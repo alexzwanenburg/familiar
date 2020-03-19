@@ -154,3 +154,26 @@ normalise.apply_normalisation <- function(x, norm_param, invert=FALSE){
   
   return(y)
 }
+
+
+.get_default_normalisation_range_for_plotting <- function(norm_method){
+  # Find a default range for normalised values during plotting.
+  if(norm_method == "none"){
+    return(c(NA, NA))
+    
+  } else if(norm_method == "mean_centering"){
+    return(c(NA, NA))
+    
+  } else if(norm_method == "quantile"){
+    return(c(-1.5, 0.0, 1.5))
+    
+  } else if(norm_method %in% c("standardisation", "standardisation_trim", "standardisation_winsor")){
+    return(c(-3.0, 0.0, 3.0))
+    
+  } else if(norm_method %in% c("normalisation", "normalisation_trim", "normalisation_winsor")){
+    return(c(0.0, 1.0))
+    
+  } else {
+    ..error_reached_unreachable_code(paste0(".get_default_normalisation_range_for_plotting: unknown normalisation method: ", norm_method))
+  }
+}
