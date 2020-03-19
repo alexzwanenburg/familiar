@@ -1,0 +1,341 @@
+learner.find_survival_grouping_thresholds <- function(object, data_obj){
+  
+  if(class(object)!="familiarModel"){
+    "Survival stratification thresholds can only be determined on familiarModel objects."
+  }
+  
+  # Load settings to find survival thresholds
+  settings <- get_settings()
+  
+  # Set time_max
+  time_max <- settings$eval$time_max
+  
+  # Generate prediction table
+  pred_table <- predict(object=object, newdata=data_obj, allow_recalibration=TRUE, time_max=time_max)
+
+  km_info_list <- list()
+  
+  # Iterate over stratification methods
+  for(cut_off_method in settings$eval$strat_method){
+
+    if(cut_off_method == "median"){
+      # Identify threshold
+      cutoff <- stats::median(pred_table$outcome_pred, na.rm=TRUE)
+      
+    } else if(cut_off_method == "fixed"){
+      # Identify thresholds
+      cutoff <- learner.find_quantile_threshold(pred_table=pred_table,
+                                                quantiles=settings$eval$strat_quant_threshold,
+                                                learner=object@learner)
+
+    } else if(cut_off_method == "optimised"){
+      # Identify threshold
+      cutoff <- learner.find_maxstat_threshold(pred_table=pred_table)
+    }
+    
+    # Find corresponding sizes of the generated groups
+    risk_group <- learner.apply_risk_threshold(predicted_values=pred_table$outcome_pred,
+                                               cutoff=cutoff, learner=object@learner)
+    group_size <- learner.get_risk_group_sizes(risk_group=risk_group)
+    
+    # Populate method_list
+    method_list <- list("method" = cut_off_method,
+                        "cutoff" = cutoff,
+                        "group_size" = group_size)
+    
+    # Attach method_list to the general km_info_list
+    km_info_list[[cut_off_method]] <- method_list
+  }
+
+  # Add stratification methods
+  out_list <- list("stratification_method"=settings$eval$strat_method, "parameters"=km_info_list, "time_max"=time_max)
+  
+  return(out_list)
+}
+
+
+
+learner.find_quantile_threshold <- function(pred_table, quantiles, learner){
+  
+  if(learner.check_model_prediction_type(learner=learner, outcome_type="survival") %in% c("expected_survival_time")){
+    # For time-like predictions, we should use the complements of the provided quantiles.
+    quantiles <- abs(1-quantiles)
+    
+  }
+  # Order quantiles in ascending order
+  quantiles <- quantiles[order(quantiles)]
+  
+  # Return threshold values
+  return(stats::quantile(x=pred_table$outcome_pred, probs=quantiles, names=FALSE, na.rm=TRUE))
+}
+
+
+
+learner.find_maxstat_threshold <- function(pred_table){
+  
+  # Check whether the model always predicted the same value
+  if(stats::var(pred_table$outcome_pred) == 0){
+    return(pred_table$outcome_pred[1])
+  }
+  
+  # Perform maxstat test
+  h <- maxstat::maxstat.test(survival::Surv(outcome_time, outcome_event)~outcome_pred,
+                             data=pred_table,
+                             smethod="LogRank",
+                             minprop=0.10,
+                             maxprop=0.90)
+  
+  # Check if at least 4 unique values are present for the smoothing spline
+  if(length(h$cuts) < 4){
+    return(unname(h$estimate))
+  }
+  
+  # Smoothed scores
+  spline_fit <- stats::smooth.spline(x=h$cuts, y=h$stats)$fit
+  
+  # Predict scores on a fine grid
+  x_sample_cuts <- seq(from=min(h$cuts), to=max(h$cuts), length.out=100)
+  test_scores <- stats::predict(object=spline_fit, x=x_sample_cuts)$y
+  
+  return(x_sample_cuts[which.max(test_scores)])
+}
+
+
+
+learner.get_risk_group_sizes <- function(risk_group){
+  # Suppress NOTES due to non-standard evaluation in data.table
+  indicated_group <- NULL
+  
+  # Find group sizes
+  group_table <- data.table::data.table("indicated_group"=risk_group)[, list("group_size"=.N), by="indicated_group"][order(indicated_group)]
+  
+  # Get group sizes and set names
+  group_sizes <- group_table$group_size / length(risk_group)
+  names(group_sizes) <- group_table$indicated_group
+  
+  return(group_sizes)
+}
+
+
+
+learner.apply_risk_threshold <- function(predicted_values, cutoff, learner){
+  
+  # Initialise risk group
+  risk_group <- rep.int(1, times=length(predicted_values))
+  
+  # Determine inversion. We assume that risk groups go from 1 (low risk) to k (high risk),
+  # with k-1 being the number of provided cutoff values.
+  if(learner.check_model_prediction_type(learner=learner, outcome_type="survival") %in% c("expected_survival_time")){
+    # Time-like
+    invert <- TRUE
+    
+  } else {
+    # Risk-like
+    invert <- FALSE
+    
+  }
+
+  # Iterate over cutoffs and define risk groups
+  for(current_cutoff in cutoff){
+    if(invert){
+      risk_group <- risk_group + as.numeric(predicted_values < current_cutoff)
+    } else {
+      risk_group <- risk_group + as.numeric(predicted_values >= current_cutoff)
+    }
+  }
+  
+  # Convert to factor
+  risk_group <- learner.assign_risk_group_names(risk_group=risk_group, cutoff=cutoff)
+  
+  # Return risk groups
+  return(risk_group)
+}
+
+
+
+learner.assign_risk_group_names <- function(risk_group, cutoff){
+  
+  # Determine the number of risk groups
+  n_groups <- length(cutoff) + 1
+  
+  if(n_groups==2){
+    # Stratification into low and high-risk groups
+    y <- factor(risk_group, levels=seq_len(n_groups), labels=c("low", "high")) 
+   
+  } else if(n_groups==3){
+    # Stratification into low, moderate and high-risk groups
+    y <- factor(risk_group, levels=seq_len(n_groups), labels=c("low", "moderate", "high"))
+    
+  } else {
+    # Assign numbers
+    y <- factor(risk_group, levels=seq_len(n_groups))
+    
+  }
+  
+  return(y)
+}
+
+
+learner.get_mean_risk_group <- function(risk_group){
+  
+  # Determine the mean average risk group. This requires discretisation
+  # as rounding toward the nearest group would overinflate center groups.
+  group_names <- levels(risk_group)
+  n <- length(group_names)
+  
+  # Discretise bins floor((mu - 1) / ((n-1) / n)) + 1. See fixed bin size discretisation
+  risk_group_num <- floor(n * (mean(as.numeric(risk_group), na.rm=TRUE) - 1) / (n - 1)) + 1
+  
+  # Check if the risk_group_num still falls within the range
+  risk_group_num <- ifelse(risk_group_num > n, n, risk_group_num)
+  
+  return(factor(group_names[risk_group_num], levels=group_names))
+}
+
+
+learner.assess_stratification <- function(risk_group_table, p_adjust_method="holm"){
+
+  # Suppress NOTES due to non-standard evaluation in data.table
+  p_value <- NULL
+  
+  # Make a local copy
+  risk_group_table <- data.table::copy(risk_group_table)
+  
+  ##### Log rank test #####
+
+    # Overall log rank test results
+  overall_test_results <- learner.perform_log_rank_test(risk_group_table=risk_group_table, all_groups=TRUE)
+
+  if(nlevels(risk_group_table$risk_group) >= 2){
+    # Get all pairs
+    pairwise_combinations <- utils::combn(x=levels(risk_group_table$risk_group), m=2, simplify=FALSE)
+    
+    # Perform a log rank test for each separate pair
+    pairwise_test_results <- data.table::rbindlist(lapply(pairwise_combinations, learner.perform_log_rank_test,
+                                                          risk_group_table=risk_group_table, all_groups=FALSE))
+    
+    # Adjust p-value for multiple testing correction
+    pairwise_test_results[, "p_value_adj":=stats::p.adjust(p_value, method=p_adjust_method)]
+    
+    # Combine overall and pairwise results
+    log_rank_results <- rbind(overall_test_results, pairwise_test_results)
+    
+  } else {
+    log_rank_results <- overall_test_results
+  }
+  
+  ##### Group hazard ratio results #####
+  
+  # Extract Hazard Ratio test results using different risk groups as reference
+  hr_test_results <- data.table::rbindlist(lapply(levels(risk_group_table$risk_group), learner.perform_hazard_ratio_test,
+                                                         risk_group_table=risk_group_table, p_adjust_method=p_adjust_method))
+  
+  # Return test results
+  return(list("logrank"=log_rank_results, "hr_ratio"=hr_test_results))
+}
+
+
+
+learner.perform_hazard_ratio_test <- function(reference_group, risk_group_table, p_adjust_method="holm"){
+  
+    # Suppress NOTES due to non-standard evaluation in data.table
+    p_value <- NULL
+
+    # Define an empty placeholder table
+    empty_table <- data.table::data.table("strat_method"=character(0),
+                                          "test"=character(0),
+                                          "reference_group"=character(0),
+                                          "risk_group"=character(0),
+                                          "hazard_ratio"=numeric(0),
+                                          "hr_lower_95"=numeric(0),
+                                          "hr_upper_95"=numeric(0),
+                                          "p_value"=numeric(0),
+                                          "p_value_adj"=numeric(0))
+    
+    if(is_empty(risk_group_table)) return(empty_table)
+    
+    # Create a local copy
+    risk_group_table <- data.table::copy(risk_group_table)
+    risk_group_table <- droplevels(risk_group_table)
+    
+    # Determine the number of risk groups
+    n_groups <- nlevels(risk_group_table$risk_group)
+    
+    # Check that there are at least two groups.
+    if(n_groups < 2) return(empty_table)
+    
+    # Reset the reference risk group
+    risk_group_table$risk_group <- stats::relevel(risk_group_table$risk_group, ref=reference_group)
+    
+    # Create model
+    model_obj <- survival::coxph(survival::Surv(time=outcome_time, event=outcome_event) ~ risk_group, data=risk_group_table)
+    
+    # Extract summary information concerning hazard ratios
+    summary_info <- summary(model_obj)
+    
+    # Include results into data table
+    test_data <- data.table::data.table("strat_method"=risk_group_table$strat_method[1], "test"="hazard_ratio_test",
+                                        "reference_group"=reference_group, "risk_group"=levels(risk_group_table$risk_group)[-1],
+                                        "hazard_ratio"=summary_info$conf.int[, 1],
+                                        "hr_lower_95"=summary_info$conf.int[, 3],
+                                        "hr_upper_95"=summary_info$conf.int[, 4],
+                                        "p_value"=summary_info$coefficients[, 5])
+    
+    # Apply multiple testing correction
+    test_data[, "p_value_adj":=stats::p.adjust(p_value, method=p_adjust_method)]
+    
+    # Return test results
+    return(test_data)
+}
+
+
+
+learner.perform_log_rank_test <- function(selected_groups=NULL, risk_group_table, all_groups=TRUE){
+  
+  # Suppress NOTES due to non-standard evaluation in data.table
+  risk_group <- NULL
+  
+  # Create an empty placeholder table
+  empty_table <- data.table::data.table("strat_method"=character(0),
+                                        "test"=character(0),
+                                        "risk_group_1"=character(0),
+                                        "risk_group_2"=character(0),
+                                        "p_value"=numeric(0),
+                                        "p_value_adj"=numeric(0))
+  
+  if(is_empty(risk_group_table)) return(empty_table)
+  
+  # Drop levels from the risk group table
+  risk_group_table <- data.table::copy(risk_group_table)
+  risk_group_table <- droplevels(risk_group_table)
+  
+  # Get groups
+  if(is.null(selected_groups)) selected_groups <- levels(risk_group_table$risk_group)
+
+  # Determine the number of groups (this is important for calculating the p-value from the chi-square score)
+  n_groups <- nlevels(risk_group_table$risk_group)
+  
+  # Ensure that at least two risk groups are present in the data.
+  if(n_groups < 2) return(empty_table)
+  
+  # Determine chi-square of log-rank test
+  chi_sq <- survival::survdiff(survival::Surv(time=outcome_time, event=outcome_event)~risk_group,
+                               data=risk_group_table[risk_group %in% selected_groups],
+                               subset=NULL, na.action="na.omit")$chisq
+  
+  # Derive p-value
+  p_value  <- stats::pchisq(q=chi_sq, df=n_groups-1, lower.tail=FALSE)
+  
+  if(all_groups==TRUE){
+    test_data <- data.table::data.table("strat_method"=risk_group_table$strat_method[1], "test"="logrank",
+                                        "risk_group_1"="all", "risk_group_2"="all",
+                                        "p_value"=p_value, "p_value_adj"=p_value)
+    
+  } else {
+    test_data <- data.table::data.table("strat_method"=risk_group_table$strat_method[1], "test"="logrank",
+                                        "risk_group_1"=selected_groups[1], "risk_group_2"=selected_groups[2],
+                                        "p_value"=p_value, "p_value_adj"=as.double(NA))
+  }
+  
+  return(test_data)
+}

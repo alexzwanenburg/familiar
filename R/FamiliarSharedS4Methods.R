@@ -1,0 +1,231 @@
+.assess_performance <- function(object, newdata, metric, allow_recalibration=TRUE, is_pre_processed=FALSE, time_max=NULL, as_objective=FALSE, na.rm=FALSE){
+  # This is an internal function for assessing discriminatory performance of a model or ensemble
+  
+  # Check if the input classes are as expected
+  if(!class(object) %in% c("familiarModel", "familiarEnsemble")){
+    stop("The \".assess_performance\" function is only applicable to objects of the \"familiarModel\" or \"familiarEnsemble\" classes.")
+  }
+  
+  # First, make predictions for the data
+  dt_pred   <- predict(object=object, newdata=newdata, allow_recalibration=allow_recalibration,
+                       is_pre_processed=is_pre_processed, time_max=time_max)
+  
+  # Calculate the metric
+  score     <- metric.main(metric=metric, learner=object@learner, purpose="score", dt=dt_pred,
+                           outcome_type=object@outcome_type, na.rm=na.rm)
+  
+  # Convert to an objective score if required
+  if(as_objective){
+    
+    # Try to get a (baseline) mean score. This is used by some regression metrics for normalisation
+    # of the objective score. It is the score achieved by assuming a model that will always produce
+    # the mean value of the development cohort.
+    if(!is.null(object@mean_outcome_value)){
+      score_mean <- metric.main(metric=metric, learner=object@learner, purpose="score",
+                                dt=data.table::copy(dt_pred)[, "outcome_pred":=object@mean_outcome_value],
+                                outcome_type=object@outcome_type, na.rm=na.rm)
+    } else {
+      score_mean <- NULL
+    }
+    
+    # Calculate objective score
+    score <- metric.main(metric=metric, learner=object@learner, purpose="objective_score",
+                         metric_score=score, score_mean=score_mean, outcome_type=object@outcome_type)
+  }
+  
+  # Return score or objective score
+  return(score)
+}
+
+
+
+.assess_calibration <- function(object, data, eval_times=NULL, is_pre_processed=FALSE) {
+  # This is an internal function for assessing calibration of a model or ensemble
+
+  # Check if the input classes are as expected
+  if(!class(object) %in% c("familiarModel", "familiarEnsemble")){
+    stop("The \".assess_calibration\" function is only applicable to objects of the \"familiarModel\" or \"familiarEnsemble\" classes.")
+  }
+  
+  # Check data consistency of external data. We cannot transfer pre-processing state beyond this function
+  if(class(data)!="dataObject"){
+    data <- methods::new("dataObject", data=data, is_pre_processed=is_pre_processed, outcome_type=object@outcome_type)
+  }
+  
+  # Check if eval_times are provided, and load from settings attribute otherwise.
+  if(is.null(eval_times)){
+    eval_times <- object@settings$eval_times
+  }
+  
+  
+  if(object@outcome_type %in% c("binomial", "multinomial")){
+    
+    # Compute calibration data
+    calibration_data <- compute_calibration_data(object=object, data=data)
+    
+    # Calibration-in-the-large and calibration slope
+    calibration_at_large <- data.table::rbindlist(lapply(split(calibration_data, by="pos_class"),
+                                                         test.calibration.model, outcome_type=object@outcome_type))
+    
+    # Hosmer-Lemeshow tests
+    calibration_gof_test <- test.calibration.hosmer_lemeshow(calibration_data=calibration_data, outcome_type=object@outcome_type)
+    
+    # Store to list
+    calibration_list <- list("data"= calibration_data, "linear_test"=calibration_at_large, "gof_test"=calibration_gof_test)
+    
+  } else if(object@outcome_type %in% c("continuous", "count")) {
+    
+    # Compute calibration data
+    calibration_data <- compute_calibration_data(object=object, data=data)
+    
+    # Calibration-in-the-large and calibration slope
+    calibration_at_large <- test.calibration.model(calibration_data=calibration_data, outcome_type=object@outcome_type)
+  
+    # Hosmer-Lemeshow tests
+    calibration_gof_test <- test.calibration.hosmer_lemeshow(calibration_data=calibration_data, outcome_type=object@outcome_type)
+    
+    # Store to list
+    calibration_list <- list("data"= calibration_data, "linear_test"=calibration_at_large, "gof_test"=calibration_gof_test)
+    
+  } else if(object@outcome_type %in% "survival"){
+    
+    # Sort evaluation times.
+    eval_times <- sort(eval_times)
+    
+    # Extract calibration data for each eval_time.
+    calibration_data_list <- lapply(eval_times, function(current_eval_time, object, data){
+
+      # Compute calibration data
+      calibration_data <- compute_calibration_data(object=object, data=data, time_max=current_eval_time)
+      
+      # Calibration-in-the-large and calibration slope
+      calibration_at_large <- test.calibration.model(calibration_data=calibration_data, outcome_type=object@outcome_type, eval_time=current_eval_time)
+      
+      # Nam-D'Agostino tests
+      calibration_gof_test <- test.calibration.nam_dagostino(calibration_data=calibration_data, eval_time=current_eval_time)
+      
+      # Store to list
+      return(list("data"= calibration_data, "linear_test"=calibration_at_large, "gof_test"=calibration_gof_test))
+      
+    }, object=object, data=data)
+    
+    # Add evaluation times as factor
+    calibration_data <- rbind_list_list(calibration_data_list, list_elem="data")
+    calibration_data$evaluation_time <- factor(calibration_data$evaluation_time, levels=eval_times)
+    
+    linear_test <- rbind_list_list(calibration_data_list, list_elem="linear_test")
+    linear_test$evaluation_time <- factor(linear_test$evaluation_time, levels=eval_times)
+    
+    gof_test <- rbind_list_list(calibration_data_list, list_elem="gof_test")
+    gof_test$evaluation_time <- factor(gof_test$evaluation_time, levels=eval_times)
+    
+    # Reorganise calibration_list by concatenating the underlying data sets.
+    calibration_list <- list("data" = calibration_data,
+                             "linear_test" = linear_test, 
+                             "gof_test" = gof_test)
+    
+  } else {
+    ..error_no_known_outcome_type(object@outcome_type)
+  }
+  
+  return(calibration_list)
+}
+
+
+.compute_calibration_data <- function(object, data, time_max=NULL){
+  # This is an internal function for computing calibration data for later use in statistical tests
+  
+  if(!class(object) %in% c("familiarModel", "familiarEnsemble")){
+    stop("The \".compute_calibration_data\" function is only applicable to objects of the \"familiarModel\" or \"familiarEnsemble\" classes.")
+  }
+  
+  # Check if there is any data present
+  if(any(class(data) == "dataObject")){
+    if(is_empty(data)){
+      return(create_empty_calibration_table(outcome_type=object@outcome_type))
+    }
+    
+    # Aggregate data
+    data <- aggregate_data(data=data)
+    
+  } else if(any(class(data) == "list")){
+    if(nrow(data$predictions) == 0){
+      return(create_empty_calibration_table(outcome_type=object@outcome_type))
+    }
+  }
+
+  # Extract data
+  calibration_data <- learner.main(object=object, data_obj=data, purpose="assess_calibration", time_max=time_max)
+  
+  # Check for unsuccessful attempts
+  if(is.null(calibration_data)){
+    calibration_data <- create_empty_calibration_table(outcome_type=object@outcome_type)
+  } else {
+    calibration_data <- strip_calibration_table(calibration_data=calibration_data, outcome_type=object@outcome_type)
+  }
+  return(calibration_data)
+}
+
+
+
+.add_model_name <- function(data, object){
+  # Adds a model identifier column
+  
+  if(is.null(data)) {
+    return(NULL)
+  }
+  
+  if(!any(class(data) %in% c("data.table"))){
+    stop("\"data\" should be a data.table.")
+  }
+  
+  if(nrow(data)>=1){
+    
+    # Get the model name
+    model_name <- get_object_name(object=object, abbreviated=TRUE)
+    
+    # Insert "model_name" column
+    data[, "model_name":=model_name]
+    
+    # Reorder columns and move model_name to the front
+    data.table::setcolorder(data, neworder="model_name")
+    
+    return(data)
+    
+  } else {
+    # In case the table is empty, return an empty table with the model name attached.
+    return(cbind(data.table::data.table("model_name"=character(0)), data))
+  }
+}
+
+
+
+.add_package_version <- function(object){
+  # Adds the version of the familiar package used to generate the object. This allows for backward compatibility.
+  
+  object@familiar_version <- utils::packageVersion("familiar")
+  
+  return(object)
+}
+
+
+
+.save <- function(object, dir_path){
+  # Saves the object to the disk. Applicable to both familiarModel, familiarEnsemble and familiarData objects
+  
+  # Generate directory path
+  dir_path  <- get_object_dir_path(dir_path=dir_path, object_type=class(object), learner=object@learner, fs_method=object@fs_method)
+  
+  # Generate file name
+  file_name <- get_object_name(object=object)
+  file_name <- paste0(file_name, ".RDS")
+  
+  # Check if the directory exists, and create anew if not
+  if(!dir.exists(dir_path)){ dir.create(dir_path, recursive=TRUE) }
+  
+  # Add package version
+  object <- add_package_version(object=object)
+  
+  # Save to disk
+  saveRDS(object, file=file.path(dir_path, file_name))
+}

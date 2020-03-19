@@ -1,0 +1,152 @@
+Package: familiar
+Title: End-To-End Machine Learning and Data Analysis Framework
+Version: 0.0.0.47
+Authors@R: c(
+   person("Alex", "Zwanenburg",
+          email = "alexander.zwanenburg@nct-dresden.de",
+          role = c("aut", "cre"),
+          comment = c(ORCID = "0000-0002-0342-9545")),
+   person("Steffen", "Löck", role="aut"),
+   person("Asier", "Rabasco", role="ctb"),
+   person("Shivaprasad", "Patil", role="ctb"),
+   person("Stefan", "Leger", role="ctb"),
+   person("Stefan", "Schmidt", role="ctb"),
+   person("Anne", "Dietert", role="ctb"))
+Description: Encapsulates the modelling and validation workflow for
+   (big) data analysis. Automatically performs steps such as data normalization,
+   dimensionality reduction, feature selection, hyper-parameter optimization,
+   model building and validation. Risk of biases is minimised through minimal
+   required user input, automation and separating development and training
+   data. Model discrimination and calibration are assessed.
+Depends: R (>= 3.4.0)
+License: EUPL
+Encoding: UTF-8
+LazyData: true
+RoxygenNote: 7.1.0
+VignetteBuilder: knitr
+Imports: methods,
+    rlang (>= 0.3.4),
+    data.table,
+    survival,
+    CORElearn,
+    cluster,
+    tools,
+    VGAM,
+    randomForestSRC,
+    mboost (>= 2.9.0),
+    partykit,
+    ggplot2 (>= 3.0.0),
+    gtable,
+    kernlab,
+    klaR,
+    xgboost,
+    glmnet,
+    ranger,
+    labeling,
+    scales,
+    stringi,
+    xml2,
+    maxstat
+Suggests:
+    dynamicTreeCut,
+    fastcluster,
+    Rservecoop,
+    RSclient,
+    Rserve,
+    qvalue,
+    cowplot,
+    knitr,
+    testthat (>= 2.1.0)
+Collate: 
+    'BatchNormalisation.R'
+    'CheckArguments.R'
+    'FamiliarS4Classes.R'
+    'FamiliarS4Generics.R'
+    'CheckHyperparameters.R'
+    'Clustering.R'
+    'CombatNormalisation.R'
+    'DataObject.R'
+    'DataParameterChecks.R'
+    'DataPreProcessing.R'
+    'DataProcessing.R'
+    'DataServerBackend.R'
+    'ErrorMessages.R'
+    'Evaluation.R'
+    'ExperimentSetup.R'
+    'Familiar.R'
+    'FamiliarCollection.R'
+    'FamiliarCollectionExport.R'
+    'FamiliarData.R'
+    'FamiliarDataCollectors.R'
+    'FamiliarDataComputation.R'
+    'FamiliarEnsemble.R'
+    'FamiliarModel.R'
+    'FamiliarObjectConversion.R'
+    'FamiliarSharedS4Methods.R'
+    'FeatureInfo.R'
+    'FeatureSelection.R'
+    'HyperparameterOptimisation.R'
+    'Imputation.R'
+    'Iterations.R'
+    'LearnerCalibration.R'
+    'LearnerCalibrationTests.R'
+    'LearnerCox.R'
+    'LearnerElasticNetRegression.R'
+    'LearnerExtremeGradientBoosting.R'
+    'LearnerGLM.R'
+    'LearnerKNearestNeighbours.R'
+    'LearnerMain.R'
+    'LearnerModelBasedBoosting.R'
+    'LearnerNaiveBayes.R'
+    'LearnerRandomForest_ranger.R'
+    'LearnerRandomForest_rfsrc.R'
+    'LearnerRecalibration.R'
+    'LearnerSupportVectorMachine.R'
+    'LearnerSurvivalGrouping.R'
+    'LearnerSurvivalProbability.R'
+    'LearnerSurvivalRegression.R'
+    'LearnerTestLearner.R'
+    'Logger.R'
+    'MetricAreaUnderCurve.R'
+    'MetricBrierScore.R'
+    'MetricConcordanceIndex.R'
+    'MetricConfusionMatrix.R'
+    'MetricMain.R'
+    'MetricObjectiveScore.R'
+    'MetricRegression.R'
+    'ModelBuilding.R'
+    'Normalisation.R'
+    'PairwiseSimilarity.R'
+    'ParallelFunctions.R'
+    'ParseData.R'
+    'ParseSettings.R'
+    'PlotAUCcurves.R'
+    'PlotAll.R'
+    'PlotCalibration.R'
+    'PlotColours.R'
+    'PlotFeatureRanking.R'
+    'PlotFeatureSimilarity.R'
+    'PlotGTable.R'
+    'PlotInputArguments.R'
+    'PlotKaplanMeier.R'
+    'PlotModelPerformance.R'
+    'PlotSampleClustering.R'
+    'PlotUnivariateImportance.R'
+    'PlotUtilities.R'
+    'PredictS4Methods.R'
+    'RandomGrouping.R'
+    'RankBordaAggregation.R'
+    'RankMain.R'
+    'RankSimpleAggregation.R'
+    'RankStabilityAggregation.R'
+    'Transformation.R'
+    'Utilities.R'
+    'UtilitiesS4.R'
+    'VimpConcordance.R'
+    'VimpCorelearn.R'
+    'VimpCorrelation.R'
+    'VimpMain.R'
+    'VimpMutualInformation.R'
+    'VimpRegression.R'
+    'VimpTest.R'
+    'zzz.R'

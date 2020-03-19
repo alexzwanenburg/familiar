@@ -1,0 +1,7 @@
+^.*\.Rproj$
+^\.Rproj\.user$
+^Thumbs\.db$
+^README\.md$
+^LICENSE\.txt$
+^NEWS$
+^cran-comments\.md$
