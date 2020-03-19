@@ -97,7 +97,7 @@ setGeneric("plot_sample_clustering",
                     facet_wrap_cols=NULL,
                     ggtheme=NULL,
                     gradient_palette=NULL,
-                    gradient_palette_range=NULL,
+                    gradient_palette_range=waiver(),
                     x_label=waiver(),
                     x_label_shared="column",
                     y_label=waiver(),
@@ -106,9 +106,12 @@ setGeneric("plot_sample_clustering",
                     plot_title=NULL,
                     plot_sub_title=NULL,
                     caption=NULL,
-                    z_range=NULL,
-                    z_n_breaks=7,
-                    z_breaks=NULL,
+                    x_range=NULL,
+                    x_n_breaks=3,
+                    x_breaks=NULL,
+                    y_range=NULL,
+                    y_n_breaks=3,
+                    y_breaks=NULL,
                     rotate_x_tick_labels=waiver(),
                     show_feature_dendrogram=TRUE,
                     show_sample_dendrogram=TRUE,
@@ -132,7 +135,7 @@ setMethod("plot_sample_clustering", signature(object="ANY"),
                    facet_wrap_cols=NULL,
                    ggtheme=NULL,
                    gradient_palette=NULL,
-                   gradient_palette_range=NULL,
+                   gradient_palette_range=waiver(),
                    x_label=waiver(),
                    x_label_shared="column",
                    y_label=waiver(),
@@ -141,9 +144,12 @@ setMethod("plot_sample_clustering", signature(object="ANY"),
                    plot_title=NULL,
                    plot_sub_title=NULL,
                    caption=NULL,
-                   z_range=NULL,
-                   z_n_breaks=7,
-                   z_breaks=NULL,
+                   x_range=NULL,
+                   x_n_breaks=3,
+                   x_breaks=NULL,
+                   y_range=NULL,
+                   y_n_breaks=3,
+                   y_breaks=NULL,
                    rotate_x_tick_labels=waiver(),
                    show_feature_dendrogram=TRUE,
                    show_sample_dendrogram=TRUE,
@@ -177,9 +183,12 @@ setMethod("plot_sample_clustering", signature(object="ANY"),
                                      "plot_title"=plot_title,
                                      "plot_sub_title"=plot_sub_title,
                                      "caption"=caption,
-                                     "z_range"=z_range,
-                                     "z_n_breaks"=z_n_breaks,
-                                     "z_breaks"=z_breaks,
+                                     "x_range"=x_range,
+                                     "x_n_breaks"=x_n_breaks,
+                                     "x_breaks"=x_breaks,
+                                     "y_range"=y_range,
+                                     "y_n_breaks"=y_n_breaks,
+                                     "y_breaks"=y_breaks,
                                      "rotate_x_tick_labels"=rotate_x_tick_labels,
                                      "show_feature_dendrogram"=show_feature_dendrogram,
                                      "show_sample_dendrogram"=show_sample_dendrogram,
@@ -204,7 +213,7 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
                    facet_wrap_cols=NULL,
                    ggtheme=NULL,
                    gradient_palette=NULL,
-                   gradient_palette_range=NULL,
+                   gradient_palette_range=waiver(),
                    x_label=waiver(),
                    x_label_shared="column",
                    y_label=waiver(),
@@ -213,9 +222,12 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
                    plot_title=NULL,
                    plot_sub_title=NULL,
                    caption=NULL,
-                   z_range=NULL,
-                   z_n_breaks=7,
-                   z_breaks=NULL,
+                   x_range=NULL,
+                   x_n_breaks=3,
+                   x_breaks=NULL,
+                   y_range=NULL,
+                   y_n_breaks=3,
+                   y_breaks=NULL,
                    rotate_x_tick_labels=waiver(),
                    show_feature_dendrogram=TRUE,
                    show_sample_dendrogram=TRUE,
@@ -480,9 +492,12 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
                                                 plot_title=plot_title,
                                                 plot_sub_title=plot_sub_title,
                                                 caption=caption,
-                                                z_range=z_range,
-                                                z_n_breaks=z_n_breaks,
-                                                z_breaks=z_breaks,
+                                                x_range=x_range,
+                                                x_n_breaks=x_n_breaks,
+                                                x_breaks=x_breaks,
+                                                y_range=y_range,
+                                                y_n_breaks=y_n_breaks,
+                                                y_breaks=y_breaks,
                                                 rotate_x_tick_labels=rotate_x_tick_labels,
                                                 show_feature_dendrogram=show_feature_dendrogram,
                                                 show_sample_dendrogram=show_sample_dendrogram,
@@ -570,9 +585,12 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
                                          plot_title,
                                          plot_sub_title,
                                          caption,
-                                         z_range,
-                                         z_n_breaks,
-                                         z_breaks,
+                                         x_range,
+                                         x_n_breaks,
+                                         x_breaks,
+                                         y_range,
+                                         y_n_breaks,
+                                         y_breaks,
                                          rotate_x_tick_labels,
                                          show_feature_dendrogram,
                                          show_sample_dendrogram,
@@ -583,6 +601,138 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
   elements <- c("guide", "strip_x", "strip_y")
   if(x_label_shared == "overall") { elements <- append(elements, "axis_title_x")}
   if(y_label_shared == "overall") { elements <- append(elements, "axis_title_y")}
+  
+  # Determine the list identifiers for the current selection of data.
+  list_id <- as.character(unique(x$list_id))
+  
+  # Determine the range of the gradient palette.
+  if(is.waive(gradient_palette_range)){
+    if(show_normalized_data == "none"){
+      # Default to an empty range.
+      gradient_palette_range <- c(NA, NA)
+      
+    } else if(show_normalized_data == "fixed"){
+      # Identify the normalisation method used to convert the data.
+      normalisation_method <- sapply(list_id, function(ii, data){
+        
+        # Obtain the normalisation methods for each feature in the current
+        # dataset.
+        normalisation_method <- sapply(data[[ii]]$feature_info, function(feature){
+          return(feature@normalisation_parameters$norm_method)
+        })
+        
+        return(normalisation_method)
+        
+      }, data=data)
+      
+      # Select the normalisation methods that we should consider.
+      normalisation_method <- unique(normalisation_method)
+      if(all(normalisation_method == "none")){
+        normalisation_method <- "none"
+      } else {
+        normalisation_method <- setdiff(normalisation_method, "none")
+      }
+      
+      # Find the default value.
+      gradient_palette_range <- .get_default_normalisation_range_for_plotting(norm_method=normalisation_method)
+      
+      
+    } else if(show_normalized_data == "set_normalisation"){
+      # By default show range -3 to 3 standard deviations
+      gradient_palette_range <- .get_default_normalisation_range_for_plotting(norm_method="standardisation_winsor")
+      
+    } else {
+      ..error_reached_unreachable_code(paste0(".plot_sample_clustering_plot: encountered unknown value for show_normalized_data: ",
+                                              show_normalized_data))
+    }
+    
+  } else if(is.null(gradient_palette_range)){
+    # Default to an empty range.
+    gradient_palette_range <- c(NA, NA)
+  }
+  browser()
+  # Normalise expression data
+  expression_data <- lapply(list_id, function(ii, data, show_normalized_data){
+    
+    # Normalise expression data
+    expression_data <- .normalise_expression_data(x=data[[ii]]$data,
+                                                  show_normalized_data=show_normalized_data,
+                                                  feature_info=data[[ii]]$feature_info)
+    
+    return(expression_data)
+    
+  }, data=data, show_normalized_data=show_normalized_data)
+  
+  # Name the expression data sets by the list identifiers so that they can be
+  # recognised and addressed by name.
+  names(expression_data) <- list_id
+  
+  # Ensure that a gradient palette range is set. This is required because the
+  # legend is shared between all facets and .
+  if(any(!is.finite(gradient_palette_range))){
+    browser()
+    # Iterate over expression data to find minimum and maximum
+    feature_ranges <- lapply(list_id, function(ii, expression_data, data){
+      
+      if(is_empty(expression_data[[ii]])){
+        return(data.table::data.table("min_value"=numeric(0),
+                                      "max_value"=numeric(0))) 
+      }
+      
+      # Find feature value ranges in the current expression data.
+      feature_ranges <- lapply(data[[ii]]$feature_info, function(feature, expression_data){
+        
+        # Only numeric features have a range.
+        if(feature@feature_type == "numeric"){
+          
+          # Find feature values that are finite.
+          feature_data <- expression_data[[feature@name]]
+          feature_data <- feature_data[is.finite(feature_data)]
+          
+          if(length(feature_data) == 0){
+            return(data.table::data.table("min_value"=numeric(0),
+                                          "max_value"=numeric(0)))
+          } else {
+            return(data.table::data.table("min_value"=as.double(min(feature_data, na.rm=FALSE)),
+                                          "max_value"=as.double(max(feature_data, na.rm=FALSE))))
+          }
+          
+        } else {
+          return(data.table::data.table("min_value"=numeric(0),
+                                        "max_value"=numeric(0)))
+        }
+      }, expression_data=expression_data[[ii]])
+      
+      # Combine ranges for all features.
+      feature_ranges <- data.table::rbindlist(feature_ranges)
+      
+      return(feature_ranges)
+      
+    }, data=data, expression_data=expression_data)
+    
+    # Combine ranges
+    feature_ranges <- data.table::rbindlist(feature_ranges)
+    
+    if(is_empty(feature_ranges)){
+      # Set a default if all features are categorical.
+      gradient_palette_range <- c(-1.0, 0.0, 1.0)
+      
+    } else {
+      # Replace the first value of the range, if it is not finite (NA).
+      if(!is.finite(gradient_palette_range[1])){
+        gradient_palette_range[1] <- min(feature_ranges$min_value)
+      }
+      
+      # Replace the last value of the range, if it is not finite (NA).
+      if(!is.finite(tail(gradient_palette_range, n=1))){
+        gradient_palette_range[length(gradient_palette_range)] <- max(feature_ranges$max_value)
+      }
+      
+      # Shrink the gradient palette range to two values.
+      gradient_palette_range <- c(gradient_palette_range[1],
+                                  gradient_palette_range[length(gradient_palette_range)])
+    }
+  }
   
   # Split by facet. This generates a list of data splits with facetting
   # information that allows for positioning.
@@ -600,9 +750,6 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
     
     x_split <- x_split_list[[ii]]
     
-    # Find the accompanying similarity data.
-    expression_data <- data[[x_split$list_id]]$data
-    
     # Find the cluster object for features
     feature_cluster_object <- data[[x_split$list_id]]$feature_cluster_object
     
@@ -617,11 +764,11 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
     browser()
     
     # Complete the expression data
-    expression_data <- .complete_expression_table(x=expression_data,
-                                                  show_normalized_data=show_normalized_data,
-                                                  feature_info=data[[x_split$list_id]]$feature_info,
-                                                  feature_order=data[[x_split$list_id]]$feature_order,
-                                                  sample_order=data[[x_split$list_id]]$sample_order)
+    plot_data <- .complete_expression_table(x=expression_data[[x_split$list_id]],
+                                            feature_info=data[[x_split$list_id]]$feature_info,
+                                            feature_order=data[[x_split$list_id]]$feature_order,
+                                            sample_order=data[[x_split$list_id]]$sample_order,
+                                            gradient_palette_range=gradient_palette_range)
     
     # Create expression heatmap
     p_heatmap <- .create_expression_heatmap(x=expression_data,
@@ -969,12 +1116,10 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
 }
 
 
-.complete_expression_table <- function(x,
+.normalise_expression_data <- function(x,
                                        show_normalized_data,
-                                       feature_info,
-                                       feature_order,
-                                       sample_order){
-  browser()
+                                       feature_info){
+  
   # Check for empty data
   if(is_empty(x)) return(NULL)
   
@@ -1005,6 +1150,16 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
                                   norm_method="standardisation_winsor")]
     }
   }
+}
+
+
+.complete_expression_table <- function(x,
+                                       feature_info,
+                                       feature_order,
+                                       sample_order,
+                                       gradient_palette_range){
+  browser()
+  
   
   # Replace categorical features by numerical values and scale to 0.05-.95 of
   # the z-range.

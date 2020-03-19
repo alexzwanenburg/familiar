@@ -17,7 +17,7 @@ plot_sample_clustering(
   facet_wrap_cols = NULL,
   ggtheme = NULL,
   gradient_palette = NULL,
-  gradient_palette_range = NULL,
+  gradient_palette_range = waiver(),
   x_label = waiver(),
   x_label_shared = "column",
   y_label = waiver(),
@@ -26,6 +26,9 @@ plot_sample_clustering(
   plot_title = NULL,
   plot_sub_title = NULL,
   caption = NULL,
+  x_range = NULL,
+  x_n_breaks = 3,
+  x_breaks = NULL,
   y_range = NULL,
   y_n_breaks = 3,
   y_breaks = NULL,
@@ -50,7 +53,7 @@ plot_sample_clustering(
   facet_wrap_cols = NULL,
   ggtheme = NULL,
   gradient_palette = NULL,
-  gradient_palette_range = NULL,
+  gradient_palette_range = waiver(),
   x_label = waiver(),
   x_label_shared = "column",
   y_label = waiver(),
@@ -59,6 +62,9 @@ plot_sample_clustering(
   plot_title = NULL,
   plot_sub_title = NULL,
   caption = NULL,
+  x_range = NULL,
+  x_n_breaks = 3,
+  x_breaks = NULL,
   y_range = NULL,
   y_n_breaks = 3,
   y_breaks = NULL,
@@ -83,7 +89,7 @@ plot_sample_clustering(
   facet_wrap_cols = NULL,
   ggtheme = NULL,
   gradient_palette = NULL,
-  gradient_palette_range = NULL,
+  gradient_palette_range = waiver(),
   x_label = waiver(),
   x_label_shared = "column",
   y_label = waiver(),
@@ -92,6 +98,9 @@ plot_sample_clustering(
   plot_title = NULL,
   plot_sub_title = NULL,
   caption = NULL,
+  x_range = NULL,
+  x_n_breaks = 3,
+  x_breaks = NULL,
   y_range = NULL,
   y_n_breaks = 3,
   y_breaks = NULL,
@@ -193,6 +202,14 @@ NULL, no subtitle is shown.}
 
 \item{caption}{(\emph{optional}) Label to provide as figure caption. If NULL, no
 caption is shown.}
+
+\item{x_range}{(\emph{optional}) Value range for the x-axis.}
+
+\item{x_n_breaks}{(\emph{optional}) Number of breaks to show on the x-axis of the
+plot. \code{x_n_breaks} is used to determine the \code{x_breaks} argument in case it
+is unset.}
+
+\item{x_breaks}{(\emph{optional}) Break points on the x-axis of the plot.}
 
 \item{y_range}{(\emph{optional}) Value range for the y-axis.}
 
