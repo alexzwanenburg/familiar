@@ -236,13 +236,16 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
                    height=waiver(),
                    units=waiver(),
                    ...){
-            browser()
+            
             # Get input data
             x <- export_feature_expressions(object=object)
             
             # Skip empty data.
             if(is.null(x)) return(NULL)
             if(length(x) == 0) return(NULL)
+            
+            # Give x names
+            names(x) <- as.character(seq_along(x))
             
             # Collect data sets, learners and feature selection methods, so that
             # splitting can be organised.
@@ -479,6 +482,8 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
               # Generate plot
               p <- .plot_sample_clustering_plot(x=y_split[[ii]],
                                                 data=x,
+                                                x_axis_by=x_axis_by,
+                                                y_axis_by=y_axis_by,
                                                 facet_by=facet_by,
                                                 facet_wrap_cols=facet_wrap_cols,
                                                 ggtheme=ggtheme,
@@ -502,7 +507,7 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
                                                 show_feature_dendrogram=show_feature_dendrogram,
                                                 show_sample_dendrogram=show_sample_dendrogram,
                                                 show_normalized_data=show_normalized_data)
-              
+              browser()
               # Check empty output
               if(is.null(p)) next()
               
@@ -513,7 +518,7 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
               if(!is.null(dir_path)){
                 
                 # Add plot type as a subtype.
-                subtype <- "similarity"
+                subtype <- character(0)
                 
                 # Determine the subtype
                 if(!is.null(split_by)){
@@ -525,18 +530,30 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
                 features <- lapply(x[y_split[[ii]]$list_id], function(list_entry){
                   if(is_empty(list_entry$data)) return(NULL)
                   
-                  return(unique(c(levels(list_entry$data$feature_1),
-                                  levels(list_entry$data$feature_2))))
+                  return(list_entry$feature_order$name)
                 })
                 
                 # Identify unique features:
                 features <- unique(unlist(features))
                 
+                # Find samples
+                samples <- lapply(x[y_split[[ii]]$list_id], function(list_entry){
+                  if(is_empty(list_entry$data)) return(NULL)
+                  
+                  return(list_entry$sample_order$name)
+                })
+                
+                # Identify unique samples.
+                samples <- unique(unlist(samples))
+                
                 # Obtain decent default values for the plot.
                 def_plot_dims <- .determine_sample_clustering_plot_dimensions(x=y_split[[ii]],
+                                                                              x_axis_by=x_axis_by,
+                                                                              y_axis_by=y_axis_by,
                                                                               facet_by=facet_by,
                                                                               facet_wrap_cols=facet_wrap_cols,
                                                                               features=features,
+                                                                              samples=samples,
                                                                               show_feature_dendrogram=show_feature_dendrogram,
                                                                               show_sample_dendrogram=show_sample_dendrogram,
                                                                               rotate_x_tick_labels=rotate_x_tick_labels)
@@ -572,6 +589,8 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
 
 .plot_sample_clustering_plot <- function(x,
                                          data,
+                                         x_axis_by,
+                                         y_axis_by,
                                          facet_by,
                                          facet_wrap_cols,
                                          ggtheme,
@@ -613,7 +632,7 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
       
     } else if(show_normalized_data == "fixed"){
       # Identify the normalisation method used to convert the data.
-      normalisation_method <- sapply(list_id, function(ii, data){
+      normalisation_method <- lapply(list_id, function(ii, data){
         
         # Obtain the normalisation methods for each feature in the current
         # dataset.
@@ -621,12 +640,12 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
           return(feature@normalisation_parameters$norm_method)
         })
         
-        return(normalisation_method)
+        return(unname(normalisation_method))
         
       }, data=data)
       
       # Select the normalisation methods that we should consider.
-      normalisation_method <- unique(normalisation_method)
+      normalisation_method <- unique(unlist(normalisation_method))
       if(all(normalisation_method == "none")){
         normalisation_method <- "none"
       } else {
@@ -650,7 +669,7 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
     # Default to an empty range.
     gradient_palette_range <- c(NA, NA)
   }
-  browser()
+  
   # Normalise expression data
   expression_data <- lapply(list_id, function(ii, data, show_normalized_data){
     
@@ -761,8 +780,7 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
     
     # Find the sample similarity metric
     sample_similarity_metric <- data[[x_split$list_id]]$sample_similarity_metric
-    browser()
-    
+
     # Complete the expression data
     plot_data <- .complete_expression_table(x=expression_data[[x_split$list_id]],
                                             feature_info=data[[x_split$list_id]]$feature_info,
@@ -771,7 +789,9 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
                                             gradient_palette_range=gradient_palette_range)
     
     # Create expression heatmap
-    p_heatmap <- .create_expression_heatmap(x=expression_data,
+    p_heatmap <- .create_expression_heatmap(x=plot_data,
+                                            x_axis_by=x_axis_by,
+                                            y_axis_by=y_axis_by,
                                             facet_by=facet_by,
                                             facet_wrap_cols=facet_wrap_cols,
                                             ggtheme=ggtheme,
@@ -785,12 +805,11 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
                                             caption=caption,
                                             rotate_x_tick_labels=rotate_x_tick_labels,
                                             show_feature_dendrogram=show_feature_dendrogram,
-                                            show_sample_dendrogram,
-                                            similarity_metric=similarity_metric)
+                                            show_sample_dendrogram=show_sample_dendrogram)
     
     # Update theme to remove guide, facet labels, etc., based on notations in
     # dataset x. The axis tick labels are kept, because we cannot guarantee that
-    # all heatmaps will have the same features and feature ordering.
+    # all heatmaps will have the same feature, samples and respective ordering.
     p_heatmap <- plotting.update_facet_plot_elements(p=p_heatmap,
                                                      x=x_split,
                                                      keep_axis_labels_x=TRUE,
@@ -805,40 +824,95 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
     # Convert to grob.
     g_heatmap <- plotting.to_grob(p_heatmap)
     
-    # Add dendogram
-    if(!is.null(show_dendrogram)){
-      # Obtain dendogram plotting data as line segments.
-      dendro_data <- plotting.dendrogram_as_table(h=cluster_object,
-                                                  similarity_metric=similarity_metric)
+    # Add sample dendogram
+    if(!is.null(show_sample_dendrogram)){
       
-      for(position in show_dendrogram){
-        # Plot dendogram
-        p_dendro <- .create_dendogram_plot(x=dendro_data,
-                                           position=position,
-                                           ggtheme=ggtheme,
-                                           y_range=y_range,
-                                           y_n_breaks=y_n_breaks,
-                                           y_breaks=y_breaks,
-                                           plot_height=grid::unit(0.1, "null"),
-                                           rotate_x_tick_labels=rotate_x_tick_labels)
-        
-        # Determine the axis element
-        axis_element <- ifelse(position %in% c("top", "bottom"), "axis-l", "axis-b")
-        
-        # Extract dendodram gtable, which consists of the panel and the height
-        # axis.
-        g_dendro <- .gtable_extract(g=plotting.to_grob(p_dendro),
-                                    element=c("panel", axis_element),
-                                    partial_match=TRUE)
-        
-        # Insert the dendrogram at the position correct position around the
-        # heatmap.
-        g_heatmap <- .gtable_insert(g=g_heatmap,
-                                    g_new=g_dendro,
-                                    where=position,
-                                    ref_element="panel",
-                                    partial_match=TRUE)
+      # Obtain dendogram plotting data as line segments.
+      dendro_data <- plotting.dendrogram_as_table(h=sample_cluster_object,
+                                                  similarity_metric=sample_similarity_metric)
+      
+      # Find the right axes settings.
+      if(show_sample_dendrogram %in% c("left", "right")){
+        dist_range <- x_range
+        dist_n_breaks <- x_n_breaks
+        dist_breaks <- x_breaks
+      } else {
+        dist_range <- y_range
+        dist_n_breaks <- y_n_breaks
+        dist_breaks <- y_breaks
       }
+      
+      # Plot dendogram
+      p_dendro <- .create_expression_dendrogram_plot(x=dendro_data,
+                                                    position=show_sample_dendrogram,
+                                                    ggtheme=ggtheme,
+                                                    dist_range=dist_range,
+                                                    dist_n_breaks=dist_n_breaks,
+                                                    dist_breaks=dist_breaks,
+                                                    plot_height=grid::unit(0.1, "null"),
+                                                    rotate_x_tick_labels=rotate_x_tick_labels)
+      
+      # Determine the axis element
+      axis_element <- ifelse(show_sample_dendrogram %in% c("top", "bottom"), "axis-l", "axis-b")
+      
+      # Extract dendodram gtable, which consists of the panel and the height
+      # axis.
+      g_sample_dendro <- .gtable_extract(g=plotting.to_grob(p_dendro),
+                                         element=c("panel", axis_element),
+                                         partial_match=TRUE)
+      
+      # Insert the dendrogram at the position correct position around the
+      # heatmap.
+      g_heatmap <- .gtable_insert(g=g_heatmap,
+                                  g_new=g_sample_dendro,
+                                  where=show_sample_dendrogram,
+                                  ref_element="panel",
+                                  partial_match=TRUE)
+    }
+    
+    # Add feature dendogram
+    if(!is.null(show_feature_dendrogram)){
+      # Obtain dendogram plotting data as line segments.
+      dendro_data <- plotting.dendrogram_as_table(h=feature_cluster_object,
+                                                  similarity_metric=feature_similarity_metric)
+      
+      # Find the right axes settings.
+      if(show_feature_dendrogram %in% c("left", "right")){
+        dist_range <- x_range
+        dist_n_breaks <- x_n_breaks
+        dist_breaks <- x_breaks
+      } else {
+        dist_range <- y_range
+        dist_n_breaks <- y_n_breaks
+        dist_breaks <- y_breaks
+      }
+      
+      # Plot dendogram
+      p_dendro <- .create_expression_dendrogram_plot(x=dendro_data,
+                                                    position=show_feature_dendrogram,
+                                                    ggtheme=ggtheme,
+                                                    dist_range=dist_range,
+                                                    dist_n_breaks=dist_n_breaks,
+                                                    dist_breaks=dist_breaks,
+                                                    plot_height=grid::unit(0.1, "null"),
+                                                    rotate_x_tick_labels=rotate_x_tick_labels)
+      
+      # Determine the axis element
+      axis_element <- ifelse(show_feature_dendrogram %in% c("top", "bottom"), "axis-l", "axis-b")
+      
+      # Extract dendodram gtable, which consists of the panel and the height
+      # axis.
+      g_feature_dendro <- .gtable_extract(g=plotting.to_grob(p_dendro),
+                                          element=c("panel", axis_element),
+                                          partial_match=TRUE)
+      
+      # Insert the dendrogram at the position correct position around the
+      # heatmap.
+      g_heatmap <- .gtable_insert(g=g_heatmap,
+                                  g_new=g_feature_dendro,
+                                  where=show_feature_dendrogram,
+                                  ref_element="panel",
+                                  partial_match=TRUE)
     }
     
     # Re-introduce plot elements.
@@ -869,7 +943,10 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
 }
 
 
+
 .create_expression_heatmap <- function(x,
+                                       x_axis_by,
+                                       y_axis_by,
                                        facet_by,
                                        facet_wrap_cols,
                                        ggtheme,
@@ -882,26 +959,17 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
                                        plot_sub_title,
                                        caption,
                                        rotate_x_tick_labels,
-                                       show_dendrogram,
-                                       similarity_metric){
-  browser()
-  if(is.null(gradient_palette_range)){
-    # Find the palette range.
-    gradient_palette_range <- similarity.metric_range(similarity_metric=similarity_metric)
-  }
+                                       show_feature_dendrogram,
+                                       show_sample_dendrogram){
   
   # Determine whether a sequential or divergent palette should be used by default.
   palette_type <- ifelse(length(gradient_palette_range) > 2,
                          "divergent",
                          "sequential")
   
-  # Should the palette be inverted? This is because for some metrics, clusters
-  # are those with least distance, not highest similarity.
-  invert_palette <- similarity.default_is_distance(similarity_metric=similarity_metric)
-  
   # Create basic plot
-  p <- ggplot2::ggplot(data=x, mapping=ggplot2::aes(x=!!sym("feature_1"),
-                                                    y=!!sym("feature_2"),
+  p <- ggplot2::ggplot(data=x, mapping=ggplot2::aes(x=!!sym(x_axis_by),
+                                                    y=!!sym(y_axis_by),
                                                     fill=!!sym("value")))
   p <- p + ggtheme
   
@@ -916,24 +984,36 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
   
   # Colors
   gradient_colours <- plotting.get_palette(x=gradient_palette, palette_type=palette_type)
-  if(invert_palette) gradient_colours <- rev(gradient_colours)
   
   # Add gradient palette. If the legend is not shown, legend_label equals NULL.
   p <- p + ggplot2::scale_fill_gradientn(name=legend_label,
                                          colors=gradient_colours,
-                                         limits=range(gradient_palette_range))
+                                         limits=range(gradient_palette_range),
+                                         oob=scales::squish)
   
   
-  # Show dendogram determines where tick labels and axis labels are placed.
+  # Create show_dendrogram that combines show_feature_dendrogram and
+  # show_sample_dendrogram.
+  show_dendrogram <- c(show_feature_dendrogram, show_sample_dendrogram)
+  
+  # Show dendrogram determines where tick labels and axis labels are placed. By
+  # default axes are located at the bottom and right.
+  x_axis_position <- "bottom"
+  y_axis_position <- "left"
   if(!is.null(show_dendrogram)){
     if("bottom" %in% show_dendrogram){
-      p <- p + ggplot2::scale_x_discrete(position="top")
+      x_axis_position <- "top"
     }
     
     if("left" %in% show_dendrogram){
-      p <- p + ggplot2::scale_y_discrete(position="right")
+      y_axis_position <- "right"
     }
   }
+  
+  # Specify both axes. Note that only the heatmap is shown, without additional
+  # space between the plot area and the axes.
+  p <- p + ggplot2::scale_x_discrete(position=x_axis_position, expand=c(0, 0))
+  p <- p + ggplot2::scale_y_discrete(position=y_axis_position, expand=c(0, 0))
   
   # Set labels.
   p <- p + ggplot2::labs(x=x_label, y=y_label, title=plot_title, subtitle=plot_sub_title, caption=caption)
@@ -965,14 +1045,15 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
 }
 
 
-.create_dendogram_plot <- function(x,
-                                   position,
-                                   ggtheme,
-                                   y_range,
-                                   y_n_breaks,
-                                   y_breaks,
-                                   plot_height,
-                                   rotate_x_tick_labels){
+
+.create_expression_dendrogram_plot <- function(x,
+                                              position,
+                                              ggtheme,
+                                              dist_range,
+                                              dist_n_breaks,
+                                              dist_breaks,
+                                              plot_height,
+                                              rotate_x_tick_labels){
   
   # Check if there is any data to plot.
   if(is_empty(x)) return(NULL)
@@ -983,24 +1064,24 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
   
   
   # y_range
-  if(is.null(y_range)) y_range <- range(c(x$y_1, x$y_2))
+  if(is.null(dist_range)) dist_range <- range(c(x$y_1, x$y_2))
   
   # y_breaks
-  if(is.null(y_breaks)){
-    plotting.check_input_args(y_range=y_range,
-                              y_n_breaks=y_n_breaks)
+  if(is.null(dist_breaks)){
+    plotting.check_input_args(y_range=dist_range,
+                              y_n_breaks=dist_n_breaks)
     
     # Create breaks and update y_range
-    y_breaks <- labeling::extended(m=y_n_breaks,
-                                   dmin=y_range[1],
-                                   dmax=y_range[2],
+    dist_breaks <- labeling::extended(m=dist_n_breaks,
+                                   dmin=dist_range[1],
+                                   dmax=dist_range[2],
                                    only.loose=TRUE)
     
-    y_range <- c(head(y_breaks, n=1), tail(y_breaks, n=1))
+    dist_range <- c(head(dist_breaks, n=1), tail(dist_breaks, n=1))
   }
   
-  plotting.check_input_args(y_range=y_range,
-                            y_breaks=y_breaks)
+  plotting.check_input_args(y_range=dist_range,
+                            y_breaks=dist_breaks)
   
   # Create basic plot
   p <- ggplot2::ggplot(data=x, mapping=ggplot2::aes(x=!!sym("x_1"),
@@ -1013,25 +1094,25 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
   p <- p + ggplot2::geom_segment(lineend="round")
   
   if(position=="right"){
-    p <- p + ggplot2::scale_x_continuous(limits=x_range)
-    p <- p + ggplot2::scale_y_continuous(limits=y_range, breaks=y_breaks)
+    p <- p + ggplot2::scale_x_continuous(limits=x_range, expand=c(0, 0))
+    p <- p + ggplot2::scale_y_continuous(limits=dist_range, breaks=dist_breaks)
     p <- p + ggplot2::coord_flip()
     
   } else if(position=="bottom"){
-    p <- p + ggplot2::scale_x_continuous(limits=x_range)
-    p <- p + ggplot2::scale_y_reverse(limits=rev(y_range), breaks=rev(y_breaks))
+    p <- p + ggplot2::scale_x_continuous(limits=x_range, expand=c(0, 0))
+    p <- p + ggplot2::scale_y_reverse(limits=rev(dist_range), breaks=rev(dist_breaks))
     
   } else if(position=="left"){
-    p <- p + ggplot2::scale_x_continuous(limits=x_range)
-    p <- p + ggplot2::scale_y_reverse(limits=rev(y_range), breaks=rev(y_breaks))
+    p <- p + ggplot2::scale_x_continuous(limits=x_range, expand=c(0, 0))
+    p <- p + ggplot2::scale_y_reverse(limits=rev(dist_range), breaks=rev(dist_breaks))
     p <- p + ggplot2::coord_flip()
     
   } else if(position=="top"){
-    p <- p + ggplot2::scale_x_continuous(limits=x_range)
-    p <- p + ggplot2::scale_y_continuous(limits=y_range, breaks=y_breaks)
+    p <- p + ggplot2::scale_x_continuous(limits=x_range, expand=c(0, 0))
+    p <- p + ggplot2::scale_y_continuous(limits=dist_range, breaks=dist_breaks)
     
   } else {
-    ..error_reached_unreachable_code(paste0(".create_dendogram_plot: unknown position encountered: ", position))
+    ..error_reached_unreachable_code(paste0(".create_expression_dendrogram_plot: unknown position encountered: ", position))
   }
   
   # Remove some theme elements and reduce margins. The histogram height is left.
@@ -1074,19 +1155,32 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
 
 
 .determine_sample_clustering_plot_dimensions <- function(x,
+                                                         x_axis_by,
+                                                         y_axis_by,
                                                          facet_by,
                                                          facet_wrap_cols,
                                                          features,
-                                                         rotate_x_tick_labels,
+                                                         samples,
                                                          show_feature_dendrogram,
-                                                         show_sample_dendrogram){
+                                                         show_sample_dendrogram,
+                                                         rotate_x_tick_labels){
   
   # Obtain facetting dimensions
   plot_dims <- plotting.get_plot_layout_dims(x=x, facet_by=facet_by, facet_wrap_cols=facet_wrap_cols)
   
   # Determine the number of elements along the x-axis.
-  x_n_elements <- y_n_elements <- length(features)
-  x_longest_element <- y_longest_element <- max(sapply(features, nchar))
+  if(x_axis_by == "feature"){
+    x_n_elements <- length(features)
+    x_longest_element <- max(sapply(features, nchar))
+    y_n_elements <- length(samples)
+    y_longest_element <- max(sapply(samples, nchar))
+    
+  } else {
+    x_n_elements <- length(samples)
+    x_longest_element <- max(sapply(samples, nchar))
+    y_n_elements <- length(features)
+    y_longest_element <- max(sapply(features, nchar))
+  }
   
   # Assume each x-axis element takes up about 0.5 cm. Then add some room for
   # other plot elements.
@@ -1109,11 +1203,13 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
   # Set overall plot height, but limit to small-margin A4 (27.7 cm)
   height <- min(c(2 + plot_dims[1] * (default_height + x_tick_space + dendro_height), 27.7))
   
-  # Set overall plot width, but limit to small-margin A4 (19 cm)
-  width <- min(c(2 + plot_dims[2] * (default_width + y_tick_space + dendro_width), 19))
+  # Set overall plot width, but limit to small-margin A4 (19 cm). We leave some
+  # room for the legend on the right.
+  width <- min(c(5 + plot_dims[2] * (default_width + y_tick_space + dendro_width), 19))
   
   return(c(height, width))
 }
+
 
 
 .normalise_expression_data <- function(x,
@@ -1153,17 +1249,16 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
 }
 
 
+
 .complete_expression_table <- function(x,
                                        feature_info,
                                        feature_order,
                                        sample_order,
                                        gradient_palette_range){
-  browser()
-  
   
   # Replace categorical features by numerical values and scale to 0.05-.95 of
   # the z-range.
-  categorical_features <- sapply(feature_info, function(feature){
+  categorical_features <- lapply(feature_info, function(feature){
     if(feature@feature_type == "category"){
       return(feature@name)
       
@@ -1172,34 +1267,46 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
     }
   })
   
-  # TODO rescale.
+  # Identify categorical features
+  categorical_features <- unique(unlist(categorical_features))
+  
+  # Convert to numerical and rescale so that the categorical values lie within
+  # the range of the remaining numerical data.
+  if(length(categorical_features) > 0){
+    browser()
+    # Determine the output value range
+    output_value_range <- numeric(2)
+    output_value_range[1] <- head(gradient_palette_range, n=1) + 0.05 * diff(range(gradient_palette_range))
+    output_value_range[2] <- head(gradient_palette_range, n=1) + 0.95 * diff(range(gradient_palette_range))
+
+    # Make a local copy of x to prevent warnings raised by data.table.
+    x <- data.table::copy(x)
+    
+    for(feature in categorical_features){
+      # Convert categorical data to numerical data.
+      numeric_data <- as.numeric(x[[feature]])
+      
+      # Determine the range of the input value range.
+      input_value_range <- c(1, length(feature_info[[feature]]@levels))
+      
+      # Convert numeric data to the output range.
+      numeric_data <- (numeric_data - input_value_range[1]) / (diff(input_value_range)) * diff(output_value_range) + output_value_range[1]
+      
+      # Update column
+      x[[feature]] <- numeric_data
+    }
+  }
   
   # Copy x and revert feature_1 and feature_2 so that all pairs are present.
-  y <- data.table::copy(x)
-  data.table::setnames(y,
-                       old=c("feature_1", "feature_2", "label_order_1", "label_order_2"),
-                       new=c("feature_2", "feature_1", "label_order_2", "label_order_1"))
+  x <- melt(data=x, measure.vars=names(feature_info), variable.name="feature", value.name="value",
+            variable.factor=TRUE, value.factor=FALSE)
   
-  # Combine.
-  x <- rbind(x, y, use.names=TRUE)
+  # Change subject_id to sample
+  data.table::setnames(x=x, old="subject_id", new="sample")
   
-  # Determine order of features.
-  feature_1_order <- unique(x[, c("feature_1", "label_order_1")])
-  feature_2_order <- unique(x[, c("feature_2", "label_order_2")])
-  
-  # Add self-paired features.
-  features <- unique(x$feature_1)
-  y <- x[rep(1, length(features))]
-  y[, ":="("feature_1"=features, "feature_2"=features, "value"=1.0, "label_order_1"=NULL, "label_order_2"=NULL)]
-  y <- merge(x=y, y=feature_1_order, by="feature_1", all=FALSE)
-  y <- merge(x=y, y=feature_2_order, by="feature_2", all=FALSE)
-  
-  # Combine.
-  x <- rbind(x, y, use.names=TRUE)
-  
-  # Reorder features
-  x$feature_1 <- factor(x$feature_1, levels=feature_1_order$feature_1[order(feature_1_order$label_order_1)])
-  x$feature_2 <- factor(x$feature_2, levels=feature_2_order$feature_2[order(feature_2_order$label_order_2)])
-  
+  # Set feature and sample order
+  x$feature <- factor(x$feature, levels=feature_order$name[order(feature_order$label_order)])
+  x$sample <- factor(x$sample, levels=sample_order$name[order(sample_order$label_order)])
+
   return(x)
 }
