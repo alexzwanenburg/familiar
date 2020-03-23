@@ -669,15 +669,15 @@ get_mode <- function(x) {
 
 
 
-get_contrasts <- function(data, encoding_method="effect", drop_levels=TRUE, outcome_type=NULL){
+get_contrasts <- function(data, encoding_method="effect", drop_levels=TRUE, outcome_type=NULL, feature_columns=NULL){
   # Converts categorical data in to contrasts and return data table including contrast
   # TODO convert to S4 method.
   # TODO deprecate getContrasts function.
   
   # Determine columns with factors
-  if(!is.null(outcome_type)) {
+  if(is.null(feature_colums) & !is.null(outcome_type)) {
     feature_columns <- get_feature_columns(x=data, outcome_type=outcome_type)
-  } else {
+  } else if(is.null(feature_colums)){
     feature_columns <- colnames(data)
   }
   
