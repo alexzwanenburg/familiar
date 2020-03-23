@@ -638,16 +638,24 @@ setMethod("plot_feature_similarity", signature(object="familiarCollection"),
                                          limits=range(gradient_palette_range))
   
 
-  # Show dendogram determines where tick labels and axis labels are placed.
+  # Show dendrogram determines where tick labels and axis labels are placed. By
+  # default axes are located at the bottom and right.
+  x_axis_position <- "bottom"
+  y_axis_position <- "left"
   if(!is.null(show_dendrogram)){
     if("bottom" %in% show_dendrogram){
-      p <- p + ggplot2::scale_x_discrete(position="top")
+      x_axis_position <- "top"
     }
     
     if("left" %in% show_dendrogram){
-      p <- p + ggplot2::scale_y_discrete(position="right")
+      y_axis_position <- "right"
     }
   }
+  
+  # Specify both axes. Note that only the heatmap is shown, without additional
+  # space between the plot area and the axes.
+  p <- p + ggplot2::scale_x_discrete(position=x_axis_position, expand=c(0, 0))
+  p <- p + ggplot2::scale_y_discrete(position=y_axis_position, expand=c(0, 0))
   
   # Set labels.
   p <- p + ggplot2::labs(x=x_label, y=y_label, title=plot_title, subtitle=plot_sub_title, caption=caption)
@@ -727,21 +735,21 @@ setMethod("plot_feature_similarity", signature(object="familiarCollection"),
   p <- p + ggplot2::geom_segment(lineend="round")
   
   if(position=="right"){
-    p <- p + ggplot2::scale_x_continuous(limits=x_range)
+    p <- p + ggplot2::scale_x_continuous(limits=x_range, expand=c(0, 0))
     p <- p + ggplot2::scale_y_continuous(limits=y_range, breaks=y_breaks)
     p <- p + ggplot2::coord_flip()
     
   } else if(position=="bottom"){
-    p <- p + ggplot2::scale_x_continuous(limits=x_range)
+    p <- p + ggplot2::scale_x_continuous(limits=x_range, expand=c(0, 0))
     p <- p + ggplot2::scale_y_reverse(limits=rev(y_range), breaks=rev(y_breaks))
     
   } else if(position=="left"){
-    p <- p + ggplot2::scale_x_continuous(limits=x_range)
+    p <- p + ggplot2::scale_x_continuous(limits=x_range, expand=c(0, 0))
     p <- p + ggplot2::scale_y_reverse(limits=rev(y_range), breaks=rev(y_breaks))
     p <- p + ggplot2::coord_flip()
     
   } else if(position=="top"){
-    p <- p + ggplot2::scale_x_continuous(limits=x_range)
+    p <- p + ggplot2::scale_x_continuous(limits=x_range, expand=c(0, 0))
     p <- p + ggplot2::scale_y_continuous(limits=y_range, breaks=y_breaks)
     
   } else {
