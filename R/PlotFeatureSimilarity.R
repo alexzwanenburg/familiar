@@ -527,14 +527,14 @@ setMethod("plot_feature_similarity", signature(object="familiarCollection"),
       
       for(position in show_dendrogram){
         # Plot dendogram
-        p_dendro <- .create_dendogram_plot(x=dendro_data,
-                                           position=position,
-                                           ggtheme=ggtheme,
-                                           y_range=y_range,
-                                           y_n_breaks=y_n_breaks,
-                                           y_breaks=y_breaks,
-                                           plot_height=grid::unit(0.1, "null"),
-                                           rotate_x_tick_labels=rotate_x_tick_labels)
+        p_dendro <- .create_feature_similarity_dendrogram_plot(x=dendro_data,
+                                                              position=position,
+                                                              ggtheme=ggtheme,
+                                                              y_range=y_range,
+                                                              y_n_breaks=y_n_breaks,
+                                                              y_breaks=y_breaks,
+                                                              plot_height=grid::unit(0.1, "null"),
+                                                              rotate_x_tick_labels=rotate_x_tick_labels)
         
         # Determine the axis element
         axis_element <- ifelse(position %in% c("top", "bottom"), "axis-l", "axis-b")
@@ -679,14 +679,14 @@ setMethod("plot_feature_similarity", signature(object="familiarCollection"),
 }
 
 
-.create_dendogram_plot <- function(x,
-                                   position,
-                                   ggtheme,
-                                   y_range,
-                                   y_n_breaks,
-                                   y_breaks,
-                                   plot_height,
-                                   rotate_x_tick_labels){
+.create_feature_similarity_dendrogram_plot <- function(x,
+                                                      position,
+                                                      ggtheme,
+                                                      y_range,
+                                                      y_n_breaks,
+                                                      y_breaks,
+                                                      plot_height,
+                                                      rotate_x_tick_labels){
   
   # Check if there is any data to plot.
   if(is_empty(x)) return(NULL)
@@ -745,7 +745,7 @@ setMethod("plot_feature_similarity", signature(object="familiarCollection"),
     p <- p + ggplot2::scale_y_continuous(limits=y_range, breaks=y_breaks)
     
   } else {
-    ..error_reached_unreachable_code(paste0(".create_dendogram_plot: unknown position encountered: ", position))
+    ..error_reached_unreachable_code(paste0(".create_feature_similarity_dendrogram_plot: unknown position encountered: ", position))
   }
   
   # Remove some theme elements and reduce margins. The histogram height is left.
