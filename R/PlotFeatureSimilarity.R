@@ -635,7 +635,8 @@ setMethod("plot_feature_similarity", signature(object="familiarCollection"),
   # Add gradient palette. If the legend is not shown, legend_label equals NULL.
   p <- p + ggplot2::scale_fill_gradientn(name=legend_label,
                                          colors=gradient_colours,
-                                         limits=range(gradient_palette_range))
+                                         limits=range(gradient_palette_range),
+                                         oob=scales::squish)
   
 
   # Show dendrogram determines where tick labels and axis labels are placed. By
