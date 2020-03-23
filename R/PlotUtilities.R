@@ -1319,7 +1319,7 @@ plotting.dendrogram_as_table <- function(h, similarity_metric){
   # Suppress NOTES due to non-standard evaluation in data.table
   x_1 <- y_1 <- x_2 <- NULL
   
-  # Convert to dendogram
+  # Convert to dendrogram
   h <- stats::as.dendrogram(h)
   
   # Determine the metric range.
@@ -1328,9 +1328,8 @@ plotting.dendrogram_as_table <- function(h, similarity_metric){
   # Convert dendogram to a list of connectors that can later be used for
   # plotting. Note that we do not know where the origin should be located on the
   # x-axis. We will correct for that later.
-  connectors <- .decompose_dendogram(h=h,
-                                     parent_height=max(metric_range),
-                                     parent_x=0.0)
+  connectors <- .decompose_dendrogram(h=h,
+                                     parent_height=max(metric_range))
   
   # Combine into single data.table.
   connectors <- data.table::rbindlist(connectors)
@@ -1351,13 +1350,17 @@ plotting.dendrogram_as_table <- function(h, similarity_metric){
 }
 
 
-.decompose_dendogram <- function(h, parent_height=Inf, parent_x=0.0){
+.decompose_dendrogram <- function(h, parent_height=Inf, parent_x=NA, leafs_visited=0){
   # Decompose dendogram. The function is designed to iterate through a
   # dendogram, and obtain the connector between node (h) and its parent, as well
   # as the connectors between the node and its children h[[1]] and h[[2]],
   # unless it has no children.
   
   dend_attr <- attributes(h)
+  
+  if(is.na(parent_x)){
+    parent_x <- ifelse(is.null(dend_attr$midpoint), 0.0, dend_attr$midpoint)
+  }
   
   if(is.null(dend_attr$midpoint)){
     # This indicates that the node has no children.
@@ -1372,24 +1375,41 @@ plotting.dendrogram_as_table <- function(h, similarity_metric){
     return(list(conn_parent_child))
   }
   
+  
+  
   # Connector from parent.
   conn_parent_child <- data.table::data.table("x_1"=parent_x,
                                               "y_1"=parent_height,
                                               "x_2"=parent_x,
                                               "y_2"=dend_attr$height,
                                               "feature"=NA_character_)
+  # Left child node x-axis location
+  if(!is.null(attributes(h[[1]])$midpoint)){
+    child_l_pos <- leafs_visited + attributes(h[[1]])$midpoint
+  } else {
+    child_l_pos <- leafs_visited
+  }
   
   # Connector to left leaf.
   conn_child_l_leaf <- data.table::data.table("x_1"=parent_x,
                                               "y_1"=dend_attr$height,
-                                              "x_2"=parent_x - dend_attr$midpoint,
+                                              "x_2"=child_l_pos,
                                               "y_2"=dend_attr$height,
                                               "feature"=NA_character_)
+  
+  # Right child node x-axis location
+  if(!is.null(attributes(h[[2]])$midpoint) & !is.null(attributes(h[[1]])$members)){
+    child_r_pos <- leafs_visited + attributes(h[[1]])$members + attributes(h[[2]])$midpoint
+  } else if(!is.null(attributes(h[[1]])$members)){
+    child_r_pos <- leafs_visited + attributes(h[[1]])$members
+  } else {
+    child_r_pos <- leafs_visited
+  }
   
   # Connector to right leaf.
   conn_child_r_leaf <- data.table::data.table("x_1"=parent_x,
                                               "y_1"=dend_attr$height,
-                                              "x_2"=parent_x + dend_attr$midpoint,
+                                              "x_2"=child_r_pos,
                                               "y_2"=dend_attr$height,
                                               "feature"=NA_character_)
   
@@ -1398,9 +1418,10 @@ plotting.dendrogram_as_table <- function(h, similarity_metric){
   
   # Left leaf
   if(!is.null(h[[1]])){
-    left_leaf_connectors <- .decompose_dendogram(h=h[[1]],
-                                                 parent_height=dend_attr$height,
-                                                 parent_x=parent_x - dend_attr$midpoint)
+    left_leaf_connectors <- .decompose_dendrogram(h=h[[1]],
+                                                  parent_height=dend_attr$height,
+                                                  parent_x=child_l_pos,
+                                                  leafs_visited=leafs_visited)
     
     # Append to list
     connector_list <- append(connector_list, left_leaf_connectors)
@@ -1408,9 +1429,10 @@ plotting.dendrogram_as_table <- function(h, similarity_metric){
   
   # Right leaf
   if(!is.null(h[[2]])){
-    right_leaf_connectors <- .decompose_dendogram(h=h[[2]],
-                                                  parent_height=dend_attr$height,
-                                                  parent_x=parent_x + dend_attr$midpoint)
+    right_leaf_connectors <- .decompose_dendrogram(h=h[[2]],
+                                                   parent_height=dend_attr$height,
+                                                   parent_x=child_r_pos,
+                                                   leafs_visited=ifelse(!is.null(attributes(h[[1]])$members), leafs_visited + attributes(h[[1]])$members, leafs_visited))
     
     # Append to list
     connector_list <- append(connector_list, right_leaf_connectors)
