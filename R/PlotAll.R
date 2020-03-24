@@ -56,6 +56,9 @@ setMethod("plot_all", signature(object="familiarCollection"),
                                                    list(...)))
             
             # Feature expressions
+            do.call(plot_sample_clustering, args=append(list("object"=object,
+                                                             "dir_path"=dir_path),
+                                                        list(...)))
             
             # Confusion matrix
             
