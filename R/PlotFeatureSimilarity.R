@@ -29,7 +29,9 @@ NULL
 #'  partioning around medioids method (`pam`).
 #'  
 #'  By default, a dendrogram is drawn to the top and right of the panel.
-#'
+#'@param dendrogram_height (*optional*) Height of the dendrogram. The height is
+#'  1.5 cm by default. Height is expected to be grid unit (see `grid::unit`),
+#'  which also allows for specifying relative heights.
 #'@inheritParams as_familiar_collection
 #'@inheritParams plot_univariate_importance
 #'@inheritParams plotting.check_input_args
@@ -87,6 +89,7 @@ setGeneric("plot_feature_similarity",
                     y_breaks=NULL,
                     rotate_x_tick_labels=TRUE,
                     show_dendrogram=c("top", "right"),
+                    dendrogram_height=grid::unit(1.5, "cm"),
                     width=waiver(),
                     height=waiver(),
                     units=waiver(),
@@ -118,6 +121,7 @@ setMethod("plot_feature_similarity", signature(object="ANY"),
                    y_breaks=NULL,
                    rotate_x_tick_labels=TRUE,
                    show_dendrogram=c("top", "right"),
+                   dendrogram_height=grid::unit(1.5, "cm"),
                    width=waiver(),
                    height=waiver(),
                    units=waiver(),
@@ -150,6 +154,7 @@ setMethod("plot_feature_similarity", signature(object="ANY"),
                                      "y_breaks"=y_breaks,
                                      "rotate_x_tick_labels"=rotate_x_tick_labels,
                                      "show_dendrogram"=show_dendrogram,
+                                     "dendrogram_height"=dendrogram_height,
                                      "width"=width,
                                      "height"=height,
                                      "units"=units)))
@@ -182,6 +187,7 @@ setMethod("plot_feature_similarity", signature(object="familiarCollection"),
                    y_breaks=NULL,
                    rotate_x_tick_labels=TRUE,
                    show_dendrogram=c("top", "right"),
+                   dendrogram_height=grid::unit(1.5, "cm"),
                    width=waiver(),
                    height=waiver(),
                    units=waiver(),
@@ -286,6 +292,13 @@ setMethod("plot_feature_similarity", signature(object="familiarCollection"),
               }
             }
             
+            
+            # Check if the dendrogram_height argument is correct.
+            if(!is.null(show_dendrogram)){
+              plotting.check_grid_unit(x=dendrogram_height, var_name="dendrogram_height")
+            }
+            
+            
             # Add default splitting variables
             if(is.null(split_by) & is.null(facet_by)){
             
@@ -361,7 +374,8 @@ setMethod("plot_feature_similarity", signature(object="familiarCollection"),
                                                  y_n_breaks=y_n_breaks,
                                                  y_breaks=y_breaks,
                                                  rotate_x_tick_labels=rotate_x_tick_labels,
-                                                 show_dendrogram=show_dendrogram)
+                                                 show_dendrogram=show_dendrogram,
+                                                 dendrogram_height=dendrogram_height)
             
               # Check empty output
               if(is.null(p)) next()
@@ -448,7 +462,8 @@ setMethod("plot_feature_similarity", signature(object="familiarCollection"),
                                           y_n_breaks,
                                           y_breaks,
                                           rotate_x_tick_labels,
-                                          show_dendrogram){
+                                          show_dendrogram,
+                                          dendrogram_height){
   
   # Define elements that need to be shared. Note that "guide" and "strip_y" may
   # be absent.
@@ -533,7 +548,7 @@ setMethod("plot_feature_similarity", signature(object="familiarCollection"),
                                                               y_range=y_range,
                                                               y_n_breaks=y_n_breaks,
                                                               y_breaks=y_breaks,
-                                                              plot_height=grid::unit(0.1, "null"),
+                                                              plot_height=dendrogram_height,
                                                               rotate_x_tick_labels=rotate_x_tick_labels)
         
         # Determine the axis element

@@ -36,6 +36,7 @@ plot_sample_clustering(
   show_feature_dendrogram = TRUE,
   show_sample_dendrogram = TRUE,
   show_normalized_data = TRUE,
+  dendrogram_height = grid::unit(1.5, "cm"),
   width = waiver(),
   height = waiver(),
   units = waiver(),
@@ -72,6 +73,7 @@ plot_sample_clustering(
   show_feature_dendrogram = TRUE,
   show_sample_dendrogram = TRUE,
   show_normalized_data = TRUE,
+  dendrogram_height = grid::unit(1.5, "cm"),
   width = waiver(),
   height = waiver(),
   units = waiver(),
@@ -108,6 +110,7 @@ plot_sample_clustering(
   show_feature_dendrogram = TRUE,
   show_sample_dendrogram = TRUE,
   show_normalized_data = TRUE,
+  dendrogram_height = grid::unit(1.5, "cm"),
   width = waiver(),
   height = waiver(),
   units = waiver(),
@@ -251,6 +254,10 @@ the only valid positions are \code{right} (default) and \code{left}. Alternative
 A dendrogram can only be drawn from cluster methods that produce dendograms,
 such as \code{hclust}. A dendogram can for example not be constructed using the
 partioning around medioids method (\code{pam}).}
+
+\item{dendrogram_height}{(\emph{optional}) Height of the dendrogram. The height is
+1.5 cm by default. Height is expected to be grid unit (see \code{grid::unit}),
+which also allows for specifying relative heights.}
 
 \item{width}{(\emph{optional}) Width of the plot. A default value is derived from
 the number of facets.}

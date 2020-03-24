@@ -31,7 +31,7 @@ NULL
 #'  A dendrogram can only be drawn from cluster methods that produce dendograms,
 #'  such as `hclust`. A dendogram can for example not be constructed using the
 #'  partioning around medioids method (`pam`).
-#'  
+#'
 #'@param show_sample_dendrogram (*optional*) Show sample dendrogram around the
 #'  main panel. Can be `TRUE`, `FALSE`, `NULL`, or a position, i.e. `top`,
 #'  `bottom`, `left` and `right`.
@@ -45,7 +45,9 @@ NULL
 #'  A dendrogram can only be drawn from cluster methods that produce dendograms,
 #'  such as `hclust`. A dendogram can for example not be constructed using the
 #'  partioning around medioids method (`pam`).
-#'
+#'@param dendrogram_height (*optional*) Height of the dendrogram. The height is
+#'  1.5 cm by default. Height is expected to be grid unit (see `grid::unit`),
+#'  which also allows for specifying relative heights.
 #'@inheritParams as_familiar_collection
 #'@inheritParams plot_univariate_importance
 #'@inheritParams plotting.check_input_args
@@ -116,6 +118,7 @@ setGeneric("plot_sample_clustering",
                     show_feature_dendrogram=TRUE,
                     show_sample_dendrogram=TRUE,
                     show_normalized_data=TRUE,
+                    dendrogram_height=grid::unit(1.5, "cm"),
                     width=waiver(),
                     height=waiver(),
                     units=waiver(),
@@ -154,6 +157,7 @@ setMethod("plot_sample_clustering", signature(object="ANY"),
                    show_feature_dendrogram=TRUE,
                    show_sample_dendrogram=TRUE,
                    show_normalized_data=TRUE,
+                   dendrogram_height=grid::unit(1.5, "cm"),
                    width=waiver(),
                    height=waiver(),
                    units=waiver(),
@@ -193,6 +197,7 @@ setMethod("plot_sample_clustering", signature(object="ANY"),
                                      "show_feature_dendrogram"=show_feature_dendrogram,
                                      "show_sample_dendrogram"=show_sample_dendrogram,
                                      "show_normalized_data"=show_normalized_data,
+                                     "dendrogram_height"=dendrogram_height,
                                      "width"=width,
                                      "height"=height,
                                      "units"=units)))
@@ -232,6 +237,7 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
                    show_feature_dendrogram=TRUE,
                    show_sample_dendrogram=TRUE,
                    show_normalized_data=TRUE,
+                   dendrogram_height=grid::unit(1.5, "cm"),
                    width=waiver(),
                    height=waiver(),
                    units=waiver(),
@@ -424,6 +430,12 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
             }
             
             
+            # Check if the dendrogram_height argument is correct.
+            if(!is.null(show_sample_dendrogram) | !is.null(show_feature_dendrogram)){
+              plotting.check_grid_unit(x=dendrogram_height, var_name="dendrogram_height")
+            }
+            
+            
             # Add default splitting variables
             if(is.null(split_by) & is.null(facet_by)){
               
@@ -506,8 +518,9 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
                                                 rotate_x_tick_labels=rotate_x_tick_labels,
                                                 show_feature_dendrogram=show_feature_dendrogram,
                                                 show_sample_dendrogram=show_sample_dendrogram,
-                                                show_normalized_data=show_normalized_data)
-              browser()
+                                                show_normalized_data=show_normalized_data,
+                                                dendrogram_height=dendrogram_height)
+              
               # Check empty output
               if(is.null(p)) next()
               
@@ -613,7 +626,8 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
                                          rotate_x_tick_labels,
                                          show_feature_dendrogram,
                                          show_sample_dendrogram,
-                                         show_normalized_data){
+                                         show_normalized_data,
+                                         dendrogram_height){
   
   # Define elements that need to be shared. Note that "guide" and "strip_y" may
   # be absent.
@@ -849,7 +863,7 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
                                                     dist_range=dist_range,
                                                     dist_n_breaks=dist_n_breaks,
                                                     dist_breaks=dist_breaks,
-                                                    plot_height=grid::unit(0.1, "null"),
+                                                    plot_height=dendrogram_height,
                                                     rotate_x_tick_labels=rotate_x_tick_labels)
       
       # Determine the axis element
@@ -894,7 +908,7 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
                                                     dist_range=dist_range,
                                                     dist_n_breaks=dist_n_breaks,
                                                     dist_breaks=dist_breaks,
-                                                    plot_height=grid::unit(0.1, "null"),
+                                                    plot_height=dendrogram_height,
                                                     rotate_x_tick_labels=rotate_x_tick_labels)
       
       # Determine the axis element

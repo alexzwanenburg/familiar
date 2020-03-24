@@ -29,6 +29,7 @@ plot_feature_similarity(
   y_breaks = NULL,
   rotate_x_tick_labels = TRUE,
   show_dendrogram = c("top", "right"),
+  dendrogram_height = grid::unit(1.5, "cm"),
   width = waiver(),
   height = waiver(),
   units = waiver(),
@@ -58,6 +59,7 @@ plot_feature_similarity(
   y_breaks = NULL,
   rotate_x_tick_labels = TRUE,
   show_dendrogram = c("top", "right"),
+  dendrogram_height = grid::unit(1.5, "cm"),
   width = waiver(),
   height = waiver(),
   units = waiver(),
@@ -87,6 +89,7 @@ plot_feature_similarity(
   y_breaks = NULL,
   rotate_x_tick_labels = TRUE,
   show_dendrogram = c("top", "right"),
+  dendrogram_height = grid::unit(1.5, "cm"),
   width = waiver(),
   height = waiver(),
   units = waiver(),
@@ -194,6 +197,10 @@ such as \code{hclust}. A dendogram can for example not be constructed using the
 partioning around medioids method (\code{pam}).
 
 By default, a dendrogram is drawn to the top and right of the panel.}
+
+\item{dendrogram_height}{(\emph{optional}) Height of the dendrogram. The height is
+1.5 cm by default. Height is expected to be grid unit (see \code{grid::unit}),
+which also allows for specifying relative heights.}
 
 \item{width}{(\emph{optional}) Width of the plot. A default value is derived from
 the number of facets.}

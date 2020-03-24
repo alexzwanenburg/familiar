@@ -239,3 +239,10 @@ plotting.check_input_legend <- function(label_var, var_name){
   }
   
 }
+
+
+plotting.check_grid_unit <- function(x, var_name){
+  if(!grid::is.unit(x)){
+    stop(paste("The", var_name, "argument should be a grid unit (see ?grid::unit), but instead is", class(x), sep=" "))
+  }
+}
