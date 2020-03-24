@@ -854,12 +854,18 @@ setMethod("plot_calibration_data", signature(object="familiarCollection"),
     if(length(label) > 0){
       label <- paste(label, collapse="\n")
       
+      # Obtain default settings.
+      text_settings <- plotting.get_geom_text_settings(ggtheme=ggtheme)
+      
       # Show in plot
       p <- p + ggplot2::annotate("text",
                                  x=x_range[1],
                                  y=y_range[2],
                                  label=label,
-                                 size=plotting.get_geom_text_font_size(ggtheme=ggtheme)$geom_text_size,
+                                 colour=text_settings$colour,
+                                 family=text_settings$family,
+                                 fontface=text_settings$face,
+                                 size=text_settings$geom_text_size,
                                  vjust="inward",
                                  hjust="inward")
     }
@@ -914,12 +920,19 @@ setMethod("plot_calibration_data", signature(object="familiarCollection"),
   }
   
   if(outcome_type %in% c("binomial", "multinomial")){
+    
+    # Obtain default settings.
+    text_settings <- plotting.get_geom_text_settings(ggtheme=ggtheme)
+    
     # Show class indicator in plot.
     p <- p + ggplot2::annotate("text",
                                x=0.0,
                                y=Inf,
                                label=ifelse(flip, "-", "+"),
-                               size=plotting.get_geom_text_font_size(ggtheme=ggtheme)$geom_text_size,
+                               colour=text_settings$colour,
+                               family=text_settings$family,
+                               fontface=text_settings$face,
+                               size=text_settings$geom_text_size,
                                vjust="inward",
                                hjust="inward")
   }

@@ -470,13 +470,24 @@ setMethod("plot_univariate_importance", signature(object="familiarCollection"),
   
   # Show clusters
   if(show_cluster){
+    
+    # Obtain default settings.
+    text_settings <- plotting.get_geom_text_settings(ggtheme=ggtheme)
+    
     if(is.null(color_by)){
       p <- p + ggplot2::geom_text(ggplot2::aes(label=!!sym("cluster_name"), y=0.0, angle=270.0),
-                                  size=plotting.get_geom_text_font_size(ggtheme=ggtheme)$geom_text_size,
+                                  colour=text_settings$colour,
+                                  family=text_settings$family,
+                                  fontface=text_settings$face,
+                                  size=text_settings$geom_text_size,
                                   vjust=-0.50)
+      
     } else {
       p <- p + ggplot2::geom_text(ggplot2::aes(label=!!sym("cluster_name"), y=0.0, group=!!sym("color_breaks"), angle=270.0),
-                                  size=plotting.get_geom_text_font_size(ggtheme=ggtheme)$geom_text_size,
+                                  colour=text_settings$colour,
+                                  family=text_settings$family,
+                                  fontface=text_settings$face,
+                                  size=text_settings$geom_text_size,
                                   vjust=-0.50,
                                   position=ggplot2::position_dodge(width=0.9))
     }

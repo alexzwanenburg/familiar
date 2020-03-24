@@ -593,7 +593,8 @@ plotting.get_panel_spacing <- function(ggtheme=NULL, axis){
 }
 
 
-plotting.get_geom_text_font_size <- function(ggtheme=NULL){
+plotting.get_geom_text_settings <- function(ggtheme=NULL){
+  # Import formatting settings from the provided ggtheme.
   
   # Import default ggtheme in case none is provided.
   if(!any(class(ggtheme) == "theme")) {
@@ -631,15 +632,39 @@ plotting.get_geom_text_font_size <- function(ggtheme=NULL){
     }
   }
   
-  # Obtain lineheight
-  lineheight <- ggtheme$text$lineheight
-  if(!is.null(ggtheme$axis.text$lineheight)) { lineheight <- ggtheme$axis.text$lineheight }
-  if(!is.null(ggtheme$axis.text.y$lineheight)) { lineheight <- ggtheme$axis.text.y$lineheight }
-  
   # Update the text size using the magical ggplot2 point size (ggplot2:::.pt).
   geom_text_size <- fontsize * fontsize_rel / 2.845276
   
-  return(list("geom_text_size"=geom_text_size, "fontsize"=fontsize, "fontsize_rel"=fontsize_rel, "lineheight"=lineheight))
+  # Obtain lineheight
+  lineheight <- ggtheme$text$lineheight
+  if(!is.null(ggtheme$axis.text$lineheight)) lineheight <- ggtheme$axis.text$lineheight
+  if(!is.null(ggtheme$axis.text.y$lineheight)) lineheight <- ggtheme$axis.text.y$lineheight
+  
+  # Obtain family
+  fontfamily <- ggtheme$text$family
+  if(!is.null(ggtheme$axis.text$family)) fontfamily <- ggtheme$axis.text$family
+  if(!is.null(ggtheme$axis.text.y$family)) fontfamily <- ggtheme$axis.text.y$family
+  if(!is.null(ggtheme$axis.text.x$family)) fontfamily <- ggtheme$axis.text.x$family
+  
+  # Obtain face
+  fontface <- ggtheme$text$face
+  if(!is.null(ggtheme$axis.text$face)) fontface <- ggtheme$axis.text$face
+  if(!is.null(ggtheme$axis.text.y$face)) fontface <- ggtheme$axis.text.y$face
+  if(!is.null(ggtheme$axis.text.x$face)) fontface <- ggtheme$axis.text.x$face
+  
+  # Obtain colour
+  colour <- ggtheme$text$colour
+  if(!is.null(ggtheme$axis.text$colour)) colour <- ggtheme$axis.text$colour
+  if(!is.null(ggtheme$axis.text.y$colour)) colour <- ggtheme$axis.text.y$colour
+  if(!is.null(ggtheme$axis.text.x$colour)) colour <- ggtheme$axis.text.x$colour
+  
+  return(list("geom_text_size"=geom_text_size,
+              "fontsize"=fontsize,
+              "fontsize_rel"=fontsize_rel,
+              "colour"=colour,
+              "family"=fontfamily,
+              "face"=fontface,
+              "lineheight"=lineheight))
 }
 
 

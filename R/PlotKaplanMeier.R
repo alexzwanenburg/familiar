@@ -735,12 +735,18 @@ setMethod("plot_kaplan_meier", signature(object="familiarCollection"),
     # Parse p-value
     p_value_label <- paste0("p: ", as.character(signif(h$p_value, 2)))
     
+    # Obtain default settings.
+    text_settings <- plotting.get_geom_text_settings(ggtheme=ggtheme)
+    
     # Show in plot
     p <- p + ggplot2::annotate("text",
                                x=x_range[1],
                                y=y_range[1],
                                label=p_value_label,
-                               size=plotting.get_geom_text_font_size(ggtheme=ggtheme)$geom_text_size,
+                               colour=text_settings$colour,
+                               family=text_settings$family,
+                               fontface=text_settings$face,
+                               size=text_settings$geom_text_size,
                                vjust="inward",
                                hjust="inward")
   }
@@ -896,16 +902,22 @@ setMethod("plot_kaplan_meier", signature(object="familiarCollection"),
     survival_table <- merge(x=survival_table, y=guide_table, by=unique_vars)
   }
 
-  # Set the geom_text_size
-  geom_text_size_list <- plotting.get_geom_text_font_size(ggtheme=ggtheme)
-  geom_text_size <- geom_text_size_list$geom_text_size
-  fontsize <- geom_text_size_list$fontsize
-  fontsize_rel <- geom_text_size_list$fontsize_rel
-  lineheight <- geom_text_size_list$lineheight
+  # Obtain default settings.
+  text_settings <- plotting.get_geom_text_settings(ggtheme=ggtheme)
+  fontsize <- text_settings$fontsize
+  fontsize_rel <- text_settings$fontsize_rel
+  lineheight <- text_settings$lineheight
   
   # Create plot
   p <- ggplot2::ggplot(data=survival_table, mapping=ggplot2::aes(x=!!sym("time"), y=!!sym("group_name"), label=!!sym("group_size")))
-  p <- p + ggplot2::geom_text(size=geom_text_size)
+  
+  # Annotate survival in strata.
+  p <- p + ggplot2::geom_text(colour=text_settings$colour,
+                              family=text_settings$family,
+                              fontface=text_settings$face,
+                              size=text_settings$geom_text_size)
+  
+  # Adapt axes.
   p <- p + ggplot2::scale_x_continuous(breaks=x_breaks, limits=x_range)
   p <- p + ggplot2::scale_y_discrete(breaks=rev(levels(survival_table$group_name)), limits=rev(levels(survival_table$group_name)))
   

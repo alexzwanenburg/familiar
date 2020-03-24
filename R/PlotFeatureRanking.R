@@ -930,13 +930,24 @@ setMethod("plot_model_signature_ranks", signature(object="familiarCollection"),
   
   # Add clustering information.
   if(show_cluster){
+    
+    # Obtain default settings.
+    text_settings <- plotting.get_geom_text_settings(ggtheme=ggtheme)
+    
     if(is.null(color_by)){
       p <- p + ggplot2::geom_text(ggplot2::aes(label=!!sym("cluster_name"), y=0.0),
-                                  size=plotting.get_geom_text_font_size(ggtheme=ggtheme)$geom_text_size,
+                                  colour=text_settings$colour,
+                                  family=text_settings$family,
+                                  fontface=text_settings$face,
+                                  size=text_settings$geom_text_size,
                                   vjust="inward")
+      
     } else {
       p <- p + ggplot2::geom_text(ggplot2::aes(label=!!sym("cluster_name"), y=0.0, group=!!sym("color_breaks")),
-                                  size=plotting.get_geom_text_font_size(ggtheme=ggtheme)$geom_text_size,
+                                  colour=text_settings$colour,
+                                  family=text_settings$family,
+                                  fontface=text_settings$face,
+                                  size=text_settings$geom_text_size,
                                   vjust="inward",
                                   position=ggplot2::position_dodge(width=0.9))
     }

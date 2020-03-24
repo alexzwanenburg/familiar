@@ -645,6 +645,9 @@ setMethod("plot_model_performance", signature(object="familiarCollection"),
                                            colors=gradient_colours,
                                            limits=range(gradient_palette_range))
     
+    # Obtain default settings.
+    text_settings <- plotting.get_geom_text_settings(ggtheme=ggtheme)
+    
     # Show performance value as text.
     if(annotate_performance == "value"){
       
@@ -656,7 +659,10 @@ setMethod("plot_model_performance", signature(object="familiarCollection"),
                                   mapping=ggplot2::aes(x=!!sym(x_axis_by),
                                                        y=!!sym(y_axis_by),
                                                        label=!!sym("performance_text")),
-                                  size=plotting.get_geom_text_font_size(ggtheme=ggtheme)$geom_text_size)
+                                  colour=text_settings$colour,
+                                  family=text_settings$family,
+                                  fontface=text_settings$face,
+                                  size=text_settings$geom_text_size)
       
     } else if(annotate_performance == "value_ci"){
       # Show median value and credibility interval
@@ -672,7 +678,10 @@ setMethod("plot_model_performance", signature(object="familiarCollection"),
                                   mapping=ggplot2::aes(x=!!sym(x_axis_by),
                                                        y=!!sym(y_axis_by),
                                                        label=!!sym("performance_text")),
-                                  size=plotting.get_geom_text_font_size(ggtheme=ggtheme)$geom_text_size)
+                                  colour=text_settings$colour,
+                                  family=text_settings$family,
+                                  fontface=text_settings$face,
+                                  size=text_settings$geom_text_size)
     }
     
   } else if(plot_type == "barplot"){
