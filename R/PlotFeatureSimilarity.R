@@ -87,7 +87,7 @@ setGeneric("plot_feature_similarity",
                     y_range=NULL,
                     y_n_breaks=3,
                     y_breaks=NULL,
-                    rotate_x_tick_labels=TRUE,
+                    rotate_x_tick_labels=waiver(),
                     show_dendrogram=c("top", "right"),
                     dendrogram_height=grid::unit(1.5, "cm"),
                     width=waiver(),
@@ -119,7 +119,7 @@ setMethod("plot_feature_similarity", signature(object="ANY"),
                    y_range=NULL,
                    y_n_breaks=3,
                    y_breaks=NULL,
-                   rotate_x_tick_labels=TRUE,
+                   rotate_x_tick_labels=waiver(),
                    show_dendrogram=c("top", "right"),
                    dendrogram_height=grid::unit(1.5, "cm"),
                    width=waiver(),
@@ -185,7 +185,7 @@ setMethod("plot_feature_similarity", signature(object="familiarCollection"),
                    y_range=NULL,
                    y_n_breaks=3,
                    y_breaks=NULL,
-                   rotate_x_tick_labels=TRUE,
+                   rotate_x_tick_labels=waiver(),
                    show_dendrogram=c("top", "right"),
                    dendrogram_height=grid::unit(1.5, "cm"),
                    width=waiver(),
@@ -229,6 +229,9 @@ setMethod("plot_feature_similarity", signature(object="familiarCollection"),
             # ggtheme
             if(!any(class(ggtheme) == "theme")) {
               ggtheme <- plotting.get_theme(use_theme=ggtheme)
+              
+            } else if(is.waive(rotate_x_tick_labels)){
+              rotate_x_tick_labels <- FALSE
             }
             
             # x_label_shared
@@ -257,6 +260,9 @@ setMethod("plot_feature_similarity", signature(object="familiarCollection"),
             
             # legend_label
             if(is.waive(legend_label)) legend_label <- NULL
+            
+            # rotate_x_tick_labels
+            if(is.waive(rotate_x_tick_labels)) rotate_x_tick_labels <- TRUE
             
             # show_dendrogram
             if(is.logical(show_dendrogram)){
