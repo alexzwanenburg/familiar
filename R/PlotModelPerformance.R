@@ -105,7 +105,7 @@ setGeneric("plot_model_performance",
                     plot_title=NULL,
                     plot_sub_title=NULL,
                     caption=NULL,
-                    rotate_x_tick_labels=TRUE,
+                    rotate_x_tick_labels=waiver(),
                     y_range=NULL,
                     y_n_breaks=5,
                     y_breaks=NULL,
@@ -139,7 +139,7 @@ setMethod("plot_model_performance", signature(object="ANY"),
                    plot_title=NULL,
                    plot_sub_title=NULL,
                    caption=NULL,
-                   rotate_x_tick_labels=TRUE,
+                   rotate_x_tick_labels=waiver(),
                    y_range=NULL,
                    y_n_breaks=5,
                    y_breaks=NULL,
@@ -208,7 +208,7 @@ setMethod("plot_model_performance", signature(object="familiarCollection"),
                    plot_title=NULL,
                    plot_sub_title=NULL,
                    caption=NULL,
-                   rotate_x_tick_labels=TRUE,
+                   rotate_x_tick_labels=waiver(),
                    y_range=NULL,
                    y_n_breaks=5,
                    y_breaks=NULL,
@@ -234,7 +234,13 @@ setMethod("plot_model_performance", signature(object="familiarCollection"),
             # ggtheme
             if(!any(class(ggtheme) == "theme")) {
               ggtheme <- plotting.get_theme(use_theme=ggtheme)
+              
+            } else if(is.waive(rotate_x_tick_labels)){
+              rotate_x_tick_labels <- FALSE
             }
+            
+            # rotate_x_tick_labels
+            if(is.waive(rotate_x_tick_labels)) rotate_x_tick_labels <- TRUE
             
             # Check plot type.
             if(!is.null(plot_type)){
