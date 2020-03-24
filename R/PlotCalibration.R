@@ -384,6 +384,11 @@ setMethod("plot_calibration_data", signature(object="familiarCollection"),
               show_density <- FALSE
             }
             
+            # Check input for show_* arguments.
+            .check_parameter_value_is_valid(x=show_calibration_fit, var_name="show_calibration_fit", values=c(FALSE, TRUE))
+            .check_parameter_value_is_valid(x=show_goodness_of_fit, var_name="show_goodness_of_fit", values=c(FALSE, TRUE))
+            .check_parameter_value_is_valid(x=show_density, var_name="show_density", values=c(FALSE, TRUE))
+            
             
             # Check input arguments for validity.
             plotting.check_input_args(x_range=x_range,
