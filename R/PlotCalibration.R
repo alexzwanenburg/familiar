@@ -24,7 +24,10 @@ NULL
 #'@param show_goodness_of_fit (*optional*) Specifies whether a the results of
 #'  goodness of fit tests are annotated in the plot. If `color_by` is set, this
 #'  information will not be shown.
-#'
+#'@param density_plot_height (*optional*) Height of the density plot. The height
+#'  is 1.5 cm by default. Height is expected to be grid unit (see `grid::unit`),
+#'  which also allows for specifying relative heights. Will be ignored if
+#'  `show_density` is `FALSE`.
 #'@inheritParams as_familiar_collection
 #'@inheritParams plot_univariate_importance
 #'@inheritParams plotting.check_input_args
@@ -71,7 +74,7 @@ NULL
 #'  Greenwood-Nam-D'Agostino (GND) tests are shown. Note that this information
 #'  is only annotated when `color_by` is not used as a splitting variable (i.e.
 #'  one calibration plot per facet).
-#'  
+#'
 #'  Available palettes for `discrete_palette` are those listed by
 #'  `grDevices::palette.pals()` (requires R >= 4.0.0), `grDevices::hcl.pals()`
 #'  (requires R >= 3.6.0) and `rainbow`, `heat.colors`, `terrain.colors`,
@@ -79,7 +82,7 @@ NULL
 #'  name in `grDevices`. If not specified, a default palette based on palettes
 #'  in Tableau are used. You may also specify your own palette by using colour
 #'  names listed by `grDevices::colors()` or through hexadecimal RGB strings.
-#'  
+#'
 #'  Labeling methods such as `set_risk_group_names` or `set_data_set_names` can
 #'  be applied to the `familiarCollection` object to update labels, and order
 #'  the output in the figure.
@@ -127,6 +130,7 @@ setGeneric("plot_calibration_data",
                     show_density=TRUE,
                     show_calibration_fit=TRUE,
                     show_goodness_of_fit=TRUE,
+                    density_plot_height=grid::unit(1.5, "cm"),
                     width=waiver(),
                     height=waiver(),
                     units=waiver(),
@@ -163,6 +167,7 @@ setMethod("plot_calibration_data", signature(object="ANY"),
                    show_density=TRUE,
                    show_calibration_fit=TRUE,
                    show_goodness_of_fit=TRUE,
+                   density_plot_height=grid::unit(1.5, "cm"),
                    width=waiver(),
                    height=waiver(),
                    units=waiver(),
@@ -199,6 +204,7 @@ setMethod("plot_calibration_data", signature(object="ANY"),
                                      "show_density"=show_density,
                                      "show_calibration_fit"=show_calibration_fit,
                                      "show_goodness_of_fit"=show_goodness_of_fit,
+                                     "density_plot_height"=density_plot_height,
                                      "width"=width,
                                      "height"=height,
                                      "units"=units)))
@@ -234,6 +240,7 @@ setMethod("plot_calibration_data", signature(object="familiarCollection"),
                    show_density=TRUE,
                    show_calibration_fit=TRUE,
                    show_goodness_of_fit=TRUE,
+                   density_plot_height=grid::unit(1.5, "cm"),
                    width=waiver(),
                    height=waiver(),
                    units=waiver(),
@@ -389,6 +396,8 @@ setMethod("plot_calibration_data", signature(object="familiarCollection"),
             .check_parameter_value_is_valid(x=show_goodness_of_fit, var_name="show_goodness_of_fit", values=c(FALSE, TRUE))
             .check_parameter_value_is_valid(x=show_density, var_name="show_density", values=c(FALSE, TRUE))
             
+            # Check density_plot_height
+            plotting.check_grid_unit(x=density_plot_height, var_name="density_plot_height")
             
             # Check input arguments for validity.
             plotting.check_input_args(x_range=x_range,
@@ -451,6 +460,7 @@ setMethod("plot_calibration_data", signature(object="familiarCollection"),
                                           show_density=show_density,
                                           show_calibration_fit=show_calibration_fit,
                                           show_goodness_of_fit=show_goodness_of_fit,
+                                          density_plot_height=density_plot_height,
                                           linear_test=linear_test_split[[ii]],
                                           gof_test=gof_test_split[[ii]],
                                           outcome_type=object@outcome_type)
@@ -526,6 +536,7 @@ setMethod("plot_calibration_data", signature(object="familiarCollection"),
                                    show_density,
                                    show_calibration_fit,
                                    show_goodness_of_fit,
+                                   density_plot_height,
                                    linear_test,
                                    gof_test,
                                    outcome_type){
@@ -601,7 +612,7 @@ setMethod("plot_calibration_data", signature(object="familiarCollection"),
                                                                  x_range=x_range,
                                                                  x_breaks=x_breaks,
                                                                  flip=FALSE,
-                                                                 plot_height=grid::unit(0.05, "null"),
+                                                                 plot_height=density_plot_height,
                                                                  outcome_type=outcome_type)
         
         # Density of the negative class.
@@ -610,7 +621,7 @@ setMethod("plot_calibration_data", signature(object="familiarCollection"),
                                                                  x_range=x_range,
                                                                  x_breaks=x_breaks,
                                                                  flip=TRUE,
-                                                                 plot_height=grid::unit(0.05, "null"),
+                                                                 plot_height=density_plot_height,
                                                                  outcome_type=outcome_type)
         
         # Extract panel elements.
@@ -642,7 +653,7 @@ setMethod("plot_calibration_data", signature(object="familiarCollection"),
                                                         x_range=x_range,
                                                         x_breaks=x_breaks,
                                                         flip=FALSE,
-                                                        plot_height=grid::unit(0.1, "null"),
+                                                        plot_height=density_plot_height,
                                                         outcome_type=outcome_type)
         
         # Extract the panel element from the density plot.

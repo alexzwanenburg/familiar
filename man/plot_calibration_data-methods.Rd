@@ -33,6 +33,7 @@ plot_calibration_data(
   show_density = TRUE,
   show_calibration_fit = TRUE,
   show_goodness_of_fit = TRUE,
+  density_plot_height = grid::unit(1.5, "cm"),
   width = waiver(),
   height = waiver(),
   units = waiver(),
@@ -66,6 +67,7 @@ plot_calibration_data(
   show_density = TRUE,
   show_calibration_fit = TRUE,
   show_goodness_of_fit = TRUE,
+  density_plot_height = grid::unit(1.5, "cm"),
   width = waiver(),
   height = waiver(),
   units = waiver(),
@@ -99,6 +101,7 @@ plot_calibration_data(
   show_density = TRUE,
   show_calibration_fit = TRUE,
   show_goodness_of_fit = TRUE,
+  density_plot_height = grid::unit(1.5, "cm"),
   width = waiver(),
   height = waiver(),
   units = waiver(),
@@ -209,6 +212,11 @@ set, this information will not be shown.}
 \item{show_goodness_of_fit}{(\emph{optional}) Specifies whether a the results of
 goodness of fit tests are annotated in the plot. If \code{color_by} is set, this
 information will not be shown.}
+
+\item{density_plot_height}{(\emph{optional}) Height of the density plot. The height
+is 1.5 cm by default. Height is expected to be grid unit (see \code{grid::unit}),
+which also allows for specifying relative heights. Will be ignored if
+\code{show_density} is \code{FALSE}.}
 
 \item{width}{(\emph{optional}) Width of the plot. A default value is derived from
 the number of facets.}
