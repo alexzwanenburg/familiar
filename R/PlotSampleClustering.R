@@ -264,7 +264,7 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
               y <- head(x[[ii]]$data[, c("data_set", "fs_method", "learner")], n=1)
               
               # Insert list_id ii
-              y[, "list_id":=ii]
+              y[, "list_id":=as.character(ii)]
               
               return(y)
             }, x=x)
@@ -703,7 +703,7 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
   # Ensure that a gradient palette range is set. This is required because the
   # legend is shared between all facets and .
   if(any(!is.finite(gradient_palette_range))){
-    browser()
+    
     # Iterate over expression data to find minimum and maximum
     feature_ranges <- lapply(list_id, function(ii, expression_data, data){
       
@@ -1260,6 +1260,8 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
                                   norm_method="standardisation_winsor")]
     }
   }
+  
+  return(x)
 }
 
 
@@ -1273,7 +1275,7 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
   # Replace categorical features by numerical values and scale to 0.05-.95 of
   # the z-range.
   categorical_features <- lapply(feature_info, function(feature){
-    if(feature@feature_type == "category"){
+    if(feature@feature_type == "factor"){
       return(feature@name)
       
     } else{
@@ -1287,7 +1289,7 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
   # Convert to numerical and rescale so that the categorical values lie within
   # the range of the remaining numerical data.
   if(length(categorical_features) > 0){
-    browser()
+    
     # Determine the output value range
     output_value_range <- numeric(2)
     output_value_range[1] <- head(gradient_palette_range, n=1) + 0.05 * diff(range(gradient_palette_range))
