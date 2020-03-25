@@ -45,9 +45,29 @@ NULL
 #'  A dendrogram can only be drawn from cluster methods that produce dendograms,
 #'  such as `hclust`. A dendogram can for example not be constructed using the
 #'  partioning around medioids method (`pam`).
+#'@param show_outcome (*optional*) Show outcome column(s) or row(s) in the
+#'  graph. Can be `TRUE`, `FALSE`, `NULL` or a poistion, i.e. `top`, `bottom`,
+#'  `left` and `right`.
+#'
+#'  If a position is specified, it should be appropriate with regard to the
+#'  `x_axis_by` or `y_axis_by` argument. If `y_axis_by` is `sample` (default),
+#'  the only valid positions are `left` (default) and `right`. Alternatively, if
+#'  `x_axis_by` is `sample`, the only valid positions are `top` (default) and
+#'  `bottom`.
+#'
+#'  The outcome data will be drawn between the main panel and the sample
+#'  dendrogram (if any).
+#'
 #'@param dendrogram_height (*optional*) Height of the dendrogram. The height is
 #'  1.5 cm by default. Height is expected to be grid unit (see `grid::unit`),
 #'  which also allows for specifying relative heights.
+#'@param outcome_height (*optional*) Height of the outcome data column/row. The
+#'  height is 0.5 cm by default. Height is expected to be a grid unit (see
+#'  `grid::unit`), which also allows for specifying relative heights.
+#'@param evaluation_times (*optional*) Times at which the event status of
+#'  time-to-event survival outcomes are determined. Only used for `survival`
+#'  outcome. If not specified, the values used when creating the underlying
+#'  `familiarData` objects are used.
 #'@inheritParams as_familiar_collection
 #'@inheritParams plot_univariate_importance
 #'@inheritParams plotting.check_input_args
@@ -118,7 +138,10 @@ setGeneric("plot_sample_clustering",
                     show_feature_dendrogram=TRUE,
                     show_sample_dendrogram=TRUE,
                     show_normalized_data=TRUE,
+                    show_outcome=TRUE,
                     dendrogram_height=grid::unit(1.5, "cm"),
+                    outcome_height=grid::unit(0.5, "cm"),
+                    evaluation_times=NULL,
                     width=waiver(),
                     height=waiver(),
                     units=waiver(),
@@ -157,7 +180,10 @@ setMethod("plot_sample_clustering", signature(object="ANY"),
                    show_feature_dendrogram=TRUE,
                    show_sample_dendrogram=TRUE,
                    show_normalized_data=TRUE,
+                   show_outcome=TRUE,
                    dendrogram_height=grid::unit(1.5, "cm"),
+                   outcome_height=grid::unit(0.5, "cm"),
+                   evaluation_times=NULL,
                    width=waiver(),
                    height=waiver(),
                    units=waiver(),
@@ -197,7 +223,10 @@ setMethod("plot_sample_clustering", signature(object="ANY"),
                                      "show_feature_dendrogram"=show_feature_dendrogram,
                                      "show_sample_dendrogram"=show_sample_dendrogram,
                                      "show_normalized_data"=show_normalized_data,
+                                     "show_outcome"=show_outcome,
                                      "dendrogram_height"=dendrogram_height,
+                                     "outcome_height"=outcome_height,
+                                     "evaluation_times"=evaluation_times,
                                      "width"=width,
                                      "height"=height,
                                      "units"=units)))
@@ -237,7 +266,10 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
                    show_feature_dendrogram=TRUE,
                    show_sample_dendrogram=TRUE,
                    show_normalized_data=TRUE,
+                   show_outcome=TRUE,
                    dendrogram_height=grid::unit(1.5, "cm"),
+                   outcome_height=grid::unit(0.5, "cm"),
+                   evaluation_times=NULL,
                    width=waiver(),
                    height=waiver(),
                    units=waiver(),

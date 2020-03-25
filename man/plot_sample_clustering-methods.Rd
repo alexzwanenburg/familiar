@@ -36,7 +36,10 @@ plot_sample_clustering(
   show_feature_dendrogram = TRUE,
   show_sample_dendrogram = TRUE,
   show_normalized_data = TRUE,
+  show_outcome = TRUE,
   dendrogram_height = grid::unit(1.5, "cm"),
+  outcome_height = grid::unit(0.5, "cm"),
+  evaluation_times = NULL,
   width = waiver(),
   height = waiver(),
   units = waiver(),
@@ -73,7 +76,10 @@ plot_sample_clustering(
   show_feature_dendrogram = TRUE,
   show_sample_dendrogram = TRUE,
   show_normalized_data = TRUE,
+  show_outcome = TRUE,
   dendrogram_height = grid::unit(1.5, "cm"),
+  outcome_height = grid::unit(0.5, "cm"),
+  evaluation_times = NULL,
   width = waiver(),
   height = waiver(),
   units = waiver(),
@@ -110,7 +116,10 @@ plot_sample_clustering(
   show_feature_dendrogram = TRUE,
   show_sample_dendrogram = TRUE,
   show_normalized_data = TRUE,
+  show_outcome = TRUE,
   dendrogram_height = grid::unit(1.5, "cm"),
+  outcome_height = grid::unit(0.5, "cm"),
+  evaluation_times = NULL,
   width = waiver(),
   height = waiver(),
   units = waiver(),
@@ -255,9 +264,31 @@ A dendrogram can only be drawn from cluster methods that produce dendograms,
 such as \code{hclust}. A dendogram can for example not be constructed using the
 partioning around medioids method (\code{pam}).}
 
+\item{show_outcome}{(\emph{optional}) Show outcome column(s) or row(s) in the
+graph. Can be \code{TRUE}, \code{FALSE}, \code{NULL} or a poistion, i.e. \code{top}, \code{bottom},
+\code{left} and \code{right}.
+
+If a position is specified, it should be appropriate with regard to the
+\code{x_axis_by} or \code{y_axis_by} argument. If \code{y_axis_by} is \code{sample} (default),
+the only valid positions are \code{left} (default) and \code{right}. Alternatively, if
+\code{x_axis_by} is \code{sample}, the only valid positions are \code{top} (default) and
+\code{bottom}.
+
+The outcome data will be drawn between the main panel and the sample
+dendrogram (if any).}
+
 \item{dendrogram_height}{(\emph{optional}) Height of the dendrogram. The height is
 1.5 cm by default. Height is expected to be grid unit (see \code{grid::unit}),
 which also allows for specifying relative heights.}
+
+\item{outcome_height}{(\emph{optional}) Height of the outcome data column/row. The
+height is 0.5 cm by default. Height is expected to be a grid unit (see
+\code{grid::unit}), which also allows for specifying relative heights.}
+
+\item{evaluation_times}{(\emph{optional}) Times at which the event status of
+time-to-event survival outcomes are determined. Only used for \code{survival}
+outcome. If not specified, the values used when creating the underlying
+\code{familiarData} objects are used.}
 
 \item{width}{(\emph{optional}) Width of the plot. A default value is derived from
 the number of facets.}
