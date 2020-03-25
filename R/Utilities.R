@@ -675,9 +675,10 @@ get_contrasts <- function(data, encoding_method="effect", drop_levels=TRUE, outc
   # TODO deprecate getContrasts function.
   
   # Determine columns with factors
-  if(is.null(feature_colums) & !is.null(outcome_type)) {
+  if(is.null(feature_columns) & !is.null(outcome_type)) {
     feature_columns <- get_feature_columns(x=data, outcome_type=outcome_type)
-  } else if(is.null(feature_colums)){
+    
+  } else if(is.null(feature_columns)){
     feature_columns <- colnames(data)
   }
   
