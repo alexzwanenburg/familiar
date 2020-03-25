@@ -83,6 +83,11 @@ the metric name. This reduces the effect of outliers somewhat.
 
 If not provided explicitly, this parameter is read from settings used at
 creation of the underlying \code{familiarModel} objects.}
+    \item{\code{eval_times}}{One or more time points that are used for assessing
+calibration in survival problems. This is done as expected and observed
+survival probabilities depend on time. If not provided explicitly, this
+parameter is read from settings used at creation of the underlying
+\code{familiarModel} objects. Only used for \code{survival} outcomes.}
     \item{\code{verbose}}{Flag to indicate whether feedback should be provided on the
 computation and extraction of various data elements.}
     \item{\code{familiar_data_names}}{Names of the dataset(s). Only used if the \code{object} parameter

@@ -315,6 +315,7 @@ setMethod("extract_data", signature(object="familiarEnsemble"),
                                                             sample_cluster_method=sample_cluster_method,
                                                             sample_linkage_method=sample_linkage_method,
                                                             sample_similarity_metric=sample_similarity_metric,
+                                                            eval_times=eval_times,
                                                             verbose=verbose)
             } else {
               expression_info <- NULL
@@ -1609,6 +1610,7 @@ setGeneric("extract_feature_expression", function(object,
                                                   sample_cluster_method=waiver(),
                                                   sample_linkage_method=waiver(),
                                                   sample_similarity_metric=waiver(),
+                                                  eval_times=waiver(),
                                                   verbose=FALSE,
                                                   ...) standardGeneric("extract_feature_expression"))
 
@@ -1624,6 +1626,7 @@ setMethod("extract_feature_expression", signature(object="familiarEnsemble", dat
                    sample_cluster_method=waiver(),
                    sample_linkage_method=waiver(),
                    sample_similarity_metric=waiver(),
+                   eval_times=waiver(),
                    verbose=FALSE){
             
             # Message extraction start
@@ -1681,6 +1684,18 @@ setMethod("extract_feature_expression", signature(object="familiarEnsemble", dat
                                       cluster_similarity_metric=sample_similarity_metric,
                                       var_type="sample")
 
+            # Obtain evaluation times from the data.
+            if(is.waive(eval_times) & object@outcome_type %in% c("survival", "competing_risk")){
+              eval_times <- object@settings$eval_times
+              
+            } else if(is.waive(eval_times)){
+              eval_times <- NULL
+            }
+            
+            # Check if eval_times is correct.
+            if(object@outcome_type %in% c("survival", "competing_risk")){
+              sapply(eval_times, .check_number_in_valid_range, var_name="eval_times", range=c(0.0, Inf), closed=c(FALSE, TRUE))
+            }
             
             # Aggregate data
             data <- aggregate_data(data=data)
@@ -1778,7 +1793,8 @@ setMethod("extract_feature_expression", signature(object="familiarEnsemble", dat
                                     "feature_order"=feature_order_table,
                                     "sample_similarity_metric"=sample_similarity_metric,
                                     "sample_cluster_object"=h_sample,
-                                    "sample_order"=sample_order_table)
+                                    "sample_order"=sample_order_table,
+                                    "evaluation_times"=eval_times)
             
             return(expression_info)
           })

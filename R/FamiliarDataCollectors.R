@@ -491,7 +491,8 @@ collect_feature_expressions <- function(fam_data_list){
                 "feature_similarity_metric"=fam_obj@feature_expressions$feature_similarity_metric,
                 "sample_cluster_object"=fam_obj@feature_expressions$sample_cluster_object,
                 "sample_order"=fam_obj@feature_expressions$sample_order,
-                "sample_similarity_metric"=fam_obj@feature_expressions$sample_similarity_metric))
+                "sample_similarity_metric"=fam_obj@feature_expressions$sample_similarity_metric,
+                "evaluation_times"=fam_obj@feature_expressions$evaluation_times))
   })
 
   return(expression_list)

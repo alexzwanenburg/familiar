@@ -15,6 +15,7 @@ extract_feature_expression(
   sample_cluster_method = waiver(),
   sample_linkage_method = waiver(),
   sample_similarity_metric = waiver(),
+  eval_times = waiver(),
   verbose = FALSE,
   ...
 )
@@ -91,6 +92,12 @@ the metric name. This reduces the effect of outliers somewhat.
 
 If not provided explicitly, this parameter is read from settings used at
 creation of the underlying \code{familiarModel} objects.}
+
+\item{eval_times}{One or more time points that are used for assessing
+calibration in survival problems. This is done as expected and observed
+survival probabilities depend on time. If not provided explicitly, this
+parameter is read from settings used at creation of the underlying
+\code{familiarModel} objects. Only used for \code{survival} outcomes.}
 
 \item{verbose}{Flag to indicate whether feedback should be provided on the
 computation and extraction of various data elements.}
