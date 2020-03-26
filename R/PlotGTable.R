@@ -435,3 +435,14 @@
   
   return(g)
 }
+
+
+.gtable_rename_element <- function(g, old, new){
+  if(!.gtable_element_in_layout(g=g, element=old, partial_match=FALSE)){
+    ..error_reached_unreachable_code(".gtable_rename_element: element not found in layout table.")
+  }
+  
+  g$layout$name[g$layout$name == old] <- new
+  
+  return(g)
+}
