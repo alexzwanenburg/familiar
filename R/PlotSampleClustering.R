@@ -18,6 +18,12 @@ NULL
 #'  gradient. This should be a range of two values, e.g. `c(0, 1)`. Lower or
 #'  upper boundary can be unset by using `NA`. If not set, the full
 #'  metric-specific range is used.
+#'@param outcome_palette (*optional*) Sequential (`continuous`, `count`
+#'  outcomes) or qualitative (other outcome types) palette used to show outcome
+#'  values. This argument is ignored if the outcome is not shown.
+#'@param outcome_palette_range (*optional*) Numerical range used to span the
+#'  gradient of numeric (`continuous`, `count`) outcome values. This argument is
+#'  ignored for other outcome types or if the outcome is not shown.
 #'@param show_feature_dendrogram (*optional*) Show feature dendrogram around the
 #'  main panel. Can be `TRUE`, `FALSE`, `NULL`, or a position, i.e. `top`,
 #'  `bottom`, `left` and `right`.
@@ -120,6 +126,8 @@ setGeneric("plot_sample_clustering",
                     ggtheme=NULL,
                     gradient_palette=NULL,
                     gradient_palette_range=waiver(),
+                    outcome_palette=NULL,
+                    outcome_palette_range=waiver(),
                     x_label=waiver(),
                     x_label_shared="column",
                     y_label=waiver(),
@@ -162,6 +170,8 @@ setMethod("plot_sample_clustering", signature(object="ANY"),
                    ggtheme=NULL,
                    gradient_palette=NULL,
                    gradient_palette_range=waiver(),
+                   outcome_palette=NULL,
+                   outcome_palette_range=waiver(),
                    x_label=waiver(),
                    x_label_shared="column",
                    y_label=waiver(),
@@ -205,6 +215,8 @@ setMethod("plot_sample_clustering", signature(object="ANY"),
                                      "ggtheme"=ggtheme,
                                      "gradient_palette"=gradient_palette,
                                      "gradient_palette_range"=gradient_palette_range,
+                                     "outcome_palette"=outcome_palette,
+                                     "outcome_palette_range"=outcome_palette_range,
                                      "x_label"=x_label,
                                      "x_label_shared"=x_label_shared,
                                      "y_label"=y_label,
@@ -248,6 +260,8 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
                    ggtheme=NULL,
                    gradient_palette=NULL,
                    gradient_palette_range=waiver(),
+                   outcome_palette=NULL,
+                   outcome_palette_range=waiver(),
                    x_label=waiver(),
                    x_label_shared="column",
                    y_label=waiver(),
@@ -467,6 +481,34 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
               plotting.check_grid_unit(x=dendrogram_height, var_name="dendrogram_height")
             }
             
+            # Check if show_outcome is specified correctly.
+            if(is.logical(show_outcome)){
+              
+              if(show_outcome) show_outcome <- ifelse(x_axis_by == "sample", "top", "left")
+              else show_outcome <- NULL
+              
+            } else if(length(show_outcome) == 0){
+              
+              show_outcome <- NULL
+              
+            } else {
+              
+              if(x_axis_by == "sample"){
+                .check_parameter_value_is_valid(x=show_outcome, var_name="show_outcome",
+                                                values=c("top", "bottom"))
+              } else {
+                .check_parameter_value_is_valid(x=show_outcome, var_name="show_outcome",
+                                                values=c("left", "right"))
+              }
+              
+              .check_argument_length(show_outcome, "show_outcome", min=1, max=1)
+            }
+            
+            # Check if the outcome_height argument is correct.
+            if(!is.null(show_outcome)){
+              plotting.check_grid_unit(x=outcome_height, var_name="outcome_height")
+            }
+            
             
             # Add default splitting variables
             if(is.null(split_by) & is.null(facet_by)){
@@ -526,6 +568,7 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
               # Generate plot
               p <- .plot_sample_clustering_plot(x=y_split[[ii]],
                                                 data=x,
+                                                outcome_type=object@outcome_type,
                                                 x_axis_by=x_axis_by,
                                                 y_axis_by=y_axis_by,
                                                 facet_by=facet_by,
@@ -533,6 +576,8 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
                                                 ggtheme=ggtheme,
                                                 gradient_palette=gradient_palette,
                                                 gradient_palette_range=gradient_palette_range,
+                                                outcome_palette=outcome_palette,
+                                                outcome_palette_range=outcome_palette_range,
                                                 x_label=x_label,
                                                 x_label_shared=x_label_shared,
                                                 y_label=y_label,
@@ -551,7 +596,10 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
                                                 show_feature_dendrogram=show_feature_dendrogram,
                                                 show_sample_dendrogram=show_sample_dendrogram,
                                                 show_normalized_data=show_normalized_data,
-                                                dendrogram_height=dendrogram_height)
+                                                show_outcome=show_outcome,
+                                                dendrogram_height=dendrogram_height,
+                                                outcome_height=outcome_height,
+                                                evaluation_times=evaluation_times)
               
               # Check empty output
               if(is.null(p)) next()
@@ -634,6 +682,7 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
 
 .plot_sample_clustering_plot <- function(x,
                                          data,
+                                         outcome_type,
                                          x_axis_by,
                                          y_axis_by,
                                          facet_by,
@@ -641,6 +690,8 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
                                          ggtheme,
                                          gradient_palette,
                                          gradient_palette_range,
+                                         outcome_palette,
+                                         outcome_palette_range,
                                          x_label,
                                          x_label_shared,
                                          y_label,
@@ -659,7 +710,10 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
                                          show_feature_dendrogram,
                                          show_sample_dendrogram,
                                          show_normalized_data,
-                                         dendrogram_height){
+                                         show_outcome,
+                                         dendrogram_height,
+                                         outcome_height,
+                                         evaluation_times){
   
   # Define elements that need to be shared. Note that "guide" and "strip_y" may
   # be absent.
@@ -669,6 +723,8 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
   
   # Determine the list identifiers for the current selection of data.
   list_id <- as.character(unique(x$list_id))
+  
+  ##### gradient_palette_range and expression_data #############################
   
   # Determine the range of the gradient palette.
   if(is.waive(gradient_palette_range)){
@@ -799,10 +855,85 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
     }
   }
   
+  #####outcome_palette_range and outcome_plot_data #############################
+  
+  # Set outcome_palette_range for continuous and count outcome types.
+  if(is.waive(outcome_palette_range) & outcome_type %in% c("continuous", "count") & !is.null(show_outcome)){
+    if(outcome_type == "continuous") outcome_palette_range <- c(NA, NA)
+    if(outcome_type == "count") outcome_palette_range <- c(0.0, NA) 
+  }
+  
+  # Process outcome plot data for plotting.
+  if(!is.null(show_outcome)){
+    # Normalise expression data
+    outcome_plot_data <- lapply(list_id, function(ii, data, outcome_type, evaluation_times){
+      if(is_empty(x)) return(NULL)
+
+      if(outcome_type %in% c("survival", "competing_risk")){
+        outcome_plot_data <- .process_expression_survival_outcome(x=data[[ii]]$data,
+                                                                  evaluation_times=evaluation_times)
+      } else {
+        outcome_plot_data <- .process_expression_generic_outcome(x=data[[ii]]$data)
+      }
+      
+      return(outcome_plot_data)
+      
+    }, data=data, outcome_type=outcome_type, evaluation_times=evaluation_times)
+  }
+  
+  # Name the outcome plot data sets by the list identifiers so that they can be
+  # recognised and addressed by name.
+  names(outcome_plot_data) <- list_id
+  
+  # Update the outcome palette range based on 
+  if(any(!is.finite(outcome_palette_range)) & outcome_type %in% c("continuous", "count") & !is.null(show_outcome)){
+    
+    # Iterate over outcome_plot_data to find minimum and maximum
+    outcome_ranges <- lapply(list_id, function(ii, outcome_plot_data){
+      
+      if(is_empty(outcome_plot_data[[ii]])){
+        return(data.table::data.table("min_value"=numeric(0),
+                                      "max_value"=numeric(0)))
+        
+      } else {
+        return(data.table::data.table("min_value"=as.double(min(outcome_plot_data[[ii]]$outcome, na.rm=TRUE)),
+                                      "max_value"=as.double(max(outcome_plot_data[[ii]]$outcome, na.rm=TRUE))))
+      }
+    }, outcome_plot_data=outcome_plot_data)
+    
+    # Combine outcome ranges
+    outcome_ranges <- data.table::rbindlist(outcome_ranges)
+    
+    if(is_empty(outcome_ranges)){
+      # Set a default if all features are categorical.
+      outcome_palette_range <- c(0.0, 1.0)
+      
+    } else {
+      # Replace the first value of the range, if it is not finite (NA).
+      if(!is.finite(outcome_palette_range[1])){
+        outcome_palette_range[1] <- min(outcome_ranges$min_value)
+      }
+      
+      # Replace the last value of the range, if it is not finite (NA).
+      if(!is.finite(tail(outcome_palette_range, n=1))){
+        outcome_palette_range[length(outcome_palette_range)] <- max(outcome_ranges$max_value)
+      }
+      
+      # Shrink the gradient palette range to two values.
+      outcome_palette_range <- c(outcome_palette_range[1],
+                                 outcome_palette_range[length(outcome_palette_range)])
+    }
+  }
+  
+  ##### Plot creation ##########################################################
+  
   # Split by facet. This generates a list of data splits with facetting
   # information that allows for positioning.
-  plot_layout_table <- plotting.get_plot_layout_table(x=x, facet_by=facet_by, facet_wrap_cols=facet_wrap_cols,
-                                                      x_label_shared=x_label_shared, y_label_shared=y_label_shared)
+  plot_layout_table <- plotting.get_plot_layout_table(x=x,
+                                                      facet_by=facet_by,
+                                                      facet_wrap_cols=facet_wrap_cols,
+                                                      x_label_shared=x_label_shared,
+                                                      y_label_shared=y_label_shared)
   
   # Split data into facets. This is done by row.
   x_split_list <- plotting.split_data_by_facet(x=x, plot_layout_table=plot_layout_table)
@@ -870,6 +1001,59 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
     # Convert to grob.
     g_heatmap <- plotting.to_grob(p_heatmap)
     
+    # Rename panel to panel-main
+    g_heatmap <- .gtable_rename_element(g=g_heatmap, old="panel", new="panel-main")
+    
+    if(!is.null(show_outcome)){
+      
+      # Find evaluation times (will still be NULL for outcome_type other than survival and competing_risk)
+      if(is.null(evaluation_times)){
+        evaluation_times <- data[[x_split$list_id]]$evaluation_times
+      }
+      
+      # Create expression outcome plot.
+      p_outcome <- .create_expression_outcome_plot(x=plot_data,
+                                                   ggtheme=ggtheme,
+                                                   position=show_outcome,
+                                                   outcome_type=outcome_type,
+                                                   outcome_palette=outcome_palette,
+                                                   outcome_palette_range=outcome_palette_range,
+                                                   plot_height=outcome_height,
+                                                   evaluation_times=evaluation_times,
+                                                   rotate_x_tick_labels=rotate_x_tick_labels)
+      
+      # Convert to grob
+      g_outcome <- plotting.to_grob(g=p_outcome)
+      
+      # Extract guide from grob
+      g_outcome_guide <- .gtable_extract(g=g_outcome, element="guide", partial_match=TRUE)
+      
+      if(outcome_type %in% c("survival", "competing_risk")){
+        # Determine the axis element
+        axis_element <- ifelse(show_outcome %in% c("top", "bottom"), "axis-l", "axis-b")
+        
+        # Define extracted outcome elements.
+        extracted_outcome_elements <- c("panel", axis_element)
+        
+      } else {
+        extracted_outcome_elements <- c("panel")
+      }
+      
+      # Extract the main plot elements from the outcome columns/rows
+      g_outcome <- .gtable_extract(g=g_outcome,
+                                   element=extracted_outcome_elements,
+                                   partial_match=TRUE)
+      
+      # Insert the outcome at the position correct position around the
+      # heatmap.
+      g_heatmap <- .gtable_insert(g=g_heatmap,
+                                  g_new=g_outcome,
+                                  where=show_outcome,
+                                  ref_element="panel-main",
+                                  partial_match=TRUE)
+      browser()
+    }
+    
     # Add sample dendogram
     if(!is.null(show_sample_dendrogram)){
       
@@ -912,7 +1096,7 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
       g_heatmap <- .gtable_insert(g=g_heatmap,
                                   g_new=g_sample_dendro,
                                   where=show_sample_dendrogram,
-                                  ref_element="panel",
+                                  ref_element="panel-main",
                                   partial_match=TRUE)
     }
     
@@ -957,7 +1141,7 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
       g_heatmap <- .gtable_insert(g=g_heatmap,
                                   g_new=g_feature_dendro,
                                   where=show_feature_dendrogram,
-                                  ref_element="panel",
+                                  ref_element="panel-main",
                                   partial_match=TRUE)
     }
     
@@ -984,6 +1168,8 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
                                 elements=setdiff(elements, c("strip_x", "strip_y")),
                                 element_grobs=extracted_element_list,
                                 ggtheme=ggtheme)
+  
+  browser()
   
   return(g)
 }
@@ -1200,6 +1386,143 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
 
 
 
+.create_expression_outcome_plot <- function(x,
+                                            ggtheme,
+                                            position,
+                                            outcome_type,
+                                            outcome_palette,
+                                            outcome_palette_range,
+                                            plot_height,
+                                            evaluation_times,
+                                            rotate_x_tick_labels){
+  
+  # Check if evaluation_times fall in a valid range.
+  if(outcome_type %in% c("survival", "competing_risk")){
+    sapply(evaluation_times, .check_number_in_valid_range, var_name="evaluation_times", range=c(0.0, Inf), closed=c(FALSE, TRUE))
+  }
+  
+  # Process data
+  if(outcome_type %in% c("binomial", "multinomial")){
+    x <- .process_expression_generic_outcome(x=x)
+    
+    legend_label <- "class"
+    palette_type <- "qualitative"
+    
+  } else if(outcome_type %in% c("continuous", "count")){
+    x <- .process_expression_generic_outcome(x=x)
+    
+    legend_label <- "value"
+    palette_type <- "sequential"
+    
+  } else if(outcome_type %in% c("survival", "competing_risk")){
+    x <- .process_expression_survival_outcome(x=x, evaluation_times=evaluation_times)
+    
+    legend_label <- "event"
+    palette_type <- "qualitative"
+    
+  } else {
+    ..error_outcome_type_not_implemented(outcome_type)
+  }
+  
+  browser()
+  # Create basic plot
+  p <- ggplot2::ggplot(data=x, mapping=ggplot2::aes(x=!!sym("sample"),
+                                                    y=!!sym("evaluation_point"),
+                                                    fill=!!sym("value")))
+  
+  # Add plot theme
+  p <- p + ggtheme
+  
+  # Plot heatmap
+  p <- p + ggplot2::geom_raster()
+  
+  
+  # Limit margins along the axis with samples so it will fit one-to-one with the
+  # main heatmap.
+  p <- p + ggplot2::scale_x_continuous(expand=c(0, 0))
+  if(position %in% c("left", "right")){
+    p <- p + ggplot2::coord_flip()
+  }
+  
+  # Specify the colours.
+  if(outcome_type %in% c("continuous", "count")){
+    
+    # Colors
+    outcome_colours <- plotting.get_palette(x=outcome_palette,
+                                            palette_type=palette_type,
+                                            use_alternative=TRUE)
+    
+    # Set the gradient
+    p <- p + ggplot2::scale_fill_gradientn(name=legend_label,
+                                           colors=outcome_colours,
+                                           limits=range(outcome_palette_range),
+                                           oob=scales::squish)
+  } else {
+    # Colors
+    outcome_colours <- plotting.get_palette(x=outcome_palette,
+                                            n=levels(x$value),
+                                            palette_type=palette_type,
+                                            use_alternative=TRUE)
+    
+    # Set the qualitative scale
+    p <- p + ggplot2::scale_fill_discrete(name=legend_label,
+                                          values=outcome_colours[seq_along(levels(x$value))],
+                                          breaks=levels(x$value),
+                                          drop=FALSE)
+  }
+  
+  # Remove some theme elements and reduce margins. The histogram height is left.
+  p <- p + ggplot2::theme(panel.grid=ggplot2::element_blank(),
+                          panel.background=ggplot2::element_blank(),
+                          panel.border=ggplot2::element_blank(),
+                          axis.title.x=ggplot2::element_blank(),
+                          axis.title.y=ggplot2::element_blank())
+  
+  if(outcome_type %in% c("survival", "competing_risk")){
+    # Survival and competing risk outcomes leave the height axis intact
+    
+    if(position %in% c("top", "bottom")){
+      # Remove x-axis
+      p <- p + ggplot2::theme(axis.line.x = ggplot2::element_blank(),
+                              axis.ticks.x=ggplot2::element_blank(),
+                              axis.text.x=ggplot2::element_blank())
+      
+    } else if(position %in% c("left", "right")){
+      # Remove y-axis (rotated x-axis in plot)
+      p <- p + ggplot2::theme(axis.line.y = ggplot2::element_blank(),
+                              axis.ticks.y=ggplot2::element_blank(),
+                              axis.text.y=ggplot2::element_blank())
+      # Rotate x-labels
+      if(rotate_x_tick_labels){
+        p <- p + ggplot2::theme(axis.text.x=ggplot2::element_text(vjust=0.25, hjust=1.0, angle=90.0))
+      }
+    }
+    
+  } else {
+    # For the remaining outcomes, remove all axes.
+    p <- p + ggplot2::theme(axis.line.x = ggplot2::element_blank(),
+                            axis.ticks.x=ggplot2::element_blank(),
+                            axis.text.x=ggplot2::element_blank(),
+                            axis.line.y = ggplot2::element_blank(),
+                            axis.ticks.y=ggplot2::element_blank(),
+                            axis.text.y=ggplot2::element_blank())
+  }
+  
+  # Ensure that panel heights/widths are set to the plot object.
+  if(position %in% c("top", "bottom")){
+    p$custom_grob <- list("heights"=list("name"="panel", "height"=plot_height))
+    
+  } else if(position %in% c("left", "right")){
+    p$custom_grob <- list("widths"=list("name"="panel", "width"=plot_height))
+  }
+  
+  class(p) <- c("familiar_ggplot", class(p))
+  
+  return(p)
+}
+
+
+
 .determine_sample_clustering_plot_dimensions <- function(x,
                                                          x_axis_by,
                                                          y_axis_by,
@@ -1357,4 +1680,60 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
   x$sample <- factor(x$sample, levels=sample_order$name[order(sample_order$label_order)])
 
   return(x)
+}
+
+
+
+.process_expression_generic_outcome <- function(x){
+  browser()
+  # Keep only one copy for each sample.
+  x <- data.table::copy(x[, c("sample", "outcome")])
+  
+  # Rename columns
+  data.table::setnames(x, old=c("outcome"), new=c("value"))
+  
+  # Set evaluation point (which is on the y-axis)
+  x$evaluation_point <- factor("1", levels="1")
+  
+  return(x)
+}
+
+
+
+.process_expression_survival_outcome <- function(x, evaluation_times){
+  # Suppress NOTES due to non-standard evaluation in data.table
+  outcome_time <- outcome_event <- NULL
+  
+  # Keep only one copy for each sample.
+  x <- data.table::copy(x[, c("sample", "outcome_time", "outcome_event")])
+  
+  plot_data <- lapply(evaluation_times, function(eval_time, x){
+    # Make a copy with the relevant data.
+    y <- data.table::copy(x)
+    
+    # Mark all as no event initially.
+    y[, "value":="no"]
+    
+    # All samples that have an event before or at the evaluation time.
+    y[outcome_time <= eval_time & outcome_event == 1, "value":="yes"]
+    
+    # All samples that were censored (lost to follow-up) at the evaluation time.
+    y[outcome_time <= eval_time & outcome_event == 0, "value":="cens."]
+    
+    # Set as factor
+    y$value <- factor(y$value, levels=c("no", "yes", "cens."))
+    
+    # Set evaluation time point
+    y[, "evaluation_point":=eval_time]
+    
+    return(y)
+  }, x=x)
+  
+  # Combine plot data
+  plot_data <- data.table::rbindlist(plot_data)
+  
+  # Set evaluation point as a factor
+  plot_data$evaluation_point <- factor(plot_data$evaluation_point, levels=evaluation_times)
+  
+  return(plot_data)
 }
