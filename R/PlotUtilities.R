@@ -802,7 +802,7 @@ plotting.reinsert_plot_elements <- function(g, elements=NULL, grob_list, ggtheme
     
     if(legend_position == "right"){
       # Align to right of the plot, and iterate inward to find valid reference elements.
-      for(ref_element in c("strip-r", "ylab-r", "axis-r", "panel")){
+      for(ref_element in c("strip-r", "ylab-r", "axis-r", "panel-main", "panel")){
         if(.gtable_element_in_layout(g=g, element=ref_element, partial_match=TRUE)){
           
           # If the reference element exists, add and align along background.
@@ -821,7 +821,7 @@ plotting.reinsert_plot_elements <- function(g, elements=NULL, grob_list, ggtheme
     } else if(legend_position == "left"){
       # Align to left of the plot, and iterate inward to find valid reference
       # elements.
-      for(ref_element in c("strip-l", "ylab-l", "axis-l", "panel")){
+      for(ref_element in c("strip-l", "ylab-l", "axis-l", "panel-main", "panel")){
         if(.gtable_element_in_layout(g=g, element=ref_element, partial_match=TRUE)){
           
           # If the reference element exists, add and align along background.
@@ -840,7 +840,7 @@ plotting.reinsert_plot_elements <- function(g, elements=NULL, grob_list, ggtheme
     } else if(legend_position == "bottom"){
       # Align to bottom of the plot, and iterate inward to find valid reference
       # elements.
-      for(ref_element in c("strip-b", "xlab-b", "axis-b", "panel")){
+      for(ref_element in c("strip-b", "xlab-b", "axis-b", "panel-main", "panel")){
         if(.gtable_element_in_layout(g=g, element=ref_element, partial_match=TRUE)){
           
           # If the reference element exists, add and align along background.
@@ -859,7 +859,7 @@ plotting.reinsert_plot_elements <- function(g, elements=NULL, grob_list, ggtheme
     } else if(legend_position == "top"){
       # Align to top of the plot, and iterate inward to find valid reference
       # elements.
-      for(ref_element in c("strip-t", "xlab-t", "axis-t", "panel")){
+      for(ref_element in c("strip-t", "xlab-t", "axis-t", "panel-main", "panel")){
         if(.gtable_element_in_layout(g=g, element=ref_element, partial_match=TRUE)){
           
           # If the reference element exists, add and align along background.
@@ -882,7 +882,7 @@ plotting.reinsert_plot_elements <- function(g, elements=NULL, grob_list, ggtheme
   if("strip_x" %in% elements & !is.null(grob_list$strip_x)){
     
     # Align top of the plot, and iterate inward to find valid reference elements.
-    for(ref_element in c("xlab-t", "axis-t", "panel")){
+    for(ref_element in c("xlab-t", "axis-t", "panel-main", "panel")){
       if(.gtable_element_in_layout(g=g, element=ref_element, partial_match=TRUE)){
         
         # If the reference element exists, add and align along the panel(s).
@@ -905,7 +905,7 @@ plotting.reinsert_plot_elements <- function(g, elements=NULL, grob_list, ggtheme
     
     # Align to right of the plot, and iterate inward to find valid reference
     # elements.
-    for(ref_element in c("ylab-r", "axis-r", "panel")){
+    for(ref_element in c("ylab-r", "axis-r", "panel-main", "panel")){
       if(.gtable_element_in_layout(g=g, element=ref_element, partial_match=TRUE)){
         
         # If the reference element exists, add and align along the panel(s).
@@ -928,7 +928,7 @@ plotting.reinsert_plot_elements <- function(g, elements=NULL, grob_list, ggtheme
     
     # Align to bottom of the plot, and iterate inward to find valid reference
     # elements.
-    for(ref_element in c("axis-b", "panel")){
+    for(ref_element in c("axis-b", "panel-main", "panel")){
       if(.gtable_element_in_layout(g=g, element=ref_element, partial_match=TRUE)){
         
         # If the reference element exists, add and align along the panel(s).
@@ -950,7 +950,7 @@ plotting.reinsert_plot_elements <- function(g, elements=NULL, grob_list, ggtheme
   if("axis_title_y" %in% elements & !is.null(grob_list$axis_title_y)){
     
     # Align to left of the plot, and iterate inward to find valid reference elements.
-    for(ref_element in c("axis-l", "panel")){
+    for(ref_element in c("axis-l", "panel-main", "panel")){
       if(.gtable_element_in_layout(g=g, element=ref_element, partial_match=TRUE)){
         
         # If the reference element exists, add and align along the panel(s).
