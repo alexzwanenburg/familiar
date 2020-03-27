@@ -18,6 +18,8 @@ plot_sample_clustering(
   ggtheme = NULL,
   gradient_palette = NULL,
   gradient_palette_range = waiver(),
+  outcome_palette = NULL,
+  outcome_palette_range = waiver(),
   x_label = waiver(),
   x_label_shared = "column",
   y_label = waiver(),
@@ -35,7 +37,7 @@ plot_sample_clustering(
   rotate_x_tick_labels = waiver(),
   show_feature_dendrogram = TRUE,
   show_sample_dendrogram = TRUE,
-  show_normalized_data = TRUE,
+  show_normalised_data = TRUE,
   show_outcome = TRUE,
   dendrogram_height = grid::unit(1.5, "cm"),
   outcome_height = grid::unit(0.5, "cm"),
@@ -58,6 +60,8 @@ plot_sample_clustering(
   ggtheme = NULL,
   gradient_palette = NULL,
   gradient_palette_range = waiver(),
+  outcome_palette = NULL,
+  outcome_palette_range = waiver(),
   x_label = waiver(),
   x_label_shared = "column",
   y_label = waiver(),
@@ -75,7 +79,7 @@ plot_sample_clustering(
   rotate_x_tick_labels = waiver(),
   show_feature_dendrogram = TRUE,
   show_sample_dendrogram = TRUE,
-  show_normalized_data = TRUE,
+  show_normalised_data = TRUE,
   show_outcome = TRUE,
   dendrogram_height = grid::unit(1.5, "cm"),
   outcome_height = grid::unit(0.5, "cm"),
@@ -98,6 +102,8 @@ plot_sample_clustering(
   ggtheme = NULL,
   gradient_palette = NULL,
   gradient_palette_range = waiver(),
+  outcome_palette = NULL,
+  outcome_palette_range = waiver(),
   x_label = waiver(),
   x_label_shared = "column",
   y_label = waiver(),
@@ -115,7 +121,7 @@ plot_sample_clustering(
   rotate_x_tick_labels = waiver(),
   show_feature_dendrogram = TRUE,
   show_sample_dendrogram = TRUE,
-  show_normalized_data = TRUE,
+  show_normalised_data = TRUE,
   show_outcome = TRUE,
   dendrogram_height = grid::unit(1.5, "cm"),
   outcome_height = grid::unit(0.5, "cm"),
@@ -174,6 +180,14 @@ colour the similarity or distance between features in a heatmap.}
 gradient. This should be a range of two values, e.g. \code{c(0, 1)}. Lower or
 upper boundary can be unset by using \code{NA}. If not set, the full
 metric-specific range is used.}
+
+\item{outcome_palette}{(\emph{optional}) Sequential (\code{continuous}, \code{count}
+outcomes) or qualitative (other outcome types) palette used to show outcome
+values. This argument is ignored if the outcome is not shown.}
+
+\item{outcome_palette_range}{(\emph{optional}) Numerical range used to span the
+gradient of numeric (\code{continuous}, \code{count}) outcome values. This argument is
+ignored for other outcome types or if the outcome is not shown.}
 
 \item{x_label}{(\emph{optional}) Label to provide to the x-axis. If NULL, no label
 is shown.}

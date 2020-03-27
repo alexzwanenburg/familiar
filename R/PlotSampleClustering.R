@@ -51,6 +51,17 @@ NULL
 #'  A dendrogram can only be drawn from cluster methods that produce dendograms,
 #'  such as `hclust`. A dendogram can for example not be constructed using the
 #'  partioning around medioids method (`pam`).
+#'@show_normalised_data (*optional*) Flag that determines whether the data shown
+#'  in the main heatmap is normalised using the same settings as within the
+#'  analysis (`fixed`; default), using a standardisation method
+#'  (`set_normalisation`) that is applied separately to each dataset, or not at
+#'  all (`none`), which shows the data at the original scale, albeit with
+#'  batch-corrections.
+#'
+#'  Categorial variables are plotted to span 90% of the entire numerical value
+#'  range, i.e. the levels of categorical variables with 2 levels are
+#'  represented at 5% and 95% of the range, with 3 levels at 5%, 50%, and 95%,
+#'  etc.
 #'@param show_outcome (*optional*) Show outcome column(s) or row(s) in the
 #'  graph. Can be `TRUE`, `FALSE`, `NULL` or a poistion, i.e. `top`, `bottom`,
 #'  `left` and `right`.
@@ -145,7 +156,7 @@ setGeneric("plot_sample_clustering",
                     rotate_x_tick_labels=waiver(),
                     show_feature_dendrogram=TRUE,
                     show_sample_dendrogram=TRUE,
-                    show_normalized_data=TRUE,
+                    show_normalised_data=TRUE,
                     show_outcome=TRUE,
                     dendrogram_height=grid::unit(1.5, "cm"),
                     outcome_height=grid::unit(0.5, "cm"),
@@ -189,7 +200,7 @@ setMethod("plot_sample_clustering", signature(object="ANY"),
                    rotate_x_tick_labels=waiver(),
                    show_feature_dendrogram=TRUE,
                    show_sample_dendrogram=TRUE,
-                   show_normalized_data=TRUE,
+                   show_normalised_data=TRUE,
                    show_outcome=TRUE,
                    dendrogram_height=grid::unit(1.5, "cm"),
                    outcome_height=grid::unit(0.5, "cm"),
@@ -234,7 +245,7 @@ setMethod("plot_sample_clustering", signature(object="ANY"),
                                      "rotate_x_tick_labels"=rotate_x_tick_labels,
                                      "show_feature_dendrogram"=show_feature_dendrogram,
                                      "show_sample_dendrogram"=show_sample_dendrogram,
-                                     "show_normalized_data"=show_normalized_data,
+                                     "show_normalised_data"=show_normalised_data,
                                      "show_outcome"=show_outcome,
                                      "dendrogram_height"=dendrogram_height,
                                      "outcome_height"=outcome_height,
@@ -279,7 +290,7 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
                    rotate_x_tick_labels=waiver(),
                    show_feature_dendrogram=TRUE,
                    show_sample_dendrogram=TRUE,
-                   show_normalized_data=TRUE,
+                   show_normalised_data=TRUE,
                    show_outcome=TRUE,
                    dendrogram_height=grid::unit(1.5, "cm"),
                    outcome_height=grid::unit(0.5, "cm"),
@@ -363,13 +374,13 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
             # rotate_x_tick_labels
             if(is.waive(rotate_x_tick_labels)) rotate_x_tick_labels <- TRUE
             
-            # show_normalized_data
-            if(is.logical(show_normalized_data)){
-              if(show_normalized_data) show_normalized_data <- "fixed"
-              else show_normalized_data <- "none"
+            # show_normalised_data
+            if(is.logical(show_normalised_data)){
+              if(show_normalised_data) show_normalised_data <- "fixed"
+              else show_normalised_data <- "none"
               
             } else {
-              .check_parameter_value_is_valid(x=show_normalized_data, var_name="show_normalized_data",
+              .check_parameter_value_is_valid(x=show_normalised_data, var_name="show_normalised_data",
                                               values=c("none", "fixed", "set_normalisation"))
             }
             
@@ -595,7 +606,7 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
                                                 rotate_x_tick_labels=rotate_x_tick_labels,
                                                 show_feature_dendrogram=show_feature_dendrogram,
                                                 show_sample_dendrogram=show_sample_dendrogram,
-                                                show_normalized_data=show_normalized_data,
+                                                show_normalised_data=show_normalised_data,
                                                 show_outcome=show_outcome,
                                                 dendrogram_height=dendrogram_height,
                                                 outcome_height=outcome_height,
@@ -709,7 +720,7 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
                                          rotate_x_tick_labels,
                                          show_feature_dendrogram,
                                          show_sample_dendrogram,
-                                         show_normalized_data,
+                                         show_normalised_data,
                                          show_outcome,
                                          dendrogram_height,
                                          outcome_height,
@@ -728,11 +739,11 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
   
   # Determine the range of the gradient palette.
   if(is.waive(gradient_palette_range)){
-    if(show_normalized_data == "none"){
+    if(show_normalised_data == "none"){
       # Default to an empty range.
       gradient_palette_range <- c(NA, NA)
       
-    } else if(show_normalized_data == "fixed"){
+    } else if(show_normalised_data == "fixed"){
       # Identify the normalisation method used to convert the data.
       normalisation_method <- lapply(list_id, function(ii, data){
         
@@ -758,13 +769,13 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
       gradient_palette_range <- .get_default_normalisation_range_for_plotting(norm_method=normalisation_method)
       
       
-    } else if(show_normalized_data == "set_normalisation"){
+    } else if(show_normalised_data == "set_normalisation"){
       # By default show range -3 to 3 standard deviations
       gradient_palette_range <- .get_default_normalisation_range_for_plotting(norm_method="standardisation_winsor")
       
     } else {
-      ..error_reached_unreachable_code(paste0(".plot_sample_clustering_plot: encountered unknown value for show_normalized_data: ",
-                                              show_normalized_data))
+      ..error_reached_unreachable_code(paste0(".plot_sample_clustering_plot: encountered unknown value for show_normalised_data: ",
+                                              show_normalised_data))
     }
     
   } else if(is.null(gradient_palette_range)){
@@ -773,16 +784,16 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
   }
   
   # Normalise expression data
-  expression_data <- lapply(list_id, function(ii, data, show_normalized_data){
+  expression_data <- lapply(list_id, function(ii, data, show_normalised_data){
     
     # Normalise expression data
     expression_data <- .normalise_expression_data(x=data[[ii]]$data,
-                                                  show_normalized_data=show_normalized_data,
+                                                  show_normalised_data=show_normalised_data,
                                                   feature_info=data[[ii]]$feature_info)
     
     return(expression_data)
     
-  }, data=data, show_normalized_data=show_normalized_data)
+  }, data=data, show_normalised_data=show_normalised_data)
   
   # Name the expression data sets by the list identifiers so that they can be
   # recognised and addressed by name.
@@ -839,19 +850,10 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
       gradient_palette_range <- c(-1.0, 0.0, 1.0)
       
     } else {
-      # Replace the first value of the range, if it is not finite (NA).
-      if(!is.finite(gradient_palette_range[1])){
-        gradient_palette_range[1] <- min(feature_ranges$min_value)
-      }
-      
-      # Replace the last value of the range, if it is not finite (NA).
-      if(!is.finite(tail(gradient_palette_range, n=1))){
-        gradient_palette_range[length(gradient_palette_range)] <- max(feature_ranges$max_value)
-      }
-      
-      # Shrink the gradient palette range to two values.
-      gradient_palette_range <- c(gradient_palette_range[1],
-                                  gradient_palette_range[length(gradient_palette_range)])
+      # Find a nice range for missing values of the palette range.
+      gradient_palette_range <- plotting.nice_range(input_range=gradient_palette_range,
+                                                    x=c(min(feature_ranges$min_value),
+                                                        max(feature_ranges$max_value)))
     }
   }
   
@@ -909,19 +911,11 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
       outcome_palette_range <- c(0.0, 1.0)
       
     } else {
-      # Replace the first value of the range, if it is not finite (NA).
-      if(!is.finite(outcome_palette_range[1])){
-        outcome_palette_range[1] <- min(outcome_ranges$min_value)
-      }
       
-      # Replace the last value of the range, if it is not finite (NA).
-      if(!is.finite(tail(outcome_palette_range, n=1))){
-        outcome_palette_range[length(outcome_palette_range)] <- max(outcome_ranges$max_value)
-      }
-      
-      # Shrink the gradient palette range to two values.
-      outcome_palette_range <- c(outcome_palette_range[1],
-                                 outcome_palette_range[length(outcome_palette_range)])
+      # Find a nice range for missing values of the palette range.
+      outcome_palette_range <- plotting.nice_range(input_range=outcome_palette_range,
+                                                    x=c(min(outcome_ranges$min_value),
+                                                        max(outcome_ranges$max_value)))
     }
   }
   
@@ -1582,14 +1576,14 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
 
 
 .normalise_expression_data <- function(x,
-                                       show_normalized_data,
+                                       show_normalised_data,
                                        feature_info){
   
   # Check for empty data
   if(is_empty(x)) return(NULL)
   
   # Apply normalisation
-  if(show_normalized_data == "fixed"){
+  if(show_normalised_data == "fixed"){
     # Fixed normalization applies normalisation and transformation parameters
     # derived during model creation. Note that extract_feature_expression method
     # already corrects batch differences (if present), and we do not apply batch
@@ -1607,7 +1601,7 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
                             features=names(feature_info),
                             invert=FALSE)
     
-  } else if(show_normalized_data == "set_normalisation"){
+  } else if(show_normalised_data == "set_normalisation"){
     
     # Normalise features within the current dataset.
     for(curr_feat in names(feature_info)){
