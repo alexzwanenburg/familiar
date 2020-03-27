@@ -1339,6 +1339,37 @@ plotting.format_number <- function(x, digits=3){
 
 
 
+plotting.nice_range <- function(input_range, x){
+  
+  # Shrink input range to first and last value
+  input_range <- c(head(input_range, n=1), tail(input_range, n=1))
+  
+  # Find values in input_range that should be replaced.
+  replace_index <- is.na(input_range)
+  
+  # Return input range if no updating is required.
+  if(!any(replace_index)) return(input_range)
+  
+  # Find range of values in x.
+  value_range <- range(x)
+  
+  # Replace missing elements of the input range.
+  input_range[replace_index] <- value_range[replace_index]
+  
+  # Make the input range nice
+  nice_range <- range(labeling::extended(dmin=input_range[1],
+                                         dmax=input_range[2],
+                                         m=5,
+                                         only.loose=TRUE))
+  
+  # Update the input_range with nice values
+  input_range[replace_index] <- nice_range[replace_index]
+  
+  return(input_range)
+}
+
+
+
 plotting.dendrogram_as_table <- function(h, similarity_metric){
   
   # Suppress NOTES due to non-standard evaluation in data.table
