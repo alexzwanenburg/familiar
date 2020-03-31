@@ -863,6 +863,9 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
   if(is.waive(outcome_palette_range) & outcome_type %in% c("continuous", "count") & !is.null(show_outcome)){
     if(outcome_type == "continuous") outcome_palette_range <- c(NA, NA)
     if(outcome_type == "count") outcome_palette_range <- c(0.0, NA) 
+    
+  } else if(is.waive(outcome_palette_range)){
+    outcome_palette_range <- c(NA, NA)
   }
   
   # Process outcome plot data for plotting.
@@ -872,6 +875,8 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
       if(is_empty(x)) return(NULL)
 
       if(outcome_type %in% c("survival", "competing_risk")){
+        if(is.null(evaluation_times)) evaluation_times <- data[[ii]]$evaluation_times
+        
         outcome_plot_data <- .process_expression_survival_outcome(x=data[[ii]]$data,
                                                                   evaluation_times=evaluation_times)
       } else {
@@ -881,12 +886,15 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
       return(outcome_plot_data)
       
     }, data=data, outcome_type=outcome_type, evaluation_times=evaluation_times)
+    
+    # Name the outcome plot data sets by the list identifiers so that they can be
+    # recognised and addressed by name.
+    names(outcome_plot_data) <- list_id
+    
+  } else {
+    outcome_plot_data <- list()
   }
-  
-  # Name the outcome plot data sets by the list identifiers so that they can be
-  # recognised and addressed by name.
-  names(outcome_plot_data) <- list_id
-  
+
   # Update the outcome palette range based on 
   if(any(!is.finite(outcome_palette_range)) & outcome_type %in% c("continuous", "count") & !is.null(show_outcome)){
     
@@ -1006,19 +1014,18 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
       }
       
       # Create expression outcome plot.
-      p_outcome <- .create_expression_outcome_plot(x=plot_data,
+      p_outcome <- .create_expression_outcome_plot(x=outcome_plot_data[[x_split$list_id]],
                                                    ggtheme=ggtheme,
                                                    position=show_outcome,
                                                    outcome_type=outcome_type,
                                                    outcome_palette=outcome_palette,
                                                    outcome_palette_range=outcome_palette_range,
                                                    plot_height=outcome_height,
-                                                   evaluation_times=evaluation_times,
                                                    rotate_x_tick_labels=rotate_x_tick_labels)
       
       # Convert to grob
-      g_outcome <- plotting.to_grob(g=p_outcome)
-      
+      g_outcome <- plotting.to_grob(p_outcome)
+      browser()
       # Extract guide from grob
       g_outcome_guide <- .gtable_extract(g=g_outcome, element="guide", partial_match=TRUE)
       
@@ -1045,7 +1052,10 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
                                   where=show_outcome,
                                   ref_element="panel-main",
                                   partial_match=TRUE)
-      browser()
+      
+    } else {
+      
+      g_outcome_guide <- NULL
     }
     
     # Add sample dendogram
@@ -1387,30 +1397,21 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
                                             outcome_palette,
                                             outcome_palette_range,
                                             plot_height,
-                                            evaluation_times,
                                             rotate_x_tick_labels){
-  
-  # Check if evaluation_times fall in a valid range.
-  if(outcome_type %in% c("survival", "competing_risk")){
-    sapply(evaluation_times, .check_number_in_valid_range, var_name="evaluation_times", range=c(0.0, Inf), closed=c(FALSE, TRUE))
-  }
-  
+
   # Process data
   if(outcome_type %in% c("binomial", "multinomial")){
-    x <- .process_expression_generic_outcome(x=x)
-    
+   
     legend_label <- "class"
     palette_type <- "qualitative"
     
   } else if(outcome_type %in% c("continuous", "count")){
-    x <- .process_expression_generic_outcome(x=x)
-    
+   
     legend_label <- "value"
     palette_type <- "sequential"
     
   } else if(outcome_type %in% c("survival", "competing_risk")){
-    x <- .process_expression_survival_outcome(x=x, evaluation_times=evaluation_times)
-    
+   
     legend_label <- "event"
     palette_type <- "qualitative"
     
@@ -1418,7 +1419,7 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
     ..error_outcome_type_not_implemented(outcome_type)
   }
   
-  browser()
+  
   # Create basic plot
   p <- ggplot2::ggplot(data=x, mapping=ggplot2::aes(x=!!sym("sample"),
                                                     y=!!sym("evaluation_point"),
@@ -1454,15 +1455,15 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
   } else {
     # Colors
     outcome_colours <- plotting.get_palette(x=outcome_palette,
-                                            n=levels(x$value),
+                                            n=nlevels(x$value),
                                             palette_type=palette_type,
                                             use_alternative=TRUE)
     
     # Set the qualitative scale
-    p <- p + ggplot2::scale_fill_discrete(name=legend_label,
-                                          values=outcome_colours[seq_along(levels(x$value))],
-                                          breaks=levels(x$value),
-                                          drop=FALSE)
+    p <- p + ggplot2::scale_fill_manual(name=legend_label,
+                                        values=outcome_colours[seq_along(levels(x$value))],
+                                        breaks=levels(x$value),
+                                        drop=FALSE)
   }
   
   # Remove some theme elements and reduce margins. The histogram height is left.
@@ -1681,10 +1682,10 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
 .process_expression_generic_outcome <- function(x){
   browser()
   # Keep only one copy for each sample.
-  x <- data.table::copy(x[, c("sample", "outcome")])
+  x <- data.table::copy(x[, c("subject_id", "outcome")])
   
   # Rename columns
-  data.table::setnames(x, old=c("outcome"), new=c("value"))
+  data.table::setnames(x, old=c("subject_id", "outcome"), new=c("sample", "value"))
   
   # Set evaluation point (which is on the y-axis)
   x$evaluation_point <- factor("1", levels="1")
@@ -1698,8 +1699,11 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
   # Suppress NOTES due to non-standard evaluation in data.table
   outcome_time <- outcome_event <- NULL
   
+  # Check if evaluation_times fall in a valid range.
+  sapply(evaluation_times, .check_number_in_valid_range, var_name="evaluation_times", range=c(0.0, Inf), closed=c(FALSE, TRUE))
+ 
   # Keep only one copy for each sample.
-  x <- data.table::copy(x[, c("sample", "outcome_time", "outcome_event")])
+  x <- data.table::copy(x[, c("subject_id", "outcome_time", "outcome_event")])
   
   plot_data <- lapply(evaluation_times, function(eval_time, x){
     # Make a copy with the relevant data.
@@ -1728,6 +1732,9 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
   
   # Set evaluation point as a factor
   plot_data$evaluation_point <- factor(plot_data$evaluation_point, levels=evaluation_times)
+  
+  # Change subject_id to sample
+  data.table::setnames(plot_data, old="subject_id", new="sample")
   
   return(plot_data)
 }
