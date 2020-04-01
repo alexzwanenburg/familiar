@@ -437,12 +437,23 @@
 }
 
 
-.gtable_rename_element <- function(g, old, new){
-  if(!.gtable_element_in_layout(g=g, element=old, partial_match=FALSE)){
-    ..error_reached_unreachable_code(".gtable_rename_element: element not found in layout table.")
+.gtable_rename_element <- function(g, old, new, partial_match=FALSE){
+  if(!.gtable_element_in_layout(g=g, element=old, partial_match=partial_match)){
+    stop(".gtable_rename_element: element not found in layout table.")
   }
   
-  g$layout$name[g$layout$name == old] <- new
+  if(partial_match){
+    updated_element <- grepl(pattern=old, x=g$layout$name)
+    
+  } else {
+    updated_element <- g$layout$name == old
+  }
+  
+  if(sum(updated_element) > 1){
+    warning(".gtable_rename_element: multiple elements will be updated.")
+  }
+  
+  g$layout$name[updated_element] <- new
   
   return(g)
 }
