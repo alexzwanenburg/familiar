@@ -1496,3 +1496,78 @@ plotting.dendrogram_as_table <- function(h, similarity_metric){
   
   return(connector_list)
 }
+
+
+
+plotting.combine_guides <- function(g, ggtheme, no_empty=TRUE){
+  
+  # Find how tables should be organised.
+  guide_position <- ggtheme$legend.position
+  
+  # Check if the guide position can be interpreted
+  if(!all(guide_position %in% c("none", "left", "right", "bottom", "top"))){
+    stop("plotting.combine_guides: Guide position (legend.position in the ggplot2 theme) is expect to be one of none, left, right, bottom, top.")
+  }
+  
+  if(guide_position == "none") return(NULL)
+  
+  # If necessary, check that all guides are present as a gtable.
+  if(no_empty){
+    if(!all(sapply(g, gtable::is.gtable))){
+      stop("plotting.combine_guides: One of the guides in the g argument is not a gtable object.")
+    } 
+  } 
+  
+  # Check if all guides are missing.
+  if(!any(sapply(g, gtable::is.gtable))) return(NULL)
+  
+  # Keep only guides that are gtables.
+  g <- g[sapply(g, gtable::is.gtable)]
+  
+  # Find widths and heights
+  widths <- lapply(g, gtable::gtable_width)
+  widths <- do.call(grid::unit.c, widths)
+  
+  heights <- lapply(g, gtable::gtable_height)
+  heights <- do.call(grid::unit.c, heights)
+  
+  if(guide_position %in% c("left", "right", "none")){
+    # Concatenate the widths.
+    widths <- max(widths)
+    
+    # Provide the matrix to order the guides.
+    order_matrix <- matrix(data=seq_along(g), nrow=length(g), ncol=1)
+    
+    # Create a grob matrix
+    g_matrix <- matrix(data=g, ncol=1)
+    
+  } else {
+    # Concatenate the heights.
+    heights <- max(heights)
+    
+    # Provide the matrix to order the guides.
+    order_matrix <- matrix(data=seq_along(g), nrow=1, ncol=length(g))
+    
+    # Create a grob matrix
+    g_matrix <- matrix(data=g, nrow=1)
+  }
+  
+  # Create a gtable that combines all guide-boxes.
+  g <- gtable::gtable_matrix(name="guide-box",
+                             grobs=g_matrix,
+                             widths=widths,
+                             heights=heights,
+                             z=order_matrix,
+                             respect=TRUE,
+                             clip="inherit")
+  
+  # Wrap the combined guides into a single grob.
+  g <- gtable::gtable_matrix(name="guide-box",
+                             grobs=matrix(list(g), nrow=1, ncol=1),
+                             widths=sum(widths),
+                             heights=sum(heights),
+                             respect=TRUE,
+                             clip="inherit")
+  
+  return(g)
+}
