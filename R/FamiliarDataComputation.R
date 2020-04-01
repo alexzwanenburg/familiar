@@ -246,6 +246,22 @@ setMethod("extract_data", signature(object="familiarEnsemble"),
             # Load models
             object <- load_models(object=object)
             
+            # TEMP
+            prediction_data <- extract_predictions(object=object,
+                                                   data=data,
+                                                   ensemble_method=ensemble_method,
+                                                   time_max=time_max,
+                                                   verbose=verbose)
+            
+            # Extract confusion matrix data.
+            if(data_element %in% c("all", "confusion_matrix")){
+              confusion_matrix_info <- extract_confusion_matrix(object=object,
+                                                                prediction_data=prediction_data,
+                                                                verbose=verbose)
+            } else {
+              confusion_matrix_info <- NULL
+            }
+            
             # Extract feature distance tables, 
             if(data_element %in% c("all", "mutual_correlation", "univariate_analysis", "feature_expressions")){
               # Not for the fs_vimp and model_vimp data elements. This is
@@ -349,7 +365,7 @@ setMethod("extract_data", signature(object="familiarEnsemble"),
             
             # Create predictions.
             if(data_element %in% c("all", "prediction_data", "model_performance",
-                                   "stratification_data", "auc_data")){
+                                   "stratification_data", "auc_data", "confusion_matrix")){
               prediction_data <- extract_predictions(object=object,
                                                      data=data,
                                                      ensemble_method=ensemble_method,
@@ -1797,6 +1813,32 @@ setMethod("extract_feature_expression", signature(object="familiarEnsemble", dat
                                     "evaluation_times"=eval_times)
             
             return(expression_info)
+          })
+
+
+
+#'@title Internal function to extract the confusion matrix.
+#'
+#'@description Computes and extracts the confusion matrix for predicted and
+#'  observed categorical outcomes used in a `familiarEnsemble` object.
+#'
+#'@inheritParams extract_data
+#'
+#'@return A data.table containing predicted and observed outcome data together
+#'  with a co-occurence count.
+#'@md
+#'@keywords internal
+setGeneric("extract_confusion_matrix", function(object,
+                                                prediction_data,
+                                                verbose=FALSE,
+                                                ...) standardGeneric("extract_confusion_matrix"))
+  
+#####extract_confusion_matrix#####
+setMethod("extract_confusion_matrix", signature(object="familiarEnsemble", data="ANY"),
+          function(object,
+                   prediction_data,
+                   verbose=FALSE){
+            browser()
           })
 
 
