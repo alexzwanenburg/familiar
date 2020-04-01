@@ -24,6 +24,10 @@ NULL
 #'@param outcome_palette_range (*optional*) Numerical range used to span the
 #'  gradient of numeric (`continuous`, `count`) outcome values. This argument is
 #'  ignored for other outcome types or if the outcome is not shown.
+#'@param outcome_legend_label (*optional*) Label to provide to the legend for
+#'  outcome data. If NULL, the legend will not have a name. By default, `class`,
+#'  `value` and `event` are used for `binomial` and `multinomial`, `continuous`
+#'  and `count`, and `survival` outcome types, respectively.
 #'@param show_feature_dendrogram (*optional*) Show feature dendrogram around the
 #'  main panel. Can be `TRUE`, `FALSE`, `NULL`, or a position, i.e. `top`,
 #'  `bottom`, `left` and `right`.
@@ -51,7 +55,7 @@ NULL
 #'  A dendrogram can only be drawn from cluster methods that produce dendograms,
 #'  such as `hclust`. A dendogram can for example not be constructed using the
 #'  partioning around medioids method (`pam`).
-#'@show_normalised_data (*optional*) Flag that determines whether the data shown
+#'@param show_normalised_data (*optional*) Flag that determines whether the data shown
 #'  in the main heatmap is normalised using the same settings as within the
 #'  analysis (`fixed`; default), using a standardisation method
 #'  (`set_normalisation`) that is applied separately to each dataset, or not at
@@ -78,9 +82,11 @@ NULL
 #'@param dendrogram_height (*optional*) Height of the dendrogram. The height is
 #'  1.5 cm by default. Height is expected to be grid unit (see `grid::unit`),
 #'  which also allows for specifying relative heights.
-#'@param outcome_height (*optional*) Height of the outcome data column/row. The
-#'  height is 0.5 cm by default. Height is expected to be a grid unit (see
-#'  `grid::unit`), which also allows for specifying relative heights.
+#'@param outcome_height (*optional*) Height of an outcome data column/row. The
+#'  height is 0.3 cm by default. Height is expected to be a grid unit (see
+#'  `grid::unit`), which also allows for specifying relative heights. In case of
+#'  `survival` outcome data with multipe `evaluation_times`, this height is
+#'  multiplied by the number of time points.
 #'@param evaluation_times (*optional*) Times at which the event status of
 #'  time-to-event survival outcomes are determined. Only used for `survival`
 #'  outcome. If not specified, the values used when creating the underlying
@@ -144,6 +150,7 @@ setGeneric("plot_sample_clustering",
                     y_label=waiver(),
                     y_label_shared="row",
                     legend_label=waiver(),
+                    outcome_legend_label=waiver(),
                     plot_title=NULL,
                     plot_sub_title=NULL,
                     caption=NULL,
@@ -159,7 +166,7 @@ setGeneric("plot_sample_clustering",
                     show_normalised_data=TRUE,
                     show_outcome=TRUE,
                     dendrogram_height=grid::unit(1.5, "cm"),
-                    outcome_height=grid::unit(0.5, "cm"),
+                    outcome_height=grid::unit(0.3, "cm"),
                     evaluation_times=NULL,
                     width=waiver(),
                     height=waiver(),
@@ -188,6 +195,7 @@ setMethod("plot_sample_clustering", signature(object="ANY"),
                    y_label=waiver(),
                    y_label_shared="row",
                    legend_label=waiver(),
+                   outcome_legend_label=waiver(),
                    plot_title=NULL,
                    plot_sub_title=NULL,
                    caption=NULL,
@@ -203,7 +211,7 @@ setMethod("plot_sample_clustering", signature(object="ANY"),
                    show_normalised_data=TRUE,
                    show_outcome=TRUE,
                    dendrogram_height=grid::unit(1.5, "cm"),
-                   outcome_height=grid::unit(0.5, "cm"),
+                   outcome_height=grid::unit(0.3, "cm"),
                    evaluation_times=NULL,
                    width=waiver(),
                    height=waiver(),
@@ -233,6 +241,7 @@ setMethod("plot_sample_clustering", signature(object="ANY"),
                                      "y_label"=y_label,
                                      "y_label_shared"=y_label_shared,
                                      "legend_label"=legend_label,
+                                     "outcome_legend_label"=outcome_legend_label,
                                      "plot_title"=plot_title,
                                      "plot_sub_title"=plot_sub_title,
                                      "caption"=caption,
@@ -278,6 +287,7 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
                    y_label=waiver(),
                    y_label_shared="row",
                    legend_label=waiver(),
+                   outcome_legend_label=waiver(),
                    plot_title=NULL,
                    plot_sub_title=NULL,
                    caption=NULL,
@@ -293,7 +303,7 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
                    show_normalised_data=TRUE,
                    show_outcome=TRUE,
                    dendrogram_height=grid::unit(1.5, "cm"),
-                   outcome_height=grid::unit(0.5, "cm"),
+                   outcome_height=grid::unit(0.3, "cm"),
                    evaluation_times=NULL,
                    width=waiver(),
                    height=waiver(),
@@ -368,9 +378,6 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
               y_label <- NULL
             }
             
-            # legend_label
-            if(is.waive(legend_label)) legend_label <- NULL
-            
             # rotate_x_tick_labels
             if(is.waive(rotate_x_tick_labels)) rotate_x_tick_labels <- TRUE
             
@@ -383,6 +390,32 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
               .check_parameter_value_is_valid(x=show_normalised_data, var_name="show_normalised_data",
                                               values=c("none", "fixed", "set_normalisation"))
             }
+            
+            # legend_label
+            if(is.waive(legend_label)){
+              legend_label <- ifelse(show_normalised_data == "none", "value", "norm. value")
+            }
+            
+            # outcome_legend_label
+            if(is.waive(outcome_legend_label)){
+              
+              # Assign default label to the 
+              if(object@outcome_type %in% c("binomial", "multinomial")){
+                outcome_legend_label <- "class"
+
+              } else if(object@outcome_type %in% c("continuous", "count")){
+                outcome_legend_label <- "value"
+
+              } else if(object@outcome_type %in% c("survival", "competing_risk")){
+                outcome_legend_label <- "event"
+
+              } else {
+                ..error_outcome_type_not_implemented(object@outcome_type)
+              }
+            }
+            
+            # check outcome_legend_label
+            plotting.check_input_label(label_var=outcome_legend_label, var_name="outcome_legend_label")
             
             # x_axis_by & y_axis_by
             available_axis_variables <- c("feature", "sample")
@@ -594,6 +627,7 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
                                                 y_label=y_label,
                                                 y_label_shared=y_label_shared,
                                                 legend_label=legend_label,
+                                                outcome_legend_label=outcome_legend_label,
                                                 plot_title=plot_title,
                                                 plot_sub_title=plot_sub_title,
                                                 caption=caption,
@@ -708,6 +742,7 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
                                          y_label,
                                          y_label_shared,
                                          legend_label,
+                                         outcome_legend_label,
                                          plot_title,
                                          plot_sub_title,
                                          caption,
@@ -1004,59 +1039,10 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
     g_heatmap <- plotting.to_grob(p_heatmap)
     
     # Rename panel to panel-main
-    g_heatmap <- .gtable_rename_element(g=g_heatmap, old="panel", new="panel-main")
-    
-    if(!is.null(show_outcome)){
-      
-      # Find evaluation times (will still be NULL for outcome_type other than survival and competing_risk)
-      if(is.null(evaluation_times)){
-        evaluation_times <- data[[x_split$list_id]]$evaluation_times
-      }
-      
-      # Create expression outcome plot.
-      p_outcome <- .create_expression_outcome_plot(x=outcome_plot_data[[x_split$list_id]],
-                                                   ggtheme=ggtheme,
-                                                   position=show_outcome,
-                                                   outcome_type=outcome_type,
-                                                   outcome_palette=outcome_palette,
-                                                   outcome_palette_range=outcome_palette_range,
-                                                   plot_height=outcome_height,
-                                                   rotate_x_tick_labels=rotate_x_tick_labels)
-      
-      # Convert to grob
-      g_outcome <- plotting.to_grob(p_outcome)
-      browser()
-      # Extract guide from grob
-      g_outcome_guide <- .gtable_extract(g=g_outcome, element="guide", partial_match=TRUE)
-      
-      if(outcome_type %in% c("survival", "competing_risk")){
-        # Determine the axis element
-        axis_element <- ifelse(show_outcome %in% c("top", "bottom"), "axis-l", "axis-b")
-        
-        # Define extracted outcome elements.
-        extracted_outcome_elements <- c("panel", axis_element)
-        
-      } else {
-        extracted_outcome_elements <- c("panel")
-      }
-      
-      # Extract the main plot elements from the outcome columns/rows
-      g_outcome <- .gtable_extract(g=g_outcome,
-                                   element=extracted_outcome_elements,
-                                   partial_match=TRUE)
-      
-      # Insert the outcome at the position correct position around the
-      # heatmap.
-      g_heatmap <- .gtable_insert(g=g_heatmap,
-                                  g_new=g_outcome,
-                                  where=show_outcome,
-                                  ref_element="panel-main",
-                                  partial_match=TRUE)
-      
-    } else {
-      
-      g_outcome_guide <- NULL
-    }
+    g_heatmap <- .gtable_rename_element(g=g_heatmap,
+                                        old="panel",
+                                        new="panel-main",
+                                        partial_match=TRUE)
     
     # Add sample dendogram
     if(!is.null(show_sample_dendrogram)){
@@ -1149,6 +1135,60 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
                                   partial_match=TRUE)
     }
     
+    if(!is.null(show_outcome)){
+      
+      # Find evaluation times (will still be NULL for outcome_type other than survival and competing_risk)
+      if(is.null(evaluation_times)){
+        evaluation_times <- data[[x_split$list_id]]$evaluation_times
+      }
+      
+      # Create expression outcome plot.
+      p_outcome <- .create_expression_outcome_plot(x=outcome_plot_data[[x_split$list_id]],
+                                                   ggtheme=ggtheme,
+                                                   position=show_outcome,
+                                                   outcome_type=outcome_type,
+                                                   outcome_palette=outcome_palette,
+                                                   outcome_palette_range=outcome_palette_range,
+                                                   outcome_legend_label=outcome_legend_label,
+                                                   plot_height=outcome_height,
+                                                   sample_order=data[[x_split$list_id]]$sample_order,
+                                                   rotate_x_tick_labels=rotate_x_tick_labels)
+      
+      # Convert to grob
+      g_outcome <- plotting.to_grob(p_outcome)
+      
+      # Extract guide from grob
+      g_outcome_guide <- .gtable_extract(g=g_outcome, element="guide", partial_match=TRUE)
+      
+      if(outcome_type %in% c("survival", "competing_risk")){
+        # Determine the axis element
+        axis_element <- ifelse(show_outcome %in% c("top", "bottom"), "axis-l", "axis-b")
+        
+        # Define extracted outcome elements.
+        extracted_outcome_elements <- c("panel", axis_element)
+        
+      } else {
+        extracted_outcome_elements <- c("panel")
+      }
+      
+      # Extract the main plot elements from the outcome columns/rows
+      g_outcome <- .gtable_extract(g=g_outcome,
+                                   element=extracted_outcome_elements,
+                                   partial_match=TRUE)
+      
+      # Insert the outcome at the position correct position around the
+      # heatmap.
+      g_heatmap <- .gtable_insert(g=g_heatmap,
+                                  g_new=g_outcome,
+                                  where=show_outcome,
+                                  ref_element="panel-main",
+                                  partial_match=TRUE)
+      
+    } else {
+      
+      g_outcome_guide <- NULL
+    }
+    
     # Re-introduce plot elements.
     g_heatmap <- plotting.reinsert_plot_elements(g=g_heatmap,
                                                  elements=c("strip_x", "strip_y"),
@@ -1162,6 +1202,11 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
     extracted_element_list <- .append_new(extracted_element_list, extracted_elements)
   }
   
+  # Combine main guide with the outcome guide
+  extracted_element_list$guide <- plotting.combine_guides(g=list(extracted_element_list$guide, g_outcome_guide),
+                                                          ggtheme=ggtheme,
+                                                          no_empty=FALSE)
+  
   # Obtain layout dimensions (rows, cols).
   layout_dims <- plotting.get_plot_layout_dims(plot_layout_table=plot_layout_table)
   
@@ -1172,8 +1217,6 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
                                 elements=setdiff(elements, c("strip_x", "strip_y")),
                                 element_grobs=extracted_element_list,
                                 ggtheme=ggtheme)
-  
-  browser()
   
   return(g)
 }
@@ -1396,29 +1439,27 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
                                             outcome_type,
                                             outcome_palette,
                                             outcome_palette_range,
+                                            outcome_legend_label,
                                             plot_height,
+                                            sample_order,
                                             rotate_x_tick_labels){
 
-  # Process data
+  # Set type of palette that is to be used for default palettes.
   if(outcome_type %in% c("binomial", "multinomial")){
-   
-    legend_label <- "class"
     palette_type <- "qualitative"
     
   } else if(outcome_type %in% c("continuous", "count")){
-   
-    legend_label <- "value"
     palette_type <- "sequential"
     
   } else if(outcome_type %in% c("survival", "competing_risk")){
-   
-    legend_label <- "event"
     palette_type <- "qualitative"
     
   } else {
     ..error_outcome_type_not_implemented(outcome_type)
   }
   
+  # Correctly order the samples
+  x$sample <- factor(x$sample, levels=sample_order$name[order(sample_order$label_order)])
   
   # Create basic plot
   p <- ggplot2::ggplot(data=x, mapping=ggplot2::aes(x=!!sym("sample"),
@@ -1434,7 +1475,7 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
   
   # Limit margins along the axis with samples so it will fit one-to-one with the
   # main heatmap.
-  p <- p + ggplot2::scale_x_continuous(expand=c(0, 0))
+  p <- p + ggplot2::scale_x_discrete(expand=c(0, 0))
   if(position %in% c("left", "right")){
     p <- p + ggplot2::coord_flip()
   }
@@ -1448,7 +1489,7 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
                                             use_alternative=TRUE)
     
     # Set the gradient
-    p <- p + ggplot2::scale_fill_gradientn(name=legend_label,
+    p <- p + ggplot2::scale_fill_gradientn(name=outcome_legend_label,
                                            colors=outcome_colours,
                                            limits=range(outcome_palette_range),
                                            oob=scales::squish)
@@ -1460,7 +1501,7 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
                                             use_alternative=TRUE)
     
     # Set the qualitative scale
-    p <- p + ggplot2::scale_fill_manual(name=legend_label,
+    p <- p + ggplot2::scale_fill_manual(name=outcome_legend_label,
                                         values=outcome_colours[seq_along(levels(x$value))],
                                         breaks=levels(x$value),
                                         drop=FALSE)
@@ -1501,6 +1542,11 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
                             axis.line.y = ggplot2::element_blank(),
                             axis.ticks.y=ggplot2::element_blank(),
                             axis.text.y=ggplot2::element_blank())
+  }
+  
+  # Adapt plot_height so that it scales with the number of evaluation points.
+  if(outcome_type %in% c("survival", "competing_risk")){
+    plot_height <- nlevels(x$evaluation_point) * plot_height
   }
   
   # Ensure that panel heights/widths are set to the plot object.
@@ -1680,7 +1726,7 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
 
 
 .process_expression_generic_outcome <- function(x){
-  browser()
+  
   # Keep only one copy for each sample.
   x <- data.table::copy(x[, c("subject_id", "outcome")])
   

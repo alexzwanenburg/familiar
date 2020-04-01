@@ -25,6 +25,7 @@ plot_sample_clustering(
   y_label = waiver(),
   y_label_shared = "row",
   legend_label = waiver(),
+  outcome_legend_label = waiver(),
   plot_title = NULL,
   plot_sub_title = NULL,
   caption = NULL,
@@ -40,7 +41,7 @@ plot_sample_clustering(
   show_normalised_data = TRUE,
   show_outcome = TRUE,
   dendrogram_height = grid::unit(1.5, "cm"),
-  outcome_height = grid::unit(0.5, "cm"),
+  outcome_height = grid::unit(0.3, "cm"),
   evaluation_times = NULL,
   width = waiver(),
   height = waiver(),
@@ -67,6 +68,7 @@ plot_sample_clustering(
   y_label = waiver(),
   y_label_shared = "row",
   legend_label = waiver(),
+  outcome_legend_label = waiver(),
   plot_title = NULL,
   plot_sub_title = NULL,
   caption = NULL,
@@ -82,7 +84,7 @@ plot_sample_clustering(
   show_normalised_data = TRUE,
   show_outcome = TRUE,
   dendrogram_height = grid::unit(1.5, "cm"),
-  outcome_height = grid::unit(0.5, "cm"),
+  outcome_height = grid::unit(0.3, "cm"),
   evaluation_times = NULL,
   width = waiver(),
   height = waiver(),
@@ -109,6 +111,7 @@ plot_sample_clustering(
   y_label = waiver(),
   y_label_shared = "row",
   legend_label = waiver(),
+  outcome_legend_label = waiver(),
   plot_title = NULL,
   plot_sub_title = NULL,
   caption = NULL,
@@ -124,7 +127,7 @@ plot_sample_clustering(
   show_normalised_data = TRUE,
   show_outcome = TRUE,
   dendrogram_height = grid::unit(1.5, "cm"),
-  outcome_height = grid::unit(0.5, "cm"),
+  outcome_height = grid::unit(0.3, "cm"),
   evaluation_times = NULL,
   width = waiver(),
   height = waiver(),
@@ -220,6 +223,11 @@ ticks themselves) is removed for all but the left-most facet plot(s).
 \item{legend_label}{(\emph{optional}) Label to provide to the legend. If NULL, the
 legend will not have a name.}
 
+\item{outcome_legend_label}{(\emph{optional}) Label to provide to the legend for
+outcome data. If NULL, the legend will not have a name. By default, \code{class},
+\code{value} and \code{event} are used for \code{binomial} and \code{multinomial}, \code{continuous}
+and \code{count}, and \code{survival} outcome types, respectively.}
+
 \item{plot_title}{(\emph{optional}) Label to provide as figure title. If NULL, no
 title is shown.}
 
@@ -278,6 +286,18 @@ A dendrogram can only be drawn from cluster methods that produce dendograms,
 such as \code{hclust}. A dendogram can for example not be constructed using the
 partioning around medioids method (\code{pam}).}
 
+\item{show_normalised_data}{(\emph{optional}) Flag that determines whether the data shown
+in the main heatmap is normalised using the same settings as within the
+analysis (\code{fixed}; default), using a standardisation method
+(\code{set_normalisation}) that is applied separately to each dataset, or not at
+all (\code{none}), which shows the data at the original scale, albeit with
+batch-corrections.
+
+Categorial variables are plotted to span 90\% of the entire numerical value
+range, i.e. the levels of categorical variables with 2 levels are
+represented at 5\% and 95\% of the range, with 3 levels at 5\%, 50\%, and 95\%,
+etc.}
+
 \item{show_outcome}{(\emph{optional}) Show outcome column(s) or row(s) in the
 graph. Can be \code{TRUE}, \code{FALSE}, \code{NULL} or a poistion, i.e. \code{top}, \code{bottom},
 \code{left} and \code{right}.
@@ -295,9 +315,11 @@ dendrogram (if any).}
 1.5 cm by default. Height is expected to be grid unit (see \code{grid::unit}),
 which also allows for specifying relative heights.}
 
-\item{outcome_height}{(\emph{optional}) Height of the outcome data column/row. The
-height is 0.5 cm by default. Height is expected to be a grid unit (see
-\code{grid::unit}), which also allows for specifying relative heights.}
+\item{outcome_height}{(\emph{optional}) Height of an outcome data column/row. The
+height is 0.3 cm by default. Height is expected to be a grid unit (see
+\code{grid::unit}), which also allows for specifying relative heights. In case of
+\code{survival} outcome data with multipe \code{evaluation_times}, this height is
+multiplied by the number of time points.}
 
 \item{evaluation_times}{(\emph{optional}) Times at which the event status of
 time-to-event survival outcomes are determined. Only used for \code{survival}
