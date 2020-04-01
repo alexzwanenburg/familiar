@@ -941,8 +941,8 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
                                       "max_value"=numeric(0)))
         
       } else {
-        return(data.table::data.table("min_value"=as.double(min(outcome_plot_data[[ii]]$outcome, na.rm=TRUE)),
-                                      "max_value"=as.double(max(outcome_plot_data[[ii]]$outcome, na.rm=TRUE))))
+        return(data.table::data.table("min_value"=as.double(min(outcome_plot_data[[ii]]$value, na.rm=TRUE)),
+                                      "max_value"=as.double(max(outcome_plot_data[[ii]]$value, na.rm=TRUE))))
       }
     }, outcome_plot_data=outcome_plot_data)
     
