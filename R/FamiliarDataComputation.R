@@ -1834,7 +1834,7 @@ setGeneric("extract_confusion_matrix", function(object,
                                                 ...) standardGeneric("extract_confusion_matrix"))
   
 #####extract_confusion_matrix#####
-setMethod("extract_confusion_matrix", signature(object="familiarEnsemble", data="ANY"),
+setMethod("extract_confusion_matrix", signature(object="familiarEnsemble"),
           function(object,
                    prediction_data,
                    verbose=FALSE){
