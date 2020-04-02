@@ -3,10 +3,10 @@ setClass("familiarModel",
          slots = list(
            # Model container
            model = "ANY",
-           # Model outcome type
+           # Outcome type
            outcome_type = "character",
-           # Levels of outcome classes
-           class_levels = "character",
+           # Outcome info, such as class levels, mean values etc.
+           outcome_info = "ANY",
            # Data required for feature pre-processing
            feature_info = "ANY",
            # Hyper-parameters (typically stored in the model as well)
@@ -29,8 +29,6 @@ setClass("familiarModel",
            calibration_info = "ANY",
            # Information required to do perform a Kaplan-Meier analysis using the model
            km_info = "ANY",
-           # Mean value of the predicted outcome in the development set. This is used for some performance metrics.
-           mean_outcome_value = "ANY",
            # Evaluation settings. This allows default values for external use of existing models.
            settings = "ANY",
            # Flags anonymisation of the model
@@ -43,7 +41,7 @@ setClass("familiarModel",
          prototype = list(
            model = NULL,
            outcome_type = NA_character_,
-           class_levels = character(0),
+           outcome_info = NULL,
            feature_info = NULL,
            hyperparameters = NULL,
            calibration_model = NULL,
@@ -54,7 +52,6 @@ setClass("familiarModel",
            important_features = NULL,
            calibration_info = NULL,
            km_info = NULL,
-           mean_outcome_value = NA,
            run_table = NULL,
            settings = NULL,
            is_anonymised = FALSE,
@@ -70,8 +67,8 @@ setClass("familiarEnsemble",
            model_list = "ANY",
            # Model outcome type
            outcome_type = "character",
-           # Levels of outcome classes
-           class_levels = "character",
+           # Outcome info, such as class levels, mean values etc.
+           outcome_info = "ANY",
            # Name of learner
            learner = "character",
            # Name of feature selection method
@@ -84,8 +81,6 @@ setClass("familiarEnsemble",
            important_features = "ANY",
            # Set of run tables for the current ensemble. This is only required for processing internal data.
            run_table = "ANY",
-           # Mean value of the predicted outcome in the development set. This is used for some performance metrics.
-           mean_outcome_value = "ANY",
            # Information required to assess model calibrations (e.g. baseline survival)
            calibration_info = "ANY",
            # Evaluation settings. This allows default values for external use of existing models.
@@ -100,14 +95,13 @@ setClass("familiarEnsemble",
          prototype = list(
            model_list = NULL,
            outcome_type = NA_character_,
-           class_levels = character(0),
+           outcome_info = NULL,
            learner = NA_character_,
            fs_method = NA_character_,
            feature_info = NULL,
            req_feature_cols = NULL,
            important_features = NULL,
            run_table = NULL,
-           mean_outcome_value = NA,
            calibration_info = NULL,
            settings = NULL,
            is_anonymised = FALSE,
@@ -123,8 +117,8 @@ setClass("familiarData",
            name = "character",
            # Model outcome type
            outcome_type = "character",
-           # Levels of outcome classes
-           class_levels = "character",
+           # Outcome info, such as class levels, mean values etc.
+           outcome_info = "ANY",
            # Feature selection variable importance
            fs_vimp = "ANY",
            # Model variable importance
@@ -177,7 +171,7 @@ setClass("familiarData",
          prototype = list(
            name = character(0),
            outcome_type = NA_character_,
-           class_levels = character(0),
+           outcome_info = NULL,
            fs_vimp = NULL,
            model_vimp = NULL,
            hyperparameters = NULL,
@@ -211,9 +205,8 @@ setClass("familiarData",
 #' A familiarCollection object aggregates data from one or more familiarData objects.
 #' @slot collection_name character. 
 #' @slot data_sets character. 
-#' @slot category ANY. 
 #' @slot outcome_type character. 
-#' @slot class_levels character. 
+#' @slot outcome_info ANY. 
 #' @slot fs_vimp ANY. 
 #' @slot model_vimp ANY. 
 #' @slot hyperparameters ANY. 
@@ -250,12 +243,10 @@ setClass("familiarCollection",
            collection_name = "character",
            # Name of the underlying data sets
            data_sets = "character",
-           # Category of the collection
-           category = "ANY",
            # Model outcome type
            outcome_type = "character",
-           # Levels of outcome classes
-           class_levels = "character",
+           # Outcome info, such as class levels, mean values etc.
+           outcome_info = "ANY",
            # Feature selection variable importance
            fs_vimp = "ANY",
            # Model variable importance
@@ -314,9 +305,8 @@ setClass("familiarCollection",
          prototype = list(
            collection_name = NA_character_,
            data_sets = character(0),
-           category = NULL,
            outcome_type = NA_character_,
-           class_levels = character(0),
+           outcome_info = NULL,
            fs_vimp = NULL,
            model_vimp = NULL,
            hyperparameters = NULL,
@@ -401,6 +391,7 @@ setClass("featureInfo",
            feature_type = "character",
            levels = "ANY",
            ordered = "logical",
+           distribution = "ANY",
            data_id = "integer",
            run_id = "integer",
            in_signature = "logical",
@@ -428,6 +419,7 @@ setClass("featureInfo",
            feature_type = NA_character_,
            levels = NULL,
            ordered = FALSE,
+           distribution = NULL,
            data_id = NA_integer_,
            run_id = NA_integer_,
            in_signature = FALSE,
@@ -448,5 +440,52 @@ setClass("featureInfo",
            imputation_parameters = NULL,
            cluster_parameters = NULL,
            required_features = NULL
+         )
+)
+
+#####outcomeInfo#####
+setClass("outcomeInfo",
+         slots = list(
+           # Name of the outcome
+           name = "character",
+           # Outcome type
+           outcome_type = "character",
+           # Class levels of categorical outcomes.
+           levels = "ANY",
+           # Flag for ordinal categorical outcomes.
+           ordered = "logical",
+           # Reference class of categorical outcomes.
+           reference = "character",
+           # Censor indicator for survival outcomes, e.g. alive.
+           censored = "character",
+           # Event indicator for survival outcomes, e.g. recurrent disease.
+           event = "character",
+           # Competing risk indicator(s) for survival outcomes, e.g. dead.
+           competing_risk = "character",
+           # Distribution information of outcome variables.
+           distribution = "ANY",
+           # Data id to which this outcome data belongs.
+           data_id = "integer",
+           # Run id to which this outcome data belongs.
+           run_id = "integer",
+           # Transformation parameters for the outcome data.
+           transformation_parameters = "ANY",
+           # Normalisation parameters for the outcome data.
+           normalisation_parameters = "ANY"
+         ),
+         prototype = list(
+           name = NA_character_,
+           outcome_type = NA_character_,
+           levels = NULL,
+           ordered = FALSE,
+           reference = NA_character_,
+           censored = NA_character_,
+           event = NA_character_,
+           competing_risk = NA_character_,
+           distribution = NULL,
+           data_id = NA_integer_,
+           run_id = NA_integer_,
+           transformation_parameters = NULL,
+           normalisation_parameters = NULL
          )
 )
