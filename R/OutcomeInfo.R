@@ -1,6 +1,7 @@
 #' @include FamiliarS4Generics.R
 #' @include FamiliarS4Classes.R
 
+
 create_outcome_info <- function(settings){
   
   outcome_info <- methods::new("outcomeInfo",
@@ -19,36 +20,18 @@ create_outcome_info <- function(settings){
     outcome_info@reference <- settings$data$class_levels[1]
   }
   
-  if(outcome_info@outcome_type %in% c("survival", "multinomial")){
-    # Set indicator for 
+  if(outcome_info@outcome_type %in% c("survival", "competing_risk")){
+    # Set indicator for censoring
+    outcome_info@censored <- settings$data$censoring_indicator
     
+    # Set indicator for events
+    outcome_info@event <- settings$data$event_indicator
   }
-  # 
-  # 
-  # name = "character",
-  # # Outcome type
-  # outcome_type = "character",
-  # # Class levels of categorical outcomes.
-  # levels = "ANY",
-  # # Flag for ordinal categorical outcomes.
-  # ordered = "logical",
-  # # Reference class of categorical outcomes.
-  # reference = "character",
-  # # Censor indicator for survival outcomes, e.g. alive.
-  # censored = "character",
-  # # Event indicator for survival outcomes, e.g. recurrent disease.
-  # event = "character",
-  # # Competing risk indicator(s) for survival outcomes, e.g. dead.
-  # competing_risk = "character",
-  # # Distribution information of outcome variables.
-  # distribution = "ANY",
-  # # Data id to which this outcome data belongs.
-  # data_id = "integer",
-  # # Run id to which this outcome data belongs.
-  # run_id = "integer",
-  # # Transformation parameters for the outcome data.
-  # transformation_parameters = "ANY",
-  # # Normalisation parameters for the outcome data.
-  # normalisation_parameters = "ANY"
   
+  if(outcome_info@outcome_type %in% c("competing_risk")){
+    # Set indicator for competing risks
+    outcome_info@competing_risk <- settings$data$competing_risk_indicator
+  }
+  
+  return(outcome_info)
 }

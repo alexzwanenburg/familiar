@@ -70,7 +70,6 @@ setGeneric("update_with_replacement", function(data, ...) {standardGeneric("upda
 
 setGeneric("add_package_version", function(object, ...) {standardGeneric("add_package_version")})
 
-
 ##### Methods to see and update labels of data in familiarCollection objects.
 setGeneric(".set_labels", function(x, ...) {standardGeneric(".set_labels")})
 
@@ -143,7 +142,7 @@ setGeneric("plot_all", function(object, ...) {standardGeneric("plot_all")})
 ##### utilities #####
 setGeneric("is_empty", function(x, ...) standardGeneric("is_empty"))
 
-setGeneric("get_outcome_levels", function(x, ...) standardGeneric("get_outcome_levels"))
+setGeneric("get_outcome_class_levels", function(object, ...) standardGeneric(".get_outcome_class_levels"))
 
 setGeneric("get_outcome_columns", function(x, ...) standardGeneric("get_outcome_columns"))
 

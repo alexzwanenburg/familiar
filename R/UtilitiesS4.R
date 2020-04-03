@@ -54,16 +54,41 @@ setMethod("is_empty", signature(x="list"), function(x){
   }
 })
 
-#####get_outcome_levels-----------------------------------------------------------------
-setMethod("get_outcome_levels", signature(x="data.table"), function(x, outcome_type){
-  return(.get_outcome_levels(data=x, outcome_type=outcome_type))
+#####get_outcome_class_levels---------------------------------------------------
+setMethod("get_outcome_class_levels", signature(x="outcomeInfo")){
+  if(x@outcome_type %in% c("binomial", "multinomial")){
+    return(x@levels)
+    
+  } else {
+    return(character(0))
+  }
+}
+
+setMethod("get_outcome_class_levels", signature(x="familiarModel")){
+  return(get_outcome_class_levels(x@outcome_info))
+}
+
+setMethod("get_outcome_class_levels", signature(x="familiarEnsemble")){
+  return(get_outcome_class_levels(x@outcome_info))
+}
+
+setMethod("get_outcome_class_levels", signature(x="familiarData")){
+  return(get_outcome_class_levels(x@outcome_info))
+}
+
+setMethod("get_outcome_class_levels", signature(x="familiarCollection")){
+  return(get_outcome_class_levels(x@outcome_info))
+}
+
+setMethod("get_outcome_class_levels", signature(x="data.table"), function(x, outcome_type){
+  return(.get_outcome_class_levels(data=x, outcome_type=outcome_type))
 })
 
-setMethod("get_outcome_levels", signature(x="dataObject"), function(x){
-  return(.get_outcome_levels(data=x@data, outcome_type=x@outcome_type))
+setMethod("get_outcome_class_levels", signature(x="dataObject"), function(x){
+  return(.get_outcome_class_levels(data=x@data, outcome_type=x@outcome_type))
 })
 
-.get_outcome_levels <- function(data, outcome_type){
+.get_outcome_class_levels <- function(data, outcome_type){
   if(outcome_type %in% c("survival", "continuous", "count", "competing_risk")){
     return(character(0))
     
@@ -190,4 +215,10 @@ setMethod("has_feature_data", signature(x="data.table"), function(x, outcome_typ
 
 setMethod("has_feature_data", signature(x="dataObject"), function(x, outcome_type){
   return(get_n_features(x=x) > 0)
+})
+
+
+#####.get_class_levels---------------------------------------------------------
+setMethod(".get_class_levels", signature(x="outcomeInfo"), function(x){
+  if(x@)
 })
