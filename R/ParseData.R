@@ -297,8 +297,17 @@
 #'
 #' @md
 #' @keywords internal
-.finish_data_preparation <- function(data, sample_id_column, batch_id_column, outcome_column,
-                                     outcome_type, include_features, class_levels, reference=NULL){
+.finish_data_preparation <- function(data,
+                                     sample_id_column,
+                                     batch_id_column,
+                                     outcome_column,
+                                     outcome_type,
+                                     include_features,
+                                     class_levels,
+                                     censoring_indicator,
+                                     event_indicator,
+                                     competing_risk_indicator,
+                                     reference=NULL){
 
   # Suppress NOTES due to non-standard evaluation in data.table
   subject_id <- cohort_id <- NULL
@@ -351,14 +360,22 @@
   if(!is.null(outcome_column)){
     
     # Check plausibility of outcome type given the data
-    .check_outcome_type_plausibility(data=data, outcome_type=outcome_type,
-                                     outcome_column=outcome_column)
+    .check_outcome_type_plausibility(data=data,
+                                     outcome_type=outcome_type,
+                                     outcome_column=outcome_column,
+                                     censoring_indicator=censoring_indicator,
+                                     event_indicator=event_indicator,
+                                     competing_risk_indicator=competing_risk_indicator)
     
     if(outcome_type %in% c("survival")){
       # Add survival columns
       
       # Identify survival status columns
-      event_cols <- sapply(outcome_column, .is_survival_status_col, data=data)
+      event_cols <- sapply(outcome_column, .is_survival_status_col,
+                           data=data,
+                           censoring_indicator=censoring_indicator,
+                           event_indicator=event_indicator,
+                           competing_risk_indicator=competing_risk_indicator)
       
       # The plausibility already took care of consistency checking.
       # This means that there is one and only one event status column and the other

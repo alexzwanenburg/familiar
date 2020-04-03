@@ -4,7 +4,14 @@
 \alias{.impute_outcome_type}
 \title{Internal imputation function for the outcome type.}
 \usage{
-.impute_outcome_type(data, outcome_column, class_levels)
+.impute_outcome_type(
+  data,
+  outcome_column,
+  class_levels,
+  censoring_indicator,
+  event_indicator,
+  competing_risk_indicator
+)
 }
 \arguments{
 \item{data}{Data set as loaded using the \code{.load_data} function.}
@@ -12,6 +19,12 @@
 \item{outcome_column}{Name of the outcome column in the data set.}
 
 \item{class_levels}{User-provided class levels for the outcome.}
+
+\item{censoring_indicator}{Name of censoring indicator.}
+
+\item{event_indicator}{Name of event indicator.}
+
+\item{competing_risk_indicator}{Name of competing risk indicator.}
 }
 \value{
 The imputed outcome type.

@@ -14,17 +14,19 @@ A familiarCollection object aggregates data from one or more familiarData object
 
 \item{\code{data_sets}}{character.}
 
-\item{\code{category}}{ANY.}
-
 \item{\code{outcome_type}}{character.}
 
-\item{\code{class_levels}}{character.}
+\item{\code{outcome_info}}{ANY.}
 
 \item{\code{fs_vimp}}{ANY.}
 
 \item{\code{model_vimp}}{ANY.}
 
+\item{\code{permutation_vimp}}{ANY.}
+
 \item{\code{hyperparameters}}{ANY.}
+
+\item{\code{hyperparameter_data}}{ANY.}
 
 \item{\code{req_feature_cols}}{ANY.}
 
@@ -34,9 +36,9 @@ A familiarCollection object aggregates data from one or more familiarData object
 
 \item{\code{fs_method}}{character.}
 
-\item{\code{hash}}{character.}
-
 \item{\code{prediction_data}}{ANY.}
+
+\item{\code{confusion_matrix}}{ANY.}
 
 \item{\code{calibration_info}}{ANY.}
 
@@ -57,6 +59,8 @@ A familiarCollection object aggregates data from one or more familiarData object
 \item{\code{mutual_correlation}}{ANY.}
 
 \item{\code{data_set_labels}}{ANY.}
+
+\item{\code{ice_data}}{ANY,}
 
 \item{\code{learner_labels}}{ANY.}
 

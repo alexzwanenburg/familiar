@@ -4,7 +4,14 @@
 \alias{.check_outcome_type_plausibility}
 \title{Internal function for checking if the outcome type fits well to the data}
 \usage{
-.check_outcome_type_plausibility(data, outcome_type, outcome_column)
+.check_outcome_type_plausibility(
+  data,
+  outcome_type,
+  outcome_column,
+  censoring_indicator,
+  event_indicator,
+  competing_risk_indicator
+)
 }
 \arguments{
 \item{data}{Data set as loaded using the \code{.load_data} function.}
@@ -13,6 +20,12 @@
 assessed.}
 
 \item{outcome_column}{Name of the outcome column in the data set.}
+
+\item{censoring_indicator}{Name of censoring indicator.}
+
+\item{event_indicator}{Name of event indicator.}
+
+\item{competing_risk_indicator}{Name of competing risk indicator.}
 }
 \description{
 This function may help identify if the outcome type is plausible

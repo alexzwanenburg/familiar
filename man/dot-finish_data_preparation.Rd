@@ -12,6 +12,9 @@
   outcome_type,
   include_features,
   class_levels,
+  censoring_indicator,
+  event_indicator,
+  competing_risk_indicator,
   reference = NULL
 )
 }

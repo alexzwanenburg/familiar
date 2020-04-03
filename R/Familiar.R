@@ -137,7 +137,13 @@ summon_familiar <- function(formula=NULL, data=NULL, cl=NULL, config=NULL, confi
                                    outcome_column = settings$data$outcome_col,
                                    outcome_type = settings$data$outcome_type,
                                    include_features = settings$data$include_features,
-                                   class_levels = settings$data$class_levels)
+                                   class_levels = settings$data$class_levels,
+                                   censoring_indicator=settings$data$censoring_indicator,
+                                   event_indicator=settings$data$event_indicator,
+                                   competing_risk_indicator=settings$data$competing_risk_indicator)
+  
+  # Create a generic outcome object
+  outcome_info <- create_outcome_info(settings=settings)
   
   # Derive experimental design
   experiment_setup <- extract_experimental_setup(experimental_design=settings$data$exp_design,

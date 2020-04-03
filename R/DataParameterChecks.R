@@ -124,17 +124,39 @@
     
     # Attempt to impute outcome settings
     settings$data$outcome_type <- .impute_outcome_type(data=data, outcome_column=settings$data$outcome_col,
-                                                       class_levels=settings$data$class_levels)
+                                                       class_levels=settings$data$class_levels,
+                                                       censoring_indicator=settings$data$censoring_indicator,
+                                                       event_indicator=settings$data$event_indicator,
+                                                       competing_risk_indicator=settings$data$competing_risk_indicator)
   }
   
   # Check whether the outcome type fits the data.
-  .check_outcome_type_plausibility(data=data, outcome_type=settings$data$outcome_type,
-                                   outcome_column=settings$data$outcome_col)
+  .check_outcome_type_plausibility(data=data,
+                                   outcome_type=settings$data$outcome_type,
+                                   outcome_column=settings$data$outcome_col,
+                                   censoring_indicator=settings$data$censoring_indicator,
+                                   event_indicator=settings$data$event_indicator,
+                                   competing_risk_indicator=settings$data$competing_risk_indicator)
   
   #####class_levels--------------------------------
   .check_class_level_plausibility(data=data, outcome_type=settings$data$outcome_type,
                                   outcome_column=settings$data$outcome_col,
                                   class_levels=settings$data$class_levels)
+  
+  # Set class levels in settings, if appropriate.
+  if(is.null(settings$data$class_levels) & settings$data$outcome_type %in% c("binomial", "multinomial")){
+    if(is.factor(data[[settings$data$outcome_col]])){
+      settings$data$class_levels <- levels(data[[settings$data$outcome_col]])
+      
+    } else {
+      settings$data$class_levels <- unique_na(data[[settings$data$outcome_col]])
+    }
+  }
+  
+  #####censoring_indicator, event_indicator, competing_risk_indicator-----------
+  settings <- .impute_survival_indicators(data=data,
+                                          outcome_type=settings$data$outcome_type,
+                                          settings=settings)
   
   #####signature-----------------------------------
   if(!is.null(settings$data$signature)){
@@ -202,6 +224,11 @@
     # Select all available predictor variables.
     settings$data$include_features <- predictor_vars
     
+  }
+  
+  # Outcome name
+  if(is.null(settings$data$outcome_name)){
+    settings$data$outcome_name <- settings$data$outcome_col
   }
   
   return(settings)
@@ -358,13 +385,17 @@
 #' @param data Data set as loaded using the `.load_data` function.
 #' @param outcome_column Name of the outcome column in the data set. 
 #' @param class_levels User-provided class levels for the outcome.
+#' @param censoring_indicator Name of censoring indicator.
+#' @param event_indicator Name of event indicator.
+#' @param competing_risk_indicator Name of competing risk indicator.
 #' 
 #' @note It is highly recommended that the user provides the outcome type.
 #'
 #' @return The imputed outcome type.
 #' @md
 #' @keywords internal
-.impute_outcome_type <- function(data, outcome_column, class_levels){
+.impute_outcome_type <- function(data, outcome_column, class_levels, censoring_indicator,
+                                 event_indicator, competing_risk_indicator){
 
   if(length(outcome_column) > 2){
     stop(paste("Only one or two (in case of survival endpoints) outcome columns are expected.",
@@ -377,7 +408,15 @@
     # One column should contain numerical or logical data with 0, 1 (event status column)
     
     # Check for presence of an event column
-    event_cols <- sapply(outcome_column, .is_survival_status_col, data=data)
+    event_survival_cols <- sapply(outcome_column, .is_survival_status_col, data=data,
+                                  censoring_indicator=censoring_indicator,
+                                  event_indicator=event_indicator,
+                                  competing_risk_indicator=NULL)
+    
+    event_competing_risk_cols <- sapply(outcome_column, .is_survival_status_col, data=data,
+                                        censoring_indicator=censoring_indicator,
+                                        event_indicator=event_indicator,
+                                        competing_risk_indicator=competing_risk_indicator)
     
     # Check for presence of a time column
     time_cols <- sapply(outcome_column, .is_survival_time_col, data=data)
@@ -385,29 +424,37 @@
     # Check if there is at least one event_col and one time_col,
     # and in case there is only one event_col and one time_col, that these are not the same.
     
-    if(!any(time_cols) | !any(event_cols)){
-      stop(paste("Survival outcome was expected as two outcome columns were provided.",
-                 "However, data in the columns did not strictly correspond to survival outcomes.",
+    if(!any(time_cols) | (!any(event_survival_cols) & !any(event_competing_risk_cols))){
+      stop(paste("Survival or competing risk outcomes were expected as two outcome columns were provided.",
+                 "However, data in the columns did not strictly correspond to these outcomes.",
                  "Check if a survival outcome was intended, and provide a single outcome column otherwise.",
-                 "Columns for survival outcomes should contain time (numeric values >= 0) and event status",
-                 "(0 and 1 or FALSE and TRUE) information."))
+                 "Columns for survival or competing risk outcomes should contain time (numeric values >= 0) and event status",
+                 "(0 and 1 or FALSE and TRUE, or values according to censoring_indicator, event_indicator and competing_risk_indicator arguments) information."))
+      
     } else if(sum(time_cols) == 1 & sum(event_cols) == 1){
       # Only one column of either type. The test below yields 0 if these are different columns,
       # and 1 if they are the same column, in which case an error is raised.
-      if(sum(time_cols * event_cols)){
-        stop(paste("Survival outcome was expected as two outcome columns were provided.",
-                   "However, data in the columns did not strictly correspond to survival outcomes.",
+      if(sum(time_cols * event_survival_cols) & sum(time_cols * event_competing_risk_cols)){
+        stop(paste("Survival or competing risk outcome was expected as two outcome columns were provided.",
+                   "However, data in the columns did not strictly correspond to these outcomes.",
                    "Check if a survival outcome was intended, and provide a single outcome column otherwise.",
-                   "Columns for survival outcomes should contain time (numeric values >= 0) and event status",
-                   "(0 and 1 or FALSE and TRUE) information."))
+                   "Columns for survival or competing risk outcomes should contain time (numeric values >= 0) and event status",
+                   "(0 and 1 or FALSE and TRUEm censoring_indicator, event_indicator and competing_risk_indicator arguments) information."))
       }
     }
     
-    # Set outcome_type to survival as it is plausible
-    message(paste("A survival outcome was imputed based on the data. If this is an incorrect type,",
-                  "please provide an outcome_type manually."))
-    return("survival")
-    
+    if(is.null(competing_risk_indicator)){
+      # Set outcome_type to survival as it is plausible
+      message(paste("A survival outcome was imputed based on the data. If this is an incorrect type,",
+                    "please provide an outcome_type manually."))
+      return("survival")
+      
+    } else {
+      # Set outcome_type to competing_risk as it is plausible
+      message(paste("A competing_risk outcome was imputed based on the data. If this is an incorrect type,",
+                    "please provide an outcome_type manually."))
+      return("competing_risk")
+    }
   }
   
   if(length(outcome_column) == 1) {
@@ -486,6 +533,205 @@
 
 
 
+
+.impute_survival_indicators <- function(data,
+                                        outcome_type,
+                                        settings){
+  browser()
+  # Define standard indicators for censoring, event and competing risk.
+  standard_censoring_indicator <- c("0", "false", "f", "n", "no")
+  if(!is.null(settings$data$censoring_indicator)) {
+    standard_censoring_indicator <- settings$data$censoring_indicator
+  }
+  
+  standard_event_indicator <- c("1", "true", "t", "y", "yes")
+  if(!is.null(settings$data$event_indicator)) {
+    standard_event_indicator <- settings$data$event_indicator
+  }
+  
+  standard_competing_risk_indicator <- NULL
+  if(!is.null(settings$data$competing_risk_indicator)){
+    standard_competing_risk_indicator <- settings$data$competing_risk_indicator
+  }
+  
+  # Combine indicators
+  all_indicators <- c(standard_censoring_indicator,
+                      standard_event_indicator,
+                      standard_competing_risk_indicator)
+  
+  # Find the number of matches with each of the two outcome columns.
+  n_matches <- sapply(settings$data$outcome_col, function(column, data, all_indicators){
+    x <- data[[column]]
+    x <- tolower(as.character(x[!is.na(x)]))
+    
+    return(sum(x %in% tolower(all_indicators)))
+  }, data=data, all_indicators=all_indicators)
+  
+  # Identify the column that is most likely to be the event column.
+  event_column <- settings$data$outcome_col[which.max(n_matches)]
+  
+  # Select unique values in the event column.
+  event_values <- data[[event_column]]
+  event_values <- unique_na(event_values)
+  
+  # Try to identify indicators present in the dataset.
+  present_censoring_indicator <- event_values[tolower(as.character(event_values)) %in% tolower(standard_censoring_indicator)]
+  present_event_indicator <- event_values[tolower(as.character(event_values)) %in% tolower(standard_event_indicator)]
+  present_competing_risk_indicator <- event_values[tolower(as.character(event_values)) %in% tolower(competing_risk_indicator)]
+  
+  # Identify values in the event column which are not yet assigned.
+  event_values <- setdiff(event_values, c(present_censoring_indicator,
+                                          present_event_indicator,
+                                          present_competing_risk_indicator))
+  
+  # Check the presence of user-provided indicators.
+  if(!is.null(settings$data$event_indicator)){
+    # An event indicator should always be present.
+    if(!all(settings$data$event_indicator %in% event_values)){
+      stop(paste0("The following provided event indicator(s) were not found in the data: ",
+           paste0(setdiff(settings$data$event_indicator, event_values), collapse=", "),
+           " . Please check for spelling errors."))
+    }
+  }
+  
+  if(!is.null(settings$data$censoring_indicator)){
+    # An censoring indicator is not required to be present, but if the user
+    # provides one, and it isn't found in the dataset, raise an error.
+    if(!all(settings$data$censoring_indicator %in% event_values)){
+      stop(paste0("The following provided censoring indicator(s) were not found in the data: ",
+                  paste0(setdiff(settings$data$censoring_indicator, event_values), collapse=", ")))
+    }
+  }
+  
+  if(!is.null(settings$data$competing_risk_indicator)){
+    # Competing risk indicators are only present in competing_risk outcomes.
+    if(outcome_type == "survival"){
+      stop(paste0("One or indicators for competing risks were specified. ",
+                  "However, the outcome type was set to survival, which does not check competing risks. ",
+                  "Please change outcome_type to competing_risk, or remove the competing risk indicators."))
+    }
+    
+    
+    if(!all(settings$data$competing_risk_indicator) %in% event_values){
+      stop(paste0("The following provided competing risk indicator(s) were not found in the data: ",
+                  paste0(setdiff(settings$data$competing_risk_indicator, event_values), collapse=", ")))
+    }
+  }
+
+  
+  if(length(event_values) > 0){
+    # Event indicator can only be determined if there is one value left over.
+    if(length(present_event_indicator) == 0){
+      if(length(event_values) == 1){
+        
+        # Assign the remaining value to the event indicator.
+        present_event_indicator <- event_values
+        
+        # Make event_values empty.
+        event_values <- setdiff(event_values, event_values)
+        
+        # Throw a warning, because the assumption may be false.
+        warning(paste0("The event indicator for survival/competing risk outcomes was neither a standard value, nor provided. ",
+                       "Based on the values found in ", event_column, ", ", present_event_indicator, " was selected as an event indicator."))
+        
+      } else {
+        stop("The event indicator for survival/competing risk outcomes was neither a standard value, nor provided. ",
+             "More than one unassigned value was found in ", event_column, ", preventing automatic assignment: ",
+             paste0(event_values, collapse=", "))
+      }
+    }
+  }
+  
+  if(length(event_values) > 0 & outcome_type == "survival"){
+    if(length(present_censoring_indicator) == 0){
+      
+      # Assign all remaining values.
+      present_censoring_indicator <- event_values
+      
+      # Make event_values empty.
+      event_values <- setdiff(event_values, event_values)
+      
+      # Throw a warning, because the assumption may be false.
+      warning(paste0("The censoring indicator for the survival outcome was neither a standard value, nor provided. ",
+                     "Based on the values found in ", event_column, ", ", paste0(present_censoring_indicator, collapse=", "),
+                      ifelse(length(present_censoring_indicator) == 1, " was", " were"),
+                      " selected as censoring indicator."))
+      
+    } else {
+      stop(paste0("One or more unassigned values for the survival outcome were found in ",event_column, ": ",
+                  paste0(event_values, collapse=", "), ". Please assign manually."))
+    }
+  }
+  
+  if(length(event_values) > 0 & outcome_type == "competing_risk"){
+    
+    if(length(present_censoring_indicator) == 0 & length(present_competing_risk_indicator) == 0){
+      stop(paste0("One or more unassigned values for the survival outcome were found in ",event_column, ": ",
+                  paste0(event_values, collapse=", "), ". These could not be assigned automatically as indicators for ",
+                  "censoring and competing risks were both missing. Please assign manually."))
+      
+    } else if(length(present_censoring_indicator) == 0){
+      
+      # Assign all remaining values.
+      present_censoring_indicator <- event_values
+      
+      # Make event_values empty.
+      event_values <- setdiff(event_values, event_values)
+      
+      # Throw a warning, because the assumption may be false.
+      warning(paste0("The censoring indicator for the competing risk outcome was neither a standard value, nor provided. ",
+                     "Based on the values found in ", event_column, ", ", paste0(present_censoring_indicator, collapse=", "),
+                     ifelse(length(present_censoring_indicator) == 1, " was", " were"),
+                     " selected as censoring indicator."))
+      
+    } else if(length(present_competing_risk_indicator) == 0){
+      
+      # Assign all remaining values.
+      present_competing_risk_indicator <- event_values
+      
+      # Make event_values empty.
+      event_values <- setdiff(event_values, event_values)
+      
+      # Throw a warning, because the assumption may be false.
+      warning(paste0("The competing risk indicator for the competing risk outcome was not provided. ",
+                     "Based on the values found in ", event_column, ", ", paste0(present_competing_risk_indicator, collapse=", "),
+                     ifelse(length(present_competing_risk_indicator) == 1, " was", " were"),
+                     " selected as competing risk indicator."))
+      
+    } else {
+      stop(paste0("One or more unassigned values for the competing risk outcome were found in ", event_column, ": ",
+                  paste0(event_values, collapse=", "), ". Please assign manually to the indicators."))
+    }
+  }
+  
+  # Update censoring indicator in settings.
+  if(length(present_censoring_indicator) > 0){
+    settings$data$censoring_indicator <- present_censoring_indicator
+    
+  } else {
+    settings$data$censoring_indicator <- NULL
+  } 
+  
+  # Update event indicator in settings.
+  if(length(present_event_indicator) > 0){
+    settings$data$event_indicator <- present_event_indicator 
+    
+  } else {
+    settings$data$event_indicator <- NULL
+  } 
+  
+  if(length(present_competing_risk_indicator) > 0){
+    settings$data$competing_risk_indicator <- present_competing_risk_indicator
+    
+  } else {
+    settings$data$competing_risk_indicator <- NULL
+  }
+  
+  return(settings)
+}
+
+
+
 #' Internal function for checking if the outcome type fits well to the data
 #'
 #' This function may help identify if the outcome type is plausible
@@ -495,12 +741,21 @@
 #' @param data Data set as loaded using the `.load_data` function.
 #' @param outcome_type Character string indicating the type of outcome being
 #'  assessed.
-#' @param outcome_column Name of the outcome column in the data set. 
+#' @param outcome_column Name of the outcome column in the data set.
+#' @param censoring_indicator Name of censoring indicator.
+#' @param event_indicator Name of event indicator.
+#' @param competing_risk_indicator Name of competing risk indicator.
 #' 
 #' @return NULL
 #' @md
 #' @keywords internal
-.check_outcome_type_plausibility <- function(data, outcome_type, outcome_column){
+.check_outcome_type_plausibility <- function(data,
+                                             outcome_type,
+                                             outcome_column,
+                                             censoring_indicator,
+                                             event_indicator,
+                                             competing_risk_indicator){
+  
   # Checks plausibility of the outcome type and identifies any errors 
 
   # Check if only a single outcome_type is specified.
@@ -567,9 +822,25 @@
   }
   
   # Plausibility check for the survival outcome type
-  if(outcome_type == "survival"){
+  if(outcome_type %in% c("survival", "competing_risk")){
     # Check for presence of an event column and time columns
-    event_cols <- sapply(outcome_column, .is_survival_status_col, data=data)
+    
+    if(outcome_type == "survival"){
+      # The competing risk indicator should be absent for survival outcomes.
+      event_cols <- sapply(outcome_column, .is_survival_status_col,
+                           data=data,
+                           censoring_indicator=censoring_indicator,
+                           event_indicator=event_indicator,
+                           competing_risk_indicator=NULL)
+      
+    } else {
+      event_cols <- sapply(outcome_column, .is_survival_status_col,
+                           data=data,
+                           censoring_indicator=censoring_indicator,
+                           event_indicator=event_indicator,
+                           competing_risk_indicator=competing_risk_indicator)
+    }
+    
     time_cols <- sapply(outcome_column, .is_survival_time_col, data=data)
     
     # Check if there is at least one event_col and one time_col,
@@ -577,7 +848,11 @@
     if(!any(event_cols)){
       stop(paste("None of the outcome columns (", paste0(outcome_column, collapse=", "),
                  ") contain event status information. This column may only contain values 0 and 1 or",
-                 "FALSE and TRUE."))
+                 "FALSE and TRUE, or the value indicated by ",
+                 ifelse(outcome_type=="survival",
+                        "censoring_indicator and event_indicator",
+                        "censoring_indicator, event_indicator and competing_risk_indicator"),
+                 " arguments."))
     }
     
     if(all(event_cols)){
@@ -720,11 +995,32 @@
 }
 
 
-.is_survival_status_col <- function(column_name, data){
+.is_survival_status_col <- function(column_name, data,
+                                    censoring_indicator=NULL,
+                                    event_indicator=NULL,
+                                    competing_risk_indicator=NULL){
   # Identify if the column could contain survival status information.
   
-  if(is.logical(data[[column_name]])){
+  # Find all indicators
+  present_indicators <- c(censoring_indicator,
+                          event_indicator,
+                          competing_risk_indicator)
+  
+  if(!is.null(present_indicators)){
+    x <- data[[column_name]]
+    x <- x[!is.na(x)]
+    
+    # Check if all data belong to the indicators.
+    if(all(x %in% present_indicators)){
+      return(TRUE)
+      
+    } else {
+      return(FALSE)
+    }
+    
+  } else if(is.logical(data[[column_name]])){
     return(TRUE)
+    
   } else if(is.numeric(data[[column_name]])){
     x <- data[[column_name]]
     x <- x[is.finite(x)]
@@ -732,9 +1028,11 @@
     # Check if all finite values are either 0 or 1
     if((sum(x==0) + sum(x==1)) == length(x)){
       return(TRUE)
+      
     } else {
       return(FALSE)
     }
+    
   } else {
     return(FALSE)
   }

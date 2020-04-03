@@ -11,8 +11,12 @@ setClass("familiarModel",
            feature_info = "ANY",
            # Hyper-parameters (typically stored in the model as well)
            hyperparameters = "ANY",
+           # Hyperparameter data, e.g. for visualising the hyperparameter space.
+           hyperparameter_data = "ANY",
            # Models used for recalibration
            calibration_model = "ANY",
+           # Model used for novelty detection
+           novelty_detector = "ANY",
            # Name of learner
            learner = "character",
            # Name of feature selection method
@@ -44,7 +48,9 @@ setClass("familiarModel",
            outcome_info = NULL,
            feature_info = NULL,
            hyperparameters = NULL,
+           hyperparameter_data = NULL,
            calibration_model = NULL,
+           novelty_detector = NULL,
            learner = NA_character_,
            fs_method = NA_character_,
            signature = NULL,
@@ -123,11 +129,17 @@ setClass("familiarData",
            fs_vimp = "ANY",
            # Model variable importance
            model_vimp = "ANY",
+           # Permutation variable importance
+           permutation_vimp = "ANY",
            # Hyper-parameters
            hyperparameters = "ANY",
+           # Hyperparameter data, e.g. for visualising the hyperparameter space.
+           hyperparameter_data = "ANY",
            # Required features to update the data
            req_feature_cols = "ANY",
-           # Features that are required for reconstruction, without imputation (i.e. features that are in the signature directly or as part of a cluster)
+           # Features that are required for reconstruction, without imputation
+           # (i.e. features that are in the signature directly or as part of a
+           # cluster)
            important_features = "ANY",
            # Name of learner
            learner = "character",
@@ -135,10 +147,10 @@ setClass("familiarData",
            fs_method = "character",
            # Run table for the current data
            pooling_table = "ANY",
-           # Data hash to identify models that require updated predictions
-           hash = "character",
            # Model predictions for later reference
            prediction_data = "ANY",
+           # Confusion matrix for categorical outcomes
+           confusion_matrix = "ANY",
            # Calibration information, e.g. baseline survival
            calibration_info = "ANY",
            # Calibration test information
@@ -157,7 +169,10 @@ setClass("familiarData",
            feature_expressions = "ANY",
            # Information concerning mutual correlations between features
            mutual_correlation = "ANY",
-           # Flag to signal whether the data concerns validation data (TRUE) or development data (FALSE)
+           # Information on individual conditional expectation
+           ice_data = "ANY",
+           # Flag to signal whether the data concerns validation data (TRUE) or
+           # development data (FALSE)
            is_validation = "logical",
            # Flag to signal whether the data is anonymised
            is_anonymised = "logical",
@@ -174,14 +189,16 @@ setClass("familiarData",
            outcome_info = NULL,
            fs_vimp = NULL,
            model_vimp = NULL,
+           permutation_vimp = NULL,
            hyperparameters = NULL,
+           hyperparameter_data = NULL,
            req_feature_cols = NULL,
            important_features = NULL,
            learner = NA_character_,
            fs_method = NA_character_,
            pooling_table = NULL,
-           hash = NA_character_,
            prediction_data = NULL,
+           confusion_matrix = NULL,
            calibration_info = NULL,
            calibration_data = NULL,
            model_performance = NULL,
@@ -191,6 +208,7 @@ setClass("familiarData",
            univariate_analysis = NULL,
            feature_expressions = NULL,
            mutual_correlation = NULL,
+           ice_data = NULL,
            is_validation = FALSE,
            is_anonymised = FALSE,
            generating_ensemble = character(0),
@@ -208,14 +226,16 @@ setClass("familiarData",
 #' @slot outcome_type character. 
 #' @slot outcome_info ANY. 
 #' @slot fs_vimp ANY. 
-#' @slot model_vimp ANY. 
-#' @slot hyperparameters ANY. 
+#' @slot model_vimp ANY.
+#' @slot permutation_vimp ANY.
+#' @slot hyperparameters ANY.
+#' @slot hyperparameter_data ANY.
 #' @slot req_feature_cols ANY.
 #' @slot important_features ANY. 
 #' @slot learner character. 
 #' @slot fs_method character. 
-#' @slot hash character.
 #' @slot prediction_data ANY.
+#' @slot confusion_matrix ANY.
 #' @slot calibration_info ANY. 
 #' @slot calibration_data ANY. 
 #' @slot model_performance ANY. 
@@ -225,7 +245,8 @@ setClass("familiarData",
 #' @slot univariate_analysis ANY. 
 #' @slot feature_expressions ANY. 
 #' @slot mutual_correlation ANY. 
-#' @slot data_set_labels ANY. 
+#' @slot data_set_labels ANY.
+#' @slot ice_data ANY,
 #' @slot learner_labels ANY. 
 #' @slot fs_method_labels ANY. 
 #' @slot feature_labels ANY. 
@@ -251,20 +272,25 @@ setClass("familiarCollection",
            fs_vimp = "ANY",
            # Model variable importance
            model_vimp = "ANY",
+           # Permutation variable importance
+           permutation_vimp = "ANY",
            # Hyper-parameters
            hyperparameters = "ANY",
+           # Hyperparameter data, e.g. for visualising the hyperparameter space.
+           hyperparameter_data = "ANY",
            # Required features to update the data
            req_feature_cols = "ANY",
-           # Important features, e.g. features that ended up in a signature individually or as part of a cluster
+           # Important features, e.g. features that ended up in a signature
+           # individually or as part of a cluster
            important_features = "ANY",
            # Name of learner
            learner = "character",
            # Name of feature selection method
            fs_method = "character",
-           # Data hash to identify models that require updated predictions
-           hash = "character",
            # Model predictions for later reference
            prediction_data = "ANY",
+           # Confusion matrix for categorical outcomes
+           confusion_matrix = "ANY",
            # Calibration information, e.g. baseline survival
            calibration_info = "ANY",
            # Calibration test information
@@ -283,6 +309,8 @@ setClass("familiarCollection",
            feature_expressions = "ANY",
            # Information concerning mutual correlations between features
            mutual_correlation = "ANY",
+           # Information on individual conditional expectation
+           ice_data = "ANY",
            # Label and order of data names
            data_set_labels = "ANY",
            # Label and order of learners
@@ -309,13 +337,15 @@ setClass("familiarCollection",
            outcome_info = NULL,
            fs_vimp = NULL,
            model_vimp = NULL,
+           permutation_vimp = NULL,
            hyperparameters = NULL,
+           hyperparameter_data = NULL,
            req_feature_cols = NULL,
            important_features = NULL,
            learner = NA_character_,
            fs_method = NA_character_,
-           hash = NA_character_,
            prediction_data = NULL,
+           confusion_matrix = NULL,
            calibration_info = NULL,
            calibration_data = NULL,
            model_performance = NULL,
@@ -325,6 +355,7 @@ setClass("familiarCollection",
            univariate_analysis = NULL,
            feature_expressions = NULL,
            mutual_correlation = NULL,
+           ice_data = NULL,
            data_set_labels = NULL,
            learner_labels = NULL,
            fs_method_labels = NULL,
@@ -450,6 +481,8 @@ setClass("outcomeInfo",
            name = "character",
            # Outcome type
            outcome_type = "character",
+           # Outcome column
+           outcome_column = "character",
            # Class levels of categorical outcomes.
            levels = "ANY",
            # Flag for ordinal categorical outcomes.
@@ -476,6 +509,7 @@ setClass("outcomeInfo",
          prototype = list(
            name = NA_character_,
            outcome_type = NA_character_,
+           outcome_column = NA_character_,
            levels = NULL,
            ordered = FALSE,
            reference = NA_character_,
