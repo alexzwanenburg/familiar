@@ -114,16 +114,16 @@ get_outcome_info_from_backend <- function(){
   # Placeholder outcome_info
   outcome_info <- NULL
   
-  # First attempt to get from backend
+  # First, attempt to obtain from familiarModel and similar objects.
+  if(inherits_any(x, c("familiarModel", "familiarEnsemble", "familiarData", "familiarCollection"))){
+    if(!is.null(x@outcome_info)) return(x@outcome_info)
+  }
+  
+  # Second attempt to get from backend
   outcome_info <- tryCatch(get_outcome_info_from_backend(),
                            error=function(err) return(NULL))
   
   if(!is.null(outcome_info)) return(outcome_info)
-  
-  # Second, attempt to obtain from familiarModel and similar objects.
-  if(inherits_any(x, c("familiarModel", "familiarEnsemble", "familiarData", "familiarCollection"))){
-    return(x@outcome_info)
-  }
   
   # Third, attempt to infer from settings.
   settings <- tryCatch(get_settings(),
