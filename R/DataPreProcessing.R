@@ -11,10 +11,10 @@ get_feature_info_file <- function(file_paths, project_id){
 
 
 .assign_feature_info_to_global <- function(cl, feature_info_list){
-  # Put file_paths into the familiar environment
+  # Put feature_info_list into the familiar environment
   assign("feature_info_list", feature_info_list, envir=familiar_global_env)
   
-  # Export file_paths to the clusters as well
+  # Export feature_info_list to the clusters as well
   if(!is.null(cl)){
     parallel::clusterExport(cl=cl, varlist="feature_info_list", envir=familiar_global_env)
   }
