@@ -35,3 +35,14 @@ create_outcome_info <- function(settings){
   
   return(outcome_info)
 }
+
+
+.assign_outcome_info_to_global <- function(cl, outcome_info){
+  # Put outcome_info in the familiar environment
+  assign("outcome_info", outcome_info, envir=familiar_global_env)
+  
+  # Export outcome_info to the clusters as well
+  if(!is.null(cl)){
+    parallel::clusterExport(cl=cl, varlist="outcome_info", envir=familiar_global_env)
+  }
+}

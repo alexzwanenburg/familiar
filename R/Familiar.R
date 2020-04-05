@@ -202,6 +202,7 @@ summon_familiar <- function(formula=NULL, data=NULL, cl=NULL, config=NULL, confi
   .assign_file_paths_to_global(cl=cl, file_paths=file_paths)
   .assign_feature_info_to_global(cl=cl, feature_info_list=feature_info_list)
   .assign_project_info_to_global(cl=cl, project_info=project_info)
+  .assign_outcome_info_to_global(cl=cl, outcome_info=outcome_info)
   .assign_data_to_backend(cl=cl, backend_data=data, backend=settings$run$backend, server_port=settings$run$server_port)
   
   # Start feature selection
