@@ -37,6 +37,7 @@ create_outcome_info <- function(settings){
 }
 
 
+
 .assign_outcome_info_to_global <- function(cl, outcome_info){
   # Put outcome_info in the familiar environment
   assign("outcome_info", outcome_info, envir=familiar_global_env)
@@ -45,4 +46,26 @@ create_outcome_info <- function(settings){
   if(!is.null(cl)){
     parallel::clusterExport(cl=cl, varlist="outcome_info", envir=familiar_global_env)
   }
+}
+
+
+
+get_outcome_info_from_backend <- function(){
+  
+  # Retrieve the paths to files and directories
+  if(exists("familiar_global_env")){
+    if(exists("outcome_info", where=familiar_global_env)){
+      data_env <- familiar_global_env
+    } else if (exists("outcome_info", where=.GlobalEnv)){
+      data_env <- .GlobalEnv
+    } else {
+      stop("The outcomeInfo object was not found in backend environment.")
+    }
+  } else if (exists("outcome_info", where=.GlobalEnv)){
+    data_env <- .GlobalEnv
+  } else {
+    stop("The outcomeInfo object was not found in backend environment.")
+  }
+  
+  return(get("outcome_info", envir=data_env))
 }
