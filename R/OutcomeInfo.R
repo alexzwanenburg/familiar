@@ -106,3 +106,39 @@ get_outcome_info_from_backend <- function(){
   
   return(get("outcome_info", envir=data_env))
 }
+
+
+.get_outcome_info <- function(x=NULL){
+  # Function to retrieve outcome_info in a generic manner.
+  
+  # Placeholder outcome_info
+  outcome_info <- NULL
+  
+  # First attempt to get from backend
+  outcome_info <- tryCatch(get_outcome_info_from_backend(),
+                           error=function(err) return(NULL))
+  
+  if(!is.null(outcome_info)) return(outcome_info)
+  
+  # Second, attempt to obtain from familiarModel and similar objects.
+  if(inherits_any(x, c("familiarModel", "familiarEnsemble", "familiarData", "familiarCollection"))){
+    return(x@outcome_info)
+  }
+  
+  # Third, attempt to infer from settings.
+  settings <- tryCatch(get_settings(),
+                       error=function(err) return(NULL))
+  
+  if(!is.null(settings)){
+    return(create_outcome_info(settings=settings))
+  }
+  
+  # Finally, attempt to infer from dataObject
+  if(inherits(x, "dataObject")){
+    return(create_outcome_info_from_data(data=x))
+  }
+  
+  if(is.null(outcome_info)){
+    stop("The requested outcomeInfo object could not be read or created on the fly.")
+  }
+}
