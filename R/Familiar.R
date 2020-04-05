@@ -130,6 +130,9 @@ summon_familiar <- function(formula=NULL, data=NULL, cl=NULL, config=NULL, confi
   # Update settings
   settings <- .update_initial_settings(formula=formula, data=data, settings=settings)
   
+  # Create a generic outcome object
+  outcome_info <- create_outcome_info(settings=settings)
+  
   # Parse data
   data <- .finish_data_preparation(data = data,
                                    sample_id_column = settings$data$sample_col,
@@ -142,8 +145,7 @@ summon_familiar <- function(formula=NULL, data=NULL, cl=NULL, config=NULL, confi
                                    event_indicator=settings$data$event_indicator,
                                    competing_risk_indicator=settings$data$competing_risk_indicator)
   
-  # Create a generic outcome object
-  outcome_info <- create_outcome_info(settings=settings)
+
   
   # Derive experimental design
   experiment_setup <- extract_experimental_setup(experimental_design=settings$data$exp_design,
