@@ -37,6 +37,43 @@ create_outcome_info <- function(settings){
 }
 
 
+create_outcome_info_from_data <- function(data){
+  # This is typically an outcomeInfo object created at runtime, without access
+  # to outcome_info in the global backend, or attached to an object.
+  
+  outcome_info <- methods::new("outcomeInfo",
+                               name = "unset",
+                               outcome_type = data@outcome_type,
+                               outcome_column = get_outcome_columns(x=data))
+  
+  if(outcome_info@outcome_type %in% c("binomial", "multinomial")){
+    # Set class levels
+    outcome_info@levels <- get_outcome_class_levels(x=data)
+    
+    # Set flag indicating that the outcome is ordinal (currently not enabled)
+    outcome_info@ordered <- is.ordered(data@data[[outcome_info@outcome_column]])
+    
+    # Set reference level of the outcome
+    outcome_info@reference <- outcome_info@levels[1]
+  }
+  
+  if(outcome_info@outcome_type %in% c("survival", "competing_risk")){
+    # Set indicator for censoring
+    outcome_info@censored <- 0
+    
+    # Set indicator for events
+    outcome_info@event <- 1
+  }
+  
+  if(outcome_info@outcome_type %in% c("competing_risk")){
+    # Set indicator for competing risks
+    outcome_info@competing_risk <- setdiff(unique_na(data@data[[outcome_info@outcome_column[2]]]), c(0, 1))
+  }
+  
+  return(outoutcome_info)
+}
+
+
 
 .assign_outcome_info_to_global <- function(cl, outcome_info){
   # Put outcome_info in the familiar environment
