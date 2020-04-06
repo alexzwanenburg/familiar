@@ -217,8 +217,3 @@ setMethod("has_feature_data", signature(x="dataObject"), function(x, outcome_typ
   return(get_n_features(x=x) > 0)
 })
 
-
-#####.get_class_levels---------------------------------------------------------
-setMethod(".get_class_levels", signature(x="outcomeInfo"), function(x){
-  if(x@)
-})
