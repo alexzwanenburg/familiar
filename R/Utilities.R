@@ -753,26 +753,6 @@ getPredictedOutcomeColumn <- function(outcome_type){
   }
 }
 
-getClassProbabilityColumns <- function(dt=NULL, outcome_type, class_levels=NULL){
-  # Returns standardised names for predicted class probabilities
-  # The names follow the standard: "outcome_pred_prob_" + class level naming
-
-  # Get outcome class levels (if not provided)
-  if(is.null(class_levels)){
-    if(is.null(dt)) { stop("Provide either class levels, or the data table with an outcome column. Otherwise the name of the class probability columns can not be established.") }
-    class_levels      <- get_outcome_class_levels(x=dt, outcome_type=outcome_type)
-  }
-
-  # Generate class probability names
-  if(outcome_type %in% c("binomial", "multinomial")){
-    class_prob_cols <- check_column_name(column_name=paste0("outcome_pred_prob_", class_levels))
-    return(class_prob_cols)
-  } else {
-    return(NULL)
-  }
-
-}
-
 
 
 get_object_file_name <- function(learner, fs_method, project_id, data_id, run_id, pool_data_id=NULL, pool_run_id=NULL,

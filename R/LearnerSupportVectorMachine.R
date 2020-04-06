@@ -425,12 +425,13 @@ learner.svm.test <- function(object, data_obj){
       predicted_probs <- data.table::as.data.table(predicted_probs)
       
       # Update the column names for the predicted probabilities
-      data.table::setnames(x=predicted_probs, old=colnames(predicted_probs),
-                           new=getClassProbabilityColumns(outcome_type=outcome_type, class_levels=colnames(predicted_probs)))
+      data.table::setnames(x=predicted_probs,
+                           old=colnames(predicted_probs),
+                           new=get_class_probability_name(x=colnames(predicted_probs)))
       
       # Reorder probability columns.
-      data.table::setcolorder(predicted_probs, neworder=getClassProbabilityColumns(outcome_type=outcome_type,
-                                                                                   class_levels=get_outcome_class_levels(x=object)))
+      data.table::setcolorder(predicted_probs,
+                              neworder=get_class_probability_name(x=object))
       
       # Add probability columns to the predictions table.
       predictions_table <- cbind(predictions_table, predicted_probs)

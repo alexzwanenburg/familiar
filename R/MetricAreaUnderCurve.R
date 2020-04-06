@@ -13,7 +13,7 @@ metric.auc.calc <- function(dt, metric, outcome_type, na.rm=FALSE){
   # Remove missing values
   if(na.rm==TRUE){
     # Get names of predicted class probabilities
-    pred_prob_cols <- getClassProbabilityColumns(outcome_type=outcome_type, class_levels=classes)
+    pred_prob_cols <- get_class_probability_name(x=classes)
 
     # Determine valid entries
     valid_entries  <- apply(dt[, pred_prob_cols, with=FALSE], 1, function(x) (all(is.finite(x))))
@@ -41,7 +41,7 @@ metric.auc.calc <- function(dt, metric, outcome_type, na.rm=FALSE){
     neg_class <- class_comb[2,ii]
 
     # Get the probability column name for the positive class
-    pos_class_prob_col <- getClassProbabilityColumns(outcome_type=outcome_type, class_levels=pos_class)
+    pos_class_prob_col <- get_class_probability_name(x=pos_class)
 
     # Get the probabilities that correspond to the positive and negative class in outcome (g and f in Hand et al.)
     prob_pos  <- dt[outcome==pos_class, ][[pos_class_prob_col]]

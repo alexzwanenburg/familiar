@@ -171,7 +171,7 @@ learner.calibration.categorical.assess_class <- function(pos_class, probability_
   obs_class <- exp_prob <- NULL
 
   # Determine outcome column
-  pos_col_name <- getClassProbabilityColumns(outcome_type=outcome_type, class_levels=pos_class)
+  pos_col_name <- get_class_probability_name(x=pos_class)
 
   # Identify the real outcome columns
   outc_col <- get_outcome_columns(x=outcome_type)

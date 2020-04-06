@@ -91,7 +91,7 @@ learner.naive_bayes.test <- function(object, data_obj){
     class_levels <- get_outcome_class_levels(x=object)
 
     # Add class probabilities
-    outcome_pred_class_prob_cols <- getClassProbabilityColumns(outcome_type=outcome_type, class_levels=class_levels)
+    outcome_pred_class_prob_cols <- get_class_probability_name(x=class_levels)
     dt_pred      <- cbind(dt_pred, data.table::as.data.table(outcome_list$posterior))
     data.table::setnames(dt_pred, old=class_levels, new=outcome_pred_class_prob_cols)
 

@@ -402,7 +402,7 @@ learner.xgboost.test <- function(object, data_obj){
     dt_pred$outcome_pred_class <- factor(dt_pred$outcome_pred_class, levels=class_levels)
 
     # Add class probabilities (xgboost gives probability for the second class)
-    outcome_pred_class_prob_cols <- getClassProbabilityColumns(outcome_type=outcome_type, class_levels=class_levels)
+    outcome_pred_class_prob_cols <- get_class_probability_name(x=class_levels)
     dt_pred[, (outcome_pred_class_prob_cols[1]):=1-pred_outc_prob]
     dt_pred[, (outcome_pred_class_prob_cols[2]):=pred_outc_prob]
 
@@ -418,7 +418,7 @@ learner.xgboost.test <- function(object, data_obj){
     colnames(pred_outc_prob) <- class_levels
 
     # Add class probabilities
-    outcome_pred_class_prob_cols <- getClassProbabilityColumns(outcome_type=outcome_type, class_levels=class_levels)
+    outcome_pred_class_prob_cols <- get_class_probability_name(x=class_levels)
     dt_pred <- cbind(dt_pred, data.table::as.data.table(pred_outc_prob))
     data.table::setnames(dt_pred, old=class_levels, new=outcome_pred_class_prob_cols)
 

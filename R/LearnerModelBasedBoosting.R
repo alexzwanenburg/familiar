@@ -284,7 +284,7 @@ learner.mbboost.test <- function(object, data_obj){
       dt_pred[, "outcome_pred_class":=pred_outc_class]
 
       # Add class probabilities (mboost gives probability for the second class)
-      outcome_pred_class_prob_cols <- getClassProbabilityColumns(dt=dt, outcome_type=outcome_type)
+      outcome_pred_class_prob_cols <- get_class_probability_name(x=object)
       dt_pred[, (outcome_pred_class_prob_cols[1]):=1-pred_outc_prob]
       dt_pred[, (outcome_pred_class_prob_cols[2]):=pred_outc_prob]
 

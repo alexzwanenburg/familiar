@@ -2070,7 +2070,7 @@ setMethod("extract_sample_similarity_table", signature(object="familiarEnsemble"
   }
   
   # Determine the name of the probability column for the current class
-  current_class_col <- getClassProbabilityColumns(outcome_type=outcome_type, class_levels=current_class)
+  current_class_col <- get_class_probability_name(x=current_class)
   
   # Extract the required data
   data <- data.table::copy(prediction_table[, c("subject_id", "outcome", current_class_col), with=FALSE])
