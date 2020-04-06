@@ -142,3 +142,61 @@ get_outcome_info_from_backend <- function(){
     stop("The requested outcomeInfo object could not be read or created on the fly.")
   }
 }
+.compute_outcome_distribution_data <- function(object, data){
+
+  # Suppress NOTES due to non-standard evaluation in data.table
+  repetition_id <- NULL
+  
+  # Get standard outcome columns
+  outcome_columns <- get_outcome_columns(x=data)
+  
+  # Check for empty datasets, and return without setting distribution info.
+  if(is_empty(data)) return(object)
+  
+  # Placeholder distribution list
+  distr_list <- list()
+  
+  # Find outcome data
+  x <- data.table::copy(data@data[repetition_id == 1, mget(outcome_columns)])
+  
+  if(object@outcome_type %in% c("binomial", "multinomial")){
+    
+    # Number of samples
+    distr_list[["n"]] <- nrow(x)
+    
+    browser()
+    
+  } else if(object@outcome_type %in% c("continuous", "count")){
+    
+    # Number of samples
+    distr_list[["n"]] <- nrow(x)
+    
+    # Five-number summary of outcome values
+    distr_list[["fivenum"]] <- fivenum_summary(x, na.rm=TRUE)
+    
+    # Mean value
+    distr_list[["mean"]] <- mean(x, na.rm=TRUE)
+    
+  } else if(object@outcome_type %in% c("survival", "competing_risk")){
+    
+    # Number of samples
+    distr_list[["n"]] <- nrow(x)
+    
+    # Number of events
+    distr_list[["n_event"]] <- sum(x$outcome_event == 1, na.rm=TRUE)
+    
+    # Five-number summary of follow-up
+    distr_list[["follow_up_fivenum"]] <- fivenum_summary(x$outcome_time, na.rm=TRUE)
+    
+    # Five-number summary of event
+    distr_list[["event_fivenum"]] <- fivenum_summary(x[outcome_event == 1, ]$outcome_time, na.rm=TRUE)
+    
+  } else {
+    ..error_no_known_outcome_type(object@outcome_type)
+  }
+  
+  object@distribution <- distr_list
+  
+  return(object)
+}
+
