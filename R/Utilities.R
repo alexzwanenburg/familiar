@@ -498,25 +498,6 @@ applyContrastReference <- function(dt, dt_ref, method){
 }
 
 
-createEmptyModelList <- function(outcome_type){
-  # Generate list
-  model_list <- list()
-
-  # Set model_trained tag to FALSE
-  model_list$model_trained <- FALSE
-
-  # Set empty variable importance table
-  model_list$vimp          <- getEmptyVimp()
-
-  # Select only non-feature columens
-  model_list$selected_cols <- get_non_feature_columns(x=outcome_type)
-
-  # Return empty model list
-  return(model_list)
-}
-
-
-
 createEmptyPredictionTable <- function(dt=NULL, outcome_type){
 
   # Create skeleton
