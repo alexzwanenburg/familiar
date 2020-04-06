@@ -142,7 +142,7 @@ setGeneric("plot_all", function(object, ...) {standardGeneric("plot_all")})
 ##### utilities #####
 setGeneric("is_empty", function(x, ...) standardGeneric("is_empty"))
 
-setGeneric("get_outcome_class_levels", function(object, ...) standardGeneric(".get_outcome_class_levels"))
+setGeneric("get_outcome_class_levels", function(x, ...) standardGeneric("get_outcome_class_levels"))
 
 setGeneric("get_outcome_columns", function(x, ...) standardGeneric("get_outcome_columns"))
 
