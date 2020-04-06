@@ -154,9 +154,11 @@
   }
   
   #####censoring_indicator, event_indicator, competing_risk_indicator-----------
-  settings <- .impute_survival_indicators(data=data,
-                                          outcome_type=settings$data$outcome_type,
-                                          settings=settings)
+  if(settings$data$outcome_type %in% c("survival", "competing_risk")){
+    settings <- .impute_survival_indicators(data=data,
+                                            outcome_type=settings$data$outcome_type,
+                                            settings=settings)
+  }
   
   #####signature-----------------------------------
   if(!is.null(settings$data$signature)){
