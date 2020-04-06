@@ -1076,6 +1076,21 @@ is_package_installed <- function(name, version=NULL, verbose=FALSE){
 
 
 
+fivenum_summary <- function(x, na.rm=FALSE){
+  
+  # Compute fivenumber summary
+  y <- stats::fivenum(x=x, na.rm=na.rm)
+  
+  # Return as data.table
+  return(data.table::data.table("min"=y[1],
+                                "Q1"=y[2],
+                                "median"=y[3],
+                                "Q3"=y[4],
+                                "max"=y[5]))
+} 
+
+
+
 trim <- function(x, fraction=0.1){
   if(fraction < 0.0 | fraction > 0.5){
     stop("Trimming fraction should be between 0.0 and 0.5.")
