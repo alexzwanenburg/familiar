@@ -230,7 +230,7 @@
   
   # Outcome name
   if(is.null(settings$data$outcome_name)){
-    settings$data$outcome_name <- settings$data$outcome_col
+    settings$data$outcome_name <- settings$data$outcome_col[1]
   }
   
   return(settings)
