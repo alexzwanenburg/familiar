@@ -252,13 +252,13 @@ learner.net.test <- function(object, data_obj){
       dt_pred[, "outcome_pred_class":=factor(pred_outc_class[,1], levels=class_levels)]
 
       # Add class probabilities (glmnet always gives probability for the second class)
-      outcome_pred_class_prob_cols <- get_class_probability_columns(data_obj=data_obj)
+      outcome_pred_class_prob_cols <- get_class_probability_name(x=class_levels)
       dt_pred[, (outcome_pred_class_prob_cols[1]):=1-pred_outc_prob[,1]]
       dt_pred[, (outcome_pred_class_prob_cols[2]):=pred_outc_prob[,1]]
 
       # If no valid predictions are made, replace dt_pred by a standard prediction table with NA values
       if(!any(is.finite(dt_pred[[outcome_pred_class_prob_cols[1]]]))){
-        dt_pred                    <- createNonValidPredictionTable(dt=dt, outcome_type=outcome_type)
+        dt_pred <- createNonValidPredictionTable(dt=dt, outcome_type=outcome_type)
       }
 
       # Set to dt_pred
@@ -274,7 +274,7 @@ learner.net.test <- function(object, data_obj){
       dt_pred[, "outcome_pred_class":=factor(pred_outc_class, levels=class_levels)]
 
       # Add class probabilities
-      outcome_pred_class_prob_cols <- get_class_probability_columns(data_obj=data_obj)
+      outcome_pred_class_prob_cols <- get_class_probability_name(x=class_levels)
       dt_pred <- cbind(dt_pred, data.table::as.data.table(pred_outc_prob))
       data.table::setnames(dt_pred, old=class_levels, new=outcome_pred_class_prob_cols)
 

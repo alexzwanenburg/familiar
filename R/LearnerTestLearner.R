@@ -145,7 +145,7 @@ learner.test_learner.test <- function(object, data_obj, extra_output=FALSE){
       prediction_table[, "outcome_pred_class":=outcome]
       
       # Add class probabilities
-      predicted_probability_cols <- get_class_probability_columns(outcome_type=outcome_type, class_levels=class_levels)
+      predicted_probability_cols <- get_class_probability_name(x=class_levels)
       
       # Fill out the probability columns
       for(ii in seq_along(class_levels)){
@@ -208,7 +208,7 @@ learner.test_learner.test <- function(object, data_obj, extra_output=FALSE){
       prediction_table$outcome_pred_class <- factor(prediction_table$outcome_pred_class, levels=class_levels)
 
       # Add class probabilities
-      predicted_probability_cols <- get_class_probability_columns(outcome_type=outcome_type, class_levels=class_levels)
+      predicted_probability_cols <- get_class_probability_name(x=class_levels)
       
       # Fill out the probability columns
       for(ii in seq_along(class_levels)){

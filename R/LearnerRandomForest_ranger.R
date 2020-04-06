@@ -275,7 +275,7 @@ learner.rf_ranger.test <- function(object, data_obj, time_max, extra_output=FALS
     dt_pred[, "outcome_pred_class":=pred_outc_class]
 
     # Add class probabilities
-    outcome_pred_class_prob_cols <- get_class_probability_columns(outcome_type=outcome_type, class_levels= class_levels)
+    outcome_pred_class_prob_cols <- get_class_probability_name(x=class_levels)
     for(ii in seq_len(length(outcome_pred_class_prob_cols))){
       dt_pred[, (outcome_pred_class_prob_cols[ii]):=pred_outc_obj$predictions[, ii]]
     }

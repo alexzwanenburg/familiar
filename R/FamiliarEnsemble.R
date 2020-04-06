@@ -596,8 +596,8 @@ ensemble_prediction <- function(object, prediction_data, ensemble_method="mean")
     
     class_levels <- get_outcome_class_levels(x=object)
     
-    prediction_columns <- get_class_probability_columns(outcome_type=object@outcome_type,
-                                                        class_levels=class_levels)
+    # Probability columns
+    prediction_columns <- get_class_probability_name(x=class_levels)
     
   } else if(object@outcome_type %in% c("continuous", "count", "survival")){
     prediction_columns <- "outcome_pred"
