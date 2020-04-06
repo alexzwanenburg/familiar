@@ -361,6 +361,9 @@ learner.xgboost.test <- function(object, data_obj){
 
   # Get the type of outcome
   outcome_type      <- object@outcome_type
+  
+  # Get class levels
+  class_levels <- get_outcome_class_levels(x=object)
 
   if(!model_is_trained(object)){
     return(createNonValidPredictionTable(dt=data_obj@data, outcome_type=outcome_type))
@@ -396,19 +399,16 @@ learner.xgboost.test <- function(object, data_obj){
     dt_pred[, "outcome_pred_class_num":=NULL]
 
     # Convert predicted class to factor
-    dt_pred$outcome_pred_class <- factor(dt_pred$outcome_pred_class, levels=object@class_levels)
+    dt_pred$outcome_pred_class <- factor(dt_pred$outcome_pred_class, levels=class_levels)
 
     # Add class probabilities (xgboost gives probability for the second class)
-    outcome_pred_class_prob_cols <- getClassProbabilityColumns(outcome_type=outcome_type, class_levels=levels(object@model$conversion_table$class_level))
+    outcome_pred_class_prob_cols <- getClassProbabilityColumns(outcome_type=outcome_type, class_levels=class_levels)
     dt_pred[, (outcome_pred_class_prob_cols[1]):=1-pred_outc_prob]
     dt_pred[, (outcome_pred_class_prob_cols[2]):=pred_outc_prob]
 
   } else if(outcome_type=="multinomial") {
     # Get predicted probabilities for the different classes
     pred_outc_prob  <- predict(object=object@model$model, newdata=as.matrix(dt[, feature_cols, with=FALSE]), reshape=TRUE)
-
-    # Get outcome levels
-    class_levels <- object@class_levels
 
     # Update predicted class
     pred_outc_class <- class_levels[apply(pred_outc_prob, 1, which.max)]

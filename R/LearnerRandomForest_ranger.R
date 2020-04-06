@@ -269,7 +269,7 @@ learner.rf_ranger.test <- function(object, data_obj, time_max, extra_output=FALS
     # We have to determine the predicted class based on the class probabilities. We do so by first determining the column with the maximum probability.
     # Subsequently we read the corresponding class level, i.e. column name.
     pred_outc_class <- class_levels[apply(pred_outc_obj$predictions, 1, which.max)]
-    pred_outc_class <- factor(pred_outc_class, levels=object@class_levels)
+    pred_outc_class <- factor(pred_outc_class, levels=get_outcome_class_levels(x=object))
 
     # Set predicted class
     dt_pred[, "outcome_pred_class":=pred_outc_class]

@@ -219,6 +219,7 @@ learner.net.test <- function(object, data_obj){
   model_obj    <- object@model$model
   outcome_type <- object@outcome_type
   optim_lambda <- object@model$lambda_min
+  class_levels <- get_outcome_class_levels(x=object)
   
   # Obtain features as glmnet depends on the ordering of the features (which is
   # poor behaviour but not something we can solve from this side of the table).
@@ -248,7 +249,7 @@ learner.net.test <- function(object, data_obj){
                                  s=optim_lambda, type="response")
 
       # Convert to factor and set to prediction data table
-      dt_pred[, "outcome_pred_class":=factor(pred_outc_class[,1], levels=object@class_levels)]
+      dt_pred[, "outcome_pred_class":=factor(pred_outc_class[,1], levels=class_levels)]
 
       # Add class probabilities (glmnet always gives probability for the second class)
       outcome_pred_class_prob_cols <- get_class_probability_columns(data_obj=data_obj)
@@ -270,12 +271,12 @@ learner.net.test <- function(object, data_obj){
                                  s=optim_lambda, type="response")[,,1]
 
       # Convert to factor and set to prediction data table
-      dt_pred[, "outcome_pred_class":=factor(pred_outc_class, levels=object@class_levels)]
+      dt_pred[, "outcome_pred_class":=factor(pred_outc_class, levels=class_levels)]
 
       # Add class probabilities
       outcome_pred_class_prob_cols <- get_class_probability_columns(data_obj=data_obj)
       dt_pred <- cbind(dt_pred, data.table::as.data.table(pred_outc_prob))
-      data.table::setnames(dt_pred, old=object@class_levels, new=outcome_pred_class_prob_cols)
+      data.table::setnames(dt_pred, old=class_levels, new=outcome_pred_class_prob_cols)
 
       # If no valid predictions are made, replace dt_pred by a standard prediction table with NA values
       if(!any(is.finite(dt_pred[[outcome_pred_class_prob_cols[1]]]))){

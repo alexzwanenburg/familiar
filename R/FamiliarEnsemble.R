@@ -593,7 +593,11 @@ ensemble_prediction <- function(object, prediction_data, ensemble_method="mean")
   
   # Determine prediction column names
   if(object@outcome_type %in% c("binomial", "multinomial")){
-    prediction_columns <- get_class_probability_columns(outcome_type=object@outcome_type, class_levels=object@class_levels)
+    
+    class_levels <- get_outcome_class_levels(x=object)
+    
+    prediction_columns <- get_class_probability_columns(outcome_type=object@outcome_type,
+                                                        class_levels=class_levels)
     
   } else if(object@outcome_type %in% c("continuous", "count", "survival")){
     prediction_columns <- "outcome_pred"
@@ -617,13 +621,14 @@ ensemble_prediction <- function(object, prediction_data, ensemble_method="mean")
   if(object@outcome_type %in% c("binomial", "multinomial")){
 
     # Identify the name of the most probable class
-    predicted_class <- object@class_levels[max.col(prediction_data[, c(prediction_columns), with=FALSE])]
+    predicted_class <- class_levels[max.col(prediction_data[, c(prediction_columns), with=FALSE])]
     
     # Add the names as the predicted outcome
     prediction_data[, "outcome_pred_class":=predicted_class]
     
     # Convert to a factor
-    prediction_data$outcome_pred_class <- factor(prediction_data$outcome_pred_class, levels=object@class_levels)
+    prediction_data$outcome_pred_class <- factor(prediction_data$outcome_pred_class,
+                                                 levels=class_levels)
   }
   
   return(prediction_data)

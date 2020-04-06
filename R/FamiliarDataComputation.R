@@ -1105,10 +1105,10 @@ setMethod("extract_auc_data", signature(object="familiarEnsemble"),
               
               if(outcome_type == "binomial"){
                 # Use the second class as positive class, as per standard.
-                class_levels <- object@class_levels[2]
+                class_levels <- get_outcome_class_levels(x=object)[2]
               } else {
                 # Use all classes as positive class in case of multinomial data
-                class_levels <- object@class_levels
+                class_levels <- get_outcome_class_levels(x=object)
               }
               
               # Extract basic information concerning matching entries
@@ -1119,7 +1119,7 @@ setMethod("extract_auc_data", signature(object="familiarEnsemble"),
               
               # Convert the pos_class into a factor for multinomial outcomes.
               if(outcome_type == "multinomial"){
-                single_auc_table$pos_class <- factor(single_auc_table$pos_class, levels=object@class_levels)
+                single_auc_table$pos_class <- factor(single_auc_table$pos_class, levels=class_levels)
               }
               
               # Add the model name
@@ -1132,10 +1132,10 @@ setMethod("extract_auc_data", signature(object="familiarEnsemble"),
             ##### Compute AUC curves for the ensemble model #####
             if(outcome_type == "binomial"){
               # Use the second class as positive class, as per standard.
-              class_levels <- object@class_levels[2]
+              class_levels <- get_outcome_class_levels(x=object)[2]
             } else {
               # Use all classes as positive class in case of multinomial data
-              class_levels <- object@class_levels
+              class_levels <- get_outcome_class_levels(x=object)
             }
             
             # Extract basic information concerning matching entries
@@ -1146,7 +1146,7 @@ setMethod("extract_auc_data", signature(object="familiarEnsemble"),
             
             # Convert the pos_class into a factor for multinomial outcomes.
             if(outcome_type == "multinomial"){
-              ensemble_auc_table$pos_class <- factor(ensemble_auc_table$pos_class, levels=object@class_levels)
+              ensemble_auc_table$pos_class <- factor(ensemble_auc_table$pos_class, levels=class_levels)
             }
             
             # Add the model name

@@ -417,7 +417,8 @@ learner.svm.test <- function(object, data_obj){
       predictions_table[, "outcome_pred_class":=kernlab::predict(object=object@model$model, newdata=data_obj@data,
                                                                  type="response")]
       # Set the class order in the outcome.
-      predictions_table$outcome_pred_class <- factor(predictions_table$outcome_pred_class, levels=object@class_levels)
+      predictions_table$outcome_pred_class <- factor(predictions_table$outcome_pred_class,
+                                                     levels=get_outcome_class_levels(x=object))
       
       # Predict probabilities and convert to data.table
       predicted_probs <- kernlab::predict(object=object@model$model, newdata=data_obj@data, type="probabilities")
@@ -428,7 +429,8 @@ learner.svm.test <- function(object, data_obj){
                            new=getClassProbabilityColumns(outcome_type=outcome_type, class_levels=colnames(predicted_probs)))
       
       # Reorder probability columns.
-      data.table::setcolorder(predicted_probs, neworder=getClassProbabilityColumns(outcome_type=outcome_type, class_levels=object@class_levels))
+      data.table::setcolorder(predicted_probs, neworder=getClassProbabilityColumns(outcome_type=outcome_type,
+                                                                                   class_levels=get_outcome_class_levels(x=object)))
       
       # Add probability columns to the predictions table.
       predictions_table <- cbind(predictions_table, predicted_probs)

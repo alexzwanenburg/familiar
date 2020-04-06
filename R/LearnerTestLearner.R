@@ -139,7 +139,7 @@ learner.test_learner.test <- function(object, data_obj, extra_output=FALSE){
     if(outcome_type %in% c("binomial", "multinomial")){
 
       # Extract class levels from the predictions
-      class_levels <- object@class_levels
+      class_levels <- get_outcome_class_levels(x=object)
       
       # Copy outcome as the predicted class
       prediction_table[, "outcome_pred_class":=outcome]
@@ -201,7 +201,7 @@ learner.test_learner.test <- function(object, data_obj, extra_output=FALSE){
     
     if(outcome_type %in% c("binomial", "multinomial")){
       # Extract class levels from the predictions
-      class_levels <- object@class_levels
+      class_levels <- get_outcome_class_levels(x=object)
       
       # Set the last class as predicted outcome
       prediction_table[, "outcome_pred_class":=tail(class_levels, n=1)]

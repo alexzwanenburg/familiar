@@ -65,7 +65,7 @@ learner.recalibrate_model <- function(object, data_obj, time_max=NULL) {
 
   if(outcome_type %in% c("binomial", "multinomial")){
     # Get class levels and class probability column names
-    class_levels <- object@class_levels
+    class_levels <- get_outcome_class_levels(x=object)
     prob_cols <- getClassProbabilityColumns(dt=predictions, outcome_type=outcome_type)
 
     # Build a logistic model on top of the predicted class probabilities for

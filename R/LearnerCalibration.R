@@ -123,7 +123,7 @@ learner.calibration.categorical <- function(object, data_obj){
   
   # Set outcome type
   outcome_type <- object@outcome_type
-  class_levels <- object@class_levels
+  class_levels <- get_outcome_class_levels(x=object)
 
   # Get prediction table
   probability_table <- predict(object=object, newdata=data_obj, allow_recalibration=TRUE)
