@@ -55,30 +55,30 @@ setMethod("is_empty", signature(x="list"), function(x){
 })
 
 #####get_outcome_class_levels---------------------------------------------------
-setMethod("get_outcome_class_levels", signature(x="outcomeInfo")){
+setMethod("get_outcome_class_levels", signature(x="outcomeInfo"), function(x){
   if(x@outcome_type %in% c("binomial", "multinomial")){
     return(x@levels)
     
   } else {
     return(character(0))
   }
-}
+})
 
-setMethod("get_outcome_class_levels", signature(x="familiarModel")){
+setMethod("get_outcome_class_levels", signature(x="familiarModel"), function(x){
   return(get_outcome_class_levels(x@outcome_info))
-}
+})
 
-setMethod("get_outcome_class_levels", signature(x="familiarEnsemble")){
+setMethod("get_outcome_class_levels", signature(x="familiarEnsemble"), function(x){
   return(get_outcome_class_levels(x@outcome_info))
-}
+})
 
-setMethod("get_outcome_class_levels", signature(x="familiarData")){
+setMethod("get_outcome_class_levels", signature(x="familiarData"), function(x){
   return(get_outcome_class_levels(x@outcome_info))
-}
+})
 
-setMethod("get_outcome_class_levels", signature(x="familiarCollection")){
+setMethod("get_outcome_class_levels", signature(x="familiarCollection"), function(x){
   return(get_outcome_class_levels(x@outcome_info))
-}
+})
 
 setMethod("get_outcome_class_levels", signature(x="data.table"), function(x, outcome_type){
   return(.get_outcome_class_levels(data=x, outcome_type=outcome_type))
