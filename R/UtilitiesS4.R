@@ -101,6 +101,71 @@ setMethod("get_outcome_class_levels", signature(x="dataObject"), function(x){
 }
 
 
+#####get_class_probability_name-------------------------------------------------
+setMethod("get_class_probability_name", signature(x="outcomeInfo"), function(x){
+  
+  # Check outcome type
+  if(x@outcome_type %in% c("binomial", "multinomial")){
+    
+    # Find class levels
+    class_levels <- get_outcome_class_levels(x=x)
+    
+    # Pass to the method for character strings.
+    return(get_class_probability_name(x=class_levels))
+    
+  } else {
+    
+    return(NULL)
+  }
+})
+
+setMethod("get_class_probability_name", signature(x="familiarModel"), function(x){
+  return(get_class_probability_name(x=x@outcome_info))
+})
+
+setMethod("get_class_probability_name", signature(x="familiarEnsemble"), function(x){
+  return(get_class_probability_name(x=x@outcome_info))
+})
+
+setMethod("get_class_probability_name", signature(x="familiarData"), function(x){
+  return(get_class_probability_name(x=x@outcome_info))
+})
+
+setMethod("get_class_probability_name", signature(x="familiarCollection"), function(x){
+  return(get_class_probability_name(x=x@outcome_info))
+})
+
+setMethod("get_class_probability_name", signature(x="dataObject"), function(x){
+  
+  outcome_info <- .get_outcome_info(x=x)
+  
+  return(get_class_probability_name(x=outcome_info))
+})
+
+setMethod("get_class_probability_name", signature(x="data.table"), function(x, outcome_type){
+  
+  if(outcome_type %in% c("binomial", "multinomial")){
+    
+    # Find class levels
+    class_levels <- get_outcome_class_levels(x=x)
+    
+    # Pass to the method for character strings.
+    return(get_class_probability_name(x=class_levels))
+    
+  } else {
+    
+    return(NULL)
+  }
+})
+
+setMethod("get_class_probability_name", signature(x="character"), function(x){
+  # Create column names
+  class_probability_columns <- check_column_name(column_name=paste0("outcome_pred_prob_", x))
+  
+  return(class_probability_columns)
+})
+
+
 #####get_outcome_columns---------------------------------------------------------------
 setMethod("get_outcome_columns", signature(x="character"), function(x){
   return(.get_outcome_columns(outcome_type=x))
@@ -207,6 +272,7 @@ setMethod("get_n_features", signature(x="data.table"), function(x, outcome_type)
 setMethod("get_n_features", signature(x="dataObject"), function(x){
   return(length(get_feature_columns(x=x)))
 })
+
 
 #####has_feature_data----------------------------------------------------------
 setMethod("has_feature_data", signature(x="data.table"), function(x, outcome_type){

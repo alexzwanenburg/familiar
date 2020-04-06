@@ -153,3 +153,5 @@ setGeneric("get_feature_columns", function(x, ...) standardGeneric("get_feature_
 setGeneric("get_n_features", function(x, ...) standardGeneric("get_n_features"))
 
 setGeneric("has_feature_data", function(x, ...) standardGeneric("has_feature_data"))
+
+setGeneric("get_class_probability_name", function(x, ...) standardGeneric("get_class_probability_name"))
