@@ -22,15 +22,15 @@ create_outcome_info <- function(settings){
   
   if(outcome_info@outcome_type %in% c("survival", "competing_risk")){
     # Set indicator for censoring
-    outcome_info@censored <- settings$data$censoring_indicator
+    outcome_info@censored <- as.character(settings$data$censoring_indicator)
     
     # Set indicator for events
-    outcome_info@event <- settings$data$event_indicator
+    outcome_info@event <- as.character(settings$data$event_indicator)
   }
   
   if(outcome_info@outcome_type %in% c("competing_risk")){
     # Set indicator for competing risks
-    outcome_info@competing_risk <- settings$data$competing_risk_indicator
+    outcome_info@competing_risk <- as.character(settings$data$competing_risk_indicator)
   }
   
   return(outcome_info)
@@ -59,15 +59,15 @@ create_outcome_info_from_data <- function(data){
   
   if(outcome_info@outcome_type %in% c("survival", "competing_risk")){
     # Set indicator for censoring
-    outcome_info@censored <- 0
+    outcome_info@censored <- "0"
     
     # Set indicator for events
-    outcome_info@event <- 1
+    outcome_info@event <- "1"
   }
   
   if(outcome_info@outcome_type %in% c("competing_risk")){
     # Set indicator for competing risks
-    outcome_info@competing_risk <- setdiff(unique_na(data@data[[outcome_info@outcome_column[2]]]), c(0, 1))
+    outcome_info@competing_risk <- as.character(setdiff(unique_na(data@data[[outcome_info@outcome_column[2]]]), c(0, 1)))
   }
   
   return(outoutcome_info)
