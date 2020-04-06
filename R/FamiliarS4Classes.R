@@ -151,6 +151,8 @@ setClass("familiarData",
            prediction_data = "ANY",
            # Confusion matrix for categorical outcomes
            confusion_matrix = "ANY",
+           # Data for decision curve analysis
+           decision_curve_data = "ANY",
            # Calibration information, e.g. baseline survival
            calibration_info = "ANY",
            # Calibration test information
@@ -199,6 +201,7 @@ setClass("familiarData",
            pooling_table = NULL,
            prediction_data = NULL,
            confusion_matrix = NULL,
+           decision_curve_data = NULL,
            calibration_info = NULL,
            calibration_data = NULL,
            model_performance = NULL,
@@ -236,6 +239,7 @@ setClass("familiarData",
 #' @slot fs_method character. 
 #' @slot prediction_data ANY.
 #' @slot confusion_matrix ANY.
+#' @slot decision_curve_data ANY.
 #' @slot calibration_info ANY. 
 #' @slot calibration_data ANY. 
 #' @slot model_performance ANY. 
@@ -291,6 +295,8 @@ setClass("familiarCollection",
            prediction_data = "ANY",
            # Confusion matrix for categorical outcomes
            confusion_matrix = "ANY",
+           # Data for decision curve analysis
+           decision_curve_data = "ANY",
            # Calibration information, e.g. baseline survival
            calibration_info = "ANY",
            # Calibration test information
@@ -346,6 +352,7 @@ setClass("familiarCollection",
            fs_method = NA_character_,
            prediction_data = NULL,
            confusion_matrix = NULL,
+           decision_curve_data = NULL,
            calibration_info = NULL,
            calibration_data = NULL,
            model_performance = NULL,
