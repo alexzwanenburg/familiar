@@ -807,7 +807,7 @@ getClassProbabilityColumns <- function(dt=NULL, outcome_type, class_levels=NULL)
   # Get outcome class levels (if not provided)
   if(is.null(class_levels)){
     if(is.null(dt)) { stop("Provide either class levels, or the data table with an outcome column. Otherwise the name of the class probability columns can not be established.") }
-    class_levels      <- get_outcome_levels(x=dt, outcome_type=outcome_type)
+    class_levels      <- get_outcome_class_levels(x=dt, outcome_type=outcome_type)
   }
 
   # Generate class probability names
@@ -828,7 +828,7 @@ get_class_probability_columns <- function(data_obj=NULL, outcome_type=NULL, clas
   # Get outcome class levels (if not provided)
   if(is.null(class_levels)){
     if(!is.null(data_obj)) {
-      class_levels <- get_outcome_levels(data_obj)
+      class_levels <- get_outcome_class_levels(data_obj)
       outcome_type <- data_obj@outcome_type
     } else {
       stop("Provide either class levels, or the dataObject with an outcome column. Otherwise the name of the class probability columns can not be established.")
@@ -842,9 +842,6 @@ get_class_probability_columns <- function(data_obj=NULL, outcome_type=NULL, clas
   } else {
     return(NULL)
   }
-
-
-
 }
 
 

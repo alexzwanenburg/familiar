@@ -28,7 +28,7 @@ learner.knn.param <- function(data_obj, learner){
 
   # Get the number of subjects
   n_samples <- nrow(data_obj@data)
-  n_classes <- length(get_outcome_levels(x=data_obj))
+  n_classes <- length(get_outcome_class_levels(x=data_obj))
 
   
   ##### Signature size #########################################################

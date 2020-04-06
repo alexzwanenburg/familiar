@@ -161,7 +161,7 @@ learner.apply_calibration <- function(object, predictions){
     predictions[, "prob_sum":=NULL]
 
     # Update predicted outcome with class with maximum predicted probability
-    class_levels <- get_outcome_levels(x=predictions, outcome_type=object@outcome_type)
+    class_levels <- get_outcome_class_levels(x=object)
     max_prob_class <- factor(class_levels[predictions[, max.col(.SD), .SDcols=prob_cols]], levels=class_levels)
     predictions[, "outcome_pred_class":=max_prob_class]
 

@@ -272,7 +272,7 @@ learner.xgboost.train <- function(object, data_obj){
   # Build a xgb data matrix
   if(outcome_type %in% c("binomial", "multinomial")){
     # Convert categorical outcomes to numerical labels
-    class_levels      <- get_outcome_levels(x=data_obj)
+    class_levels      <- get_outcome_class_levels(x=object)
     class_num_labels  <- as.numeric(seq_len(length(class_levels)))-1
     dt_class_conv     <- data.table::data.table("class_level"=factor(class_levels, levels=class_levels), "num_label"=class_num_labels)
 
