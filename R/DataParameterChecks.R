@@ -539,7 +539,7 @@
 .impute_survival_indicators <- function(data,
                                         outcome_type,
                                         settings){
-  browser()
+  
   # Define standard indicators for censoring, event and competing risk.
   standard_censoring_indicator <- c("0", "false", "f", "n", "no")
   if(!is.null(settings$data$censoring_indicator)) {
@@ -579,7 +579,7 @@
   # Try to identify indicators present in the dataset.
   present_censoring_indicator <- event_values[tolower(as.character(event_values)) %in% tolower(standard_censoring_indicator)]
   present_event_indicator <- event_values[tolower(as.character(event_values)) %in% tolower(standard_event_indicator)]
-  present_competing_risk_indicator <- event_values[tolower(as.character(event_values)) %in% tolower(competing_risk_indicator)]
+  present_competing_risk_indicator <- event_values[tolower(as.character(event_values)) %in% tolower(standard_competing_risk_indicator)]
   
   # Identify values in the event column which are not yet assigned.
   event_values <- setdiff(event_values, c(present_censoring_indicator,
