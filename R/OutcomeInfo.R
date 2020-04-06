@@ -142,6 +142,82 @@ get_outcome_info_from_backend <- function(){
     stop("The requested outcomeInfo object could not be read or created on the fly.")
   }
 }
+
+
+
+.aggregate_outcome_info <- function(x){
+  
+  # Suppress NOTES due to non-standard evaluation in data.table
+  min <- Q1 <- median <- Q3 <- max <- NULL
+  
+  browser()
+  # Copy the first outcome info object
+  outcome_info <- x[[1]]
+  
+  # Find distribution items
+  distribution_items <- names(outcome_info@distribution)
+  
+  if(!is.null(distribution_items)){
+    
+    # Placeholder list
+    distr_list <- list()
+    
+    # Iterate over items in the distribution list
+    for(item in distribution_items){
+      
+      if(grepl(pattern="fivenum", x=item, fixed=TRUE)){
+        
+        # Aggregate from list
+        fivenum_values <- lapply(x, function(outcome_info_object, item) (outcome_info_object@distribution[[item]]), item=item)
+        
+        # Combine all the data.tables
+        fivenum_values <- data.table::rbindlist(fivenum_values)
+        
+        # Check for zero-length lists.
+        if(is_empty(fivenum_values) == 0) next()
+        browser()
+        fivenum_values <- fivenum_values[, list("min"=min(min),
+                                                "Q1"=mean(Q1),
+                                                "median"=mean(median),
+                                                "Q3"=mean(Q3),
+                                                "max"=mean(max)), ]
+        
+      } else {
+        # Find mean value
+        distr_list[[item]] <- mean(extract_from_slot(x, "distribution", item, na.rm=TRUE))
+      }
+      
+    }
+    
+    # Update distribution slot
+    outcome_info@distribution <- distr_list
+  }
+  
+  # Update transformation parameters
+  if(!is.null(outcome_info@transformation_parameters)){
+    transform_method <- get_mode(extract_from_slot(object_list=x, slot_name="transformation_parameters", slot_element="transform_method"))
+    transform_lambda <- get_mode(extract_from_slot(object_list=x, slot_name="transformation_parameters", slot_element="transform_lambda"))
+    
+    outcome_info@transformation_parameters <- list("transform_method" = transform_method,
+                                                   "transform_lambda" = transform_lambda)
+  }
+  
+  # Update normalisation parameters
+  if(!is.null(outcome_info@normalisation_parameters)){
+    normalisation_method <- get_mode(extract_from_slot(object_list=x, slot_name="normalisation_parameters", slot_element="norm_method"))
+    normalisation_shift  <- mean(extract_from_slot(object_list=x, slot_name="normalisation_parameters", slot_element="norm_shift"))
+    normalisation_scale  <- mean(extract_from_slot(object_list=x, slot_name="normalisation_parameters", slot_element="norm_scale"))
+    
+    outcome_info@normalisation_parameters <- list("norm_method" = normalisation_method,
+                                                  "norm_shift" = normalisation_shift,
+                                                  "norm_scale" = normalisation_scale)
+  }
+  
+  return(outcome_info)
+}
+
+
+
 .compute_outcome_distribution_data <- function(object, data){
 
   # Suppress NOTES due to non-standard evaluation in data.table
