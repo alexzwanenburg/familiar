@@ -390,7 +390,7 @@ learner.rf_ranger.vimp <- function(data_obj=NULL, param=NULL, method="random_for
                            outcome_type = outcome_type,
                            learner = learner.rf_ranger.learner(method=method, outcome_type=outcome_type),
                            hyperparameters = param,
-                           class_levels = get_outcome_levels(x=data_obj))
+                           outcome_info = .get_outcome_info(x=data_obj))
 
     # Generate model for the given variable importance method and forest type
     object <- train(object=object, data=data_obj, get_recalibration=FALSE, get_additional_info=FALSE)

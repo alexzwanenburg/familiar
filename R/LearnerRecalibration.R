@@ -30,16 +30,21 @@ learner.recalibrate_model <- function(object, data_obj, time_max=NULL) {
     data_test       <- select_data_from_samples(data=data_obj, samples=iter_list$valid_list[[ii]])
 
     # Create familiar model
-    cv_model        <- methods::new("familiarModel",
-                                    outcome_type = object@outcome_type,
-                                    learner = object@learner,
-                                    hyperparameters = object@hyperparameters,
-                                    signature = object@signature,
-                                    req_feature_cols = object@req_feature_cols,
-                                    class_levels = object@class_levels)
-
-    # Train the model - the recalibration flag is set to FALSE to avoid an infinite loop, as this would involve calling learner.calibrate_model again.
-    cv_model        <- train(object=cv_model, data=data_train, get_recalibration=FALSE, get_additional_info=FALSE)
+    cv_model <- methods::new("familiarModel",
+                             outcome_type = object@outcome_type,
+                             learner = object@learner,
+                             hyperparameters = object@hyperparameters,
+                             signature = object@signature,
+                             req_feature_cols = object@req_feature_cols,
+                             outcome_info = .get_outcome_info(x=object))
+    
+    # Train the model - the recalibration flag is set to FALSE to avoid an
+    # infinite loop, as this would involve calling learner.calibrate_model
+    # again.
+    cv_model <- train(object=cv_model,
+                      data=data_train,
+                      get_recalibration=FALSE,
+                      get_additional_info=FALSE)
 
     # Generate a prediction table
     pred_list[[ii]] <- predict(object=cv_model, newdata=data_test, allow_recalibration=FALSE, time_max=time_max)

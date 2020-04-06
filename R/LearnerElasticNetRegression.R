@@ -322,7 +322,7 @@ learner.net.vimp <- function(data_obj=NULL, param=NULL, method=NULL, object=NULL
                            outcome_type = outcome_type,
                            learner = learner.net.learner(method=method, outcome_type=outcome_type),
                            hyperparameters = param,
-                           class_levels = get_outcome_levels(x=data_obj))
+                           outcome_info = .get_outcome_info(x=data_obj))
     
     object <- train(object=object, data=data_obj, get_recalibration=FALSE, get_additional_info=FALSE)
   }

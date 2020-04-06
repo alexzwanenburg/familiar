@@ -720,7 +720,7 @@ hpo.evaluate_hyperparameters <- function(run, dt_param, dt_ranks, feature_info_l
                                 run_table = run$run_table,
                                 hyperparameters = param_list,
                                 signature = sel_feat,
-                                class_levels = get_outcome_levels(x=data_obj))
+                                outcome_info=.get_outcome_info())
 
   # Train model
   fam_model   <- train(object=fam_model, data=data_obj_tr, get_recalibration=FALSE, get_additional_info=FALSE)

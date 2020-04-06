@@ -49,12 +49,12 @@ setMethod("train", signature(object="familiarModel", data="ANY"),
                 fam_model@km_info <- learner.find_survival_grouping_thresholds(object=fam_model, data_obj=data)
               }
               
+              # TODO Novelty detector
+              fam_model@novelty_detector <- NULL
             }
             
-            # Extract mean outcome value from input data and attach to the model
-            if(outcome_type %in% c("count", "continuous")){
-              fam_model@mean_outcome_value <- mean(data@data$outcome)
-            }
+            # Add outcome distribution data
+            fam_model@outcome_info <- .compute_outcome_distribution_data(object=fam_model@outcome_info, data=data)
             
             return(fam_model)
           })

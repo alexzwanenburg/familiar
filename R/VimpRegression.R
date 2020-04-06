@@ -251,7 +251,7 @@ vimp.regression.evaluate_model_ <- function(add_feat, sel_feat, dt_data, iter_li
                                       hyperparameters = param,
                                       signature = c(add_feat, sel_feat),
                                       req_feature_cols = c(add_feat, sel_feat),
-                                      class_levels = get_outcome_levels(x=data_obj))
+                                      outcome_info = .get_outcome_info(x=data_obj))
 
     # Train model
     fam_model     <- train(object=fam_model, data=data_train, get_recalibration=FALSE, get_additional_info=FALSE)
