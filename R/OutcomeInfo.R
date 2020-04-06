@@ -7,7 +7,7 @@ create_outcome_info <- function(settings){
   outcome_info <- methods::new("outcomeInfo",
                                name = settings$data$outcome_name,
                                outcome_type = settings$data$outcome_type,
-                               outcome_column = settings$data$outcome_column)
+                               outcome_column = settings$data$outcome_col)
   
   if(outcome_info@outcome_type %in% c("binomial", "multinomial")){
     # Set class levels
