@@ -28,7 +28,7 @@ setMethod("predict", signature(object="familiarModel"),
               }
               
               # Return prediction table
-              return(dt_pred)
+              return(predictions)
               
             } else {
               # Return extra output in addition to predicted outcomes
