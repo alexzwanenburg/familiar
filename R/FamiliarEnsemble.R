@@ -41,7 +41,6 @@ setMethod("complete_familiar_ensemble", signature(object="familiarEnsemble"),
                                          feature_info = feature_info_list,
                                          run_table = object@run_table,
                                          calibration_info = calibration_info,
-                                         mean_outcome_value = extract_from_slot(object_list=object@model_list, slot_name="mean_outcome_value"),
                                          settings = object@model_list[[1]]@settings,
                                          is_anonymised = all(extract_from_slot(object_list=object@model_list, slot_name="is_anonymised")),
                                          project_id = object@model_list[[1]]@project_id)

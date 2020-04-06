@@ -40,6 +40,8 @@ A familiarCollection object aggregates data from one or more familiarData object
 
 \item{\code{confusion_matrix}}{ANY.}
 
+\item{\code{decision_curve_data}}{ANY.}
+
 \item{\code{calibration_info}}{ANY.}
 
 \item{\code{calibration_data}}{ANY.}
