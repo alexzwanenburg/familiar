@@ -70,6 +70,8 @@ setGeneric("update_with_replacement", function(data, ...) {standardGeneric("upda
 
 setGeneric("add_package_version", function(object, ...) {standardGeneric("add_package_version")})
 
+setGeneric("add_data_column_info", function(object, ...) standardGeneric("add_data_column_info"))
+
 ##### Methods to see and update labels of data in familiarCollection objects.
 setGeneric(".set_labels", function(x, ...) {standardGeneric(".set_labels")})
 
