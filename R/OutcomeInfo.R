@@ -108,6 +108,7 @@ get_outcome_info_from_backend <- function(){
 }
 
 
+
 .get_outcome_info <- function(x=NULL){
   # Function to retrieve outcome_info in a generic manner.
   
@@ -148,9 +149,8 @@ get_outcome_info_from_backend <- function(){
 .aggregate_outcome_info <- function(x){
   
   # Suppress NOTES due to non-standard evaluation in data.table
-  min <- Q1 <- median <- Q3 <- max <- NULL
+  min <- Q1 <- median <- Q3 <- max <- count <- NULL
   
-  browser()
   # Copy the first outcome info object
   outcome_info <- x[[1]]
   
@@ -174,13 +174,33 @@ get_outcome_info_from_backend <- function(){
         fivenum_values <- data.table::rbindlist(fivenum_values)
         
         # Check for zero-length lists.
-        if(is_empty(fivenum_values) == 0) next()
-        browser()
+        if(is_empty(fivenum_values)) next()
+        
+        # Summarise
         fivenum_values <- fivenum_values[, list("min"=min(min),
                                                 "Q1"=mean(Q1),
                                                 "median"=mean(median),
                                                 "Q3"=mean(Q3),
-                                                "max"=mean(max)), ]
+                                                "max"=max(max)), ]
+        
+        # Add to list
+        distr_list[[item]] <- fivenum_values
+        
+      } else if(grepl(patter="frequency", x=item, fixed=TRUE)){
+        
+        # Aggregate from list
+        frequency_values <- lapply(x, function(outcome_info_object, item) (outcome_info_object@distribution[[item]]), item=item)
+        
+        # Combine all the data.tables
+        frequency_values <- data.table::rbindlist(frequency_values)
+        
+        if(is_empty(frequency_values)) next()
+        
+        # Summarise
+        frequency_values[, "count":=mean(count), by="outcome"]
+        
+        # Add to list
+        distr_list[[item]] <- frequency_values
         
       } else {
         # Find mean value
@@ -240,7 +260,8 @@ get_outcome_info_from_backend <- function(){
     # Number of samples
     distr_list[["n"]] <- nrow(x)
     
-    browser()
+    # Number of instances for each class
+    distr_list[["frequency"]] <- x[, list("count"=.N), by="outcome"]
     
   } else if(object@outcome_type %in% c("continuous", "count")){
     
