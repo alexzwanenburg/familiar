@@ -283,6 +283,14 @@ determine_pre_processing_parameters <- function(cl, data_id, run_id){
   
   
   
+  ##### Add feature distribution data ------------------------------------------
+  logger.message(paste0("Pre-processing: Adding value distribution statistics to features."))
+  
+  # Add feature distribution data
+  feature_info_list <- compute_feature_distribution_data(cl=cl, feature_info_list=feature_info_list, data_obj=data_obj)
+  
+  
+  
   ##### Transform features #####
   if(settings$prep$transform_method!="none"){
     logger.message("Pre-processing: Performing transformations to normalise feature value distributions.")
