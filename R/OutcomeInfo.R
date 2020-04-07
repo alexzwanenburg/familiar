@@ -196,11 +196,8 @@ get_outcome_info_from_backend <- function(){
         
         if(is_empty(frequency_values)) next()
         
-        # Summarise
-        frequency_values[, "count":=mean(count), by="outcome"]
-        
-        # Add to list
-        distr_list[[item]] <- frequency_values
+        # Summarise and add to list
+        distr_list[[item]] <- frequency_values[, list("count"=mean(count)), by="outcome"]
         
       } else {
         # Find mean value
