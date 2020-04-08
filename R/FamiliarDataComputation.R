@@ -246,22 +246,6 @@ setMethod("extract_data", signature(object="familiarEnsemble"),
             # Load models
             object <- load_models(object=object)
             
-            # TEMP
-            prediction_data <- extract_predictions(object=object,
-                                                   data=data,
-                                                   ensemble_method=ensemble_method,
-                                                   time_max=time_max,
-                                                   verbose=verbose)
-            
-            # Extract confusion matrix data.
-            if(data_element %in% c("all", "confusion_matrix")){
-              confusion_matrix_info <- extract_confusion_matrix(object=object,
-                                                                prediction_data=prediction_data,
-                                                                verbose=verbose)
-            } else {
-              confusion_matrix_info <- NULL
-            }
-            
             # Extract feature distance tables, 
             if(data_element %in% c("all", "mutual_correlation", "univariate_analysis", "feature_expressions")){
               # Not for the fs_vimp and model_vimp data elements. This is
@@ -425,6 +409,15 @@ setMethod("extract_data", signature(object="familiarEnsemble"),
               auc_data <- NULL
             }
             
+            # Extract confusion matrix data.
+            if(data_element %in% c("all", "confusion_matrix")){
+              confusion_matrix_info <- extract_confusion_matrix(object=object,
+                                                                prediction_data=prediction_data,
+                                                                verbose=verbose)
+            } else {
+              confusion_matrix_info <- NULL
+            }
+            
             # Set up a placehold pooling table. This may need to be adepted.
             pooling_table <- data.table::data.table("ensemble_data_id"=object@run_table$ensemble_data_id,
                                                     "ensemble_run_id"=object@run_table$ensemble_run_id,
@@ -448,7 +441,7 @@ setMethod("extract_data", signature(object="familiarEnsemble"),
                                      fs_method = object@fs_method,
                                      pooling_table = pooling_table,
                                      prediction_data = prediction_data,
-                                     confusion_matrix = NULL,
+                                     confusion_matrix = confusion_matrix_info,
                                      decision_curve_data = NULL,
                                      calibration_info = add_model_name(object@calibration_info, object=object),
                                      calibration_data = calibration_data,
@@ -1843,7 +1836,28 @@ setMethod("extract_confusion_matrix", signature(object="familiarEnsemble"),
           function(object,
                    prediction_data,
                    verbose=FALSE){
-            browser()
+            
+            # Don't compute a confusion matrix if there is nothing to be computed.
+            if(!object@outcome_type %in% c("binomial", "multinomial")) return(NULL)
+            
+            # Don't compute a confusion matrix if there is no data available.
+            if(is_empty(prediction_data$ensemble)) return(NULL)
+            
+            # Don't compute a confusion matrix if there are no valid predictions.
+            if(!any_predictions_valid(prediction_data$ensemble, outcome_type=object@outcome_type)) return(NULL)
+            
+            # Message extraction start
+            if(verbose){
+              logger.message(paste0("\tComputing confusion matrix."))
+            }
+            
+            # Compute confusion matrices for single prediction tables.
+            confusion_matrix_list <- list("single"=data.table::rbindlist(lapply(prediction_data$single, .compute_confusion_matrix, object=object)))
+            
+            # Compute confusion matrix for ensemble prediction table.
+            confusion_matrix_list$ensemble <- .compute_confusion_matrix(prediction_data$ensemble, object=object)
+            
+            return(confusion_matrix_list)
           })
 
 
@@ -2015,6 +2029,46 @@ setMethod("extract_sample_similarity_table", signature(object="familiarEnsemble"
             
             return(sample_similarity_table)
           })
+
+
+
+.compute_confusion_matrix <- function(prediction_table, object){
+  
+  # Suppress NOTES due to non-standard evaluation in data.table
+  outcome <- count <- NULL
+  
+  if(!any_predictions_valid(prediction_table=prediction_table, outcome_type=object@outcome_type)) return(NULL)
+  
+  # Make a local copy with only the required data
+  data <- data.table::copy(prediction_table[!is.na(outcome), c("outcome", "outcome_pred_class")])
+  
+  # Rename outcome columns
+  data.table::setnames(data,
+                       old=c("outcome", "outcome_pred_class"),
+                       new=c("observed_outcome", "expected_outcome"))
+  
+  # Sum pairs of observed and expected outcome categories.
+  data <- data[, list("count"=.N), by=c("observed_outcome", "expected_outcome")]
+  
+  # Find class levels in the data
+  class_levels <- get_outcome_class_levels(object)
+  
+  # Construct an empty matrix 
+  empty_matrix <- data.table::data.table(expand.grid(list("observed_outcome"=class_levels, "expected_outcome"=class_levels), stringsAsFactors=FALSE))
+  empty_matrix[, "count":=0L]
+  
+  # Combine data with the empty matrix to add in combinations that
+  # appear 0 times.
+  data <- data.table::rbindlist(list(data, empty_matrix), use.names=TRUE)
+  
+  # Use a max operation to remove any combinations that appear twice in the table.
+  data <- data[, list("count"=max(count)), by=c("observed_outcome", "expected_outcome")]
+  
+  # Add the model name
+  data <- add_model_name(data=data, object=object)
+  
+  return(data)
+}
 
 
 
