@@ -153,7 +153,7 @@ setMethod(".construct_label_table", signature(x="familiarCollection"),
               data <- unique(c("low", "moderate", "high", unlist(sapply(names(x@km_data), function(curr_method)(levels(x@km_data[[curr_method]]$data$risk_group))))))
 
             } else if(upd_slot == "class_labels") {
-              data <- slot(x, "class_levels")
+              data <- get_outcome_class_levels(x)
               
             } else {
               stop("Slot is not available for familiarCollection objects.")
