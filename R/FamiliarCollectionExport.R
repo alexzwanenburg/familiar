@@ -65,6 +65,9 @@ setMethod("export_all", signature(object="familiarCollection"),
             # Export model performance
             model_performance <- export_model_performance(object=object, dir_path=dir_path, export_raw=export_raw)
             
+            # Export confusion matrix
+            confusion_matrix <- export_confusion_matrix_data(object=object, dir_path=dir_path)
+            
             # Export kaplan-meier info
             km_info <- export_stratification_cutoff(object=object, dir_path=dir_path)
             
@@ -91,6 +94,7 @@ setMethod("export_all", signature(object="familiarCollection"),
                           "calibration_info" = calibration_info,
                           "calibration_data" = calibration_data,
                           "model_performance" = model_performance,
+                          "confusion_matrix" = confusion_matrix,
                           "km_info" = km_info,
                           "km_data" = km_data,
                           "auc_data" = auc_data,
@@ -1090,6 +1094,92 @@ setMethod("export_auc_data", signature(object="ANY"),
 
 
 
+#####export_confusion_matrix_data#####
+
+#'@title Extract and export confusion matrices.
+#'
+#'@description Extract and export confusion matrics for models in a
+#'  familiarCollection.
+#'
+#'@inheritParams export_all
+#'
+#'@inheritDotParams extract_confusion_matrix
+#'@inheritDotParams as_familiar_collection
+#'
+#'@details Data is usually collected from a `familiarCollection` object.
+#'  However, you can also provide one or more `familiarData` objects, that will
+#'  be internally converted to a `familiarCollection` object. It is also
+#'  possible to provide a `familiarEnsemble` or one or more `familiarModel`
+#'  objects together with the data from which data is computed prior to export.
+#'  Paths to the previous files can also be provided.
+#'
+#'  All parameters aside from `object` and `dir_path` are only used if `object`
+#'  is not a `familiarCollection` object, or a path to one.
+#'
+#'  Confusion matrices are exported for individual and ensemble models.
+#'
+#'@return A list of data.tables (if `dir_path` is not provided), or nothing, as
+#'  all data is exported to `csv` files.
+#'@exportMethod export_confusion_matrix_data
+#'@md
+#'@rdname export_confusion_matrix_data-methods
+setGeneric("export_confusion_matrix_data", function(object, dir_path=NULL, ...) standardGeneric("export_confusion_matrix_data"))
+
+#####export_confusion_matrix_data (collection)#####
+
+#'@rdname export_confusion_matrix_data-methods
+setMethod("export_confusion_matrix_data", signature(object="familiarCollection"),
+          function(object, dir_path=NULL, ...){
+            
+            # Check if auc data is present
+            if(nrow(object@auc_data$single)==0){
+              return(NULL)
+            }
+            
+            # Extract list of lists
+            main_list <- object@confusion_matrix
+            
+            # Confusion matrix from single models
+            single_confusion_matrix <- .apply_labels(data=main_list$single, object=object)
+            
+            # Confusion matrix from ensemble models
+            ensemble_confusion_matrix <- .apply_labels(data=main_list$ensemble, object=object)
+            
+            
+            if(is.null(dir_path)){
+              return(list("single"=single_confusion_matrix,
+                          "ensemble"=ensemble_confusion_matrix))
+              
+            } else {
+              # Export model performances of individual models
+              .export_to_file(data=single_confusion_matrix, object=object, dir_path=dir_path,
+                              type="performance", subtype="confusion_matrix_single")
+              
+              # Export model performances of ensembles
+              .export_to_file(data=ensemble_confusion_matrix, object=object, dir_path=dir_path,
+                              type="performance", subtype="confusion_matrix_ensemble")
+              
+              return(NULL)
+            }
+            
+          })
+
+#####export_confusion_matrix_data (generic)#####
+
+#'@rdname export_confusion_matrix_data-methods
+setMethod("export_confusion_matrix_data", signature(object="ANY"),
+          function(object, dir_path=NULL, ...){
+            
+            # Attempt conversion to familiarCollection object.
+            object <- do.call(as_familiar_collection,
+                              args=append(list("object"=object, "data_element"="confusion_matrix"), list(...)))
+            
+            return(do.call(export_confusion_matrix_data,
+                           args=append(list("object"=object, "dir_path"=dir_path), list(...))))
+          })
+
+
+
 #####export_univariate_analysis_data#####
 
 #'@title Extract and export univariate analysis data of features.
@@ -1417,6 +1507,8 @@ setMethod(".apply_labels", signature(data="ANY", object="familiarCollection"),
             has_feature            <- ifelse(any(c("name", "feature_1", "feature_2") %in% columns), TRUE, FALSE)
             has_risk_group         <- ifelse(any(c("risk_group", "risk_group_1", "risk_group_2", "reference_group") %in% columns), TRUE, FALSE)
             has_multiclass_outcome <- ifelse(any(c("pos_class", "outcome") %in% columns) & object@outcome_type=="multinomial", TRUE, FALSE)
+            has_categorical_outcome <- ifelse(any(c("observed_outcome", "expected_outcome") %in% columns) & object@outcome_type %in% c("binomial", "multinomial"),
+                                              TRUE, FALSE)
             
             # Apply levels
             if(has_data_set){
@@ -1449,6 +1541,15 @@ setMethod(".apply_labels", signature(data="ANY", object="familiarCollection"),
             
             if(has_multiclass_outcome){
               for(curr_col_name in c("pos_class", "outcome")){
+                if(!is.null(data[[curr_col_name]])){
+                  data[[curr_col_name]] <- factor(x=data[[curr_col_name]], levels=get_class_name_levels(x=object), labels=get_class_names(x=object))
+                }
+              }
+            }
+            
+            if(has_categorical_outcome){
+              # For confusion matrices.
+              for(curr_col_name in c("observed_outcome", "expected_outcome")){
                 if(!is.null(data[[curr_col_name]])){
                   data[[curr_col_name]] <- factor(x=data[[curr_col_name]], levels=get_class_name_levels(x=object), labels=get_class_names(x=object))
                 }
