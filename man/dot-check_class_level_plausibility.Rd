@@ -29,19 +29,22 @@ Implemented outcome types are:
 
 If not provided, the algorithm will attempt to obtain outcome_type from
 contents of the outcome column. This may lead to unexpected results, and we
-therefore advise to provide this information manually.}
+therefore advise to provide this information manually.
+
+Note that \code{competing_risk} survival analysis are not fully supported, and
+is currently not a valid choice for \code{outcome_type}.}
 
 \item{outcome_column}{(\strong{recommended}) Name of the column containing the
 outcome of interest. May be identified from a formula, if a formula is
 provided as an argument. Otherwise an error is raised. Note that \code{survival}
-type outcomes require two columns that indicate the time-to-event or the
-time of last follow-up and the event status. Event status can be \code{0} to
-indicate right-censoring and \code{1} to indicate that the event occurred.}
+and \code{competing_risk} outcome type outcomes require two columns that
+indicate the time-to-event or the time of last follow-up and the event
+status.}
 
 \item{class_levels}{(\emph{optional}) Class levels for \code{binomial} or \code{multinomial}
 outcomes. This argument can be used to specify the ordering of levels for
 categorical outcomes. These class levels must exactly match the levels
-present in the outcome column.`}
+present in the outcome column.}
 }
 \description{
 This function checks whether categorical levels are present in the data that

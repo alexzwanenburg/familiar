@@ -110,12 +110,18 @@ identifiers to constitute data sets for external validation. Defaults to
 all data sets except those in \code{development_batch_id} for external
 validation, or none if not. Required if \code{development_batch_id} is not
 provided.}
+    \item{\code{outcome_name}}{(\emph{optional}) Name of the modelled outcome. This name will
+be used in figures created by \code{familiar}.
+
+If not set, the column name in \code{outcome_column} will be used for
+\code{binomial}, \code{multinomial}, \code{count} and \code{continuous} outcomes. For other
+outcomes (\code{survival} and \code{competing_risk}) no default is used.}
     \item{\code{outcome_column}}{(\strong{recommended}) Name of the column containing the
 outcome of interest. May be identified from a formula, if a formula is
 provided as an argument. Otherwise an error is raised. Note that \code{survival}
-type outcomes require two columns that indicate the time-to-event or the
-time of last follow-up and the event status. Event status can be \code{0} to
-indicate right-censoring and \code{1} to indicate that the event occurred.}
+and \code{competing_risk} outcome type outcomes require two columns that
+indicate the time-to-event or the time of last follow-up and the event
+status.}
     \item{\code{outcome_type}}{(\strong{recommended}) Type of outcome found in the outcome
 column. The outcome type determines many aspects of the overall process,
 e.g. the available feature selection methods and learners, but also the
@@ -131,11 +137,28 @@ Implemented outcome types are:
 
 If not provided, the algorithm will attempt to obtain outcome_type from
 contents of the outcome column. This may lead to unexpected results, and we
-therefore advise to provide this information manually.}
+therefore advise to provide this information manually.
+
+Note that \code{competing_risk} survival analysis are not fully supported, and
+is currently not a valid choice for \code{outcome_type}.}
     \item{\code{class_levels}}{(\emph{optional}) Class levels for \code{binomial} or \code{multinomial}
 outcomes. This argument can be used to specify the ordering of levels for
 categorical outcomes. These class levels must exactly match the levels
-present in the outcome column.`}
+present in the outcome column.}
+    \item{\code{event_indicator}}{(\strong{recommended}) Indicator for events in \code{survival}
+and \code{competing_risk} analyses. \code{familiar} will automatically recognise \code{1},
+\code{true}, \code{t}, \code{y} and \code{yes} as event indicators, including different
+capitalisations. If this parameter is set, it replaces the default values.}
+    \item{\code{censoring_indicator}}{(\strong{recommended}) Indicator for right-censoring in
+\code{survival} and \code{competing_risk} analyses. \code{familiar} will automatically
+recognise \code{0}, \code{false}, \code{f}, \code{n}, \code{no} ascensoring indicators, including
+different capitalisations. If this parameter is set, it replaces the
+default values.}
+    \item{\code{competing_risk_indicator}}{(\strong{recommended}) Indicator for competing
+risks in \code{competing_risk} analyses. There are no default values, and if
+unset, all values other than those specified by the \code{event_indicator} and
+\code{censoring_indicator} parameters are considered to indicate competing
+risks.}
     \item{\code{signature}}{(\emph{optional}) One or more names of feature columns that are
 considered part of a specific signature. Features specified here will
 always be used for modeling. Ranking from feature selection has no effect

@@ -26,10 +26,20 @@
       <development_batch_id></development_batch_id>
       <!-- Validation cohort (required for external validation, otherwise optional) - note that these cohorts are not used for internal validation. -->
       <validation_batch_id></validation_batch_id>
+      <!-- Name of the outcome being modelled (optional)-->
+      <outcome_name></outcome_name>
       <!-- Name of data column with outcome values (required, 2 for survival outcomes, 1 otherwise) -->
       <outcome_column>required</outcome_column>
       <!-- Outcome type (required, one of binomial, multinomial, continuous and survival) -->
       <outcome_type>required</outcome_type>
+      <!-- Levels of categorical outcomes (optional) -->
+      <class_levels></class_levels>
+      <!-- Indicator for events in survival and competing risk analyses (recommended) -->
+      <event_indicator></event_indicator>
+      <!-- Indicator for right-censoring (e.g. loss of patient follow-up) in survival and competing risk analyses (recommended) -->
+      <censoring_indicator></censoring_indicator>
+      <!-- Indicator for competing risks in competing risk analysis (recommended) -->
+      <competing_risk_indicator></competing_risk_indicator>
       <!-- Signature, column names for features that should always be included in a model  (optional) -->
       <signature></signature>
       <!-- Names of features/columns which are to be removed (optional) -->
