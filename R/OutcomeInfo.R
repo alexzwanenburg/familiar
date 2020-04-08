@@ -42,7 +42,7 @@ create_outcome_info_from_data <- function(data){
   # to outcome_info in the global backend, or attached to an object.
   
   outcome_info <- methods::new("outcomeInfo",
-                               name = "unset",
+                               name = character(0L),
                                outcome_type = data@outcome_type,
                                outcome_column = get_outcome_columns(x=data))
   
