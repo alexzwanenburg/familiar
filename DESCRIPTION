@@ -125,6 +125,7 @@ Collate:
     'PlotAll.R'
     'PlotCalibration.R'
     'PlotColours.R'
+    'PlotConfusionMatrix.R'
     'PlotFeatureRanking.R'
     'PlotFeatureSimilarity.R'
     'PlotGTable.R'
