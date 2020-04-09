@@ -4,7 +4,7 @@
 \alias{plot_auc_roc_curve}
 \alias{plot_auc_roc_curve,ANY-method}
 \alias{plot_auc_roc_curve,familiarCollection-method}
-\title{Plot area under the receiver operating characteristic curve.}
+\title{Plot the receiver operating characteristic curve.}
 \usage{
 plot_auc_roc_curve(
   object,

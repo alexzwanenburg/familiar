@@ -3,7 +3,7 @@
 NULL
 
 
-#'@title Plot area under the receiver operating characteristic curve.
+#'@title Plot the receiver operating characteristic curve.
 #'
 #'@description This method creates receiver operating characteristic curves
 #'  based on data in a familiarCollection object.
