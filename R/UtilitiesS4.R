@@ -166,7 +166,30 @@ setMethod("get_class_probability_name", signature(x="character"), function(x){
 })
 
 
-#####get_outcome_columns---------------------------------------------------------------
+#####get_outcome_name-----------------------------------------------------------
+setMethod("get_outcome_name", signature(x="familiarModel"), function(x){
+  return(get_outcome_name(x@outcome_info))
+})
+
+setMethod("get_outcome_name", signature(x="familiarEnsemble"), function(x){
+  return(get_outcome_name(x@outcome_info))
+})
+
+setMethod("get_outcome_name", signature(x="familiarData"), function(x){
+  return(get_outcome_name(x@outcome_info))
+})
+
+setMethod("get_outcome_name", signature(x="familiarCollection"), function(x){
+  return(get_outcome_name(x@outcome_info))
+})
+
+setMethod("get_outcome_name", signature(x="outcomeInfo"), function(x){
+  return(x@name)
+})
+
+
+
+#####get_outcome_columns--------------------------------------------------------
 setMethod("get_outcome_columns", signature(x="character"), function(x){
   return(.get_outcome_columns(outcome_type=x))
 })
