@@ -165,3 +165,239 @@
   
   return(cl)
 }
+
+
+fam_lapply <- function(cl=NULL, assign=NULL, x, fun, progress_bar=FALSE, ...){
+  # lapply. Reverts to sequential lapply if cl is NULL.
+  
+  # Restart cluster if specified. This also means that we should terminate the
+  # cluster after use.
+  if(!is.null(cl) & .needs_cluster_restart() & !.is_external_cluster()){
+    cl <- .restart_cluster(cl=cl, assign=assign_to_cluster)
+    terminate_cluster_on_exit <- TRUE
+    
+  } else {
+    terminate_cluster_on_exit <- FALSE
+  }
+  
+  if(is.null(cl) & !progress_bar){
+    # Simple sequential lapply.
+    y <- do.call(lapply, args=append(list("X" = x,
+                                          "FUN" = fun),
+                                     list(...)))
+    
+  } else if(is.null(cl) & progress_bar){
+    # Start progress bar
+    pb_conn <- utils::txtProgressBar(min=0, max=length(x), style=3)
+    
+    # Perform the sequential apply as mapply.
+    y <- mapply(FUN=.fun_with_progress, x, seq_along(x),
+                MoreArgs=append(list("fun"=fun,
+                                     "pb_conn"=pb_conn),
+                                list(...)),
+                SIMPLIFY=FALSE,
+                USE.NAMES=TRUE)
+    
+    # Close the progress bar connection.
+    close(pb_conn)
+    
+  } else if(inherits(cl, "cluster")){
+    # Parallel lapply without load balancing.
+    y <- do.call(parallel::parLapply, args=append(list("cl" = cl,
+                                                       "X" = x,
+                                                       "fun" = fun),
+                                                  list(...)))
+    
+  } else {
+    ..error_reached_unreachable_code("fam_lapply: the cluster object is neither NULL nor a cluster.")
+  }
+  
+  if(terminate_cluster_on_exit){
+    cl <- .terminate_cluster(cl=cl)
+  }
+  
+  return(y)
+}
+
+
+
+fam_lapply_lb <- function(cl=NULL, assign=NULL, x, fun, progress_bar=FALSE, ...){
+  # Load-balanced lapply. Reverts to sequential lapply if cl is NULL.
+  
+  # Restart cluster if specified. This also means that we should terminate the
+  # cluster after use.
+  if(!is.null(cl) & .needs_cluster_restart() & !.is_external_cluster()){
+    cl <- .restart_cluster(cl=cl, assign=assign_to_cluster)
+    terminate_cluster_on_exit <- TRUE
+    
+  } else {
+    terminate_cluster_on_exit <- FALSE
+  }
+  
+  if(is.null(cl) & !progress_bar){
+    # Simple sequential lapply
+    y <- do.call(lapply, args=append(list("X" = x,
+                                          "FUN" = fun),
+                                     list(...)))
+    
+  } else if(is.null(cl) & progress_bar){
+    # Start progress bar
+    pb_conn <- utils::txtProgressBar(min=0, max=length(x), style=3)
+    
+    # Perform the sequential apply as mapply.
+    y <- mapply(FUN=.fun_with_progress, x, seq_along(x),
+                MoreArgs=append(list("fun"=fun,
+                                     "pb_conn"=pb_conn),
+                                list(...)),
+                SIMPLIFY=FALSE,
+                USE.NAMES=TRUE)
+    
+    # Close the progress bar connection.
+    close(pb_conn)
+    
+  } else if(inherits(cl, "cluster")){
+    # Parallel lapply with load-balancing.
+    y <- do.call(parallel::parLapplyLB, args=append(list("cl" = cl,
+                                                         "X" = x,
+                                                         "fun" = fun),
+                                                    list(...)))
+    
+  } else {
+    ..error_reached_unreachable_code("fam_lapply_lb: the cluster object is neither NULL nor a cluster.")
+  }
+  
+  if(terminate_cluster_on_exit){
+    cl <- .terminate_cluster(cl=cl)
+  }
+  
+  return(y)
+}
+
+
+
+fam_sapply <- function(cl=NULL, assign=NULL, x, fun, progress_bar=FALSE, ..., simplify=TRUE, USE.NAMES=TRUE){
+  # sapply. Reverts to sequential sapply if cl is NULL.
+  
+  # Restart cluster if specified. This also means that we should terminate the
+  # cluster after use.
+  if(!is.null(cl) & .needs_cluster_restart() & !.is_external_cluster()){
+    cl <- .restart_cluster(cl=cl, assign=assign_to_cluster)
+    terminate_cluster_on_exit <- TRUE
+    
+  } else {
+    terminate_cluster_on_exit <- FALSE
+  }
+  
+  if(is.null(cl) & !progress_bar){
+    # Simple sequential sapply.
+    y <- do.call(sapply, args=append(list("X" = x,
+                                          "FUN" = fun,
+                                          "simplify" = simplify,
+                                          "USE.NAMES" = USE.NAMES),
+                                     list(...)))
+    
+  } else if(is.null(cl) & progress_bar){
+    # Start progress bar
+    pb_conn <- utils::txtProgressBar(min=0, max=length(x), style=3)
+    
+    # Perform the sequential apply as mapply.
+    y <- mapply(FUN=.fun_with_progress, x, seq_along(x),
+                MoreArgs=append(list("fun"=fun,
+                                     "pb_conn"=pb_conn),
+                                list(...)),
+                SIMPLIFY=simplify,
+                USE.NAMES=USE.NAMES)
+    
+    # Close the progress bar connection.
+    close(pb_conn)
+    
+  } else if(inherits(cl, "cluster")){
+    # Parallel sapply without load balancing.
+    y <- do.call(parallel::parSapply, args=append(list("cl" = cl,
+                                                       "X" = x,
+                                                       "FUN" = fun,
+                                                       "simplify" = simplify,
+                                                       "USE.NAMES" = USE.NAMES),
+                                                  list(...)))
+    
+  } else {
+    ..error_reached_unreachable_code("fam_sapply: the cluster object is neither NULL nor a cluster.")
+  }
+  
+  if(terminate_cluster_on_exit){
+    cl <- .terminate_cluster(cl=cl)
+  }
+  
+  return(y)
+}
+
+
+
+fam_sapply_lb <- function(cl=NULL, assign=NULL, x, fun, progress_bar=FALSE, ..., simplify=TRUE, USE.NAMES=TRUE){
+  # Load-balanced sapply. Reverts to sequential lapply if cl is NULL.
+  
+  # Restart cluster if specified. This also means that we should terminate the
+  # cluster after use.
+  if(!is.null(cl) & .needs_cluster_restart() & !.is_external_cluster()){
+    cl <- .restart_cluster(cl=cl, assign=assign_to_cluster)
+    terminate_cluster_on_exit <- TRUE
+    
+  } else {
+    terminate_cluster_on_exit <- FALSE
+  }
+  
+  if(is.null(cl)){
+    # Simple sequential sapply.
+    y <- do.call(sapply, args=append(list("X" = x,
+                                          "FUN" = fun,
+                                          "simplify" = simplify,
+                                          "USE.NAMES" = USE.NAMES),
+                                     list(...)))
+    
+  } else if(is.null(cl) & progress_bar){
+    # Start progress bar
+    pb_conn <- utils::txtProgressBar(min=0, max=length(x), style=3)
+    
+    # Perform the sequential apply as mapply.
+    y <- mapply(FUN=.fun_with_progress, x, seq_along(x),
+                MoreArgs=append(list("fun"=fun,
+                                     "pb_conn"=pb_conn),
+                                list(...)),
+                SIMPLIFY=simplify,
+                USE.NAMES=USE.NAMES)
+    
+    # Close the progress bar connection.
+    close(pb_conn)
+    
+  } else if(inherits(cl, "cluster")){
+    # Parallel sapply with load balancing.
+    y <- do.call(parallel::parSapplyLB, args=append(list("cl" = cl,
+                                                         "X" = x,
+                                                         "FUN" = fun,
+                                                         "simplify" = simplify,
+                                                         "USE.NAMES" = USE.NAMES),
+                                                    list(...)))
+    
+  } else {
+    ..error_reached_unreachable_code("fam_sapply_lb: the cluster object is neither NULL nor a cluster.")
+  }
+  
+  if(terminate_cluster_on_exit){
+    cl <- .terminate_cluster(cl=cl)
+  }
+  
+  return(y)
+}
+
+
+
+.fun_with_progress <- function(x, ii, fun, pb_conn, ...){
+  
+  # Execute function
+  y <- do.call(fun, args=append(list(x), list(...)))
+  
+  # Update the progress bar
+  utils::setTxtProgressBar(pb=pb_conn, value=ii)
+  
+  return(y)
+}
