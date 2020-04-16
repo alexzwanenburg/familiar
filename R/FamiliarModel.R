@@ -40,7 +40,7 @@ setMethod("train", signature(object="familiarModel", data="ANY"),
             # Extract information required for assessing model performance, calibration (e.g. baseline survival) etc.
             if(get_additional_info){
               # Remove duplicate subject_id from the data prior to calibration
-              data       <- aggregate_data(data=data)
+              data <- aggregate_data(data=data)
               
               # Extract data required for assessing calibration
               fam_model@calibration_info <- learner.main(object=fam_model, data_obj=data, purpose="calibration_info")
@@ -49,12 +49,15 @@ setMethod("train", signature(object="familiarModel", data="ANY"),
                 fam_model@km_info <- learner.find_survival_grouping_thresholds(object=fam_model, data_obj=data)
               }
               
+              # TODO Novelty detector
+              fam_model@novelty_detector <- NULL
+              
+              # Add column data
+              fam_model <- add_data_column_info(object=fam_model)
             }
             
-            # Extract mean outcome value from input data and attach to the model
-            if(outcome_type %in% c("count", "continuous")){
-              fam_model@mean_outcome_value <- mean(data@data$outcome)
-            }
+            # Add outcome distribution data
+            fam_model@outcome_info <- .compute_outcome_distribution_data(object=fam_model@outcome_info, data=data)
             
             return(fam_model)
           })
@@ -253,4 +256,66 @@ setMethod("add_package_version", signature(object="familiarModel"),
             
             # Set version of familiar
             return(.add_package_version(object=object))
+          })
+
+
+setMethod("add_data_column_info", signature(object="familiarModel"),
+          function(object, sample_id_column=NULL, batch_id_column=NULL){
+            
+            # Don't determine new column information if this information is
+            # already present.
+            if(!is.null(object@data_column_info)) return(object)
+            
+            if(is.null(sample_id_column) & is.null(batch_id_column)){
+              # Load settings to find identifier columns
+              settings <- get_settings()
+              
+              # Read from settings. If not set, these will be NULL.
+              sample_id_column <- settings$data$sample_col
+              batch_id_column <- settings$data$batch_col
+            }
+            
+            # Replace any missing.
+            if(is.null(sample_id_column)) sample_id_column <- NA_character_
+            
+            if(is.null(batch_id_column)) batch_id_column <- NA_character_
+            
+            # Repetition column ids are only internal.
+            repetition_id_column <- NA_character_
+            
+            # Create table
+            data_info_table <- data.table::data.table("type"=c("sample_id_column", "batch_id_column", "repetition_id_column"),
+                                                      "internal"=c("subject_id", "cohort_id", "repetition_id"),
+                                                      "external"=c(sample_id_column, batch_id_column, repetition_id_column))
+            
+            if(object@outcome_type %in% c("survival", "competing_risk")){
+              
+              # Find internal and external outcome column names.
+              internal_outcome_columns <- get_outcome_columns(object@outcome_type)
+              external_outcome_columns <- object@outcome_info@outcome_column
+              
+              # Add to table
+              outcome_info_table <- data.table::data.table("type"=c("outcome_column", "outcome_column"),
+                                                           "internal"=internal_outcome_columns,
+                                                           "external"=external_outcome_columns)
+              
+            } else if(object@outcome_type %in% c("binomial", "multinomial", "continuous", "count")){
+              
+              # Find internal and external outcome column names.
+              internal_outcome_columns <- get_outcome_columns(object@outcome_type)
+              external_outcome_columns <- object@outcome_info@outcome_column
+              
+              # Add to table
+              outcome_info_table <- data.table::data.table("type"="outcome_column",
+                                                           "internal"=internal_outcome_columns,
+                                                           "external"=external_outcome_columns)
+              
+            } else {
+              ..error_no_known_outcome_type(outcome_type=object@outcome_type)
+            }
+            
+            # Combine into one table and add to object
+            object@data_column_info <- rbind(data_info_table, outcome_info_table)
+            
+            return(object)
           })

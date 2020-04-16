@@ -498,53 +498,6 @@ applyContrastReference <- function(dt, dt_ref, method){
 }
 
 
-createEmptyModelList <- function(outcome_type){
-  # Generate list
-  model_list <- list()
-
-  # Set model_trained tag to FALSE
-  model_list$model_trained <- FALSE
-
-  # Set empty variable importance table
-  model_list$vimp          <- getEmptyVimp()
-
-  # Select only non-feature columens
-  model_list$selected_cols <- get_non_feature_columns(x=outcome_type)
-
-  # Return empty model list
-  return(model_list)
-}
-
-
-
-createEmptyPredictionTable <- function(dt=NULL, outcome_type){
-
-  # Create skeleton
-  dt_pred <- dt[, get_non_feature_columns(x=outcome_type), with=FALSE]
-
-  # Add prediction columns
-  if(outcome_type %in% c("survival", "continuous", "count")){
-    # For survival and continuous outcomes, a single column is required
-    dt_pred$outcome_pred         <- numeric(0)
-  } else if(outcome_type %in% c("binomial", "multinomial")){
-    # For binomial and multinomial outcomes, we add both predicted class and predicted class probabilities
-    dt_pred$outcome_pred_class   <- character(0)
-
-    # Add class probabilities
-    outcome_pred_class_prob_cols <- check_column_name(column_name=paste0("outcome_pred_prob_", levels(dt$outcome)))
-    for(ii in 1:length(outcome_pred_class_prob_cols)){
-      dt_pred[, (outcome_pred_class_prob_cols[ii]):=numeric(0)]
-    }
-  } else if(outcome_type == "competing_risk"){
-    ..error_outcome_type_not_implemented(outcome_type)
-  }
-
-  # Return empty prediction table
-  return(dt_pred)
-}
-
-
-
 createNonValidPredictionTable <- function(dt, outcome_type){
   # Create skeleton
   dt_pred <- dt[, get_non_feature_columns(x=outcome_type), with=FALSE]
@@ -800,52 +753,6 @@ getPredictedOutcomeColumn <- function(outcome_type){
   }
 }
 
-getClassProbabilityColumns <- function(dt=NULL, outcome_type, class_levels=NULL){
-  # Returns standardised names for predicted class probabilities
-  # The names follow the standard: "outcome_pred_prob_" + class level naming
-
-  # Get outcome class levels (if not provided)
-  if(is.null(class_levels)){
-    if(is.null(dt)) { stop("Provide either class levels, or the data table with an outcome column. Otherwise the name of the class probability columns can not be established.") }
-    class_levels      <- get_outcome_levels(x=dt, outcome_type=outcome_type)
-  }
-
-  # Generate class probability names
-  if(outcome_type %in% c("binomial", "multinomial")){
-    class_prob_cols <- check_column_name(column_name=paste0("outcome_pred_prob_", class_levels))
-    return(class_prob_cols)
-  } else {
-    return(NULL)
-  }
-
-}
-
-
-get_class_probability_columns <- function(data_obj=NULL, outcome_type=NULL, class_levels=NULL){
-  # Returns standardised names for predicted class probabilities
-  # The names follow the standard: "outcome_pred_prob_" + class level naming
-
-  # Get outcome class levels (if not provided)
-  if(is.null(class_levels)){
-    if(!is.null(data_obj)) {
-      class_levels <- get_outcome_levels(data_obj)
-      outcome_type <- data_obj@outcome_type
-    } else {
-      stop("Provide either class levels, or the dataObject with an outcome column. Otherwise the name of the class probability columns can not be established.")
-    }
-  }
-
-  # Generate class probability names
-  if(outcome_type %in% c("binomial", "multinomial")){
-    class_prob_cols <- check_column_name(column_name=paste0("outcome_pred_prob_", class_levels))
-    return(class_prob_cols)
-  } else {
-    return(NULL)
-  }
-
-
-
-}
 
 
 get_object_file_name <- function(learner, fs_method, project_id, data_id, run_id, pool_data_id=NULL, pool_run_id=NULL,
@@ -1166,6 +1073,21 @@ is_package_installed <- function(name, version=NULL, verbose=FALSE){
 
   return(is_installed)
 }
+
+
+
+fivenum_summary <- function(x, na.rm=FALSE){
+  
+  # Compute fivenumber summary
+  y <- stats::fivenum(x=x, na.rm=na.rm)
+  
+  # Return as data.table
+  return(data.table::data.table("min"=y[1],
+                                "Q1"=y[2],
+                                "median"=y[3],
+                                "Q3"=y[4],
+                                "max"=y[5]))
+} 
 
 
 

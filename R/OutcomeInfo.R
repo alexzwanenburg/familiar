@@ -7,7 +7,7 @@ create_outcome_info <- function(settings){
   outcome_info <- methods::new("outcomeInfo",
                                name = settings$data$outcome_name,
                                outcome_type = settings$data$outcome_type,
-                               outcome_column = settings$data$outcome_column)
+                               outcome_column = settings$data$outcome_col)
   
   if(outcome_info@outcome_type %in% c("binomial", "multinomial")){
     # Set class levels
@@ -22,15 +22,15 @@ create_outcome_info <- function(settings){
   
   if(outcome_info@outcome_type %in% c("survival", "competing_risk")){
     # Set indicator for censoring
-    outcome_info@censored <- settings$data$censoring_indicator
+    outcome_info@censored <- as.character(settings$data$censoring_indicator)
     
     # Set indicator for events
-    outcome_info@event <- settings$data$event_indicator
+    outcome_info@event <- as.character(settings$data$event_indicator)
   }
   
   if(outcome_info@outcome_type %in% c("competing_risk")){
     # Set indicator for competing risks
-    outcome_info@competing_risk <- settings$data$competing_risk_indicator
+    outcome_info@competing_risk <- as.character(settings$data$competing_risk_indicator)
   }
   
   return(outcome_info)
@@ -42,7 +42,7 @@ create_outcome_info_from_data <- function(data){
   # to outcome_info in the global backend, or attached to an object.
   
   outcome_info <- methods::new("outcomeInfo",
-                               name = "unset",
+                               name = character(0L),
                                outcome_type = data@outcome_type,
                                outcome_column = get_outcome_columns(x=data))
   
@@ -59,15 +59,15 @@ create_outcome_info_from_data <- function(data){
   
   if(outcome_info@outcome_type %in% c("survival", "competing_risk")){
     # Set indicator for censoring
-    outcome_info@censored <- 0
+    outcome_info@censored <- "0"
     
     # Set indicator for events
-    outcome_info@event <- 1
+    outcome_info@event <- "1"
   }
   
   if(outcome_info@outcome_type %in% c("competing_risk")){
     # Set indicator for competing risks
-    outcome_info@competing_risk <- setdiff(unique_na(data@data[[outcome_info@outcome_column[2]]]), c(0, 1))
+    outcome_info@competing_risk <- as.character(setdiff(unique_na(data@data[[outcome_info@outcome_column[2]]]), c(0, 1)))
   }
   
   return(outoutcome_info)
@@ -108,6 +108,7 @@ get_outcome_info_from_backend <- function(){
 }
 
 
+
 .get_outcome_info <- function(x=NULL){
   # Function to retrieve outcome_info in a generic manner.
   
@@ -115,7 +116,7 @@ get_outcome_info_from_backend <- function(){
   outcome_info <- NULL
   
   # First, attempt to obtain from familiarModel and similar objects.
-  if(inherits_any(x, c("familiarModel", "familiarEnsemble", "familiarData", "familiarCollection"))){
+  if(rlang::inherits_any(x, c("familiarModel", "familiarEnsemble", "familiarData", "familiarCollection"))){
     if(!is.null(x@outcome_info)) return(x@outcome_info)
   }
   
@@ -142,3 +143,154 @@ get_outcome_info_from_backend <- function(){
     stop("The requested outcomeInfo object could not be read or created on the fly.")
   }
 }
+
+
+
+.aggregate_outcome_info <- function(x){
+  
+  # Suppress NOTES due to non-standard evaluation in data.table
+  min <- Q1 <- median <- Q3 <- max <- count <- NULL
+  
+  # Copy the first outcome info object
+  outcome_info <- x[[1]]
+  
+  # Find distribution items
+  distribution_items <- names(outcome_info@distribution)
+  
+  if(!is.null(distribution_items)){
+    
+    # Placeholder list
+    distr_list <- list()
+    
+    # Iterate over items in the distribution list
+    for(item in distribution_items){
+      
+      if(grepl(pattern="fivenum", x=item, fixed=TRUE)){
+        
+        # Aggregate from list
+        fivenum_values <- lapply(x, function(outcome_info_object, item) (outcome_info_object@distribution[[item]]), item=item)
+        
+        # Combine all the data.tables
+        fivenum_values <- data.table::rbindlist(fivenum_values)
+        
+        # Check for zero-length lists.
+        if(is_empty(fivenum_values)) next()
+        
+        # Summarise
+        fivenum_values <- fivenum_values[, list("min"=min(min),
+                                                "Q1"=mean(Q1),
+                                                "median"=mean(median),
+                                                "Q3"=mean(Q3),
+                                                "max"=max(max)), ]
+        
+        # Add to list
+        distr_list[[item]] <- fivenum_values
+        
+      } else if(grepl(patter="frequency", x=item, fixed=TRUE)){
+        
+        # Aggregate from list
+        frequency_values <- lapply(x, function(outcome_info_object, item) (outcome_info_object@distribution[[item]]), item=item)
+        
+        # Combine all the data.tables
+        frequency_values <- data.table::rbindlist(frequency_values)
+        
+        if(is_empty(frequency_values)) next()
+        
+        # Summarise and add to list
+        distr_list[[item]] <- frequency_values[, list("count"=mean(count)), by="outcome"]
+        
+      } else {
+        # Find mean value
+        distr_list[[item]] <- mean(extract_from_slot(x, "distribution", item, na.rm=TRUE))
+      }
+      
+    }
+    
+    # Update distribution slot
+    outcome_info@distribution <- distr_list
+  }
+  
+  # Update transformation parameters
+  if(!is.null(outcome_info@transformation_parameters)){
+    transform_method <- get_mode(extract_from_slot(object_list=x, slot_name="transformation_parameters", slot_element="transform_method"))
+    transform_lambda <- get_mode(extract_from_slot(object_list=x, slot_name="transformation_parameters", slot_element="transform_lambda"))
+    
+    outcome_info@transformation_parameters <- list("transform_method" = transform_method,
+                                                   "transform_lambda" = transform_lambda)
+  }
+  
+  # Update normalisation parameters
+  if(!is.null(outcome_info@normalisation_parameters)){
+    normalisation_method <- get_mode(extract_from_slot(object_list=x, slot_name="normalisation_parameters", slot_element="norm_method"))
+    normalisation_shift  <- mean(extract_from_slot(object_list=x, slot_name="normalisation_parameters", slot_element="norm_shift"))
+    normalisation_scale  <- mean(extract_from_slot(object_list=x, slot_name="normalisation_parameters", slot_element="norm_scale"))
+    
+    outcome_info@normalisation_parameters <- list("norm_method" = normalisation_method,
+                                                  "norm_shift" = normalisation_shift,
+                                                  "norm_scale" = normalisation_scale)
+  }
+  
+  return(outcome_info)
+}
+
+
+
+.compute_outcome_distribution_data <- function(object, data){
+
+  # Suppress NOTES due to non-standard evaluation in data.table
+  repetition_id <- NULL
+  
+  # Get standard outcome columns
+  outcome_columns <- get_outcome_columns(x=data)
+  
+  # Check for empty datasets, and return without setting distribution info.
+  if(is_empty(data)) return(object)
+  
+  # Placeholder distribution list
+  distr_list <- list()
+  
+  # Find outcome data
+  x <- data.table::copy(data@data[repetition_id == 1, mget(outcome_columns)])
+  
+  if(object@outcome_type %in% c("binomial", "multinomial")){
+    
+    # Number of samples
+    distr_list[["n"]] <- nrow(x)
+    
+    # Number of instances for each class
+    distr_list[["frequency"]] <- x[, list("count"=.N), by="outcome"]
+    
+  } else if(object@outcome_type %in% c("continuous", "count")){
+    
+    # Number of samples
+    distr_list[["n"]] <- nrow(x)
+    
+    # Five-number summary of outcome values
+    distr_list[["fivenum"]] <- fivenum_summary(x, na.rm=TRUE)
+    
+    # Mean value
+    distr_list[["mean"]] <- mean(x, na.rm=TRUE)
+    
+  } else if(object@outcome_type %in% c("survival", "competing_risk")){
+    
+    # Number of samples
+    distr_list[["n"]] <- nrow(x)
+    
+    # Number of events
+    distr_list[["n_event"]] <- sum(x$outcome_event == 1, na.rm=TRUE)
+    
+    # Five-number summary of follow-up
+    distr_list[["follow_up_fivenum"]] <- fivenum_summary(x$outcome_time, na.rm=TRUE)
+    
+    # Five-number summary of event
+    distr_list[["event_fivenum"]] <- fivenum_summary(x[outcome_event == 1, ]$outcome_time, na.rm=TRUE)
+    
+  } else {
+    ..error_no_known_outcome_type(object@outcome_type)
+  }
+  
+  object@distribution <- distr_list
+  
+  return(object)
+}
+

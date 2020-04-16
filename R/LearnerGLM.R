@@ -197,8 +197,9 @@ learner.glm.vimp <- function(object){
 
 learner.glm.test <- function(object, data_obj){
 
-  # Extract data
+  # Extract data and class levels
   outcome_type <- object@outcome_type
+  class_levels <- get_outcome_class_levels(x=object)
   
   # For consistency, use contrast for factors if this was done during model training
   
@@ -221,14 +222,11 @@ learner.glm.test <- function(object, data_obj){
       # Predict class probabilities for new data
       pred_outc_prob <- stats::predict.glm(object=model_obj, newdata=dt, type="response")
 
-      # Get class levels
-      class_levels   <- object@class_levels
-
       # Set initial predicted class
       dt_pred[, "outcome_pred_class":=factor(class_levels[1], levels=class_levels)]
 
       # Add class probabilities (glm always gives probability for the second class)
-      outcome_pred_class_prob_cols <- getClassProbabilityColumns(outcome_type=outcome_type, class_levels=class_levels)
+      outcome_pred_class_prob_cols <- get_class_probability_name(x=class_levels)
       dt_pred[, (outcome_pred_class_prob_cols[1]):=1-pred_outc_prob]
       dt_pred[, (outcome_pred_class_prob_cols[2]):=pred_outc_prob]
 
@@ -239,19 +237,17 @@ learner.glm.test <- function(object, data_obj){
       if(!any(is.finite(dt_pred[[outcome_pred_class_prob_cols[1]]]))){
         dt_pred    <- createNonValidPredictionTable(dt=dt, outcome_type=outcome_type)
       }
+      
     } else if(outcome_type == "multinomial") {
       # Predict class probabilities for new data
       pred_outc_prob <- VGAM::predictvglm(object=model_obj, newdata=dt, type="response")
-
-      # Get class levels
-      class_levels    <- object@class_levels
 
       # Update predicted class
       pred_outc_class <- colnames(pred_outc_prob)[apply(pred_outc_prob, 1, which.max)]
       dt_pred[, "outcome_pred_class":=factor(x=pred_outc_class, levels=class_levels)]
 
       # Add class probabilities
-      outcome_pred_class_prob_cols <- getClassProbabilityColumns(outcome_type=outcome_type, class_levels=class_levels)
+      outcome_pred_class_prob_cols <- get_class_probability_name(x=class_levels)
       dt_pred <- cbind(dt_pred, data.table::as.data.table(pred_outc_prob))
       data.table::setnames(dt_pred, old=class_levels, new=outcome_pred_class_prob_cols)
 

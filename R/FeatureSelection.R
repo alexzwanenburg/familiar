@@ -29,7 +29,7 @@ run_feature_selection <- function(cl, proj_list, settings, file_paths){
     # Extract variable importance lists
     if(settings$fs$do_parallel){
       # Calculate variable importance
-      vimp_list <- parallel::parLapply(cl=cl, run_list, compute_variable_importance, fs_method=curr_fs_method,
+      vimp_list <- parallel::parLapply(cl=cl, X=run_list, fun=compute_variable_importance, fs_method=curr_fs_method,
                                        hpo_list=hpo_list, proj_list=proj_list, settings=settings, file_paths=file_paths)
     } else{
       # Start text progress bar

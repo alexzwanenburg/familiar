@@ -70,6 +70,8 @@ setGeneric("update_with_replacement", function(data, ...) {standardGeneric("upda
 
 setGeneric("add_package_version", function(object, ...) {standardGeneric("add_package_version")})
 
+setGeneric("add_data_column_info", function(object, ...) standardGeneric("add_data_column_info"))
+
 ##### Methods to see and update labels of data in familiarCollection objects.
 setGeneric(".set_labels", function(x, ...) {standardGeneric(".set_labels")})
 
@@ -142,7 +144,9 @@ setGeneric("plot_all", function(object, ...) {standardGeneric("plot_all")})
 ##### utilities #####
 setGeneric("is_empty", function(x, ...) standardGeneric("is_empty"))
 
-setGeneric("get_outcome_class_levels", function(object, ...) standardGeneric(".get_outcome_class_levels"))
+setGeneric("get_outcome_name", function(x, ...) standardGeneric("get_outcome_name"))
+
+setGeneric("get_outcome_class_levels", function(x, ...) standardGeneric("get_outcome_class_levels"))
 
 setGeneric("get_outcome_columns", function(x, ...) standardGeneric("get_outcome_columns"))
 
@@ -153,3 +157,5 @@ setGeneric("get_feature_columns", function(x, ...) standardGeneric("get_feature_
 setGeneric("get_n_features", function(x, ...) standardGeneric("get_n_features"))
 
 setGeneric("has_feature_data", function(x, ...) standardGeneric("has_feature_data"))
+
+setGeneric("get_class_probability_name", function(x, ...) standardGeneric("get_class_probability_name"))

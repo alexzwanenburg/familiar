@@ -17,12 +17,14 @@
   # Convert to an objective score if required
   if(as_objective){
     
-    # Try to get a (baseline) mean score. This is used by some regression metrics for normalisation
-    # of the objective score. It is the score achieved by assuming a model that will always produce
-    # the mean value of the development cohort.
-    if(!is.null(object@mean_outcome_value)){
+    # Try to get a (baseline) mean score. This is used by some regression
+    # metrics for normalisation of the objective score. It is the score achieved
+    # by assuming a model that will always produce the mean value of the
+    # development cohort.
+    
+    if(!is.null(object@outcome_info@distribution$mean)){
       score_mean <- metric.main(metric=metric, learner=object@learner, purpose="score",
-                                dt=data.table::copy(dt_pred)[, "outcome_pred":=object@mean_outcome_value],
+                                dt=data.table::copy(dt_pred)[, "outcome_pred":=object@outcome_info@distribution$mean],
                                 outcome_type=object@outcome_type, na.rm=na.rm)
     } else {
       score_mean <- NULL

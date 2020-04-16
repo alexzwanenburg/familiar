@@ -111,11 +111,12 @@ build_model <- function(run, hpo_list, pb_conn=NULL){
                                     fs_method = run$fs_method,
                                     run_table = run$run_table,
                                     hyperparameters = param_list,
+                                    hyperparameter_data = NULL,
                                     signature = selected_features,
                                     req_feature_cols =  required_features,
                                     important_features = important_features,
                                     feature_info = feature_info_list,
-                                    class_levels = get_outcome_levels(x=data_obj),
+                                    outcome_info = .get_outcome_info(),
                                     project_id = proj_list$project_id,
                                     settings = settings$eval)
 

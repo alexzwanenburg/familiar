@@ -14,8 +14,8 @@ setMethod("complete_familiar_ensemble", signature(object="familiarEnsemble"),
             
             # Add outcome_type and class levels to object.
             object@outcome_type <- object@model_list[[1]]@outcome_type
-            object@class_levels <- object@model_list[[1]]@class_levels
-            
+            object@outcome_info <- .aggregate_outcome_info(x=lapply(object@model_list, function(list_elem) (list_elem@outcome_info)))
+              
             # Find all required features
             required_features <- unique(unlist(lapply(object@model_list, function(fam_model) (fam_model@req_feature_cols))))
             
@@ -33,7 +33,8 @@ setMethod("complete_familiar_ensemble", signature(object="familiarEnsemble"),
             fam_ensemble <- methods::new("familiarEnsemble",
                                          model_list = object@model_list,
                                          outcome_type = object@outcome_type,
-                                         class_levels = object@class_levels,
+                                         outcome_info = object@outcome_info,
+                                         data_column_info = object@model_list[[1]]@data_column_info,
                                          learner = object@learner,
                                          fs_method = object@fs_method,
                                          req_feature_cols = required_features,
@@ -41,7 +42,6 @@ setMethod("complete_familiar_ensemble", signature(object="familiarEnsemble"),
                                          feature_info = feature_info_list,
                                          run_table = object@run_table,
                                          calibration_info = calibration_info,
-                                         mean_outcome_value = extract_from_slot(object_list=object@model_list, slot_name="mean_outcome_value"),
                                          settings = object@model_list[[1]]@settings,
                                          is_anonymised = all(extract_from_slot(object_list=object@model_list, slot_name="is_anonymised")),
                                          project_id = object@model_list[[1]]@project_id)
@@ -593,7 +593,11 @@ ensemble_prediction <- function(object, prediction_data, ensemble_method="mean")
   
   # Determine prediction column names
   if(object@outcome_type %in% c("binomial", "multinomial")){
-    prediction_columns <- get_class_probability_columns(outcome_type=object@outcome_type, class_levels=object@class_levels)
+    
+    class_levels <- get_outcome_class_levels(x=object)
+    
+    # Probability columns
+    prediction_columns <- get_class_probability_name(x=class_levels)
     
   } else if(object@outcome_type %in% c("continuous", "count", "survival")){
     prediction_columns <- "outcome_pred"
@@ -617,13 +621,14 @@ ensemble_prediction <- function(object, prediction_data, ensemble_method="mean")
   if(object@outcome_type %in% c("binomial", "multinomial")){
 
     # Identify the name of the most probable class
-    predicted_class <- object@class_levels[max.col(prediction_data[, c(prediction_columns), with=FALSE])]
+    predicted_class <- class_levels[max.col(prediction_data[, c(prediction_columns), with=FALSE])]
     
     # Add the names as the predicted outcome
     prediction_data[, "outcome_pred_class":=predicted_class]
     
     # Convert to a factor
-    prediction_data$outcome_pred_class <- factor(prediction_data$outcome_pred_class, levels=object@class_levels)
+    prediction_data$outcome_pred_class <- factor(prediction_data$outcome_pred_class,
+                                                 levels=class_levels)
   }
   
   return(prediction_data)

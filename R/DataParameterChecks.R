@@ -154,9 +154,11 @@
   }
   
   #####censoring_indicator, event_indicator, competing_risk_indicator-----------
-  settings <- .impute_survival_indicators(data=data,
-                                          outcome_type=settings$data$outcome_type,
-                                          settings=settings)
+  if(settings$data$outcome_type %in% c("survival", "competing_risk")){
+    settings <- .impute_survival_indicators(data=data,
+                                            outcome_type=settings$data$outcome_type,
+                                            settings=settings)
+  }
   
   #####signature-----------------------------------
   if(!is.null(settings$data$signature)){
@@ -226,9 +228,13 @@
     
   }
   
-  # Outcome name
-  if(is.null(settings$data$outcome_name)){
-    settings$data$outcome_name <- settings$data$outcome_col
+  # Outcome name is only explicitly set for outcome types other than survival
+  # and competing risk. 
+  if(is.null(settings$data$outcome_name) & !settings$data$outcome_type %in% c("survival", "competing_risk")){
+    settings$data$outcome_name <- settings$data$outcome_col[1]
+    
+  } else if(is.null(settings$data$outcome)){
+    settings$data$outcome_name <- character(0L)
   }
   
   return(settings)
@@ -537,7 +543,7 @@
 .impute_survival_indicators <- function(data,
                                         outcome_type,
                                         settings){
-  browser()
+  
   # Define standard indicators for censoring, event and competing risk.
   standard_censoring_indicator <- c("0", "false", "f", "n", "no")
   if(!is.null(settings$data$censoring_indicator)) {
@@ -577,7 +583,7 @@
   # Try to identify indicators present in the dataset.
   present_censoring_indicator <- event_values[tolower(as.character(event_values)) %in% tolower(standard_censoring_indicator)]
   present_event_indicator <- event_values[tolower(as.character(event_values)) %in% tolower(standard_event_indicator)]
-  present_competing_risk_indicator <- event_values[tolower(as.character(event_values)) %in% tolower(competing_risk_indicator)]
+  present_competing_risk_indicator <- event_values[tolower(as.character(event_values)) %in% tolower(standard_competing_risk_indicator)]
   
   # Identify values in the event column which are not yet assigned.
   event_values <- setdiff(event_values, c(present_censoring_indicator,

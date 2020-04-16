@@ -365,12 +365,19 @@
 #'   validation, or none if not. Required if `development_batch_id` is not
 #'   provided.
 #'
+#' @param outcome_name (*optional*) Name of the modelled outcome. This name will
+#'   be used in figures created by `familiar`.
+#'
+#'   If not set, the column name in `outcome_column` will be used for
+#'   `binomial`, `multinomial`, `count` and `continuous` outcomes. For other
+#'   outcomes (`survival` and `competing_risk`) no default is used.
+#'
 #' @param outcome_column (**recommended**) Name of the column containing the
 #'   outcome of interest. May be identified from a formula, if a formula is
 #'   provided as an argument. Otherwise an error is raised. Note that `survival`
-#'   type outcomes require two columns that indicate the time-to-event or the
-#'   time of last follow-up and the event status. Event status can be `0` to
-#'   indicate right-censoring and `1` to indicate that the event occurred.
+#'   and `competing_risk` outcome type outcomes require two columns that
+#'   indicate the time-to-event or the time of last follow-up and the event
+#'   status.
 #'
 #' @param outcome_type (**recommended**) Type of outcome found in the outcome
 #'   column. The outcome type determines many aspects of the overall process,
@@ -391,10 +398,32 @@
 #'   If not provided, the algorithm will attempt to obtain outcome_type from
 #'   contents of the outcome column. This may lead to unexpected results, and we
 #'   therefore advise to provide this information manually.
+#'
+#'   Note that `competing_risk` survival analysis are not fully supported, and
+#'   is currently not a valid choice for `outcome_type`.
+#'
 #' @param class_levels (*optional*) Class levels for `binomial` or `multinomial`
 #'   outcomes. This argument can be used to specify the ordering of levels for
 #'   categorical outcomes. These class levels must exactly match the levels
-#'   present in the outcome column.`
+#'   present in the outcome column.
+#'
+#' @param event_indicator (**recommended**) Indicator for events in `survival`
+#'   and `competing_risk` analyses. `familiar` will automatically recognise `1`,
+#'   `true`, `t`, `y` and `yes` as event indicators, including different
+#'   capitalisations. If this parameter is set, it replaces the default values.
+#'
+#' @param censoring_indicator (**recommended**) Indicator for right-censoring in
+#'   `survival` and `competing_risk` analyses. `familiar` will automatically
+#'   recognise `0`, `false`, `f`, `n`, `no` ascensoring indicators, including
+#'   different capitalisations. If this parameter is set, it replaces the
+#'   default values.
+#'
+#' @param competing_risk_indicator (**recommended**) Indicator for competing
+#'   risks in `competing_risk` analyses. There are no default values, and if
+#'   unset, all values other than those specified by the `event_indicator` and
+#'   `censoring_indicator` parameters are considered to indicate competing
+#'   risks.
+#'
 #' @param signature (*optional*) One or more names of feature columns that are
 #'   considered part of a specific signature. Features specified here will
 #'   always be used for modeling. Ranking from feature selection has no effect
@@ -486,8 +515,12 @@
                                        batch_id_column=waiver(),
                                        development_batch_id=waiver(),
                                        validation_batch_id=waiver(),
+                                       outcome_name=waiver(),
                                        outcome_column=waiver(),
                                        outcome_type=waiver(),
+                                       event_indicator=waiver(),
+                                       censoring_indicator=waiver(),
+                                       competing_risk_indicator=waiver(),
                                        class_levels=waiver(),
                                        signature=waiver(),
                                        exclude_features=waiver(),
@@ -556,9 +589,25 @@
   settings$outcome_type <- .parse_arg(x_config=config$outcome_type, x_var=outcome_type,
                                       var_name="outcome_type", type="character", optional=TRUE, default=NULL)
   
+  # Outcome name
+  settings$outcome_name <- .parse_arg(x_config=config$outcome_name, x_var=outcome_name,
+                                      var_name="outcome_name", type="character", optional=TRUE, default=NULL)
+  
   # Class levels
   settings$class_levels <- .parse_arg(x_config=config$class_levels, x_var=class_levels,
                                       var_name="class_levels", type="character_list", optional=TRUE, default=NULL)
+  
+  # Event indicator
+  settings$event_indicator <- .parse_arg(x_config=config$event_indicator, x_var=event_indicator,
+                                         var_name="event_indicator", type="character_list", optional=TRUE, default=NULL)
+  
+  # Censoring indicator
+  settings$censoring_indicator <- .parse_arg(x_config=config$censoring_indicator, x_var=censoring_indicator,
+                                             var_name="censoring_indicator", type="character_list", optional=TRUE, default=NULL)
+  
+  # Competing risk indicator
+  settings$competing_risk_indicator <- .parse_arg(x_config=config$competing_risk_indicator, x_var=competing_risk_indicator,
+                                                  var_name="competing_risk_indicator", type="character_list", optional=TRUE, default=NULL) 
   
   # Signature features
   settings$signature <- .parse_arg(x_config=config$signature, x_var=signature,

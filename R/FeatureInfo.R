@@ -241,6 +241,72 @@ add_required_features <- function(feature_info_list){
 }
 
 
+
+# Add feature distribution data
+compute_feature_distribution_data <- function(cl, feature_info_list, data_obj){
+  
+  
+  # Identify the feature columns in the data
+  feature_columns <- get_feature_columns(x=data_obj)
+  
+  if(is.null(cl)){
+    updated_feature_info <- lapply(feature_columns, function(ii, feature_info_list, data){
+      return(.compute_feature_distribution_data(object=feature_info_list[[ii]], x=data@data[[ii]]))
+      
+    }, feature_info_list=feature_info_list, data=data_obj)
+    
+  } else {
+    updated_feature_info <- parallel::parLapply(cl=cl, feature_columns, function(ii, feature_info_list, data){
+      return(.compute_feature_distribution_data(object=feature_info_list[[ii]], x=data@data[[ii]]))
+      
+    }, feature_info_list=feature_info_list, data=data_obj)
+  }
+  
+  if(length(feature_columns) > 0){
+    feature_info_list[feature_columns] <- updated_feature_info
+  }
+  
+  return(feature_info_list)
+}
+
+
+
+.compute_feature_distribution_data <- function(object, x){
+  
+  # Placeholder distribution list
+  distr_list <- list()
+  
+  if(object@feature_type %in% c("factor")){
+    
+    # Number of samples
+    distr_list[["n"]] <- length(x)
+    
+    # Number of instances for each class
+    distr_list[["frequency"]] <- data.table::data.table("factor_level"=x)[, list("count"=.N), by="factor_level"]
+    
+  } else if(object@feature_type %in% c("numeric")){
+    
+    # Number of samples
+    distr_list[["n"]] <- length(x)
+    
+    # Five-number summary of outcome values
+    distr_list[["fivenum"]] <- fivenum_summary(x, na.rm=TRUE)
+    
+    # Mean value
+    distr_list[["mean"]] <- mean(x, na.rm=TRUE)
+    
+  } else {
+    ..error_reached_unreachable_code(".compute_feature_distribution_data: unknown feature type encountered.")
+  }
+  
+  # Add to slot
+  object@distribution <- distr_list
+  
+  return(object)
+}
+
+
+
 find_invariant_features <- function(cl=NULL, feature_info_list, data_obj){
   # Find features that are invariant. Such features are ill-behaved and should be removed.
   
@@ -756,6 +822,7 @@ collect_and_aggregate_feature_info <- function(feature, object, stop_at="imputat
   
   # Suppress NOTES due to non-standard evaluation in data.table
   norm_method <- norm_shift <- norm_scale <- n <- batch_id <- NULL
+  min <- Q1 <- median <- Q3 <- max <- count <- NULL
   
   # Find all featureInfo objects for the current feature
   feature_info_list <- lapply(object@model_list, function(fam_model, feature){
@@ -790,6 +857,61 @@ collect_and_aggregate_feature_info <- function(feature, object, stop_at="imputat
   # Compute average univariate importance
   if(!all_empty_slot(object_list=feature_info_list, slot_name="univariate_importance")){
     feature_info@univariate_importance <- mean(extract_from_slot(object_list=feature_info_list, slot_name="univariate_importance", na.rm=TRUE))
+  }
+  
+  # Find distribution items
+  distribution_items <- names(feature_info_list[[1]]@distribution)
+  
+  if(!is.null(distribution_items)){
+    
+    # Placeholder list
+    distr_list <- list()
+    
+    # Iterate over items in the distribution list
+    for(item in distribution_items){
+      
+      if(grepl(pattern="fivenum", x=item, fixed=TRUE)){
+        
+        # Aggregate from list
+        fivenum_values <- lapply(feature_info_list, function(feature_info, item) (feature_info@distribution[[item]]), item=item)
+        
+        # Combine all the data.tables
+        fivenum_values <- data.table::rbindlist(fivenum_values)
+        
+        # Check for zero-length lists.
+        if(is_empty(fivenum_values)) next()
+        
+        # Summarise
+        fivenum_values <- fivenum_values[, list("min"=min(min),
+                                                "Q1"=mean(Q1),
+                                                "median"=mean(median),
+                                                "Q3"=mean(Q3),
+                                                "max"=max(max)), ]
+        
+        # Add to list
+        distr_list[[item]] <- fivenum_values
+        
+      } else if(grepl(patter="frequency", x=item, fixed=TRUE)){
+        
+        # Aggregate from list
+        frequency_values <- lapply(feature_info_list, function(feature_info, item) (feature_info@distribution[[item]]), item=item)
+        
+        # Combine all the data.tables
+        frequency_values <- data.table::rbindlist(frequency_values)
+        
+        if(is_empty(frequency_values)) next()
+        
+        # Summarise and add to list
+        distr_list[[item]] <- frequency_values[, list("count"=mean(count)), by="factor_level"]
+        
+      } else {
+        # Find mean value
+        distr_list[[item]] <- mean(extract_from_slot(feature_info_list, "distribution", item, na.rm=TRUE))
+      }
+    }
+    
+    # Update distribution slot
+    feature_info@distribution <- distr_list
   }
   
   # Transformation parameters

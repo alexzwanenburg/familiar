@@ -420,6 +420,41 @@ collect_auc_data <- function(fam_data_list){
 }
 
 
+#' @title Collector for confusion matrices
+#'
+#' @inheritParams collect_fs_vimp
+#'
+#' @return A list with aggregated confusion matrices.
+#' @noRd
+collect_confusion_matrix_data <- function(fam_data_list){
+  
+  # Parse data from single models
+  single_model_table <- data.table::rbindlist(lapply(fam_data_list, function(fam_obj){
+    
+    # Extract model performances
+    single_model_table <- fam_obj@confusion_matrix$single
+    
+    # Add identifiers
+    single_model_table <- add_identifiers(data=single_model_table, object=fam_obj, more_identifiers=c("fs_method", "learner"))
+    
+  }))
+  
+  # Parse data from ensemble models
+  ensemble_model_table <- data.table::rbindlist(lapply(fam_data_list, function(fam_obj){
+    
+    # Extract model performances
+    ensemble_model_table <- fam_obj@confusion_matrix$ensemble
+    
+    # Add identifiers
+    ensemble_model_table <- add_identifiers(data=ensemble_model_table, object=fam_obj, more_identifiers=c("fs_method", "learner"))
+    
+  }))
+  
+  # Combine all information to a single list.
+  return(list("single"=single_model_table, "ensemble"=ensemble_model_table))
+}
+
+
 
 #' @title Collector for univariate feature analysis data
 #'

@@ -8,7 +8,7 @@ metric.brier.calc <- function(dt, metric, outcome_type){
   if(n_classes<=1){ return(as.double(NA)) }
 
   # Get names of columns with predicted class probabilities
-  pred_prob_cols <- getClassProbabilityColumns(outcome_type=outcome_type, class_levels=classes)
+  pred_prob_cols <- get_class_probability_name(x=classes)
 
   # Identify the real outcome columns
   outc_col       <- get_outcome_columns(x=outcome_type)
@@ -31,7 +31,7 @@ metric.brier.calc <- function(dt, metric, outcome_type){
     pos_class    <- classes[ii]
 
     # Get the probability column name for the positive class
-    pos_class_prob_col <- getClassProbabilityColumns(outcome_type=outcome_type, class_levels=pos_class)
+    pos_class_prob_col <- get_class_probability_name(x=pos_class)
 
     # Copy data table
     dt_brier     <- data.table::copy(dt[,c(outc_col, pos_class_prob_col), with=FALSE])

@@ -48,10 +48,16 @@
 
   if("Rservecoop" %in% installed_libs) {
     return("rserve_coop")
-  } else if(getOS() != "windows") {
+    
+  } else if(getOS() != "windows" & !interactive()) {
+    # The documentation of parallel::makeCluster recommends against forking when
+    # running from a GUI such as RStudio. We use the interactive() function to
+    # figure out if the R session is interactive or not.
     return("fork")
+    
   } else if("Rserve" %in% installed_libs) {
     return("rserve")
+    
   } else {
     return("non_fork")
   }
@@ -154,12 +160,6 @@ getDataFromBackend <- function(subj_id=NULL, col_names=NULL, settings){
   }
 }
 
-
-addBackendDataToCluster <- function(cl, backend){
-
-
-
-}
 
 
 getOS <- function(){

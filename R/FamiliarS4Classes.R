@@ -9,6 +9,8 @@ setClass("familiarModel",
            outcome_info = "ANY",
            # Data required for feature pre-processing
            feature_info = "ANY",
+           # Info related to the columns in the dataset.
+           data_column_info = "ANY",
            # Hyper-parameters (typically stored in the model as well)
            hyperparameters = "ANY",
            # Hyperparameter data, e.g. for visualising the hyperparameter space.
@@ -47,6 +49,7 @@ setClass("familiarModel",
            outcome_type = NA_character_,
            outcome_info = NULL,
            feature_info = NULL,
+           data_column_info = NULL,
            hyperparameters = NULL,
            hyperparameter_data = NULL,
            calibration_model = NULL,
@@ -75,6 +78,8 @@ setClass("familiarEnsemble",
            outcome_type = "character",
            # Outcome info, such as class levels, mean values etc.
            outcome_info = "ANY",
+           # Info related to the columns in the dataset.
+           data_column_info = "ANY",
            # Name of learner
            learner = "character",
            # Name of feature selection method
@@ -102,6 +107,7 @@ setClass("familiarEnsemble",
            model_list = NULL,
            outcome_type = NA_character_,
            outcome_info = NULL,
+           data_column_info = NULL,
            learner = NA_character_,
            fs_method = NA_character_,
            feature_info = NULL,
@@ -151,6 +157,8 @@ setClass("familiarData",
            prediction_data = "ANY",
            # Confusion matrix for categorical outcomes
            confusion_matrix = "ANY",
+           # Data for decision curve analysis
+           decision_curve_data = "ANY",
            # Calibration information, e.g. baseline survival
            calibration_info = "ANY",
            # Calibration test information
@@ -199,6 +207,7 @@ setClass("familiarData",
            pooling_table = NULL,
            prediction_data = NULL,
            confusion_matrix = NULL,
+           decision_curve_data = NULL,
            calibration_info = NULL,
            calibration_data = NULL,
            model_performance = NULL,
@@ -236,6 +245,7 @@ setClass("familiarData",
 #' @slot fs_method character. 
 #' @slot prediction_data ANY.
 #' @slot confusion_matrix ANY.
+#' @slot decision_curve_data ANY.
 #' @slot calibration_info ANY. 
 #' @slot calibration_data ANY. 
 #' @slot model_performance ANY. 
@@ -291,6 +301,8 @@ setClass("familiarCollection",
            prediction_data = "ANY",
            # Confusion matrix for categorical outcomes
            confusion_matrix = "ANY",
+           # Data for decision curve analysis
+           decision_curve_data = "ANY",
            # Calibration information, e.g. baseline survival
            calibration_info = "ANY",
            # Calibration test information
@@ -346,6 +358,7 @@ setClass("familiarCollection",
            fs_method = NA_character_,
            prediction_data = NULL,
            confusion_matrix = NULL,
+           decision_curve_data = NULL,
            calibration_info = NULL,
            calibration_data = NULL,
            model_performance = NULL,
@@ -426,6 +439,7 @@ setClass("featureInfo",
            data_id = "integer",
            run_id = "integer",
            in_signature = "logical",
+           in_novelty = "logical",
            removed = "logical",
            removed_unknown_type = "logical",
            removed_missing_values = "logical",
@@ -454,6 +468,7 @@ setClass("featureInfo",
            data_id = NA_integer_,
            run_id = NA_integer_,
            in_signature = FALSE,
+           in_novelty = FALSE,
            removed = FALSE,
            removed_unknown_type = FALSE,
            removed_missing_values = FALSE,

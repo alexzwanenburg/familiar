@@ -28,7 +28,7 @@ learner.knn.param <- function(data_obj, learner){
 
   # Get the number of subjects
   n_samples <- nrow(data_obj@data)
-  n_classes <- length(get_outcome_levels(x=data_obj))
+  n_classes <- length(get_outcome_class_levels(x=data_obj))
 
   
   ##### Signature size #########################################################
@@ -113,10 +113,10 @@ learner.knn.test <- function(object, data_obj){
   dt_pred[, "outcome_pred_class":=outcome_list$class]
 
   # Get outcome levels
-  class_levels <- object@class_levels
+  class_levels <- get_outcome_class_levels(x=object)
 
   # Add class probabilities
-  outcome_pred_class_prob_cols <- getClassProbabilityColumns(outcome_type=outcome_type, class_levels=class_levels)
+  outcome_pred_class_prob_cols <- get_class_probability_name(x=class_levels)
   dt_pred <- cbind(dt_pred, data.table::as.data.table(outcome_list$posterior))
   data.table::setnames(dt_pred, old=class_levels, new=outcome_pred_class_prob_cols)
 

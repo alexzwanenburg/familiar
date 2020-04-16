@@ -32,9 +32,9 @@ is provided, or if external validation is performed.}
 \item{outcome_column}{(\strong{recommended}) Name of the column containing the
 outcome of interest. May be identified from a formula, if a formula is
 provided as an argument. Otherwise an error is raised. Note that \code{survival}
-type outcomes require two columns that indicate the time-to-event or the
-time of last follow-up and the event status. Event status can be \code{0} to
-indicate right-censoring and \code{1} to indicate that the event occurred.}
+and \code{competing_risk} outcome type outcomes require two columns that
+indicate the time-to-event or the time of last follow-up and the event
+status.}
 
 \item{outcome_type}{(\strong{recommended}) Type of outcome found in the outcome
 column. The outcome type determines many aspects of the overall process,
@@ -51,7 +51,10 @@ Implemented outcome types are:
 
 If not provided, the algorithm will attempt to obtain outcome_type from
 contents of the outcome column. This may lead to unexpected results, and we
-therefore advise to provide this information manually.}
+therefore advise to provide this information manually.
+
+Note that \code{competing_risk} survival analysis are not fully supported, and
+is currently not a valid choice for \code{outcome_type}.}
 
 \item{include_features}{(\emph{optional}) Feature columns that are specifically
 included in the data set. By default all features are included. Cannot
@@ -63,7 +66,24 @@ provided that there is no overlap between the two.}
 \item{class_levels}{(\emph{optional}) Class levels for \code{binomial} or \code{multinomial}
 outcomes. This argument can be used to specify the ordering of levels for
 categorical outcomes. These class levels must exactly match the levels
-present in the outcome column.`}
+present in the outcome column.}
+
+\item{censoring_indicator}{(\strong{recommended}) Indicator for right-censoring in
+\code{survival} and \code{competing_risk} analyses. \code{familiar} will automatically
+recognise \code{0}, \code{false}, \code{f}, \code{n}, \code{no} ascensoring indicators, including
+different capitalisations. If this parameter is set, it replaces the
+default values.}
+
+\item{event_indicator}{(\strong{recommended}) Indicator for events in \code{survival}
+and \code{competing_risk} analyses. \code{familiar} will automatically recognise \code{1},
+\code{true}, \code{t}, \code{y} and \code{yes} as event indicators, including different
+capitalisations. If this parameter is set, it replaces the default values.}
+
+\item{competing_risk_indicator}{(\strong{recommended}) Indicator for competing
+risks in \code{competing_risk} analyses. There are no default values, and if
+unset, all values other than those specified by the \code{event_indicator} and
+\code{censoring_indicator} parameters are considered to indicate competing
+risks.}
 
 \item{reference}{list with class levels (\code{levels}) and ordering (\code{ordered}) per list entry. Each list entry
 should have the name of the corresponding feature. The intended use is that \code{featureInfo} objects

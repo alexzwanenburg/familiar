@@ -11,29 +11,40 @@ setMethod("predict", signature(object="familiarModel"),
             outcome_type <- object@outcome_type
             
             # Prepare input data
-            newdata    <- process_input_data(object=object, data=newdata, is_pre_processed=is_pre_processed)
+            newdata <- process_input_data(object=object,
+                                          data=newdata,
+                                          is_pre_processed=is_pre_processed)
             
             if(!extra_output){
-              # Validate input data dt and generate a prediction table
-              dt_pred    <- learner.main(learner=object@learner, purpose="test", data_obj=newdata, object=object, time_max=time_max)
+              # Generate a prediction table.
+              predictions <- learner.main(learner=object@learner, purpose="test", data_obj=newdata, object=object, time_max=time_max)
               
-              # Apply calibration (if applicable - this is determined within the function based on outcome_type and the presence of calibration models)
+              # Apply calibration (if applicable - this is determined within the
+              # function based on outcome_type and the presence of calibration
+              # models).
               if(allow_recalibration==TRUE){
-                dt_pred  <- learner.apply_calibration(dt=dt_pred, learner=object@learner, outcome_type=outcome_type, calibration_model=object@calibration_model)
+                predictions  <- learner.apply_calibration(object=object,
+                                                          predictions=predictions)
               }
               
               # Return prediction table
-              return(dt_pred)
+              return(predictions)
               
             } else {
               # Return extra output in addition to predicted outcomes
-              prediction_list <- learner.main(learner=object@learner, purpose="test", data_obj=newdata, object=object, time_max=time_max,
+              prediction_list <- learner.main(learner=object@learner,
+                                              purpose="test",
+                                              data_obj=newdata,
+                                              object=object,
+                                              time_max=time_max,
                                               extra_output=TRUE)
               
-              # Apply calibration (if applicable - this is determined within the function based on outcome_type and the presence of calibration models)
+              # Apply calibration (if applicable - this is determined within the
+              # function based on outcome_type and the presence of calibration
+              # models)
               if(allow_recalibration){
-                prediction_list$predictions <- learner.apply_calibration(dt=prediction_list$predictions, learner=object@learner, outcome_type=outcome_type,
-                                                                         calibration_model=object@calibration_model)
+                prediction_list$predictions <- learner.apply_calibration(object=object,
+                                                                         predictions=predictions)
               }
               
               # Return prediction list
