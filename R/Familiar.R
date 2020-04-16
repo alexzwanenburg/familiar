@@ -371,20 +371,20 @@ get_project_list <- function(){
   
   # Retrieve the project list
   if(exists("familiar_global_env")){
-    if(exists("proj_list", where=familiar_global_env)){
+    if(exists("project_info_list", where=familiar_global_env)){
       data_env <- familiar_global_env
-    } else if (exists("proj_list", where=.GlobalEnv)){
+    } else if (exists("project_info_list", where=.GlobalEnv)){
       data_env <- .GlobalEnv
     } else {
       stop("Project list not found in backend.")
     }
-  } else if (exists("proj_list", where=.GlobalEnv)){
+  } else if (exists("project_info_list", where=.GlobalEnv)){
     data_env <- .GlobalEnv
   } else {
     stop("Project list not found in backend.")
   }
   
-  return(get("proj_list", envir=data_env))
+  return(get("project_info_list", envir=data_env))
 }
 
 
