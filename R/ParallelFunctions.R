@@ -192,7 +192,7 @@ fam_lapply <- function(cl=NULL, assign=NULL, X, FUN, progress_bar=FALSE, ...){
     
     # Perform the sequential apply as mapply.
     y <- mapply(FUN=.fun_with_progress, X, seq_along(X),
-                MoreArgs=append(list("fun"=FUN,
+                MoreArgs=append(list("FUN2"=FUN,
                                      "pb_conn"=pb_conn),
                                 list(...)),
                 SIMPLIFY=FALSE,
@@ -246,7 +246,7 @@ fam_lapply_lb <- function(cl=NULL, assign=NULL, X, FUN, progress_bar=FALSE, ...)
     
     # Perform the sequential apply as mapply.
     y <- mapply(FUN=.fun_with_progress, X, seq_along(X),
-                MoreArgs=append(list("fun"=FUN,
+                MoreArgs=append(list("FUN2"=FUN,
                                      "pb_conn"=pb_conn),
                                 list(...)),
                 SIMPLIFY=FALSE,
@@ -302,7 +302,7 @@ fam_sapply <- function(cl=NULL, assign=NULL, X, FUN, progress_bar=FALSE, ..., si
     
     # Perform the sequential apply as mapply.
     y <- mapply(FUN=.fun_with_progress, X, seq_along(X),
-                MoreArgs=append(list("fun"=FUN,
+                MoreArgs=append(list("FUN2"=FUN,
                                      "pb_conn"=pb_conn),
                                 list(...)),
                 SIMPLIFY=simplify,
@@ -360,7 +360,7 @@ fam_sapply_lb <- function(cl=NULL, assign=NULL, X, FUN, progress_bar=FALSE, ...,
     
     # Perform the sequential apply as mapply.
     y <- mapply(FUN=.fun_with_progress, X, seq_along(X),
-                MoreArgs=append(list("fun"=FUN,
+                MoreArgs=append(list("FUN2"=FUN,
                                      "pb_conn"=pb_conn),
                                 list(...)),
                 SIMPLIFY=simplify,
@@ -391,13 +391,13 @@ fam_sapply_lb <- function(cl=NULL, assign=NULL, X, FUN, progress_bar=FALSE, ...,
 
 
 
-.fun_with_progress <- function(x, ii, fun, pb_conn, ...){
+.fun_with_progress <- function(X2, II, FUN2, pb_conn, ...){
   
   # Execute function
-  y <- do.call(fun, args=append(list(x), list(...)))
+  y <- do.call(FUN2, args=append(list(X2), list(...)))
   
   # Update the progress bar
-  utils::setTxtProgressBar(pb=pb_conn, value=ii)
+  utils::setTxtProgressBar(pb=pb_conn, value=II)
   
   return(y)
 }
