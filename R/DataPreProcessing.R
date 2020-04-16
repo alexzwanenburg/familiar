@@ -10,14 +10,9 @@ get_feature_info_file <- function(file_paths, project_id){
 
 
 
-.assign_feature_info_to_global <- function(cl, feature_info_list){
+.assign_feature_info_to_global <- function(feature_info_list){
   # Put feature_info_list into the familiar environment
   assign("feature_info_list", feature_info_list, envir=familiar_global_env)
-  
-  # Export feature_info_list to the clusters as well
-  if(!is.null(cl)){
-    parallel::clusterExport(cl=cl, varlist="feature_info_list", envir=familiar_global_env)
-  }
 }
 
 
@@ -100,7 +95,7 @@ check_pre_processing <- function(cl, data_id, file_paths, project_id){
     saveRDS(feature_info_list, file=feature_info_file)
     
     # Set to backend
-    .assign_feature_info_to_global(cl=cl, feature_info_list=feature_info_list)
+    .assign_feature_info_to_global(feature_info_list=feature_info_list)
     
   }
 }

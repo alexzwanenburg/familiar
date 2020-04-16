@@ -64,7 +64,7 @@
 }
 
 
-.assign_data_to_backend <- function(cl, backend_data, backend, server_port){
+.assign_data_to_global <- function(backend_data, backend, server_port){
 
   if(backend %in% c("fork", "non_fork")){
     # Put dt_backend_data in global environment
@@ -88,11 +88,6 @@
     
   } else {
     ..error_reached_unreachable_code("assign_data_to_backed_unknown_backend")
-  }
-  
-  # Only add backend data when running a non-rserve backend
-  if(!is.null(cl) & backend %in% c("fork", "non_fork")){
-    parallel::clusterExport(cl=cl, varlist="dt_backend_data", envir=familiar_global_env)
   }
 }
 

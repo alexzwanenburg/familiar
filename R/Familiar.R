@@ -197,13 +197,14 @@ summon_familiar <- function(formula=NULL, data=NULL, cl=NULL, config=NULL, confi
     cl <- NULL
   }
 
-  # Assign settings, file_paths, feature_info_list, data and project_info to the backend
-  .assign_settings_to_global(cl=cl, settings=settings)
-  .assign_file_paths_to_global(cl=cl, file_paths=file_paths)
-  .assign_feature_info_to_global(cl=cl, feature_info_list=feature_info_list)
-  .assign_project_info_to_global(cl=cl, project_info=project_info)
-  .assign_outcome_info_to_global(cl=cl, outcome_info=outcome_info)
-  .assign_data_to_backend(cl=cl, backend_data=data, backend=settings$run$backend, server_port=settings$run$server_port)
+  # Assign objects that should be accessible everywhere to the familiar global
+  # environment.
+  .assign_settings_to_global(settings=settings)
+  .assign_file_paths_to_global(file_paths=file_paths)
+  .assign_feature_info_to_global(feature_info_list=feature_info_list)
+  .assign_project_info_to_global(project_info=project_info)
+  .assign_outcome_info_to_global(outcome_info=outcome_info)
+  .assign_data_to_global(backend_data=data, backend=settings$run$backend, server_port=settings$run$server_port)
   
   # Start feature selection
   run_feature_selection(cl=cl, proj_list=project_info, settings=settings, file_paths=file_paths)
@@ -301,15 +302,9 @@ get_xml_config <- function(dir_path){
 
 
 
-.assign_settings_to_global <- function(cl, settings){
-  
-  # Put settings into the familiar environment
+.assign_settings_to_global <- function(settings){
+  # Assign settings into the familiar global, environment
   assign("settings", settings, envir=familiar_global_env)
-  
-  # Export settings to the clusters as well
-  if(!is.null(cl)){
-    parallel::clusterExport(cl=cl, varlist="settings", envir=familiar_global_env)
-  }
 }
 
 
@@ -336,14 +331,9 @@ get_settings <- function(){
 
 
 
-.assign_file_paths_to_global <- function(cl, file_paths){
+.assign_file_paths_to_global <- function(file_paths){
   # Put file_paths into the familiar environment
   assign("file_paths", file_paths, envir=familiar_global_env)
-  
-  # Export file_paths to the clusters as well
-  if(!is.null(cl)){
-    parallel::clusterExport(cl=cl, varlist="file_paths", envir=familiar_global_env)
-  }
 }
 
 
@@ -370,15 +360,9 @@ get_file_paths <- function(){
 
 
 
-.assign_project_info_to_global <- function(cl, project_info){
-  
-  # Put proj_list into the familiar environment
-  assign("proj_list", project_info, envir=familiar_global_env)
-  
-  # Export proj_list to the clusters as well
-  if(!is.null(cl)){
-    parallel::clusterExport(cl=cl, varlist="proj_list", envir=familiar_global_env)
-  }
+.assign_project_info_to_global <- function(project_info){
+  # Put project_info_list into the familiar environment
+  assign("project_info_list", project_info, envir=familiar_global_env)
 }
 
 
