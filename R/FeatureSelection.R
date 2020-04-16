@@ -108,7 +108,7 @@ compute_variable_importance <- function(run, fs_method, hpo_list, proj_list, set
   dt_fs <- data.table::data.table("fs_method"=settings$fs$fs_methods)
 
   # Add expected feature selection file names
-  dt_fs[,"fs_file":=getFSFileName(proj_list=proj_list, fs_method=fs_method, file_paths=file_paths)]
+  dt_fs[,"fs_file":=.get_feature_selection_data_filename(proj_list=proj_list, fs_method=fs_method, file_paths=file_paths)]
 
   # List files in directory
   file_list <- normalizePath(list.files(path=file_paths$fs_dir, pattern=paste0(proj_list$project_id, "_fs_"), full.names=TRUE, recursive=TRUE), mustWork=FALSE)
@@ -122,6 +122,6 @@ compute_variable_importance <- function(run, fs_method, hpo_list, proj_list, set
 
 
 
-getFSFileName <- function(fs_method, proj_list, file_paths){
+.get_feature_selection_data_filename <- function(fs_method, proj_list, file_paths){
   return(normalizePath(file.path(file_paths$fs_dir, paste0(proj_list$project_id, "_fs_", fs_method, ".RDS")), mustWork=FALSE))
 }
