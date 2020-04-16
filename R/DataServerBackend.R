@@ -161,12 +161,6 @@ getDataFromBackend <- function(subj_id=NULL, col_names=NULL, settings){
 }
 
 
-addBackendDataToCluster <- function(cl, backend){
-
-
-
-}
-
 
 getOS <- function(){
   # Gets the operating system name
