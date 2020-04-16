@@ -75,3 +75,36 @@
   
   return(n_available_connections)
 }
+
+
+.assign_parallel_options_to_global <- function(is_external_cluster=FALSE,
+                                               restart_cluster=FALSE,
+                                               n_cores=NULL,
+                                               parallel_backend=NULL){
+  
+  # We don't need a backend if the cluster is external.
+  if(is.null(parallel_backend) & !is_external_cluster) parallel_backend <- .get_default_backend()
+  
+  # Assign parallelisation options to the familiar global environment.
+  assign("is_external_cluster", is_external_cluster, envir=familiar_global_env)
+  assign("restart_cluster", restart_cluster, envir=familiar_global_env)
+  assign("n_cores", n_cores, envir=familiar_global_env)
+  assign("parallel_backend", parallel_backend, envir=familiar_global_env)
+}
+
+
+.needs_cluster_restart <- function(){
+  return(get("restart_cluster", envir=familiar_global_env))
+}
+
+.is_external_cluster <- function(){
+  return(get("is_external_cluster", envir=familiar_global_env))
+}
+
+.get_desired_n_cores <- function(){
+  return(get("n_cores", envir=familiar_global_env))
+}
+
+.get_selected_parallel_backend <- function(){
+  return(get("parallel_backend", envir=familiar_global_env))
+}

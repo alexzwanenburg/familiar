@@ -179,22 +179,12 @@ summon_familiar <- function(formula=NULL, data=NULL, cl=NULL, config=NULL, confi
   feature_info_list <- .get_feature_info_data(data=data, file_paths=file_paths, project_id=project_info$project_id,
                                               outcome_type=settings$data$outcome_type)
 
-  # Start parallel process cluster
+  # Identify if an external cluster is provided, and required.
   if(settings$run$parallel){
-    if(is.null(cl)){
-      cl <- .start_cluster(nr_cores=settings$run$parallel_nr_cores, backend=settings$run$backend)
-      
-      is_external_cluster <- FALSE
-    } else {
-      is_external_cluster <- TRUE
-    }
-    
-    # Load familiar library on the cluster nodes.
-    parallel::clusterEvalQ(cl=cl, library(familiar))
+    is_external_cluster <- inherits(cl, "cluster")
     
   } else {
-    # Remove cluster information in case it is not required by familiar
-    cl <- NULL
+    is_external_cluster <- FALSE
   }
 
   # Assign objects that should be accessible everywhere to the familiar global
@@ -205,6 +195,11 @@ summon_familiar <- function(formula=NULL, data=NULL, cl=NULL, config=NULL, confi
   .assign_project_info_to_global(project_info=project_info)
   .assign_outcome_info_to_global(outcome_info=outcome_info)
   .assign_data_to_global(backend_data=data, backend=settings$run$backend, server_port=settings$run$server_port)
+  .assign_parallel_options_to_global(is_external_cluster=is_external_cluster,
+                                     restart_cluster=FALSE,
+                                     n_cores=settings$run$parallel_nr_cores,
+                                     parallel_backend=settings$run$backend)
+  
   
   # Start feature selection
   run_feature_selection(cl=cl, proj_list=project_info, settings=settings, file_paths=file_paths)
