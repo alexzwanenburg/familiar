@@ -4,7 +4,7 @@ run_feature_selection <- function(cl, proj_list, settings, file_paths){
   fs_data_id <- getProcessDataID(proj_list=proj_list, process_step="fs")
 
   # Get feature selection methods that still need to be checked
-  run_fs_methods <- getIncompleteFeatureSelection(proj_list=proj_list, settings=settings, file_paths=file_paths)
+  run_fs_methods <- .find_missing_feature_selection_data(proj_list=proj_list, settings=settings, file_paths=file_paths)
 
   # Check whether pre-processing has been conducted
   check_pre_processing(cl=cl, data_id=fs_data_id, file_paths=file_paths, project_id=proj_list$project_id)
@@ -99,7 +99,7 @@ compute_variable_importance <- function(run, fs_method, hpo_list, proj_list, set
 
 
 
-getIncompleteFeatureSelection <- function(proj_list, settings, file_paths){
+.find_missing_feature_selection_data <- function(proj_list, settings, file_paths){
 
   # Suppress NOTES due to non-standard evaluation in data.table
   fs_method <- fs_file <- NULL
