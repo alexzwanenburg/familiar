@@ -11,12 +11,10 @@ run_feature_selection <- function(cl, proj_list, settings, file_paths){
 
   # Get runs
   run_list <- getRunList(iter_list=proj_list$iter_list, data_id=fs_data_id)
-
-  # Start cluster for parallel processing
-  if(settings$fs$do_parallel){
-    parallel::clusterExport(cl=cl, varlist=c("compute_variable_importance"), envir=environment())
-  }
-
+  
+  # Remove cluster information in case no parallelisation is provided.
+  if(!settings$fs$do_parallel) cl <- NULL
+  
   # Create variable importance matrices by iterating over feature selection methods
   for(curr_fs_method in run_fs_methods){
 
@@ -26,28 +24,22 @@ run_feature_selection <- function(cl, proj_list, settings, file_paths){
     # Optimise models used for feature selection
     hpo_list <- run_hyperparameter_optimisation(cl=cl, proj_list=proj_list, data_id=fs_data_id, settings=settings, file_paths=file_paths, fs_method=curr_fs_method)
 
-    # Extract variable importance lists
-    if(settings$fs$do_parallel){
-      # Calculate variable importance
-      vimp_list <- parallel::parLapply(cl=cl, X=run_list, fun=compute_variable_importance, fs_method=curr_fs_method,
-                                       hpo_list=hpo_list, proj_list=proj_list, settings=settings, file_paths=file_paths)
-    } else{
-      # Start text progress bar
-      pb_conn   <- utils::txtProgressBar(min=0, max=length(run_list), style=3)
-
-      # Add iteration number for progress bar
-      run_list  <- lapply(seq_len(length(run_list)), function(ii, run_list) (append(run_list[[ii]], c("iter_nr"=ii))), run_list=run_list)
-
-      # Calculate variable importance
-      vimp_list <- lapply(run_list, compute_variable_importance, fs_method=curr_fs_method,
-                          hpo_list=hpo_list, proj_list=proj_list, settings=settings, file_paths=file_paths, pb_conn=pb_conn)
-
-      # Close progress bar
-      close(pb_conn)
-    }
-
+    # Create variable importance information by iterating over the list of runs.
+    vimp_list <- fam_lapply(cl=cl,
+                            assign="all",
+                            X=run_list,
+                            FUN=compute_variable_importance,
+                            progress_bar=TRUE,
+                            fs_method=curr_fs_method,
+                            hpo_list=hpo_list,
+                            proj_list=proj_list,
+                            settings=settings,
+                            file_paths=file_paths)
+    
     # Save to file
-    saveRDS(vimp_list, file=getFSFileName(proj_list=proj_list, fs_method=curr_fs_method, file_paths=file_paths))
+    saveRDS(vimp_list, file=.get_feature_selection_data_filename(proj_list=proj_list,
+                                                                 fs_method=curr_fs_method,
+                                                                 file_paths=file_paths))
 
     # Message that feature selection has been completed.
     logger.message(paste0("Feature selection: feature selection using \"", curr_fs_method, "\" method has been completed."))
@@ -56,9 +48,8 @@ run_feature_selection <- function(cl, proj_list, settings, file_paths){
 
 
 
-compute_variable_importance <- function(run, fs_method, hpo_list, proj_list, settings, file_paths, pb_conn=NULL){
+compute_variable_importance <- function(run, fs_method, hpo_list, proj_list, settings, file_paths){
   # Function for calculating variable importance
-
 
   ############### Data preparation ################################################################
   # Pre-process data
@@ -88,11 +79,6 @@ compute_variable_importance <- function(run, fs_method, hpo_list, proj_list, set
   # Generate the translation table for the selected set of features.
   translation_table <- rank.get_decluster_translation_table(features=vimp_table$name,
                                                             feature_info_list=get_feature_info_list(run=run))
-
-  # Update progress bar
-  if(!is.null(pb_conn)){
-    utils::setTxtProgressBar(pb=pb_conn, value=run$iter_nr)
-  }
 
   return(list("run_table"=run$run_table, "fs_method"=fs_method, "vimp"=vimp_table, "translation_table"=translation_table))
 }
