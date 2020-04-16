@@ -26,6 +26,12 @@ workflow can be disabled by setting respective flags to \code{FALSE}.}
     \item{\code{parallel_nr_cores}}{(\emph{optional}) Number of cores available for
 parallelisation. Defaults to all available cores-1. This setting does
 nothing if parallelisation is disabled.}
+    \item{\code{restart_cluster}}{(\emph{optional}) Restart nodes used for parallel computing
+to free up memory prior to starting a parallel process. Note that it does
+take time to set up the clusters. Therefore setting this argument to \code{TRUE}
+may impact processing speed. This argument is ignored if \code{parallel} is
+\code{FALSE} or the cluster was initialised outside of familiar. Default is
+\code{FALSE}, which causes the clusters to be initialised only once.}
     \item{\code{backend}}{(\emph{optional}) Selection of the back-end for distributing copies
 of the data. Several backend options are available, notably \code{rserve},
 \code{rserve_coop} (a version of rserve that is forced to operate in cooperative

@@ -649,6 +649,12 @@
 #' @param parallel_nr_cores (*optional*) Number of cores available for
 #'   parallelisation. Defaults to all available cores-1. This setting does
 #'   nothing if parallelisation is disabled.
+#' @param restart_cluster (*optional*) Restart nodes used for parallel computing
+#'   to free up memory prior to starting a parallel process. Note that it does
+#'   take time to set up the clusters. Therefore setting this argument to `TRUE`
+#'   may impact processing speed. This argument is ignored if `parallel` is
+#'   `FALSE` or the cluster was initialised outside of familiar. Default is
+#'   `FALSE`, which causes the clusters to be initialised only once.
 #' @param backend (*optional*) Selection of the back-end for distributing copies
 #'   of the data. Several backend options are available, notably `rserve`,
 #'   `rserve_coop` (a version of rserve that is forced to operate in cooperative
@@ -668,6 +674,7 @@
 .parse_setup_settings <- function(config=NULL,
                                   parallel=waiver(),
                                   parallel_nr_cores=waiver(),
+                                  restart_cluster=waiver(),
                                   backend=waiver(),
                                   server_port=waiver(),
                                   ...){
@@ -681,6 +688,7 @@
   # Maximum number of cores that a R may use
   settings$parallel_nr_cores <- .parse_arg(x_config=config$parallel_nr_cores, x_var=parallel_nr_cores,
                                            var_name="parallel_nr_cores", type="integer", optional=TRUE, default=NULL)
+  
   if(!is.null(settings$parallel_nr_cores)){
     .check_number_in_valid_range(x=settings$parallel_nr_cores, var_name="parallel_nr_cores", range=c(1, parallel::detectCores()))
   }
@@ -688,6 +696,14 @@
   # Set cores to 1 in case parallel processing is disabled.
   if(!settings$parallel){
     settings$parallel_nr_cores <- 1L
+  }
+  
+  # Restart clusters
+  settings$restart_cluster <- .parse_arg(x_config=config$restart_cluster, x_var=restart_cluster,
+                                         var_name="restart_cluster", type="logical", optional=TRUE, default=FALSE)
+  
+  if(!settings$parallel){
+    settings$restart_cluster <- FALSE
   }
   
   # Data server backend - this is os- and package-dependent
