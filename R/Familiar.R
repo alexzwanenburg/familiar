@@ -200,6 +200,19 @@ summon_familiar <- function(formula=NULL, data=NULL, cl=NULL, config=NULL, confi
                                      n_cores=settings$run$parallel_nr_cores,
                                      parallel_backend=settings$run$backend)
   
+  if(settings$run$parallel & !settings$run$restart_cluster & !is_external_cluster){
+    # Start local cluster in the overall process.
+    cl <- .restart_cluster(cl=NULL, assign_to_cluster="all")
+    
+  } else if(settings$run$parallel & settings$run$restart_cluster & !is_external_cluster){
+    # Start processes locally.
+    cl <- waiver()
+    
+  } else if(!settings$run$parallel){
+    # No cluster is created when 
+    cl <- NULL
+  }
+  
   
   # Start feature selection
   run_feature_selection(cl=cl, proj_list=project_info, settings=settings, file_paths=file_paths)
@@ -210,12 +223,8 @@ summon_familiar <- function(formula=NULL, data=NULL, cl=NULL, config=NULL, confi
   # Start evaluation
   run_evaluation(cl=cl, proj_list=project_info, settings=settings, file_paths=file_paths)
   
-  # Stop clusters
-  if(settings$run$parallel){
-    if(!is_external_cluster) {
-      .terminate_cluster(cl)
-    }
-  }
+  # Stop locally initiated clusters
+  .terminate_cluster(cl)
   
   if(file_paths$is_temporary){
     # Collect all familiarModels, familiarEnsemble, familiarData and

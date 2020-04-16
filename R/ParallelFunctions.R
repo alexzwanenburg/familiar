@@ -122,3 +122,46 @@
 .get_selected_parallel_backend <- function(){
   return(get("parallel_backend", envir=familiar_global_env))
 }
+
+
+.restart_cluster <- function(cl, assign_to_cluster=NULL){
+  
+  # Terminate old cluster (if necessary)
+  cl <- .terminate_cluster(cl=cl)
+  
+  # Start a new cluster
+  cl <- .start_cluster()
+  
+  # If the cluster doesn't start, return a NULL
+  if(is.null(cl)) return(NULL)
+  
+  # Load familiar library to each cluster.
+  parallel::clusterEvalQ(cl=cl, library(familiar))
+  
+  # Check if anything needs to be loaded
+  if(any(c("all", "data") %in% assign_to_cluster)){
+    
+    # Only add master data to the global environment of the clusters when
+    # running a non-rserve data backend.
+    if(.get_selected_parallel_backend() %in% c("fork", "non_fork")){
+      parallel::clusterExport(cl=cl, varlist="master_data", envir=familiar_global_env)
+    }
+  }
+  
+  # Export the feature_info list
+  if(any(c("all", "feature_info") %in% assign_to_cluster)){
+    parallel::clusterExport(cl=cl, varlist="feature_info_list", envir=familiar_global_env)
+  }
+  
+  # Export the project_info list
+  if(any(c("all", "project_info") %in% assign_to_cluster)){
+    parallel::clusterExport(cl=cl, varlist="project_info_list", envir=familiar_global_env)
+  }
+    
+  # Export smaller objects directly, so that we don't have to worry about them.
+  parallel::clusterExport(cl=cl, varlist="settings", envir=familiar_global_env)
+  parallel::clusterExport(cl=cl, varlist="file_paths", envir=familiar_global_env)
+  parallel::clusterExport(cl=cl, varlist="outcome_info", envir=familiar_global_env)
+  
+  return(cl)
+}
