@@ -167,7 +167,7 @@
 }
 
 
-fam_lapply <- function(cl=NULL, assign=NULL, x, fun, progress_bar=FALSE, ...){
+fam_lapply <- function(cl=NULL, assign=NULL, X, FUN, progress_bar=FALSE, ...){
   # lapply. Reverts to sequential lapply if cl is NULL.
   
   # Restart cluster if specified. This also means that we should terminate the
@@ -182,17 +182,17 @@ fam_lapply <- function(cl=NULL, assign=NULL, x, fun, progress_bar=FALSE, ...){
   
   if(is.null(cl) & !progress_bar){
     # Simple sequential lapply.
-    y <- do.call(lapply, args=append(list("X" = x,
-                                          "FUN" = fun),
+    y <- do.call(lapply, args=append(list("X" = X,
+                                          "FUN" = FUN),
                                      list(...)))
     
   } else if(is.null(cl) & progress_bar){
     # Start progress bar
-    pb_conn <- utils::txtProgressBar(min=0, max=length(x), style=3)
+    pb_conn <- utils::txtProgressBar(min=0, max=length(X), style=3)
     
     # Perform the sequential apply as mapply.
-    y <- mapply(FUN=.fun_with_progress, x, seq_along(x),
-                MoreArgs=append(list("fun"=fun,
+    y <- mapply(FUN=.fun_with_progress, X, seq_along(X),
+                MoreArgs=append(list("fun"=FUN,
                                      "pb_conn"=pb_conn),
                                 list(...)),
                 SIMPLIFY=FALSE,
@@ -204,8 +204,8 @@ fam_lapply <- function(cl=NULL, assign=NULL, x, fun, progress_bar=FALSE, ...){
   } else if(inherits(cl, "cluster")){
     # Parallel lapply without load balancing.
     y <- do.call(parallel::parLapply, args=append(list("cl" = cl,
-                                                       "X" = x,
-                                                       "fun" = fun),
+                                                       "X" = X,
+                                                       "FUN" = FUN),
                                                   list(...)))
     
   } else {
@@ -221,7 +221,7 @@ fam_lapply <- function(cl=NULL, assign=NULL, x, fun, progress_bar=FALSE, ...){
 
 
 
-fam_lapply_lb <- function(cl=NULL, assign=NULL, x, fun, progress_bar=FALSE, ...){
+fam_lapply_lb <- function(cl=NULL, assign=NULL, X, FUN, progress_bar=FALSE, ...){
   # Load-balanced lapply. Reverts to sequential lapply if cl is NULL.
   
   # Restart cluster if specified. This also means that we should terminate the
@@ -236,17 +236,17 @@ fam_lapply_lb <- function(cl=NULL, assign=NULL, x, fun, progress_bar=FALSE, ...)
   
   if(is.null(cl) & !progress_bar){
     # Simple sequential lapply
-    y <- do.call(lapply, args=append(list("X" = x,
-                                          "FUN" = fun),
+    y <- do.call(lapply, args=append(list("X" = X,
+                                          "FUN" = FUN),
                                      list(...)))
     
   } else if(is.null(cl) & progress_bar){
     # Start progress bar
-    pb_conn <- utils::txtProgressBar(min=0, max=length(x), style=3)
+    pb_conn <- utils::txtProgressBar(min=0, max=length(X), style=3)
     
     # Perform the sequential apply as mapply.
-    y <- mapply(FUN=.fun_with_progress, x, seq_along(x),
-                MoreArgs=append(list("fun"=fun,
+    y <- mapply(FUN=.fun_with_progress, X, seq_along(X),
+                MoreArgs=append(list("fun"=FUN,
                                      "pb_conn"=pb_conn),
                                 list(...)),
                 SIMPLIFY=FALSE,
@@ -258,8 +258,8 @@ fam_lapply_lb <- function(cl=NULL, assign=NULL, x, fun, progress_bar=FALSE, ...)
   } else if(inherits(cl, "cluster")){
     # Parallel lapply with load-balancing.
     y <- do.call(parallel::parLapplyLB, args=append(list("cl" = cl,
-                                                         "X" = x,
-                                                         "fun" = fun),
+                                                         "X" = X,
+                                                         "fun" = FUN),
                                                     list(...)))
     
   } else {
@@ -275,7 +275,7 @@ fam_lapply_lb <- function(cl=NULL, assign=NULL, x, fun, progress_bar=FALSE, ...)
 
 
 
-fam_sapply <- function(cl=NULL, assign=NULL, x, fun, progress_bar=FALSE, ..., simplify=TRUE, USE.NAMES=TRUE){
+fam_sapply <- function(cl=NULL, assign=NULL, X, FUN, progress_bar=FALSE, ..., simplify=TRUE, USE.NAMES=TRUE){
   # sapply. Reverts to sequential sapply if cl is NULL.
   
   # Restart cluster if specified. This also means that we should terminate the
@@ -290,19 +290,19 @@ fam_sapply <- function(cl=NULL, assign=NULL, x, fun, progress_bar=FALSE, ..., si
   
   if(is.null(cl) & !progress_bar){
     # Simple sequential sapply.
-    y <- do.call(sapply, args=append(list("X" = x,
-                                          "FUN" = fun,
+    y <- do.call(sapply, args=append(list("X" = X,
+                                          "FUN" = FUN,
                                           "simplify" = simplify,
                                           "USE.NAMES" = USE.NAMES),
                                      list(...)))
     
   } else if(is.null(cl) & progress_bar){
     # Start progress bar
-    pb_conn <- utils::txtProgressBar(min=0, max=length(x), style=3)
+    pb_conn <- utils::txtProgressBar(min=0, max=length(X), style=3)
     
     # Perform the sequential apply as mapply.
-    y <- mapply(FUN=.fun_with_progress, x, seq_along(x),
-                MoreArgs=append(list("fun"=fun,
+    y <- mapply(FUN=.fun_with_progress, X, seq_along(X),
+                MoreArgs=append(list("fun"=FUN,
                                      "pb_conn"=pb_conn),
                                 list(...)),
                 SIMPLIFY=simplify,
@@ -314,8 +314,8 @@ fam_sapply <- function(cl=NULL, assign=NULL, x, fun, progress_bar=FALSE, ..., si
   } else if(inherits(cl, "cluster")){
     # Parallel sapply without load balancing.
     y <- do.call(parallel::parSapply, args=append(list("cl" = cl,
-                                                       "X" = x,
-                                                       "FUN" = fun,
+                                                       "X" = X,
+                                                       "FUN" = FUN,
                                                        "simplify" = simplify,
                                                        "USE.NAMES" = USE.NAMES),
                                                   list(...)))
@@ -333,7 +333,7 @@ fam_sapply <- function(cl=NULL, assign=NULL, x, fun, progress_bar=FALSE, ..., si
 
 
 
-fam_sapply_lb <- function(cl=NULL, assign=NULL, x, fun, progress_bar=FALSE, ..., simplify=TRUE, USE.NAMES=TRUE){
+fam_sapply_lb <- function(cl=NULL, assign=NULL, X, FUN, progress_bar=FALSE, ..., simplify=TRUE, USE.NAMES=TRUE){
   # Load-balanced sapply. Reverts to sequential lapply if cl is NULL.
   
   # Restart cluster if specified. This also means that we should terminate the
@@ -348,19 +348,19 @@ fam_sapply_lb <- function(cl=NULL, assign=NULL, x, fun, progress_bar=FALSE, ...,
   
   if(is.null(cl)){
     # Simple sequential sapply.
-    y <- do.call(sapply, args=append(list("X" = x,
-                                          "FUN" = fun,
+    y <- do.call(sapply, args=append(list("X" = X,
+                                          "FUN" = FUN,
                                           "simplify" = simplify,
                                           "USE.NAMES" = USE.NAMES),
                                      list(...)))
     
   } else if(is.null(cl) & progress_bar){
     # Start progress bar
-    pb_conn <- utils::txtProgressBar(min=0, max=length(x), style=3)
+    pb_conn <- utils::txtProgressBar(min=0, max=length(X), style=3)
     
     # Perform the sequential apply as mapply.
-    y <- mapply(FUN=.fun_with_progress, x, seq_along(x),
-                MoreArgs=append(list("fun"=fun,
+    y <- mapply(FUN=.fun_with_progress, X, seq_along(X),
+                MoreArgs=append(list("fun"=FUN,
                                      "pb_conn"=pb_conn),
                                 list(...)),
                 SIMPLIFY=simplify,
@@ -372,8 +372,8 @@ fam_sapply_lb <- function(cl=NULL, assign=NULL, x, fun, progress_bar=FALSE, ...,
   } else if(inherits(cl, "cluster")){
     # Parallel sapply with load balancing.
     y <- do.call(parallel::parSapplyLB, args=append(list("cl" = cl,
-                                                         "X" = x,
-                                                         "FUN" = fun,
+                                                         "X" = X,
+                                                         "FUN" = FUN,
                                                          "simplify" = simplify,
                                                          "USE.NAMES" = USE.NAMES),
                                                     list(...)))
