@@ -61,6 +61,9 @@ setMethod("plot_all", signature(object="familiarCollection"),
                                                         list(...)))
             
             # Confusion matrix
+            do.call(plot_confusion_matrix, args=append(list("object"=object,
+                                                            "dir_path"=dir_path),
+                                                       list(...)))
             
             # Decision curve analysis.
             
