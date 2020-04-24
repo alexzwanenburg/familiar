@@ -196,13 +196,13 @@ summon_familiar <- function(formula=NULL, data=NULL, cl=NULL, config=NULL, confi
   .assign_outcome_info_to_global(outcome_info=outcome_info)
   .assign_data_to_global(backend_data=data, backend=settings$run$backend, server_port=settings$run$server_port)
   .assign_parallel_options_to_global(is_external_cluster=is_external_cluster,
-                                     restart_cluster=FALSE,
+                                     restart_cluster=settings$run$restart_cluster,
                                      n_cores=settings$run$parallel_nr_cores,
                                      parallel_backend=settings$run$backend)
   
   if(settings$run$parallel & !settings$run$restart_cluster & !is_external_cluster){
     # Start local cluster in the overall process.
-    cl <- .restart_cluster(cl=NULL, assign_to_cluster="all")
+    cl <- .restart_cluster(cl=NULL, assign="all")
     
   } else if(settings$run$parallel & settings$run$restart_cluster & !is_external_cluster){
     # Start processes locally.
