@@ -107,24 +107,69 @@
 }
 
 
+
 .needs_cluster_restart <- function(){
-  return(get("restart_cluster", envir=familiar_global_env))
+  
+  if(exists("familiar_global_env")){
+    if(exists("restart_cluster", where=familiar_global_env)){
+      data_env <- familiar_global_env
+      
+    } else if (exists("restart_cluster", where=.GlobalEnv)){
+      data_env <- .GlobalEnv
+      
+    } else {
+      return(FALSE)
+    }
+    
+  } else if (exists("restart_cluster", where=.GlobalEnv)){
+    data_env <- .GlobalEnv
+    
+  } else {
+    return(FALSE)
+  }
+  
+  return(get("restart_cluster", envir=data_env))
 }
 
+
+
 .is_external_cluster <- function(){
-  return(get("is_external_cluster", envir=familiar_global_env))
+  
+  if(exists("familiar_global_env")){
+    if(exists("is_external_cluster", where=familiar_global_env)){
+      data_env <- familiar_global_env
+      
+    } else if (exists("is_external_cluster", where=.GlobalEnv)){
+      data_env <- .GlobalEnv
+      
+    } else {
+      return(TRUE)
+    }
+    
+  } else if (exists("is_external_cluster", where=.GlobalEnv)){
+    data_env <- .GlobalEnv
+    
+  } else {
+    return(TRUE)
+  }
+  
+  return(get("is_external_cluster", envir=data_env))
 }
+
+
 
 .get_desired_n_cores <- function(){
   return(get("n_cores", envir=familiar_global_env))
 }
+
+
 
 .get_selected_parallel_backend <- function(){
   return(get("parallel_backend", envir=familiar_global_env))
 }
 
 
-.restart_cluster <- function(cl, assign_to_cluster=NULL){
+.restart_cluster <- function(cl, assign=NULL){
   
   # Terminate old cluster (if necessary)
   cl <- .terminate_cluster(cl=cl)
@@ -135,11 +180,11 @@
   # If the cluster doesn't start, return a NULL
   if(is.null(cl)) return(NULL)
   
-  # Load familiar library to each cluster.
+  # Load familiar and data.table libraries to each cluster.
   parallel::clusterEvalQ(cl=cl, library(familiar))
   
   # Check if anything needs to be loaded
-  if(any(c("all", "data") %in% assign_to_cluster)){
+  if(any(c("all", "data") %in% assign)){
     
     # Only add master data to the global environment of the clusters when
     # running a non-rserve data backend.
@@ -149,12 +194,12 @@
   }
   
   # Export the feature_info list
-  if(any(c("all", "feature_info") %in% assign_to_cluster)){
+  if(any(c("all", "feature_info") %in% assign)){
     parallel::clusterExport(cl=cl, varlist="feature_info_list", envir=familiar_global_env)
   }
   
   # Export the project_info list
-  if(any(c("all", "project_info") %in% assign_to_cluster)){
+  if(any(c("all", "project_info") %in% assign)){
     parallel::clusterExport(cl=cl, varlist="project_info_list", envir=familiar_global_env)
   }
     
@@ -167,14 +212,32 @@
 }
 
 
-fam_lapply <- function(cl=NULL, assign=NULL, X, FUN, progress_bar=FALSE, ...){
+.update_info_on_cluster <- function(cl, assign){
+  # Not all variables in the familiar global environment are static. For
+  # example, the feature_info_list may be updated by pre-processing. This
+  # function updates the clusters with the latest version of such variables.
+  
+  # Re-export the feature_info list.
+  if(any(c("all", "feature_info") %in% assign)){
+    parallel::clusterExport(cl=cl, varlist="feature_info_list", envir=familiar_global_env)
+  }
+}
+
+
+
+fam_lapply <- function(cl=NULL, assign=NULL, X, FUN, progress_bar=FALSE, ..., .scheduling="static"){
   # lapply. Reverts to sequential lapply if cl is NULL.
   
   # Restart cluster if specified. This also means that we should terminate the
-  # cluster after use.
+  # cluster after use. If clusters already exist, update the cluster with the
+  # latest versions of variables in the global familiar environment.
   if(!is.null(cl) & .needs_cluster_restart() & !.is_external_cluster()){
-    cl <- .restart_cluster(cl=cl, assign=assign_to_cluster)
+    cl <- .restart_cluster(cl=cl, assign=assign)
     terminate_cluster_on_exit <- TRUE
+    
+  } else if(inherits(cl, "cluster")) {
+    .update_info_on_cluster(cl=cl, assign=assign)
+    terminate_cluster_on_exit <- FALSE
     
   } else {
     terminate_cluster_on_exit <- FALSE
@@ -190,23 +253,33 @@ fam_lapply <- function(cl=NULL, assign=NULL, X, FUN, progress_bar=FALSE, ...){
     # Start progress bar
     pb_conn <- utils::txtProgressBar(min=0, max=length(X), style=3)
     
+    # Determine the length of the argument.
+    arg_length <- length(X)
+    
     # Perform the sequential apply as mapply.
-    y <- mapply(FUN=.fun_with_progress, X, seq_along(X),
-                MoreArgs=append(list("FUN2"=FUN,
-                                     "pb_conn"=pb_conn),
-                                list(...)),
-                SIMPLIFY=FALSE,
-                USE.NAMES=TRUE)
+    y <- do.call(mapply, args=c(list("FUN"=.fun_with_progress_map),
+                                list(X),
+                                list("II"=seq_len(arg_length),
+                                     "MoreArgs"=list("FUN2"=FUN,
+                                                     "pb_conn"=pb_conn,
+                                                     "MoreArgs"=list(...)),
+                                     "SIMPLIFY"=FALSE,
+                                     "USE.NAMES"=TRUE)))
     
     # Close the progress bar connection.
     close(pb_conn)
     
   } else if(inherits(cl, "cluster")){
+    
+    # Determine the type of scheduling.
+    if(.scheduling == "static") FUN_par <- parallel::parLapply
+    else FUN_par <- parallel::parLapplyLB
+    
     # Parallel lapply without load balancing.
-    y <- do.call(parallel::parLapply, args=append(list("cl" = cl,
-                                                       "X" = X,
-                                                       "FUN" = FUN),
-                                                  list(...)))
+    y <- do.call(FUN_par, args=c(list("cl" = cl,
+                                      "X" = X,
+                                      "fun" = FUN),                                                                                                                                                  
+                                 list(...)))
     
   } else {
     ..error_reached_unreachable_code("fam_lapply: the cluster object is neither NULL nor a cluster.")
@@ -222,67 +295,33 @@ fam_lapply <- function(cl=NULL, assign=NULL, X, FUN, progress_bar=FALSE, ...){
 
 
 fam_lapply_lb <- function(cl=NULL, assign=NULL, X, FUN, progress_bar=FALSE, ...){
-  # Load-balanced lapply. Reverts to sequential lapply if cl is NULL.
-  
-  # Restart cluster if specified. This also means that we should terminate the
-  # cluster after use.
-  if(!is.null(cl) & .needs_cluster_restart() & !.is_external_cluster()){
-    cl <- .restart_cluster(cl=cl, assign=assign_to_cluster)
-    terminate_cluster_on_exit <- TRUE
-    
-  } else {
-    terminate_cluster_on_exit <- FALSE
-  }
-  
-  if(is.null(cl) & !progress_bar){
-    # Simple sequential lapply
-    y <- do.call(lapply, args=append(list("X" = X,
-                                          "FUN" = FUN),
-                                     list(...)))
-    
-  } else if(is.null(cl) & progress_bar){
-    # Start progress bar
-    pb_conn <- utils::txtProgressBar(min=0, max=length(X), style=3)
-    
-    # Perform the sequential apply as mapply.
-    y <- mapply(FUN=.fun_with_progress, X, seq_along(X),
-                MoreArgs=append(list("FUN2"=FUN,
-                                     "pb_conn"=pb_conn),
-                                list(...)),
-                SIMPLIFY=FALSE,
-                USE.NAMES=TRUE)
-    
-    # Close the progress bar connection.
-    close(pb_conn)
-    
-  } else if(inherits(cl, "cluster")){
-    # Parallel lapply with load-balancing.
-    y <- do.call(parallel::parLapplyLB, args=append(list("cl" = cl,
-                                                         "X" = X,
-                                                         "fun" = FUN),
-                                                    list(...)))
-    
-  } else {
-    ..error_reached_unreachable_code("fam_lapply_lb: the cluster object is neither NULL nor a cluster.")
-  }
-  
-  if(terminate_cluster_on_exit){
-    cl <- .terminate_cluster(cl=cl)
-  }
+  # Call fam_lapply, with dynamic scheduling.
+  y <- do.call(fam_lapply, args=c(list("cl"=cl,
+                                       "assign"=assign,
+                                       "X"=X,
+                                       "FUN"=FUN,
+                                       "progress_bar"=progress_bar,
+                                       ".scheduling"="dynamic"),
+                                  list(...)))
   
   return(y)
 }
 
 
 
-fam_sapply <- function(cl=NULL, assign=NULL, X, FUN, progress_bar=FALSE, ..., simplify=TRUE, USE.NAMES=TRUE){
+fam_sapply <- function(cl=NULL, assign=NULL, X, FUN, progress_bar=FALSE, ..., SIMPLIFY=TRUE, USE.NAMES=TRUE, .scheduling="static"){
   # sapply. Reverts to sequential sapply if cl is NULL.
   
   # Restart cluster if specified. This also means that we should terminate the
-  # cluster after use.
+  # cluster after use. If clusters already exist, update the cluster with the
+  # latest versions of variables in the global familiar environment.
   if(!is.null(cl) & .needs_cluster_restart() & !.is_external_cluster()){
-    cl <- .restart_cluster(cl=cl, assign=assign_to_cluster)
+    cl <- .restart_cluster(cl=cl, assign=assign)
     terminate_cluster_on_exit <- TRUE
+    
+  } else if(inherits(cl, "cluster")) {
+    .update_info_on_cluster(cl=cl, assign=assign)
+    terminate_cluster_on_exit <- FALSE
     
   } else {
     terminate_cluster_on_exit <- FALSE
@@ -292,7 +331,7 @@ fam_sapply <- function(cl=NULL, assign=NULL, X, FUN, progress_bar=FALSE, ..., si
     # Simple sequential sapply.
     y <- do.call(sapply, args=append(list("X" = X,
                                           "FUN" = FUN,
-                                          "simplify" = simplify,
+                                          "simplify" = SIMPLIFY,
                                           "USE.NAMES" = USE.NAMES),
                                      list(...)))
     
@@ -300,25 +339,35 @@ fam_sapply <- function(cl=NULL, assign=NULL, X, FUN, progress_bar=FALSE, ..., si
     # Start progress bar
     pb_conn <- utils::txtProgressBar(min=0, max=length(X), style=3)
     
+    # Determine the length of the argument.
+    arg_length <- length(X)
+    
     # Perform the sequential apply as mapply.
-    y <- mapply(FUN=.fun_with_progress, X, seq_along(X),
-                MoreArgs=append(list("FUN2"=FUN,
-                                     "pb_conn"=pb_conn),
-                                list(...)),
-                SIMPLIFY=simplify,
-                USE.NAMES=USE.NAMES)
+    y <- do.call(mapply, args=c(list("FUN"=.fun_with_progress_map),
+                                list(X),
+                                list("II"=seq_len(arg_length),
+                                     "MoreArgs"=list("FUN2"=FUN,
+                                                     "pb_conn"=pb_conn,
+                                                     "MoreArgs"=list(...)),
+                                     "SIMPLIFY"=SIMPLIFY,
+                                     "USE.NAMES"=USE.NAMES)))
     
     # Close the progress bar connection.
     close(pb_conn)
     
   } else if(inherits(cl, "cluster")){
+    
+    # Determine the type of scheduling.
+    if(.scheduling == "static") FUN_par <- parallel::parSapply
+    else FUN_par <- parallel::parSapplyLB
+    
     # Parallel sapply without load balancing.
-    y <- do.call(parallel::parSapply, args=append(list("cl" = cl,
-                                                       "X" = X,
-                                                       "FUN" = FUN,
-                                                       "simplify" = simplify,
-                                                       "USE.NAMES" = USE.NAMES),
-                                                  list(...)))
+    y <- do.call(FUN_par, args=append(list("cl" = cl,
+                                           "X" = X,
+                                           "FUN" = FUN,
+                                           "simplify" = SIMPLIFY,
+                                           "USE.NAMES" = USE.NAMES),
+                                      list(...)))
     
   } else {
     ..error_reached_unreachable_code("fam_sapply: the cluster object is neither NULL nor a cluster.")
@@ -332,54 +381,83 @@ fam_sapply <- function(cl=NULL, assign=NULL, X, FUN, progress_bar=FALSE, ..., si
 }
 
 
+fam_sapply_lb <- function(cl=NULL, assign=NULL, X, FUN, progress_bar=FALSE, ..., SIMPLIFY=TRUE, USE.NAMES=TRUE){
+  # Call fam_sapply, with dynamic scheduling.
+  y <- do.call(fam_sapply, args=c(list("cl"=cl,
+                                       "assign"=assign,
+                                       "X"=X,
+                                       "FUN"=FUN,
+                                       "progress_bar"=progress_bar,
+                                       "SIMPLIFY"=SIMPLIFY,
+                                       "USE.NAMES"=USE.NAMES,
+                                       ".scheduling"="dynamic"),
+                                  list(...)))
+  
+  return(y)
+}
 
-fam_sapply_lb <- function(cl=NULL, assign=NULL, X, FUN, progress_bar=FALSE, ..., simplify=TRUE, USE.NAMES=TRUE){
-  # Load-balanced sapply. Reverts to sequential lapply if cl is NULL.
+
+
+fam_mapply <- function(cl=NULL, assign=NULL, FUN, ...,  progress_bar=FALSE, MoreArgs=NULL, SIMPLIFY=FALSE, USE.NAMES=TRUE, .scheduling="static"){
+  # mapply. Reverts to sequential mapply if cl is NULL.
   
   # Restart cluster if specified. This also means that we should terminate the
-  # cluster after use.
+  # cluster after use. If clusters already exist, update the cluster with the
+  # latest versions of variables in the global familiar environment.
   if(!is.null(cl) & .needs_cluster_restart() & !.is_external_cluster()){
-    cl <- .restart_cluster(cl=cl, assign=assign_to_cluster)
+    cl <- .restart_cluster(cl=cl, assign=assign)
     terminate_cluster_on_exit <- TRUE
+    
+  } else if(inherits(cl, "cluster")) {
+    .update_info_on_cluster(cl=cl, assign=assign)
+    terminate_cluster_on_exit <- FALSE
     
   } else {
     terminate_cluster_on_exit <- FALSE
   }
   
-  if(is.null(cl)){
-    # Simple sequential sapply.
-    y <- do.call(sapply, args=append(list("X" = X,
-                                          "FUN" = FUN,
-                                          "simplify" = simplify,
-                                          "USE.NAMES" = USE.NAMES),
-                                     list(...)))
+  if(is.null(cl) & !progress_bar){
+    # Simple sequential lapply.
+    y <- do.call(mapply, args=c(list("FUN" = FUN),
+                                list(...),
+                                list("MoreArgs"=MoreArgs,
+                                     "SIMPLIFY"=SIMPLIFY,
+                                     "USE.NAMES"=USE.NAMES)))
     
   } else if(is.null(cl) & progress_bar){
+    
+    # Define length of dots
+    dots <- list(...)
+    arg_length <- max(sapply(dots, length))
+    
     # Start progress bar
-    pb_conn <- utils::txtProgressBar(min=0, max=length(X), style=3)
+    pb_conn <- utils::txtProgressBar(min=0, max=arg_length, style=3)
     
     # Perform the sequential apply as mapply.
-    y <- mapply(FUN=.fun_with_progress, X, seq_along(X),
-                MoreArgs=append(list("FUN2"=FUN,
-                                     "pb_conn"=pb_conn),
-                                list(...)),
-                SIMPLIFY=simplify,
-                USE.NAMES=USE.NAMES)
+    y <- do.call(mapply, args=c(list("FUN"=.fun_with_progress_map),
+                                list(...),
+                                list("II"=seq_len(arg_length),
+                                     "MoreArgs"=list("FUN2"=FUN,
+                                                     "pb_conn"=pb_conn,
+                                                     "MoreArgs"=MoreArgs),
+                                     "SIMPLIFY"=SIMPLIFY,
+                                     "USE.NAMES"=USE.NAMES)))
     
     # Close the progress bar connection.
     close(pb_conn)
     
   } else if(inherits(cl, "cluster")){
-    # Parallel sapply with load balancing.
-    y <- do.call(parallel::parSapplyLB, args=append(list("cl" = cl,
-                                                         "X" = X,
-                                                         "FUN" = FUN,
-                                                         "simplify" = simplify,
-                                                         "USE.NAMES" = USE.NAMES),
-                                                    list(...)))
+    # Parallel lapply without load balancing.
+    y <- do.call(parallel::clusterMap, args=c(list("cl"=cl,
+                                                   "fun"=FUN),
+                                              list(...),
+                                              list("MoreArgs"=MoreArgs,
+                                                   "SIMPLIFY"=SIMPLIFY,
+                                                   "USE.NAMES"=USE.NAMES,
+                                                   ".scheduling"=.scheduling)))
     
   } else {
-    ..error_reached_unreachable_code("fam_sapply_lb: the cluster object is neither NULL nor a cluster.")
+    ..error_reached_unreachable_code("fam_lapply: the cluster object is neither NULL nor a cluster.")
   }
   
   if(terminate_cluster_on_exit){
@@ -391,10 +469,28 @@ fam_sapply_lb <- function(cl=NULL, assign=NULL, X, FUN, progress_bar=FALSE, ...,
 
 
 
-.fun_with_progress <- function(X2, II, FUN2, pb_conn, ...){
+fam_mapply_lb <- function(cl=NULL, assign=NULL, FUN, ...,  progress_bar=FALSE, MoreArgs=NULL, SIMPLIFY=FALSE, USE.NAMES=TRUE){
+  # Call fam_sapply, with dynamic scheduling.
+  y <- do.call(fam_mapply, args=c(list("cl"=cl,
+                                       "assign"=assign,
+                                       "FUN"=FUN,
+                                       "progress_bar"=progress_bar,
+                                       "MoreArgs"=MoreArgs,
+                                       "SIMPLIFY"=SIMPLIFY,
+                                       "USE.NAMES"=USE.NAMES,
+                                       ".scheduling"="dynamic"),
+                                  list(...)))
+  
+  return(y)
+}
+
+
+
+.fun_with_progress_map <- function(FUN2, II, pb_conn, ..., MoreArgs=NULL){
   
   # Execute function
-  y <- do.call(FUN2, args=append(list(X2), list(...)))
+  y <- do.call(FUN2, args=c(list(...),
+                            MoreArgs))
   
   # Update the progress bar
   utils::setTxtProgressBar(pb=pb_conn, value=II)
