@@ -131,11 +131,11 @@ add_missing_value_fractions <- function(cl=NULL, feature_info_list, data, thresh
   feature_columns <- get_feature_columns(x=data)
   
   # Determine number of missing values per column
-  if(is.null(cl)){
-    n_valid_val <- sapply(feature_columns, function(ii, dt) (sum(is_valid_data(dt[[ii]]))), dt=data@data)
-  } else {
-    n_valid_val <- parallel::parSapply(cl=cl, feature_columns, function(ii, dt) (sum(is_valid_data(dt[[ii]]))), dt=data@data)
-  }
+  n_valid_val <- fam_sapply(cl=cl,
+                            assign=NULL,
+                            X=data@data[, mget(feature_columns)],
+                            FUN=function(data) (return(sum(is_valid_data(data)))),
+                            progress_bar=FALSE)
   
   # Determine fraction of missing values
   missing_frac    <- 1.0 - n_valid_val / nrow(data@data)
@@ -249,19 +249,14 @@ compute_feature_distribution_data <- function(cl, feature_info_list, data_obj){
   # Identify the feature columns in the data
   feature_columns <- get_feature_columns(x=data_obj)
   
-  if(is.null(cl)){
-    updated_feature_info <- lapply(feature_columns, function(ii, feature_info_list, data){
-      return(.compute_feature_distribution_data(object=feature_info_list[[ii]], x=data@data[[ii]]))
-      
-    }, feature_info_list=feature_info_list, data=data_obj)
-    
-  } else {
-    updated_feature_info <- parallel::parLapply(cl=cl, feature_columns, function(ii, feature_info_list, data){
-      return(.compute_feature_distribution_data(object=feature_info_list[[ii]], x=data@data[[ii]]))
-      
-    }, feature_info_list=feature_info_list, data=data_obj)
-  }
-  
+  # Compute feature distributions
+  updated_feature_info <- fam_mapply(cl=cl,
+                                     assign=NULL,
+                                     FUN=.compute_feature_distribution_data,
+                                     object=feature_info_list[feature_columns],
+                                     x=data_obj@data[, mget(feature_columns)],
+                                     progress_bar=FALSE)
+
   if(length(feature_columns) > 0){
     feature_info_list[feature_columns] <- updated_feature_info
   }
@@ -313,12 +308,14 @@ find_invariant_features <- function(cl=NULL, feature_info_list, data_obj){
   # Identify the feature columns in the data
   feature_columns <- get_feature_columns(x=data_obj)
   
-  # Determine features which only have a single value
-  if(is.null(cl)){
-    singular_features <- feature_columns[sapply(feature_columns, function(ii, data) (is_singular_data(data@data[[ii]])), data=data_obj)]
-  } else {
-    singular_features <- feature_columns[parallel::parSapply(cl=cl, feature_columns, function(ii, data) (is_singular_data(data@data[[ii]])), data=data_obj)]
-  }
+  # Shorthand.
+  singular_features <- fam_sapply(cl=cl,
+                                  assign=NULL,
+                                  X=data_obj@data[, mget(feature_columns)],
+                                  FUN=is_singular_data,
+                                  progress_bar=FALSE)
+  
+  singular_features <- feature_columns[singular_features]
   
   # Iterate over singular features and mark for removal
   if(length(singular_features) > 0){
@@ -363,16 +360,15 @@ find_low_variance_features <- function(cl=NULL, feature_info_list, data_obj, set
     return(feature_info_list)
   }
   
-  # Calculate variances
-  if(is.null(cl)){
-    feature_variances <- sapply(numeric_columns, function(ii, data) (stats::var(data@data[[ii]], na.rm=TRUE)), data=data_obj)
-  } else {
-    feature_variances <- parallel::parSapply(cl=cl, numeric_columns, function(ii, data) (stats::var(data@data[[ii]], na.rm=TRUE)), data=data_obj)
-  }
+  feature_variances <- fam_sapply(cl=cl,
+                                  assign=NULL,
+                                  X=data_obj@data[, mget(numeric_columns)],
+                                  FUN=stats::var,
+                                  progress_bar=FALSE,
+                                  na.rm=TRUE)
   
   # Define a data table containing the variances
   dt_var <- data.table::data.table("name"=numeric_columns, "variance"=feature_variances)
-  
   
   # Set missing parameters
   if(is.null(settings$prep$low_var_threshold)){
@@ -455,38 +451,21 @@ find_non_robust_features <- function(cl=NULL, feature_info_list, data_obj, setti
   icc_filter_column <- settings$prep$robustness_threshold_param
   icc_threshold     <- settings$prep$robustness_threshold_value
   
-  # Compute the ICC
-  if(is.null(cl)){
-    icc_list <- lapply(numeric_columns, function(ii, data, icc_type){
-      
-      # Compute ICC information for the current feature
-      dt_icc <- compute_icc(dt = data@data[, c(ii, "subject_id", "cohort_id", "repetition_id"), with=FALSE],
-                            type = icc_type,
-                            feat_name = ii)
-      
-      return(dt_icc)
-      
-    }, data=data_obj, icc_type=icc_type)
-    
-  } else {
-    parallel::clusterExport(cl=cl, varlist="compute_icc", envir=environment())
-    icc_list <- parallel::parLapply(cl=cl, numeric_columns, function(ii, data, icc_type){
-      
-      # Compute ICC information for the current feature
-      dt_icc <- compute_icc(dt = data@data[, c(ii, "subject_id", "cohort_id", "repetition_id"), with=FALSE],
-                            type = icc_type,
-                            feat_name = ii)
-      
-      return(dt_icc)
-    }, data=data_obj, icc_type=icc_type)
-    
-  }
+  # Compute ICC values.
+  icc_list <- fam_mapply(cl=cl,
+                         assign=NULL,
+                         FUN=compute_icc,
+                         x=data_obj@data[, mget(numeric_columns)],
+                         feature=numeric_columns,
+                         progress_bar=FALSE,
+                         MoreArgs=list("id_data"=data_obj@data[, c("subject_id", "cohort_id", "repetition_id")],
+                                       "type"=icc_type))
   
   # Combine ICC data from list
-  dt_icc <- data.table::rbindlist(icc_list)
+  icc_table <- data.table::rbindlist(icc_list)
   
   # Identify the features with low robustness
-  low_robustness_features <- dt_icc[get(icc_filter_column) < icc_threshold]$name
+  low_robustness_features <- icc_table[get(icc_filter_column) < icc_threshold]$name
   
   # Set removal flags for features with low robustness
   if(length(low_robustness_features) > 0){
