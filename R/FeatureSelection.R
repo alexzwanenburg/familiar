@@ -13,7 +13,11 @@ run_feature_selection <- function(cl, proj_list, settings, file_paths){
   run_list <- getRunList(iter_list=proj_list$iter_list, data_id=fs_data_id)
   
   # Remove cluster information in case no parallelisation is provided.
-  if(!settings$fs$do_parallel) cl <- NULL
+  if(!settings$fs$do_parallel){
+    cl_fs <- NULL
+  } else {
+    cl_fs <- cl
+  }
   
   # Create variable importance matrices by iterating over feature selection methods
   for(curr_fs_method in run_fs_methods){
@@ -22,19 +26,24 @@ run_feature_selection <- function(cl, proj_list, settings, file_paths){
     logger.message(paste0("\nFeature selection: starting feature selection using \"", curr_fs_method, "\" method."))
 
     # Optimise models used for feature selection
-    hpo_list <- run_hyperparameter_optimisation(cl=cl, proj_list=proj_list, data_id=fs_data_id, settings=settings, file_paths=file_paths, fs_method=curr_fs_method)
-
+    hpo_list <- run_hyperparameter_optimisation(cl=cl,
+                                                proj_list=proj_list,
+                                                data_id=fs_data_id,
+                                                settings=settings,
+                                                file_paths=file_paths,
+                                                fs_method=curr_fs_method)
+    
     # Create variable importance information by iterating over the list of runs.
-    vimp_list <- fam_lapply(cl=cl,
-                            assign="all",
-                            X=run_list,
-                            FUN=compute_variable_importance,
-                            progress_bar=TRUE,
-                            fs_method=curr_fs_method,
-                            hpo_list=hpo_list,
-                            proj_list=proj_list,
-                            settings=settings,
-                            file_paths=file_paths)
+    vimp_list <- fam_mapply_lb(cl=cl_fs,
+                               assign="all",
+                               FUN=compute_variable_importance,
+                               run=run_list,
+                               progress_bar=TRUE,
+                               MoreArgs=list("fs_method"=curr_fs_method,
+                                             "hpo_list"=hpo_list,
+                                             "proj_list"=proj_list,
+                                             "settings"=settings,
+                                             "file_paths"=file_paths))
     
     # Save to file
     saveRDS(vimp_list, file=.get_feature_selection_data_filename(proj_list=proj_list,
