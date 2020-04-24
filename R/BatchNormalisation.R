@@ -117,28 +117,20 @@ batch_normalise.set_basic_normalisation_parameters <- function(cl=NULL, features
   }
   
   # Determine batch-normalisation parameters by iterating over the features.
-  if(is.null(cl)){
-    updated_feature_info_list <- lapply(features,
-                                        batch_normalise.get_normalisation_per_feature,
-                                        feature_info_list=feature_info_list,
-                                        data=data,
-                                        batch_normalisation_method=batch_normalisation_method,
-                                        batches=batches)
-    
-  } else {
-    updated_feature_info_list <- parallel::parLapply(cl=cl,
-                                                     features,
-                                                     batch_normalise.get_normalisation_per_feature,
-                                                     feature_info_list=feature_info_list,
-                                                     data=data,
-                                                     batch_normalisation_method=batch_normalisation_method,
-                                                     batches=batches)
-  }
+  updated_feature_info_list <- fam_lapply(cl=cl,
+                                          assign=NULL,
+                                          X=features,
+                                          FUN=batch_normalise.get_normalisation_per_feature,
+                                          progress_bar=TRUE,
+                                          feature_info_list=feature_info_list,
+                                          data=data,
+                                          batch_normalisation_method=batch_normalisation_method,
+                                          batches=batches)
   
   # Set names of the updated list
   names(updated_feature_info_list) <- features
 
-  return(updated_feature_info_list)  
+  return(updated_feature_info_list)
 }
 
 
