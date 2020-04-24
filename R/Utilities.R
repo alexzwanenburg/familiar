@@ -353,7 +353,7 @@ compute_univariable_p_values <- function(cl=NULL, data_obj, feature_columns){
 
 
 
-compute_icc <- function(dt, type="1", feat_name){
+compute_icc <- function(x, feature, id_data, type="1"){
   
   # We start from the following equation: xij = mu + a_i + b_j + e_ij, with mu
   # the population mean, a_i the rater-dependent change, b_j the
@@ -377,27 +377,25 @@ compute_icc <- function(dt, type="1", feat_name){
   # Suppress NOTES due to non-standard evaluation in data.table
   value <- mu <- subject_id <- cohort_id <- repetition_id <- bj <- ai <- NULL
   
-  # Make a local copy
-  dt <- data.table::copy(dt)
-  
-  # Rename feature colume to value
-  data.table::setnames(dt, old=feat_name, new="value")
+  # Create data table from x and combine with id_data
+  data <- data.table::data.table("value"=x)
+  data <- cbind(id_data, data)
   
   # Calculate each parameter in the equation
-  dt[,"mu":=mean(value, na.rm=TRUE)][,"bj":=mean(value, na.rm=TRUE)-mu, by=list(subject_id,cohort_id)][,"ai":=mean(value, na.rm=TRUE)-mu, by=list(repetition_id)][,"eij":=value-mu-bj-ai]
+  data[,"mu":=mean(value, na.rm=TRUE)][,"bj":=mean(value, na.rm=TRUE)-mu, by=list(subject_id,cohort_id)][,"ai":=mean(value, na.rm=TRUE)-mu, by=list(repetition_id)][,"eij":=value-mu-bj-ai]
   
   # Calculate
-  n_subjects <- data.table::uniqueN(dt, by="subject_id")
-  n_raters   <- data.table::uniqueN(dt, by="repetition_id")
+  n_subjects <- data.table::uniqueN(data, by="subject_id")
+  n_raters   <- data.table::uniqueN(data, by="repetition_id")
   
   # Calculate mean squared errors: msb between subjects (bj), msj between raters (ai), mse of error (eij) and msw of error with rater (ai + eij)
   if(n_subjects > 1){
-    msb <- sum(dt$bj^2, na.rm=TRUE) / (n_subjects-1)
+    msb <- sum(data$bj^2, na.rm=TRUE) / (n_subjects-1)
   }
   
   if(type=="1"){
     # Calculate mean squared of error with rater
-    msw       <- (sum(dt$eij^2, na.rm=TRUE) + sum(dt$ai^2, na.rm=TRUE)) / (n_subjects * (n_raters-1))
+    msw       <- (sum(data$eij^2, na.rm=TRUE) + sum(data$ai^2, na.rm=TRUE)) / (n_subjects * (n_raters-1))
     
     # Calculate icc for individual rater and rater panel
     if(msb==0 & msw==0) {
@@ -423,8 +421,8 @@ compute_icc <- function(dt, type="1", feat_name){
   
   if(type=="2"){
     # Calculate mean squared error (mse) and mean squared rater error (msj)
-    msj <- sum(dt$ai^2, na.rm=TRUE) / (n_raters-1)
-    mse <- sum(dt$eij^2, na.rm=TRUE) / ((n_subjects-1) * (n_raters-1))
+    msj <- sum(data$ai^2, na.rm=TRUE) / (n_raters-1)
+    mse <- sum(data$eij^2, na.rm=TRUE) / ((n_subjects-1) * (n_raters-1))
     
     # Calculate icc for individual rater and rater panel
     if(msb==0 & mse==0) {
@@ -452,7 +450,7 @@ compute_icc <- function(dt, type="1", feat_name){
   
   if(type=="3"){
     # Calculate mean squared error (mse)
-    mse <- sum(dt$eij^2, na.rm=TRUE) / ((n_subjects-1) * (n_raters-1))
+    mse <- sum(data$eij^2, na.rm=TRUE) / ((n_subjects-1) * (n_raters-1))
     
     # Calculate icc for individual rater and rater panel
     if(msb==0 & mse==0) {
@@ -476,8 +474,23 @@ compute_icc <- function(dt, type="1", feat_name){
     }
   }
   
-  return(data.table::data.table("name"=feat_name, "icc"=icc, "icc_low"=icc_ci_low, "icc_up"=icc_ci_up,
-                                "icc_panel"=icc_panel, "icc_panel_low"=icc_panel_ci_low, "icc_panel_up"=icc_panel_ci_up))
+  if(icc == 1.0){
+    if(!is.finite(icc_ci_low)) icc_ci_low <- 1.0
+    if(!is.finite(icc_ci_up)) icc_ci_up <- 1.0
+  }
+  
+  if(icc_panel == 1.0){
+    if(!is.finite(icc_ci_low)) icc_panel_ci_low <- 1.0
+    if(!is.finite(icc_ci_up)) icc_panel_ci_up <- 1.0
+  }
+  
+  return(data.table::data.table("name"=feature,
+                                "icc"=icc,
+                                "icc_low"=icc_ci_low,
+                                "icc_up"=icc_ci_up,
+                                "icc_panel"=icc_panel,
+                                "icc_panel_low"=icc_panel_ci_low,
+                                "icc_panel_up"=icc_panel_ci_up))
 }
 
 
