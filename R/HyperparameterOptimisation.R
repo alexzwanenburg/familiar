@@ -66,15 +66,25 @@ run_hyperparameter_optimisation <- function(cl, proj_list, data_id, settings, fi
   if(settings$hpo$do_parallel & (length(iter_list) >= length(cl) | length(cl) > 10)){
     # Perform an outer parallellisation.
     outer_parallel <- TRUE
-    parallel::clusterExport(cl=cl, varlist=c("hpo.perform_smbo"), envir=environment())
+    cl_outer <- cl
+    cl_inner <- NULL
+    show_progress_bar <- TRUE
+    
+    logger.message(paste0("\tHyperparameter optimisation: load-balanced parallel processing is done in the outer loop. ",
+                          "No progress can be displayed."))
     
   } else if(settings$hpo$do_parallel){
     # Perform an inner parallellisation.
     outer_parallel <- FALSE
-    parallel::clusterExport(cl=cl, varlist=c("hpo.evaluate_hyperparameters"), envir=environment())
+    cl_outer <- NULL
+    cl_inner <- cl
+    show_progress_bar <- FALSE
     
   } else {
     outer_parallel <- FALSE
+    cl_outer <- NULL
+    cl_inner <- NULL
+    show_progress_bar <- FALSE
   }
 
   # Message start of hyperparameter optimisation
@@ -86,38 +96,28 @@ run_hyperparameter_optimisation <- function(cl, proj_list, data_id, settings, fi
                          "learner, based on variable importances from the", fs_method, "feature selection method."))
   }
 
-  # Iterate over different primary data sets for hyperparameter optimisation
-  if(outer_parallel) {
-    # Outer loop parallel.
-    logger.message(paste0("\tHyperparameter optimisation: load-balanced parallel processing is done in the outer loop. ",
-                          "No progress can be displayed."))
-    hpo_list <- parallel::parLapplyLB(seq_along(iter_list), function(ii, iter_list, fs_method, learner, proj_list, file_paths, settings){
-      
-      # Run SMBO algorithm
-      tuning_list <- hpo.perform_smbo(cl=NULL, run=iter_list[[ii]], fs_method=fs_method, learner=learner,
-                                      proj_list=proj_list, file_paths=file_paths, settings=settings)
-      
-      return(list("run_table"=iter_list[[ii]]$run_table, "param"=tuning_list$param, "score"=tuning_list$full_score))
-      
-    }, iter_list=iter_list, fs_method=fs_method, learner=learner, proj_list=proj_list, file_paths, settings, cl=cl)
+  # Find optimised hyperparameters and scores by iterating over different
+  # primary datasets.
+  hpo_list <- fam_mapply_lb(cl=cl_outer,
+                            assign="all",
+                            FUN=hpo.perform_smbo,
+                            run=iter_list,
+                            progress_bar=show_progress_bar,
+                            MoreArgs=list("cl"=cl_inner,
+                                          "fs_method"=fs_method,
+                                          "learner"=learner))
+  
+  # Adapt list.
+  hpo_list <- mapply(FUN=function(run, tuning_list){
+    return(list("run_table"=run$run_table,
+                "param"=tuning_list$param,
+                "score"=tuning_list$full_score))
     
-  } else {
-    # Inner loop parallel.
-    hpo_list <- lapply(seq_along(iter_list), function(ii, cl, iter_list, fs_method, learner, proj_list, file_paths, settings){
-      logger.message(paste0("\tHyperparameter optimisation: Performing optimisation for ", ii, " of ", length(iter_list), " runs."))
-      
-      # Run SMBO algorithm
-      tuning_list <- hpo.perform_smbo(cl=cl, run=iter_list[[ii]], fs_method=fs_method, learner=learner,
-                                      proj_list=proj_list, file_paths=file_paths, settings=settings)
-      
-      return(list("run_table"=iter_list[[ii]]$run_table, "param"=tuning_list$param, "score"=tuning_list$full_score))
-      
-    }, cl=cl, iter_list=iter_list, fs_method=fs_method, learner=learner, proj_list=proj_list, file_paths, settings)
-  }
+  }, run=iter_list, tuning_list=hpo_list, SIMPLIFY=FALSE)
   
   # Store to disk as RDS file
   saveRDS(object=hpo_list, file=hpo_file_rds)
-
+  
   # Message finish of hyperparameter optimisation
   if(is_vimp){
     logger.message(paste("\tHyperparameter optimisation: Completed parameter optimisation for the", fs_method,
@@ -133,7 +133,7 @@ run_hyperparameter_optimisation <- function(cl, proj_list, data_id, settings, fi
 
 
 
-hpo.perform_smbo <- function(cl, run, fs_method, learner=NULL, proj_list, file_paths, settings){
+hpo.perform_smbo <- function(run, cl, fs_method, learner=NULL){
 
   # Suppress NOTES due to non-standard evaluation in data.table
   param_id <- NULL
@@ -145,6 +145,11 @@ hpo.perform_smbo <- function(cl, run, fs_method, learner=NULL, proj_list, file_p
     is_vimp <- FALSE
   }
 
+  # Get project list, file_paths and settings
+  proj_list <- get_project_list()
+  file_paths <- get_file_paths()
+  settings <- get_settings()
+  
   # Pre-process primary data. process_step is one of "fs" and "mb"
   data_prmry <- apply_pre_processing(run=run, train_or_validate="train")
 
@@ -941,54 +946,25 @@ hpo.get_model_performance <- function(cl, dt_hpo_run, run_list, data_obj, featur
   # Suppress NOTES due to non-standard evaluation in data.table
   param_id <- NULL
 
-  if(settings$hpo$do_parallel & !is.null(cl)){
-    # Parallel execution
-    pred_list <- parallel::parLapplyLB(cl=cl,
-                                       seq_len(nrow(dt_hpo_run)),
-                                       function(ii, dt_hpo_run, run_list, data_obj, feature_info_list, dt_ranks, dt_param, settings, fs_method, learner){
-                                         
-                                         hpo.evaluate_hyperparameters(run       = run_list[[as.character(dt_hpo_run$run_id[ii])]],
-                                                                      dt_param  = dt_param[param_id==dt_hpo_run$param_id[ii], ],
-                                                                      dt_ranks  = dt_ranks,
-                                                                      feature_info_list = feature_info_list,
-                                                                      data_obj  = data_obj,
-                                                                      settings  = settings,
-                                                                      learner   = learner,
-                                                                      fs_method = fs_method)
-                                         
-                                       }, dt_hpo_run=dt_hpo_run, run_list=run_list, data_obj=data_obj,
-                                       dt_ranks=dt_ranks, dt_param=dt_param, feature_info_list=feature_info_list,
-                                       settings=settings, learner=learner, fs_method=fs_method)
-  } else {
-    
-    # Start text progress bar
-    pb_conn   <- utils::txtProgressBar(min=0, max=nrow(dt_hpo_run), style=3)
-    
-    # Serial execution
-    pred_list <- lapply(seq_len(nrow(dt_hpo_run)),
-                        function(ii, dt_hpo_run, run_list, data_obj, feature_info_list, dt_ranks, dt_param, settings, fs_method, learner, pb_con){
-                          
-                          hpo.evaluate_hyperparameters(run       = run_list[[as.character(dt_hpo_run$run_id[ii])]],
-                                                       dt_param  = dt_param[param_id==dt_hpo_run$param_id[ii], ],
-                                                       dt_ranks  = dt_ranks,
-                                                       feature_info_list = feature_info_list,
-                                                       data_obj  = data_obj,
-                                                       settings  = settings,
-                                                       learner   = learner,
-                                                       fs_method = fs_method,
-                                                       pb_conn   = pb_conn,
-                                                       run_iter = ii)
-                          
-                        }, dt_hpo_run=dt_hpo_run, run_list=run_list, data_obj=data_obj,
-                        dt_ranks=dt_ranks, dt_param=dt_param, feature_info_list=feature_info_list,
-                        settings=settings, learner=learner, fs_method=fs_method)
-    
-    # Close text progress bar
-    close(pb_conn)
-  }
-
+  # Prepare new hpo_run_list and parameter lists for the mapping operation.
+  hpo_run_list <- lapply(dt_hpo_run$run_id, function(ii, run_list) (run_list[[as.character(ii)]]), run_list=run_list)
+  parameter_list <- lapply(dt_hpo_run$param_id, function(ii, parameter_table) (parameter_table[param_id==ii]), parameter_table=dt_param)
+  
+  prediction_list <- fam_mapply_lb(cl=cl,
+                                   assign=NULL,
+                                   FUN=hpo.evaluate_hyperparameters,
+                                   run=hpo_run_list,
+                                   dt_param=parameter_list,
+                                   progress_bar=!settings$hpo$do_parallel,
+                                   MoreArgs=list("dt_ranks"=dt_ranks,
+                                                 "feature_info_list"=feature_info_list,
+                                                 "data_obj"=data_obj,
+                                                 "settings"=settings,
+                                                 "learner"=learner,
+                                                 "fs_method"=fs_method))
+  
   # Return predictions
-  return(pred_list)
+  return(prediction_list)
 }
 
 

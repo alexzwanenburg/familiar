@@ -179,31 +179,40 @@ summon_familiar <- function(formula=NULL, data=NULL, cl=NULL, config=NULL, confi
   feature_info_list <- .get_feature_info_data(data=data, file_paths=file_paths, project_id=project_info$project_id,
                                               outcome_type=settings$data$outcome_type)
 
-  # Start parallel process cluster
+  # Identify if an external cluster is provided, and required.
   if(settings$run$parallel){
-    if(is.null(cl)){
-      cl <- .start_cluster(nr_cores=settings$run$parallel_nr_cores, backend=settings$run$backend)
-      
-      is_external_cluster <- FALSE
-    } else {
-      is_external_cluster <- TRUE
-    }
-    
-    # Load familiar library on the cluster nodes.
-    parallel::clusterEvalQ(cl=cl, library(familiar))
+    is_external_cluster <- inherits(cl, "cluster")
     
   } else {
-    # Remove cluster information in case it is not required by familiar
-    cl <- NULL
+    is_external_cluster <- FALSE
   }
 
-  # Assign settings, file_paths, feature_info_list, data and project_info to the backend
-  .assign_settings_to_global(cl=cl, settings=settings)
-  .assign_file_paths_to_global(cl=cl, file_paths=file_paths)
-  .assign_feature_info_to_global(cl=cl, feature_info_list=feature_info_list)
-  .assign_project_info_to_global(cl=cl, project_info=project_info)
-  .assign_outcome_info_to_global(cl=cl, outcome_info=outcome_info)
-  .assign_data_to_backend(cl=cl, backend_data=data, backend=settings$run$backend, server_port=settings$run$server_port)
+  # Assign objects that should be accessible everywhere to the familiar global
+  # environment.
+  .assign_settings_to_global(settings=settings)
+  .assign_file_paths_to_global(file_paths=file_paths)
+  .assign_feature_info_to_global(feature_info_list=feature_info_list)
+  .assign_project_info_to_global(project_info=project_info)
+  .assign_outcome_info_to_global(outcome_info=outcome_info)
+  .assign_data_to_global(backend_data=data, backend=settings$run$backend, server_port=settings$run$server_port)
+  .assign_parallel_options_to_global(is_external_cluster=is_external_cluster,
+                                     restart_cluster=settings$run$restart_cluster,
+                                     n_cores=settings$run$parallel_nr_cores,
+                                     parallel_backend=settings$run$backend)
+  
+  if(settings$run$parallel & !settings$run$restart_cluster & !is_external_cluster){
+    # Start local cluster in the overall process.
+    cl <- .restart_cluster(cl=NULL, assign="all")
+    
+  } else if(settings$run$parallel & settings$run$restart_cluster & !is_external_cluster){
+    # Start processes locally.
+    cl <- waiver()
+    
+  } else if(!settings$run$parallel){
+    # No cluster is created when 
+    cl <- NULL
+  }
+  
   
   # Start feature selection
   run_feature_selection(cl=cl, proj_list=project_info, settings=settings, file_paths=file_paths)
@@ -214,12 +223,8 @@ summon_familiar <- function(formula=NULL, data=NULL, cl=NULL, config=NULL, confi
   # Start evaluation
   run_evaluation(cl=cl, proj_list=project_info, settings=settings, file_paths=file_paths)
   
-  # Stop clusters
-  if(settings$run$parallel){
-    if(!is_external_cluster) {
-      .terminate_cluster(cl)
-    }
-  }
+  # Stop locally initiated clusters
+  .terminate_cluster(cl)
   
   if(file_paths$is_temporary){
     # Collect all familiarModels, familiarEnsemble, familiarData and
@@ -301,15 +306,9 @@ get_xml_config <- function(dir_path){
 
 
 
-.assign_settings_to_global <- function(cl, settings){
-  
-  # Put settings into the familiar environment
+.assign_settings_to_global <- function(settings){
+  # Assign settings into the familiar global, environment
   assign("settings", settings, envir=familiar_global_env)
-  
-  # Export settings to the clusters as well
-  if(!is.null(cl)){
-    parallel::clusterExport(cl=cl, varlist="settings", envir=familiar_global_env)
-  }
 }
 
 
@@ -336,14 +335,9 @@ get_settings <- function(){
 
 
 
-.assign_file_paths_to_global <- function(cl, file_paths){
+.assign_file_paths_to_global <- function(file_paths){
   # Put file_paths into the familiar environment
   assign("file_paths", file_paths, envir=familiar_global_env)
-  
-  # Export file_paths to the clusters as well
-  if(!is.null(cl)){
-    parallel::clusterExport(cl=cl, varlist="file_paths", envir=familiar_global_env)
-  }
 }
 
 
@@ -370,15 +364,9 @@ get_file_paths <- function(){
 
 
 
-.assign_project_info_to_global <- function(cl, project_info){
-  
-  # Put proj_list into the familiar environment
-  assign("proj_list", project_info, envir=familiar_global_env)
-  
-  # Export proj_list to the clusters as well
-  if(!is.null(cl)){
-    parallel::clusterExport(cl=cl, varlist="proj_list", envir=familiar_global_env)
-  }
+.assign_project_info_to_global <- function(project_info){
+  # Put project_info_list into the familiar environment
+  assign("project_info_list", project_info, envir=familiar_global_env)
 }
 
 
@@ -387,20 +375,20 @@ get_project_list <- function(){
   
   # Retrieve the project list
   if(exists("familiar_global_env")){
-    if(exists("proj_list", where=familiar_global_env)){
+    if(exists("project_info_list", where=familiar_global_env)){
       data_env <- familiar_global_env
-    } else if (exists("proj_list", where=.GlobalEnv)){
+    } else if (exists("project_info_list", where=.GlobalEnv)){
       data_env <- .GlobalEnv
     } else {
       stop("Project list not found in backend.")
     }
-  } else if (exists("proj_list", where=.GlobalEnv)){
+  } else if (exists("project_info_list", where=.GlobalEnv)){
     data_env <- .GlobalEnv
   } else {
     stop("Project list not found in backend.")
   }
   
-  return(get("proj_list", envir=data_env))
+  return(get("project_info_list", envir=data_env))
 }
 
 

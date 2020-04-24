@@ -4,7 +4,9 @@ rank.get_vimp_table <- function(run, fs_method, proj_list, file_paths, decluster
   data_id <- run_id <- NULL
   
   # Find and load vimp list
-  vimp_list <- readRDS(getFSFileName(proj_list=proj_list, fs_method=fs_method, file_paths=file_paths))
+  vimp_list <- readRDS(.get_feature_selection_data_filename(proj_list=proj_list,
+                                                            fs_method=fs_method,
+                                                            file_paths=file_paths))
   
   # Try and identify matching data and run ids between vimp_list entries and run$run_table
   # Start at the bottom and try to match.

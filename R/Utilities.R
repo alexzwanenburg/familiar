@@ -26,60 +26,65 @@ check_column_name <- function(column_name){
 compute_univariable_p_values <- function(cl=NULL, data_obj, feature_columns){
   
   outcome_type <- data_obj@outcome_type
+  outcome_columns <- get_outcome_columns(data_obj)
   
-  if(is.null(cl)){
-    # Serial processing
-    if(outcome_type=="survival"){
-      regr_p_val <- sapply(feature_columns, function(curr_feat, dt) (eval.univar_cox_regr(data=dt[, c(curr_feat, "outcome_time", "outcome_event"), with=FALSE])), dt=data_obj@data)
-    } else if(outcome_type=="continuous"){
-      regr_p_val <- sapply(feature_columns, function(curr_feat, dt) (eval.univar_gauss_regr(data=dt[, c(curr_feat, "outcome"), with=FALSE])), dt=data_obj@data)
-    } else if(outcome_type=="binomial"){
-      regr_p_val <- sapply(feature_columns, function(curr_feat, dt) (eval.univar_binomial_logistic_regr(data=dt[, c(curr_feat, "outcome"), with=FALSE])), dt=data_obj@data)
-    } else if(outcome_type=="multinomial"){
-      regr_p_val <- sapply(feature_columns, function(curr_feat, dt) (eval.univar_multinomial_logistic_regr(data=dt[, c(curr_feat, "outcome"), with=FALSE])), dt=data_obj@data)
-    } else if(outcome_type=="count"){
-      regr_p_val <- sapply(feature_columns, function(curr_feat, dt) (eval.univar_poisson_regr(data=dt[, c(curr_feat, "outcome"), with=FALSE])), dt=data_obj@data)
-    } else if(outcome_type=="competing_risk"){
-      ..error_outcome_type_not_implemented(outcome_type)
-    }
+  if(outcome_type=="survival"){
+    univariate_fun <- .univariate_cox_regression_test
+    
+  } else if(outcome_type=="continuous"){
+    univariate_fun <- .univariate_linear_regression_test
+    
+  } else if(outcome_type=="binomial"){
+    univariate_fun <- .univariate_binomial_logistic_regression_test
+    
+  } else if(outcome_type=="multinomial"){
+    univariate_fun <- .univariate_multinomial_logistic_regression_test
+    
+  } else if(outcome_type=="count"){
+    univariate_fun <- .univariate_poisson_regression_test
+    
+  } else if(outcome_type=="competing_risk"){
+    ..error_outcome_type_not_implemented(outcome_type)
+    
   } else {
-    # Parallel processing
-    if(outcome_type=="survival"){
-      regr_p_val <- parallel::parSapply(cl, feature_columns, function(curr_feat, dt) (eval.univar_cox_regr(data=dt[, c(curr_feat, "outcome_time", "outcome_event"), with=FALSE])), dt=data_obj@data)
-    } else if(outcome_type=="continuous"){
-      regr_p_val <- parallel::parSapply(cl, feature_columns, function(curr_feat, dt) (eval.univar_gauss_regr(data=dt[, c(curr_feat, "outcome"), with=FALSE])), dt=data_obj@data)
-    } else if(outcome_type=="binomial"){
-      regr_p_val <- parallel::parSapply(cl, feature_columns, function(curr_feat, dt) (eval.univar_binomial_logistic_regr(data=dt[, c(curr_feat, "outcome"), with=FALSE])), dt=data_obj@data)
-    } else if(outcome_type=="multinomial"){
-      regr_p_val <- parallel::parSapply(cl, feature_columns, function(curr_feat, dt) (eval.univar_multinomial_logistic_regr(data=dt[, c(curr_feat, "outcome"), with=FALSE])), dt=data_obj@data)
-    } else if(outcome_type=="count"){
-      regr_p_val <- parallel::parSapply(cl, feature_columns, function(curr_feat, dt) (eval.univar_poisson_regr(data=dt[, c(curr_feat, "outcome"), with=FALSE])), dt=data_obj@data)
-    } else if(outcome_type=="competing_risk"){
-      ..error_outcome_type_not_implemented(outcome_type)
-    }
+    ..error_no_known_outcome_type(outcome_type)
   }
   
-  return(regr_p_val)
+  # Obtain p-values
+  coefficient_p_values <- fam_sapply(cl=cl,
+                                     assign=NULL,
+                                     X=data_obj@data[, mget(feature_columns)],
+                                     FUN=univariate_fun,
+                                     progress_bar=FALSE,
+                                     outcome_data=data_obj@data[, mget(outcome_columns)])
+  
+  return(coefficient_p_values)
 }
 
 
-eval.univar_cox_regr <- function(data){
+.univariate_cox_regression_test <- function(x, outcome_data){
   # Cox regression model for univariable analysis
   
-  # Get name of the current feature.
-  feature <- setdiff(colnames(data), c("outcome_time", "outcome_event"))
+  # Check if any data was provided.
+  if(length(x) == 0) return(NA_real_)
+  
+  # Combine the feature value column with the outcome
+  data <- data.table("value"=x,
+                     "outcome_time"=outcome_data$outcome_time,
+                     "outcome_event"=outcome_data$outcome_event)
   
   # Drop entries with missing feature values.
-  data <- data[is.finite(eval(parse(text=feature)))]
+  data <- data[is.finite(value)]
   
+  # Check if the data is empty.
   if(is_empty(data)) return(NA_real_)
   
   # Check if the feature column is singular
-  if(is_singular_data(data[[feature]])) return(NA_real_)
+  if(is_singular_data(data$value)) return(NA_real_)
   
   # Drop levels from factor
-  if(is.factor(data[[feature]])){
-    data[[feature]] <- droplevels(data[[feature]])
+  if(is.factor(data$value)){
+    data$value <- droplevels(data$value)
   }
   
   # Construct model
@@ -98,23 +103,27 @@ eval.univar_cox_regr <- function(data){
 
 
 
-eval.univar_gauss_regr <- function(data){
+.univariate_linear_regression_test <- function(x, outcome_data){
   # Gaussian regression for univariable analysis
   
-  # Get name of the current feature.
-  feature <- setdiff(colnames(data), "outcome")
+  # Check if any data was provided.
+  if(length(x) == 0) return(NA_real_)
+  
+  # Combine the feature value column with the outcome
+  data <- data.table("value"=x, "outcome"=outcome_data$outcome)
   
   # Drop entries with missing feature values.
-  data <- data[is.finite(eval(parse(text=feature)))]
+  data <- data[is.finite(value)]
   
+  # Check if the data is empty.
   if(is_empty(data)) return(NA_real_)
   
   # Check if the feature column is singular
-  if(is_singular_data(data[[feature]])) return(NA_real_)
+  if(is_singular_data(data$value)) return(NA_real_)
   
   # Drop levels from factor
-  if(is.factor(data[[feature]])){
-    data[[feature]] <- droplevels(data[[feature]])
+  if(is.factor(data$value)){
+    data$value <- droplevels(data$value)
   }
   
   # Construct model
@@ -137,23 +146,27 @@ eval.univar_gauss_regr <- function(data){
 
 
 
-eval.univar_poisson_regr <- function(data){
+.univariate_poisson_regression_test <- function(x, outcome_data){
   # Poisson regression for univariable analysis with count-type outcomes
   
-  # Get name of the current feature.
-  feature <- setdiff(colnames(data), "outcome")
+  # Check if any data was provided.
+  if(length(x) == 0) return(NA_real_)
+  
+  # Combine the feature value column with the outcome
+  data <- data.table("value"=x, "outcome"=outcome_data$outcome)
   
   # Drop entries with missing feature values.
-  data <- data[is.finite(eval(parse(text=feature)))]
+  data <- data[is.finite(value)]
   
+  # Check if the data is empty.
   if(is_empty(data)) return(NA_real_)
   
   # Check if the feature column is singular
-  if(is_singular_data(data[[feature]])) return(NA_real_)
+  if(is_singular_data(data$value)) return(NA_real_)
   
   # Drop levels from factor
-  if(is.factor(data[[feature]])){
-    data[[feature]] <- droplevels(data[[feature]])
+  if(is.factor(data$value)){
+    data$value <- droplevels(data$value)
   }
   
   # Construct model
@@ -176,23 +189,30 @@ eval.univar_poisson_regr <- function(data){
 
 
 
-eval.univar_binomial_logistic_regr <- function(data){
+.univariate_binomial_logistic_regression_test <- function(x, outcome_data){
   #Binomial model for univariable analysis using logistic regression
   
-  # Get name of the current feature.
-  feature <- setdiff(colnames(data), "outcome")
+  # Suppress NOTES due to non-standard evaluation in data.table
+  value <- NULL
+  
+  # Check if any data was provided.
+  if(length(x) == 0) return(NA_real_)
+  
+  # Combine the feature value column with the outcome
+  data <- data.table("value"=x, "outcome"=outcome_data$outcome)
   
   # Drop entries with missing feature values.
-  data <- data[is.finite(eval(parse(text=feature)))]
+  data <- data[is.finite(value)]
   
+  # Check if the data is empty.
   if(is_empty(data)) return(NA_real_)
   
   # Check if the feature column is singular
-  if(is_singular_data(data[[feature]])) return(NA_real_)
+  if(is_singular_data(data$value)) return(NA_real_)
   
   # Drop levels from factor
-  if(is.factor(data[[feature]])){
-    data[[feature]] <- droplevels(data[[feature]])
+  if(is.factor(data$value)){
+    data$value <- droplevels(data$value)
   }
   
   # We train two models, with and without intercept, to avoid the Hauck-Donner
@@ -248,23 +268,30 @@ eval.univar_binomial_logistic_regr <- function(data){
 
 
 
-eval.univar_multinomial_logistic_regr <- function(data){
+.univariate_multinomial_logistic_regression_test <- function(x, outcome_data){
   # Multinomial model for univariable analysis using logistic regression
   
-  # Get name of the current feature.
-  feature <- setdiff(colnames(data), "outcome")
+  # Suppress NOTES due to non-standard evaluation in data.table
+  value <- NULL
+  
+  # Check if any data was provided.
+  if(length(x) == 0) return(NA_real_)
+  
+  # Combine the feature value column with the outcome
+  data <- data.table("value"=x, "outcome"=outcome_data$outcome)
   
   # Drop entries with missing feature values.
-  data <- data[is.finite(eval(parse(text=feature)))]
+  data <- data[is.finite(value)]
   
+  # Check if the data is empty.
   if(is_empty(data)) return(NA_real_)
   
   # Check if the feature column is singular
-  if(is_singular_data(data[[feature]])) return(NA_real_)
+  if(is_singular_data(data$value)) return(NA_real_)
   
   # Drop levels from factor
-  if(is.factor(data[[feature]])){
-    data[[feature]] <- droplevels(data[[feature]])
+  if(is.factor(data$value)){
+    data$value <- droplevels(data$value)
   }
   
   # We train two models, with and without intercept, to avoid the Hauck-Donner
@@ -326,7 +353,7 @@ eval.univar_multinomial_logistic_regr <- function(data){
 
 
 
-compute_icc <- function(dt, type="1", feat_name){
+compute_icc <- function(x, feature, id_data, type="1"){
   
   # We start from the following equation: xij = mu + a_i + b_j + e_ij, with mu
   # the population mean, a_i the rater-dependent change, b_j the
@@ -350,27 +377,25 @@ compute_icc <- function(dt, type="1", feat_name){
   # Suppress NOTES due to non-standard evaluation in data.table
   value <- mu <- subject_id <- cohort_id <- repetition_id <- bj <- ai <- NULL
   
-  # Make a local copy
-  dt <- data.table::copy(dt)
-  
-  # Rename feature colume to value
-  data.table::setnames(dt, old=feat_name, new="value")
+  # Create data table from x and combine with id_data
+  data <- data.table::data.table("value"=x)
+  data <- cbind(id_data, data)
   
   # Calculate each parameter in the equation
-  dt[,"mu":=mean(value, na.rm=TRUE)][,"bj":=mean(value, na.rm=TRUE)-mu, by=list(subject_id,cohort_id)][,"ai":=mean(value, na.rm=TRUE)-mu, by=list(repetition_id)][,"eij":=value-mu-bj-ai]
+  data[,"mu":=mean(value, na.rm=TRUE)][,"bj":=mean(value, na.rm=TRUE)-mu, by=list(subject_id,cohort_id)][,"ai":=mean(value, na.rm=TRUE)-mu, by=list(repetition_id)][,"eij":=value-mu-bj-ai]
   
   # Calculate
-  n_subjects <- data.table::uniqueN(dt, by="subject_id")
-  n_raters   <- data.table::uniqueN(dt, by="repetition_id")
+  n_subjects <- data.table::uniqueN(data, by="subject_id")
+  n_raters   <- data.table::uniqueN(data, by="repetition_id")
   
   # Calculate mean squared errors: msb between subjects (bj), msj between raters (ai), mse of error (eij) and msw of error with rater (ai + eij)
   if(n_subjects > 1){
-    msb <- sum(dt$bj^2, na.rm=TRUE) / (n_subjects-1)
+    msb <- sum(data$bj^2, na.rm=TRUE) / (n_subjects-1)
   }
   
   if(type=="1"){
     # Calculate mean squared of error with rater
-    msw       <- (sum(dt$eij^2, na.rm=TRUE) + sum(dt$ai^2, na.rm=TRUE)) / (n_subjects * (n_raters-1))
+    msw       <- (sum(data$eij^2, na.rm=TRUE) + sum(data$ai^2, na.rm=TRUE)) / (n_subjects * (n_raters-1))
     
     # Calculate icc for individual rater and rater panel
     if(msb==0 & msw==0) {
@@ -396,8 +421,8 @@ compute_icc <- function(dt, type="1", feat_name){
   
   if(type=="2"){
     # Calculate mean squared error (mse) and mean squared rater error (msj)
-    msj <- sum(dt$ai^2, na.rm=TRUE) / (n_raters-1)
-    mse <- sum(dt$eij^2, na.rm=TRUE) / ((n_subjects-1) * (n_raters-1))
+    msj <- sum(data$ai^2, na.rm=TRUE) / (n_raters-1)
+    mse <- sum(data$eij^2, na.rm=TRUE) / ((n_subjects-1) * (n_raters-1))
     
     # Calculate icc for individual rater and rater panel
     if(msb==0 & mse==0) {
@@ -425,7 +450,7 @@ compute_icc <- function(dt, type="1", feat_name){
   
   if(type=="3"){
     # Calculate mean squared error (mse)
-    mse <- sum(dt$eij^2, na.rm=TRUE) / ((n_subjects-1) * (n_raters-1))
+    mse <- sum(data$eij^2, na.rm=TRUE) / ((n_subjects-1) * (n_raters-1))
     
     # Calculate icc for individual rater and rater panel
     if(msb==0 & mse==0) {
@@ -449,8 +474,23 @@ compute_icc <- function(dt, type="1", feat_name){
     }
   }
   
-  return(data.table::data.table("name"=feat_name, "icc"=icc, "icc_low"=icc_ci_low, "icc_up"=icc_ci_up,
-                                "icc_panel"=icc_panel, "icc_panel_low"=icc_panel_ci_low, "icc_panel_up"=icc_panel_ci_up))
+  if(icc == 1.0){
+    if(!is.finite(icc_ci_low)) icc_ci_low <- 1.0
+    if(!is.finite(icc_ci_up)) icc_ci_up <- 1.0
+  }
+  
+  if(icc_panel == 1.0){
+    if(!is.finite(icc_ci_low)) icc_panel_ci_low <- 1.0
+    if(!is.finite(icc_ci_up)) icc_panel_ci_up <- 1.0
+  }
+  
+  return(data.table::data.table("name"=feature,
+                                "icc"=icc,
+                                "icc_low"=icc_ci_low,
+                                "icc_up"=icc_ci_up,
+                                "icc_panel"=icc_panel,
+                                "icc_panel_low"=icc_panel_ci_low,
+                                "icc_panel_up"=icc_panel_ci_up))
 }
 
 
@@ -516,7 +556,7 @@ createNonValidPredictionTable <- function(dt, outcome_type){
       dt_pred[, (outcome_pred_class_prob_cols[ii]):=as.double(NA)]
     }
   } else if(outcome_type == "competing_risk"){
-    browser()
+    ..error_outcome_type_not_implemented(outcome_type)
   }
 
   # Return without valid data prediction table

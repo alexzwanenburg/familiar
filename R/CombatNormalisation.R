@@ -136,16 +136,15 @@ combat.iterative_parametric_bayes_solver <- function(z, tolerance=0.0001, max_it
   # supplement A3.1. 1 value per batch
   z_short[, "theta_bar":=combat.theta_prior(delta_hat_squared), by="cohort_id"]
 
-  # Split by batch.
-  if(is.null(cl)){
-    batch_parameters <- lapply(split(z, by="cohort_id"),
-                               .combat.iterative_parametric_bayes_solver,
-                               z_short=z_short, tolerance=tolerance, max_iterations=max_iterations)
-  } else {
-    batch_parameters <- parallel::parLapplyLB(cl=cl, split(z, by="cohort_id"),
-                                              .combat.iterative_parametric_bayes_solver,
-                                              z_short=z_short, tolerance=tolerance, max_iterations=max_iterations)
-  }
+  # Split by batchS
+  batch_parameters <- fam_lapply_lb(cl=cl,
+                                    assign=NULL,
+                                    X=split(z, by="cohort_id"),
+                                    FUN=.combat.iterative_parametric_bayes_solver,
+                                    progress_bar=TRUE,
+                                    z_short=z_short,
+                                    tolerance=tolerance,
+                                    max_iterations=max_iterations)
   
   # Concatenate to single table.
   batch_parameters <- data.table::rbindlist(batch_parameters)
@@ -231,14 +230,13 @@ combat.non_parametric_bayes_solver <- function(z, n_sample_features=50, cl=NULL)
   z_short <- unique(data.table::copy(z)[, "value":=NULL])
   
   # Iterate over batches and features to obtain batch parameters.
-  if(is.null(cl)){
-    batch_parameters <- lapply(split(z, by=c("cohort_id", "feature")), .combat.non_parametric_bayes_solver,
-                               z_short=z_short, n_sample_features=n_sample_features)
-  } else {
-    batch_parameters <- parallel::parLapply(cl=cl, split(z, by=c("cohort_id", "feature")), .combat.non_parametric_bayes_solver,
-                                            z_short=z_short, n_sample_features=n_sample_features)
-    
-  }
+  batch_parameters <- fam_lapply(cl=cl,
+                                 assign=NULL,
+                                 X=split(z, by=c("cohort_id", "feature")),
+                                 FUN=.combat.non_parametric_bayes_solver,
+                                 progress_bar=TRUE,
+                                 z_short=z_short,
+                                 n_sample_features=n_sample_features)
   
   # Concatenate to single table.
   batch_parameters <- data.table::rbindlist(batch_parameters)
@@ -302,12 +300,11 @@ combat.non_combat_solver <- function(z, cl=NULL){
   # Extracts batch normalisation parameters using standard methods.
   
   # Extract parameters for each feature in each batch.
-  if(is.null(cl)){
-    batch_parameters <- lapply(split(z, by=c("feature", "cohort_id")), .combat.non_combat_solver)
-    
-  } else {
-    batch_parameters <- parallel::parLapply(cl=cl, split(z, by=c("feature", "cohort_id")), .combat.non_combat_solver)
-  }
+  batch_parameters <- fam_lapply(cl=cl,
+                                 assign=NULL,
+                                 X=split(z, by=c("cohort_id", "feature")),
+                                 FUN=.combat.non_combat_solver,
+                                 progress_bar=TRUE)
   
   # Combine into single table
   batch_parameters <- data.table::rbindlist(batch_parameters)

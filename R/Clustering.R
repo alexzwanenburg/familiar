@@ -129,24 +129,17 @@ cluster.get_featurewise_similarity_table <- function(cl=NULL, data_obj,
   
   # Add names to the mask to allow indexing by feature name.
   names(categorical_mask) <- feature_columns
-
-  # Determine similarity measures.
-  if(is.null(cl)){
-    similarity <- sapply(seq_len(ncol(combinations)),
-                         ..compute_similarity,
-                         combinations=combinations,
-                         data=droplevels(data_obj@data),
-                         similarity_metric=similarity_metric,
-                         categorical_mask=categorical_mask)
-    
-  } else {
-    similarity <- parallel::parSapply(cl=cl, seq_len(ncol(combinations)),
-                                      ..compute_similarity,
-                                      combinations=combinations,
-                                      data=droplevels(data_obj@data),
-                                      similarity_metric=similarity_metric,
-                                      categorical_mask=categorical_mask)
-  }
+  
+  # Determine similarity measures for each feature pair.
+  similarity <- fam_sapply(cl=cl,
+                           assign=NULL,
+                           X=seq_len(ncol(combinations)),
+                           FUN=..compute_similarity,
+                           progress_bar=TRUE,
+                           combinations=combinations,
+                           data=droplevels(data_obj@data),
+                           similarity_metric=similarity_metric,
+                           categorical_mask=categorical_mask)
   
   # Transform similarity scores into a data.table.
   similarity_table  <- data.table::data.table("feature_1"=combinations[1,],
@@ -224,26 +217,19 @@ cluster.get_samplewise_similarity_table <- function(cl=NULL, data_obj, similarit
     }
   }
   
-  # Generate all combinations of rows
+  # Generate all combinations of samples
   combinations <- utils::combn(seq_len(nrow(data_obj@data)), 2)
   
-  # Determine similarity measures.
-  if(is.null(cl)){
-    similarity <- sapply(seq_len(ncol(combinations)),
-                         ..compute_similarity,
-                         combinations=combinations,
-                         data=data_obj@data[, feature_columns, with=FALSE],
-                         similarity_metric=similarity_metric,
-                         categorical_mask=categorical_mask)
-    
-  } else {
-    similarity <- parallel::parSapply(cl=cl, seq_len(ncol(combinations)),
-                                      ..compute_similarity,
-                                      combinations=combinations,
-                                      data=droplevels(data_obj@data),
-                                      similarity_metric=similarity_metric,
-                                      categorical_mask=categorical_mask)
-  }
+  # Determine similarity measures for each sample pair.
+  similarity <- fam_sapply(cl=cl,
+                           assign=NULL,
+                           X=seq_len(ncol(combinations)),
+                           FUN=..compute_similarity,
+                           progress_bar=TRUE,
+                           combinations=combinations,
+                           data=data_obj@data[, mget(feature_columns)],
+                           similarity_metric=similarity_metric,
+                           categorical_mask=categorical_mask)
   
   # Transform similarity scores into a data.table.
   similarity_table  <- data.table::data.table("sample_1"=data_obj@data$subject_id[combinations[1, ]],
@@ -545,21 +531,20 @@ cluster.get_cluster_table <- function(cl=NULL, require_representation=TRUE, clus
     }
     
     if(require_representation){
+      
       # Find representative features
-      if(is.null(cl)){
-        cluster_table <- data.table::rbindlist(lapply(split(cluster_table, by="cluster_id"), cluster.find_representation,
-                                                      data_obj=data_obj,
-                                                      feature_info_list=feature_info_list,
-                                                      dist_mat=distance_matrix,
-                                                      method=cluster_representation_method))
-      } else {
-        cluster_table <- data.table::rbindlist(parallel::parLapplyLB(cl=cl, split(cluster_table, by="cluster_id"),
-                                                                     cluster.find_representation,
-                                                                     data_obj=data_obj,
-                                                                     feature_info_list=feature_info_list,
-                                                                     dist_mat=distance_matrix,
-                                                                     method=cluster_representation_method))
-      }
+      cluster_table <- fam_lapply_lb(cl=cl,
+                                     assign=NULL,
+                                     X=split(cluster_table, by="cluster_id"),
+                                     FUN=cluster.find_representation,
+                                     progress_bar=FALSE,
+                                     data_obj=data_obj,
+                                     feature_info_list=feature_info_list,
+                                     dist_mat=distance_matrix,
+                                     method=cluster_representation_method)
+      
+      # Combine into single table
+      cluster_table <- data.table::rbindlist(cluster_table)
     }
   }
 

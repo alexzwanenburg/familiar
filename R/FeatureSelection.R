@@ -4,19 +4,21 @@ run_feature_selection <- function(cl, proj_list, settings, file_paths){
   fs_data_id <- getProcessDataID(proj_list=proj_list, process_step="fs")
 
   # Get feature selection methods that still need to be checked
-  run_fs_methods <- getIncompleteFeatureSelection(proj_list=proj_list, settings=settings, file_paths=file_paths)
+  run_fs_methods <- .find_missing_feature_selection_data(proj_list=proj_list, settings=settings, file_paths=file_paths)
 
   # Check whether pre-processing has been conducted
   check_pre_processing(cl=cl, data_id=fs_data_id, file_paths=file_paths, project_id=proj_list$project_id)
 
   # Get runs
   run_list <- getRunList(iter_list=proj_list$iter_list, data_id=fs_data_id)
-
-  # Start cluster for parallel processing
-  if(settings$fs$do_parallel){
-    parallel::clusterExport(cl=cl, varlist=c("compute_variable_importance"), envir=environment())
+  
+  # Remove cluster information in case no parallelisation is provided.
+  if(!settings$fs$do_parallel){
+    cl_fs <- NULL
+  } else {
+    cl_fs <- cl
   }
-
+  
   # Create variable importance matrices by iterating over feature selection methods
   for(curr_fs_method in run_fs_methods){
 
@@ -24,30 +26,29 @@ run_feature_selection <- function(cl, proj_list, settings, file_paths){
     logger.message(paste0("\nFeature selection: starting feature selection using \"", curr_fs_method, "\" method."))
 
     # Optimise models used for feature selection
-    hpo_list <- run_hyperparameter_optimisation(cl=cl, proj_list=proj_list, data_id=fs_data_id, settings=settings, file_paths=file_paths, fs_method=curr_fs_method)
-
-    # Extract variable importance lists
-    if(settings$fs$do_parallel){
-      # Calculate variable importance
-      vimp_list <- parallel::parLapply(cl=cl, X=run_list, fun=compute_variable_importance, fs_method=curr_fs_method,
-                                       hpo_list=hpo_list, proj_list=proj_list, settings=settings, file_paths=file_paths)
-    } else{
-      # Start text progress bar
-      pb_conn   <- utils::txtProgressBar(min=0, max=length(run_list), style=3)
-
-      # Add iteration number for progress bar
-      run_list  <- lapply(seq_len(length(run_list)), function(ii, run_list) (append(run_list[[ii]], c("iter_nr"=ii))), run_list=run_list)
-
-      # Calculate variable importance
-      vimp_list <- lapply(run_list, compute_variable_importance, fs_method=curr_fs_method,
-                          hpo_list=hpo_list, proj_list=proj_list, settings=settings, file_paths=file_paths, pb_conn=pb_conn)
-
-      # Close progress bar
-      close(pb_conn)
-    }
-
+    hpo_list <- run_hyperparameter_optimisation(cl=cl,
+                                                proj_list=proj_list,
+                                                data_id=fs_data_id,
+                                                settings=settings,
+                                                file_paths=file_paths,
+                                                fs_method=curr_fs_method)
+    
+    # Create variable importance information by iterating over the list of runs.
+    vimp_list <- fam_mapply_lb(cl=cl_fs,
+                               assign="all",
+                               FUN=compute_variable_importance,
+                               run=run_list,
+                               progress_bar=TRUE,
+                               MoreArgs=list("fs_method"=curr_fs_method,
+                                             "hpo_list"=hpo_list,
+                                             "proj_list"=proj_list,
+                                             "settings"=settings,
+                                             "file_paths"=file_paths))
+    
     # Save to file
-    saveRDS(vimp_list, file=getFSFileName(proj_list=proj_list, fs_method=curr_fs_method, file_paths=file_paths))
+    saveRDS(vimp_list, file=.get_feature_selection_data_filename(proj_list=proj_list,
+                                                                 fs_method=curr_fs_method,
+                                                                 file_paths=file_paths))
 
     # Message that feature selection has been completed.
     logger.message(paste0("Feature selection: feature selection using \"", curr_fs_method, "\" method has been completed."))
@@ -56,9 +57,8 @@ run_feature_selection <- function(cl, proj_list, settings, file_paths){
 
 
 
-compute_variable_importance <- function(run, fs_method, hpo_list, proj_list, settings, file_paths, pb_conn=NULL){
+compute_variable_importance <- function(run, fs_method, hpo_list, proj_list, settings, file_paths){
   # Function for calculating variable importance
-
 
   ############### Data preparation ################################################################
   # Pre-process data
@@ -89,17 +89,12 @@ compute_variable_importance <- function(run, fs_method, hpo_list, proj_list, set
   translation_table <- rank.get_decluster_translation_table(features=vimp_table$name,
                                                             feature_info_list=get_feature_info_list(run=run))
 
-  # Update progress bar
-  if(!is.null(pb_conn)){
-    utils::setTxtProgressBar(pb=pb_conn, value=run$iter_nr)
-  }
-
   return(list("run_table"=run$run_table, "fs_method"=fs_method, "vimp"=vimp_table, "translation_table"=translation_table))
 }
 
 
 
-getIncompleteFeatureSelection <- function(proj_list, settings, file_paths){
+.find_missing_feature_selection_data <- function(proj_list, settings, file_paths){
 
   # Suppress NOTES due to non-standard evaluation in data.table
   fs_method <- fs_file <- NULL
@@ -108,7 +103,7 @@ getIncompleteFeatureSelection <- function(proj_list, settings, file_paths){
   dt_fs <- data.table::data.table("fs_method"=settings$fs$fs_methods)
 
   # Add expected feature selection file names
-  dt_fs[,"fs_file":=getFSFileName(proj_list=proj_list, fs_method=fs_method, file_paths=file_paths)]
+  dt_fs[,"fs_file":=.get_feature_selection_data_filename(proj_list=proj_list, fs_method=fs_method, file_paths=file_paths)]
 
   # List files in directory
   file_list <- normalizePath(list.files(path=file_paths$fs_dir, pattern=paste0(proj_list$project_id, "_fs_"), full.names=TRUE, recursive=TRUE), mustWork=FALSE)
@@ -122,6 +117,6 @@ getIncompleteFeatureSelection <- function(proj_list, settings, file_paths){
 
 
 
-getFSFileName <- function(fs_method, proj_list, file_paths){
+.get_feature_selection_data_filename <- function(fs_method, proj_list, file_paths){
   return(normalizePath(file.path(file_paths$fs_dir, paste0(proj_list$project_id, "_fs_", fs_method, ".RDS")), mustWork=FALSE))
 }

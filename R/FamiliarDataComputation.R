@@ -1438,15 +1438,33 @@ setMethod("extract_univariate_analysis", signature(object="familiarEnsemble", da
             # Check if repeated measurements are present, otherwise return no feature names.
             if(is_repeated_measurement){
               
-              # Calculate intraclass correlation coefficient (1,1)
-              icc_list <- lapply(feature_columns, function(curr_feat, data, icc_type){
-                compute_icc(dt=data[, c(curr_feat, "subject_id", "cohort_id", "repetition_id"), with=FALSE],
-                            type=icc_type,
-                            feat_name=curr_feat)
-              }, data=data@data, icc_type=icc_type)
+              # Determine which columns actually contains numeric data
+              numeric_columns <- feature_columns[sapply(feature_columns, function(ii, data) (is.numeric(data@data[[ii]])), data=data)]
               
-              # Merge with univariate_data
-              univariate_data <- merge(x=univariate_data, y=data.table::rbindlist(icc_list), by="name", all.x=TRUE)
+              if(length(numeric_columns) == 0){
+                # If there are no numeric columns, add empty ICC data columns.
+                univariate_data <- cbind(univariate_data,
+                                         data.table::data.table("icc"=NA_real_,
+                                                                "icc_low"=NA_real_,
+                                                                "icc_up"=NA_real_,
+                                                                "icc_panel"=NA_real_,
+                                                                "icc_panel_low"=NA_real_,
+                                                                "icc_panel_up"=NA_real_))
+                
+              } else {
+                # Compute ICC values
+                icc_list <- fam_mapply(cl=NULL,
+                                       assign=NULL,
+                                       FUN=compute_icc,
+                                       x=data@data[, mget(numeric_columns)],
+                                       feature=numeric_columns,
+                                       progress_bar=FALSE,
+                                       MoreArgs=list("id_data"=data@data[, c("subject_id", "cohort_id", "repetition_id")],
+                                                     "type"=icc_type))
+                
+                # Merge with univariate_data
+                univariate_data <- merge(x=univariate_data, y=data.table::rbindlist(icc_list), by="name", all.x=TRUE)
+              }
             }
             
             # Find cluster info

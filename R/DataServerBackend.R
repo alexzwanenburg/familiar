@@ -64,11 +64,11 @@
 }
 
 
-.assign_data_to_backend <- function(cl, backend_data, backend, server_port){
+.assign_data_to_global <- function(backend_data, backend, server_port){
 
   if(backend %in% c("fork", "non_fork")){
-    # Put dt_backend_data in global environment
-    assign(x="dt_backend_data", value=backend_data, envir=familiar_global_env)
+    # Put master_data in global environment
+    assign(x="master_data", value=backend_data, envir=familiar_global_env)
     
   } else if(backend %in% c("rserve", "rserve_coop")){
     # Start server and open connection
@@ -81,18 +81,13 @@
     RSclient::RS.eval(rsc=rcon, library(familiar))
 
     # Send data.table to server
-    RSclient::RS.assign(rsc=rcon, name="dt_backend_data", value=backend_data, wait=TRUE)
+    RSclient::RS.assign(rsc=rcon, name="master_data", value=backend_data, wait=TRUE)
 
     # Close server connection
     RSclient::RS.close(rcon)
     
   } else {
     ..error_reached_unreachable_code("assign_data_to_backed_unknown_backend")
-  }
-  
-  # Only add backend data when running a non-rserve backend
-  if(!is.null(cl) & backend %in% c("fork", "non_fork")){
-    parallel::clusterExport(cl=cl, varlist="dt_backend_data", envir=familiar_global_env)
   }
 }
 
@@ -116,13 +111,13 @@ getDataFromBackend <- function(subj_id=NULL, col_names=NULL, settings){
 
     # Get slice of data.table from server
     if( is.null(subj_id) &  is.null(col_names)){
-      dt <- RSclient::RS.eval(rsc=rcon, substitute(dt_backend_data[!subject_id %in% r_vars, ], list(r_vars=character(0))), lazy=FALSE) }
+      dt <- RSclient::RS.eval(rsc=rcon, substitute(master_data[!subject_id %in% r_vars, ], list(r_vars=character(0))), lazy=FALSE) }
     if( is.null(subj_id) & !is.null(col_names)){
-      dt <- RSclient::RS.eval(rsc=rcon, substitute(dt_backend_data[, c_vars], list(c_vars=col_names)), lazy=FALSE) }
+      dt <- RSclient::RS.eval(rsc=rcon, substitute(master_data[, c_vars], list(c_vars=col_names)), lazy=FALSE) }
     if(!is.null(subj_id) &  is.null(col_names)){
-      dt <- RSclient::RS.eval(rsc=rcon, substitute(dt_backend_data[subject_id %in% r_vars, ], list(r_vars=subj_id)), lazy=FALSE) }
+      dt <- RSclient::RS.eval(rsc=rcon, substitute(master_data[subject_id %in% r_vars, ], list(r_vars=subj_id)), lazy=FALSE) }
     if(!is.null(subj_id) & !is.null(col_names)){
-      dt <- RSclient::RS.eval(rsc=rcon, substitute(dt_backend_data[subject_id %in% r_vars, c_vars], list(r_vars=subj_id, c_vars=col_names)), lazy=FALSE) }
+      dt <- RSclient::RS.eval(rsc=rcon, substitute(master_data[subject_id %in% r_vars, c_vars], list(r_vars=subj_id, c_vars=col_names)), lazy=FALSE) }
 
     # Close connection
     RSclient::RS.close(rsc=rcon)
@@ -133,14 +128,14 @@ getDataFromBackend <- function(subj_id=NULL, col_names=NULL, settings){
   if(settings$run$backend %in% c("fork", "non_fork")){
     # Data is stored in the familiar_global_env environment by default, but may be assigned to the global environment on clusters
     if(exists("familiar_global_env")){
-      if(exists("dt_backend_data", where=familiar_global_env)){
+      if(exists("master_data", where=familiar_global_env)){
         data_env <- familiar_global_env
-      } else if (exists("dt_backend_data", where=.GlobalEnv)){
+      } else if (exists("master_data", where=.GlobalEnv)){
         data_env <- .GlobalEnv
       } else {
         stop("Data not found in backend.")
       }
-    } else if (exists("dt_backend_data", where=.GlobalEnv)){
+    } else if (exists("master_data", where=.GlobalEnv)){
       data_env <- .GlobalEnv
     } else {
       stop("Data not found in backend.")
@@ -148,13 +143,13 @@ getDataFromBackend <- function(subj_id=NULL, col_names=NULL, settings){
 
 
     if( is.null(subj_id) &  is.null(col_names)){
-      dt <- data.table::copy(get("dt_backend_data", envir=data_env)) }
+      dt <- data.table::copy(get("master_data", envir=data_env)) }
     if( is.null(subj_id) & !is.null(col_names)){
-      dt <- data.table::copy(get("dt_backend_data", envir=data_env)[, col_names, with=FALSE]) }
+      dt <- data.table::copy(get("master_data", envir=data_env)[, col_names, with=FALSE]) }
     if(!is.null(subj_id) &  is.null(col_names)){
-      dt <- data.table::copy(get("dt_backend_data", envir=data_env)[subject_id %in% subj_id, ]) }
+      dt <- data.table::copy(get("master_data", envir=data_env)[subject_id %in% subj_id, ]) }
     if(!is.null(subj_id) & !is.null(col_names)){
-      dt <- data.table::copy(get("dt_backend_data", envir=data_env)[subject_id %in% subj_id, col_names, with=FALSE]) }
+      dt <- data.table::copy(get("master_data", envir=data_env)[subject_id %in% subj_id, col_names, with=FALSE]) }
 
     return(dt)
   }

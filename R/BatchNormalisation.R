@@ -117,28 +117,20 @@ batch_normalise.set_basic_normalisation_parameters <- function(cl=NULL, features
   }
   
   # Determine batch-normalisation parameters by iterating over the features.
-  if(is.null(cl)){
-    updated_feature_info_list <- lapply(features,
-                                        batch_normalise.get_normalisation_per_feature,
-                                        feature_info_list=feature_info_list,
-                                        data=data,
-                                        batch_normalisation_method=batch_normalisation_method,
-                                        batches=batches)
-    
-  } else {
-    updated_feature_info_list <- parallel::parLapply(cl=cl,
-                                                     features,
-                                                     batch_normalise.get_normalisation_per_feature,
-                                                     feature_info_list=feature_info_list,
-                                                     data=data,
-                                                     batch_normalisation_method=batch_normalisation_method,
-                                                     batches=batches)
-  }
+  updated_feature_info_list <- fam_lapply(cl=cl,
+                                          assign=NULL,
+                                          X=features,
+                                          FUN=batch_normalise.get_normalisation_per_feature,
+                                          progress_bar=TRUE,
+                                          feature_info_list=feature_info_list,
+                                          data=data,
+                                          batch_normalisation_method=batch_normalisation_method,
+                                          batches=batches)
   
   # Set names of the updated list
   names(updated_feature_info_list) <- features
 
-  return(updated_feature_info_list)  
+  return(updated_feature_info_list)
 }
 
 
@@ -366,7 +358,10 @@ batch_normalise.apply_normalisation <- function(x, feature_info, invert=FALSE){
                 }
               
                 # Return y
-                return(data.table::data.table("subject_id"=x$subject_id, "cohort_id"=x$cohort_id, "y"=y))
+                return(data.table::data.table("subject_id"=x$subject_id,
+                                              "cohort_id"=x$cohort_id,
+                                              "repetition_id"=x$repetition_id,
+                                              "y"=y))
                 
               }, feature_info=feature_info, invert=invert)
 
@@ -374,7 +369,7 @@ batch_normalise.apply_normalisation <- function(x, feature_info, invert=FALSE){
   y <- data.table::rbindlist(y, use.names=TRUE)
   
   # Merge with input x, while making sure that the order remains the same.
-  y <- merge(x=x, y=y, by=c("subject_id", "cohort_id"), sort=FALSE)
+  y <- merge(x=x, y=y, by=c("subject_id", "cohort_id", "repetition_id"), sort=FALSE)
   
   # Return transformed values
   return(y$y)

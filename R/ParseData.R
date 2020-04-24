@@ -13,7 +13,7 @@
   if(data.table::is.data.table(data)){
     #####data.table---------------------------------------------
     # Keep data as is
-    data <- data
+    data <- data.table::copy(data)
 
     # Update column names using a fixed routine
     data.table::setnames(data, check_column_name(colnames(data)))

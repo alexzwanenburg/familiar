@@ -52,6 +52,8 @@
       <parallel></parallel>
       <!-- Number of cores available for parallelisation (optional, default: all-1) -->
       <parallel_nr_cores></parallel_nr_cores>
+      <!-- Flag indicating that parallel computation clusters started locally should be restarted prior to parallel computations (optional, default: FALSE) -->
+      <restart_cluster></restart_cluster>
       <!-- Selection of the back-end for serving data (optional, default: os and package-dependent; one of rserve_coop, rserve, fork, non_fork) -->
       <backend></backend>
       <!-- Port for RServe process that is used to store input data (optional, default: 6311)-->

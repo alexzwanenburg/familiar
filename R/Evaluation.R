@@ -132,11 +132,14 @@ run_evaluation <- function(cl, proj_list, settings, file_paths){
     new_ensemble_table <- unique(new_ensemble_table)
     
     logger.message("\nEvaluation: Creating ensemble models from individual models.")
-    if(is.null(cl)){
-      lapply(split(new_ensemble_table, by="fam_ensemble"), .create_familiar_ensemble_runtime, dir_path=file_paths$mb_dir)
-    } else {
-      parallel::parLapplyLB(cl=cl, split(new_ensemble_table, by="fam_ensemble"), .create_familiar_ensemble_runtime, dir_path=file_paths$mb_dir)
-    }
+    
+    # Create familiarEnsemble objects
+    fam_lapply_lb(cl=cl,
+                  assign=NULL,
+                  X=split(new_ensemble_table, by="fam_ensemble"),
+                  FUN=.create_familiar_ensemble_runtime,
+                  progress_bar=TRUE,
+                  dir_path=file_paths$mb_dir)
   }
   
   # Re-check which ensembles exist
@@ -161,11 +164,11 @@ run_evaluation <- function(cl, proj_list, settings, file_paths){
     logger.message("\nEvaluation: Processing data to create familiarData objects.")
     
     # Generate data objects
-    if(is.null(cl)){
-      lapply(split(new_data_table, by="fam_data"), .create_familiar_data_runtime, dir_path=file_paths$fam_data_dir)
-    } else {
-      parallel::clusterApplyLB(cl=cl, split(new_data_table, by="fam_data"), .create_familiar_data_runtime, dir_path=file_paths$fam_data_dir)
-    }
+    fam_lapply_lb(cl=cl,
+                  assign="all",
+                  X=split(new_data_table, by="fam_data"),
+                  FUN=.create_familiar_data_runtime,
+                  dir_path=file_paths$fam_data_dir)
   }  
     
   # Re-check if all familiarData objects exist

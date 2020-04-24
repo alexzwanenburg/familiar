@@ -145,11 +145,15 @@ impute.add_lasso_imputation_info <- function(cl=NULL, feature_info_list, data_ob
 
   # Add in check so that there is more one than feature available. We cannot define model using only an outcome column.
   if(length(feature_columns) > 1){
-    if(is.null(cl)){
-      upd_list <- lapply(feature_columns, .add_info, feature_info_list=feature_info_list, data_obj=data_obj, uncensored_data_obj=uncensored_data_obj)
-    } else {
-      upd_list <- parallel::parLapply(cl=cl, feature_columns, .add_info, feature_info_list=feature_info_list, data_obj=data_obj, uncensored_data_obj=uncensored_data_obj)
-    }
+    
+    upd_list <- fam_lapply(cl=cl,
+                           assign=NULL,
+                           X=feature_columns,
+                           FUN=.add_info,
+                           progress_bar=TRUE,
+                           feature_info_list=feature_info_list,
+                           data_obj=data_obj,
+                           uncensored_data_obj=uncensored_data_obj)
     
     # Set names of the update object list
     names(upd_list) <- feature_columns
@@ -259,12 +263,14 @@ impute.impute_lasso <- function(cl=NULL, feature_info_list, data_obj, uncensored
   }
   
   # Define the replacement list
-  if(is.null(cl)){
-    replacement_list <- lapply(censored_features, .get_imputed_values, data_obj=data_obj, uncensored_data_obj=uncensored_data_obj, feature_info_list=feature_info_list)
-  } else {
-    replacement_list <- parallel::parLapply(cl=cl, censored_features, .get_imputed_values, data_obj=data_obj,
-                                            uncensored_data_obj=uncensored_data_obj, feature_info_list=feature_info_list)
-  }
+  replacement_list <- fam_lapply(cl=cl,
+                                 assign=NULL,
+                                 X=censored_features,
+                                 FUN=.get_imputed_values,
+                                 progress_bar=FALSE,
+                                 data_obj=data_obj,
+                                 uncensored_data_obj=uncensored_data_obj,
+                                 feature_info_list=feature_info_list)
   
   # Set replacement names
   names(replacement_list) <- censored_features
@@ -313,11 +319,13 @@ impute.add_simple_imputation_info <- function(cl=NULL, feature_info_list, data_o
   feature_columns <- get_feature_columns(x=data_obj)
 
   # Add simple imputation information
-  if(is.null(cl)){
-    upd_list <- lapply(feature_columns, .add_info, feature_info_list=feature_info_list, data_obj=data_obj)
-  } else {
-    upd_list <- parallel::parLapply(cl, feature_columns, .add_info, feature_info_list=feature_info_list, data_obj=data_obj)
-  }
+  upd_list <- fam_lapply(cl=cl,
+                         assign=NULL,
+                         X=feature_columns,
+                         FUN=.add_info,
+                         progress_bar=TRUE,
+                         feature_info_list=feature_info_list,
+                         data_obj=data_obj)
   
   # Set names of the update object list
   names(upd_list) <- feature_columns
@@ -363,11 +371,13 @@ impute.impute_simple <- function(cl=NULL, data_obj, feature_info_list, censored_
   }
   
   # Define the replacement list
-  if(is.null(cl)){
-    replacement_list <- lapply(censored_features, .get_imputed_values, data_obj=data_obj, feature_info_list=feature_info_list)
-  } else {
-    replacement_list <- parallel::parLapply(cl=cl, censored_features, .get_imputed_values, data_obj=data_obj, feature_info_list=feature_info_list)
-  }
+  replacement_list <- fam_lapply(cl=cl,
+                                 assign=NULL,
+                                 X=censored_features,
+                                 FUN=.get_imputed_values,
+                                 progress_bar=FALSE,
+                                 data_obj=data_obj,
+                                 feature_info_list=feature_info_list)
   
   # Set replacement names
   names(replacement_list) <- censored_features
