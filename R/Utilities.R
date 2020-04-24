@@ -543,7 +543,7 @@ createNonValidPredictionTable <- function(dt, outcome_type){
       dt_pred[, (outcome_pred_class_prob_cols[ii]):=as.double(NA)]
     }
   } else if(outcome_type == "competing_risk"){
-    browser()
+    ..error_outcome_type_not_implemented(outcome_type)
   }
 
   # Return without valid data prediction table
