@@ -13,9 +13,11 @@ run_model_development <- function(cl, proj_list, settings, file_paths){
   # Identify combinations of feature selection methods and learners
   run_methods <- get_fs_learner_combinations(settings=settings)
 
-  # Load functions to cluster
-  if(settings$mb$do_parallel){
-    parallel::clusterExport(cl=cl, varlist=c("build_model"), envir=environment())
+  # Remove parallel clusters for model building in case these are not required.
+  if(!settings$mb$do_parallel){
+    cl_mb <- NULL
+  } else {
+    cl_mb <- cl
   }
 
   # Create models by iterating over combination of feature selection methods and learners
@@ -37,26 +39,21 @@ run_model_development <- function(cl, proj_list, settings, file_paths){
                           iter_methods$fs_method, "\" feature selection."))
     
     # Optimise hyperparameters of models used for model building
-    hpo_list      <- run_hyperparameter_optimisation(cl=cl, proj_list=proj_list, data_id=mb_data_id,
-                                                     settings=settings, file_paths=file_paths,
-                                                     fs_method=iter_methods$fs_method, learner=iter_methods$learner)
-
+    hpo_list      <- run_hyperparameter_optimisation(cl=cl,
+                                                     proj_list=proj_list,
+                                                     data_id=mb_data_id,
+                                                     settings=settings,
+                                                     file_paths=file_paths,
+                                                     fs_method=iter_methods$fs_method,
+                                                     learner=iter_methods$learner)
+    
     # Build models
-    if(settings$mb$do_parallel){
-      parallel::parLapplyLB(cl=cl, iter_run_list, build_model, hpo_list=hpo_list)
-    } else {
-      # Start text progress bar
-      pb_conn   <- utils::txtProgressBar(min=0, max=length(run_list), style=3)
-
-      # Add iteration number for progress bar
-      iter_run_list  <- lapply(seq_len(length(iter_run_list)), function(ii, run_list) (append(run_list[[ii]], c("iter_nr"=ii))), run_list=iter_run_list)
-
-      # Build models
-      lapply(iter_run_list, build_model, hpo_list=hpo_list, pb_conn=pb_conn)
-
-      # Close text progress bar
-      close(pb_conn)
-    }
+    fam_lapply_lb(cl=cl_mb,
+                  assign="all",
+                  X=iter_run_list,
+                  FUN=build_model,
+                  progress_bar=TRUE,
+                  hpo_list=hpo_list)
 
     logger.message(paste0("Model building: model building using \"",
                           iter_methods$learner, "\" learner, based on \"",
@@ -65,7 +62,7 @@ run_model_development <- function(cl, proj_list, settings, file_paths){
 }
 
 
-build_model <- function(run, hpo_list, pb_conn=NULL){
+build_model <- function(run, hpo_list){
   # Function for model building and data extraction
 
   # Load from the familiar or global environment
@@ -128,11 +125,6 @@ build_model <- function(run, hpo_list, pb_conn=NULL){
 
   # Save model
   save(list=fam_model, file=file_paths$mb_dir)
-
-  # Update progress bar
-  if(!is.null(pb_conn)){
-    utils::setTxtProgressBar(pb=pb_conn, value=run$iter_nr)
-  }
 }
 
 
