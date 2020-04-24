@@ -208,9 +208,7 @@ determine_pre_processing_parameters <- function(cl, data_id, run_id){
   data_obj           <- filter_features(data=data_obj, available_features=available_features)
    
   # Unload cluster locally, if it is not required
-  if(!settings$prep$do_parallel){
-    cl <- NULL
-  } 
+  if(!settings$prep$do_parallel) cl <- NULL 
   
   ##### Remove samples with missing outcome data #####
   n_samples_current  <- length(run_subj_id)
@@ -232,7 +230,12 @@ determine_pre_processing_parameters <- function(cl, data_id, run_id){
   logger.message(paste0("Pre-processing: ", n_features_current, " features were initially available."))
   
   # Determine the fraction of missing values
-  feature_info_list  <- add_missing_value_fractions(feature_info_list=feature_info_list, data=data_obj, threshold=settings$prep$feat_max_fract_missing)
+  feature_info_list  <- add_missing_value_fractions(cl=cl,
+                                                    feature_info_list=feature_info_list,
+                                                    data=data_obj,
+                                                    threshold=settings$prep$feat_max_fract_missing)
+  
+  # Find features that are not missing too many values.
   available_features <- get_available_features(feature_info_list=feature_info_list)
   
   # Remove features with a high fraction of missing values
@@ -354,6 +357,8 @@ determine_pre_processing_parameters <- function(cl, data_id, run_id){
     logger.message("Pre-processing: Feature data were batch-normalised.")
   }
   
+  
+  
   ##### Remove non-robust features #####
   if("robustness" %in% settings$prep$filter_method){
     n_features_current <- length(available_features)
@@ -414,5 +419,4 @@ determine_pre_processing_parameters <- function(cl, data_id, run_id){
   
   # Return list of featureInfo objects
   return(feature_info_list)
-  
 }
