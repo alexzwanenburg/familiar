@@ -508,20 +508,6 @@ setMethod("filter_bad_samples", signature(data="dataObject"),
             
             # Find the columns containing features
             feature_columns <- get_feature_columns(x=data)
-
-            # Determine the number of missing data points and total number of data points for each sample
-            # Can be quite slow as is_valid_data is being called for every single entry, instead of column-wise.
-            # dt_missing <- data@data[, list(n_missing=sum(sapply(.SD, function(x) (sum(!is_valid_data(x))))), n_total=.N*length(feature_columns), keep_sample=TRUE),
-                                    # by=seq_len(nrow(data@data)), .SDcols=feature_columns]
-            
-            # Determine which samples should be removed by comparing the missing data fraction with the provided threshold.
-            # dt_missing[n_missing/n_total >= threshold, "keep_sample":=FALSE]
-            
-            # Filter bad samples
-            # data@data <- data@data[(dt_missing$keep_sample)]
-            
-            # Fast, but recreates the data set in memory <- not good for large data sets!
-            # n_missing <- data@data[, list(n_missing=rowSums(sapply(.SD, function(x) (!is_valid_data(x))))), .SDcols=feature_columns]$n_missing
             
             # Still very fast, but is much friendlier to our poor memory.
             n_missing <- numeric(nrow(data@data))
@@ -660,7 +646,8 @@ setMethod("batch_normalise_features", signature(data="dataObject"),
             # Apply batch-normalisation
             batch_normalised_list <- lapply(feature_columns, function(ii, data, feature_info_list){
               
-              x <- batch_normalise.apply_normalisation(x=data@data[, c(ii, "subject_id", "cohort_id"), with=FALSE], feature_info=feature_info_list[[ii]])
+              x <- batch_normalise.apply_normalisation(x=data@data[, c(ii, "subject_id", "cohort_id", "repetition_id"), with=FALSE],
+                                                       feature_info=feature_info_list[[ii]])
               
               return(x)
             }, data=data, feature_info_list=feature_info_list)
