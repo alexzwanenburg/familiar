@@ -2093,14 +2093,16 @@ setMethod("extract_sample_similarity_table", signature(object="familiarEnsemble"
 .process_single_iter_performance <- function(prediction_table, metric, learner, outcome_type, samples=NULL){
   # Low level function calculate discrimination performance scores
   
-  if(nrow(prediction_table) == 0){
+  if(is_empty(prediction_table)){
     # Generate dummy output.
     # This also captures length(samples) == 0
     dummy_list <- list()
+    
     for(metric_col_name in paste0("performance_", metric)){
       dummy_list[[metric_col_name]] <- 1.0
     }
-    return(head(data.table::data.table(dummy_list), n=0))
+    
+    return(head(data.table::as.data.table(dummy_list), n=0))
   }
   
   # Generate a subsample of the prediction table if required
