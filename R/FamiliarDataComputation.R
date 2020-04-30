@@ -2093,14 +2093,16 @@ setMethod("extract_sample_similarity_table", signature(object="familiarEnsemble"
 .process_single_iter_performance <- function(prediction_table, metric, learner, outcome_type, samples=NULL){
   # Low level function calculate discrimination performance scores
   
-  if(nrow(prediction_table) == 0){
+  if(is_empty(prediction_table)){
     # Generate dummy output.
     # This also captures length(samples) == 0
     dummy_list <- list()
+    
     for(metric_col_name in paste0("performance_", metric)){
       dummy_list[[metric_col_name]] <- 1.0
     }
-    return(head(data.table::data.table(dummy_list), n=0))
+    
+    return(head(data.table::as.data.table(dummy_list), n=0))
   }
   
   # Generate a subsample of the prediction table if required
@@ -2201,6 +2203,11 @@ setMethod("extract_sample_similarity_table", signature(object="familiarEnsemble"
   # Determine the number of positive classes (n_y) and negative classes (n_x)
   n_x <- tail(data, n=1)$x
   n_y <- tail(data, n=1)$y
+  
+  if(is.na(n_x) | is.na(n_y)){
+    # A table cannot be drawn if there are no positive or negative classes.
+    return(data.table::data.table("x"=numeric(0), "y"=numeric(0)))
+  }
   
   if(n_x==0 | n_y==0){
     # A table cannot be drawn if there are only positive or negative classes.

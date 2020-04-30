@@ -325,10 +325,12 @@ collect_stratification_data <- function(fam_data_list){
   stratification_data <- lapply(stratification_methods, function(strat_method, fam_data_list){
     
     # Collect stratification data
-    stratification_data <- data.table::rbindlist(lapply(fam_data_list, function(fam_data, strat_method){
+    stratification_data <-lapply(fam_data_list, function(fam_data, strat_method){
       
       # Extract stratification data
       stratification_data <- fam_data@km_data$data[[strat_method]]
+      
+      if(is_empty(stratification_data)) return(NULL)
       
       # Add identifiers
       stratification_data <- add_identifiers(data=stratification_data, object=fam_data,
@@ -336,14 +338,21 @@ collect_stratification_data <- function(fam_data_list){
       
       return(stratification_data)
       
-    }, strat_method=strat_method))
+    }, strat_method=strat_method)
+    
+    # Concatenate list to table
+    stratification_data <- data.table::rbindlist(stratification_data, use.names=TRUE)
+    
+    if(is_empty(stratification_data)) stratification_data <- NULL
     
     
     # Collect logrank test information
-    logrank_test_info <- data.table::rbindlist(lapply(fam_data_list, function(fam_data, strat_method){
+    logrank_test_info <- lapply(fam_data_list, function(fam_data, strat_method){
       
       # Extract logrank test info
       logrank_test_info <- fam_data@km_data$test[[strat_method]]$logrank
+      
+      if(is_empty(logrank_test_info)) return(NULL)
       
       # Add identifiers
       logrank_test_info <- add_identifiers(data=logrank_test_info, object=fam_data,
@@ -351,14 +360,21 @@ collect_stratification_data <- function(fam_data_list){
       
       return(logrank_test_info)
       
-    }, strat_method=strat_method))
+    }, strat_method=strat_method)
+    
+    # Concatenate list to table
+    logrank_test_info <- data.table::rbindlist(logrank_test_info, use.names=TRUE)
+    
+    if(is_empty(logrank_test_info)) logrank_test_info <- NULL
     
     
     # Collect hazard-ratio test information
-    hr_test_info <- data.table::rbindlist(lapply(fam_data_list, function(fam_data, strat_method){
+    hr_test_info <- lapply(fam_data_list, function(fam_data, strat_method){
       
       # Extract hazard ratio test info
       hr_test_info <- fam_data@km_data$test[[strat_method]]$hr_ratio
+      
+      if(is_empty(hr_test_info)) return(NULL)
       
       # Add identifiers
       hr_test_info <- add_identifiers(data=hr_test_info, object=fam_data,
@@ -366,7 +382,13 @@ collect_stratification_data <- function(fam_data_list){
       
       return(hr_test_info)
       
-    }, strat_method=strat_method))
+    }, strat_method=strat_method)
+    
+    # Concatenate list to table
+    hr_test_info <- data.table::rbindlist(hr_test_info)
+    
+    if(is_empty(hr_test_info)) hr_test_info <- NULL
+    
     
     # Extract time_max
     time_max <- unlist(sapply(fam_data_list, function(fam_data) (fam_data@km_data$time_max)))[1]

@@ -541,7 +541,7 @@ setMethod("plot_feature_similarity", signature(object="familiarCollection"),
     g_heatmap <- plotting.to_grob(p_heatmap)
     
     # Add dendogram
-    if(!is.null(show_dendrogram)){
+    if(!is.null(show_dendrogram) & inherits(cluster_object, "hclust")){
       # Obtain dendogram plotting data as line segments.
       dendro_data <- plotting.dendrogram_as_table(h=cluster_object,
                                                   similarity_metric=similarity_metric)

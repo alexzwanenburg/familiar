@@ -248,6 +248,10 @@ similarity.correlation <- function(x, y, x_categorical, y_categorical, similarit
                              y=y,
                              method=similarity_metric)
   
+  if(x_categorical | y_categorical){
+    correlation_coef <- abs(correlation_coef)
+  }
+  
   # Compute similarity as the mean correlation coefficient.
   similarity <- mean(correlation_coef, na.rm=TRUE)
   
