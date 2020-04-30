@@ -157,7 +157,7 @@ metric.confusion_matrix.get_confusion_matrix <- function(data, outcome_type){
   n_classes <- length(classes)
   
   # Skip calculation if only one class is present (this should never happen)
-  if(n_classes<=1){ return(as.double(NA)) }
+  if(n_classes <= 1) return(NULL)
   
   # Get the column with predicted outcomes
   p_outc_col <- getPredictedOutcomeColumn(outcome_type=outcome_type)
@@ -172,7 +172,7 @@ metric.confusion_matrix.get_confusion_matrix <- function(data, outcome_type){
   data <- data[valid_entries, ]
   
   # Skip further processing if no valid entries exist
-  if(nrow(data)==0) { return(NULL) }
+  if(is_empty(data)) return(NULL)
   
   # Create empty scalars
   tp <- tn <- fp <- fn <- prevalence <- bias <- numeric(n_classes)
