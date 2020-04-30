@@ -1045,7 +1045,7 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
                                         partial_match=TRUE)
     
     # Add sample dendogram
-    if(!is.null(show_sample_dendrogram)){
+    if(!is.null(show_sample_dendrogram) & inherits(sample_cluster_object, "hclust")){
       
       # Obtain dendogram plotting data as line segments.
       dendro_data <- plotting.dendrogram_as_table(h=sample_cluster_object,
@@ -1091,7 +1091,7 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
     }
     
     # Add feature dendogram
-    if(!is.null(show_feature_dendrogram)){
+    if(!is.null(show_feature_dendrogram) & inherits(feature_cluster_object, "hclust")){
       # Obtain dendogram plotting data as line segments.
       dendro_data <- plotting.dendrogram_as_table(h=feature_cluster_object,
                                                   similarity_metric=feature_similarity_metric)
