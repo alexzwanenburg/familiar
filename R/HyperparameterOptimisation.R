@@ -102,8 +102,10 @@ run_hyperparameter_optimisation <- function(cl, proj_list, data_id, settings, fi
                             assign="all",
                             FUN=hpo.perform_smbo,
                             run=iter_list,
+                            run_id=seq_along(iter_list),
                             progress_bar=show_progress_bar,
-                            MoreArgs=list("cl"=cl_inner,
+                            MoreArgs=list("n_run_total"=length(iter_list),
+                                          "cl"=cl_inner,
                                           "fs_method"=fs_method,
                                           "learner"=learner))
   
@@ -133,7 +135,7 @@ run_hyperparameter_optimisation <- function(cl, proj_list, data_id, settings, fi
 
 
 
-hpo.perform_smbo <- function(run, cl, fs_method, learner=NULL){
+hpo.perform_smbo <- function(run, run_id, n_run_total, cl, fs_method, learner=NULL){
 
   # Suppress NOTES due to non-standard evaluation in data.table
   param_id <- NULL
@@ -145,6 +147,9 @@ hpo.perform_smbo <- function(run, cl, fs_method, learner=NULL){
     is_vimp <- FALSE
   }
 
+  # Message
+  logger.message(paste0("\n\tStarting hyperparameter optimisation for run ", run_id, " of ", n_run_total, "."))
+  
   # Get project list, file_paths and settings
   proj_list <- get_project_list()
   file_paths <- get_file_paths()
