@@ -894,15 +894,22 @@ collect_and_aggregate_feature_info <- function(feature, object, stop_at="imputat
   }
   
   # Transformation parameters
-  transform_method <- get_mode(extract_from_slot(object_list=feature_info_list, slot_name="transformation_parameters", slot_element="transform_method"))
-  transform_lambda <- get_mode(extract_from_slot(object_list=feature_info_list, slot_name="transformation_parameters", slot_element="transform_lambda"))
-
+  transform_method_used <- extract_from_slot(object_list=feature_info_list, slot_name="transformation_parameters", slot_element="transform_method")
+  transform_lambda_used <- extract_from_slot(object_list=feature_info_list, slot_name="transformation_parameters", slot_element="transform_lambda")
+  transform_method <- get_mode(transform_method_used)
+  transform_lambda <- get_mode(transform_lambda_used)
+  
   feature_info@transformation_parameters <- list("transform_method" = transform_method,
                                                  "transform_lambda" = transform_lambda)
   
   if(stop_at == "transformation"){
     return(feature_info)
   }
+  
+  # Create a transform mask id so that we only extract remaining parameters from those lists that have a matching method and lambda
+  transform_mask_id <- (transform_method_used == transform_method) & (transform_lambda_used == transform_lambda)
+  
+  if(sum(transform_mask_id) > 0) feature_info_list <- feature_info_list[transform_mask_id]
   
   # Normalisation parameters
   normalisation_method <- get_mode(extract_from_slot(object_list=feature_info_list, slot_name="normalisation_parameters", slot_element="norm_method"))
