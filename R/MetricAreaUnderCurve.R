@@ -7,8 +7,9 @@ metric.auc.calc <- function(dt, metric, outcome_type, na.rm=FALSE){
   classes   <- levels(droplevels(dt$outcome))
   n_classes <- length(classes)
 
-  # Skip calculation if only one class is present (this should never happen)
-  if(n_classes==1){ return(as.double(NA)) }
+  # Skip calculation if only one class is present (this may happen in e.g.
+  # leave-one-out-cross-validation).
+  if(n_classes <=1 ) return(as.double(NA))
 
   # Remove missing values
   if(na.rm==TRUE){
