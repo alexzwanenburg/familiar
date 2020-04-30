@@ -2202,6 +2202,11 @@ setMethod("extract_sample_similarity_table", signature(object="familiarEnsemble"
   n_x <- tail(data, n=1)$x
   n_y <- tail(data, n=1)$y
   
+  if(is.na(n_x) | is.na(n_y)){
+    # A table cannot be drawn if there are no positive or negative classes.
+    return(data.table::data.table("x"=numeric(0), "y"=numeric(0)))
+  }
+  
   if(n_x==0 | n_y==0){
     # A table cannot be drawn if there are only positive or negative classes.
     return(data.table::data.table("x"=numeric(0), "y"=numeric(0)))
