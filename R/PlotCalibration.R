@@ -612,7 +612,7 @@ setMethod("plot_calibration_data", signature(object="familiarCollection"),
                                                                  x_range=x_range,
                                                                  x_breaks=x_breaks,
                                                                  flip=FALSE,
-                                                                 plot_height=density_plot_height,
+                                                                 plot_height=0.5 * density_plot_height,
                                                                  outcome_type=outcome_type)
         
         # Density of the negative class.
@@ -621,7 +621,7 @@ setMethod("plot_calibration_data", signature(object="familiarCollection"),
                                                                  x_range=x_range,
                                                                  x_breaks=x_breaks,
                                                                  flip=TRUE,
-                                                                 plot_height=density_plot_height,
+                                                                 plot_height=0.5 * density_plot_height,
                                                                  outcome_type=outcome_type)
         
         # Extract panel elements.
