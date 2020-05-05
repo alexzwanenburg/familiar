@@ -23,7 +23,7 @@ setMethod("create_data_object", signature(object="familiarModel", data="ANY"),
 
 #####load_delayed_data (model)#####
 setMethod("load_delayed_data", signature(data="dataObject", object="familiarModel"),
-          function(data, object){
+          function(data, object, stop_at){
             # Loads data from internal memory
 
             # Check if loading was actually delayed
@@ -66,7 +66,7 @@ setMethod("load_delayed_data", signature(data="dataObject", object="familiarMode
                                      sample_set_on_load = data@sample_set_on_load)
             
             # Preprocess data
-            new_data <- preprocess_data(data=new_data, object=object)
+            new_data <- preprocess_data(data=new_data, object=object, stop_at=stop_at)
             
             # Recreate iteration
             new_data <- select_data_from_samples(data=new_data, samples=run_subj_id)
@@ -88,7 +88,7 @@ setMethod("load_delayed_data", signature(data="dataObject", object="familiarMode
 
 #####preprocess_data (model)#####
 setMethod("preprocess_data", signature(data="dataObject", object="familiarModel"),
-          function(data, object){
+          function(data, object, stop_at){
             
             # Check whether pre-processing is required
             if(data@is_pre_processed) {

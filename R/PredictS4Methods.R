@@ -13,7 +13,8 @@ setMethod("predict", signature(object="familiarModel"),
             # Prepare input data
             newdata <- process_input_data(object=object,
                                           data=newdata,
-                                          is_pre_processed=is_pre_processed)
+                                          is_pre_processed=is_pre_processed,
+                                          stop_at="clustering")
             
             if(!extra_output){
               # Generate a prediction table.
