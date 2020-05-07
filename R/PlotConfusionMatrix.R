@@ -261,11 +261,15 @@ setMethod("plot_confusion_matrix", signature(object="familiarCollection"),
               } else if(show_alpha == "by_matrix"){
                 # Find the maximum observations in each facet and split, i.e.
                 # normalise per matrix.
-                max_observations[, "total_observed":=max(total_observed), by=c(facet_by, split_by)]
+                if(!is.null(facet_by) | !is.null(split_by)){
+                  max_observations[, "total_observed":=max(total_observed), by=c(facet_by, split_by)]
+                }
                 
               } else if(show_alpha == "by_figure"){
                 # Find the maximum observations over all facets.
-                max_observations[, "total_observed":=max(total_observed), by=c(split_by)]
+                if(!is.null(split_by)){
+                  max_observations[, "total_observed":=max(total_observed), by=c(split_by)]
+                }
                 
               } else if(show_alpha == "by_all"){
                 # Find the maximum observations over all plots.
