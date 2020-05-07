@@ -252,13 +252,17 @@ feature values. Two methods are implemented:
 \itemize{
 \item \code{simple}: Simple replacement of a missing value by the median value (for
 numeric features) or the modal value (for categorical features).
-\item \code{lasso} (default): Imputation of missing value by lasso regression (using
-\code{glmnet}) based on information contained in other features.
+\item \code{lasso}: Imputation of missing value by lasso regression (using \code{glmnet})
+based on information contained in other features.
 }
 
 \code{simple} imputation precedes \code{lasso} imputation to ensure that any missing
 values in predictors required for \code{lasso} regression are resolved. The
 \code{lasso} estimate is then used to replace the missing value.
+
+The default value depends on the number of features in the dataset. If the
+number is lower than 100, \code{lasso} is used by default, and \code{simple}
+otherwise.
 
 Only single imputation is performed. Imputation models and parameters are
 stored within \code{featureInfo} objects for later use with validation data
@@ -305,7 +309,7 @@ methods can be used:
     \item{\code{cluster_cut_method}}{(\emph{optional}) The method used to define the actual
 clusters. The following methods can be used:
 \itemize{
-\item \code{silhouette} (default): Clusters are formed based on the silhouette score
+\item \code{silhouette}: Clusters are formed based on the silhouette score
 (Rousseeuw, 1987). The average silhouette score is computed from 2 to
 \eqn{n} clusters, with \eqn{n} the number of features. Clusters are only
 formed if the average silhouette exceeds 0.50, which indicates reasonable
@@ -318,7 +322,10 @@ only available for \code{agnes}, \code{diana} and \code{hclust}.
 \item \code{dynamic_cut}: Dynamic cluster formation using the cutting algorithm in
 the \code{dynamicTreeCut} package. This package should be installed to select
 this option. \code{dynamic_cut} can only be used with \code{agnes} and \code{hclust}.
-}}
+}
+
+The default options are \code{silhouette} for partioning around medioids (\code{pam})
+and \code{fixed_cut} otherwise.}
     \item{\code{cluster_similarity_metric}}{(\emph{optional}) Clusters are formed based on
 feature similarity. All features are compared in a pair-wise fashion to
 compute similarity, for example correlation. The resulting similarity grid

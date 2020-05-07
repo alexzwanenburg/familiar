@@ -193,7 +193,7 @@
 #' @param config A list of settings, e.g. from an xml file.
 #' @param data Data set as loaded using the `.load_data` function.
 #' @inheritDotParams .parse_setup_settings -config
-#' @inheritDotParams .parse_preprocessing_settings -config -parallel
+#' @inheritDotParams .parse_preprocessing_settings -data -config -parallel -outcome_type
 #' @inheritDotParams .parse_feature_selection_settings -data -config -parallel -outcome_type
 #' @inheritDotParams .parse_model_development_settings -data -config -parallel -outcome_type
 #' @inheritDotParams .parse_hyperparameter_optimisation_settings -config -parallel -outcome_type
@@ -296,7 +296,9 @@
   # Pre-processing settings
   settings$prep <- do.call(.parse_preprocessing_settings,
                            args=append(list("config"=config$preprocessing,
-                                            "parallel"=settings$run$parallel),
+                                            "data"=data,
+                                            "parallel"=settings$run$parallel,
+                                            "outcome_type"=settings$data$outcome_type),
                                        dots))
   
   # Feature selection settings
@@ -731,8 +733,10 @@
 #' Internal function for parsing settings related to preprocessing
 #'
 #' @param config A list of settings, e.g. from an xml file.
+#' @param data Data set as loaded using the `.load_data` function.
 #' @param parallel Logical value that whether familiar uses parallelisation. If
 #'   `FALSE` it will override `parallel_preprocessing`.
+#' @param outcome_type Type of outcome found in the data set.
 #' @param feature_max_fraction_missing (*optional*) Numeric value between `0.0`
 #'   and `0.95` that determines the meximum fraction of missing values that
 #'   still allows a feature to be included in the data set. All features with a
@@ -971,12 +975,16 @@
 #'   * `simple`: Simple replacement of a missing value by the median value (for
 #'   numeric features) or the modal value (for categorical features).
 #'
-#'   * `lasso` (default): Imputation of missing value by lasso regression (using
-#'   `glmnet`) based on information contained in other features.
+#'   * `lasso`: Imputation of missing value by lasso regression (using `glmnet`)
+#'   based on information contained in other features.
 #'
 #'   `simple` imputation precedes `lasso` imputation to ensure that any missing
 #'   values in predictors required for `lasso` regression are resolved. The
 #'   `lasso` estimate is then used to replace the missing value.
+#'
+#'   The default value depends on the number of features in the dataset. If the
+#'   number is lower than 100, `lasso` is used by default, and `simple`
+#'   otherwise.
 #'
 #'   Only single imputation is performed. Imputation models and parameters are
 #'   stored within `featureInfo` objects for later use with validation data
@@ -1029,7 +1037,7 @@
 #' @param cluster_cut_method (*optional*) The method used to define the actual
 #'   clusters. The following methods can be used:
 #'
-#'   * `silhouette` (default): Clusters are formed based on the silhouette score
+#'   * `silhouette`: Clusters are formed based on the silhouette score
 #'   (Rousseeuw, 1987). The average silhouette score is computed from 2 to
 #'   \eqn{n} clusters, with \eqn{n} the number of features. Clusters are only
 #'   formed if the average silhouette exceeds 0.50, which indicates reasonable
@@ -1044,6 +1052,9 @@
 #'   * `dynamic_cut`: Dynamic cluster formation using the cutting algorithm in
 #'   the `dynamicTreeCut` package. This package should be installed to select
 #'   this option. `dynamic_cut` can only be used with `agnes` and `hclust`.
+#'
+#'   The default options are `silhouette` for partioning around medioids (`pam`)
+#'   and `fixed_cut` otherwise.
 #'
 #' @param cluster_similarity_metric (*optional*) Clusters are formed based on
 #'   feature similarity. All features are compared in a pair-wise fashion to
@@ -1185,7 +1196,7 @@
 #'
 #' @md
 #' @keywords internal
-.parse_preprocessing_settings <- function(config=NULL, parallel,
+.parse_preprocessing_settings <- function(config=NULL, data, parallel, outcome_type,
                                           feature_max_fraction_missing=waiver(),
                                           sample_max_fraction_missing=waiver(),
                                           filter_method=waiver(),
@@ -1309,9 +1320,12 @@
   .check_number_in_valid_range(x=settings$robustness_threshold_value, var_name="robustness_threshold_value", range=c(-Inf, 1.0))
   
   
-  # Data imputation
+  # Data imputation method. For datasets smaller than 100 features we use lasso,
+  # and simple imputation is used otherwise.
+  default_imputation_method <- ifelse(get_n_features(data, outcome_type=outcome_type) < 100, "lasso", "simple")
+  
   settings$imputation_method <- .parse_arg(x_config=config$imputation_method, x_var=imputation_method,
-                                           var_name="imputation_method", type="character", optional=TRUE, default="lasso")
+                                           var_name="imputation_method", type="character", optional=TRUE, default=default_imputation_method)
   
   .check_parameter_value_is_valid(x=settings$imputation_method, var_name="imputation_method", values=c("simple", "lasso"))
 
@@ -1354,8 +1368,9 @@
                                          var_name="cluster_linkage_method", type="character", optional=TRUE, default="average")
 
   # Feature cluster cut method
+  default_cluster_cut_method <- ifelse(settings$cluster_method == "pam", "silhouette", "fixed_cut")
   settings$cluster_cut_method <- .parse_arg(x_config=config$cluster_cut_method, x_var=cluster_cut_method,
-                                            var_name="cluster_cut_method", type="character", optional=TRUE, default="silhouette")
+                                            var_name="cluster_cut_method", type="character", optional=TRUE, default=default_cluster_cut_method)
   
   # Feature similarity metric which expresses some sort of correlation between a pair of features
   settings$cluster_similarity_metric <- .parse_arg(x_config=config$cluster_similarity_metric, x_var=cluster_similarity_metric,

@@ -58,7 +58,7 @@
 #' @inheritDotParams .parse_file_paths -config
 #' @inheritDotParams .parse_experiment_settings -config
 #' @inheritDotParams .parse_setup_settings -config
-#' @inheritDotParams .parse_preprocessing_settings -config -parallel
+#' @inheritDotParams .parse_preprocessing_settings -config -data -parallel -outcome_type
 #' @inheritDotParams .parse_feature_selection_settings -config -data -parallel -outcome_type
 #' @inheritDotParams .parse_model_development_settings -config -data -parallel -outcome_type
 #' @inheritDotParams .parse_hyperparameter_optimisation_settings -config -parallel -outcome_type
