@@ -1007,7 +1007,7 @@ setMethod("extract_performance", signature(object="familiarEnsemble", prediction
             performance_list$ensemble <- data.table::rbindlist(lapply(seq_len(n_iter), function(ii, prediction_table, metric, learner, outcome_type){
               
               # Generate a bootstrap sample.
-              samples <- sample(x=prediction_table$subject_id, size=nrow(prediction_table), replace=TRUE)
+              samples <- fam_sample(x=prediction_table$subject_id, size=nrow(prediction_table), replace=TRUE)
               
               # Calculate the model performance
               model_performance <- .process_single_iter_performance(prediction_table=prediction_table,
@@ -2266,7 +2266,7 @@ setMethod("extract_sample_similarity_table", signature(object="familiarEnsemble"
     
     auc_table <- data.table::rbindlist(lapply(seq_len(n_iter), function(ii, basic_auc_table){
       # Create samples
-      samples <- sample(x=basic_auc_table$subject_id, size=nrow(basic_auc_table), replace=TRUE)
+      samples <- fam_sample(x=basic_auc_table$subject_id, size=nrow(basic_auc_table), replace=TRUE)
       
       # Generate the AUC table
       auc_table <- .process_auc_table(basic_auc_table=basic_auc_table, samples=samples)

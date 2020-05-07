@@ -93,7 +93,7 @@ create_randomised_groups <- function(x, y=NULL, sample_id=NULL, n_max_groups=NUL
       if(n_min_groups == n_max_groups){
         n_group_draw <- n_max_groups
       } else {
-        n_group_draw <- sample(x=seq.int(from=n_min_groups, to=n_max_groups, by=1L), size=1, replace=FALSE)
+        n_group_draw <- fam_sample(x=seq.int(from=n_min_groups, to=n_max_groups, by=1L), size=1, replace=FALSE)
       }
 
       # Draw a randomised groups assignment

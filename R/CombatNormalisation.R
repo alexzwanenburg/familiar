@@ -262,7 +262,7 @@ combat.non_parametric_bayes_solver <- function(z, n_sample_features=50, cl=NULL,
   n_sample_features <- ifelse(n_sample_features > length(features), length(features), n_sample_features)
   
   # Find the selected features
-  selected_features <- sample(features, size=n_sample_features, replace=FALSE)
+  selected_features <- fam_sample(features, size=n_sample_features, replace=FALSE)
   
   # Make selection
   z_short <- droplevels(z_short[feature %in% selected_features])

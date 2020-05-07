@@ -610,7 +610,7 @@
       dt_unassigned <- dt_sub[fold_id==0,]
 
       # Choose subject id for current fold
-      curr_sample_identifiers <- sample(dt_unassigned$subject_id, size=fold_size, replace=FALSE)
+      curr_sample_identifiers <- fam_sample(x=dt_unassigned$subject_id, size=fold_size, replace=FALSE)
 
       # Update data table with fold id
       dt_sub[subject_id %in% curr_sample_identifiers, "fold_id":=as.double(ii)]
@@ -643,7 +643,7 @@
           dt_unassigned <- dt_sub[fold_id==0 & outcome==jj,]
 
           # Choose subject id for current fold
-          curr_sample_identifiers <- sample(dt_unassigned$subject_id, size=level_fold_size, replace=FALSE)
+          curr_sample_identifiers <- fam_sample(x=dt_unassigned$subject_id, size=level_fold_size, replace=FALSE)
 
           # Update data table with fold id
           dt_sub[subject_id %in% curr_sample_identifiers, "fold_id":=as.double(ii)]
@@ -670,7 +670,7 @@
         if(length(unassigned_id)<2){ next() }
 
         # Assign 1 to validation folds and remaining to training
-        valid_id <- c(valid_id, sample(x=unassigned_id, size=1))
+        valid_id <- c(valid_id, fam_sample(x=unassigned_id, size=1))
         train_id <- c(train_id, unassigned_id[!unassigned_id %in% valid_id])
       }
 
@@ -751,7 +751,7 @@
 
     if(stratify==FALSE){
       # Sample training data with replacement
-      train_id <- sample(x=dt_sub$subject_id, size=nrow(dt_sub), replace=TRUE)
+      train_id <- fam_sample(x=dt_sub$subject_id, size=nrow(dt_sub), replace=TRUE)
 
       # Determine out-of-bag data (no overlap with training subject ids)
       valid_id <- unique(sample_identifiers[!sample_identifiers %in% train_id])
@@ -779,9 +779,9 @@
         
         # Sample samples with replacement for the current class/event status
         train_id <- c(train_id,
-                      sample(x=level_sample_identifiers,
-                             size=length(level_sample_identifiers),
-                             replace=TRUE))
+                      fam_sample(x=level_sample_identifiers,
+                                 size=length(level_sample_identifiers),
+                                 replace=TRUE))
       }
 
       # Determine out-of-bag data
@@ -872,7 +872,7 @@
       if(n_remain > 0){
 
         # Randomly select the partition id to which a sample is added.
-        sel_part_id <- sample(x=partition_id, size=n_remain, replace=FALSE)
+        sel_part_id <- fam_sample(x=partition_id, size=n_remain, replace=FALSE)
 
         # Increase sample counter by 1
         dt_part[class_id==curr_class_id & part_id %in% sel_part_id, "base_samples":=base_samples+1]
@@ -895,7 +895,7 @@
 
         if(n_base_samples > 0){
           # Randomly select up to n_base_samples subject ids with the current class that were not selected before.
-          base_subjects   <- sample(x=dt_sub[class_id==jj & part_id==0]$subject_id, size=n_base_samples, replace=FALSE)
+          base_subjects   <- fam_sample(x=dt_sub[class_id==jj & part_id==0]$subject_id, size=n_base_samples, replace=FALSE)
 
           # Mark selected base subjects in dt_sub
           dt_sub[subject_id %in% base_subjects, "part_id":=ii]
@@ -908,7 +908,7 @@
 
         if(n_random_samples > 0){
           # Randomly select up to n_random_samples subject ids with the current class that were not selected for this partition
-          random_subjects <- sample(x=dt_sub[class_id==jj & part_id!=ii]$subject_id, size=n_random_samples, replace=FALSE)
+          random_subjects <- fam_sample(x=dt_sub[class_id==jj & part_id!=ii]$subject_id, size=n_random_samples, replace=FALSE)
         } else {
           random_subjects <- character(0)
         }
