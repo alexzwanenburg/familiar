@@ -417,6 +417,9 @@ determine_pre_processing_parameters <- function(cl, data_id, run_id){
   # Add required features
   feature_info_list   <- add_required_features(feature_info_list=feature_info_list)
   
+  # Filter features that are not required from the list
+  feature_info_list <- trim_unused_features_from_list(feature_info_list=feature_info_list)
+  
   # Return list of featureInfo objects
   return(feature_info_list)
 }
