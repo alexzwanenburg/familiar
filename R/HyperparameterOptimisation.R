@@ -124,9 +124,16 @@ run_hyperparameter_optimisation <- function(cl, proj_list, data_id, settings, fi
   if(is_vimp){
     logger.message(paste("\tHyperparameter optimisation: Completed parameter optimisation for the", fs_method,
                          "feature selection method."))
+    
+    logger.message(paste0("\nFeature selection: Proceeding with feature selection using the \"", fs_method, "\" method."))
+    
   } else {
     logger.message(paste("\tHyperparameter optimisation: Completed parameter optimisation for the", learner,
                          "learner, based on variable importances from the", fs_method, "feature selection method."))
+    
+    logger.message(paste0("\nModel building: Proceeding with model building using the \"",
+                          learner, "\" learner, based on variable importances from the \"",
+                          fs_method, "\" feature selection method."))
   }
 
   # Return the hpo_list variable which contains the (optimised) hyperparameters.
