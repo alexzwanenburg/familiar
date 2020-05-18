@@ -56,7 +56,7 @@ setMethod("load_delayed_data", signature(data="dataObject", object="familiarMode
             
             # Prepare a new data object
             new_data <- methods::new("dataObject",
-                                     data = getDataFromBackend(subj_id=uniq_subj_id, col_names=c(non_feature_cols, req_feature_cols), settings=settings),
+                                     data = get_data_from_backend(sample_identifiers=uniq_subj_id, column_names=c(non_feature_cols, req_feature_cols)),
                                      is_pre_processed = FALSE,
                                      outcome_type = data@outcome_type,
                                      delay_loading = FALSE,
@@ -194,9 +194,7 @@ setMethod("load_delayed_data", signature(data="dataObject", object="familiarEnse
             
             # Prepare a new data object
             new_data <- methods::new("dataObject",
-                                     data = getDataFromBackend(subj_id=uniq_subj_id,
-                                                               col_names=c(non_feature_cols, req_feature_cols),
-                                                               settings=settings),
+                                     data = get_data_from_backend(sample_identifiers=uniq_subj_id, column_names=c(non_feature_cols, req_feature_cols)),
                                      is_pre_processed = FALSE,
                                      outcome_type = data@outcome_type,
                                      delay_loading = FALSE,

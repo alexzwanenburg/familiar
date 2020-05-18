@@ -657,17 +657,30 @@
 #'   may impact processing speed. This argument is ignored if `parallel` is
 #'   `FALSE` or the cluster was initialised outside of familiar. Default is
 #'   `FALSE`, which causes the clusters to be initialised only once.
-#' @param backend (*optional*) Selection of the back-end for distributing copies
-#'   of the data. Several backend options are available, notably `rserve`,
-#'   `rserve_coop` (a version of rserve that is forced to operate in cooperative
-#'   mode), `fork` and `non_fork`. Availability of the backend depends on the OS
-#'   and package installation. `rserve_coop` (all OS), `rserve` (under windows)
-#'   and `fork` (under Linux and derived OS) maintain a single copy of the
-#'   complete dataset that is accessible to all parallel processes. This is
-#'   usually considerably more memory-efficient.
+#' @param cluster_type (*optional*) Selection of the cluster type for parallel
+#'   processing. Available types are the ones supported by the parallel package
+#'   that is part of the base R distribution: `psock` (default), `fork`, `mpi`,
+#'   `nws`, `sock`. In addition, `none` is available, which also disables
+#'   parallel processing.
+#' @param backend_type (*optional*) Selection of the backend for distributing
+#'   copies of the data. This backend ensures that only a single master copy is
+#'   kept in memory. This limits memory usage during parallel processing.
+#'
+#'   Several backend options are available, notably `socket_server`, `rserve`,
+#'   `rserve_coop` and `none` (default). Availability of the backend depends on
+#'   the operating system and package installation. `socket_server` is based on
+#'   the callr package and R sockets, comes with `familiar` and is available for
+#'   any OS. Note the callr currently has an issue that can prevent familiar
+#'   from working correctly (https://github.com/r-lib/callr/issues/151).
+#'   `rserve` requires the RServe package, and only functions correctly under
+#'   Windows. `rserve_coop` requires the RServe_coop package (installable from
+#'   https://github.com/alexzwanenburg/Rserve_coop), but can be compiled against
+#'   any OS. `none` uses the global environment of familiar to store data, and
+#'   is available for any OS. However, `none` requires copying of data to any
+#'   parallel process, and has a larger memory footprint.
 #' @param server_port (*optional*) Integer indicating the port on which the
-#'   RServe process should communicate. Defaults to port 6311. Note that ports 0
-#'   to 1024 and 49152 to 65535 cannot be used.
+#'   socket server or RServe process should communicate. Defaults to port 6311.
+#'   Note that ports 0 to 1024 and 49152 to 65535 cannot be used.
 #' @param ... Unused arguments.
 #'
 #' @return List of parameters related to the computational setup.
@@ -677,7 +690,8 @@
                                   parallel=waiver(),
                                   parallel_nr_cores=waiver(),
                                   restart_cluster=waiver(),
-                                  backend=waiver(),
+                                  cluster_type=waiver(),
+                                  backend_type=waiver(),
                                   server_port=waiver(),
                                   ...){
   
@@ -708,17 +722,24 @@
     settings$restart_cluster <- FALSE
   }
   
-  # Data server backend - this is os- and package-dependent
-  settings$backend <- .parse_arg(x_config=config$backend, x_var=backend, var_name="backed",
-                                 type="character", optional=TRUE, default=.get_default_backend())
+  # Define the cluster type
+  settings$cluster_type <- .parse_arg(x_config=config$cluster_type, x_var=cluster_type,
+                                      var_name="cluster_type", type="character", optional=TRUE, default="psock")
   
-  # Set to non-fork processing if parallel is disabled. This avoids starting any
-  # RServe or RServeCoop processes.
+  .check_parameter_value_is_valid(settings$cluster_type, var_name="cluster_type",
+                                  values=c("psock", "fork", "mpi", "nws", "sock", "none"))
+  
   if(!settings$parallel){
-    settings$backend <- "non_fork"
+    settings$cluster_type <- "none"
   }
   
-  .check_backend_availability(backend_option=settings$backend)
+  .check_cluster_type_availability(cluster_type=settings$cluster_type)
+  
+  # Data server backend - this is os- and package-dependent
+  settings$backend_type <- .parse_arg(x_config=config$backend_type, x_var=backend_type, var_name="backend_type",
+                                      type="character", optional=TRUE, default="none")
+  
+  .check_backend_type_availability(backend_type=settings$backend_type)
   
   # RServe communications port
   settings$server_port <- .parse_arg(x_config=config$server_port, x_var=server_port, var_name="server_port",

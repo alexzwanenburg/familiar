@@ -25,6 +25,7 @@ LazyData: true
 RoxygenNote: 7.1.0
 VignetteBuilder: knitr
 Imports: methods,
+    callr (>= 3.4.3),
     rlang (>= 0.3.4),
     data.table,
     survival,
@@ -141,6 +142,7 @@ Collate:
     'RankMain.R'
     'RankSimpleAggregation.R'
     'RankStabilityAggregation.R'
+    'SocketServer.R'
     'Transformation.R'
     'Utilities.R'
     'UtilitiesS4.R'

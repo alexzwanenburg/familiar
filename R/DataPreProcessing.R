@@ -9,50 +9,14 @@ get_feature_info_file <- function(file_paths, project_id){
 }
 
 
-
-.assign_feature_info_to_global <- function(feature_info_list){
-  # Put feature_info_list into the familiar environment
-  assign("feature_info_list", feature_info_list, envir=familiar_global_env)
-}
-
-
-
-get_feature_info_from_backend <- function(){
-  
-  # Retrieve the paths to files and directories
-  if(exists("familiar_global_env")){
-    if(exists("feature_info_list", where=familiar_global_env)){
-      data_env <- familiar_global_env
-    } else if (exists("feature_info_list", where=.GlobalEnv)){
-      data_env <- .GlobalEnv
-    } else {
-      stop("Feature info was not found in backend.")
-    }
-  } else if (exists("feature_info_list", where=.GlobalEnv)){
-    data_env <- .GlobalEnv
-  } else {
-    stop("Feature info was not found in backend.")
-  }
-  
-  return(get("feature_info_list", envir=data_env))
-}
-
-
-
-get_feature_info_list_name <- function(data_id, run_id){
-  return(paste0(data_id, ".", run_id))
-}
-
-
-
 get_feature_info_list <- function(run){
   
   # Find pre-processing control element for the current run
   pre_proc_id_list <- getPreprocessingID(run=run)
   
   # Load feature info list from backend
-  feature_info_list <- get_feature_info_from_backend()[[get_feature_info_list_name(data_id=pre_proc_id_list$data,
-                                                                                   run_id=pre_proc_id_list$run)]]
+  feature_info_list <- get_feature_info_from_backend(data_id=pre_proc_id_list$data,
+                                                     run_id=pre_proc_id_list$run)
   
   return(feature_info_list)
 }
@@ -61,8 +25,9 @@ get_feature_info_list <- function(run){
 check_pre_processing <- function(cl, data_id, file_paths, project_id){
 
   # Get the feature info list from the backend
-  feature_info_list <- get_feature_info_from_backend()
-
+  feature_info_list <- get_feature_info_from_backend(data_id=waiver(),
+                                                     run_id=waiver())
+  
   # Identify the data_id for pre-processing
   pre_process_data_id <- getPreprocessingID(run=getRunList(iter_list=get_project_list()$iter_list, data_id=data_id, run_id=1))$data
   
@@ -79,7 +44,7 @@ check_pre_processing <- function(cl, data_id, file_paths, project_id){
   for(run_id in all_runs){
     
     # Define the name of the feature_info_list entry
-    list_name <- get_feature_info_list_name(data_id=pre_process_data_id, run_id=run_id)
+    list_name <- .get_feature_info_list_name(data_id=pre_process_data_id, run_id=run_id)
     
     # Determine if the pre-processing data has already been stored
     if(!is.null(feature_info_list[[list_name]])){
@@ -95,8 +60,7 @@ check_pre_processing <- function(cl, data_id, file_paths, project_id){
     saveRDS(feature_info_list, file=feature_info_file)
     
     # Set to backend
-    .assign_feature_info_to_global(feature_info_list=feature_info_list)
-    
+    .assign_feature_info_to_backend(feature_info_list=feature_info_list)
   }
 }
 
@@ -138,8 +102,8 @@ apply_pre_processing <- function(cl=NULL, run, train_or_validate, selected_featu
   data <- methods::new("dataObject", data=NULL, is_pre_processed=TRUE, outcome_type=settings$data$outcome_type)
   
   # Read data from external data server. A slice is requested for the relevant subjects (rows) and columns
-  data@data <- getDataFromBackend(subj_id=unique_samples, col_names=c(non_feature_cols, required_features), settings=settings)
-
+  data@data <- get_data_from_backend(sample_identifiers=unique_samples, column_names=c(non_feature_cols, required_features))
+  
   # Check whether the dataset has any features.
   if(!has_feature_data(x=data)){
     
@@ -183,7 +147,7 @@ determine_pre_processing_parameters <- function(cl, data_id, run_id){
   settings <- get_settings()
     
   # Get the generic feature information list
-  feature_info_list <- get_feature_info_from_backend()[["generic"]]
+  feature_info_list <- get_feature_info_from_backend()
   
   # Add workflow control info
   feature_info_list  <- add_control_info(feature_info_list=feature_info_list, data_id=data_id, run_id=run_id)
@@ -202,7 +166,7 @@ determine_pre_processing_parameters <- function(cl, data_id, run_id){
   data_obj           <- methods::new("dataObject", data=NULL, is_pre_processed=TRUE, outcome_type=settings$data$outcome_type)
   
   # Read data from external data server. A slice is requested for the relevant subjects (rows) and columns
-  data_obj@data      <- getDataFromBackend(subj_id=run_subj_id, settings=settings)
+  data_obj@data      <- get_data_from_backend(sample_identifiers=run_subj_id)
   
   # Remove unavailable features from the data object.
   data_obj           <- filter_features(data=data_obj, available_features=available_features)
