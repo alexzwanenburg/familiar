@@ -58,7 +58,7 @@
 #' @inheritDotParams .parse_file_paths -config
 #' @inheritDotParams .parse_experiment_settings -config
 #' @inheritDotParams .parse_setup_settings -config
-#' @inheritDotParams .parse_preprocessing_settings -config -parallel
+#' @inheritDotParams .parse_preprocessing_settings -config -data -parallel -outcome_type
 #' @inheritDotParams .parse_feature_selection_settings -config -data -parallel -outcome_type
 #' @inheritDotParams .parse_model_development_settings -config -data -parallel -outcome_type
 #' @inheritDotParams .parse_hyperparameter_optimisation_settings -config -parallel -outcome_type
@@ -188,21 +188,33 @@ summon_familiar <- function(formula=NULL, data=NULL, cl=NULL, config=NULL, confi
   }
 
   # Assign objects that should be accessible everywhere to the familiar global
-  # environment.
+  # environment. Note that .assign_data_to_backend will also start backend
+  # server processes.
   .assign_settings_to_global(settings=settings)
   .assign_file_paths_to_global(file_paths=file_paths)
-  .assign_feature_info_to_global(feature_info_list=feature_info_list)
   .assign_project_info_to_global(project_info=project_info)
   .assign_outcome_info_to_global(outcome_info=outcome_info)
-  .assign_data_to_global(backend_data=data, backend=settings$run$backend, server_port=settings$run$server_port)
+  .assign_backend_options_to_global(backend_type=settings$run$backend_type,
+                                    server_port=settings$run$server_port)
+  .assign_data_to_backend(data=data,
+                          backend_type=settings$run$backend_type,
+                          server_port=settings$run$server_port)
+  .assign_feature_info_to_backend(feature_info_list=feature_info_list,
+                                  backend_type=settings$run$backend_type,
+                                  server_port=settings$run$server_port)
   .assign_parallel_options_to_global(is_external_cluster=is_external_cluster,
                                      restart_cluster=settings$run$restart_cluster,
                                      n_cores=settings$run$parallel_nr_cores,
-                                     parallel_backend=settings$run$backend)
+                                     cluster_type=settings$run$cluster_type)
+  
+  # Make sure that backend server will close after the process finishes.
+  on.exit(shutdown_backend_server(backend_type=settings$run$backend_type,
+                                  server_port=settings$run$server_port))
   
   if(settings$run$parallel & !settings$run$restart_cluster & !is_external_cluster){
     # Start local cluster in the overall process.
     cl <- .restart_cluster(cl=NULL, assign="all")
+    on.exit(.terminate_cluster(cl))
     
   } else if(settings$run$parallel & settings$run$restart_cluster & !is_external_cluster){
     # Start processes locally.
@@ -222,9 +234,6 @@ summon_familiar <- function(formula=NULL, data=NULL, cl=NULL, config=NULL, confi
   
   # Start evaluation
   run_evaluation(cl=cl, proj_list=project_info, settings=settings, file_paths=file_paths)
-  
-  # Stop locally initiated clusters
-  .terminate_cluster(cl)
   
   if(file_paths$is_temporary){
     # Collect all familiarModels, familiarEnsemble, familiarData and

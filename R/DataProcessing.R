@@ -207,14 +207,14 @@ get_signature <- function(feature_info_list, dt_ranks, fs_method, param, setting
                                                feature_info_list=feature_info_list)
     
     # Order randomly so that there is no accidental dependency on order
-    sel_feat_cols <- sample(x=sel_feat_cols, size=length(sel_feat_cols), replace=FALSE)
+    sel_feat_cols <- fam_sample(x=sel_feat_cols, size=length(sel_feat_cols), replace=FALSE)
 
   } else if(fs_method=="random"){
     # Randomise selection
     features <- features_after_clustering(features=get_available_features(feature_info_list=feature_info_list),
                                           feature_info_list=feature_info_list)
 
-    sel_feat_cols <- sample(x=features, size=sign_size, replace=FALSE)
+    sel_feat_cols <- fam_sample(x=features, size=sign_size, replace=FALSE)
 
   } else {
     # Select non-feature columns and signature feature columns

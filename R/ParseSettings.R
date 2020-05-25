@@ -193,7 +193,7 @@
 #' @param config A list of settings, e.g. from an xml file.
 #' @param data Data set as loaded using the `.load_data` function.
 #' @inheritDotParams .parse_setup_settings -config
-#' @inheritDotParams .parse_preprocessing_settings -config -parallel
+#' @inheritDotParams .parse_preprocessing_settings -data -config -parallel -outcome_type
 #' @inheritDotParams .parse_feature_selection_settings -data -config -parallel -outcome_type
 #' @inheritDotParams .parse_model_development_settings -data -config -parallel -outcome_type
 #' @inheritDotParams .parse_hyperparameter_optimisation_settings -config -parallel -outcome_type
@@ -296,7 +296,9 @@
   # Pre-processing settings
   settings$prep <- do.call(.parse_preprocessing_settings,
                            args=append(list("config"=config$preprocessing,
-                                            "parallel"=settings$run$parallel),
+                                            "data"=data,
+                                            "parallel"=settings$run$parallel,
+                                            "outcome_type"=settings$data$outcome_type),
                                        dots))
   
   # Feature selection settings
@@ -655,17 +657,30 @@
 #'   may impact processing speed. This argument is ignored if `parallel` is
 #'   `FALSE` or the cluster was initialised outside of familiar. Default is
 #'   `FALSE`, which causes the clusters to be initialised only once.
-#' @param backend (*optional*) Selection of the back-end for distributing copies
-#'   of the data. Several backend options are available, notably `rserve`,
-#'   `rserve_coop` (a version of rserve that is forced to operate in cooperative
-#'   mode), `fork` and `non_fork`. Availability of the backend depends on the OS
-#'   and package installation. `rserve_coop` (all OS), `rserve` (under windows)
-#'   and `fork` (under Linux and derived OS) maintain a single copy of the
-#'   complete dataset that is accessible to all parallel processes. This is
-#'   usually considerably more memory-efficient.
+#' @param cluster_type (*optional*) Selection of the cluster type for parallel
+#'   processing. Available types are the ones supported by the parallel package
+#'   that is part of the base R distribution: `psock` (default), `fork`, `mpi`,
+#'   `nws`, `sock`. In addition, `none` is available, which also disables
+#'   parallel processing.
+#' @param backend_type (*optional*) Selection of the backend for distributing
+#'   copies of the data. This backend ensures that only a single master copy is
+#'   kept in memory. This limits memory usage during parallel processing.
+#'
+#'   Several backend options are available, notably `socket_server`, `rserve`,
+#'   `rserve_coop` and `none` (default). Availability of the backend depends on
+#'   the operating system and package installation. `socket_server` is based on
+#'   the callr package and R sockets, comes with `familiar` and is available for
+#'   any OS. Note the callr currently has an issue that can prevent familiar
+#'   from working correctly (https://github.com/r-lib/callr/issues/151).
+#'   `rserve` requires the RServe package, and only functions correctly under
+#'   Windows. `rserve_coop` requires the RServe_coop package (installable from
+#'   https://github.com/alexzwanenburg/Rserve_coop), but can be compiled against
+#'   any OS. `none` uses the global environment of familiar to store data, and
+#'   is available for any OS. However, `none` requires copying of data to any
+#'   parallel process, and has a larger memory footprint.
 #' @param server_port (*optional*) Integer indicating the port on which the
-#'   RServe process should communicate. Defaults to port 6311. Note that ports 0
-#'   to 1024 and 49152 to 65535 cannot be used.
+#'   socket server or RServe process should communicate. Defaults to port 6311.
+#'   Note that ports 0 to 1024 and 49152 to 65535 cannot be used.
 #' @param ... Unused arguments.
 #'
 #' @return List of parameters related to the computational setup.
@@ -675,7 +690,8 @@
                                   parallel=waiver(),
                                   parallel_nr_cores=waiver(),
                                   restart_cluster=waiver(),
-                                  backend=waiver(),
+                                  cluster_type=waiver(),
+                                  backend_type=waiver(),
                                   server_port=waiver(),
                                   ...){
   
@@ -706,17 +722,24 @@
     settings$restart_cluster <- FALSE
   }
   
-  # Data server backend - this is os- and package-dependent
-  settings$backend <- .parse_arg(x_config=config$backend, x_var=backend, var_name="backed",
-                                 type="character", optional=TRUE, default=.get_default_backend())
+  # Define the cluster type
+  settings$cluster_type <- .parse_arg(x_config=config$cluster_type, x_var=cluster_type,
+                                      var_name="cluster_type", type="character", optional=TRUE, default="psock")
   
-  # Set to non-fork processing if parallel is disabled. This avoids starting any
-  # RServe or RServeCoop processes.
+  .check_parameter_value_is_valid(settings$cluster_type, var_name="cluster_type",
+                                  values=c("psock", "fork", "mpi", "nws", "sock", "none"))
+  
   if(!settings$parallel){
-    settings$backend <- "non_fork"
+    settings$cluster_type <- "none"
   }
   
-  .check_backend_availability(backend_option=settings$backend)
+  .check_cluster_type_availability(cluster_type=settings$cluster_type)
+  
+  # Data server backend - this is os- and package-dependent
+  settings$backend_type <- .parse_arg(x_config=config$backend_type, x_var=backend_type, var_name="backend_type",
+                                      type="character", optional=TRUE, default="none")
+  
+  .check_backend_type_availability(backend_type=settings$backend_type)
   
   # RServe communications port
   settings$server_port <- .parse_arg(x_config=config$server_port, x_var=server_port, var_name="server_port",
@@ -731,8 +754,10 @@
 #' Internal function for parsing settings related to preprocessing
 #'
 #' @param config A list of settings, e.g. from an xml file.
+#' @param data Data set as loaded using the `.load_data` function.
 #' @param parallel Logical value that whether familiar uses parallelisation. If
 #'   `FALSE` it will override `parallel_preprocessing`.
+#' @param outcome_type Type of outcome found in the data set.
 #' @param feature_max_fraction_missing (*optional*) Numeric value between `0.0`
 #'   and `0.95` that determines the meximum fraction of missing values that
 #'   still allows a feature to be included in the data set. All features with a
@@ -971,12 +996,16 @@
 #'   * `simple`: Simple replacement of a missing value by the median value (for
 #'   numeric features) or the modal value (for categorical features).
 #'
-#'   * `lasso` (default): Imputation of missing value by lasso regression (using
-#'   `glmnet`) based on information contained in other features.
+#'   * `lasso`: Imputation of missing value by lasso regression (using `glmnet`)
+#'   based on information contained in other features.
 #'
 #'   `simple` imputation precedes `lasso` imputation to ensure that any missing
 #'   values in predictors required for `lasso` regression are resolved. The
 #'   `lasso` estimate is then used to replace the missing value.
+#'
+#'   The default value depends on the number of features in the dataset. If the
+#'   number is lower than 100, `lasso` is used by default, and `simple`
+#'   otherwise.
 #'
 #'   Only single imputation is performed. Imputation models and parameters are
 #'   stored within `featureInfo` objects for later use with validation data
@@ -1029,7 +1058,7 @@
 #' @param cluster_cut_method (*optional*) The method used to define the actual
 #'   clusters. The following methods can be used:
 #'
-#'   * `silhouette` (default): Clusters are formed based on the silhouette score
+#'   * `silhouette`: Clusters are formed based on the silhouette score
 #'   (Rousseeuw, 1987). The average silhouette score is computed from 2 to
 #'   \eqn{n} clusters, with \eqn{n} the number of features. Clusters are only
 #'   formed if the average silhouette exceeds 0.50, which indicates reasonable
@@ -1044,6 +1073,9 @@
 #'   * `dynamic_cut`: Dynamic cluster formation using the cutting algorithm in
 #'   the `dynamicTreeCut` package. This package should be installed to select
 #'   this option. `dynamic_cut` can only be used with `agnes` and `hclust`.
+#'
+#'   The default options are `silhouette` for partioning around medioids (`pam`)
+#'   and `fixed_cut` otherwise.
 #'
 #' @param cluster_similarity_metric (*optional*) Clusters are formed based on
 #'   feature similarity. All features are compared in a pair-wise fashion to
@@ -1185,7 +1217,7 @@
 #'
 #' @md
 #' @keywords internal
-.parse_preprocessing_settings <- function(config=NULL, parallel,
+.parse_preprocessing_settings <- function(config=NULL, data, parallel, outcome_type,
                                           feature_max_fraction_missing=waiver(),
                                           sample_max_fraction_missing=waiver(),
                                           filter_method=waiver(),
@@ -1309,9 +1341,12 @@
   .check_number_in_valid_range(x=settings$robustness_threshold_value, var_name="robustness_threshold_value", range=c(-Inf, 1.0))
   
   
-  # Data imputation
+  # Data imputation method. For datasets smaller than 100 features we use lasso,
+  # and simple imputation is used otherwise.
+  default_imputation_method <- ifelse(get_n_features(data, outcome_type=outcome_type) < 100, "lasso", "simple")
+  
   settings$imputation_method <- .parse_arg(x_config=config$imputation_method, x_var=imputation_method,
-                                           var_name="imputation_method", type="character", optional=TRUE, default="lasso")
+                                           var_name="imputation_method", type="character", optional=TRUE, default=default_imputation_method)
   
   .check_parameter_value_is_valid(x=settings$imputation_method, var_name="imputation_method", values=c("simple", "lasso"))
 
@@ -1354,8 +1389,9 @@
                                          var_name="cluster_linkage_method", type="character", optional=TRUE, default="average")
 
   # Feature cluster cut method
+  default_cluster_cut_method <- ifelse(settings$cluster_method == "pam", "silhouette", "fixed_cut")
   settings$cluster_cut_method <- .parse_arg(x_config=config$cluster_cut_method, x_var=cluster_cut_method,
-                                            var_name="cluster_cut_method", type="character", optional=TRUE, default="silhouette")
+                                            var_name="cluster_cut_method", type="character", optional=TRUE, default=default_cluster_cut_method)
   
   # Feature similarity metric which expresses some sort of correlation between a pair of features
   settings$cluster_similarity_metric <- .parse_arg(x_config=config$cluster_similarity_metric, x_var=cluster_similarity_metric,

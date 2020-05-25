@@ -32,17 +32,30 @@ take time to set up the clusters. Therefore setting this argument to \code{TRUE}
 may impact processing speed. This argument is ignored if \code{parallel} is
 \code{FALSE} or the cluster was initialised outside of familiar. Default is
 \code{FALSE}, which causes the clusters to be initialised only once.}
-    \item{\code{backend}}{(\emph{optional}) Selection of the back-end for distributing copies
-of the data. Several backend options are available, notably \code{rserve},
-\code{rserve_coop} (a version of rserve that is forced to operate in cooperative
-mode), \code{fork} and \code{non_fork}. Availability of the backend depends on the OS
-and package installation. \code{rserve_coop} (all OS), \code{rserve} (under windows)
-and \code{fork} (under Linux and derived OS) maintain a single copy of the
-complete dataset that is accessible to all parallel processes. This is
-usually considerably more memory-efficient.}
+    \item{\code{cluster_type}}{(\emph{optional}) Selection of the cluster type for parallel
+processing. Available types are the ones supported by the parallel package
+that is part of the base R distribution: \code{psock} (default), \code{fork}, \code{mpi},
+\code{nws}, \code{sock}. In addition, \code{none} is available, which also disables
+parallel processing.}
+    \item{\code{backend_type}}{(\emph{optional}) Selection of the backend for distributing
+copies of the data. This backend ensures that only a single master copy is
+kept in memory. This limits memory usage during parallel processing.
+
+Several backend options are available, notably \code{socket_server}, \code{rserve},
+\code{rserve_coop} and \code{none} (default). Availability of the backend depends on
+the operating system and package installation. \code{socket_server} is based on
+the callr package and R sockets, comes with \code{familiar} and is available for
+any OS. Note the callr currently has an issue that can prevent familiar
+from working correctly (https://github.com/r-lib/callr/issues/151).
+\code{rserve} requires the RServe package, and only functions correctly under
+Windows. \code{rserve_coop} requires the RServe_coop package (installable from
+https://github.com/alexzwanenburg/Rserve_coop), but can be compiled against
+any OS. \code{none} uses the global environment of familiar to store data, and
+is available for any OS. However, \code{none} requires copying of data to any
+parallel process, and has a larger memory footprint.}
     \item{\code{server_port}}{(\emph{optional}) Integer indicating the port on which the
-RServe process should communicate. Defaults to port 6311. Note that ports 0
-to 1024 and 49152 to 65535 cannot be used.}
+socket server or RServe process should communicate. Defaults to port 6311.
+Note that ports 0 to 1024 and 49152 to 65535 cannot be used.}
     \item{\code{feature_max_fraction_missing}}{(\emph{optional}) Numeric value between \code{0.0}
 and \code{0.95} that determines the meximum fraction of missing values that
 still allows a feature to be included in the data set. All features with a
@@ -252,13 +265,17 @@ feature values. Two methods are implemented:
 \itemize{
 \item \code{simple}: Simple replacement of a missing value by the median value (for
 numeric features) or the modal value (for categorical features).
-\item \code{lasso} (default): Imputation of missing value by lasso regression (using
-\code{glmnet}) based on information contained in other features.
+\item \code{lasso}: Imputation of missing value by lasso regression (using \code{glmnet})
+based on information contained in other features.
 }
 
 \code{simple} imputation precedes \code{lasso} imputation to ensure that any missing
 values in predictors required for \code{lasso} regression are resolved. The
 \code{lasso} estimate is then used to replace the missing value.
+
+The default value depends on the number of features in the dataset. If the
+number is lower than 100, \code{lasso} is used by default, and \code{simple}
+otherwise.
 
 Only single imputation is performed. Imputation models and parameters are
 stored within \code{featureInfo} objects for later use with validation data
@@ -305,7 +322,7 @@ methods can be used:
     \item{\code{cluster_cut_method}}{(\emph{optional}) The method used to define the actual
 clusters. The following methods can be used:
 \itemize{
-\item \code{silhouette} (default): Clusters are formed based on the silhouette score
+\item \code{silhouette}: Clusters are formed based on the silhouette score
 (Rousseeuw, 1987). The average silhouette score is computed from 2 to
 \eqn{n} clusters, with \eqn{n} the number of features. Clusters are only
 formed if the average silhouette exceeds 0.50, which indicates reasonable
@@ -318,7 +335,10 @@ only available for \code{agnes}, \code{diana} and \code{hclust}.
 \item \code{dynamic_cut}: Dynamic cluster formation using the cutting algorithm in
 the \code{dynamicTreeCut} package. This package should be installed to select
 this option. \code{dynamic_cut} can only be used with \code{agnes} and \code{hclust}.
-}}
+}
+
+The default options are \code{silhouette} for partioning around medioids (\code{pam})
+and \code{fixed_cut} otherwise.}
     \item{\code{cluster_similarity_metric}}{(\emph{optional}) Clusters are formed based on
 feature similarity. All features are compared in a pair-wise fashion to
 compute similarity, for example correlation. The resulting similarity grid

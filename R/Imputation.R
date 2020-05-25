@@ -323,7 +323,7 @@ impute.add_simple_imputation_info <- function(cl=NULL, feature_info_list, data_o
                          assign=NULL,
                          X=feature_columns,
                          FUN=.add_info,
-                         progress_bar=TRUE,
+                         progress_bar=FALSE,
                          feature_info_list=feature_info_list,
                          data_obj=data_obj)
   

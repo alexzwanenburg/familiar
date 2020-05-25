@@ -9,7 +9,8 @@
   parallel = waiver(),
   parallel_nr_cores = waiver(),
   restart_cluster = waiver(),
-  backend = waiver(),
+  cluster_type = waiver(),
+  backend_type = waiver(),
   server_port = waiver(),
   ...
 )
@@ -34,18 +35,32 @@ may impact processing speed. This argument is ignored if \code{parallel} is
 \code{FALSE} or the cluster was initialised outside of familiar. Default is
 \code{FALSE}, which causes the clusters to be initialised only once.}
 
-\item{backend}{(\emph{optional}) Selection of the back-end for distributing copies
-of the data. Several backend options are available, notably \code{rserve},
-\code{rserve_coop} (a version of rserve that is forced to operate in cooperative
-mode), \code{fork} and \code{non_fork}. Availability of the backend depends on the OS
-and package installation. \code{rserve_coop} (all OS), \code{rserve} (under windows)
-and \code{fork} (under Linux and derived OS) maintain a single copy of the
-complete dataset that is accessible to all parallel processes. This is
-usually considerably more memory-efficient.}
+\item{cluster_type}{(\emph{optional}) Selection of the cluster type for parallel
+processing. Available types are the ones supported by the parallel package
+that is part of the base R distribution: \code{psock} (default), \code{fork}, \code{mpi},
+\code{nws}, \code{sock}. In addition, \code{none} is available, which also disables
+parallel processing.}
+
+\item{backend_type}{(\emph{optional}) Selection of the backend for distributing
+copies of the data. This backend ensures that only a single master copy is
+kept in memory. This limits memory usage during parallel processing.
+
+Several backend options are available, notably \code{socket_server}, \code{rserve},
+\code{rserve_coop} and \code{none} (default). Availability of the backend depends on
+the operating system and package installation. \code{socket_server} is based on
+the callr package and R sockets, comes with \code{familiar} and is available for
+any OS. Note the callr currently has an issue that can prevent familiar
+from working correctly (https://github.com/r-lib/callr/issues/151).
+\code{rserve} requires the RServe package, and only functions correctly under
+Windows. \code{rserve_coop} requires the RServe_coop package (installable from
+https://github.com/alexzwanenburg/Rserve_coop), but can be compiled against
+any OS. \code{none} uses the global environment of familiar to store data, and
+is available for any OS. However, \code{none} requires copying of data to any
+parallel process, and has a larger memory footprint.}
 
 \item{server_port}{(\emph{optional}) Integer indicating the port on which the
-RServe process should communicate. Defaults to port 6311. Note that ports 0
-to 1024 and 49152 to 65535 cannot be used.}
+socket server or RServe process should communicate. Defaults to port 6311.
+Note that ports 0 to 1024 and 49152 to 65535 cannot be used.}
 
 \item{...}{Unused arguments.}
 }

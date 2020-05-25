@@ -1284,3 +1284,28 @@ quiet <- function(x) {
   
   return(append(l, new))
 }
+
+
+fam_sample <- function(x, size, replace=FALSE, prob=NULL){
+  # This function prevents the documented behaviour of the sample function,
+  # where if x is positive, numeric and only has one element, it interprets x as
+  # a series of x, i.e. x=seq_len(x). That's bad news if x is a sample
+  # identifier.
+  
+  if(length(x) == 1){
+    
+    # Check that size is not greater than 1, if items are to be drawn without
+    # replacement.
+    if(!replace & size > 1){
+      stop("cannot take a sample larger than the population when 'replace = FALSE'")
+    }
+    
+    return(rep_len(x=x, length.out=size))
+    
+  } else {
+    # If x is a vector, array or list with multiple elements, then all of the
+    # above is not an issue, and we can make use of sample.
+    
+    return(sample(x=x, size=size, replace=replace, prob=prob))
+  }
+}

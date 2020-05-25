@@ -797,6 +797,46 @@ get_cluster_table <- function(feature_info_list, selected_features=NULL){
 }
 
 
+
+trim_unused_features_from_list <- function(feature_info_list){
+  
+  # Iterate over features to find all required features
+  required_features <- unlist(lapply(feature_info_list, function(feature_info) {
+    # Check if the feature was removed.
+    if(feature_info@removed) return(NULL)
+    
+    return(feature_info@required_features)
+    
+  }))
+  
+  # All required features.
+  required_features <- unique(required_features)
+  
+  # All signature features.
+  signature_features <- unlist(lapply(feature_info_list, function(feature_info) {
+    # Check if the feature is in the signature.
+    if(!feature_info@in_signature) return(NULL)
+    
+    return(feature_info@name)
+    
+  }))
+  
+  # All novelty features.
+  novelty_features <- unlist(lapply(feature_info_list, function(feature_info) {
+    # Check if the feature is a novelty feature.
+    if(!feature_info@in_novelty) return(NULL)
+    
+    return(feature_info@name)
+    
+  }))
+  
+  features_kept <- unique(c(required_features, signature_features, novelty_features))
+  
+  return(feature_info_list[features_kept])
+}
+
+
+
 collect_and_aggregate_feature_info <- function(feature, object, stop_at="imputation"){
   
   # Suppress NOTES due to non-standard evaluation in data.table

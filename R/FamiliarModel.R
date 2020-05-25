@@ -179,7 +179,7 @@ setMethod("save", signature(list="familiarModel", file="character"),
 
 #####process_input_data (model)#####
 setMethod("process_input_data", signature(object="familiarModel", data="ANY"),
-          function(object, data, is_pre_processed=FALSE){
+          function(object, data, is_pre_processed=FALSE, stop_at="clustering"){
             # Prepares data for prediction, assessing calibration etc.
             
             # Check whether data is a dataObject, and create one otherwise
@@ -189,12 +189,12 @@ setMethod("process_input_data", signature(object="familiarModel", data="ANY"),
             
             # Load data from internal memory, if not provided otherwise
             if(data@delay_loading){
-              data <- load_delayed_data(data=data, object=object)
+              data <- load_delayed_data(data=data, object=object, stop_at=stop_at)
             }
 
             # Pre-process data in case it has not been pre-processed
             if(!data@is_pre_processed){
-              data <- preprocess_data(data=data, object=object)
+              data <- preprocess_data(data=data, object=object, stop_at=stop_at)
             }
   
             # Return data

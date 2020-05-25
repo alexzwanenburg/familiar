@@ -124,9 +124,16 @@ run_hyperparameter_optimisation <- function(cl, proj_list, data_id, settings, fi
   if(is_vimp){
     logger.message(paste("\tHyperparameter optimisation: Completed parameter optimisation for the", fs_method,
                          "feature selection method."))
+    
+    logger.message(paste0("\nFeature selection: Proceeding with feature selection using the \"", fs_method, "\" method."))
+    
   } else {
     logger.message(paste("\tHyperparameter optimisation: Completed parameter optimisation for the", learner,
                          "learner, based on variable importances from the", fs_method, "feature selection method."))
+    
+    logger.message(paste0("\nModel building: Proceeding with model building using the \"",
+                          learner, "\" learner, based on variable importances from the \"",
+                          fs_method, "\" feature selection method."))
   }
 
   # Return the hpo_list variable which contains the (optimised) hyperparameters.
@@ -260,7 +267,7 @@ hpo.perform_smbo <- function(run, run_id, n_run_total, cl, fs_method, learner=NU
                                         perturbation = "bootstrap")
   
   # Select hyperparameter bootstraps
-  sel_run_id <- sample(seq_len(settings$hpo$hpo_max_bootstraps), settings$hpo$hpo_bootstraps, replace=FALSE)
+  sel_run_id <- sample(seq_len(settings$hpo$hpo_max_bootstraps), size=settings$hpo$hpo_bootstraps, replace=FALSE)
 
   # Set up hyperparameter runs
   dt_hpo_run <- data.table::as.data.table(expand.grid(param_id=dt_param$param_id, run_id=sel_run_id, KEEP.OUT.ATTRS=FALSE, stringsAsFactors=FALSE))
@@ -620,11 +627,11 @@ hpo.create_runoff_run_table <- function(param_id_inc, param_id_chal, dt_score, n
 
     # Sample and add to run_id_inc_new
     if(n_sample > 0){
-      run_id_inc_new <- append(run_id_inc_new, sample(x=run_id_inc_unsample, size=n_sample, replace=FALSE))
+      run_id_inc_new <- append(run_id_inc_new, fam_sample(x=run_id_inc_unsample, size=n_sample, replace=FALSE))
     }
   } else {
     # Sample up to n_new from run_id_inc_new
-    run_id_inc_new <- sample(x=run_id_inc_new, size=n_new, replace=FALSE)
+    run_id_inc_new <- fam_sample(x=run_id_inc_new, size=n_new, replace=FALSE)
   }
 
   # Add new runs to the incumbent and applicable challengers
@@ -1041,7 +1048,7 @@ hpo.randomise_hyperparameter_set <- function(parameter_table=NULL, parameter_lis
     # Select one hyperparameter from the list of randomisable hyperparameters to
     # randomly update.
     random_parameters <- sapply(parameter_list, function(list_entry) (list_entry$randomise))
-    selected_parameter <- sample(names(parameter_list)[random_parameters], 1)
+    selected_parameter <- fam_sample(names(parameter_list)[random_parameters], size=1)
 
     # Get current value of hyperparameter from dt
     current_parameter_value <- parameter_table[[selected_parameter]]
@@ -1078,7 +1085,7 @@ hpo.randomise_hyperparameter_set <- function(parameter_table=NULL, parameter_lis
         
       } else {
         # Treat a range such as c(0,1,3) as if only these values can be selected.
-        new_hp_val_float <- sample(parameter_range, 1)
+        new_hp_val_float <- fam_sample(parameter_range, size=1)
       }
 
       # Set new value as integer or numeric float
@@ -1093,7 +1100,7 @@ hpo.randomise_hyperparameter_set <- function(parameter_table=NULL, parameter_lis
       available_parameter_values <- parameter_range[parameter_range != current_parameter_value]
 
       # Randomly select one option
-      updated_list[[selected_parameter]] <- sample(available_parameter_values, 1)
+      updated_list[[selected_parameter]] <- fam_sample(available_parameter_values, size=1)
       
     } else {
       ..error_reached_unreachable_code("randomise_hyperparameter_set_unknown_type")
@@ -1133,7 +1140,7 @@ hpo.randomise_hyperparameter_set <- function(parameter_table=NULL, parameter_lis
           
         } else {
           # Treat a range such as c(0,1,3) as if only these values can be selected.
-          new_hp_val_float <- sample(parameter_range, 1)
+          new_hp_val_float <- fam_sample(parameter_range, size=1)
         }
         
         # Set new value as integer or numeric float
@@ -1145,7 +1152,7 @@ hpo.randomise_hyperparameter_set <- function(parameter_table=NULL, parameter_lis
         
       } else if(parameter_type %in% c("factor", "logical")){
         # Randomly select one option
-        updated_list[[selected_parameter]] <- sample(parameter_range, 1)
+        updated_list[[selected_parameter]] <- fam_sample(parameter_range, size=1)
       }
     }
   }

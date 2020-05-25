@@ -1,4 +1,4 @@
-combat.get_normalisation_parameters <- function(x, batch_normalisation_method, cl=NULL){
+combat.get_normalisation_parameters <- function(x, batch_normalisation_method, cl=NULL, progress_bar=TRUE){
   # Suppress NOTES due to non-standard evaluation in data.table
   value <- n <- n_valid_features <- is_valid <- NULL
   gamma_hat <- norm_method <- NULL
@@ -48,13 +48,13 @@ combat.get_normalisation_parameters <- function(x, batch_normalisation_method, c
       
       # Find batch parameters after Bayesian optimisation with parametric
       # empirical priors.
-      combat_batch_parameters <- combat.iterative_parametric_bayes_solver(z=z, cl=cl)
+      combat_batch_parameters <- combat.iterative_parametric_bayes_solver(z=z, cl=cl, progress_bar=progress_bar)
 
     } else {
       # Non-parametric empirical Bayes
       
       # Find batch parameters with non-parametric empirical priors.
-      combat_batch_parameters <- combat.non_parametric_bayes_solver(z=z, cl=cl)
+      combat_batch_parameters <- combat.non_parametric_bayes_solver(z=z, cl=cl, progress_bar=progress_bar)
     }
 
     # Set the norm_method in batch_parameters, and turn into a list.
@@ -71,7 +71,7 @@ combat.get_normalisation_parameters <- function(x, batch_normalisation_method, c
   
   if(!is_empty(z)){
     # Obtain normal parameters
-    normal_batch_parameters <- combat.non_combat_solver(z=z, cl=cl)
+    normal_batch_parameters <- combat.non_combat_solver(z=z, cl=cl, progress_bar=progress_bar)
     
     # Update the norm_method. Note that any "unknown" is not updated.
     normal_batch_parameters[norm_method != "unknown", "norm_method":=batch_normalisation_method]
@@ -110,7 +110,7 @@ combat.apply_normalisation <- function(x, norm_param, invert){
 
 
   
-combat.iterative_parametric_bayes_solver <- function(z, tolerance=0.0001, max_iterations=20, cl=NULL){
+combat.iterative_parametric_bayes_solver <- function(z, tolerance=0.0001, max_iterations=20, cl=NULL, progress_bar=TRUE){
   # In the empirical Bayes approach with parametric priors, the posterior
   # estimations of gamma and delta_squared are iteratively optimised.
   
@@ -141,7 +141,7 @@ combat.iterative_parametric_bayes_solver <- function(z, tolerance=0.0001, max_it
                                     assign=NULL,
                                     X=split(z, by="cohort_id"),
                                     FUN=.combat.iterative_parametric_bayes_solver,
-                                    progress_bar=TRUE,
+                                    progress_bar=progress_bar,
                                     z_short=z_short,
                                     tolerance=tolerance,
                                     max_iterations=max_iterations)
@@ -211,7 +211,7 @@ combat.iterative_parametric_bayes_solver <- function(z, tolerance=0.0001, max_it
 }
 
 
-combat.non_parametric_bayes_solver <- function(z, n_sample_features=50, cl=NULL){
+combat.non_parametric_bayes_solver <- function(z, n_sample_features=50, cl=NULL, progress_bar=TRUE){
   # Computes batch parameters using non-parametric priors. Sadly, this seems to
   # be an O(2) problem because it compares each feature with every other
   # feature. Johnson et al. We may be able to cheat a bit by subsampling the
@@ -234,7 +234,7 @@ combat.non_parametric_bayes_solver <- function(z, n_sample_features=50, cl=NULL)
                                  assign=NULL,
                                  X=split(z, by=c("cohort_id", "feature")),
                                  FUN=.combat.non_parametric_bayes_solver,
-                                 progress_bar=TRUE,
+                                 progress_bar=progress_bar,
                                  z_short=z_short,
                                  n_sample_features=n_sample_features)
   
@@ -262,7 +262,7 @@ combat.non_parametric_bayes_solver <- function(z, n_sample_features=50, cl=NULL)
   n_sample_features <- ifelse(n_sample_features > length(features), length(features), n_sample_features)
   
   # Find the selected features
-  selected_features <- sample(features, size=n_sample_features, replace=FALSE)
+  selected_features <- fam_sample(features, size=n_sample_features, replace=FALSE)
   
   # Make selection
   z_short <- droplevels(z_short[feature %in% selected_features])
@@ -296,7 +296,7 @@ combat.non_parametric_bayes_solver <- function(z, n_sample_features=50, cl=NULL)
 }
 
 
-combat.non_combat_solver <- function(z, cl=NULL){
+combat.non_combat_solver <- function(z, cl=NULL, progress_bar=TRUE){
   # Extracts batch normalisation parameters using standard methods.
   
   # Extract parameters for each feature in each batch.
@@ -304,7 +304,7 @@ combat.non_combat_solver <- function(z, cl=NULL){
                                  assign=NULL,
                                  X=split(z, by=c("cohort_id", "feature")),
                                  FUN=.combat.non_combat_solver,
-                                 progress_bar=TRUE)
+                                 progress_bar=progress_bar)
   
   # Combine into single table
   batch_parameters <- data.table::rbindlist(batch_parameters)

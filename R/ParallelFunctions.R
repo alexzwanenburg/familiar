@@ -1,65 +1,47 @@
-.start_cluster <- function(n_cores=NULL, parallel_backend=NULL){
+.start_cluster <- function(n_cores=NULL, cluster_type=NULL){
   # Start a cluster of workers
   
   # Load from familiar global environment if unset.
   if(is.null(n_cores)) n_cores <- .get_desired_n_cores()
-  if(is.null(parallel_backend)) parallel_backend <- .get_selected_parallel_backend()
+  if(is.null(cluster_type)) cluster_type <- .get_selected_cluster_type()
+  
+  if(cluster_type == "none") return(NULL)
   
   # Check the number of available connections
   n_available_connections <- .available_connections()
   
-  # Set the number of available cores
-  if(is.null(n_cores)){
+  # Find the number of available cores.
+  n_available_cores <- parallel::detectCores()
+  n_cores <- max(c(1, min(c(n_available_cores-1, n_cores))))
+  
+  if(n_available_connections < 2 & n_cores > 2 & cluster_type %in% c("psock", "sock", "fork")){
+    stop(paste0("R has insufficient available connections to perform parallel processing. ",
+                "You may close connections using closeAllConnections() to free up connections. ",
+                "If this does not resolve the issue, disable parallelisation for familiar."))
     
-    # Find the number of available cores.
-    n_cores <- parallel::detectCores()
-    if(n_cores>1) n_cores <- n_cores-1
+  } else if(n_cores > 2 & n_available_connections < n_cores){
     
-    if(n_available_connections < 2 & n_cores > 2){
-      stop(paste0("R has insufficient available connections to perform parallel processing. ",
-                  "You may close connections using closeAllConnections() to free up connections. ",
-                  "If this does not resolve the issue, disable parallelisation for familiar."))
-      
-    } else if(n_cores > 2 & n_available_connections < n_cores){
-      
-      warning(paste0("R has insufficient available connections to use all available cores for parallel processing. ",
-                     n_available_connections, " are used instead."))
-      
-      # Update the number of cores.
-      n_cores <- n_available_connections
-    }
+    warning(paste0("R has insufficient available connections to use all available cores for parallel processing. ",
+                   n_available_connections, " are used instead."))
     
-  } else {
-    
-    # Find the number of available cores.
-    n_available_cores <- parallel::detectCores()
-    n_cores <- max(c(1, min(c(n_available_cores-1, n_cores))))
-    
-    if(n_available_connections < 2 & n_cores > 2){
-      stop(paste0("R has insufficient available connections to perform parallel processing. ",
-                  "You may close connections using closeAllConnections() to free up connections. ",
-                  "If this does not resolve the issue, disable parallelisation for familiar."))
-
-    } else if(n_cores > 2 & n_available_connections < n_cores){
-      
-      warning(paste0("R has insufficient available connections to use all available cores for parallel processing. ",
-                     n_available_connections, " are used instead."))
-      
-      # Update the number of cores.
-      n_cores <- n_available_connections
-    }
+    # Update the number of cores.
+    n_cores <- n_available_connections
   }
   
   # Return NULL if the number of cores is 1 or less.
   if(n_cores <= 1) return(NULL)
   
-  # Start CPU cluster
-  if(parallel_backend == "fork"){
+  # Start cluster.
+  if(cluster_type == "psock"){
+    cl <- parallel::makePSOCKcluster(n_cores)
+    
+  } else if(cluster_type == "fork"){
     cl <- parallel::makeForkCluster(n_cores)
-  } else {
-    cl <- parallel::makeCluster(n_cores)
+    
+  } else if(cluster_type %in% c("mpi", "nws", "sock")){
+    cl <- parallel::makeCluster(type=toupper(cluster_type), 2)
   }
-
+  
   return(cl)
 }
 
@@ -80,7 +62,9 @@
   # TODO Add check for R version in case the number of available connections
   # changes.
   
-  R_available <- 125
+  # The standard is that R allows 128 connections. 3 are in standard use by R.
+  # Another socket is used by the default socket_server data backend.
+  R_available <- 124
   
   # Find the number of currently available connections.
   n_available_connections <- R_available - nrow(showConnections())
@@ -91,19 +75,38 @@
 }
 
 
+.check_cluster_type_availability <- function(cluster_type){
+  # Check if the provided cluster type is available.
+  
+  if(get_os() == "windows" & cluster_type == "fork") {
+    stop("FORK clusters are not available for windows OS.")
+  }
+  
+  installed_libs <- utils::installed.packages()[,1]
+  
+  if(!"snow" %in% installed_libs & cluster_type %in% c("mpi", "nws", "sock")){
+    stop("The parallel package requires the snow package to work with MPI, NWS or SOCK clusters.")
+  }
+  
+  if(!"Rmpi" %in% installed_libs & cluster_type == "mpi"){
+    stop("The parallel packages requires the Rmpi package to work with MPI clusters.")
+  }
+}
+
+
 .assign_parallel_options_to_global <- function(is_external_cluster=FALSE,
                                                restart_cluster=FALSE,
                                                n_cores=NULL,
-                                               parallel_backend=NULL){
+                                               cluster_type=NULL){
   
   # We don't need a backend if the cluster is external.
-  if(is.null(parallel_backend) & !is_external_cluster) parallel_backend <- .get_default_backend()
+  if(is.null(cluster_type) & !is_external_cluster) cluster_type <- "psock"
   
   # Assign parallelisation options to the familiar global environment.
   assign("is_external_cluster", is_external_cluster, envir=familiar_global_env)
   assign("restart_cluster", restart_cluster, envir=familiar_global_env)
   assign("n_cores", n_cores, envir=familiar_global_env)
-  assign("parallel_backend", parallel_backend, envir=familiar_global_env)
+  assign("cluster_type", cluster_type, envir=familiar_global_env)
 }
 
 
@@ -164,9 +167,10 @@
 
 
 
-.get_selected_parallel_backend <- function(){
-  return(get("parallel_backend", envir=familiar_global_env))
+.get_selected_cluster_type <- function(){
+  return(get("cluster_type", envir=familiar_global_env))
 }
+
 
 
 .restart_cluster <- function(cl, assign=NULL){
@@ -188,14 +192,16 @@
     
     # Only add master data to the global environment of the clusters when
     # running a non-rserve data backend.
-    if(.get_selected_parallel_backend() %in% c("fork", "non_fork")){
+    if(.get_selected_backend_type() == "none"){
       parallel::clusterExport(cl=cl, varlist="master_data", envir=familiar_global_env)
     }
   }
   
   # Export the feature_info list
   if(any(c("all", "feature_info") %in% assign)){
-    parallel::clusterExport(cl=cl, varlist="feature_info_list", envir=familiar_global_env)
+    if(.get_selected_backend_type() == "none"){
+      parallel::clusterExport(cl=cl, varlist="feature_info_list", envir=familiar_global_env)
+    }
   }
   
   # Export the project_info list
@@ -207,19 +213,25 @@
   parallel::clusterExport(cl=cl, varlist="settings", envir=familiar_global_env)
   parallel::clusterExport(cl=cl, varlist="file_paths", envir=familiar_global_env)
   parallel::clusterExport(cl=cl, varlist="outcome_info", envir=familiar_global_env)
+  parallel::clusterExport(cl=cl, varlist="server_port", envir=familiar_global_env)
+  parallel::clusterExport(cl=cl, varlist="backend_type", envir=familiar_global_env)
   
   return(cl)
 }
 
 
-.update_info_on_cluster <- function(cl, assign){
+.update_info_on_cluster <- function(cl, assign, backend_type=NULL){
   # Not all variables in the familiar global environment are static. For
   # example, the feature_info_list may be updated by pre-processing. This
   # function updates the clusters with the latest version of such variables.
   
+  if(is.null(backend_type)) backend_type <- .get_selected_backend_type()
+  
   # Re-export the feature_info list.
   if(any(c("all", "feature_info") %in% assign)){
-    parallel::clusterExport(cl=cl, varlist="feature_info_list", envir=familiar_global_env)
+    if(backend_type == "none"){
+      parallel::clusterExport(cl=cl, varlist="feature_info_list", envir=familiar_global_env)
+    }
   }
 }
 
