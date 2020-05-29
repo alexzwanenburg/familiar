@@ -2,16 +2,16 @@ metric.concordance_index.calc <- function(dt, metric="concordance_index", learne
   # Wraps the metric.concordance_index.cindex_ function
 
   # Suppress NOTES due to non-standard evaluation in data.table
-  outcome_pred <- NULL
+  predicted_outcome <- NULL
 
   # Remove missing values
   if(na.rm==TRUE){
 
     # Maintain only valid entries
-    dt <- dt[is.finite(outcome_pred), ]
+    dt <- dt[is.finite(predicted_outcome), ]
 
     # Skip further processing if no valid entries exist
-    if(nrow(dt)==0) { return(as.double(NA)) }
+    if(is_empty(dt)) return(as.double(NA))
   }
 
   # Get outcome type
@@ -19,10 +19,10 @@ metric.concordance_index.calc <- function(dt, metric="concordance_index", learne
 
   if(metric=="concordance_index"){
     # Calculate concordance index
-    score <- metric.concordance_index.cindex_(x=dt$outcome_pred, y=as.matrix(dt[, outcome_cols, with=FALSE]))
+    score <- metric.concordance_index.cindex_(x=dt$predicted_outcome, y=as.matrix(dt[, outcome_cols, with=FALSE]))
   } else if(metric=="global_concordance_index"){
     # Calculate global concordance index
-    score <- metric.concordance_index.cindex_(x=dt$outcome_pred, y=as.matrix(dt[, outcome_cols, with=FALSE]), weight="sqrt")
+    score <- metric.concordance_index.cindex_(x=dt$predicted_outcome, y=as.matrix(dt[, outcome_cols, with=FALSE]), weight="sqrt")
   }
 
   # Invert the concordance index for risks (which are inversely related to survival times)

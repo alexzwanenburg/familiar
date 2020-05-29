@@ -3,63 +3,59 @@
 NULL
 
 
-#####train#####
-setMethod("train", signature(object="familiarModel", data="ANY"),
-          function(object, data, get_recalibration=FALSE, get_additional_info=FALSE) {
+#####.train#####
+setMethod(".train", signature(object="familiarModel", data="dataObject"),
+          function(object, data, get_additional_info=FALSE) {
             # Train method for model training
             
-            # Check if input data is available.
-            if(is.null(data)){
-              stop("Data should be provided for training a supervised learner.")
-            } else if(class(data)!="dataObject"){
-              stop("Data should be a dataObject.")
-            }
-            
             # Extract outcome type
-            fam_model    <- object
-            outcome_type <- fam_model@outcome_type
+            outcome_type <- object@outcome_type
+
+            # Check if the class of object is a subclass of familiarModel.
+            if(!is_subclass(class(object)[1], "familiarModel")) object <- promote_learner(object)
             
-            # Check if there are any data entries. The familiar model cannot be trained otherwise
-            if(is_empty(x=data)){ return(fam_model) }
+            # Check if there are any data entries. The familiar model cannot be
+            # trained otherwise
+            if(is_empty(x=data)) return(object)
             
-            # Check the number of features in data; if it has no features, the familiar model can not be trained
-            if(!has_feature_data(x=data)){ return(fam_model) }
+            # Check the number of features in data; if it has no features, the
+            # familiar model can not be trained
+            if(!has_feature_data(x=data)) return(object)
             
-            # Train a new model based on data in dt
-            fam_model@model <- learner.main(object=fam_model, data_obj=data, purpose="train")
+            # Train a new model based on data.
+            object <- ..train(object=object, data=data)
             
-            # Allow model recalibration
-            if(get_recalibration){
-              # Remove duplicate subject_id from the data for validation
-              data <- aggregate_data(data=data)
-              
-              # Create calibration models
-              fam_model@calibration_model <- learner.main(object=fam_model, data_obj=data, purpose="recalibrate")
-            }
-            
-            # Extract information required for assessing model performance, calibration (e.g. baseline survival) etc.
+            # Extract information required for assessing model performance,
+            # calibration (e.g. baseline survival) etc.
             if(get_additional_info){
-              # Remove duplicate subject_id from the data prior to calibration
+              # Remove duplicate subject_id from the data prior to obtaining fut
               data <- aggregate_data(data=data)
               
-              # Extract data required for assessing calibration
-              fam_model@calibration_info <- learner.main(object=fam_model, data_obj=data, purpose="calibration_info")
+              # Create calibration models and add to the object. Not all models
+              # require recalibration.
+              object <- ..set_recalibration_model(object=object, data=data)
               
-              if(outcome_type =="survival"){
-                fam_model@km_info <- learner.find_survival_grouping_thresholds(object=fam_model, data_obj=data)
-              }
+              # Extract data required for assessing calibration. Not all outcome
+              # types require calibration info. Currently calibration
+              # information is only retrieved for survival outcomes, in the form
+              # of baseline survival curves.
+              object <- ..set_calibration_info(object=object, data=data)
+              
+              # Set stratification thresholds. This is currently only done for
+              # survival outcomes.
+              object <- ..set_risk_stratification_thresholds(object=object, data=data)
               
               # TODO Novelty detector
-              fam_model@novelty_detector <- NULL
+              object@novelty_detector <- NULL
               
               # Add column data
-              fam_model <- add_data_column_info(object=fam_model)
+              object <- add_data_column_info(object=object)
             }
             
             # Add outcome distribution data
-            fam_model@outcome_info <- .compute_outcome_distribution_data(object=fam_model@outcome_info, data=data)
+            object@outcome_info <- .compute_outcome_distribution_data(object=object@outcome_info, data=data)
             
-            return(fam_model)
+            return(object)
           })
 
 
@@ -68,8 +64,14 @@ setMethod("assess_performance", signature(object="familiarModel"),
           function(object, newdata, metric, allow_recalibration=TRUE, is_pre_processed=FALSE, time_max=NULL, as_objective=FALSE, na.rm=FALSE){
             
             # This function is the same for familiarModel and familiarEnsemble objects
-            return(.assess_performance(object=object, newdata=newdata, metric=metric, allow_recalibration=allow_recalibration,
-                                       is_pre_processed=is_pre_processed, time_max=time_max, as_objective=as_objective, na.rm=na.rm))
+            return(.assess_performance(object=object,
+                                       data=newdata, 
+                                       metric=metric,
+                                       allow_recalibration=allow_recalibration,
+                                       is_pre_processed=is_pre_processed,
+                                       time=time_max,
+                                       as_objective=as_objective,
+                                       na.rm=na.rm))
             
           })
 
@@ -122,7 +124,7 @@ setMethod("assign_risk_groups", signature(object="familiarModel", prediction_dat
             data <- lapply(km_info_list, function(km_info, prediction_data, learner){
               
               # Assign risk group based on cutoff values stored in the familiarModel object
-              risk_group <- learner.apply_risk_threshold(predicted_values=prediction_data$outcome_pred,
+              risk_group <- learner.apply_risk_threshold(predicted_values=prediction_data$predicted_outcome,
                                                          cutoff=km_info$cutoff,
                                                          learner=learner)
               
@@ -157,19 +159,19 @@ setMethod("assess_stratification", signature(object="familiarModel"),
 
 #####compute_calibration_data (model, dataObject)#####
 setMethod("compute_calibration_data", signature(object="familiarModel", data="dataObject"),
-          function(object, data, time_max=NULL){
+          function(object, data, time=NULL){
             
             # This function is the same for familiarModel and familiarEnsemble objects
-            return(.compute_calibration_data(object=object, data=data, time_max=time_max))
+            return(.compute_calibration_data(object=object, data=data, time=time))
           })
 
-#####compute_calibration_data (model, list)#####
-setMethod("compute_calibration_data", signature(object="familiarModel", data="list"),
-          function(object, data, time_max=NULL){
-            
-            # This function is the same for familiarModel and familiarEnsemble objects
-            return(.compute_calibration_data(object=object, data=data, time_max=time_max))
-          })
+# #####compute_calibration_data (model, list)#####
+# setMethod("compute_calibration_data", signature(object="familiarModel", data="list"),
+#           function(object, data, time_max=NULL){
+#             
+#             # This function is the same for familiarModel and familiarEnsemble objects
+#             return(.compute_calibration_data(object=object, data=data, time=time))
+#           })
 
 #####save (model)#####
 setMethod("save", signature(list="familiarModel", file="character"),
@@ -183,7 +185,7 @@ setMethod("process_input_data", signature(object="familiarModel", data="ANY"),
             # Prepares data for prediction, assessing calibration etc.
             
             # Check whether data is a dataObject, and create one otherwise
-            if(class(data)!="dataObject"){
+            if(!is(data, "dataObject")){
               data <- create_data_object(object=object, data=data, is_pre_processed=is_pre_processed)
             }
             
@@ -319,3 +321,70 @@ setMethod("add_data_column_info", signature(object="familiarModel"),
             
             return(object)
           })
+
+
+#####is_available#####
+setMethod("is_available", signature(object="familiarModel"),
+          function(object, ...) return(FALSE))
+
+
+#####get_default_hyperparameters#####
+setMethod("get_default_hyperparameters", signature(object="familiarModel"),
+          function(object, ...) return(list()))
+
+
+#####..train#####
+setMethod("..train", signature(object="familiarModel", data="dataObject"),
+          function(object, data){
+            
+            # Set a NULL model
+            object@model <- NULL
+            
+            return(object)
+          })
+
+#####..predict#####
+setMethod("..predict", signature(object="familiarModel", data="dataObject"),
+          function(object, data, ...) return(get_placeholder_prediction_table(object=object, data=data)))
+
+#####..predict_survival_probability####
+setMethod("..predict_survival_probability", signature(object="familiarModel", data="dataObject"),
+          function(object, data, time) return(get_placeholder_prediction_table(object=object, data=data)))
+
+#####..set_calibration_info#####
+setMethod("..set_calibration_info", signature(object="familiarModel"),
+          function(object, data){
+            if(is.null(object@calibration_info)) object@calibration_info <- NULL
+            
+            return(object)
+          })
+
+#####..set_recalibration_model#####
+setMethod("..set_recalibration_model", signature(object="familiarModel", data="dataObject"),
+          function(object, data){
+            
+            # Set a series of NULL models.
+            object@calibration_model <- NULL
+            
+            return(object)
+          })
+
+#####..set_risk_stratification_thresholds#####
+setMethod("..set_risk_stratification_thresholds", signature(object="familiarModel", data="dataObject"),
+          function(object, data){
+            
+            if(object@outcome_type %in% c("survival")){
+              object@km_info <- learner.find_survival_grouping_thresholds(object=object, data=data)
+            } else {
+              object@km_info <- NULL
+            }
+            
+            return(object)
+          })
+
+#####..vimp######
+setMethod("..vimp", signature(object="familiarModel"),
+          function(object) return(get_placeholder_vimp_table()))
+
+setMethod("has_calibration_info", signature(object="familiarModel"),
+          function(object) return(!is.null(object@calibration_info)))

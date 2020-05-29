@@ -194,7 +194,7 @@ compute_univariable_p_values <- function(cl=NULL, data_obj, feature_columns){
   
   # Suppress NOTES due to non-standard evaluation in data.table
   value <- NULL
-  
+  browser()
   # Check if any data was provided.
   if(length(x) == 0) return(NA_real_)
   
@@ -494,6 +494,7 @@ compute_icc <- function(x, feature, id_data, type="1"){
 }
 
 
+
 applyContrastReference <- function(dt, dt_ref, method){
   # Updates data table dt based on score
   
@@ -538,30 +539,30 @@ applyContrastReference <- function(dt, dt_ref, method){
 }
 
 
-createNonValidPredictionTable <- function(dt, outcome_type){
-  # Create skeleton
-  dt_pred <- dt[, get_non_feature_columns(x=outcome_type), with=FALSE]
-
-  # Add prediction columns
-  if(outcome_type %in% c("survival", "continuous", "count")){
-    # For survival and continuous outcomes, a single column is required
-    dt_pred$outcome_pred         <- as.double(NA)
-  } else if (outcome_type %in% c("binomial", "multinomial")){
-    # For binomial and multinomial outcomes, we add both predicted class and predicted class probabilities
-    dt_pred$outcome_pred_class   <- as.character(NA)
-
-    # Add class probabilities
-    outcome_pred_class_prob_cols <- check_column_name(column_name=paste0("outcome_pred_prob_", levels(dt$outcome)))
-    for(ii in 1:length(outcome_pred_class_prob_cols)){
-      dt_pred[, (outcome_pred_class_prob_cols[ii]):=as.double(NA)]
-    }
-  } else if(outcome_type == "competing_risk"){
-    ..error_outcome_type_not_implemented(outcome_type)
-  }
-
-  # Return without valid data prediction table
-  return(dt_pred)
-}
+# createNonValidPredictionTable <- function(dt, outcome_type){
+#   # Create skeleton
+#   dt_pred <- dt[, get_non_feature_columns(x=outcome_type), with=FALSE]
+# 
+#   # Add prediction columns
+#   if(outcome_type %in% c("survival", "continuous", "count")){
+#     # For survival and continuous outcomes, a single column is required
+#     dt_pred$outcome_pred         <- as.double(NA)
+#   } else if (outcome_type %in% c("binomial", "multinomial")){
+#     # For binomial and multinomial outcomes, we add both predicted class and predicted class probabilities
+#     dt_pred$outcome_pred_class   <- as.character(NA)
+# 
+#     # Add class probabilities
+#     outcome_pred_class_prob_cols <- check_column_name(column_name=paste0("outcome_pred_prob_", levels(dt$outcome)))
+#     for(ii in 1:length(outcome_pred_class_prob_cols)){
+#       dt_pred[, (outcome_pred_class_prob_cols[ii]):=as.double(NA)]
+#     }
+#   } else if(outcome_type == "competing_risk"){
+#     ..error_outcome_type_not_implemented(outcome_type)
+#   }
+# 
+#   # Return without valid data prediction table
+#   return(dt_pred)
+# }
 
 any_predictions_valid <- function(prediction_table, outcome_type){
   
@@ -570,10 +571,10 @@ any_predictions_valid <- function(prediction_table, outcome_type){
   }
   
   if(outcome_type %in% c("survival", "continuous", "count")){
-    return(any(is.finite(prediction_table$outcome_pred)))
+    return(any(is.finite(prediction_table$predicted_outcome)))
     
   } else if(outcome_type %in% c("binomial", "multinomial")){
-    return(!all(is.na(prediction_table$outcome_pred_class)))
+    return(!all(is.na(prediction_table$predicted_class)))
     
   } else {
     ..error_no_known_outcome_type(outcome_type)
@@ -770,6 +771,11 @@ getContrasts <- function(dt, method="effect", drop_levels=TRUE, outcome_type=NUL
 }
 
 
+get_placeholder_vimp_table <- function(){
+  return(data.table::data.table("score"=numeric(0), "name"=character(0), "rank"=numeric(0), "multi_var"=logical(0)))
+}
+
+
 
 getEmptyVimp <- function(){
   # Returns an empty variable importance data table
@@ -781,17 +787,17 @@ getEmptyVimp <- function(){
 
 
 
-getPredictedOutcomeColumn <- function(outcome_type){
-  # Returns column name with predicted outcomes, given the outcome type
-
-  if(outcome_type %in% c("survival", "continuous", "count")){
-    return("outcome_pred")
-  } else if(outcome_type %in% c("binomial", "multinomial")){
-    return("outcome_pred_class")
-  } else if(outcome_type == "competing_risk"){
-    stop()
-  }
-}
+# getPredictedOutcomeColumn <- function(outcome_type){
+#   # Returns column name with predicted outcomes, given the outcome type
+# 
+#   if(outcome_type %in% c("survival", "continuous", "count")){
+#     return("outcome_pred")
+#   } else if(outcome_type %in% c("binomial", "multinomial")){
+#     return("outcome_pred_class")
+#   } else if(outcome_type == "competing_risk"){
+#     stop()
+#   }
+# }
 
 
 
@@ -1015,27 +1021,27 @@ is_valid_data <- function(x){
 }
 
 
-regrLocTest <- function(regr_fit_obj, mean=0){
-
+coefficient_one_sample_z_test <- function(model, mean=0){
+  
   # Provides location test for unrestriced regression models
-  if("vglm" %in% class(regr_fit_obj)){
+  if(inherits(model, "vglm")){
     # VGAM::vglm-based methods
-    mu    <- VGAM::coefvlm(regr_fit_obj)
-
+    mu    <- VGAM::coefvlm(model)
+    
     if(is.matrix(mu)){
-      stdevs <- matrix(sqrt(diag(VGAM::vcovvlm(regr_fit_obj))), ncol=ncol(mu), byrow=TRUE)
+      stdevs <- matrix(sqrt(diag(VGAM::vcovvlm(model))), ncol=ncol(mu), byrow=TRUE)
     } else {
-      stdevs <- sqrt(diag(VGAM::vcovvlm(regr_fit_obj)))
+      stdevs <- sqrt(diag(VGAM::vcovvlm(model)))
       stdevs <- stdevs[names(stdevs) %in% names(mu)][names(mu)]
     }
   } else {
     # glm-based methods
-    mu    <- stats::coef(regr_fit_obj)
-
+    mu    <- stats::coef(model)
+    
     if(is.matrix(mu)){
-      stdevs <- matrix(sqrt(diag(stats::vcov(regr_fit_obj))), ncol=ncol(mu), byrow=TRUE)
+      stdevs <- matrix(sqrt(diag(stats::vcov(model))), ncol=ncol(mu), byrow=TRUE)
     } else {
-      stdevs <- sqrt(diag(stats::vcov(regr_fit_obj)))
+      stdevs <- sqrt(diag(stats::vcov(model)))
       
       if(is.null(names(stdevs))){
         # Case where no names are provided
@@ -1045,7 +1051,7 @@ regrLocTest <- function(regr_fit_obj, mean=0){
       }
     }
   }
-
+  
   # Compute z-score
   z  <- (mu-mean)/stdevs
   
@@ -1053,21 +1059,60 @@ regrLocTest <- function(regr_fit_obj, mean=0){
   return(2*(1-stats::pnorm(abs(z))))
 }
 
-
-updateWithReplacement <- function(dt, repl_list){
-  # Updates columns of a data table with replacement data from repl_list
-  dt_repl <- copy(dt)
-
-  # Find feature names corresponding to columns to be replaced
-  repl_feat <- names(repl_list)
-
-  # Iterate over replacement list entries
-  for(curr_feat in repl_feat){
-    dt_repl[, (curr_feat):=repl_list[[curr_feat]] ]
-  }
-
-  return(dt_repl)
-}
+# 
+# regrLocTest <- function(regr_fit_obj, mean=0){
+# 
+#   # Provides location test for unrestriced regression models
+#   if("vglm" %in% class(regr_fit_obj)){
+#     # VGAM::vglm-based methods
+#     mu    <- VGAM::coefvlm(regr_fit_obj)
+# 
+#     if(is.matrix(mu)){
+#       stdevs <- matrix(sqrt(diag(VGAM::vcovvlm(regr_fit_obj))), ncol=ncol(mu), byrow=TRUE)
+#     } else {
+#       stdevs <- sqrt(diag(VGAM::vcovvlm(regr_fit_obj)))
+#       stdevs <- stdevs[names(stdevs) %in% names(mu)][names(mu)]
+#     }
+#   } else {
+#     # glm-based methods
+#     mu    <- stats::coef(regr_fit_obj)
+# 
+#     if(is.matrix(mu)){
+#       stdevs <- matrix(sqrt(diag(stats::vcov(regr_fit_obj))), ncol=ncol(mu), byrow=TRUE)
+#     } else {
+#       stdevs <- sqrt(diag(stats::vcov(regr_fit_obj)))
+#       
+#       if(is.null(names(stdevs))){
+#         # Case where no names are provided
+#         stdevs <- stdevs[seq_len(length(mu))]
+#       } else {
+#         stdevs <- stdevs[names(stdevs) %in% names(mu)][names(mu)]
+#       }
+#     }
+#   }
+# 
+#   # Compute z-score
+#   z  <- (mu-mean)/stdevs
+#   
+#   # Return p-value based on z-score
+#   return(2*(1-stats::pnorm(abs(z))))
+# }
+# 
+# 
+# updateWithReplacement <- function(dt, repl_list){
+#   # Updates columns of a data table with replacement data from repl_list
+#   dt_repl <- copy(dt)
+# 
+#   # Find feature names corresponding to columns to be replaced
+#   repl_feat <- names(repl_list)
+# 
+#   # Iterate over replacement list entries
+#   for(curr_feat in repl_feat){
+#     dt_repl[, (curr_feat):=repl_list[[curr_feat]] ]
+#   }
+# 
+#   return(dt_repl)
+# }
 
 
 
@@ -1114,6 +1159,11 @@ is_package_installed <- function(name, version=NULL, verbose=FALSE){
   return(is_installed)
 }
 
+
+is_any <- function(object, class2){
+  # Tests whether the object is any of the classes in class2.
+  return(any(sapply(class2, function(class, object) is(object, class2=class), object=object)))
+}
 
 
 fivenum_summary <- function(x, na.rm=FALSE){
@@ -1308,4 +1358,23 @@ fam_sample <- function(x, size, replace=FALSE, prob=NULL){
     
     return(sample(x=x, size=size, replace=replace, prob=prob))
   }
+}
+
+
+is_subclass <- function(class_1, class_2){
+  # Find out if class_1 is a subclass of class_2
+  extending_classes <- methods::extends(class_1)
+  
+  # If class 2 is not in the classes from which class 1 inherits, class 1 cannot
+  # be a subclass of class 2.
+  if(!class_2 %in% extending_classes) return(FALSE)
+  
+  # If the classes are the same, class 1 cannot be a subclass of class 2.
+  if(class_1 == class_2) return(FALSE)
+  
+  # The classes are ordered by distance. Therefore class 2 cannot be a subclass
+  # of class 1 if it is less distant.
+  if(extending_classes[1] == class_2) return(FALSE)
+  
+  return(TRUE)
 }

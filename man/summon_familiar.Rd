@@ -822,7 +822,9 @@ optimisation, regardless of the settings of the \code{parallel} parameter.
     \item{\code{ensemble_method}}{(\emph{optional}) Method for ensembling predictions from
 models for the same sample. Available methods are:
 \itemize{
-\item \code{mean} (default): Use the mean of the predicted values as the ensemble
+\item \code{median} (default): Use the median of the predicted values as the ensemble
+value for a sample.
+\item \code{mean}: Use the mean of the predicted values as the ensemble
 value for a sample.
 }}
     \item{\code{evaluation_metric}}{(\emph{optional}) One or more metrics for assessing model

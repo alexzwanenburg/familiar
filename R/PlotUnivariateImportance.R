@@ -213,7 +213,7 @@ setMethod("plot_univariate_importance", signature(object="familiarCollection"),
             x[, "log_value":=-log10(get(metric_col))]
             
             # ggtheme
-            if(!any(class(ggtheme) == "theme")) {
+            if(!is(ggtheme, "theme")) {
               ggtheme <- plotting.get_theme(use_theme=ggtheme)
             }
 

@@ -147,19 +147,19 @@ setMethod("assess_calibration", signature(object="familiarEnsemble"),
 
 #####compute_calibration_data (ensemble, dataObject)#####
 setMethod("compute_calibration_data", signature(object="familiarEnsemble", data="dataObject"),
-          function(object, data, time_max=NULL){
+          function(object, data, time=NULL){
             
             # This function is the same for familiarModel and familiarEnsemble objects
-            return(.compute_calibration_data(object=object, data=data, time_max=time_max))
+            return(.compute_calibration_data(object=object, data=data, time=time))
           })
 
-#####compute_calibration_data (ensemble, list)#####
-setMethod("compute_calibration_data", signature(object="familiarEnsemble", data="list"),
-          function(object, data, time_max=NULL){
-            
-            # This function is the same for familiarModel and familiarEnsemble objects
-            return(.compute_calibration_data(object=object, data=data, time_max=time_max))
-          })
+# #####compute_calibration_data (ensemble, list)#####
+# setMethod("compute_calibration_data", signature(object="familiarEnsemble", data="list"),
+#           function(object, data, time=NULL){
+#             
+#             # This function is the same for familiarModel and familiarEnsemble objects
+#             return(.compute_calibration_data(object=object, data=data, time=time))
+#           })
 
 
 #####assess_performance (ensemble)#####
@@ -167,8 +167,14 @@ setMethod("assess_performance", signature(object="familiarEnsemble"),
           function(object, newdata, metric, allow_recalibration=TRUE, is_pre_processed=FALSE, time_max=NULL, as_objective=FALSE, na.rm=FALSE){
             
             # This function is the same for familiarModel and familiarEnsemble objects
-            return(.assess_performance(object=object, newdata=newdata, metric=metric, allow_recalibration=allow_recalibration,
-                                       is_pre_processed=is_pre_processed, time_max=time_max, as_objective=as_objective, na.rm=na.rm))
+            return(.assess_performance(object=object,
+                                       data=newdata,
+                                       metric=metric,
+                                       allow_recalibration=allow_recalibration,
+                                       is_pre_processed=is_pre_processed,
+                                       time=time_max,
+                                       as_objective=as_objective,
+                                       na.rm=na.rm))
           })
 
 .get_available_risk_ensemble_methods <- function(){
@@ -361,7 +367,7 @@ setMethod("assign_risk_groups", signature(object="familiarEnsemble", prediction_
                 }
                 
                 # Get risk groups
-                risk_group <- learner.apply_risk_threshold(predicted_values=prediction_data$ensemble$outcome_pred,
+                risk_group <- learner.apply_risk_threshold(predicted_values=prediction_data$ensemble$predicted_outcome,
                                                            cutoff=cutoff, learner=object@learner)
                 
                 # Generate data table
@@ -450,7 +456,7 @@ setMethod("load_models", signature(object="familiarEnsemble"),
                 }
                 
                 # Check if the file is a familiarModel
-                if(class(loaded_model) != "familiarModel"){
+                if(!is(loaded_model, "familiarModel")){
                   logger.stop(paste0("The model at ", selected_path, " is not a familiarModel object."))
                 }
                 
@@ -469,14 +475,14 @@ setMethod("load_models", signature(object="familiarEnsemble"),
 #####is_model_loaded#####
 setMethod("is_model_loaded", signature(object="familiarEnsemble"),
           function(object){
-            return(all(sapply(object@model_list, function(x)("familiarModel" %in% class(x)))))
+            return(all(sapply(object@model_list, is, class2="familiarModel")))
           })
 
 #####detach_models#####
 setMethod("detach_models", signature(object="familiarEnsemble"),
           function(object){
             # Unload the models in the familiarEnsemble
-            if(class(object@model_list[[1]]) == "familiarModel"){
+            if(is(object@model_list[[1]], "familiarModel")){
               model_list <- list()
               
               # Iterate over the familiar models
@@ -553,7 +559,7 @@ setMethod("process_input_data", signature(object="familiarEnsemble", data="ANY")
             # analysis, etc.
             
             # Check whether data is a dataObject, and create one otherwise
-            if(!any(class(data)=="dataObject")){
+            if(!is(data, "dataObject")){
               data <- create_data_object(object=object, data=data, is_pre_processed=is_pre_processed)
             }
             
@@ -586,7 +592,7 @@ setMethod("save", signature(list="familiarEnsemble", file="character"),
           })
 
 .get_available_ensemble_prediction_methods <- function(){
-  return(c("mean"))
+  return(c("median", "mean"))
 }
 
 ensemble_prediction <- function(object, prediction_data, ensemble_method="mean"){
@@ -600,35 +606,43 @@ ensemble_prediction <- function(object, prediction_data, ensemble_method="mean")
     prediction_columns <- get_class_probability_name(x=class_levels)
     
   } else if(object@outcome_type %in% c("continuous", "count", "survival")){
-    prediction_columns <- "outcome_pred"
+    prediction_columns <- "predicted_outcome"
     
   } else if(object@outcome_type == "competing_risk"){
     ..error_outcome_type_not_implemented(outcome_type=object@outcome_type)
+    
   } else {
     ..error_no_known_outcome_type(outcome_type=object@outcome_type)
   }
   
-  if(ensemble_method=="mean"){
-    # Calculate mean predicted value
-    prediction_data <- prediction_data[, ensemble_mean_prediction(data=.SD, prediction_columns=prediction_columns),
-                                       by=eval(get_non_feature_columns(x=object))]
+  
+  # Set the ensemble aggregation function.
+  if(ensemble_method == "mean"){
+    FUN <- mean
+    
+  } else if(ensemble_method == "median"){
+    FUN <- median
     
   } else {
     stop("Ensemble method ", ensemble_method, " has not been implemented.")
   }
   
+  # Compute the ensemble predictions:
+  prediction_data <- prediction_data[, .do_ensemble_prediction(data=.SD, prediction_columns=prediction_columns, FUN=FUN),
+                                     by=eval(get_non_feature_columns(x=object))]
+  
   # Add the predicted class, if required
   if(object@outcome_type %in% c("binomial", "multinomial")){
 
     # Identify the name of the most probable class
-    predicted_class <- class_levels[max.col(prediction_data[, c(prediction_columns), with=FALSE])]
+    new_predicted_class <- class_levels[max.col(prediction_data[, c(prediction_columns), with=FALSE])]
     
     # Add the names as the predicted outcome
-    prediction_data[, "outcome_pred_class":=predicted_class]
+    prediction_data[, "predicted_class":=new_predicted_class]
     
     # Convert to a factor
-    prediction_data$outcome_pred_class <- factor(prediction_data$outcome_pred_class,
-                                                 levels=class_levels)
+    prediction_data$predicted_class <- factor(prediction_data$predicted_class,
+                                              levels=class_levels)
   }
   
   return(prediction_data)
@@ -636,14 +650,15 @@ ensemble_prediction <- function(object, prediction_data, ensemble_method="mean")
 
 
 
-ensemble_mean_prediction <- function(data, prediction_columns){
+.do_ensemble_prediction <- function(data, prediction_columns, FUN){
 
-  # Calculate means for the prediction columns
-  ensemble_pred <- lapply(prediction_columns, function(ii_col, data) (mean(data[[ii_col]], na.rm=TRUE)), data=data)
+  # Calculate ensemble value for the prediction columns
+  ensemble_pred <- lapply(prediction_columns, function(ii_col, data) (FUN(data[[ii_col]], na.rm=TRUE)), data=data)
   names(ensemble_pred) <- prediction_columns
 
   return(ensemble_pred)
 }
+
 
 
 ensemble_failure_times <- function(prediction_list){

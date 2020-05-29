@@ -1941,8 +1941,11 @@
 #'@param prep_cluster_similarity_metric Cluster similarity metric used during
 #'@param ensemble_method (*optional*) Method for ensembling predictions from
 #'  models for the same sample. Available methods are:
-#'
-#'  * `mean` (default): Use the mean of the predicted values as the ensemble
+#'  
+#'  * `median` (default): Use the median of the predicted values as the ensemble
+#'  value for a sample.
+#'  
+#'  * `mean`: Use the mean of the predicted values as the ensemble
 #'  value for a sample.
 #'
 #'@param evaluation_metric (*optional*) One or more metrics for assessing model
@@ -2196,7 +2199,7 @@
   
   # Method for ensemble predictions
   settings$ensemble_method <- .parse_arg(x_config=config$ensemble_method, x_var=ensemble_method,
-                                         var_name="ensemble_method", type="character", optional=TRUE, default="mean")
+                                         var_name="ensemble_method", type="character", optional=TRUE, default="median")
   
   .check_parameter_value_is_valid(x=settings$ensemble_method, var_name="ensemble_method",
                                   values=.get_available_ensemble_prediction_methods())

@@ -1,11 +1,7 @@
 learner.recalibrate_model <- function(object, data_obj, time_max=NULL) {
-
-  if(!inherits(object, "familiarModel")){
-    stop("Only familiarModel objects can be recalibrated.")
-  }
-  
+  browser()
   # Suppress NOTES due to non-standard evaluation in data.table
-  outcome <- outcome_pred <- NULL
+  outcome <- predicted_outcome <- NULL
 
   # Extract constants
   outcome_type <- object@outcome_type
@@ -33,28 +29,21 @@ learner.recalibrate_model <- function(object, data_obj, time_max=NULL) {
     data_train  <- select_data_from_samples(data=data_obj, samples=iter_list$train_list[[ii]])
     data_test <- select_data_from_samples(data=data_obj, samples=iter_list$valid_list[[ii]])
     
-    # Create familiar model
-    cv_model <- methods::new("familiarModel",
-                             outcome_type = object@outcome_type,
-                             learner = object@learner,
-                             hyperparameters = object@hyperparameters,
-                             signature = object@signature,
-                             req_feature_cols = object@req_feature_cols,
-                             outcome_info = .get_outcome_info(x=object))
+    # Copy the object
+    cv_model <- object
     
-    # Train the model - the recalibration flag is set to FALSE to avoid an
-    # infinite loop, as this would involve calling learner.calibrate_model
+    # Train the model - the additional info flag is set to FALSE to avoid an
+    # infinite loop, as this would involve calling learner.recalibrate_model
     # again.
-    cv_model <- train(object=cv_model,
-                      data=data_train,
-                      get_recalibration=FALSE,
-                      get_additional_info=FALSE)
-
+    cv_model <- .train(object=cv_model,
+                       data=data_train,
+                       get_additional_info=FALSE)
+    
     # Generate a prediction table
-    pred_list[[ii]] <- predict(object=cv_model,
-                               newdata=data_test,
-                               allow_recalibration=FALSE,
-                               time_max=time_max)
+    pred_list[[ii]] <- .predict(object=cv_model,
+                                newdata=data_test,
+                                allow_recalibration=FALSE,
+                                time_max=time_max)
 
   }
 
@@ -96,11 +85,11 @@ learner.recalibrate_model <- function(object, data_obj, time_max=NULL) {
   } else if(outcome_type == "survival"){
 
     # Parse formula
-    formula <- stats::reformulate(termlabels="outcome_pred",
+    formula <- stats::reformulate(termlabels="predicted_outcome",
                                   response=quote(survival::Surv(outcome_time, outcome_event)))
 
     # Remove NA from the table
-    predictions <- predictions[is.finite(outcome_pred)]
+    predictions <- predictions[is.finite(predicted_outcome)]
 
     # If the prediction data table returns no or just one (valid) entry,
     # calibration is not possible.
@@ -135,6 +124,7 @@ learner.apply_calibration <- function(object, predictions){
   }
 
   if(object@outcome_type %in% c("binomial", "multinomial")){
+    browser()
     # Determine probability columns
     prob_cols <- get_class_probability_name(x=object)
 
@@ -163,17 +153,17 @@ learner.apply_calibration <- function(object, predictions){
     # Update predicted outcome with class with maximum predicted probability
     class_levels <- get_outcome_class_levels(x=object)
     max_prob_class <- factor(class_levels[predictions[, max.col(.SD), .SDcols=prob_cols]], levels=class_levels)
-    predictions[, "outcome_pred_class":=max_prob_class]
+    predictions[, "predicted_class":=max_prob_class]
 
   } else if(object@outcome_type == "survival") {
-
+    browser()
     # Predict cox PH relative risk
     pred_outc  <- predict(object=object@calibration_model[[1]],
                           newdata=predictions,
                           type="risk")
 
     # Replace in table
-    predictions[, "outcome_pred":=pred_outc]
+    predictions[, "predicted_outcome":=pred_outc]
   }
   
   return(predictions)

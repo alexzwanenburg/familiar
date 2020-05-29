@@ -163,7 +163,7 @@ learner.glm.vimp <- function(object){
     # Determine coefficient p-values
     coef_p_val   <- regrLocTest(regr_fit_obj=object@model$model)
 
-    if("vglm" %in% class(object@model$model)){
+    if(is(object@model, "vglm")){
       # Parse coefficient names
       coef_names <- stringi::stri_split_fixed(names(coef_p_val), pattern=":")
       coef_names <- sapply(coef_names, function(curr_coef_name) (paste0(curr_coef_name[-length(curr_coef_name)], collapse=":")))

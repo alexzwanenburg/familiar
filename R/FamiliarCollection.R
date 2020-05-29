@@ -104,7 +104,7 @@ setMethod(".set_labels", signature(x="familiarCollection"),
               }
               
               # Check that new_order has the same class the label.
-              if(!any(class(new_order) %in% class(label_table$label))){
+              if(!is_any(new_order, class(label_table$label))){
                 stop(paste0("\"order should have the same class as the label, i.e. ", paste(class(label_table$label), collapse=" or "), "."))
               }
               

@@ -9,9 +9,7 @@ setMethod("create_data_object", signature(object="familiarModel", data="ANY"),
             # Creates a data object
             
             # Skip checks if the data already is a data objects
-            if(any(class(data) == "dataObject")){
-              return(data)
-            }
+            if(is(data, "dataObject")) return(data)
             
             # TODO check input data consistency, i.e. column naming etc.
             new_data <- methods::new("dataObject", data=data, is_pre_processed=is_pre_processed, outcome_type=object@outcome_type)

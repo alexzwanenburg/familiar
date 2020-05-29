@@ -538,3 +538,20 @@ setClass("outcomeInfo",
            normalisation_parameters = NULL
          )
 )
+
+
+setClass("Learner",
+         slots = list(
+           # Name of the outcome
+           learner = "character",
+           # Outcome type
+           outcome_type = "character",
+           # Model
+           model = "ANY"
+         ),
+         prototype = list(
+           learner = NA_character_,
+           outcome_type = NA_character_,
+           model = NULL
+         )
+)
