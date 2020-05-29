@@ -910,7 +910,7 @@ collect_and_aggregate_feature_info <- function(feature, object, stop_at="imputat
         # Add to list
         distr_list[[item]] <- fivenum_values
         
-      } else if(grepl(patter="frequency", x=item, fixed=TRUE)){
+      } else if(grepl(pattern="frequency", x=item, fixed=TRUE)){
         
         # Aggregate from list
         frequency_values <- lapply(feature_info_list, function(feature_info, item) (feature_info@distribution[[item]]), item=item)
