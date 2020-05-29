@@ -135,6 +135,11 @@ setMethod("get_class_probability_name", signature(x="familiarCollection"), funct
   return(get_class_probability_name(x=x@outcome_info))
 })
 
+setMethod("get_class_probability_name", signature(x="ANY"), function(x){
+  # Backup for numeric and logical categories.
+  return(get_class_probability_name(x=as.character(x)))
+})
+
 setMethod("get_class_probability_name", signature(x="dataObject"), function(x){
   
   outcome_info <- .get_outcome_info(x=x)

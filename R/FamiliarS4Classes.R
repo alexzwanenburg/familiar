@@ -503,7 +503,7 @@ setClass("outcomeInfo",
            # Flag for ordinal categorical outcomes.
            ordered = "logical",
            # Reference class of categorical outcomes.
-           reference = "character",
+           reference = "ANY",
            # Censor indicator for survival outcomes, e.g. alive.
            censored = "character",
            # Event indicator for survival outcomes, e.g. recurrent disease.

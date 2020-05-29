@@ -910,7 +910,7 @@ collect_and_aggregate_feature_info <- function(feature, object, stop_at="imputat
         # Add to list
         distr_list[[item]] <- fivenum_values
         
-      } else if(grepl(patter="frequency", x=item, fixed=TRUE)){
+      } else if(grepl(pattern="frequency", x=item, fixed=TRUE)){
         
         # Aggregate from list
         frequency_values <- lapply(feature_info_list, function(feature_info, item) (feature_info@distribution[[item]]), item=item)
@@ -947,7 +947,7 @@ collect_and_aggregate_feature_info <- function(feature, object, stop_at="imputat
   }
   
   # Create a transform mask id so that we only extract remaining parameters from those lists that have a matching method and lambda
-  transform_mask_id <- (transform_method_used == transform_method) & (transform_lambda_used == transform_lambda)
+  transform_mask_id <- (transform_method_used == transform_method) & sapply(transform_lambda_used, identical, transform_lambda)
   
   if(sum(transform_mask_id) > 0) feature_info_list <- feature_info_list[transform_mask_id]
   
