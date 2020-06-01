@@ -384,7 +384,7 @@ setMethod("..set_risk_stratification_thresholds", signature(object="familiarMode
 
 #####..vimp######
 setMethod("..vimp", signature(object="familiarModel"),
-          function(object) return(get_placeholder_vimp_table()))
+          function(object, ...) return(get_placeholder_vimp_table()))
 
 setMethod("has_calibration_info", signature(object="familiarModel"),
           function(object) return(!is.null(object@calibration_info)))
