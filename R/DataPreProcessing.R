@@ -197,7 +197,7 @@ determine_pre_processing_parameters <- function(cl, data_id, run_id){
   feature_info_list  <- add_missing_value_fractions(cl=cl,
                                                     feature_info_list=feature_info_list,
                                                     data=data_obj,
-                                                    threshold=settings$prep$feat_max_fract_missing)
+                                                    threshold=settings$prep$feature_max_fraction_missing)
   
   # Find features that are not missing too many values.
   available_features <- get_available_features(feature_info_list=feature_info_list)
@@ -217,7 +217,7 @@ determine_pre_processing_parameters <- function(cl, data_id, run_id){
   n_samples_current  <- n_samples_remain
   
   # Remove samples with a large fraction of missing values
-  data_obj           <- filter_bad_samples(data=data_obj, threshold=settings$prep$subj_max_fract_missing)
+  data <- filter_bad_samples(data=data, threshold=settings$prep$sample_max_fraction_missing)
   
   # Message how many subjects were removed
   n_samples_remain   <- uniqueN(data_obj@data, by=c("subject_id", "cohort_id"))

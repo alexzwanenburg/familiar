@@ -1245,19 +1245,21 @@
   settings <- list()
   
   # Maximum fraction of data points missing for inclusion of a feature
-  settings$feat_max_fract_missing <- .parse_arg(x_config=config$feature_max_fraction_missing,
-                                                x_var=feature_max_fraction_missing, var_name="feature_max_fraction_missing",
-                                                type="numeric", optional=TRUE, default=0.30)
+  settings$feature_max_fraction_missing <- .parse_arg(x_config=config$feature_max_fraction_missing,
+                                                      x_var=feature_max_fraction_missing, var_name="feature_max_fraction_missing",
+                                                      type="numeric", optional=TRUE, default=0.30)
   
-  .check_number_in_valid_range(x=settings$feat_max_fract_missing, var_name="feature_max_fraction_missing", range=c(0.0, 0.95))
+  .check_number_in_valid_range(x=settings$feature_max_fraction_missing,
+                               var_name="feature_max_fraction_missing", range=c(0.0, 0.95))
   
 
     # Maximum fraction of features missing for inclusion of a subject
-  settings$subj_max_fract_missing <- .parse_arg(x_config=config$sample_max_fraction_missing,
-                                                x_var=sample_max_fraction_missing, var_name="sample_max_fraction_missing",
-                                                type="numeric", optional=TRUE, default=0.30)
+  settings$sample_max_fraction_missing <- .parse_arg(x_config=config$sample_max_fraction_missing,
+                                                     x_var=sample_max_fraction_missing, var_name="sample_max_fraction_missing",
+                                                     type="numeric", optional=TRUE, default=0.30)
   
-  .check_number_in_valid_range(x=settings$subj_max_fract_missing, var_name="sample_max_fraction_missing", range=c(0.0, 0.95))
+  .check_number_in_valid_range(x=settings$sample_max_fraction_missing,
+                               var_name="sample_max_fraction_missing", range=c(0.0, 0.95))
   
   
   # Univariate filter methods
