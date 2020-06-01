@@ -93,60 +93,60 @@ learner.survival_probability_relative_risk <- function(object, data, time){
 
 
 
-learner.survival_probability.random_forest <- function(object, data_obj, time_max){
-  # Get the survival probability from the cumulative hazard function
-
-  # Suppress NOTES due to non-standard evaluation in data.table
-  survival <- NULL
-
-  # Predict the data
-  if(is(data_obj, "dataObject")){
-    prediction_list <- predict(object=object, newdata=data_obj, allow_recalibration=TRUE, extra_output=TRUE, time_max=time_max)
-  } else if(is(data_obj, "list")){
-    prediction_list <- data_obj
-  }
-  
-  if(is.null(prediction_list$survival) | is.null(prediction_list$predictions)){
-    return(NULL)
-  }
-
-  # Compute table with survival probabilities at time=time_max
-  probability_table <- lapply(split(prediction_list$survival, by="subject_id"), function(sample_table, time_max){
-    
-    # Interpolate survival probabilities at time=time_max
-    survival_probability <- stats::approx(x=sample_table$event_time,
-                                          y=sample_table$survival_probability,
-                                          xout=time_max,
-                                          rule=2)$y
-    
-    return(data.table::data.table("subject_id"=sample_table$subject_id[1],
-                                  "survival"=survival_probability))
-  }, time_max=time_max)
-  
-  # Concatenate to single table.
-  probability_table <- data.table::rbindlist(probability_table)
-  
-  # Add in outcome_time and outcome_event from the predictions.
-  probability_table <- merge(x=probability_table,
-                             y=prediction_list$predictions[, c("subject_id", "outcome_time", "outcome_event")],
-                             by="subject_id")
-  
-  # Check if the merged table is not empty (it should not be).
-  if(is_empty(probability_table)){
-    return(NULL)
-  }
-  
-  # Rename outcome_time and outcome_event.
-  data.table::setnames(probability_table, old=c("outcome_time", "outcome_event"), new=c("time", "event"))
-  
-  # Reorder columns
-  data.table::setcolorder(probability_table, c("subject_id", "survival", "time", "event"))
-  
-  # Order by predicted probability.
-  probability_table <- probability_table[order(survival)]
-  
-  return(probability_table)
-}
+# learner.survival_probability.random_forest <- function(object, data_obj, time_max){
+#   # Get the survival probability from the cumulative hazard function
+# 
+#   # Suppress NOTES due to non-standard evaluation in data.table
+#   survival <- NULL
+# 
+#   # Predict the data
+#   if(is(data_obj, "dataObject")){
+#     prediction_list <- predict(object=object, newdata=data_obj, allow_recalibration=TRUE, extra_output=TRUE, time_max=time_max)
+#   } else if(is(data_obj, "list")){
+#     prediction_list <- data_obj
+#   }
+#   
+#   if(is.null(prediction_list$survival) | is.null(prediction_list$predictions)){
+#     return(NULL)
+#   }
+# 
+#   # Compute table with survival probabilities at time=time_max
+#   probability_table <- lapply(split(prediction_list$survival, by="subject_id"), function(sample_table, time_max){
+#     
+#     # Interpolate survival probabilities at time=time_max
+#     survival_probability <- stats::approx(x=sample_table$event_time,
+#                                           y=sample_table$survival_probability,
+#                                           xout=time_max,
+#                                           rule=2)$y
+#     
+#     return(data.table::data.table("subject_id"=sample_table$subject_id[1],
+#                                   "survival"=survival_probability))
+#   }, time_max=time_max)
+#   
+#   # Concatenate to single table.
+#   probability_table <- data.table::rbindlist(probability_table)
+#   
+#   # Add in outcome_time and outcome_event from the predictions.
+#   probability_table <- merge(x=probability_table,
+#                              y=prediction_list$predictions[, c("subject_id", "outcome_time", "outcome_event")],
+#                              by="subject_id")
+#   
+#   # Check if the merged table is not empty (it should not be).
+#   if(is_empty(probability_table)){
+#     return(NULL)
+#   }
+#   
+#   # Rename outcome_time and outcome_event.
+#   data.table::setnames(probability_table, old=c("outcome_time", "outcome_event"), new=c("time", "event"))
+#   
+#   # Reorder columns
+#   data.table::setcolorder(probability_table, c("subject_id", "survival", "time", "event"))
+#   
+#   # Order by predicted probability.
+#   probability_table <- probability_table[order(survival)]
+#   
+#   return(probability_table)
+# }
 
 
 

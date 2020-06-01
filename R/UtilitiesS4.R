@@ -256,13 +256,13 @@ setMethod("get_non_feature_columns", signature(x="familiarEnsemble"), function(x
   # Find outcome columns
   outcome_columns <- get_outcome_columns(x=outcome_type)
   
+  # Find the id-columns
+  id_columns <- get_id_columns(include_repetition_id)
+  
   # Generate the names of the non-feature columns
-  if(include_repetition_id){
-    return(c(outcome_columns, "subject_id", "cohort_id", "repetition_id"))
-  } else {
-    return(c(outcome_columns, "subject_id", "cohort_id"))
-  }
+  return(c(outcome_columns, id_columns))
 }
+
 
 
 #####get_feature_columns---------------------------------------------------------

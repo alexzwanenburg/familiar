@@ -189,3 +189,5 @@ setGeneric("get_prediction_type", function(object, ...) standardGeneric("get_pre
 setGeneric("..set_calibration_info", function(object, data, ...) standardGeneric("..set_calibration_info"))
 
 setGeneric("..set_risk_stratification_thresholds", function(object, data, ...) standardGeneric("..set_risk_stratification_thresholds"))
+
+setGeneric("..set_vimp_parameters", function(object, ...) standardGeneric("..set_vimp_parameters"))

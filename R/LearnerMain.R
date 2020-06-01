@@ -1,6 +1,7 @@
 #' @include FamiliarS4Generics.R
 #' @include FamiliarS4Classes.R
 #' @include LearnerS4Cox.R
+#' @include LearnerS4Ranger.R
 NULL
 
 setMethod("promote_learner", signature(object="familiarModel"),

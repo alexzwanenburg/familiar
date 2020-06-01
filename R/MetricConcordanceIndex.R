@@ -26,7 +26,7 @@ metric.concordance_index.calc <- function(dt, metric="concordance_index", learne
   }
 
   # Invert the concordance index for risks (which are inversely related to survival times)
-  if(learner.check_model_prediction_type(learner=learner, outcome_type=outcome_type) %in% c("hazard_ratio", "sum_cumulative_hazard")){
+  if(learner.check_model_prediction_type(learner=learner, outcome_type=outcome_type) %in% c("hazard_ratio", "cumulative_hazard", "survival_probability")){
     score <- 1 - score
   }
 

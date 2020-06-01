@@ -425,7 +425,7 @@ learner.rf_rfsrc.prediction_type <- function(learner, outcome_type){
 
   # Cox regression models predict risks, not expected survival times
   if(outcome_type=="survival"){
-    return("sum_cumulative_hazard")
+    return("cumulative_hazard")
   } else {
     return(NULL)
   }

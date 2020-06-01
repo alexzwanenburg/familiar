@@ -1,7 +1,14 @@
+#' @include FamiliarS4Generics.R
+#' @include FamiliarS4Classes.R
+NULL
+
 vimp.main <- function(method, purpose, outcome_type=NULL, param=NULL, data_obj=NULL){
   # This is a convenience function for access to method-related functions.
   # This functions should only be called through its interfaces
 
+  # Try to infer outcome_type
+  if(is.null(outcome_type) & is(data_obj, "dataObject")) outcome_type <- data_obj@outcome_type
+  
   ##### Univariable statistical methods #####
 
   # Concordance-based methods
@@ -108,17 +115,30 @@ vimp.main <- function(method, purpose, outcome_type=NULL, param=NULL, data_obj=N
   }
 
 
-  # Maximally selected rank random forest variable importance methods
-  if(method %in% c("random_forest_ranger_holdout_permutation", "random_forest_ranger_permutation", "random_forest_ranger_impurity")){
+  # Ranger random forest
+  if(method %in% c("random_forest_ranger_holdout_permutation", "random_forest_ranger_permutation",
+                   "random_forest_ranger_impurity")){
+    
+    # Create a familiarModel and promote to the right class.
+    object <- methods::new("familiarModel",
+                           learner = "random_forest_ranger",
+                           outcome_type = outcome_type,
+                           hyperparameters = param)
+    
+    # Promote to the correct subclass.
+    object <- promote_learner(object)
+    
+    # Set the variable importance parameters for the method.
+    object <- ..set_vimp_parameters(object, method=method)
+    
     if(purpose=="variable_importance"){
-      dt_vimp       <- learner.rf_ranger.vimp(data_obj=data_obj, param=param, method=method)
+      dt_vimp       <- ..vimp(object=object, data=data_obj)
     } else if(purpose=="parameters"){
-      base_learner  <- learner.rf_ranger.learner(method=method, outcome_type=outcome_type)
-      param         <- learner.rf_ranger.param(data_obj=data_obj)
+      param         <- get_default_hyperparameters(object=object, data=data_obj)
     } else if(purpose=="outcome") {
-      type_is_valid <- learner.rf_ranger.outcome(method=method, outcome_type=outcome_type)
+      type_is_valid <- is_available(object)
     } else if(purpose=="base_learner"){
-      base_learner  <- learner.rf_ranger.learner(method=method, outcome_type=outcome_type)
+      base_learner  <- "random_forest_ranger"
     }
   }
 

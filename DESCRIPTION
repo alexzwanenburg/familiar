@@ -95,6 +95,7 @@ Collate:
     'LearnerExtremeGradientBoosting.R'
     'LearnerGLM.R'
     'LearnerKNearestNeighbours.R'
+    'LearnerS4Ranger.R'
     'LearnerS4Cox.R'
     'LearnerMain.R'
     'LearnerModelBasedBoosting.R'
