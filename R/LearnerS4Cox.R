@@ -8,7 +8,7 @@ setClass("familiarCoxPH",
          prototype=list("encoding_reference_table" = NULL))
 
 
-
+#####is_available#####
 setMethod("is_available", signature(object="familiarCoxPH"),
           function(object, ...){
             
@@ -18,6 +18,7 @@ setMethod("is_available", signature(object="familiarCoxPH"),
 
 
 
+#####get_default_hyperparameters#####
 setMethod("get_default_hyperparameters", signature(object="familiarCoxPH"),
           function(object, data=NULL){
             
@@ -36,6 +37,24 @@ setMethod("get_default_hyperparameters", signature(object="familiarCoxPH"),
 
 
 
+#####get_prediction_type#####
+setMethod("get_prediction_type", signature(object="familiarCoxPH"),
+          function(object, type=NULL){
+            
+            # Cox proportional hazards models predict relative risks
+            if(is.null(type)) return("hazard_ratio")
+            
+            if(type == "risk"){
+              return("hazard_ratio")
+              
+            } else {
+              ..error_reached_unreachable_code("get_prediction_type,familiarCoxPH: unknown type")
+            }
+          })
+
+
+
+#####..train####
 setMethod("..train", signature(object="familiarCoxPH", data="dataObject"),
           function(object, data){
             
@@ -81,6 +100,7 @@ setMethod("..train", signature(object="familiarCoxPH", data="dataObject"),
 
 
 
+#####..predict#####
 setMethod("..predict", signature(object="familiarCoxPH", data="dataObject"),
           function(object, data, type="risk", ...){
             
@@ -109,6 +129,8 @@ setMethod("..predict", signature(object="familiarCoxPH", data="dataObject"),
           })
 
 
+
+#####..predict_survival_probability#####
 setMethod("..predict_survival_probability", signature(object="familiarCoxPH", data="dataObject"),
           function(object, data, time){
             
@@ -118,8 +140,10 @@ setMethod("..predict_survival_probability", signature(object="familiarCoxPH", da
           })
 
 
+
+#####..vimp#####
 setMethod("..vimp", signature(object="familiarCoxPH"),
-          function(object){
+          function(object, ...){
             
             if(!model_is_trained(object)) callNextMethod()
             
@@ -146,21 +170,8 @@ setMethod("..vimp", signature(object="familiarCoxPH"),
           })
 
 
-setMethod("get_prediction_type", signature(object="familiarCoxPH"),
-          function(object, type=NULL){
-            
-            # Cox proportional hazards models predict relative risks
-            if(is.null(type)) return("hazard_ratio")
-            
-            if(type == "risk"){
-              return("hazard_ratio")
-              
-            } else {
-              ..error_reached_unreachable_code("get_prediction_type,familiarCoxPH: unknown type")
-            }
-          })
 
-
+#####..set_calibration_info#####
 setMethod("..set_calibration_info", signature(object="familiarCoxPH"),
           function(object, data){
             
