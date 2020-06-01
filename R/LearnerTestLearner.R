@@ -316,7 +316,7 @@ learner.test_learner.prediction_type <- function(learner, outcome_type){
     return("expected_survival_time")
     
   } else if(outcome_type %in% c("survival") & risk_type == "random_forest"){
-    return("sum_cumulative_hazard")
+    return("cumulative_hazard")
     
   } else {
     return(NULL)

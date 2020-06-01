@@ -319,19 +319,22 @@ learner.calibration.regression <- function(object, data_obj){
 
   # Remove non-finite predicted values.
   prediction_table <- prediction_table[is.finite(outcome) & is.finite(predicted_outcome), ]
-  
+  browser()
   # Check for empty required data.
   if(is_empty(prediction_table)) return(create_empty_calibration_table(outcome_type=outcome_type))
-  if(is.null(object@calibration_info)) return(create_empty_calibration_table(outcome_type=outcome_type))
+  if(is.null(object@outcome_info)) return(create_empty_calibration_table(outcome_type=outcome_type))
   
-  # Normalise predicted and observed outcomes. The same range is used for
-  # predicted and observed outcomes.
-  norm_range <- c(object@calibration_info$min_value,
-                  object@calibration_info$max_value)
+  # Determine the outcome range
+  outcome_range <- range(object@outcome_info@distribution$fivenum)
+  
+  # # Normalise predicted and observed outcomes. The same range is used for
+  # # predicted and observed outcomes.
+  # norm_range <- c(object@calibration_info$min_value,
+  #                 object@calibration_info$max_value)
   
   # Get the shift and scale parameters.
-  norm_shift <- norm_range[1]
-  norm_scale <- diff(norm_range)
+  norm_shift <- outcome_range[1]
+  norm_scale <- diff(outcome_range)
   
   # Set scale parameters equal to 0.0 to 1.0 to avoid division by 0.
   if(norm_scale == 0.0) norm_scale <- 1.0
@@ -400,21 +403,21 @@ learner.calibration.regression.prepare_data <- function(groups, probability_tabl
 }
 
 
-learner.calibration.regression.outcome_range <- function(data_obj){
-  
-  # Check for empty dataset.
-  if(is_empty(data_obj@data)){
-    return(NULL)
-  }
-  
-  # Acquire range of observed outcome values
-  outcome_range <- range(data_obj@data$outcome, na.rm=TRUE)
-  
-  if(!all(is.finite(outcome_range))){
-    return(NULL)
-    
-  } else {
-    return(data.table::data.table("min_value"=outcome_range[1],
-                                  "max_value"=outcome_range[2]))
-  }
-}
+# learner.calibration.regression.outcome_range <- function(data_obj){
+#   
+#   # Check for empty dataset.
+#   if(is_empty(data_obj@data)){
+#     return(NULL)
+#   }
+#   
+#   # Acquire range of observed outcome values
+#   outcome_range <- range(data_obj@data$outcome, na.rm=TRUE)
+#   
+#   if(!all(is.finite(outcome_range))){
+#     return(NULL)
+#     
+#   } else {
+#     return(data.table::data.table("min_value"=outcome_range[1],
+#                                   "max_value"=outcome_range[2]))
+#   }
+# }
