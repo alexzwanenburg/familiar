@@ -436,7 +436,8 @@ determine_pre_processing_parameters <- function(cl, data_id, run_id){
   feature_info_list <- add_imputation_info(cl=cl,
                                            feature_info_list=feature_info_list,
                                            data_obj=data,
-                                           settings=settings)
+                                           settings=settings,
+                                           verbose=verbose)
   
   # Impute features with censored data prior to clustering
   data <- impute_features(data=data,
@@ -450,7 +451,8 @@ determine_pre_processing_parameters <- function(cl, data_id, run_id){
   feature_info_list  <- add_cluster_info(cl=cl,
                                          feature_info_list=feature_info_list,
                                          data_obj=data,
-                                         settings=settings)
+                                         settings=settings,
+                                         verbose=verbose)
 
   # Add required features
   feature_info_list <- add_required_features(feature_info_list=feature_info_list)
