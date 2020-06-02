@@ -36,7 +36,9 @@ extract_experimental_setup <- function(experimental_design, file_dir, verbose=TR
 
 .experimental_design_is_file <- function(file_dir, experimental_design){
   # Check if the experimental design argument is actually a path to a file.
-
+  
+  if(is.null(file_dir)) return(FALSE)
+  
   # Check if the file exists at all.
   if(!file.exists(file.path(file_dir, experimental_design)) & !file.exists(experimental_design)){
     return(FALSE)
