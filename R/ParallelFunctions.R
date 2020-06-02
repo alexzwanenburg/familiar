@@ -200,7 +200,7 @@
   # Export the feature_info list
   if(any(c("all", "feature_info") %in% assign)){
     if(.get_selected_backend_type() == "none"){
-      parallel::clusterExport(cl=cl, varlist="feature_info_list", envir=familiar_global_env)
+      parallel::clusterExport(cl=cl, varlist="master_feature_info_list", envir=familiar_global_env)
     }
   }
   
@@ -230,7 +230,7 @@
   # Re-export the feature_info list.
   if(any(c("all", "feature_info") %in% assign)){
     if(backend_type == "none"){
-      parallel::clusterExport(cl=cl, varlist="feature_info_list", envir=familiar_global_env)
+      parallel::clusterExport(cl=cl, varlist="master_feature_info_list", envir=familiar_global_env)
     }
   }
 }
