@@ -1,4 +1,4 @@
-add_cluster_info <- function(cl=NULL, feature_info_list, data_obj, settings){
+add_cluster_info <- function(cl=NULL, feature_info_list, data_obj, settings, verbose=TRUE){
 
   # Suppress NOTES due to non-standard evaluation in data.table
   name <- cluster_id <- weight <- cluster_size <-  NULL
@@ -8,7 +8,7 @@ add_cluster_info <- function(cl=NULL, feature_info_list, data_obj, settings){
   
   if(length(feature_columns) <= 2 | settings$prep$cluster_method=="none"){
     # Message that no clustering was performed
-    logger.message(paste0("Pre-processing: No feature clustering was performed."))
+    if(verbose) logger.message(paste0("Pre-processing: No feature clustering was performed."))
     
     return(feature_info_list)
   }
@@ -22,7 +22,7 @@ add_cluster_info <- function(cl=NULL, feature_info_list, data_obj, settings){
                                            similarity_metric=settings$prep$cluster_similarity_metric))){
     
     # Message that no clustering was performed due to distances
-    logger.message(paste0("Pre-processing: No feature clustering was performed as no feature pairs were within the distance to form a cluster."))
+    if(verbose) logger.message(paste0("Pre-processing: No feature clustering was performed as no feature pairs were within the distance to form a cluster."))
     
     return(feature_info_list)
   }
