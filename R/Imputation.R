@@ -1,15 +1,21 @@
-add_imputation_info <- function(cl=NULL, feature_info_list, data_obj, settings){
+add_imputation_info <- function(cl=NULL, feature_info_list, data_obj, settings, verbose=TRUE){
   
   # Add simple imputation info
-  feature_info_list <- impute.add_simple_imputation_info(cl=cl, feature_info_list=feature_info_list, data_obj=data_obj)
+  feature_info_list <- impute.add_simple_imputation_info(cl=cl,
+                                                         feature_info_list=feature_info_list,
+                                                         data_obj=data_obj,
+                                                         verbose = verbose & settings$prep$imputation_method == "simple")
   
   if(settings$prep$imputation_method == "lasso"){
     # Process data with simple imputation
     local_train_data  <- impute.impute_simple(cl=cl, data_obj=data_obj, feature_info_list=feature_info_list)
     
     # Add lasso-regression info
-    feature_info_list <- impute.add_lasso_imputation_info(cl=cl, feature_info_list=feature_info_list, data_obj=data_obj,
-                                                          uncensored_data_obj=local_train_data)
+    feature_info_list <- impute.add_lasso_imputation_info(cl=cl,
+                                                          feature_info_list=feature_info_list,
+                                                          data_obj=data_obj,
+                                                          uncensored_data_obj=local_train_data,
+                                                          verbose=verbose)
   }
   
   return(feature_info_list)
@@ -17,7 +23,7 @@ add_imputation_info <- function(cl=NULL, feature_info_list, data_obj, settings){
 
 
 
-impute.add_lasso_imputation_info <- function(cl=NULL, feature_info_list, data_obj, uncensored_data_obj){
+impute.add_lasso_imputation_info <- function(cl=NULL, feature_info_list, data_obj, uncensored_data_obj, verbose=TRUE){
   
   # Suppress NOTES due to non-standard evaluation in data.table
   name <- NULL
@@ -150,7 +156,7 @@ impute.add_lasso_imputation_info <- function(cl=NULL, feature_info_list, data_ob
                            assign=NULL,
                            X=feature_columns,
                            FUN=.add_info,
-                           progress_bar=TRUE,
+                           progress_bar=verbose,
                            feature_info_list=feature_info_list,
                            data_obj=data_obj,
                            uncensored_data_obj=uncensored_data_obj)
@@ -283,7 +289,7 @@ impute.impute_lasso <- function(cl=NULL, feature_info_list, data_obj, uncensored
 
 
 
-impute.add_simple_imputation_info <- function(cl=NULL, feature_info_list, data_obj, settings){
+impute.add_simple_imputation_info <- function(cl=NULL, feature_info_list, data_obj, settings, verbose=TRUE){
   
   # Local function
   .add_info <- function(feature, feature_info_list, data_obj){
@@ -323,7 +329,7 @@ impute.add_simple_imputation_info <- function(cl=NULL, feature_info_list, data_o
                          assign=NULL,
                          X=feature_columns,
                          FUN=.add_info,
-                         progress_bar=FALSE,
+                         progress_bar=verbose,
                          feature_info_list=feature_info_list,
                          data_obj=data_obj)
   
