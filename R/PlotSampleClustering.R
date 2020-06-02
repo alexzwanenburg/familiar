@@ -606,7 +606,7 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
               if(is_empty(y_split[[ii]])) next()
               
               # Skip sets with empty similarity data.
-              data_are_empty <- sapply(x[y_split[[ii]]$list_id], function(list_entry) (is_empty(list_entry$data)))
+              data_are_empty <- sapply(x[y_split[[ii]]$list_id], function(list_entry) (is_empty(list_entry$data) | is_empty(list_entry$feature_order) | is_empty(list_entry$sample_order)))
               if(all(data_are_empty)) next()
               
               # Generate plot
