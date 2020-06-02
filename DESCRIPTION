@@ -100,7 +100,6 @@ Collate:
     'LearnerMain.R'
     'LearnerModelBasedBoosting.R'
     'LearnerNaiveBayes.R'
-    'LearnerRandomForest_ranger.R'
     'LearnerRandomForest_rfsrc.R'
     'LearnerRecalibration.R'
     'LearnerSupportVectorMachine.R'

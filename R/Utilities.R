@@ -1038,7 +1038,7 @@ process_random_forest_survival_predictions <- function(event_matrix, event_times
   prediction_table[, "predicted_outcome":=NULL]
   
   # Then merge the event table into the prediction table.
-  prediction_table <- merge(x=prediction_table, y=event_table, on=id_columns)
+  prediction_table <- merge(x=prediction_table, y=event_table, by=id_columns)
   
   return(prediction_table)
 }
