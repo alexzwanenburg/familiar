@@ -143,6 +143,7 @@ Collate:
     'RankSimpleAggregation.R'
     'RankStabilityAggregation.R'
     'SocketServer.R'
+    'TestDataCreators.R'
     'TrainS4Methods.R'
     'Transformation.R'
     'Utilities.R'

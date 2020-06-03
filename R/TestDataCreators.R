@@ -1,0 +1,107 @@
+test.create_good_data_set <- function(outcome_type){
+  
+  if(outcome_type == "survival"){
+    # Load colon dataset from the survival package
+    data <- as.data.table(survival::colon)
+    
+    # Recurrence
+    data <- data[etype == 1]
+    
+    # Keep only first 100 samples for speed and only id, nodes, rx, extent and outcome.
+    data <- familiar:::as_data_object(data=data[1:100, ],
+                                      sample_id_column="id",
+                                      outcome_column=c("time", "status"),
+                                      outcome_type=outcome_type,
+                                      include_features=c("nodes", "rx"))
+  } 
+  
+  return(data)
+}
+
+
+
+test.create_empty_data_set <- function(outcome_type){
+  
+  # Create good dataset first and work from there.
+  data <- test.create_good_data_set(outcome_type=outcome_type)
+  
+  # Now empty the data.
+  data@data <- head(data@data, n=0)
+  
+  return(data)
+}
+
+
+
+test.create_one_sample_data_set <- function(outcome_type){
+  
+  # Create good dataset first and work from there.
+  data <- test.create_good_data_set(outcome_type=outcome_type)
+  
+  # Now keep only the first sample.
+  data@data <- head(data@data, n=1)
+  
+  return(data)
+}
+
+
+
+test.create_wide_data_set <- function(outcome_type){
+  
+  # Set random seed so that the same numbers are produced every time.
+  set.seed(1844)
+  
+  if(outcome_type == "survival"){
+    
+    # Load colon dataset from the survival package
+    data <- as.data.table(survival::colon)
+    
+    # Recurrence
+    data <- data[etype == 1]
+    
+    # Remove superfluous columns
+    data[, ":="("study"=NULL, "node4"=NULL, "etype"=NULL)]
+    
+    # Refactor columns
+    data$sex <- factor(x=data$sex, levels=c(0, 1), labels=c("female", "male"))
+    data$obstruct <- factor(data$obstruct, levels=c(0, 1), labels=c(FALSE, TRUE))
+    data$perfor <- factor(data$perfor, levels=c(0, 1), labels=c(FALSE, TRUE))
+    data$adhere <- factor(data$adhere, levels=c(0, 1), labels=c(FALSE, TRUE))
+    data$differ <- factor(data$differ, levels=c(1, 2, 3), labels=c("well", "moderate", "poor"), ordered=TRUE)
+    data$extent <- factor(data$extent, levels=c(1, 2, 3, 4), labels=c("submucosa", "muscle",  "serosa", "contiguous_structures"), ordered=TRUE)
+    data$surg <- factor(data$surg, levels=c(0, 1), labels=c("short", "long"))
+    
+    # Make the dataset small and wide (10 features)
+    data <- data[1:5, ]
+    
+    # Add twenty random features
+    random_data <- lapply(seq_len(20), function(ii, n) rnorm(n=n), n=nrow(data))
+    names(random_data) <- paste0("random_", seq_len(20))
+    
+    # Add to dataset
+    data <- cbind(data, data.table::as.data.table(random_data))
+    
+    # Keep only first 100 samples for speed and only id, nodes, rx, extent and outcome.
+    data <- familiar:::as_data_object(data=data,
+                                      sample_id_column="id",
+                                      outcome_column=c("time", "status"),
+                                      outcome_type=outcome_type)
+  }
+  
+  return(data)
+}
+
+
+
+test.create_bad_data_set <- function(outcome_type){
+  
+  # Create good dataset first and work from there.
+  data <- test.create_good_data_set(outcome_type=outcome_type)
+  
+  if(outcome_type == "survival"){
+    # For survival data it would be really bad if all data are censored.
+    data@data[, "outcome_event":=0]
+  }
+  
+  return(data)
+}
