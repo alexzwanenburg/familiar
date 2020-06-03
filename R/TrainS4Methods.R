@@ -5,47 +5,12 @@ NULL
 setMethod("train", signature(data="data.table"),
           function(data, learner, hyperparameter_list=list(), ...){
             
-            # Load settings from ellipsis
-            settings <- do.call(.parse_initial_settings, args=c(list("experimental_design"="fs+mb"),
-                                                                list(...)))
-            
-            # Convert data.table to a dataObject.
-            data <- do.call(.load_data, args=append(list("data"=data), settings$data))
-            
-            # Update settings
-            settings <- .update_initial_settings(data=data, settings=settings)
-            
-            # Parse data
-            data <- .finish_data_preparation(data = data,
-                                             sample_id_column = settings$data$sample_col,
-                                             batch_id_column = settings$data$batch_col,
-                                             outcome_column = settings$data$outcome_col,
-                                             outcome_type = settings$data$outcome_type,
-                                             include_features = settings$data$include_features,
-                                             class_levels = settings$data$class_levels,
-                                             censoring_indicator=settings$data$censoring_indicator,
-                                             event_indicator=settings$data$event_indicator,
-                                             competing_risk_indicator=settings$data$competing_risk_indicator)
-            
-            # Derive experimental design
-            experiment_setup <- extract_experimental_setup(experimental_design=settings$data$exp_design,
-                                                           file_dir=NULL,
-                                                           verbose=FALSE)
-            
-            # Check experiment settings
-            settings <- .update_experimental_design_settings(section_table=experiment_setup,
-                                                             data=data,
-                                                             settings=settings)
-            
-            # Create dataObject from data.
-            data <- methods::new("dataObject",
-                                 data=data,
-                                 is_pre_processed=FALSE,
-                                 outcome_type=settings$data$outcome_type)
+            # Convert data to dataObject.
+            data <- do.call(as_data_object, args=c(list("data"=data),
+                                                   list(...)))
             
             return(do.call(train, args=c(list("data"=data,
                                               "learner"=learner,
-                                              "settings"=settings,
                                               "hyperparameter_list"=hyperparameter_list),
                                          list(...))))
           })
