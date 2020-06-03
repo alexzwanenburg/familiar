@@ -317,9 +317,6 @@ setMethod("has_feature_data", signature(x="dataObject"), function(x, outcome_typ
 setMethod("encode_categorical_variables", signature(data="dataObject", object="ANY"),
           function(object=NULL, data, encoding_method="effect", drop_levels=TRUE, feature_columns=NULL){
             
-            # Check if data is present.
-            if(is_empty(data)) return(list("encoded_data"=NULL, "reference_table"=NULL))
-            
             # Obtain feature columns if not provided.
             if(is.null(feature_columns)) feature_columns <- get_feature_columns(data)
 
