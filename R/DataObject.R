@@ -3,6 +3,132 @@
 NULL
 
 
+#####as_data_object (dataObject)#####
+setMethod("as_data_object", signature(data="dataObject"),
+          function(data, ...) return(data))
+
+
+#####as_data_object (data.table)#####
+setMethod("as_data_object", signature(data="data.table"),
+          function(data,
+                   sample_id_column=waiver(),
+                   batch_id_column=waiver(),
+                   development_batch_id=waiver(),
+                   validation_batch_id=waiver(),
+                   outcome_name=waiver(),
+                   outcome_column=waiver(),
+                   outcome_type=waiver(),
+                   event_indicator=waiver(),
+                   censoring_indicator=waiver(),
+                   competing_risk_indicator=waiver(),
+                   class_levels=waiver(),
+                   exclude_features=waiver(),
+                   include_features=waiver(),
+                   ...){
+            
+            # Load settings from ellipsis
+            settings <- do.call(.parse_initial_settings, args=c(list("experimental_design"="fs+mb",
+                                                                     "sample_id_column"=sample_id_column,
+                                                                     "batch_id_column"=batch_id_column,
+                                                                     "development_batch_id"=development_batch_id,
+                                                                     "validation_batch_id"=validation_batch_id,
+                                                                     "outcome_name"=outcome_name,
+                                                                     "outcome_column"=outcome_column,
+                                                                     "outcome_type"=outcome_type,
+                                                                     "event_indicator"=event_indicator,
+                                                                     "censoring_indicator"=censoring_indicator,
+                                                                     "competing_risk_indicator"=competing_risk_indicator,
+                                                                     "class_levels"=class_levels,
+                                                                     "exclude_features"=exclude_features,
+                                                                     "include_features"=include_features),
+                                                                list(...)))
+            
+            # Update settings
+            settings <- .update_initial_settings(data=data, settings=settings)
+            
+            # Parse data
+            data <- .finish_data_preparation(data = data,
+                                             sample_id_column = settings$data$sample_col,
+                                             batch_id_column = settings$data$batch_col,
+                                             outcome_column = settings$data$outcome_col,
+                                             outcome_type = settings$data$outcome_type,
+                                             include_features = settings$data$include_features,
+                                             class_levels = settings$data$class_levels,
+                                             censoring_indicator=settings$data$censoring_indicator,
+                                             event_indicator=settings$data$event_indicator,
+                                             competing_risk_indicator=settings$data$competing_risk_indicator)
+            
+            # Convert to dataObject
+            data <- methods::new("dataObject",
+                                 data = data,
+                                 is_pre_processed = FALSE,
+                                 outcome_type = settings$data$outcome_type,
+                                 outcome_info = create_outcome_info(settings=settings))
+            
+            return(data)
+          })
+
+
+#####as_data_object (ANY)#####
+setMethod("as_data_object", signature(data="ANY"),
+          function(data,
+                   sample_id_column=waiver(),
+                   batch_id_column=waiver(),
+                   ...){
+            
+            # Create a local copy of batch_id_column to pass on to .load_data.
+            if(is.waive(sample_id_column)){
+              sample_id_column_local <- NULL
+              
+            } else {
+              sample_id_column_local <- sample_id_column
+            }
+            
+            # Create a local copy of batch_id_column to pass on to .load_data.
+            if(is.waive(batch_id_column)){
+              batch_id_column_local <- NULL
+              
+            } else {
+              batch_id_column_local <- batch_id_column
+            }
+            
+            # Load data and convert to data.table
+            data <- .load_data(data=data,
+                               sample_id_column=sample_id_column_local,
+                               batch_id_column=batch_id_column_local)
+            
+            # Pass on to data.table method.
+            return(do.call(as_data_object, args=c(list("data"=data,
+                                                       "sample_id_column"=sample_id_column,
+                                                       "batch_id_column"=batch_id_column),
+                                                  list(...))))
+          })
+
+
+setMethod("extract_settings_from_data", signature(data="dataObject"),
+          function(data, settings=NULL){
+            
+            if(is.null(settings)){
+              settings <- list("data"=list())
+            }
+            
+            # Sample identifier column
+            settings$data$sample_col <- "subject_id"
+            settings$data$batch_col <- "cohort_id"
+            settings$data$outcome_col <- get_outcome_columns(data)
+            settings$data$outcome_type <- data@outcome_type
+            settings$data$outcome_name <- get_outcome_name(data@outcome_info)
+            settings$data$class_levels <- get_outcome_class_levels(data@outcome_info)
+            settings$data$event_indicator <- data@outcome_info@event
+            settings$data$censoring_indicator <- data@outcome_info@censored
+            settings$data$competing_risk_indicator <- data@outcome_info@competing_risk
+            settings$data$include_features <- get_feature_columns(data)
+            
+            return(settings)
+          })
+
+
+
 #####create_data_object#####
 setMethod("create_data_object", signature(object="familiarModel", data="ANY"),
           function(object, data, is_pre_processed=FALSE){
