@@ -47,6 +47,9 @@ setMethod("get_prediction_type", signature(object="familiarCoxPH"),
             if(type == "risk"){
               return("hazard_ratio")
               
+            } else if(type == "survival_probability"){
+              return("survival_probability")
+               
             } else {
               ..error_reached_unreachable_code("get_prediction_type,familiarCoxPH: unknown type")
             }
@@ -84,10 +87,13 @@ setMethod("..train", signature(object="familiarCoxPH", data="dataObject"),
                               error=identity)
             
             # Check if the model trained at all.
-            if(inherits(model, "error")) callNextMethod()
+            if(inherits(model, "error")) return(callNextMethod())
             
             # Check if the model fitter converged in time.
-            if(model$iter >= 100) callNextMethod()
+            if(model$iter >= 100) return(callNextMethod())
+            
+            # Check if all coefficients could not be estimated.
+            if(all(!sapply(stats::coef(model), is.finite))) return(callNextMethod())
             
             # Add model
             object@model <- model
@@ -105,7 +111,7 @@ setMethod("..predict", signature(object="familiarCoxPH", data="dataObject"),
           function(object, data, type="risk", ...){
             
             # Check if the model was trained.
-            if(!model_is_trained(object)) callNextMethod()
+            if(!model_is_trained(object)) return(callNextMethod())
             
             # Encode data so that the features are the same as in the training.
             encoded_data <- encode_categorical_variables(data=data,
@@ -134,8 +140,11 @@ setMethod("..predict", signature(object="familiarCoxPH", data="dataObject"),
 setMethod("..predict_survival_probability", signature(object="familiarCoxPH", data="dataObject"),
           function(object, data, time){
             
-            if(object@outcome_type != "survival") callNextMethod()
-              
+            if(object@outcome_type != "survival") return(callNextMethod())
+            
+            # If time is unset, read the max time stored by the model.
+            if(is.null(time)) time <- object@settings$time_max
+            
             return(learner.survival_probability_relative_risk(object=object, data=data, time=time))
           })
 
@@ -145,13 +154,13 @@ setMethod("..predict_survival_probability", signature(object="familiarCoxPH", da
 setMethod("..vimp", signature(object="familiarCoxPH"),
           function(object, ...){
             
-            if(!model_is_trained(object)) callNextMethod()
+            if(!model_is_trained(object)) return(callNextMethod())
             
             # Define p-values
             coefficient_p_values <- coefficient_one_sample_z_test(model=object@model)
             coefficient_p_values <- coefficient_p_values[names(coefficient_p_values) != "(Intercept)"]
             
-            if(length(coefficient_p_values) == 0) callNextMethod()
+            if(length(coefficient_p_values) == 0) return(callNextMethod())
             
             # Assign to variable importance table.
             vimp_table <- data.table::data.table("score"=coefficient_p_values,
@@ -183,7 +192,7 @@ setMethod("..set_calibration_info", signature(object="familiarCoxPH"),
               object@calibration_info <- get_baseline_survival(data=data)
               
             } else {
-              callNextMethod()
+              return(callNextMethod())
             }
             
             return(object)
