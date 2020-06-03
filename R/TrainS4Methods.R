@@ -81,6 +81,10 @@ setMethod("train", signature(data="dataObject"),
                                                                      settings=settings,
                                                                      verbose=FALSE)
             
+            # Remove invariant features from the data
+            data <- filter_features(data=data,
+                                    available_features=get_available_features(feature_info_list=feature_info_list))
+            
             # Get the features names.
             selected_features <- get_feature_columns(data)
             
