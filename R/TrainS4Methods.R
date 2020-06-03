@@ -17,28 +17,15 @@ setMethod("train", signature(data="data.table"),
 
 
 setMethod("train", signature(data="dataObject"),
-          function(data, learner, hyperparameter_list=list(), settings=NULL, ...){
-
+          function(data, learner, hyperparameter_list=list(), ...){
+            
             #####Prepare settings###############################################
             
-            if(is.null(settings)){
-              # Load settings from ellipsis
-              settings <- do.call(.parse_initial_settings, args=c(list("experimental_design"="fs+mb"),
-                                                                  list(...)))
-              
-              # Update settings
-              settings <- .update_initial_settings(data=data@data, settings=settings)
-              
-              # Derive experimental design
-              experiment_setup <- extract_experimental_setup(experimental_design=settings$data$exp_design,
-                                                             file_dir=NULL,
-                                                             verbose=FALSE)
-              
-              # Check experiment settings
-              settings <- .update_experimental_design_settings(section_table=experiment_setup,
-                                                               data=data@data,
-                                                               settings=settings)
-            }
+            # Reconstitute settings from the data.
+            settings <- extract_settings_from_data(data)
+            
+            # Update some missing settings that can be fixed within this method.
+            settings$data$train_cohorts <- unique(data@data[["cohort_id"]])
             
             # Parse the remaining settings that are important. Remove
             # outcome_type from ... This prevents an error caused by multiple
@@ -48,7 +35,7 @@ setMethod("train", signature(data="dataObject"),
             dots$fs_method <- NULL
             dots$hyperparameter <- NULL
 
-            # Create hyperparam setting so that it can be parsed correctly.
+            # Create setting_hyperparam so that it can be parsed correctly.
             if(!learner %in% names(hyperparameter_list) & length(hyperparameter_list) > 0){
               setting_hyperparam <- list()
               setting_hyperparam[[learner]] <- hyperparameter_list
@@ -73,7 +60,7 @@ setMethod("train", signature(data="dataObject"),
             #####Prepare outcome_info###########################################
             
             # Create a generic outcome object
-            outcome_info <- create_outcome_info(settings=settings)
+            outcome_info <- data@outcome_info
             
             
             #####Prepare featureInfo objects####################################
