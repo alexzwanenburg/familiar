@@ -192,7 +192,7 @@ setMethod("get_prediction_type", signature(object="familiarRanger"),
               } 
               
             } else {
-              callNextMethod()
+              return(callNextMethod())
             }
           })
 
@@ -277,7 +277,7 @@ setMethod("..predict", signature(object="familiarRanger", data="dataObject"),
           function(object, data, type=NULL, time=NULL, ...){
             
             # Check if the model was trained.
-            if(!model_is_trained(object)) callNextMethod()
+            if(!model_is_trained(object)) return(callNextMethod())
             
             # Set the prediction type
             if(is.null(type)){
@@ -380,7 +380,7 @@ setMethod("..predict", signature(object="familiarRanger", data="dataObject"),
 setMethod("..predict_survival_probability", signature(object="familiarRanger", data="dataObject"),
           function(object, data, time){
             
-            if(!object@outcome_type %in% c("survival")) callNextMethod()
+            if(!object@outcome_type %in% c("survival")) return(callNextMethod())
             
             return(..predict(object=object, data=data, time=time, type="survival_probability"))
           })
@@ -395,7 +395,7 @@ setMethod("..vimp", signature(object="familiarRanger"),
             if(!model_is_trained(object)) object <- ..train(object, data)
             
             # Check if the model has been trained upon retry.
-            if(!model_is_trained(object)) callNextMethod()
+            if(!model_is_trained(object)) return(callNextMethod())
             
             # Extract the variable importance score
             if(object@hyperparameters$fs_forest_type == "standard"){
@@ -427,7 +427,7 @@ setMethod("..set_calibration_info", signature(object="familiarRanger"),
               object@calibration_info <- get_baseline_survival(data=data)
               
             } else {
-              callNextMethod()
+              return(callNextMethod())
             }
             
             return(object)
