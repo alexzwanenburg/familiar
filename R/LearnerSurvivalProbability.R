@@ -62,7 +62,6 @@ learner.survival_probability_relative_risk <- function(object, data, time){
   
   # Check for several issues that prevent survival probabilities from being
   # predicted.
-  if(nrow(prediction_table) <= 1) return(empty_table)
   if(!any_predictions_valid(prediction_table=prediction_table, outcome_type=object@outcome_type)) return(empty_table)
   if(!has_calibration_info(object)) return(empty_table)
   
