@@ -391,7 +391,7 @@ setMethod("..predict_survival_probability", signature(object="familiarRanger", d
 
 #####..vimp#####
 setMethod("..vimp", signature(object="familiarRanger"),
-          function(object, data, ...){
+          function(object, data=NULL, ...){
             
             # Attempt to train the model if it has not been trained yet.
             if(!model_is_trained(object)) object <- ..train(object, data)

@@ -190,7 +190,7 @@ setGeneric("..predict_survival_probability", function(object, data, time, ...) s
 
 setGeneric("..set_recalibration_model", function(object, data, ...) standardGeneric("..set_recalibration_model"))
 
-setGeneric("..vimp", function(object, data, ...) standardGeneric("..vimp"))
+setGeneric("..vimp", function(object, ...) standardGeneric("..vimp"))
 
 setGeneric("get_prediction_type", function(object, ...) standardGeneric("get_prediction_type"))
 
