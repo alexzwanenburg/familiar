@@ -316,7 +316,7 @@ setMethod("..predict", signature(object="familiarRanger", data="dataObject"),
             
             if(object@outcome_type %in% c("binomial", "multinomial")){
               #####Categorical outcomes######
-              browser()
+              
               # Extract class levels from the predictions.
               class_levels <- colnames(model_predictions$predictions)
               
