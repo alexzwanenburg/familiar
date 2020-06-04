@@ -389,6 +389,17 @@ setMethod("..train", signature(object="familiarModel", data="dataObject"),
             return(object)
           })
 
+
+#####..train#####
+setMethod("..train", signature(object="familiarModel", data="NULL"),
+          function(object, data){
+            
+            # Set a NULL model
+            object@model <- NULL
+            
+            return(object)
+          })
+
 #####..predict#####
 setMethod("..predict", signature(object="familiarModel", data="dataObject"),
           function(object, data, ...) return(get_placeholder_prediction_table(object=object, data=data)))
