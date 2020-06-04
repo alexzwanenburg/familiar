@@ -2,6 +2,7 @@
 good_data <- familiar:::test.create_good_data_set("survival")
 empty_data <- familiar:::test.create_empty_data_set("survival")
 one_sample_data <- familiar:::test.create_one_sample_data_set("survival")
+one_feature_data <- familiar:::test.create_one_feature_data_set("survival")
 wide_data <- familiar:::test.create_wide_data_set("survival")
 bad_data <- familiar:::test.create_bad_data_set("survival")
 
@@ -11,6 +12,13 @@ good_model <- familiar:::train(data=good_data,
                                imputation_method="simple",
                                hyperparameter_list=list("sign_size"=familiar:::get_n_features(good_data)),
                                learner="cox")
+
+# Train the one-feature model.
+one_feature_model <- familiar:::train(data=one_feature_data,
+                                      cluster_method="none",
+                                      imputation_method="simple",
+                                      hyperparameter_list=list("sign_size"=familiar:::get_n_features(one_feature_data)),
+                                      learner="cox")
 
 # Train the model using wide data.
 wide_model <- familiar:::train(data=wide_data,
@@ -108,7 +116,23 @@ testthat::test_that("Cox model can predict single samples", {
 })
 
 
-testthat::test_that("The Cox model does not train for wide data", {
+testthat::test_that("Cox model can train on single features", {
+  
+  # Model trained
+  testthat::expect_equal(familiar:::model_is_trained(one_feature_model), TRUE)
+  
+  # Variable importance table is present
+  testthat::expect_equal(nrow(familiar:::..vimp(one_feature_model)), 1)
+  
+  # Valid predictions can be made.
+  testthat::expect_equal(familiar:::any_predictions_valid(familiar:::.predict(one_feature_model, one_feature_data), outcome_type=one_feature_model@outcome_type), TRUE)
+  
+  # Valid survival probability predictions can be made.
+  testthat::expect_equal(familiar:::any_predictions_valid(familiar:::.predict(one_feature_model, one_feature_data, type="survival_probability", time=1000), outcome_type=one_feature_model@outcome_type), TRUE)
+})
+
+
+testthat::test_that("Cox model does not train for wide data", {
   
   # Model trained
   testthat::expect_equal(familiar:::model_is_trained(wide_model), FALSE)
@@ -124,7 +148,7 @@ testthat::test_that("The Cox model does not train for wide data", {
 })
 
 
-testthat::test_that("The Cox model does not train for bad data with all censoring", {
+testthat::test_that("Cox model does not train for bad data with all censoring", {
   
   # Model trained
   testthat::expect_equal(familiar:::model_is_trained(bad_model), FALSE)
