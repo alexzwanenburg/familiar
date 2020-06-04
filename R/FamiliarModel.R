@@ -252,6 +252,52 @@ setMethod("model_is_trained", signature(object="familiarModel"),
             }
           })
 
+
+setMethod("has_bad_training_data", signature(object="familiarModel", data="dataObject"),
+          function(object, data, ...){
+            
+            # Retrieve outcomeInfo object.
+            if(!is.null(object@outcome_info)){
+              outcome_info <- object@outcome_info
+              
+            } else if(!is.null(data@outcome_info)){
+              outcome_info <- data@outcome_info
+              
+            } else {
+              ..error_reached_unreachable_code("has_bad_training_data: could not find outcomeInfo object attached to familiarModel or dataObject.")
+            }
+            
+            # One cannot train without data or on a single sample.
+            if(is_empty(data)) return(TRUE)
+            if(nrow(data@data) < 2) return(TRUE)
+            
+            if(object@outcome_type == "survival"){
+              
+              # Check that not all data are censored.
+              censoring_variable <- outcome_info@censored
+              if(all(data@data$outcome_event == censoring_variable)) return(TRUE)
+              if(all(data@data$outcome_event == 0)) return(TRUE)
+              
+              # Check that not all data have the same survival time.
+              if(all(data@data$outcome_time == data@data$outcome_time[1])) return(TRUE)
+              
+            } else if(object@outcome_type %in% c("binomial", "categorical")){
+              
+              # Check that not all data have the same class.
+              if(data.table::uniqueN(data@data$outcome) == 1) return(TRUE)
+              
+            } else if(object@outcome_type %in% c("count", "continuous")){
+              
+              # Check that not all data have the same outcome value.
+              if(all(data@data$outcome == data@data$outcome[1])) return(TRUE)
+              
+            } else {
+              ..error_outcome_type_not_implemented(object@outcome_type)
+            }
+            
+            return(FALSE)
+          })
+
 #####add_package_version (model)#####
 setMethod("add_package_version", signature(object="familiarModel"),
           function(object){

@@ -61,6 +61,9 @@ setMethod("get_prediction_type", signature(object="familiarCoxPH"),
 setMethod("..train", signature(object="familiarCoxPH", data="dataObject"),
           function(object, data){
             
+            # Check if training data is ok.
+            if(has_bad_training_data(object=object, data=data)) return(callNextMethod())
+            
             # Use effect coding to convert categorical data into encoded data -
             # this is required to deal with factors with missing/new levels
             # between training and test data sets.

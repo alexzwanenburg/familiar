@@ -174,6 +174,8 @@ setGeneric("decode_categorical_variables_vimp", function(object, ...) standardGe
 
 setGeneric("get_placeholder_prediction_table", function(object, data, ...) standardGeneric("get_placeholder_prediction_table"))
 
+setGeneric("has_bad_training_data", function(object, data, ...) standardGeneric("has_bad_training_data"))
+
 
 ##### familiarModel learner methods #####
 setGeneric("promote_learner", function(object, ...) standardGeneric("promote_learner"))

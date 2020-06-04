@@ -197,14 +197,16 @@ setMethod("get_prediction_type", signature(object="familiarRanger"),
           })
 
 
-
 #####..train####
 setMethod("..train", signature(object="familiarRanger", data="dataObject"),
           function(object, data){
-            
+
             # Aggregate repeated measurement data - ranger does not facilitate
             # repeated measurements.
             data <- aggregate_data(data=data)
+            
+            # Check if the training data is ok.
+            if(has_bad_training_data(object=object, data=data)) return(callNextMethod())
             
             # Find feature columns in data table
             feature_cols <- get_feature_columns(x=data)
