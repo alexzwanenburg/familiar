@@ -281,6 +281,9 @@ setMethod("..predict", signature(object="familiarRanger", data="dataObject"),
             # Check if the model was trained.
             if(!model_is_trained(object)) return(callNextMethod())
             
+            # Check if the data is empty.
+            if(is_empty(data)) return(callNextMethod())
+            
             # Set the prediction type
             if(is.null(type)){
               if(object@outcome_type %in% c("survival")){
