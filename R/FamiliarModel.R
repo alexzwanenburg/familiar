@@ -281,10 +281,13 @@ setMethod("has_bad_training_data", signature(object="familiarModel", data="dataO
               # Check that not all data have the same survival time.
               if(all(data@data$outcome_time == data@data$outcome_time[1])) return(TRUE)
               
-            } else if(object@outcome_type %in% c("binomial", "categorical")){
+            } else if(object@outcome_type %in% c("binomial", "multinomial")){
               
               # Check that not all data have the same class.
               if(data.table::uniqueN(data@data$outcome) == 1) return(TRUE)
+              
+              # Check that all classes are present at least once.
+              if(data.table::uniqueN(data@data$outcome) < nlevels(data@data$outcome)) return(TRUE)
               
             } else if(object@outcome_type %in% c("count", "continuous")){
               
@@ -297,6 +300,7 @@ setMethod("has_bad_training_data", signature(object="familiarModel", data="dataO
             
             return(FALSE)
           })
+
 
 #####add_package_version (model)#####
 setMethod("add_package_version", signature(object="familiarModel"),
