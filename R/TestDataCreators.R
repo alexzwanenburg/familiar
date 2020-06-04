@@ -61,6 +61,43 @@ test.create_one_sample_data_set <- function(outcome_type){
 
 
 
+test.create_one_feature_data_set <- function(outcome_type){
+  
+  if(outcome_type == "survival"){
+    # Load colon dataset from the survival package
+    data <- as.data.table(survival::colon)
+    
+    # Recurrence
+    data <- data[etype == 1]
+    
+    # Keep only first 100 samples for speed and only id, nodes, rx, extent and outcome.
+    data <- familiar:::as_data_object(data=data[1:100, ],
+                                      sample_id_column="id",
+                                      outcome_column=c("time", "status"),
+                                      outcome_type=outcome_type,
+                                      include_features=c("nodes"))
+    
+  } else if(outcome_type == "multinomial") {
+    # Load iris data set.
+    data <- data.table::as.data.table(iris)
+    
+    # Add sample identifier.
+    data[,":="("sample_id"=.I)]
+    
+    # Convert to a data object.
+    data <- as_data_object(data=data,
+                           sample_id_column="sample_id",
+                           outcome_column="Species",
+                           outcome_type=outcome_type,
+                           include_features=c("Petal.Length"))
+    
+  }
+  
+  return(data)
+}
+
+
+
 test.create_wide_data_set <- function(outcome_type){
   
   # Set random seed so that the same numbers are produced every time.
