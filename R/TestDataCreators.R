@@ -1,19 +1,34 @@
 test.create_good_data_set <- function(outcome_type){
   
   if(outcome_type == "survival"){
-    # Load colon dataset from the survival package
-    data <- as.data.table(survival::colon)
+    # Load colon dataset from the survival package.
+    data <- data.table::as.data.table(survival::colon)
     
-    # Recurrence
+    # Focus on recurrence.
     data <- data[etype == 1]
     
-    # Keep only first 100 samples for speed and only id, nodes, rx, extent and outcome.
-    data <- familiar:::as_data_object(data=data[1:100, ],
-                                      sample_id_column="id",
-                                      outcome_column=c("time", "status"),
-                                      outcome_type=outcome_type,
-                                      include_features=c("nodes", "rx"))
-  } 
+    # Keep only first 100 samples for speed and only id, nodes, rx, extent and
+    # outcome.
+    data <- as_data_object(data=data[1:100, ],
+                           sample_id_column="id",
+                           outcome_column=c("time", "status"),
+                           outcome_type=outcome_type,
+                           include_features=c("nodes", "rx"))
+    
+  } else if(outcome_type == "multinomial") {
+    # Load iris data set.
+    data <- data.table::as.data.table(iris)
+    
+    # Add sample identifier.
+    data[,":="("sample_id"=.I)]
+    
+    # Convert to a data object.
+    data <- as_data_object(data=data,
+                           sample_id_column="sample_id",
+                           outcome_column="Species",
+                           outcome_type=outcome_type)
+    
+  }
   
   return(data)
 }
@@ -86,6 +101,36 @@ test.create_wide_data_set <- function(outcome_type){
                                       sample_id_column="id",
                                       outcome_column=c("time", "status"),
                                       outcome_type=outcome_type)
+    
+  } else if(outcome_type == "multinomial"){
+    # Load iris data set.
+    data <- data.table::as.data.table(iris)
+    
+    # Squeeze data
+    data <- data[c(1, 2, 3, 80, 81, 82, 148, 149, 150)]
+    
+    # Add sample identifier.
+    data[,":="("sample_id"=.I)]
+    
+    # Add twenty random features
+    random_data <- lapply(seq_len(20), function(ii, n) rnorm(n=n), n=nrow(data))
+    names(random_data) <- paste0("random_", seq_len(20))
+    
+    # Add to dataset
+    data <- cbind(data, data.table::as.data.table(random_data))
+    
+    # Add another 3 random features
+    random_data <- lapply(seq_len(3), function(ii, n) factor(sample(c("red", "green", "blue"), size=n, replace=TRUE)), n=nrow(data))
+    names(random_data) <- paste0("random_categorical_", seq_len(3))
+    
+    # Add to dataset
+    data <- cbind(data, data.table::as.data.table(random_data))
+    
+    # Convert to a data object.
+    data <- as_data_object(data=data,
+                           sample_id_column="sample_id",
+                           outcome_column="Species",
+                           outcome_type=outcome_type)
   }
   
   return(data)
@@ -101,6 +146,11 @@ test.create_bad_data_set <- function(outcome_type){
   if(outcome_type == "survival"){
     # For survival data it would be really bad if all data are censored.
     data@data[, "outcome_event":=0]
+    
+  } else if(outcome_type == "multinomial"){
+    # For multinomial data, having a single class is bad.
+    data@data[, "outcome":="setosa"]
+    
   }
   
   return(data)
