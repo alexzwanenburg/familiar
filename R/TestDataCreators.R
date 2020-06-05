@@ -52,9 +52,62 @@ test.create_good_data_set <- function(outcome_type){
                            sample_id_column="id",
                            outcome_column="cell_malignancy",
                            outcome_type=outcome_type,
-                           exclude_features="cell_shape_uniformity",
+                           exclude_features="cell_size_uniformity",
                            class_levels=c("benign", "malignant"))
     
+  } else if(outcome_type == "continuous"){
+    # Load the California Test Score Data Set
+    data <- data.table::data.table(Ecdat::Caschool)
+    
+    # Drop distcod, district, county, readscr, mathscr
+    data[, ":="("distcod"=NULL, "district"=NULL, "county"=NULL, "readscr"=NULL, "mathscr"=NULL)]
+    
+    # Add sample identifier.
+    data[, ":="("sample_id"=.I)]
+    
+    # Limit to 150 samples
+    data <- data[271:420, ]
+    
+    # Convert to a data object. Exclude mealpct, as this feature is correlated
+    # to avginc.
+    data <- as_data_object(data=data,
+                           sample_id_column="sample_id",
+                           outcome_column="testscr",
+                           outcome_type=outcome_type,
+                           exclude_features="mealpct")
+    
+  } else if(outcome_type == "count"){
+    # Load the Boston Housing data set
+    data <- data.table::as.data.table(MASS::Boston)
+    
+    # Rename columns
+    data.table::setnames(data,
+                         old=c("crim", "zn", "indus", "chas", "nox", "rm", "age", "dis", "rad", "tax", "ptratio", "black", "lstat", "medv"),
+                         new=c("per_capita_crime", "large_residence_proportion", "industry", "by_charles_river",
+                               "nox_concentration", "avg_rooms", "residence_before_1940_proportion",
+                               "distance_to_employment_centres", "radial_highway_accessibility", "property_tax_rate",
+                               "pupil_teacher_ratio", "african_american_metric", "lower_status_percentage", "median_house_value"))
+    
+    # Convert by_charles_river to a factor.
+    data$by_charles_river <- factor(x=data$by_charles_river, levels=c(0, 1), labels=c("no", "yes"))
+    
+    # Convert the median_house_value to the actual value.
+    data[, "median_house_value":=median_house_value * 1000.0]
+    
+    # Add sample identifier.
+    data[, ":="("sample_id"=.I)]
+    
+    # Limit to 150 samples
+    data <- data[1:150, ]
+    
+    # Convert to a data object.
+    data <- as_data_object(data=data,
+                           sample_id_column="sample_id",
+                           outcome_column="median_house_value",
+                           outcome_type=outcome_type)
+    
+  } else {
+    ..error_outcome_type_not_implemented(outcome_type)
   }
   
   return(data)
@@ -144,6 +197,59 @@ test.create_one_feature_data_set <- function(outcome_type){
                            class_levels=c("benign", "malignant"),
                            include_features="cell_size_uniformity")
     
+  } else if(outcome_type == "continuous"){
+    # Load the California Test Score Data Set
+    data <- data.table::data.table(Ecdat::Caschool)
+    
+    # Drop distcod, district, county, readscr, mathscr
+    data[, ":="("distcod"=NULL, "district"=NULL, "county"=NULL, "readscr"=NULL, "mathscr"=NULL)]
+    
+    # Add sample identifier.
+    data[, ":="("sample_id"=.I)]
+    
+    # Limit to 150 samples
+    data <- data[271:420, ]
+    
+    # Convert to a data object.
+    data <- as_data_object(data=data,
+                           sample_id_column="sample_id",
+                           outcome_column="testscr",
+                           outcome_type=outcome_type,
+                           include_features="avginc")
+    
+  } else if(outcome_type == "count"){
+    # Load the Boston Housing data set
+    data <- data.table::as.data.table(MASS::Boston)
+    
+    # Rename columns
+    data.table::setnames(data,
+                         old=c("crim", "zn", "indus", "chas", "nox", "rm", "age", "dis", "rad", "tax", "ptratio", "black", "lstat", "medv"),
+                         new=c("per_capita_crime", "large_residence_proportion", "industry", "by_charles_river",
+                               "nox_concentration", "avg_rooms", "residence_before_1940_proportion",
+                               "distance_to_employment_centres", "radial_highway_accessibility", "property_tax_rate",
+                               "pupil_teacher_ratio", "african_american_metric", "lower_status_percentage", "median_house_value"))
+    
+    # Convert by_charles_river to a factor.
+    data$by_charles_river <- factor(x=data$by_charles_river, levels=c(0, 1), labels=c("no", "yes"))
+    
+    # Convert the median_house_value to the actual value.
+    data[, "median_house_value":=median_house_value * 1000.0]
+    
+    # Add sample identifier.
+    data[, ":="("sample_id"=.I)]
+    
+    # Limit to 150 samples
+    data <- data[1:150, ]
+    
+    # Convert to a data object.
+    data <- as_data_object(data=data,
+                           sample_id_column="sample_id",
+                           outcome_column="median_house_value",
+                           outcome_type=outcome_type,
+                           include_features="lower_status_percentage")
+    
+  } else {
+    ..error_outcome_type_not_implemented(outcome_type)
   }
   
   return(data)
@@ -261,6 +367,78 @@ test.create_wide_data_set <- function(outcome_type){
                            outcome_type=outcome_type,
                            class_levels=c("benign", "malignant"))
     
+  } else if(outcome_type == "continuous"){
+    # Load the California Test Score Data Set
+    data <- data.table::data.table(Ecdat::Caschool)
+    
+    # Drop distcod, district, county, readscr, mathscr
+    data[, ":="("distcod"=NULL, "district"=NULL, "county"=NULL, "readscr"=NULL, "mathscr"=NULL)]
+    
+    # Add sample identifier.
+    data[, ":="("sample_id"=.I)]
+    
+    # Limit to 10 samples
+    data <- data[411:420, ]
+    
+    # Add twenty random features
+    random_data <- lapply(seq_len(20), function(ii, n) rnorm(n=n), n=nrow(data))
+    names(random_data) <- paste0("random_", seq_len(20))
+    
+    # Add to dataset
+    data <- cbind(data, data.table::as.data.table(random_data))
+    
+    # Convert to a data object.
+    data <- as_data_object(data=data,
+                           sample_id_column="sample_id",
+                           outcome_column="testscr",
+                           outcome_type=outcome_type)
+    
+  } else if(outcome_type == "count"){
+    # Load the Boston Housing data set
+    data <- data.table::as.data.table(MASS::Boston)
+    
+    # Rename columns
+    data.table::setnames(data,
+                         old=c("crim", "zn", "indus", "chas", "nox", "rm", "age", "dis", "rad", "tax", "ptratio", "black", "lstat", "medv"),
+                         new=c("per_capita_crime", "large_residence_proportion", "industry", "by_charles_river",
+                               "nox_concentration", "avg_rooms", "residence_before_1940_proportion",
+                               "distance_to_employment_centres", "radial_highway_accessibility", "property_tax_rate",
+                               "pupil_teacher_ratio", "african_american_metric", "lower_status_percentage", "median_house_value"))
+    
+    # Convert by_charles_river to a factor.
+    data$by_charles_river <- factor(x=data$by_charles_river, levels=c(0, 1), labels=c("no", "yes"))
+    
+    # Convert the median_house_value to the actual value.
+    data[, "median_house_value":=median_house_value * 1000.0]
+    
+    # Add sample identifier.
+    data[, ":="("sample_id"=.I)]
+    
+    # Limit to 10 samples
+    data <- data[1:10, ]
+    
+    # Add twenty random features
+    random_data <- lapply(seq_len(20), function(ii, n) rnorm(n=n), n=nrow(data))
+    names(random_data) <- paste0("random_", seq_len(20))
+    
+    # Add to dataset
+    data <- cbind(data, data.table::as.data.table(random_data))
+    
+    # Add another 3 random features
+    random_data <- lapply(seq_len(3), function(ii, n) factor(sample(c("red", "green", "blue"), size=n, replace=TRUE)), n=nrow(data))
+    names(random_data) <- paste0("random_categorical_", seq_len(3))
+    
+    # Add to dataset
+    data <- cbind(data, data.table::as.data.table(random_data))
+    
+    # Convert to a data object.
+    data <- as_data_object(data=data,
+                           sample_id_column="sample_id",
+                           outcome_column="median_house_value",
+                           outcome_type=outcome_type)
+    
+  } else {
+    ..error_outcome_type_not_implemented(outcome_type)
   }
   
   return(data)
@@ -283,8 +461,18 @@ test.create_bad_data_set <- function(outcome_type){
     
   } else if(outcome_type == "binomial" ){
     # For binomial data, having a single class is bad.
-    data@data[, "outcome":="setosa"]
+    data@data[, "outcome":="benign"]
     
+  } else if(outcome_type == "continuous"){
+    # For continuous data, it would be bad if all outcome values are invariant.
+    data@data[, "outcome":=500.0]
+    
+  } else if(outcome_type == "count"){
+    # For count data it would be bad if all outcome values are invariant
+    data@data[, "outcome":=50000]
+    
+  } else {
+    ..error_outcome_type_not_implemented(outcome_type)
   }
   
   return(data)

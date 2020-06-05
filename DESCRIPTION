@@ -47,8 +47,7 @@ Imports: methods,
     scales,
     stringi,
     xml2,
-    maxstat,
-    MASS
+    maxstat
 Suggests:
     dynamicTreeCut,
     fastcluster,
@@ -58,7 +57,9 @@ Suggests:
     qvalue,
     cowplot,
     knitr,
-    testthat (>= 2.1.0)
+    testthat (>= 2.1.0),
+    Ecdat,
+    MASS
 Collate: 
     'BatchNormalisation.R'
     'CheckArguments.R'
