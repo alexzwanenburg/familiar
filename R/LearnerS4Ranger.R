@@ -338,7 +338,7 @@ setMethod("..predict", signature(object="familiarRanger", data="dataObject"),
               
             } else if(object@outcome_type %in% c("continuous", "count")){
               #####Numerical outcomes######
-              browser()
+              
               # Extract predicted regression values.
               prediction_table[, "predicted_outcome":=model_predictions$predictions]
             
