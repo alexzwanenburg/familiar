@@ -47,7 +47,8 @@ Imports: methods,
     scales,
     stringi,
     xml2,
-    maxstat
+    maxstat,
+    MASS
 Suggests:
     dynamicTreeCut,
     fastcluster,

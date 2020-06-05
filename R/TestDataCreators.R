@@ -15,7 +15,7 @@ test.create_good_data_set <- function(outcome_type){
                            outcome_type=outcome_type,
                            include_features=c("nodes", "rx"))
     
-  } else if(outcome_type == "multinomial") {
+  } else if(outcome_type == "multinomial"){
     # Load iris data set.
     data <- data.table::as.data.table(iris)
     
@@ -27,6 +27,33 @@ test.create_good_data_set <- function(outcome_type){
                            sample_id_column="sample_id",
                            outcome_column="Species",
                            outcome_type=outcome_type)
+    
+  } else if(outcome_type == "binomial"){
+    # Load the cancer breast biopsy data set.
+    data <- data.table::as.data.table(MASS::biopsy)
+    
+    # Rename columns.
+    data.table::setnames(data,
+                         old=c("ID", "V1", "V2", "V3", "V4", "V5", "V6", "V7", "V8", "V9", "class"),
+                         new=c("id", "clump_thickness", "cell_size_uniformity", "cell_shape_uniformity",
+                               "marginal_adhesion", "epithelial_cell_size", "bare_nuclei",
+                               "bland_chromatin", "normal_nucleoli", "mitoses", "cell_malignancy"))
+    
+    # Keep unique samples. Some samples have the same id, but a different
+    # outcome.
+    data <- unique(data, by="id")
+    
+    # Limit to 150 samples
+    data <- data[1:150, ]
+    
+    # Convert to a data object. Exclude cell_size_uniformity, as these are
+    # correlated and make it difficult to stable establish variable importance.
+    data <- as_data_object(data=data,
+                           sample_id_column="id",
+                           outcome_column="cell_malignancy",
+                           outcome_type=outcome_type,
+                           exclude_features="cell_shape_uniformity",
+                           class_levels=c("benign", "malignant"))
     
   }
   
@@ -90,6 +117,32 @@ test.create_one_feature_data_set <- function(outcome_type){
                            outcome_column="Species",
                            outcome_type=outcome_type,
                            include_features=c("Petal.Length"))
+    
+  } else if(outcome_type == "binomial"){
+    # Load the cancer breast biopsy data set.
+    data <- data.table::as.data.table(MASS::biopsy)
+    
+    # Rename columns.
+    data.table::setnames(data,
+                         old=c("ID", "V1", "V2", "V3", "V4", "V5", "V6", "V7", "V8", "V9", "class"),
+                         new=c("id", "clump_thickness", "cell_size_uniformity", "cell_shape_uniformity",
+                               "marginal_adhesion", "epithelial_cell_size", "bare_nuclei",
+                               "bland_chromatin", "normal_nucleoli", "mitoses", "cell_malignancy"))
+    
+    # Keep unique samples. Some samples have the same id, but a different
+    # outcome.
+    data <- unique(data, by="id")
+    
+    # Limit to 150 samples
+    data <- data[1:150, ]
+    
+    # Convert to a data object.
+    data <- as_data_object(data=data,
+                           sample_id_column="id",
+                           outcome_column="cell_malignancy",
+                           outcome_type=outcome_type,
+                           class_levels=c("benign", "malignant"),
+                           include_features="cell_size_uniformity")
     
   }
   
@@ -168,6 +221,46 @@ test.create_wide_data_set <- function(outcome_type){
                            sample_id_column="sample_id",
                            outcome_column="Species",
                            outcome_type=outcome_type)
+    
+  } else if(outcome_type == "binomial"){
+    # Load the cancer breast biopsy data set.
+    data <- data.table::as.data.table(MASS::biopsy)
+    
+    # Rename columns.
+    data.table::setnames(data,
+                         old=c("ID", "V1", "V2", "V3", "V4", "V5", "V6", "V7", "V8", "V9", "class"),
+                         new=c("id", "clump_thickness", "cell_size_uniformity", "cell_shape_uniformity",
+                               "marginal_adhesion", "epithelial_cell_size", "bare_nuclei",
+                               "bland_chromatin", "normal_nucleoli", "mitoses", "cell_malignancy"))
+    
+    # Keep unique samples. Some samples have the same id, but a different
+    # outcome.
+    data <- unique(data, by="id")
+    
+    # Limit to 10 samples
+    data <- data[11:20, ]
+    
+    # Add twenty random features
+    random_data <- lapply(seq_len(20), function(ii, n) rnorm(n=n), n=nrow(data))
+    names(random_data) <- paste0("random_", seq_len(20))
+    
+    # Add to dataset
+    data <- cbind(data, data.table::as.data.table(random_data))
+    
+    # Add another 3 random features
+    random_data <- lapply(seq_len(3), function(ii, n) factor(sample(c("red", "green", "blue"), size=n, replace=TRUE)), n=nrow(data))
+    names(random_data) <- paste0("random_categorical_", seq_len(3))
+    
+    # Add to dataset
+    data <- cbind(data, data.table::as.data.table(random_data))
+    
+    # Convert to a data object.
+    data <- as_data_object(data=data,
+                           sample_id_column="id",
+                           outcome_column="cell_malignancy",
+                           outcome_type=outcome_type,
+                           class_levels=c("benign", "malignant"))
+    
   }
   
   return(data)
@@ -185,7 +278,11 @@ test.create_bad_data_set <- function(outcome_type){
     data@data[, "outcome_event":=0]
     
   } else if(outcome_type == "multinomial"){
-    # For multinomial data, having a single class is bad.
+    # For multinomial data, having not all classes is bad.
+    data@data <- data@data[outcome %in% c("setosa", "versicolor"), ]
+    
+  } else if(outcome_type == "binomial" ){
+    # For binomial data, having a single class is bad.
     data@data[, "outcome":="setosa"]
     
   }
