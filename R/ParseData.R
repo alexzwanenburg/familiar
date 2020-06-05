@@ -433,8 +433,19 @@
   
   # Add repetition identifiers
   outcome_cols <- get_outcome_columns(x=outcome_type)
-  data[, "repetition_id":=seq_len(.N), by=list(subject_id, cohort_id, get(outcome_cols))]
-
+  data[, "repetition_id":=seq_len(.N), by=c("subject_id", "cohort_id", outcome_cols)]
+  
+  # Check that there are all combinations of subject_id and cohort_id have the
+  # same outcome.
+  unique_samples_with_single_outcomes <- unique(data, by=c("subject_id", "cohort_id", outcome_cols))[, list("N"=.N), by=c("subject_id", "cohort_id")]
+  if(any(unique_samples_with_single_outcomes$N > 1)){
+    
+    unique_samples_with_single_outcomes <- unique_samples_with_single_outcomes[N > 1]
+    unique_samples_with_single_outcomes[, "descriptor":=paste0(subject_id, " (", cohort_id, ")")]
+    stop(paste0("One or more samples with the same identifier do not have the same outcome value: ",
+                paste0(unique_samples_with_single_outcomes$descriptor, collapse=", ")))
+  }
+  
   # Determine which columns to maintain
   if(!is.null(include_features)){
     # Check presence of features in include_features in the data
