@@ -90,7 +90,7 @@
       <normalisation_method></normalisation_method>
       <!-- Batch normalisation method (optional, default: none; check documentation for other options) -->
       <batch_normalisation_method></batch_normalisation_method>
-      <!-- Imputation method (optional, default: lasso; otherwise one of simple, random_forest) -->
+      <!-- Imputation method (optional, lasso (default: features < 100) or simple) -->
       <imputation_method></imputation_method>
       <!-- Cluster method (optional, default: hclust; otherwise one of none, pam, agnes, diana) -->
       <cluster_method></cluster_method>
