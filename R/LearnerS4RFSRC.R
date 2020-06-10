@@ -202,8 +202,9 @@ setMethod("..train", signature(object="familiarRFSRC", data="dataObject"),
             
             # Parse formula.
             if(object@outcome_type == "survival") {
+              Surv <- survival::Surv
               formula <- stats::reformulate(termlabels=feature_columns,
-                                            response=quote(survival::Surv(outcome_time, outcome_event)))
+                                            response=quote(Surv(outcome_time, outcome_event)))
               
             } else if(object@outcome_type %in% c("binomial", "multinomial", "count", "continuous")){
               formula <- stats::reformulate(termlabels=feature_columns,
@@ -274,7 +275,7 @@ setMethod("..predict", signature(object="familiarRFSRC", data="dataObject"),
             
             if(object@outcome_type %in% c("binomial", "multinomial")){
               #####Categorical outcomes######
-              browser()
+              
               # Set predicted class.
               prediction_table[, "predicted_class":=model_predictions$class]
               
@@ -292,7 +293,7 @@ setMethod("..predict", signature(object="familiarRFSRC", data="dataObject"),
               
             } else if(object@outcome_type %in% c("survival")){
               #####Survival outcomes######
-              browser()
+              
               # Get the unique event times
               event_times <- model_predictions$time.interest
               
@@ -343,7 +344,7 @@ setMethod("..predict_survival_probability", signature(object="familiarRFSRC", da
 #####..vimp#####
 setMethod("..vimp", signature(object="familiarRFSRC"),
           function(object, data=NULL, ...){
-            browser()
+            
             # Suppress NOTES due to non-standard evaluation in data.table
             score <- NULL
             
@@ -443,8 +444,25 @@ setMethod("..vimp", signature(object="familiarRFSRC"),
                 ..error_outcome_type_not_implemented(object@outcome_type)
               }
               
-              # Perform holdout variable importance:
-              vimp_score <- randomForestSRC::holdout.vimp(formula, data=data@data)
+              # Extract hyperparameters from the model object.
+              param <- object@hyperparameters
+              
+              # Determine the sample size
+              sample_size <- ceiling(param$sample_size * nrow(data@data))
+              sample_type <- ifelse(sample_size == nrow(data@data), "swr", "swor")
+              
+              # Perform holdout variable importance.
+              vimp_score <-randomForestSRC::holdout.vimp(formula,
+                                                         data = data@data,
+                                                         ntree = 2^param$n_tree,
+                                                         samptype = sample_type,
+                                                         sampsize = sample_size,
+                                                         mtry = max(c(1, ceiling(param$m_try * get_n_features(data)))),
+                                                         nodesize = param$node_size,
+                                                         nodedepth = param$tree_depth,
+                                                         nsplit = param$n_split,
+                                                         splitrule = param$split_rule,
+                                                         verbose=FALSE)
               
               # Create the variable importance data table
               vimp_table <- data.table::data.table("score"=vimp_score, "name"=names(vimp_score))
