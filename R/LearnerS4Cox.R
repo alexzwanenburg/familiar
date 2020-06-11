@@ -157,6 +157,9 @@ setMethod("..predict_survival_probability", signature(object="familiarCoxPH", da
 setMethod("..vimp", signature(object="familiarCoxPH"),
           function(object, ...){
             
+            # Suppress NOTES due to non-standard evaluation in data.table
+            score <- NULL
+            
             if(!model_is_trained(object)) return(callNextMethod())
             
             # Define p-values
@@ -172,10 +175,10 @@ setMethod("..vimp", signature(object="familiarCoxPH"),
             # Decode any categorical variables.
             vimp_table <- decode_categorical_variables_vimp(object=object,
                                                             vimp_table=vimp_table,
-                                                            method="min")
+                                                            method="max")
             
             # Add ranks and set multi_var
-            vimp_table[, "rank":=data.table::frank(score, ties.method="min")]
+            vimp_table[, "rank":=data.table::frank(-score, ties.method="min")]
             vimp_table[, "multi_var":=TRUE]
             
             return(vimp_table)

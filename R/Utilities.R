@@ -1167,7 +1167,7 @@ coefficient_one_sample_z_test <- function(model, mean=0){
   z  <- (mu-mean)/stdevs
   
   # Return p-value based on z-score
-  return(2*(1-stats::pnorm(abs(z))))
+  return(abs(z))
 }
 
 # 
