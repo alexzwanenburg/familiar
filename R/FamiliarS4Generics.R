@@ -199,3 +199,5 @@ setGeneric("..set_calibration_info", function(object, data, ...) standardGeneric
 setGeneric("..set_risk_stratification_thresholds", function(object, data, ...) standardGeneric("..set_risk_stratification_thresholds"))
 
 setGeneric("..set_vimp_parameters", function(object, ...) standardGeneric("..set_vimp_parameters"))
+
+setGeneric("..get_distribution_family", function(object, ...) standardGeneric("..get_distribution_family"))
