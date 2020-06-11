@@ -539,6 +539,10 @@ setMethod("get_placeholder_prediction_table", signature(object="familiarModel", 
               # class probabilities are added.
               prediction_table[, "predicted_class":=as.character(NA)]
               
+              # Assign factor.
+              prediction_table$predicted_class <- factor(prediction_table$predicted_class,
+                                                         levels=get_outcome_class_levels(x=object))
+              
               # Define probabilities columns
               outcome_probability_columns <- get_class_probability_name(object)
               
