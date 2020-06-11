@@ -59,7 +59,6 @@ bad_model <- familiar:::train(data=bad_data,
                                                        "node_size"=5,
                                                        "tree_depth"=5,
                                                        "alpha"=0.1),
-                              time_max=1832,
                               learner="random_forest_ranger")
 
 testthat::test_that("Ranger random forest model trained correctly", {
@@ -85,7 +84,7 @@ testthat::test_that("Ranger random forest model has variable importance", {
 })
 
 
-testthat::test_that("Ranger random forest model can predict class probabilities", {
+testthat::test_that("Ranger random forest model can predict values", {
   
   # Extract the prediction table.
   prediction_table <- familiar:::.predict(good_model, data=good_data)
@@ -239,7 +238,7 @@ testthat::test_that("Ranger random forest model has variable importance", {
 })
 
 
-testthat::test_that("Ranger random forest model can predict class probabilities", {
+testthat::test_that("Ranger random forest model can predict values", {
   
   # Extract the prediction table.
   prediction_table <- familiar:::.predict(good_model, data=good_data)
@@ -367,7 +366,6 @@ bad_model <- familiar:::train(data=bad_data,
                                                        "node_size"=5,
                                                        "tree_depth"=5,
                                                        "alpha"=0.1),
-                              time_max=1832,
                               learner="random_forest_ranger")
 
 testthat::test_that("Ranger random forest model trained correctly", {
@@ -398,6 +396,9 @@ testthat::test_that("Ranger random forest model can predict class probabilities"
   # Extract the prediction table.
   prediction_table <- familiar:::.predict(good_model, data=good_data)
   testthat::expect_equal(familiar:::any_predictions_valid(prediction_table, good_data@outcome_type), TRUE)
+  
+  # Expect that the predicted_class column is a factor.
+  testthat::expect_s3_class(prediction_table$predicted_class, "factor")
 })
 
 
@@ -521,7 +522,6 @@ bad_model <- familiar:::train(data=bad_data,
                                                        "node_size"=5,
                                                        "tree_depth"=5,
                                                        "alpha"=0.1),
-                              time_max=1832,
                               learner="random_forest_ranger")
 
 
@@ -553,6 +553,9 @@ testthat::test_that("Ranger random forest model can predict class probabilities"
   # Extract the prediction table.
   prediction_table <- familiar:::.predict(good_model, data=good_data)
   testthat::expect_equal(familiar:::any_predictions_valid(prediction_table, good_data@outcome_type), TRUE)
+  
+  # Expect that the predicted_class column is a factor.
+  testthat::expect_s3_class(prediction_table$predicted_class, "factor")
 })
 
 

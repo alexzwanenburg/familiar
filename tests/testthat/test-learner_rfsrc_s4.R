@@ -81,7 +81,7 @@ testthat::test_that("Random forest SRC model has variable importance", {
 })
 
 
-testthat::test_that("Random forest SRC model can predict class probabilities", {
+testthat::test_that("Random forest SRC model can predict values", {
   
   # Extract the prediction table.
   prediction_table <- familiar:::.predict(good_model, data=good_data)
@@ -230,7 +230,7 @@ testthat::test_that("Random forest SRC model has variable importance", {
 })
 
 
-testthat::test_that("Random forest SRC model can predict class probabilities", {
+testthat::test_that("Random forest SRC model can predict values", {
   
   # Extract the prediction table.
   prediction_table <- familiar:::.predict(good_model, data=good_data)
@@ -386,6 +386,9 @@ testthat::test_that("Random forest SRC model can predict class probabilities", {
   # Extract the prediction table.
   prediction_table <- familiar:::.predict(good_model, data=good_data)
   testthat::expect_equal(familiar:::any_predictions_valid(prediction_table, good_data@outcome_type), TRUE)
+  
+  # Expect that the predicted_class column is a factor.
+  testthat::expect_s3_class(prediction_table$predicted_class, "factor")
 })
 
 
@@ -537,6 +540,9 @@ testthat::test_that("Random forest SRC model can predict class probabilities", {
   # Extract the prediction table.
   prediction_table <- familiar:::.predict(good_model, data=good_data)
   testthat::expect_equal(familiar:::any_predictions_valid(prediction_table, good_data@outcome_type), TRUE)
+  
+  # Expect that the predicted_class column is a factor.
+  testthat::expect_s3_class(prediction_table$predicted_class, "factor")
 })
 
 
