@@ -239,16 +239,10 @@ setMethod("model_is_trained", signature(object="familiarModel"),
               # Check if a model is present
               return(FALSE)
               
-            } else if(!(is.null(object@model$model_trained))){
-              # Look at the model_trained list element that is created by
-              # many implementations during training
-              return(object@model$model_trained)
-              
             } else {
               # Assume that the model is present if it is not specifically
               # stated using the model_trained element
               return(TRUE)
-              
             }
           })
 
