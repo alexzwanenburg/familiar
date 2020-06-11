@@ -116,6 +116,9 @@ setMethod("..predict", signature(object="familiarCoxPH", data="dataObject"),
             # Check if the model was trained.
             if(!model_is_trained(object)) return(callNextMethod())
             
+            # Check if the data is empty.
+            if(is_empty(data)) return(callNextMethod())
+            
             # Encode data so that the features are the same as in the training.
             encoded_data <- encode_categorical_variables(data=data,
                                                          object=object,
