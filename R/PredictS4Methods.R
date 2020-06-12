@@ -40,6 +40,11 @@ setMethod(".predict", signature(object="familiarModel"),
                                             type=type)
             }
             
+            # Order output columns.
+            data.table::setcolorder(prediction_table,
+                                    neworder=colnames(get_placeholder_prediction_table(object=object, data=data)))
+            
+            
             return(prediction_table)  
           })
 
