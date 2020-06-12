@@ -304,25 +304,25 @@ setMethod("..vimp", signature(object="familiarGLM"),
             
             if(!model_is_trained(object)) return(callNextMethod())
             
-            # Define p-values
-            coefficient_p_values <- coefficient_one_sample_z_test(model=object@model)
+            # Compute z-values
+            coefficient_z_values <- coefficient_one_sample_z_test(model=object@model)
             
             if(is(object@model, "vglm")){
               
               # Parse coefficient names. vglm adds :1 and :2 (and so on) to
               # coefficient names.
-              coefficient_names <- stringi::stri_split_fixed(names(coefficient_p_values), pattern=":")
+              coefficient_names <- stringi::stri_split_fixed(names(coefficient_z_values), pattern=":")
               coefficient_names <- sapply(coefficient_names, function(coefficient_name) coefficient_name[1])
-              names(coefficient_p_values) <- coefficient_names
+              names(coefficient_z_values) <- coefficient_names
             }
             
             # Remove intercept from the coefficients.
-            coefficient_p_values <- coefficient_p_values[names(coefficient_p_values) != "(Intercept)"]
-            if(length(coefficient_p_values) == 0) return(callNextMethod())
+            coefficient_z_values <- coefficient_z_values[names(coefficient_z_values) != "(Intercept)"]
+            if(length(coefficient_z_values) == 0) return(callNextMethod())
           
             # Assign to variable importance table.
-            vimp_table <- data.table::data.table("score"=coefficient_p_values,
-                                                 "name"=names(coefficient_p_values))
+            vimp_table <- data.table::data.table("score"=coefficient_z_values,
+                                                 "name"=names(coefficient_z_values))
             
             # Merge by name (vglm coefficients can occur multiple times for the
             # same feature).

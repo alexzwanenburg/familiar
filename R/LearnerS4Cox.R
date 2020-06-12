@@ -166,14 +166,14 @@ setMethod("..vimp", signature(object="familiarCoxPH"),
             if(!model_is_trained(object)) return(callNextMethod())
             
             # Define p-values
-            coefficient_p_values <- coefficient_one_sample_z_test(model=object@model)
-            coefficient_p_values <- coefficient_p_values[names(coefficient_p_values) != "(Intercept)"]
+            coefficient_z_values <- coefficient_one_sample_z_test(model=object@model)
+            coefficient_z_values <- coefficient_z_values[names(coefficient_z_values) != "(Intercept)"]
             
-            if(length(coefficient_p_values) == 0) return(callNextMethod())
+            if(length(coefficient_z_values) == 0) return(callNextMethod())
             
             # Assign to variable importance table.
-            vimp_table <- data.table::data.table("score"=coefficient_p_values,
-                                                 "name"=names(coefficient_p_values))
+            vimp_table <- data.table::data.table("score"=coefficient_z_values,
+                                                 "name"=names(coefficient_z_values))
             
             # Decode any categorical variables.
             vimp_table <- decode_categorical_variables_vimp(object=object,
