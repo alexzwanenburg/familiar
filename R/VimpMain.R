@@ -85,15 +85,24 @@ vimp.main <- function(method, purpose, outcome_type=NULL, param=NULL, data_obj=N
   if(method %in% c("elastic_net", "elastic_net_gaussian",  "elastic_net_poisson", "elastic_net_binomial","elastic_net_multinomial",
                     "elastic_net_cox", "lasso", "lasso_gaussian", "lasso_poisson", "lasso_binomial", "lasso_multinomial", "lasso_cox",
                    "ridge", "ridge_gaussian", "ridge_gaussian", "ridge_poisson", "ridge_binomial", "ridge_multinomial", "ridge_cox")){
+    
+    # Create a familiarModel and promote to the right class.
+    object <- methods::new("familiarModel",
+                           learner = method,
+                           outcome_type = outcome_type,
+                           hyperparameters = param)
+    
+    # Promote to the correct subclass.
+    object <- promote_learner(object)
+    
     if(purpose=="variable_importance"){
-      dt_vimp       <- learner.net.vimp(data_obj=data_obj, param=param, method=method)
+      dt_vimp       <- ..vimp(object=object, data=data_obj)
     } else if(purpose=="parameters"){
-      base_learner  <- learner.net.learner(method=method, outcome_type=outcome_type)
-      param         <- learner.net.param(data_obj=data_obj, learner=base_learner)
+      param         <- get_default_hyperparameters(object=object, data=data_obj)
     } else if(purpose=="outcome") {
-      type_is_valid <- learner.net.outcome(method=method, outcome_type=outcome_type)
+      type_is_valid <- is_available(object)
     } else if(purpose=="base_learner"){
-      base_learner  <- learner.net.learner(method=method, outcome_type=outcome_type)
+      base_learner  <- method
     }
   }
 

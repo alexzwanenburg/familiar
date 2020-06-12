@@ -353,7 +353,7 @@ setMethod("..get_distribution_family", signature(object="familiarGLM"),
             }
             
             # Load families for linear regression
-            if(family == "logistic"){
+            if(family %in% c("logistic", "binomial")){
               family_fun <- stats::binomial(link="logit")
               
             } else if(family == "probit"){

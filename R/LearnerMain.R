@@ -2,6 +2,7 @@
 #' @include FamiliarS4Classes.R
 #' @include LearnerS4Cox.R
 #' @include LearnerS4GLM.R
+#' @include LearnerS4GLMnet.R
 #' @include LearnerS4Ranger.R
 #' @include LearnerS4RFSRC.R
 NULL
