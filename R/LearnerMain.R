@@ -4,6 +4,7 @@
 #' @include LearnerS4GLM.R
 #' @include LearnerS4GLMnet.R
 #' @include LearnerS4KNN.R
+#' @include LearnerS4NaiveBayes.R
 #' @include LearnerS4Ranger.R
 #' @include LearnerS4RFSRC.R
 NULL
