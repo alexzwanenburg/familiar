@@ -131,7 +131,7 @@ testthat::test_that("Ranger random forest model can train on wide data", {
   testthat::expect_equal(familiar:::model_is_trained(wide_model), TRUE)
   
   # Variable importance table is present.
-  testthat::expect_equal(is_empty(familiar:::..vimp(wide_model)), FALSE)
+  testthat::expect_equal(familiar:::is_empty(familiar:::..vimp(wide_model)), FALSE)
   
   # Valid predictions.
   testthat::expect_equal(familiar:::any_predictions_valid(familiar:::.predict(wide_model, wide_data), outcome_type=wide_data@outcome_type), TRUE)
@@ -285,7 +285,7 @@ testthat::test_that("Ranger random forest model can train on wide data", {
   testthat::expect_equal(familiar:::model_is_trained(wide_model), TRUE)
   
   # Variable importance table is present.
-  testthat::expect_equal(is_empty(familiar:::..vimp(wide_model)), FALSE)
+  testthat::expect_equal(familiar:::is_empty(familiar:::..vimp(wide_model)), FALSE)
   
   # Valid predictions.
   testthat::expect_equal(familiar:::any_predictions_valid(familiar:::.predict(wide_model, wide_data), outcome_type=wide_data@outcome_type), TRUE)
@@ -441,7 +441,7 @@ testthat::test_that("Ranger random forest model can train on wide data", {
   testthat::expect_equal(familiar:::model_is_trained(wide_model), TRUE)
   
   # Variable importance table is present.
-  testthat::expect_equal(is_empty(familiar:::..vimp(wide_model)), FALSE)
+  testthat::expect_equal(familiar:::is_empty(familiar:::..vimp(wide_model)), FALSE)
   
   # Valid predictions.
   testthat::expect_equal(familiar:::any_predictions_valid(familiar:::.predict(wide_model, wide_data), outcome_type=wide_data@outcome_type), TRUE)
@@ -598,7 +598,7 @@ testthat::test_that("Ranger random forest model can train on wide data", {
   testthat::expect_equal(familiar:::model_is_trained(wide_model), TRUE)
   
   # Variable importance table is present.
-  testthat::expect_equal(is_empty(familiar:::..vimp(wide_model)), FALSE)
+  testthat::expect_equal(familiar:::is_empty(familiar:::..vimp(wide_model)), FALSE)
   
   # Valid predictions.
   testthat::expect_equal(familiar:::any_predictions_valid(familiar:::.predict(wide_model, wide_data), outcome_type=wide_data@outcome_type), TRUE)
@@ -785,7 +785,7 @@ testthat::test_that("Ranger random forest model can train on wide data", {
   testthat::expect_equal(familiar:::model_is_trained(wide_model), TRUE)
   
   # Variable importance table is present
-  testthat::expect_equal(is_empty(familiar:::..vimp(wide_model)), FALSE)
+  testthat::expect_equal(familiar:::is_empty(familiar:::..vimp(wide_model)), FALSE)
   
   # Valid predictions are possible.
   testthat::expect_equal(familiar:::any_predictions_valid(familiar:::.predict(wide_model, wide_data), outcome_type=wide_data@outcome_type), TRUE)
