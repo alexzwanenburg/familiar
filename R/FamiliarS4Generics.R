@@ -201,3 +201,5 @@ setGeneric("..set_risk_stratification_thresholds", function(object, data, ...) s
 setGeneric("..set_vimp_parameters", function(object, ...) standardGeneric("..set_vimp_parameters"))
 
 setGeneric("..get_distribution_family", function(object, ...) standardGeneric("..get_distribution_family"))
+
+setGeneric("..update_outcome", function(object, data, ...) standardGeneric("..update_outcome"))

@@ -96,6 +96,7 @@ Collate:
     'LearnerExtremeGradientBoosting.R'
     'LearnerS4RFSRC.R'
     'LearnerS4Ranger.R'
+    'LearnerS4MBoost.R'
     'LearnerS4NaiveBayes.R'
     'LearnerS4KNN.R'
     'LearnerS4GLMnet.R'

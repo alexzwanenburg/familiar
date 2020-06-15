@@ -5,6 +5,7 @@
 #' @include LearnerS4GLMnet.R
 #' @include LearnerS4KNN.R
 #' @include LearnerS4NaiveBayes.R
+#' @include LearnerS4MBoost.R
 #' @include LearnerS4Ranger.R
 #' @include LearnerS4RFSRC.R
 NULL
@@ -42,13 +43,9 @@ setMethod("promote_learner", signature(object="familiarModel"),
               # Elastic net penalised regression models
               object <- methods::new("familiarGLMnet", object)
               
-            } else if(learner %in% c("boosted_glm", "boosted_glm_multinomial", "boosted_glm_logistic",
-                              "boosted_glm_probit", "boosted_glm_loglog", "boosted_glm_cauchy", "boosted_glm_log",
-                              "boosted_glm_auc", "boosted_glm_gaussian", "boosted_glm_huber", "boosted_glm_laplace",
-                              "boosted_glm_poisson", "boosted_glm_cox", "boosted_glm_surv",
-                              "boosted_glm_weibull", "boosted_glm_lognormal", "boosted_glm_gehan", "boosted_glm_cindex")){
+            } else if(learner %in% .get_available_mboost_lm_learners()){
               # Boosted generalised linear models
-              object <- methods::new("familiarMBBoostLM", object)
+              object <- methods::new("familiarMBoostLM", object)
               
             } else if(learner %in% c("xgboost_lm", "xgboost_lm_logistic", "xgboost_lm_linear",
                                      "xgboost_lm_poisson", "xgboost_lm_gamma", "xgboost_lm_cox")){
@@ -73,18 +70,14 @@ setMethod("promote_learner", signature(object="familiarModel"),
               # Ranger random forests
               object <- methods::new("familiarRanger", object)
               
-            } else if(learner %in% c("boosted_tree", "boosted_tree_logistic", "boosted_tree_probit",
-                                     "boosted_tree_loglog", "boosted_tree_cauchy", "boosted_tree_log",
-                                     "boosted_tree_auc", "boosted_tree_gaussian", "boosted_tree_huber",
-                                     "boosted_tree_laplace", "boosted_tree_poisson", "boosted_tree_cox", "boosted_tree_surv",
-                                     "boosted_tree_weibull", "boosted_tree_lognormal", "boosted_tree_gehan", "boosted_tree_cindex")){
+            } else if(learner %in% .get_available_mboost_tree_learners()){
               # Boosted regression trees
-              object <- methods::new("familiarMBBoostTree")
+              object <- methods::new("familiarMBoostTree", object)
               
             } else if(learner %in% c("xgboost_tree", "xgboost_tree_logistic", "xgboost_tree_linear",
                                      "xgboost_tree_poisson", "xgboost_tree_gamma", "xgboost_tree_cox")){
               # Extreme gradient boosted trees
-              object <- methods::new("familiarXGBoostTree")
+              object <- methods::new("familiarXGBoostTree", object)
               
             } else if(learner %in% c("__test_invalid", "__test_perfect", "__test_intercept")){
               # TEST learners.
