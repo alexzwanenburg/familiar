@@ -297,7 +297,7 @@ setMethod("..predict", signature(object="familiarGLM", data="dataObject"),
 
 #####..vimp#####
 setMethod("..vimp", signature(object="familiarGLM"),
-          function(object, data=NULL, ...){
+          function(object, ...){
             
             # Suppress NOTES due to non-standard evaluation in data.table
             score <- NULL
@@ -342,6 +342,7 @@ setMethod("..vimp", signature(object="familiarGLM"),
 
 
 
+#####..get_distribution_family#####
 setMethod("..get_distribution_family", signature(object="familiarGLM"),
           function(object){
             # Obtain family from the hyperparameters.
