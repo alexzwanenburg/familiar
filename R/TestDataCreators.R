@@ -257,6 +257,19 @@ test.create_one_feature_data_set <- function(outcome_type){
 
 
 
+test.create_one_feature_one_sample_data_set <- function(outcome_type){
+  
+  # Create good dataset first and work from there.
+  data <- test.create_one_feature_data_set(outcome_type=outcome_type)
+  
+  # Now keep only the first sample.
+  data@data <- head(data@data, n=1)
+  
+  return(data)
+}
+
+
+
 test.create_wide_data_set <- function(outcome_type){
   
   # Set random seed so that the same numbers are produced every time.
