@@ -1,5 +1,5 @@
-learner.recalibrate_model <- function(object, data_obj, time_max=NULL) {
-  browser()
+learner.recalibrate_model <- function(object, data, time=NULL) {
+  
   # Suppress NOTES due to non-standard evaluation in data.table
   outcome <- predicted_outcome <- NULL
 
@@ -14,10 +14,10 @@ learner.recalibrate_model <- function(object, data_obj, time_max=NULL) {
   calibration_list  <- list()
 
   # Create a 3-fold cross-validation
-  iter_list <- .create_cv(sample_identifiers=data_obj@data$subject_id,
+  iter_list <- .create_cv(sample_identifiers=data@data$subject_id,
                           n_folds=n_cv_folds,
                           outcome_type=outcome_type,
-                          data=data_obj@data,
+                          data=data@data,
                           stratify=TRUE)
 
   # Train new models using the learner. This is done to avoid biasing the
@@ -26,8 +26,8 @@ learner.recalibrate_model <- function(object, data_obj, time_max=NULL) {
   for(ii in seq_len(n_cv_folds)){
 
     # Select training data and test data
-    data_train  <- select_data_from_samples(data=data_obj, samples=iter_list$train_list[[ii]])
-    data_test <- select_data_from_samples(data=data_obj, samples=iter_list$valid_list[[ii]])
+    data_train  <- select_data_from_samples(data=data, samples=iter_list$train_list[[ii]])
+    data_test <- select_data_from_samples(data=data, samples=iter_list$valid_list[[ii]])
     
     # Copy the object
     cv_model <- object
@@ -41,9 +41,9 @@ learner.recalibrate_model <- function(object, data_obj, time_max=NULL) {
     
     # Generate a prediction table
     pred_list[[ii]] <- .predict(object=cv_model,
-                                newdata=data_test,
+                                data=data_test,
                                 allow_recalibration=FALSE,
-                                time_max=time_max)
+                                time=time)
 
   }
 
@@ -97,14 +97,20 @@ learner.recalibrate_model <- function(object, data_obj, time_max=NULL) {
 
     # Generate model
     model_ctrl <- survival::coxph.control(iter.max=100)
-    model_obj <- tryCatch({ coxph(formula, data=predictions, control=model_ctrl, y=FALSE) },
-                          error=function(err) { return(NULL) } )
-
-    # Return NULL if the model cannot be trained
-    if(is.null(model_obj)) return(NULL)
+    model <- tryCatch(survival::coxph(formula,
+                                      data=predictions,
+                                      control=model_ctrl,
+                                      y=FALSE),
+                      error=identity)
+    
+    # Check if the model trained at all.
+    if(inherits(model, "error")) return(NULL)
+    
+    # Check if the model fitter converged in time.
+    if(model$iter >= 100) return(NULL)
     
     # Store calibration model.
-    calibration_list[[1]] <- model_obj
+    calibration_list[[1]] <- model
   }
 
   # Return list of calibration models
@@ -117,14 +123,14 @@ learner.apply_calibration <- function(object, predictions){
 
   # Suppress NOTES due to non-standard evaluation in data.table
   prob_sum <- NULL
-
+  
   # Return the input outcome data table dt if calibration models are missing
   if(is.null(object@calibration_model)) {
     return(predictions)
   }
-
+  
   if(object@outcome_type %in% c("binomial", "multinomial")){
-    browser()
+    
     # Determine probability columns
     prob_cols <- get_class_probability_name(x=object)
 
@@ -156,7 +162,7 @@ learner.apply_calibration <- function(object, predictions){
     predictions[, "predicted_class":=max_prob_class]
 
   } else if(object@outcome_type == "survival") {
-    browser()
+    
     # Predict cox PH relative risk
     pred_outc  <- predict(object=object@calibration_model[[1]],
                           newdata=predictions,
