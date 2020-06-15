@@ -147,6 +147,7 @@ Collate:
     'RankStabilityAggregation.R'
     'SocketServer.R'
     'TestDataCreators.R'
+    'TestFunctions.R'
     'TrainS4Methods.R'
     'Transformation.R'
     'Utilities.R'
