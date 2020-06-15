@@ -15,7 +15,7 @@
   
   # Calculate the metric
   score <- metric.main(metric=metric,
-                       learner=object@learner,
+                       object=object,
                        purpose="score",
                        dt=prediction_table,
                        outcome_type=object@outcome_type,
@@ -30,7 +30,7 @@
     # development cohort.
     
     if(!is.null(object@outcome_info@distribution$mean)){
-      score_mean <- metric.main(metric=metric, learner=object@learner, purpose="score",
+      score_mean <- metric.main(metric=metric, object=object, purpose="score",
                                 dt=data.table::copy(dt_pred)[, "predicted_outcome":=object@outcome_info@distribution$mean],
                                 outcome_type=object@outcome_type, na.rm=na.rm)
     } else {
@@ -38,7 +38,7 @@
     }
     
     # Calculate objective score
-    score <- metric.main(metric=metric, learner=object@learner, purpose="objective_score",
+    score <- metric.main(metric=metric, object=object, purpose="objective_score",
                          metric_score=score, score_mean=score_mean, outcome_type=object@outcome_type)
   }
   

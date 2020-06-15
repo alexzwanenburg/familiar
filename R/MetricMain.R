@@ -1,4 +1,4 @@
-metric.main <- function(metric, purpose, dt=NULL, learner=NULL, outcome_type=NULL, metric_score=NULL, score_train=NULL, score_mean=NULL, na.rm=NULL){
+metric.main <- function(metric, purpose, object=NULL, dt=NULL, outcome_type=NULL, metric_score=NULL, score_train=NULL, score_mean=NULL, na.rm=NULL){
   # This is a convenience function so that all relevant access to metric-specific functions can be implemented and called from here.
   # Do not call this function directly, but use interface functions metric.assess_model_performance, checkOutcomeType and getMetricObjectiveScoreRange
 
@@ -39,7 +39,7 @@ metric.main <- function(metric, purpose, dt=NULL, learner=NULL, outcome_type=NUL
   # Concordance index
   if(metric %in% c("concordance_index", "global_concordance_index")){
     if(purpose=="score"){
-      score           <- metric.concordance_index.calc(dt=dt, metric=metric, outcome_type=outcome_type, learner=learner, na.rm=na.rm)
+      score           <- metric.concordance_index.calc(dt=dt, metric=metric, outcome_type=outcome_type, object=object, na.rm=na.rm)
     } else if(purpose=="objective_score"){
       obj_score       <- metric.concordance_index.to_objective(score=metric_score)
     } else if(purpose=="outcome"){

@@ -24,7 +24,8 @@ learner.find_survival_grouping_thresholds <- function(object, data){
       
     } else if(cut_off_method == "fixed"){
       # Identify thresholds
-      cutoff <- learner.find_quantile_threshold(pred_table=pred_table,
+      cutoff <- learner.find_quantile_threshold(object=object,
+                                                pred_table=pred_table,
                                                 quantiles=settings$eval$strat_quant_threshold,
                                                 learner=object@learner)
 
@@ -34,7 +35,8 @@ learner.find_survival_grouping_thresholds <- function(object, data){
     }
     
     # Find corresponding sizes of the generated groups
-    risk_group <- learner.apply_risk_threshold(predicted_values=pred_table$predicted_outcome,
+    risk_group <- learner.apply_risk_threshold(object=object,
+                                               predicted_values=pred_table$predicted_outcome,
                                                cutoff=cutoff,
                                                learner=object@learner)
     group_size <- learner.get_risk_group_sizes(risk_group=risk_group)
@@ -56,9 +58,10 @@ learner.find_survival_grouping_thresholds <- function(object, data){
 
 
 
-learner.find_quantile_threshold <- function(pred_table, quantiles, learner){
+learner.find_quantile_threshold <- function(object, pred_table, quantiles, learner){
   
-  if(learner.check_model_prediction_type(learner=learner, outcome_type="survival") %in% c("expected_survival_time")){
+  if(get_prediction_type(object=object) %in% c("expected_survival_time")){
+    
     # For time-like predictions, we should use the complements of the provided quantiles.
     quantiles <- abs(1-quantiles)
     
@@ -119,14 +122,14 @@ learner.get_risk_group_sizes <- function(risk_group){
 
 
 
-learner.apply_risk_threshold <- function(predicted_values, cutoff, learner){
+learner.apply_risk_threshold <- function(object, predicted_values, cutoff, learner){
   
   # Initialise risk group
   risk_group <- rep.int(1, times=length(predicted_values))
   
   # Determine inversion. We assume that risk groups go from 1 (low risk) to k (high risk),
   # with k-1 being the number of provided cutoff values.
-  if(learner.check_model_prediction_type(learner=learner, outcome_type="survival") %in% c("expected_survival_time")){
+  if(get_prediction_type(object=object) %in% c("expected_survival_time")){
     # Time-like
     invert <- TRUE
     

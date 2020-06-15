@@ -987,7 +987,7 @@ setMethod("extract_performance", signature(object="familiarEnsemble", prediction
               # Calculate the model performance
               model_performance <- .process_single_iter_performance(prediction_table=prediction_data$single[[ii]],
                                                                     metric=metric,
-                                                                    learner=object@learner,
+                                                                    object=object@model_list[[ii]],
                                                                     outcome_type=object@outcome_type,
                                                                     samples=NULL)
               
@@ -1012,12 +1012,12 @@ setMethod("extract_performance", signature(object="familiarEnsemble", prediction
               # Calculate the model performance
               model_performance <- .process_single_iter_performance(prediction_table=prediction_table,
                                                                     metric=metric,
-                                                                    learner=learner,
+                                                                    object=object,
                                                                     outcome_type=outcome_type,
                                                                     samples=samples)
               
               return(model_performance)
-            }, prediction_table=prediction_data$ensemble, metric=metric, learner=object@learner, outcome_type=object@outcome_type))
+            }, prediction_table=prediction_data$ensemble, metric=metric, object=object@model_list[[1]], outcome_type=object@outcome_type))
             
             # Add model name to ensemble performance
             performance_list$ensemble <- add_model_name(data=performance_list$ensemble, object=object)
@@ -2090,7 +2090,7 @@ setMethod("extract_sample_similarity_table", signature(object="familiarEnsemble"
 
 
 
-.process_single_iter_performance <- function(prediction_table, metric, learner, outcome_type, samples=NULL){
+.process_single_iter_performance <- function(prediction_table, metric, object, outcome_type, samples=NULL){
   # Low level function calculate discrimination performance scores
   
   if(is_empty(prediction_table)){
@@ -2120,7 +2120,7 @@ setMethod("extract_sample_similarity_table", signature(object="familiarEnsemble"
     metric_col_name  <- paste0("performance_", current_metric)
     
     # Extract performance metric
-    performance_list[[metric_col_name]] <- metric.main(metric=current_metric, learner=learner, purpose="score", dt=prediction_table, outcome_type=outcome_type, na.rm=TRUE)
+    performance_list[[metric_col_name]] <- metric.main(metric=current_metric, object=object, purpose="score", dt=prediction_table, outcome_type=outcome_type, na.rm=TRUE)
   }
   
   # Parse list of performances to a data.table and return

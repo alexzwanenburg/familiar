@@ -121,10 +121,11 @@ setMethod("assign_risk_groups", signature(object="familiarModel", prediction_dat
             }
             
             # Iterate over methods used to determine thresholds
-            data <- lapply(km_info_list, function(km_info, prediction_data, learner){
+            data <- lapply(km_info_list, function(km_info, object, prediction_data, learner){
               
               # Assign risk group based on cutoff values stored in the familiarModel object
-              risk_group <- learner.apply_risk_threshold(predicted_values=prediction_data$predicted_outcome,
+              risk_group <- learner.apply_risk_threshold(object=object,
+                                                         predicted_values=prediction_data$predicted_outcome,
                                                          cutoff=km_info$cutoff,
                                                          learner=learner)
               
@@ -139,7 +140,7 @@ setMethod("assign_risk_groups", signature(object="familiarModel", prediction_dat
               
               return(data)
               
-            }, prediction_data=prediction_data, learner=object@learner)
+            }, object=object, prediction_data=prediction_data, learner=object@learner)
             
             return(data)
           })

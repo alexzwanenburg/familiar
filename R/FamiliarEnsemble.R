@@ -367,8 +367,10 @@ setMethod("assign_risk_groups", signature(object="familiarEnsemble", prediction_
                 }
                 
                 # Get risk groups
-                risk_group <- learner.apply_risk_threshold(predicted_values=prediction_data$ensemble$predicted_outcome,
-                                                           cutoff=cutoff, learner=object@learner)
+                risk_group <- learner.apply_risk_threshold(object=object,
+                                                           predicted_values=prediction_data$ensemble$predicted_outcome,
+                                                           cutoff=cutoff,
+                                                           learner=object@learner)
                 
                 # Generate data table
                 data <- data.table::data.table("subject_id"=prediction_data$ensemble$subject_id,
@@ -399,6 +401,13 @@ setMethod("assign_risk_groups", signature(object="familiarEnsemble", prediction_
             names(data) <- strat_methods
             
             return(data)
+          })
+
+
+#####get_prediction_type#####
+setMethod("get_prediction_type", signature(object="familiarEnsemble"),
+          function(object){
+            return(get_prediction_type(object@model_list[[1]]))
           })
 
 
