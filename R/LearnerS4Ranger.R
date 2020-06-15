@@ -209,15 +209,15 @@ setMethod("..train", signature(object="familiarRanger", data="dataObject"),
             if(has_bad_training_data(object=object, data=data)) return(callNextMethod())
             
             # Find feature columns in data table
-            feature_cols <- get_feature_columns(x=data)
+            feature_columns <- get_feature_columns(x=data)
             
             # Parse formula.
             if(object@outcome_type == "survival") {
-              formula <- stats::reformulate(termlabels=feature_cols,
+              formula <- stats::reformulate(termlabels=feature_columns,
                                             response=quote(survival::Surv(outcome_time, outcome_event)))
               
             } else if(object@outcome_type %in% c("binomial", "multinomial", "count", "continuous")){
-              formula <- stats::reformulate(termlabels=feature_cols,
+              formula <- stats::reformulate(termlabels=feature_columns,
                                             response=quote(outcome))
               
             } else {
@@ -239,7 +239,7 @@ setMethod("..train", signature(object="familiarRanger", data="dataObject"),
                               data = data@data,
                               num.trees = 2^param$n_tree,
                               sample.fraction = param$sample_size,
-                              mtry = max(c(1, ceiling(param$m_try * length(feature_cols)))),
+                              mtry = max(c(1, ceiling(param$m_try * length(feature_columns)))),
                               min.node.size = param$node_size,
                               max.depth = param$tree_depth,
                               alpha = param$alpha,
@@ -256,7 +256,7 @@ setMethod("..train", signature(object="familiarRanger", data="dataObject"),
                                          data = data@data,
                                          num.trees = 2^param$n_tree,
                                          sample.fraction = param$sample_size,
-                                         mtry = max(c(1, ceiling(param$m_try * length(feature_cols)))),
+                                         mtry = max(c(1, ceiling(param$m_try * length(feature_columns)))),
                                          min.node.size = param$node_size,
                                          max.depth = param$tree_depth,
                                          alpha = param$alpha,
@@ -371,10 +371,11 @@ setMethod("..predict", signature(object="familiarRanger", data="dataObject"),
                                                                                time=time,
                                                                                type="survival")
                 
-              } else {
-                ..error_outcome_type_not_implemented(object@outcome_type)
               }
-            }  
+              
+            } else {
+              ..error_outcome_type_not_implemented(object@outcome_type)
+            }
             
             return(prediction_table)
           })
