@@ -103,7 +103,6 @@ Collate:
     'LearnerS4GLM.R'
     'LearnerS4Cox.R'
     'LearnerMain.R'
-    'LearnerModelBasedBoosting.R'
     'LearnerRecalibration.R'
     'LearnerSupportVectorMachine.R'
     'LearnerSurvivalGrouping.R'
