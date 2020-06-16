@@ -70,13 +70,13 @@ test_all_learners_train_predict_vimp <- function(learners, hyperparameter_list=N
       #####Full data set########################################################
       
       # Train the model..
-      model <- train(data=full_data,
-                     cluster_method="none",
-                     imputation_method="simple",
-                     hyperparameter_list=c(hyperparameter_list[[outcome_type]],
-                                           list("sign_size"=get_n_features(full_data))),
-                     learner=learner,
-                     time_max=1832)
+      model <- suppressWarnings(train(data=full_data,
+                                      cluster_method="none",
+                                      imputation_method="simple",
+                                      hyperparameter_list=c(hyperparameter_list[[outcome_type]],
+                                                            list("sign_size"=get_n_features(full_data))),
+                                      learner=learner,
+                                      time_max=1832))
       
       # Test that models can be created.
       testthat::test_that(paste0("Model for ", outcome_type, " can be created using ", learner, " using a complete data set."), {
@@ -94,7 +94,7 @@ test_all_learners_train_predict_vimp <- function(learners, hyperparameter_list=N
       # Test that models can be used to predict the outcome.
       testthat::test_that(paste0("Sample predictions for ", outcome_type, " can be made using ", learner, " for a complete data set."), {
         # Expect predictions to be made.
-        prediction_table <- .predict(model, data=full_data)
+        prediction_table <- suppressWarnings(.predict(model, data=full_data))
         
         # Test that the predictions were successfully made.
         expect_equal(any_predictions_valid(prediction_table, outcome_type),
@@ -112,7 +112,7 @@ test_all_learners_train_predict_vimp <- function(learners, hyperparameter_list=N
       # Test that models can be used to predict the outcome.
       testthat::test_that(paste0("Sample predictions for ", outcome_type, " can be made using ", learner, " for a one-sample data set."), {
         # Expect predictions to be made.
-        prediction_table <- .predict(model, data=full_one_sample_data)
+        prediction_table <- suppressWarnings(.predict(model, data=full_one_sample_data))
         
         # Test that the predictions were successfully made.
         expect_equal(any_predictions_valid(prediction_table, outcome_type),
@@ -130,7 +130,7 @@ test_all_learners_train_predict_vimp <- function(learners, hyperparameter_list=N
       # Test that models cannot predict for empty datasets.
       testthat::test_that(paste0("Sample predictions for ", outcome_type, " can not be made using ", learner, " for an empty data set."), {
         # Expect predictions to be made.
-        prediction_table <- .predict(model, data=empty_data)
+        prediction_table <- suppressWarnings(.predict(model, data=empty_data))
         
         # Test that the predictions were successfully made.
         expect_equal(any_predictions_valid(prediction_table, outcome_type), FALSE)
@@ -140,7 +140,7 @@ test_all_learners_train_predict_vimp <- function(learners, hyperparameter_list=N
       if(outcome_type %in% c("survival", "competing_risk")){
         testthat::test_that(paste0("Sample survival predictions for ", outcome_type, " can be made using ", learner, " for a complete data set."), {
           # Expect predictions to be made.
-          prediction_table <- .predict(model, full_data, type="survival_probability", time=1000)
+          prediction_table <- suppressWarnings(.predict(model, full_data, type="survival_probability", time=1000))
           
           # Test that the predictions were successfully made.
           expect_equal(any_predictions_valid(prediction_table, outcome_type),
@@ -149,7 +149,7 @@ test_all_learners_train_predict_vimp <- function(learners, hyperparameter_list=N
         
         testthat::test_that(paste0("Sample survival predictions for ", outcome_type, " can be made using ", learner, " for a one-sample data set."), {
           # Expect predictions to be made.
-          prediction_table <- .predict(model, data=full_one_sample_data, type="survival_probability", time=1000)
+          prediction_table <- suppressWarnings(.predict(model, data=full_one_sample_data, type="survival_probability", time=1000))
           
           # Test that the predictions were successfully made.
           expect_equal(any_predictions_valid(prediction_table, outcome_type),
@@ -160,7 +160,7 @@ test_all_learners_train_predict_vimp <- function(learners, hyperparameter_list=N
       # Test that the model has variable importance.
       testthat::test_that(paste0("Model has variable importance for ", outcome_type, " and ", learner, "for the complete data set."), {
         # Extract the variable importance table.
-        vimp_table <- familiar:::..vimp(model)
+        vimp_table <- suppressWarnings(familiar:::..vimp(model))
         
         if(has_vimp){
           # Get the number of features
@@ -183,13 +183,13 @@ test_all_learners_train_predict_vimp <- function(learners, hyperparameter_list=N
       
       #####One-feature data set#################################################
       # Train the model.
-      model <- train(data=one_feature_data,
-                     cluster_method="none",
-                     imputation_method="simple",
-                     hyperparameter_list=c(hyperparameter_list[[outcome_type]],
-                                           list("sign_size"=get_n_features(one_feature_data))),
-                     learner=learner,
-                     time_max=1832)
+      model <- suppressWarnings(train(data=one_feature_data,
+                                      cluster_method="none",
+                                      imputation_method="simple",
+                                      hyperparameter_list=c(hyperparameter_list[[outcome_type]],
+                                                            list("sign_size"=get_n_features(one_feature_data))),
+                                      learner=learner,
+                                      time_max=1832))
       
       # Test that models can be created.
       testthat::test_that(paste0("Model for ", outcome_type, " can be created using ", learner, " using a one-feature data set."), {
@@ -207,7 +207,7 @@ test_all_learners_train_predict_vimp <- function(learners, hyperparameter_list=N
       # Test that models can be used to predict the outcome.
       testthat::test_that(paste0("Sample predictions for ", outcome_type, " can be made using ", learner, " for a one-feature data set."), {
         # Expect predictions to be made.
-        prediction_table <- .predict(model, data=one_feature_data)
+        prediction_table <- suppressWarnings(.predict(model, data=one_feature_data))
         
         # Test that the predictions were successfully made.
         expect_equal(any_predictions_valid(prediction_table, outcome_type),
@@ -225,7 +225,7 @@ test_all_learners_train_predict_vimp <- function(learners, hyperparameter_list=N
       # Test that models can be used to predict the outcome.
       testthat::test_that(paste0("Sample predictions for ", outcome_type, " can be made using ", learner, " for a one-feature, one-sample data set."), {
         # Expect predictions to be made.
-        prediction_table <- .predict(model, data=one_feature_one_sample_data)
+        prediction_table <- suppressWarnings(.predict(model, data=one_feature_one_sample_data))
         
         # Test that the predictions were successfully made.
         expect_equal(any_predictions_valid(prediction_table, outcome_type),
@@ -244,7 +244,7 @@ test_all_learners_train_predict_vimp <- function(learners, hyperparameter_list=N
       if(outcome_type %in% c("survival", "competing_risk")){
         testthat::test_that(paste0("Sample survival predictions for ", outcome_type, " can be made using ", learner, " for a one-feature data set."), {
           # Expect predictions to be made.
-          prediction_table <- .predict(model, one_feature_data, type="survival_probability", time=1000)
+          prediction_table <- suppressWarnings(.predict(model, one_feature_data, type="survival_probability", time=1000))
           
           # Test that the predictions were successfully made.
           expect_equal(any_predictions_valid(prediction_table, outcome_type),
@@ -253,7 +253,7 @@ test_all_learners_train_predict_vimp <- function(learners, hyperparameter_list=N
         
         testthat::test_that(paste0("Sample survival predictions for ", outcome_type, " can be made using ", learner, " for a one-feature, one-sample data set."), {
           # Expect predictions to be made.
-          prediction_table <- .predict(model, data=one_feature_one_sample_data, type="survival_probability", time=1000)
+          prediction_table <- suppressWarnings(.predict(model, data=one_feature_one_sample_data, type="survival_probability", time=1000))
           
           # Test that the predictions were successfully made.
           expect_equal(any_predictions_valid(prediction_table, outcome_type),
@@ -264,13 +264,13 @@ test_all_learners_train_predict_vimp <- function(learners, hyperparameter_list=N
       
       #####Bad data-set#########################################################
       # Train the model.
-      model <- train(data=bad_data,
-                     cluster_method="none",
-                     imputation_method="simple",
-                     hyperparameter_list=c(hyperparameter_list[[outcome_type]],
-                                           list("sign_size"=get_n_features(bad_data))),
-                     learner=learner,
-                     time_max=1832)
+      model <- suppressWarnings(train(data=bad_data,
+                                      cluster_method="none",
+                                      imputation_method="simple",
+                                      hyperparameter_list=c(hyperparameter_list[[outcome_type]],
+                                                            list("sign_size"=get_n_features(bad_data))),
+                                      learner=learner,
+                                      time_max=1832))
       
       # Test that models can be created.
       testthat::test_that(paste0("Model for ", outcome_type, " can not be created using ", learner, " using a bad data set."), {
