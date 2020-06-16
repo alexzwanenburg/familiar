@@ -9,6 +9,57 @@ setClass("familiarGLMnet",
          prototype=list("encoding_reference_table" = NULL,
                         "feature_order"=character()))
 
+setClass("familiarGLMnetRidge",
+         contains="familiarGLMnet")
+
+setClass("familiarGLMnetLasso",
+         contains="familiarGLMnet")
+
+setClass("familiarGLMnetElasticNet",
+         contains="familiarGLMnet")
+
+
+.get_available_glmnet_ridge_learners <- function(show_general=TRUE){
+  
+  # Learners
+  learners <- c("ridge", "ridge_gaussian", "ridge_gaussian",
+                "ridge_poisson", "ridge_binomial", "ridge_multinomial", "ridge_cox")
+  
+  if(!show_general){
+    learners <- setdiff(learners, c("ridge"))
+  }
+  
+  return(learners)
+}
+
+
+.get_available_glmnet_lasso_learners <- function(show_general=TRUE){
+  
+  # Learners
+  learners <- c("lasso", "lasso_gaussian", "lasso_poisson",
+                "lasso_binomial", "lasso_multinomial", "lasso_cox")
+  
+  if(!show_general){
+    learners <- setdiff(learners, c("lasso"))
+  }
+  
+  return(learners)
+}
+
+
+.get_available_glmnet_elastic_net_learners <- function(show_general=TRUE){
+  
+  # Learners
+  learners <- c("elastic_net", "elastic_net_gaussian",  "elastic_net_poisson",
+                "elastic_net_binomial","elastic_net_multinomial", "elastic_net_cox")
+  
+  if(!show_general){
+    learners <- setdiff(learners, c("elastic_net"))
+  }
+  
+  return(learners)
+}
+
 
 #####is_available#####
 setMethod("is_available", signature(object="familiarGLMnet"),
@@ -50,7 +101,7 @@ setMethod("is_available", signature(object="familiarGLMnet"),
 
 
 
-#####get_default_hyperparameters#####
+#####get_default_hyperparameters,familiarGLMnet#####
 setMethod("get_default_hyperparameters", signature(object="familiarGLMnet"),
           function(object, data=NULL){
             
@@ -58,7 +109,6 @@ setMethod("get_default_hyperparameters", signature(object="familiarGLMnet"),
             param <- list()
             param$sign_size <- list()
             param$family <- list()
-            param$alpha <- list()
             param$lambda_min <- list()
             param$n_folds <- list()
             param$normalise <- list()
@@ -69,20 +119,6 @@ setMethod("get_default_hyperparameters", signature(object="familiarGLMnet"),
             
             # Internal
             outcome_type <- data@outcome_type
-            
-            # Determine the base learner
-            if(stringi::stri_startswith_fixed(str=object@learner, pattern="elastic_net")) {
-              base_learner <- "elastic_net"
-              
-            } else if(stringi::stri_startswith_fixed(str=object@learner, pattern="lasso")) {
-              base_learner <- "lasso"
-              
-            } else if(stringi::stri_startswith_fixed(str=object@learner, pattern="ridge")) {
-              base_learner <- "ridge"
-              
-            } else {
-              ..error_reached_unreachable_code(paste0("get_default_hyperparameters,familiarGLMnet: could not determine base_learner from learner: ", object@learner))
-            }
             
             # Determine the family.
             fam <- stringi::stri_replace_first_regex(str=object@learner, pattern="elastic_net|lasso|ridge", replace="")
@@ -121,24 +157,98 @@ setMethod("get_default_hyperparameters", signature(object="familiarGLMnet"),
                                                 randomise=ifelse(length(family_default) > 1, TRUE, FALSE))
             
             
-            ##### Elastic net mixing parameter #################################
-            if(base_learner == "elastic_net"){
-              alpha_default <- c(0, 1/3, 2/3, 1)
-              
-            } else if(base_learner == "lasso"){
-              alpha_default <- 1
-              
-            } else if(base_learner == "ridge"){
-              alpha_default <- 0
-              
+            ##### Lambda indicating the optimal model complexity ###############
+            param$lambda_min <- .set_hyperparameter(default="lambda.min", type="factor",
+                                                    range=c("lambda.1se", "lambda.min"), randomise=FALSE)
+            
+            
+            ##### Number of cross-validation folds #############################
+            
+            # glmnet requires at least 3 folds. The default number of
+            # cross-validation folds may grow up to 20, for data sets > 200
+            # samples.
+            n_folds_default <- min(c(20, max(c(3, floor(n_samples/10)))))
+            
+            # Set the number of cross-validation folds.
+            param$n_folds <- .set_hyperparameter(default=n_folds_default, type="integer", range=c(3, n_samples),
+                                                 valid_range=c(3, Inf), randomise=FALSE)
+            
+            
+            ##### Feature normalisation ########################################
+            
+            # By default, normalisation is part of the pre-processing of
+            # familiar, but the user may have disabled it. In that the case, the
+            # user can set normalisation to TRUE to avoid complaints by glmnet.
+            param$normalise <- .set_hyperparameter(default=FALSE, type="logical", range=c(FALSE, TRUE), randomise=FALSE)
+            
+            # Return hyperparameters
+            return(param)
+          })
+
+
+#####get_default_hyperparameters,familiarGLMnetElasticNet#####
+setMethod("get_default_hyperparameters", signature(object="familiarGLMnetElasticNet"),
+          function(object, data=NULL){
+            
+            # Initialise list and declare hyperparameter entries.
+            param <- list()
+            param$sign_size <- list()
+            param$family <- list()
+            param$alpha <- list()
+            param$lambda_min <- list()
+            param$n_folds <- list()
+            param$normalise <- list()
+            
+            # If dt is not provided, return the list with hyperparameter names
+            # only.
+            if(is.null(data)) return(param)
+            
+            # Internal
+            outcome_type <- data@outcome_type
+            
+                       # Determine the family.
+            fam <- stringi::stri_replace_first_regex(str=object@learner, pattern="elastic_net|lasso|ridge", replace="")
+            if(fam != "") fam <- stringi::stri_replace_first_regex(str=fam, pattern="_", replace="")
+            
+            # Determine number of subjects
+            n_samples <- data.table::uniqueN(data@data, by=c("subject_id", "cohort_id"))
+            
+            ##### Signature size ###############################################
+            param$sign_size <- .get_default_sign_size(data_obj=data)
+            
+            
+            ##### Family #######################################################
+            if(fam == ""){
+              if(outcome_type == "continuous"){
+                family_default <- c("gaussian", "poisson")
+                
+              } else if(outcome_type == "count"){
+                family_default <- "poisson"
+                
+              } else if(outcome_type == "binomial"){
+                family_default <- "binomial"
+                
+              } else if(outcome_type == "multinomial"){
+                family_default <- "multinomial"
+                
+              } else if(outcome_type == "survival"){
+                family_default <- "cox"
+              }
             } else {
-              ..error_reached_unreachable_code(paste0("get_default_hyperparameters,familiarGLMnet: encountered unknown base_learner: ", base_learner))
+              family_default <- fam
             }
+            
+            # Set family parameter
+            param$family <- .set_hyperparameter(default=family_default, type="factor", range=family_default,
+                                                randomise=ifelse(length(family_default) > 1, TRUE, FALSE))
+            
+            
+            ##### Elastic net mixing parameter #################################
             
             # Set alpha parameter. Alpha = 1 is lasso, alpha = 0 is ridge.
             # glmnet requires alpha to be in the closed interval [0, 1].
-            param$alpha <- .set_hyperparameter(default=alpha_default, type="numeric", range=c(0, 1), valid_range=c(0, 1),
-                                               randomise=ifelse(length(alpha_default) > 1, TRUE, FALSE))
+            param$alpha <- .set_hyperparameter(default= c(0, 1/3, 2/3, 1), type="numeric", range=c(0, 1),
+                                               valid_range=c(0, 1), randomise=TRUE)
             
             
             ##### Lambda indicating the optimal model complexity ###############
@@ -168,7 +278,6 @@ setMethod("get_default_hyperparameters", signature(object="familiarGLMnet"),
             # Return hyperparameters
             return(param)
           })
-
 
 
 #####get_prediction_type#####
@@ -242,16 +351,48 @@ setMethod("..train", signature(object="familiarGLMnet", data="dataObject"),
                                 y=fold_table[, "subject_id"],
                                 by="subject_id")
             
-            # Attempt to train the model
-            model <- tryCatch(cv.glmnet(x = as.matrix(encoded_data$encoded_data@data[, mget(feature_columns)]),
-                                        y = outcome_data,
-                                        family = object@hyperparameters$family,
-                                        alpha = object@hyperparameters$alpha,
-                                        standardize = object@hyperparameters$normalise,
-                                        nfolds = NULL,
-                                        foldid = fold_table$fold_id,
-                                        parallel = FALSE),
-                              error=identity)
+            # Train the model.
+            if(is(object, "familiarGLMnetRidge")){
+              # Attempt to train the model
+              model <- tryCatch(cv.glmnet(x = as.matrix(encoded_data$encoded_data@data[, mget(feature_columns)]),
+                                          y = outcome_data,
+                                          family = object@hyperparameters$family,
+                                          alpha = 0.0,
+                                          standardize = object@hyperparameters$normalise,
+                                          nfolds = NULL,
+                                          foldid = fold_table$fold_id,
+                                          parallel = FALSE),
+                                error=identity)
+              
+              
+            } else if(is(object, "familiarGLMnetLasso")){
+              # Attempt to train the model
+              model <- tryCatch(cv.glmnet(x = as.matrix(encoded_data$encoded_data@data[, mget(feature_columns)]),
+                                          y = outcome_data,
+                                          family = object@hyperparameters$family,
+                                          alpha = 1.0,
+                                          standardize = object@hyperparameters$normalise,
+                                          nfolds = NULL,
+                                          foldid = fold_table$fold_id,
+                                          parallel = FALSE),
+                                error=identity)
+              
+            } else if(is(object, "familiarGLMnetElasticNet")){
+              # Attempt to train the model
+              model <- tryCatch(cv.glmnet(x = as.matrix(encoded_data$encoded_data@data[, mget(feature_columns)]),
+                                          y = outcome_data,
+                                          family = object@hyperparameters$family,
+                                          alpha = object@hyperparameters$alpha,
+                                          standardize = object@hyperparameters$normalise,
+                                          nfolds = NULL,
+                                          foldid = fold_table$fold_id,
+                                          parallel = FALSE),
+                                error=identity)
+              
+            } else {
+              ..error_reached_unreachable_code(paste0("..train,familiarGLMnet: encountered unknown familiar class: ", paste0(class(object), collapse=", ")))
+            }
+
             
             # Check if the model trained at all.
             if(inherits(model, "error")) return(callNextMethod())

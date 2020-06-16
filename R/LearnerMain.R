@@ -27,21 +27,21 @@ setMethod("promote_learner", signature(object="familiarModel"),
               # Support vector machines
               object <- methods::new("familiarSVM", object)
               
-            } else if(learner %in% c("glm", "glm_logistic", "glm_probit", "glm_cauchy",
-                                     "glm_log", "glm_loglog", "glm_multinomial", "glm_gaussian",
-                                     "glm_log_gaussian", "glm_inv_gaussian", "glm_poisson",
-                                     "glm_log_poisson")){
+            } else if(learner %in% .get_available_glm_learners()){
               # Generalised linear models
               object <- methods::new("familiarGLM", object)
+
+            } else if(learner %in% .get_available_glmnet_ridge_learners()){
+              # Ridge penalised regression models
+              object <- methods::new("familiarGLMnetRidge", object)
               
-            } else if(learner %in% c("elastic_net", "elastic_net_gaussian",  "elastic_net_poisson",
-                                     "elastic_net_binomial","elastic_net_multinomial", "elastic_net_cox",
-                                     "lasso", "lasso_gaussian", "lasso_poisson",
-                                     "lasso_binomial", "lasso_multinomial", "lasso_cox",
-                                     "ridge", "ridge_gaussian", "ridge_gaussian",
-                                     "ridge_poisson", "ridge_binomial", "ridge_multinomial", "ridge_cox")){
-              # Elastic net penalised regression models
-              object <- methods::new("familiarGLMnet", object)
+            } else if(learner %in% .get_available_glmnet_lasso_learners()){
+              # Lasso penalised regression models
+              object <- methods::new("familiarGLMnetLasso", object)
+              
+            } else if(learner %in% .get_available_glmnet_elastic_net_learners()){
+              # Elastic net penalised regression models.
+              object <- methods::new("familiarGLMnetElasticNet", object)
               
             } else if(learner %in% .get_available_mboost_lm_learners()){
               # Boosted generalised linear models
@@ -52,7 +52,7 @@ setMethod("promote_learner", signature(object="familiarModel"),
               # Extreme gradient boosted linear models
               object <- methods::new("familiarXGBoostLM", object)
               
-            } else if(learner == "cox"){
+            } else if(learner %in% .get_available_cox_learners()){
               # Cox proportional hazards regression model
               object <- methods::new("familiarCoxPH", object)
             

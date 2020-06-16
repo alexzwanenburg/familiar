@@ -8,6 +8,15 @@ setClass("familiarCoxPH",
          prototype=list("encoding_reference_table" = NULL))
 
 
+.get_available_cox_learners <- function(show_general=TRUE){
+  
+  # Learners
+  learners <- c("cox")
+
+  return(learners)
+}
+
+
 #####is_available#####
 setMethod("is_available", signature(object="familiarCoxPH"),
           function(object, ...){

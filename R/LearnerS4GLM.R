@@ -8,6 +8,21 @@ setClass("familiarGLM",
          prototype=list("encoding_reference_table" = NULL))
 
 
+.get_available_glm_learners <- function(show_general=TRUE){
+  
+  # Learners
+  learners <- c("glm", "glm_logistic", "glm_probit", "glm_cauchy",
+                "glm_log", "glm_loglog", "glm_multinomial", "glm_gaussian",
+                "glm_log_gaussian", "glm_inv_gaussian", "glm_poisson",
+                "glm_log_poisson")
+  
+  if(!show_general){
+    learners <- setdiff(learners, c("glm", "glm_log"))
+  }
+  
+  return(learners)
+}
+
 
 #####is_available#####
 setMethod("is_available", signature(object="familiarGLM"),
