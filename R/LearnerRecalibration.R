@@ -124,10 +124,12 @@ learner.apply_calibration <- function(object, predictions){
   # Suppress NOTES due to non-standard evaluation in data.table
   prob_sum <- NULL
   
-  # Return the input outcome data table dt if calibration models are missing
-  if(is.null(object@calibration_model)) {
-    return(predictions)
-  }
+  # Return predictions if calibration models are missing
+  if(is.null(object@calibration_model)) return(predictions)
+  
+  # Return predictions if it is empty
+  if(is_empty(predictions)) return(predictions)
+  
   
   if(object@outcome_type %in% c("binomial", "multinomial")){
     
