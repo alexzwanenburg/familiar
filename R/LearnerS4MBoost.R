@@ -429,7 +429,8 @@ setMethod("..train", signature(object="familiarMBoostLM", data="dataObject"),
             }
             
             # Potentially update the outcome data
-            encoded_data$encoded_data <- ..update_outcome(object=object, data=encoded_data$encoded_data)
+            encoded_data$encoded_data <- ..update_outcome(object=object,
+                                                          data=encoded_data$encoded_data)
             
             # Get family for mboost, which determines how the response and
             # predictors are linked.
@@ -468,7 +469,7 @@ setMethod("..train", signature(object="familiarMBoostLM", data="dataObject"),
 #####..train,familiarMBoostTree####
 setMethod("..train", signature(object="familiarMBoostTree", data="dataObject"),
           function(object, data){
-            browser()
+            
             # Aggregate repeated measurement data - ranger does not facilitate
             # repeated measurements.
             data <- aggregate_data(data=data)
@@ -499,6 +500,10 @@ setMethod("..train", signature(object="familiarMBoostTree", data="dataObject"),
             } else {
               ..error_outcome_type_not_implemented(object@outcome_type)
             }
+            
+            # Potentially update the outcome data
+            encoded_data$encoded_data <- ..update_outcome(object=object,
+                                                          data=encoded_data$encoded_data)
             
             # Get family for mboost, which determines how the response and
             # predictors are linked.
