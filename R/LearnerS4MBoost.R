@@ -125,8 +125,8 @@ setMethod("is_available", signature(object="familiarMBoostTree"),
 
 
 
-#####get_default_hyperparameters,familiarMBoostLM#####
-setMethod("get_default_hyperparameters", signature(object="familiarMBoostLM"),
+#####get_default_hyperparameters#####
+setMethod("get_default_hyperparameters", signature(object="familiarMBoost"),
           function(object, data=NULL){
             
             # Initialise list and declare hyperparameter entries.
@@ -136,6 +136,11 @@ setMethod("get_default_hyperparameters", signature(object="familiarMBoostLM"),
             param$n_boost <- list()
             param$learning_rate <- list()
             
+            if(is(object, "familiarMBoostTree")){
+              param$tree_depth <- list()
+              param$min_child_weight <- list()
+              param$alpha <- list()
+            }
             
             # If data is explicitly NULL, return the list with hyperparameter
             # names only.
@@ -154,7 +159,7 @@ setMethod("get_default_hyperparameters", signature(object="familiarMBoostLM"),
                                     "surv_loglog", "gehan", "cindex", "multinomial")
             
             # Read family string by parsing learner
-            fam <- stringi::stri_replace_first_regex(str=object@learner, pattern="boosted_glm", replace="")
+            fam <- stringi::stri_replace_first_regex(str=object@learner, pattern="boosted_glm|boosted_tree", replace="")
             if(fam != "") fam <- stringi::stri_replace_first_regex(str=fam, pattern="_", replace="")
             
             # Define the family based on the name of the learner.
@@ -222,136 +227,29 @@ setMethod("get_default_hyperparameters", signature(object="familiarMBoostLM"),
             # models, but converge slower.
             param$learning_rate <- .set_hyperparameter(default=c(-5, -3, -2, -1), type="numeric", range=c(-7, 0),
                                                        valid_range=c(-Inf, 0), randomise=TRUE)
-
-            # Return hyper-parameters
-            return(param)
-          })
-
-
-
-#####get_default_hyperparameters,familiarMBoostTree#####
-setMethod("get_default_hyperparameters", signature(object="familiarMBoostTree"),
-          function(object, data=NULL){
             
-            # Initialise list and declare hyperparameter entries.
-            param <- list()
-            param$sign_size <- list()
-            param$family <- list()
-            param$n_boost <- list()
-            param$learning_rate <- list()
-            param$tree_depth    <- list()
-            param$min_child_weight <- list()
-            param$alpha <- list()
-            
-            
-            # If data is explicitly NULL, return the list with hyperparameter
-            # names only.
-            if(is.null(data)) return(param)
-            
-
-            ##### Signature size ###############################################
-            param$sign_size <- .get_default_sign_size(data_obj=data)
-            
-            
-            ##### Model family #####
-            param$family$type  <- "factor"
-            param$family$range <- c("logistic", "probit", "bin_loglog", "cauchy",
-                                    "log", "auc", "gaussian", "huber", "laplace",
-                                    "poisson", "cox", "weibull", "lognormal",
-                                    "surv_loglog", "gehan", "cindex", "multinomial")
-            
-            # Read family string by parsing learner
-            fam <- stringi::stri_replace_first_regex(str=object@learner, pattern="boosted_tree", replace="")
-            if(fam != "") fam <- stringi::stri_replace_first_regex(str=fam, pattern="_", replace="")
-            
-            # Define the family based on the name of the learner.
-            if(fam == ""){
-              # No specific family is provided.
-              if(object@outcome_type == "continuous"){
-                family_default <- c("gaussian", "huber", "poisson")
-                
-              } else if(object@outcome_type == "count"){
-                family_default <- "poisson"
-                
-              } else if(object@outcome_type == "binomial") {
-                family_default <- c("logistic", "probit", "bin_loglog", "cauchy", "log")
-                
-              # } else if(object@outcome_type == "multinomial"){
-              #   family_default <- "multinomial"
-              #   
-              } else if(object@outcome_type == "survival"){
-                family_default <- "cox"
-                
-              } else {
-                ..error_outcome_type_not_implemented(object@outcome_type)
-              }
+            if(is(object, "familiarMBoostTree")){
+              ##### Tree maximum depth #########################################
               
-            } else if(fam == "surv"){
-              # A survival family is provided, but not specified further.
-              family_default <- c("weibull", "lognormal", "surv_loglog")
+              # This hyperparameter is only used by tree models. Larger depths
+              # increase the risk of overfitting.
+              param$tree_depth <- .set_hyperparameter(default=c(1, 2, 3, 7), type="integer", range=c(1, 10),
+                                                      valid_range=c(1, Inf), randomise=TRUE)
               
-            } else if(fam == "loglog") {
-              # "loglog" is a collection of families that should be further
-              # split according to outcome type.
-              if(object@outcome_type == "binomial") {
-                family_default <- "bin_loglog"
-                
-              } else if(object@outcome_type == "survival") {
-                family_default <- "surv_loglog"
-                
-              } else {
-                ..error_outcome_type_not_implemented(object@outcome_type)
-              }
               
-            } else {
-              # Other families are uniquely defined.
-              family_default <- fam
+              ##### Minimum sum of instance weight #############################
+              
+              # We implement this on a power(10) scale, with -1 offset.
+              param$min_child_weight <- .set_hyperparameter(default=c(0, 1, 2), type="numeric", range=c(0, 2),
+                                                            valid_range=c(0, Inf), randomise=TRUE)
+              
+              
+              ##### Significance threshold for splitting #######################
+              
+              # Sets the significance level required to allow a split on a variable.
+              param$alpha <- .set_hyperparameter(default=c(0.05, 0.1, 0.5, 1.0), type="numeric", range=c(10^-6, 1.0),
+                                                 valid_range=c(0.0, 1.0), randomise=TRUE, distribution="log")
             }
-            
-            # Set the family parameter.
-            param$family <- .set_hyperparameter(default=family_default, type="factor", range=family_default,
-                                                randomise=ifelse(length(family_default) > 1, TRUE, FALSE))
-            
-            ##### Number of boosting iterations ################################
-            
-            # This parameter could be set using the cv or cvrisk functions in
-            # mboost. However, the SMAC hyperoptimisation method implemented in
-            # the framework is superior to that of the grid-search method of cv
-            # and cvrisk This hyper-parameter is expressed on the log 10 scale
-            param$n_boost <- .set_hyperparameter(default=c(0, 1, 2, 3), type="numeric", range=c(0, 3),
-                                                 valid_range=c(0, Inf), randomise=TRUE)
-            
-            
-            ##### Learning rate ################################################
-            
-            # Learning rate is on a log10 scale and determines how fast the
-            # algorithm tries to learn. Lower values typically lead to better
-            # models, but converge slower.
-            param$learning_rate <- .set_hyperparameter(default=c(-3, -2, -1), type="numeric", range=c(-5, 0),
-                                                       valid_range=c(-Inf, 0), randomise=TRUE)
-            
-            
-            ##### Tree maximum depth ###########################################
-            
-            # This hyperparameter is only used by tree models. Larger depths
-            # increase the risk of overfitting.
-            param$tree_depth <- .set_hyperparameter(default=c(1, 2, 3, 7), type="integer", range=c(1, 10),
-                                                    valid_range=c(1, Inf), randomise=TRUE)
-            
-            
-            ##### Minimum sum of instance weight ###############################
-            
-            # We implement this on a power(10) scale, with -1 offset.
-            param$min_child_weight <- .set_hyperparameter(default=c(0, 1, 2), type="numeric", range=c(0, 2),
-                                                          valid_range=c(0, Inf), randomise=TRUE)
-            
-            
-            ##### Significance threshold for splitting #########################
-            
-            # Sets the significance level required to allow a split on a variable.
-            param$alpha <- .set_hyperparameter(default=c(0.05, 0.1, 0.5, 1.0), type="numeric", range=c(10^-6, 1.0),
-                                               valid_range=c(0.0, 1.0), randomise=TRUE, distribution="log")
-            
             
             # Return hyper-parameters
             return(param)
@@ -393,8 +291,8 @@ setMethod("get_prediction_type", signature(object="familiarMBoost"),
 
 
 
-#####..train,familiarMBoostLM####
-setMethod("..train", signature(object="familiarMBoostLM", data="dataObject"),
+#####..train####
+setMethod("..train", signature(object="familiarMBoost", data="dataObject"),
           function(object, data){
             
             # Aggregate repeated measurement data - ranger does not facilitate
@@ -441,94 +339,35 @@ setMethod("..train", signature(object="familiarMBoostLM", data="dataObject"),
             control_object <- mboost::boost_control(mstop = round(10^object@hyperparameters$n_boost),
                                                     nu = 10^object@hyperparameters$learning_rate)
             
-            # Attempt to create model
-            model <- tryCatch(mboost::glmboost(formula,
-                                               data=encoded_data$encoded_data@data,
-                                               family=family,
-                                               center=FALSE,
-                                               control=control_object),
-                              error=identity)
-            
-            # Check if the model trained at all.
-            if(inherits(model, "error")) return(callNextMethod())
-            
-            # Add model
-            object@model <- model
-            
-            # Add the contrast references to model_list
-            object@encoding_reference_table <- encoded_data$reference_table
-            
-            # Add feature order
-            object@feature_order <- feature_columns
-            
-            return(object)
-          })
-
-
-
-#####..train,familiarMBoostTree####
-setMethod("..train", signature(object="familiarMBoostTree", data="dataObject"),
-          function(object, data){
-            
-            # Aggregate repeated measurement data - ranger does not facilitate
-            # repeated measurements.
-            data <- aggregate_data(data=data)
-            
-            # Check if the training data is ok.
-            if(has_bad_training_data(object=object, data=data)) return(callNextMethod())
-            
-            # Use effect coding to convert categorical data into encoded data -
-            # this is required to deal with factors with missing/new levels
-            # between training and test data sets.
-            encoded_data <- encode_categorical_variables(data=data,
-                                                         object=object,
-                                                         encoding_method="dummy",
-                                                         drop_levels=FALSE)
-            
-            # Find feature columns in the data.
-            feature_columns <- get_feature_columns(x=encoded_data$encoded_data)
-            
-            # Parse formula.
-            if(object@outcome_type == "survival") {
-              formula <- stats::reformulate(termlabels=feature_columns,
-                                            response=quote(survival::Surv(outcome_time, outcome_event)))
-              
-            } else if(object@outcome_type %in% c("binomial", "count", "continuous")){
-              formula <- stats::reformulate(termlabels=feature_columns,
-                                            response=quote(outcome))
-              
-            } else {
-              ..error_outcome_type_not_implemented(object@outcome_type)
-            }
-            
-            # Potentially update the outcome data
-            encoded_data$encoded_data <- ..update_outcome(object=object,
-                                                          data=encoded_data$encoded_data)
-            
-            # Get family for mboost, which determines how the response and
-            # predictors are linked.
-            family <- ..get_distribution_family(object)
-            
-            # Set control object. Note that learning rate is defined on the log
-            # 10 scale.
-            control_object <- mboost::boost_control(mstop = round(10^object@hyperparameters$n_boost),
-                                                    nu = 10^object@hyperparameters$learning_rate)
-            
-            # Set tree controls. Note that every parameter except max depth is
-            # kept at default for mboost.
-            tree_control_object <- partykit::ctree_control(testtype = "Univariate",
-                                                           maxdepth = object@hyperparameters$tree_depth,
-                                                           minsplit = 10^object@hyperparameters$min_child_weight - 1,
-                                                           mincriterion = 1 - object@hyperparameters$alpha,
-                                                           saveinfo = FALSE)
-            
-            # Attempt to create model
-            model <- tryCatch(mboost::blackboost(formula,
+            if(is(object, "familiarMBoostLM")){
+              # Attempt to create model
+              model <- tryCatch(mboost::glmboost(formula,
                                                  data=encoded_data$encoded_data@data,
                                                  family=family,
-                                                 control=control_object,
-                                                 tree_controls=tree_control_object),
-                              error=identity)
+                                                 center=FALSE,
+                                                 control=control_object),
+                                error=identity)
+              
+            } else if(is(object, "familiarMBoostTree")){
+              # Set tree controls. Note that every parameter except max depth is
+              # kept at default for mboost.
+              tree_control_object <- partykit::ctree_control(testtype = "Univariate",
+                                                             maxdepth = object@hyperparameters$tree_depth,
+                                                             minsplit = 10^object@hyperparameters$min_child_weight - 1,
+                                                             mincriterion = 1 - object@hyperparameters$alpha,
+                                                             saveinfo = FALSE)
+              
+              # Attempt to create model
+              model <- tryCatch(mboost::blackboost(formula,
+                                                   data=encoded_data$encoded_data@data,
+                                                   family=family,
+                                                   control=control_object,
+                                                   tree_controls=tree_control_object),
+                                error=identity)
+              
+            } else {
+              ..error_reached_unreachable_code(paste0("..train,familiarMBoost: encountered unknown learner of unknown class: ", paste0(class(object), collapse=", ")))
+            }
             
             # Check if the model trained at all.
             if(inherits(model, "error")) return(callNextMethod())
@@ -544,7 +383,6 @@ setMethod("..train", signature(object="familiarMBoostTree", data="dataObject"),
             
             return(object)
           })
-
 
 
 #####..predict#####

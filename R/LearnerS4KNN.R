@@ -13,7 +13,6 @@ setClass("familiarKNNradial",
 
 .get_available_radial_knn_learners <- function(show_general=TRUE) return(c("k_nearest_neighbours_radial"))
 
-
 .get_available_linear_knn_learners <- function(show_general=TRUE) return(c("k_nearest_neighbours"))
 
 
@@ -33,13 +32,17 @@ setMethod("is_available", signature(object="familiarKNN"),
 
 
 #####get_default_hyperparameters,KNNlinear#####
-setMethod("get_default_hyperparameters", signature(object="familiarKNNlinear"),
+setMethod("get_default_hyperparameters", signature(object="familiarKNN"),
           function(object, data=NULL){
             
             # Initialise list and declare hyperparameter entries.
             param <- list()
             param$sign_size <- list()
             param$k <- list()
+            
+            if(is(object, "familiarKNNradial")){
+              param$gamma <- list()
+            }
            
             # If data is explicitly NULL, return the list with hyperparameter
             # names only.
@@ -66,58 +69,18 @@ setMethod("get_default_hyperparameters", signature(object="familiarKNNlinear"),
             param$k <- .set_hyperparameter(default=k_default, type="integer", range=k_range,
                                            valid_range=c(n_classes, Inf), randomise=TRUE)
             
-            return(param)
-          })
-
-
-
-#####get_default_hyperparameters,KNNlinear#####
-setMethod("get_default_hyperparameters", signature(object="familiarKNNradial"),
-          function(object, data=NULL){
-            
-            # Initialise list and declare hyperparameter entries.
-            param <- list()
-            param$sign_size <- list()
-            param$k <- list()
-            param$gamma <- list()
-            
-            # If data is explicitly NULL, return the list with hyperparameter
-            # names only.
-            if(is.null(data)) return(param)
-            
-            # Get the number of subjects
-            n_samples <- nrow(data@data)
-            n_classes <- length(get_outcome_class_levels(x=data))
-            
-            
-            ##### Signature size ###############################################
-            param$sign_size <- .get_default_sign_size(data_obj=data)
-            
-            
-            ##### Number of nearest neighbours k ###############################
-            
-            # Define the range for the number of nearest neighbour clusters.
-            k_range <- c(1, ceiling(2*n_samples^(1/3)))
-            
-            # Define the default value.
-            k_default <- c(1, 2, 5, 10, 20)
-            k_default <- k_default[k_default >= k_range[1] & k_default <= k_range[2]]
-            
-            param$k <- .set_hyperparameter(default=k_default, type="integer", range=k_range,
-                                           valid_range=c(n_classes, Inf), randomise=TRUE)
-            
-            
-            ##### Radial basis function kernel gamma ###########################
-            
-            # Gamma is based on the log10 scale with a 10^-5 offset, so that
-            # gamma=-5 leads to no distance weighting.
-            # Set the gamma parameter.
-            param$gamma <- .set_hyperparameter(default=c(-5, -3, -1, 0, 1, 3, 5), type="numeric", range=c(-5, 5),
-                                               valid_range=c(-5, Inf), randomise=TRUE)
+            if(is(object, "familiarKNNradial")){
+              ##### Radial basis function kernel gamma #########################
+              
+              # Gamma is based on the log10 scale with a 10^-5 offset, so that
+              # gamma=-5 leads to no distance weighting.
+              # Set the gamma parameter.
+              param$gamma <- .set_hyperparameter(default=c(-5, -3, -1, 0, 1, 3, 5), type="numeric", range=c(-5, 5),
+                                                 valid_range=c(-5, Inf), randomise=TRUE)
+            }
             
             return(param)
           })
-
 
 
 #####..train####
