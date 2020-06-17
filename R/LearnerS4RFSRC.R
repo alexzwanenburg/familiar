@@ -5,6 +5,8 @@ NULL
 setClass("familiarRFSRC",
          contains="familiarModel")
 
+.get_available_rfsrc_learners <- function(show_general=TRUE) return(c("random_forest", "random_forest_rfsrc"))
+
 
 #####is_available#####
 setMethod("is_available", signature(object="familiarRFSRC"),

@@ -15,7 +15,7 @@ setMethod("promote_learner", signature(object="familiarModel"),
             
             learner <- object@learner
             
-            if(learner == "naive_bayes"){
+            if(learner %in% .get_available_naive_bayes_learners()){
               # Naive bayes model
               object <- methods::new("familiarNaiveBayes", object)
             
@@ -66,11 +66,11 @@ setMethod("promote_learner", signature(object="familiarModel"),
               # Fully parametric survival regression model
               object <- methods::new("familiarSurvRegr", object)
               
-            } else if(learner %in% c("random_forest", "random_forest_rfsrc")){
+            } else if(learner %in% .get_available_rfsrc_learners()){
               # Random forests for survival, regression, and classification
               object <- methods::new("familiarRFSRC", object)
               
-            } else if(learner=="random_forest_ranger"){
+            } else if(learner %in% .get_available_ranger_learners()){
               # Ranger random forests
               object <- methods::new("familiarRanger", object)
               

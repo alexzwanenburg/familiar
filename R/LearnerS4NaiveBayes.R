@@ -6,6 +6,7 @@ setClass("familiarNaiveBayes",
          contains="familiarModel")
 
 
+.get_available_naive_bayes_learners <- function(show_general=TRUE) return("naive_bayes")
 
 #####is_available#####
 setMethod("is_available", signature(object="familiarNaiveBayes"),

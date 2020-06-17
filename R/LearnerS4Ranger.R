@@ -6,28 +6,15 @@ setClass("familiarRanger",
          contains="familiarModel")
 
 
+.get_available_ranger_learners <- function(show_general=TRUE) return("random_forest_ranger")
+
+
 #####is_available#####
 setMethod("is_available", signature(object="familiarRanger"),
           function(object, ...){
             # Ranger exists for all outcome types and variable importance
             # methods, including impurity for survival.
             return(TRUE)
-            
-            # # Ranger exists for all outcome types.
-            # if(is.null(object@hyperparameters)) return(TRUE)
-            # 
-            # # If hyperparameters are set (e.g. for use in feature selection),
-            # # the fs_vimp_method parameter should be specified.
-            # if(is.null(object@hyperparameters$fs_vimp_method)){
-            #   ..error_reached_unreachable_code("is_available,familiarRanger: the fs_vimp_method hyperparameter was not specified.")
-            # }
-            # 
-            # # Impurity-based methods are not available for survival endpoints.
-            # if(object@hyperparameters$fs_vimp_method %in% c("impurity", "impurity_corrected") & object@outcome_type == "survival"){
-            #   return(FALSE)
-            # } else {
-            #   return(TRUE)
-            # }
           })
 
 
