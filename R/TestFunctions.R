@@ -66,6 +66,18 @@ test_all_learners_train_predict_vimp <- function(learners, hyperparameter_list=N
       # Test if the learner is available for the current outcome_type
       if(!is_available(object)) next()
       
+      # Parse hyperparameter list
+      hyperparameters <- c(hyperparameter_list[[outcome_type]],
+                           list("sign_size"=get_n_features(full_data)))
+      
+      # Find required hyperparameters
+      learner_hyperparameters <- .get_preset_hyperparameters(learner=learner,
+                                                             outcome_type=outcome_type,
+                                                             names_only=TRUE)
+      
+      # Select hyperparameters that are being used, and are present in the input
+      # list of hyperparameters.
+      hyperparameters <- hyperparameters[intersect(learner_hyperparameters, names(hyperparameters))]
       
       #####Full data set########################################################
       
@@ -73,8 +85,7 @@ test_all_learners_train_predict_vimp <- function(learners, hyperparameter_list=N
       model <- suppressWarnings(train(data=full_data,
                                       cluster_method="none",
                                       imputation_method="simple",
-                                      hyperparameter_list=c(hyperparameter_list[[outcome_type]],
-                                                            list("sign_size"=get_n_features(full_data))),
+                                      hyperparameter_list=hyperparameters,
                                       learner=learner,
                                       time_max=1832))
       
@@ -186,8 +197,7 @@ test_all_learners_train_predict_vimp <- function(learners, hyperparameter_list=N
       model <- suppressWarnings(train(data=one_feature_data,
                                       cluster_method="none",
                                       imputation_method="simple",
-                                      hyperparameter_list=c(hyperparameter_list[[outcome_type]],
-                                                            list("sign_size"=get_n_features(one_feature_data))),
+                                      hyperparameter_list=hyperparameters,
                                       learner=learner,
                                       time_max=1832))
       
@@ -267,8 +277,7 @@ test_all_learners_train_predict_vimp <- function(learners, hyperparameter_list=N
       model <- suppressWarnings(train(data=bad_data,
                                       cluster_method="none",
                                       imputation_method="simple",
-                                      hyperparameter_list=c(hyperparameter_list[[outcome_type]],
-                                                            list("sign_size"=get_n_features(bad_data))),
+                                      hyperparameter_list=hyperparameters,
                                       learner=learner,
                                       time_max=1832))
       
