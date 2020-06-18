@@ -8,6 +8,7 @@
 #' @include LearnerS4MBoost.R
 #' @include LearnerS4Ranger.R
 #' @include LearnerS4RFSRC.R
+#' @include LearnerS4SVM.R
 NULL
 
 setMethod("promote_learner", signature(object="familiarModel"),
@@ -27,9 +28,25 @@ setMethod("promote_learner", signature(object="familiarModel"),
               # k-nearest neighbours model with radial kernel
               object <- methods::new("familiarKNNlinear", object)
               
-            } else if(learner.svm.is_svm(learner=learner)){
-              # Support vector machines
-              object <- methods::new("familiarSVM", object)
+            } else if(learner %in% .get_available_svm_c_learners()){
+              # C-classification support vector machines.
+              object <- methods::new("familiarSVMC", object)
+              
+            } else if(learner %in% .get_available_svm_c_bound_learners()){
+              # Bound constraint C-classification support vector machines.
+              object <- methods::new("familiarSVMCBound", object)
+              
+            } else if(learner %in% .get_available_svm_nu_learners()){
+              # Nu-classification and regression support vector machines.
+              object <- methods::new("familiarSVMNu", object)
+              
+            } else if(learner %in% .get_available_svm_eps_learners()){
+              # Epsilon regression support vector machines.
+              object <- methods::new("familiarSVMEps", object)
+              
+            } else if(learner %in% .get_available_svm_eps_bound_learners()){
+              # Bound constraint epsilon regression support vector machines.
+              object <- methods::new("familiarSVMEpsBound", object)
               
             } else if(learner %in% .get_available_glm_learners()){
               # Generalised linear models
