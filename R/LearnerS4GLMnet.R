@@ -65,7 +65,7 @@ setClass("familiarGLMnetElasticNet",
 setMethod("is_available", signature(object="familiarGLMnet"),
           function(object, ...){
             
-            # Extract learner and 
+            # Extract learner and outcome_type.
             learner      <- object@learner
             outcome_type <- object@outcome_type
             
