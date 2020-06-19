@@ -375,6 +375,9 @@ setMethod("..predict_survival_probability", signature(object="familiarRanger", d
             
             if(!object@outcome_type %in% c("survival")) return(callNextMethod())
             
+            # If time is unset, read the max time stored by the model.
+            if(is.null(time)) time <- object@settings$time_max
+            
             return(..predict(object=object, data=data, time=time, type="survival_probability"))
           })
 
