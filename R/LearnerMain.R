@@ -9,6 +9,7 @@
 #' @include LearnerS4Ranger.R
 #' @include LearnerS4RFSRC.R
 #' @include LearnerS4SVM.R
+#' @include LearnerS4SurvivalRegression.R
 NULL
 
 setMethod("promote_learner", signature(object="familiarModel"),
@@ -77,9 +78,7 @@ setMethod("promote_learner", signature(object="familiarModel"),
               # Cox proportional hazards regression model
               object <- methods::new("familiarCoxPH", object)
             
-            } else if(learner %in% c("survival_regr", "survival_regr_weibull", "survival_regr_exponential",
-                                     "survival_regr_gaussian", "survival_regr_logistic",
-                                     "survival_regr_lognormal", "survival_regr_loglogistic")){
+            } else if(learner %in% .get_available_survival_regression_learners()){
               # Fully parametric survival regression model
               object <- methods::new("familiarSurvRegr", object)
               

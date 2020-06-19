@@ -148,63 +148,63 @@ learner.survival_probability_relative_risk <- function(object, data, time){
 # }
 
 
-
-learner.survival_probability.accelerated_failure_time <- function(object, data_obj, time_max){
-  # Survival probability based on predicted survival quantiles (1-failure
-  # probability) We are dealing with an inverse problem. We know the survival
-  # quantiles, but need to know them at the event times. A basic approach that
-  # does not depend directly on the choice of distribution is to try and
-  # interpolate the survival quantiles for each sample at time-max.
-
-  # Suppress NOTES due to non-standard evaluation in data.table
-  survival <- NULL
-  
-  # Get predictions
-  if(is(data_obj, "dataObject")){
-    prediction_list <- predict(object=object, newdata=data_obj, allow_recalibration=TRUE, extra_output=TRUE, time_max=time_max)
-  } else if(is(data_obj, "list")){
-    prediction_list <- data_obj
-  }
-
-  # Return NULL in case the model prediction could not be performed.
-  if(is.null(prediction_list$failure_times) | is.null(prediction_list$predictions)){
-    return(NULL)
-  }
-  
-  # Compute probability table
-  probability_table <- lapply(split(prediction_list$failure_times, by="subject_id"), function(failure_table, time_max){
-    
-    # Compute survival probability from the failure table.
-    survival_probability <- stats::approx(x=failure_table$failure_time,
-                                          y=failure_table$quantile,
-                                          xout=time_max,
-                                          rule=2)$y
-    
-    return(data.table::data.table("subject_id"=failure_table$subject_id[1],
-                                  "survival"=survival_probability))
-  }, time_max=time_max)
-  
-  # Concatenate to single table.
-  probability_table <- data.table::rbindlist(probability_table)
-  
-  # Add in outcome_time and outcome_event from the predictions.
-  probability_table <- merge(x=probability_table,
-                             y=prediction_list$predictions[, c("subject_id", "outcome_time", "outcome_event")],
-                             by="subject_id")
-  
-  # Check if the merged table is not empty (it should not be).
-  if(is_empty(probability_table)){
-    return(NULL)
-  }
-  
-  # Rename outcome_time and outcome_event.
-  data.table::setnames(probability_table, old=c("outcome_time", "outcome_event"), new=c("time", "event"))
-  
-  # Reorder columns
-  data.table::setcolorder(probability_table, c("subject_id", "survival", "time", "event"))
-  
-  # Order by predicted probability.
-  probability_table <- probability_table[order(survival)]
-  
-  return(probability_table)
-}
+# 
+# learner.survival_probability.accelerated_failure_time <- function(object, data_obj, time_max){
+#   # Survival probability based on predicted survival quantiles (1-failure
+#   # probability) We are dealing with an inverse problem. We know the survival
+#   # quantiles, but need to know them at the event times. A basic approach that
+#   # does not depend directly on the choice of distribution is to try and
+#   # interpolate the survival quantiles for each sample at time-max.
+# 
+#   # Suppress NOTES due to non-standard evaluation in data.table
+#   survival <- NULL
+#   
+#   # Get predictions
+#   if(is(data_obj, "dataObject")){
+#     prediction_list <- predict(object=object, newdata=data_obj, allow_recalibration=TRUE, extra_output=TRUE, time_max=time_max)
+#   } else if(is(data_obj, "list")){
+#     prediction_list <- data_obj
+#   }
+# 
+#   # Return NULL in case the model prediction could not be performed.
+#   if(is.null(prediction_list$failure_times) | is.null(prediction_list$predictions)){
+#     return(NULL)
+#   }
+#   
+#   # Compute probability table
+#   probability_table <- lapply(split(prediction_list$failure_times, by="subject_id"), function(failure_table, time_max){
+#     
+#     # Compute survival probability from the failure table.
+#     survival_probability <- stats::approx(x=failure_table$failure_time,
+#                                           y=failure_table$quantile,
+#                                           xout=time_max,
+#                                           rule=2)$y
+#     
+#     return(data.table::data.table("subject_id"=failure_table$subject_id[1],
+#                                   "survival"=survival_probability))
+#   }, time_max=time_max)
+#   
+#   # Concatenate to single table.
+#   probability_table <- data.table::rbindlist(probability_table)
+#   
+#   # Add in outcome_time and outcome_event from the predictions.
+#   probability_table <- merge(x=probability_table,
+#                              y=prediction_list$predictions[, c("subject_id", "outcome_time", "outcome_event")],
+#                              by="subject_id")
+#   
+#   # Check if the merged table is not empty (it should not be).
+#   if(is_empty(probability_table)){
+#     return(NULL)
+#   }
+#   
+#   # Rename outcome_time and outcome_event.
+#   data.table::setnames(probability_table, old=c("outcome_time", "outcome_event"), new=c("time", "event"))
+#   
+#   # Reorder columns
+#   data.table::setcolorder(probability_table, c("subject_id", "survival", "time", "event"))
+#   
+#   # Order by predicted probability.
+#   probability_table <- probability_table[order(survival)]
+#   
+#   return(probability_table)
+# }
