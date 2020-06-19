@@ -122,14 +122,14 @@ Learning algorithms create models that relate input data to the outcome. Develop
 | k-nearest neighbours | `k_nearest_neighbours`                         | × | × |   |   |   |
 | k-nearest neighbours (radial kernel)| `k_nearest_neighbours_radial`   | × | × |   |   |   |
 |**support vector machines**|
-| $C$-classification^b^ | `svm`, `svm_*`, `svm_c_*`                     | × | × |   |   |   |
-| bound constraint $C$-classification^b^ | `svm_c_bound_*`                | × | × |   |   |   |
-| $\nu$-classification/ regression^b^ | `svm_nu_*`                       | × | × | × | × |   |
-| $\epsilon$-regression^b^ | `svm`, `svm_*`, `svm_eps_*`                |   |   | × | × |   |
+| $C$-classification^b^ | `svm_c_*`                                     | × | × |   |   |   |
+| bound constraint $C$-classification^b^ | `svm_c_bound_*`              | × | × |   |   |   |
+| $\nu$-classification/ regression^b^ | `svm_nu_*`                      | × | × | × | × |   |
+| $\epsilon$-regression^b^ | `svm_eps_*`                                |   |   | × | × |   |
 | bound constraint $\epsilon$-regression^b^ | `svm_eps_bound_*`         |   |   | × | × |   |
 | linear kernel^c^ | `svm_*_linear`, `svm_*_vanilla`                    | × | × | × | × |   |
 | polynomial kernel^c^ | `svm_*_poly`, `svm_*_polynomial`               | × | × | × | × |   |
-| radial kernel^c^ | `svm`, `svm_*`, `svm_*_rbf`, `svm_*_radial`        | × | × | × | × |   |
+| radial kernel^c^ | `svm_*_rbf`, `svm_*_radial`                        | × | × | × | × |   |
 | sigmoid kernel^c^ | `svm_*_tanh`, `svm_*_sigmoid`                     | × | × | × | × |   |
 | Bessel kernel^c^ | `svm_*_bessel`                                     | × | × | × | × |   |
 | Laplace kernel^c^ | `svm_*_laplace`                                   | × | × | × | × |   |
@@ -141,7 +141,7 @@ Table: Overview of learners implemented in familiar.
 
 ^b^ SVM kernel is indicated by `*`. If omitted (e.g. `svm_c`), the radial basis function is used as kernel.
 
-^c^ SVM type is indicated by `*`. If omitted (e.g. `svm_linear`), a default SVM type is used: $C$-classification for categorical outcomes, and $\epsilon$-classification for regression.
+^c^ SVM type is indicated by `*`, and must be one of `c`, `c_bound`, `nu`, `epsilon` or `epsilon_bound`.
 
 ## Configuration options
 
@@ -218,7 +218,6 @@ Three shrinkage methods are implemented in `familiar`, namely ridge regression, 
 | **parameter** | **tag** | **values** | **optimised** | **comments** |
 |:--------------|:--------|:----------:|:----------:|:-------------|
 | signature size |`sign_size` | $\mathbb{Z} \in \left[1,n\right]$ | yes | -- |
-| family | `family` | `gaussian`, `binomial`, `poisson`, `multinomial`, `cox` | continuous outcomes | For continuous outcomes `gaussian` and `poisson` may be tested. The family is not optimised when it is specified, e.g. `lasso_gaussian`. For other outcomes only one applicable family exists.|
 | elastic net penalty | `alpha` | $\mathbb{R} \in \left[0,1\right]$ | elastic net | This penalty is fixed for ridge regression (`alpha = 0`) and lasso (`alpha = 1`). |
 | optimal lambda | `lambda_min` | `lambda.1se`, `lambda.min` | no | Default is `lambda.min`.|
 | number of CV folds | `n_folds` | $\mathbb{Z} \in \left[3,n\right]$ | no | Default is $3$ if $n<30$, $\lfloor n/10\rfloor$ if $30\leq n \leq 200$ and $20$ if $n>200$.|
@@ -226,18 +225,17 @@ Three shrinkage methods are implemented in `familiar`, namely ridge regression, 
 
 ## Boosted generalised linear models and regression trees
 
-Boosting is a procedure which combines many weak learners to form a more powerful panel [@Schapire1990-vn; @Hastie2009-ed]. Boosting learners are implemented using the `mboost` package [@Buhlmann2007-ku; @Hothorn2010-cu; @Hofner2015-tt]. The hyperparameters are shown in the table below.
+Boosting is a procedure which combines many weak learners to form a more powerful panel [@Schapire1990-vn; @Hastie2009-ed]. Boosting learners are implemented using the `mboost` package [@Buhlmann2007-ku; @Hothorn2010-cu; @Hofner2015-tt]. Both linear regression (`mboost::glmboost`) and regression trees (`mboost::blackboost`) are implemented. The hyperparameters are shown in the table below.
 
 | **parameter** | **tag** | **values** | **optimised** | **comments** |
 |:--------------|:--------|:----------:|:----------:|:-------------|
-| base learner | `base_model` | `glm`, `tree` | no | This is set through the learner tag. The base learners are either generalised models or decision trees. |
 | signature size | `sign_size` | $\mathbb{Z} \in \left[1,n\right]$ | yes | -- |
 | family | `family` | `logistic`, `probit`, `bin_loglog`, `cauchy`, `log`, `auc`, `gaussian`, `huber`, `laplace`, `poisson`, `cox`, `weibull`, `lognormal`, `surv_loglog`, `gehan`, `cindex` | general tags | The family is not optimised when it is specified, e.g. `boosted_tree_gaussian`.|
 | boosting iterations | `n_boost` | $\mathbb{R} \in \left[0,\infty\right)$ | yes | This parameter is expressed on the $\log_{10}$ scale, i.e. the actual input value will be $10^\texttt{n_boost}$. The default range is $\left[0, 3\right]$. |
 | learning rate | `learning_rate` | $\mathbb{R} \in \left[-\infty,0\right]$ | yes | This parameter is expressed on the $\log_{10}$ scale. The default range is $\left[-5,0\right]$.|
-| maximum tree depth | `tree_depth` | $\mathbb{Z} \in \left[1,n\right]$ | `tree` | Maximum depth to which trees are allowed to grow.|
-| minimum sum of instance weight | `min_child_weight` | $\mathbb{R} \in \left[0,\infty\right)$ | `tree` | Minimal instance weight required for further branch partitioning, or the number of instances required in each node. This parameter is expressed on the $\log_{10}$ scale with a $-1$ offset. The default range is $\left[0, 2\right]$.|
-| significance split threshold | `alpha` | $\mathbb{R} \in \left(0.0, 1.0\right]$ | `tree` | Minimum significance level for further splitting. The default range is $\left[10^{-6}, 1.0\right]$ |
+| maximum tree depth | `tree_depth` | $\mathbb{Z} \in \left[1,n\right]$ | trees only | Maximum depth to which trees are allowed to grow.|
+| minimum sum of instance weight | `min_child_weight` | $\mathbb{R} \in \left[0,\infty\right)$ | trees only | Minimal instance weight required for further branch partitioning, or the number of instances required in each node. This parameter is expressed on the $\log_{10}$ scale with a $-1$ offset. The default range is $\left[0, 2\right]$.|
+| significance split threshold | `alpha` | $\mathbb{R} \in \left(0.0, 1.0\right]$ | trees only | Minimum significance level for further splitting. The default range is $\left[10^{-6}, 1.0\right]$ |
 
 Optimising the number of boosting iterations may be slow as models with a large number of boosting iterations take longer to learn and predict from. If this is an issue, the `n_boost` parameter should be set to a smaller range, or provided with a fixed value.
 
@@ -332,7 +330,6 @@ Familiar implements SVM using `kernlab::ksvm` [@Karatzoglou2004-bb]. By default,
 | **parameter** | **tag** | **values** | **optimised** | **comments** |
 |:--------------|:--------|:----------:|:----------:|:-------------|
 | signature size | `sign_size` | $\mathbb{Z} \in \left[1,n\right]$ | yes | -- |
-| SVM type | `svm_type` | `c`, `c_bound`, `nu`, `eps`, `eps_bound` | no | Defaults are `c` (`binomial`, `multinomial`) and `eps` (`continuous`, `count`), unless specified as part of the learner name. |
 | SVM kernel | `kernel` | `vanilla`, `linear`, `poly`, `polynomial`, `rbf`, `radial`, `tanh`, `sigmoid`, `bessel`, `laplace`, `anova` | no | Default is `radial`, unless specified as part of the learner name. |
 | $C$ | `c` | $\mathbb{R}$ | yes | The cost for violation of constraints is expressed on a $\log_{10}$ scale, i.e. the actual value is $10^\texttt{c}$. The default range is $\left[-5, 3\right]$. |
 | $\epsilon$ | `epsilon` | $\mathbb{R}$ | `continuous` and `count` outcomes | The error tolerance $\epsilon$ is only used for regression SVM. $\epsilon$ is expressed on a $\log_{10}$ scale. The default range is $\left[-5, 1\right]$. |
@@ -364,7 +361,7 @@ The following kernels are implemented:
 * Bessel kernel: `bessel`
 * ANOVA with radial basis function kernel: `anova`
 
-An outcome variable that represents `count`-type data is first transformed using a $\log(x+1)$ transformation. Predicted responses are then transformed to the original scale using the inverse $\exp(x)-1$ transformation.
+<!-- An outcome variable that represents `count`-type data is first transformed using a $\log(x+1)$ transformation. Predicted responses are then transformed to the original scale using the inverse $\exp(x)-1$ transformation. -->
 
 
 # Hyperparameter optimization
