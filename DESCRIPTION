@@ -108,7 +108,6 @@ Collate:
     'LearnerRecalibration.R'
     'LearnerSurvivalGrouping.R'
     'LearnerSurvivalProbability.R'
-    'LearnerTestLearner.R'
     'Logger.R'
     'MetricAreaUnderCurve.R'
     'MetricBrierScore.R'
