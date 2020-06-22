@@ -131,9 +131,11 @@ setMethod("train", signature(data="dataObject"),
                                    signature = selected_features,
                                    req_feature_cols =  required_features,
                                    important_features = important_features,
+                                   run_table = get_placeholder_run_table(),
                                    feature_info = feature_info_list,
                                    outcome_info = outcome_info,
-                                   settings=settings$eval)
+                                   settings=settings$eval,
+                                   project_id = 0)
             
             # Preprocess data.
             data <- process_input_data(object=object,
@@ -149,3 +151,9 @@ setMethod("train", signature(data="dataObject"),
             
             return(object)
           })
+
+
+
+get_placeholder_run_table <- function(){
+  return(data.table::data.table("run_id"=1L, "data_id"=1L, "can_pre_process"=TRUE, "perturbation"="main", "perturb_level"=1))
+}
