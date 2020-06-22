@@ -506,3 +506,18 @@ test.create_bad_data_set <- function(outcome_type){
   
   return(data)
 }
+
+
+test.create_small_bad_data_set <- function(outcome_type){
+  
+  # Set random seed so that the same numbers are produced every time.
+  set.seed(1844)
+  
+  # Create good dataset first and work from there.
+  data <- test.create_bad_data_set(outcome_type=outcome_type)
+  
+  # Now select a subset of the data.
+  data@data <- data@data[sample(30)]
+  
+  return(data)
+}
