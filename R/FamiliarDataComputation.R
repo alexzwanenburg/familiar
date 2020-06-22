@@ -1004,7 +1004,7 @@ setMethod("extract_performance", signature(object="familiarEnsemble", prediction
             n_iter <- ceiling(20 / metric_alpha)
             
             # Get ensemble performance.
-            performance_list$ensemble <- data.table::rbindlist(lapply(seq_len(n_iter), function(ii, prediction_table, metric, learner, outcome_type){
+            performance_list$ensemble <- data.table::rbindlist(lapply(seq_len(n_iter), function(ii, prediction_table, metric, object, outcome_type){
               
               # Generate a bootstrap sample.
               samples <- fam_sample(x=prediction_table$subject_id, size=nrow(prediction_table), replace=TRUE)
