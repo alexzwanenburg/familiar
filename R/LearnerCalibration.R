@@ -1,4 +1,4 @@
-learner.calibration.survival <- function(object, probability_table, time_max){
+learner.calibration.survival <- function(object, data, time){
   # Generate baseline calibration data for survival models from an input table
   # (dt) containing survival probabilities at time_max for each sample and
   # corresponding time and event status.
@@ -9,19 +9,39 @@ learner.calibration.survival <- function(object, probability_table, time_max){
   # Set outcome type
   outcome_type <- object@outcome_type
   
-  if(is_empty(probability_table)) return(create_empty_calibration_table(outcome_type=outcome_type))
+  # Create a probability table. Note that the ensemble_method argument is
+  # ignored unless object is a familiarEnsemble.
+  probability_table <- .predict(object=object,
+                                data=data,
+                                time=time,
+                                type="survival_probability",
+                                allow_recalibration=TRUE,
+                                ensemble_method="median")
+  
+  # Check for empty predictions.
+  if(is_empty(probability_table)){
+    return(create_empty_calibration_table(outcome_type=outcome_type))
+  }
+  
+  # Check for failed predictions.
+  if(!any_predictions_valid(probability_table, outcome_type=outcome_type)){
+    return(create_empty_calibration_table(outcome_type=outcome_type))
+  } 
   
   # Rename the survival column to standard name.
-  data.table::setnames(probability_table, "survival", "exp_prob")
-
+  data.table::setnames(probability_table,
+                       old=c("outcome_time", "outcome_event", "predicted_outcome"),
+                       new=c("time", "event", "exp_prob"))
+  
   # Sort by survival probability.
   probability_table <- probability_table[order(exp_prob)]
   
-  # Repeatedly split into groups. The number of groups is determined using sturges rule
+  # Repeatedly split into groups. The number of groups is determined using
+  # sturges rule.
   repeated_groups <- lapply(seq_len(20), function(ii, x, y, sample_id){
     return(create_randomised_groups(x=x, y=y, sample_id=sample_id, n_min_y_in_group=4))
     
-    }, x=probability_table$exp_prob, y=probability_table$event, sample_id=probability_table$subject_id)
+  }, x=probability_table$exp_prob, y=probability_table$event, sample_id=probability_table$subject_id)
   
   # Iterate over groups and add details by comparing the kaplan-meier survival
   # curve within each group at time_max with the mean survival probability in
@@ -33,7 +53,8 @@ learner.calibration.survival <- function(object, probability_table, time_max){
                                                                                  outcome_type=outcome_type,
                                                                                  time_max=time_max,
                                                                                  ii=ii))
-                              }, probability_table=probability_table, outcome_type=outcome_type, time_max=time_max)
+                                
+                              }, probability_table=probability_table, outcome_type=outcome_type, time_max=time)
   
   # Concatenate to table.
   calibration_table <- data.table::rbindlist(calibration_table)
@@ -42,7 +63,7 @@ learner.calibration.survival <- function(object, probability_table, time_max){
   if(is_empty(calibration_table)) return(create_empty_calibration_table(outcome_type=outcome_type))
   
   # Set the evaluation time.
-  calibration_table[, "evaluation_time":=time_max]
+  calibration_table[, "evaluation_time":=time]
   
   # Set column order.
   data.table::setcolorder(calibration_table, c("evaluation_time", "expected", "observed", "km_var", "n_g", "rep_id"))
@@ -112,21 +133,28 @@ learner.calibration.survival.prepare_data <- function(groups, probability_table,
 
 
 
-learner.calibration.categorical <- function(object, data_obj){
-  # For assessing the calibration of categorical outcomes, we require expected and observed probabilities for 1 (binomial)
-  # or all classes (multinomial). Expected probabilities are easy, as the model predicts them. Observed probabilities are
-  # however based on class proportion within a group. This means that we need to define groups, ordered by predicted
-  # probability. The same groups need to be defined for the Hosmer-Lemeshow test, so we might as well obtain all the data
-  # here.
-  # Groups are defined for each class level because the samples should be ordered according to predicted class probability
-  # to create the groups.
+learner.calibration.categorical <- function(object, data){
+  # For assessing the calibration of categorical outcomes, we require expected
+  # and observed probabilities for 1 (binomial) or all classes (multinomial).
+  # Expected probabilities are easy, as the model predicts them. Observed
+  # probabilities are however based on class proportion within a group. This
+  # means that we need to define groups, ordered by predicted probability. The
+  # same groups need to be defined for the Hosmer-Lemeshow test, so we might as
+  # well obtain all the data here.
+  #
+  # Groups are defined for each class level because the samples should be
+  # ordered according to predicted class probability to create the groups.
   
   # Set outcome type
   outcome_type <- object@outcome_type
   class_levels <- get_outcome_class_levels(x=object)
 
-  # Get prediction table
-  probability_table <- predict(object=object, newdata=data_obj, allow_recalibration=TRUE)
+  # Get prediction table. Note that the ensemble method is ignored unless object
+  # is a familiarEnsemble.
+  probability_table <- .predict(object=object,
+                                data=data,
+                                allow_recalibration=TRUE,
+                                ensemble_method="median")
 
   if(is_empty(probability_table)){
     return(create_empty_calibration_table(outcome_type=outcome_type))
@@ -276,35 +304,37 @@ learner.calibration.regression <- function(object, data_obj){
   # object.
   
   # Suppress NOTES due to non-standard evaluation in data.table
-  outcome <- outcome_pred <- NULL
+  outcome <- predicted_outcome <- NULL
   
   # Set outcome type
   outcome_type <- object@outcome_type
 
-  # Get prediction table
-  prediction_table <- predict(object=object, newdata=data_obj, allow_recalibration=TRUE)
+  # Get prediction table. Note that the ensemble_method argument may be ignored
+  # unless object is a familiarEnsemble.
+  prediction_table <- .predict(object=object,
+                               data=data_obj,
+                               allow_recalibration=TRUE,
+                               ensemble_method="median")
 
   # Remove non-finite predicted values.
-  prediction_table <- prediction_table[is.finite(outcome) & is.finite(outcome_pred), ]
+  prediction_table <- prediction_table[is.finite(outcome) & is.finite(predicted_outcome), ]
   
   # Check for empty required data.
   if(is_empty(prediction_table)) return(create_empty_calibration_table(outcome_type=outcome_type))
-  if(is.null(object@calibration_info)) return(create_empty_calibration_table(outcome_type=outcome_type))
+  if(is.null(object@outcome_info)) return(create_empty_calibration_table(outcome_type=outcome_type))
   
-  # Normalise predicted and observed outcomes. The same range is used for
-  # predicted and observed outcomes.
-  norm_range <- c(object@calibration_info$min_value,
-                  object@calibration_info$max_value)
+  # Determine the outcome range
+  outcome_range <- range(object@outcome_info@distribution$fivenum)
   
   # Get the shift and scale parameters.
-  norm_shift <- norm_range[1]
-  norm_scale <- diff(norm_range)
+  norm_shift <- outcome_range[1]
+  norm_scale <- diff(outcome_range)
   
   # Set scale parameters equal to 0.0 to 1.0 to avoid division by 0.
   if(norm_scale == 0.0) norm_scale <- 1.0
   
   # Apply normalisation.
-  prediction_table[, ":="("expected"=(outcome_pred - norm_shift) / norm_scale,
+  prediction_table[, ":="("expected"=(predicted_outcome - norm_shift) / norm_scale,
                           "observed"=(outcome - norm_shift) / norm_scale)]
   
   # Repeatedly split into groups. The number of groups is determined using sturges rule
@@ -367,21 +397,21 @@ learner.calibration.regression.prepare_data <- function(groups, probability_tabl
 }
 
 
-learner.calibration.regression.outcome_range <- function(data_obj){
-  
-  # Check for empty dataset.
-  if(is_empty(data_obj@data)){
-    return(NULL)
-  }
-  
-  # Acquire range of observed outcome values
-  outcome_range <- range(data_obj@data$outcome, na.rm=TRUE)
-  
-  if(!all(is.finite(outcome_range))){
-    return(NULL)
-    
-  } else {
-    return(data.table::data.table("min_value"=outcome_range[1],
-                                  "max_value"=outcome_range[2]))
-  }
-}
+# learner.calibration.regression.outcome_range <- function(data_obj){
+#   
+#   # Check for empty dataset.
+#   if(is_empty(data_obj@data)){
+#     return(NULL)
+#   }
+#   
+#   # Acquire range of observed outcome values
+#   outcome_range <- range(data_obj@data$outcome, na.rm=TRUE)
+#   
+#   if(!all(is.finite(outcome_range))){
+#     return(NULL)
+#     
+#   } else {
+#     return(data.table::data.table("min_value"=outcome_range[1],
+#                                   "max_value"=outcome_range[2]))
+#   }
+# }

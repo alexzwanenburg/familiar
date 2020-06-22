@@ -404,6 +404,8 @@ setClass("dataObject",
            is_pre_processed = "logical",
            # Outcome type
            outcome_type = "character",
+           # Outcome info, such as class levels, mean values etc.
+           outcome_info = "ANY",
            # Flag for delayed loading. This can only be meaningfully set using internal data.
            delay_loading = "logical",
            # Perturbation level for data which has not been loaded. Used for data retrieval in combination with the run table of the accompanying model.
@@ -419,6 +421,7 @@ setClass("dataObject",
            data = NULL,
            is_pre_processed = FALSE,
            outcome_type = NA_character_,
+           outcome_info = NULL,
            delay_loading = FALSE,
            perturb_level = NA_integer_,
            load_validation = TRUE,
@@ -536,5 +539,22 @@ setClass("outcomeInfo",
            run_id = NA_integer_,
            transformation_parameters = NULL,
            normalisation_parameters = NULL
+         )
+)
+
+
+setClass("Learner",
+         slots = list(
+           # Name of the outcome
+           learner = "character",
+           # Outcome type
+           outcome_type = "character",
+           # Model
+           model = "ANY"
+         ),
+         prototype = list(
+           learner = NA_character_,
+           outcome_type = NA_character_,
+           model = NULL
          )
 )

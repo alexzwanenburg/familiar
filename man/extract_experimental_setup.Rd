@@ -4,7 +4,7 @@
 \alias{extract_experimental_setup}
 \title{Parse experimental design}
 \usage{
-extract_experimental_setup(experimental_design, file_dir)
+extract_experimental_setup(experimental_design, file_dir, verbose = TRUE)
 }
 \arguments{
 \item{experimental_design}{(\strong{required}) Defines what the experiment looks

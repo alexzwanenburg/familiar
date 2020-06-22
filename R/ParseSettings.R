@@ -1245,19 +1245,21 @@
   settings <- list()
   
   # Maximum fraction of data points missing for inclusion of a feature
-  settings$feat_max_fract_missing <- .parse_arg(x_config=config$feature_max_fraction_missing,
-                                                x_var=feature_max_fraction_missing, var_name="feature_max_fraction_missing",
-                                                type="numeric", optional=TRUE, default=0.30)
+  settings$feature_max_fraction_missing <- .parse_arg(x_config=config$feature_max_fraction_missing,
+                                                      x_var=feature_max_fraction_missing, var_name="feature_max_fraction_missing",
+                                                      type="numeric", optional=TRUE, default=0.30)
   
-  .check_number_in_valid_range(x=settings$feat_max_fract_missing, var_name="feature_max_fraction_missing", range=c(0.0, 0.95))
+  .check_number_in_valid_range(x=settings$feature_max_fraction_missing,
+                               var_name="feature_max_fraction_missing", range=c(0.0, 0.95))
   
 
     # Maximum fraction of features missing for inclusion of a subject
-  settings$subj_max_fract_missing <- .parse_arg(x_config=config$sample_max_fraction_missing,
-                                                x_var=sample_max_fraction_missing, var_name="sample_max_fraction_missing",
-                                                type="numeric", optional=TRUE, default=0.30)
+  settings$sample_max_fraction_missing <- .parse_arg(x_config=config$sample_max_fraction_missing,
+                                                     x_var=sample_max_fraction_missing, var_name="sample_max_fraction_missing",
+                                                     type="numeric", optional=TRUE, default=0.30)
   
-  .check_number_in_valid_range(x=settings$subj_max_fract_missing, var_name="sample_max_fraction_missing", range=c(0.0, 0.95))
+  .check_number_in_valid_range(x=settings$sample_max_fraction_missing,
+                               var_name="sample_max_fraction_missing", range=c(0.0, 0.95))
   
   
   # Univariate filter methods
@@ -1941,8 +1943,11 @@
 #'@param prep_cluster_similarity_metric Cluster similarity metric used during
 #'@param ensemble_method (*optional*) Method for ensembling predictions from
 #'  models for the same sample. Available methods are:
-#'
-#'  * `mean` (default): Use the mean of the predicted values as the ensemble
+#'  
+#'  * `median` (default): Use the median of the predicted values as the ensemble
+#'  value for a sample.
+#'  
+#'  * `mean`: Use the mean of the predicted values as the ensemble
 #'  value for a sample.
 #'
 #'@param evaluation_metric (*optional*) One or more metrics for assessing model
@@ -2196,7 +2201,7 @@
   
   # Method for ensemble predictions
   settings$ensemble_method <- .parse_arg(x_config=config$ensemble_method, x_var=ensemble_method,
-                                         var_name="ensemble_method", type="character", optional=TRUE, default="mean")
+                                         var_name="ensemble_method", type="character", optional=TRUE, default="median")
   
   .check_parameter_value_is_valid(x=settings$ensemble_method, var_name="ensemble_method",
                                   values=.get_available_ensemble_prediction_methods())

@@ -239,7 +239,7 @@ setMethod("plot_kaplan_meier", signature(object="familiarCollection"),
             ##### Check input arguments ########################################
             
             # ggtheme
-            if(!any(class(ggtheme) == "theme")) {
+            if(!is(ggtheme, "theme")) {
               ggtheme <- plotting.get_theme(use_theme=ggtheme)
             }
             

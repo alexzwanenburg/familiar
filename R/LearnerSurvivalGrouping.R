@@ -1,7 +1,7 @@
-learner.find_survival_grouping_thresholds <- function(object, data_obj){
+learner.find_survival_grouping_thresholds <- function(object, data){
   
-  if(class(object)!="familiarModel"){
-    "Survival stratification thresholds can only be determined on familiarModel objects."
+  if(!object@outcome_type %in% c("survival")){
+    ..error_reached_unreachable_code(paste0("learner.find_survival_grouping_thresholds: only available for survival outcome. Found: ", object@outcome_type))
   }
   
   # Load settings to find survival thresholds
@@ -11,7 +11,7 @@ learner.find_survival_grouping_thresholds <- function(object, data_obj){
   time_max <- settings$eval$time_max
   
   # Generate prediction table
-  pred_table <- predict(object=object, newdata=data_obj, allow_recalibration=TRUE, time_max=time_max)
+  pred_table <- .predict(object=object, data=data, allow_recalibration=TRUE, time=time_max)
 
   km_info_list <- list()
   
@@ -20,11 +20,12 @@ learner.find_survival_grouping_thresholds <- function(object, data_obj){
 
     if(cut_off_method == "median"){
       # Identify threshold
-      cutoff <- stats::median(pred_table$outcome_pred, na.rm=TRUE)
+      cutoff <- stats::median(pred_table$predicted_outcome, na.rm=TRUE)
       
     } else if(cut_off_method == "fixed"){
       # Identify thresholds
-      cutoff <- learner.find_quantile_threshold(pred_table=pred_table,
+      cutoff <- learner.find_quantile_threshold(object=object,
+                                                pred_table=pred_table,
                                                 quantiles=settings$eval$strat_quant_threshold,
                                                 learner=object@learner)
 
@@ -34,8 +35,10 @@ learner.find_survival_grouping_thresholds <- function(object, data_obj){
     }
     
     # Find corresponding sizes of the generated groups
-    risk_group <- learner.apply_risk_threshold(predicted_values=pred_table$outcome_pred,
-                                               cutoff=cutoff, learner=object@learner)
+    risk_group <- learner.apply_risk_threshold(object=object,
+                                               predicted_values=pred_table$predicted_outcome,
+                                               cutoff=cutoff,
+                                               learner=object@learner)
     group_size <- learner.get_risk_group_sizes(risk_group=risk_group)
     
     # Populate method_list
@@ -55,9 +58,10 @@ learner.find_survival_grouping_thresholds <- function(object, data_obj){
 
 
 
-learner.find_quantile_threshold <- function(pred_table, quantiles, learner){
+learner.find_quantile_threshold <- function(object, pred_table, quantiles, learner){
   
-  if(learner.check_model_prediction_type(learner=learner, outcome_type="survival") %in% c("expected_survival_time")){
+  if(get_prediction_type(object=object) %in% c("expected_survival_time")){
+    
     # For time-like predictions, we should use the complements of the provided quantiles.
     quantiles <- abs(1-quantiles)
     
@@ -66,7 +70,7 @@ learner.find_quantile_threshold <- function(pred_table, quantiles, learner){
   quantiles <- quantiles[order(quantiles)]
   
   # Return threshold values
-  return(stats::quantile(x=pred_table$outcome_pred, probs=quantiles, names=FALSE, na.rm=TRUE))
+  return(stats::quantile(x=pred_table$predicted_outcome, probs=quantiles, names=FALSE, na.rm=TRUE))
 }
 
 
@@ -74,12 +78,12 @@ learner.find_quantile_threshold <- function(pred_table, quantiles, learner){
 learner.find_maxstat_threshold <- function(pred_table){
   
   # Check whether the model always predicted the same value
-  if(stats::var(pred_table$outcome_pred) == 0){
-    return(pred_table$outcome_pred[1])
+  if(stats::var(pred_table$predicted_outcome) == 0){
+    return(pred_table$predicted_outcome[1])
   }
   
   # Perform maxstat test
-  h <- maxstat::maxstat.test(survival::Surv(outcome_time, outcome_event)~outcome_pred,
+  h <- maxstat::maxstat.test(survival::Surv(outcome_time, outcome_event) ~ predicted_outcome,
                              data=pred_table,
                              smethod="LogRank",
                              minprop=0.10,
@@ -118,21 +122,20 @@ learner.get_risk_group_sizes <- function(risk_group){
 
 
 
-learner.apply_risk_threshold <- function(predicted_values, cutoff, learner){
+learner.apply_risk_threshold <- function(object, predicted_values, cutoff, learner){
   
   # Initialise risk group
   risk_group <- rep.int(1, times=length(predicted_values))
   
   # Determine inversion. We assume that risk groups go from 1 (low risk) to k (high risk),
   # with k-1 being the number of provided cutoff values.
-  if(learner.check_model_prediction_type(learner=learner, outcome_type="survival") %in% c("expected_survival_time")){
+  if(get_prediction_type(object=object) %in% c("expected_survival_time")){
     # Time-like
     invert <- TRUE
     
   } else {
     # Risk-like
     invert <- FALSE
-    
   }
 
   # Iterate over cutoffs and define risk groups

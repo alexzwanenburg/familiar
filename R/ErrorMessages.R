@@ -158,7 +158,7 @@
   }
   
   stop(paste("The provided object cannot be converted from ", class(object), " to ", expected_class,
-             ". The object should have one of the following classes: ", paste0(allowed_class, collapse=", ")))
+             ". The object should have one of the following classes, or inherit it: ", paste0(allowed_class, collapse=", ")))
 }
 
 

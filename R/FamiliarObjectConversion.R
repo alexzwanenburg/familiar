@@ -15,13 +15,13 @@ NULL
 #'@exportMethod as_familiar_ensemble
 #'@md
 #'@rdname as_familiar_ensemble-methods
-setGeneric("as_familiar_ensemble", function(object, ...) {standardGeneric("as_familiar_ensemble")})
+setGeneric("as_familiar_ensemble", function(object, ...) standardGeneric("as_familiar_ensemble"))
 
 #####as_familiar_ensemble (ensemble)#####
 
 #'@rdname as_familiar_ensemble-methods
 setMethod("as_familiar_ensemble", signature(object="familiarEnsemble"),
-          function(object, ...){ return(object) })
+          function(object, ...) return(object))
 
 #####as_familiar_ensemble (model)#####
 
@@ -44,10 +44,10 @@ setMethod("as_familiar_ensemble", signature(object="list"),
             object <- load_familiar_object(object=object)
             
             # Return the object if it contains a single familiarEnsemble.
-            if(length(object) == 1 & all(sapply(object, class) == "familiarEnsemble")){
+            if(length(object) == 1 & all(sapply(object, is, "familiarEnsemble"))){
               return(object[[1]])
               
-            } else if(!all(sapply(object, class) == "familiarModel")){
+            } else if(!all(sapply(object, is, "familiarModel"))){
               stop("familiarEnsemble objects can only be constructed from familiarModel objects.")
             }
 
@@ -105,7 +105,7 @@ setMethod("as_familiar_ensemble", signature(object="ANY"),
 #'@exportMethod as_familiar_data
 #'@md
 #'@rdname as_familiar_data-methods
-setGeneric("as_familiar_data", function(object, ...) {standardGeneric("as_familiar_data")})
+setGeneric("as_familiar_data", function(object, ...) standardGeneric("as_familiar_data"))
 
 #####as_familiar_data (data)######
 
@@ -154,17 +154,17 @@ setMethod("as_familiar_data", signature(object="list"),
             object <- load_familiar_object(object=object)
             
             # Return the object if it contains a single familiarEnsemble.
-            if(length(object) == 1 & all(sapply(object, class) == "familiarData")){
+            if(length(object) == 1 & all(sapply(object, is, "familiarData"))){
               return(object[[1]])
             } 
             
             # Convert familiarModel(s) to familiarEnsemble.
-            if(all(sapply(object, class) == "familiarModel")) {
+            if(all(sapply(object, is, "familiarModel"))) {
               object <- list(as_familiar_ensemble(object=object))
             } 
             
             # Check if a single familiarEnsemble has been supplied or generated.
-            if(!all(sapply(object, class) == "familiarEnsemble") | length(object) > 1){
+            if(!all(sapply(object, is, "familiarEnsemble")) | length(object) > 1){
               stop("A familiarData object can only be constructed from a single familiarEnsemble object.")
               
             } else {
@@ -218,15 +218,13 @@ setMethod("as_familiar_data", signature(object="ANY"),
 #'@exportMethod as_familiar_collection
 #'@md
 #'@rdname as_familiar_collection-methods
-setGeneric("as_familiar_collection", function(object, familiar_data_names=NULL, collection_name=NULL, ...) {standardGeneric("as_familiar_collection")})
+setGeneric("as_familiar_collection", function(object, familiar_data_names=NULL, collection_name=NULL, ...) standardGeneric("as_familiar_collection"))
 
 #####as_familiar_collection (collection)#####
 
 #'@rdname as_familiar_collection-methods
 setMethod("as_familiar_collection", signature(object="familiarCollection"),
-          function(object, ...){
-            return(object)
-          })
+          function(object, ...) return(object))
 
 
 #####as_familiar_collection (data)#####
@@ -284,39 +282,39 @@ setMethod("as_familiar_collection", signature(object="list"),
             object <- load_familiar_object(object=object)
 
             # Return the object if it contains a single familiarCollection.
-            if(length(object) == 1 & all(sapply(object, class) == "familiarCollection")){
+            if(length(object) == 1 & all(sapply(object, is, class2="familiarCollection"))){
               return(object[[1]])
               
-            } else if(all(sapply(object, class) == "familiarCollection")){
+            } else if(all(sapply(object, is, class2="familiarCollection"))){
               stop("Only a single familiarCollection can be returned.")
             }
             
             # Convert to familiarModel(s) to familiarData
-            if(all(sapply(object, class) == "familiarModel")) {
+            if(all(sapply(object, is, class2="familiarModel"))) {
               object <- do.call(as_familiar_data, args=append(list("object"=object),
                                                               list(...)))
               
               # Store in list, if required
-              if(class(object) != "list"){
+              if(!is(object, "list")){
                 object <- list(object)
               }
             } 
             
             # Convert familiarEnsemble to familiarData
-            if(all(sapply(object, class) == "familiarEnsemble") & length(object) == 1){
+            if(all(sapply(object, is, class2="familiarEnsemble")) & length(object) == 1){
               object <- do.call(as_familiar_data, args=append(list("object"=object),
                                                               list(...)))
               
               # Store in list, if required.
-              if(class(object) != "list"){
+              if(!is(object, "list")){
                 object <- list(object)
               }
               
-            } else if(all(sapply(object, class) == "familiarEnsemble")){
+            } else if(all(sapply(object, is, class2="familiarEnsemble"))){
               stop("A familiarData object can only be constructed from a single familiarEnsemble object.")
             }
             
-            if(!all(sapply(object, class) == "familiarData")){
+            if(!all(sapply(object, is, class2="familiarData"))){
               stop("Only familiarData objects can be used to construct a familiarCollection object.")
             }
 
@@ -466,7 +464,8 @@ setMethod("load_familiar_object", signature(object="ANY"),
           function(object){
 
             # Return the object if it is a familiar S4 class object that has already been loaded. Else throw an error.
-            if(class(object) %in% c("familiarModel", "familiarEnsemble", "familiarData", "familiarCollection")){
+            
+            if(is_any(object, class2=c("familiarModel", "familiarEnsemble", "familiarData", "familiarCollection"))){
               return(object)
               
             } else {

@@ -253,28 +253,3 @@ apply_signature <- function(data_obj, selected_feat) {
 
   return(data_obj)
 }
-
-
-# set_categorical_data <- function(dt, outcome_type){
-#   # Replace columns types so that only numeric and categorical features remain
-# 
-#   # Get feature columns
-#   feature_columns <- get_feature_columns(x=dt, outcome_type=outcome_type)
-#   
-#   # Find column classes
-#   column_class <- sapply(feature_columns, function(ii, dt) (class(dt[[ii]])), dt=dt)
-#   
-#   # All "logical" columns should be categorical
-#   logical_columns <- feature_columns[column_class == "logical"]
-#   
-#   # All "character" columns should be categorical
-#   character_columns <- feature_columns[column_class == "character"]
-#   
-#   # Combine
-#   categorical_columns <- c(logical_columns, character_columns)
-#   
-#   # Update columns
-#   for(ii in categorical_columns) data.table::set(dt, j=ii, value=factor(dt[[ii]]))
-#   
-#   return(dt)
-# }

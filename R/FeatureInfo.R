@@ -6,7 +6,13 @@ NULL
   
   # Create path to the feature info file
   feature_info_file <- get_feature_info_file(file_paths=file_paths, project_id=project_id)
-  if(!file.exists(feature_info_file)){
+  if(is.null(file_paths)){
+    
+    # Create, but do not store to disk.
+    feature_info_list <- list()
+    feature_info_list[["generic"]] <- get_generic_feature_info(dt=data, outcome_type=outcome_type, descriptor=NULL)
+  
+  } else if(!file.exists(feature_info_file)){
     
     # Generate feature information
     feature_info_list <- list()

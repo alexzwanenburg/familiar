@@ -53,7 +53,7 @@ setMethod("add_identifiers", signature(data="ANY", object="familiarData"),
               return(NULL)
             }
             
-            if(!any(class(data) %in% c("data.table"))){
+            if(!inherits(data, "data.table")){
               stop("\"data\" should be a data.table.")
             }
 

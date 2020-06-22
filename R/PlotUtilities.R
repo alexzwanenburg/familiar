@@ -561,7 +561,7 @@ plotting.get_panel_spacing <- function(ggtheme=NULL, axis){
   # Obtain spacing between panels. This determines distance between facets.
   
   # Import default ggtheme in case none is provided.
-  if(!any(class(ggtheme) == "theme")) {
+  if(!is(ggtheme, "theme")) {
     ggtheme <- plotting.get_theme(use_theme=ggtheme)
   }
   
@@ -597,7 +597,7 @@ plotting.get_geom_text_settings <- function(ggtheme=NULL){
   # Import formatting settings from the provided ggtheme.
   
   # Import default ggtheme in case none is provided.
-  if(!any(class(ggtheme) == "theme")) {
+  if(!is(ggtheme, "theme")) {
     ggtheme <- plotting.get_theme(use_theme=ggtheme)
   }
   
@@ -607,7 +607,7 @@ plotting.get_geom_text_settings <- function(ggtheme=NULL){
   
   # Attempt to base the text size on the general axis.text attribute.
   if(!is.null(ggtheme$axis.text$size)){
-    if(any(class(ggtheme$axis.text$size) == "rel")){
+    if(inherits(ggtheme$axis.text$size, "rel")){
       # Find the relative text size of axis text.
       fontsize_rel <- as.numeric(ggtheme$axis.text$size)
       
@@ -621,7 +621,7 @@ plotting.get_geom_text_settings <- function(ggtheme=NULL){
   # Attempt to refine the text size using the axis.text.y attribute in
   # particular.
   if(!is.null(ggtheme$axis.text.y$size)){
-    if(any(class(ggtheme$axis.text.y$size) == "rel")){
+    if(inherits(ggtheme$axis.text.y$size, "rel")){
       # Set relative text size of axis text
       fontsize_rel <- as.numeric(ggtheme$axis.text.y$size)
       
@@ -989,7 +989,7 @@ plotting.to_grob <- function(plots_or_grobs){
   grobs <- list()
   
   for(p in plots_or_grobs){
-    if(any(class(p) == "familiar_ggplot")){
+    if(inherits(p, "familiar_ggplot")){
       
       # Convert to grob
       g <- ggplot2::ggplotGrob(p)
@@ -1023,12 +1023,12 @@ plotting.to_grob <- function(plots_or_grobs){
           }
         }
       }
-    } else if(any(class(p) == "ggplot")){
+    } else if(inherits(p, "ggplot")){
       
       # Convert to grob
       g <- ggplot2::ggplotGrob(p)
       
-    } else if(any(class(p) == "grob")){
+    } else if(inherits(p, "grob")){
       
       # Assign grob
       g <- p

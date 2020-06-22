@@ -261,10 +261,10 @@ get_outcome_info_from_backend <- function(){
     distr_list[["n"]] <- nrow(x)
     
     # Five-number summary of outcome values
-    distr_list[["fivenum"]] <- fivenum_summary(x, na.rm=TRUE)
+    distr_list[["fivenum"]] <- fivenum_summary(x$outcome, na.rm=TRUE)
     
     # Mean value
-    distr_list[["mean"]] <- mean(x, na.rm=TRUE)
+    distr_list[["mean"]] <- mean(x$outcome, na.rm=TRUE)
     
   } else if(object@outcome_type %in% c("survival", "competing_risk")){
     

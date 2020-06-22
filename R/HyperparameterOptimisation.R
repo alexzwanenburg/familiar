@@ -182,7 +182,10 @@ hpo.perform_smbo <- function(run, run_id, n_run_total, cl, fs_method, learner=NU
       # Check whether there are any features in dt_data_prmry
       if(!has_feature_data(x=data_prmry)){
         # Get hyper-parameters
-        param_list <- learner.get_model_hyperparameters(data_obj=data_prmry, learner=learner)
+        param_list <- learner.get_model_hyperparameters(data=data_prmry,
+                                                        learner=learner,
+                                                        names_only=FALSE,
+                                                        outcome_type=data_prmry@outcome_type)
 
         # Get an empty parameter table, with just column names and expected data types.
         dt_param <- head(data.table::as.data.table(lapply(param_list, function(curr_param) (curr_param$range[1]))), 0)
@@ -738,9 +741,9 @@ hpo.evaluate_hyperparameters <- function(run, dt_param, dt_ranks, feature_info_l
                                 hyperparameters = param_list,
                                 signature = sel_feat,
                                 outcome_info=.get_outcome_info())
-
+  
   # Train model
-  fam_model   <- train(object=fam_model, data=data_obj_tr, get_recalibration=FALSE, get_additional_info=FALSE)
+  fam_model   <- .train(object=fam_model, data=data_obj_tr, get_additional_info=FALSE)
 
   ############## Assess model performance ##############################
 

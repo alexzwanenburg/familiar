@@ -236,7 +236,7 @@ setMethod("extract_data", signature(object="familiarEnsemble"),
             # Generates a familiarData object from the ensemble.
             
             # Check whether data is a dataObject, and create one otherwise.
-            if(!any(class(data) == "dataObject")){
+            if(!is(data, "dataObject")){
               data <- methods::new("dataObject",
                                    data=data,
                                    is_pre_processed=is_pre_processed,
@@ -246,19 +246,19 @@ setMethod("extract_data", signature(object="familiarEnsemble"),
             # Load models
             object <- load_models(object=object)
             
-            # Extract feature distance tables, 
+            # Extract feature distance tables,
             if(data_element %in% c("all", "mutual_correlation", "univariate_analysis", "feature_expressions")){
               # Not for the fs_vimp and model_vimp data elements. This is
               # because these derive cluster information from consensus
               # clustering.
-              
+
               # Compute a table containg the pairwise distance between features.
               feature_similarity_table <- extract_feature_similarity_table(object=object,
                                                                            data=data,
                                                                            feature_similarity_metric=feature_similarity_metric,
                                                                            verbose=verbose)
             }
-            
+
             if(data_element %in% c("all", "feature_expressions")){
               # Compute a table containing the pairwise distance between samples.
               sample_similarity_table <- extract_sample_similarity_table(object=object,
@@ -266,7 +266,7 @@ setMethod("extract_data", signature(object="familiarEnsemble"),
                                                                          sample_similarity_metric=sample_similarity_metric,
                                                                          verbose=verbose)
             }
-            
+
             # Extract feature variable importance
             if(data_element %in% c("all", "fs_vimp")){
               fs_vimp_info <- extract_fs_vimp(object=object,
@@ -276,8 +276,8 @@ setMethod("extract_data", signature(object="familiarEnsemble"),
             } else {
               fs_vimp_info <- NULL
             }
-            
-            
+
+
             # Extract model-based variable importance
             if(data_element %in% c("all", "model_vimp")){
               model_vimp_info <- extract_model_vimp(object=object,
@@ -287,8 +287,8 @@ setMethod("extract_data", signature(object="familiarEnsemble"),
             } else {
               model_vimp_info <- NULL
             }
-            
-            
+
+
             # Create mutual correlation information
             if(data_element %in% c("all", "mutual_correlation")){
               mutual_corr_info <- extract_mutual_correlation(object=object,
@@ -301,8 +301,8 @@ setMethod("extract_data", signature(object="familiarEnsemble"),
             } else {
               mutual_corr_info <- NULL
             }
-            
-            
+
+
             # Expression heatmap data
             if(data_element %in% c("all", "feature_expressions")){
               expression_info <- extract_feature_expression(object=object,
@@ -320,8 +320,8 @@ setMethod("extract_data", signature(object="familiarEnsemble"),
             } else {
               expression_info <- NULL
             }
-            
-            
+
+
             # Univariate analysis
             if(data_element %in% c("all", "univariate_analysis")){
               univar_info <- extract_univariate_analysis(object=object,
@@ -337,8 +337,8 @@ setMethod("extract_data", signature(object="familiarEnsemble"),
             } else {
               univar_info <- NULL
             }
-            
-            
+
+
             # Extract hyper-parameters
             if(data_element %in% c("all", "hyperparameters")){
               hyperparameter_info <- extract_hyperparameters(object=object,
@@ -346,7 +346,7 @@ setMethod("extract_data", signature(object="familiarEnsemble"),
             } else {
               hyperparameter_info <- NULL
             }
-            
+
             # Create predictions.
             if(data_element %in% c("all", "prediction_data", "model_performance",
                                    "stratification_data", "auc_data", "confusion_matrix")){
@@ -705,7 +705,7 @@ setMethod("extract_model_vimp", signature(object="familiarModel"),
           function(object, ...){
             
             # Extract variable importance from the models
-            model_vimp <- learner.main(object=object, purpose="vimp")
+            model_vimp <- ..vimp(object)
             
             # Add the data_id and run_id column
             model_vimp[, ":="("data_id"=tail(object@run_table, n=1)$data_id,
@@ -827,16 +827,16 @@ setMethod("extract_predictions", signature(object="familiarEnsemble"),
             data <- aggregate_data(data=data)
             
             # Predict for all separate models
-            prediction_data <- list("single"=lapply(object@model_list, function(object, newdata){
+            prediction_data <- list("single"=lapply(object@model_list, function(object, data){
               
               # Make predictions
-              predict_table <- predict(object=object, newdata=newdata, allow_recalibration=TRUE, extra_output=FALSE, time_max=time_max)
+              predict_table <- .predict(object=object, data=data, allow_recalibration=TRUE, time=time_max)
               
               # Add the model name to the table
               predict_table <- add_model_name(data=predict_table, object=object)
               
               return(predict_table)
-            }, newdata=data))
+            }, data=data))
             
             # Create the ensemble predictions
             prediction_data$ensemble <- ensemble_prediction(object=object, prediction_data=data.table::rbindlist(prediction_data$single), ensemble_method=ensemble_method)
@@ -987,7 +987,7 @@ setMethod("extract_performance", signature(object="familiarEnsemble", prediction
               # Calculate the model performance
               model_performance <- .process_single_iter_performance(prediction_table=prediction_data$single[[ii]],
                                                                     metric=metric,
-                                                                    learner=object@learner,
+                                                                    object=object@model_list[[ii]],
                                                                     outcome_type=object@outcome_type,
                                                                     samples=NULL)
               
@@ -1004,7 +1004,7 @@ setMethod("extract_performance", signature(object="familiarEnsemble", prediction
             n_iter <- ceiling(20 / metric_alpha)
             
             # Get ensemble performance.
-            performance_list$ensemble <- data.table::rbindlist(lapply(seq_len(n_iter), function(ii, prediction_table, metric, learner, outcome_type){
+            performance_list$ensemble <- data.table::rbindlist(lapply(seq_len(n_iter), function(ii, prediction_table, metric, object, outcome_type){
               
               # Generate a bootstrap sample.
               samples <- fam_sample(x=prediction_table$subject_id, size=nrow(prediction_table), replace=TRUE)
@@ -1012,12 +1012,12 @@ setMethod("extract_performance", signature(object="familiarEnsemble", prediction
               # Calculate the model performance
               model_performance <- .process_single_iter_performance(prediction_table=prediction_table,
                                                                     metric=metric,
-                                                                    learner=learner,
+                                                                    object=object,
                                                                     outcome_type=outcome_type,
                                                                     samples=samples)
               
               return(model_performance)
-            }, prediction_table=prediction_data$ensemble, metric=metric, learner=object@learner, outcome_type=object@outcome_type))
+            }, prediction_table=prediction_data$ensemble, metric=metric, object=object@model_list[[1]], outcome_type=object@outcome_type))
             
             # Add model name to ensemble performance
             performance_list$ensemble <- add_model_name(data=performance_list$ensemble, object=object)
@@ -2058,11 +2058,11 @@ setMethod("extract_sample_similarity_table", signature(object="familiarEnsemble"
   if(!any_predictions_valid(prediction_table=prediction_table, outcome_type=object@outcome_type)) return(NULL)
   
   # Make a local copy with only the required data
-  data <- data.table::copy(prediction_table[!is.na(outcome), c("outcome", "outcome_pred_class")])
+  data <- data.table::copy(prediction_table[!is.na(outcome), c("outcome", "predicted_class")])
   
   # Rename outcome columns
   data.table::setnames(data,
-                       old=c("outcome", "outcome_pred_class"),
+                       old=c("outcome", "predicted_class"),
                        new=c("observed_outcome", "expected_outcome"))
   
   # Sum pairs of observed and expected outcome categories.
@@ -2090,7 +2090,7 @@ setMethod("extract_sample_similarity_table", signature(object="familiarEnsemble"
 
 
 
-.process_single_iter_performance <- function(prediction_table, metric, learner, outcome_type, samples=NULL){
+.process_single_iter_performance <- function(prediction_table, metric, object, outcome_type, samples=NULL){
   # Low level function calculate discrimination performance scores
   
   if(is_empty(prediction_table)){
@@ -2120,7 +2120,7 @@ setMethod("extract_sample_similarity_table", signature(object="familiarEnsemble"
     metric_col_name  <- paste0("performance_", current_metric)
     
     # Extract performance metric
-    performance_list[[metric_col_name]] <- metric.main(metric=current_metric, learner=learner, purpose="score", dt=prediction_table, outcome_type=outcome_type, na.rm=TRUE)
+    performance_list[[metric_col_name]] <- metric.main(metric=current_metric, object=object, purpose="score", dt=prediction_table, outcome_type=outcome_type, na.rm=TRUE)
   }
   
   # Parse list of performances to a data.table and return
