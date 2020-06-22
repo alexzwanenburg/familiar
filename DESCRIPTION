@@ -93,7 +93,7 @@ Collate:
     'Iterations.R'
     'LearnerCalibration.R'
     'LearnerCalibrationTests.R'
-    'LearnerExtremeGradientBoosting.R'
+    'LearnerS4XGBoost.R'
     'LearnerS4SurvivalRegression.R'
     'LearnerS4SVM.R'
     'LearnerS4RFSRC.R'

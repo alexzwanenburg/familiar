@@ -10,6 +10,7 @@
 #' @include LearnerS4RFSRC.R
 #' @include LearnerS4SVM.R
 #' @include LearnerS4SurvivalRegression.R
+#' @include LearnerS4XGBoost.R
 NULL
 
 setMethod("promote_learner", signature(object="familiarModel"),
@@ -69,8 +70,7 @@ setMethod("promote_learner", signature(object="familiarModel"),
               # Boosted generalised linear models
               object <- methods::new("familiarMBoostLM", object)
               
-            } else if(learner %in% c("xgboost_lm", "xgboost_lm_logistic", "xgboost_lm_linear",
-                                     "xgboost_lm_poisson", "xgboost_lm_gamma", "xgboost_lm_cox")){
+            } else if(learner %in% .get_available_xgboost_lm_learners()){
               # Extreme gradient boosted linear models
               object <- methods::new("familiarXGBoostLM", object)
               
@@ -94,14 +94,14 @@ setMethod("promote_learner", signature(object="familiarModel"),
               # Boosted regression trees
               object <- methods::new("familiarMBoostTree", object)
               
-            } else if(learner %in% c("xgboost_tree", "xgboost_tree_logistic", "xgboost_tree_linear",
-                                     "xgboost_tree_poisson", "xgboost_tree_gamma", "xgboost_tree_cox")){
+            } else if(learner %in% .get_available_xgboost_tree_learners()){
               # Extreme gradient boosted trees
               object <- methods::new("familiarXGBoostTree", object)
-              
-            } else if(learner %in% c("__test_invalid", "__test_perfect", "__test_intercept")){
-              # TEST learners.
-              object <- methods::new("familiarTestLearner")
+            
+            } else if(learner %in% .get_available_xgboost_dart_learners()){
+              # Extreme gradient boosted trees
+              object <- methods::new("familiarXGBoostDart", object)
+
             }
             
             # Returned object can be a standard familiarModel
