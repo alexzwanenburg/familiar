@@ -88,17 +88,29 @@ compute_univariable_p_values <- function(cl=NULL, data_obj, feature_columns){
   }
   
   # Construct model
-  model_obj <- tryCatch({coxph(Surv(outcome_time, outcome_event) ~ .,
+  model <- tryCatch(coxph(Surv(outcome_time, outcome_event) ~ .,
                                data=data,
                                na.action=stats::na.omit,
-                               model=TRUE) },
-                        error=function(err) return(NULL))
+                               model=TRUE),
+                        error=identity)
 
-  # Check if the model did not converge
-  if(is.null(model_obj)) return(NA_real_)
+  # Check if the model did not converge.
+  if(inherits(model, "error")) return(NA_real_)
   
-  # Return wald test p-value
-  return(unname(summary(model_obj)$waldtest[3]))
+  # Compute z-statistic.
+  z <- coefficient_one_sample_z_test(model)
+  
+  # Remove intercept (if present).
+  z <- z[names(z) != "(Intercept)"]
+  
+  # Compute the p-value from a t-distribution
+  p_value <- 2 * (1.0 - stats::pt(abs(z), df=length(x)))
+  
+  # Check if the value is finite.
+  if(all(!is.finite(p_value))) return(NA_real_)
+  
+  # Return p-value.
+  return(unname(min(p_value, na.rm=TRUE)))
 }
 
 
@@ -127,21 +139,28 @@ compute_univariable_p_values <- function(cl=NULL, data_obj, feature_columns){
   }
   
   # Construct model
-  model_obj <- tryCatch({stats::glm(outcome ~ .,
-                                    data=data,
-                                    family=stats::gaussian(link="identity"))},
-                        error=function(err) return(NULL))
+  model <- tryCatch(stats::glm(outcome ~ .,
+                               data=data,
+                               family=stats::gaussian(link="identity")),
+                    error=identity)
   
-  # Check if the model did not converge
-  if(is.null(model_obj)) return(NA_real_)
+  # Check if the model did not converge.
+  if(inherits(model, "error")) return(NA_real_)
   
-  # Get coefficient p-value by removing intercept from the model
-  coef_p_val <- regrLocTest(model_obj)
-  coef_p_val <- coef_p_val[names(coef_p_val)!="(Intercept)"]
+  # Compute z-statistic.
+  z <- coefficient_one_sample_z_test(model)
   
-  if(all(!is.finite(coef_p_val))) return(NA_real_)
+  # Remove intercept (if present).
+  z <- z[names(z) != "(Intercept)"]
   
-  return(unname(min(coef_p_val, na.rm=TRUE)))
+  # Compute the p-value from a t-distribution
+  p_value <- 2 * (1.0 - stats::pt(abs(z), df=length(x)))
+  
+  # Check if the value is finite.
+  if(all(!is.finite(p_value))) return(NA_real_)
+  
+  # Return p-value.
+  return(unname(min(p_value, na.rm=TRUE)))
 }
 
 
@@ -170,21 +189,28 @@ compute_univariable_p_values <- function(cl=NULL, data_obj, feature_columns){
   }
   
   # Construct model
-  model_obj <- tryCatch({stats::glm(outcome~.,
-                                    data=data,
-                                    family=stats::poisson(link="log"))},
-                        error=function(err) return(NULL))
+  model <- tryCatch(stats::glm(outcome~.,
+                               data=data,
+                               family=stats::poisson(link="log")),
+                    error=identity)
   
-  # Check if the model did not converge
-  if(is.null(model_obj)) return(NA_real_)
+  # Check if the model did not converge.
+  if(inherits(model, "error")) return(NA_real_)
   
-  # Get coefficient p-value by removing intercept from the model
-  coef_p_val <- regrLocTest(model_obj)
-  coef_p_val <- coef_p_val[names(coef_p_val)!="(Intercept)"]
+  # Compute z-statistic.
+  z <- coefficient_one_sample_z_test(model)
   
-  if(all(!is.finite(coef_p_val))) return(NA_real_)
+  # Remove intercept (if present).
+  z <- z[names(z) != "(Intercept)"]
   
-  return(unname(min(coef_p_val, na.rm=TRUE)))
+  # Compute the p-value from a t-distribution
+  p_value <- 2 * (1.0 - stats::pt(abs(z), df=length(x)))
+  
+  # Check if the value is finite.
+  if(all(!is.finite(p_value))) return(NA_real_)
+  
+  # Return p-value.
+  return(unname(min(p_value, na.rm=TRUE)))
 }
 
 
@@ -194,7 +220,7 @@ compute_univariable_p_values <- function(cl=NULL, data_obj, feature_columns){
   
   # Suppress NOTES due to non-standard evaluation in data.table
   value <- NULL
-  browser()
+  
   # Check if any data was provided.
   if(length(x) == 0) return(NA_real_)
   
@@ -215,55 +241,29 @@ compute_univariable_p_values <- function(cl=NULL, data_obj, feature_columns){
     data$value <- droplevels(data$value)
   }
   
-  # We train two models, with and without intercept, to avoid the Hauck-Donner
-  # effect.
-  p_values <- numeric(2)
-  
   # Construct model
-  model_obj <- tryCatch({stats::glm(outcome ~ .,
-                                    data=data,
-                                    family=stats::binomial(link="logit"))},
-                        error=function(err) return(NULL))
+  model <- tryCatch(stats::glm(outcome ~ .,
+                               data=data,
+                               family=stats::binomial(link="logit")),
+                    error=identity)
   
   # Check if the model did not converge
-  if(is.null(model_obj)){
-    p_values[1] <- NA_real_
-    
-  } else {
-    
-    # Get coefficient p-value by removing intercept from the model
-    coef_p_val <- regrLocTest(model_obj)
-    coef_p_val <- coef_p_val[names(coef_p_val)!="(Intercept)"]
-    
-    p_values[1] <- ifelse(any(is.finite(coef_p_val)),
-                          unname(min(coef_p_val, na.rm=TRUE)),
-                          NA_real_)
-  }
+  if(inherits(model, "error")) return(NA_real_)
   
-  # Construct model without an intercept
-  model_obj <- tryCatch({stats::glm(outcome ~ . -1,
-                                    data=data,
-                                    family=stats::binomial(link="logit"))},
-                        error=function(err) return(NULL))
+  # Compute z-statistic
+  z <- coefficient_one_sample_z_test(model)
   
-  if(is.null(model_obj)){
-    p_values[2] <- NA_real_
-    
-  } else {
-    # Get coefficient p-value
-    coef_p_val <- regrLocTest(model_obj)
-    
-    p_values[2] <- ifelse(any(is.finite(coef_p_val)),
-                          unname(min(coef_p_val, na.rm=TRUE)),
-                          NA_real_)
-  }
+  # Remove intercept (if present).
+  z <- z[names(z) != "(Intercept)"]
   
-  # Find the p_value
-  p_value <- min(p_values, na.rm=TRUE)
+  # Compute the p-value from a t-distribution
+  p_value <- 2 * (1.0 - stats::pt(abs(z), df=length(x)))
   
-  if(!is.finite(p_value)) return(NA_real_)
+  # Check if the value is finite.
+  if(all(!is.finite(p_value))) return(NA_real_)
   
-  return(p_value)
+  # Return p-value.
+  return(unname(min(p_value, na.rm=TRUE)))
 }
 
 
@@ -293,56 +293,30 @@ compute_univariable_p_values <- function(cl=NULL, data_obj, feature_columns){
   if(is.factor(data$value)){
     data$value <- droplevels(data$value)
   }
-  
-  # We train two models, with and without intercept, to avoid the Hauck-Donner
-  # effect.
-  p_values <- numeric(2)
-  
+
   # Construct model
-  model_obj <- tryCatch({VGAM::vglm(outcome ~ .,
-                                    data=data,
-                                    family=VGAM::multinomial())},
-                        error=function(err) return(NULL))
+  model <- tryCatch(VGAM::vglm(outcome ~ .,
+                               data=data,
+                               family=VGAM::multinomial()),
+                    error=identity)
   
   # Check if the model did not converge
-  if(is.null(model_obj)){
-    p_values[1] <- NA_real_
-    
-  } else {
-    
-    # Get coefficient p-value by removing intercept from the model
-    coef_p_val <- regrLocTest(model_obj)
-    coef_p_val <- coef_p_val[!grepl(pattern="(Intercept)", x=names(coef_p_val), fixed=TRUE)]
-    
-    p_values[1] <- ifelse(any(is.finite(coef_p_val)),
-                          unname(min(coef_p_val, na.rm=TRUE)),
-                          NA_real_)
-  }
+  if(inherits(model, "error")) return(NA_real_)
   
-  # Construct model without an intercept
-  model_obj <- tryCatch({VGAM::vglm(outcome ~ . -1,
-                                    data=data,
-                                    family=VGAM::multinomial())},
-                        error=function(err) return(NULL))
+  # Compute z-statistic
+  z <- coefficient_one_sample_z_test(model)
   
-  if(is.null(model_obj)){
-    p_values[2] <- NA_real_
-    
-  } else {
-    # Get coefficient p-value
-    coef_p_val <- regrLocTest(model_obj)
-    
-    p_values[2] <- ifelse(any(is.finite(coef_p_val)),
-                          unname(min(coef_p_val, na.rm=TRUE)),
-                          NA_real_)
-  }
+  # Remove intercept (if present).
+  z <- z[names(z) != "(Intercept)"]
   
-  # Find the p_value
-  p_value <- min(p_values, na.rm=TRUE)
+  # Compute the p-value from a t-distribution
+  p_value <- 2 * (1.0 - stats::pt(abs(z), df=length(x)))
   
-  if(!is.finite(p_value)) return(NA_real_)
+  # Check if the value is finite.
+  if(all(!is.finite(p_value))) return(NA_real_)
   
-  return(p_value)
+  # Return p-value.
+  return(unname(min(p_value, na.rm=TRUE)))
 }
 
 
