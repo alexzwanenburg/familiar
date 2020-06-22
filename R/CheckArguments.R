@@ -76,7 +76,7 @@
 .perform_type_conversion <- function(x, to_type, var_name, req_length, allow_more=FALSE){
 
   # Specify conversion functions
-  if(to_type == "character"){
+  if(to_type %in% c("character", "factor")){
     conv_function <- as.character
     
   } else if(to_type == "numeric"){
