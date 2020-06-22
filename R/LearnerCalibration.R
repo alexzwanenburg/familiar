@@ -149,7 +149,6 @@ learner.calibration.categorical <- function(object, data){
   outcome_type <- object@outcome_type
   class_levels <- get_outcome_class_levels(x=object)
 
-  browser()
   # Get prediction table. Note that the ensemble method is ignored unless object
   # is a familiarEnsemble.
   probability_table <- .predict(object=object,
@@ -319,18 +318,13 @@ learner.calibration.regression <- function(object, data_obj){
 
   # Remove non-finite predicted values.
   prediction_table <- prediction_table[is.finite(outcome) & is.finite(predicted_outcome), ]
-  browser()
+  
   # Check for empty required data.
   if(is_empty(prediction_table)) return(create_empty_calibration_table(outcome_type=outcome_type))
   if(is.null(object@outcome_info)) return(create_empty_calibration_table(outcome_type=outcome_type))
   
   # Determine the outcome range
   outcome_range <- range(object@outcome_info@distribution$fivenum)
-  
-  # # Normalise predicted and observed outcomes. The same range is used for
-  # # predicted and observed outcomes.
-  # norm_range <- c(object@calibration_info$min_value,
-  #                 object@calibration_info$max_value)
   
   # Get the shift and scale parameters.
   norm_shift <- outcome_range[1]
