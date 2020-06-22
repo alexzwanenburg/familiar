@@ -1,6 +1,6 @@
 Package: familiar
 Title: End-To-End Machine Learning and Data Analysis Framework
-Version: 0.0.0.50
+Version: 0.0.0.51
 Authors@R: c(
    person("Alex", "Zwanenburg",
           email = "alexander.zwanenburg@nct-dresden.de",
@@ -8,6 +8,7 @@ Authors@R: c(
           comment = c(ORCID = "0000-0002-0342-9545")),
    person("Steffen", "Löck", role="aut"),
    person("Asier", "Rabasco", role="ctb"),
+   person("Iram", "Shahzadi", role="ctb"),
    person("Shivaprasad", "Patil", role="ctb"),
    person("Stefan", "Leger", role="ctb"),
    person("Stefan", "Schmidt", role="ctb"),
@@ -57,7 +58,9 @@ Suggests:
     qvalue,
     cowplot,
     knitr,
-    testthat (>= 2.1.0)
+    testthat (>= 2.1.0),
+    Ecdat,
+    MASS
 Collate: 
     'BatchNormalisation.R'
     'CheckArguments.R'
@@ -91,22 +94,21 @@ Collate:
     'Iterations.R'
     'LearnerCalibration.R'
     'LearnerCalibrationTests.R'
-    'LearnerCox.R'
-    'LearnerElasticNetRegression.R'
-    'LearnerExtremeGradientBoosting.R'
-    'LearnerGLM.R'
-    'LearnerKNearestNeighbours.R'
+    'LearnerS4XGBoost.R'
+    'LearnerS4SurvivalRegression.R'
+    'LearnerS4SVM.R'
+    'LearnerS4RFSRC.R'
+    'LearnerS4Ranger.R'
+    'LearnerS4MBoost.R'
+    'LearnerS4NaiveBayes.R'
+    'LearnerS4KNN.R'
+    'LearnerS4GLMnet.R'
+    'LearnerS4GLM.R'
+    'LearnerS4Cox.R'
     'LearnerMain.R'
-    'LearnerModelBasedBoosting.R'
-    'LearnerNaiveBayes.R'
-    'LearnerRandomForest_ranger.R'
-    'LearnerRandomForest_rfsrc.R'
     'LearnerRecalibration.R'
-    'LearnerSupportVectorMachine.R'
     'LearnerSurvivalGrouping.R'
     'LearnerSurvivalProbability.R'
-    'LearnerSurvivalRegression.R'
-    'LearnerTestLearner.R'
     'Logger.R'
     'MetricAreaUnderCurve.R'
     'MetricBrierScore.R'
@@ -143,6 +145,9 @@ Collate:
     'RankSimpleAggregation.R'
     'RankStabilityAggregation.R'
     'SocketServer.R'
+    'TestDataCreators.R'
+    'TestFunctions.R'
+    'TrainS4Methods.R'
     'Transformation.R'
     'Utilities.R'
     'UtilitiesS4.R'

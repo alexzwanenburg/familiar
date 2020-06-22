@@ -88,17 +88,29 @@ compute_univariable_p_values <- function(cl=NULL, data_obj, feature_columns){
   }
   
   # Construct model
-  model_obj <- tryCatch({coxph(Surv(outcome_time, outcome_event) ~ .,
+  model <- tryCatch(coxph(Surv(outcome_time, outcome_event) ~ .,
                                data=data,
                                na.action=stats::na.omit,
-                               model=TRUE) },
-                        error=function(err) return(NULL))
+                               model=TRUE),
+                        error=identity)
 
-  # Check if the model did not converge
-  if(is.null(model_obj)) return(NA_real_)
+  # Check if the model did not converge.
+  if(inherits(model, "error")) return(NA_real_)
   
-  # Return wald test p-value
-  return(unname(summary(model_obj)$waldtest[3]))
+  # Compute z-statistic.
+  z <- coefficient_one_sample_z_test(model)
+  
+  # Remove intercept (if present).
+  z <- z[names(z) != "(Intercept)"]
+  
+  # Compute the p-value from a t-distribution
+  p_value <- 2 * (1.0 - stats::pt(abs(z), df=length(x)))
+  
+  # Check if the value is finite.
+  if(all(!is.finite(p_value))) return(NA_real_)
+  
+  # Return p-value.
+  return(unname(min(p_value, na.rm=TRUE)))
 }
 
 
@@ -127,21 +139,28 @@ compute_univariable_p_values <- function(cl=NULL, data_obj, feature_columns){
   }
   
   # Construct model
-  model_obj <- tryCatch({stats::glm(outcome ~ .,
-                                    data=data,
-                                    family=stats::gaussian(link="identity"))},
-                        error=function(err) return(NULL))
+  model <- tryCatch(stats::glm(outcome ~ .,
+                               data=data,
+                               family=stats::gaussian(link="identity")),
+                    error=identity)
   
-  # Check if the model did not converge
-  if(is.null(model_obj)) return(NA_real_)
+  # Check if the model did not converge.
+  if(inherits(model, "error")) return(NA_real_)
   
-  # Get coefficient p-value by removing intercept from the model
-  coef_p_val <- regrLocTest(model_obj)
-  coef_p_val <- coef_p_val[names(coef_p_val)!="(Intercept)"]
+  # Compute z-statistic.
+  z <- coefficient_one_sample_z_test(model)
   
-  if(all(!is.finite(coef_p_val))) return(NA_real_)
+  # Remove intercept (if present).
+  z <- z[names(z) != "(Intercept)"]
   
-  return(unname(min(coef_p_val, na.rm=TRUE)))
+  # Compute the p-value from a t-distribution
+  p_value <- 2 * (1.0 - stats::pt(abs(z), df=length(x)))
+  
+  # Check if the value is finite.
+  if(all(!is.finite(p_value))) return(NA_real_)
+  
+  # Return p-value.
+  return(unname(min(p_value, na.rm=TRUE)))
 }
 
 
@@ -170,21 +189,28 @@ compute_univariable_p_values <- function(cl=NULL, data_obj, feature_columns){
   }
   
   # Construct model
-  model_obj <- tryCatch({stats::glm(outcome~.,
-                                    data=data,
-                                    family=stats::poisson(link="log"))},
-                        error=function(err) return(NULL))
+  model <- tryCatch(stats::glm(outcome~.,
+                               data=data,
+                               family=stats::poisson(link="log")),
+                    error=identity)
   
-  # Check if the model did not converge
-  if(is.null(model_obj)) return(NA_real_)
+  # Check if the model did not converge.
+  if(inherits(model, "error")) return(NA_real_)
   
-  # Get coefficient p-value by removing intercept from the model
-  coef_p_val <- regrLocTest(model_obj)
-  coef_p_val <- coef_p_val[names(coef_p_val)!="(Intercept)"]
+  # Compute z-statistic.
+  z <- coefficient_one_sample_z_test(model)
   
-  if(all(!is.finite(coef_p_val))) return(NA_real_)
+  # Remove intercept (if present).
+  z <- z[names(z) != "(Intercept)"]
   
-  return(unname(min(coef_p_val, na.rm=TRUE)))
+  # Compute the p-value from a t-distribution
+  p_value <- 2 * (1.0 - stats::pt(abs(z), df=length(x)))
+  
+  # Check if the value is finite.
+  if(all(!is.finite(p_value))) return(NA_real_)
+  
+  # Return p-value.
+  return(unname(min(p_value, na.rm=TRUE)))
 }
 
 
@@ -215,55 +241,29 @@ compute_univariable_p_values <- function(cl=NULL, data_obj, feature_columns){
     data$value <- droplevels(data$value)
   }
   
-  # We train two models, with and without intercept, to avoid the Hauck-Donner
-  # effect.
-  p_values <- numeric(2)
-  
   # Construct model
-  model_obj <- tryCatch({stats::glm(outcome ~ .,
-                                    data=data,
-                                    family=stats::binomial(link="logit"))},
-                        error=function(err) return(NULL))
+  model <- tryCatch(stats::glm(outcome ~ .,
+                               data=data,
+                               family=stats::binomial(link="logit")),
+                    error=identity)
   
   # Check if the model did not converge
-  if(is.null(model_obj)){
-    p_values[1] <- NA_real_
-    
-  } else {
-    
-    # Get coefficient p-value by removing intercept from the model
-    coef_p_val <- regrLocTest(model_obj)
-    coef_p_val <- coef_p_val[names(coef_p_val)!="(Intercept)"]
-    
-    p_values[1] <- ifelse(any(is.finite(coef_p_val)),
-                          unname(min(coef_p_val, na.rm=TRUE)),
-                          NA_real_)
-  }
+  if(inherits(model, "error")) return(NA_real_)
   
-  # Construct model without an intercept
-  model_obj <- tryCatch({stats::glm(outcome ~ . -1,
-                                    data=data,
-                                    family=stats::binomial(link="logit"))},
-                        error=function(err) return(NULL))
+  # Compute z-statistic
+  z <- coefficient_one_sample_z_test(model)
   
-  if(is.null(model_obj)){
-    p_values[2] <- NA_real_
-    
-  } else {
-    # Get coefficient p-value
-    coef_p_val <- regrLocTest(model_obj)
-    
-    p_values[2] <- ifelse(any(is.finite(coef_p_val)),
-                          unname(min(coef_p_val, na.rm=TRUE)),
-                          NA_real_)
-  }
+  # Remove intercept (if present).
+  z <- z[names(z) != "(Intercept)"]
   
-  # Find the p_value
-  p_value <- min(p_values, na.rm=TRUE)
+  # Compute the p-value from a t-distribution
+  p_value <- 2 * (1.0 - stats::pt(abs(z), df=length(x)))
   
-  if(!is.finite(p_value)) return(NA_real_)
+  # Check if the value is finite.
+  if(all(!is.finite(p_value))) return(NA_real_)
   
-  return(p_value)
+  # Return p-value.
+  return(unname(min(p_value, na.rm=TRUE)))
 }
 
 
@@ -293,56 +293,30 @@ compute_univariable_p_values <- function(cl=NULL, data_obj, feature_columns){
   if(is.factor(data$value)){
     data$value <- droplevels(data$value)
   }
-  
-  # We train two models, with and without intercept, to avoid the Hauck-Donner
-  # effect.
-  p_values <- numeric(2)
-  
+
   # Construct model
-  model_obj <- tryCatch({VGAM::vglm(outcome ~ .,
-                                    data=data,
-                                    family=VGAM::multinomial())},
-                        error=function(err) return(NULL))
+  model <- tryCatch(VGAM::vglm(outcome ~ .,
+                               data=data,
+                               family=VGAM::multinomial()),
+                    error=identity)
   
   # Check if the model did not converge
-  if(is.null(model_obj)){
-    p_values[1] <- NA_real_
-    
-  } else {
-    
-    # Get coefficient p-value by removing intercept from the model
-    coef_p_val <- regrLocTest(model_obj)
-    coef_p_val <- coef_p_val[!grepl(pattern="(Intercept)", x=names(coef_p_val), fixed=TRUE)]
-    
-    p_values[1] <- ifelse(any(is.finite(coef_p_val)),
-                          unname(min(coef_p_val, na.rm=TRUE)),
-                          NA_real_)
-  }
+  if(inherits(model, "error")) return(NA_real_)
   
-  # Construct model without an intercept
-  model_obj <- tryCatch({VGAM::vglm(outcome ~ . -1,
-                                    data=data,
-                                    family=VGAM::multinomial())},
-                        error=function(err) return(NULL))
+  # Compute z-statistic
+  z <- coefficient_one_sample_z_test(model)
   
-  if(is.null(model_obj)){
-    p_values[2] <- NA_real_
-    
-  } else {
-    # Get coefficient p-value
-    coef_p_val <- regrLocTest(model_obj)
-    
-    p_values[2] <- ifelse(any(is.finite(coef_p_val)),
-                          unname(min(coef_p_val, na.rm=TRUE)),
-                          NA_real_)
-  }
+  # Remove intercept (if present).
+  z <- z[names(z) != "(Intercept)"]
   
-  # Find the p_value
-  p_value <- min(p_values, na.rm=TRUE)
+  # Compute the p-value from a t-distribution
+  p_value <- 2 * (1.0 - stats::pt(abs(z), df=length(x)))
   
-  if(!is.finite(p_value)) return(NA_real_)
+  # Check if the value is finite.
+  if(all(!is.finite(p_value))) return(NA_real_)
   
-  return(p_value)
+  # Return p-value.
+  return(unname(min(p_value, na.rm=TRUE)))
 }
 
 
@@ -494,6 +468,7 @@ compute_icc <- function(x, feature, id_data, type="1"){
 }
 
 
+
 applyContrastReference <- function(dt, dt_ref, method){
   # Updates data table dt based on score
   
@@ -538,30 +513,30 @@ applyContrastReference <- function(dt, dt_ref, method){
 }
 
 
-createNonValidPredictionTable <- function(dt, outcome_type){
-  # Create skeleton
-  dt_pred <- dt[, get_non_feature_columns(x=outcome_type), with=FALSE]
-
-  # Add prediction columns
-  if(outcome_type %in% c("survival", "continuous", "count")){
-    # For survival and continuous outcomes, a single column is required
-    dt_pred$outcome_pred         <- as.double(NA)
-  } else if (outcome_type %in% c("binomial", "multinomial")){
-    # For binomial and multinomial outcomes, we add both predicted class and predicted class probabilities
-    dt_pred$outcome_pred_class   <- as.character(NA)
-
-    # Add class probabilities
-    outcome_pred_class_prob_cols <- check_column_name(column_name=paste0("outcome_pred_prob_", levels(dt$outcome)))
-    for(ii in 1:length(outcome_pred_class_prob_cols)){
-      dt_pred[, (outcome_pred_class_prob_cols[ii]):=as.double(NA)]
-    }
-  } else if(outcome_type == "competing_risk"){
-    ..error_outcome_type_not_implemented(outcome_type)
-  }
-
-  # Return without valid data prediction table
-  return(dt_pred)
-}
+# createNonValidPredictionTable <- function(dt, outcome_type){
+#   # Create skeleton
+#   dt_pred <- dt[, get_non_feature_columns(x=outcome_type), with=FALSE]
+# 
+#   # Add prediction columns
+#   if(outcome_type %in% c("survival", "continuous", "count")){
+#     # For survival and continuous outcomes, a single column is required
+#     dt_pred$outcome_pred         <- as.double(NA)
+#   } else if (outcome_type %in% c("binomial", "multinomial")){
+#     # For binomial and multinomial outcomes, we add both predicted class and predicted class probabilities
+#     dt_pred$outcome_pred_class   <- as.character(NA)
+# 
+#     # Add class probabilities
+#     outcome_pred_class_prob_cols <- check_column_name(column_name=paste0("outcome_pred_prob_", levels(dt$outcome)))
+#     for(ii in 1:length(outcome_pred_class_prob_cols)){
+#       dt_pred[, (outcome_pred_class_prob_cols[ii]):=as.double(NA)]
+#     }
+#   } else if(outcome_type == "competing_risk"){
+#     ..error_outcome_type_not_implemented(outcome_type)
+#   }
+# 
+#   # Return without valid data prediction table
+#   return(dt_pred)
+# }
 
 any_predictions_valid <- function(prediction_table, outcome_type){
   
@@ -570,10 +545,10 @@ any_predictions_valid <- function(prediction_table, outcome_type){
   }
   
   if(outcome_type %in% c("survival", "continuous", "count")){
-    return(any(is.finite(prediction_table$outcome_pred)))
+    return(any(is.finite(prediction_table$predicted_outcome)))
     
   } else if(outcome_type %in% c("binomial", "multinomial")){
-    return(!all(is.na(prediction_table$outcome_pred_class)))
+    return(!all(is.na(prediction_table$predicted_class)))
     
   } else {
     ..error_no_known_outcome_type(outcome_type)
@@ -770,6 +745,11 @@ getContrasts <- function(dt, method="effect", drop_levels=TRUE, outcome_type=NUL
 }
 
 
+get_placeholder_vimp_table <- function(){
+  return(data.table::data.table("score"=numeric(0), "name"=character(0), "rank"=numeric(0), "multi_var"=logical(0)))
+}
+
+
 
 getEmptyVimp <- function(){
   # Returns an empty variable importance data table
@@ -781,17 +761,27 @@ getEmptyVimp <- function(){
 
 
 
-getPredictedOutcomeColumn <- function(outcome_type){
-  # Returns column name with predicted outcomes, given the outcome type
-
-  if(outcome_type %in% c("survival", "continuous", "count")){
-    return("outcome_pred")
-  } else if(outcome_type %in% c("binomial", "multinomial")){
-    return("outcome_pred_class")
-  } else if(outcome_type == "competing_risk"){
-    stop()
+get_id_columns <- function(include_repetition_id=TRUE){
+  # Generate the names of the non-feature columns
+  if(include_repetition_id){
+    return(c("subject_id", "cohort_id", "repetition_id"))
+    
+  } else {
+    return(c("subject_id", "cohort_id"))
   }
 }
+
+# getPredictedOutcomeColumn <- function(outcome_type){
+#   # Returns column name with predicted outcomes, given the outcome type
+# 
+#   if(outcome_type %in% c("survival", "continuous", "count")){
+#     return("outcome_pred")
+#   } else if(outcome_type %in% c("binomial", "multinomial")){
+#     return("outcome_pred_class")
+#   } else if(outcome_type == "competing_risk"){
+#     stop()
+#   }
+# }
 
 
 
@@ -927,6 +917,107 @@ all_empty_slot <- function(object_list, slot_name, slot_element=NULL){
 
 }
 
+
+process_random_forest_survival_predictions <- function(event_matrix, event_times, prediction_table, time, type){
+  
+  # Suppress NOTES due to non-standard evaluation in data.table
+  event_time <- NULL
+  
+  # Set id columns
+  id_columns <- get_id_columns()
+  
+  # Make a local copy of the prediction_table
+  prediction_table <- data.table::copy(prediction_table)
+  
+  # Convert event_matrix to a matrix.
+  if(!is.matrix(event_matrix)){
+    event_matrix <- matrix(data=event_matrix, ncol=length(event_matrix))
+  }
+  
+  # Combine with identifiers and cast to table.
+  event_table <- cbind(prediction_table[, mget(id_columns)],
+                       data.table::as.data.table(event_matrix))
+  
+  # Remove duplicate entries
+  event_table <- unique(event_table, by=id_columns)
+  
+  # Melt to a long format.
+  event_table <- data.table::melt(event_table,
+                                  id.vars=id_columns,
+                                  variable.name="time_variable",
+                                  value.name="value")
+  
+  # Create conversion table to convert temporary variables into
+  # the event times.
+  conversion_table <- data.table::data.table("time_variable"=paste0("V", seq_along(event_times)),
+                                             "event_time"=event_times)
+  
+  # Add in event times
+  event_table <- merge(x=event_table, y=conversion_table, on="time_variable")
+  
+  # Drop the time_variable column
+  event_table[, "time_variable":=NULL]
+  
+  if(time %in% event_times){
+    # Get the event time directly.
+    event_table <- event_table[event_time == time, ]
+    
+    # Remove event_time column and rename the value column to predicted_outcome.
+    event_table[, "event_time":=NULL]
+    data.table::setnames(x=event_table, old="value", new="predicted_outcome")
+    
+  } else {
+    
+    # Add starting values.
+    if(! 0 %in% event_times){
+      # Create initial table
+      initial_event_table <- data.table::copy(event_table[event_time == event_times[1]])
+      
+      # Update values
+      if(type == "cumulative_hazard"){
+        initial_event_table[, ":="("value"=0.0, "event_time"=0)]
+        
+      } else if(type == "survival"){
+        initial_event_table[, ":="("value"=1.0, "event_time"=0)]
+        
+      } else {
+        ..error_reached_unreachable_code(paste0("process_random_forest_survival_predictions: type was not recognised: ", type))
+      }
+      
+      # Combine with the event table.
+      event_table <- rbind(initial_event_table, event_table)
+    }
+    
+    # Now, interpolate at the given time point.
+    event_table <- lapply(split(event_table, by=id_columns), function(sample_table, time, id_columns){
+      
+      # Interpolate values at the given time.
+      value <- stats::approx(x=sample_table$event_time,
+                             y=sample_table$value,
+                             xout=time,
+                             rule=2)$y
+      
+      # Create an output table
+      output_table <- data.table::copy(sample_table[1, mget(id_columns)])
+      output_table[, "predicted_outcome":=value]
+      
+      return(output_table)
+    }, time=time, id_columns=id_columns)
+    
+    # Concatenate to single table.
+    event_table <- data.table::rbindlist(event_table)
+  }
+  
+  # Remove predicted_outcome from the prediction table.
+  prediction_table[, "predicted_outcome":=NULL]
+  
+  # Then merge the event table into the prediction table.
+  prediction_table <- merge(x=prediction_table, y=event_table, by=id_columns)
+  
+  return(prediction_table)
+}
+
+
 # getStandardEvalColumns <- function(){
 #   return(c("data_id", "run_id", "model_id", "repetition_id", "fs_method", "learner", "perturbation",
 #            "perturb_level", "assignment", "is_ensemble"))
@@ -1015,27 +1106,27 @@ is_valid_data <- function(x){
 }
 
 
-regrLocTest <- function(regr_fit_obj, mean=0){
-
+coefficient_one_sample_z_test <- function(model, mean=0){
+  
   # Provides location test for unrestriced regression models
-  if("vglm" %in% class(regr_fit_obj)){
+  if(inherits(model, "vglm")){
     # VGAM::vglm-based methods
-    mu    <- VGAM::coefvlm(regr_fit_obj)
-
+    mu    <- VGAM::coefvlm(model)
+    
     if(is.matrix(mu)){
-      stdevs <- matrix(sqrt(diag(VGAM::vcovvlm(regr_fit_obj))), ncol=ncol(mu), byrow=TRUE)
+      stdevs <- matrix(sqrt(diag(VGAM::vcovvlm(model))), ncol=ncol(mu), byrow=TRUE)
     } else {
-      stdevs <- sqrt(diag(VGAM::vcovvlm(regr_fit_obj)))
+      stdevs <- sqrt(diag(VGAM::vcovvlm(model)))
       stdevs <- stdevs[names(stdevs) %in% names(mu)][names(mu)]
     }
   } else {
     # glm-based methods
-    mu    <- stats::coef(regr_fit_obj)
-
+    mu    <- stats::coef(model)
+    
     if(is.matrix(mu)){
-      stdevs <- matrix(sqrt(diag(stats::vcov(regr_fit_obj))), ncol=ncol(mu), byrow=TRUE)
+      stdevs <- matrix(sqrt(diag(stats::vcov(model))), ncol=ncol(mu), byrow=TRUE)
     } else {
-      stdevs <- sqrt(diag(stats::vcov(regr_fit_obj)))
+      stdevs <- sqrt(diag(stats::vcov(model)))
       
       if(is.null(names(stdevs))){
         # Case where no names are provided
@@ -1045,29 +1136,68 @@ regrLocTest <- function(regr_fit_obj, mean=0){
       }
     }
   }
-
+  
   # Compute z-score
   z  <- (mu-mean)/stdevs
   
   # Return p-value based on z-score
-  return(2*(1-stats::pnorm(abs(z))))
+  return(abs(z))
 }
 
-
-updateWithReplacement <- function(dt, repl_list){
-  # Updates columns of a data table with replacement data from repl_list
-  dt_repl <- copy(dt)
-
-  # Find feature names corresponding to columns to be replaced
-  repl_feat <- names(repl_list)
-
-  # Iterate over replacement list entries
-  for(curr_feat in repl_feat){
-    dt_repl[, (curr_feat):=repl_list[[curr_feat]] ]
-  }
-
-  return(dt_repl)
-}
+# 
+# regrLocTest <- function(regr_fit_obj, mean=0){
+# 
+#   # Provides location test for unrestriced regression models
+#   if("vglm" %in% class(regr_fit_obj)){
+#     # VGAM::vglm-based methods
+#     mu    <- VGAM::coefvlm(regr_fit_obj)
+# 
+#     if(is.matrix(mu)){
+#       stdevs <- matrix(sqrt(diag(VGAM::vcovvlm(regr_fit_obj))), ncol=ncol(mu), byrow=TRUE)
+#     } else {
+#       stdevs <- sqrt(diag(VGAM::vcovvlm(regr_fit_obj)))
+#       stdevs <- stdevs[names(stdevs) %in% names(mu)][names(mu)]
+#     }
+#   } else {
+#     # glm-based methods
+#     mu    <- stats::coef(regr_fit_obj)
+# 
+#     if(is.matrix(mu)){
+#       stdevs <- matrix(sqrt(diag(stats::vcov(regr_fit_obj))), ncol=ncol(mu), byrow=TRUE)
+#     } else {
+#       stdevs <- sqrt(diag(stats::vcov(regr_fit_obj)))
+#       
+#       if(is.null(names(stdevs))){
+#         # Case where no names are provided
+#         stdevs <- stdevs[seq_len(length(mu))]
+#       } else {
+#         stdevs <- stdevs[names(stdevs) %in% names(mu)][names(mu)]
+#       }
+#     }
+#   }
+# 
+#   # Compute z-score
+#   z  <- (mu-mean)/stdevs
+#   
+#   # Return p-value based on z-score
+#   return(2*(1-stats::pnorm(abs(z))))
+# }
+# 
+# 
+# updateWithReplacement <- function(dt, repl_list){
+#   # Updates columns of a data table with replacement data from repl_list
+#   dt_repl <- copy(dt)
+# 
+#   # Find feature names corresponding to columns to be replaced
+#   repl_feat <- names(repl_list)
+# 
+#   # Iterate over replacement list entries
+#   for(curr_feat in repl_feat){
+#     dt_repl[, (curr_feat):=repl_list[[curr_feat]] ]
+#   }
+# 
+#   return(dt_repl)
+# }
 
 
 
@@ -1114,6 +1244,11 @@ is_package_installed <- function(name, version=NULL, verbose=FALSE){
   return(is_installed)
 }
 
+
+is_any <- function(object, class2){
+  # Tests whether the object is any of the classes in class2.
+  return(any(sapply(class2, function(class, object) is(object, class2=class), object=object)))
+}
 
 
 fivenum_summary <- function(x, na.rm=FALSE){
@@ -1308,4 +1443,23 @@ fam_sample <- function(x, size, replace=FALSE, prob=NULL){
     
     return(sample(x=x, size=size, replace=replace, prob=prob))
   }
+}
+
+
+is_subclass <- function(class_1, class_2){
+  # Find out if class_1 is a subclass of class_2
+  extending_classes <- methods::extends(class_1)
+  
+  # If class 2 is not in the classes from which class 1 inherits, class 1 cannot
+  # be a subclass of class 2.
+  if(!class_2 %in% extending_classes) return(FALSE)
+  
+  # If the classes are the same, class 1 cannot be a subclass of class 2.
+  if(class_1 == class_2) return(FALSE)
+  
+  # The classes are ordered by distance. Therefore class 2 cannot be a subclass
+  # of class 1 if it is less distant.
+  if(extending_classes[1] == class_2) return(FALSE)
+  
+  return(TRUE)
 }

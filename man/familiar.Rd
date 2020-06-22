@@ -19,6 +19,7 @@ Authors:
 Other contributors:
 \itemize{
   \item Asier Rabasco [contributor]
+  \item Iram Shahzadi [contributor]
   \item Shivaprasad Patil [contributor]
   \item Stefan Leger [contributor]
   \item Stefan Schmidt [contributor]

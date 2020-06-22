@@ -13,19 +13,19 @@ metric.regression.calc <- function(dt, metric, outcome_type){
 
   if(metric %in% c("mae", "mean_absolute_error")){
     # Mean absolute error
-    score <- sum(abs(dt$outcome - dt$outcome_pred)) / nrow(dt)
+    score <- sum(abs(dt$outcome - dt$predicted_outcome)) / nrow(dt)
 
   } else if(metric %in% c("mlae", "mean_log_absolute_error")){
     # Mean log absolute error
-    score <- sum(log1p(abs(dt$outcome - dt$outcome_pred))) / nrow(dt)
+    score <- sum(log1p(abs(dt$outcome - dt$predicted_outcome))) / nrow(dt)
     
   } else if(metric %in% c("mse", "mean_squared_error")){
     # Mean squared error
-    score <- sum((dt$outcome - dt$outcome_pred)^2) / nrow(dt)
+    score <- sum((dt$outcome - dt$predicted_outcome)^2) / nrow(dt)
 
   } else if(metric %in% c("msle", "mean_squared_log_error")){
     # Mean squared logarithmic error
-    score <- sum((log1p(dt$outcome) - log1p(dt$outcome_pred))^2) / nrow(dt)
+    score <- sum((log1p(dt$outcome) - log1p(dt$predicted_outcome))^2) / nrow(dt)
     
     if(!is.finite(score)){
       score <- as.double(NA)
@@ -33,25 +33,25 @@ metric.regression.calc <- function(dt, metric, outcome_type){
 
   } else if(metric %in% c("medae", "median_absolute_error")){
     # Median absolute error
-    score <- stats::median(x=abs(dt$outcome - dt$outcome_pred))
+    score <- stats::median(x=abs(dt$outcome - dt$predicted_outcome))
 
   } else if(metric %in% c("rmse", "root_mean_square_error")){
     # Root mean square error
-    score <- sqrt(sum((dt$outcome - dt$outcome_pred)^2) / nrow(dt))
+    score <- sqrt(sum((dt$outcome - dt$predicted_outcome)^2) / nrow(dt))
 
   } else if (metric %in% c("r2_score", "explained_variance")){
     
     if(metric == "r2_score"){
       # R2-score (coefficient of determination)
       y_mean <- mean(dt$outcome)
-      nom    <- sum((dt$outcome - dt$outcome_pred)^2)
+      nom    <- sum((dt$outcome - dt$predicted_outcome)^2)
       denom  <- sum((dt$outcome - y_mean)^2)
       
     } else if(metric == "explained_variance"){
       # Explained variance
-      y_err_mean <- mean(dt$outcome-dt$outcome_pred)
+      y_err_mean <- mean(dt$outcome-dt$predicted_outcome)
       y_mean <- mean(dt$outcome)
-      nom   <- sum((dt$outcome - dt$outcome_pred - y_err_mean)^2)
+      nom   <- sum((dt$outcome - dt$predicted_outcome - y_err_mean)^2)
       denom <- sum((dt$outcome - y_mean)^2)
       
     } else {

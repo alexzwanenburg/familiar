@@ -1464,14 +1464,14 @@ setMethod(".export_to_file", signature(data="ANY", object="familiarCollection", 
             
             base_file_name <- paste0(type, ifelse(is.null(subtype), "", paste0("_", subtype)))
             
-            if(any(class(data) == "data.table")){
+            if(inherits(data, "data.table")){
               # Generate file name
               file_name <- file.path(file_dir, paste0(base_file_name, ".csv"))
               
               # Write data to file
               data.table::fwrite(x=data, file=file_name, sep=";", dec=".")
               
-            } else if(any(class(data) == "character")){
+            } else if(inherits(data, "character")){
               # Generate file name
               file_name <- file.path(file_dir, paste0(base_file_name, ".txt"))
               
@@ -1491,7 +1491,7 @@ setMethod(".apply_labels", signature(data="ANY", object="familiarCollection"),
             }
             
             # Check if data has the correct class.
-            if(!any(class(data) %in% c("data.frame", "data.table"))){
+            if(!(inherits(data, "data.frame") | inherits(data, "data.table"))){
               stop(paste0("\"data\" is expected to be a \"data.frame\" or \"data.table\". Found: ", paste(class(data), sep=", "), "."))
             }
 

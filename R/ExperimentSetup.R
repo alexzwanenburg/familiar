@@ -9,7 +9,7 @@
 #'
 #' @md
 #' @keywords internal
-extract_experimental_setup <- function(experimental_design, file_dir){
+extract_experimental_setup <- function(experimental_design, file_dir, verbose=TRUE){
   
   if(.experimental_design_is_file(file_dir=file_dir, experimental_design=experimental_design)){
     return(waiver())
@@ -28,7 +28,7 @@ extract_experimental_setup <- function(experimental_design, file_dir){
   .check_experimental_design_section_table(section_table=section_table)
   
   # Report experimental design to the user.
-  .report_experimental_design(section_table=section_table)
+  if(verbose) .report_experimental_design(section_table=section_table)
   
   return(section_table)
 }
@@ -36,7 +36,9 @@ extract_experimental_setup <- function(experimental_design, file_dir){
 
 .experimental_design_is_file <- function(file_dir, experimental_design){
   # Check if the experimental design argument is actually a path to a file.
-
+  
+  if(is.null(file_dir)) return(FALSE)
+  
   # Check if the file exists at all.
   if(!file.exists(file.path(file_dir, experimental_design)) & !file.exists(experimental_design)){
     return(FALSE)

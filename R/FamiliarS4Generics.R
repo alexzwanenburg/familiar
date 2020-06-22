@@ -2,11 +2,13 @@
 setGeneric("save")
 
 # Predict method. This is a standard method converted to S4.
-setGeneric("predict")
+setGeneric(".predict", function(object, data, ...) standardGeneric(".predict"))
 
-setGeneric("train", function(object, data, ...) {standardGeneric("train")})
+setGeneric("train", function(data, ...) standardGeneric("train"))
 
-setGeneric("model_is_trained", function(object, ...) {standardGeneric("model_is_trained")})
+setGeneric(".train", function(object, data, ...) standardGeneric(".train"))
+
+setGeneric("model_is_trained", function(object, ...) standardGeneric("model_is_trained"))
 
 setGeneric("extract_calibration_info", function(object, ...) {standardGeneric("extract_calibration_info")})
 
@@ -16,7 +18,7 @@ setGeneric("assess_calibration", function(object, ...) {standardGeneric("assess_
 
 setGeneric("compute_calibration_data", function(object, data, ...) {standardGeneric("compute_calibration_data")})
 
-setGeneric("assess_performance", function(object, ...) {standardGeneric("assess_performance")})
+setGeneric("assess_performance", function(object, ...) standardGeneric("assess_performance"))
 
 setGeneric("assign_risk_groups", function(object, prediction_data, ...) {standardGeneric("assign_risk_groups")})
 
@@ -71,6 +73,12 @@ setGeneric("update_with_replacement", function(data, ...) {standardGeneric("upda
 setGeneric("add_package_version", function(object, ...) {standardGeneric("add_package_version")})
 
 setGeneric("add_data_column_info", function(object, ...) standardGeneric("add_data_column_info"))
+
+setGeneric("has_calibration_info", function(object) standardGeneric("has_calibration_info"))
+
+setGeneric("extract_settings_from_data", function(data, ...) standardGeneric("extract_settings_from_data"))
+
+setGeneric("as_data_object", function(data, ...) standardGeneric("as_data_object"))
 
 ##### Methods to see and update labels of data in familiarCollection objects.
 setGeneric(".set_labels", function(x, ...) {standardGeneric(".set_labels")})
@@ -159,3 +167,39 @@ setGeneric("get_n_features", function(x, ...) standardGeneric("get_n_features"))
 setGeneric("has_feature_data", function(x, ...) standardGeneric("has_feature_data"))
 
 setGeneric("get_class_probability_name", function(x, ...) standardGeneric("get_class_probability_name"))
+
+setGeneric("encode_categorical_variables", function(object, data, ...) standardGeneric("encode_categorical_variables"))
+
+setGeneric("decode_categorical_variables_vimp", function(object, ...) standardGeneric("decode_categorical_variables_vimp"))
+
+setGeneric("get_placeholder_prediction_table", function(object, data, ...) standardGeneric("get_placeholder_prediction_table"))
+
+setGeneric("has_bad_training_data", function(object, data, ...) standardGeneric("has_bad_training_data"))
+
+
+##### familiarModel learner methods #####
+setGeneric("promote_learner", function(object, ...) standardGeneric("promote_learner"))
+
+setGeneric("get_default_hyperparameters", function(object, ...) standardGeneric("get_default_hyperparameters"))
+
+setGeneric("..train", function(object, data, ...) standardGeneric("..train"))
+
+setGeneric("..predict", function(object, data, ...) standardGeneric("..predict"))
+
+setGeneric("..predict_survival_probability", function(object, data, time, ...) standardGeneric("..predict_survival_probability"))
+
+setGeneric("..set_recalibration_model", function(object, data, ...) standardGeneric("..set_recalibration_model"))
+
+setGeneric("..vimp", function(object, ...) standardGeneric("..vimp"))
+
+setGeneric("get_prediction_type", function(object, ...) standardGeneric("get_prediction_type"))
+
+setGeneric("..set_calibration_info", function(object, data, ...) standardGeneric("..set_calibration_info"))
+
+setGeneric("..set_risk_stratification_thresholds", function(object, data, ...) standardGeneric("..set_risk_stratification_thresholds"))
+
+setGeneric("..set_vimp_parameters", function(object, ...) standardGeneric("..set_vimp_parameters"))
+
+setGeneric("..get_distribution_family", function(object, ...) standardGeneric("..get_distribution_family"))
+
+setGeneric("..update_outcome", function(object, data, ...) standardGeneric("..update_outcome"))

@@ -119,9 +119,9 @@ build_model <- function(run, hpo_list){
 
   # Add package version
   fam_model         <- add_package_version(object=fam_model)
-  
+
   # Train model
-  fam_model         <- train(object=fam_model, data=data_obj, get_recalibration=TRUE, get_additional_info=TRUE)
+  fam_model         <- .train(object=fam_model, data=data_obj, get_additional_info=TRUE)
 
   # Save model
   save(list=fam_model, file=file_paths$mb_dir)

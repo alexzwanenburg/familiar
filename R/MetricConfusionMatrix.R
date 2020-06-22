@@ -160,7 +160,7 @@ metric.confusion_matrix.get_confusion_matrix <- function(data, outcome_type){
   if(n_classes <= 1) return(NULL)
   
   # Get the column with predicted outcomes
-  p_outc_col <- getPredictedOutcomeColumn(outcome_type=outcome_type)
+  p_outc_col <- predicted_class
   
   # Identify the real outcome columns
   outc_col <- get_outcome_columns(x=outcome_type)

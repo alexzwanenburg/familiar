@@ -657,7 +657,7 @@ setMethod("plot_model_signature_ranks", signature(object="familiarCollection"),
   ##### Check input arguments ##################################################
   
   # ggtheme
-  if(!any(class(ggtheme) == "theme")) {
+  if(!is(ggtheme, "theme")) {
     ggtheme <- plotting.get_theme(use_theme=ggtheme)
     
   } else if(is.waive(rotate_x_tick_labels)){

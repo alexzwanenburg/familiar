@@ -252,9 +252,9 @@ vimp.regression.evaluate_model_ <- function(add_feat, sel_feat, dt_data, iter_li
                                       signature = c(add_feat, sel_feat),
                                       req_feature_cols = c(add_feat, sel_feat),
                                       outcome_info = .get_outcome_info(x=data_obj))
-
+    
     # Train model
-    fam_model     <- train(object=fam_model, data=data_train, get_recalibration=FALSE, get_additional_info=FALSE)
+    fam_model     <- .train(object=fam_model, data=data_train, get_additional_info=FALSE)
 
     # Collect objective scores
     score_train   <- assess_performance(object=fam_model, newdata=data_train, metric=metric, allow_recalibration=FALSE, as_objective=TRUE, na.rm=FALSE)

@@ -27,7 +27,7 @@ NULL
   # Check whether all names in the hyperparameter list correspond to a fs_method or learner.
   unknown_function <- setdiff(user_function_names, all_functions)
   if(length(unknown_function) > 0){
-    stop(paste("Could not match all entries in the parameter list to ", ifelse(is_vimp, "feature selection methods.", "learners."),
+    stop(paste("Could not match all entries in the parameter list to", ifelse(is_vimp, "feature selection methods.", "learners."),
                "Failed to match:", paste0(unknown_function, collapse=", ")))
   }
   
@@ -161,7 +161,7 @@ NULL
   # Internal error checks. We should be able to obtain the outcome_type.
   if(is.null(data) & is.null(outcome_type)){
     ..error_reached_unreachable_code("get_preset_hyperparameters_outcome_type_missing")
-  } else if(!any(class(data) == "dataObject") & is.null(outcome_type)){
+  } else if(!is(data, "dataObject") & is.null(outcome_type)){
     ..error_reached_unreachable_code("get_preset_hyperparameters_outcome_type_missing")
   }
   
@@ -174,8 +174,10 @@ NULL
     preset_list <- vimp.get_fs_parameters(data_obj=data, method=fs_method,
                                           outcome_type=outcome_type, names_only=names_only)
   } else {
-    preset_list <- learner.get_model_hyperparameters(data_obj=data, learner=learner,
-                                                     outcome_type=outcome_type, names_only=names_only)
+    preset_list <- learner.get_model_hyperparameters(data=data,
+                                                     learner=learner,
+                                                     outcome_type=outcome_type,
+                                                     names_only=names_only)
   }
   
   return(preset_list)

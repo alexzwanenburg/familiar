@@ -64,10 +64,11 @@ Feature selection methods in familiar measure variable importance in a univariat
 | permutation^b^ | `random_forest_permutation`                          | × | × | × | × | × |
 | minimum depth^b^ | `random_forest_minimum_depth`                      | × | × | × | × | × |
 | variable hunting^b^ | `random_forest_variable_hunting`                | × | × | × | × | × |
+| hold-out ^b^ | `random_forest_holdout`                                | × | × | × | × | × |
 | **random forest (ranger) variable importance**|
 | permutation^b^ | `random_forest_ranger_permutation`                   | × | × | × | × | × |
 | hold-out permutation^b^ | `random_forest_ranger_holdout_permutation`  | × | × | × | × | × |
-| impurity^b^ | `random_forest_ranger_impurity`                         | × | × | × | × |   |
+| impurity^b^ | `random_forest_ranger_impurity`                         | × | × | × | × | x |
 | **special methods**|
 | no selection | `none`                                                 | × | × | × | × | × |
 | random selection | `random`                                           | × | × | × | × | × |
@@ -211,7 +212,7 @@ Several feature selection methods are based on random forests. All these methods
 | maximum tree depth | `tree_depth` | $\mathbb{Z} \in \left[1,\infty\right)$ | yes | Maximum depth to which trees are allowed to grow. The default range is $\left[1, 10\right]$. |
 | number of split points | `n_split` | $\mathbb{Z} \in \left[0, \infty\right)$ | no | By default, splitting is deterministic and has one split point ($0$).|
 | splitting rule (`randomForestSRC` only) | `split_rule` | `gini`, `auc`, `entropy`, `mse`, `quantile.regr`, `la.quantile.regr`, `logrank`, `logrankscore`, `bs.gradient` | no | Default splitting rules are `gini` for `binomial` and `multinonial` outcomes, `mse` for `continuous` and `count` outcomes and `logrank` for `survival` outcomes.|
-| splitting rule (`ranger` only) | `split_rule` | `gini`, `extratrees`, `variance`, `logrank`, `C`, `maxstat`| no | Default splitting rules are `gini` for `binomial` and `multinomial` outcomes and `maxstat` for `continuous`, `count` and `survival` outcomes.|
+| splitting rule (`ranger` only) | `split_rule` | `gini`, `hellinger`, `extratrees`, `beta`, `variance`, `logrank`, `C`, `maxstat`| no | Default splitting rules are `gini` for `binomial` and `multinomial` outcomes and `maxstat` for `continuous`, `count` and `survival` outcomes.|
 | significance split threshold (`ranger` only) | `alpha` | $\mathbb{R} \in \left(0.0, 1.0\right]$ | `maxstat` | Minimum significance level for further splitting. The default range is $\left[10^{-6}, 1.0\right]$ |
 | variable hunting cross-validation folds | `fs_vh_fold` | $\mathbb{Z} \in \left[2, \infty\right)$ | no | Number of cross-validation folds for the `random_forest_variable_hunting` method. The default is $5$. |
 | variable hunting step size | `fs_vh_step_size` | $\mathbb{Z} \in \left[1, \infty\right)$ | no | Step size for the `random_forest_variable_hunting` method. The default is $1$. |
@@ -223,7 +224,9 @@ The permutation importance method is implemented by `random_forest_permutation` 
 
 ### Holdout permutation importance
 
-This variant on permutation importance (`random_forest_ranger_holdout_permutation`) is implemented using `ranger::holdoutRF`. Instead of using out-of-bag to compute feature importance, two cross-validation folds are used. A random forest is trained on either fold, and variable importance determined on the other [@Janitza2018-k]. 
+This variant on permutation importance (`random_forest_ranger_holdout_permutation`) is implemented using `ranger::holdoutRF`. Instead of using out-of-bag to compute feature importance, two cross-validation folds are used. A random forest is trained on either fold, and variable importance determined on the other [@Janitza2018-k].
+
+The hold-out variable importance method implemented in the `randomForestSRC` package (`random_forest_holdout`) is implemented using `randomForestSRC::holdout.vimp`. It is similar to the previous variant, but does not cross-validation folds. Instead, out-of-bag prediction errors for models trained with and without each feature are compared.
 
 ### Minimum depth variable selection
 

@@ -1,7 +1,14 @@
+#' @include FamiliarS4Generics.R
+#' @include FamiliarS4Classes.R
+NULL
+
 vimp.main <- function(method, purpose, outcome_type=NULL, param=NULL, data_obj=NULL){
   # This is a convenience function for access to method-related functions.
   # This functions should only be called through its interfaces
 
+  # Try to infer outcome_type
+  if(is.null(outcome_type) & is(data_obj, "dataObject")) outcome_type <- data_obj@outcome_type
+  
   ##### Univariable statistical methods #####
 
   # Concordance-based methods
@@ -78,15 +85,24 @@ vimp.main <- function(method, purpose, outcome_type=NULL, param=NULL, data_obj=N
   if(method %in% c("elastic_net", "elastic_net_gaussian",  "elastic_net_poisson", "elastic_net_binomial","elastic_net_multinomial",
                     "elastic_net_cox", "lasso", "lasso_gaussian", "lasso_poisson", "lasso_binomial", "lasso_multinomial", "lasso_cox",
                    "ridge", "ridge_gaussian", "ridge_gaussian", "ridge_poisson", "ridge_binomial", "ridge_multinomial", "ridge_cox")){
+    
+    # Create a familiarModel and promote to the right class.
+    object <- methods::new("familiarModel",
+                           learner = method,
+                           outcome_type = outcome_type,
+                           hyperparameters = param)
+    
+    # Promote to the correct subclass.
+    object <- promote_learner(object)
+    
     if(purpose=="variable_importance"){
-      dt_vimp       <- learner.net.vimp(data_obj=data_obj, param=param, method=method)
+      dt_vimp       <- ..vimp(object=object, data=data_obj)
     } else if(purpose=="parameters"){
-      base_learner  <- learner.net.learner(method=method, outcome_type=outcome_type)
-      param         <- learner.net.param(data_obj=data_obj, learner=base_learner)
+      param         <- get_default_hyperparameters(object=object, data=data_obj)
     } else if(purpose=="outcome") {
-      type_is_valid <- learner.net.outcome(method=method, outcome_type=outcome_type)
+      type_is_valid <- is_available(object)
     } else if(purpose=="base_learner"){
-      base_learner  <- learner.net.learner(method=method, outcome_type=outcome_type)
+      base_learner  <- method
     }
   }
 
@@ -94,31 +110,57 @@ vimp.main <- function(method, purpose, outcome_type=NULL, param=NULL, data_obj=N
 
   # Random forest variable importance methods
   if(method %in% c("random_forest_permutation", "random_forest_minimum_depth", "random_forest_variable_hunting",
-                   "random_forest_rfsrc_permutation", "random_forest_rfsrc_minimum_depth", "random_forest_rfsrc_variable_hunting")){
+                   "random_forest_rfsrc_permutation", "random_forest_rfsrc_minimum_depth", "random_forest_rfsrc_variable_hunting",
+                   "random_forest_holdout", "random_forest_rfsrc_holdout")){
+    
+    # Create a familiarModel and promote to the right class.
+    object <- methods::new("familiarModel",
+                           learner = "random_forest_rfsrc",
+                           outcome_type = outcome_type,
+                           hyperparameters = param)
+    
+    # Promote to the correct subclass.
+    object <- promote_learner(object)
+    
+    # Set the variable importance parameters for the method.
+    object <- ..set_vimp_parameters(object, method=method)
+    
     if(purpose=="variable_importance"){
-      dt_vimp       <- learner.rf_rfsrc.vimp(data_obj=data_obj, param=param, method=method)
+      dt_vimp       <- ..vimp(object=object, data=data_obj)
     } else if(purpose=="parameters"){
-      base_learner  <- learner.rf_rfsrc.learner(method=method, outcome_type=outcome_type)
-      param         <- learner.rf_rfsrc.param(data_obj=data_obj)
+      param         <- get_default_hyperparameters(object=object, data=data_obj)
     } else if(purpose=="outcome") {
-      type_is_valid <- learner.rf_rfsrc.outcome(method=method, outcome_type=outcome_type)
+      type_is_valid <- is_available(object)
     } else if(purpose=="base_learner"){
-      base_learner  <- learner.rf_rfsrc.learner(method=method, outcome_type=outcome_type)
+      base_learner  <- "random_forest_rfsrc"
     }
   }
 
 
-  # Maximally selected rank random forest variable importance methods
-  if(method %in% c("random_forest_ranger_holdout_permutation", "random_forest_ranger_permutation", "random_forest_ranger_impurity")){
+  # Ranger random forest
+  if(method %in% c("random_forest_ranger_holdout_permutation", "random_forest_ranger_permutation",
+                   "random_forest_ranger_impurity")){
+    
+    # Create a familiarModel and promote to the right class.
+    object <- methods::new("familiarModel",
+                           learner = "random_forest_ranger",
+                           outcome_type = outcome_type,
+                           hyperparameters = param)
+    
+    # Promote to the correct subclass.
+    object <- promote_learner(object)
+    
+    # Set the variable importance parameters for the method.
+    object <- ..set_vimp_parameters(object, method=method)
+    
     if(purpose=="variable_importance"){
-      dt_vimp       <- learner.rf_ranger.vimp(data_obj=data_obj, param=param, method=method)
+      dt_vimp       <- ..vimp(object=object, data=data_obj)
     } else if(purpose=="parameters"){
-      base_learner  <- learner.rf_ranger.learner(method=method, outcome_type=outcome_type)
-      param         <- learner.rf_ranger.param(data_obj=data_obj)
+      param         <- get_default_hyperparameters(object=object, data=data_obj)
     } else if(purpose=="outcome") {
-      type_is_valid <- learner.rf_ranger.outcome(method=method, outcome_type=outcome_type)
+      type_is_valid <- is_available(object)
     } else if(purpose=="base_learner"){
-      base_learner  <- learner.rf_ranger.learner(method=method, outcome_type=outcome_type)
+      base_learner  <- "random_forest_ranger"
     }
   }
 
