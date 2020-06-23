@@ -75,40 +75,25 @@
 #' @md
 summon_familiar <- function(formula=NULL, data=NULL, cl=NULL, config=NULL, config_id=1,  ...){
   
-  # Set options
-  # Disable randomForestSRC OpenMP core use
+  # Set options.
+  # Disable randomForestSRC OpenMP core use.
   options(rf.cores=as.integer(1))
   on.exit(options(rf.cores=-1L), add=TRUE)
   
-  # Disable multithreading on data.table to prevent reduced performance due to resource collisions with familiar parallelisation.
+  # Disable multithreading on data.table to prevent reduced performance due to
+  # resource collisions with familiar parallelisation.
   data.table::setDTthreads(1L)
   on.exit(data.table::setDTthreads(0L))
   
+
   ##### Load configuration file -----------------------------------
-  if(!is.null(config)){
-    
-    # Load as file path
-    if(is.character(config)){
-      if(length(config) > 1){
-        stop(paste("Configuration: the path to the configuration file is expected",
-                   "to be a single character string. Multiple strings were found."))
-      }
-      
-      # Normalise file paths
-      config <- normalizePath(config)
-      
-      # Read xml file, parse to list and remove comments
-      config <- xml2::as_list(xml2::read_xml(config))[[1]][[config_id]]
-      config <- .clean_configuration_comments(config=config)
-      
-    } else {
-      if(!is.list(config) || !is.recursive(config)){
-        stop("Configuration: the input configuration data is not a list of lists.")
-      }
-    }
-  } else {
-    config    <- NULL
-  }
+  config <- .load_configuration_file(config=config,
+                                     config_id=config_id)
+  
+  
+  ##### Test arguments provided by ... and config ------------------------------
+  .check_dots_is_parameter(dots=names(list(...)))
+  .check_configuration_tag_is_parameter(config=config)
   
   
   ##### File paths ------------------------------------------------------------------
@@ -256,6 +241,37 @@ summon_familiar <- function(formula=NULL, data=NULL, cl=NULL, config=NULL, confi
 
 .is_absolute_path <- function(x){
   return(dir.exists(paste0(unlist(strsplit(x, split=.Platform$file.sep))[1], .Platform$file.sep)))
+}
+
+
+
+.load_configuration_file <- function(config, config_id=1){
+  if(!is.null(config)){
+    
+    # Load as file path
+    if(is.character(config)){
+      if(length(config) > 1){
+        stop(paste("Configuration: the path to the configuration file is expected",
+                   "to be a single character string. Multiple strings were found."))
+      }
+      
+      # Normalise file paths
+      config <- normalizePath(config)
+      
+      # Read xml file, parse to list and remove comments
+      config <- xml2::as_list(xml2::read_xml(config))[[1]][[config_id]]
+      config <- .clean_configuration_comments(config=config)
+      
+    } else {
+      if(!is.list(config) || !is.recursive(config)){
+        stop("Configuration: the input configuration data is not a list of lists.")
+      }
+    }
+  } else {
+    config    <- NULL
+  }
+  
+  return(config)
 }
 
 

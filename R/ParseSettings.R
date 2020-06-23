@@ -2354,3 +2354,34 @@
   # Return list of settings
   return(settings)
 }
+
+
+
+.get_all_parameter_names <- function(){
+  
+  # Find all possible arguments that could be matched.
+  available_parameters <- unique(c(names(as.list(args(.parse_file_paths))),
+                                   names(as.list(args(.parse_experiment_settings))),
+                                   names(as.list(args(.parse_setup_settings))),
+                                   names(as.list(args(.parse_preprocessing_settings))),
+                                   names(as.list(args(.parse_feature_selection_settings))),
+                                   names(as.list(args(.parse_model_development_settings))),
+                                   names(as.list(args(.parse_hyperparameter_optimisation_settings))),
+                                   names(as.list(args(.parse_evaluation_settings)))))
+  
+  # Remove "" and "..." and other arguments that are not parameters that can be
+  # specified using ... ..
+  available_parameters <- setdiff(available_parameters,
+                                  c("", "...", "config", "data", "hpo_metric", "prep_cluster_method",
+                                    "prep_cluster_linkage_method", "prep_cluster_cut_method",
+                                    "prep_cluster_similarity_threshold", "prep_cluster_similarity_metric"))
+  
+  return(available_parameters)
+}
+
+
+
+.get_all_configuration_parent_node_names <- function(){
+  return(c("paths", "data", "run", "preprocessing", "feature_selection",
+           "model_development", "hyperparameter_optimisation", "evaluation"))
+}

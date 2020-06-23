@@ -1,3 +1,53 @@
+.check_dots_is_parameter <- function(dots){
+  
+  if(length(dots) > 0){
+    # Find unmatched arguments.
+    unmatched_args <- setdiff(dots, .get_all_parameter_names())
+    
+    if(length(unmatched_args) > 0){
+      stop(paste0("Configuration: one or more function arguments could not be matched ",
+                  "to arguments passed by summon_familiar as configuration parameters: ",
+                  paste0(unmatched_args, collapse=", "),
+                  "\nThese arguments may have been misspelled, or were deprecated or renamed."))
+    }
+  }
+}
+
+
+
+.check_configuration_tag_is_parameter <- function(config){
+  
+  if(!is.null(config)){
+    # Find names of parent nodes.
+    config_node_names <- names(config)
+    
+    # Find nodes that are specified differently by the user.
+    unmatched_node_names <- setdiff(config_node_names, .get_all_configuration_parent_node_names())
+    
+    if(length(unmatched_node_names) > 0){
+      stop(paste0("Configuration: one or more parent nodes in the configuration file could not be matched ",
+                  "to node names used by summon_familiar to group configuration parameters: ",
+                  paste0(unmatched_node_names, collapse=", "),
+                  "\nThese node names may have been misspelled, or were deprecated or renamed."))
+    }
+    
+    # Find names of configuration arguments.
+    config_args <- unique(unlist(sapply(config, names)))
+    
+    # Find unmatched arguments.
+    unmatched_args <- setdiff(config_args, .get_all_parameter_names())
+    
+    if(length(unmatched_args) > 0){
+      stop(paste0("Configuration: one or more parameters set in the configuration file could not be matched ",
+                  "to arguments passed by summon_familiar as configuration parameters: ",
+                  paste0(unmatched_args, collapse=", "),
+                  "\nThese parameters may have been misspelled, or were deprecated or renamed."))
+    }
+  }
+}
+
+
+
 .check_number_in_valid_range <- function(x, var_name, range, closed=c(TRUE, TRUE)){
 
   # Interpret single input range value as range containing only one value.
