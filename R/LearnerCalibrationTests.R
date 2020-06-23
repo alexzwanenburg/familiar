@@ -115,9 +115,10 @@ test.calibration.hosmer_lemeshow <- function(calibration_data, outcome_type){
     gof_table <- gof_table[, list(p_value=stats::pchisq(q=statistic, df=n_groups-2, lower.tail=FALSE)),
                            by=list(pos_class, rep_id)]
     
-    # Samples overlap, and combination methods that assume independence cannot
-    # be used (e.g. Fisher's method) Hence we calculate a mean p-value.
-    gof_table <- gof_table[, list(p_value=mean(p_value)), by=list(pos_class)]
+    # Since samples overlap, combination methods that assume independence cannot
+    # be used (e.g. Fisher's method). Hence we calculate a harmonic mean p value
+    # according to Wilson (2019), 10.1073/pnas.1814092116.
+    gof_table <- gof_table[, list("p_value"= 1 / sum(1/.N * 1/p_value)), by=list(pos_class)]
 
     # Add test type
     gof_table[, "type":="hosmer_lemeshow"]
@@ -155,10 +156,11 @@ test.calibration.hosmer_lemeshow <- function(calibration_data, outcome_type){
     gof_table <- gof_table[, list(p_value=stats::pchisq(q=statistic, df=n_groups-2, lower.tail=FALSE)),
                            by=list(rep_id)]
 
-    # Samples overlap, and combination methods that assume independence cannot
-    # be used (e.g. Fisher's method) Hence we calculate a mean p-value.
-    gof_table <- gof_table[, list(p_value=mean(p_value))]
-
+    # Since samples overlap, combination methods that assume independence cannot
+    # be used (e.g. Fisher's method). Hence we calculate a harmonic mean p value
+    # according to Wilson (2019), 10.1073/pnas.1814092116.
+    gof_table <- gof_table[, list("p_value"= 1 / sum(1/.N * 1/p_value))]
+    
     # Add test type.
     gof_table[, "type":="hosmer_lemeshow"]
 
@@ -214,9 +216,10 @@ test.calibration.nam_dagostino <- function(calibration_data, eval_time){
   # Melt so that each test is on a separate row
   gof_table <- melt(gof_table, id.vars="rep_id", variable.name="type", value.name="p_value", variable.factor=FALSE)
   
-  # Samples overlap, and combination methods that assume independence cannot be
-  # used (e.g. Fisher's method). Hence we calculate a mean p-value.
-  gof_table <- gof_table[, list("p_value"=mean(p_value)), by="type"]
+  # Since samples overlap, combination methods that assume independence cannot
+  # be used (e.g. Fisher's method). Hence we calculate a harmonic mean p value
+  # according to Wilson (2019), 10.1073/pnas.1814092116.
+  gof_table <- gof_table[, list("p_value"= 1 / sum(1/.N * 1/p_value)), by="type"]
   
   # Add in evaluation time.
   gof_table[, "evaluation_time":=eval_time]
