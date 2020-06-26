@@ -1055,6 +1055,10 @@ is_singular_data <- function(x){
   # Checks if the input data is singular (i.e. only has one value)
   class_x <- class(x)
 
+  # Drop any NA data.
+  x <- x[!is.na(x)]
+  if(length(x) <= 1) return(TRUE)
+  
   if(any(class_x %in% "factor")){
     if(length(levels(droplevels(x)))==1){
       return(TRUE)
@@ -1064,6 +1068,11 @@ is_singular_data <- function(x){
     }
     
   } else if(any(class_x %in% c("numeric", "integer", "logical"))) {
+    
+    # Drop any infinite data
+    x <- x[is.finite(x)]
+    if(length(x) <= 1) return(TRUE)
+    
     if(stats::var(x, na.rm=TRUE)==0){
       return(TRUE)
       
