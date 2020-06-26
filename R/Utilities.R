@@ -746,17 +746,7 @@ getContrasts <- function(dt, method="effect", drop_levels=TRUE, outcome_type=NUL
 
 
 get_placeholder_vimp_table <- function(){
-  return(data.table::data.table("score"=numeric(0), "name"=character(0), "rank"=numeric(0), "multi_var"=logical(0)))
-}
-
-
-
-getEmptyVimp <- function(){
-  # Returns an empty variable importance data table
-
-  dt_vimp <- data.table("score"=numeric(0), "name"=character(0), "rank"=numeric(0), "multi_var"=logical(0))
-
-  return(dt_vimp)
+  return(data.table::data.table("name"=character(0), "rank"=numeric(0), "score"=numeric(0), "multi_var"=logical(0)))
 }
 
 
@@ -770,18 +760,6 @@ get_id_columns <- function(include_repetition_id=TRUE){
     return(c("subject_id", "cohort_id"))
   }
 }
-
-# getPredictedOutcomeColumn <- function(outcome_type){
-#   # Returns column name with predicted outcomes, given the outcome type
-# 
-#   if(outcome_type %in% c("survival", "continuous", "count")){
-#     return("outcome_pred")
-#   } else if(outcome_type %in% c("binomial", "multinomial")){
-#     return("outcome_pred_class")
-#   } else if(outcome_type == "competing_risk"){
-#     stop()
-#   }
-# }
 
 
 
@@ -842,6 +820,8 @@ get_object_file_name <- function(learner, fs_method, project_id, data_id, run_id
   
   return(output_str)
 }
+
+
 
 get_object_dir_path <- function(dir_path, object_type, learner=NULL, fs_method=NULL){
   # Generate the directory path to an object
@@ -1018,39 +998,6 @@ process_random_forest_survival_predictions <- function(event_matrix, event_times
 }
 
 
-# getStandardEvalColumns <- function(){
-#   return(c("data_id", "run_id", "model_id", "repetition_id", "fs_method", "learner", "perturbation",
-#            "perturb_level", "assignment", "is_ensemble"))
-# }
-
-# getEnsembleEvalColumns <- function(){
-#   # As getStandardEvalColumns(), but without model_id and repetition_id
-#   return(c("data_id", "run_id", "fs_method", "learner", "perturbation",
-#            "perturb_level", "assignment"))
-# }
-
-# insertPlaceholderValues <- function(x){
-#   # Fills NA data with placeholder values
-# 
-#   class_x <- class(x)
-#   if(class_x == "numeric"){
-#     x[!is.finite(x)] = as.double(1)
-#     return(x) }
-#   if(class_x == "integer"){
-#     x[!is.finite(x)] = as.integer(1)
-#     return(x) }
-#   if(class_x == "logical"){
-#     x[!is.finite(x)] = as.logical(1)
-#     return(x) }
-#   if(class_x == "factor"){
-#     x[is.na(x)] <- levels(x)[1]
-#     return(x) }
-#   if(class_x == "character"){
-#     x[(is.na(x) | tolower(x) %in% c("na","nan","inf","-inf"))] <- "placeholder"
-#     return(x) }
-# }
-
-
 is_singular_data <- function(x){
   # Checks if the input data is singular (i.e. only has one value)
   class_x <- class(x)
@@ -1153,60 +1100,6 @@ coefficient_one_sample_z_test <- function(model, mean=0){
   return(abs(z))
 }
 
-# 
-# regrLocTest <- function(regr_fit_obj, mean=0){
-# 
-#   # Provides location test for unrestriced regression models
-#   if("vglm" %in% class(regr_fit_obj)){
-#     # VGAM::vglm-based methods
-#     mu    <- VGAM::coefvlm(regr_fit_obj)
-# 
-#     if(is.matrix(mu)){
-#       stdevs <- matrix(sqrt(diag(VGAM::vcovvlm(regr_fit_obj))), ncol=ncol(mu), byrow=TRUE)
-#     } else {
-#       stdevs <- sqrt(diag(VGAM::vcovvlm(regr_fit_obj)))
-#       stdevs <- stdevs[names(stdevs) %in% names(mu)][names(mu)]
-#     }
-#   } else {
-#     # glm-based methods
-#     mu    <- stats::coef(regr_fit_obj)
-# 
-#     if(is.matrix(mu)){
-#       stdevs <- matrix(sqrt(diag(stats::vcov(regr_fit_obj))), ncol=ncol(mu), byrow=TRUE)
-#     } else {
-#       stdevs <- sqrt(diag(stats::vcov(regr_fit_obj)))
-#       
-#       if(is.null(names(stdevs))){
-#         # Case where no names are provided
-#         stdevs <- stdevs[seq_len(length(mu))]
-#       } else {
-#         stdevs <- stdevs[names(stdevs) %in% names(mu)][names(mu)]
-#       }
-#     }
-#   }
-# 
-#   # Compute z-score
-#   z  <- (mu-mean)/stdevs
-#   
-#   # Return p-value based on z-score
-#   return(2*(1-stats::pnorm(abs(z))))
-# }
-# 
-# 
-# updateWithReplacement <- function(dt, repl_list){
-#   # Updates columns of a data table with replacement data from repl_list
-#   dt_repl <- copy(dt)
-# 
-#   # Find feature names corresponding to columns to be replaced
-#   repl_feat <- names(repl_list)
-# 
-#   # Iterate over replacement list entries
-#   for(curr_feat in repl_feat){
-#     dt_repl[, (curr_feat):=repl_list[[curr_feat]] ]
-#   }
-# 
-#   return(dt_repl)
-# }
 
 
 

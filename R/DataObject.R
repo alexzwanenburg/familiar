@@ -155,6 +155,10 @@ setMethod("load_delayed_data", signature(data="dataObject", object="familiarMode
           function(data, object, stop_at){
             # Loads data from internal memory
 
+            if(!(is(object, "familiarModel") | is(object, "familiarVimpMethod"))){
+              ..error_reached_unreachable_code("load_delayed_data: object is expected to be a familiarModel or familiarVimpMethod.")
+            }
+            
             # Check if loading was actually delayed
             if(!data@delay_loading){
               return(data)
@@ -215,9 +219,13 @@ setMethod("load_delayed_data", signature(data="dataObject", object="familiarMode
           })
 
 
-#####preprocess_data (model)#####
-setMethod("preprocess_data", signature(data="dataObject", object="familiarModel"),
+#####preprocess_data (model, vimp)#####
+setMethod("preprocess_data", signature(data="dataObject", object="ANY"),
           function(data, object, stop_at){
+            
+            if(!(is(object, "familiarModel") | is(object, "familiarVimpMethod"))){
+              ..error_reached_unreachable_code("preprocess_data: object is expected to be a familiarModel or familiarVimpMethod.")
+            }
             
             # Check whether pre-processing is required
             if(data@is_pre_processed) {
@@ -245,9 +253,11 @@ setMethod("preprocess_data", signature(data="dataObject", object="familiarModel"
             # Cluster features
             data      <- cluster_features(data=data, feature_info_list=object@feature_info)
             
-            # Select only the signature (if present)
-            if(!is.null(object@signature)){
-              data    <- apply_signature(data_obj=data, selected_feat=object@signature)
+            if(is(object, "familiarModel")){
+              # Select only the signature (if present)
+              if(!is.null(object@signature)){
+                data    <- apply_signature(data_obj=data, selected_feat=object@signature)
+              }
             }
             
             return(data)

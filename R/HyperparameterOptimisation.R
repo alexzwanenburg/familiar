@@ -720,27 +720,43 @@ hpo.evaluate_hyperparameters <- function(run, dt_param, dt_ranks, feature_info_l
     # Apply signature to data.
     data_obj_tr <- apply_signature(data_obj=data_obj_tr, selected_feat=sel_feat)
     
+    # Create familiar model
+    fam_model     <- methods::new("familiarModel",
+                                  outcome_type = data_obj@outcome_type,
+                                  learner = learner,
+                                  fs_method = fs_method,
+                                  run_table = run$run_table,
+                                  hyperparameters = param_list,
+                                  signature = sel_feat)
+    
   } else {
-    # We are optimising model parameters for a (model-based) feature selection method.
-    sel_feat <- character(0)
+    # We are optimising model parameters for a (model-based) variable importance
+    # method.
+    browser()
     
-    # Derive the learner
-    learner <- vimp.get_base_learner(method=fs_method, outcome_type=data_obj_tr@outcome_type)
+    # Create a familiarModel from variable.
+    fam_model <- promote_vimp_method(object=methods::new("familiarVimpMethod",
+                                                         outcome_type=data_obj@outcome_type,
+                                                         hyperparameters=param_list,
+                                                         vimp_method=fs_method))
     
-    if(is.null(learner)){
+    # Update missing slots.
+    fam_model@run_table <- run$run_table
+
+    if(!is(fam_model, "familiarModel")){
       ..error_reached_unreachable_code("hpo_evaluate_hyperparameters_feature_selection_method_is_not_model_based")
     }
   }
-
-  # Create familiar model
-  fam_model     <- methods::new("familiarModel",
-                                outcome_type = data_obj@outcome_type,
-                                learner = learner,
-                                fs_method = fs_method,
-                                run_table = run$run_table,
-                                hyperparameters = param_list,
-                                signature = sel_feat,
-                                outcome_info=.get_outcome_info())
+# 
+#   # Create familiar model
+#   fam_model     <- methods::new("familiarModel",
+#                                 outcome_type = data_obj@outcome_type,
+#                                 learner = learner,
+#                                 fs_method = fs_method,
+#                                 run_table = run$run_table,
+#                                 hyperparameters = param_list,
+#                                 signature = sel_feat,
+#                                 outcome_info=.get_outcome_info())
   
   # Train model
   fam_model   <- .train(object=fam_model, data=data_obj_tr, get_additional_info=FALSE)

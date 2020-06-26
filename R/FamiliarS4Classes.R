@@ -543,18 +543,31 @@ setClass("outcomeInfo",
 )
 
 
-setClass("Learner",
+####familiarModel####
+setClass("familiarVimpMethod",
          slots = list(
-           # Name of the outcome
-           learner = "character",
            # Outcome type
            outcome_type = "character",
-           # Model
-           model = "ANY"
+           # Hyper-parameters (typically stored in the model as well)
+           hyperparameters = "ANY",
+           # Name of variable importance method
+           vimp_method = "character",
+           # Outcome info, such as class levels, mean values etc.
+           outcome_info = "ANY",
+           # Data required for feature pre-processing
+           feature_info = "ANY",
+           # Required features for complete reconstruction, including imputation
+           req_feature_cols = "ANY",
+           # Run table for the current vimp method
+           run_table = "ANY"
          ),
          prototype = list(
-           learner = NA_character_,
            outcome_type = NA_character_,
-           model = NULL
+           hyperparameters = NULL,
+           vimp_method = NA_character_,
+           outcome_info = NULL,
+           feature_info = NULL,
+           req_feature_cols = NULL,
+           run_table = NULL
          )
 )
