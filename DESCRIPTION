@@ -159,6 +159,5 @@ Collate:
     'VimpS4OtherMethods.R'
     'VimpMain.R'
     'VimpMutualInformation.R'
-    'VimpRegression.R'
     'VimpTest.R'
     'zzz.R'
