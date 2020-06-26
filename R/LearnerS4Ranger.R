@@ -8,6 +8,11 @@ setClass("familiarRanger",
 
 .get_available_ranger_learners <- function(show_general=TRUE) return("random_forest_ranger")
 
+.get_available_ranger_vimp_methods <- function(show_general=TRUE){
+  return(c("random_forest_ranger_holdout_permutation", "random_forest_ranger_permutation",
+           "random_forest_ranger_impurity"))
+}
+
 
 #####is_available#####
 setMethod("is_available", signature(object="familiarRanger"),

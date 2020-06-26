@@ -7,12 +7,17 @@ setClass("familiarRFSRC",
 
 .get_available_rfsrc_learners <- function(show_general=TRUE) return(c("random_forest", "random_forest_rfsrc"))
 
+.get_available_rfsrc_vimp_methods <- function(show_general=TRUE){
+  return(c("random_forest_permutation", "random_forest_minimum_depth", "random_forest_variable_hunting",
+           "random_forest_rfsrc_permutation", "random_forest_rfsrc_minimum_depth", "random_forest_rfsrc_variable_hunting",
+           "random_forest_holdout", "random_forest_rfsrc_holdout"))
+}
 
 #####is_available#####
 setMethod("is_available", signature(object="familiarRFSRC"),
           function(object, ...){
-            # Ranger exists for all outcome types and variable importance
-            # methods, including impurity for survival.
+            # Random forests exists for all outcome types and variable
+            # importance methods.
             return(TRUE)
           })
 

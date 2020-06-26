@@ -60,6 +60,17 @@ setClass("familiarGLMnetElasticNet",
   return(learners)
 }
 
+.get_available_glmnet_ridge_vimp_methods <- function(show_general=TRUE){
+  return(.get_available_glmnet_ridge_learners(show_general=show_general))
+}
+
+.get_available_glmnet_lasso_vimp_methods <- function(show_general=TRUE){
+  return(.get_available_glmnet_lasso_learners(show_general=show_general))
+}
+
+.get_available_glmnet_elastic_net_vimp_methods <- function(show_general=TRUE){
+  return(.get_available_glmnet_elastic_net_learners(show_general=show_general))
+}
 
 #####is_available#####
 setMethod("is_available", signature(object="familiarGLMnet"),
