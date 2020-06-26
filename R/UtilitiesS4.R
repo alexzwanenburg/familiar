@@ -39,6 +39,10 @@ setMethod("is_empty", signature(x="dataObject"), function(x){
     # Data is empty if the data table has no rows
     return(TRUE)
     
+  } else if(!has_feature_data(x)){
+    # Data is empty if there are no features.
+    return(TRUE)
+    
   } else {
     # Data is present otherwise
     return(FALSE)
