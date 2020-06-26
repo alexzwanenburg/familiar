@@ -136,13 +136,7 @@ setMethod("train", signature(data="dataObject"),
                                    outcome_info = outcome_info,
                                    settings=settings$eval,
                                    project_id = 0)
-            
-            # Preprocess data.
-            data <- process_input_data(object=object,
-                                       data=data,
-                                       is_pre_processed=data@is_pre_processed,
-                                       stop_at="clustering")
-            
+
             # Add package version/
             object <- add_package_version(object=object)
             

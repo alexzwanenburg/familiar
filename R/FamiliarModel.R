@@ -5,14 +5,17 @@ NULL
 
 #####.train#####
 setMethod(".train", signature(object="familiarModel", data="dataObject"),
-          function(object, data, get_additional_info=FALSE) {
+          function(object, data, get_additional_info=FALSE, is_pre_processed=FALSE) {
             # Train method for model training
             
-            # Extract outcome type
-            outcome_type <- object@outcome_type
-
             # Check if the class of object is a subclass of familiarModel.
             if(!is_subclass(class(object)[1], "familiarModel")) object <- promote_learner(object)
+            
+            # Process data, if required.
+            data <- process_input_data(object=object,
+                                       data=data,
+                                       is_pre_processed = is_pre_processed,
+                                       stop_at="clustering")
             
             # Check if there are any data entries. The familiar model cannot be
             # trained otherwise
