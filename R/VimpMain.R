@@ -1,5 +1,6 @@
 #' @include FamiliarS4Generics.R
 #' @include FamiliarS4Classes.R
+#' @include VimpS4Correlation.R
 #' @include VimpS4OtherMethods.R
 #' @include VimpS4Regression.R
 NULL
@@ -39,16 +40,10 @@ setMethod("promote_vimp_method", signature(object="familiarVimpMethod"),
             }
             
             # Correlation-based methods
-            if(method %in% c("pearson", "spearman", "kendall")){
-              if(purpose=="variable_importance"){
-                dt_vimp       <- vimp.correlation.vimp(data_obj=data_obj, method=method)
-              } else if(purpose=="parameters") {
-                param         <- vimp.correlation.param(data_obj=data_obj, method=method)
-              } else if(purpose=="outcome"){
-                type_is_valid <- vimp.correlation.outcome(method=method, outcome_type=outcome_type)
-              } else if(purpose=="base_learner"){
-                base_learner  <- vimp.correlation.learner(method=method, outcome_type=outcome_type)
-              }
+            if(method %in% .get_available_correlation_vimp_methods()){
+              # Correlation-based methods.
+              object <- methods::new("familiarCorrelationVimp", object)
+              
             }
             
             ##### Mutual information-based statistical methods #####
