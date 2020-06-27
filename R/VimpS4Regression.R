@@ -106,7 +106,7 @@ setMethod("get_default_hyperparameters", signature(object="familiarRegressionVim
 setMethod("..vimp", signature(object="familiarRegressionVimp"),
           function(object, data, ...){
             # Suppress NOTES due to non-standard evaluation in data.table
-            score <- objective_score_mean <- objective_score_sd <- name <- available <- NULL
+            score <- objective_score_mean <- name <- available <- NULL
           
             if(is_empty(data)) return(callNextMethod())
             
