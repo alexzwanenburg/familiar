@@ -26,26 +26,6 @@ setMethod("promote_vimp_method", signature(object="familiarVimpMethod"),
               }
             }
             
-            # Impurity-based methods
-            if(method %in% c("gini", "mdl", "relieff_exp_rank", "gain_ratio")){
-              if(purpose=="variable_importance"){
-                dt_vimp       <- vimp.corelearn.vimp(data_obj=data_obj, method=method)
-              } else if(purpose=="parameters") {
-                param         <- vimp.corelearn.param(data_obj=data_obj, method=method)
-              } else if(purpose=="outcome"){
-                type_is_valid <- vimp.corelearn.outcome(method=method, outcome_type=outcome_type)
-              } else if(purpose=="base_learner"){
-                base_learner  <- vimp.corelearn.learner(method=method, outcome_type=outcome_type)
-              }
-            }
-            
-            # Correlation-based methods
-            if(method %in% .get_available_correlation_vimp_methods()){
-              # Correlation-based methods.
-              object <- methods::new("familiarCorrelationVimp", object)
-              
-            }
-            
             ##### Mutual information-based statistical methods #####
             
             # Mutual information
@@ -60,9 +40,29 @@ setMethod("promote_vimp_method", signature(object="familiarVimpMethod"),
                 base_learner  <- vimp.mutual_information.learner(method=method, outcome_type=outcome_type)
               }
             }
-
             
-            if(method %in% .get_available_regression_vimp_methods()){
+            # Correlation-based methods
+            if(method %in% .get_available_correlation_vimp_methods()){
+              # Correlation-based methods.
+              object <- methods::new("familiarCorrelationVimp", object)
+              
+            } else if(method %in% .get_available_corelearn_gini_vimp_method()){
+              # Gini measure.
+              object <- methods::new("familiarCoreLearnGiniVimp", object)
+              
+            } else if(method %in% .get_available_corelearn_mdl_vimp_method()){
+              # MDL variable importance method.
+              object <- methods::new("familiarCoreLearnMDLVimp", object)
+              
+            } else if(method %in% .get_available_corelearn_relieff_exp_rank_vimp_method()){
+              # ReliefF with exponentially decreasing rank.
+              object <- methods::new("familiarCoreLearnRelieffExpRankVimp", object)
+              
+            } else if(method %in% .get_available_corelearn_gain_ratio_vimp_method()){
+              # Gain ratio measure.
+              object <- methods::new("familiarCoreLearnGainRatioVimp", object)
+              
+            } else if(method %in% .get_available_regression_vimp_methods()){
               # Regression-based methods.
               object <- methods::new("familiarRegressionVimp", object)
             
