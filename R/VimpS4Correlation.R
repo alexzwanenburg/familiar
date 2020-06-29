@@ -86,7 +86,7 @@ setMethod("..vimp", signature(object="familiarCorrelationVimp"),
             
             # Add ranks and set multivariate flag.
             vimp_table[, "rank":=data.table::frank(-abs(score), ties.method="min")]
-            vimp_table[, "multi_var":=TRUE]
+            vimp_table[, "multi_var":=FALSE]
             
             return(vimp_table)
           })
