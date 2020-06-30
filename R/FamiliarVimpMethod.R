@@ -86,7 +86,7 @@ setMethod(".vimp", signature(object="familiarVimpMethod"),
 #####.vimp (model)#####
 setMethod(".vimp", signature(object="familiarModel"),
           function(object, data, is_pre_processed=FALSE, ...) {
-            browser()
+            
             # Check if the class of object is a subclass of familiarModel.
             if(!is_subclass(class(object)[1], "familiarModel")) object <- promote_learner(object)
             

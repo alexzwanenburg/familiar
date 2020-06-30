@@ -1,6 +1,7 @@
 #' @include FamiliarS4Generics.R
 #' @include FamiliarS4Classes.R
 #' @include VimpS4Correlation.R
+#' @include VimpS4MutualInformation.R
 #' @include VimpS4OtherMethods.R
 #' @include VimpS4Regression.R
 NULL
@@ -26,23 +27,16 @@ setMethod("promote_vimp_method", signature(object="familiarVimpMethod"),
               }
             }
             
-            ##### Mutual information-based statistical methods #####
-            
-            # Mutual information
-            if(method %in% c("mim", "mifs", "mrmr")){
-              if(purpose=="variable_importance"){
-                dt_vimp       <- vimp.mutual_information.vimp(data_obj=data_obj, method=method)
-              } else if(purpose=="parameters") {
-                param         <- vimp.mutual_information.param(data_obj=data_obj, method=method)
-              } else if(purpose=="outcome"){
-                type_is_valid <- vimp.mutual_information.outcome(method=method, outcome_type=outcome_type)
-              } else if(purpose=="base_learner"){
-                base_learner  <- vimp.mutual_information.learner(method=method, outcome_type=outcome_type)
-              }
-            }
-            
-            # Correlation-based methods
-            if(method %in% .get_available_correlation_vimp_methods()){
+
+            if(method %in% .get_available_univariate_mutual_information_vimp_method()){
+              # Mutual information maximisation.
+              object <- methods::new("familiarCoreUnivariateMutualInfoVimp", object)
+              
+            } else if(method %in% .get_available_multivariate_mutual_information_vimp_method()){
+              # Multivariate information methods.
+              object <- methods::new("familiarCoreMultivariateMutualInfoVimp", object)
+              
+            } else if(method %in% .get_available_correlation_vimp_methods()){
               # Correlation-based methods.
               object <- methods::new("familiarCorrelationVimp", object)
               
