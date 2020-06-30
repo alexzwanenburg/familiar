@@ -252,7 +252,7 @@ setMethod("..vimp", signature(object="familiarRegressionVimp"),
             data.table::setnames(vimp_table, "select_step", "rank")
             
             # Add multivariate flag
-            vimp_table[, "multi_var"] <- TRUE
+            vimp_table[, "multi_var":=TRUE]
             
             return(vimp_table)
           })
