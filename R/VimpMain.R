@@ -58,7 +58,11 @@ setMethod("promote_vimp_method", signature(object="familiarVimpMethod"),
               object <- methods::new("familiarModel",
                                      learner = method,
                                      outcome_type = object@outcome_type,
-                                     hyperparameters = object@hyperparameters)
+                                     hyperparameters = object@hyperparameters,
+                                     outcome_info = object@outcome_info,
+                                     feature_info = object@feature_info,
+                                     req_feature_cols = object@req_feature_cols,
+                                     run_table = object@run_table)
               
               # Promote to the correct subclass.
               object <- promote_learner(object)
@@ -70,7 +74,11 @@ setMethod("promote_vimp_method", signature(object="familiarVimpMethod"),
               object <- methods::new("familiarModel",
                                      learner = method,
                                      outcome_type = object@outcome_type,
-                                     hyperparameters = object@hyperparameters)
+                                     hyperparameters = object@hyperparameters,
+                                     outcome_info = object@outcome_info,
+                                     feature_info = object@feature_info,
+                                     req_feature_cols = object@req_feature_cols,
+                                     run_table = object@run_table)
               
               # Promote to the correct subclass.
               object <- promote_learner(object)
@@ -82,7 +90,11 @@ setMethod("promote_vimp_method", signature(object="familiarVimpMethod"),
               object <- methods::new("familiarModel",
                                      learner = method,
                                      outcome_type = object@outcome_type,
-                                     hyperparameters = object@hyperparameters)
+                                     hyperparameters = object@hyperparameters,
+                                     outcome_info = object@outcome_info,
+                                     feature_info = object@feature_info,
+                                     req_feature_cols = object@req_feature_cols,
+                                     run_table = object@run_table)
               
               # Promote to the correct subclass.
               object <- promote_learner(object)
@@ -94,7 +106,11 @@ setMethod("promote_vimp_method", signature(object="familiarVimpMethod"),
               object <- methods::new("familiarModel",
                                      learner = "random_forest_rfsrc",
                                      outcome_type = object@outcome_type,
-                                     hyperparameters = object@hyperparameters)
+                                     hyperparameters = object@hyperparameters,
+                                     outcome_info = object@outcome_info,
+                                     feature_info = object@feature_info,
+                                     req_feature_cols = object@req_feature_cols,
+                                     run_table = object@run_table)
               
               # Promote to the correct subclass.
               object <- promote_learner(object)
@@ -109,7 +125,11 @@ setMethod("promote_vimp_method", signature(object="familiarVimpMethod"),
               object <- methods::new("familiarModel",
                                      learner = "random_forest_ranger",
                                      outcome_type = object@outcome_type,
-                                     hyperparameters = object@hyperparameters)
+                                     hyperparameters = object@hyperparameters,
+                                     outcome_info = object@outcome_info,
+                                     feature_info = object@feature_info,
+                                     req_feature_cols = object@req_feature_cols,
+                                     run_table = object@run_table)
               
               # Promote to the correct subclass.
               object <- promote_learner(object)
@@ -176,8 +196,8 @@ vimp.check_outcome_type <- function(method, outcome_type){
   # Check validity.
   vimp_method_available <- is_available(vimp_method_object)
   
-  # Check if the familiar model has been successfuly promoted.
-  if(!is_subclass(class(vimp_method_object)[1], "familiarVimpMethod")){
+  # Check if the vimp method or familiar model has been successfully promoted.
+  if(!is_subclass(class(vimp_method_object)[1], "familiarVimpMethod") & !is_subclass(class(vimp_method_object)[1], "familiarModel")){
     stop(paste0(method, " is not a valid variable importance method. Please check the vignette for available methods."))
   }
 
@@ -345,6 +365,9 @@ setMethod("prepare_vimp_object", signature(data="dataObject"),
             
             # Determine which hyperparameters still need to be specified.
             unset_parameters <- sapply(param_list, function(hyperparameter_entry) hyperparameter_entry$randomise)
+            
+            # Mark sign-size as set, as it is not used for variable importance.
+            if("sign_size" %in% names(unset_parameters)) unset_parameters["sign_size"] <- FALSE
             
             # Raise an error if any hyperparameters were not set.
             if(any(unset_parameters)){
