@@ -1,5 +1,6 @@
 #' @include FamiliarS4Generics.R
 #' @include FamiliarS4Classes.R
+#' @include VimpS4Concordance.R
 #' @include VimpS4Correlation.R
 #' @include VimpS4MutualInformation.R
 #' @include VimpS4OtherMethods.R
@@ -14,21 +15,11 @@ setMethod("promote_vimp_method", signature(object="familiarVimpMethod"),
             # Extract vimp_method.
             method <- object@vimp_method
             
-            # Concordance-based methods
-            if(method == "concordance"){
-              if(purpose=="variable_importance"){
-                dt_vimp       <- vimp.concordance.vimp(data_obj=data_obj)
-              } else if(purpose=="parameters") {
-                param         <- vimp.concordance.param(data_obj=data_obj, method=method)
-              } else if(purpose=="outcome"){
-                type_is_valid <- vimp.concordance.outcome(method=method, outcome_type=outcome_type)
-              } else if(purpose=="base_learner"){
-                base_learner  <- vimp.concordance.learner(method=method, outcome_type=outcome_type)
-              }
-            }
-            
-
-            if(method %in% .get_available_univariate_mutual_information_vimp_method()){
+            if(method %in% .get_available_concordance_vimp_method()){
+              # Concordance-based methods.
+              object <- methods::new("familiarConcordanceVimp", object)
+              
+            } else if(method %in% .get_available_univariate_mutual_information_vimp_method()){
               # Mutual information maximisation.
               object <- methods::new("familiarCoreUnivariateMutualInfoVimp", object)
               
