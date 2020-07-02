@@ -34,6 +34,7 @@ setMethod("get_default_hyperparameters", signature(object="familiarRFSRC"),
             param$sample_size  <- list()
             param$m_try        <- list()
             param$node_size    <- list()
+            param$tree_depth   <- list()
             param$n_split      <- list()
             param$split_rule   <- list()
             
