@@ -464,6 +464,10 @@ setMethod("..vimp", signature(object="familiarGLMnet"),
             # Check if the model has been trained upon retry.
             if(!model_is_trained(object)) return(callNextMethod())
             
+            # Check if the model is a familiarGLMnet object, and not
+            # familiarGLM (which happens for one-feature datasets).
+            if(!is(object, "familiarGLMnet")) return(..vimp(object=object, data=data))
+            
             if(object@hyperparameters$family == "multinomial"){
               # Read coefficient lists
               coefficient_list <- coef(object@model,
