@@ -279,7 +279,7 @@ setMethod("..train", signature(object="familiarGLMnet", data="dataObject"),
             # Order according to subject_id in encoded_data$encoded_data@data so
             # that fold_id corresponds to the correct rows.
             fold_table <- merge(x=fold_table,
-                                y=fold_table[, "subject_id"],
+                                y=encoded_data$encoded_data@data[, "subject_id"],
                                 by="subject_id")
             
             # Train the model.
@@ -324,7 +324,6 @@ setMethod("..train", signature(object="familiarGLMnet", data="dataObject"),
               ..error_reached_unreachable_code(paste0("..train,familiarGLMnet: encountered unknown learner of unknown class: ", paste0(class(object), collapse=", ")))
             }
 
-            
             # Check if the model trained at all.
             if(inherits(model, "error")) return(callNextMethod())
             
