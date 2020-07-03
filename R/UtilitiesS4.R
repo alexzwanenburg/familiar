@@ -245,6 +245,10 @@ setMethod("get_non_feature_columns", signature(x="dataObject"), function(x, incl
   return(.get_non_feature_columns(outcome_type=x@outcome_type, include_repetition_id=include_repetition_id))
 })
 
+setMethod("get_non_feature_columns", signature(x="familiarVimpMethod"), function(x, include_repetition_id=TRUE){
+  return(.get_non_feature_columns(outcome_type=x@outcome_type, include_repetition_id=include_repetition_id))
+})
+
 setMethod("get_non_feature_columns", signature(x="familiarModel"), function(x, include_repetition_id=TRUE){
   return(.get_non_feature_columns(outcome_type=x@outcome_type, include_repetition_id=include_repetition_id))
 })
