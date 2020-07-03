@@ -130,6 +130,32 @@ test.create_small_good_data_set <- function(outcome_type){
 }
 
 
+test.create_good_data_invariant_set <- function(outcome_type){
+  
+  # Create good dataset first and work from there.
+  data <- test.create_good_data_set(outcome_type=outcome_type)
+  
+  if(outcome_type == "survival"){
+    data@data[, "nodes":=4.0]
+    
+  } else if(outcome_type == "binomial"){
+    data@data[, "clump_thickness":=4.0]
+    
+  } else if(outcome_type == "multinomial"){
+    data@data[, "Sepal_Length":=3.0]
+    
+  } else if(outcome_type == "continuous"){
+    data@data[, "calwpct":=5.0]
+    
+  } else if(outcome_type == "count"){
+    data@data[, "industry":=3.0]
+    
+  }
+  
+  return(data)
+}
+
+
 
 test.create_empty_data_set <- function(outcome_type){
   
@@ -280,6 +306,22 @@ test.create_one_feature_one_sample_data_set <- function(outcome_type){
   
   # Now keep only the first sample.
   data@data <- head(data@data, n=1)
+  
+  return(data)
+}
+
+
+
+test.create_one_feature_invariant_data_set <- function(outcome_type){
+  
+  # Create good dataset first and work from there.
+  data <- test.create_one_feature_data_set(outcome_type=outcome_type)
+  
+  # Get the feature column
+  feature_column <- get_feature_columns(data)
+  
+  # Set the feature to a fixed value.
+  data@data[, (feature_column):=1.0]
   
   return(data)
 }

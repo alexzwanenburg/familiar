@@ -171,8 +171,11 @@ NULL
   
   # Find the parameter list
   if(is_vimp){
-    preset_list <- vimp.get_fs_parameters(data_obj=data, method=fs_method,
-                                          outcome_type=outcome_type, names_only=names_only)
+    preset_list <- vimp.get_fs_parameters(data=data,
+                                          method=fs_method,
+                                          outcome_type=outcome_type, 
+                                          names_only=names_only)
+    
   } else {
     preset_list <- learner.get_model_hyperparameters(data=data,
                                                      learner=learner,

@@ -1437,7 +1437,7 @@ setMethod(".summarise_model_performance", signature(object="familiarCollection")
             metric_columns <- paste0("performance_", metrics)
 
             # Compute descriptive statistics for each column
-            ensemble_performance <- data[, sapply(.SD, describe, conf_alpha=conf_alpha),
+            ensemble_performance <- data[, sapply(.SD, bootstrap_ci, conf_alpha=conf_alpha),
                                          by=c("data_set", "fs_method", "learner", "model_name"),
                                          .SDcols=metric_columns]
             

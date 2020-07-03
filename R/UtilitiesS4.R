@@ -39,6 +39,10 @@ setMethod("is_empty", signature(x="dataObject"), function(x){
     # Data is empty if the data table has no rows
     return(TRUE)
     
+  } else if(!has_feature_data(x)){
+    # Data is empty if there are no features.
+    return(TRUE)
+    
   } else {
     # Data is present otherwise
     return(FALSE)
@@ -238,6 +242,10 @@ setMethod("get_non_feature_columns", signature(x="character"), function(x, inclu
 })
 
 setMethod("get_non_feature_columns", signature(x="dataObject"), function(x, include_repetition_id=TRUE){
+  return(.get_non_feature_columns(outcome_type=x@outcome_type, include_repetition_id=include_repetition_id))
+})
+
+setMethod("get_non_feature_columns", signature(x="familiarVimpMethod"), function(x, include_repetition_id=TRUE){
   return(.get_non_feature_columns(outcome_type=x@outcome_type, include_repetition_id=include_repetition_id))
 })
 

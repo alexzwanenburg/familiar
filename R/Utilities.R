@@ -746,17 +746,7 @@ getContrasts <- function(dt, method="effect", drop_levels=TRUE, outcome_type=NUL
 
 
 get_placeholder_vimp_table <- function(){
-  return(data.table::data.table("score"=numeric(0), "name"=character(0), "rank"=numeric(0), "multi_var"=logical(0)))
-}
-
-
-
-getEmptyVimp <- function(){
-  # Returns an empty variable importance data table
-
-  dt_vimp <- data.table("score"=numeric(0), "name"=character(0), "rank"=numeric(0), "multi_var"=logical(0))
-
-  return(dt_vimp)
+  return(data.table::data.table("name"=character(0), "rank"=numeric(0), "score"=numeric(0), "multi_var"=logical(0)))
 }
 
 
@@ -770,18 +760,6 @@ get_id_columns <- function(include_repetition_id=TRUE){
     return(c("subject_id", "cohort_id"))
   }
 }
-
-# getPredictedOutcomeColumn <- function(outcome_type){
-#   # Returns column name with predicted outcomes, given the outcome type
-# 
-#   if(outcome_type %in% c("survival", "continuous", "count")){
-#     return("outcome_pred")
-#   } else if(outcome_type %in% c("binomial", "multinomial")){
-#     return("outcome_pred_class")
-#   } else if(outcome_type == "competing_risk"){
-#     stop()
-#   }
-# }
 
 
 
@@ -842,6 +820,8 @@ get_object_file_name <- function(learner, fs_method, project_id, data_id, run_id
   
   return(output_str)
 }
+
+
 
 get_object_dir_path <- function(dir_path, object_type, learner=NULL, fs_method=NULL){
   # Generate the directory path to an object
@@ -1018,43 +998,14 @@ process_random_forest_survival_predictions <- function(event_matrix, event_times
 }
 
 
-# getStandardEvalColumns <- function(){
-#   return(c("data_id", "run_id", "model_id", "repetition_id", "fs_method", "learner", "perturbation",
-#            "perturb_level", "assignment", "is_ensemble"))
-# }
-
-# getEnsembleEvalColumns <- function(){
-#   # As getStandardEvalColumns(), but without model_id and repetition_id
-#   return(c("data_id", "run_id", "fs_method", "learner", "perturbation",
-#            "perturb_level", "assignment"))
-# }
-
-# insertPlaceholderValues <- function(x){
-#   # Fills NA data with placeholder values
-# 
-#   class_x <- class(x)
-#   if(class_x == "numeric"){
-#     x[!is.finite(x)] = as.double(1)
-#     return(x) }
-#   if(class_x == "integer"){
-#     x[!is.finite(x)] = as.integer(1)
-#     return(x) }
-#   if(class_x == "logical"){
-#     x[!is.finite(x)] = as.logical(1)
-#     return(x) }
-#   if(class_x == "factor"){
-#     x[is.na(x)] <- levels(x)[1]
-#     return(x) }
-#   if(class_x == "character"){
-#     x[(is.na(x) | tolower(x) %in% c("na","nan","inf","-inf"))] <- "placeholder"
-#     return(x) }
-# }
-
-
 is_singular_data <- function(x){
   # Checks if the input data is singular (i.e. only has one value)
   class_x <- class(x)
 
+  # Drop any NA data.
+  x <- x[!is.na(x)]
+  if(length(x) <= 1) return(TRUE)
+  
   if(any(class_x %in% "factor")){
     if(length(levels(droplevels(x)))==1){
       return(TRUE)
@@ -1064,6 +1015,11 @@ is_singular_data <- function(x){
     }
     
   } else if(any(class_x %in% c("numeric", "integer", "logical"))) {
+    
+    # Drop any infinite data
+    x <- x[is.finite(x)]
+    if(length(x) <= 1) return(TRUE)
+    
     if(stats::var(x, na.rm=TRUE)==0){
       return(TRUE)
       
@@ -1144,60 +1100,6 @@ coefficient_one_sample_z_test <- function(model, mean=0){
   return(abs(z))
 }
 
-# 
-# regrLocTest <- function(regr_fit_obj, mean=0){
-# 
-#   # Provides location test for unrestriced regression models
-#   if("vglm" %in% class(regr_fit_obj)){
-#     # VGAM::vglm-based methods
-#     mu    <- VGAM::coefvlm(regr_fit_obj)
-# 
-#     if(is.matrix(mu)){
-#       stdevs <- matrix(sqrt(diag(VGAM::vcovvlm(regr_fit_obj))), ncol=ncol(mu), byrow=TRUE)
-#     } else {
-#       stdevs <- sqrt(diag(VGAM::vcovvlm(regr_fit_obj)))
-#       stdevs <- stdevs[names(stdevs) %in% names(mu)][names(mu)]
-#     }
-#   } else {
-#     # glm-based methods
-#     mu    <- stats::coef(regr_fit_obj)
-# 
-#     if(is.matrix(mu)){
-#       stdevs <- matrix(sqrt(diag(stats::vcov(regr_fit_obj))), ncol=ncol(mu), byrow=TRUE)
-#     } else {
-#       stdevs <- sqrt(diag(stats::vcov(regr_fit_obj)))
-#       
-#       if(is.null(names(stdevs))){
-#         # Case where no names are provided
-#         stdevs <- stdevs[seq_len(length(mu))]
-#       } else {
-#         stdevs <- stdevs[names(stdevs) %in% names(mu)][names(mu)]
-#       }
-#     }
-#   }
-# 
-#   # Compute z-score
-#   z  <- (mu-mean)/stdevs
-#   
-#   # Return p-value based on z-score
-#   return(2*(1-stats::pnorm(abs(z))))
-# }
-# 
-# 
-# updateWithReplacement <- function(dt, repl_list){
-#   # Updates columns of a data table with replacement data from repl_list
-#   dt_repl <- copy(dt)
-# 
-#   # Find feature names corresponding to columns to be replaced
-#   repl_feat <- names(repl_list)
-# 
-#   # Iterate over replacement list entries
-#   for(curr_feat in repl_feat){
-#     dt_repl[, (curr_feat):=repl_list[[curr_feat]] ]
-#   }
-# 
-#   return(dt_repl)
-# }
 
 
 
@@ -1311,23 +1213,72 @@ rbind_list_list <- function(l, list_elem, ...){
 }
 
 
-describe <- function(x, conf_alpha=0.05){
+bootstrap_ci <- function(x, x_0=NULL, conf_alpha=0.05, bootstrap_ci_type="percentile"){
 
-  # Test conf_alpha
-  if(conf_alpha > 1.0){
+  # Test significance level alpha.
+  if(conf_alpha >= 1.0){
     stop("No confidence interval exists for widths of 0% or smaller.")
   } else if(conf_alpha <= 0.0){
-    stop("The confidence interval cannot exceed 100% width.")
+    stop("The confidence interval cannot match or exceed 100% width.")
   }
   
-  # Define quantile probabilities based on the alpha confidence interval width.
-  quantile_prob <- c(conf_alpha/2.0, 1.0 - conf_alpha/2.0)
+  # Define empty summary list.
+  empty_list <- list("median"=NA_real_,
+                     "ci_low"=NA_real_,
+                     "ci_up"=NA_real_)
   
-  # Compute quantiles within the data set
-  quantiles <- stats::quantile(x, probs=quantile_prob, names=FALSE, na.rm=TRUE)
+  # Select finite values.
+  x <- x[is.finite(x)]
   
-  # Generate a summary list
-  summary_list <- list("median"=stats::median(x, na.rm=TRUE), "ci_low"=quantiles[1], "ci_up"=quantiles[2])
+  if(length(x) == 0) return(empty_list)
+  
+  # If no x_0 is provided, the percentile method should be used.
+  if(length(x_0) == 0) bootstrap_ci_type <- "percentile"
+  
+  if(bootstrap_ci_type == "percentile"){
+    # Follows the percentile method of Efron, B. & Hastie, T. Computer Age
+    # Statistical Inference. (Cambridge University Press, 2016).
+    
+    # Define percentiles based on the alpha level..
+    percentiles <- c(conf_alpha/2.0, 1.0 - conf_alpha/2.0)
+    
+    # Compute percentiles within the data set
+    percentile_values <- stats::quantile(x, probs=percentiles, names=FALSE)
+    
+    # Generate a summary list
+    summary_list <- list("median"=stats::median(x),
+                         "ci_low"=percentile_values[1],
+                         "ci_up"=percentile_values[2])
+    
+  } else if(bootstrap_ci_type == "bc"){
+    # Follows the bias-corrected (BC) method of Efron, B. & Hastie, T. Computer
+    # Age Statistical Inference. (Cambridge University Press, 2016).
+    if(length(x_0) > 1){
+      stop(paste0("The full-data estimate should have length 1. Found: length ", length(x_0), "."))
+    } 
+    
+    if(!is.finite(x_0)) return(empty_list)
+    
+    # Compute the bias-correction value. In absence of bias, z_0 equals 0.
+    z_0 <- stats::qnorm(sum(x <= x_0) / length(x))
+    
+    if(!is.finite(z_0)) return(empty_list)
+    
+    # Define the z-statistic for bounds of the confidence interval.
+    z_alpha <- stats::qnorm(c(conf_alpha/2.0, 1.0 - conf_alpha/2.0))
+    
+    # Define bias-corrected percentiles.
+    percentiles <- stats::pnorm((2.0 * z_0 + z_alpha))
+    
+    # Compute percentiles within the data set
+    percentile_values <- stats::quantile(x, probs=percentiles, names=FALSE)
+    
+    # Generate a summary list
+    summary_list <- list("median"=x_0,
+                         "ci_low"=percentile_values[1],
+                         "ci_up"=percentile_values[2])
+  }
+  
   
   return(summary_list)
 }

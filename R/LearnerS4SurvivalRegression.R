@@ -330,3 +330,24 @@ setMethod("..set_calibration_info", signature(object="familiarSurvRegr"),
             
             return(object)
           })
+
+
+#####..set_vimp_parameters#####
+setMethod("..set_vimp_parameters", signature(object="familiarSurvRegr"),
+          function(object, method, ...){
+            
+            # Randomisation of distribution depends on selected learner.
+            if(method == "survival_regr"){
+              distribution_default <- "weibull"
+              
+            } else {
+              distribution_default <- stringi::stri_replace_first_fixed(str=method,
+                                                                        pattern="survival_regr_",
+                                                                        replacement="")
+            }
+            
+            # Set the distribution parameter
+            object@hyperparameters$distribution <- distribution_default
+            
+            return(object)
+          })

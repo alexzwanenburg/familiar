@@ -7,12 +7,17 @@ setClass("familiarRFSRC",
 
 .get_available_rfsrc_learners <- function(show_general=TRUE) return(c("random_forest", "random_forest_rfsrc"))
 
+.get_available_rfsrc_vimp_methods <- function(show_general=TRUE){
+  return(c("random_forest_permutation", "random_forest_minimum_depth", "random_forest_variable_hunting",
+           "random_forest_rfsrc_permutation", "random_forest_rfsrc_minimum_depth", "random_forest_rfsrc_variable_hunting",
+           "random_forest_holdout", "random_forest_rfsrc_holdout"))
+}
 
 #####is_available#####
 setMethod("is_available", signature(object="familiarRFSRC"),
           function(object, ...){
-            # Ranger exists for all outcome types and variable importance
-            # methods, including impurity for survival.
+            # Random forests exists for all outcome types and variable
+            # importance methods.
             return(TRUE)
           })
 
@@ -29,6 +34,7 @@ setMethod("get_default_hyperparameters", signature(object="familiarRFSRC"),
             param$sample_size  <- list()
             param$m_try        <- list()
             param$node_size    <- list()
+            param$tree_depth   <- list()
             param$n_split      <- list()
             param$split_rule   <- list()
             
@@ -402,9 +408,9 @@ setMethod("..vimp", signature(object="familiarRFSRC"),
               # Perform variable hunting
               vimp_score <- randomForestSRC::var.select(object=object@model,
                                                         method="vh",
-                                                        K=param$fs_vh_fold,
-                                                        nstep=param$fs_vh_step_size,
-                                                        nrep=param$fs_vh_n_rep,
+                                                        K=object@hyperparameters$fs_vh_fold,
+                                                        nstep=object@hyperparameters$fs_vh_step_size,
+                                                        nrep=object@hyperparameters$fs_vh_n_rep,
                                                         verbose=FALSE,
                                                         refit=FALSE)$varselect
               
@@ -430,14 +436,26 @@ setMethod("..vimp", signature(object="familiarRFSRC"),
                 return(callNextMethod())
               }
               
+              if(get_n_features(data) <= 1){
+                warning("Variable importance using randomForestRFSRC::holdout.vimp requires more than 1 feature.")
+                
+                return(data.table::data.table("score"=0.0,
+                                              "name"=get_feature_columns(x=data),
+                                              "rank"=1L,
+                                              "multi_var"=TRUE))
+              }
+              
               # Find feature columns in the data.
               feature_columns <- get_feature_columns(x=data)
               
               # Parse formula.
               if(object@outcome_type == "survival") {
+                # Creating a local instance of survival::Surv() prevents an
+                # error.
+                Surv <- survival::Surv
                 formula <- stats::reformulate(termlabels=feature_columns,
-                                              response=quote(survival::Surv(outcome_time, outcome_event)))
-                
+                                              response=quote(Surv(outcome_time, outcome_event)))
+
               } else if(object@outcome_type %in% c("binomial", "multinomial", "count", "continuous")){
                 formula <- stats::reformulate(termlabels=feature_columns,
                                               response=quote(outcome))
@@ -445,25 +463,22 @@ setMethod("..vimp", signature(object="familiarRFSRC"),
               } else {
                 ..error_outcome_type_not_implemented(object@outcome_type)
               }
-              
-              # Extract hyperparameters from the model object.
-              param <- object@hyperparameters
-              
+
               # Determine the sample size
-              sample_size <- ceiling(param$sample_size * nrow(data@data))
+              sample_size <- ceiling(object@hyperparameters$sample_size * nrow(data@data))
               sample_type <- ifelse(sample_size == nrow(data@data), "swr", "swor")
               
               # Perform holdout variable importance.
               vimp_score <-randomForestSRC::holdout.vimp(formula,
                                                          data = data@data,
-                                                         ntree = 2^param$n_tree,
+                                                         ntree = 2^object@hyperparameters$n_tree,
                                                          samptype = sample_type,
                                                          sampsize = sample_size,
-                                                         mtry = max(c(1, ceiling(param$m_try * get_n_features(data)))),
-                                                         nodesize = param$node_size,
-                                                         nodedepth = param$tree_depth,
-                                                         nsplit = param$n_split,
-                                                         splitrule = param$split_rule,
+                                                         mtry = max(c(1, ceiling(object@hyperparameters$m_try * get_n_features(data)))),
+                                                         nodesize = object@hyperparameters$node_size,
+                                                         nodedepth = object@hyperparameters$tree_depth,
+                                                         nsplit = object@hyperparameters$n_split,
+                                                         splitrule = object@hyperparameters$split_rule,
                                                          verbose=FALSE)
               
               # Create the variable importance data table

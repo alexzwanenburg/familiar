@@ -59,24 +59,61 @@ run_feature_selection <- function(cl, proj_list, settings, file_paths){
 
 compute_variable_importance <- function(run, fs_method, hpo_list, proj_list, settings, file_paths){
   # Function for calculating variable importance
-
+  
   ############### Data preparation ################################################################
   # Pre-process data
-  data_obj <- apply_pre_processing(run=run, train_or_validate="train")
+  
+  # Data will be loaded at run time in .vimp.
+  data <- methods::new("dataObject",
+                       data = NULL,
+                       is_pre_processed = FALSE,
+                       outcome_type = settings$data$outcome_type,
+                       delay_loading = TRUE,
+                       perturb_level = tail(run$run_table, n=1)$perturb_level,
+                       load_validation =FALSE,
+                       aggregate_on_load = FALSE,
+                       outcome_info = create_outcome_info(settings=settings))
   
   ############## Select parameters ################################################################
-  param_list <- .find_hyperparameters_for_run(run=run, hpo_list=hpo_list)
+  parameter_list <- .find_hyperparameters_for_run(run=run, hpo_list=hpo_list)
 
   ############## Variable importance calculation ##################################################
-  vimp_table <- vimp.assess_variable_importance(data_obj=data_obj, method=fs_method, param=param_list)
+  
+  # Load feature_info_list
+  feature_info_list <- get_feature_info_list(run=run)
+  
+  # Find required features
+  required_features <- find_required_features(features=get_available_features(feature_info_list=feature_info_list,
+                                                                              exclude_signature=TRUE),
+                                              feature_info_list=feature_info_list)
+  
+  # Limit to required features. In principle, this removes signature features
+  # which are not assessed through variable importance.
+  feature_info_list <- feature_info_list[required_features]
+  
+  # Create the variable importance method object or familiar model object to
+  # compute variable importance with.
+  vimp_object <- methods::new("familiarVimpMethod",
+                              outcome_type=data@outcome_type,
+                              hyperparameters=parameter_list,
+                              vimp_method=fs_method,
+                              outcome_info=.get_outcome_info(),
+                              feature_info=feature_info_list,
+                              req_feature_cols=required_features,
+                              run_table=run$run_table)
 
+  # Compute variable importance.
+  vimp_table <- .vimp(object=vimp_object, data=data)
+  
   # Post-processing on the variable importance data table
-  if(nrow(vimp_table)==0){
+  if(nrow(vimp_table) == 0){
     # If the variable importance data table is empty, return an empty table
     vimp_table$data_id   <- numeric(0)
     vimp_table$run_id    <- numeric(0)
     vimp_table$fs_method <- character(0)
+    
   } else {
+    # Obtain the list of identifiers.
     id_list <- getIterID(run=run)
 
     # Add identifiers to variable importance data table
@@ -87,7 +124,7 @@ compute_variable_importance <- function(run, fs_method, hpo_list, proj_list, set
 
   # Generate the translation table for the selected set of features.
   translation_table <- rank.get_decluster_translation_table(features=vimp_table$name,
-                                                            feature_info_list=get_feature_info_list(run=run))
+                                                            feature_info_list=feature_info_list)
 
   return(list("run_table"=run$run_table, "fs_method"=fs_method, "vimp"=vimp_table, "translation_table"=translation_table))
 }

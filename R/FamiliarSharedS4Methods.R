@@ -31,7 +31,7 @@
     
     if(!is.null(object@outcome_info@distribution$mean)){
       score_mean <- metric.main(metric=metric, object=object, purpose="score",
-                                dt=data.table::copy(dt_pred)[, "predicted_outcome":=object@outcome_info@distribution$mean],
+                                dt=data.table::copy(prediction_table)[, "predicted_outcome":=object@outcome_info@distribution$mean],
                                 outcome_type=object@outcome_type, na.rm=na.rm)
     } else {
       score_mean <- NULL
@@ -267,3 +267,59 @@
   # Save to disk
   saveRDS(object, file=file.path(dir_path, file_name))
 }
+
+
+
+#####has_bad_training_data#####
+setMethod("has_bad_training_data", signature(object="ANY", data="dataObject"),
+          function(object, data, ...){
+            
+            if(!(is(object, "familiarModel") | is(object, "familiarVimpMethod"))){
+              ..error_reached_unreachable_code("has_bad_training_data: object is not a familiarModel or familiarVimpMethod.")
+            }
+            
+            # Retrieve outcomeInfo object.
+            if(!is.null(object@outcome_info)){
+              outcome_info <- object@outcome_info
+              
+            } else if(!is.null(data@outcome_info)){
+              outcome_info <- data@outcome_info
+              
+            } else {
+              ..error_reached_unreachable_code("has_bad_training_data: could not find outcomeInfo object attached to familiarModel/familiarVimpMethod or dataObject.")
+            }
+            
+            # One cannot train without data or on a single sample.
+            if(is_empty(data)) return(TRUE)
+            
+            if(nrow(data@data) < 2) return(TRUE)
+            
+            if(object@outcome_type == "survival"){
+              
+              # Check that not all data are censored.
+              censoring_variable <- outcome_info@censored
+              if(all(data@data$outcome_event == censoring_variable)) return(TRUE)
+              if(all(data@data$outcome_event == 0)) return(TRUE)
+              
+              # Check that not all data have the same survival time.
+              if(all(data@data$outcome_time == data@data$outcome_time[1])) return(TRUE)
+              
+            } else if(object@outcome_type %in% c("binomial", "multinomial")){
+              
+              # Check that not all data have the same class.
+              if(data.table::uniqueN(data@data$outcome) == 1) return(TRUE)
+              
+              # Check that all classes are present at least once.
+              if(data.table::uniqueN(data@data$outcome) < nlevels(data@data$outcome)) return(TRUE)
+              
+            } else if(object@outcome_type %in% c("count", "continuous")){
+              
+              # Check that not all data have the same outcome value.
+              if(all(data@data$outcome == data@data$outcome[1])) return(TRUE)
+              
+            } else {
+              ..error_outcome_type_not_implemented(object@outcome_type)
+            }
+            
+            return(FALSE)
+          })

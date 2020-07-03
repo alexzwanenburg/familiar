@@ -3,7 +3,7 @@
 NULL
 
 setMethod("train", signature(data="data.table"),
-          function(data, learner, hyperparameter_list=list(), ...){
+          function(data, learner, hyperparameter_list=list(), create_bootstrap=FALSE, ...){
             
             # Convert data to dataObject.
             data <- do.call(as_data_object, args=c(list("data"=data),
@@ -11,13 +11,14 @@ setMethod("train", signature(data="data.table"),
             
             return(do.call(train, args=c(list("data"=data,
                                               "learner"=learner,
-                                              "hyperparameter_list"=hyperparameter_list),
+                                              "hyperparameter_list"=hyperparameter_list,
+                                              "create_bootstrap"=create_bootstrap),
                                          list(...))))
           })
 
 
 setMethod("train", signature(data="dataObject"),
-          function(data, learner, hyperparameter_list=list(), ...){
+          function(data, learner, hyperparameter_list=list(), create_bootstrap=FALSE, ...){
             
             #####Prepare settings###############################################
             
@@ -136,15 +137,22 @@ setMethod("train", signature(data="dataObject"),
                                    outcome_info = outcome_info,
                                    settings=settings$eval,
                                    project_id = 0)
-            
-            # Preprocess data.
-            data <- process_input_data(object=object,
-                                       data=data,
-                                       is_pre_processed=data@is_pre_processed,
-                                       stop_at="clustering")
-            
+
             # Add package version/
             object <- add_package_version(object=object)
+            
+            # Process data.
+            data <- process_input_data(object=object,
+                                       data=data,
+                                       is_pre_processed = is_pre_processed,
+                                       stop_at="clustering")
+            
+            # Create bootstraps.
+            if(create_bootstrap){
+              data <- select_data_from_samples(data=data, samples=fam_sample(x=data@data$subject_id,
+                                                                             size=nrow(data@data),
+                                                                             replace=TRUE))
+            }
             
             # Train model.
             object <- .train(object=object, data=data, get_additional_info=TRUE)

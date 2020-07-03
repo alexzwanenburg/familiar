@@ -64,12 +64,23 @@ run_model_development <- function(cl, proj_list, settings, file_paths){
 
 build_model <- function(run, hpo_list){
   # Function for model building and data extraction
-
+  
   # Load from the familiar or global environment
   proj_list         <- get_project_list()
   settings          <- get_settings()
   file_paths        <- get_file_paths()
 
+  # Data will be loaded at run time in .train
+  data <- methods::new("dataObject",
+                       data = NULL,
+                       is_pre_processed = FALSE,
+                       outcome_type = settings$data$outcome_type,
+                       delay_loading = TRUE,
+                       perturb_level = tail(run$run_table, n=1)$perturb_level,
+                       load_validation =FALSE,
+                       aggregate_on_load = FALSE,
+                       outcome_info = create_outcome_info(settings=settings))
+  
   ############### Initialisation ##################################################################
 
   # Get hyper-parameters
@@ -88,40 +99,40 @@ build_model <- function(run, hpo_list){
   selected_features <- get_signature(feature_info_list=feature_info_list, dt_ranks=dt_ranks, fs_method=run$fs_method, param=param_list, settings=settings)
   
   # Generate data object
-  data_obj          <- apply_pre_processing(run=run, train_or_validate="train", selected_features=selected_features)
-  
+  # data_obj          <- apply_pre_processing(run=run, train_or_validate="train", selected_features=selected_features)
+  # 
   # Find features that are required for processing the data
   required_features <- find_required_features(features=selected_features, feature_info_list=feature_info_list)
 
   # Find important features, i.e. those that constitute the signature either individually or as part of a cluster
   important_features <- find_important_features(features=selected_features, feature_info_list=feature_info_list)
   
-  # Find pre-porcessing data
+  # Find pre-processing data
   feature_info_list <- feature_info_list[required_features]
 
   ############### Model building ################################################################
 
   # Create familiar model
-  fam_model         <- methods::new("familiarModel",
-                                    outcome_type = settings$data$outcome_type,
-                                    learner = run$learner,
-                                    fs_method = run$fs_method,
-                                    run_table = run$run_table,
-                                    hyperparameters = param_list,
-                                    hyperparameter_data = NULL,
-                                    signature = selected_features,
-                                    req_feature_cols =  required_features,
-                                    important_features = important_features,
-                                    feature_info = feature_info_list,
-                                    outcome_info = .get_outcome_info(),
-                                    project_id = proj_list$project_id,
-                                    settings = settings$eval)
-
+  fam_model <- methods::new("familiarModel",
+                            outcome_type = settings$data$outcome_type,
+                            learner = run$learner,
+                            fs_method = run$fs_method,
+                            run_table = run$run_table,
+                            hyperparameters = param_list,
+                            hyperparameter_data = NULL,
+                            signature = selected_features,
+                            req_feature_cols =  required_features,
+                            important_features = important_features,
+                            feature_info = feature_info_list,
+                            outcome_info = .get_outcome_info(),
+                            project_id = proj_list$project_id,
+                            settings = settings$eval)
+  
   # Add package version
-  fam_model         <- add_package_version(object=fam_model)
+  fam_model <- add_package_version(object=fam_model)
 
   # Train model
-  fam_model         <- .train(object=fam_model, data=data_obj, get_additional_info=TRUE)
+  fam_model <- .train(object=fam_model, data=data, get_additional_info=TRUE)
 
   # Save model
   save(list=fam_model, file=file_paths$mb_dir)

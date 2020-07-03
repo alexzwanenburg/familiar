@@ -591,25 +591,27 @@
                                           present_competing_risk_indicator))
   
   # Check the presence of user-provided indicators.
-  if(!is.null(settings$data$event_indicator)){
+  if(!is.null(settings$data$event_indicator) & length(event_values) > 0){
     # An event indicator should always be present.
-    if(!all(settings$data$event_indicator %in% event_values)){
+    if(!all(tolower(as.character(settings$data$event_indicator)) %in% tolower(as.character(event_values)))){
       stop(paste0("The following provided event indicator(s) were not found in the data: ",
-           paste0(setdiff(settings$data$event_indicator, event_values), collapse=", "),
+           paste0(setdiff(tolower(as.character(settings$data$event_indicator)),
+                          tolower(as.character(event_values))), collapse=", "),
            " . Please check for spelling errors."))
     }
   }
   
-  if(!is.null(settings$data$censoring_indicator)){
+  if(!is.null(settings$data$censoring_indicator) & length(event_values) > 0){
     # An censoring indicator is not required to be present, but if the user
     # provides one, and it isn't found in the dataset, raise an error.
-    if(!all(settings$data$censoring_indicator %in% event_values)){
+    if(!all(tolower(as.character(settings$data$censoring_indicator)) %in% tolower(as.character(event_values)))){
       stop(paste0("The following provided censoring indicator(s) were not found in the data: ",
-                  paste0(setdiff(settings$data$censoring_indicator, event_values), collapse=", ")))
+                  paste0(setdiff(tolower(as.character(settings$data$censoring_indicator)),
+                                 tolower(as.character(event_values))), collapse=", ")))
     }
   }
   
-  if(!is.null(settings$data$competing_risk_indicator)){
+  if(!is.null(settings$data$competing_risk_indicator) & length(event_values) > 0){
     # Competing risk indicators are only present in competing_risk outcomes.
     if(outcome_type == "survival"){
       stop(paste0("One or indicators for competing risks were specified. ",
@@ -618,9 +620,10 @@
     }
     
     
-    if(!all(settings$data$competing_risk_indicator) %in% event_values){
+    if(!all(tolower(as.character(settings$data$competing_risk_indicator)) %in% tolower(as.character(event_values)))){
       stop(paste0("The following provided competing risk indicator(s) were not found in the data: ",
-                  paste0(setdiff(settings$data$competing_risk_indicator, event_values), collapse=", ")))
+                  paste0(setdiff(tolower(as.character(settings$data$competing_risk_indicator)),
+                                 tolower(as.character(event_values))), collapse=", ")))
     }
   }
 

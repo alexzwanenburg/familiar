@@ -60,6 +60,17 @@ setClass("familiarGLMnetElasticNet",
   return(learners)
 }
 
+.get_available_glmnet_ridge_vimp_methods <- function(show_general=TRUE){
+  return(.get_available_glmnet_ridge_learners(show_general=show_general))
+}
+
+.get_available_glmnet_lasso_vimp_methods <- function(show_general=TRUE){
+  return(.get_available_glmnet_lasso_learners(show_general=show_general))
+}
+
+.get_available_glmnet_elastic_net_vimp_methods <- function(show_general=TRUE){
+  return(.get_available_glmnet_elastic_net_learners(show_general=show_general))
+}
 
 #####is_available#####
 setMethod("is_available", signature(object="familiarGLMnet"),
@@ -268,7 +279,7 @@ setMethod("..train", signature(object="familiarGLMnet", data="dataObject"),
             # Order according to subject_id in encoded_data$encoded_data@data so
             # that fold_id corresponds to the correct rows.
             fold_table <- merge(x=fold_table,
-                                y=fold_table[, "subject_id"],
+                                y=encoded_data$encoded_data@data[, "subject_id"],
                                 by="subject_id")
             
             # Train the model.
@@ -313,7 +324,6 @@ setMethod("..train", signature(object="familiarGLMnet", data="dataObject"),
               ..error_reached_unreachable_code(paste0("..train,familiarGLMnet: encountered unknown learner of unknown class: ", paste0(class(object), collapse=", ")))
             }
 
-            
             # Check if the model trained at all.
             if(inherits(model, "error")) return(callNextMethod())
             
@@ -452,6 +462,10 @@ setMethod("..vimp", signature(object="familiarGLMnet"),
             
             # Check if the model has been trained upon retry.
             if(!model_is_trained(object)) return(callNextMethod())
+            
+            # Check if the model is a familiarGLMnet object, and not
+            # familiarGLM (which happens for one-feature datasets).
+            if(!is(object, "familiarGLMnet")) return(..vimp(object=object, data=data))
             
             if(object@hyperparameters$family == "multinomial"){
               # Read coefficient lists

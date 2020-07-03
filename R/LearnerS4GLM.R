@@ -408,3 +408,59 @@ setMethod("..get_distribution_family", signature(object="familiarGLM"),
             
             return(family_fun)
           })
+
+
+#####..set_vimp_parameters#####
+setMethod("..set_vimp_parameters", signature(object="familiarGLM"),
+          function(object, method, ...){
+            
+            # Read family string by parsing the learner.
+            family_str <- stringi::stri_replace_first_regex(str=method, pattern="glm", replace="")
+            if(family_str != "") family_str <- stringi::stri_replace_first_regex(str=family_str, pattern="_", replace="")
+            
+            # Determine the family or families.
+            if(family_str == ""){
+              # If no family is specified, the default behaviour is to identify the family
+              # through optimisation.
+              if(outcome_type=="binomial") {
+                family_default <- c("logistic")
+                
+              } else if(outcome_type=="continuous"){
+                family_default <- c("gaussian")
+                
+              } else if(outcome_type=="count"){
+                family_default <- c("poisson")
+                
+              } else if(outcome_type=="multinomial") {
+                family_default <- "multinomial"
+                
+              } else if(outcome_type == "survival") {
+                family_default <- "cox"
+                
+              } else {
+                ..error_outcome_type_not_implemented(outcome_type)
+              }
+              
+            } else if(family_str == "log") {
+              # "log" is a collection of different families, that should be specified
+              # according to the outcome type.
+              if(outcome_type=="binomial") {
+                family_default <- "log_binomial"
+                
+              } else if(outcome_type=="continuous") {
+                family_default <- c("log_gaussian")
+                
+              } else if(outcome_type=="count") {
+                family_default <- "log_poisson"
+              }
+              
+            } else {
+              # A family was unambiguously specified.
+              family_default <- family_str
+            }
+            
+            # Update family hyperparameter.
+            object@hyperparameters$family <- family_default
+            
+            return(object)
+          })

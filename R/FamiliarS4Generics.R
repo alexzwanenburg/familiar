@@ -203,3 +203,11 @@ setGeneric("..set_vimp_parameters", function(object, ...) standardGeneric("..set
 setGeneric("..get_distribution_family", function(object, ...) standardGeneric("..get_distribution_family"))
 
 setGeneric("..update_outcome", function(object, data, ...) standardGeneric("..update_outcome"))
+
+
+#####familiarVimpMethod variable importance methods #####
+setGeneric(".vimp", function(object, ...) standardGeneric(".vimp"))
+
+setGeneric("promote_vimp_method", function(object, ...) standardGeneric("promote_vimp_method"))
+
+setGeneric("prepare_vimp_object", function(data, ...) standardGeneric("prepare_vimp_object"))
