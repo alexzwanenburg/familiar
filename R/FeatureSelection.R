@@ -59,7 +59,7 @@ run_feature_selection <- function(cl, proj_list, settings, file_paths){
 
 compute_variable_importance <- function(run, fs_method, hpo_list, proj_list, settings, file_paths){
   # Function for calculating variable importance
-  browser()
+  
   ############### Data preparation ################################################################
   # Pre-process data
   
@@ -98,15 +98,13 @@ compute_variable_importance <- function(run, fs_method, hpo_list, proj_list, set
                               hyperparameters=parameter_list,
                               vimp_method=fs_method,
                               outcome_info=.get_outcome_info(),
-                              feature_info=feature_info,
+                              feature_info=feature_info_list,
                               req_feature_cols=required_features,
                               run_table=run$run_table)
 
   # Compute variable importance.
   vimp_table <- .vimp(object=vimp_object, data=data)
   
-  # vimp_table <- vimp.assess_variable_importance(data_obj=data_obj, method=fs_method, param=param_list)
-
   # Post-processing on the variable importance data table
   if(nrow(vimp_table) == 0){
     # If the variable importance data table is empty, return an empty table
@@ -126,7 +124,7 @@ compute_variable_importance <- function(run, fs_method, hpo_list, proj_list, set
 
   # Generate the translation table for the selected set of features.
   translation_table <- rank.get_decluster_translation_table(features=vimp_table$name,
-                                                            feature_info_list=get_feature_info_list(run=run))
+                                                            feature_info_list=feature_info_list)
 
   return(list("run_table"=run$run_table, "fs_method"=fs_method, "vimp"=vimp_table, "translation_table"=translation_table))
 }

@@ -727,18 +727,19 @@ hpo.evaluate_hyperparameters <- function(run, dt_param, dt_ranks, feature_info_l
                                   fs_method = fs_method,
                                   run_table = run$run_table,
                                   hyperparameters = param_list,
-                                  signature = sel_feat)
+                                  signature = sel_feat,
+                                  outcome_info = .get_outcome_info())
     
   } else {
     # We are optimising model parameters for a (model-based) variable importance
     # method.
-    browser()
-    
+
     # Create a familiarModel from variable.
     fam_model <- promote_vimp_method(object=methods::new("familiarVimpMethod",
                                                          outcome_type=data_obj@outcome_type,
                                                          hyperparameters=param_list,
-                                                         vimp_method=fs_method))
+                                                         vimp_method=fs_method,
+                                                         outcome_info=.get_outcome_info()))
     
     # Update missing slots.
     fam_model@run_table <- run$run_table
@@ -747,20 +748,10 @@ hpo.evaluate_hyperparameters <- function(run, dt_param, dt_ranks, feature_info_l
       ..error_reached_unreachable_code("hpo_evaluate_hyperparameters_feature_selection_method_is_not_model_based")
     }
   }
-# 
-#   # Create familiar model
-#   fam_model     <- methods::new("familiarModel",
-#                                 outcome_type = data_obj@outcome_type,
-#                                 learner = learner,
-#                                 fs_method = fs_method,
-#                                 run_table = run$run_table,
-#                                 hyperparameters = param_list,
-#                                 signature = sel_feat,
-#                                 outcome_info=.get_outcome_info())
-  
+
   # Train model
   fam_model   <- .train(object=fam_model, data=data_obj_tr, get_additional_info=FALSE)
-
+  
   ############## Assess model performance ##############################
 
   # Assess performance on the development data

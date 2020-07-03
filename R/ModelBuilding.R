@@ -64,7 +64,7 @@ run_model_development <- function(cl, proj_list, settings, file_paths){
 
 build_model <- function(run, hpo_list){
   # Function for model building and data extraction
-  browser()
+  
   # Load from the familiar or global environment
   proj_list         <- get_project_list()
   settings          <- get_settings()
