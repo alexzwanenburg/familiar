@@ -192,6 +192,32 @@ test_all_learners_train_predict_vimp <- function(learners, hyperparameter_list=N
       })
       
       
+      
+      #####Bootstrapped data set################################################
+      # Train the model.
+      model <- suppressWarnings(train(data=full_data,
+                                      cluster_method="none",
+                                      imputation_method="simple",
+                                      hyperparameter_list=hyperparameters,
+                                      learner=learner,
+                                      time_max=1832,
+                                      create_bootstrap=TRUE))
+      
+      # Test that models can be created.
+      testthat::test_that(paste0("Model for ", outcome_type, " can be created using ", learner, " using a complete data set."), {
+        
+        # Test that the model was successfully created.
+        testthat::expect_equal(model_is_trained(model),
+                               ifelse(learner %in% except_train, FALSE, TRUE))
+        
+        if(outcome_type == "survival"){
+          # Calibration info is present
+          testthat::expect_equal(familiar:::has_calibration_info(model), TRUE)
+        }
+      })
+      
+      
+      
       #####One-feature data set#################################################
       # Train the model.
       model <- suppressWarnings(train(data=one_feature_data,
