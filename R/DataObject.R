@@ -151,7 +151,7 @@ setMethod("create_data_object", signature(object="familiarModel", data="ANY"),
 
 
 #####load_delayed_data (model)#####
-setMethod("load_delayed_data", signature(data="dataObject", object="familiarModel"),
+setMethod("load_delayed_data", signature(data="dataObject", object="ANY"),
           function(data, object, stop_at){
             # Loads data from internal memory
 
@@ -160,14 +160,11 @@ setMethod("load_delayed_data", signature(data="dataObject", object="familiarMode
             }
             
             # Check if loading was actually delayed
-            if(!data@delay_loading){
-              return(data)
-            }
-            
+            if(!data@delay_loading) return(data)
+
             # Read project list and settings
             iter_list <- get_project_list()$iter_list
-            settings  <- get_settings()
-            
+
             # Read required features
             req_feature_cols <- object@req_feature_cols
             
@@ -175,16 +172,21 @@ setMethod("load_delayed_data", signature(data="dataObject", object="familiarMode
             non_feature_cols <- get_non_feature_columns(x=object)
             
             # Get subject ids
-            run_id_list      <- getIterID(run=list("run_table"=object@run_table), perturb_level=data@perturb_level)
-            run_subj_id      <- getSubjectIDs(iter_list=iter_list, data_id=run_id_list$data, run_id=run_id_list$run,
-                                              train_or_validate=ifelse(data@load_validation, "valid", "train"))
+            run_id_list <- getIterID(run=list("run_table"=object@run_table), perturb_level=data@perturb_level)
+            run_subj_id <- getSubjectIDs(iter_list=iter_list, data_id=run_id_list$data, run_id=run_id_list$run,
+                                         train_or_validate=ifelse(data@load_validation, "valid", "train"))
             
             # Check subjects and select unique subjects
             if(!is.null(run_subj_id)){
-              uniq_subj_id   <- unique(run_subj_id)
+              uniq_subj_id <- unique(run_subj_id)
+              
             } else {
               # Return an updated data object, but without data
-              return(methods::new("dataObject", data=NULL, is_pre_processed=FALSE, outcome_type=data@outcome_type, aggregate_on_load=data@aggregate_on_load))
+              return(methods::new("dataObject",
+                                  data=NULL,
+                                  is_pre_processed=FALSE,
+                                  outcome_type=data@outcome_type,
+                                  aggregate_on_load=data@aggregate_on_load))
             }
             
             # Prepare a new data object
@@ -215,7 +217,6 @@ setMethod("load_delayed_data", signature(data="dataObject", object="familiarMode
             }
             
             return(new_data)
-            
           })
 
 
