@@ -246,6 +246,7 @@ setMethod("extract_data", signature(object="familiarEnsemble"),
             # Load models
             object <- load_models(object=object)
             
+            
             # Extract feature distance tables,
             if(data_element %in% c("all", "mutual_correlation", "univariate_analysis", "feature_expressions")){
               # Not for the fs_vimp and model_vimp data elements. This is
@@ -369,6 +370,21 @@ setMethod("extract_data", signature(object="familiarEnsemble"),
             } else {
               model_performance_data <- NULL
             }
+            
+            # Compute the decision curve analysis data.
+            if(data_element %in% c("all", "decision_curve_analyis")){
+              decision_curve_data <- extract_decision_curve_data(object=object,
+                                                                 data=data,
+                                                                 cl=cl,
+                                                                 ensemble_method=ensemble_method,
+                                                                 eval_times=eval_times,
+                                                                 metric_alpha=metric_alpha,
+                                                                 verbose=verbose)
+              
+            } else {
+              decision_curve_data <- NULL
+            }
+            
             
             # Extract information regarding stratification
             if(data_element %in% c("all", "kaplan_meier_info")){
@@ -1004,6 +1020,7 @@ setMethod("extract_performance", signature(object="familiarEnsemble", prediction
             n_iter <- ceiling(20 / metric_alpha)
             
             # Get ensemble performance.
+            # TODO: Make sure to pass along a familiarModel object to set the right prediction type.
             performance_list$ensemble <- data.table::rbindlist(lapply(seq_len(n_iter), function(ii, prediction_table, metric, object, outcome_type){
               
               # Generate a bootstrap sample.
