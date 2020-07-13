@@ -237,35 +237,35 @@ setMethod("get_outcome_columns", signature(x="familiarEnsemble"), function(x){
 
 
 #####get_non_feature_columns--------------------------------------------------------
-setMethod("get_non_feature_columns", signature(x="character"), function(x, include_repetition_id=TRUE){
-  return(.get_non_feature_columns(outcome_type=x, include_repetition_id=include_repetition_id))
+setMethod("get_non_feature_columns", signature(x="character"), function(x, sample_level_only=FALSE){
+  return(.get_non_feature_columns(outcome_type=x, sample_level_only=sample_level_only))
 })
 
-setMethod("get_non_feature_columns", signature(x="dataObject"), function(x, include_repetition_id=TRUE){
-  return(.get_non_feature_columns(outcome_type=x@outcome_type, include_repetition_id=include_repetition_id))
+setMethod("get_non_feature_columns", signature(x="dataObject"), function(x, sample_level_only=FALSE){
+  return(.get_non_feature_columns(outcome_type=x@outcome_type, sample_level_only=sample_level_only))
 })
 
-setMethod("get_non_feature_columns", signature(x="familiarVimpMethod"), function(x, include_repetition_id=TRUE){
-  return(.get_non_feature_columns(outcome_type=x@outcome_type, include_repetition_id=include_repetition_id))
+setMethod("get_non_feature_columns", signature(x="familiarVimpMethod"), function(x, sample_level_only=FALSE){
+  return(.get_non_feature_columns(outcome_type=x@outcome_type, sample_level_only=sample_level_only))
 })
 
-setMethod("get_non_feature_columns", signature(x="familiarModel"), function(x, include_repetition_id=TRUE){
-  return(.get_non_feature_columns(outcome_type=x@outcome_type, include_repetition_id=include_repetition_id))
+setMethod("get_non_feature_columns", signature(x="familiarModel"), function(x, sample_level_only=FALSE){
+  return(.get_non_feature_columns(outcome_type=x@outcome_type, sample_level_only=sample_level_only))
 })
 
-setMethod("get_non_feature_columns", signature(x="familiarEnsemble"), function(x, include_repetition_id=TRUE){
-  return(.get_non_feature_columns(outcome_type=x@outcome_type, include_repetition_id=include_repetition_id))
+setMethod("get_non_feature_columns", signature(x="familiarEnsemble"), function(x, sample_level_only=FALSE){
+  return(.get_non_feature_columns(outcome_type=x@outcome_type, sample_level_only=sample_level_only))
 })
 
 # Internal function
-.get_non_feature_columns <- function(outcome_type, include_repetition_id=TRUE){
+.get_non_feature_columns <- function(outcome_type, sample_level_only=FALSE){
   # Returns column names in data table which are not features
   
   # Find outcome columns
   outcome_columns <- get_outcome_columns(x=outcome_type)
   
   # Find the id-columns
-  id_columns <- get_id_columns(include_repetition_id)
+  id_columns <- get_id_columns(sample_level_only=sample_level_only)
   
   # Generate the names of the non-feature columns
   return(c(outcome_columns, id_columns))

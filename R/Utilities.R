@@ -751,13 +751,13 @@ get_placeholder_vimp_table <- function(){
 
 
 
-get_id_columns <- function(include_repetition_id=TRUE){
+get_id_columns <- function(sample_level_only=FALSE){
   # Generate the names of the non-feature columns
-  if(include_repetition_id){
-    return(c("subject_id", "cohort_id", "repetition_id"))
+  if(sample_level_only){
+    return(c("subject_id", "cohort_id"))
     
   } else {
-    return(c("subject_id", "cohort_id"))
+    return(c("subject_id", "cohort_id", "repetition_id"))
   }
 }
 
