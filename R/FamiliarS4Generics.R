@@ -176,6 +176,11 @@ setGeneric("get_placeholder_prediction_table", function(object, data, ...) stand
 
 setGeneric("has_bad_training_data", function(object, data, ...) standardGeneric("has_bad_training_data"))
 
+setGeneric("bootstrapper", function(data, ...) standardGeneric("bootstrapper"))
+
+setGeneric("get_bootstrap_sample", function(data, ...) standardGeneric("get_bootstrap_sample"))
+
+setGeneric("universal_extractor", function(object, ...) standardGeneric("universal_extractor"))
 
 ##### familiarModel learner methods #####
 setGeneric("promote_learner", function(object, ...) standardGeneric("promote_learner"))

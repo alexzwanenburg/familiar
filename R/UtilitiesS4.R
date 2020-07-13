@@ -564,3 +564,300 @@ setMethod("get_placeholder_prediction_table", signature(object="familiarModel", 
             
             return(prediction_table)
           })
+
+
+#####bootstrapper---------------------------------------------------------------
+setMethod("bootstrapper", signature(data="dataObject"),
+          function(data, n=NULL, alpha=0.05, FUN, ...){
+            # Call the bootstrapper function dor data.table objects.
+            return(do.call(bootstrapper, args=c(list("data"=data@data,
+                                                     "alpha"=alpha,
+                                                     "n"=n,
+                                                     "FUN"=FUN),
+                                                list(...))))
+          })
+
+setMethod("bootstrapper", signature(data="data.table"),
+          function(data, n=NULL, alpha=0.05, FUN, cl=NULL, verbose=FALSE, ...){
+            
+            # Determine n.
+            if(is.null(n)) n <- ceiling(20 / alpha)
+            
+            if(is_empty(data)) return(data)
+            
+            bootstrapped_data <- fam_lapply(cl=cl,
+                                            X=seq_len(n),
+                                            FUN=function(ii, data, FUN2, dots2){
+                                              
+                                              # Create a random subsample of the data.
+                                              data <- get_bootstrap_sample(data=data)
+                                              
+                                              # Execute the function
+                                              results <- do.call(FUN2, args=c(list("data"=data),
+                                                                              dots2))
+                                              
+                                              # Add bootstrap id
+                                              if(data.table::is.data.table(results)){
+                                                results[, "bootstrap_id":=ii]
+                                                
+                                              } else if(is.null(results)) {
+                                                results <- NULL
+                                                
+                                              } else {
+                                                results <- list("results"=results,
+                                                                "bootstrap_id"=ii)
+                                              }
+                                              
+                                              return(results)
+                                            },
+                                            data=data,
+                                            FUN2=FUN,
+                                            dots2=list(...),
+                                            progress_bar=verbose)
+            
+            # Combine data.tables, if bootstrapped_data is indeed a list of
+            # data.tables.
+            if(any(sapply(bootstrapped_data, data.table::is.data.table))){
+              bootstrapped_data <- data.table::rbindlist(bootstrapped_data, use.names=TRUE)
+            }
+            
+            return(bootstrapped_data)
+          })
+
+
+
+#####get_bootstrap_sample------------------------------------------------------
+setMethod("get_bootstrap_sample", signature(data="dataObject"),
+          function(data, ...){
+            
+            if(data@is_pre_processed){
+            
+              # Bootstrap the data element.
+              data@data <- get_bootstrap_sample(data=data@data)
+              
+            } else if(length(data@sample_set_on_load) > 0){
+              
+              # Reshuffle the samples.
+              data@sample_set_on_load <- fam_sample(x=unique(data@sample_set_on_load),
+                                                    size=length(data@sample_set_on_load),
+                                                    replace=TRUE)
+              
+            } else if(!data@delay_loading){
+              # TODO: make sure that this takes into account cohort_id,
+              # duplicates.
+              sample_ids <- unique(data@data$subject_id)
+              
+              # Apply after processing.
+              data@sample_set_on_load <- fam_sample(x=sample_ids,
+                                                    size=length(sample_ids),
+                                                    replace=TRUE)
+              
+            } else {
+              ..error_reached_unreachable_code("get_boostrap_sample,dataObject: could not identify a suitable method for bootstrapping.")
+            }
+            
+            return(data)
+          })
+
+setMethod("get_bootstrap_sample", signature(data="data.table"),
+          function(data, ...){
+            
+            # Suppress NOTES due to non-standard evaluation in data.table
+            repetition_id <- series_id <- NULL
+            
+            # Find identifier columns at the sample level, i.e. excluding
+            # repetitions and series.
+            id_columns <- intersect(get_id_columns(sample_level_only=TRUE), colnames(data))
+            
+            if(length(id_columns) == 0){
+              # Sample rows.
+              row_ids <- fam_sample(x=seq_len(nrow(data)),
+                                    size=nrow(data),
+                                    replace=TRUE)
+              
+              # Create a subset.
+              data <- data[row_ids, ]
+              
+            } else {
+              # List unique samples.
+              id_table <- unique(data[, mget(id_columns)])
+              
+              # Determine the number of samples to drawn
+              all_id_columns <- intersect(get_id_columns(), colnames(data))
+              all_id_table <- data[, mget(all_id_columns)]
+              
+              # Select only the first repetition.
+              if("repetition_id" %in% all_id_columns){
+                all_id_table <- all_id_table[repetition_id == 1]
+              }
+              
+              # Select only the first series.
+              if("series_id" %in% all_id_columns){
+                all_id_table <- all_id_table[series_id == 1]
+              }
+              
+              # Sample the unique rows of the identifier table.
+              row_ids <- fam_sample(x=seq_len(nrow(id_table)),
+                                    size=nrow(all_id_table),
+                                    replace=TRUE)
+              
+              # Create subsample.
+              id_table <- id_table[row_ids, ]
+              
+              # Merge the subsampled identifier table with the data (removing
+              # duplicates).
+              data <- merge(id_table, unique(data), by=id_columns, all.x=FALSE, all.y=FALSE,
+                            allow.cartesian=TRUE)
+            }
+            
+            return(data)
+          })
+
+setMethod("get_bootstrap_sample", signature(data="NULL"), function(data, ...) return(NULL))
+
+
+#####universal_extractor--------------------------------------------------------
+setMethod("universal_extractor", signature(object="familiarEnsemble"),
+          function(object, FUN, individual_model_ci=FALSE, cl=NULL, verbose=FALSE, ...){
+            
+            # Only pass cl for individual model extraction if
+            # individual_model_ci is TRUE.
+            if(individual_model_ci){
+              cl_model <- NULL
+              cl_internal <- cl
+              
+            } else {
+              cl_model <- cl
+              cl_internal <- NULL
+            }
+            
+            if(verbose) logger.message("\t\tPerforming computations for models in the ensemble.")
+            
+            # Individual model extraction
+            individual_model_data <- fam_lapply(cl=cl_model, 
+                                                X=object@model_list,
+                                                FUN=function(object, FUN2, determine_ci, cl2, dots2, verbose=FALSE){
+                                                  
+                                                  # Execute the function that computes the data.
+                                                  results <- do.call(FUN2, args=c(list("determine_ci"=determine_ci,
+                                                                                       "object"=object,
+                                                                                       "cl"=cl2,
+                                                                                       "verbose"=verbose),
+                                                                                  dots2))
+                                                  
+                                                  # Check that the results are not empty.
+                                                  if(is_empty(results)) return(NULL)
+                                                  
+                                                  # Add model name.
+                                                  if(data.table::is.data.table(results)){
+                                                    # In case the results are a data.table
+                                                    results <- add_model_name(data=results, object=object)
+                                                    
+                                                  } else if(is.list(results)){
+                                                    # In case the results are a list, including data.tables. First
+                                                    # determine the names of the list elements, and then add model
+                                                    # names.
+                                                    result_names <- names(results)
+                                                    results <- lapply(results, add_model_name, object=object)
+                                                    
+                                                    # Restore names.
+                                                    names(results) <- result_names
+                                                  }
+                                                  
+                                                  return(results)
+                                                  
+                                                },
+                                                FUN2=FUN,
+                                                dots2=list(...),
+                                                determine_ci=individual_model_ci,
+                                                cl2=cl_internal,
+                                                verbose=verbose,
+                                                progress_bar=verbose)
+            
+            # Parse to single list.
+            if(any(sapply(individual_model_data, data.table::is.data.table))){
+              # Check if the results are a list of data.tables.
+              individual_model_data <- data.table::rbindlist(individual_model_data, use.names=TRUE)
+              
+            } else if(all(sapply(individual_model_data, is_empty))){
+              # Check if all entries are empty.
+              individual_model_data <- NULL
+              
+            } else {
+              # Check for nested data tables.
+              element_names <- unique(unlist(lapply(individual_model_data, names)))
+              
+              # Aggregate data produced by the models.
+              individual_model_data <- lapply(element_names, function(element, model_data){
+                
+                if(any(sapply(model_data,
+                              function(list_entry, element) data.table::is.data.table(list_entry[[element]]),
+                              element=element))) {
+                  # Check if there is any data.table for the list element, and
+                  # extract a combined data.table if so.
+                  return(rbind_list_list(model_data, element))
+                  
+                } else if(all(sapply(model_data,
+                                     function(list_entry, element) is_empty(list_entry[[element]]),
+                                     element=element))) {
+                  # Check if there is any data for the list element, and return
+                  # a NULL if not.
+                  return(NULL)
+                  
+                } else if(all(sapply(model_data,
+                                     function(list_entry, element) length(list_entry[[element]]) <= 1,
+                                     element=element))) {
+                  
+                  # Find the unique value.
+                  value <- unique_na(unlist(sapply(model_data,
+                                                   function(list_entry, element) list_entry[[element]],
+                                                   element=element)))
+                  
+                  if(length(value) > 1){
+                    ..error_reached_unreachable_code("universal_extractor,familiarEnsemble: cannot aggregate data because of multiple unique values.")
+                  }
+                  
+                  return(value)
+                  
+                } else {
+                  ..error_reached_unreachable_code("universal_extractor,familiarEnsemble: cannot aggregate data because of unknown reasons.")
+                }
+                
+              }, model_data=individual_model_data)
+              
+              # Set names.
+              names(individual_model_data) <- element_names
+              
+            }
+            
+            if(verbose) logger.message("\t\tPerforming computations for the ensemble itself.")
+            
+            # Compute data for the ensemble itself.
+            ensemble_model_data <- do.call(FUN, args=c(list("determine_ci"=TRUE,
+                                                            "object"=object,
+                                                            "cl"=cl,
+                                                            "verbose"=verbose),
+                                                       list(...)))
+            
+            # Check that the results are not empty.
+            if(is_empty(ensemble_model_data)) ensemble_model_data <- NULL
+            
+            # Add model name.
+            if(data.table::is.data.table(ensemble_model_data)){
+              # In case the results are a data.table
+              ensemble_model_data <- add_model_name(data=ensemble_model_data, object=object)
+              
+            } else if(is.list(ensemble_model_data)){
+              # In case the results are a list, including data.tables. First
+              # determine the names of the list elements, and then add model
+              # names.
+              ensemble_model_data_names <- names(ensemble_model_data)
+              ensemble_model_data <- lapply(ensemble_model_data, add_model_name, object=object)
+              
+              # Restore names.
+              names(ensemble_model_data) <- ensemble_model_data_names
+            }
+            
+            return(list("individual"=individual_model_data,
+                        "ensemble"=ensemble_model_data))
+          })
