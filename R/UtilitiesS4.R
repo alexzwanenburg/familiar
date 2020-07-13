@@ -3,7 +3,7 @@
 
 
 #####is_empty---------------------------------------------------------------------------
-setMethod("is_empty", signature(x="NULL"), function(x) {return(TRUE)})
+setMethod("is_empty", signature(x="NULL"), function(x) return(TRUE))
 
 setMethod("is_empty", signature(x="data.table"), function(x){
   if(ncol(x) > 0 & nrow(x) > 0){
@@ -57,6 +57,8 @@ setMethod("is_empty", signature(x="list"), function(x){
     return(FALSE)
   }
 })
+
+setMethod("is_empty", signature(x="vector"), function(x) length(x) == 0)
 
 #####get_outcome_class_levels---------------------------------------------------
 setMethod("get_outcome_class_levels", signature(x="outcomeInfo"), function(x){
