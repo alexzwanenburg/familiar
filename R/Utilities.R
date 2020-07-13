@@ -1209,7 +1209,12 @@ rbind_list_list <- function(l, list_elem, ...){
   # Remove empty list elements
   elem_list[sapply(elem_list, is.null)] <- NULL
   
-  return(data.table::rbindlist(elem_list, ...))
+  if(length(elem_list) > 0){
+    return(data.table::rbindlist(elem_list, ...))
+    
+  } else {
+    return(NULL)
+  }
 }
 
 
