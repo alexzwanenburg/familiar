@@ -162,6 +162,8 @@ setMethod("extract_decision_curve_data", signature(object="familiarEnsemble"),
                                                            return_intervention=TRUE)
   
   if(determine_ci){
+    if(verbose) logger.message(paste0("\t\t\tComputing bootstrap confidence interval data for the \"", positive_class, "\"."))
+    
     # Bootstrap the data.
     bootstrap_data <- bootstrapper(data=data,
                                    alpha=conf_alpha,
@@ -262,6 +264,8 @@ setMethod("extract_decision_curve_data", signature(object="familiarEnsemble"),
                                                         return_intervention=TRUE)
   
   if(determine_ci){
+    if(verbose) logger.message(paste0("\t\t\tComputing bootstrap confidence interval data at a time of ", evaluation_time, "."))
+    
     # Bootstrap the data.
     bootstrap_data <- bootstrapper(data=data,
                                    alpha=conf_alpha,
