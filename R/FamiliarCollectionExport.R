@@ -56,6 +56,9 @@ setMethod("export_all", signature(object="familiarCollection"),
             # Export prediction tables
             prediction_data <- export_prediction_data(object=object, dir_path=dir_path)
             
+            # Export decision curve analysis data
+            dca_data <- export_decision_curve_analysis_data(object=object, dir_path=dir_path, export_raw=export_raw)
+            
             # Export calibration information
             calibration_info <- export_calibration_info(object=object, dir_path=dir_path)
             
@@ -499,6 +502,177 @@ setMethod("export_prediction_data", signature(object="ANY"),
             
             return(do.call(export_prediction_data,
                            args=append(list("object"=object, "dir_path"=dir_path), list(...))))
+          })
+
+
+
+#####export_decision_curve_analysis_data#####
+
+#'@title Extract and export decision curve analysis data.
+#'
+#'@description Extract and export decision curve analysis data in a
+#'  familiarCollection.
+#'
+#'@inheritParams export_all
+#'
+#'@inheritDotParams as_familiar_collection
+#'
+#'@details Data is usually collected from a `familiarCollection` object.
+#'  However, you can also provide one or more `familiarData` objects, that will
+#'  be internally converted to a `familiarCollection` object. It is also
+#'  possible to provide a `familiarEnsemble` or one or more `familiarModel`
+#'  objects together with the data from which data is computed prior to export.
+#'  Paths to the previous files can also be provided.
+#'
+#'  All parameters aside from `object` and `dir_path` are only used if `object`
+#'  is not a `familiarCollection` object, or a path to one.
+#'  
+#'  Decision curve analysis data is computed for categorical outcomes, i.e.
+#'  binomial and multinomial, as well as survival outcomes.
+#'
+#'@return A list of data.table (if `dir_path` is not provided), or nothing, as
+#'  all data is exported to `csv` files.
+#'@exportMethod export_decision_curve_analysis_data
+#'@md
+#'@rdname export_decision_curve_analysis_data-methods
+setGeneric("export_decision_curve_analysis_data", function(object, dir_path=NULL, ...) standardGeneric("export_decision_curve_analysis_data"))
+
+#####export_decision_curve_analysis_data (collection)#####
+
+#'@rdname export_decision_curve_analysis_data-methods
+setMethod("export_decision_curve_analysis_data", signature(object="familiarCollection"),
+          function(object, dir_path=NULL, export_raw=FALSE, ...){
+            
+            # Extract list of lists
+            main_list <- object@decision_curve_data
+            
+            # This list will be filled.
+            export_list <- list()
+            
+            for(type in c("individual", "ensemble")){
+              # Confidence level
+              conf_alpha <- main_list[[type]]$conf_alpha
+              
+              # Apply labels.
+              data <- .apply_labels(data=main_list[[type]], object=object)
+              
+              if(!export_raw){
+                # Export summarised data.
+                
+                export_data <- list("data" = .compute_bootstrap_ci(x0=data$model_data,
+                                                                   xb=data$bootstrap_data,
+                                                                   target_column="net_benefit",
+                                                                   bootstrap_ci_method="bc",
+                                                                   additional_splitting_variable="threshold_probability",
+                                                                   conf_alpha=conf_alpha),
+                                    "intervention_data"=data$intervention_data,
+                                    "conf_alpha"=conf_alpha)
+                
+                if(!is.null(dir_path)){
+                  
+                  # Extract the summarised model data.
+                  write_data <- export_data$data
+                  
+                  if(!is_empty(export_data$intervention_data)){
+                    # Parse intervention data.
+                    intervention_data <- export_data$intervention_data
+                    setnames(intervention_data, old="net_benefit", new="intervention_all")
+                    
+                    # Merge with the summarised model data.
+                    write_data <- merge(x=intervention_data,
+                                        y=write_data,
+                                        by=setdiff(colnames(intervention_data), "intervention_all"))
+                  }
+                  
+                  # Export model performances of the models
+                  .export_to_file(data=write_data, object=object, dir_path=dir_path,
+                                  type="decision_curve_analysis", subtype=paste(type, "data", sep="_"))
+                }
+                
+              } else {
+                # Export all the data.
+                
+                if(!is.null(dir_path)){
+                  # Prepare data for writing by combining, model, intervention
+                  # and bootstrap data into a single table before writing it to
+                  # a folder.
+                  
+                  if(!is_empty(data@bootstrap_data)){
+                    # Cast wide by bootstrap id.
+                    bootstrap_data <- dcast(data=data$bootstrap_data,
+                                            stats::reformulate(termlabels=setdiff(colnames(individual_export_data), c("net_benefit", "bootstrap_id")),
+                                                               response="bootstrap_id",
+                                                               intercept=FALSE),
+                                            value.var="net_benefit")
+                  } else {
+                    bootstrap_data <- NULL
+                  }
+                  
+                  if(!is_empty(data@intervention_data)){
+                    
+                    # Parse intervention data.
+                    intervention_data <- data$intervention_data
+                    setnames(intervention_data, old="net_benefit", new="intervention_all")
+                    
+                  } else {
+                    intervention_data <- NULL
+                  }
+                  
+                  if(!is_empty(data@model_data)){
+                    
+                    # Parse model data.
+                    export_data <- data$model_data
+                    setnames(export_data, old="net_benefit", new="model")
+                    
+                    # Specify identifier columns
+                    id_columns <- setdiff(colnames(export_data), "model")
+                    
+                    if(!is.null(intervention_data)){
+                      export_data <- merge(x=export_data,
+                                           y=intervention_data,
+                                           by=id_columns)
+                    }
+                    
+                    if(!is.null(bootstrap_data)){
+                      export_data <- merge(x=export_data,
+                                           y=bootstrap_data,
+                                           by=id_columns)
+                    }
+                    
+                  } else {
+                    export_data <- NULL
+                  }
+                  
+                  # Export data to file.
+                  .export_to_file(data=write_data, object=object, dir_path=dir_path,
+                                  type="decision_curve_analysis", subtype=paste(type, "data", sep="_"))
+                  
+                } else {
+                  # Data is exported directly.
+                  export_data <- data
+                }
+              }
+              
+              # Add export data to list.
+              export_list[[type]] <- export_data
+            }
+            
+            # Return list of data.
+            if(is.null(dir_path)) return(export_list)
+          })
+
+#####export_decision_curve_analysis_data (generic)#####
+
+#'@rdname export_decision_curve_analysis_data-methods
+setMethod("export_decision_curve_analysis_data", signature(object="ANY"),
+          function(object, dir_path=NULL, export_raw=FALSE, ...){
+            
+            # Attempt conversion to familiarCollection object.
+            object <- do.call(as_familiar_collection,
+                              args=append(list("object"=object, "data_element"="decision_curve_analyis"), list(...)))
+            
+            return(do.call(export_decision_curve_analysis_data,
+                           args=append(list("object"=object, "dir_path"=dir_path, "export_raw"=export_raw), list(...))))
           })
 
 
@@ -1486,13 +1660,28 @@ setMethod(".apply_labels", signature(data="ANY", object="familiarCollection"),
           function(data, object){
             
             # Return NULL for NULL input
-            if(is.null(data)){
-              return(NULL)
-            }
+            if(is.null(data)) return(NULL)
             
-            # Check if data has the correct class.
-            if(!(inherits(data, "data.frame") | inherits(data, "data.table"))){
-              stop(paste0("\"data\" is expected to be a \"data.frame\" or \"data.table\". Found: ", paste(class(data), sep=", "), "."))
+            # Check if data has the expected class.
+            if(!data.table::is.data.table(data)){
+              
+              if(is.list(data)){
+                # Get the names of the list elements.
+                element_names <- names(data)
+                
+                # Update underlying data
+                data <- lapply(data, .apply_labels, object=object)
+                
+                # Set the names
+                names(data) <- element_names
+                
+                return(data)
+              } else if(is.numeric(data) | is.character(data) | is.logical(data) | is.factor(data)){
+                return(data)
+                
+              } else {
+                stop(paste0("\"data\" is expected to be a \"data.frame\" or \"data.table\", or a list of these. Found: ", paste(class(data), sep=", "), "."))
+              }
             }
 
             # Make sure that a local copy is updated
@@ -1561,3 +1750,82 @@ setMethod(".apply_labels", signature(data="ANY", object="familiarCollection"),
             
             return(data)
           })
+
+
+
+.compute_bootstrap_ci <- function(x0, xb, target_column, bootstrap_ci_method="bc",
+                                  additional_splitting_variable=NULL,
+                                  conf_alpha=0.05){
+
+  # Suppress NOTES due to non-standard evaluation in data.table
+  bootstrap_id <- NULL
+  
+  # Perform some simple consistency checks.
+  if(is_empty(x0)) return(x0)
+  if(is_empty(xb)) return(x0)
+  
+  if(!(data.table::is.data.table(x0) & data.table::is.data.table(xb))){
+    ..error_reached_unreachable_code(".compute_bootstrap_ci: both x0 and xb should be data.tables.")
+  }
+  
+  if(!target_column %in% colnames(x0) | !target_column %in% colnames(xb)){
+    ..error_reached_unreachable_code(".compute_bootstrap_ci: target column does not appear in the data.tables.")
+  }
+  
+  if(!is.null(additional_splitting_variable)){
+    if(!all(additional_splitting_variable %in% colnames(x0))){
+      ..error_reached_unreachable_code(".compute_bootstrap_ci: not all splitting variables were found in the x0 data.table.")
+    }
+  }
+  
+  # Set splitting variables.
+  splitting_variables <- c("data_set", "learner", "fs_method", "pos_class", "eval_time", additional_splitting_variable)
+  
+  # Add a bootstrap_id column to facilitate merger with bootstrap data.
+  x0[, "bootstrap_id":=0L]
+  
+  # Combine datasets.
+  data <- data.table::rbindlist(list(x0, xb), use.names=TRUE)
+  
+  # Select only splitting variables that appear in data.
+  splitting_variables <- intersect(colnames(data), splitting_variables)
+  
+  # Split the data and compute confidence intervals.
+  data <- lapply(split(data, by=splitting_variables, keep.by=TRUE),
+                 function(data, target_column, conf_alpha, bootstrap_ci_method){
+                   
+                   # Select point estimate and bootstrap estimates.
+                   x0 <- data[bootstrap_id == 0, ][[target_column]]
+                   xb <- data[bootstrap_id != 0, ][[target_column]]
+                   
+                   if(length(x0) != 1) ..error_reached_unreachable_code(".compute_bootstrap_ci: no, or more than one point estimate in split.")
+                   
+                   # Compute bootstrap confidence interval for the current
+                   # split.
+                   ci_data <- bootstrap_ci(x=xb,
+                                           x_0=x0,
+                                           conf_alpha=conf_alpha,
+                                           bootstrap_ci_method=bootstrap_ci_method)
+                   
+                   # Make a copy and drop the bootstrap_id column.
+                   output_data <- data.table::copy(data[bootstrap_id == 0, ])[, "bootstrap_id":=NULL]
+                   
+                   # Replace the value in the target column by the median in
+                   # ci_data.
+                   output_data[, (target_column):=ci_data$median]
+                   
+                   # Add confidence interval boundaries.
+                   output_data[, ":="("ci_low"=ci_data$ci_low,
+                                      "ci_up"=ci_data$ci_up)]
+                   
+                   return(output_data)
+                 },
+                 target_column=target_column,
+                 conf_alpha=conf_alpha,
+                 bootstrap_ci_method=bootstrap_ci_method)
+  browser()
+  # Combine into a single dataset
+  data <- data.table::rbindlist(data, use.names=TRUE)
+  
+  return(data)
+}
