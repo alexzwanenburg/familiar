@@ -273,6 +273,50 @@ collect_model_performance <- function(fam_data_list){
 }
 
 
+#' @title A collector for decision curve analysis data
+#'
+#' @inheritParams collect_fs_vimp
+#'
+#' @return A list with aggregated data.
+#' @noRd
+collect_decision_curve_analysis_data <- function(fam_data_list){
+  
+  # Create placeholder list.
+  dca_list <- list()
+  
+  # Iterate over individual and ensemble data.
+  for(type in c("individual", "ensemble")){
+    
+    # Create type list and add conf_alpha.
+    type_list <- list("conf_alpha"=fam_data_list[[1]]@decision_curve_data[[type]]$conf_alpha)
+    
+    for(element in c("model_data", "intervention_data", "bootstrap_data")){
+      
+      # Capture and combine data for the particular element.
+      type_list[[element]] <- data.table::rbindlist(lapply(fam_data_list, function(fam_obj, type, element){
+        
+        # Collect data from the element.
+        data <- fam_obj@decision_curve_data[[type]][[element]]
+        
+        # Check if the data is empty.
+        if(is_empty(data)) return(NULL)
+        
+        # Add identifiers.
+        data <- add_identifiers(data=data, object=fam_obj, more_identifiers=c("fs_method", "learner"))
+        
+        return(data)
+      }, type=type, element=element), use.names=TRUE)
+    }
+    
+    # Add to dca_list
+    dca_list[[type]] <- type_list
+  }
+  
+  return(dca_list)
+}
+
+
+
 #' @title Collector for stratification information
 #'
 #' @inheritParams collect_fs_vimp
@@ -283,8 +327,7 @@ collect_stratification_info <- function(fam_data_list){
   # Stratification info (e.g. cutoffs) is shared between objects with the same feature selection method and data ids,
   # as they are generated at model creation.
   unique_entries <- .which_unique_data(fam_data_list=fam_data_list, by=c("fs_method", "learner"))
-  # unique_entries <- .which_unique_data(fam_data_list=fam_data_list, incl_learner=TRUE, incl_validation_status=FALSE)
-  
+
   # Select only unique entries
   stratification_info_table <- data.table::rbindlist(lapply(unique_entries, function(ii, fam_data_list){
     

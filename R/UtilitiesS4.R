@@ -861,3 +861,4 @@ setMethod("universal_extractor", signature(object="familiarEnsemble"),
             return(list("individual"=individual_model_data,
                         "ensemble"=ensemble_model_data))
           })
+

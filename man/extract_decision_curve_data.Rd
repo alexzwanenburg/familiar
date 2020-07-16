@@ -7,6 +7,7 @@
 extract_decision_curve_data(
   object,
   data,
+  cl = NULL,
   ensemble_method = waiver(),
   metric_alpha = waiver(),
   eval_times = waiver(),
@@ -21,6 +22,9 @@ extract_decision_curve_data(
 
 \item{data}{A \code{dataObject} object, \code{data.table} or \code{data.frame} that
 constitutes the data that are used to compute}
+
+\item{cl}{Cluster created using the \code{parallel} package. This cluster is then
+used to speed up computation through parallelisation.}
 
 \item{ensemble_method}{Method for ensembling predictions from models for the
 same sample. Available methods are:
