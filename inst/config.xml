@@ -150,6 +150,8 @@
       <parallel_hyperparameter_optimisation></parallel_hyperparameter_optimisation>
     </hyperparameter_optimisation>
     <evaluation>
+      <!-- Evaluate only the most important experiment level (true), or additionally evaluate underlying levels (false) (optional, default: true)-->
+      <evaluate_top_level_only></evaluate_top_level_only>
       <!-- Method for clustering features (optional, default: same as cluster_method) -->
       <feature_cluster_method></feature_cluster_method>
       <!-- Linkage method for clustering features (optional, default: same as cluster_linkage_method) -->

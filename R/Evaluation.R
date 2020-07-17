@@ -6,7 +6,7 @@ run_evaluation <- function(cl, proj_list, settings, file_paths){
   }
   
   # Extract data from ensembles
-  data_set_list <- .prepare_familiar_data_sets(cl=cl)
+  data_set_list <- .prepare_familiar_data_sets(cl=cl, only_pooling=settings$eval$pool_only)
 
   # Form collections (all individual ensembles with train and validation data combined)
   collection_list <- .prepare_familiar_collections(data_set_list=data_set_list)

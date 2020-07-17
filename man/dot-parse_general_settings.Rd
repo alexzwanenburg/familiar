@@ -601,13 +601,27 @@ processing for hyperparameter optimisation. Defaults to \code{TRUE}. When set to
 \code{FALSE}, this will disable the use of parallel processing while performing
 optimisation, regardless of the settings of the \code{parallel} parameter.
 \code{parallel_hyperparameter_optimisation} is ignored if \code{parallel=FALSE}.}
+    \item{\code{evaluate_top_level_only}}{(\emph{optional}) Flag that signals that only
+evaluation at the most global experiment level is required. Consider a
+cross-validation experiment with additional external validation. The global
+experiment level consists of data that are used for development, internal
+validation and external validation. The next lower experiment level are the
+individual cross-validation iterations.
+
+When the flag is \code{true}, evaluations take place on the global level only,
+and no results are generated for the next lower experiment levels. In our
+example, this means that results from individual cross-validation iterations
+are not computed and shown. When the flag is \code{false}, results are computed
+from both the global layer and the next lower level.
+
+Setting the flag to \code{true} saves computation time.}
     \item{\code{ensemble_method}}{(\emph{optional}) Method for ensembling predictions from
 models for the same sample. Available methods are:
 \itemize{
 \item \code{median} (default): Use the median of the predicted values as the ensemble
 value for a sample.
-\item \code{mean}: Use the mean of the predicted values as the ensemble
-value for a sample.
+\item \code{mean}: Use the mean of the predicted values as the ensemble value for a
+sample.
 }}
     \item{\code{evaluation_metric}}{(\emph{optional}) One or more metrics for assessing model
 performance. See the vignette on performance metrics for the available

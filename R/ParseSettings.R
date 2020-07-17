@@ -1941,14 +1941,29 @@
 #'@param prep_cluster_similarity_threshold Cluster similarity threshold used
 #'  during pre-processing.
 #'@param prep_cluster_similarity_metric Cluster similarity metric used during
+#'  pre-processing.
+#'@param evaluate_top_level_only (*optional*) Flag that signals that only
+#'  evaluation at the most global experiment level is required. Consider a
+#'  cross-validation experiment with additional external validation. The global
+#'  experiment level consists of data that are used for development, internal
+#'  validation and external validation. The next lower experiment level are the
+#'  individual cross-validation iterations.
+#'
+#'  When the flag is `true`, evaluations take place on the global level only,
+#'  and no results are generated for the next lower experiment levels. In our
+#'  example, this means that results from individual cross-validation iterations
+#'  are not computed and shown. When the flag is `false`, results are computed
+#'  from both the global layer and the next lower level.
+#'  
+#'  Setting the flag to `true` saves computation time.
 #'@param ensemble_method (*optional*) Method for ensembling predictions from
 #'  models for the same sample. Available methods are:
-#'  
+#'
 #'  * `median` (default): Use the median of the predicted values as the ensemble
 #'  value for a sample.
-#'  
-#'  * `mean`: Use the mean of the predicted values as the ensemble
-#'  value for a sample.
+#'
+#'  * `mean`: Use the mean of the predicted values as the ensemble value for a
+#'  sample.
 #'
 #'@param evaluation_metric (*optional*) One or more metrics for assessing model
 #'  performance. See the vignette on performance metrics for the available
@@ -2172,6 +2187,7 @@
                                        prep_cluster_cut_method,
                                        prep_cluster_similarity_threshold,
                                        prep_cluster_similarity_metric,
+                                       evaluate_top_level_only=waiver(),
                                        ensemble_method=waiver(),
                                        evaluation_metric=waiver(),
                                        confidence_alpha=waiver(),
@@ -2198,6 +2214,10 @@
   outcome_event <- cohort_id <- NULL
   
   settings <- list()
+  
+  # Flag that limits the depth of the evaluation.
+  settings$pool_only <- .parse_arg(x_config=config$evaluate_top_level_only, x_var=evaluate_top_level_only,
+                                   var_name="evaluate_top_level_only", type="logical", optional=TRUE, default=TRUE)
   
   # Method for ensemble predictions
   settings$ensemble_method <- .parse_arg(x_config=config$ensemble_method, x_var=ensemble_method,

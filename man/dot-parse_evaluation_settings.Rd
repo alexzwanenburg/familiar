@@ -18,6 +18,7 @@
   prep_cluster_cut_method,
   prep_cluster_similarity_threshold,
   prep_cluster_similarity_metric,
+  evaluate_top_level_only = waiver(),
   ensemble_method = waiver(),
   evaluation_metric = waiver(),
   confidence_alpha = waiver(),
@@ -74,15 +75,31 @@ pre-processing.}
 \item{prep_cluster_similarity_threshold}{Cluster similarity threshold used
 during pre-processing.}
 
-\item{prep_cluster_similarity_metric}{Cluster similarity metric used during}
+\item{prep_cluster_similarity_metric}{Cluster similarity metric used during
+pre-processing.}
+
+\item{evaluate_top_level_only}{(\emph{optional}) Flag that signals that only
+evaluation at the most global experiment level is required. Consider a
+cross-validation experiment with additional external validation. The global
+experiment level consists of data that are used for development, internal
+validation and external validation. The next lower experiment level are the
+individual cross-validation iterations.
+
+When the flag is \code{true}, evaluations take place on the global level only,
+and no results are generated for the next lower experiment levels. In our
+example, this means that results from individual cross-validation iterations
+are not computed and shown. When the flag is \code{false}, results are computed
+from both the global layer and the next lower level.
+
+Setting the flag to \code{true} saves computation time.}
 
 \item{ensemble_method}{(\emph{optional}) Method for ensembling predictions from
 models for the same sample. Available methods are:
 \itemize{
 \item \code{median} (default): Use the median of the predicted values as the ensemble
 value for a sample.
-\item \code{mean}: Use the mean of the predicted values as the ensemble
-value for a sample.
+\item \code{mean}: Use the mean of the predicted values as the ensemble value for a
+sample.
 }}
 
 \item{evaluation_metric}{(\emph{optional}) One or more metrics for assessing model
