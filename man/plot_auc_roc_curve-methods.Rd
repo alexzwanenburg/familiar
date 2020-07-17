@@ -99,9 +99,10 @@ prior to export. Paths to such files can also be provided.}
 
 \item{draw}{(\emph{optional}) Draws the plot if TRUE.}
 
-\item{dir_path}{(\emph{optional}) Path to the directory where created performance
-plots are saved to. Output is saved in the \code{performance} subdirectory. If
-\code{NULL} no figures are saved, but are returned instead.}
+\item{dir_path}{(\emph{optional}) Path to the directory where the plots of receiver
+operating characteristic curves are saved to. Output is saved in the
+\code{performance} subdirectory. If \code{NULL} no figures are saved, but are returned
+instead.}
 
 \item{split_by}{(\emph{optional}) Splitting variables. This refers to column names
 on which datasets are split. A separate figure is created for each split.
