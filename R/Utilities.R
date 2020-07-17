@@ -751,13 +751,13 @@ get_placeholder_vimp_table <- function(){
 
 
 
-get_id_columns <- function(include_repetition_id=TRUE){
+get_id_columns <- function(sample_level_only=FALSE){
   # Generate the names of the non-feature columns
-  if(include_repetition_id){
-    return(c("subject_id", "cohort_id", "repetition_id"))
+  if(sample_level_only){
+    return(c("subject_id", "cohort_id"))
     
   } else {
-    return(c("subject_id", "cohort_id"))
+    return(c("subject_id", "cohort_id", "repetition_id"))
   }
 }
 
@@ -1209,17 +1209,22 @@ rbind_list_list <- function(l, list_elem, ...){
   # Remove empty list elements
   elem_list[sapply(elem_list, is.null)] <- NULL
   
-  return(data.table::rbindlist(elem_list, ...))
+  if(length(elem_list) > 0){
+    return(data.table::rbindlist(elem_list, ...))
+    
+  } else {
+    return(NULL)
+  }
 }
 
 
-bootstrap_ci <- function(x, x_0=NULL, conf_alpha=0.05, bootstrap_ci_type="percentile"){
+bootstrap_ci <- function(x, x_0=NULL, confidence_level=0.95, bootstrap_ci_method="percentile"){
 
   # Test significance level alpha.
-  if(conf_alpha >= 1.0){
-    stop("No confidence interval exists for widths of 0% or smaller.")
-  } else if(conf_alpha <= 0.0){
-    stop("The confidence interval cannot match or exceed 100% width.")
+  if(confidence_level >= 1.0){
+    stop("A 100% confidence interval does not exist.")
+  } else if(confidence_level <= 0.0){
+    stop("The confidence interval cannot be smaller than 0.")
   }
   
   # Define empty summary list.
@@ -1233,14 +1238,15 @@ bootstrap_ci <- function(x, x_0=NULL, conf_alpha=0.05, bootstrap_ci_type="percen
   if(length(x) == 0) return(empty_list)
   
   # If no x_0 is provided, the percentile method should be used.
-  if(length(x_0) == 0) bootstrap_ci_type <- "percentile"
+  if(length(x_0) == 0) bootstrap_ci_method <- "percentile"
   
-  if(bootstrap_ci_type == "percentile"){
+  if(bootstrap_ci_method == "percentile"){
     # Follows the percentile method of Efron, B. & Hastie, T. Computer Age
     # Statistical Inference. (Cambridge University Press, 2016).
     
     # Define percentiles based on the alpha level..
-    percentiles <- c(conf_alpha/2.0, 1.0 - conf_alpha/2.0)
+    percentiles <- c((1.0 - confidence_level) / 2.0,
+                     1.0 - (1.0 - confidence_level) / 2.0)
     
     # Compute percentiles within the data set
     percentile_values <- stats::quantile(x, probs=percentiles, names=FALSE)
@@ -1250,7 +1256,7 @@ bootstrap_ci <- function(x, x_0=NULL, conf_alpha=0.05, bootstrap_ci_type="percen
                          "ci_low"=percentile_values[1],
                          "ci_up"=percentile_values[2])
     
-  } else if(bootstrap_ci_type == "bc"){
+  } else if(bootstrap_ci_method == "bc"){
     # Follows the bias-corrected (BC) method of Efron, B. & Hastie, T. Computer
     # Age Statistical Inference. (Cambridge University Press, 2016).
     if(length(x_0) > 1){
@@ -1262,10 +1268,20 @@ bootstrap_ci <- function(x, x_0=NULL, conf_alpha=0.05, bootstrap_ci_type="percen
     # Compute the bias-correction value. In absence of bias, z_0 equals 0.
     z_0 <- stats::qnorm(sum(x <= x_0) / length(x))
     
-    if(!is.finite(z_0)) return(empty_list)
+    if(!is.finite(z_0)){
+      if(all(x == x_0)){
+        return(list("median"=x_0,
+                    "ci_low"=x_0,
+                    "ci_up"=x_0))
+        
+      } else{
+        return(empty_list)
+      }
+    } 
     
     # Define the z-statistic for bounds of the confidence interval.
-    z_alpha <- stats::qnorm(c(conf_alpha/2.0, 1.0 - conf_alpha/2.0))
+    z_alpha <- stats::qnorm(c((1.0 - confidence_level) / 2.0,
+                              1.0 - (1.0 - confidence_level) / 2.0))
     
     # Define bias-corrected percentiles.
     percentiles <- stats::pnorm((2.0 * z_0 + z_alpha))
@@ -1414,3 +1430,4 @@ is_subclass <- function(class_1, class_2){
   
   return(TRUE)
 }
+

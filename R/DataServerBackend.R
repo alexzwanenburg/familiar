@@ -163,10 +163,11 @@ get_data_from_backend <- function(backend_type=NULL, server_port=NULL, sample_id
     on.exit(RSclient::RS.close(rsc=rcon))
     
     # Obtain the data
-    x <- RSclient::RS.eval(.get_data_from_backend(sample_identifiers=sample_identifiers,
-                                                  column_names=column_names),
+    x <- RSclient::RS.eval(rsc=rcon,
+                           x=.get_data_from_backend(sample_identifiers=sample_identifiers,
+                                                    column_names=column_names),
                            lazy=FALSE)
-
+    
   } else {
     ..error_reached_unreachable_code(paste0("get_data_from_backend: encountered unknown type of backend: ", backend_type))
   }
@@ -305,8 +306,9 @@ get_feature_info_from_backend <- function(backend_type=NULL, server_port=NULL, d
     }
     
     # Obtain the feature info list.
-    x <- RSclient::RS.eval(.get_feature_info_from_backend(data_id=data_id,
-                                                          run_id=run_id),
+    x <- RSclient::RS.eval(rsc=rcon,
+                           x=.get_feature_info_from_backend(data_id=data_id,
+                                                            run_id=run_id),
                            lazy=FALSE)
     on.exit(RSclient::RS.close(rsc=rcon))
     

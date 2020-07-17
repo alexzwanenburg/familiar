@@ -194,7 +194,7 @@
   
   if(is.null(data)) return(NULL)
   
-  if(!inherits(data, "data.table")) stop("\"data\" should be a data.table.")
+  if(!data.table::is.data.table(data)) return(data)
   
   if(nrow(data)>=1){
     

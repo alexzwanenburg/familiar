@@ -4,10 +4,13 @@
 \alias{.prepare_familiar_data_sets}
 \title{Prepare familiarData objects for evaluation at runtime.}
 \usage{
-.prepare_familiar_data_sets(cl = NULL)
+.prepare_familiar_data_sets(cl = NULL, only_pooling = FALSE)
 }
 \arguments{
 \item{cl}{Cluster for parallel processing.}
+
+\item{only_pooling}{Flag that, if set, forces evaluation of only the
+top-level data, and not e.g. ensembles.}
 }
 \value{
 A data.table with created links to created data objects.

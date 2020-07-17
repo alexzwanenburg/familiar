@@ -30,11 +30,13 @@ run_evaluation <- function(cl, proj_list, settings, file_paths){
 #'   objects to be created.
 #'
 #' @param cl Cluster for parallel processing.
+#' @param only_pooling Flag that, if set, forces evaluation of only the
+#'   top-level data, and not e.g. ensembles.
 #'
 #' @return A data.table with created links to created data objects.
 #'
 #' @md
-.prepare_familiar_data_sets <- function(cl=NULL){
+.prepare_familiar_data_sets <- function(cl=NULL, only_pooling=FALSE){
   
   # Suppress NOTES due to non-standard evaluation in data.table
   fam_ensemble_exists <- fam_ensemble <- fam_data_exists <- fam_data <- NULL
@@ -59,7 +61,9 @@ run_evaluation <- function(cl, proj_list, settings, file_paths){
   run_list <- getRunList(iter_list=project_list$iter_list, data_id=mb_data_id)
   
   # Get list of data collection pools
-  data_sets <- data.table::rbindlist(.get_ensemble_structure_info(run_list=run_list, proj_list=project_list),
+  data_sets <- data.table::rbindlist(.get_ensemble_structure_info(run_list=run_list,
+                                                                  proj_list=project_list,
+                                                                  only_pooling=only_pooling),
                                      use.names=TRUE)
 
   # Identify combinations of feature selection methods and learners
@@ -210,7 +214,7 @@ run_evaluation <- function(cl, proj_list, settings, file_paths){
 }
 
 
-.get_ensemble_structure_info <- function(run_list, proj_list){
+.get_ensemble_structure_info <- function(run_list, proj_list, only_pooling=FALSE){
   
   # Suppress NOTES due to non-standard evaluation in data.table
   perturb_level <- data_id <- run_id <- has_validation <- pool_perturb_level <- data_perturb_level <- can_pre_process <- NULL
@@ -323,13 +327,21 @@ run_evaluation <- function(cl, proj_list, settings, file_paths){
                                     "is_ensemble"=ifelse(data_perturb_level==pool_perturb_level, TRUE, FALSE),
                                     "is_validation"=TRUE)]
 
-    # List of datasets
-    data_sets <- c(split(internal_development_ensemble, by="ensemble_run_id"),
-                   split(internal_validation_ensemble, by="ensemble_run_id"),
-                   split(external_validation_ensemble, by="ensemble_run_id"),
-                   list(internal_development_pool),
-                   list(internal_validation_pool),
-                   list(external_validation_pool))
+    if(only_pooling){
+      # List of datasets that operate on the top level (pooling level).
+      data_sets <- c(list(internal_development_pool),
+                     list(internal_validation_pool),
+                     list(external_validation_pool))
+      
+    } else {
+      # List of datasets
+      data_sets <- c(split(internal_development_ensemble, by="ensemble_run_id"),
+                     split(internal_validation_ensemble, by="ensemble_run_id"),
+                     split(external_validation_ensemble, by="ensemble_run_id"),
+                     list(internal_development_pool),
+                     list(internal_validation_pool),
+                     list(external_validation_pool))
+    }
   }
 
   return(data_sets)

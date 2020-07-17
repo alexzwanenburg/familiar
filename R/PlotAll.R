@@ -50,6 +50,11 @@ setMethod("plot_all", signature(object="familiarCollection"),
                                                          "dir_path"=dir_path),
                                                     list(...)))
             
+            # Decision curve
+            do.call(plot_decision_curve, args=append(list("object"=object,
+                                                          "dir_path"=dir_path),
+                                                     list(...)))
+            
             # Kaplan-Meier curves
             do.call(plot_kaplan_meier, args=append(list("object"=object,
                                                         "dir_path"=dir_path),

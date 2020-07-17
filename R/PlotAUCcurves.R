@@ -8,9 +8,10 @@ NULL
 #'@description This method creates receiver operating characteristic curves
 #'  based on data in a familiarCollection object.
 #'
-#'@param dir_path (*optional*) Path to the directory where created performance
-#'  plots are saved to. Output is saved in the `performance` subdirectory. If
-#'  `NULL` no figures are saved, but are returned instead.
+#'@param dir_path (*optional*) Path to the directory where the plots of receiver
+#'  operating characteristic curves are saved to. Output is saved in the
+#'  `performance` subdirectory. If `NULL` no figures are saved, but are returned
+#'  instead.
 #'@param discrete_palette (*optional*) Palette to use to color the different
 #'  plot elements in case a value was provided to the `color_by` argument.
 #'
@@ -470,13 +471,6 @@ setMethod("plot_auc_roc_curve", signature(object="familiarCollection"),
                                                          fill=!!sym("color_breaks")),
                                     alpha=conf_int_alpha,
                                     na.rm=TRUE)
-      
-      # # Create special data for ribbon so that it becomes a step ribbon.
-      # x_ribbon <- data.table::rbindlist(lapply(split(x, by=c("color_breaks", facet_by)), .prepare_auc_conf_int_plot_data))
-      # 
-      # p <- p + ggplot2::geom_ribbon(data=x_ribbon,
-      #                               mapping=ggplot2::aes(x=!!sym("x"), ymin=!!sym("conf_int_lower"), ymax=!!sym("conf_int_upper"),
-      #                                                    fill=!!sym("color_breaks")), alpha=conf_int_alpha, na.rm=TRUE)
     }
   }
   
@@ -487,7 +481,7 @@ setMethod("plot_auc_roc_curve", signature(object="familiarCollection"),
   # Labels
   p <- p + ggplot2::labs(x=x_label, y=y_label, title=plot_title, subtitle=plot_sub_title, caption=caption)
   
-  # Determine how things are facetted
+  # Determine how things are faceted
   facet_by_list <- plotting.parse_facet_by(x=x, facet_by=facet_by, facet_wrap_cols=facet_wrap_cols)
   
   if(!is.null(facet_by)){
@@ -508,7 +502,7 @@ setMethod("plot_auc_roc_curve", signature(object="familiarCollection"),
                                                facet_by,
                                                facet_wrap_cols){
   
-  # Obtain facetting dimensions
+  # Obtain faceting dimensions
   plot_dims <- plotting.get_plot_layout_dims(x=x, facet_by=facet_by, facet_wrap_cols=facet_wrap_cols)
   
   # Set default height and width for each subplot (in cm).
@@ -522,24 +516,4 @@ setMethod("plot_auc_roc_curve", signature(object="familiarCollection"),
   width <- min(c(2 + plot_dims[2] * default_width, 19))
   
   return(c(height, width))
-  
-}
-  
-
-
-.prepare_auc_conf_int_plot_data <- function(data){
-  # Suppress NOTES due to non-standard evaluation in data.table
-  x <- conf_int_lower <- conf_int_upper <- NULL
-  
-  if(is_empty(data)){ return(data) }
-  
-  # Make sure that the surv_lower and surv_upper coordinate sets are correct.
-  data_1 <- data.table::copy(data)[order(x)]
-  data_2 <- data.table::copy(data)[1:nrow(data)-1]
-  data_2[, "x":=data_1$x[2:nrow(data)]]
-  
-  # Combine and order correctly.
-  x <- rbind(data_1, data_2)[order(x, -conf_int_lower, -conf_int_upper)]
-  
-  return(x)
 }

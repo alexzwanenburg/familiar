@@ -497,7 +497,7 @@ setMethod("aggregate_data", signature(data="dataObject"),
             }
             
             # Identify the columns containing outcome and subject and cohort identifiers
-            id_cols <- get_non_feature_columns(x=data, include_repetition_id=FALSE)
+            id_cols <- get_non_feature_columns(x=data, sample_level_only=TRUE)
             
             # Determine the number of different entries
             
