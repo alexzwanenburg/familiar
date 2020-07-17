@@ -1218,13 +1218,13 @@ rbind_list_list <- function(l, list_elem, ...){
 }
 
 
-bootstrap_ci <- function(x, x_0=NULL, conf_alpha=0.05, bootstrap_ci_method="percentile"){
+bootstrap_ci <- function(x, x_0=NULL, confidence_level=0.95, bootstrap_ci_method="percentile"){
 
   # Test significance level alpha.
-  if(conf_alpha >= 1.0){
-    stop("No confidence interval exists for widths of 0% or smaller.")
-  } else if(conf_alpha <= 0.0){
-    stop("The confidence interval cannot match or exceed 100% width.")
+  if(confidence_level >= 1.0){
+    stop("A 100% confidence interval does not exist.")
+  } else if(confidence_level <= 0.0){
+    stop("The confidence interval cannot be smaller than 0.")
   }
   
   # Define empty summary list.
@@ -1245,7 +1245,8 @@ bootstrap_ci <- function(x, x_0=NULL, conf_alpha=0.05, bootstrap_ci_method="perc
     # Statistical Inference. (Cambridge University Press, 2016).
     
     # Define percentiles based on the alpha level..
-    percentiles <- c(conf_alpha/2.0, 1.0 - conf_alpha/2.0)
+    percentiles <- c((1.0 - confidence_level) / 2.0,
+                     1.0 - (1.0 - confidence_level) / 2.0)
     
     # Compute percentiles within the data set
     percentile_values <- stats::quantile(x, probs=percentiles, names=FALSE)
@@ -1279,7 +1280,8 @@ bootstrap_ci <- function(x, x_0=NULL, conf_alpha=0.05, bootstrap_ci_method="perc
     } 
     
     # Define the z-statistic for bounds of the confidence interval.
-    z_alpha <- stats::qnorm(c(conf_alpha/2.0, 1.0 - conf_alpha/2.0))
+    z_alpha <- stats::qnorm(c((1.0 - confidence_level) / 2.0,
+                              1.0 - (1.0 - confidence_level) / 2.0))
     
     # Define bias-corrected percentiles.
     percentiles <- stats::pnorm((2.0 * z_0 + z_alpha))

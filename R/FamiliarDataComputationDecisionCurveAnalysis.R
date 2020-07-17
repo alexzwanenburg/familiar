@@ -65,6 +65,16 @@ setMethod("extract_decision_curve_data", signature(object="familiarEnsemble"),
               ensemble_method <- object@settings$ensemble_method
             }
             
+            # Load confidence alpha from object settings attribute if not
+            # provided externally.
+            if(is.waive(metric_alpha)){
+              metric_alpha <- object@settings$metric_alpha
+            }
+            
+            # Check metric_alpha input argument
+            .check_number_in_valid_range(x=metric_alpha, var_name="metric_alpha",
+                                         range=c(0.0, 1.0), closed=c(FALSE, FALSE))
+            
             # Check ensemble_method argument
             .check_parameter_value_is_valid(x=ensemble_method, var_name="ensemble_method",
                                             values=.get_available_ensemble_prediction_methods())
@@ -80,14 +90,14 @@ setMethod("extract_decision_curve_data", signature(object="familiarEnsemble"),
                                             data=data,
                                             is_pre_processed=is_pre_processed,
                                             eval_times=eval_times,
-                                            conf_alpha=metric_alpha,
+                                            confidence_level= 1.0 - metric_alpha,
                                             verbose=verbose)
             
             return(dca_data)
           })
 
 
-.extract_decision_curve_data <- function(object, data, cl=NULL, is_pre_processed, eval_times, conf_alpha, determine_ci, verbose=verbose){
+.extract_decision_curve_data <- function(object, data, cl=NULL, is_pre_processed, eval_times, confidence_level, determine_ci, verbose=verbose){
   
   # Ensemble model.
   if(object@outcome_type %in% c("binomial", "multinomial")){
@@ -106,7 +116,7 @@ setMethod("extract_decision_curve_data", signature(object="familiarEnsemble"),
                        .compute_dca_data_categorical,
                        data=prediction_data,
                        object=object,
-                       conf_alpha=conf_alpha,
+                       confidence_level=confidence_level,
                        determine_ci=determine_ci,
                        cl=cl,
                        verbose=verbose)
@@ -115,7 +125,7 @@ setMethod("extract_decision_curve_data", signature(object="familiarEnsemble"),
     dca_data <- list("model_data"=rbind_list_list(dca_data, "model_data"),
                      "intervention_data"=rbind_list_list(dca_data, "intervention_data"),
                      "bootstrap_data"=rbind_list_list(dca_data, "bootstrap_data"),
-                     "conf_alpha"=conf_alpha)
+                     "confidence_level"=confidence_level)
     
   } else if(object@outcome_type %in% c("survival")){
     # Iterate over evaluation times.
@@ -123,7 +133,7 @@ setMethod("extract_decision_curve_data", signature(object="familiarEnsemble"),
                        .compute_dca_data_survival,
                        data=data,
                        object=object,
-                       conf_alpha=conf_alpha,
+                       confidence_level=confidence_level,
                        determine_ci=determine_ci,
                        cl=cl,
                        verbose=verbose)
@@ -132,7 +142,7 @@ setMethod("extract_decision_curve_data", signature(object="familiarEnsemble"),
     dca_data <- list("model_data"=rbind_list_list(dca_data, "model_data"),
                      "intervention_data"=rbind_list_list(dca_data, "intervention_data"),
                      "bootstrap_data"=rbind_list_list(dca_data, "bootstrap_data"),
-                     "conf_alpha"=conf_alpha)
+                     "confidence_level"=confidence_level)
     
   } else {
     ..error_outcome_type_not_implemented(object@outcome_type)
@@ -142,10 +152,10 @@ setMethod("extract_decision_curve_data", signature(object="familiarEnsemble"),
 }
 
 
-.compute_dca_data_categorical <- function(positive_class, data, object, conf_alpha=0.05, determine_ci=FALSE, cl=NULL, verbose=FALSE){
+.compute_dca_data_categorical <- function(positive_class, data, object, confidence_level, determine_ci=FALSE, cl=NULL, verbose=FALSE){
   
   # Check if the data has more than 1 row.
-  if(nrow(data) <= 1) return(list("conf_alpha"=conf_alpha))
+  if(nrow(data) <= 1) return(list("confidence_level"=confidence_level))
  
   # Set test probabilities
   test_probabilities <- seq(from=0.00, to=1.00, by=0.005)
@@ -162,11 +172,11 @@ setMethod("extract_decision_curve_data", signature(object="familiarEnsemble"),
                                                            return_intervention=TRUE)
   
   if(determine_ci){
-    if(verbose) logger.message(paste0("\t\t\tComputing bootstrap confidence interval data for the \"", positive_class, "\"."))
+    if(verbose) logger.message(paste0("\t\t\tComputing bootstrap confidence interval data for the \"", positive_class, "\" class."))
     
     # Bootstrap the data.
     bootstrap_data <- bootstrapper(data=data,
-                                   alpha=conf_alpha,
+                                   alpha= 1.0 - confidence_level,
                                    FUN=.compute_dca_data_categorical_model,
                                    positive_class=positive_class,
                                    x=test_probabilities,
@@ -181,7 +191,7 @@ setMethod("extract_decision_curve_data", signature(object="familiarEnsemble"),
   return(list("model_data"=model_data,
               "intervention_data"=intervention_data,
               "bootstrap_data"=bootstrap_data,
-              "conf_alpha"=conf_alpha))
+              "confidence_level"=confidence_level))
 }
 
 
@@ -234,7 +244,7 @@ setMethod("extract_decision_curve_data", signature(object="familiarEnsemble"),
 
 
 
-.compute_dca_data_survival <- function(evaluation_time, data, object, conf_alpha=0.05, determine_ci=TRUE, cl=NULL, verbose=FALSE){
+.compute_dca_data_survival <- function(evaluation_time, data, object, confidence_level, determine_ci=TRUE, cl=NULL, verbose=FALSE){
   
   # Predict survival probabilities.
   data <- .predict(object=object,
@@ -244,10 +254,10 @@ setMethod("extract_decision_curve_data", signature(object="familiarEnsemble"),
                    type="survival_probability")
 
   # Check if any predictions are valid.
-  if(!any_predictions_valid(data, outcome_type=object@outcome_type)) return(list("conf_alpha"=conf_alpha))
+  if(!any_predictions_valid(data, outcome_type=object@outcome_type)) return(list("confidence_level"=confidence_level))
   
   # Check if the data has more than 1 row.
-  if(nrow(data) <= 1) return(list("conf_alpha"=conf_alpha))
+  if(nrow(data) <= 1) return(list("confidence_level"=confidence_level))
   
   # Set test probabilities
   test_probabilities <- seq(from=0.00, to=1.00, by=0.005)
@@ -268,7 +278,7 @@ setMethod("extract_decision_curve_data", signature(object="familiarEnsemble"),
     
     # Bootstrap the data.
     bootstrap_data <- bootstrapper(data=data,
-                                   alpha=conf_alpha,
+                                   alpha= 1.0 - confidence_level,
                                    FUN=.compute_dca_data_survival_model,
                                    evaluation_time=evaluation_time,
                                    x=test_probabilities,
@@ -283,7 +293,7 @@ setMethod("extract_decision_curve_data", signature(object="familiarEnsemble"),
   return(list("model_data"=model_data,
               "intervention_data"=intervention_data,
               "bootstrap_data"=bootstrap_data,
-              "conf_alpha"=conf_alpha))
+              "confidence_level"=confidence_level))
 }
 
 

@@ -551,7 +551,7 @@ setMethod("export_decision_curve_analysis_data", signature(object="familiarColle
             
             for(type in c("individual", "ensemble")){
               # Confidence level
-              conf_alpha <- main_list[[type]]$conf_alpha
+              confidence_level <- main_list[[type]]$confidence_level
               
               # Apply labels.
               data <- .apply_labels(data=main_list[[type]], object=object)
@@ -564,9 +564,9 @@ setMethod("export_decision_curve_analysis_data", signature(object="familiarColle
                                                                    target_column="net_benefit",
                                                                    bootstrap_ci_method="bc",
                                                                    additional_splitting_variable="threshold_probability",
-                                                                   conf_alpha=conf_alpha),
+                                                                   confidence_level=confidence_level),
                                     "intervention_data"=data$intervention_data,
-                                    "conf_alpha"=conf_alpha)
+                                    "confidence_level"=confidence_level)
                 
                 if(!is.null(dir_path)){
                   
@@ -1611,7 +1611,7 @@ setMethod(".summarise_model_performance", signature(object="familiarCollection")
             metric_columns <- paste0("performance_", metrics)
 
             # Compute descriptive statistics for each column
-            ensemble_performance <- data[, sapply(.SD, bootstrap_ci, conf_alpha=conf_alpha),
+            ensemble_performance <- data[, sapply(.SD, bootstrap_ci, confidence_level=1.0-conf_alpha),
                                          by=c("data_set", "fs_method", "learner", "model_name"),
                                          .SDcols=metric_columns]
             
@@ -1755,7 +1755,7 @@ setMethod(".apply_labels", signature(data="ANY", object="familiarCollection"),
 
 .compute_bootstrap_ci <- function(x0, xb, target_column, bootstrap_ci_method="bc",
                                   additional_splitting_variable=NULL,
-                                  conf_alpha=0.05){
+                                  confidence_level=0.95){
 
   # Suppress NOTES due to non-standard evaluation in data.table
   bootstrap_id <- NULL
@@ -1792,7 +1792,7 @@ setMethod(".apply_labels", signature(data="ANY", object="familiarCollection"),
   
   # Split the data and compute confidence intervals.
   data <- lapply(split(data, by=splitting_variables, keep.by=TRUE),
-                 function(data, target_column, conf_alpha, bootstrap_ci_method){
+                 function(data, target_column, confidence_level, bootstrap_ci_method){
                    
                    # Select point estimate and bootstrap estimates.
                    x0 <- data[bootstrap_id == 0, ][[target_column]]
@@ -1804,7 +1804,7 @@ setMethod(".apply_labels", signature(data="ANY", object="familiarCollection"),
                    # split.
                    ci_data <- bootstrap_ci(x=xb,
                                            x_0=x0,
-                                           conf_alpha=conf_alpha,
+                                           confidence_level=confidence_level,
                                            bootstrap_ci_method=bootstrap_ci_method)
                    
                    # Make a copy and drop the bootstrap_id column.
@@ -1821,9 +1821,9 @@ setMethod(".apply_labels", signature(data="ANY", object="familiarCollection"),
                    return(output_data)
                  },
                  target_column=target_column,
-                 conf_alpha=conf_alpha,
+                 confidence_level=confidence_level,
                  bootstrap_ci_method=bootstrap_ci_method)
-  browser()
+  
   # Combine into a single dataset
   data <- data.table::rbindlist(data, use.names=TRUE)
   

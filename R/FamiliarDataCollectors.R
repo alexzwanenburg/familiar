@@ -287,8 +287,8 @@ collect_decision_curve_analysis_data <- function(fam_data_list){
   # Iterate over individual and ensemble data.
   for(type in c("individual", "ensemble")){
     
-    # Create type list and add conf_alpha.
-    type_list <- list("conf_alpha"=fam_data_list[[1]]@decision_curve_data[[type]]$conf_alpha)
+    # Create type list and add the confidence level.
+    type_list <- list("confidence_level"=fam_data_list[[1]]@decision_curve_data[[type]]$confidence_level)
     
     for(element in c("model_data", "intervention_data", "bootstrap_data")){
       
