@@ -27,6 +27,7 @@ setGeneric("extract_decision_curve_data",
                     metric_alpha=waiver(),
                     eval_times=waiver(),
                     is_pre_processed=FALSE,
+                    message_indent=0L,
                     verbose=FALSE,
                     ...) standardGeneric("extract_decision_curve_data"))
 
@@ -38,6 +39,7 @@ setMethod("extract_decision_curve_data", signature(object="familiarEnsemble"),
                    metric_alpha=waiver(),
                    eval_times=waiver(),
                    is_pre_processed=FALSE,
+                   message_indent=0L,
                    verbose=FALSE,
                    ...){
             
@@ -47,7 +49,8 @@ setMethod("extract_decision_curve_data", signature(object="familiarEnsemble"),
             
             # Message extraction start
             if(verbose){
-              logger.message(paste0("\tComputing data for decision curve analysis."))
+              logger.message(paste0("Computing data for decision curve analysis."),
+                             indent=message_indent)
             }
             
             # Load eval_times from the object settings attribute, if it is not provided.

@@ -403,6 +403,7 @@ setMethod("extract_data", signature(object="familiarEnsemble"),
                                                                  ensemble_method=ensemble_method,
                                                                  eval_times=eval_times,
                                                                  metric_alpha=metric_alpha,
+                                                                 message_indent=message_indent,
                                                                  verbose=verbose)
               
             } else {
