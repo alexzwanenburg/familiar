@@ -286,6 +286,7 @@ setMethod("extract_data", signature(object="familiarEnsemble"),
               fs_vimp_info <- extract_fs_vimp(object=object,
                                               aggregation_method=aggregation_method,
                                               rank_threshold=rank_threshold,
+                                              message_indent=message_indent,
                                               verbose=verbose)
             } else {
               fs_vimp_info <- NULL
@@ -297,6 +298,7 @@ setMethod("extract_data", signature(object="familiarEnsemble"),
               model_vimp_info <- extract_model_vimp(object=object,
                                                     aggregation_method=aggregation_method,
                                                     rank_threshold=rank_threshold,
+                                                    message_indent=message_indent,
                                                     verbose=verbose)
             } else {
               model_vimp_info <- NULL
@@ -507,13 +509,16 @@ setMethod("extract_data", signature(object="familiarEnsemble"),
 setGeneric("extract_fs_vimp", function(object,
                                        aggregation_method=waiver(),
                                        rank_threshold=waiver(),
-                                       verbose=FALSE, ...) standardGeneric("extract_fs_vimp"))
+                                       message_indent=0L,
+                                       verbose=FALSE,
+                                       ...) standardGeneric("extract_fs_vimp"))
 
 #####extract_fs_vimp#####
 setMethod("extract_fs_vimp", signature(object="familiarEnsemble"),
           function(object,
                    aggregation_method=waiver(),
                    rank_threshold=waiver(),
+                   message_indent=0L,
                    verbose=FALSE){
             
             # Obtain aggregation method from stored settings, if required.
@@ -546,7 +551,8 @@ setMethod("extract_fs_vimp", signature(object="familiarEnsemble"),
             
             # Message extraction start
             if(verbose){
-              logger.message(paste0("\tExtracting variable importance obtained during feature selection."))
+              logger.message(paste0("Extracting variable importance obtained during feature selection."),
+                             indent=message_indent)
             }
             
             # Define the run table -> at the pooling level
@@ -626,6 +632,7 @@ setMethod("extract_fs_vimp", signature(object="familiarEnsemble"),
 setGeneric("extract_model_vimp", function(object,
                                           aggregation_method=waiver(),
                                           rank_threshold=waiver(),
+                                          message_indent=0L,
                                           verbose=FALSE,
                                           ...) standardGeneric("extract_model_vimp"))
 
