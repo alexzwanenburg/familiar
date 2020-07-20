@@ -130,8 +130,8 @@ NULL
 #'
 #'@param sample_cluster_method The method used to perform clustering based on
 #'  distance between samples. These are the same methods as for the
-#'  `cluster_method` configuration parameter: `hclust`, `agnes`, `diana`
-#'  and `pam`.
+#'  `cluster_method` configuration parameter: `hclust`, `agnes`, `diana` and
+#'  `pam`.
 #'
 #'  `none` cannot be used when extracting data for feature expressions.
 #'
@@ -178,6 +178,8 @@ NULL
 #'  creation of the underlying `familiarModel` objects.
 #'@param verbose Flag to indicate whether feedback should be provided on the
 #'  computation and extraction of various data elements.
+#'@param message_indent Number of indentation steps for messages shown during
+#'  computation and extraction of various data elements.
 #'@param data_element String indicating which data elements are to be extracted.
 #'  Default is `all`, but specific elements can be specified to speed up
 #'  computations if not all elements are to be computed. This is an internal
@@ -189,7 +191,9 @@ NULL
 #'  assessing rater reliability. Psychol. Bull. 86, 420–428 (1979).
 #'@md
 #'@keywords internal
-setGeneric("extract_data", function(object, data, is_pre_processed=FALSE, cl=NULL,
+setGeneric("extract_data", function(object, data,
+                                    is_pre_processed=FALSE,
+                                    cl=NULL,
                                     time_max=waiver(),
                                     aggregation_method=waiver(),
                                     rank_threshold=waiver(),
@@ -207,12 +211,16 @@ setGeneric("extract_data", function(object, data, is_pre_processed=FALSE, cl=NUL
                                     sample_similarity_metric=waiver(),
                                     metric_alpha=waiver(),
                                     icc_type=waiver(),
+                                    message_indent=0L,
                                     verbose=FALSE,
                                     data_element="all", ...) standardGeneric("extract_data"))
 
 #####extract_data#####
 setMethod("extract_data", signature(object="familiarEnsemble"),
-          function(object, data, is_pre_processed=FALSE, cl=NULL,
+          function(object,
+                   data,
+                   is_pre_processed=FALSE,
+                   cl=NULL,
                    time_max=waiver(),
                    aggregation_method=waiver(),
                    rank_threshold=waiver(),
@@ -230,6 +238,7 @@ setMethod("extract_data", signature(object="familiarEnsemble"),
                    sample_similarity_metric=waiver(),
                    metric_alpha=waiver(),
                    icc_type=waiver(),
+                   message_indent=0L,
                    verbose=FALSE,
                    data_element="all",
                    ...){

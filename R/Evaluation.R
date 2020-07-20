@@ -448,6 +448,7 @@ run_evaluation <- function(cl, proj_list, settings, file_paths){
                            sample_similarity_metric=settings$eval$sample_similarity_metric,
                            metric_alpha = settings$eval$metric_alpha,
                            icc_type= settings$eval$icc_type,
+                           message_indent=1L,
                            verbose=TRUE)
   
   # Update the pooling table
