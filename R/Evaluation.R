@@ -167,18 +167,43 @@ run_evaluation <- function(cl, proj_list, settings, file_paths){
     
     logger.message("\nEvaluation: Processing data to create familiarData objects.")
     
-    # Generate data objects
-    fam_lapply_lb(cl=cl,
+    # Allow automated switching between internal and external loops.
+    if(settings$eval$do_parallel & nrow(new_data_table) > length(cl)){
+      # Perform parallelisation of the outer loop.
+      outer_parallel <- show_progress_bar <- TRUE
+      cl_outer <- cl
+      cl_inner <- NULL
+     
+      logger.message(paste0("Evaluation: Parallel processing is done in the outer loop. ",
+                            "No progress can be displayed."))
+      
+    } else if(settings$eval$do_parallel){
+      # Perform parallelisation in the internal processes.
+      outer_parallel <- show_progress_bar <- FALSE
+      cl_outer <- NULL
+      cl_inner <- cl
+      
+    } else {
+      # No parallelisation is conducted.
+      outer_parallel <- show_progress_bar <- FALSE
+      cl_outer <- NULL
+      cl_inner <- NULL
+    }
+    
+    # Perform the necessary computations to create familiarData objects.
+    fam_mapply_lb(cl=cl_outer,
                   assign="all",
-                  X=split(new_data_table, by="fam_data"),
                   FUN=.create_familiar_data_runtime,
-                  dir_path=file_paths$fam_data_dir)
+                  pool_data_table=split(new_data_table, by="fam_data"),
+                  progress_bar=show_progress_bar,
+                  MoreArgs=list("cl"=cl_inner,
+                                "dir_path"=file_paths$fam_data_dir))
   }  
     
   # Re-check if all familiarData objects exist
   data_set_list[, "fam_data_exists":=file.exists(fam_data)]
   if(!all(data_set_list$fam_data_exists)){
-    ..error_reached_unreachable_code(".prepare_familiar_data_sets_not_all_familiarData_objects_were_created.")
+    ..error_reached_unreachable_code(".prepare_familiar_data_sets: not all familiarData_objects were created.")
   }
 
   return(data_set_list)
@@ -378,7 +403,7 @@ run_evaluation <- function(cl, proj_list, settings, file_paths){
 
 
 
-.create_familiar_data_runtime <- function(pool_data_table, dir_path){
+.create_familiar_data_runtime <- function(cl=NULL, pool_data_table, dir_path){
   # Creates a familiarData object.
 
   logger.message(paste0("\nEvaluation: Processing dataset ", pool_data_table$iteration_id,
@@ -387,7 +412,9 @@ run_evaluation <- function(cl, proj_list, settings, file_paths){
   # Load the familiarEnsemble
   fam_ensemble <- readRDS(pool_data_table$fam_ensemble)
   
-  # Define a dataObject with delayed reading
+  # Define a dataObject with delayed reading. This enables the proper selection
+  # of development and training data for each familiarModel used in the
+  # ensemble.
   data_obj <- methods::new("dataObject",
                            data = NULL,
                            is_pre_processed = FALSE,
@@ -403,6 +430,7 @@ run_evaluation <- function(cl, proj_list, settings, file_paths){
   # Create a familiarData object
   fam_data <- extract_data(object = fam_ensemble,
                            data = data_obj,
+                           cl=cl,
                            time_max = settings$eval$time_max,
                            eval_times = settings$eval$eval_times,
                            aggregation_method = settings$eval$aggregation,
