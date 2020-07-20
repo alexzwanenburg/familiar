@@ -313,6 +313,7 @@ setMethod("extract_data", signature(object="familiarEnsemble"),
                                                              feature_cluster_method=feature_cluster_method,
                                                              feature_linkage_method=feature_linkage_method,
                                                              feature_similarity_metric=feature_similarity_metric,
+                                                             message_indent=message_indent,
                                                              verbose=verbose)
             } else {
               mutual_corr_info <- NULL
@@ -1567,6 +1568,7 @@ setGeneric("extract_mutual_correlation", function(object,
                                                   feature_cluster_method=waiver(),
                                                   feature_linkage_method=waiver(),
                                                   feature_similarity_metric=waiver(),
+                                                  message_indent=0L,
                                                   verbose=FALSE,
                                                   ...) standardGeneric("extract_mutual_correlation"))
 
@@ -1579,12 +1581,14 @@ setMethod("extract_mutual_correlation", signature(object="familiarEnsemble", dat
                    feature_cluster_method=waiver(),
                    feature_linkage_method=waiver(),
                    feature_similarity_metric=waiver(),
+                   message_indent=0L,
                    verbose=FALSE){
             # Assess mutual correlation
             
             # Message extraction start
             if(verbose){
-              logger.message(paste0("\tComputing similarity between important features."))
+              logger.message(paste0("Computing similarity between important features."),
+                             indent=message_indent)
             }
 
             # Obtain cluster method from stored settings, if required.
@@ -1628,7 +1632,8 @@ setMethod("extract_mutual_correlation", signature(object="familiarEnsemble", dat
                                             cluster_linkage=feature_linkage_method)
             
             # Get data.table with feature ordering
-            feature_order_table <- cluster.extract_label_order(cluster_object=h, cluster_method=feature_cluster_method)
+            feature_order_table <- cluster.extract_label_order(cluster_object=h,
+                                                               cluster_method=feature_cluster_method)
             
             # Merge ordering into feature_similarity_table. The table is first
             # merged on feature_1 and then on feature_2.
