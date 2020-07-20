@@ -414,6 +414,7 @@ setMethod("extract_data", signature(object="familiarEnsemble"),
             # Extract information regarding stratification
             if(data_element %in% c("all", "kaplan_meier_info")){
               km_info <- extract_km_cutoffs(object=object,
+                                            message_indent=message_indent,
                                             verbose=verbose)
             } else {
               km_info <- NULL
@@ -915,22 +916,23 @@ setMethod("extract_predictions", signature(object="familiarEnsemble"),
 #'@md
 #'@keywords internal
 setGeneric("extract_km_cutoffs", function(object,
+                                          message_indent=0L,
                                           verbose=FALSE,
                                           ...) standardGeneric("extract_km_cutoffs"))
 
 #####extract_km_cutoffs#####
 setMethod("extract_km_cutoffs", signature(object="familiarEnsemble"),
           function(object,
+                   message_indent=0L,
                    verbose=FALSE){
             
             # Test if the outcome type is survival
-            if(!object@outcome_type %in% c("survival")){
-              return(NULL)
-            }
+            if(!object@outcome_type %in% c("survival")) return(NULL)
             
             # Message extraction start
             if(verbose){
-              logger.message(paste0("\tExtracting Kaplan-Meier cutoffs from the models."))
+              logger.message(paste0("Extracting Kaplan-Meier cutoffs from the models."),
+                             indent=message_indent)
             }
             
             # Test if models are properly loaded
