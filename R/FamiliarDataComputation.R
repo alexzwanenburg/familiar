@@ -362,6 +362,7 @@ setMethod("extract_data", signature(object="familiarEnsemble"),
             # Extract hyper-parameters
             if(data_element %in% c("all", "hyperparameters")){
               hyperparameter_info <- extract_hyperparameters(object=object,
+                                                             message_indent=message_indent,
                                                              verbose=verbose)
             } else {
               hyperparameter_info <- NULL
@@ -770,18 +771,21 @@ setMethod("extract_model_vimp", signature(object="familiarModel"),
 #'@md
 #'@keywords internal
 setGeneric("extract_hyperparameters", function(object,
+                                               message_indent=0L,
                                                verbose=FALSE,
                                                ...) standardGeneric("extract_hyperparameters"))
 
 #####extract_hyperparameters#####
 setMethod("extract_hyperparameters", signature(object="familiarEnsemble"),
           function(object,
+                   message_indent=0L,
                    verbose=FALSE){
             # Extracts hyper-parameters from each model and collects them.
             
             # Message extraction start
             if(verbose){
-              logger.message(paste0("\tExtracting hyperparameters from the models in the ensemble."))
+              logger.message(paste0("Extracting hyperparameters from the models in the ensemble."),
+                             indent=message_indent)
             }
             
             # Test if models are properly loaded
