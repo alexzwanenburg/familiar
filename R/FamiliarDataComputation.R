@@ -386,8 +386,10 @@ setMethod("extract_data", signature(object="familiarEnsemble"),
             if(data_element %in% c("all", "model_performance")){
               model_performance_data <- extract_performance(object=object,
                                                             prediction_data=prediction_data,
+                                                            cl=cl,
                                                             metric=metric,
                                                             metric_alpha=metric_alpha,
+                                                            message_indent=message_indent,
                                                             verbose=verbose)
             } else {
               model_performance_data <- NULL
@@ -988,9 +990,11 @@ setMethod("extract_km_cutoffs", signature(object="familiarEnsemble"),
 #'@keywords internal
 setGeneric("extract_performance",
            function(object,
-                    prediction_data=NULL, 
+                    prediction_data=NULL,
+                    cl=NULL,
                     metric=waiver(),
                     metric_alpha=waiver(),
+                    message_indent=0L,
                     verbose=FALSE,
                     ...) standardGeneric("extract_performance"))
 
@@ -998,14 +1002,22 @@ setGeneric("extract_performance",
 setMethod("extract_performance", signature(object="familiarEnsemble", prediction_data="list"),
           function(object,
                    prediction_data=NULL,
+                   cl=NULL,
                    metric=waiver(),
                    metric_alpha=waiver(),
+                   message_indent=0L,
                    verbose=FALSE,
                    ...){
             # Compute metrics based on a pre-calculated set of prediction_data.
             # Note that this is different from the "assess_performance" method,
             # which performs the prediction on the fly, and enables the
             # extraction of objective scores.
+            
+            # Message extraction start
+            if(verbose){
+              logger.message(paste0("Computing performance metrics for models on the dataset."),
+                             indent=message_indent)
+            }
             
             # Check if predictions were generated, and generate them on the fly
             # if necessary.
