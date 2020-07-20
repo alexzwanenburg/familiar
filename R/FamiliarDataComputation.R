@@ -265,7 +265,9 @@ setMethod("extract_data", signature(object="familiarEnsemble"),
               # Compute a table containg the pairwise distance between features.
               feature_similarity_table <- extract_feature_similarity_table(object=object,
                                                                            data=data,
+                                                                           cl=cl,
                                                                            feature_similarity_metric=feature_similarity_metric,
+                                                                           message_indent=message_indent,
                                                                            verbose=verbose)
             }
 
@@ -273,7 +275,9 @@ setMethod("extract_data", signature(object="familiarEnsemble"),
               # Compute a table containing the pairwise distance between samples.
               sample_similarity_table <- extract_sample_similarity_table(object=object,
                                                                          data=data,
+                                                                         cl=cl,
                                                                          sample_similarity_metric=sample_similarity_metric,
+                                                                         message_indent=message_indent,
                                                                          verbose=verbose)
             }
 
@@ -630,12 +634,14 @@ setMethod("extract_model_vimp", signature(object="familiarEnsemble"),
           function(object,
                    aggregation_method=waiver(),
                    rank_threshold=waiver(),
+                   message_indent=0L,
                    verbose=FALSE,
                    ...){
             
             # Message extraction start
             if(verbose){
-              logger.message(paste0("\tExtracting variable importance obtained from the models."))
+              logger.message(paste0("Extracting variable importance obtained from the models."),
+                             indent=message_indent)
             }
             
             # Test if models are properly loaded
@@ -1922,20 +1928,24 @@ setMethod("extract_confusion_matrix", signature(object="familiarEnsemble"),
 #'@keywords internal
 setGeneric("extract_feature_similarity_table", function(object,
                                                         data,
+                                                        cl=NULL,
                                                         feature_similarity_metric=waiver(),
                                                         verbose=FALSE,
+                                                        message_indent=0L,
                                                         ...) standardGeneric("extract_feature_similarity_table"))
 
 #####extract_feature_similarity_table#####
 setMethod("extract_feature_similarity_table", signature(object="familiarEnsemble", data="ANY"),
           function(object,
                    data,
+                   cl=NULL,
                    feature_similarity_metric=waiver(),
+                   message_indent=0L,
                    verbose=FALSE){
             
             # Message extraction start
             if(verbose){
-              logger.message(paste0("\tComputing pairwise similarity for important features."))
+              logger.message(paste0("Computing pairwise similarity for important features."), indent=message_indent)
             }
             
             # Obtain similarity metric from stored settings, if required.
@@ -1956,21 +1966,17 @@ setMethod("extract_feature_similarity_table", signature(object="familiarEnsemble
             data <- process_input_data(object=object, data=data, stop_at="imputation")
             
             # Check if the input data is not empty
-            if(is_empty(data)){
-              return(empty_similarity_table)
-            }
+            if(is_empty(data)) return(empty_similarity_table)
             
             # Check if the number of samples is sufficient (>5), and return an
             # empty table if not.
-            if(data.table::uniqueN(data@data, by="subject_id") <= 5){
-              return(empty_similarity_table)
-            }
+            if(data.table::uniqueN(data@data, by="subject_id") <= 5) return(empty_similarity_table)
             
             # Maintain only important features. The current set is based on the
             # required features.
             data <- filter_features(data=data, available_features=object@important_features)
             
-            # Identify eligble, numeric columns
+            # Identify eligible columns.
             feature_columns <- get_feature_columns(x=data)
             
             # Break if there are not at least 2 features present between which
@@ -1980,10 +1986,12 @@ setMethod("extract_feature_similarity_table", signature(object="familiarEnsemble
             }
             
             # Compute the similarity table
-            feature_similarity_table <- cluster.get_featurewise_similarity_table(data_obj=data,
+            feature_similarity_table <- cluster.get_featurewise_similarity_table(cl=cl,
+                                                                                 data_obj=data,
                                                                                  feature_columns=feature_columns,
                                                                                  similarity_metric=feature_similarity_metric,
-                                                                                 verbose=FALSE)
+                                                                                 verbose=verbose,
+                                                                                 message_indent=message_indent + 1L)
             
             return(feature_similarity_table)
           })
@@ -2006,7 +2014,9 @@ setMethod("extract_feature_similarity_table", signature(object="familiarEnsemble
 #'@keywords internal
 setGeneric("extract_sample_similarity_table", function(object,
                                                        data,
+                                                       cl=NULL,
                                                        sample_similarity_metric=waiver(),
+                                                       message_indent=0L,
                                                        verbose=FALSE,
                                                        ...) standardGeneric("extract_sample_similarity_table"))
 
@@ -2014,12 +2024,14 @@ setGeneric("extract_sample_similarity_table", function(object,
 setMethod("extract_sample_similarity_table", signature(object="familiarEnsemble", data="ANY"),
           function(object,
                    data,
+                   cl=NULL,
                    sample_similarity_metric=waiver(),
+                   message_indent=0L,
                    verbose=FALSE){
             
             # Message extraction start
             if(verbose){
-              logger.message(paste0("\tComputing pairwise similarity between samples."))
+              logger.message(paste0("Computing pairwise similarity between samples."), indent=message_indent)
             }
             
             # Obtain similarity metric from stored settings, if required.
@@ -2040,15 +2052,11 @@ setMethod("extract_sample_similarity_table", signature(object="familiarEnsemble"
             data <- process_input_data(object=object, data=data, stop_at="imputation")
             
             # Check if the input data is not empty
-            if(is_empty(data)){
-              return(empty_similarity_table)
-            }
+            if(is_empty(data)) return(empty_similarity_table)
             
             # Check if the number of samples is sufficient to form pairs (>= 2),
             # and return an empty table if not.
-            if(data.table::uniqueN(data@data, by="subject_id") < 2){
-              return(empty_similarity_table)
-            }
+            if(data.table::uniqueN(data@data, by="subject_id") < 2) return(empty_similarity_table)
             
             # Maintain only important features. The current set is based on the
             # required features.
@@ -2057,19 +2065,19 @@ setMethod("extract_sample_similarity_table", signature(object="familiarEnsemble"
             # Aggregate features.
             data <- aggregate_data(data=data)
             
-            # Identify eligble, numeric columns
+            # Identify eligible columns
             feature_columns <- get_feature_columns(x=data)
             
             # Break if there are is not at least 1 feature present between which
             # similarity can be compared between samples.
-            if(length(feature_columns) < 2) {
-              return(empty_similarity_table)
-            }
+            if(length(feature_columns) < 2) return(empty_similarity_table)
             
             # Compute the similarity table
-            sample_similarity_table <- cluster.get_samplewise_similarity_table(data_obj=data,
-                                                                                similarity_metric=sample_similarity_metric,
-                                                                                verbose=FALSE)
+            sample_similarity_table <- cluster.get_samplewise_similarity_table(cl=cl,
+                                                                               data_obj=data,
+                                                                               similarity_metric=sample_similarity_metric,
+                                                                               verbose=verbose,
+                                                                               message_indent=message_indent + 1L)
             
             return(sample_similarity_table)
           })
