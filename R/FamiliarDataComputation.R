@@ -848,7 +848,8 @@ setMethod("extract_predictions", signature(object="familiarEnsemble"),
             
             # Message extraction start
             if(verbose){
-              logger.message(paste0("\tComputing ensemble predictions for the dataset."))
+              logger.message(paste0("Computing ensemble predictions for the dataset."),
+                             indent=message_indent)
             }
             
             # Load time_max from the object settings attribute, if it is not provided.
