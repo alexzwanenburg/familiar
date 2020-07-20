@@ -1124,7 +1124,7 @@ setMethod("export_model_performance", signature(object="familiarCollection"),
               # Summarise data
               ensemble_performance <- .summarise_model_performance(object=object, data=ensemble_performance,
                                                                    metrics=main_list$metric,
-                                                                   conf_alpha=main_list$conf_alpha)
+                                                                   confidence_level=main_list$confidence_level)
             } else if(export_raw & !is_empty(main_list$ensemble)){
               
               # Melt dataset so that it is in long format.
@@ -1148,7 +1148,7 @@ setMethod("export_model_performance", signature(object="familiarCollection"),
               return(list("single"=single_performance,
                           "ensemble"=ensemble_performance,
                           "metric"=main_list$metric,
-                          "conf_alpha"=main_list$conf_alpha))
+                          "confidence_level"=main_list$confidence_level))
               
             } else {
               # Export model performances of individual models
@@ -1236,7 +1236,7 @@ setMethod("export_auc_data", signature(object="familiarCollection"),
             if(is.null(dir_path)){
               return(list("single"=single_performance,
                           "ensemble"=ensemble_performance,
-                          "conf_alpha"=main_list$conf_alpha))
+                          "confidence_level"=main_list$confidence_level))
               
             } else {
               # Export model performances of individual models
@@ -1591,7 +1591,7 @@ setMethod("export_feature_similarity", signature(object="ANY"),
 
 #####.summarise_model_performance#####
 setMethod(".summarise_model_performance", signature(object="familiarCollection"),
-          function(object, data=NULL, metrics=NULL, conf_alpha=NULL){
+          function(object, data=NULL, metrics=NULL, confidence_level=NULL){
             # Ensemble model performance contains bootstrapped performance metrics.
             # This method summarises this data and extracts confidence intervals.
             
@@ -1603,15 +1603,15 @@ setMethod(".summarise_model_performance", signature(object="familiarCollection")
               metrics <- object@model_performance$metric
             }
             
-            if(is.null(conf_alpha)){
-              conf_alpha <- object@model_performance$conf_alpha
+            if(is.null(confidence_level)){
+              confidence_level <- object@model_performance$confidence_level
             }
             
             # Identify the columns containing metric values
             metric_columns <- paste0("performance_", metrics)
 
             # Compute descriptive statistics for each column
-            ensemble_performance <- data[, sapply(.SD, bootstrap_ci, confidence_level=1.0-conf_alpha),
+            ensemble_performance <- data[, sapply(.SD, bootstrap_ci, confidence_level=confidence_level),
                                          by=c("data_set", "fs_method", "learner", "model_name"),
                                          .SDcols=metric_columns]
             

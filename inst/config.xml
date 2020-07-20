@@ -172,8 +172,8 @@
       <ensemble_method></ensemble_method>
       <!-- Metric(s) for assessing model performance (optional, default: same as metric for hyperparameter_optimisation, multiple possible) -->
       <evaluation_metric></evaluation_metric>
-      <!-- Alpha for confidence intervals (optional, default: 0.05) -->
-      <confidence_alpha></confidence_alpha>
+      <!-- Confidence level for confidence intervals (optional, default: 0.95) -->
+      <confidence_level></confidence_level>
       <!-- Method for aggregating variable importances (optional, default: same as method in feature_selection) -->
       <eval_aggregation_method></eval_aggregation_method>
       <!-- Rank threshold for determining the best features (optional, default: same as rank threshold in feature_selection) -->

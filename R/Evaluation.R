@@ -446,7 +446,7 @@ run_evaluation <- function(cl, proj_list, settings, file_paths){
                            sample_cluster_method=settings$eval$sample_cluster_method,
                            sample_linkage_method=settings$eval$sample_linkage_method,
                            sample_similarity_metric=settings$eval$sample_similarity_metric,
-                           metric_alpha = settings$eval$metric_alpha,
+                           confidence_level = settings$eval$confidence_level,
                            icc_type= settings$eval$icc_type,
                            message_indent=1L,
                            verbose=TRUE)

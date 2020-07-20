@@ -1954,7 +1954,7 @@
 #'  example, this means that results from individual cross-validation iterations
 #'  are not computed and shown. When the flag is `false`, results are computed
 #'  from both the global layer and the next lower level.
-#'  
+#'
 #'  Setting the flag to `true` saves computation time.
 #'@param ensemble_method (*optional*) Method for ensembling predictions from
 #'  models for the same sample. Available methods are:
@@ -1971,17 +1971,16 @@
 #'
 #'  Confidence intervals (or rather credibility intervals) are computed for each
 #'  metric during evaluation. This is done using bootstraps, the number of which
-#'  depends on the value of `confidence_alpha` (Davison and Hinkley, 1997).
+#'  depends on the value of `confidence_level` (Davison and Hinkley, 1997).
 #'
 #'  If unset, the metric in the `optimisation_metric` variable is used.
 #'
-#'@param confidence_alpha (*optional*) Numeric value for the alpha level at
-#'  which confidence (or credibility intervals) intervals are determined using
-#'  bootstrap estimation. The number of bootstraps depend on `confidence_alpha`.
-#'  `familiar` uses the rule of thumb \eqn{n = 20 / \alpha} to determine the
-#'  number of required bootstraps.
+#'@param confidence_level (*optional*) Numeric value for the level at which
+#'  confidence are determined. In the case bootstraps are used to determine the
+#'  confidence intervals bootstrap estimation, `familiar` uses the rule of thumb
+#'  \eqn{n = 20 / ci.level} to determine the number of required bootstraps.
 #'
-#'  The default value is `0.05`.
+#'  The default value is `0.95`.
 #'
 #'@param feature_cluster_method (*optional*) Method used to perform clustering
 #'  of features. The same methods as for the `cluster_method` configuration
@@ -2190,7 +2189,7 @@
                                        evaluate_top_level_only=waiver(),
                                        ensemble_method=waiver(),
                                        evaluation_metric=waiver(),
-                                       confidence_alpha=waiver(),
+                                       confidence_level=waiver(),
                                        feature_cluster_method=waiver(),
                                        feature_cluster_cut_method=waiver(),
                                        feature_linkage_method=waiver(),
@@ -2235,10 +2234,10 @@
   
   
   # Width of the confidence intervals
-  settings$metric_alpha <- .parse_arg(x_config=config$confidence_alpha, x_var=confidence_alpha,
-                                      var_name="confidence_alpha", type="numeric", optional=TRUE, default=0.05)
+  settings$confidence_level <- .parse_arg(x_config=config$confidence_level, x_var=confidence_level,
+                                          var_name="confidence_level", type="numeric", optional=TRUE, default=0.95)
   
-  .check_number_in_valid_range(x=settings$metric_alpha, var_name="confidence_alpha", range=c(0.0, 1.0), closed=c(FALSE, FALSE))
+  .check_number_in_valid_range(x=settings$confidence_level, var_name="confidence_level", range=c(0.0, 1.0), closed=c(FALSE, FALSE))
   
   # Feature cluster method
   settings$feature_cluster_method <- .parse_arg(x_config=config$feature_cluster_method, x_var=feature_cluster_method,

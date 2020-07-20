@@ -267,7 +267,7 @@ collect_model_performance <- function(fam_data_list){
   # Combine all information into a single list
   performance_list <- list("single"=single_model_table, "ensemble"=ensemble_model_table,
                            "metric"=fam_data_list[[1]]@model_performance$metric,
-                           "conf_alpha"=fam_data_list[[1]]@model_performance$conf_alpha)
+                           "confidence_level"=fam_data_list[[1]]@model_performance$confidence_level)
   
   return(performance_list)
 }
@@ -479,7 +479,7 @@ collect_auc_data <- function(fam_data_list){
   }))
   
   # Combine all AUC information to a single list
-  auc_list <- list("single"=single_model_table, "ensemble"=ensemble_model_table, "conf_alpha"=fam_data_list[[1]]@auc_data$conf_alpha)
+  auc_list <- list("single"=single_model_table, "ensemble"=ensemble_model_table, "confidence_level"=fam_data_list[[1]]@auc_data$confidence_level)
   
   return(auc_list)
 }

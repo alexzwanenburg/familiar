@@ -162,11 +162,10 @@ NULL
 #'  If not provided explicitly, this parameter is read from settings used at
 #'  creation of the underlying `familiarModel` objects.
 #'
-#'@param metric_alpha Numeric value for the alpha level at which confidence (or
-#'  credibility intervals) intervals are determined using bootstrap estimation.
-#'  The number of bootstraps depend on `metric_alpha`. `familiar` uses the rule
-#'  of thumb \eqn{n = 20 / \alpha} to determine the number of required
-#'  bootstraps.
+#'@param confidence_level (*optional*) Numeric value for the level at which
+#'  confidence are determined. In the case bootstraps are used to determine the
+#'  confidence intervals bootstrap estimation, `familiar` uses the rule of thumb
+#'  \eqn{n = 20 / ci.level} to determine the number of required bootstraps.
 #'
 #'  If not provided explicitly, this parameter is read from settings used at
 #'  creation of the underlying `familiarModel` objects.
@@ -209,7 +208,7 @@ setGeneric("extract_data", function(object, data,
                                     sample_cluster_method=waiver(),
                                     sample_linkage_method=waiver(),
                                     sample_similarity_metric=waiver(),
-                                    metric_alpha=waiver(),
+                                    confidence_level=waiver(),
                                     icc_type=waiver(),
                                     message_indent=0L,
                                     verbose=FALSE,
@@ -236,7 +235,7 @@ setMethod("extract_data", signature(object="familiarEnsemble"),
                    sample_cluster_method=waiver(),
                    sample_linkage_method=waiver(),
                    sample_similarity_metric=waiver(),
-                   metric_alpha=waiver(),
+                   confidence_level=waiver(),
                    icc_type=waiver(),
                    message_indent=0L,
                    verbose=FALSE,
@@ -388,7 +387,7 @@ setMethod("extract_data", signature(object="familiarEnsemble"),
                                                             prediction_data=prediction_data,
                                                             cl=cl,
                                                             metric=metric,
-                                                            metric_alpha=metric_alpha,
+                                                            confidence_level=confidence_level,
                                                             message_indent=message_indent,
                                                             verbose=verbose)
             } else {
@@ -402,7 +401,7 @@ setMethod("extract_data", signature(object="familiarEnsemble"),
                                                                  cl=cl,
                                                                  ensemble_method=ensemble_method,
                                                                  eval_times=eval_times,
-                                                                 metric_alpha=metric_alpha,
+                                                                 confidence_level=confidence_level,
                                                                  message_indent=message_indent,
                                                                  verbose=verbose)
               
@@ -448,7 +447,7 @@ setMethod("extract_data", signature(object="familiarEnsemble"),
               auc_data <- extract_auc_data(object=object,
                                            prediction_data=prediction_data,
                                            cl=cl,
-                                           metric_alpha=metric_alpha,
+                                           confidence_level=confidence_level,
                                            message_indent=message_indent,
                                            verbose=verbose)
             } else {
@@ -988,7 +987,7 @@ setMethod("extract_km_cutoffs", signature(object="familiarEnsemble"),
 #'  scores.
 #'
 #'  This function also computes credibility intervals for the ensemble model, at
-#'  the level of `metric_alpha`. This is a general method. Metrics with known,
+#'  the level of `confidence_level`. This is a general method. Metrics with known,
 #'  theoretically derived confidence intervals, nevertheless have a credibility
 #'  interval computed.
 #'
@@ -1000,7 +999,7 @@ setGeneric("extract_performance",
                     prediction_data=NULL,
                     cl=NULL,
                     metric=waiver(),
-                    metric_alpha=waiver(),
+                    confidence_level=waiver(),
                     message_indent=0L,
                     verbose=FALSE,
                     ...) standardGeneric("extract_performance"))
@@ -1011,7 +1010,7 @@ setMethod("extract_performance", signature(object="familiarEnsemble", prediction
                    prediction_data=NULL,
                    cl=NULL,
                    metric=waiver(),
-                   metric_alpha=waiver(),
+                   confidence_level=waiver(),
                    message_indent=0L,
                    verbose=FALSE,
                    ...){
@@ -1041,15 +1040,15 @@ setMethod("extract_performance", signature(object="familiarEnsemble", prediction
             
             # Load confidence alpha from object settings attribute if not
             # provided externally.
-            if(is.waive(metric_alpha)){
-              metric_alpha <- object@settings$metric_alpha
+            if(is.waive(confidence_level)){
+              confidence_level <- object@settings$confidence_level
             }
             
             # Check metric input argument
             sapply(metric, metric.check_outcome_type, outcome_type=object@outcome_type)
             
-            # Check metric_alpha input argument
-            .check_number_in_valid_range(x=metric_alpha, var_name="metric_alpha",
+            # Check confidence_level input argument
+            .check_number_in_valid_range(x=confidence_level, var_name="confidence_level",
                                          range=c(0.0, 1.0), closed=c(FALSE, FALSE))
             
             
@@ -1073,7 +1072,7 @@ setMethod("extract_performance", signature(object="familiarEnsemble", prediction
             
             # Determine the desired number of iterations for obtaining a stable
             # confidence interval.
-            n_iter <- ceiling(20 / metric_alpha)
+            n_iter <- ceiling(20 / (1 - confidence_level))
             
             # Get ensemble performance.
             # TODO: Make sure to pass along a familiarModel object to set the right prediction type.
@@ -1097,7 +1096,7 @@ setMethod("extract_performance", signature(object="familiarEnsemble", prediction
             
             # Add the metrics and the alpha-level used
             performance_list$metric <- metric
-            performance_list$conf_alpha <- metric_alpha
+            performance_list$confidence_level <- confidence_level
             
             return(performance_list)
           })
@@ -1114,7 +1113,7 @@ setMethod("extract_performance", signature(object="familiarEnsemble", prediction
 #'@inheritDotParams extract_predictions
 #'
 #'@details This function also computes credibility intervals for the ROC curve
-#'  for the ensemble model, at the level of `metric_alpha`. In the case of
+#'  for the ensemble model, at the level of `confidence_level`. In the case of
 #'  multinomial outcomes, an AUC curve is computed per class in a
 #'  one-against-all fashion.
 #'
@@ -1127,7 +1126,7 @@ setMethod("extract_performance", signature(object="familiarEnsemble", prediction
 setGeneric("extract_auc_data", function(object,
                                         prediction_data=NULL,
                                         cl=NULL,
-                                        metric_alpha=waiver(),
+                                        confidence_level=waiver(),
                                         message_indent=0L,
                                         verbose=FALSE,
                                         ...) standardGeneric("extract_auc_data"))
@@ -1137,7 +1136,7 @@ setMethod("extract_auc_data", signature(object="familiarEnsemble"),
           function(object,
                    prediction_data=NULL,
                    cl=NULL,
-                   metric_alpha=waiver(),
+                   confidence_level=waiver(),
                    message_indent=0L,
                    verbose=FALSE,
                    ...) {
@@ -1155,12 +1154,12 @@ setMethod("extract_auc_data", signature(object="familiarEnsemble"),
             }
             
             # Obtain alpha from the 
-            if(is.waive(metric_alpha)){
-              metric_alpha <- object@settings$metric_alpha
+            if(is.waive(confidence_level)){
+              confidence_level <- object@settings$confidence_level
             }
             
             # Check alpha
-            .check_number_in_valid_range(metric_alpha, var_name="metric_alpha", range=c(0.0, 1.0), closed=c(FALSE, FALSE))
+            .check_number_in_valid_range(confidence_level, var_name="confidence_level", range=c(0.0, 1.0), closed=c(FALSE, FALSE))
             
             # Check if predictions were generated, and generate them on the fly
             # if necessary.
@@ -1223,7 +1222,7 @@ setMethod("extract_auc_data", signature(object="familiarEnsemble"),
             auc_table_list$ensemble <- add_model_name(data=ensemble_auc_table, object=object)
             
             # Add the confidence alpha level
-            auc_table_list$conf_alpha <- metric_alpha
+            auc_table_list$confidence_level <- confidence_level
             
             return(auc_table_list)
           })
@@ -2322,7 +2321,7 @@ setMethod("extract_sample_similarity_table", signature(object="familiarEnsemble"
 
 
 
-.complete_auc_table <- function(basic_auc_table, compute_confidence_intervals=FALSE, conf_alpha=0.05){
+.complete_auc_table <- function(basic_auc_table, compute_confidence_intervals=FALSE, confidence_level=0.95){
   
   # Suppress NOTES due to non-standard evaluation in data.table
   y <- NULL
@@ -2359,7 +2358,7 @@ setMethod("extract_sample_similarity_table", signature(object="familiarEnsemble"
     
   } else {
     # Compute confidence intervals for the AUC table
-    n_iter <- ceiling(20 / conf_alpha)
+    n_iter <- ceiling(20 / (1-confidence_level))
     
     auc_table <- data.table::rbindlist(lapply(seq_len(n_iter), function(ii, basic_auc_table){
       # Create samples
@@ -2388,8 +2387,8 @@ setMethod("extract_sample_similarity_table", signature(object="familiarEnsemble"
     }, basic_auc_table=basic_auc_table))
     
     # Aggregate results
-    auc_table <- auc_table[, list(y=stats::median(y), conf_int_lower=stats::quantile(y, conf_alpha/2),
-                                  conf_int_upper=stats::quantile(y, 1-conf_alpha/2)), by="x"]
+    auc_table <- auc_table[, list(y=stats::median(y), conf_int_lower=stats::quantile(y, (1-confidence_level)/2),
+                                  conf_int_upper=stats::quantile(y, 1-(1-confidence_level)/2)), by="x"]
     
     # Add in initial data point. Endpoints are always present in vallid auc_tables.
     auc_table_initial <- head(auc_table, n=1)

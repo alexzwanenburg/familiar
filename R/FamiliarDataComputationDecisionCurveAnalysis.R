@@ -24,7 +24,7 @@ setGeneric("extract_decision_curve_data",
                     data,
                     cl=NULL,
                     ensemble_method=waiver(),
-                    metric_alpha=waiver(),
+                    confidence_level=waiver(),
                     eval_times=waiver(),
                     is_pre_processed=FALSE,
                     message_indent=0L,
@@ -36,7 +36,7 @@ setMethod("extract_decision_curve_data", signature(object="familiarEnsemble"),
                    data,
                    cl=NULL,
                    ensemble_method=waiver(),
-                   metric_alpha=waiver(),
+                   confidence_level=waiver(),
                    eval_times=waiver(),
                    is_pre_processed=FALSE,
                    message_indent=0L,
@@ -70,12 +70,12 @@ setMethod("extract_decision_curve_data", signature(object="familiarEnsemble"),
             
             # Load confidence alpha from object settings attribute if not
             # provided externally.
-            if(is.waive(metric_alpha)){
-              metric_alpha <- object@settings$metric_alpha
+            if(is.waive(confidence_level)){
+              confidence_level <- object@settings$confidence_level
             }
             
-            # Check metric_alpha input argument
-            .check_number_in_valid_range(x=metric_alpha, var_name="metric_alpha",
+            # Check confidence_level input argument
+            .check_number_in_valid_range(x=confidence_level, var_name="confidence_level",
                                          range=c(0.0, 1.0), closed=c(FALSE, FALSE))
             
             # Check ensemble_method argument
@@ -93,7 +93,7 @@ setMethod("extract_decision_curve_data", signature(object="familiarEnsemble"),
                                             data=data,
                                             is_pre_processed=is_pre_processed,
                                             eval_times=eval_times,
-                                            confidence_level= 1.0 - metric_alpha,
+                                            confidence_level=confidence_level,
                                             verbose=verbose)
             
             return(dca_data)
