@@ -373,8 +373,10 @@ setMethod("extract_data", signature(object="familiarEnsemble"),
                                    "stratification_data", "auc_data", "confusion_matrix")){
               prediction_data <- extract_predictions(object=object,
                                                      data=data,
+                                                     cl=cl,
                                                      ensemble_method=ensemble_method,
                                                      time_max=time_max,
+                                                     message_indent=message_indent,
                                                      verbose=verbose)
             } else {
               prediction_data <- NULL
@@ -821,8 +823,10 @@ setMethod("extract_hyperparameters", signature(object="familiarEnsemble"),
 setGeneric("extract_predictions",
            function(object,
                     data,
+                    cl=NULL,
                     ensemble_method=waiver(),
                     time_max=waiver(),
+                    message_indent=0L,
                     verbose=FALSE,
                     ...) standardGeneric("extract_predictions"))
 
@@ -830,8 +834,10 @@ setGeneric("extract_predictions",
 setMethod("extract_predictions", signature(object="familiarEnsemble"),
           function(object,
                    data,
+                   cl=NULL,
                    ensemble_method=waiver(),
                    time_max=waiver(),
+                   message_indent=0L,
                    verbose=FALSE,
                    ...){
             # Extract predictions from the data using the models in the
