@@ -344,6 +344,7 @@ setMethod("extract_data", signature(object="familiarEnsemble"),
             if(data_element %in% c("all", "univariate_analysis")){
               univar_info <- extract_univariate_analysis(object=object,
                                                          data=data,
+                                                         cl=cl,
                                                          icc_type=icc_type,
                                                          feature_similarity_table=feature_similarity_table,
                                                          feature_cluster_method=feature_cluster_method,
@@ -351,6 +352,7 @@ setMethod("extract_data", signature(object="familiarEnsemble"),
                                                          feature_linkage_method=feature_linkage_method,
                                                          feature_similarity_threshold=feature_similarity_threshold,
                                                          feature_similarity_metric=feature_similarity_metric,
+                                                         message_indent=message_indent,
                                                          verbose=verbose)
             } else {
               univar_info <- NULL
@@ -1319,6 +1321,7 @@ setMethod("extract_stratification_data", signature(object="familiarEnsemble"),
 #'@keywords internal
 setGeneric("extract_univariate_analysis", function(object,
                                                    data,
+                                                   cl=NULL,
                                                    icc_type=waiver(),
                                                    feature_similarity_table=NULL,
                                                    feature_cluster_method=waiver(),
@@ -1326,6 +1329,7 @@ setGeneric("extract_univariate_analysis", function(object,
                                                    feature_linkage_method=waiver(),
                                                    feature_similarity_threshold=waiver(),
                                                    feature_similarity_metric=waiver(),
+                                                   message_indent=0L,
                                                    verbose=FALSE,
                                                    ...) standardGeneric("extract_univariate_analysis"))
 
@@ -1333,6 +1337,7 @@ setGeneric("extract_univariate_analysis", function(object,
 setMethod("extract_univariate_analysis", signature(object="familiarEnsemble", data="ANY"),
           function(object,
                    data,
+                   cl=NULL,
                    icc_type=waiver(),
                    feature_similarity_table=NULL,
                    feature_cluster_method=waiver(),
@@ -1340,11 +1345,13 @@ setMethod("extract_univariate_analysis", signature(object="familiarEnsemble", da
                    feature_linkage_method=waiver(),
                    feature_similarity_threshold=waiver(),
                    feature_similarity_metric=waiver(),
+                   message_indent=0L,
                    verbose=FALSE){
             
             # Message extraction start
             if(verbose){
-              logger.message(paste0("\tExtracting univariate analysis information."))
+              logger.message(paste0("Extracting univariate analysis information."),
+                             indent=message_indent)
             }
             
             # Obtain cluster method from stored settings, if required.
@@ -1449,7 +1456,7 @@ setMethod("extract_univariate_analysis", signature(object="familiarEnsemble", da
             if(length(feature_columns) == 0) return(list("data"=empty_table))
             
             # Calculate univariate P values, based on aggregated data
-            regr_p_values <- compute_univariable_p_values(cl=NULL,
+            regr_p_values <- compute_univariable_p_values(cl=cl,
                                                           data_obj=aggregate_data(data=data),
                                                           feature_columns=feature_columns)
             
@@ -1494,7 +1501,7 @@ setMethod("extract_univariate_analysis", signature(object="familiarEnsemble", da
                 
               } else {
                 # Compute ICC values
-                icc_list <- fam_mapply(cl=NULL,
+                icc_list <- fam_mapply(cl=cl,
                                        assign=NULL,
                                        FUN=compute_icc,
                                        x=data@data[, mget(numeric_columns)],
@@ -1545,9 +1552,7 @@ setMethod("extract_univariate_analysis", signature(object="familiarEnsemble", da
             univariate_info <- list("data"=univariate_data)
             
             # Add ICC type if it is used.
-            if(is_repeated_measurement){
-              univariate_info$icc_type <- icc_type
-            }
+            if(is_repeated_measurement) univariate_info$icc_type <- icc_type
 
             return(univariate_info)
           })
