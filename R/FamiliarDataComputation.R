@@ -426,6 +426,7 @@ setMethod("extract_data", signature(object="familiarEnsemble"),
                                                                  prediction_data=prediction_data,
                                                                  risk_ensemble_method=risk_ensemble_method,
                                                                  time_max=time_max,
+                                                                 message_indent=message_indent,
                                                                  verbose=verbose)
             } else {
               stratification_data <- NULL
@@ -436,6 +437,7 @@ setMethod("extract_data", signature(object="familiarEnsemble"),
               calibration_data <- extract_calibration_data(object=object,
                                                            data=data,
                                                            eval_times=eval_times,
+                                                           message_indent=message_indent,
                                                            verbose=verbose)
             } else {
               calibration_data <- NULL
@@ -445,7 +447,9 @@ setMethod("extract_data", signature(object="familiarEnsemble"),
             if(data_element %in% c("all", "auc_data")){
               auc_data <- extract_auc_data(object=object,
                                            prediction_data=prediction_data,
+                                           cl=cl,
                                            metric_alpha=metric_alpha,
+                                           message_indent=message_indent,
                                            verbose=verbose)
             } else {
               auc_data <- NULL
@@ -455,6 +459,8 @@ setMethod("extract_data", signature(object="familiarEnsemble"),
             if(data_element %in% c("all", "confusion_matrix")){
               confusion_matrix_info <- extract_confusion_matrix(object=object,
                                                                 prediction_data=prediction_data,
+                                                                cl=cl,
+                                                                message_indent=message_indent,
                                                                 verbose=verbose)
             } else {
               confusion_matrix_info <- NULL
@@ -943,9 +949,7 @@ setMethod("extract_km_cutoffs", signature(object="familiarEnsemble"),
             # Collect Kaplan-Meier stratification parameters
             km_cut_off_info <- data.table::rbindlist(lapply(object@model_list, function(fam_model){
               
-              if(is_empty(fam_model@km_info$parameters)){
-                return(NULL)
-              }
+              if(is_empty(fam_model@km_info$parameters)) return(NULL)
               
               # Iterate over stratification parameters
               data <- data.table::rbindlist(lapply(fam_model@km_info$parameters, function(method_list){
@@ -1122,7 +1126,9 @@ setMethod("extract_performance", signature(object="familiarEnsemble", prediction
 #'@keywords internal
 setGeneric("extract_auc_data", function(object,
                                         prediction_data=NULL,
+                                        cl=NULL,
                                         metric_alpha=waiver(),
+                                        message_indent=0L,
                                         verbose=FALSE,
                                         ...) standardGeneric("extract_auc_data"))
 
@@ -1130,7 +1136,9 @@ setGeneric("extract_auc_data", function(object,
 setMethod("extract_auc_data", signature(object="familiarEnsemble"),
           function(object,
                    prediction_data=NULL,
+                   cl=NULL,
                    metric_alpha=waiver(),
+                   message_indent=0L,
                    verbose=FALSE,
                    ...) {
             # Extract data for plotting AUC curves.
@@ -1138,13 +1146,12 @@ setMethod("extract_auc_data", signature(object="familiarEnsemble"),
             outcome_type <- object@outcome_type
             
             # AUC data can only be prepared for binomial and multinomial outcomes
-            if(!outcome_type %in% c("binomial", "multinomial")){
-              return(NULL)
-            }
-            
+            if(!outcome_type %in% c("binomial", "multinomial")) return(NULL)
+
             # Message start of auc computations
             if(verbose){
-              logger.message(paste0("\tComputing receiver-operating characteristic curves."))
+              logger.message(paste0("Computing receiver-operating characteristic curves."),
+                             indent=message_indent)
             }
             
             # Obtain alpha from the 
@@ -1244,6 +1251,7 @@ setGeneric("extract_calibration_data",
                     data,
                     eval_times=waiver(),
                     is_pre_processed=FALSE,
+                    message_indent=0L,
                     verbose=FALSE,
                     ...) standardGeneric("extract_calibration_data"))
 
@@ -1253,12 +1261,14 @@ setMethod("extract_calibration_data", signature(object="familiarEnsemble"),
                    data,
                    eval_times=waiver(),
                    is_pre_processed=FALSE,
+                   message_indent=0L,
                    verbose=FALSE,
                    ...){
             
             # Message extraction start
             if(verbose){
-              logger.message(paste0("\tAssessing model calibration."))
+              logger.message(paste0("Assessing model calibration."),
+                             indent=message_indent)
             }
             
             # Load eval_times from the object settings attribute, if it is not provided.
@@ -1301,6 +1311,7 @@ setGeneric("extract_stratification_data", function(object,
                                                    time_max=waiver(),
                                                    risk_group_list=NULL,
                                                    risk_ensemble_method=waiver(),
+                                                   message_indent=0L,
                                                    verbose=FALSE,
                                                    ...) standardGeneric("extract_stratification_data"))
 #####extract_stratification_data#####
@@ -1312,6 +1323,7 @@ setMethod("extract_stratification_data", signature(object="familiarEnsemble"),
                    time_max=waiver(),
                    risk_group_list=NULL,
                    risk_ensemble_method=waiver(),
+                   message_indent=0L,
                    verbose=FALSE,
                    ...){
             
@@ -1322,7 +1334,8 @@ setMethod("extract_stratification_data", signature(object="familiarEnsemble"),
             
             # Message extraction start
             if(verbose){
-              logger.message(paste0("\tAssessing stratification into risk groups."))
+              logger.message(paste0("Assessing stratification into risk groups."),
+                             indent=message_indent)
             }
             
             # Assess stratification
@@ -1923,6 +1936,8 @@ setMethod("extract_feature_expression", signature(object="familiarEnsemble", dat
 #'@keywords internal
 setGeneric("extract_confusion_matrix", function(object,
                                                 prediction_data,
+                                                cl=NULL,
+                                                message_indent=0L,
                                                 verbose=FALSE,
                                                 ...) standardGeneric("extract_confusion_matrix"))
   
@@ -1930,6 +1945,8 @@ setGeneric("extract_confusion_matrix", function(object,
 setMethod("extract_confusion_matrix", signature(object="familiarEnsemble"),
           function(object,
                    prediction_data,
+                   cl=NULL,
+                   message_indent=0L,
                    verbose=FALSE){
             
             # Don't compute a confusion matrix if there is nothing to be computed.
@@ -1943,7 +1960,8 @@ setMethod("extract_confusion_matrix", signature(object="familiarEnsemble"),
             
             # Message extraction start
             if(verbose){
-              logger.message(paste0("\tComputing confusion matrix."))
+              logger.message(paste0("Computing confusion matrix."),
+                             indent=message_indent)
             }
             
             # Compute confusion matrices for single prediction tables.

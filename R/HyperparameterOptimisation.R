@@ -70,7 +70,7 @@ run_hyperparameter_optimisation <- function(cl, proj_list, data_id, settings, fi
     cl_inner <- NULL
     show_progress_bar <- TRUE
     
-    logger.message(paste0("\tHyperparameter optimisation: load-balanced parallel processing is done in the outer loop. ",
+    logger.message(paste0("\tHyperparameter optimisation: Load-balanced parallel processing is done in the outer loop. ",
                           "No progress can be displayed."))
     
   } else if(settings$hpo$do_parallel){
