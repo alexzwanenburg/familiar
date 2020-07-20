@@ -333,6 +333,7 @@ setMethod("extract_data", signature(object="familiarEnsemble"),
                                                             sample_linkage_method=sample_linkage_method,
                                                             sample_similarity_metric=sample_similarity_metric,
                                                             eval_times=eval_times,
+                                                            message_indent=message_indent,
                                                             verbose=verbose)
             } else {
               expression_info <- NULL
@@ -1687,6 +1688,7 @@ setGeneric("extract_feature_expression", function(object,
                                                   sample_linkage_method=waiver(),
                                                   sample_similarity_metric=waiver(),
                                                   eval_times=waiver(),
+                                                  message_indent=0L,
                                                   verbose=FALSE,
                                                   ...) standardGeneric("extract_feature_expression"))
 
@@ -1703,11 +1705,13 @@ setMethod("extract_feature_expression", signature(object="familiarEnsemble", dat
                    sample_linkage_method=waiver(),
                    sample_similarity_metric=waiver(),
                    eval_times=waiver(),
+                   message_indent=0L,
                    verbose=FALSE){
             
             # Message extraction start
             if(verbose){
-              logger.message(paste0("\tComputing sample clustering using important features."))
+              logger.message(paste0("Computing sample clustering using important features."),
+                             indent=message_indent)
             }
             
             # Obtain feature cluster method from stored settings, if required.
@@ -1781,9 +1785,7 @@ setMethod("extract_feature_expression", signature(object="familiarEnsemble", dat
             # original scale to derive expressions.
             data <- process_input_data(object=object, data=data, stop_at="batch_normalisation")
             
-            if(is_empty(data)){
-              return(NULL)
-            }
+            if(is_empty(data)) return(NULL)
             
             # Determine signature features
             model_features <- object@important_features
