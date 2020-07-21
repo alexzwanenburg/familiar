@@ -169,6 +169,38 @@ NULL
 #'
 #'  If not provided explicitly, this parameter is read from settings used at
 #'  creation of the underlying `familiarModel` objects.
+#'  
+#'  #'@param confidence_level (*optional*) Numeric value for the level at which
+#'  confidence are determined. In the case bootstraps are used to determine the
+#'  confidence intervals bootstrap estimation, `familiar` uses the rule of thumb
+#'  \eqn{n = 20 / ci.level} to determine the number of required bootstraps.
+#'
+#'  The default value is `0.95`.
+#'
+#'@param bootstrap_ci_method (*optional*) Method used to determine bootstrap
+#'  confidence intervals (Efron and Hastie, 2016). The following methods are
+#'  implemented:
+#'
+#'  * `percentile`: Confidence intervals obtained using the percentile method.
+#'
+#'  * `bc` (default): Bias-corrected confidence intervals.
+#'
+#'  Note that the standard method is not implemented because this method is
+#'  often not suitable due to non-normal distributions. The bias-corrected and
+#'  accelerated method is not implemented yet.
+#'
+#'@param aggregate_ci (*optional*) Bootstraps are used to determine confidence
+#'  intervals. This information can be stored for export. However, in many cases
+#'  this is not necessary, and keeping the bootstrap data can lead to large
+#'  `familiarData` and `familiarCollection` objects. This provides the option to
+#'  aggregate the bootstrap data by computing the confidence interval directly.
+#'
+#'  This parameter can take one or more of the following values: `all`,
+#'  `model_performance`, `auc_data`, `decision_curve_analyis`, as well as
+#'  `true`, `false` and `none`. By default, bootstrap data is aggregated by
+#'  computing confidence intervals for receiver-operating characteristic curves
+#'  and decision curves.
+#'  
 #'@param icc_type String indicating the type of intraclass correlation
 #'  coefficient (`1`, `2` or `3`) that should be used to compute robustness for
 #'  features in repeated measurements during the evaluation of univariate
@@ -209,6 +241,8 @@ setGeneric("extract_data", function(object, data,
                                     sample_linkage_method=waiver(),
                                     sample_similarity_metric=waiver(),
                                     confidence_level=waiver(),
+                                    bootstrap_ci_method=waiver(),
+                                    aggregate_ci=waiver(),
                                     icc_type=waiver(),
                                     message_indent=0L,
                                     verbose=FALSE,
@@ -236,6 +270,8 @@ setMethod("extract_data", signature(object="familiarEnsemble"),
                    sample_linkage_method=waiver(),
                    sample_similarity_metric=waiver(),
                    confidence_level=waiver(),
+                   bootstrap_ci_method=waiver(),
+                   aggregate_ci=waiver(),
                    icc_type=waiver(),
                    message_indent=0L,
                    verbose=FALSE,
@@ -402,6 +438,8 @@ setMethod("extract_data", signature(object="familiarEnsemble"),
                                                                  ensemble_method=ensemble_method,
                                                                  eval_times=eval_times,
                                                                  confidence_level=confidence_level,
+                                                                 bootstrap_ci_method=bootstrap_ci_method,
+                                                                 aggregate_ci=aggregate_ci,
                                                                  message_indent=message_indent,
                                                                  verbose=verbose)
               
@@ -2002,8 +2040,8 @@ setMethod("extract_feature_similarity_table", signature(object="familiarEnsemble
                    data,
                    cl=NULL,
                    feature_similarity_metric=waiver(),
-                   message_indent=0L,
-                   verbose=FALSE){
+                   verbose=FALSE,
+                   message_indent=0L){
             
             # Message extraction start
             if(verbose){

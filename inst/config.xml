@@ -174,6 +174,10 @@
       <evaluation_metric></evaluation_metric>
       <!-- Confidence level for confidence intervals (optional, default: 0.95) -->
       <confidence_level></confidence_level>
+      <!-- Method for bootstrap confidence interval (optional, default: bc) -->
+      <bootstrap_ci_method></bootstrap_ci_method>
+      <!-- Computation steps where confidence intervals may be determined during computation, instead of during export (optional, default: auc_data, decision_curve_analyis) -->
+      <aggregate_ci></aggregate_ci>
       <!-- Method for aggregating variable importances (optional, default: same as method in feature_selection) -->
       <eval_aggregation_method></eval_aggregation_method>
       <!-- Rank threshold for determining the best features (optional, default: same as rank threshold in feature_selection) -->

@@ -447,6 +447,8 @@ run_evaluation <- function(cl, proj_list, settings, file_paths){
                            sample_linkage_method=settings$eval$sample_linkage_method,
                            sample_similarity_metric=settings$eval$sample_similarity_metric,
                            confidence_level = settings$eval$confidence_level,
+                           bootstrap_ci_method = settings$eval$bootstrap_ci_method,
+                           aggregate_ci = settings$eval$aggregate_ci,
                            icc_type= settings$eval$icc_type,
                            message_indent=1L,
                            verbose=TRUE)

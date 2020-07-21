@@ -271,6 +271,9 @@
 #'   1. Davison, A. C. & Hinkley, D. V. Bootstrap methods and their application.
 #'   (Cambridge University Press, 1997).
 #'
+#'   1. Efron, B. & Hastie, T. Computer Age Statistical Inference. (Cambridge
+#'   University Press, 2016).
+#'
 #'   1. Lausen, B. & Schumacher, M. Maximally Selected Rank Statistics.
 #'   Biometrics 48, 73 (1992).
 #'
@@ -1982,6 +1985,30 @@
 #'
 #'  The default value is `0.95`.
 #'
+#'@param bootstrap_ci_method (*optional*) Method used to determine bootstrap
+#'  confidence intervals (Efron and Hastie, 2016). The following methods are
+#'  implemented:
+#'
+#'  * `percentile`: Confidence intervals obtained using the percentile method.
+#'
+#'  * `bc` (default): Bias-corrected confidence intervals.
+#'
+#'  Note that the standard method is not implemented because this method is
+#'  often not suitable due to non-normal distributions. The bias-corrected and
+#'  accelerated method is not implemented yet.
+#'
+#'@param aggregate_ci (*optional*) Bootstraps are used to determine confidence
+#'  intervals. This information can be stored for export. However, in many cases
+#'  this is not necessary, and keeping the bootstrap data can lead to large
+#'  `familiarData` and `familiarCollection` objects. This provides the option to
+#'  aggregate the bootstrap data by computing the confidence interval directly.
+#'
+#'  This parameter can take one or more of the following values: `all`,
+#'  `model_performance`, `auc_data`, `decision_curve_analyis`, as well as
+#'  `true`, `false` and `none`. By default, bootstrap data is aggregated by
+#'  computing confidence intervals for receiver-operating characteristic curves
+#'  and decision curves.
+#'
 #'@param feature_cluster_method (*optional*) Method used to perform clustering
 #'  of features. The same methods as for the `cluster_method` configuration
 #'  parameter are available: `none`, `hclust`, `agnes`, `diana` and `pam`.
@@ -2172,6 +2199,9 @@
 #'@references 1. Davison, A. C. & Hinkley, D. V. Bootstrap methods and their
 #'  application. (Cambridge University Press, 1997).
 #'
+#'  1. Efron, B. & Hastie, T. Computer Age Statistical Inference. (Cambridge
+#'  University Press, 2016).
+#'
 #'  1. Lausen, B. & Schumacher, M. Maximally Selected Rank Statistics.
 #'  Biometrics 48, 73 (1992).
 #'
@@ -2190,6 +2220,8 @@
                                        ensemble_method=waiver(),
                                        evaluation_metric=waiver(),
                                        confidence_level=waiver(),
+                                       bootstrap_ci_method=waiver(),
+                                       aggregate_ci=waiver(),
                                        feature_cluster_method=waiver(),
                                        feature_cluster_cut_method=waiver(),
                                        feature_linkage_method=waiver(),
@@ -2231,6 +2263,31 @@
                                 var_name="evaluation_metric", type="character_list", optional=TRUE, default=hpo_metric)
   
   sapply(settings$metric, metric.check_outcome_type, outcome_type=outcome_type)
+  
+  
+  # Bootstrap confidence interval.
+  settings$bootstrap_ci_method <- .parge_arg(x_config=config$bootstrap_ci_method, x_var=bootstrap_ci_method,
+                                             var_name="bootstrap_ci_method", type="character", optional=TRUE, default="bc")
+  
+  .check_parameter_value_is_valid(x=settings$bootstrap_ci_method, var_name="bootstrap_ci_method",
+                                  values=.get_available_bootstrap_confidence_interval_methods())
+  
+  
+  # Parts for which confidence intervals should be determined.
+  settings$aggregate_ci <- .parse_arg(x_config=config$aggregate_ci, x_var=aggregate_ci,
+                                      var_name="aggregate_ci", type="character_list", optional=TRUE, default=c("auc_data", "decision_curve_analyis"))
+  
+  settings$aggregate_ci <- tolower(settings$aggregate_ci)
+  .check_parameter_value_is_valid(x=settings$aggregate_ci, var_name="aggregate_ci",
+                                  values=c("all", "model_performance", "auc_data", "decision_curve_analyis",
+                                           "true", "false", "none"))
+  
+  # Handle none, false
+  if(any(settings$aggregate_ci %in% c("none", "false"))){
+    settings$aggregate_ci <- NULL
+  } else if(any(settings$aggregate_ci %in% c("true", "all"))){
+    settings$aggregate_ci <- "all"
+  }
   
   
   # Width of the confidence intervals

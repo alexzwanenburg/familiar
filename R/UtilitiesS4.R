@@ -718,7 +718,13 @@ setMethod("get_bootstrap_sample", signature(data="NULL"), function(data, ...) re
 
 #####universal_extractor--------------------------------------------------------
 setMethod("universal_extractor", signature(object="familiarEnsemble"),
-          function(object, FUN, individual_model_ci=FALSE, cl=NULL, verbose=FALSE, ...){
+          function(object,
+                   FUN,
+                   individual_model_ci=FALSE,
+                   cl=NULL,
+                   verbose=FALSE,
+                   message_indent=0L,
+                   ...){
             
             # Only pass cl for individual model extraction if
             # individual_model_ci is TRUE.
@@ -731,18 +737,20 @@ setMethod("universal_extractor", signature(object="familiarEnsemble"),
               cl_internal <- NULL
             }
             
-            if(verbose) logger.message("\t\tPerforming computations for models in the ensemble.")
+            if(verbose) logger.message("Performing computations for models in the ensemble.",
+                                       indent=message_indent)
             
             # Individual model extraction
             individual_model_data <- fam_lapply(cl=cl_model, 
                                                 X=object@model_list,
-                                                FUN=function(object, FUN2, determine_ci, cl2, dots2, verbose=FALSE){
+                                                FUN=function(object, FUN2, determine_ci, cl2, dots2, verbose=FALSE, message_indent=0L){
                                                   
                                                   # Execute the function that computes the data.
                                                   results <- do.call(FUN2, args=c(list("determine_ci"=determine_ci,
                                                                                        "object"=object,
                                                                                        "cl"=cl2,
-                                                                                       "verbose"=verbose),
+                                                                                       "verbose"=verbose,
+                                                                                       "message_indent"=message_indent + 1L),
                                                                                   dots2))
                                                   
                                                   # Check that the results are not empty.
@@ -772,6 +780,7 @@ setMethod("universal_extractor", signature(object="familiarEnsemble"),
                                                 determine_ci=individual_model_ci,
                                                 cl2=cl_internal,
                                                 verbose=verbose,
+                                                message_indent=message_indent,
                                                 progress_bar=verbose)
             
             # Parse to single list.
@@ -830,13 +839,15 @@ setMethod("universal_extractor", signature(object="familiarEnsemble"),
               
             }
             
-            if(verbose) logger.message("\t\tPerforming computations for the ensemble itself.")
+            if(verbose) logger.message("Performing computations for the ensemble itself.",
+                                       indent=message_indent)
             
             # Compute data for the ensemble itself.
             ensemble_model_data <- do.call(FUN, args=c(list("determine_ci"=TRUE,
                                                             "object"=object,
                                                             "cl"=cl,
-                                                            "verbose"=verbose),
+                                                            "verbose"=verbose,
+                                                            "message_indent"=message_indent + 1L),
                                                        list(...)))
             
             # Check that the results are not empty.

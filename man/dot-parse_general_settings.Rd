@@ -56,7 +56,6 @@ parallel process, and has a larger memory footprint.}
     \item{\code{server_port}}{(\emph{optional}) Integer indicating the port on which the
 socket server or RServe process should communicate. Defaults to port 6311.
 Note that ports 0 to 1024 and 49152 to 65535 cannot be used.}
-    \item{\code{outcome_type}}{Type of outcome found in the data set.}
     \item{\code{feature_max_fraction_missing}}{(\emph{optional}) Numeric value between \code{0.0}
 and \code{0.95} that determines the meximum fraction of missing values that
 still allows a feature to be included in the data set. All features with a
@@ -602,9 +601,6 @@ processing for hyperparameter optimisation. Defaults to \code{TRUE}. When set to
 \code{FALSE}, this will disable the use of parallel processing while performing
 optimisation, regardless of the settings of the \code{parallel} parameter.
 \code{parallel_hyperparameter_optimisation} is ignored if \code{parallel=FALSE}.}
-    \item{\code{prep_cluster_method}}{Cluster method used during pre-processing.}
-    \item{\code{prep_cluster_similarity_threshold}}{Cluster similarity threshold used
-during pre-processing.}
     \item{\code{evaluate_top_level_only}}{(\emph{optional}) Flag that signals that only
 evaluation at the most global experiment level is required. Consider a
 cross-validation experiment with additional external validation. The global
