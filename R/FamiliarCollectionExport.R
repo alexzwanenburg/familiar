@@ -1611,7 +1611,7 @@ setMethod(".summarise_model_performance", signature(object="familiarCollection")
             metric_columns <- paste0("performance_", metrics)
 
             # Compute descriptive statistics for each column
-            ensemble_performance <- data[, sapply(.SD, bootstrap_ci, confidence_level=confidence_level),
+            ensemble_performance <- data[, sapply(.SD, ..bootstrap_ci, confidence_level=confidence_level),
                                          by=c("data_set", "fs_method", "learner", "model_name"),
                                          .SDcols=metric_columns]
             
@@ -1750,82 +1750,3 @@ setMethod(".apply_labels", signature(data="ANY", object="familiarCollection"),
             
             return(data)
           })
-
-
-
-.compute_bootstrap_ci <- function(x0, xb, target_column, bootstrap_ci_method="bc",
-                                  additional_splitting_variable=NULL,
-                                  confidence_level=0.95){
-
-  # Suppress NOTES due to non-standard evaluation in data.table
-  bootstrap_id <- NULL
-  
-  # Perform some simple consistency checks.
-  if(is_empty(x0)) return(x0)
-  if(is_empty(xb)) return(x0)
-  
-  if(!(data.table::is.data.table(x0) & data.table::is.data.table(xb))){
-    ..error_reached_unreachable_code(".compute_bootstrap_ci: both x0 and xb should be data.tables.")
-  }
-  
-  if(!target_column %in% colnames(x0) | !target_column %in% colnames(xb)){
-    ..error_reached_unreachable_code(".compute_bootstrap_ci: target column does not appear in the data.tables.")
-  }
-  
-  if(!is.null(additional_splitting_variable)){
-    if(!all(additional_splitting_variable %in% colnames(x0))){
-      ..error_reached_unreachable_code(".compute_bootstrap_ci: not all splitting variables were found in the x0 data.table.")
-    }
-  }
-  
-  # Set splitting variables.
-  splitting_variables <- c("data_set", "learner", "fs_method", "pos_class", "eval_time", additional_splitting_variable)
-  
-  # Add a bootstrap_id column to facilitate merger with bootstrap data.
-  x0[, "bootstrap_id":=0L]
-  
-  # Combine datasets.
-  data <- data.table::rbindlist(list(x0, xb), use.names=TRUE)
-  
-  # Select only splitting variables that appear in data.
-  splitting_variables <- intersect(colnames(data), splitting_variables)
-  
-  # Split the data and compute confidence intervals.
-  data <- lapply(split(data, by=splitting_variables, keep.by=TRUE),
-                 function(data, target_column, confidence_level, bootstrap_ci_method){
-                   
-                   # Select point estimate and bootstrap estimates.
-                   x0 <- data[bootstrap_id == 0, ][[target_column]]
-                   xb <- data[bootstrap_id != 0, ][[target_column]]
-                   
-                   if(length(x0) != 1) ..error_reached_unreachable_code(".compute_bootstrap_ci: no, or more than one point estimate in split.")
-                   
-                   # Compute bootstrap confidence interval for the current
-                   # split.
-                   ci_data <- bootstrap_ci(x=xb,
-                                           x_0=x0,
-                                           confidence_level=confidence_level,
-                                           bootstrap_ci_method=bootstrap_ci_method)
-                   
-                   # Make a copy and drop the bootstrap_id column.
-                   output_data <- data.table::copy(data[bootstrap_id == 0, ])[, "bootstrap_id":=NULL]
-                   
-                   # Replace the value in the target column by the median in
-                   # ci_data.
-                   output_data[, (target_column):=ci_data$median]
-                   
-                   # Add confidence interval boundaries.
-                   output_data[, ":="("ci_low"=ci_data$ci_low,
-                                      "ci_up"=ci_data$ci_up)]
-                   
-                   return(output_data)
-                 },
-                 target_column=target_column,
-                 confidence_level=confidence_level,
-                 bootstrap_ci_method=bootstrap_ci_method)
-  
-  # Combine into a single dataset
-  data <- data.table::rbindlist(data, use.names=TRUE)
-  
-  return(data)
-}

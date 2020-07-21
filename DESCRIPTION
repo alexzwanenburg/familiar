@@ -63,6 +63,7 @@ Suggests:
     MASS
 Collate: 
     'BatchNormalisation.R'
+    'BootstrapConfidenceInterval.R'
     'CheckArguments.R'
     'FamiliarS4Classes.R'
     'FamiliarS4Generics.R'
