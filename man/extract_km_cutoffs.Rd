@@ -4,11 +4,14 @@
 \alias{extract_km_cutoffs}
 \title{Internal function to extract Kaplan-Meier risk group stratification cutoffs from models.}
 \usage{
-extract_km_cutoffs(object, verbose = FALSE, ...)
+extract_km_cutoffs(object, message_indent = 0L, verbose = FALSE, ...)
 }
 \arguments{
 \item{object}{A \code{familiarEnsemble} object, which is an ensemble of one or more
 \code{familiarModel} objects.}
+
+\item{message_indent}{Number of indentation steps for messages shown during
+computation and extraction of various data elements.}
 
 \item{verbose}{Flag to indicate whether feedback should be provided on the
 computation and extraction of various data elements.}

@@ -54,8 +54,8 @@ If not provided explicitly, this parameter is read from settings used at
 creation of the underlying \code{familiarModel} objects.}
     \item{\code{sample_cluster_method}}{The method used to perform clustering based on
 distance between samples. These are the same methods as for the
-\code{cluster_method} configuration parameter: \code{hclust}, \code{agnes}, \code{diana}
-and \code{pam}.
+\code{cluster_method} configuration parameter: \code{hclust}, \code{agnes}, \code{diana} and
+\code{pam}.
 
 \code{none} cannot be used when extracting data for feature expressions.
 
@@ -88,6 +88,8 @@ calibration in survival problems. This is done as expected and observed
 survival probabilities depend on time. If not provided explicitly, this
 parameter is read from settings used at creation of the underlying
 \code{familiarModel} objects. Only used for \code{survival} outcomes.}
+    \item{\code{message_indent}}{Number of indentation steps for messages shown during
+computation and extraction of various data elements.}
     \item{\code{verbose}}{Flag to indicate whether feedback should be provided on the
 computation and extraction of various data elements.}
     \item{\code{familiar_data_names}}{Names of the dataset(s). Only used if the \code{object} parameter

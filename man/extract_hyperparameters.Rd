@@ -4,11 +4,14 @@
 \alias{extract_hyperparameters}
 \title{Internal function to extract hyperparameters from models.}
 \usage{
-extract_hyperparameters(object, verbose = FALSE, ...)
+extract_hyperparameters(object, message_indent = 0L, verbose = FALSE, ...)
 }
 \arguments{
 \item{object}{A \code{familiarEnsemble} object, which is an ensemble of one or more
 \code{familiarModel} objects.}
+
+\item{message_indent}{Number of indentation steps for messages shown during
+computation and extraction of various data elements.}
 
 \item{verbose}{Flag to indicate whether feedback should be provided on the
 computation and extraction of various data elements.}

@@ -22,6 +22,10 @@ will allow export as a structured list of data.tables.}
 \item{...}{
   Arguments passed on to \code{\link[=extract_confusion_matrix]{extract_confusion_matrix}}, \code{\link[=as_familiar_collection]{as_familiar_collection}}
   \describe{
+    \item{\code{cl}}{Cluster created using the \code{parallel} package. This cluster is then
+used to speed up computation through parallelisation.}
+    \item{\code{message_indent}}{Number of indentation steps for messages shown during
+computation and extraction of various data elements.}
     \item{\code{verbose}}{Flag to indicate whether feedback should be provided on the
 computation and extraction of various data elements.}
     \item{\code{familiar_data_names}}{Names of the dataset(s). Only used if the \code{object} parameter

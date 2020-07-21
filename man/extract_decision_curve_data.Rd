@@ -9,9 +9,12 @@ extract_decision_curve_data(
   data,
   cl = NULL,
   ensemble_method = waiver(),
-  metric_alpha = waiver(),
+  confidence_level = waiver(),
+  bootstrap_ci_method = waiver(),
+  aggregate_ci = waiver(),
   eval_times = waiver(),
   is_pre_processed = FALSE,
+  message_indent = 0L,
   verbose = FALSE,
   ...
 )
@@ -33,14 +36,44 @@ same sample. Available methods are:
 sample.
 }}
 
-\item{metric_alpha}{Numeric value for the alpha level at which confidence (or
-credibility intervals) intervals are determined using bootstrap estimation.
-The number of bootstraps depend on \code{metric_alpha}. \code{familiar} uses the rule
-of thumb \eqn{n = 20 / \alpha} to determine the number of required
-bootstraps.
+\item{confidence_level}{(\emph{optional}) Numeric value for the level at which
+confidence are determined. In the case bootstraps are used to determine the
+confidence intervals bootstrap estimation, \code{familiar} uses the rule of thumb
+\eqn{n = 20 / ci.level} to determine the number of required bootstraps.
 
 If not provided explicitly, this parameter is read from settings used at
-creation of the underlying \code{familiarModel} objects.}
+creation of the underlying \code{familiarModel} objects.
+
+#'@param confidence_level (\emph{optional}) Numeric value for the level at which
+confidence are determined. In the case bootstraps are used to determine the
+confidence intervals bootstrap estimation, \code{familiar} uses the rule of thumb
+\eqn{n = 20 / ci.level} to determine the number of required bootstraps.
+
+The default value is \code{0.95}.}
+
+\item{bootstrap_ci_method}{(\emph{optional}) Method used to determine bootstrap
+confidence intervals (Efron and Hastie, 2016). The following methods are
+implemented:
+\itemize{
+\item \code{percentile}: Confidence intervals obtained using the percentile method.
+\item \code{bc} (default): Bias-corrected confidence intervals.
+}
+
+Note that the standard method is not implemented because this method is
+often not suitable due to non-normal distributions. The bias-corrected and
+accelerated method is not implemented yet.}
+
+\item{aggregate_ci}{(\emph{optional}) Bootstraps are used to determine confidence
+intervals. This information can be stored for export. However, in many cases
+this is not necessary, and keeping the bootstrap data can lead to large
+\code{familiarData} and \code{familiarCollection} objects. This provides the option to
+aggregate the bootstrap data by computing the confidence interval directly.
+
+This parameter can take one or more of the following values: \code{all},
+\code{model_performance}, \code{auc_data}, \code{decision_curve_analyis}, as well as
+\code{true}, \code{false} and \code{none}. By default, bootstrap data is aggregated by
+computing confidence intervals for receiver-operating characteristic curves
+and decision curves.}
 
 \item{eval_times}{One or more time points that are used for assessing
 calibration in survival problems. This is done as expected and observed
@@ -51,6 +84,9 @@ parameter is read from settings used at creation of the underlying
 \item{is_pre_processed}{Flag that indicates whether the data was already
 pre-processed externally, e.g. normalised and clustered. Only used if the
 \code{data} argument is a \code{data.table} or \code{data.frame}.}
+
+\item{message_indent}{Number of indentation steps for messages shown during
+computation and extraction of various data elements.}
 
 \item{verbose}{Flag to indicate whether feedback should be provided on the
 computation and extraction of various data elements.}

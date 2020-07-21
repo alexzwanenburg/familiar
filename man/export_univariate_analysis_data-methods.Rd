@@ -24,6 +24,8 @@ will allow export as a structured list of data.tables.}
   \describe{
     \item{\code{data}}{A \code{dataObject} object, \code{data.table} or \code{data.frame} that
 constitutes the data that are used to compute}
+    \item{\code{cl}}{Cluster created using the \code{parallel} package. This cluster is then
+used to speed up computation through parallelisation.}
     \item{\code{icc_type}}{String indicating the type of intraclass correlation
 coefficient (\code{1}, \code{2} or \code{3}) that should be used to compute robustness for
 features in repeated measurements during the evaluation of univariate
@@ -72,6 +74,8 @@ as \code{cluster_similarity_metric}: \code{mcfadden_r2}, \code{cox_snell_r2},
 
 If not provided explicitly, this parameter is read from settings used at
 creation of the underlying \code{familiarModel} objects.}
+    \item{\code{message_indent}}{Number of indentation steps for messages shown during
+computation and extraction of various data elements.}
     \item{\code{verbose}}{Flag to indicate whether feedback should be provided on the
 computation and extraction of various data elements.}
     \item{\code{familiar_data_names}}{Names of the dataset(s). Only used if the \code{object} parameter

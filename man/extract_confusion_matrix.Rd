@@ -4,11 +4,24 @@
 \alias{extract_confusion_matrix}
 \title{Internal function to extract the confusion matrix.}
 \usage{
-extract_confusion_matrix(object, prediction_data, verbose = FALSE, ...)
+extract_confusion_matrix(
+  object,
+  prediction_data,
+  cl = NULL,
+  message_indent = 0L,
+  verbose = FALSE,
+  ...
+)
 }
 \arguments{
 \item{object}{A \code{familiarEnsemble} object, which is an ensemble of one or more
 \code{familiarModel} objects.}
+
+\item{cl}{Cluster created using the \code{parallel} package. This cluster is then
+used to speed up computation through parallelisation.}
+
+\item{message_indent}{Number of indentation steps for messages shown during
+computation and extraction of various data elements.}
 
 \item{verbose}{Flag to indicate whether feedback should be provided on the
 computation and extraction of various data elements.}

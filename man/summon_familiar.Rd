@@ -847,16 +847,37 @@ metrics.
 
 Confidence intervals (or rather credibility intervals) are computed for each
 metric during evaluation. This is done using bootstraps, the number of which
-depends on the value of \code{confidence_alpha} (Davison and Hinkley, 1997).
+depends on the value of \code{confidence_level} (Davison and Hinkley, 1997).
 
 If unset, the metric in the \code{optimisation_metric} variable is used.}
-    \item{\code{confidence_alpha}}{(\emph{optional}) Numeric value for the alpha level at
-which confidence (or credibility intervals) intervals are determined using
-bootstrap estimation. The number of bootstraps depend on \code{confidence_alpha}.
-\code{familiar} uses the rule of thumb \eqn{n = 20 / \alpha} to determine the
-number of required bootstraps.
+    \item{\code{confidence_level}}{(\emph{optional}) Numeric value for the level at which
+confidence are determined. In the case bootstraps are used to determine the
+confidence intervals bootstrap estimation, \code{familiar} uses the rule of thumb
+\eqn{n = 20 / ci.level} to determine the number of required bootstraps.
 
-The default value is \code{0.05}.}
+The default value is \code{0.95}.}
+    \item{\code{bootstrap_ci_method}}{(\emph{optional}) Method used to determine bootstrap
+confidence intervals (Efron and Hastie, 2016). The following methods are
+implemented:
+\itemize{
+\item \code{percentile}: Confidence intervals obtained using the percentile method.
+\item \code{bc} (default): Bias-corrected confidence intervals.
+}
+
+Note that the standard method is not implemented because this method is
+often not suitable due to non-normal distributions. The bias-corrected and
+accelerated method is not implemented yet.}
+    \item{\code{aggregate_ci}}{(\emph{optional}) Bootstraps are used to determine confidence
+intervals. This information can be stored for export. However, in many cases
+this is not necessary, and keeping the bootstrap data can lead to large
+\code{familiarData} and \code{familiarCollection} objects. This provides the option to
+aggregate the bootstrap data by computing the confidence interval directly.
+
+This parameter can take one or more of the following values: \code{all},
+\code{model_performance}, \code{auc_data}, \code{decision_curve_analyis}, as well as
+\code{true}, \code{false} and \code{none}. By default, bootstrap data is aggregated by
+computing confidence intervals for receiver-operating characteristic curves
+and decision curves.}
     \item{\code{feature_cluster_method}}{(\emph{optional}) Method used to perform clustering
 of features. The same methods as for the \code{cluster_method} configuration
 parameter are available: \code{none}, \code{hclust}, \code{agnes}, \code{diana} and \code{pam}.
@@ -1091,6 +1112,8 @@ Intelligent Optimization (ed. Coello, C. A. C.) 6683, 507–523 (Springer
 Berlin Heidelberg, 2011).
 \item Davison, A. C. & Hinkley, D. V. Bootstrap methods and their application.
 (Cambridge University Press, 1997).
+\item Efron, B. & Hastie, T. Computer Age Statistical Inference. (Cambridge
+University Press, 2016).
 \item Lausen, B. & Schumacher, M. Maximally Selected Rank Statistics.
 Biometrics 48, 73 (1992).
 \item Hothorn, T. & Lausen, B. On the exact distribution of maximally selected
