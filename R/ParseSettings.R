@@ -2266,7 +2266,7 @@
   
   
   # Bootstrap confidence interval.
-  settings$bootstrap_ci_method <- .parge_arg(x_config=config$bootstrap_ci_method, x_var=bootstrap_ci_method,
+  settings$bootstrap_ci_method <- .parse_arg(x_config=config$bootstrap_ci_method, x_var=bootstrap_ci_method,
                                              var_name="bootstrap_ci_method", type="character", optional=TRUE, default="bc")
   
   .check_parameter_value_is_valid(x=settings$bootstrap_ci_method, var_name="bootstrap_ci_method",
