@@ -5,7 +5,10 @@
 
 .compute_bootstrap_ci <- function(x0, xb, target_column, bootstrap_ci_method="bc",
                                   additional_splitting_variable=NULL,
-                                  confidence_level=0.95){
+                                  confidence_level=0.95,
+                                  cl=NULL,
+                                  verbose=FALSE,
+                                  message_indent=0L){
   
   # Suppress NOTES due to non-standard evaluation in data.table
   bootstrap_id <- NULL
@@ -28,6 +31,12 @@
     }
   }
   
+  if(verbose){
+    logger.message(paste0("Computing ", 100 * confidence_level, "% bootstrap intervals using the ",
+                          bootstrap_ci_method, " method."),
+                   indent=message_indent)
+  }
+  
   # Set splitting variables.
   splitting_variables <- c("data_set", "learner", "fs_method", "pos_class", "eval_time", additional_splitting_variable)
   
@@ -41,39 +50,42 @@
   splitting_variables <- intersect(colnames(data), splitting_variables)
   
   # Split the data and compute confidence intervals.
-  data <- lapply(split(data, by=splitting_variables, keep.by=TRUE),
-                 function(data, target_column, confidence_level, bootstrap_ci_method){
-                   
-                   # Select point estimate and bootstrap estimates.
-                   x0 <- data[bootstrap_id == 0, ][[target_column]]
-                   xb <- data[bootstrap_id != 0, ][[target_column]]
-                   
-                   if(length(x0) != 1) ..error_reached_unreachable_code(".compute_bootstrap_ci: no, or more than one point estimate in split.")
-                   
-                   # Compute bootstrap confidence interval for the current
-                   # split.
-                   ci_data <- ..bootstrap_ci(x=xb,
-                                             x_0=x0,
-                                             confidence_level=confidence_level,
-                                             bootstrap_ci_method=bootstrap_ci_method)
-                   
-                   # Make a copy and drop the bootstrap_id column.
-                   output_data <- data.table::copy(data[bootstrap_id == 0, ])[, "bootstrap_id":=NULL]
-                   
-                   # Replace the value in the target column by the median in
-                   # ci_data.
-                   output_data[, (target_column):=ci_data$median]
-                   
-                   # Add confidence interval boundaries.
-                   output_data[, ":="("ci_low"=ci_data$ci_low,
-                                      "ci_up"=ci_data$ci_up)]
-                   
-                   return(output_data)
-                 },
-                 target_column=target_column,
-                 confidence_level=confidence_level,
-                 bootstrap_ci_method=bootstrap_ci_method)
+  data <- fam_lapply(cl=cl,
+                     X=split(data, by=splitting_variables, keep.by=TRUE),
+                     FUN=function(data, target_column, confidence_level, bootstrap_ci_method){
+                       
+                       # Select point estimate and bootstrap estimates.
+                       x0 <- data[bootstrap_id == 0, ][[target_column]]
+                       xb <- data[bootstrap_id != 0, ][[target_column]]
+                       
+                       if(length(x0) != 1) ..error_reached_unreachable_code(".compute_bootstrap_ci: no, or more than one point estimate in split.")
+                       
+                       # Compute bootstrap confidence interval for the current
+                       # split.
+                       ci_data <- ..bootstrap_ci(x=xb,
+                                                 x_0=x0,
+                                                 confidence_level=confidence_level,
+                                                 bootstrap_ci_method=bootstrap_ci_method)
+                       
+                       # Make a copy and drop the bootstrap_id column.
+                       output_data <- data.table::copy(data[bootstrap_id == 0, ])[, "bootstrap_id":=NULL]
+                       
+                       # Replace the value in the target column by the median in
+                       # ci_data.
+                       output_data[, (target_column):=ci_data$median]
+                       
+                       # Add confidence interval boundaries.
+                       output_data[, ":="("ci_low"=ci_data$ci_low,
+                                          "ci_up"=ci_data$ci_up)]
+                       
+                       return(output_data)
+                     },
+                     target_column=target_column,
+                     confidence_level=confidence_level,
+                     bootstrap_ci_method=bootstrap_ci_method,
+                     progress_bar=verbose)
   
+ 
   # Combine into a single dataset
   data <- data.table::rbindlist(data, use.names=TRUE)
   
