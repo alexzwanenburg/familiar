@@ -20,7 +20,7 @@ logger.message <- function(mess_str, file_name=NULL, indent=0L){
   }
 
   # Write message to console
-  message(mess_str)
+  message(paste0(indent_str, mess_str))
 }
 
 
