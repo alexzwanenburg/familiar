@@ -174,17 +174,24 @@ setMethod("extract_decision_curve_data", signature(object="familiarEnsemble"),
   }
   
   if(determine_ci & aggregate_ci){
-    browser()
+    
     # Aggregate the data by computing the bootstrap confidence intervals.
     dca_data$model_data <- .compute_bootstrap_ci(x0=dca_data$model_data,
                                                  xb=dca_data$bootstrap_data,
                                                  target_column="net_benefit",
-                                                 bootstrap_ci_method="bc",
+                                                 bootstrap_ci_method=bootstrap_ci_method,
                                                  additional_splitting_variable="threshold_probability",
-                                                 confidence_level=confidence_level)
+                                                 confidence_level=confidence_level,
+                                                 cl=cl,
+                                                 verbose=verbose,
+                                                 message_indent=message_indent)
     
     # Set the bootstrap_data to NULL.
     dca_data$bootstrap_data <- NULL
+    
+  } else if (determine_ci){
+    # Add the bootstrap confidence interval method
+    dca_data$bootstrap_ci_method <- bootstrap_ci_method
   }
   
   return(dca_data)

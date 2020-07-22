@@ -290,7 +290,6 @@ setMethod("extract_data", signature(object="familiarEnsemble"),
             # Load models
             object <- load_models(object=object)
             
-            
             # Extract feature distance tables,
             if(data_element %in% c("all", "mutual_correlation", "univariate_analysis", "feature_expressions")){
               # Not for the fs_vimp and model_vimp data elements. This is

@@ -562,7 +562,7 @@ setMethod("export_decision_curve_analysis_data", signature(object="familiarColle
                 export_data <- list("data" = .compute_bootstrap_ci(x0=data$model_data,
                                                                    xb=data$bootstrap_data,
                                                                    target_column="net_benefit",
-                                                                   bootstrap_ci_method="bc",
+                                                                   bootstrap_ci_method=data$bootstrap_ci_method,
                                                                    additional_splitting_variable="threshold_probability",
                                                                    confidence_level=confidence_level),
                                     "intervention_data"=data$intervention_data,
@@ -625,7 +625,7 @@ setMethod("export_decision_curve_analysis_data", signature(object="familiarColle
                     setnames(export_data, old="net_benefit", new="model")
                     
                     # Specify identifier columns
-                    id_columns <- setdiff(colnames(export_data), "model")
+                    id_columns <- setdiff(colnames(export_data), c("model", "ci_low", "ci_up"))
                     
                     if(!is.null(intervention_data)){
                       export_data <- merge(x=export_data,
