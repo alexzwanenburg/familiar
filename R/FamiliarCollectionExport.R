@@ -1305,8 +1305,8 @@ setGeneric("export_confusion_matrix_data", function(object, dir_path=NULL, ...) 
 setMethod("export_confusion_matrix_data", signature(object="familiarCollection"),
           function(object, dir_path=NULL, ...){
             
-            # Check if auc data is present
-            if(nrow(object@auc_data$single)==0){
+            # Check if confusion matrix data is present
+            if(nrow(object@confusion_matrix$single)==0){
               return(NULL)
             }
             
