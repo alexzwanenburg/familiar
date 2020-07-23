@@ -145,15 +145,24 @@
     z_0 <- stats::qnorm(sum(x <= x_0) / length(x))
     
     if(!is.finite(z_0)){
-      if(all(x == x_0)){
-        return(list("median"=x_0,
-                    "ci_low"=x_0,
-                    "ci_up"=x_0))
-        
-      } else{
-        return(empty_list)
-      }
-    } 
+      # This means that we are dealing with an edge case where sum(x <= x_0) is
+      # either 0 or the length of x. In that case we determine the confidence
+      # interval with the percentile method.
+      summary_list <- ..bootstrap_ci(x=x,
+                                     x_0=x_0,
+                                     confidence_level=confidence_level,
+                                     bootstrap_ci_method="percentile")
+      
+      # Replace the median in the list by the point estimate.
+      summary_list$median <- x_0
+      
+      # Check boundary issues where the point estimate lays outside the
+      # confidence interval.
+      if(x_0 < summary_list$ci_low) summary_list$ci_low <- x_0
+      if(x_0 > summary_list$ci_up) summary_list$ci_up <- x_0
+  
+      return(summary_list)
+    }
     
     # Define the z-statistic for bounds of the confidence interval.
     z_alpha <- stats::qnorm(c((1.0 - confidence_level) / 2.0,
