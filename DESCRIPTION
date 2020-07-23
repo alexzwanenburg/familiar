@@ -85,6 +85,7 @@ Collate:
     'FamiliarDataCollectors.R'
     'FamiliarDataComputation.R'
     'FamiliarDataComputationDecisionCurveAnalysis.R'
+    'FamiliarDataComputationROCCurve.R'
     'FamiliarEnsemble.R'
     'FamiliarModel.R'
     'FamiliarObjectConversion.R'

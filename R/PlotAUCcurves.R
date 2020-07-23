@@ -169,27 +169,21 @@ setMethod("plot_auc_roc_curve", signature(object="familiarCollection"),
     
     # Check for empty data
     if(is.null(x)) return(NULL)
-    if(is_empty(x$ensemble)) return(NULL)
+    if(is_empty(x$ensemble$data)) return(NULL)
                                     
     # Extract the data for the ensemble.
-    x <- x$ensemble
+    x <- x$ensemble$data
     
     ##### Check input arguments ------------------------------------------------
     
     # ggtheme
-    if(!inherits(ggtheme, "theme")){
-      ggtheme <- plotting.get_theme(use_theme=ggtheme)
-    }
+    if(!inherits(ggtheme, "theme")) ggtheme <- plotting.get_theme(use_theme=ggtheme)
     
     # x_label
-    if(is.waive(x_label)){
-      x_label <- "1 - specificity"
-    }
+    if(is.waive(x_label)) x_label <- "1 - specificity"
     
     # y_label
-    if(is.waive(y_label)){
-      y_label <- "sensitivity"
-    }
+    if(is.waive(y_label)) y_label <- "sensitivity"
     
     # x_range and y_range
     x_range <- y_range <- c(0.0, 1.0)
@@ -218,6 +212,10 @@ setMethod("plot_auc_roc_curve", signature(object="familiarCollection"),
     
     # conf_int_style
     if(length(conf_int_style) > 1) conf_int_style <- head(conf_int_style, n=1)
+    
+    # Set the style of the confidence interval to none, in case no
+    # confidence interval data is present.
+    if(is_empty(x$ci_low) | is_empty(x$ci_up)) conf_int_style <- "none"
     
     # Splitting variables
     if(is.null(split_by) & is.null(facet_by) & is.null(color_by)){
@@ -428,8 +426,8 @@ setMethod("plot_auc_roc_curve", signature(object="familiarCollection"),
   x <- guide_list$data
   
   # Create basic plot
-  p <- ggplot2::ggplot(data=x, mapping=ggplot2::aes(x=!!sym("x"),
-                                                    y=!!sym("y")))
+  p <- ggplot2::ggplot(data=x, mapping=ggplot2::aes(x=!!sym("fpr"),
+                                                    y=!!sym("tpr")))
   
   # Add theme
   p <- p + ggtheme
@@ -461,13 +459,13 @@ setMethod("plot_auc_roc_curve", signature(object="familiarCollection"),
   # Plot confidence intervals
   if(conf_int_style[1]!="none"){
     if(conf_int_style[1] == "step"){
-      p <- p + ggplot2::geom_step(mapping=ggplot2::aes(y=!!sym("conf_int_lower"), linetype="dashed", na.rm=TRUE))
-      p <- p + ggplot2::geom_step(mapping=ggplot2::aes(y=!!sym("conf_int_upper"), linetype="dashed", na.rm=TRUE))
+      p <- p + ggplot2::geom_step(mapping=ggplot2::aes(y=!!sym("ci_low"), linetype="dashed", na.rm=TRUE))
+      p <- p + ggplot2::geom_step(mapping=ggplot2::aes(y=!!sym("ci_up"), linetype="dashed", na.rm=TRUE))
       
     } else if(conf_int_style[1] == "ribbon"){
       
-      p <- p + ggplot2::geom_ribbon(mapping=ggplot2::aes(ymin=!!sym("conf_int_lower"),
-                                                         ymax=!!sym("conf_int_upper"),
+      p <- p + ggplot2::geom_ribbon(mapping=ggplot2::aes(ymin=!!sym("ci_low"),
+                                                         ymax=!!sym("ci_up"),
                                                          fill=!!sym("color_breaks")),
                                     alpha=conf_int_alpha,
                                     na.rm=TRUE)

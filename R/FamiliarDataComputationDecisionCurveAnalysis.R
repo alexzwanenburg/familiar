@@ -189,7 +189,7 @@ setMethod("extract_decision_curve_data", signature(object="familiarEnsemble"),
     # Set the bootstrap_data to NULL.
     dca_data$bootstrap_data <- NULL
     
-  } else if (determine_ci){
+  } else if(determine_ci){
     # Add the bootstrap confidence interval method
     dca_data$bootstrap_ci_method <- bootstrap_ci_method
   }
@@ -204,7 +204,7 @@ setMethod("extract_decision_curve_data", signature(object="familiarEnsemble"),
   
   # Check if the data has more than 1 row.
   if(nrow(data) <= 1) return(list("confidence_level"=confidence_level))
- 
+  
   # Set test probabilities
   test_probabilities <- seq(from=0.00, to=1.00, by=0.005)
   

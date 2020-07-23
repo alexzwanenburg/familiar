@@ -455,34 +455,42 @@ collect_stratification_data <- function(fam_data_list){
 #' @return A list with aggregated AUC curve information.
 #' @noRd
 collect_auc_data <- function(fam_data_list){
-  # AUC data is not shared between different familiarData objects. We don't need to identify unique entries.
+  # AUC data is not shared between different familiarData objects. We don't need
+  # to identify unique entries.
 
-  # Parse data from single models
-  single_model_table <- data.table::rbindlist(lapply(fam_data_list, function(fam_obj){
-    
-    # Extract model performances
-    single_model_table <- fam_obj@auc_data$single
-    
-    # Add identifiers
-    single_model_table <- add_identifiers(data=single_model_table, object=fam_obj, more_identifiers=c("fs_method", "learner"))
-    
-  }))
+  # Create placeholder list.
+  roc_list <- list()
   
-  # Parse data from ensemble models
-  ensemble_model_table <- data.table::rbindlist(lapply(fam_data_list, function(fam_obj){
+  # Iterate over individual and ensemble data.
+  for(type in c("individual", "ensemble")){
     
-    # Extract model performances
-    ensemble_model_table <- fam_obj@auc_data$ensemble
+    # Create type list and add the confidence level.
+    type_list <- list("confidence_level"=fam_data_list[[1]]@auc_data[[type]]$confidence_level,
+                      "bootstrap_ci_method"=fam_data_list[[1]]@auc_data[[type]]$bootstrap_ci_method)
     
-    # Add identifiers
-    ensemble_model_table <- add_identifiers(data=ensemble_model_table, object=fam_obj, more_identifiers=c("fs_method", "learner"))
+    for(element in c("model_data", "bootstrap_data")){
+      
+      # Capture and combine data for the particular element.
+      type_list[[element]] <- data.table::rbindlist(lapply(fam_data_list, function(fam_obj, type, element){
+        
+        # Collect data from the element.
+        data <- fam_obj@auc_data[[type]][[element]]
+        
+        # Check if the data is empty.
+        if(is_empty(data)) return(NULL)
+        
+        # Add identifiers.
+        data <- add_identifiers(data=data, object=fam_obj, more_identifiers=c("fs_method", "learner"))
+        
+        return(data)
+      }, type=type, element=element), use.names=TRUE)
+    }
     
-  }))
+    # Add to roc_list
+    roc_list[[type]] <- type_list
+  }
   
-  # Combine all AUC information to a single list
-  auc_list <- list("single"=single_model_table, "ensemble"=ensemble_model_table, "confidence_level"=fam_data_list[[1]]@auc_data$confidence_level)
-  
-  return(auc_list)
+  return(roc_list)
 }
 
 

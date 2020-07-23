@@ -1210,60 +1210,113 @@ setMethod("export_model_performance", signature(object="ANY"),
 #'@exportMethod export_auc_data
 #'@md
 #'@rdname export_auc_data-methods
-setGeneric("export_auc_data", function(object, dir_path=NULL, ...) standardGeneric("export_auc_data"))
+setGeneric("export_auc_data", function(object, dir_path=NULL, export_raw=FALSE, ...) standardGeneric("export_auc_data"))
 
 #####export_auc_data (collection)#####
 
 #'@rdname export_auc_data-methods
 setMethod("export_auc_data", signature(object="familiarCollection"),
-          function(object, dir_path=NULL, ...){
-            
-            # Check if auc data is present
-            if(nrow(object@auc_data$single)==0){
-              return(NULL)
-            }
+          function(object, dir_path=NULL, export_raw=FALSE, ...){
             
             # Extract list of lists
             main_list <- object@auc_data
             
-            # Performance from single models
-            single_performance <- .apply_labels(data=main_list$single, object=object)
+            # This list will be filled.
+            export_list <- list()
             
-            # Performance from ensemble models
-            ensemble_performance <- .apply_labels(data=main_list$ensemble, object=object)
-            
-
-            if(is.null(dir_path)){
-              return(list("single"=single_performance,
-                          "ensemble"=ensemble_performance,
-                          "confidence_level"=main_list$confidence_level))
+            for(type in c("individual", "ensemble")){
+              # Confidence level
+              confidence_level <- main_list[[type]]$confidence_level
               
-            } else {
-              # Export model performances of individual models
-              .export_to_file(data=single_performance, object=object, dir_path=dir_path,
-                              type="performance", subtype="auc_single")
+              # Apply labels.
+              data <- .apply_labels(data=main_list[[type]], object=object)
               
-              # Export model performances of ensembles
-              .export_to_file(data=ensemble_performance, object=object, dir_path=dir_path,
-                              type="performance", subtype="auc_ensemble")
+              if(!export_raw){
+                # Export summarised data.
+                
+                export_data <- list("data"=.compute_bootstrap_ci(x0=data$model_data,
+                                                                 xb=data$bootstrap_data,
+                                                                 target_column="tpr",
+                                                                 bootstrap_ci_method=data$bootstrap_ci_method,
+                                                                 additional_splitting_variable="fpr",
+                                                                 confidence_level=confidence_level),
+                                    "confidence_level"=confidence_level)
+                
+                if(!is.null(dir_path)){
+                  # Export model performances of the models
+                  .export_to_file(data=export_data$data, object=object, dir_path=dir_path,
+                                  type="performance", subtype=paste(type, "roc", sep="_"))
+                }
+                
+              } else {
+                # Export all the data.
+                
+                if(!is.null(dir_path)){
+                  # Prepare data for writing by combining, model, intervention
+                  # and bootstrap data into a single table before writing it to
+                  # a folder.
+                  
+                  if(!is_empty(data@bootstrap_data)){
+                    # Cast wide by bootstrap id.
+                    bootstrap_data <- dcast(data=data$bootstrap_data,
+                                            stats::reformulate(termlabels=setdiff(colnames(individual_export_data), c("tpr", "bootstrap_id")),
+                                                               response="bootstrap_id",
+                                                               intercept=FALSE),
+                                            value.var="tpr")
+                  } else {
+                    bootstrap_data <- NULL
+                  }
+                  
+                  if(!is_empty(data@model_data)){
+                    
+                    # Parse model data.
+                    export_data <- data$model_data
+                    setnames(export_data, old="tpr", new="model")
+                    
+                    # Specify identifier columns
+                    id_columns <- setdiff(colnames(export_data), c("model", "ci_low", "ci_up"))
+                    
+                    if(!is.null(bootstrap_data)){
+                      export_data <- merge(x=export_data,
+                                           y=bootstrap_data,
+                                           by=id_columns)
+                    }
+                    
+                  } else {
+                    export_data <- NULL
+                  }
+                  
+                  # Export data to file.
+                  .export_to_file(data=write_data, object=object, dir_path=dir_path,
+                                  type="performance", subtype=paste(type, "roc", sep="_"))
+                  
+                } else {
+                  # Data is exported directly.
+                  export_data <- data
+                }
+              }
               
-              return(NULL)
+              # Add export data to list.
+              export_list[[type]] <- export_data
             }
             
+            # Return list of data.
+            if(is.null(dir_path)) return(export_list)
           })
 
 #####export_auc_data (generic)#####
 
 #'@rdname export_auc_data-methods
 setMethod("export_auc_data", signature(object="ANY"),
-          function(object, dir_path=NULL, ...){
+          function(object, dir_path=NULL, export_raw=FALSE, ...){
             
             # Attempt conversion to familiarCollection object.
             object <- do.call(as_familiar_collection,
                               args=append(list("object"=object, "data_element"="auc_data"), list(...)))
             
             return(do.call(export_auc_data,
-                           args=append(list("object"=object, "dir_path"=dir_path), list(...))))
+                           args=append(list("object"=object, "dir_path"=dir_path, "export_raw"=export_raw),
+                                       list(...))))
           })
 
 
