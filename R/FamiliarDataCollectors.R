@@ -240,37 +240,15 @@ collect_prediction_data <- function(fam_data_list){
 #' @return A list with aggregated model performance information.
 #' @noRd
 collect_model_performance <- function(fam_data_list){
-  # Model performance data is not shared between different data objects. We don't need to identify unique entries.
+  # Model performance data is not shared between different data objects. We
+  # don't need to identify unique entries.
   
-  # Parse data from single models
-  single_model_table <- data.table::rbindlist(lapply(fam_data_list, function(fam_obj){
-    
-    # Extract model performances
-    single_model_table <- fam_obj@model_performance$single
-    
-    # Add identifiers
-    single_model_table <- add_identifiers(data=single_model_table, object=fam_obj, more_identifiers=c("fs_method", "learner"))
-    
-  }))
-  
-  # Parse data from ensemble models
-  ensemble_model_table <- data.table::rbindlist(lapply(fam_data_list, function(fam_obj){
-    
-    # Extract model performances
-    ensemble_model_table <- fam_obj@model_performance$ensemble
-    
-    # Add identifiers
-    ensemble_model_table <- add_identifiers(data=ensemble_model_table, object=fam_obj, more_identifiers=c("fs_method", "learner"))
-    
-  }))
-  
-  # Combine all information into a single list
-  performance_list <- list("single"=single_model_table, "ensemble"=ensemble_model_table,
-                           "metric"=fam_data_list[[1]]@model_performance$metric,
-                           "confidence_level"=fam_data_list[[1]]@model_performance$confidence_level)
-  
-  return(performance_list)
+  return(universal_collector(fam_data_list=fam_data_list,
+                             data_slot="model_performance",
+                             extra_data=NULL,
+                             more_identifiers=c("fs_method", "learner")))
 }
+
 
 
 #' @title A collector for decision curve analysis data
@@ -281,39 +259,10 @@ collect_model_performance <- function(fam_data_list){
 #' @noRd
 collect_decision_curve_analysis_data <- function(fam_data_list){
   
-  # Create placeholder list.
-  dca_list <- list()
-  
-  # Iterate over individual and ensemble data.
-  for(type in c("individual", "ensemble")){
-    
-    # Create type list and add the confidence level.
-    type_list <- list("confidence_level"=fam_data_list[[1]]@decision_curve_data[[type]]$confidence_level,
-                      "bootstrap_ci_method"=fam_data_list[[1]]@decision_curve_data[[type]]$bootstrap_ci_method)
-    
-    for(element in c("model_data", "intervention_data", "bootstrap_data")){
-      
-      # Capture and combine data for the particular element.
-      type_list[[element]] <- data.table::rbindlist(lapply(fam_data_list, function(fam_obj, type, element){
-        
-        # Collect data from the element.
-        data <- fam_obj@decision_curve_data[[type]][[element]]
-        
-        # Check if the data is empty.
-        if(is_empty(data)) return(NULL)
-        
-        # Add identifiers.
-        data <- add_identifiers(data=data, object=fam_obj, more_identifiers=c("fs_method", "learner"))
-        
-        return(data)
-      }, type=type, element=element), use.names=TRUE)
-    }
-    
-    # Add to dca_list
-    dca_list[[type]] <- type_list
-  }
-  
-  return(dca_list)
+  return(universal_collector(fam_data_list=fam_data_list,
+                             data_slot="decision_curve_data",
+                             extra_data="intervention_all",
+                             more_identifiers=c("fs_method", "learner")))
 }
 
 
@@ -457,40 +406,11 @@ collect_stratification_data <- function(fam_data_list){
 collect_auc_data <- function(fam_data_list){
   # AUC data is not shared between different familiarData objects. We don't need
   # to identify unique entries.
-
-  # Create placeholder list.
-  roc_list <- list()
   
-  # Iterate over individual and ensemble data.
-  for(type in c("individual", "ensemble")){
-    
-    # Create type list and add the confidence level.
-    type_list <- list("confidence_level"=fam_data_list[[1]]@auc_data[[type]]$confidence_level,
-                      "bootstrap_ci_method"=fam_data_list[[1]]@auc_data[[type]]$bootstrap_ci_method)
-    
-    for(element in c("model_data", "bootstrap_data")){
-      
-      # Capture and combine data for the particular element.
-      type_list[[element]] <- data.table::rbindlist(lapply(fam_data_list, function(fam_obj, type, element){
-        
-        # Collect data from the element.
-        data <- fam_obj@auc_data[[type]][[element]]
-        
-        # Check if the data is empty.
-        if(is_empty(data)) return(NULL)
-        
-        # Add identifiers.
-        data <- add_identifiers(data=data, object=fam_obj, more_identifiers=c("fs_method", "learner"))
-        
-        return(data)
-      }, type=type, element=element), use.names=TRUE)
-    }
-    
-    # Add to roc_list
-    roc_list[[type]] <- type_list
-  }
-  
-  return(roc_list)
+  return(universal_collector(fam_data_list=fam_data_list,
+                             data_slot="auc_data",
+                             extra_data=NULL,
+                             more_identifiers=c("fs_method", "learner")))
 }
 
 
@@ -674,4 +594,52 @@ collect_mutual_correlation <- function(fam_data_list){
   unique_entries <- which(!duplicated(id_table))
   
   return(unique_entries)
+}
+
+
+universal_collector <- function(fam_data_list, data_slot, extra_data=NULL, more_identifiers=NULL){
+  
+  # Create placeholder list.
+  collection_list <- list()
+  
+  # Iterate over individual and ensemble data.
+  for(type in c("individual", "ensemble")){
+    
+    # Create type list and add the confidence level.
+    type_list <- list("confidence_level"=slot(object=fam_data_list[[1]],
+                                                    name=data_slot)[[type]]$confidence_level,
+                            "bootstrap_ci_method"=slot(object=fam_data_list[[1]],
+                                                       name=data_slot)[[type]]$bootstrap_ci_method)
+    
+    for(element in c("model_data", "bootstrap_data", extra_data)){
+      
+      # Capture and combine data for the particular element by iterating over
+      # the familiarData objects.
+      element_list <- lapply(fam_data_list, function(fam_obj, type, data_slot, element, more_identifiers){
+        
+        # Collect data from the element.
+        data <- slot(object=fam_obj, name=data_slot)[[type]][[element]]
+
+        # Check if the data is empty.
+        if(is_empty(data)) return(NULL)
+        
+        # Add identifiers.
+        data <- add_identifiers(data=data, object=fam_obj, more_identifiers=more_identifiers)
+        
+        return(data)
+      },
+      type=type,
+      data_slot=data_slot,
+      element=element,
+      more_identifiers=more_identifiers)
+      
+      # Combine and add to the type list.
+      type_list[[element]] <- data.table::rbindlist(element_list, use.names=TRUE)
+    }
+    
+    # Add to collection_list
+    collection_list[[type]] <- type_list
+  }
+  
+  return(collection_list)
 }
