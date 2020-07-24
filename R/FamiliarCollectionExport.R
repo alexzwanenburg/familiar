@@ -543,122 +543,15 @@ setGeneric("export_decision_curve_analysis_data", function(object, dir_path=NULL
 setMethod("export_decision_curve_analysis_data", signature(object="familiarCollection"),
           function(object, dir_path=NULL, export_raw=FALSE, ...){
             
-            # Extract list of lists
-            main_list <- object@decision_curve_data
-            
-            # This list will be filled.
-            export_list <- list()
-            
-            for(type in c("individual", "ensemble")){
-              # Confidence level
-              confidence_level <- main_list[[type]]$confidence_level
-              
-              # Apply labels.
-              data <- .apply_labels(data=main_list[[type]], object=object)
-              
-              if(!export_raw){
-                # Export summarised data.
-                
-                export_data <- list("data" = .compute_bootstrap_ci(x0=data$model_data,
-                                                                   xb=data$bootstrap_data,
-                                                                   target_column="net_benefit",
-                                                                   bootstrap_ci_method=data$bootstrap_ci_method,
-                                                                   additional_splitting_variable="threshold_probability",
-                                                                   confidence_level=confidence_level),
-                                    "intervention_data"=data$intervention_data,
-                                    "confidence_level"=confidence_level)
-                
-                if(!is.null(dir_path)){
-                  
-                  # Extract the summarised model data.
-                  write_data <- export_data$data
-                  
-                  if(!is_empty(export_data$intervention_data)){
-                    # Parse intervention data.
-                    intervention_data <- export_data$intervention_data
-                    setnames(intervention_data, old="net_benefit", new="intervention_all")
-                    
-                    # Merge with the summarised model data.
-                    write_data <- merge(x=intervention_data,
-                                        y=write_data,
-                                        by=setdiff(colnames(intervention_data), "intervention_all"))
-                  }
-                  
-                  # Export model performances of the models
-                  .export_to_file(data=write_data, object=object, dir_path=dir_path,
-                                  type="decision_curve_analysis", subtype=paste(type, "data", sep="_"))
-                }
-                
-              } else {
-                # Export all the data.
-                
-                if(!is.null(dir_path)){
-                  # Prepare data for writing by combining, model, intervention
-                  # and bootstrap data into a single table before writing it to
-                  # a folder.
-                  
-                  if(!is_empty(data@bootstrap_data)){
-                    # Cast wide by bootstrap id.
-                    bootstrap_data <- dcast(data=data$bootstrap_data,
-                                            stats::reformulate(termlabels=setdiff(colnames(individual_export_data), c("net_benefit", "bootstrap_id")),
-                                                               response="bootstrap_id",
-                                                               intercept=FALSE),
-                                            value.var="net_benefit")
-                  } else {
-                    bootstrap_data <- NULL
-                  }
-                  
-                  if(!is_empty(data@intervention_data)){
-                    
-                    # Parse intervention data.
-                    intervention_data <- data$intervention_data
-                    setnames(intervention_data, old="net_benefit", new="intervention_all")
-                    
-                  } else {
-                    intervention_data <- NULL
-                  }
-                  
-                  if(!is_empty(data@model_data)){
-                    
-                    # Parse model data.
-                    export_data <- data$model_data
-                    setnames(export_data, old="net_benefit", new="model")
-                    
-                    # Specify identifier columns
-                    id_columns <- setdiff(colnames(export_data), c("model", "ci_low", "ci_up"))
-                    
-                    if(!is.null(intervention_data)){
-                      export_data <- merge(x=export_data,
-                                           y=intervention_data,
-                                           by=id_columns)
-                    }
-                    
-                    if(!is.null(bootstrap_data)){
-                      export_data <- merge(x=export_data,
-                                           y=bootstrap_data,
-                                           by=id_columns)
-                    }
-                    
-                  } else {
-                    export_data <- NULL
-                  }
-                  
-                  # Export data to file.
-                  .export_to_file(data=write_data, object=object, dir_path=dir_path,
-                                  type="decision_curve_analysis", subtype=paste(type, "data", sep="_"))
-                  
-                } else {
-                  # Data is exported directly.
-                  export_data <- data
-                }
-              }
-              
-              # Add export data to list.
-              export_list[[type]] <- export_data
-            }
-            
-            # Return list of data.
-            if(is.null(dir_path)) return(export_list)
+            return(universal_exporter(object=object,
+                                      dir_path=dir_path,
+                                      export_raw=export_raw,
+                                      data_slot="decision_curve_data",
+                                      extra_data="intervention_all",
+                                      target_column="net_benefit",
+                                      splitting_variable="threshold_probability",
+                                      main_type="decision_curve_analysis",
+                                      sub_type="data"))
           })
 
 #####export_decision_curve_analysis_data (generic)#####
@@ -1110,60 +1003,17 @@ setGeneric("export_model_performance",
 setMethod("export_model_performance", signature(object="familiarCollection"),
           function(object, dir_path=NULL, export_raw=FALSE, ...){
             
-            # Extract list of lists
-            main_list <- object@model_performance
-            
-            # Performance from single models
-            single_performance <- .apply_labels(data=main_list$single, object=object)
-            
-            if(!export_raw){
-              
-              # Performance from ensemble models
-              ensemble_performance <- .apply_labels(data=main_list$ensemble, object=object)
-              
-              # Summarise data
-              ensemble_performance <- .summarise_model_performance(object=object, data=ensemble_performance,
-                                                                   metrics=main_list$metric,
-                                                                   confidence_level=main_list$confidence_level)
-            } else if(export_raw & !is_empty(main_list$ensemble)){
-              
-              # Melt dataset so that it is in long format.
-              ensemble_performance <- melt(data=main_list$ensemble,
-                                           measure.vars=paste0("performance_", main_list$metric),
-                                           variable.name="metric",
-                                           value.name="value",
-                                           variable.factor=TRUE,
-                                           value.factor=FALSE)
-              
-              # Update the "metric" factor so that the correct labels are used.
-              ensemble_performance$metric <- factor(ensemble_performance$metric,
-                                                    levels=paste0("performance_", main_list$metric),
-                                                    labels=main_list$metric)
-              
-              # Apply labels stored in the data.
-              ensemble_performance <- .apply_labels(data=ensemble_performance, object=object)
-            }
-            
-            if(is.null(dir_path)){
-              return(list("single"=single_performance,
-                          "ensemble"=ensemble_performance,
-                          "metric"=main_list$metric,
-                          "confidence_level"=main_list$confidence_level))
-              
-            } else {
-              # Export model performances of individual models
-              .export_to_file(data=single_performance, object=object, dir_path=dir_path,
-                              type="performance", subtype="single")
-              
-              # Export model performances of ensembles
-              .export_to_file(data=ensemble_performance, object=object, dir_path=dir_path,
-                              type="performance", subtype="ensemble")
-              
-              return(NULL)
-            }
-            
+            return(universal_exporter(object=object,
+                                      dir_path=dir_path,
+                                      export_raw=export_raw,
+                                      data_slot="model_performance",
+                                      extra_data=NULL,
+                                      target_column="value",
+                                      splitting_variable="metric",
+                                      main_type="performance",
+                                      sub_type="metric"))
           })
-
+          
 #####export_model_performance (generic)#####
 
 #'@rdname export_model_performance-methods
@@ -1218,90 +1068,15 @@ setGeneric("export_auc_data", function(object, dir_path=NULL, export_raw=FALSE, 
 setMethod("export_auc_data", signature(object="familiarCollection"),
           function(object, dir_path=NULL, export_raw=FALSE, ...){
             
-            # Extract list of lists
-            main_list <- object@auc_data
-            
-            # This list will be filled.
-            export_list <- list()
-            
-            for(type in c("individual", "ensemble")){
-              # Confidence level
-              confidence_level <- main_list[[type]]$confidence_level
-              
-              # Apply labels.
-              data <- .apply_labels(data=main_list[[type]], object=object)
-              
-              if(!export_raw){
-                # Export summarised data.
-                
-                export_data <- list("data"=.compute_bootstrap_ci(x0=data$model_data,
-                                                                 xb=data$bootstrap_data,
-                                                                 target_column="tpr",
-                                                                 bootstrap_ci_method=data$bootstrap_ci_method,
-                                                                 additional_splitting_variable="fpr",
-                                                                 confidence_level=confidence_level),
-                                    "confidence_level"=confidence_level)
-                
-                if(!is.null(dir_path)){
-                  # Export model performances of the models
-                  .export_to_file(data=export_data$data, object=object, dir_path=dir_path,
-                                  type="performance", subtype=paste(type, "roc", sep="_"))
-                }
-                
-              } else {
-                # Export all the data.
-                
-                if(!is.null(dir_path)){
-                  # Prepare data for writing by combining, model, intervention
-                  # and bootstrap data into a single table before writing it to
-                  # a folder.
-                  
-                  if(!is_empty(data@bootstrap_data)){
-                    # Cast wide by bootstrap id.
-                    bootstrap_data <- dcast(data=data$bootstrap_data,
-                                            stats::reformulate(termlabels=setdiff(colnames(individual_export_data), c("tpr", "bootstrap_id")),
-                                                               response="bootstrap_id",
-                                                               intercept=FALSE),
-                                            value.var="tpr")
-                  } else {
-                    bootstrap_data <- NULL
-                  }
-                  
-                  if(!is_empty(data@model_data)){
-                    
-                    # Parse model data.
-                    export_data <- data$model_data
-                    setnames(export_data, old="tpr", new="model")
-                    
-                    # Specify identifier columns
-                    id_columns <- setdiff(colnames(export_data), c("model", "ci_low", "ci_up"))
-                    
-                    if(!is.null(bootstrap_data)){
-                      export_data <- merge(x=export_data,
-                                           y=bootstrap_data,
-                                           by=id_columns)
-                    }
-                    
-                  } else {
-                    export_data <- NULL
-                  }
-                  
-                  # Export data to file.
-                  .export_to_file(data=write_data, object=object, dir_path=dir_path,
-                                  type="performance", subtype=paste(type, "roc", sep="_"))
-                  
-                } else {
-                  # Data is exported directly.
-                  export_data <- data
-                }
-              }
-              
-              # Add export data to list.
-              export_list[[type]] <- export_data
-            }
-            
-            # Return list of data.
-            if(is.null(dir_path)) return(export_list)
+            return(universal_exporter(object=object,
+                                      dir_path=dir_path,
+                                      export_raw=export_raw,
+                                      data_slot="auc_data",
+                                      extra_data=NULL,
+                                      target_column="tpr",
+                                      splitting_variable="fpr",
+                                      main_type="performance",
+                                      sub_type="roc"))
           })
 
 #####export_auc_data (generic)#####
@@ -1803,3 +1578,158 @@ setMethod(".apply_labels", signature(data="ANY", object="familiarCollection"),
             
             return(data)
           })
+
+
+universal_exporter <- function(object,
+                               dir_path=NULL,
+                               export_raw=FALSE,
+                               data_slot,
+                               extra_data=NULL,
+                               target_column,
+                               splitting_variable=NULL,
+                               main_type,
+                               sub_type=NULL){
+  
+  # Extract list of lists
+  main_list <- slot(object=object, name=data_slot)
+                    
+  # This list will be filled.
+  export_list <- list()
+  
+  for(type in c("individual", "ensemble")){
+    # Confidence level
+    confidence_level <- main_list[[type]]$confidence_level
+    
+    # Apply labels.
+    data <- .apply_labels(data=main_list[[type]], object=object)
+    
+    if(!export_raw){
+      # Export summarised data.
+      
+      export_data <- list("data"=.compute_bootstrap_ci(x0=data$model_data,
+                                                       xb=data$bootstrap_data,
+                                                       target_column=target_column,
+                                                       bootstrap_ci_method=data$bootstrap_ci_method,
+                                                       additional_splitting_variable=splitting_variable,
+                                                       confidence_level=confidence_level),
+                          "confidence_level"=confidence_level)
+      
+      if(!is.null(extra_data)){
+        
+        # Retrieve extra data.
+        extra_export_data <- lapply(extra_data, function(list_element, data) data[[list_element]], data=data)
+        
+        # Rename exported data.
+        names(extra_export_data) <- extra_data
+        
+        # Join the two lists.
+        export_data <- c(export_data, extra_export_data)
+      }
+      
+      
+      if(!is.null(dir_path)){
+        # Export to file.
+        
+        # Extract the summarised model data.
+        write_data <- export_data$data
+        
+        if(!is.null(extra_data)){
+          
+          # Identify the identifier columns
+          id_columns <- setdiff(colnames(write_data),
+                                c(target_column, "ci_low", "ci_up"))
+          
+          for(current_data_set in extra_data){
+            
+            # Skip empty datasets.
+            if(is_empty(export_data[[current_data_set]])) next()
+            
+            # Parse current dataset
+            current_data <- export_data[[current_data_set]]
+            data.table::setnames(current_data, old=target_column, new=current_data_set)
+            
+            # Merge with summarised data.
+            write_data <- merge(x=write_data,
+                                y=current_data,
+                                by=id_columns)
+          }
+        }
+        
+        # Export model performances of the models
+        .export_to_file(data=write_data, object=object, dir_path=dir_path,
+                        type=main_type, subtype=paste(sub_type, type, sep="_")) 
+      }
+      
+    } else {
+      # Export all the data.
+      
+      if(!is.null(dir_path)){
+        # Prepare data for writing by combining, model, intervention
+        # and bootstrap data into a single table before writing it to
+        # a folder.
+        
+        if(!is_empty(data$bootstrap_data)){
+          # Cast wide by bootstrap id.
+          bootstrap_data <- dcast(data=data$bootstrap_data,
+                                  stats::reformulate(termlabels=setdiff(colnames(individual_export_data), c(target_column, "bootstrap_id")),
+                                                     response="bootstrap_id",
+                                                     intercept=FALSE),
+                                  value.var=targer_column)
+        } else {
+          bootstrap_data <- NULL
+        }
+        
+        if(!is_empty(data$model_data)){
+          
+          # Parse model data.
+          write_data <- data$model_data
+          setnames(export_data, old=target_column, new="model")
+          
+          # Specify identifier columns
+          id_columns <- setdiff(colnames(write_data), c("model", "ci_low", "ci_up"))
+          
+          if(!is.null(bootstrap_data)){
+            write_data <- merge(x=write_data,
+                                y=bootstrap_data,
+                                by=id_columns)
+          }
+          
+        } else {
+          write_data <- NULL
+        }
+        
+        if(!is.null(write_data) & !is.null(extra_data)){
+          
+          for(current_data_set in extra_data){
+            
+            # Skip empty datasets.
+            if(is_empty(write_data[[current_data_set]])) next()
+            
+            # Parse current dataset
+            current_data <- data[[current_data_set]]
+            data.table::setnames(current_data, old=target_column, new=current_data_set)
+            
+            # Merge with summarised data.
+            write_data <- merge(x=write_data,
+                                y=current_data,
+                                by=id_columns)
+          }
+        }
+
+        # Export data to file.
+        .export_to_file(data=export_data, object=object, dir_path=dir_path,
+                        type=main_type, subtype=paste(sub_type, type, sep="_"))
+        
+      } else {
+        # Data is exported directly.
+        export_data <- data
+      }
+    }
+    
+    # Add export data to list.
+    export_list[[type]] <- export_data
+  }
+  
+  # Return list of data.
+  if(is.null(dir_path)) return(export_list)
+}
