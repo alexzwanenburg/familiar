@@ -191,7 +191,7 @@ setMethod("plot_decision_curve", signature(object="familiarCollection"),
             if(is.null(x)) return(NULL)
             if(is_empty(x$ensemble)) return(NULL)
             if(is_empty(x$ensemble$data)) return(NULL)
-            if(is_empty(x$ensemble$intervention_data)) return(NULL)
+            if(is_empty(x$ensemble$intervention_all)) return(NULL)
             
             # Extract the data for the ensemble.
             x <- x$ensemble
@@ -371,7 +371,7 @@ setMethod("plot_decision_curve", signature(object="familiarCollection"),
             ##### Create plots ---------------------------------------------------------
             
             # Combine the data with intervention data before splitting
-            intervention_data <- x$intervention_data
+            intervention_data <- x$intervention_all
             setnames(intervention_data, old="net_benefit", new="intervention_all")
             
             x <- merge(x=x$data,

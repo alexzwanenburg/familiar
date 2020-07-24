@@ -122,7 +122,7 @@ setMethod("extract_decision_curve_data", signature(object="familiarEnsemble"),
 .extract_decision_curve_data <- function(object, data, cl=NULL, is_pre_processed, eval_times, confidence_level,
                                          aggregate_ci, determine_ci, bootstrap_ci_method, verbose, message_indent=0L){
   
-  # Ensemble model.
+  
   if(object@outcome_type %in% c("binomial", "multinomial")){
     # Iterate over outcome classes.
     
@@ -147,7 +147,7 @@ setMethod("extract_decision_curve_data", signature(object="familiarEnsemble"),
     
     # Concatenate lists.
     dca_data <- list("model_data"=rbind_list_list(dca_data, "model_data"),
-                     "intervention_data"=rbind_list_list(dca_data, "intervention_data"),
+                     "intervention_all"=rbind_list_list(dca_data, "intervention_all"),
                      "bootstrap_data"=rbind_list_list(dca_data, "bootstrap_data"),
                      "confidence_level"=confidence_level)
     
@@ -165,7 +165,7 @@ setMethod("extract_decision_curve_data", signature(object="familiarEnsemble"),
     
     # Concatenate lists.
     dca_data <- list("model_data"=rbind_list_list(dca_data, "model_data"),
-                     "intervention_data"=rbind_list_list(dca_data, "intervention_data"),
+                     "intervention_all"=rbind_list_list(dca_data, "intervention_all"),
                      "bootstrap_data"=rbind_list_list(dca_data, "bootstrap_data"),
                      "confidence_level"=confidence_level)
     
@@ -238,7 +238,7 @@ setMethod("extract_decision_curve_data", signature(object="familiarEnsemble"),
 
   # Add to list and return
   return(list("model_data"=model_data,
-              "intervention_data"=intervention_data,
+              "intervention_all"=intervention_data,
               "bootstrap_data"=bootstrap_data,
               "confidence_level"=confidence_level))
 }
@@ -342,7 +342,7 @@ setMethod("extract_decision_curve_data", signature(object="familiarEnsemble"),
   
   # Add to list and return
   return(list("model_data"=model_data,
-              "intervention_data"=intervention_data,
+              "intervention_all"=intervention_data,
               "bootstrap_data"=bootstrap_data,
               "confidence_level"=confidence_level))
 }
