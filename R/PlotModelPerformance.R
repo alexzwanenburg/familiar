@@ -217,18 +217,7 @@ setMethod("plot_model_performance", signature(object="familiarCollection"),
                    units=waiver(),
                    annotate_performance=NULL,
                    ...){
-            
-            # Get input data. We export the raw data so that individual plots
-            # can/could be plotted.
-            x <- export_model_performance(object=object, export_raw=TRUE)
-            
-            # Check for empty data.
-            if(is.null(x)) return(NULL)
-            if(is_empty(x$ensemble)) return(NULL)
-            
-            # Extract the raw ensemble predictions.
-            x <- x$ensemble
-            
+           
             ##### Check input arguments ----------------------------------------
             
             # ggtheme
@@ -252,6 +241,41 @@ setMethod("plot_model_performance", signature(object="familiarCollection"),
               plot_type <- "violinplot"
             }
             
+            if(plot_type == "heatmap"){
+              # For the heatmap we require aggregated data.
+              
+              # Load the data.
+              x <- export_model_performance(object=object, export_raw=FALSE)
+              x <- x$ensemble$data
+              
+              # Check that the data is not empty.
+              if(is_empty(x)) return(NULL)
+              
+            } else {
+              # For other data we require de-aggregated data.
+              
+              # Load the data.
+              x <- export_model_performance(object=object, export_raw=TRUE)
+              
+              if(is_empty(x$ensemble$bootstrap_data) & !is_empty(x$ensemble$model_data)){
+                warning(paste0("Creating a ", plot_type, " requires de-aggregated data, which are not available."))
+                return(NULL)
+                
+              } else if(is_empty(x$ensemble$bootstrap_data)){
+                return(NULL)
+              }
+              
+              x <- x$ensemble$bootstrap_data
+            }
+            
+            # 
+            if(object@outcome_type %in% c("survival")){
+              split_variable <- "eval_time"
+              
+            } else {
+              split_variable <- NULL
+            }
+            
             # Add default splitting variables.
             if(is.null(split_by) & is.null(color_by) & is.null(facet_by) & is.null(x_axis_by) & is.null(y_axis_by)){
               if(plot_type == "heatmap"){
@@ -259,7 +283,7 @@ setMethod("plot_model_performance", signature(object="familiarCollection"),
                 split_by <- c("metric")
                 
                 # Set facetting variables.
-                facet_by <- c("data_set")
+                facet_by <- c("data_set", split_variable)
                 
                 # Set x-axis variables.
                 x_axis_by <- c("learner")
@@ -278,19 +302,23 @@ setMethod("plot_model_performance", signature(object="familiarCollection"),
                 # Set facetting variables.
                 if(n_learner > 1 | n_fs_method > 1) facet_by <- c("data_set")
                 
-                # Set color variables. This splitting variable is only used in non-heatmap plots.
+                # Set color variables. This splitting variable is only used in
+                # non-heatmap plots.
                 if(n_learner > 1 & n_fs_method > 1) color_by <- c("fs_method")
                 
                 # Set x-axis variables.
                 if(n_learner == 1 & n_fs_method == 1){
                   x_axis_by <- c("data_set")
-                  
+
                 } else if(n_learner == 1 & n_fs_method > 1){
                   x_axis_by <- c("fs_method")
                   
                 } else {
                   x_axis_by <- c("learner")
                 }
+                
+                # Add split variable (if any) to facet_by.
+                facet_by <- c(facet_by, split_variable)
               }
             }
             
@@ -308,7 +336,7 @@ setMethod("plot_model_performance", signature(object="familiarCollection"),
                                                              facet_by=facet_by,
                                                              x_axis_by=x_axis_by,
                                                              y_axis_by=y_axis_by,
-                                                             available=c("metric", "data_set", "fs_method", "learner"))
+                                                             available=c("metric", "data_set", "fs_method", "learner", split_variable))
             } else {
               
               # Check if the y_axis_by argument is provided.
@@ -322,7 +350,7 @@ setMethod("plot_model_performance", signature(object="familiarCollection"),
                                                              color_by=color_by,
                                                              facet_by=facet_by,
                                                              x_axis_by=x_axis_by,
-                                                             available=c("metric", "data_set", "fs_method", "learner"))
+                                                             available=c("metric", "data_set", "fs_method", "learner", split_variable))
             }
            
             # Update splitting variables
@@ -334,8 +362,8 @@ setMethod("plot_model_performance", signature(object="familiarCollection"),
 
             if(plot_type == "heatmap"){
               # Check that x_axis_by and y_axis_by only take fs_method or learner.
-              if(!x_axis_by %in% c("fs_method", "learner", "data_set")) stop("The x_axis_by argument should be one of fs_method, learner or data_set.")
-              if(!y_axis_by %in% c("fs_method", "learner", "data_set")) stop("The y_axis_by argument should be one of fs_method, learner or data_set.")
+              if(!x_axis_by %in% c("fs_method", "learner", "data_set", split_variable)) stop("The x_axis_by argument should be one of fs_method, learner or data_set.")
+              if(!y_axis_by %in% c("fs_method", "learner", "data_set", split_variable)) stop("The y_axis_by argument should be one of fs_method, learner or data_set.")
             }
             
             # x_label
@@ -344,7 +372,8 @@ setMethod("plot_model_performance", signature(object="familiarCollection"),
                                 learner = "learner",
                                 fs_method = "feature selection method",
                                 data_set = "dataset",
-                                metric = "metric")
+                                metric = "metric",
+                                eval_time = "time")
             }
             
             # annotate_performance
@@ -567,7 +596,8 @@ setMethod("plot_model_performance", signature(object="familiarCollection"),
                         learner = "learner",
                         fs_method = "feature selection method",
                         data_set = "dataset",
-                        metric = "metric")
+                        metric = "metric",
+                        eval_time = "time")
       
     }
     
