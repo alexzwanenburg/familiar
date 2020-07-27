@@ -403,12 +403,12 @@ setMethod("extract_data", signature(object="familiarEnsemble"),
             }
 
             # Create predictions.
-            if(data_element %in% c("all", "prediction_data", "stratification_data")){
+            if(data_element %in% c("all", "prediction_data")){
               prediction_data <- extract_predictions(object=object,
                                                      data=data,
                                                      cl=cl,
                                                      ensemble_method=ensemble_method,
-                                                     time_max=time_max,
+                                                     eval_times=eval_times,
                                                      message_indent=message_indent,
                                                      verbose=verbose)
             } else {
@@ -861,97 +861,6 @@ setMethod("extract_hyperparameters", signature(object="familiarEnsemble"),
             } ))
             
             return(hyperparameter_info)
-          })
-
-
-
-#'@title Internal function to extract predicted values from models.
-#'
-#'@description Collects predicted values from models in a `familiarEnsemble`.
-#'
-#'@inheritParams extract_data
-#'
-#'@return A list with single-model and ensemble predictions.
-#'@md
-#'@keywords internal
-setGeneric("extract_predictions",
-           function(object,
-                    data,
-                    cl=NULL,
-                    ensemble_method=waiver(),
-                    time_max=waiver(),
-                    message_indent=0L,
-                    verbose=FALSE,
-                    ...) standardGeneric("extract_predictions"))
-
-#####extract_predictions#####
-setMethod("extract_predictions", signature(object="familiarEnsemble"),
-          function(object,
-                   data,
-                   cl=NULL,
-                   ensemble_method=waiver(),
-                   time_max=waiver(),
-                   message_indent=0L,
-                   verbose=FALSE,
-                   ...){
-            # Extract predictions from the data using the models in the
-            # ensemble. Note: we do not call the predict function on the
-            # familiarEnsemble directly as this would cause predict to become
-            # highly convoluted, in particular with generating both single and
-            # ensemble predictions.
-            
-            # Message extraction start
-            if(verbose){
-              logger.message(paste0("Computing ensemble predictions for the dataset."),
-                             indent=message_indent)
-            }
-            
-            # Load time_max from the object settings attribute, if it is not provided.
-            if(is.waive(time_max) & object@outcome_type %in% c("survival")){
-              time_max <- object@settings$time_max
-            }
-            
-            # Check time_max argument
-            if(object@outcome_type %in% c("survival")){
-              .check_number_in_valid_range(time_max, var_name="time_max", range=c(0.0, Inf), closed=c(FALSE, TRUE))
-            }
-            
-            # Obtain ensemble method from stored settings, if required.
-            if(is.waive(ensemble_method)){
-              ensemble_method <- object@settings$ensemble_method
-            }
-            
-            # Check ensemble_method argument
-            .check_parameter_value_is_valid(x=ensemble_method, var_name="ensemble_method",
-                                            values=.get_available_ensemble_prediction_methods())
-            
-            # Test if models are properly loaded
-            if(!is_model_loaded(object=object)){
-              ..error_ensemble_models_not_loaded()
-            }
-            
-            # Aggregate data. It does not make sense to keep duplicate rows here.
-            data <- aggregate_data(data=data)
-            
-            # Predict for all separate models
-            prediction_data <- list("single"=lapply(object@model_list, function(object, data){
-              
-              # Make predictions
-              predict_table <- .predict(object=object, data=data, allow_recalibration=TRUE, time=time_max)
-              
-              # Add the model name to the table
-              predict_table <- add_model_name(data=predict_table, object=object)
-              
-              return(predict_table)
-            }, data=data))
-            
-            # Create the ensemble predictions
-            prediction_data$ensemble <- ensemble_prediction(object=object, prediction_data=data.table::rbindlist(prediction_data$single), ensemble_method=ensemble_method)
-            
-            # Add the ensemble name to the table
-            prediction_data$ensemble <- add_model_name(data=prediction_data$ensemble, object=object)
-            
-            return(prediction_data)
           })
 
 

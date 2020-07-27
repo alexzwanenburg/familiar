@@ -203,31 +203,10 @@ collect_calibration_data <- function(fam_data_list){
 collect_prediction_data <- function(fam_data_list){
   # Model predictions are not shared between different data objects. We don't need to identify unique entries.
   
-  # Parse prediction data from single models
-  single_model_table <- data.table::rbindlist(lapply(fam_data_list, function(fam_obj){
-    
-    # Extract model predictions
-    single_model_table <- data.table::rbindlist(fam_obj@prediction_data$single)
-    
-    # Add identifiers
-    single_model_table <- add_identifiers(data=single_model_table, object=fam_obj, more_identifiers=c("fs_method", "learner"))
-    
-  }))
-  
-  ensemble_model_table <- data.table::rbindlist(lapply(fam_data_list, function(fam_obj){
-    
-    # Extract model predictions
-    ensemble_model_table <- fam_obj@prediction_data$ensemble
-    
-    # Add identifiers
-    ensemble_model_table <- add_identifiers(data=ensemble_model_table, object=fam_obj, more_identifiers=c("fs_method", "learner"))
-    
-  }))
-  
-  # Combine all information into a single list
-  prediction_data_list <- list("single"=single_model_table, "ensemble"=ensemble_model_table)
-  
-  return(prediction_data_list)
+  return(universal_collector(fam_data_list=fam_data_list,
+                             data_slot="prediction_data",
+                             extra_data=NULL,
+                             more_identifiers=c("fs_method", "learner")))
 }
 
 

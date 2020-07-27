@@ -456,52 +456,37 @@ setMethod("export_hyperparameters", signature(object="ANY"),
 #'@md
 #'@rdname export_prediction_data-methods
 setGeneric("export_prediction_data",
-           function(object, dir_path=NULL, ...) standardGeneric("export_prediction_data"))
+           function(object, dir_path=NULL, export_raw=FALSE, ...) standardGeneric("export_prediction_data"))
 
 #####export_prediction_data (collection)#####
 
 #'@rdname export_prediction_data-methods
 setMethod("export_prediction_data", signature(object="familiarCollection"),
-          function(object, dir_path=NULL, ...){
-
-            # Extract data
-            main_list <- object@prediction_data
+          function(object, dir_path=NULL, export_raw=FALSE, ...){
             
-            # Predictions for individual models
-            prediction_single <- .apply_labels(data=main_list$single, object=object)
-            
-            # Prdictions for the ensemble model
-            prediction_ensemble <- .apply_labels(data=main_list$ensemble, object=object)
-            
-            if(is.null(dir_path)){
-              return(list("single"=prediction_single,
-                          "ensemble"=prediction_ensemble))
-              
-            } else {
-              # Export calibration at large
-              .export_to_file(data=prediction_single, object=object, dir_path=dir_path,
-                              type="prediction", subtype="single_model")
-              
-              # Export calibration goodness-of-fit tests
-              .export_to_file(data=prediction_ensemble, object=object, dir_path=dir_path,
-                              type="prediction", subtype="ensemble_model")
-              
-              return(NULL)
-            }
+            return(universal_exporter(object=object,
+                                      dir_path=dir_path,
+                                      export_raw=export_raw,
+                                      data_slot="prediction_data",
+                                      extra_data=NULL,
+                                      target_column="predicted_outcome",
+                                      splitting_variable=NULL,
+                                      main_type="prediction",
+                                      sub_type=NULL))
           })
 
 #####export_prediction_data (generic)#####
 
 #'@rdname export_prediction_data-methods
 setMethod("export_prediction_data", signature(object="ANY"),
-          function(object, dir_path=NULL, ...){
+          function(object, dir_path=NULL, export_raw=FALSE, ...){
             
             # Attempt conversion to familiarCollection object.
             object <- do.call(as_familiar_collection,
                               args=append(list("object"=object, "data_element"="prediction_data"), list(...)))
             
             return(do.call(export_prediction_data,
-                           args=append(list("object"=object, "dir_path"=dir_path), list(...))))
+                           args=append(list("object"=object, "dir_path"=dir_path, "export_raw"=export_raw), list(...))))
           })
 
 
@@ -1143,7 +1128,6 @@ setMethod("export_confusion_matrix_data", signature(object="familiarCollection")
                                       splitting_variable=NULL,
                                       main_type="performance",
                                       sub_type="confusion_matrix"))
-            
           })
 
 #####export_confusion_matrix_data (generic)#####
