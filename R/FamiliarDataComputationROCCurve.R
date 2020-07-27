@@ -84,6 +84,7 @@ setMethod("extract_auc_data", signature(object="familiarEnsemble"),
                                             individual_model_ci=FALSE,
                                             data=data,
                                             is_pre_processed=is_pre_processed,
+                                            ensemble_method=ensemble_method,
                                             confidence_level=confidence_level,
                                             aggregate_ci=any(c("all", "auc_data") %in% aggregate_ci),
                                             bootstrap_ci_method=bootstrap_ci_method,
@@ -95,7 +96,7 @@ setMethod("extract_auc_data", signature(object="familiarEnsemble"),
 
 
 
-.extract_roc_curve_data <- function(object, data, cl=NULL, is_pre_processed, confidence_level,
+.extract_roc_curve_data <- function(object, data, cl=NULL, is_pre_processed, confidence_level, ensemble_method,
                                     aggregate_ci, determine_ci, bootstrap_ci_method, verbose, message_indent=0L){
   
   
@@ -105,6 +106,7 @@ setMethod("extract_auc_data", signature(object="familiarEnsemble"),
     # Predict class probabilities.
     prediction_data <- .predict(object=object,
                                 data=data,
+                                ensemble_method=ensemble_method,
                                 is_pre_processed=is_pre_processed)
     
     # Check if any predictions are valid.
