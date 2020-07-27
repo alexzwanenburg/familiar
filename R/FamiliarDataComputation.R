@@ -403,8 +403,7 @@ setMethod("extract_data", signature(object="familiarEnsemble"),
             }
 
             # Create predictions.
-            if(data_element %in% c("all", "prediction_data",
-                                   "stratification_data", "confusion_matrix")){
+            if(data_element %in% c("all", "prediction_data", "stratification_data")){
               prediction_data <- extract_predictions(object=object,
                                                      data=data,
                                                      cl=cl,
@@ -502,8 +501,9 @@ setMethod("extract_data", signature(object="familiarEnsemble"),
             # Extract confusion matrix data.
             if(data_element %in% c("all", "confusion_matrix")){
               confusion_matrix_info <- extract_confusion_matrix(object=object,
-                                                                prediction_data=prediction_data,
+                                                                data=data,
                                                                 cl=cl,
+                                                                ensemble_method=ensemble_method,
                                                                 message_indent=message_indent,
                                                                 verbose=verbose)
             } else {
@@ -1709,55 +1709,7 @@ setMethod("extract_feature_expression", signature(object="familiarEnsemble", dat
 
 
 
-#'@title Internal function to extract the confusion matrix.
-#'
-#'@description Computes and extracts the confusion matrix for predicted and
-#'  observed categorical outcomes used in a `familiarEnsemble` object.
-#'
-#'@inheritParams extract_data
-#'
-#'@return A data.table containing predicted and observed outcome data together
-#'  with a co-occurence count.
-#'@md
-#'@keywords internal
-setGeneric("extract_confusion_matrix", function(object,
-                                                prediction_data,
-                                                cl=NULL,
-                                                message_indent=0L,
-                                                verbose=FALSE,
-                                                ...) standardGeneric("extract_confusion_matrix"))
-  
-#####extract_confusion_matrix#####
-setMethod("extract_confusion_matrix", signature(object="familiarEnsemble"),
-          function(object,
-                   prediction_data,
-                   cl=NULL,
-                   message_indent=0L,
-                   verbose=FALSE){
-            
-            # Don't compute a confusion matrix if there is nothing to be computed.
-            if(!object@outcome_type %in% c("binomial", "multinomial")) return(NULL)
-            
-            # Don't compute a confusion matrix if there is no data available.
-            if(is_empty(prediction_data$ensemble)) return(NULL)
-            
-            # Don't compute a confusion matrix if there are no valid predictions.
-            if(!any_predictions_valid(prediction_data$ensemble, outcome_type=object@outcome_type)) return(NULL)
-            
-            # Message extraction start
-            if(verbose){
-              logger.message(paste0("Computing confusion matrix."),
-                             indent=message_indent)
-            }
-            
-            # Compute confusion matrices for single prediction tables.
-            confusion_matrix_list <- list("single"=data.table::rbindlist(lapply(prediction_data$single, .compute_confusion_matrix, object=object)))
-            
-            # Compute confusion matrix for ensemble prediction table.
-            confusion_matrix_list$ensemble <- .compute_confusion_matrix(prediction_data$ensemble, object=object)
-            
-            return(confusion_matrix_list)
-          })
+
 
 
 
@@ -1930,43 +1882,3 @@ setMethod("extract_sample_similarity_table", signature(object="familiarEnsemble"
             
             return(sample_similarity_table)
           })
-
-
-
-.compute_confusion_matrix <- function(prediction_table, object){
-  
-  # Suppress NOTES due to non-standard evaluation in data.table
-  outcome <- count <- NULL
-  
-  if(!any_predictions_valid(prediction_table=prediction_table, outcome_type=object@outcome_type)) return(NULL)
-  
-  # Make a local copy with only the required data
-  data <- data.table::copy(prediction_table[!is.na(outcome), c("outcome", "predicted_class")])
-  
-  # Rename outcome columns
-  data.table::setnames(data,
-                       old=c("outcome", "predicted_class"),
-                       new=c("observed_outcome", "expected_outcome"))
-  
-  # Sum pairs of observed and expected outcome categories.
-  data <- data[, list("count"=.N), by=c("observed_outcome", "expected_outcome")]
-  
-  # Find class levels in the data
-  class_levels <- get_outcome_class_levels(object)
-  
-  # Construct an empty matrix 
-  empty_matrix <- data.table::data.table(expand.grid(list("observed_outcome"=class_levels, "expected_outcome"=class_levels), stringsAsFactors=FALSE))
-  empty_matrix[, "count":=0L]
-  
-  # Combine data with the empty matrix to add in combinations that
-  # appear 0 times.
-  data <- data.table::rbindlist(list(data, empty_matrix), use.names=TRUE)
-  
-  # Use a max operation to remove any combinations that appear twice in the table.
-  data <- data[, list("count"=max(count)), by=c("observed_outcome", "expected_outcome")]
-  
-  # Add the model name
-  data <- add_model_name(data=data, object=object)
-  
-  return(data)
-}

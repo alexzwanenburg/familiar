@@ -6,11 +6,11 @@
 \alias{export_confusion_matrix_data,ANY-method}
 \title{Extract and export confusion matrices.}
 \usage{
-export_confusion_matrix_data(object, dir_path = NULL, ...)
+export_confusion_matrix_data(object, dir_path = NULL, export_raw = FALSE, ...)
 
-\S4method{export_confusion_matrix_data}{familiarCollection}(object, dir_path = NULL, ...)
+\S4method{export_confusion_matrix_data}{familiarCollection}(object, dir_path = NULL, export_raw = FALSE, ...)
 
-\S4method{export_confusion_matrix_data}{ANY}(object, dir_path = NULL, ...)
+\S4method{export_confusion_matrix_data}{ANY}(object, dir_path = NULL, export_raw = FALSE, ...)
 }
 \arguments{
 \item{object}{A \code{familiarCollection} object, or other other objects from which
@@ -19,11 +19,25 @@ a \code{familiarCollection} can be extracted. See details for more information.}
 \item{dir_path}{Path to folder where extracted data should be saved. \code{NULL}
 will allow export as a structured list of data.tables.}
 
+\item{export_raw}{Allows export of raw data. Only used when exporting model
+performance information.}
+
 \item{...}{
   Arguments passed on to \code{\link[=extract_confusion_matrix]{extract_confusion_matrix}}, \code{\link[=as_familiar_collection]{as_familiar_collection}}
   \describe{
+    \item{\code{data}}{A \code{dataObject} object, \code{data.table} or \code{data.frame} that
+constitutes the data that are used to compute}
     \item{\code{cl}}{Cluster created using the \code{parallel} package. This cluster is then
 used to speed up computation through parallelisation.}
+    \item{\code{is_pre_processed}}{Flag that indicates whether the data was already
+pre-processed externally, e.g. normalised and clustered. Only used if the
+\code{data} argument is a \code{data.table} or \code{data.frame}.}
+    \item{\code{ensemble_method}}{Method for ensembling predictions from models for the
+same sample. Available methods are:
+\itemize{
+\item \code{mean}: Use the mean of the predicted values as the ensemble value for a
+sample.
+}}
     \item{\code{message_indent}}{Number of indentation steps for messages shown during
 computation and extraction of various data elements.}
     \item{\code{verbose}}{Flag to indicate whether feedback should be provided on the

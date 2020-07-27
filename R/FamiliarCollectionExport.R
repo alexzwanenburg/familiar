@@ -1125,44 +1125,24 @@ setMethod("export_auc_data", signature(object="ANY"),
 #'@exportMethod export_confusion_matrix_data
 #'@md
 #'@rdname export_confusion_matrix_data-methods
-setGeneric("export_confusion_matrix_data", function(object, dir_path=NULL, ...) standardGeneric("export_confusion_matrix_data"))
+setGeneric("export_confusion_matrix_data",
+           function(object, dir_path=NULL, export_raw=FALSE, ...) standardGeneric("export_confusion_matrix_data"))
 
 #####export_confusion_matrix_data (collection)#####
 
 #'@rdname export_confusion_matrix_data-methods
 setMethod("export_confusion_matrix_data", signature(object="familiarCollection"),
-          function(object, dir_path=NULL, ...){
+          function(object, dir_path=NULL, export_raw=FALSE, ...){
             
-            # Check if confusion matrix data is present
-            if(nrow(object@confusion_matrix$single)==0){
-              return(NULL)
-            }
-            
-            # Extract list of lists
-            main_list <- object@confusion_matrix
-            
-            # Confusion matrix from single models
-            single_confusion_matrix <- .apply_labels(data=main_list$single, object=object)
-            
-            # Confusion matrix from ensemble models
-            ensemble_confusion_matrix <- .apply_labels(data=main_list$ensemble, object=object)
-            
-            
-            if(is.null(dir_path)){
-              return(list("single"=single_confusion_matrix,
-                          "ensemble"=ensemble_confusion_matrix))
-              
-            } else {
-              # Export model performances of individual models
-              .export_to_file(data=single_confusion_matrix, object=object, dir_path=dir_path,
-                              type="performance", subtype="confusion_matrix_single")
-              
-              # Export model performances of ensembles
-              .export_to_file(data=ensemble_confusion_matrix, object=object, dir_path=dir_path,
-                              type="performance", subtype="confusion_matrix_ensemble")
-              
-              return(NULL)
-            }
+            return(universal_exporter(object=object,
+                                      dir_path=dir_path,
+                                      export_raw=export_raw,
+                                      data_slot="confusion_matrix",
+                                      extra_data=NULL,
+                                      target_column="count",
+                                      splitting_variable=NULL,
+                                      main_type="performance",
+                                      sub_type="confusion_matrix"))
             
           })
 
@@ -1170,14 +1150,14 @@ setMethod("export_confusion_matrix_data", signature(object="familiarCollection")
 
 #'@rdname export_confusion_matrix_data-methods
 setMethod("export_confusion_matrix_data", signature(object="ANY"),
-          function(object, dir_path=NULL, ...){
+          function(object, dir_path=NULL, export_raw=FALSE, ...){
             
             # Attempt conversion to familiarCollection object.
             object <- do.call(as_familiar_collection,
                               args=append(list("object"=object, "data_element"="confusion_matrix"), list(...)))
             
             return(do.call(export_confusion_matrix_data,
-                           args=append(list("object"=object, "dir_path"=dir_path), list(...))))
+                           args=append(list("object"=object, "dir_path"=dir_path, "export_raw"=FALSE,), list(...))))
           })
 
 
