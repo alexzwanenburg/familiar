@@ -44,6 +44,7 @@ setMethod("extract_performance", signature(object="familiarEnsemble"),
                    confidence_level=waiver(),
                    bootstrap_ci_method=waiver(),
                    aggregate_ci=waiver(),
+                   is_pre_processed=FALSE,
                    message_indent=0L,
                    verbose=FALSE,
                    ...){
@@ -108,6 +109,7 @@ setMethod("extract_performance", signature(object="familiarEnsemble"),
                                                     individual_model_ci=FALSE,
                                                     data=data,
                                                     is_pre_processed=is_pre_processed,
+                                                    ensemble_method=ensemble_method,
                                                     metric=metric,
                                                     eval_times=eval_times,
                                                     confidence_level=confidence_level,
@@ -181,7 +183,8 @@ setMethod("extract_performance", signature(object="familiarEnsemble"),
 
 
 
-..extract_model_performance_data <- function(eval_times=NULL, object, data, cl=NULL, is_pre_processed, metric, confidence_level,
+..extract_model_performance_data <- function(eval_times=NULL, object, data, cl=NULL, is_pre_processed,
+                                             ensemble_method, metric, confidence_level,
                                              determine_ci, bootstrap_ci_method, verbose, message_indent=0L){
   
   # Perform a safety check.
@@ -191,6 +194,7 @@ setMethod("extract_performance", signature(object="familiarEnsemble"),
   prediction_data <- .predict(object=object,
                               data=data,
                               time=eval_times,
+                              ensemble_method=ensemble_method,
                               is_pre_processed=is_pre_processed)
   
   # Check if any predictions are valid.
