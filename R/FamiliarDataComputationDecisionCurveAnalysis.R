@@ -108,6 +108,7 @@ setMethod("extract_decision_curve_data", signature(object="familiarEnsemble"),
                                             individual_model_ci=FALSE,
                                             data=data,
                                             is_pre_processed=is_pre_processed,
+                                            ensemble_method=ensemble_method,
                                             eval_times=eval_times,
                                             confidence_level=confidence_level,
                                             aggregate_ci=any(c("all", "decision_curve_analyis") %in% aggregate_ci),
@@ -119,8 +120,9 @@ setMethod("extract_decision_curve_data", signature(object="familiarEnsemble"),
           })
 
 
-.extract_decision_curve_data <- function(object, data, cl=NULL, is_pre_processed, eval_times, confidence_level,
-                                         aggregate_ci, determine_ci, bootstrap_ci_method, verbose, message_indent=0L){
+.extract_decision_curve_data <- function(object, data, cl=NULL, is_pre_processed, ensemble_method,
+                                         eval_times, confidence_level, aggregate_ci, determine_ci,
+                                         bootstrap_ci_method, verbose, message_indent=0L){
   
   
   if(object@outcome_type %in% c("binomial", "multinomial")){
@@ -129,6 +131,7 @@ setMethod("extract_decision_curve_data", signature(object="familiarEnsemble"),
     # Predict class probabilities.
     prediction_data <- .predict(object=object,
                                 data=data,
+                                ensemble_method=ensemble_method,
                                 is_pre_processed=is_pre_processed)
     
     # Check if any predictions are valid.
@@ -157,6 +160,8 @@ setMethod("extract_decision_curve_data", signature(object="familiarEnsemble"),
                        .compute_dca_data_survival,
                        data=data,
                        object=object,
+                       ensemble_method=ensemble_method,
+                       is_pre_processed=is_pre_processed,
                        confidence_level=confidence_level,
                        determine_ci=determine_ci,
                        cl=cl,
@@ -294,12 +299,14 @@ setMethod("extract_decision_curve_data", signature(object="familiarEnsemble"),
 
 
 .compute_dca_data_survival <- function(evaluation_time, data, object, confidence_level,
-                                       determine_ci=TRUE, cl=NULL, verbose=FALSE, message_indent=0L){
+                                       ensemble_method, is_pre_processed, determine_ci=TRUE, cl=NULL,
+                                       verbose=FALSE, message_indent=0L){
   
   # Predict survival probabilities.
   data <- .predict(object=object,
                    data=data,
                    time=evaluation_time,
+                   ensemble_method=ensemble_method,
                    is_pre_processed=is_pre_processed,
                    type="survival_probability")
 
