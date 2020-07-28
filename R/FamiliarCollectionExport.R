@@ -1490,6 +1490,7 @@ setMethod(".apply_labels", signature(data="ANY", object="familiarCollection"),
             has_multiclass_outcome <- ifelse(any(c("pos_class", "outcome") %in% columns) & object@outcome_type=="multinomial", TRUE, FALSE)
             has_categorical_outcome <- ifelse(any(c("observed_outcome", "expected_outcome") %in% columns) & object@outcome_type %in% c("binomial", "multinomial"),
                                               TRUE, FALSE)
+            has_evaluation_time <- any(c("evaluation_time", "eval_time") %in% columns) & object@outcome_type %in% c("survival", "competing_risk")
             
             # Apply levels
             if(has_data_set){
@@ -1533,6 +1534,14 @@ setMethod(".apply_labels", signature(data="ANY", object="familiarCollection"),
               for(curr_col_name in c("observed_outcome", "expected_outcome")){
                 if(!is.null(data[[curr_col_name]])){
                   data[[curr_col_name]] <- factor(x=data[[curr_col_name]], levels=get_class_name_levels(x=object), labels=get_class_names(x=object))
+                }
+              }
+            }
+            
+            if(has_evaluation_time){
+              for(curr_col_name in c("evaluation_time", "eval_time")){
+                if(!is.null(data[[curr_col_name]])){
+                  data[[curr_col_name]] <- factor(x=data[[curr_col_name]])
                 }
               }
             }
