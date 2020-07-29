@@ -568,14 +568,53 @@ setMethod("get_placeholder_prediction_table", signature(object="familiarModel", 
 
 #####bootstrapper---------------------------------------------------------------
 setMethod("bootstrapper", signature(data="dataObject"),
-          function(data, n=NULL, alpha=0.05, FUN, ...){
-            # Call the bootstrapper function dor data.table objects.
-            return(do.call(bootstrapper, args=c(list("data"=data@data,
-                                                     "alpha"=alpha,
-                                                     "n"=n,
-                                                     "FUN"=FUN),
-                                                list(...))))
+          function(data, n=NULL, alpha=0.05, FUN, cl=NULL, verbose=FALSE, ...){
+
+            # Determine n.
+            if(is.null(n)) n <- ceiling(20 / alpha)
+            
+            if(is_empty(data)) return(data)
+            
+            bootstrapped_data <- fam_lapply(cl=cl,
+                                            X=seq_len(n),
+                                            FUN=function(ii, data, FUN2, dots2){
+                                              
+                                              # Create a random subsample of the data.
+                                              data <- get_bootstrap_sample(data=data)
+                                              
+                                              # Execute the function
+                                              results <- do.call(FUN2, args=c(list("data"=data),
+                                                                              dots2))
+                                              
+                                              # Add bootstrap id
+                                              if(data.table::is.data.table(results)){
+                                                results[, "bootstrap_id":=ii]
+                                                
+                                              } else if(is.null(results)) {
+                                                results <- NULL
+                                                
+                                              } else {
+                                                results <- list("results"=results,
+                                                                "bootstrap_id"=ii)
+                                              }
+                                              
+                                              return(results)
+                                            },
+                                            data=data,
+                                            FUN2=FUN,
+                                            dots2=list(...),
+                                            progress_bar=verbose)
+            
+            # Combine data.tables, if bootstrapped_data is indeed a list of
+            # data.tables.
+            if(any(sapply(bootstrapped_data, data.table::is.data.table))){
+              bootstrapped_data <- data.table::rbindlist(bootstrapped_data, use.names=TRUE)
+            }
+            
+            return(bootstrapped_data)
           })
+
+
 
 setMethod("bootstrapper", signature(data="data.table"),
           function(data, n=NULL, alpha=0.05, FUN, cl=NULL, verbose=FALSE, ...){
