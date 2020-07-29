@@ -281,10 +281,9 @@ setMethod("extract_data", signature(object="familiarEnsemble"),
             
             # Check whether data is a dataObject, and create one otherwise.
             if(!is(data, "dataObject")){
-              data <- methods::new("dataObject",
-                                   data=data,
-                                   is_pre_processed=is_pre_processed,
-                                   outcome_type=object@outcome_type)
+              data <- create_data_object(object=object,
+                                         data=data,
+                                         is_pre_processed=is_pre_processed)
             }
             
             # Load models

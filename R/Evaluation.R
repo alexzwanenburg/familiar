@@ -417,7 +417,7 @@ run_evaluation <- function(cl, proj_list, settings, file_paths){
   # ensemble.
   data_obj <- methods::new("dataObject",
                            data = NULL,
-                           is_pre_processed = FALSE,
+                           preprocessing_level="none",
                            outcome_type = fam_ensemble@outcome_type,
                            delay_loading = TRUE,
                            perturb_level = pool_data_table$data_perturb_level[1],

@@ -17,31 +17,6 @@ setMethod("..vimp", signature(object="familiarVimpMethod"),
           function(object, ...) return(get_placeholder_vimp_table()))
 
 
-#####process_input_data (model)#####
-setMethod("process_input_data", signature(object="familiarVimpMethod", data="ANY"),
-          function(object, data, is_pre_processed=FALSE, stop_at="clustering"){
-            # Prepares data for variable importance methods.
-            
-            # Check whether data is a dataObject, and create one otherwise
-            if(!is(data, "dataObject")){
-              data <- create_data_object(object=object, data=data, is_pre_processed=is_pre_processed)
-            }
-            
-            # Load data from internal memory, if not provided otherwise
-            if(data@delay_loading){
-              data <- load_delayed_data(data=data, object=object, stop_at=stop_at)
-            }
-            
-            # Pre-process data in case it has not been pre-processed
-            if(!data@is_pre_processed){
-              data <- preprocess_data(data=data, object=object, stop_at=stop_at)
-            }
-            
-            # Return data
-            return(data)
-          })
-
-
 
 #####.vimp (vimp method)#####
 setMethod(".vimp", signature(object="familiarVimpMethod"),

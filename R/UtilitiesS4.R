@@ -630,8 +630,9 @@ setMethod("bootstrapper", signature(data="data.table"),
 setMethod("get_bootstrap_sample", signature(data="dataObject"),
           function(data, ...){
             
-            if(data@is_pre_processed){
-            
+            if(.as_preprocessing_level(data) > "none"){
+              # Indicating that some preprocessing has taken please.
+              
               # Bootstrap the data element.
               data@data <- get_bootstrap_sample(data=data@data)
               
@@ -640,16 +641,6 @@ setMethod("get_bootstrap_sample", signature(data="dataObject"),
               # Reshuffle the samples.
               data@sample_set_on_load <- fam_sample(x=unique(data@sample_set_on_load),
                                                     size=length(data@sample_set_on_load),
-                                                    replace=TRUE)
-              
-            } else if(!data@delay_loading){
-              # TODO: make sure that this takes into account cohort_id,
-              # duplicates.
-              sample_ids <- unique(data@data$subject_id)
-              
-              # Apply after processing.
-              data@sample_set_on_load <- fam_sample(x=sample_ids,
-                                                    size=length(sample_ids),
                                                     replace=TRUE)
               
             } else {

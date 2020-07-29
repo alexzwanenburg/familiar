@@ -13,7 +13,6 @@ setMethod(".predict", signature(object="familiarModel"),
                                        is_pre_processed=is_pre_processed,
                                        stop_at="clustering")
             
-            
             if(is.null(type)){
               # Predict using the model and the standard type.
               prediction_table <- ..predict(object=object,

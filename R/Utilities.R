@@ -1349,3 +1349,24 @@ is_subclass <- function(class_1, class_2){
   return(TRUE)
 }
 
+.as_preprocessing_level <- function(x){
+  
+  if(is(x, "dataObject")) x <- x@preprocessing_level
+  
+  # Available pre-processing levels
+  preprocessing_levels <- c("none",
+                            "signature",
+                            "transformation",
+                            "normalisation",
+                            "batch_normalisation",
+                            "imputation",
+                            "clustering")
+  
+  if(!all(x %in% preprocessing_levels)){
+    ..error_reached_unreachable_code(".as_preprocessing_level: one or more of x could not be matched to preprocessing levels.")
+  }
+  
+  return(factor(x=x,
+                levels=preprocessing_levels,
+                ordered=TRUE))
+}

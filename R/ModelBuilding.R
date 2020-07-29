@@ -73,7 +73,7 @@ build_model <- function(run, hpo_list){
   # Data will be loaded at run time in .train
   data <- methods::new("dataObject",
                        data = NULL,
-                       is_pre_processed = FALSE,
+                       preprocessing_level="none",
                        outcome_type = settings$data$outcome_type,
                        delay_loading = TRUE,
                        perturb_level = tail(run$run_table, n=1)$perturb_level,
