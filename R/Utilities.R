@@ -1349,6 +1349,27 @@ is_subclass <- function(class_1, class_2){
   return(TRUE)
 }
 
+
+paste_s <- function(...){
+  dots <- c(...)
+  
+  if(length(dots) > 2){
+    # 
+    initial_string <- paste0(head(dots, n=length(dots)-2), collapse=", ")
+    
+    final_string <- paste0(tail(dots, n=2), collapse=" and ")
+    
+    return(paste0(c(initial_string, final_string), collapse=", "))
+    
+  } else if(length(dots) == 2){
+    
+    return(paste0(dots, collapse=" and "))
+  } else {
+    return(paste0(dots))
+  }
+}
+
+
 .as_preprocessing_level <- function(x){
   
   if(is(x, "dataObject")) x <- x@preprocessing_level
