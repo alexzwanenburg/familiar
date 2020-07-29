@@ -336,8 +336,27 @@ setMethod("extract_data", signature(object="familiarEnsemble"),
             } else {
               model_vimp_info <- NULL
             }
-
-
+            
+            
+            # Assess permutation variable importance
+            if(data_element %in% c("all", "permutation_vimp")){
+              permutation_vimp <- extract_permutation_vimp(object=object,
+                                                           data=data,
+                                                           cl=cl,
+                                                           metric=metric,
+                                                           ensemble_method=ensemble_method,
+                                                           eval_times=eval_times,
+                                                           confidence_level=confidence_level,
+                                                           bootstrap_ci_method=bootstrap_ci_method,
+                                                           aggregate_ci=aggregate_ci,
+                                                           message_indent=message_indent,
+                                                           verbose=verbose)
+              
+            } else {
+              permutation_vimp <- NULL
+            }
+            
+            
             # Create mutual correlation information
             if(data_element %in% c("all", "mutual_correlation")){
               mutual_corr_info <- extract_mutual_correlation(object=object,
@@ -351,7 +370,6 @@ setMethod("extract_data", signature(object="familiarEnsemble"),
             } else {
               mutual_corr_info <- NULL
             }
-
 
             # Expression heatmap data
             if(data_element %in% c("all", "feature_expressions")){
@@ -523,7 +541,7 @@ setMethod("extract_data", signature(object="familiarEnsemble"),
                                      outcome_info = object@outcome_info,
                                      fs_vimp = fs_vimp_info,
                                      model_vimp = model_vimp_info,
-                                     permutation_vimp = NULL,
+                                     permutation_vimp = permutation_vimp,
                                      hyperparameters = hyperparameter_info,
                                      hyperparameter_data = NULL,
                                      req_feature_cols = object@req_feature_cols,

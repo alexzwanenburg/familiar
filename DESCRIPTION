@@ -87,6 +87,7 @@ Collate:
     'FamiliarDataComputationConfusionMatrix.R'
     'FamiliarDataComputationDecisionCurveAnalysis.R'
     'FamiliarDataComputationModelPerformance.R'
+    'FamiliarDataComputationPermutationVimp.R'
     'FamiliarDataComputationPredictionData.R'
     'FamiliarDataComputationROCCurve.R'
     'FamiliarEnsemble.R'

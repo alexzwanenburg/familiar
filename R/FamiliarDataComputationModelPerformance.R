@@ -6,14 +6,10 @@
 #'
 #'@inheritParams extract_data
 #'
-#'@details This method differs from the `assess_performance` method that
-#'  performance predictions on the fly and enables computation of objective
-#'  scores.
-#'
-#'  This function also computes credibility intervals for the ensemble model, at
-#'  the level of `confidence_level`. This is a general method. Metrics with known,
-#'  theoretically derived confidence intervals, nevertheless have a credibility
-#'  interval computed.
+#'@details This method computes credibility intervals for the ensemble model, at
+#'  the level of `confidence_level`. This is a general method. Metrics with
+#'  known, theoretically derived confidence intervals, nevertheless have a
+#'  credibility interval computed.
 #'
 #'@return A list with data.tables for single and ensemble model assessments.
 #'@md
@@ -48,10 +44,6 @@ setMethod("extract_performance", signature(object="familiarEnsemble"),
                    message_indent=0L,
                    verbose=FALSE,
                    ...){
-            # Compute metrics based on a pre-calculated set of prediction_data.
-            # Note that this is different from the "assess_performance" method,
-            # which performs the prediction on the fly, and enables the
-            # extraction of objective scores.
             
             # Message extraction start
             if(verbose){

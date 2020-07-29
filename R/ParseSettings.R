@@ -2275,11 +2275,11 @@
   
   # Parts for which confidence intervals should be determined.
   settings$aggregate_ci <- .parse_arg(x_config=config$aggregate_ci, x_var=aggregate_ci,
-                                      var_name="aggregate_ci", type="character_list", optional=TRUE, default=c("auc_data", "decision_curve_analyis"))
+                                      var_name="aggregate_ci", type="character_list", optional=TRUE, default=c("auc_data", "decision_curve_analyis", "permutation_vimp"))
   
   settings$aggregate_ci <- tolower(settings$aggregate_ci)
   .check_parameter_value_is_valid(x=settings$aggregate_ci, var_name="aggregate_ci",
-                                  values=c("all", "model_performance", "auc_data", "decision_curve_analyis",
+                                  values=c("all", "model_performance", "auc_data", "decision_curve_analyis", "permutation_vimp",
                                            "true", "false", "none"))
   
   # Handle none, false
