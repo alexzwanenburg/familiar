@@ -65,6 +65,23 @@ collect_model_vimp <- function(fam_data_list){
 
 
 
+#' @title Collector for permutation variable importance.
+#'
+#' @inheritParams collect_fs_vimp
+#'
+#' @return A list with aggregated permutation variable importance data. Contains
+#'   a data.table for each list element.
+#' @noRd
+collect_permutation_vimp <- function(fam_data_list){
+  
+  return(universal_collector(fam_data_list=fam_data_list,
+                             data_slot="permutation_vimp",
+                             extra_data=NULL,
+                             more_identifiers=c("fs_method", "learner")))
+}
+
+
+
 #' @title Collector for model hyperparameters
 #'
 #' @inheritParams collect_fs_vimp

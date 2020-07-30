@@ -50,11 +50,14 @@ setMethod("export_all", signature(object="familiarCollection"),
             # Export model variable importance
             model_vimp <- export_model_vimp(object=object, dir_path=dir_path)
             
+            # Export permutation variable importance.
+            permutation_vimp <- export_permutation_vimp(object=object, dir_path=dir_path, export_raw=export_raw)
+            
             # Export model hyperparameters
             hyperparameters <- export_hyperparameters(object=object, dir_path=dir_path)
             
             # Export prediction tables
-            prediction_data <- export_prediction_data(object=object, dir_path=dir_path)
+            prediction_data <- export_prediction_data(object=object, dir_path=dir_path, export_raw=export_raw)
             
             # Export decision curve analysis data
             dca_data <- export_decision_curve_analysis_data(object=object, dir_path=dir_path, export_raw=export_raw)
@@ -69,7 +72,7 @@ setMethod("export_all", signature(object="familiarCollection"),
             model_performance <- export_model_performance(object=object, dir_path=dir_path, export_raw=export_raw)
             
             # Export confusion matrix
-            confusion_matrix <- export_confusion_matrix_data(object=object, dir_path=dir_path)
+            confusion_matrix <- export_confusion_matrix_data(object=object, dir_path=dir_path, export_raw=export_raw)
             
             # Export kaplan-meier info
             km_info <- export_stratification_cutoff(object=object, dir_path=dir_path)
@@ -78,7 +81,7 @@ setMethod("export_all", signature(object="familiarCollection"),
             km_data <- export_stratification_data(object=object, dir_path=dir_path)
             
             # Export AUC data
-            auc_data <- export_auc_data(object=object, dir_path=dir_path)
+            auc_data <- export_auc_data(object=object, dir_path=dir_path, export_raw=export_raw)
             
             # Export data from the univariate analysis
             univariate_analysis <- export_univariate_analysis_data(object=object, dir_path=dir_path)
@@ -92,12 +95,14 @@ setMethod("export_all", signature(object="familiarCollection"),
             if(is.null(dir_path)){
               return(list("fs_vimp" = fs_vimp,
                           "model_vimp" = model_vimp,
+                          "permutation_vimp" = permutation_vimp,
                           "hyperparameters" = hyperparameters,
                           "prediction_data" = prediction_data,
                           "calibration_info" = calibration_info,
                           "calibration_data" = calibration_data,
                           "model_performance" = model_performance,
                           "confusion_matrix" = confusion_matrix,
+                          "decision_curve" = dca_data,
                           "km_info" = km_info,
                           "km_data" = km_data,
                           "auc_data" = auc_data,
@@ -297,6 +302,92 @@ setMethod("export_model_vimp", signature(object="ANY"),
             
             return(do.call(export_model_vimp,
                            args=append(list("object"=object, "dir_path"=dir_path), list(...))))
+          })
+
+
+#####export_permutation_vimp#####
+
+#'@title Extract and export permutation variable importance.
+#'
+#'@description Extract and export model-based variable importance from a
+#'  familiarCollection.
+#'
+#'@inheritParams export_all
+#'
+#'@inheritDotParams extract_permutation_vimp
+#'@inheritDotParams as_familiar_collection
+#'
+#'@details Data, such as permutation variable importance and calibration
+#'  information, is usually collected from a `familiarCollection` object.
+#'  However, you can also provide one or more `familiarData` objects, that will
+#'  be internally converted to a `familiarCollection` object. It is also
+#'  possible to provide a `familiarEnsemble` or one or more `familiarModel`
+#'  objects together with the data from which data is computed prior to export.
+#'  Paths to the previously mentioned files can also be provided.
+#'
+#'  All parameters aside from `object` and `dir_path` are only used if `object`
+#'  is not a `familiarCollection` object, or a path to one.
+#'
+#'  Permutation Variable importance assesses the improvement in model
+#'  performance due to a feature. For this purpose, the performance of the model
+#'  is measured as normal, and is measured again with a dataset where the values
+#'  of the feature in question have been randomly permuted. The difference
+#'  between both performance measurements is the permutation variable
+#'  importance.
+#'
+#'  In familiar, this basic concept is extended in several ways:
+#'
+#'  * Point estimates of variable importance are based on multiple (21) random
+#'  permutations. The difference between model performance on the normal dataset
+#'  and the median performance measurement of the randomly permuted datasets is
+#'  used as permutation variable importance.
+#'
+#'  * Confidence intervals for the ensemble model are determined using bootstrap
+#'  methods.
+#'
+#'  * Permutation variable importance is assessed for any metric specified using
+#'  the `metric` argument.
+#'
+#'  * Permutation variable importance can take into account similarity between
+#'  features and permute similar features simultaneously.
+#'
+#'@return A data.table (if `dir_path` is not provided), or nothing, as all data
+#'  is exported to `csv` files.
+#'@exportMethod export_permutation_vimp
+#'@md
+#'@rdname export_permutation_vimp-methods
+setGeneric("export_permutation_vimp",
+           function(object, dir_path=NULL, ...) standardGeneric("export_permutation_vimp"))
+
+#####export_permutation_vimp (collection)#####
+
+#'@rdname export_permutation_vimp-methods
+setMethod("export_permutation_vimp", signature(object="familiarCollection"),
+          function(object, dir_path=NULL, export_raw=FALSE, ...){
+            
+            return(universal_exporter(object=object,
+                                      dir_path=dir_path,
+                                      export_raw=export_raw,
+                                      data_slot="permutation_vimp",
+                                      extra_data=NULL,
+                                      target_column="value",
+                                      splitting_variable=c("metric", "feature"),
+                                      main_type="variable_importance",
+                                      sub_type="permutation"))
+          })
+
+#####export_permutation_vimp (generic)#####
+
+#'@rdname export_permutation_vimp-methods
+setMethod("export_permutation_vimp", signature(object="ANY"),
+          function(object, dir_path=NULL, export_raw=FALSE, ...){
+            
+            # Attempt conversion to familiarCollection object.
+            object <- do.call(as_familiar_collection,
+                              args=append(list("object"=object, "data_element"="prediction_data"), list(...)))
+            
+            return(do.call(export_permutation_vimp,
+                           args=append(list("object"=object, "dir_path"=dir_path, "export_raw"=export_raw), list(...))))
           })
 
 
