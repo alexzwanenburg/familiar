@@ -352,6 +352,10 @@ batch_normalise.replace_unknown_parameters <- function(parameter_set, known_para
 batch_normalise.apply_normalisation <- function(x, feature_info, invert=FALSE){
   # Applies normalisation parameters to input data
   
+  # Add another identifier to make sure that everything is correctly ordered.
+  x <- data.table::copy(x)
+  x[, "order_index_id":=.I]
+  
   # Iterate over batches to determine the transformed data.
   y <- lapply(split(x, by="cohort_id", sorted=FALSE, keep.by=TRUE),
               function(x, feature_info, invert){
@@ -380,9 +384,7 @@ batch_normalise.apply_normalisation <- function(x, feature_info, invert=FALSE){
                 }
               
                 # Return y
-                return(data.table::data.table("subject_id"=x$subject_id,
-                                              "cohort_id"=x$cohort_id,
-                                              "repetition_id"=x$repetition_id,
+                return(data.table::data.table("order_index_id"=x$order_index_id,
                                               "y"=y))
                 
               }, feature_info=feature_info, invert=invert)
@@ -391,7 +393,7 @@ batch_normalise.apply_normalisation <- function(x, feature_info, invert=FALSE){
   y <- data.table::rbindlist(y, use.names=TRUE)
   
   # Merge with input x, while making sure that the order remains the same.
-  y <- merge(x=x, y=y, by=c("subject_id", "cohort_id", "repetition_id"), sort=FALSE)
+  y <- merge(x=x, y=y, by=c("order_index_id"), sort=FALSE)
   
   # Return transformed values
   return(y$y)
