@@ -8,8 +8,14 @@ extract_permutation_vimp(
   object,
   data,
   cl = NULL,
-  metric = waiver(),
   ensemble_method = waiver(),
+  feature_similarity_table,
+  feature_cluster_method = waiver(),
+  feature_linkage_method = waiver(),
+  feature_cluster_cut_method = waiver(),
+  feature_similarity_metric = waiver(),
+  feature_similarity_threshold = waiver(),
+  metric = waiver(),
   eval_times = waiver(),
   confidence_level = waiver(),
   bootstrap_ci_method = waiver(),
@@ -30,17 +36,64 @@ constitutes the data that are used to compute}
 \item{cl}{Cluster created using the \code{parallel} package. This cluster is then
 used to speed up computation through parallelisation.}
 
-\item{metric}{One or more metrics for assessing model performance. See the
-vignette on performance metrics for the available metrics. If not provided
-explicitly, this parameter is read from settings used at creation of the
-underlying \code{familiarModel} objects.}
-
 \item{ensemble_method}{Method for ensembling predictions from models for the
 same sample. Available methods are:
 \itemize{
 \item \code{mean}: Use the mean of the predicted values as the ensemble value for a
 sample.
 }}
+
+\item{feature_cluster_method}{The method used to perform clustering. These are
+the same methods as for the \code{cluster_method} configuration parameter:
+\code{none}, \code{hclust}, \code{agnes}, \code{diana} and \code{pam}.
+
+\code{none} cannot be used when extracting data regarding mutual correlation or
+feature expressions.
+
+If not provided explicitly, this parameter is read from settings used at
+creation of the underlying \code{familiarModel} objects.}
+
+\item{feature_linkage_method}{The method used for agglomerative clustering in
+\code{hclust} and \code{agnes}. These are the same methods as for the
+\code{cluster_linkage_method} configuration parameter: \code{average}, \code{single},
+\code{complete}, \code{weighted}, and \code{ward}.
+
+If not provided explicitly, this parameter is read from settings used at
+creation of the underlying \code{familiarModel} objects.}
+
+\item{feature_cluster_cut_method}{The method used to divide features into
+separate clusters. The available methods are the same as for the
+\code{cluster_cut_method} configuration parameter: \code{silhouette}, \code{fixed_cut} and
+\code{dynamic_cut}.
+
+\code{silhouette} is available for all cluster methods, but \code{fixed_cut} only
+applies to methods that create hierarchical trees (\code{hclust}, \code{agnes} and
+\code{diana}). \code{dynamic_cut} requires the \code{dynamicTreeCut} package and can only
+be used with \code{agnes} and \code{hclust}.
+
+If not provided explicitly, this parameter is read from settings used at
+creation of the underlying \code{familiarModel} objects.}
+
+\item{feature_similarity_metric}{Metric to determine pairwise similarity
+between features. Similarity is computed in the same manner as for
+clustering, and \code{feature_similarity_metric} therefore has the same options
+as \code{cluster_similarity_metric}: \code{mcfadden_r2}, \code{cox_snell_r2},
+\code{nagelkerke_r2}, \code{spearman}, \code{kendall} and \code{pearson}.
+
+If not provided explicitly, this parameter is read from settings used at
+creation of the underlying \code{familiarModel} objects.}
+
+\item{feature_similarity_threshold}{The threshold level for pair-wise
+similarity that is required to form feature clusters with the \code{fixed_cut}
+method.
+
+If not provided explicitly, this parameter is read from settings used at
+creation of the underlying \code{familiarModel} objects.}
+
+\item{metric}{One or more metrics for assessing model performance. See the
+vignette on performance metrics for the available metrics. If not provided
+explicitly, this parameter is read from settings used at creation of the
+underlying \code{familiarModel} objects.}
 
 \item{eval_times}{One or more time points that are used for assessing
 calibration in survival problems. This is done as expected and observed

@@ -240,6 +240,7 @@ setGeneric("extract_data", function(object, data,
                                     sample_cluster_method=waiver(),
                                     sample_linkage_method=waiver(),
                                     sample_similarity_metric=waiver(),
+                                    
                                     confidence_level=waiver(),
                                     bootstrap_ci_method=waiver(),
                                     aggregate_ci=waiver(),
@@ -343,6 +344,12 @@ setMethod("extract_data", signature(object="familiarEnsemble"),
               permutation_vimp <- extract_permutation_vimp(object=object,
                                                            data=data,
                                                            cl=cl,
+                                                           feature_similarity_table=feature_similarity_table,
+                                                           feature_cluster_method=feature_cluster_method,
+                                                           feature_linkage_method=feature_linkage_method,
+                                                           feature_cluster_cut_method=feature_cluster_cut_method,
+                                                           feature_similarity_metric=feature_similarity_metric,
+                                                           feature_similarity_threshold=feature_similarity_threshold,
                                                            metric=metric,
                                                            ensemble_method=ensemble_method,
                                                            eval_times=eval_times,
@@ -351,7 +358,6 @@ setMethod("extract_data", signature(object="familiarEnsemble"),
                                                            aggregate_ci=aggregate_ci,
                                                            message_indent=message_indent,
                                                            verbose=verbose)
-              
             } else {
               permutation_vimp <- NULL
             }
