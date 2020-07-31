@@ -702,7 +702,10 @@ pair-wise similarity that is required to form feature clusters with the
 defined using the \code{cluster_similarity_threshold} parameter.
 
 By default, the value for the \code{cluster_similarity_threshold} configuration
-parameter is used.}
+parameter is used.
+
+Unlike for \code{cluster_similarity_threshold}, more than one value can be
+supplied here.}
     \item{\code{sample_cluster_method}}{(\emph{optional}) The method used to perform
 clustering based on distance between samples. These are the same methods as
 for the \code{cluster_method} configuration parameter: \code{hclust}, \code{agnes}, \code{diana}

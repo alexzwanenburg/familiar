@@ -1273,6 +1273,9 @@ setMethod("extract_univariate_analysis", signature(object="familiarEnsemble", da
               distance_matrix <- cluster.get_distance_matrix(similarity_table=feature_similarity_table,
                                                              similarity_metric=feature_similarity_metric)
               
+              # TODO: update so that this works for multiple similarity thresholds.
+              if(length(feature_similarity_threshold) > 0) feature_similarity_threshold <- feature_similarity_threshold[1]
+              
               # Find cluster information
               cluster_info <- cluster.get_cluster_table(distance_matrix=distance_matrix,
                                                         require_representation=FALSE,

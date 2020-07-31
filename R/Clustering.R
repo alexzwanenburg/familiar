@@ -1100,8 +1100,14 @@ cluster.compute_cluster <- function(cluster_table, data_obj){
   
   # Check cluster similarity threshold value
   if(!is.waive(cluster_similarity_threshold)){
-    .check_number_in_valid_range(x=cluster_similarity_threshold, var_name=paste0(var_type, "_similarity_threshold"),
-                                 range=c(0.0, 1.0))
+    if(var_type == "feature"){
+      # During evaluation 
+      sapply(cluster_similarity_threshold, .check_number_in_valid_range, var_name=paste0(var_type, "_similarity_threshold"),
+             range=c(0.0, 1.0))
+    } else {
+      .check_number_in_valid_range(x=cluster_similarity_threshold, var_name=paste0(var_type, "_similarity_threshold"),
+                                   range=c(0.0, 1.0))
+    }
   }
   
   # Check cluster representation method

@@ -2057,6 +2057,9 @@
 #'  By default, the value for the `cluster_similarity_threshold` configuration
 #'  parameter is used.
 #'
+#'  Unlike for `cluster_similarity_threshold`, more than one value can be
+#'  supplied here.
+#'
 #'@param sample_cluster_method (*optional*) The method used to perform
 #'  clustering based on distance between samples. These are the same methods as
 #'  for the `cluster_method` configuration parameter: `hclust`, `agnes`, `diana`
@@ -2314,7 +2317,7 @@
   
   # Feature similarity threshold
   settings$feature_similarity_threshold <- .parse_arg(x_config=config$feature_similarity_threshold, x_var=feature_similarity_threshold,
-                                                      var_name="feature_similarity_threshold", type="numeric", optional=TRUE, default=prep_cluster_similarity_threshold)
+                                                      var_name="feature_similarity_threshold", type="numeric_list", optional=TRUE, default=prep_cluster_similarity_threshold)
   
   .check_cluster_parameters(cluster_method=settings$feature_cluster_method,
                             cluster_linkage=settings$feature_linkage_method,
