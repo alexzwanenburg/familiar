@@ -126,8 +126,8 @@
   # Identify those values that are not allowed
   forbidden_values <- setdiff(x, values)
   
-  stop(paste(var_name, "expects one of", paste0(values, collapse=", "), "as input.",
-             "Found the following unknown values:", paste0(forbidden_values, collapse=", ")))
+  stop(paste(var_name, "expects one of", paste_s(values), "as input.",
+             "Found the following unknown values:", paste_s(forbidden_values)))
 }
 
 ..error_ensemble_models_not_loaded <- function(){
