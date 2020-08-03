@@ -581,11 +581,34 @@ universal_collector <- function(fam_data_list, data_slot, extra_data=NULL, more_
   # Iterate over individual and ensemble data.
   for(type in c("individual", "ensemble")){
     
-    # Create type list and add the confidence level.
-    type_list <- list("confidence_level"=slot(object=fam_data_list[[1]],
-                                                    name=data_slot)[[type]]$confidence_level,
-                            "bootstrap_ci_method"=slot(object=fam_data_list[[1]],
-                                                       name=data_slot)[[type]]$bootstrap_ci_method)
+    # Find present elements in the list.
+    present_elements <- unique(unlist(lapply(fam_data_list, function(fam_data_object, type, data_slot) names(slot(object=fam_data_object, name=data_slot)[[type]]),
+                                             type=type,
+                                             data_slot=data_slot)))
+    
+    # Find elements that are not related data.tables.
+    simple_elements <- setdiff(present_elements,
+                                c("model_data", "bootstrap_data", extra_data))
+    
+    # Fill place holder list
+    type_list <- lapply(simple_elements, function(element, fam_data_list, type, data_slot){
+      
+      # Iterate over familiarData objects.
+      for(fam_data_object in fam_data_list){
+        # Find the value in the particular familiarData object.
+        data_value <- slot(object=fam_data_object, name=data_slot)[[type]][[element]]
+        
+        if(!is_empty(data_value)) break()
+      }
+      
+      return(data_value)
+    },
+    fam_data_list=fam_data_list,
+    type=type,
+    data_slot=data_slot)
+    
+    # Add names to the list.
+    names(type_list) <- simple_elements
     
     for(element in c("model_data", "bootstrap_data", extra_data)){
       
