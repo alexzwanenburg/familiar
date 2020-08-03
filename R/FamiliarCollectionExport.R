@@ -1670,13 +1670,24 @@ universal_exporter <- function(object,
     if(!export_raw){
       # Export summarised data.
       
-      export_data <- list("data"=.compute_bootstrap_ci(x0=data$model_data,
-                                                       xb=data$bootstrap_data,
-                                                       target_column=target_column,
-                                                       bootstrap_ci_method=data$bootstrap_ci_method,
-                                                       additional_splitting_variable=splitting_variable,
-                                                       confidence_level=confidence_level),
-                          "confidence_level"=confidence_level)
+      # Find present elements in the list.
+      present_elements <- names(main_list[[type]])
+      
+      # Find elements that are not related data.tables.
+      simple_elements <- setdiff(present_elements,
+                                 c("model_data", "bootstrap_data", extra_data))
+      
+      # Copy simple elements.
+      export_data <- main_list[[type]][simple_elements]
+      
+      # Parse data with bootstrap confidence intervals, if required.
+      export_data <- c(export_data,
+                       list("data"=.compute_bootstrap_ci(x0=data$model_data,
+                                                         xb=data$bootstrap_data,
+                                                         target_column=target_column,
+                                                         bootstrap_ci_method=data$bootstrap_ci_method,
+                                                         additional_splitting_variable=splitting_variable,
+                                                         confidence_level=confidence_level)))
       
       if(!is.null(extra_data)){
         
