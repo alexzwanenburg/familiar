@@ -240,7 +240,6 @@ setGeneric("extract_data", function(object, data,
                                     sample_cluster_method=waiver(),
                                     sample_linkage_method=waiver(),
                                     sample_similarity_metric=waiver(),
-                                    
                                     confidence_level=waiver(),
                                     bootstrap_ci_method=waiver(),
                                     aggregate_ci=waiver(),

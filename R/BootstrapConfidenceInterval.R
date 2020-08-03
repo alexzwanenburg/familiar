@@ -38,7 +38,7 @@
   }
   
   # Set splitting variables.
-  splitting_variables <- c("data_set", "learner", "fs_method", "pos_class", "eval_time", additional_splitting_variable)
+  splitting_variables <- c("data_set", "learner", "fs_method", "pos_class", "eval_time", "evaluation_time", additional_splitting_variable)
   
   # Add a bootstrap_id column to facilitate merger with bootstrap data.
   x0[, "bootstrap_id":=0L]
