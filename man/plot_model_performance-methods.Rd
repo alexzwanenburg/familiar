@@ -246,10 +246,11 @@ types of plots, as determined by \code{plot_type}.
 This function plots model performance based on empirical bootstraps,
 using various plot representations.
 
-Available splitting variables are: \code{fs_method}, \code{learner}, \code{data_set} and
-\code{metric}. The default for \code{heatmap} is to split by \code{metric}, facet by
-\code{data_set}, have \code{learner} along the x-axis and \code{fs_method} along the
-y-axis. The \code{color_by} argument is not used. The only valid options for
+Available splitting variables are: \code{fs_method}, \code{learner}, \code{data_set},
+\code{evaluation_time} (survival outcome only) and \code{metric}. The default for
+\code{heatmap} is to split by \code{metric}, facet by \code{data_set} and
+\code{evaluation_time}, position \code{learner} along the x-axis and \code{fs_method} along
+the y-axis. The \code{color_by} argument is not used. The only valid options for
 \code{x_axis_by} and \code{y_axis_by} are \code{learner} and \code{fs_method}.
 
 For other plot types (\code{barplot}, \code{boxplot} and \code{violinplot}), depends on the
@@ -263,9 +264,11 @@ number of learners and feature selection methods:
 split by \code{metric}, facet by \code{data_set} and have \code{fs_method} along the
 x-axis.
 \item \emph{multiple feature selection methods and learners}: the default is to split
-by \code{metric}, facet by \code{data_set}, color by \code{fs_method} and have \code{learner}
+by \code{metric}, facet by \code{data_set}, colour by \code{fs_method} and have \code{learner}
 along the x-axis.
 }
+
+If applicable, additional faceting is performed for \code{evaluation_time}.
 
 Available palettes for \code{discrete_palette} and \code{gradient_palette} are those
 listed by \code{grDevices::palette.pals()} (requires R >= 4.0.0),

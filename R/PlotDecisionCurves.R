@@ -25,9 +25,9 @@ NULL
 #'@details This function generates plots for decision curves.
 #'
 #'  Available splitting variables are: `fs_method`, `learner`, `data_set` and
-#'  `pos_class` (categorical outcomes) or `eval_time` (survival outcomes). By
-#'  default, the data is split by `fs_method` and `learner`, with faceting by
-#'  `data_set` and colouring by `pos_class` or `eval_time`.
+#'  `pos_class` (categorical outcomes) or `evaluation_time` (survival outcomes).
+#'  By default, the data is split by `fs_method` and `learner`, with faceting by
+#'  `data_set` and colouring by `pos_class` or `evaluation_time`.
 #'
 #'  Available palettes for `discrete_palette` are those listed by
 #'  `grDevices::palette.pals()` (requires R >= 4.0.0), `grDevices::hcl.pals()`
@@ -261,7 +261,7 @@ setMethod("plot_decision_curve", signature(object="familiarCollection"),
               split_variable <- "pos_class"
               
             } else if(object@outcome_type %in% c("survival")){
-              split_variable <- "eval_time"
+              split_variable <- "evaluation_time"
               
             } else {
               ..error_outcome_type_not_implemented(object@outcome_type)

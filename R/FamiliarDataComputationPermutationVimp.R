@@ -456,7 +456,7 @@ setMethod("extract_permutation_vimp", signature(object="familiarEnsemble"),
     # Return data.
     if(!is.null(time)){
       return(data.table::data.table("feature"=rep(shuffled_features, times=length(similarity_threshold)),
-                                    "eval_time"=time,
+                                    "evaluation_time"=time,
                                     "similarity_threshold"=rep(similarity_threshold, each=length(shuffled_features)),
                                     "metric"=selected_metric,
                                     "value"=unshuffled_value - shuffled_value))

@@ -273,7 +273,7 @@ setMethod("extract_performance", signature(object="familiarEnsemble"),
   if(!is.finite(score)) return(NULL)
   
   if(!is.null(time)){
-    performance_data <- data.table::data.table("eval_time"=time,
+    performance_data <- data.table::data.table("evaluation_time"=time,
                                                "metric"=metric,
                                                "value"=score)
     

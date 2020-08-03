@@ -94,7 +94,7 @@ setMethod("extract_predictions", signature(object="familiarEnsemble"),
       if(is_empty(prediction_data)) return(NULL)
                                            
       # Add an eval_time column.
-      prediction_data[, "eval_time":=time]
+      prediction_data[, "evaluation_time":=time]
       
       # Reorder columns
       data.table::setcolorder(x=prediction_data,

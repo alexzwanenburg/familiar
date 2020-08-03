@@ -443,7 +443,7 @@ setMethod("extract_decision_curve_data", signature(object="familiarEnsemble"),
   }
   
   # Store data.
-  model_data <- data.table::data.table("eval_time"=evaluation_time,
+  model_data <- data.table::data.table("evaluation_time"=evaluation_time,
                                        "threshold_probability"=x,
                                        "net_benefit"=net_benefit)
   
