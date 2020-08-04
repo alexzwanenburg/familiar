@@ -283,7 +283,33 @@ setMethod("plot_permutation_variable_importance", signature(object="familiarColl
             facet_by <- split_var_list$facet_by
             
             # Parse legend label
-            legend_label <- plotting.create_legend_label(user_label=legend_label, color_by=color_by)
+            if(is.waive(legend_label)){
+              legend_label <- plotting.create_legend_label(user_label=legend_label,
+                                                           color_by=color_by)
+              
+              # Update "similarity threshold" in the legend label to be more
+              # specific.
+              if(!is.null(color_by)){
+                if(grepl(pattern="similarity threshold",
+                         x=legend_label$guide_color,
+                         fixed=TRUE)){
+                  
+                  if(all(levels(x$"similarity_threshold") %in% c("clustered", "individual"))){
+                    legend_label$guide_color <- sub(pattern="similarity threshold",
+                                                    replacement="clustering",
+                                                    x=legend_label$guide_color,
+                                                    fixed=TRUE)
+                    
+                  } else {
+                    legend_label$guide_color <- sub(pattern="similarity threshold",
+                                                    replacement=paste0(similarity_metric, " threshold"),
+                                                    x=legend_label$guide_color,
+                                                    fixed=TRUE)
+                  }
+                }
+              }
+            }
+            
             
             # Iterate over the data to identify data that should be reworked.
             # For metrics where higher scores indicate worse performance,
