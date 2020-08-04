@@ -1542,8 +1542,8 @@ setMethod(".export_to_file", signature(data="ANY", object="familiarCollection", 
 setMethod(".apply_labels", signature(data="ANY", object="familiarCollection"),
           function(data, object){
             
-            # Return NULL for NULL input
-            if(is.null(data)) return(NULL)
+            # Return NULL for empty input
+            if(is_empty(data)) return(NULL)
             
             # Check if data has the expected class.
             if(!data.table::is.data.table(data)){
@@ -1576,30 +1576,39 @@ setMethod(".apply_labels", signature(data="ANY", object="familiarCollection"),
             has_data_set           <- ifelse("data_set" %in% columns, TRUE, FALSE)
             has_learner            <- ifelse("learner" %in% columns, TRUE, FALSE)
             has_fs_method          <- ifelse("fs_method" %in% columns, TRUE, FALSE)
-            has_feature            <- ifelse(any(c("name", "feature_1", "feature_2") %in% columns), TRUE, FALSE)
+            has_feature            <- ifelse(any(c("name", "feature_1", "feature_2", "feature") %in% columns), TRUE, FALSE)
             has_risk_group         <- ifelse(any(c("risk_group", "risk_group_1", "risk_group_2", "reference_group") %in% columns), TRUE, FALSE)
             has_multiclass_outcome <- ifelse(any(c("pos_class", "outcome") %in% columns) & object@outcome_type=="multinomial", TRUE, FALSE)
             has_categorical_outcome <- ifelse(any(c("observed_outcome", "expected_outcome") %in% columns) & object@outcome_type %in% c("binomial", "multinomial"),
                                               TRUE, FALSE)
             has_evaluation_time <- any(c("evaluation_time", "eval_time") %in% columns) & object@outcome_type %in% c("survival", "competing_risk")
+            has_performance_metric <- any(c("metric") %in% columns)
             
             # Apply levels
             if(has_data_set){
-              data$data_set <- factor(x=data$data_set, levels=get_data_set_name_levels(x=object), labels=get_data_set_names(x=object))
+              data$data_set <- factor(x=data$data_set,
+                                      levels=get_data_set_name_levels(x=object),
+                                      labels=get_data_set_names(x=object))
             }
             
             if(has_learner){
-              data$learner <- factor(x=data$learner, levels=get_learner_name_levels(x=object), labels=get_learner_names(x=object))
+              data$learner <- factor(x=data$learner,
+                                     levels=get_learner_name_levels(x=object),
+                                     labels=get_learner_names(x=object))
             }
             
             if(has_fs_method){
-              data$fs_method <- factor(x=data$fs_method, levels=get_fs_method_name_levels(x=object), labels=get_fs_method_names(x=object))
+              data$fs_method <- factor(x=data$fs_method,
+                                       levels=get_fs_method_name_levels(x=object),
+                                       labels=get_fs_method_names(x=object))
             }
             
             if(has_feature){
-              for(curr_col_name in c("name", "feature_1", "feature_2")){
+              for(curr_col_name in c("name", "feature_1", "feature_2", "feature")){
                 if(!is.null(data[[curr_col_name]])){
-                  data[[curr_col_name]] <- factor(x=data[[curr_col_name]], levels=get_feature_name_levels(x=object), labels=get_feature_names(x=object))
+                  data[[curr_col_name]] <- factor(x=data[[curr_col_name]],
+                                                  levels=get_feature_name_levels(x=object),
+                                                  labels=get_feature_names(x=object))
                 }
               }
             }
@@ -1607,7 +1616,9 @@ setMethod(".apply_labels", signature(data="ANY", object="familiarCollection"),
             if(has_risk_group){
               for(curr_col_name in c("risk_group", "risk_group_1", "risk_group_2", "reference_group")){
                 if(!is.null(data[[curr_col_name]])){
-                  data[[curr_col_name]] <- factor(x=data[[curr_col_name]], levels=get_risk_group_name_levels(x=object), labels=get_risk_group_names(x=object))
+                  data[[curr_col_name]] <- factor(x=data[[curr_col_name]],
+                                                  levels=get_risk_group_name_levels(x=object),
+                                                  labels=get_risk_group_names(x=object))
                 }
               }
             }
@@ -1615,7 +1626,9 @@ setMethod(".apply_labels", signature(data="ANY", object="familiarCollection"),
             if(has_multiclass_outcome){
               for(curr_col_name in c("pos_class", "outcome")){
                 if(!is.null(data[[curr_col_name]])){
-                  data[[curr_col_name]] <- factor(x=data[[curr_col_name]], levels=get_class_name_levels(x=object), labels=get_class_names(x=object))
+                  data[[curr_col_name]] <- factor(x=data[[curr_col_name]],
+                                                  levels=get_class_name_levels(x=object),
+                                                  labels=get_class_names(x=object))
                 }
               }
             }
@@ -1624,7 +1637,9 @@ setMethod(".apply_labels", signature(data="ANY", object="familiarCollection"),
               # For confusion matrices.
               for(curr_col_name in c("observed_outcome", "expected_outcome")){
                 if(!is.null(data[[curr_col_name]])){
-                  data[[curr_col_name]] <- factor(x=data[[curr_col_name]], levels=get_class_name_levels(x=object), labels=get_class_names(x=object))
+                  data[[curr_col_name]] <- factor(x=data[[curr_col_name]],
+                                                  levels=get_class_name_levels(x=object),
+                                                  labels=get_class_names(x=object))
                 }
               }
             }
@@ -1632,7 +1647,17 @@ setMethod(".apply_labels", signature(data="ANY", object="familiarCollection"),
             if(has_evaluation_time){
               for(curr_col_name in c("evaluation_time", "eval_time")){
                 if(!is.null(data[[curr_col_name]])){
-                  data[[curr_col_name]] <- factor(x=data[[curr_col_name]])
+                  data[[curr_col_name]] <- factor(x=data[[curr_col_name]],
+                                                  levels=sort(unique(data[[curr_col_name]])))
+                }
+              }
+            }
+            
+            if(has_performance_metric){
+              for(curr_col_name in c("metric")){
+                if(!is.null(data[[curr_col_name]])){
+                  data[[curr_col_name]] <- factor(x=data[[curr_col_name]],
+                                                  levels=sort(unique(data[[curr_col_name]])))
                 }
               }
             }
