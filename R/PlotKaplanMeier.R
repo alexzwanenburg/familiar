@@ -45,9 +45,9 @@ NULL
 #'
 #'  Available splitting variables are: `fs_method`, `learner`, `data_set` and
 #'  `risk_group`. By default, separate figures are created for each combination
-#'  of `fs_method` and `learner`, with facetting by `data_set`, colouring of the
+#'  of `fs_method` and `learner`, with faceting by `data_set`, colouring of the
 #'  strata in each individual plot by `risk_group`.
-#'  
+#'
 #'  Available palettes for `discrete_palette` are those listed by
 #'  `grDevices::palette.pals()` (requires R >= 4.0.0), `grDevices::hcl.pals()`
 #'  (requires R >= 3.6.0) and `rainbow`, `heat.colors`, `terrain.colors`,
@@ -55,8 +55,21 @@ NULL
 #'  name in `grDevices`. If not specified, a default palette based on palettes
 #'  in Tableau are used. You may also specify your own palette by using colour
 #'  names listed by `grDevices::colors()` or through hexadecimal RGB strings.
-#'  
-#'  Labeling methods such as `set_risk_group_names` or `set_data_set_names` can
+#'
+#'  Greenwood confidence intervals of the Kaplan-Meier curve can be shown using
+#'  various styles set by `conf_int_style`:
+#'
+#'  * `ribbon` (default): confidence intervals are shown as a ribbon with an
+#'  opacity of `conf_int_alpha` around the point estimate of the Kaplan-Meier
+#'  curve.
+#'
+#'  * `step` (default): confidence intervals are shown as a step function around
+#'  the point estimate of the Kaplan-Meier curve.
+#'
+#'  * `none`: confidence intervals are not shown. The point estimate of the ROC
+#'  curve is shown as usual.
+#'
+#'  Labelling methods such as `set_risk_group_names` or `set_data_set_names` can
 #'  be applied to the `familiarCollection` object to update labels, and order
 #'  the output in the figure.
 #'

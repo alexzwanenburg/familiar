@@ -168,11 +168,13 @@ is unset.}
 
 \item{y_breaks}{(\emph{optional}) Break points on the y-axis of the plot.}
 
-\item{conf_int_style}{(\emph{optional})}
+\item{conf_int_style}{(\emph{optional}) Confidence interval style. See details for
+allowed styles.}
 
-\item{conf_int_alpha}{(\emph{optional}) Alpha value to determine transparancy of
-\code{ribbon}-style confidence intervals in a plot. Only values between 0.0
-(fully transparent) and 1.0 (fully opaque) are allowed.}
+\item{conf_int_alpha}{(\emph{optional}) Alpha value to determine transparency of
+confidence intervals or, alternatively, other plot elements with which the
+confidence interval overlaps. Only values between 0.0 (fully transparent)
+and 1.0 (fully opaque) are allowed.}
 
 \item{width}{(\emph{optional}) Width of the plot. A default value is derived from
 the number of facets.}
@@ -226,6 +228,17 @@ Available palettes for \code{discrete_palette} are those listed by
 name in \code{grDevices}. If not specified, a default palette based on palettes
 in Tableau are used. You may also specify your own palette by using colour
 names listed by \code{grDevices::colors()} or through hexadecimal RGB strings.
+
+Bootstrap confidence intervals of the decision curve (if present) can be
+shown using various styles set by \code{conf_int_style}:
+\itemize{
+\item \code{ribbon} (default): confidence intervals are shown as a ribbon with an
+opacity of \code{conf_int_alpha} around the point estimate of the decision curve.
+\item \code{step} (default): confidence intervals are shown as a step function around
+the point estimate of the decision curve.
+\item \code{none}: confidence intervals are not shown. The point estimate of the
+decision curve is shown as usual.
+}
 
 Labelling methods such as \code{set_fs_method_names} or \code{set_data_set_names} can
 be applied to the \code{familiarCollection} object to update labels, and order

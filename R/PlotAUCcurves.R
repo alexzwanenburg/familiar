@@ -26,7 +26,7 @@ NULL
 #'
 #'  Available splitting variables are: `fs_method`, `learner`, `data_set` and
 #'  `pos_class`. By default, the data is split by `fs_method` and `learner`,
-#'  with facetting by `data_set` and colouring by `pos_class`.
+#'  with faceting by `data_set` and colouring by `pos_class`.
 #'
 #'  Available palettes for `discrete_palette` are those listed by
 #'  `grDevices::palette.pals()` (requires R >= 4.0.0), `grDevices::hcl.pals()`
@@ -36,7 +36,19 @@ NULL
 #'  in Tableau are used. You may also specify your own palette by using colour
 #'  names listed by `grDevices::colors()` or through hexadecimal RGB strings.
 #'
-#'  Labeling methods such as `set_fs_method_names` or `set_data_set_names` can
+#'  Bootstrap confidence intervals of the ROC curve (if present) can be shown
+#'  using various styles set by `conf_int_style`:
+#'
+#'  * `ribbon` (default): confidence intervals are shown as a ribbon with an
+#'  opacity of `conf_int_alpha` around the point estimate of the ROC curve.
+#'
+#'  * `step` (default): confidence intervals are shown as a step function around
+#'  the point estimate of the ROC curve.
+#'
+#'  * `none`: confidence intervals are not shown. The point estimate of the ROC
+#'  curve is shown as usual.
+#'
+#'  Labelling methods such as `set_fs_method_names` or `set_data_set_names` can
 #'  be applied to the `familiarCollection` object to update labels, and order
 #'  the output in the figure.
 #'

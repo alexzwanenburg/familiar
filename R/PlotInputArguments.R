@@ -11,10 +11,13 @@
 #' @param x_breaks (*optional*) Break points on the x-axis of the plot.
 #' @param y_breaks (*optional*) Break points on the y-axis of the plot.
 #' @param conf_int (*optional*)
-#' @param conf_int_alpha (*optional*) Alpha value to determine transparancy of
-#'   `ribbon`-style confidence intervals in a plot. Only values between 0.0
-#'   (fully transparent) and 1.0 (fully opaque) are allowed.
-#' @param conf_int_style (*optional*)
+#' @param conf_int_alpha (*optional*) Alpha value to determine transparency of
+#'   confidence intervals or, alternatively, other plot elements with which the
+#'   confidence interval overlaps. Only values between 0.0 (fully transparent)
+#'   and 1.0 (fully opaque) are allowed.
+#' @param conf_int_style (*optional*) Confidence interval style. See details for
+#'   allowed styles.
+#' @param conf_int_default Sets the default options for the confidence interval.
 #' @param facet_wrap_cols (*optional*) Number of columns to generate when facet
 #'   wrapping. If NULL, a facet grid is produced instead.
 #' @param x_label (*optional*) Label to provide to the x-axis. If NULL, no label
@@ -65,14 +68,28 @@
 #'   45 degrees.
 #' @md
 #' @keywords internal
-plotting.check_input_args <- function(x_range=waiver(), y_range=waiver(), x_n_breaks=waiver(), y_n_breaks=waiver(),
-                                      x_breaks=waiver(), y_breaks=waiver(), conf_int=waiver(),
-                                      conf_int_alpha=waiver(), conf_int_style=waiver(), facet_wrap_cols=waiver(),
-                                      x_label=waiver(), y_label=waiver(),
-                                      x_label_shared=waiver(), y_label_shared=waiver(),
-                                      rotate_x_tick_labels=waiver(), rotate_y_tick_labels=waiver(),
-                                      legend_label=waiver(), combine_legend=waiver(), plot_title=waiver(),
-                                      plot_sub_title=waiver(), caption=waiver()){
+plotting.check_input_args <- function(x_range=waiver(),
+                                      y_range=waiver(),
+                                      x_n_breaks=waiver(),
+                                      y_n_breaks=waiver(),
+                                      x_breaks=waiver(),
+                                      y_breaks=waiver(),
+                                      conf_int=waiver(),
+                                      conf_int_alpha=waiver(),
+                                      conf_int_style=waiver(),
+                                      conf_int_default=c("step", "ribbon", "none"),
+                                      facet_wrap_cols=waiver(),
+                                      x_label=waiver(),
+                                      y_label=waiver(),
+                                      x_label_shared=waiver(),
+                                      y_label_shared=waiver(),
+                                      rotate_x_tick_labels=waiver(),
+                                      rotate_y_tick_labels=waiver(),
+                                      legend_label=waiver(),
+                                      combine_legend=waiver(),
+                                      plot_title=waiver(),
+                                      plot_sub_title=waiver(),
+                                      caption=waiver()){
   
   # x and y ranges
   if(!is.waive(x_range)){ plotting.check_input_range(range_var=x_range, var_name="x_range") }
@@ -116,7 +133,7 @@ plotting.check_input_args <- function(x_range=waiver(), y_range=waiver(), x_n_br
   
   # Style of confidence intervals
   if(!is.waive(conf_int_style)){
-    .check_parameter_value_is_valid(x=conf_int_style, var_name="conf_int_style", values=c("step", "ribbon", "none"))
+    .check_parameter_value_is_valid(x=conf_int_style, var_name="conf_int_style", values=conf_int_default)
   }
   
   # Sharing of x-axis labels
