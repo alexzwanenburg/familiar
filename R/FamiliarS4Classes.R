@@ -383,25 +383,37 @@ setClass("familiarCollection",
 
 
 #####dataObject#####
+
 #' Data object
 #'
-#' The dataObject class is used to resolve the issue of keeping track of pre-processing status and data loading inside complex workflows, e.g.
-#' nested predict functions inside a calibration function.
-#' @slot data NULL or data table containing the data. This is the data which will be read and used.
-#' @slot is_pre_processed logical, signifies whether the data has been pre-processed.
-#' @slot outcome_type character, determines the outcome type.
-#' @slot delay_loading logical. Allows delayed loading data, which enables data parsing downstream without additional workflow complexity or memory utilisation.
-#' @slot perturb_level numeric. This is the perturbation level for data which has not been loaded. Used for data retrieval by interacting with the run table of the accompanying model.
-#' @slot load_validation logical. This determines which internal data set will be loaded. If TRUE, the validation data will be loaded, whereas FALSE loads the development data.
-#' @slot aggregate_on_load logical. Determines whether data is aggregated after loading.
-#' @slot sample_set_on_load NULL or vector of sample identifiers to be loaded.
+#' The dataObject class is used to resolve the issue of keeping track of
+#' pre-processing status and data loading inside complex workflows, e.g. nested
+#' predict functions inside a calibration function.
 #'
+#' @slot data NULL or data table containing the data. This is the data which
+#'   will be read and used.
+#' @slot preprocessing_level character indicating the level of pre-processing
+#'   already conducted.
+#' @slot outcome_type character, determines the outcome type.
+#' @slot delay_loading logical. Allows delayed loading data, which enables data
+#'   parsing downstream without additional workflow complexity or memory
+#'   utilisation.
+#' @slot perturb_level numeric. This is the perturbation level for data which
+#'   has not been loaded. Used for data retrieval by interacting with the run
+#'   table of the accompanying model.
+#' @slot load_validation logical. This determines which internal data set will
+#'   be loaded. If TRUE, the validation data will be loaded, whereas FALSE loads
+#'   the development data.
+#' @slot aggregate_on_load logical. Determines whether data is aggregated after
+#'   loading.
+#' @slot sample_set_on_load NULL or vector of sample identifiers to be loaded.
+#'   
 setClass("dataObject",
          slots = list(
            # Data
            data = "ANY",
-           # Whether the data has been pre-processed
-           is_pre_processed = "logical",
+           # Level to which pre-processing has been conducted.
+           preprocessing_level = "character",
            # Outcome type
            outcome_type = "character",
            # Outcome info, such as class levels, mean values etc.
@@ -419,7 +431,7 @@ setClass("dataObject",
          ),
          prototype = list(
            data = NULL,
-           is_pre_processed = FALSE,
+           preprocessing_level = "none",
            outcome_type = NA_character_,
            outcome_info = NULL,
            delay_loading = FALSE,

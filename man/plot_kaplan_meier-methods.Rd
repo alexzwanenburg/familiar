@@ -228,11 +228,13 @@ is unset.}
 
 \item{conf_int}{(\emph{optional})}
 
-\item{conf_int_style}{(\emph{optional})}
+\item{conf_int_style}{(\emph{optional}) Confidence interval style. See details for
+allowed styles.}
 
-\item{conf_int_alpha}{(\emph{optional}) Alpha value to determine transparancy of
-\code{ribbon}-style confidence intervals in a plot. Only values between 0.0
-(fully transparent) and 1.0 (fully opaque) are allowed.}
+\item{conf_int_alpha}{(\emph{optional}) Alpha value to determine transparency of
+confidence intervals or, alternatively, other plot elements with which the
+confidence interval overlaps. Only values between 0.0 (fully transparent)
+and 1.0 (fully opaque) are allowed.}
 
 \item{censoring}{(\emph{optional}) Flag to indicate whether censored samples should
 be indicated on the survival curve.}
@@ -297,7 +299,7 @@ survival the y-axis represents. It is therefore recommended to provide
 
 Available splitting variables are: \code{fs_method}, \code{learner}, \code{data_set} and
 \code{risk_group}. By default, separate figures are created for each combination
-of \code{fs_method} and \code{learner}, with facetting by \code{data_set}, colouring of the
+of \code{fs_method} and \code{learner}, with faceting by \code{data_set}, colouring of the
 strata in each individual plot by \code{risk_group}.
 
 Available palettes for \code{discrete_palette} are those listed by
@@ -308,7 +310,19 @@ name in \code{grDevices}. If not specified, a default palette based on palettes
 in Tableau are used. You may also specify your own palette by using colour
 names listed by \code{grDevices::colors()} or through hexadecimal RGB strings.
 
-Labeling methods such as \code{set_risk_group_names} or \code{set_data_set_names} can
+Greenwood confidence intervals of the Kaplan-Meier curve can be shown using
+various styles set by \code{conf_int_style}:
+\itemize{
+\item \code{ribbon} (default): confidence intervals are shown as a ribbon with an
+opacity of \code{conf_int_alpha} around the point estimate of the Kaplan-Meier
+curve.
+\item \code{step} (default): confidence intervals are shown as a step function around
+the point estimate of the Kaplan-Meier curve.
+\item \code{none}: confidence intervals are not shown. The point estimate of the ROC
+curve is shown as usual.
+}
+
+Labelling methods such as \code{set_risk_group_names} or \code{set_data_set_names} can
 be applied to the \code{familiarCollection} object to update labels, and order
 the output in the figure.
 }

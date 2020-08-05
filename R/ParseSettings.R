@@ -271,6 +271,9 @@
 #'   1. Davison, A. C. & Hinkley, D. V. Bootstrap methods and their application.
 #'   (Cambridge University Press, 1997).
 #'
+#'   1. Efron, B. & Hastie, T. Computer Age Statistical Inference. (Cambridge
+#'   University Press, 2016).
+#'
 #'   1. Lausen, B. & Schumacher, M. Maximally Selected Rank Statistics.
 #'   Biometrics 48, 73 (1992).
 #'
@@ -1941,14 +1944,29 @@
 #'@param prep_cluster_similarity_threshold Cluster similarity threshold used
 #'  during pre-processing.
 #'@param prep_cluster_similarity_metric Cluster similarity metric used during
+#'  pre-processing.
+#'@param evaluate_top_level_only (*optional*) Flag that signals that only
+#'  evaluation at the most global experiment level is required. Consider a
+#'  cross-validation experiment with additional external validation. The global
+#'  experiment level consists of data that are used for development, internal
+#'  validation and external validation. The next lower experiment level are the
+#'  individual cross-validation iterations.
+#'
+#'  When the flag is `true`, evaluations take place on the global level only,
+#'  and no results are generated for the next lower experiment levels. In our
+#'  example, this means that results from individual cross-validation iterations
+#'  are not computed and shown. When the flag is `false`, results are computed
+#'  from both the global layer and the next lower level.
+#'
+#'  Setting the flag to `true` saves computation time.
 #'@param ensemble_method (*optional*) Method for ensembling predictions from
 #'  models for the same sample. Available methods are:
-#'  
+#'
 #'  * `median` (default): Use the median of the predicted values as the ensemble
 #'  value for a sample.
-#'  
-#'  * `mean`: Use the mean of the predicted values as the ensemble
-#'  value for a sample.
+#'
+#'  * `mean`: Use the mean of the predicted values as the ensemble value for a
+#'  sample.
 #'
 #'@param evaluation_metric (*optional*) One or more metrics for assessing model
 #'  performance. See the vignette on performance metrics for the available
@@ -1956,17 +1974,62 @@
 #'
 #'  Confidence intervals (or rather credibility intervals) are computed for each
 #'  metric during evaluation. This is done using bootstraps, the number of which
-#'  depends on the value of `confidence_alpha` (Davison and Hinkley, 1997).
+#'  depends on the value of `confidence_level` (Davison and Hinkley, 1997).
 #'
 #'  If unset, the metric in the `optimisation_metric` variable is used.
 #'
-#'@param confidence_alpha (*optional*) Numeric value for the alpha level at
-#'  which confidence (or credibility intervals) intervals are determined using
-#'  bootstrap estimation. The number of bootstraps depend on `confidence_alpha`.
-#'  `familiar` uses the rule of thumb \eqn{n = 20 / \alpha} to determine the
-#'  number of required bootstraps.
+#'@param confidence_level (*optional*) Numeric value for the level at which
+#'  confidence intervals are determined. In the case bootstraps are used to
+#'  determine the confidence intervals bootstrap estimation, `familiar` uses the
+#'  rule of thumb \eqn{n = 20 / ci.level} to determine the number of required
+#'  bootstraps.
 #'
-#'  The default value is `0.05`.
+#'  The default value is `0.95`.
+#'
+#'@param bootstrap_ci_method (*optional*) Method used to determine bootstrap
+#'  confidence intervals (Efron and Hastie, 2016). The following methods are
+#'  implemented:
+#'
+#'  * `percentile`: Confidence intervals obtained using the percentile method.
+#'
+#'  * `bc` (default): Bias-corrected confidence intervals.
+#'
+#'  Note that the standard method is not implemented because this method is
+#'  often not suitable due to non-normal distributions. The bias-corrected and
+#'  accelerated (BCa) method is not implemented yet.
+#'
+#'@param compute_model_ci (*optional*) This parameter can be set to enable
+#'  computation of bootstrap confidence intervals for individual models in
+#'  several parts of the evaluation. The parameter can take one or more of the
+#'  following values: `all`, `model_performance`, `auc_data`,
+#'  `decision_curve_analyis`, `permutation_vimp` as well as `true`, `false` and
+#'  `none`.
+#'
+#'  By default, bootstrap confidence intervals are not computed for individual
+#'  models.
+#'
+#'@param compute_ensemble_ci (*optional*) This parameter can be set to enable
+#'  computation of bootstrap confidence intervals for ensemble models in
+#'  several parts of the evaluation. The parameter can take one or more of the
+#'  following values: `all`, `model_performance`, `auc_data`,
+#'  `decision_curve_analyis`, `permutation_vimp` as well as `true`, `false` and
+#'  `none`.
+#'
+#'  By default, bootstrap confidence intervals are computed for ensemble
+#'  models.
+#'
+#'@param aggregate_ci (*optional*) Bootstraps are used to determine confidence
+#'  intervals. This information can be stored for export. However, in many cases
+#'  this is not necessary, and keeping the bootstrap data can lead to large
+#'  `familiarData` and `familiarCollection` objects. This provides the option to
+#'  aggregate the bootstrap data by computing the confidence interval directly.
+#'
+#'  This parameter can take one or more of the following values: `all`,
+#'  `model_performance`, `auc_data`, `decision_curve_analyis`,
+#'  `permutation_vimp` as well as `true`, `false` and `none`. By default,
+#'  bootstrap data is aggregated by computing confidence intervals for
+#'  receiver-operating characteristic curves, decision curves and permutation
+#'  variable importance.
 #'
 #'@param feature_cluster_method (*optional*) Method used to perform clustering
 #'  of features. The same methods as for the `cluster_method` configuration
@@ -2015,6 +2078,9 @@
 #'
 #'  By default, the value for the `cluster_similarity_threshold` configuration
 #'  parameter is used.
+#'
+#'  Unlike for `cluster_similarity_threshold`, more than one value can be
+#'  supplied here.
 #'
 #'@param sample_cluster_method (*optional*) The method used to perform
 #'  clustering based on distance between samples. These are the same methods as
@@ -2158,6 +2224,9 @@
 #'@references 1. Davison, A. C. & Hinkley, D. V. Bootstrap methods and their
 #'  application. (Cambridge University Press, 1997).
 #'
+#'  1. Efron, B. & Hastie, T. Computer Age Statistical Inference. (Cambridge
+#'  University Press, 2016).
+#'
 #'  1. Lausen, B. & Schumacher, M. Maximally Selected Rank Statistics.
 #'  Biometrics 48, 73 (1992).
 #'
@@ -2172,9 +2241,14 @@
                                        prep_cluster_cut_method,
                                        prep_cluster_similarity_threshold,
                                        prep_cluster_similarity_metric,
+                                       evaluate_top_level_only=waiver(),
                                        ensemble_method=waiver(),
                                        evaluation_metric=waiver(),
-                                       confidence_alpha=waiver(),
+                                       confidence_level=waiver(),
+                                       bootstrap_ci_method=waiver(),
+                                       compute_model_ci=waiver(),
+                                       compute_ensemble_ci=waiver(),
+                                       aggregate_ci=waiver(),
                                        feature_cluster_method=waiver(),
                                        feature_cluster_cut_method=waiver(),
                                        feature_linkage_method=waiver(),
@@ -2199,6 +2273,10 @@
   
   settings <- list()
   
+  # Flag that limits the depth of the evaluation.
+  settings$pool_only <- .parse_arg(x_config=config$evaluate_top_level_only, x_var=evaluate_top_level_only,
+                                   var_name="evaluate_top_level_only", type="logical", optional=TRUE, default=TRUE)
+  
   # Method for ensemble predictions
   settings$ensemble_method <- .parse_arg(x_config=config$ensemble_method, x_var=ensemble_method,
                                          var_name="ensemble_method", type="character", optional=TRUE, default="median")
@@ -2214,11 +2292,77 @@
   sapply(settings$metric, metric.check_outcome_type, outcome_type=outcome_type)
   
   
-  # Width of the confidence intervals
-  settings$metric_alpha <- .parse_arg(x_config=config$confidence_alpha, x_var=confidence_alpha,
-                                      var_name="confidence_alpha", type="numeric", optional=TRUE, default=0.05)
+  # Bootstrap confidence interval.
+  settings$bootstrap_ci_method <- .parse_arg(x_config=config$bootstrap_ci_method, x_var=bootstrap_ci_method,
+                                             var_name="bootstrap_ci_method", type="character", optional=TRUE, default="bc")
   
-  .check_number_in_valid_range(x=settings$metric_alpha, var_name="confidence_alpha", range=c(0.0, 1.0), closed=c(FALSE, FALSE))
+  .check_parameter_value_is_valid(x=settings$bootstrap_ci_method, var_name="bootstrap_ci_method",
+                                  values=.get_available_bootstrap_confidence_interval_methods())
+  
+  # List of available confidence interval elements.
+  evaluation_ci_elements <- c("all", "model_performance", "auc_data",
+                              "decision_curve_analyis", "permutation_vimp",
+                              "true", "false", "none")
+  
+  # Enable or disable computation of confidence intervals for individual models.
+  settings$compute_model_ci <- .parse_arg(x_config=config$compute_model_ci, x_var=compute_model_ci,
+                                          var_name="compute_model_ci", type="character_list", optional=TRUE,
+                                          default="none")
+  
+  settings$compute_model_ci <- tolower(settings$compute_model_ci)
+  .check_parameter_value_is_valid(x=settings$compute_model_ci, var_name="compute_model_ci",
+                                  values=evaluation_ci_elements)
+  
+  # Handle none, false, true and all values.
+  if(any(settings$compute_model_ci %in% c("none", "false"))){
+    settings$compute_model_ci <- NULL
+    
+  } else if(any(settings$compute_model_ci %in% c("true", "all"))){
+    settings$compute_model_ci <- "all"
+  }
+  
+  
+  # Enable or disable computation of confidence intervals for ensemble models.
+  settings$compute_ensemble_ci <- .parse_arg(x_config=config$compute_ensemble_ci, x_var=compute_ensemble_ci,
+                                             var_name="compute_ensemble_ci", type="character_list", optional=TRUE,
+                                             default="all")
+  
+  settings$compute_ensemble_ci <- tolower(settings$compute_ensemble_ci)
+  .check_parameter_value_is_valid(x=settings$compute_ensemble_ci, var_name="compute_ensemble_ci",
+                                  values=evaluation_ci_elements)
+  
+  # Handle none, false, true and all values.
+  if(any(settings$compute_ensemble_ci %in% c("none", "false"))){
+    settings$compute_ensemble_ci <- NULL
+    
+  } else if(any(settings$compute_ensemble_ci %in% c("true", "all"))){
+    settings$compute_ensemble_ci <- "all"
+  }
+  
+  
+  # Parts for which confidence intervals should be determined.
+  settings$aggregate_ci <- .parse_arg(x_config=config$aggregate_ci, x_var=aggregate_ci,
+                                      var_name="aggregate_ci", type="character_list", optional=TRUE,
+                                      default=c("auc_data", "decision_curve_analyis", "permutation_vimp"))
+  
+  settings$aggregate_ci <- tolower(settings$aggregate_ci)
+  .check_parameter_value_is_valid(x=settings$aggregate_ci, var_name="aggregate_ci",
+                                  values=evaluation_ci_elements)
+  
+  # Handle none, false, true and all values.
+  if(any(settings$aggregate_ci %in% c("none", "false"))){
+    settings$aggregate_ci <- NULL
+    
+  } else if(any(settings$aggregate_ci %in% c("true", "all"))){
+    settings$aggregate_ci <- "all"
+  }
+  
+  
+  # Width of the confidence intervals
+  settings$confidence_level <- .parse_arg(x_config=config$confidence_level, x_var=confidence_level,
+                                          var_name="confidence_level", type="numeric", optional=TRUE, default=0.95)
+  
+  .check_number_in_valid_range(x=settings$confidence_level, var_name="confidence_level", range=c(0.0, 1.0), closed=c(FALSE, FALSE))
   
   # Feature cluster method
   settings$feature_cluster_method <- .parse_arg(x_config=config$feature_cluster_method, x_var=feature_cluster_method,
@@ -2238,7 +2382,7 @@
   
   # Feature similarity threshold
   settings$feature_similarity_threshold <- .parse_arg(x_config=config$feature_similarity_threshold, x_var=feature_similarity_threshold,
-                                                      var_name="feature_similarity_threshold", type="numeric", optional=TRUE, default=prep_cluster_similarity_threshold)
+                                                      var_name="feature_similarity_threshold", type="numeric_list", optional=TRUE, default=prep_cluster_similarity_threshold)
   
   .check_cluster_parameters(cluster_method=settings$feature_cluster_method,
                             cluster_linkage=settings$feature_linkage_method,

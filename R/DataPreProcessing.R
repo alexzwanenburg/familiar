@@ -78,7 +78,10 @@ apply_pre_processing <- function(cl=NULL, run, train_or_validate, selected_featu
   
   # Return an empty data set in case no samples are found.
   if(is.null(sample_id)){
-    return(methods::new("dataObject", data=NULL, is_pre_processed=FALSE, outcome_type=settings$data$outcome_type))
+    return(methods::new("dataObject",
+                        data=NULL,
+                        preprocessing_level="none",
+                        outcome_type=settings$data$outcome_type))
   } else {
     unique_samples <- unique(sample_id)
   }
@@ -99,7 +102,10 @@ apply_pre_processing <- function(cl=NULL, run, train_or_validate, selected_featu
   non_feature_cols <- get_non_feature_columns(x=settings$data$outcome_type)
   
   # Create a dataObject
-  data <- methods::new("dataObject", data=NULL, is_pre_processed=TRUE, outcome_type=settings$data$outcome_type)
+  data <- methods::new("dataObject",
+                       data=NULL,
+                       preprocessing_level="none",
+                       outcome_type=settings$data$outcome_type)
   
   # Read data from external data server. A slice is requested for the relevant subjects (rows) and columns
   data@data <- get_data_from_backend(sample_identifiers=unique_samples, column_names=c(non_feature_cols, required_features))
@@ -163,13 +169,13 @@ determine_pre_processing_parameters <- function(cl, data_id, run_id){
   available_features <- get_available_features(feature_info_list=feature_info_list)
 
   # Create a dataObject
-  data_obj           <- methods::new("dataObject", data=NULL, is_pre_processed=TRUE, outcome_type=settings$data$outcome_type)
-  
-  # Read data from external data server. A slice is requested for the relevant subjects (rows) and columns
-  data_obj@data      <- get_data_from_backend(sample_identifiers=run_subj_id)
+  data_obj <- methods::new("dataObject",
+                           data=get_data_from_backend(sample_identifiers=run_subj_id),
+                           preprocessing_level="none",
+                           outcome_type=settings$data$outcome_type)
   
   # Remove unavailable features from the data object.
-  data_obj           <- filter_features(data=data_obj, available_features=available_features)
+  data_obj <- filter_features(data=data_obj, available_features=available_features)
   
   # Unload cluster locally, if it is not required
   if(!settings$prep$do_parallel) cl <- NULL 

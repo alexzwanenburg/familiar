@@ -50,11 +50,14 @@ setMethod("export_all", signature(object="familiarCollection"),
             # Export model variable importance
             model_vimp <- export_model_vimp(object=object, dir_path=dir_path)
             
+            # Export permutation variable importance.
+            permutation_vimp <- export_permutation_vimp(object=object, dir_path=dir_path, export_raw=export_raw)
+            
             # Export model hyperparameters
             hyperparameters <- export_hyperparameters(object=object, dir_path=dir_path)
             
             # Export prediction tables
-            prediction_data <- export_prediction_data(object=object, dir_path=dir_path)
+            prediction_data <- export_prediction_data(object=object, dir_path=dir_path, export_raw=export_raw)
             
             # Export decision curve analysis data
             dca_data <- export_decision_curve_analysis_data(object=object, dir_path=dir_path, export_raw=export_raw)
@@ -69,7 +72,7 @@ setMethod("export_all", signature(object="familiarCollection"),
             model_performance <- export_model_performance(object=object, dir_path=dir_path, export_raw=export_raw)
             
             # Export confusion matrix
-            confusion_matrix <- export_confusion_matrix_data(object=object, dir_path=dir_path)
+            confusion_matrix <- export_confusion_matrix_data(object=object, dir_path=dir_path, export_raw=export_raw)
             
             # Export kaplan-meier info
             km_info <- export_stratification_cutoff(object=object, dir_path=dir_path)
@@ -78,7 +81,7 @@ setMethod("export_all", signature(object="familiarCollection"),
             km_data <- export_stratification_data(object=object, dir_path=dir_path)
             
             # Export AUC data
-            auc_data <- export_auc_data(object=object, dir_path=dir_path)
+            auc_data <- export_auc_data(object=object, dir_path=dir_path, export_raw=export_raw)
             
             # Export data from the univariate analysis
             univariate_analysis <- export_univariate_analysis_data(object=object, dir_path=dir_path)
@@ -92,12 +95,14 @@ setMethod("export_all", signature(object="familiarCollection"),
             if(is.null(dir_path)){
               return(list("fs_vimp" = fs_vimp,
                           "model_vimp" = model_vimp,
+                          "permutation_vimp" = permutation_vimp,
                           "hyperparameters" = hyperparameters,
                           "prediction_data" = prediction_data,
                           "calibration_info" = calibration_info,
                           "calibration_data" = calibration_data,
                           "model_performance" = model_performance,
                           "confusion_matrix" = confusion_matrix,
+                          "decision_curve" = dca_data,
                           "km_info" = km_info,
                           "km_data" = km_data,
                           "auc_data" = auc_data,
@@ -300,6 +305,92 @@ setMethod("export_model_vimp", signature(object="ANY"),
           })
 
 
+#####export_permutation_vimp#####
+
+#'@title Extract and export permutation variable importance.
+#'
+#'@description Extract and export model-based variable importance from a
+#'  familiarCollection.
+#'
+#'@inheritParams export_all
+#'
+#'@inheritDotParams extract_permutation_vimp
+#'@inheritDotParams as_familiar_collection
+#'
+#'@details Data, such as permutation variable importance and calibration
+#'  information, is usually collected from a `familiarCollection` object.
+#'  However, you can also provide one or more `familiarData` objects, that will
+#'  be internally converted to a `familiarCollection` object. It is also
+#'  possible to provide a `familiarEnsemble` or one or more `familiarModel`
+#'  objects together with the data from which data is computed prior to export.
+#'  Paths to the previously mentioned files can also be provided.
+#'
+#'  All parameters aside from `object` and `dir_path` are only used if `object`
+#'  is not a `familiarCollection` object, or a path to one.
+#'
+#'  Permutation Variable importance assesses the improvement in model
+#'  performance due to a feature. For this purpose, the performance of the model
+#'  is measured as normal, and is measured again with a dataset where the values
+#'  of the feature in question have been randomly permuted. The difference
+#'  between both performance measurements is the permutation variable
+#'  importance.
+#'
+#'  In familiar, this basic concept is extended in several ways:
+#'
+#'  * Point estimates of variable importance are based on multiple (21) random
+#'  permutations. The difference between model performance on the normal dataset
+#'  and the median performance measurement of the randomly permuted datasets is
+#'  used as permutation variable importance.
+#'
+#'  * Confidence intervals for the ensemble model are determined using bootstrap
+#'  methods.
+#'
+#'  * Permutation variable importance is assessed for any metric specified using
+#'  the `metric` argument.
+#'
+#'  * Permutation variable importance can take into account similarity between
+#'  features and permute similar features simultaneously.
+#'
+#'@return A data.table (if `dir_path` is not provided), or nothing, as all data
+#'  is exported to `csv` files.
+#'@exportMethod export_permutation_vimp
+#'@md
+#'@rdname export_permutation_vimp-methods
+setGeneric("export_permutation_vimp",
+           function(object, dir_path=NULL, ...) standardGeneric("export_permutation_vimp"))
+
+#####export_permutation_vimp (collection)#####
+
+#'@rdname export_permutation_vimp-methods
+setMethod("export_permutation_vimp", signature(object="familiarCollection"),
+          function(object, dir_path=NULL, export_raw=FALSE, ...){
+            
+            return(universal_exporter(object=object,
+                                      dir_path=dir_path,
+                                      export_raw=export_raw,
+                                      data_slot="permutation_vimp",
+                                      extra_data=NULL,
+                                      target_column="value",
+                                      splitting_variable=c("metric", "feature"),
+                                      main_type="variable_importance",
+                                      sub_type="permutation"))
+          })
+
+#####export_permutation_vimp (generic)#####
+
+#'@rdname export_permutation_vimp-methods
+setMethod("export_permutation_vimp", signature(object="ANY"),
+          function(object, dir_path=NULL, export_raw=FALSE, ...){
+            
+            # Attempt conversion to familiarCollection object.
+            object <- do.call(as_familiar_collection,
+                              args=append(list("object"=object, "data_element"="prediction_data"), list(...)))
+            
+            return(do.call(export_permutation_vimp,
+                           args=append(list("object"=object, "dir_path"=dir_path, "export_raw"=export_raw), list(...))))
+          })
+
+
 #####export_hyperparameters#####
 
 #'@title Extract and export model hyperparameters.
@@ -456,52 +547,37 @@ setMethod("export_hyperparameters", signature(object="ANY"),
 #'@md
 #'@rdname export_prediction_data-methods
 setGeneric("export_prediction_data",
-           function(object, dir_path=NULL, ...) standardGeneric("export_prediction_data"))
+           function(object, dir_path=NULL, export_raw=FALSE, ...) standardGeneric("export_prediction_data"))
 
 #####export_prediction_data (collection)#####
 
 #'@rdname export_prediction_data-methods
 setMethod("export_prediction_data", signature(object="familiarCollection"),
-          function(object, dir_path=NULL, ...){
-
-            # Extract data
-            main_list <- object@prediction_data
+          function(object, dir_path=NULL, export_raw=FALSE, ...){
             
-            # Predictions for individual models
-            prediction_single <- .apply_labels(data=main_list$single, object=object)
-            
-            # Prdictions for the ensemble model
-            prediction_ensemble <- .apply_labels(data=main_list$ensemble, object=object)
-            
-            if(is.null(dir_path)){
-              return(list("single"=prediction_single,
-                          "ensemble"=prediction_ensemble))
-              
-            } else {
-              # Export calibration at large
-              .export_to_file(data=prediction_single, object=object, dir_path=dir_path,
-                              type="prediction", subtype="single_model")
-              
-              # Export calibration goodness-of-fit tests
-              .export_to_file(data=prediction_ensemble, object=object, dir_path=dir_path,
-                              type="prediction", subtype="ensemble_model")
-              
-              return(NULL)
-            }
+            return(universal_exporter(object=object,
+                                      dir_path=dir_path,
+                                      export_raw=export_raw,
+                                      data_slot="prediction_data",
+                                      extra_data=NULL,
+                                      target_column="predicted_outcome",
+                                      splitting_variable=NULL,
+                                      main_type="prediction",
+                                      sub_type=NULL))
           })
 
 #####export_prediction_data (generic)#####
 
 #'@rdname export_prediction_data-methods
 setMethod("export_prediction_data", signature(object="ANY"),
-          function(object, dir_path=NULL, ...){
+          function(object, dir_path=NULL, export_raw=FALSE, ...){
             
             # Attempt conversion to familiarCollection object.
             object <- do.call(as_familiar_collection,
                               args=append(list("object"=object, "data_element"="prediction_data"), list(...)))
             
             return(do.call(export_prediction_data,
-                           args=append(list("object"=object, "dir_path"=dir_path), list(...))))
+                           args=append(list("object"=object, "dir_path"=dir_path, "export_raw"=export_raw), list(...))))
           })
 
 
@@ -543,122 +619,15 @@ setGeneric("export_decision_curve_analysis_data", function(object, dir_path=NULL
 setMethod("export_decision_curve_analysis_data", signature(object="familiarCollection"),
           function(object, dir_path=NULL, export_raw=FALSE, ...){
             
-            # Extract list of lists
-            main_list <- object@decision_curve_data
-            
-            # This list will be filled.
-            export_list <- list()
-            
-            for(type in c("individual", "ensemble")){
-              # Confidence level
-              confidence_level <- main_list[[type]]$confidence_level
-              
-              # Apply labels.
-              data <- .apply_labels(data=main_list[[type]], object=object)
-              
-              if(!export_raw){
-                # Export summarised data.
-                
-                export_data <- list("data" = .compute_bootstrap_ci(x0=data$model_data,
-                                                                   xb=data$bootstrap_data,
-                                                                   target_column="net_benefit",
-                                                                   bootstrap_ci_method="bc",
-                                                                   additional_splitting_variable="threshold_probability",
-                                                                   confidence_level=confidence_level),
-                                    "intervention_data"=data$intervention_data,
-                                    "confidence_level"=confidence_level)
-                
-                if(!is.null(dir_path)){
-                  
-                  # Extract the summarised model data.
-                  write_data <- export_data$data
-                  
-                  if(!is_empty(export_data$intervention_data)){
-                    # Parse intervention data.
-                    intervention_data <- export_data$intervention_data
-                    setnames(intervention_data, old="net_benefit", new="intervention_all")
-                    
-                    # Merge with the summarised model data.
-                    write_data <- merge(x=intervention_data,
-                                        y=write_data,
-                                        by=setdiff(colnames(intervention_data), "intervention_all"))
-                  }
-                  
-                  # Export model performances of the models
-                  .export_to_file(data=write_data, object=object, dir_path=dir_path,
-                                  type="decision_curve_analysis", subtype=paste(type, "data", sep="_"))
-                }
-                
-              } else {
-                # Export all the data.
-                
-                if(!is.null(dir_path)){
-                  # Prepare data for writing by combining, model, intervention
-                  # and bootstrap data into a single table before writing it to
-                  # a folder.
-                  
-                  if(!is_empty(data@bootstrap_data)){
-                    # Cast wide by bootstrap id.
-                    bootstrap_data <- dcast(data=data$bootstrap_data,
-                                            stats::reformulate(termlabels=setdiff(colnames(individual_export_data), c("net_benefit", "bootstrap_id")),
-                                                               response="bootstrap_id",
-                                                               intercept=FALSE),
-                                            value.var="net_benefit")
-                  } else {
-                    bootstrap_data <- NULL
-                  }
-                  
-                  if(!is_empty(data@intervention_data)){
-                    
-                    # Parse intervention data.
-                    intervention_data <- data$intervention_data
-                    setnames(intervention_data, old="net_benefit", new="intervention_all")
-                    
-                  } else {
-                    intervention_data <- NULL
-                  }
-                  
-                  if(!is_empty(data@model_data)){
-                    
-                    # Parse model data.
-                    export_data <- data$model_data
-                    setnames(export_data, old="net_benefit", new="model")
-                    
-                    # Specify identifier columns
-                    id_columns <- setdiff(colnames(export_data), "model")
-                    
-                    if(!is.null(intervention_data)){
-                      export_data <- merge(x=export_data,
-                                           y=intervention_data,
-                                           by=id_columns)
-                    }
-                    
-                    if(!is.null(bootstrap_data)){
-                      export_data <- merge(x=export_data,
-                                           y=bootstrap_data,
-                                           by=id_columns)
-                    }
-                    
-                  } else {
-                    export_data <- NULL
-                  }
-                  
-                  # Export data to file.
-                  .export_to_file(data=write_data, object=object, dir_path=dir_path,
-                                  type="decision_curve_analysis", subtype=paste(type, "data", sep="_"))
-                  
-                } else {
-                  # Data is exported directly.
-                  export_data <- data
-                }
-              }
-              
-              # Add export data to list.
-              export_list[[type]] <- export_data
-            }
-            
-            # Return list of data.
-            if(is.null(dir_path)) return(export_list)
+            return(universal_exporter(object=object,
+                                      dir_path=dir_path,
+                                      export_raw=export_raw,
+                                      data_slot="decision_curve_data",
+                                      extra_data="intervention_all",
+                                      target_column="net_benefit",
+                                      splitting_variable="threshold_probability",
+                                      main_type="decision_curve_analysis",
+                                      sub_type="data"))
           })
 
 #####export_decision_curve_analysis_data (generic)#####
@@ -1110,60 +1079,17 @@ setGeneric("export_model_performance",
 setMethod("export_model_performance", signature(object="familiarCollection"),
           function(object, dir_path=NULL, export_raw=FALSE, ...){
             
-            # Extract list of lists
-            main_list <- object@model_performance
-            
-            # Performance from single models
-            single_performance <- .apply_labels(data=main_list$single, object=object)
-            
-            if(!export_raw){
-              
-              # Performance from ensemble models
-              ensemble_performance <- .apply_labels(data=main_list$ensemble, object=object)
-              
-              # Summarise data
-              ensemble_performance <- .summarise_model_performance(object=object, data=ensemble_performance,
-                                                                   metrics=main_list$metric,
-                                                                   conf_alpha=main_list$conf_alpha)
-            } else if(export_raw & !is_empty(main_list$ensemble)){
-              
-              # Melt dataset so that it is in long format.
-              ensemble_performance <- melt(data=main_list$ensemble,
-                                           measure.vars=paste0("performance_", main_list$metric),
-                                           variable.name="metric",
-                                           value.name="value",
-                                           variable.factor=TRUE,
-                                           value.factor=FALSE)
-              
-              # Update the "metric" factor so that the correct labels are used.
-              ensemble_performance$metric <- factor(ensemble_performance$metric,
-                                                    levels=paste0("performance_", main_list$metric),
-                                                    labels=main_list$metric)
-              
-              # Apply labels stored in the data.
-              ensemble_performance <- .apply_labels(data=ensemble_performance, object=object)
-            }
-            
-            if(is.null(dir_path)){
-              return(list("single"=single_performance,
-                          "ensemble"=ensemble_performance,
-                          "metric"=main_list$metric,
-                          "conf_alpha"=main_list$conf_alpha))
-              
-            } else {
-              # Export model performances of individual models
-              .export_to_file(data=single_performance, object=object, dir_path=dir_path,
-                              type="performance", subtype="single")
-              
-              # Export model performances of ensembles
-              .export_to_file(data=ensemble_performance, object=object, dir_path=dir_path,
-                              type="performance", subtype="ensemble")
-              
-              return(NULL)
-            }
-            
+            return(universal_exporter(object=object,
+                                      dir_path=dir_path,
+                                      export_raw=export_raw,
+                                      data_slot="model_performance",
+                                      extra_data=NULL,
+                                      target_column="value",
+                                      splitting_variable="metric",
+                                      main_type="performance",
+                                      sub_type="metric"))
           })
-
+          
 #####export_model_performance (generic)#####
 
 #'@rdname export_model_performance-methods
@@ -1210,60 +1136,38 @@ setMethod("export_model_performance", signature(object="ANY"),
 #'@exportMethod export_auc_data
 #'@md
 #'@rdname export_auc_data-methods
-setGeneric("export_auc_data", function(object, dir_path=NULL, ...) standardGeneric("export_auc_data"))
+setGeneric("export_auc_data", function(object, dir_path=NULL, export_raw=FALSE, ...) standardGeneric("export_auc_data"))
 
 #####export_auc_data (collection)#####
 
 #'@rdname export_auc_data-methods
 setMethod("export_auc_data", signature(object="familiarCollection"),
-          function(object, dir_path=NULL, ...){
+          function(object, dir_path=NULL, export_raw=FALSE, ...){
             
-            # Check if auc data is present
-            if(nrow(object@auc_data$single)==0){
-              return(NULL)
-            }
-            
-            # Extract list of lists
-            main_list <- object@auc_data
-            
-            # Performance from single models
-            single_performance <- .apply_labels(data=main_list$single, object=object)
-            
-            # Performance from ensemble models
-            ensemble_performance <- .apply_labels(data=main_list$ensemble, object=object)
-            
-
-            if(is.null(dir_path)){
-              return(list("single"=single_performance,
-                          "ensemble"=ensemble_performance,
-                          "conf_alpha"=main_list$conf_alpha))
-              
-            } else {
-              # Export model performances of individual models
-              .export_to_file(data=single_performance, object=object, dir_path=dir_path,
-                              type="performance", subtype="auc_single")
-              
-              # Export model performances of ensembles
-              .export_to_file(data=ensemble_performance, object=object, dir_path=dir_path,
-                              type="performance", subtype="auc_ensemble")
-              
-              return(NULL)
-            }
-            
+            return(universal_exporter(object=object,
+                                      dir_path=dir_path,
+                                      export_raw=export_raw,
+                                      data_slot="auc_data",
+                                      extra_data=NULL,
+                                      target_column="tpr",
+                                      splitting_variable="fpr",
+                                      main_type="performance",
+                                      sub_type="roc"))
           })
 
 #####export_auc_data (generic)#####
 
 #'@rdname export_auc_data-methods
 setMethod("export_auc_data", signature(object="ANY"),
-          function(object, dir_path=NULL, ...){
+          function(object, dir_path=NULL, export_raw=FALSE, ...){
             
             # Attempt conversion to familiarCollection object.
             object <- do.call(as_familiar_collection,
                               args=append(list("object"=object, "data_element"="auc_data"), list(...)))
             
             return(do.call(export_auc_data,
-                           args=append(list("object"=object, "dir_path"=dir_path), list(...))))
+                           args=append(list("object"=object, "dir_path"=dir_path, "export_raw"=export_raw),
+                                       list(...))))
           })
 
 
@@ -1297,59 +1201,38 @@ setMethod("export_auc_data", signature(object="ANY"),
 #'@exportMethod export_confusion_matrix_data
 #'@md
 #'@rdname export_confusion_matrix_data-methods
-setGeneric("export_confusion_matrix_data", function(object, dir_path=NULL, ...) standardGeneric("export_confusion_matrix_data"))
+setGeneric("export_confusion_matrix_data",
+           function(object, dir_path=NULL, export_raw=FALSE, ...) standardGeneric("export_confusion_matrix_data"))
 
 #####export_confusion_matrix_data (collection)#####
 
 #'@rdname export_confusion_matrix_data-methods
 setMethod("export_confusion_matrix_data", signature(object="familiarCollection"),
-          function(object, dir_path=NULL, ...){
+          function(object, dir_path=NULL, export_raw=FALSE, ...){
             
-            # Check if auc data is present
-            if(nrow(object@auc_data$single)==0){
-              return(NULL)
-            }
-            
-            # Extract list of lists
-            main_list <- object@confusion_matrix
-            
-            # Confusion matrix from single models
-            single_confusion_matrix <- .apply_labels(data=main_list$single, object=object)
-            
-            # Confusion matrix from ensemble models
-            ensemble_confusion_matrix <- .apply_labels(data=main_list$ensemble, object=object)
-            
-            
-            if(is.null(dir_path)){
-              return(list("single"=single_confusion_matrix,
-                          "ensemble"=ensemble_confusion_matrix))
-              
-            } else {
-              # Export model performances of individual models
-              .export_to_file(data=single_confusion_matrix, object=object, dir_path=dir_path,
-                              type="performance", subtype="confusion_matrix_single")
-              
-              # Export model performances of ensembles
-              .export_to_file(data=ensemble_confusion_matrix, object=object, dir_path=dir_path,
-                              type="performance", subtype="confusion_matrix_ensemble")
-              
-              return(NULL)
-            }
-            
+            return(universal_exporter(object=object,
+                                      dir_path=dir_path,
+                                      export_raw=export_raw,
+                                      data_slot="confusion_matrix",
+                                      extra_data=NULL,
+                                      target_column="count",
+                                      splitting_variable=NULL,
+                                      main_type="performance",
+                                      sub_type="confusion_matrix"))
           })
 
 #####export_confusion_matrix_data (generic)#####
 
 #'@rdname export_confusion_matrix_data-methods
 setMethod("export_confusion_matrix_data", signature(object="ANY"),
-          function(object, dir_path=NULL, ...){
+          function(object, dir_path=NULL, export_raw=FALSE, ...){
             
             # Attempt conversion to familiarCollection object.
             object <- do.call(as_familiar_collection,
                               args=append(list("object"=object, "data_element"="confusion_matrix"), list(...)))
             
             return(do.call(export_confusion_matrix_data,
-                           args=append(list("object"=object, "dir_path"=dir_path), list(...))))
+                           args=append(list("object"=object, "dir_path"=dir_path, "export_raw"=FALSE,), list(...))))
           })
 
 
@@ -1591,7 +1474,7 @@ setMethod("export_feature_similarity", signature(object="ANY"),
 
 #####.summarise_model_performance#####
 setMethod(".summarise_model_performance", signature(object="familiarCollection"),
-          function(object, data=NULL, metrics=NULL, conf_alpha=NULL){
+          function(object, data=NULL, metrics=NULL, confidence_level=NULL){
             # Ensemble model performance contains bootstrapped performance metrics.
             # This method summarises this data and extracts confidence intervals.
             
@@ -1603,15 +1486,15 @@ setMethod(".summarise_model_performance", signature(object="familiarCollection")
               metrics <- object@model_performance$metric
             }
             
-            if(is.null(conf_alpha)){
-              conf_alpha <- object@model_performance$conf_alpha
+            if(is.null(confidence_level)){
+              confidence_level <- object@model_performance$confidence_level
             }
             
             # Identify the columns containing metric values
             metric_columns <- paste0("performance_", metrics)
 
             # Compute descriptive statistics for each column
-            ensemble_performance <- data[, sapply(.SD, bootstrap_ci, confidence_level=1.0-conf_alpha),
+            ensemble_performance <- data[, sapply(.SD, ..bootstrap_ci, confidence_level=confidence_level),
                                          by=c("data_set", "fs_method", "learner", "model_name"),
                                          .SDcols=metric_columns]
             
@@ -1659,8 +1542,8 @@ setMethod(".export_to_file", signature(data="ANY", object="familiarCollection", 
 setMethod(".apply_labels", signature(data="ANY", object="familiarCollection"),
           function(data, object){
             
-            # Return NULL for NULL input
-            if(is.null(data)) return(NULL)
+            # Return NULL for empty input
+            if(is_empty(data)) return(NULL)
             
             # Check if data has the expected class.
             if(!data.table::is.data.table(data)){
@@ -1693,29 +1576,39 @@ setMethod(".apply_labels", signature(data="ANY", object="familiarCollection"),
             has_data_set           <- ifelse("data_set" %in% columns, TRUE, FALSE)
             has_learner            <- ifelse("learner" %in% columns, TRUE, FALSE)
             has_fs_method          <- ifelse("fs_method" %in% columns, TRUE, FALSE)
-            has_feature            <- ifelse(any(c("name", "feature_1", "feature_2") %in% columns), TRUE, FALSE)
+            has_feature            <- ifelse(any(c("name", "feature_1", "feature_2", "feature") %in% columns), TRUE, FALSE)
             has_risk_group         <- ifelse(any(c("risk_group", "risk_group_1", "risk_group_2", "reference_group") %in% columns), TRUE, FALSE)
             has_multiclass_outcome <- ifelse(any(c("pos_class", "outcome") %in% columns) & object@outcome_type=="multinomial", TRUE, FALSE)
             has_categorical_outcome <- ifelse(any(c("observed_outcome", "expected_outcome") %in% columns) & object@outcome_type %in% c("binomial", "multinomial"),
                                               TRUE, FALSE)
+            has_evaluation_time <- any(c("evaluation_time", "eval_time") %in% columns) & object@outcome_type %in% c("survival", "competing_risk")
+            has_performance_metric <- any(c("metric") %in% columns)
             
             # Apply levels
             if(has_data_set){
-              data$data_set <- factor(x=data$data_set, levels=get_data_set_name_levels(x=object), labels=get_data_set_names(x=object))
+              data$data_set <- factor(x=data$data_set,
+                                      levels=get_data_set_name_levels(x=object),
+                                      labels=get_data_set_names(x=object))
             }
             
             if(has_learner){
-              data$learner <- factor(x=data$learner, levels=get_learner_name_levels(x=object), labels=get_learner_names(x=object))
+              data$learner <- factor(x=data$learner,
+                                     levels=get_learner_name_levels(x=object),
+                                     labels=get_learner_names(x=object))
             }
             
             if(has_fs_method){
-              data$fs_method <- factor(x=data$fs_method, levels=get_fs_method_name_levels(x=object), labels=get_fs_method_names(x=object))
+              data$fs_method <- factor(x=data$fs_method,
+                                       levels=get_fs_method_name_levels(x=object),
+                                       labels=get_fs_method_names(x=object))
             }
             
             if(has_feature){
-              for(curr_col_name in c("name", "feature_1", "feature_2")){
+              for(curr_col_name in c("name", "feature_1", "feature_2", "feature")){
                 if(!is.null(data[[curr_col_name]])){
-                  data[[curr_col_name]] <- factor(x=data[[curr_col_name]], levels=get_feature_name_levels(x=object), labels=get_feature_names(x=object))
+                  data[[curr_col_name]] <- factor(x=data[[curr_col_name]],
+                                                  levels=get_feature_name_levels(x=object),
+                                                  labels=get_feature_names(x=object))
                 }
               }
             }
@@ -1723,7 +1616,9 @@ setMethod(".apply_labels", signature(data="ANY", object="familiarCollection"),
             if(has_risk_group){
               for(curr_col_name in c("risk_group", "risk_group_1", "risk_group_2", "reference_group")){
                 if(!is.null(data[[curr_col_name]])){
-                  data[[curr_col_name]] <- factor(x=data[[curr_col_name]], levels=get_risk_group_name_levels(x=object), labels=get_risk_group_names(x=object))
+                  data[[curr_col_name]] <- factor(x=data[[curr_col_name]],
+                                                  levels=get_risk_group_name_levels(x=object),
+                                                  labels=get_risk_group_names(x=object))
                 }
               }
             }
@@ -1731,7 +1626,9 @@ setMethod(".apply_labels", signature(data="ANY", object="familiarCollection"),
             if(has_multiclass_outcome){
               for(curr_col_name in c("pos_class", "outcome")){
                 if(!is.null(data[[curr_col_name]])){
-                  data[[curr_col_name]] <- factor(x=data[[curr_col_name]], levels=get_class_name_levels(x=object), labels=get_class_names(x=object))
+                  data[[curr_col_name]] <- factor(x=data[[curr_col_name]],
+                                                  levels=get_class_name_levels(x=object),
+                                                  labels=get_class_names(x=object))
                 }
               }
             }
@@ -1740,7 +1637,27 @@ setMethod(".apply_labels", signature(data="ANY", object="familiarCollection"),
               # For confusion matrices.
               for(curr_col_name in c("observed_outcome", "expected_outcome")){
                 if(!is.null(data[[curr_col_name]])){
-                  data[[curr_col_name]] <- factor(x=data[[curr_col_name]], levels=get_class_name_levels(x=object), labels=get_class_names(x=object))
+                  data[[curr_col_name]] <- factor(x=data[[curr_col_name]],
+                                                  levels=get_class_name_levels(x=object),
+                                                  labels=get_class_names(x=object))
+                }
+              }
+            }
+            
+            if(has_evaluation_time){
+              for(curr_col_name in c("evaluation_time", "eval_time")){
+                if(!is.null(data[[curr_col_name]])){
+                  data[[curr_col_name]] <- factor(x=data[[curr_col_name]],
+                                                  levels=sort(unique(data[[curr_col_name]])))
+                }
+              }
+            }
+            
+            if(has_performance_metric){
+              for(curr_col_name in c("metric")){
+                if(!is.null(data[[curr_col_name]])){
+                  data[[curr_col_name]] <- factor(x=data[[curr_col_name]],
+                                                  levels=sort(unique(data[[curr_col_name]])))
                 }
               }
             }
@@ -1752,80 +1669,167 @@ setMethod(".apply_labels", signature(data="ANY", object="familiarCollection"),
           })
 
 
+universal_exporter <- function(object,
+                               dir_path=NULL,
+                               export_raw=FALSE,
+                               data_slot,
+                               extra_data=NULL,
+                               target_column,
+                               splitting_variable=NULL,
+                               main_type,
+                               sub_type=NULL){
+  
+  # Extract list of lists
+  main_list <- slot(object=object, name=data_slot)
+                    
+  # This list will be filled.
+  export_list <- list()
+  
+  for(type in c("individual", "ensemble")){
+    # Confidence level
+    confidence_level <- main_list[[type]]$confidence_level
+    
+    # Apply labels.
+    data <- .apply_labels(data=main_list[[type]], object=object)
+    
+    if(!export_raw){
+      # Export summarised data.
+      
+      # Find present elements in the list.
+      present_elements <- names(main_list[[type]])
+      
+      # Find elements that are not related data.tables.
+      simple_elements <- setdiff(present_elements,
+                                 c("model_data", "bootstrap_data", extra_data))
+      
+      # Copy simple elements.
+      export_data <- main_list[[type]][simple_elements]
+      
+      # Parse data with bootstrap confidence intervals, if required.
+      export_data <- c(export_data,
+                       list("data"=.compute_bootstrap_ci(x0=data$model_data,
+                                                         xb=data$bootstrap_data,
+                                                         target_column=target_column,
+                                                         bootstrap_ci_method=data$bootstrap_ci_method,
+                                                         additional_splitting_variable=splitting_variable,
+                                                         confidence_level=confidence_level)))
+      
+      if(!is.null(extra_data)){
+        
+        # Retrieve extra data.
+        extra_export_data <- lapply(extra_data, function(list_element, data) data[[list_element]], data=data)
+        
+        # Rename exported data.
+        names(extra_export_data) <- extra_data
+        
+        # Join the two lists.
+        export_data <- c(export_data, extra_export_data)
+      }
+      
+      
+      if(!is.null(dir_path)){
+        # Export to file.
+        
+        # Extract the summarised model data.
+        write_data <- export_data$data
+        
+        if(!is.null(extra_data)){
+          
+          # Identify the identifier columns
+          id_columns <- setdiff(colnames(write_data),
+                                c(target_column, "ci_low", "ci_up"))
+          
+          for(current_data_set in extra_data){
+            
+            # Skip empty datasets.
+            if(is_empty(export_data[[current_data_set]])) next()
+            
+            # Parse current dataset
+            current_data <- export_data[[current_data_set]]
+            data.table::setnames(current_data, old=target_column, new=current_data_set)
+            
+            # Merge with summarised data.
+            write_data <- merge(x=write_data,
+                                y=current_data,
+                                by=id_columns)
+          }
+        }
+        
+        # Export model performances of the models
+        .export_to_file(data=write_data, object=object, dir_path=dir_path,
+                        type=main_type, subtype=paste(sub_type, type, sep="_")) 
+      }
+      
+    } else {
+      # Export all the data.
+      
+      if(!is.null(dir_path)){
+        # Prepare data for writing by combining, model, intervention
+        # and bootstrap data into a single table before writing it to
+        # a folder.
+        
+        if(!is_empty(data$bootstrap_data)){
+          # Cast wide by bootstrap id.
+          bootstrap_data <- dcast(data=data$bootstrap_data,
+                                  stats::reformulate(termlabels=setdiff(colnames(individual_export_data), c(target_column, "bootstrap_id")),
+                                                     response="bootstrap_id",
+                                                     intercept=FALSE),
+                                  value.var=targer_column)
+        } else {
+          bootstrap_data <- NULL
+        }
+        
+        if(!is_empty(data$model_data)){
+          
+          # Parse model data.
+          write_data <- data$model_data
+          setnames(export_data, old=target_column, new="model")
+          
+          # Specify identifier columns
+          id_columns <- setdiff(colnames(write_data), c("model", "ci_low", "ci_up"))
+          
+          if(!is.null(bootstrap_data)){
+            write_data <- merge(x=write_data,
+                                y=bootstrap_data,
+                                by=id_columns)
+          }
+          
+        } else {
+          write_data <- NULL
+        }
+        
+        if(!is.null(write_data) & !is.null(extra_data)){
+          
+          for(current_data_set in extra_data){
+            
+            # Skip empty datasets.
+            if(is_empty(write_data[[current_data_set]])) next()
+            
+            # Parse current dataset
+            current_data <- data[[current_data_set]]
+            data.table::setnames(current_data, old=target_column, new=current_data_set)
+            
+            # Merge with summarised data.
+            write_data <- merge(x=write_data,
+                                y=current_data,
+                                by=id_columns)
+          }
+        }
 
-.compute_bootstrap_ci <- function(x0, xb, target_column, bootstrap_ci_method="bc",
-                                  additional_splitting_variable=NULL,
-                                  confidence_level=0.95){
-
-  # Suppress NOTES due to non-standard evaluation in data.table
-  bootstrap_id <- NULL
-  
-  # Perform some simple consistency checks.
-  if(is_empty(x0)) return(x0)
-  if(is_empty(xb)) return(x0)
-  
-  if(!(data.table::is.data.table(x0) & data.table::is.data.table(xb))){
-    ..error_reached_unreachable_code(".compute_bootstrap_ci: both x0 and xb should be data.tables.")
-  }
-  
-  if(!target_column %in% colnames(x0) | !target_column %in% colnames(xb)){
-    ..error_reached_unreachable_code(".compute_bootstrap_ci: target column does not appear in the data.tables.")
-  }
-  
-  if(!is.null(additional_splitting_variable)){
-    if(!all(additional_splitting_variable %in% colnames(x0))){
-      ..error_reached_unreachable_code(".compute_bootstrap_ci: not all splitting variables were found in the x0 data.table.")
+        # Export data to file.
+        .export_to_file(data=export_data, object=object, dir_path=dir_path,
+                        type=main_type, subtype=paste(sub_type, type, sep="_"))
+        
+      } else {
+        # Data is exported directly.
+        export_data <- data
+      }
     }
+    
+    # Add export data to list.
+    export_list[[type]] <- export_data
   }
   
-  # Set splitting variables.
-  splitting_variables <- c("data_set", "learner", "fs_method", "pos_class", "eval_time", additional_splitting_variable)
-  
-  # Add a bootstrap_id column to facilitate merger with bootstrap data.
-  x0[, "bootstrap_id":=0L]
-  
-  # Combine datasets.
-  data <- data.table::rbindlist(list(x0, xb), use.names=TRUE)
-  
-  # Select only splitting variables that appear in data.
-  splitting_variables <- intersect(colnames(data), splitting_variables)
-  
-  # Split the data and compute confidence intervals.
-  data <- lapply(split(data, by=splitting_variables, keep.by=TRUE),
-                 function(data, target_column, confidence_level, bootstrap_ci_method){
-                   
-                   # Select point estimate and bootstrap estimates.
-                   x0 <- data[bootstrap_id == 0, ][[target_column]]
-                   xb <- data[bootstrap_id != 0, ][[target_column]]
-                   
-                   if(length(x0) != 1) ..error_reached_unreachable_code(".compute_bootstrap_ci: no, or more than one point estimate in split.")
-                   
-                   # Compute bootstrap confidence interval for the current
-                   # split.
-                   ci_data <- bootstrap_ci(x=xb,
-                                           x_0=x0,
-                                           confidence_level=confidence_level,
-                                           bootstrap_ci_method=bootstrap_ci_method)
-                   
-                   # Make a copy and drop the bootstrap_id column.
-                   output_data <- data.table::copy(data[bootstrap_id == 0, ])[, "bootstrap_id":=NULL]
-                   
-                   # Replace the value in the target column by the median in
-                   # ci_data.
-                   output_data[, (target_column):=ci_data$median]
-                   
-                   # Add confidence interval boundaries.
-                   output_data[, ":="("ci_low"=ci_data$ci_low,
-                                      "ci_up"=ci_data$ci_up)]
-                   
-                   return(output_data)
-                 },
-                 target_column=target_column,
-                 confidence_level=confidence_level,
-                 bootstrap_ci_method=bootstrap_ci_method)
-  
-  # Combine into a single dataset
-  data <- data.table::rbindlist(data, use.names=TRUE)
-  
-  return(data)
+  # Return list of data.
+  if(is.null(dir_path)) return(export_list)
 }

@@ -130,8 +130,8 @@ NULL
 #'
 #'@param sample_cluster_method The method used to perform clustering based on
 #'  distance between samples. These are the same methods as for the
-#'  `cluster_method` configuration parameter: `hclust`, `agnes`, `diana`
-#'  and `pam`.
+#'  `cluster_method` configuration parameter: `hclust`, `agnes`, `diana` and
+#'  `pam`.
 #'
 #'  `none` cannot be used when extracting data for feature expressions.
 #'
@@ -161,15 +161,7 @@ NULL
 #'
 #'  If not provided explicitly, this parameter is read from settings used at
 #'  creation of the underlying `familiarModel` objects.
-#'
-#'@param metric_alpha Numeric value for the alpha level at which confidence (or
-#'  credibility intervals) intervals are determined using bootstrap estimation.
-#'  The number of bootstraps depend on `metric_alpha`. `familiar` uses the rule
-#'  of thumb \eqn{n = 20 / \alpha} to determine the number of required
-#'  bootstraps.
-#'
-#'  If not provided explicitly, this parameter is read from settings used at
-#'  creation of the underlying `familiarModel` objects.
+#'  
 #'@param icc_type String indicating the type of intraclass correlation
 #'  coefficient (`1`, `2` or `3`) that should be used to compute robustness for
 #'  features in repeated measurements during the evaluation of univariate
@@ -178,18 +170,24 @@ NULL
 #'  creation of the underlying `familiarModel` objects.
 #'@param verbose Flag to indicate whether feedback should be provided on the
 #'  computation and extraction of various data elements.
+#'@param message_indent Number of indentation steps for messages shown during
+#'  computation and extraction of various data elements.
 #'@param data_element String indicating which data elements are to be extracted.
 #'  Default is `all`, but specific elements can be specified to speed up
 #'  computations if not all elements are to be computed. This is an internal
 #'  parameter that is set by, e.g. the `export_model_vimp` method.
 #'@param ... Unused arguments.
 #'
+#'@inheritParams .parse_evaluation_settings
+#'
 #'@return A `familiarData` object.
 #'@references 1. Shrout, P. E. & Fleiss, J. L. Intraclass correlations: uses in
 #'  assessing rater reliability. Psychol. Bull. 86, 420–428 (1979).
 #'@md
 #'@keywords internal
-setGeneric("extract_data", function(object, data, is_pre_processed=FALSE, cl=NULL,
+setGeneric("extract_data", function(object, data,
+                                    is_pre_processed=FALSE,
+                                    cl=NULL,
                                     time_max=waiver(),
                                     aggregation_method=waiver(),
                                     rank_threshold=waiver(),
@@ -205,14 +203,22 @@ setGeneric("extract_data", function(object, data, is_pre_processed=FALSE, cl=NUL
                                     sample_cluster_method=waiver(),
                                     sample_linkage_method=waiver(),
                                     sample_similarity_metric=waiver(),
-                                    metric_alpha=waiver(),
+                                    confidence_level=waiver(),
+                                    bootstrap_ci_method=waiver(),
+                                    compute_model_ci=waiver(),
+                                    compute_ensemble_ci=waiver(),
+                                    aggregate_ci=waiver(),
                                     icc_type=waiver(),
+                                    message_indent=0L,
                                     verbose=FALSE,
                                     data_element="all", ...) standardGeneric("extract_data"))
 
 #####extract_data#####
 setMethod("extract_data", signature(object="familiarEnsemble"),
-          function(object, data, is_pre_processed=FALSE, cl=NULL,
+          function(object,
+                   data,
+                   is_pre_processed=FALSE,
+                   cl=NULL,
                    time_max=waiver(),
                    aggregation_method=waiver(),
                    rank_threshold=waiver(),
@@ -228,8 +234,13 @@ setMethod("extract_data", signature(object="familiarEnsemble"),
                    sample_cluster_method=waiver(),
                    sample_linkage_method=waiver(),
                    sample_similarity_metric=waiver(),
-                   metric_alpha=waiver(),
+                   confidence_level=waiver(),
+                   bootstrap_ci_method=waiver(),
+                   compute_model_ci=waiver(),
+                   compute_ensemble_ci=waiver(),
+                   aggregate_ci=waiver(),
                    icc_type=waiver(),
+                   message_indent=0L,
                    verbose=FALSE,
                    data_element="all",
                    ...){
@@ -237,15 +248,13 @@ setMethod("extract_data", signature(object="familiarEnsemble"),
             
             # Check whether data is a dataObject, and create one otherwise.
             if(!is(data, "dataObject")){
-              data <- methods::new("dataObject",
-                                   data=data,
-                                   is_pre_processed=is_pre_processed,
-                                   outcome_type=object@outcome_type)
+              data <- create_data_object(object=object,
+                                         data=data,
+                                         is_pre_processed=is_pre_processed)
             }
             
             # Load models
             object <- load_models(object=object)
-            
             
             # Extract feature distance tables,
             if(data_element %in% c("all", "mutual_correlation", "univariate_analysis", "feature_expressions")){
@@ -256,7 +265,9 @@ setMethod("extract_data", signature(object="familiarEnsemble"),
               # Compute a table containg the pairwise distance between features.
               feature_similarity_table <- extract_feature_similarity_table(object=object,
                                                                            data=data,
+                                                                           cl=cl,
                                                                            feature_similarity_metric=feature_similarity_metric,
+                                                                           message_indent=message_indent,
                                                                            verbose=verbose)
             }
 
@@ -264,7 +275,9 @@ setMethod("extract_data", signature(object="familiarEnsemble"),
               # Compute a table containing the pairwise distance between samples.
               sample_similarity_table <- extract_sample_similarity_table(object=object,
                                                                          data=data,
+                                                                         cl=cl,
                                                                          sample_similarity_metric=sample_similarity_metric,
+                                                                         message_indent=message_indent,
                                                                          verbose=verbose)
             }
 
@@ -273,6 +286,7 @@ setMethod("extract_data", signature(object="familiarEnsemble"),
               fs_vimp_info <- extract_fs_vimp(object=object,
                                               aggregation_method=aggregation_method,
                                               rank_threshold=rank_threshold,
+                                              message_indent=message_indent,
                                               verbose=verbose)
             } else {
               fs_vimp_info <- NULL
@@ -284,12 +298,39 @@ setMethod("extract_data", signature(object="familiarEnsemble"),
               model_vimp_info <- extract_model_vimp(object=object,
                                                     aggregation_method=aggregation_method,
                                                     rank_threshold=rank_threshold,
+                                                    message_indent=message_indent,
                                                     verbose=verbose)
             } else {
               model_vimp_info <- NULL
             }
-
-
+            
+            
+            # Assess permutation variable importance
+            if(data_element %in% c("all", "permutation_vimp")){
+              permutation_vimp <- extract_permutation_vimp(object=object,
+                                                           data=data,
+                                                           cl=cl,
+                                                           feature_similarity_table=feature_similarity_table,
+                                                           feature_cluster_method=feature_cluster_method,
+                                                           feature_linkage_method=feature_linkage_method,
+                                                           feature_cluster_cut_method=feature_cluster_cut_method,
+                                                           feature_similarity_metric=feature_similarity_metric,
+                                                           feature_similarity_threshold=feature_similarity_threshold,
+                                                           metric=metric,
+                                                           ensemble_method=ensemble_method,
+                                                           eval_times=eval_times,
+                                                           confidence_level=confidence_level,
+                                                           bootstrap_ci_method=bootstrap_ci_method,
+                                                           compute_model_ci=compute_model_ci,
+                                                           compute_ensemble_ci=compute_ensemble_ci,
+                                                           aggregate_ci=aggregate_ci,
+                                                           message_indent=message_indent,
+                                                           verbose=verbose)
+            } else {
+              permutation_vimp <- NULL
+            }
+            
+            
             # Create mutual correlation information
             if(data_element %in% c("all", "mutual_correlation")){
               mutual_corr_info <- extract_mutual_correlation(object=object,
@@ -298,11 +339,11 @@ setMethod("extract_data", signature(object="familiarEnsemble"),
                                                              feature_cluster_method=feature_cluster_method,
                                                              feature_linkage_method=feature_linkage_method,
                                                              feature_similarity_metric=feature_similarity_metric,
+                                                             message_indent=message_indent,
                                                              verbose=verbose)
             } else {
               mutual_corr_info <- NULL
             }
-
 
             # Expression heatmap data
             if(data_element %in% c("all", "feature_expressions")){
@@ -317,6 +358,7 @@ setMethod("extract_data", signature(object="familiarEnsemble"),
                                                             sample_linkage_method=sample_linkage_method,
                                                             sample_similarity_metric=sample_similarity_metric,
                                                             eval_times=eval_times,
+                                                            message_indent=message_indent,
                                                             verbose=verbose)
             } else {
               expression_info <- NULL
@@ -327,6 +369,7 @@ setMethod("extract_data", signature(object="familiarEnsemble"),
             if(data_element %in% c("all", "univariate_analysis")){
               univar_info <- extract_univariate_analysis(object=object,
                                                          data=data,
+                                                         cl=cl,
                                                          icc_type=icc_type,
                                                          feature_similarity_table=feature_similarity_table,
                                                          feature_cluster_method=feature_cluster_method,
@@ -334,6 +377,7 @@ setMethod("extract_data", signature(object="familiarEnsemble"),
                                                          feature_linkage_method=feature_linkage_method,
                                                          feature_similarity_threshold=feature_similarity_threshold,
                                                          feature_similarity_metric=feature_similarity_metric,
+                                                         message_indent=message_indent,
                                                          verbose=verbose)
             } else {
               univar_info <- NULL
@@ -343,18 +387,20 @@ setMethod("extract_data", signature(object="familiarEnsemble"),
             # Extract hyper-parameters
             if(data_element %in% c("all", "hyperparameters")){
               hyperparameter_info <- extract_hyperparameters(object=object,
+                                                             message_indent=message_indent,
                                                              verbose=verbose)
             } else {
               hyperparameter_info <- NULL
             }
 
             # Create predictions.
-            if(data_element %in% c("all", "prediction_data", "model_performance",
-                                   "stratification_data", "auc_data", "confusion_matrix")){
+            if(data_element %in% c("all", "prediction_data")){
               prediction_data <- extract_predictions(object=object,
                                                      data=data,
+                                                     cl=cl,
                                                      ensemble_method=ensemble_method,
-                                                     time_max=time_max,
+                                                     eval_times=eval_times,
+                                                     message_indent=message_indent,
                                                      verbose=verbose)
             } else {
               prediction_data <- NULL
@@ -363,10 +409,19 @@ setMethod("extract_data", signature(object="familiarEnsemble"),
             # Compute model performance based on the prediction_data
             if(data_element %in% c("all", "model_performance")){
               model_performance_data <- extract_performance(object=object,
-                                                            prediction_data=prediction_data,
+                                                            data=data,
+                                                            cl=cl,
                                                             metric=metric,
-                                                            metric_alpha=metric_alpha,
+                                                            ensemble_method=ensemble_method,
+                                                            eval_times=eval_times,
+                                                            confidence_level=confidence_level,
+                                                            bootstrap_ci_method=bootstrap_ci_method,
+                                                            compute_model_ci=compute_model_ci,
+                                                            compute_ensemble_ci=compute_ensemble_ci,
+                                                            aggregate_ci=aggregate_ci,
+                                                            message_indent=message_indent,
                                                             verbose=verbose)
+              
             } else {
               model_performance_data <- NULL
             }
@@ -378,7 +433,12 @@ setMethod("extract_data", signature(object="familiarEnsemble"),
                                                                  cl=cl,
                                                                  ensemble_method=ensemble_method,
                                                                  eval_times=eval_times,
-                                                                 metric_alpha=metric_alpha,
+                                                                 confidence_level=confidence_level,
+                                                                 bootstrap_ci_method=bootstrap_ci_method,
+                                                                 compute_model_ci=compute_model_ci,
+                                                                 compute_ensemble_ci=compute_ensemble_ci,
+                                                                 aggregate_ci=aggregate_ci,
+                                                                 message_indent=message_indent,
                                                                  verbose=verbose)
               
             } else {
@@ -389,6 +449,7 @@ setMethod("extract_data", signature(object="familiarEnsemble"),
             # Extract information regarding stratification
             if(data_element %in% c("all", "kaplan_meier_info")){
               km_info <- extract_km_cutoffs(object=object,
+                                            message_indent=message_indent,
                                             verbose=verbose)
             } else {
               km_info <- NULL
@@ -400,6 +461,7 @@ setMethod("extract_data", signature(object="familiarEnsemble"),
                                                                  prediction_data=prediction_data,
                                                                  risk_ensemble_method=risk_ensemble_method,
                                                                  time_max=time_max,
+                                                                 message_indent=message_indent,
                                                                  verbose=verbose)
             } else {
               stratification_data <- NULL
@@ -410,6 +472,7 @@ setMethod("extract_data", signature(object="familiarEnsemble"),
               calibration_data <- extract_calibration_data(object=object,
                                                            data=data,
                                                            eval_times=eval_times,
+                                                           message_indent=message_indent,
                                                            verbose=verbose)
             } else {
               calibration_data <- NULL
@@ -418,8 +481,15 @@ setMethod("extract_data", signature(object="familiarEnsemble"),
             # Extract AUC data
             if(data_element %in% c("all", "auc_data")){
               auc_data <- extract_auc_data(object=object,
-                                           prediction_data=prediction_data,
-                                           metric_alpha=metric_alpha,
+                                           data=data,
+                                           cl=cl,
+                                           ensemble_method=ensemble_method,
+                                           bootstrap_ci_method=bootstrap_ci_method,
+                                           compute_model_ci=compute_model_ci,
+                                           compute_ensemble_ci=compute_ensemble_ci,
+                                           aggregate_ci=aggregate_ci,
+                                           confidence_level=confidence_level,
+                                           message_indent=message_indent,
                                            verbose=verbose)
             } else {
               auc_data <- NULL
@@ -428,7 +498,10 @@ setMethod("extract_data", signature(object="familiarEnsemble"),
             # Extract confusion matrix data.
             if(data_element %in% c("all", "confusion_matrix")){
               confusion_matrix_info <- extract_confusion_matrix(object=object,
-                                                                prediction_data=prediction_data,
+                                                                data=data,
+                                                                cl=cl,
+                                                                ensemble_method=ensemble_method,
+                                                                message_indent=message_indent,
                                                                 verbose=verbose)
             } else {
               confusion_matrix_info <- NULL
@@ -448,7 +521,7 @@ setMethod("extract_data", signature(object="familiarEnsemble"),
                                      outcome_info = object@outcome_info,
                                      fs_vimp = fs_vimp_info,
                                      model_vimp = model_vimp_info,
-                                     permutation_vimp = NULL,
+                                     permutation_vimp = permutation_vimp,
                                      hyperparameters = hyperparameter_info,
                                      hyperparameter_data = NULL,
                                      req_feature_cols = object@req_feature_cols,
@@ -494,13 +567,16 @@ setMethod("extract_data", signature(object="familiarEnsemble"),
 setGeneric("extract_fs_vimp", function(object,
                                        aggregation_method=waiver(),
                                        rank_threshold=waiver(),
-                                       verbose=FALSE, ...) standardGeneric("extract_fs_vimp"))
+                                       message_indent=0L,
+                                       verbose=FALSE,
+                                       ...) standardGeneric("extract_fs_vimp"))
 
 #####extract_fs_vimp#####
 setMethod("extract_fs_vimp", signature(object="familiarEnsemble"),
           function(object,
                    aggregation_method=waiver(),
                    rank_threshold=waiver(),
+                   message_indent=0L,
                    verbose=FALSE){
             
             # Obtain aggregation method from stored settings, if required.
@@ -533,7 +609,8 @@ setMethod("extract_fs_vimp", signature(object="familiarEnsemble"),
             
             # Message extraction start
             if(verbose){
-              logger.message(paste0("\tExtracting variable importance obtained during feature selection."))
+              logger.message(paste0("Extracting variable importance obtained during feature selection."),
+                             indent=message_indent)
             }
             
             # Define the run table -> at the pooling level
@@ -613,6 +690,7 @@ setMethod("extract_fs_vimp", signature(object="familiarEnsemble"),
 setGeneric("extract_model_vimp", function(object,
                                           aggregation_method=waiver(),
                                           rank_threshold=waiver(),
+                                          message_indent=0L,
                                           verbose=FALSE,
                                           ...) standardGeneric("extract_model_vimp"))
 
@@ -621,31 +699,27 @@ setMethod("extract_model_vimp", signature(object="familiarEnsemble"),
           function(object,
                    aggregation_method=waiver(),
                    rank_threshold=waiver(),
+                   message_indent=0L,
                    verbose=FALSE,
                    ...){
             
             # Message extraction start
             if(verbose){
-              logger.message(paste0("\tExtracting variable importance obtained from the models."))
+              logger.message(paste0("Extracting variable importance obtained from the models."),
+                             indent=message_indent)
             }
             
             # Test if models are properly loaded
-            if(!is_model_loaded(object=object)){
-              ..error_ensemble_models_not_loaded()
-            }
+            if(!is_model_loaded(object=object)) ..error_ensemble_models_not_loaded()
             
             # Obtain aggregation method from stored settings, if required.
-            if(is.waive(aggregation_method)){
-              aggregation_method <- object@settings$aggregation
-            }
+            if(is.waive(aggregation_method)) aggregation_method <- object@settings$aggregation
             
             # Check aggregation method
             rank.check_aggregation_method(method=aggregation_method)
             
             # Obtain rank thresholds from stored settings, if required
-            if(is.waive(rank_threshold)){
-              rank_threshold <- object@settings$aggr_rank_threshold
-            }
+            if(is.waive(rank_threshold)) rank_threshold <- object@settings$aggr_rank_threshold
             
             # Check rank threshold. NULL is an allowed value.
             if(!is.null(rank_threshold)){
@@ -659,7 +733,7 @@ setMethod("extract_model_vimp", signature(object="familiarEnsemble"),
             raw_model_vimp <- data.table::rbindlist(lapply(object@model_list, extract_model_vimp))
             
             # Check for empty model_vimp
-            if(nrow(raw_model_vimp) == 0){
+            if(is_empty(raw_model_vimp)){
               return(list("vimp_table" = NULL,
                           "aggregation_method" = aggregation_method,
                           "rank_threshold" = rank_threshold))
@@ -744,18 +818,21 @@ setMethod("extract_model_vimp", signature(object="familiarModel"),
 #'@md
 #'@keywords internal
 setGeneric("extract_hyperparameters", function(object,
+                                               message_indent=0L,
                                                verbose=FALSE,
                                                ...) standardGeneric("extract_hyperparameters"))
 
 #####extract_hyperparameters#####
 setMethod("extract_hyperparameters", signature(object="familiarEnsemble"),
           function(object,
+                   message_indent=0L,
                    verbose=FALSE){
             # Extracts hyper-parameters from each model and collects them.
             
             # Message extraction start
             if(verbose){
-              logger.message(paste0("\tExtracting hyperparameters from the models in the ensemble."))
+              logger.message(paste0("Extracting hyperparameters from the models in the ensemble."),
+                             indent=message_indent)
             }
             
             # Test if models are properly loaded
@@ -778,92 +855,6 @@ setMethod("extract_hyperparameters", signature(object="familiarEnsemble"),
           })
 
 
-
-#'@title Internal function to extract predicted values from models.
-#'
-#'@description Collects predicted values from models in a `familiarEnsemble`.
-#'
-#'@inheritParams extract_data
-#'
-#'@return A list with single-model and ensemble predictions.
-#'@md
-#'@keywords internal
-setGeneric("extract_predictions",
-           function(object,
-                    data,
-                    ensemble_method=waiver(),
-                    time_max=waiver(),
-                    verbose=FALSE,
-                    ...) standardGeneric("extract_predictions"))
-
-#####extract_predictions#####
-setMethod("extract_predictions", signature(object="familiarEnsemble"),
-          function(object,
-                   data,
-                   ensemble_method=waiver(),
-                   time_max=waiver(),
-                   verbose=FALSE,
-                   ...){
-            # Extract predictions from the data using the models in the
-            # ensemble. Note: we do not call the predict function on the
-            # familiarEnsemble directly as this would cause predict to become
-            # highly convoluted, in particular with generating both single and
-            # ensemble predictions.
-            
-            # Message extraction start
-            if(verbose){
-              logger.message(paste0("\tComputing ensemble predictions for the dataset."))
-            }
-            
-            # Load time_max from the object settings attribute, if it is not provided.
-            if(is.waive(time_max) & object@outcome_type %in% c("survival")){
-              time_max <- object@settings$time_max
-            }
-            
-            # Check time_max argument
-            if(object@outcome_type %in% c("survival")){
-              .check_number_in_valid_range(time_max, var_name="time_max", range=c(0.0, Inf), closed=c(FALSE, TRUE))
-            }
-            
-            # Obtain ensemble method from stored settings, if required.
-            if(is.waive(ensemble_method)){
-              ensemble_method <- object@settings$ensemble_method
-            }
-            
-            # Check ensemble_method argument
-            .check_parameter_value_is_valid(x=ensemble_method, var_name="ensemble_method",
-                                            values=.get_available_ensemble_prediction_methods())
-            
-            # Test if models are properly loaded
-            if(!is_model_loaded(object=object)){
-              ..error_ensemble_models_not_loaded()
-            }
-            
-            # Aggregate data. It does not make sense to keep duplicate rows here.
-            data <- aggregate_data(data=data)
-            
-            # Predict for all separate models
-            prediction_data <- list("single"=lapply(object@model_list, function(object, data){
-              
-              # Make predictions
-              predict_table <- .predict(object=object, data=data, allow_recalibration=TRUE, time=time_max)
-              
-              # Add the model name to the table
-              predict_table <- add_model_name(data=predict_table, object=object)
-              
-              return(predict_table)
-            }, data=data))
-            
-            # Create the ensemble predictions
-            prediction_data$ensemble <- ensemble_prediction(object=object, prediction_data=data.table::rbindlist(prediction_data$single), ensemble_method=ensemble_method)
-            
-            # Add the ensemble name to the table
-            prediction_data$ensemble <- add_model_name(data=prediction_data$ensemble, object=object)
-            
-            return(prediction_data)
-          })
-
-
 #'@title Internal function to extract Kaplan-Meier risk group stratification cutoffs from models.
 #'
 #'@description Collects Kaplan-Meier risk group stratification cutoffs from
@@ -875,22 +866,23 @@ setMethod("extract_predictions", signature(object="familiarEnsemble"),
 #'@md
 #'@keywords internal
 setGeneric("extract_km_cutoffs", function(object,
+                                          message_indent=0L,
                                           verbose=FALSE,
                                           ...) standardGeneric("extract_km_cutoffs"))
 
 #####extract_km_cutoffs#####
 setMethod("extract_km_cutoffs", signature(object="familiarEnsemble"),
           function(object,
+                   message_indent=0L,
                    verbose=FALSE){
             
             # Test if the outcome type is survival
-            if(!object@outcome_type %in% c("survival")){
-              return(NULL)
-            }
+            if(!object@outcome_type %in% c("survival")) return(NULL)
             
             # Message extraction start
             if(verbose){
-              logger.message(paste0("\tExtracting Kaplan-Meier cutoffs from the models."))
+              logger.message(paste0("Extracting Kaplan-Meier cutoffs from the models."),
+                             indent=message_indent)
             }
             
             # Test if models are properly loaded
@@ -901,9 +893,7 @@ setMethod("extract_km_cutoffs", signature(object="familiarEnsemble"),
             # Collect Kaplan-Meier stratification parameters
             km_cut_off_info <- data.table::rbindlist(lapply(object@model_list, function(fam_model){
               
-              if(is_empty(fam_model@km_info$parameters)){
-                return(NULL)
-              }
+              if(is_empty(fam_model@km_info$parameters)) return(NULL)
               
               # Iterate over stratification parameters
               data <- data.table::rbindlist(lapply(fam_model@km_info$parameters, function(method_list){
@@ -922,251 +912,6 @@ setMethod("extract_km_cutoffs", signature(object="familiarEnsemble"),
             } ))
             
             return(km_cut_off_info)
-          })
-
-
-#'@title Internal function to extract performance metrics.
-#'
-#'@description Computes and collects discriminative performance metrics from a
-#'  `familiarEnsemble`.
-#'
-#'@param prediction_data A table with pre-computed predicted values per sample.
-#'  This table is generated by the `extract_predictions` method. If
-#'  `prediction_data` is not provided it will be computed internally.
-#'
-#'@inheritParams extract_data
-#'@inheritDotParams extract_predictions
-#'
-#'@details This method differs from the `assess_performance` method that
-#'  performance predictions on the fly and enables computation of objective
-#'  scores.
-#'
-#'  This function also computes credibility intervals for the ensemble model, at
-#'  the level of `metric_alpha`. This is a general method. Metrics with known,
-#'  theoretically derived confidence intervals, nevertheless have a credibility
-#'  interval computed.
-#'
-#'@return A list with data.tables for single and ensemble model assessments.
-#'@md
-#'@keywords internal
-setGeneric("extract_performance",
-           function(object,
-                    prediction_data=NULL, 
-                    metric=waiver(),
-                    metric_alpha=waiver(),
-                    verbose=FALSE,
-                    ...) standardGeneric("extract_performance"))
-
-#####extract_performance#####
-setMethod("extract_performance", signature(object="familiarEnsemble", prediction_data="list"),
-          function(object,
-                   prediction_data=NULL,
-                   metric=waiver(),
-                   metric_alpha=waiver(),
-                   verbose=FALSE,
-                   ...){
-            # Compute metrics based on a pre-calculated set of prediction_data.
-            # Note that this is different from the "assess_performance" method,
-            # which performs the prediction on the fly, and enables the
-            # extraction of objective scores.
-            
-            # Check if predictions were generated, and generate them on the fly
-            # if necessary.
-            if(is.null(prediction_data)){
-              prediction_data <- do.call(extract_predictions, args=append(list("object"=object),
-                                                                          list(...)))
-            }
-            
-            # Load metric(s) from the object settings attribute if not provided
-            # externally.
-            if(is.waive(metric)){
-              metric <- object@settings$metric
-            }
-            
-            # Load confidence alpha from object settings attribute if not
-            # provided externally.
-            if(is.waive(metric_alpha)){
-              metric_alpha <- object@settings$metric_alpha
-            }
-            
-            # Check metric input argument
-            sapply(metric, metric.check_outcome_type, outcome_type=object@outcome_type)
-            
-            # Check metric_alpha input argument
-            .check_number_in_valid_range(x=metric_alpha, var_name="metric_alpha",
-                                         range=c(0.0, 1.0), closed=c(FALSE, FALSE))
-            
-            
-            ##### Compute the performance metrics for single models #####
-            performance_list <- list("single"=data.table::rbindlist(lapply(seq_len(length(prediction_data$single)), function(ii, object, prediction_data, metric) {
-              
-              # Calculate the model performance
-              model_performance <- .process_single_iter_performance(prediction_table=prediction_data$single[[ii]],
-                                                                    metric=metric,
-                                                                    object=object@model_list[[ii]],
-                                                                    outcome_type=object@outcome_type,
-                                                                    samples=NULL)
-              
-              # Add the model name
-              model_performance <- add_model_name(data=model_performance, object=object@model_list[[ii]])
-              
-              return(model_performance)
-            }, object=object, prediction_data=prediction_data, metric=metric)))
-            
-            ##### Compute the performance metrics for ensemble models #####
-            
-            # Determine the desired number of iterations for obtaining a stable
-            # confidence interval.
-            n_iter <- ceiling(20 / metric_alpha)
-            
-            # Get ensemble performance.
-            # TODO: Make sure to pass along a familiarModel object to set the right prediction type.
-            performance_list$ensemble <- data.table::rbindlist(lapply(seq_len(n_iter), function(ii, prediction_table, metric, object, outcome_type){
-              
-              # Generate a bootstrap sample.
-              samples <- fam_sample(x=prediction_table$subject_id, size=nrow(prediction_table), replace=TRUE)
-              
-              # Calculate the model performance
-              model_performance <- .process_single_iter_performance(prediction_table=prediction_table,
-                                                                    metric=metric,
-                                                                    object=object,
-                                                                    outcome_type=outcome_type,
-                                                                    samples=samples)
-              
-              return(model_performance)
-            }, prediction_table=prediction_data$ensemble, metric=metric, object=object@model_list[[1]], outcome_type=object@outcome_type))
-            
-            # Add model name to ensemble performance
-            performance_list$ensemble <- add_model_name(data=performance_list$ensemble, object=object)
-            
-            # Add the metrics and the alpha-level used
-            performance_list$metric <- metric
-            performance_list$conf_alpha <- metric_alpha
-            
-            return(performance_list)
-          })
-
-#'@title Internal function to extract area under the ROC curve information.
-#'
-#'@description Computes the ROC curve from a `familiarEnsemble`.
-#'
-#'@param prediction_data A table with pre-computed predicted values per sample.
-#'  This table is generated by the `extract_predictions` method. If
-#'  `prediction_data` is not provided it will be computed internally.
-#'
-#'@inheritParams extract_data
-#'@inheritDotParams extract_predictions
-#'
-#'@details This function also computes credibility intervals for the ROC curve
-#'  for the ensemble model, at the level of `metric_alpha`. In the case of
-#'  multinomial outcomes, an AUC curve is computed per class in a
-#'  one-against-all fashion.
-#'
-#'  To allow plotting of multiple AUC curves in the same plot and the use of
-#'  ensemble models, the AUC curve is evaluated at 0.01 (1-specificity) intervals.
-#'
-#'@return A list with data.tables for single and ensemble model ROC curve data.
-#'@md
-#'@keywords internal
-setGeneric("extract_auc_data", function(object,
-                                        prediction_data=NULL,
-                                        metric_alpha=waiver(),
-                                        verbose=FALSE,
-                                        ...) standardGeneric("extract_auc_data"))
-
-#####extract_auc_data#####
-setMethod("extract_auc_data", signature(object="familiarEnsemble"),
-          function(object,
-                   prediction_data=NULL,
-                   metric_alpha=waiver(),
-                   verbose=FALSE,
-                   ...) {
-            # Extract data for plotting AUC curves.
-            
-            outcome_type <- object@outcome_type
-            
-            # AUC data can only be prepared for binomial and multinomial outcomes
-            if(!outcome_type %in% c("binomial", "multinomial")){
-              return(NULL)
-            }
-            
-            # Message start of auc computations
-            if(verbose){
-              logger.message(paste0("\tComputing receiver-operating characteristic curves."))
-            }
-            
-            # Obtain alpha from the 
-            if(is.waive(metric_alpha)){
-              metric_alpha <- object@settings$metric_alpha
-            }
-            
-            # Check alpha
-            .check_number_in_valid_range(metric_alpha, var_name="metric_alpha", range=c(0.0, 1.0), closed=c(FALSE, FALSE))
-            
-            # Check if predictions were generated, and generate them on the fly
-            # if necessary.
-            if(is.null(prediction_data)){
-              prediction_data <- do.call(extract_predictions, args=append(list("object"=object),
-                                                                          list(...)))
-            }
-            
-            ##### Compute AUC curves for single models #####
-            auc_table_list <- list("single"=data.table::rbindlist(lapply(seq_len(length(prediction_data$single)), function(ii, object, prediction_data) {
-              outcome_type <- object@outcome_type
-              
-              if(outcome_type == "binomial"){
-                # Use the second class as positive class, as per standard.
-                class_levels <- get_outcome_class_levels(x=object)[2]
-              } else {
-                # Use all classes as positive class in case of multinomial data
-                class_levels <- get_outcome_class_levels(x=object)
-              }
-              
-              # Extract basic information concerning matching entries
-              basic_auc_table_list <- lapply(class_levels, .prepare_basic_auc_table , prediction_table=prediction_data$single[[ii]], outcome_type=outcome_type)
-              
-              # Create a complete AUC table from the data. No confidence intervals are calculated here.
-              single_auc_table <- data.table::rbindlist(lapply(basic_auc_table_list, .complete_auc_table, compute_confidence_intervals=FALSE))
-              
-              # Convert the pos_class into a factor for multinomial outcomes.
-              if(outcome_type == "multinomial"){
-                single_auc_table$pos_class <- factor(single_auc_table$pos_class, levels=class_levels)
-              }
-              
-              # Add the model name
-              single_auc_table <- add_model_name(data=single_auc_table, object=object@model_list[[ii]])
-              
-              return(single_auc_table)
-            }, object=object, prediction_data=prediction_data)))
-            
-            
-            ##### Compute AUC curves for the ensemble model #####
-            if(outcome_type == "binomial"){
-              # Use the second class as positive class, as per standard.
-              class_levels <- get_outcome_class_levels(x=object)[2]
-            } else {
-              # Use all classes as positive class in case of multinomial data
-              class_levels <- get_outcome_class_levels(x=object)
-            }
-            
-            # Extract basic information concerning matching entries
-            basic_auc_table_list <- lapply(class_levels, .prepare_basic_auc_table , prediction_table=prediction_data$ensemble, outcome_type=outcome_type)
-            
-            # Create a complete AUC table from the data. No confidence intervals are calculated here.
-            ensemble_auc_table <- data.table::rbindlist(lapply(basic_auc_table_list, .complete_auc_table, compute_confidence_intervals=TRUE))
-            
-            # Convert the pos_class into a factor for multinomial outcomes.
-            if(outcome_type == "multinomial"){
-              ensemble_auc_table$pos_class <- factor(ensemble_auc_table$pos_class, levels=class_levels)
-            }
-            
-            # Add the model name
-            auc_table_list$ensemble <- add_model_name(data=ensemble_auc_table, object=object)
-            
-            # Add the confidence alpha level
-            auc_table_list$conf_alpha <- metric_alpha
-            
-            return(auc_table_list)
           })
 
 
@@ -1192,6 +937,7 @@ setGeneric("extract_calibration_data",
                     data,
                     eval_times=waiver(),
                     is_pre_processed=FALSE,
+                    message_indent=0L,
                     verbose=FALSE,
                     ...) standardGeneric("extract_calibration_data"))
 
@@ -1201,12 +947,14 @@ setMethod("extract_calibration_data", signature(object="familiarEnsemble"),
                    data,
                    eval_times=waiver(),
                    is_pre_processed=FALSE,
+                   message_indent=0L,
                    verbose=FALSE,
                    ...){
             
             # Message extraction start
             if(verbose){
-              logger.message(paste0("\tAssessing model calibration."))
+              logger.message(paste0("Assessing model calibration."),
+                             indent=message_indent)
             }
             
             # Load eval_times from the object settings attribute, if it is not provided.
@@ -1249,6 +997,7 @@ setGeneric("extract_stratification_data", function(object,
                                                    time_max=waiver(),
                                                    risk_group_list=NULL,
                                                    risk_ensemble_method=waiver(),
+                                                   message_indent=0L,
                                                    verbose=FALSE,
                                                    ...) standardGeneric("extract_stratification_data"))
 #####extract_stratification_data#####
@@ -1260,6 +1009,7 @@ setMethod("extract_stratification_data", signature(object="familiarEnsemble"),
                    time_max=waiver(),
                    risk_group_list=NULL,
                    risk_ensemble_method=waiver(),
+                   message_indent=0L,
                    verbose=FALSE,
                    ...){
             
@@ -1270,7 +1020,8 @@ setMethod("extract_stratification_data", signature(object="familiarEnsemble"),
             
             # Message extraction start
             if(verbose){
-              logger.message(paste0("\tAssessing stratification into risk groups."))
+              logger.message(paste0("Assessing stratification into risk groups."),
+                             indent=message_indent)
             }
             
             # Assess stratification
@@ -1295,6 +1046,7 @@ setMethod("extract_stratification_data", signature(object="familiarEnsemble"),
 #'@keywords internal
 setGeneric("extract_univariate_analysis", function(object,
                                                    data,
+                                                   cl=NULL,
                                                    icc_type=waiver(),
                                                    feature_similarity_table=NULL,
                                                    feature_cluster_method=waiver(),
@@ -1302,6 +1054,7 @@ setGeneric("extract_univariate_analysis", function(object,
                                                    feature_linkage_method=waiver(),
                                                    feature_similarity_threshold=waiver(),
                                                    feature_similarity_metric=waiver(),
+                                                   message_indent=0L,
                                                    verbose=FALSE,
                                                    ...) standardGeneric("extract_univariate_analysis"))
 
@@ -1309,6 +1062,7 @@ setGeneric("extract_univariate_analysis", function(object,
 setMethod("extract_univariate_analysis", signature(object="familiarEnsemble", data="ANY"),
           function(object,
                    data,
+                   cl=NULL,
                    icc_type=waiver(),
                    feature_similarity_table=NULL,
                    feature_cluster_method=waiver(),
@@ -1316,11 +1070,13 @@ setMethod("extract_univariate_analysis", signature(object="familiarEnsemble", da
                    feature_linkage_method=waiver(),
                    feature_similarity_threshold=waiver(),
                    feature_similarity_metric=waiver(),
+                   message_indent=0L,
                    verbose=FALSE){
             
             # Message extraction start
             if(verbose){
-              logger.message(paste0("\tExtracting univariate analysis information."))
+              logger.message(paste0("Extracting univariate analysis information."),
+                             indent=message_indent)
             }
             
             # Obtain cluster method from stored settings, if required.
@@ -1425,7 +1181,7 @@ setMethod("extract_univariate_analysis", signature(object="familiarEnsemble", da
             if(length(feature_columns) == 0) return(list("data"=empty_table))
             
             # Calculate univariate P values, based on aggregated data
-            regr_p_values <- compute_univariable_p_values(cl=NULL,
+            regr_p_values <- compute_univariable_p_values(cl=cl,
                                                           data_obj=aggregate_data(data=data),
                                                           feature_columns=feature_columns)
             
@@ -1470,7 +1226,7 @@ setMethod("extract_univariate_analysis", signature(object="familiarEnsemble", da
                 
               } else {
                 # Compute ICC values
-                icc_list <- fam_mapply(cl=NULL,
+                icc_list <- fam_mapply(cl=cl,
                                        assign=NULL,
                                        FUN=compute_icc,
                                        x=data@data[, mget(numeric_columns)],
@@ -1490,6 +1246,9 @@ setMethod("extract_univariate_analysis", signature(object="familiarEnsemble", da
               # Compute the distance matrix
               distance_matrix <- cluster.get_distance_matrix(similarity_table=feature_similarity_table,
                                                              similarity_metric=feature_similarity_metric)
+              
+              # TODO: update so that this works for multiple similarity thresholds.
+              if(length(feature_similarity_threshold) > 0) feature_similarity_threshold <- feature_similarity_threshold[1]
               
               # Find cluster information
               cluster_info <- cluster.get_cluster_table(distance_matrix=distance_matrix,
@@ -1521,9 +1280,7 @@ setMethod("extract_univariate_analysis", signature(object="familiarEnsemble", da
             univariate_info <- list("data"=univariate_data)
             
             # Add ICC type if it is used.
-            if(is_repeated_measurement){
-              univariate_info$icc_type <- icc_type
-            }
+            if(is_repeated_measurement) univariate_info$icc_type <- icc_type
 
             return(univariate_info)
           })
@@ -1545,6 +1302,7 @@ setGeneric("extract_mutual_correlation", function(object,
                                                   feature_cluster_method=waiver(),
                                                   feature_linkage_method=waiver(),
                                                   feature_similarity_metric=waiver(),
+                                                  message_indent=0L,
                                                   verbose=FALSE,
                                                   ...) standardGeneric("extract_mutual_correlation"))
 
@@ -1557,12 +1315,14 @@ setMethod("extract_mutual_correlation", signature(object="familiarEnsemble", dat
                    feature_cluster_method=waiver(),
                    feature_linkage_method=waiver(),
                    feature_similarity_metric=waiver(),
+                   message_indent=0L,
                    verbose=FALSE){
             # Assess mutual correlation
             
             # Message extraction start
             if(verbose){
-              logger.message(paste0("\tComputing similarity between important features."))
+              logger.message(paste0("Computing similarity between important features."),
+                             indent=message_indent)
             }
 
             # Obtain cluster method from stored settings, if required.
@@ -1606,7 +1366,8 @@ setMethod("extract_mutual_correlation", signature(object="familiarEnsemble", dat
                                             cluster_linkage=feature_linkage_method)
             
             # Get data.table with feature ordering
-            feature_order_table <- cluster.extract_label_order(cluster_object=h, cluster_method=feature_cluster_method)
+            feature_order_table <- cluster.extract_label_order(cluster_object=h,
+                                                               cluster_method=feature_cluster_method)
             
             # Merge ordering into feature_similarity_table. The table is first
             # merged on feature_1 and then on feature_2.
@@ -1660,6 +1421,7 @@ setGeneric("extract_feature_expression", function(object,
                                                   sample_linkage_method=waiver(),
                                                   sample_similarity_metric=waiver(),
                                                   eval_times=waiver(),
+                                                  message_indent=0L,
                                                   verbose=FALSE,
                                                   ...) standardGeneric("extract_feature_expression"))
 
@@ -1676,11 +1438,13 @@ setMethod("extract_feature_expression", signature(object="familiarEnsemble", dat
                    sample_linkage_method=waiver(),
                    sample_similarity_metric=waiver(),
                    eval_times=waiver(),
+                   message_indent=0L,
                    verbose=FALSE){
             
             # Message extraction start
             if(verbose){
-              logger.message(paste0("\tComputing sample clustering using important features."))
+              logger.message(paste0("Computing sample clustering using important features."),
+                             indent=message_indent)
             }
             
             # Obtain feature cluster method from stored settings, if required.
@@ -1754,9 +1518,7 @@ setMethod("extract_feature_expression", signature(object="familiarEnsemble", dat
             # original scale to derive expressions.
             data <- process_input_data(object=object, data=data, stop_at="batch_normalisation")
             
-            if(is_empty(data)){
-              return(NULL)
-            }
+            if(is_empty(data)) return(NULL)
             
             # Determine signature features
             model_features <- object@important_features
@@ -1850,50 +1612,7 @@ setMethod("extract_feature_expression", signature(object="familiarEnsemble", dat
 
 
 
-#'@title Internal function to extract the confusion matrix.
-#'
-#'@description Computes and extracts the confusion matrix for predicted and
-#'  observed categorical outcomes used in a `familiarEnsemble` object.
-#'
-#'@inheritParams extract_data
-#'
-#'@return A data.table containing predicted and observed outcome data together
-#'  with a co-occurence count.
-#'@md
-#'@keywords internal
-setGeneric("extract_confusion_matrix", function(object,
-                                                prediction_data,
-                                                verbose=FALSE,
-                                                ...) standardGeneric("extract_confusion_matrix"))
-  
-#####extract_confusion_matrix#####
-setMethod("extract_confusion_matrix", signature(object="familiarEnsemble"),
-          function(object,
-                   prediction_data,
-                   verbose=FALSE){
-            
-            # Don't compute a confusion matrix if there is nothing to be computed.
-            if(!object@outcome_type %in% c("binomial", "multinomial")) return(NULL)
-            
-            # Don't compute a confusion matrix if there is no data available.
-            if(is_empty(prediction_data$ensemble)) return(NULL)
-            
-            # Don't compute a confusion matrix if there are no valid predictions.
-            if(!any_predictions_valid(prediction_data$ensemble, outcome_type=object@outcome_type)) return(NULL)
-            
-            # Message extraction start
-            if(verbose){
-              logger.message(paste0("\tComputing confusion matrix."))
-            }
-            
-            # Compute confusion matrices for single prediction tables.
-            confusion_matrix_list <- list("single"=data.table::rbindlist(lapply(prediction_data$single, .compute_confusion_matrix, object=object)))
-            
-            # Compute confusion matrix for ensemble prediction table.
-            confusion_matrix_list$ensemble <- .compute_confusion_matrix(prediction_data$ensemble, object=object)
-            
-            return(confusion_matrix_list)
-          })
+
 
 
 
@@ -1913,20 +1632,24 @@ setMethod("extract_confusion_matrix", signature(object="familiarEnsemble"),
 #'@keywords internal
 setGeneric("extract_feature_similarity_table", function(object,
                                                         data,
+                                                        cl=NULL,
                                                         feature_similarity_metric=waiver(),
                                                         verbose=FALSE,
+                                                        message_indent=0L,
                                                         ...) standardGeneric("extract_feature_similarity_table"))
 
 #####extract_feature_similarity_table#####
 setMethod("extract_feature_similarity_table", signature(object="familiarEnsemble", data="ANY"),
           function(object,
                    data,
+                   cl=NULL,
                    feature_similarity_metric=waiver(),
-                   verbose=FALSE){
+                   verbose=FALSE,
+                   message_indent=0L){
             
             # Message extraction start
             if(verbose){
-              logger.message(paste0("\tComputing pairwise similarity for important features."))
+              logger.message(paste0("Computing pairwise similarity for important features."), indent=message_indent)
             }
             
             # Obtain similarity metric from stored settings, if required.
@@ -1947,21 +1670,17 @@ setMethod("extract_feature_similarity_table", signature(object="familiarEnsemble
             data <- process_input_data(object=object, data=data, stop_at="imputation")
             
             # Check if the input data is not empty
-            if(is_empty(data)){
-              return(empty_similarity_table)
-            }
+            if(is_empty(data)) return(empty_similarity_table)
             
             # Check if the number of samples is sufficient (>5), and return an
             # empty table if not.
-            if(data.table::uniqueN(data@data, by="subject_id") <= 5){
-              return(empty_similarity_table)
-            }
+            if(data.table::uniqueN(data@data, by="subject_id") <= 5) return(empty_similarity_table)
             
             # Maintain only important features. The current set is based on the
             # required features.
             data <- filter_features(data=data, available_features=object@important_features)
             
-            # Identify eligble, numeric columns
+            # Identify eligible columns.
             feature_columns <- get_feature_columns(x=data)
             
             # Break if there are not at least 2 features present between which
@@ -1971,10 +1690,12 @@ setMethod("extract_feature_similarity_table", signature(object="familiarEnsemble
             }
             
             # Compute the similarity table
-            feature_similarity_table <- cluster.get_featurewise_similarity_table(data_obj=data,
+            feature_similarity_table <- cluster.get_featurewise_similarity_table(cl=cl,
+                                                                                 data_obj=data,
                                                                                  feature_columns=feature_columns,
                                                                                  similarity_metric=feature_similarity_metric,
-                                                                                 verbose=FALSE)
+                                                                                 verbose=verbose,
+                                                                                 message_indent=message_indent + 1L)
             
             return(feature_similarity_table)
           })
@@ -1997,7 +1718,9 @@ setMethod("extract_feature_similarity_table", signature(object="familiarEnsemble
 #'@keywords internal
 setGeneric("extract_sample_similarity_table", function(object,
                                                        data,
+                                                       cl=NULL,
                                                        sample_similarity_metric=waiver(),
+                                                       message_indent=0L,
                                                        verbose=FALSE,
                                                        ...) standardGeneric("extract_sample_similarity_table"))
 
@@ -2005,12 +1728,14 @@ setGeneric("extract_sample_similarity_table", function(object,
 setMethod("extract_sample_similarity_table", signature(object="familiarEnsemble", data="ANY"),
           function(object,
                    data,
+                   cl=NULL,
                    sample_similarity_metric=waiver(),
+                   message_indent=0L,
                    verbose=FALSE){
             
             # Message extraction start
             if(verbose){
-              logger.message(paste0("\tComputing pairwise similarity between samples."))
+              logger.message(paste0("Computing pairwise similarity between samples."), indent=message_indent)
             }
             
             # Obtain similarity metric from stored settings, if required.
@@ -2031,15 +1756,11 @@ setMethod("extract_sample_similarity_table", signature(object="familiarEnsemble"
             data <- process_input_data(object=object, data=data, stop_at="imputation")
             
             # Check if the input data is not empty
-            if(is_empty(data)){
-              return(empty_similarity_table)
-            }
+            if(is_empty(data)) return(empty_similarity_table)
             
             # Check if the number of samples is sufficient to form pairs (>= 2),
             # and return an empty table if not.
-            if(data.table::uniqueN(data@data, by="subject_id") < 2){
-              return(empty_similarity_table)
-            }
+            if(data.table::uniqueN(data@data, by="subject_id") < 2) return(empty_similarity_table)
             
             # Maintain only important features. The current set is based on the
             # required features.
@@ -2048,280 +1769,19 @@ setMethod("extract_sample_similarity_table", signature(object="familiarEnsemble"
             # Aggregate features.
             data <- aggregate_data(data=data)
             
-            # Identify eligble, numeric columns
+            # Identify eligible columns
             feature_columns <- get_feature_columns(x=data)
             
             # Break if there are is not at least 1 feature present between which
             # similarity can be compared between samples.
-            if(length(feature_columns) < 2) {
-              return(empty_similarity_table)
-            }
+            if(length(feature_columns) < 2) return(empty_similarity_table)
             
             # Compute the similarity table
-            sample_similarity_table <- cluster.get_samplewise_similarity_table(data_obj=data,
-                                                                                similarity_metric=sample_similarity_metric,
-                                                                                verbose=FALSE)
+            sample_similarity_table <- cluster.get_samplewise_similarity_table(cl=cl,
+                                                                               data_obj=data,
+                                                                               similarity_metric=sample_similarity_metric,
+                                                                               verbose=verbose,
+                                                                               message_indent=message_indent + 1L)
             
             return(sample_similarity_table)
           })
-
-
-
-.compute_confusion_matrix <- function(prediction_table, object){
-  
-  # Suppress NOTES due to non-standard evaluation in data.table
-  outcome <- count <- NULL
-  
-  if(!any_predictions_valid(prediction_table=prediction_table, outcome_type=object@outcome_type)) return(NULL)
-  
-  # Make a local copy with only the required data
-  data <- data.table::copy(prediction_table[!is.na(outcome), c("outcome", "predicted_class")])
-  
-  # Rename outcome columns
-  data.table::setnames(data,
-                       old=c("outcome", "predicted_class"),
-                       new=c("observed_outcome", "expected_outcome"))
-  
-  # Sum pairs of observed and expected outcome categories.
-  data <- data[, list("count"=.N), by=c("observed_outcome", "expected_outcome")]
-  
-  # Find class levels in the data
-  class_levels <- get_outcome_class_levels(object)
-  
-  # Construct an empty matrix 
-  empty_matrix <- data.table::data.table(expand.grid(list("observed_outcome"=class_levels, "expected_outcome"=class_levels), stringsAsFactors=FALSE))
-  empty_matrix[, "count":=0L]
-  
-  # Combine data with the empty matrix to add in combinations that
-  # appear 0 times.
-  data <- data.table::rbindlist(list(data, empty_matrix), use.names=TRUE)
-  
-  # Use a max operation to remove any combinations that appear twice in the table.
-  data <- data[, list("count"=max(count)), by=c("observed_outcome", "expected_outcome")]
-  
-  # Add the model name
-  data <- add_model_name(data=data, object=object)
-  
-  return(data)
-}
-
-
-
-.process_single_iter_performance <- function(prediction_table, metric, object, outcome_type, samples=NULL){
-  # Low level function calculate discrimination performance scores
-  
-  if(is_empty(prediction_table)){
-    # Generate dummy output.
-    # This also captures length(samples) == 0
-    dummy_list <- list()
-    
-    for(metric_col_name in paste0("performance_", metric)){
-      dummy_list[[metric_col_name]] <- 1.0
-    }
-    
-    return(head(data.table::as.data.table(dummy_list), n=0))
-  }
-  
-  # Generate a subsample of the prediction table if required
-  if(!is.null(samples)){
-    sample_table     <- data.table::data.table("subject_id"=samples)
-    prediction_table <- merge(sample_table, prediction_table, all.x=TRUE, all.y=FALSE, allow.cartesian=TRUE)
-  }
-  
-  # Create place-holder list
-  performance_list   <- list()
-  
-  # Iterate over performance metrics
-  for(current_metric in metric){
-    # Parse metric to column name
-    metric_col_name  <- paste0("performance_", current_metric)
-    
-    # Extract performance metric
-    performance_list[[metric_col_name]] <- metric.main(metric=current_metric, object=object, purpose="score", dt=prediction_table, outcome_type=outcome_type, na.rm=TRUE)
-  }
-  
-  # Parse list of performances to a data.table and return
-  return(data.table::as.data.table(performance_list))
-}
-
-
-
-.prepare_basic_auc_table <- function(current_class, prediction_table, outcome_type){
-  # Prepares a basic AUC table that is sorted by probability of the positive class and has matching outcomes identified
-  
-  # Suppress NOTES due to non-standard evaluation in data.table
-  pos_class_probability <- outcome <- NULL
-  
-  if(is_empty(prediction_table)){
-    # If input data is lacking, the table cannot be created.
-    return(data.table::data.table("subject_id"=character(0),
-                                  "pos_class"=character(0),
-                                  "is_pos_class"=logical(0),
-                                  "pos_class_probability"=numeric(0)))
-  }
-  
-  # Determine the name of the probability column for the current class
-  current_class_col <- get_class_probability_name(x=current_class)
-  
-  # Extract the required data
-  data <- data.table::copy(prediction_table[, c("subject_id", "outcome", current_class_col), with=FALSE])
-  
-  # Rename the "current_class_col" column to a more general name.
-  data.table::setnames(data, current_class_col, "pos_class_probability")
-  
-  # Only keep data with valid probabilities
-  data <- data[is.finite(pos_class_probability)]
-  
-  if(is_empty(data)){
-    # If input data is lacking, the table cannot be created.
-    return(data.table::data.table("subject_id"=character(0),
-                                  "pos_class"=character(0),
-                                  "is_pos_class"=logical(0),
-                                  "pos_class_probability"=numeric(0)))
-  }
-  
-  # Order with decreasing class probability
-  data <- data[order(-pos_class_probability)]
-  
-  # Find entries that match the expected class
-  data[, "is_pos_class":=outcome == current_class]
-  
-  # Drop outcome and probability and add the positive class
-  data[, ":="("outcome"=NULL, "pos_class"=current_class)]
-  
-  # Reorder columns
-  data.table::setcolorder(data, neworder=c("subject_id", "pos_class", "is_pos_class", "pos_class_probability"))
-  
-  return(data)
-}
-
-
-
-.process_auc_table <- function(basic_auc_table, samples=NULL){
-  # Low level function to compute the AUC table
-  
-  # Suppress NOTES due to non-standard evaluation in data.table
-  y <- pos_class_probability <- is_pos_class <- x <- NULL
-  
-  if(nrow(basic_auc_table) == 0){
-    return(data.table::data.table("x"=numeric(0), "y"=numeric(0)))
-  }
-  
-  if(is.null(samples)){
-    data <- data.table::copy(basic_auc_table)
-  } else {
-    sample_table     <- data.table::data.table("subject_id"=samples)
-    data <- merge(basic_auc_table, sample_table, by="subject_id", all.x=FALSE, all.y=TRUE, allow.cartesian=TRUE)[order(-pos_class_probability)]
-  }
-  
-  # Add sensititivity (y) and 1-specificity (x)
-  data[, ":="(x=cumsum(!is_pos_class), "y"=cumsum(is_pos_class))]
-  
-  # Determine the number of positive classes (n_y) and negative classes (n_x)
-  n_x <- tail(data, n=1)$x
-  n_y <- tail(data, n=1)$y
-  
-  if(is.na(n_x) | is.na(n_y)){
-    # A table cannot be drawn if there are no positive or negative classes.
-    return(data.table::data.table("x"=numeric(0), "y"=numeric(0)))
-  }
-  
-  if(n_x==0 | n_y==0){
-    # A table cannot be drawn if there are only positive or negative classes.
-    return(data.table::data.table("x"=numeric(0), "y"=numeric(0)))
-  }
-  
-  # Keep only unique points in x
-  data <- data[, list(y=max(y)), by="x"]
-  
-  # Update x and y
-  data[, ":="("x"=x/n_x, "y"=y/n_y)]
-  
-  return(data)
-}
-
-
-
-.complete_auc_table <- function(basic_auc_table, compute_confidence_intervals=FALSE, conf_alpha=0.05){
-  
-  # Suppress NOTES due to non-standard evaluation in data.table
-  y <- NULL
-  
-  if(is_empty(basic_auc_table)){
-    # Catch cases where the input is invalid.
-    if(!compute_confidence_intervals){
-      return(data.table::data.table("pos_class"=character(0), "x"=numeric(0), "y"=numeric(0)))
-      
-    } else {
-      return(data.table::data.table("pos_class"=character(0), "x"=numeric(0), "y"=numeric(0), "conf_int_lower"=numeric(0), "conf_int_upper"=numeric(0)))
-    }
-  }
-  
-  # Determine the positive class
-  current_pos_class <- head(basic_auc_table, n=1)$pos_class
-  
-  if(!compute_confidence_intervals){
-    # Calculate the auc_table directly from the data.
-    auc_table <- .process_auc_table(basic_auc_table=basic_auc_table, samples=NULL)
-    
-    if(nrow(auc_table) > 0){
-      # Add in initial data. Endpoints are always present in vallid auc_tables.
-      auc_table <- rbind(data.table::data.table("x"=0.0, "y"=0.0), auc_table)
-      
-      # Add positive class column and reorder columns
-      auc_table[, "pos_class":=current_pos_class]
-      data.table::setcolorder(auc_table, "pos_class")
-    } else {
-      auc_table <- data.table::data.table("pos_class"=character(0), "x"=numeric(0), "y"=numeric(0))
-    }
-    
-    return(auc_table)
-    
-  } else {
-    # Compute confidence intervals for the AUC table
-    n_iter <- ceiling(20 / conf_alpha)
-    
-    auc_table <- data.table::rbindlist(lapply(seq_len(n_iter), function(ii, basic_auc_table){
-      # Create samples
-      samples <- fam_sample(x=basic_auc_table$subject_id, size=nrow(basic_auc_table), replace=TRUE)
-      
-      # Generate the AUC table
-      auc_table <- .process_auc_table(basic_auc_table=basic_auc_table, samples=samples)
-      
-      # Check cases
-      if(nrow(auc_table) == 0){
-        auc_table <- data.table::data.table("x"=c(0.0, 1.0), "y"=c(0.0, 1.0))
-      } else {
-        if(head(auc_table, n=1)$x > 0){
-          auc_table <- rbind(data.table::data.table("x"=0.0, "y"=0.0), auc_table)
-        }
-      }
-      
-      # Approximate function at small intervals
-      x_out <- seq(from=0.0, to=1.0, by=0.01)
-      
-      auc_table <- data.table::data.table("x"=x_out,
-                                          "y"=stats::approx(x=auc_table$x, y=auc_table$y, xout=x_out, method="linear", rule=2)$y)
-      
-      return(auc_table)
-      
-    }, basic_auc_table=basic_auc_table))
-    
-    # Aggregate results
-    auc_table <- auc_table[, list(y=stats::median(y), conf_int_lower=stats::quantile(y, conf_alpha/2),
-                                  conf_int_upper=stats::quantile(y, 1-conf_alpha/2)), by="x"]
-    
-    # Add in initial data point. Endpoints are always present in vallid auc_tables.
-    auc_table_initial <- head(auc_table, n=1)
-    auc_table_initial[, ":="("x"=0.0, "y"=0.0)]
-    
-    # Combine.
-    auc_table <- rbind(auc_table_initial, auc_table)
-    
-    # Add positive class column and reorder columns
-    auc_table[, "pos_class":=current_pos_class]
-    data.table::setcolorder(auc_table, "pos_class")
-    
-    return(auc_table)
-  }
-}

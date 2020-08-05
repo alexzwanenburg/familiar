@@ -1,15 +1,18 @@
-logger.message <- function(mess_str, file_name=NULL){
+logger.message <- function(mess_str, file_name=NULL, indent=0L){
   # Write message to console and file
 
   if(is.null(file_name)) {
     file_name <- .get_log_file()
   }
-
+  
+  # Derive an indent string using two spaces for each indentation.
+  indent_str <- paste0(rep("  ", indent), collapse="")
+  
   # Date and time string
   date_str <- format(Sys.time(), "%Y-%m-%d %H:%M:%S")
 
   # Parse date and time with message string to log string
-  log_str  <- paste0(date_str, "\tMESSAGE\t", mess_str)
+  log_str  <- paste0(date_str, "\tMESSAGE\t", indent_str, mess_str)
 
   # Write message to log file
   if(!is.null(file_name)){
@@ -17,7 +20,7 @@ logger.message <- function(mess_str, file_name=NULL){
   }
 
   # Write message to console
-  message(mess_str)
+  message(paste0(indent_str, mess_str))
 }
 
 

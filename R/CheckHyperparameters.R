@@ -38,7 +38,10 @@ NULL
   }
   
   # Package data into a data object.
-  data <- methods::new("dataObject", data=data, is_pre_processed=FALSE, outcome_type=outcome_type)
+  data <- methods::new("dataObject",
+                       data=data,
+                       preprocessing_level="none",
+                       outcome_type=outcome_type)
   
   # Iterate over the feature selection methods or learners to parse and check the hyperparameters
   out_list <- lapply(user_function_names, .check_hyperparameters, in_list=parameter_list, data=data, is_vimp=is_vimp)

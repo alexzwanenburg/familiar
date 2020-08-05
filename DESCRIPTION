@@ -1,6 +1,6 @@
 Package: familiar
 Title: End-To-End Machine Learning and Data Analysis Framework
-Version: 0.0.0.51
+Version: 0.0.0.52
 Authors@R: c(
    person("Alex", "Zwanenburg",
           email = "alexander.zwanenburg@nct-dresden.de",
@@ -63,6 +63,7 @@ Suggests:
     MASS
 Collate: 
     'BatchNormalisation.R'
+    'BootstrapConfidenceInterval.R'
     'CheckArguments.R'
     'FamiliarS4Classes.R'
     'FamiliarS4Generics.R'
@@ -83,7 +84,12 @@ Collate:
     'FamiliarData.R'
     'FamiliarDataCollectors.R'
     'FamiliarDataComputation.R'
+    'FamiliarDataComputationConfusionMatrix.R'
     'FamiliarDataComputationDecisionCurveAnalysis.R'
+    'FamiliarDataComputationModelPerformance.R'
+    'FamiliarDataComputationPermutationVimp.R'
+    'FamiliarDataComputationPredictionData.R'
+    'FamiliarDataComputationROCCurve.R'
     'FamiliarEnsemble.R'
     'FamiliarModel.R'
     'FamiliarObjectConversion.R'
@@ -138,6 +144,7 @@ Collate:
     'PlotInputArguments.R'
     'PlotKaplanMeier.R'
     'PlotModelPerformance.R'
+    'PlotPermutationVariableImportance.R'
     'PlotSampleClustering.R'
     'PlotUnivariateImportance.R'
     'PlotUtilities.R'

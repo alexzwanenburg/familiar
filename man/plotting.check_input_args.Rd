@@ -14,6 +14,7 @@ plotting.check_input_args(
   conf_int = waiver(),
   conf_int_alpha = waiver(),
   conf_int_style = waiver(),
+  conf_int_default = c("step", "ribbon", "none"),
   facet_wrap_cols = waiver(),
   x_label = waiver(),
   y_label = waiver(),
@@ -47,11 +48,15 @@ is unset.}
 
 \item{conf_int}{(\emph{optional})}
 
-\item{conf_int_alpha}{(\emph{optional}) Alpha value to determine transparancy of
-\code{ribbon}-style confidence intervals in a plot. Only values between 0.0
-(fully transparent) and 1.0 (fully opaque) are allowed.}
+\item{conf_int_alpha}{(\emph{optional}) Alpha value to determine transparency of
+confidence intervals or, alternatively, other plot elements with which the
+confidence interval overlaps. Only values between 0.0 (fully transparent)
+and 1.0 (fully opaque) are allowed.}
 
-\item{conf_int_style}{(\emph{optional})}
+\item{conf_int_style}{(\emph{optional}) Confidence interval style. See details for
+allowed styles.}
+
+\item{conf_int_default}{Sets the default options for the confidence interval.}
 
 \item{facet_wrap_cols}{(\emph{optional}) Number of columns to generate when facet
 wrapping. If NULL, a facet grid is produced instead.}

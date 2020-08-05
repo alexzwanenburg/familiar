@@ -5,25 +5,35 @@
 \alias{dataObject-class}
 \title{Data object}
 \description{
-The dataObject class is used to resolve the issue of keeping track of pre-processing status and data loading inside complex workflows, e.g.
-nested predict functions inside a calibration function.
+The dataObject class is used to resolve the issue of keeping track of
+pre-processing status and data loading inside complex workflows, e.g. nested
+predict functions inside a calibration function.
 }
 \section{Slots}{
 
 \describe{
-\item{\code{data}}{NULL or data table containing the data. This is the data which will be read and used.}
+\item{\code{data}}{NULL or data table containing the data. This is the data which
+will be read and used.}
 
-\item{\code{is_pre_processed}}{logical, signifies whether the data has been pre-processed.}
+\item{\code{preprocessing_level}}{character indicating the level of pre-processing
+already conducted.}
 
 \item{\code{outcome_type}}{character, determines the outcome type.}
 
-\item{\code{delay_loading}}{logical. Allows delayed loading data, which enables data parsing downstream without additional workflow complexity or memory utilisation.}
+\item{\code{delay_loading}}{logical. Allows delayed loading data, which enables data
+parsing downstream without additional workflow complexity or memory
+utilisation.}
 
-\item{\code{perturb_level}}{numeric. This is the perturbation level for data which has not been loaded. Used for data retrieval by interacting with the run table of the accompanying model.}
+\item{\code{perturb_level}}{numeric. This is the perturbation level for data which
+has not been loaded. Used for data retrieval by interacting with the run
+table of the accompanying model.}
 
-\item{\code{load_validation}}{logical. This determines which internal data set will be loaded. If TRUE, the validation data will be loaded, whereas FALSE loads the development data.}
+\item{\code{load_validation}}{logical. This determines which internal data set will
+be loaded. If TRUE, the validation data will be loaded, whereas FALSE loads
+the development data.}
 
-\item{\code{aggregate_on_load}}{logical. Determines whether data is aggregated after loading.}
+\item{\code{aggregate_on_load}}{logical. Determines whether data is aggregated after
+loading.}
 
 \item{\code{sample_set_on_load}}{NULL or vector of sample identifiers to be loaded.}
 }}

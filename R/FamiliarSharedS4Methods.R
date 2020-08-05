@@ -58,7 +58,9 @@
   
   # Check data consistency of external data. We cannot transfer pre-processing state beyond this function
   if(!is(data, "dataObject")){
-    data <- methods::new("dataObject", data=data, is_pre_processed=is_pre_processed, outcome_type=object@outcome_type)
+    data <- create_data_object(object=object,
+                               data=data,
+                               is_pre_processed=is_pre_processed)
   }
   
   # Check if eval_times are provided, and load from settings attribute otherwise.

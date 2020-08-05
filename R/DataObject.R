@@ -66,7 +66,7 @@ setMethod("as_data_object", signature(data="data.table"),
             # Convert to dataObject
             data <- methods::new("dataObject",
                                  data = data,
-                                 is_pre_processed = FALSE,
+                                 preprocessing_level="none",
                                  outcome_type = settings$data$outcome_type,
                                  outcome_info = create_outcome_info(settings=settings))
             
@@ -133,21 +133,37 @@ setMethod("extract_settings_from_data", signature(data="dataObject"),
           })
 
 
+#####create_data_object (vimp method)#####
+setMethod("create_data_object", signature(object="familiarVimpMethod", data="ANY"),
+          function(object, data, is_pre_processed=FALSE) .create_data_object(object=object,
+                                                                             data=data,
+                                                                             is_pre_processed=is_pre_processed))
 
-#####create_data_object#####
+#####create_data_object (model)#####
 setMethod("create_data_object", signature(object="familiarModel", data="ANY"),
-          function(object, data, is_pre_processed=FALSE){
-            # Creates a data object
-            
-            # Skip checks if the data already is a data objects
-            if(is(data, "dataObject")) return(data)
-            
-            # TODO check input data consistency, i.e. column naming etc.
-            new_data <- methods::new("dataObject", data=data, is_pre_processed=is_pre_processed, outcome_type=object@outcome_type)
-            
-            return(new_data)
-            
-          })
+          function(object, data, is_pre_processed=FALSE) .create_data_object(object=object,
+                                                                             data=data,
+                                                                             is_pre_processed=is_pre_processed))
+          
+          
+#####create_data_object (ensemble)#####
+setMethod("create_data_object", signature(object="familiarEnsemble", data="ANY"),
+          function(object, data, is_pre_processed=FALSE) .create_data_object(object=object,
+                                                                             data=data,
+                                                                             is_pre_processed=is_pre_processed))
+
+.create_data_object <- function(object, data, is_pre_processed){
+  # Skip checks if the data already is a data objects
+  if(is(data, "dataObject")) return(data)
+  
+  # TODO check input data consistency, i.e. column naming etc.
+  new_data <- methods::new("dataObject",
+                           data=data,
+                           preprocessing_level=ifelse(is_pre_processed, "clustering", "none"),
+                           outcome_type=object@outcome_type)
+  
+  return(new_data)
+}
 
 
 #####load_delayed_data (model)#####
@@ -184,7 +200,7 @@ setMethod("load_delayed_data", signature(data="dataObject", object="ANY"),
               # Return an updated data object, but without data
               return(methods::new("dataObject",
                                   data=NULL,
-                                  is_pre_processed=FALSE,
+                                  preprocessing_level="none",
                                   outcome_type=data@outcome_type,
                                   aggregate_on_load=data@aggregate_on_load))
             }
@@ -192,7 +208,7 @@ setMethod("load_delayed_data", signature(data="dataObject", object="ANY"),
             # Prepare a new data object
             new_data <- methods::new("dataObject",
                                      data = get_data_from_backend(sample_identifiers=uniq_subj_id, column_names=c(non_feature_cols, req_feature_cols)),
-                                     is_pre_processed = FALSE,
+                                     preprocessing_level="none",
                                      outcome_type = data@outcome_type,
                                      delay_loading = FALSE,
                                      perturb_level = NA_integer_,
@@ -219,50 +235,6 @@ setMethod("load_delayed_data", signature(data="dataObject", object="ANY"),
             return(new_data)
           })
 
-
-#####preprocess_data (model, vimp)#####
-setMethod("preprocess_data", signature(data="dataObject", object="ANY"),
-          function(data, object, stop_at){
-            
-            if(!(is(object, "familiarModel") | is(object, "familiarVimpMethod"))){
-              ..error_reached_unreachable_code("preprocess_data: object is expected to be a familiarModel or familiarVimpMethod.")
-            }
-            
-            # Check whether pre-processing is required
-            if(data@is_pre_processed) {
-              return(data)
-            }
-            
-            # Set pre-processing flag to TRUE
-            data@is_pre_processed <- TRUE
-            
-            # Select only required features
-            data      <- apply_signature(data_obj=data, selected_feat=object@req_feature_cols)
-            
-            # Transform features
-            data      <- transform_features(data=data, feature_info_list=object@feature_info)
-            
-            # Normalise feature values
-            data      <- normalise_features(data=data, feature_info_list=object@feature_info)
-            
-            # Batch-normalise feature values
-            data      <- batch_normalise_features(data=data, feature_info_list=object@feature_info)
-            
-            # Impute missing values
-            data      <- impute_features(data=data, feature_info_list=object@feature_info)
-            
-            # Cluster features
-            data      <- cluster_features(data=data, feature_info_list=object@feature_info)
-            
-            if(is(object, "familiarModel")){
-              # Select only the signature (if present)
-              if(!is.null(object@signature)){
-                data    <- apply_signature(data_obj=data, selected_feat=object@signature)
-              }
-            }
-            
-            return(data)
-          })
 
 
 #####load_delayed_data (ensemble)#####
@@ -327,7 +299,7 @@ setMethod("load_delayed_data", signature(data="dataObject", object="familiarEnse
               # Return an updated data object, but without data
               return(methods::new("dataObject",
                                   data = NULL,
-                                  is_pre_processed = FALSE,
+                                  preprocessing_level="none",
                                   outcome_type = data@outcome_type,
                                   aggregate_on_load = data@aggregate_on_load))
             }
@@ -335,7 +307,7 @@ setMethod("load_delayed_data", signature(data="dataObject", object="familiarEnse
             # Prepare a new data object
             new_data <- methods::new("dataObject",
                                      data = get_data_from_backend(sample_identifiers=uniq_subj_id, column_names=c(non_feature_cols, req_feature_cols)),
-                                     is_pre_processed = FALSE,
+                                     preprocessing_level="none",
                                      outcome_type = data@outcome_type,
                                      delay_loading = FALSE,
                                      perturb_level = NA_integer_,
@@ -364,64 +336,133 @@ setMethod("load_delayed_data", signature(data="dataObject", object="familiarEnse
           })
 
 
+#####preprocess_data (vimp method)#####
+setMethod("preprocess_data", signature(data="dataObject", object="familiarVimpMethod"),
+          function(data, object, stop_at="clustering") .pre_process_data(data=data,
+                                                                         object=object,
+                                                                         stop_at=stop_at))
+
+
+#####preprocess_data (model)#####
+setMethod("preprocess_data", signature(data="dataObject", object="familiarModel"),
+          function(data, object, stop_at="clustering") .pre_process_data(data=data,
+                                                                         object=object,
+                                                                         stop_at=stop_at))
+
+
 #####preprocess_data (ensemble)#####
 setMethod("preprocess_data", signature(data="dataObject", object="familiarEnsemble"),
-          function(data, object, stop_at="clustering"){
-            # Preprocessing for data used by familiarEnsemble objects
-            
-            # Check whether pre-processing is required
-            if(data@is_pre_processed) {
-              return(data)
-            }
-            
-            if(!stop_at %in% c("signature", "transformation", "normalisation", "batch_normalisation", "imputation", "clustering")){
-              stop(paste0("Data pre-processing can only be stopped after \"signature\", \"transformation\", \"normalisation\", \"imputation\", \"clustering\". \"",
-                          stop_at, "\" is not a valid option."))
-            }
-            
-            # Set pre-processing flag to TRUE
-            data@is_pre_processed <- TRUE
-            
-            # Select only required features
-            data      <- apply_signature(data_obj=data, selected_feat=object@req_feature_cols)
-            
-            if(stop_at == "signature"){
-              return(data)
-            }
-            
-            # Transform features
-            data      <- transform_features(data=data, feature_info_list=object@feature_info)
-            
-            if(stop_at == "transformation"){
-              return(data)
-            }
-            
-            # Normalise feature values
-            data      <- normalise_features(data=data, feature_info_list=object@feature_info)
-            
-            if(stop_at == "normalisation"){
-              return(data)
-            }
-            
-            # Batch-normalise feature values
-            data      <- batch_normalise_features(data=data, feature_info_list=object@feature_info)
-            
-            if(stop_at == "batch_normalisation"){
-              return(data)
-            }
-            
-            # Impute missing values
-            data      <- impute_features(data=data, feature_info_list=object@feature_info)
-            
-            if(stop_at == "imputation"){
-              return(data)
-            }
-            
-            # Cluster features
-            data <- cluster_features(data=data, feature_info_list=object@feature_info)
-            
-            return(data)
-          })
+          function(data, object, stop_at="clustering") .pre_process_data(data=data,
+                                                                         object=object,
+                                                                         stop_at=stop_at))
+
+
+.pre_process_data <- function(data, object, stop_at){
+  
+  # Convert the preprocessing_level attained and the requested
+  # stopping level to ordinals.
+  preprocessing_level_attained <- .as_preprocessing_level(data@preprocessing_level)
+  stop_at <- .as_preprocessing_level(stop_at)
+  
+  # Check whether pre-processing is required
+  if(preprocessing_level_attained == stop_at){
+    return(data)
+    
+  } else if(preprocessing_level_attained > stop_at) {
+    ..error_reached_unreachable_code("preprocess_data,dataObject,ANY: data were preprocessed at a higher level than required by stop_at.")
+  }
+  
+  if(preprocessing_level_attained <= "signature" & stop_at >= "signature"){
+    # Apply the signature.
+    data <- apply_signature(data_obj=data,
+                            selected_feat=object@req_feature_cols)
+    
+    # Update pre-processing level externally from apply_signature, as
+    # it is not limited to pre-processing per sé.
+    data@preprocessing_level <- "signature"
+  }
+  
+  if(preprocessing_level_attained < "transformation" & stop_at >= "transformation"){
+    # Transform the features.
+    data <- transform_features(data=data,
+                               feature_info_list=object@feature_info)
+  }
+  
+  if(preprocessing_level_attained < "normalisation" & stop_at >= "normalisation"){
+    # Normalise feature values.
+    data <- normalise_features(data=data,
+                               feature_info_list=object@feature_info)
+  }
+  
+  if(preprocessing_level_attained < "batch_normalisation" & stop_at >= "batch_normalisation"){
+    # Batch-normalise feature values
+    data <- batch_normalise_features(data=data,
+                                     feature_info_list=object@feature_info)
+  }
+  
+  if(preprocessing_level_attained < "imputation" & stop_at >= "imputation"){
+    # Impute missing values
+    data  <- impute_features(data=data,
+                             feature_info_list=object@feature_info)
+  }
+  
+  if(preprocessing_level_attained < "clustering" & stop_at >= "clustering"){
+    # Cluster features
+    data <- cluster_features(data=data,
+                             feature_info_list=object@feature_info)
+  }
+  
+  if(is(object, "familiarModel") & stop_at >= "clustering"){
+    # Select only the signature (if present)
+    if(!is.null(object@signature)){
+      data <- apply_signature(data_obj=data,
+                              selected_feat=object@signature)
+    }
+  }
+  
+  return(data)
+}
+
+
+
+#####process_input_data (vimp method)#####
+setMethod("process_input_data", signature(object="familiarVimpMethod", data="ANY"),
+          function(object, data, is_pre_processed=FALSE, stop_at="clustering") .process_input_data(object=object,
+                                                                                                   data=data,
+                                                                                                   is_pre_processed=is_pre_processed,
+                                                                                                   stop_at=stop_at))
+
+#####process_input_data (model)#####
+setMethod("process_input_data", signature(object="familiarModel", data="ANY"),
+          function(object, data, is_pre_processed=FALSE, stop_at="clustering") .process_input_data(object=object,
+                                                                                                   data=data,
+                                                                                                   is_pre_processed=is_pre_processed,
+                                                                                                   stop_at=stop_at))
+
+#####process_input_data (ensemble)#####
+setMethod("process_input_data", signature(object="familiarEnsemble", data="ANY"),
+          function(object, data, is_pre_processed=FALSE, stop_at="clustering") .process_input_data(object=object,
+                                                                                                   data=data,
+                                                                                                   is_pre_processed=is_pre_processed,
+                                                                                                   stop_at=stop_at))
+
+.process_input_data <- function(object, data, is_pre_processed, stop_at){
+  # Check whether data is a dataObject, and create one otherwise
+  if(!is(data, "dataObject")){
+    data <- create_data_object(object=object, data=data, is_pre_processed=is_pre_processed)
+  }
+  
+  # Load data from internal memory, if not provided otherwise
+  if(data@delay_loading){
+    data <- load_delayed_data(data=data, object=object, stop_at=stop_at)
+  }
+  
+  # Pre-process data in case it has not been pre-processed
+  data <- preprocess_data(data=data, object=object, stop_at=stop_at)
+  
+  # Return data
+  return(data)
+}
 
 
 #####select_data_from_samples#####
@@ -667,10 +708,16 @@ setMethod("filter_bad_samples", signature(data="dataObject"),
 setMethod("transform_features", signature(data="dataObject"),
           function(data, feature_info_list, invert=FALSE){
             
-            # Check if data is empty
-            if(is_empty(data)){
-              return(data)
+            # Check if transformation was already performed.
+            if(!invert & .as_preprocessing_level(data) >= "transformation"){
+              ..error_reached_unreachable_code("transform_features,dataObject: attempting to transform data that are already transformed.")
             }
+            
+            # Update the preprocessing level.
+            if(!invert) data@preprocessing_level <- "transformation"
+            
+            # Check if data is empty
+            if(is_empty(data)) return(data)
             
             # Find the columns containing features
             feature_columns <- get_feature_columns(x=data)
@@ -680,7 +727,7 @@ setMethod("transform_features", signature(data="dataObject"),
                                             feature_info_list=feature_info_list,
                                             features=feature_columns,
                                             invert=invert)
-            
+
             return(data)
           })
 
@@ -718,10 +765,21 @@ setMethod("transform_features", signature(data="data.table"),
 setMethod("normalise_features", signature(data="dataObject"),
           function(data, feature_info_list, invert=FALSE){
             
-            # Check if data is empty
-            if(is_empty(data)){
-              return(data)
+            # Check if normalisation was already performed.
+            if(!invert & .as_preprocessing_level(data) >= "normalisation"){
+              ..error_reached_unreachable_code("normalise_features,dataObject: attempting to normalise data that are already normalised.")
             }
+            
+            # Check if the previous step (transformation) was conducted.
+            if(!invert & .as_preprocessing_level(data) < "transformation"){
+              ..error_reached_unreachable_code("normalise_features,dataObject: data should be transformed prior to normalisation.")
+            }
+            
+            # Update the preprocessing_level.
+            if(!invert) data@preprocessing_level <- "normalisation"
+            
+            # Check if data is empty
+            if(is_empty(data)) return(data)
             
             # Find the columns containing features
             feature_columns <- get_feature_columns(x=data)
@@ -769,10 +827,21 @@ setMethod("normalise_features", signature(data="data.table"),
 setMethod("batch_normalise_features", signature(data="dataObject"),
           function(data, feature_info_list, cl=NULL){
             
-            # Check if data is empty
-            if(is_empty(data)){
-              return(data)
+            # Check if batch normalisation was already performed.
+            if(.as_preprocessing_level(data) >= "batch_normalisation"){
+              ..error_reached_unreachable_code("batch_normalise_features,dataObject: attempting to batch normalise data that are already batch normalised.")
             }
+            
+            # Check if the previous step (normalisation) was conducted.
+            if(.as_preprocessing_level(data) < "normalisation"){
+              ..error_reached_unreachable_code("batch_normalise_features,dataObject: data should be normalised globally prior to batch normalisation.")
+            }
+            
+            # Update the attained processing level.
+            data@preprocessing_level <- "batch_normalisation"
+            
+            # Check if data is empty
+            if(is_empty(data)) return(data)
             
             # Find the columns containing features
             feature_columns <- get_feature_columns(x=data)
@@ -805,16 +874,25 @@ setMethod("batch_normalise_features", signature(data="dataObject"),
 setMethod("impute_features", signature(data="dataObject"),
           function(data, feature_info_list, cl=NULL){
             
-            # Check if data is empty
-            if(is_empty(data)){
-              return(data)
+            # Check if imputation was already performed.
+            if(.as_preprocessing_level(data) >= "imputation"){
+              ..error_reached_unreachable_code("impute_features,dataObject: attempting to impute data that already have been imputed.")
             }
             
-            # Check if data has features
-            if(!has_feature_data(x=data)){
-              return(data)
+            # Check if the previous step (batch normalisation) was conducted.
+            if(.as_preprocessing_level(data) < "batch_normalisation"){
+              ..error_reached_unreachable_code("impute_features,dataObject: data should be batch normalised prior to imputation.")
             }
+            
+            # Update the attained processing level.
+            data@preprocessing_level <- "imputation"
+            
+            # Check if data is empty
+            if(is_empty(data)) return(data)
 
+            # Check if data has features
+            if(!has_feature_data(x=data)) return(data)
+            
             # Find the columns containing features
             feature_columns <- get_feature_columns(x=data)
             
@@ -822,16 +900,20 @@ setMethod("impute_features", signature(data="dataObject"),
             censored_features <- feature_columns[sapply(feature_columns, function(ii, data_obj) (!all(is_valid_data(data_obj@data[[ii]]))), data_obj=data)]
             
             # Skip if there are no censored features
-            if(length(censored_features) == 0){
-              return(data)
-            }
+            if(length(censored_features) == 0) return(data)
             
             # Fill out all censored entries by simple imputation
-            uncensored_data <- impute.impute_simple(cl=cl, data_obj=data, feature_info_list=feature_info_list, censored_features=censored_features)
+            uncensored_data <- impute.impute_simple(cl=cl,
+                                                    data_obj=data,
+                                                    feature_info_list=feature_info_list,
+                                                    censored_features=censored_features)
             
             # Fill out all censored entries by lasso-based imputation
-            data <- impute.impute_lasso(cl=cl, data_obj=data, uncensored_data_obj=uncensored_data,
-                                        feature_info_list=feature_info_list, censored_features=censored_features)
+            data <- impute.impute_lasso(cl=cl,
+                                        data_obj=data,
+                                        uncensored_data_obj=uncensored_data,
+                                        feature_info_list=feature_info_list,
+                                        censored_features=censored_features)
             
             return(data)
           })
@@ -841,16 +923,24 @@ setMethod("impute_features", signature(data="dataObject"),
 setMethod("cluster_features", signature(data="dataObject"),
           function(data, feature_info_list){
             
-            # Check if data is empty
-            if(is_empty(data)){
-              return(data)
+            if(.as_preprocessing_level(data) >= "clustering"){
+              ..error_reached_unreachable_code("cluster_features,dataObject: attempting to cluster data that already have been clustered.")
             }
             
-            # Check if data has features
-            if(!has_feature_data(x=data)){
-              return(data)
+            # Check if the previous step (imputation) was conducted.
+            if(.as_preprocessing_level(data) < "imputation"){
+              ..error_reached_unreachable_code("cluster_features,dataObject: data should be imputed prior to clustering.")
             }
-
+            
+            # Update the attained processing level.
+            data@preprocessing_level <- "clustering"
+            
+            # Check if data is empty
+            if(is_empty(data)) return(data)
+            
+            # Check if data has features
+            if(!has_feature_data(x=data)) return(data)
+            
             # Find the columns containing features
             feature_columns <- get_feature_columns(x=data)
             
@@ -858,9 +948,7 @@ setMethod("cluster_features", signature(data="dataObject"),
             clustering_features <- find_clustering_features(features=feature_columns, feature_info_list=feature_info_list)
             
             # Skip if all clusters are singular
-            if(length(clustering_features) == 0){
-              return(data)
-            }
+            if(length(clustering_features) == 0) return(data)
             
             # Reconstitute a cluster table
             cluster_table <- get_cluster_table(feature_info_list=feature_info_list, selected_features=clustering_features)

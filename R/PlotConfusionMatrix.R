@@ -172,10 +172,10 @@ setMethod("plot_confusion_matrix", signature(object="familiarCollection"),
             
             # Check for empty data
             if(is.null(x)) return(NULL)
-            if(is_empty(x$ensemble)) return(NULL)
+            if(is_empty(x$ensemble$data)) return(NULL)
             
             # Extract the data for the ensemble.
-            x <- data.table::copy(x$ensemble)
+            x <- data.table::copy(x$ensemble$data)
             
             ##### Check input arguments ------------------------------------------------
             

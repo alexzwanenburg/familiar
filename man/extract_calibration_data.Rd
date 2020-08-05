@@ -9,6 +9,7 @@ extract_calibration_data(
   data,
   eval_times = waiver(),
   is_pre_processed = FALSE,
+  message_indent = 0L,
   verbose = FALSE,
   ...
 )
@@ -29,6 +30,9 @@ parameter is read from settings used at creation of the underlying
 \item{is_pre_processed}{Flag that indicates whether the data was already
 pre-processed externally, e.g. normalised and clustered. Only used if the
 \code{data} argument is a \code{data.table} or \code{data.frame}.}
+
+\item{message_indent}{Number of indentation steps for messages shown during
+computation and extraction of various data elements.}
 
 \item{verbose}{Flag to indicate whether feedback should be provided on the
 computation and extraction of various data elements.}

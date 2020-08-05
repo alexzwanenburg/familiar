@@ -13,7 +13,6 @@ setMethod(".predict", signature(object="familiarModel"),
                                        is_pre_processed=is_pre_processed,
                                        stop_at="clustering")
             
-            
             if(is.null(type)){
               # Predict using the model and the standard type.
               prediction_table <- ..predict(object=object,
@@ -51,7 +50,7 @@ setMethod(".predict", signature(object="familiarModel"),
 
 #####.predict (ensemble)#####
 setMethod(".predict", signature(object="familiarEnsemble"),
-          function(object, data, allow_recalibration=TRUE, is_pre_processed=FALSE, time=NULL, type=NULL, dir_path=NULL, ensemble_method="median") {
+          function(object, data, allow_recalibration=TRUE, is_pre_processed=FALSE, time=NULL, type=NULL, dir_path=NULL, ensemble_method="median", ...) {
             # Predict function for a model ensemble. This will always return
             # ensemble information, and not details corresponding to the
             # individual models.

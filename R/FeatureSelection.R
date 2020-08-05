@@ -66,7 +66,7 @@ compute_variable_importance <- function(run, fs_method, hpo_list, proj_list, set
   # Data will be loaded at run time in .vimp.
   data <- methods::new("dataObject",
                        data = NULL,
-                       is_pre_processed = FALSE,
+                       preprocessing_level="none",
                        outcome_type = settings$data$outcome_type,
                        delay_loading = TRUE,
                        perturb_level = tail(run$run_table, n=1)$perturb_level,

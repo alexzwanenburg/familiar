@@ -819,13 +819,27 @@ processing for hyperparameter optimisation. Defaults to \code{TRUE}. When set to
 \code{FALSE}, this will disable the use of parallel processing while performing
 optimisation, regardless of the settings of the \code{parallel} parameter.
 \code{parallel_hyperparameter_optimisation} is ignored if \code{parallel=FALSE}.}
+    \item{\code{evaluate_top_level_only}}{(\emph{optional}) Flag that signals that only
+evaluation at the most global experiment level is required. Consider a
+cross-validation experiment with additional external validation. The global
+experiment level consists of data that are used for development, internal
+validation and external validation. The next lower experiment level are the
+individual cross-validation iterations.
+
+When the flag is \code{true}, evaluations take place on the global level only,
+and no results are generated for the next lower experiment levels. In our
+example, this means that results from individual cross-validation iterations
+are not computed and shown. When the flag is \code{false}, results are computed
+from both the global layer and the next lower level.
+
+Setting the flag to \code{true} saves computation time.}
     \item{\code{ensemble_method}}{(\emph{optional}) Method for ensembling predictions from
 models for the same sample. Available methods are:
 \itemize{
 \item \code{median} (default): Use the median of the predicted values as the ensemble
 value for a sample.
-\item \code{mean}: Use the mean of the predicted values as the ensemble
-value for a sample.
+\item \code{mean}: Use the mean of the predicted values as the ensemble value for a
+sample.
 }}
     \item{\code{evaluation_metric}}{(\emph{optional}) One or more metrics for assessing model
 performance. See the vignette on performance metrics for the available
@@ -833,16 +847,57 @@ metrics.
 
 Confidence intervals (or rather credibility intervals) are computed for each
 metric during evaluation. This is done using bootstraps, the number of which
-depends on the value of \code{confidence_alpha} (Davison and Hinkley, 1997).
+depends on the value of \code{confidence_level} (Davison and Hinkley, 1997).
 
 If unset, the metric in the \code{optimisation_metric} variable is used.}
-    \item{\code{confidence_alpha}}{(\emph{optional}) Numeric value for the alpha level at
-which confidence (or credibility intervals) intervals are determined using
-bootstrap estimation. The number of bootstraps depend on \code{confidence_alpha}.
-\code{familiar} uses the rule of thumb \eqn{n = 20 / \alpha} to determine the
-number of required bootstraps.
+    \item{\code{confidence_level}}{(\emph{optional}) Numeric value for the level at which
+confidence intervals are determined. In the case bootstraps are used to
+determine the confidence intervals bootstrap estimation, \code{familiar} uses the
+rule of thumb \eqn{n = 20 / ci.level} to determine the number of required
+bootstraps.
 
-The default value is \code{0.05}.}
+The default value is \code{0.95}.}
+    \item{\code{bootstrap_ci_method}}{(\emph{optional}) Method used to determine bootstrap
+confidence intervals (Efron and Hastie, 2016). The following methods are
+implemented:
+\itemize{
+\item \code{percentile}: Confidence intervals obtained using the percentile method.
+\item \code{bc} (default): Bias-corrected confidence intervals.
+}
+
+Note that the standard method is not implemented because this method is
+often not suitable due to non-normal distributions. The bias-corrected and
+accelerated (BCa) method is not implemented yet.}
+    \item{\code{compute_model_ci}}{(\emph{optional}) This parameter can be set to enable
+computation of bootstrap confidence intervals for individual models in
+several parts of the evaluation. The parameter can take one or more of the
+following values: \code{all}, \code{model_performance}, \code{auc_data},
+\code{decision_curve_analyis}, \code{permutation_vimp} as well as \code{true}, \code{false} and
+\code{none}.
+
+By default, bootstrap confidence intervals are not computed for individual
+models.}
+    \item{\code{compute_ensemble_ci}}{(\emph{optional}) This parameter can be set to enable
+computation of bootstrap confidence intervals for ensemble models in
+several parts of the evaluation. The parameter can take one or more of the
+following values: \code{all}, \code{model_performance}, \code{auc_data},
+\code{decision_curve_analyis}, \code{permutation_vimp} as well as \code{true}, \code{false} and
+\code{none}.
+
+By default, bootstrap confidence intervals are computed for ensemble
+models.}
+    \item{\code{aggregate_ci}}{(\emph{optional}) Bootstraps are used to determine confidence
+intervals. This information can be stored for export. However, in many cases
+this is not necessary, and keeping the bootstrap data can lead to large
+\code{familiarData} and \code{familiarCollection} objects. This provides the option to
+aggregate the bootstrap data by computing the confidence interval directly.
+
+This parameter can take one or more of the following values: \code{all},
+\code{model_performance}, \code{auc_data}, \code{decision_curve_analyis},
+\code{permutation_vimp} as well as \code{true}, \code{false} and \code{none}. By default,
+bootstrap data is aggregated by computing confidence intervals for
+receiver-operating characteristic curves, decision curves and permutation
+variable importance.}
     \item{\code{feature_cluster_method}}{(\emph{optional}) Method used to perform clustering
 of features. The same methods as for the \code{cluster_method} configuration
 parameter are available: \code{none}, \code{hclust}, \code{agnes}, \code{diana} and \code{pam}.
@@ -885,7 +940,10 @@ pair-wise similarity that is required to form feature clusters with the
 defined using the \code{cluster_similarity_threshold} parameter.
 
 By default, the value for the \code{cluster_similarity_threshold} configuration
-parameter is used.}
+parameter is used.
+
+Unlike for \code{cluster_similarity_threshold}, more than one value can be
+supplied here.}
     \item{\code{sample_cluster_method}}{(\emph{optional}) The method used to perform
 clustering based on distance between samples. These are the same methods as
 for the \code{cluster_method} configuration parameter: \code{hclust}, \code{agnes}, \code{diana}
@@ -1077,6 +1135,8 @@ Intelligent Optimization (ed. Coello, C. A. C.) 6683, 507–523 (Springer
 Berlin Heidelberg, 2011).
 \item Davison, A. C. & Hinkley, D. V. Bootstrap methods and their application.
 (Cambridge University Press, 1997).
+\item Efron, B. & Hastie, T. Computer Age Statistical Inference. (Cambridge
+University Press, 2016).
 \item Lausen, B. & Schumacher, M. Maximally Selected Rank Statistics.
 Biometrics 48, 73 (1992).
 \item Hothorn, T. & Lausen, B. On the exact distribution of maximally selected

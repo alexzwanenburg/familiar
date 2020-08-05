@@ -150,6 +150,8 @@
       <parallel_hyperparameter_optimisation></parallel_hyperparameter_optimisation>
     </hyperparameter_optimisation>
     <evaluation>
+      <!-- Evaluate only the most important experiment level (true), or additionally evaluate underlying levels (false) (optional, default: true)-->
+      <evaluate_top_level_only></evaluate_top_level_only>
       <!-- Method for clustering features (optional, default: same as cluster_method) -->
       <feature_cluster_method></feature_cluster_method>
       <!-- Linkage method for clustering features (optional, default: same as cluster_linkage_method) -->
@@ -170,8 +172,16 @@
       <ensemble_method></ensemble_method>
       <!-- Metric(s) for assessing model performance (optional, default: same as metric for hyperparameter_optimisation, multiple possible) -->
       <evaluation_metric></evaluation_metric>
-      <!-- Alpha for confidence intervals (optional, default: 0.05) -->
-      <confidence_alpha></confidence_alpha>
+      <!-- Confidence level for confidence intervals (optional, default: 0.95) -->
+      <confidence_level></confidence_level>
+      <!-- Method for bootstrap confidence interval (optional, default: bc) -->
+      <bootstrap_ci_method></bootstrap_ci_method>
+      <!-- Compute bootstraps confidence intervals for individual models. Individual evaluation steps can be selected. Optional (default: none) -->
+      <compute_model_ci></compute_model_ci>
+      <!-- Compute bootstraps confidence intervals for ensemble models. Individual evaluation steps can be selected. Optional (default: all) -->
+      <compute_ensemble_ci></compute_ensemble_ci>
+      <!-- Computation steps where confidence intervals may be determined during computation, instead of during export (optional, default: auc_data, decision_curve_analyis, permutation_vimp) -->
+      <aggregate_ci></aggregate_ci>
       <!-- Method for aggregating variable importances (optional, default: same as method in feature_selection) -->
       <eval_aggregation_method></eval_aggregation_method>
       <!-- Rank threshold for determining the best features (optional, default: same as rank threshold in feature_selection) -->

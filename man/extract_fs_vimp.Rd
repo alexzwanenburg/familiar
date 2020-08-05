@@ -8,6 +8,7 @@ extract_fs_vimp(
   object,
   aggregation_method = waiver(),
   rank_threshold = waiver(),
+  message_indent = 0L,
   verbose = FALSE,
   ...
 )
@@ -36,6 +37,9 @@ See the documentation for the \code{vimp_aggregation_rank_threshold} argument in
 
 If not provided explicitly, this parameter is read from settings used at
 creation of the underlying \code{familiarModel} objects.}
+
+\item{message_indent}{Number of indentation steps for messages shown during
+computation and extraction of various data elements.}
 
 \item{verbose}{Flag to indicate whether feedback should be provided on the
 computation and extraction of various data elements.}

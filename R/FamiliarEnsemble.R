@@ -561,30 +561,6 @@ setMethod("model_is_trained", signature(object="familiarEnsemble"),
             }
           })
 
-#####process_input_data (ensemble)#####
-setMethod("process_input_data", signature(object="familiarEnsemble", data="ANY"),
-          function(object, data, is_pre_processed=FALSE, stop_at="clustering"){
-            # Prepares data for determination of mutual correlation, univariate
-            # analysis, etc.
-            
-            # Check whether data is a dataObject, and create one otherwise
-            if(!is(data, "dataObject")){
-              data <- create_data_object(object=object, data=data, is_pre_processed=is_pre_processed)
-            }
-            
-            # Load data from internal memory, if not provided otherwise
-            if(data@delay_loading){
-              data <- load_delayed_data(data=data, object=object, stop_at=stop_at)
-            }
-            
-            # Pre-process data in case it has not been pre-processed
-            if(!data@is_pre_processed){
-              data <- preprocess_data(data=data, object=object, stop_at=stop_at)
-            }
-            
-            # Return data
-            return(data)
-          })
 
 #####add_package_version (ensemble)#####
 setMethod("add_package_version", signature(object="familiarEnsemble"),

@@ -30,6 +30,11 @@ setMethod("plot_all", signature(object="familiarCollection"),
                                                                  "dir_path"=dir_path),
                                                             list(...)))
             
+            # Permutation variable importance
+            do.call(plot_permutation_variable_importance, args=c(list("object"=object,
+                                                                      "dir_path"=dir_path),
+                                                                 list(...)))
+            
             # Feature similarity heatmap
             do.call(plot_feature_similarity, args=append(list("object"=object,
                                                               "dir_path"=dir_path),

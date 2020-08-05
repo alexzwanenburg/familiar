@@ -7,8 +7,10 @@
 extract_feature_similarity_table(
   object,
   data,
+  cl = NULL,
   feature_similarity_metric = waiver(),
   verbose = FALSE,
+  message_indent = 0L,
   ...
 )
 }
@@ -18,6 +20,9 @@ extract_feature_similarity_table(
 
 \item{data}{A \code{dataObject} object, \code{data.table} or \code{data.frame} that
 constitutes the data that are used to compute}
+
+\item{cl}{Cluster created using the \code{parallel} package. This cluster is then
+used to speed up computation through parallelisation.}
 
 \item{feature_similarity_metric}{Metric to determine pairwise similarity
 between features. Similarity is computed in the same manner as for
@@ -29,6 +34,9 @@ If not provided explicitly, this parameter is read from settings used at
 creation of the underlying \code{familiarModel} objects.}
 
 \item{verbose}{Flag to indicate whether feedback should be provided on the
+computation and extraction of various data elements.}
+
+\item{message_indent}{Number of indentation steps for messages shown during
 computation and extraction of various data elements.}
 
 \item{...}{Unused arguments.}

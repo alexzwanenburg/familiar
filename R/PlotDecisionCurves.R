@@ -25,9 +25,9 @@ NULL
 #'@details This function generates plots for decision curves.
 #'
 #'  Available splitting variables are: `fs_method`, `learner`, `data_set` and
-#'  `pos_class` (categorical outcomes) or `eval_time` (survival outcomes). By
-#'  default, the data is split by `fs_method` and `learner`, with faceting by
-#'  `data_set` and colouring by `pos_class` or `eval_time`.
+#'  `pos_class` (categorical outcomes) or `evaluation_time` (survival outcomes).
+#'  By default, the data is split by `fs_method` and `learner`, with faceting by
+#'  `data_set` and colouring by `pos_class` or `evaluation_time`.
 #'
 #'  Available palettes for `discrete_palette` are those listed by
 #'  `grDevices::palette.pals()` (requires R >= 4.0.0), `grDevices::hcl.pals()`
@@ -36,6 +36,18 @@ NULL
 #'  name in `grDevices`. If not specified, a default palette based on palettes
 #'  in Tableau are used. You may also specify your own palette by using colour
 #'  names listed by `grDevices::colors()` or through hexadecimal RGB strings.
+#'
+#'  Bootstrap confidence intervals of the decision curve (if present) can be
+#'  shown using various styles set by `conf_int_style`:
+#'
+#'  * `ribbon` (default): confidence intervals are shown as a ribbon with an
+#'  opacity of `conf_int_alpha` around the point estimate of the decision curve.
+#'
+#'  * `step` (default): confidence intervals are shown as a step function around
+#'  the point estimate of the decision curve.
+#'
+#'  * `none`: confidence intervals are not shown. The point estimate of the
+#'  decision curve is shown as usual.
 #'
 #'  Labelling methods such as `set_fs_method_names` or `set_data_set_names` can
 #'  be applied to the `familiarCollection` object to update labels, and order
@@ -191,7 +203,7 @@ setMethod("plot_decision_curve", signature(object="familiarCollection"),
             if(is.null(x)) return(NULL)
             if(is_empty(x$ensemble)) return(NULL)
             if(is_empty(x$ensemble$data)) return(NULL)
-            if(is_empty(x$ensemble$intervention_data)) return(NULL)
+            if(is_empty(x$ensemble$intervention_all)) return(NULL)
             
             # Extract the data for the ensemble.
             x <- x$ensemble
@@ -261,7 +273,7 @@ setMethod("plot_decision_curve", signature(object="familiarCollection"),
               split_variable <- "pos_class"
               
             } else if(object@outcome_type %in% c("survival")){
-              split_variable <- "eval_time"
+              split_variable <- "evaluation_time"
               
             } else {
               ..error_outcome_type_not_implemented(object@outcome_type)
@@ -371,7 +383,7 @@ setMethod("plot_decision_curve", signature(object="familiarCollection"),
             ##### Create plots ---------------------------------------------------------
             
             # Combine the data with intervention data before splitting
-            intervention_data <- x$intervention_data
+            intervention_data <- x$intervention_all
             setnames(intervention_data, old="net_benefit", new="intervention_all")
             
             x <- merge(x=x$data,

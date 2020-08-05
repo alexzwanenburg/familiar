@@ -78,7 +78,8 @@ cluster.get_featurewise_similarity_table <- function(cl=NULL, data_obj,
                                                      feature_columns=NULL,
                                                      settings=NULL,
                                                      similarity_metric=NULL,
-                                                     verbose=FALSE){
+                                                     verbose=FALSE,
+                                                     message_indent=0L){
   # Create a pairwise similarity table
   
   # Internal function for computing pair-wise similarity
@@ -111,8 +112,9 @@ cluster.get_featurewise_similarity_table <- function(cl=NULL, data_obj,
   
   if(verbose){
     # Message similarity metric
-    logger.message(paste0("Pre-processing: Pair-wise distances between features are quantified by ",
-                          similarity.message_similarity_metric(similarity_metric=similarity_metric), "."))
+    logger.message(paste0("Pair-wise distance between features is quantified by ",
+                          similarity.message_similarity_metric(similarity_metric=similarity_metric), "."),
+                   indent=message_indent)
   }
   
   # Get feature columns if this was not provided
@@ -151,7 +153,11 @@ cluster.get_featurewise_similarity_table <- function(cl=NULL, data_obj,
 
 
 
-cluster.get_samplewise_similarity_table <- function(cl=NULL, data_obj, similarity_metric, verbose=FALSE){
+cluster.get_samplewise_similarity_table <- function(cl=NULL,
+                                                    data_obj,
+                                                    similarity_metric,
+                                                    verbose=FALSE,
+                                                    message_indent=0L){
   
   # Internal function for computing pair-wise similarity
   ..compute_similarity <- function(ii, combinations, data, similarity_metric, categorical_mask){
@@ -183,8 +189,9 @@ cluster.get_samplewise_similarity_table <- function(cl=NULL, data_obj, similarit
   
   if(verbose){
     # Message similarity metric
-    logger.message(paste0("Pair-wise distances between samples are quantified by ",
-                          similarity.message_similarity_metric(similarity_metric=similarity_metric), "."))
+    logger.message(paste0("Pair-wise distance between samples is quantified by ",
+                          similarity.message_similarity_metric(similarity_metric=similarity_metric), "."),
+                   indent=message_indent)
   }
   
   # Get feature columns.
@@ -261,7 +268,8 @@ cluster.get_distance_matrix <- function(cl=NULL, data_obj=NULL, similarity_table
                                                                  feature_columns=feature_columns,
                                                                  settings=settings,
                                                                  similarity_metric=similarity_metric,
-                                                                 verbose=verbose)
+                                                                 verbose=verbose,
+                                                                 message_indent=1L)
     
   } else {
     similarity_table <- data.table::copy(similarity_table)
@@ -1092,8 +1100,14 @@ cluster.compute_cluster <- function(cluster_table, data_obj){
   
   # Check cluster similarity threshold value
   if(!is.waive(cluster_similarity_threshold)){
-    .check_number_in_valid_range(x=cluster_similarity_threshold, var_name=paste0(var_type, "_similarity_threshold"),
-                                 range=c(0.0, 1.0))
+    if(var_type == "feature"){
+      # During evaluation 
+      sapply(cluster_similarity_threshold, .check_number_in_valid_range, var_name=paste0(var_type, "_similarity_threshold"),
+             range=c(0.0, 1.0))
+    } else {
+      .check_number_in_valid_range(x=cluster_similarity_threshold, var_name=paste0(var_type, "_similarity_threshold"),
+                                   range=c(0.0, 1.0))
+    }
   }
   
   # Check cluster representation method
