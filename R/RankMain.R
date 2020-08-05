@@ -371,7 +371,7 @@ rank.consensus_clustering <- function(vimp_table){
   # Performs consensus clustering and return a table that can be 
   
   # Suppress NOTES due to non-standard evaluation in data.table
-  is_co_clustered <- n_co_clustered <- n_total <- cluster_size <- cluster_repr_feature <- NULL
+  value <- is_co_clustered <- n_co_clustered <- n_total <- cluster_size <- cluster_repr_feature <- NULL
   
   # Check if the vimp_table is empty.
   if(is_empty(vimp_table)){
@@ -472,10 +472,13 @@ rank.consensus_clustering <- function(vimp_table){
                                                    "feature_2"=features,
                                                    "value"=0.0))
   
+  # Remove any duplicate entries introduced by adding the diagonal.
+  co_cluster_table <- co_cluster_table[, list("value"=min(value)), by=c("feature_1", "feature_2")]
+  
   # Create n x n table
   co_cluster_table  <- data.table::dcast(co_cluster_table,
-                                       feature_1 ~ feature_2,
-                                       value.var="value")
+                                         feature_1 ~ feature_2,
+                                         value.var="value")
   
   rownames(co_cluster_table) <- co_cluster_table$feature_1
   co_cluster_table[, "feature_1":=NULL]
