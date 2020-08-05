@@ -161,45 +161,6 @@ NULL
 #'
 #'  If not provided explicitly, this parameter is read from settings used at
 #'  creation of the underlying `familiarModel` objects.
-#'
-#'@param confidence_level (*optional*) Numeric value for the level at which
-#'  confidence are determined. In the case bootstraps are used to determine the
-#'  confidence intervals bootstrap estimation, `familiar` uses the rule of thumb
-#'  \eqn{n = 20 / ci.level} to determine the number of required bootstraps.
-#'
-#'  If not provided explicitly, this parameter is read from settings used at
-#'  creation of the underlying `familiarModel` objects.
-#'  
-#'  #'@param confidence_level (*optional*) Numeric value for the level at which
-#'  confidence are determined. In the case bootstraps are used to determine the
-#'  confidence intervals bootstrap estimation, `familiar` uses the rule of thumb
-#'  \eqn{n = 20 / ci.level} to determine the number of required bootstraps.
-#'
-#'  The default value is `0.95`.
-#'
-#'@param bootstrap_ci_method (*optional*) Method used to determine bootstrap
-#'  confidence intervals (Efron and Hastie, 2016). The following methods are
-#'  implemented:
-#'
-#'  * `percentile`: Confidence intervals obtained using the percentile method.
-#'
-#'  * `bc` (default): Bias-corrected confidence intervals.
-#'
-#'  Note that the standard method is not implemented because this method is
-#'  often not suitable due to non-normal distributions. The bias-corrected and
-#'  accelerated method is not implemented yet.
-#'
-#'@param aggregate_ci (*optional*) Bootstraps are used to determine confidence
-#'  intervals. This information can be stored for export. However, in many cases
-#'  this is not necessary, and keeping the bootstrap data can lead to large
-#'  `familiarData` and `familiarCollection` objects. This provides the option to
-#'  aggregate the bootstrap data by computing the confidence interval directly.
-#'
-#'  This parameter can take one or more of the following values: `all`,
-#'  `model_performance`, `auc_data`, `decision_curve_analyis`, as well as
-#'  `true`, `false` and `none`. By default, bootstrap data is aggregated by
-#'  computing confidence intervals for receiver-operating characteristic curves
-#'  and decision curves.
 #'  
 #'@param icc_type String indicating the type of intraclass correlation
 #'  coefficient (`1`, `2` or `3`) that should be used to compute robustness for
@@ -216,6 +177,8 @@ NULL
 #'  computations if not all elements are to be computed. This is an internal
 #'  parameter that is set by, e.g. the `export_model_vimp` method.
 #'@param ... Unused arguments.
+#'
+#'@inheritParams .parse_evaluation_settings
 #'
 #'@return A `familiarData` object.
 #'@references 1. Shrout, P. E. & Fleiss, J. L. Intraclass correlations: uses in
@@ -242,6 +205,8 @@ setGeneric("extract_data", function(object, data,
                                     sample_similarity_metric=waiver(),
                                     confidence_level=waiver(),
                                     bootstrap_ci_method=waiver(),
+                                    compute_model_ci=waiver(),
+                                    compute_ensemble_ci=waiver(),
                                     aggregate_ci=waiver(),
                                     icc_type=waiver(),
                                     message_indent=0L,
@@ -271,6 +236,8 @@ setMethod("extract_data", signature(object="familiarEnsemble"),
                    sample_similarity_metric=waiver(),
                    confidence_level=waiver(),
                    bootstrap_ci_method=waiver(),
+                   compute_model_ci=waiver(),
+                   compute_ensemble_ci=waiver(),
                    aggregate_ci=waiver(),
                    icc_type=waiver(),
                    message_indent=0L,
@@ -354,6 +321,8 @@ setMethod("extract_data", signature(object="familiarEnsemble"),
                                                            eval_times=eval_times,
                                                            confidence_level=confidence_level,
                                                            bootstrap_ci_method=bootstrap_ci_method,
+                                                           compute_model_ci=compute_model_ci,
+                                                           compute_ensemble_ci=compute_ensemble_ci,
                                                            aggregate_ci=aggregate_ci,
                                                            message_indent=message_indent,
                                                            verbose=verbose)
@@ -447,6 +416,8 @@ setMethod("extract_data", signature(object="familiarEnsemble"),
                                                             eval_times=eval_times,
                                                             confidence_level=confidence_level,
                                                             bootstrap_ci_method=bootstrap_ci_method,
+                                                            compute_model_ci=compute_model_ci,
+                                                            compute_ensemble_ci=compute_ensemble_ci,
                                                             aggregate_ci=aggregate_ci,
                                                             message_indent=message_indent,
                                                             verbose=verbose)
@@ -464,6 +435,8 @@ setMethod("extract_data", signature(object="familiarEnsemble"),
                                                                  eval_times=eval_times,
                                                                  confidence_level=confidence_level,
                                                                  bootstrap_ci_method=bootstrap_ci_method,
+                                                                 compute_model_ci=compute_model_ci,
+                                                                 compute_ensemble_ci=compute_ensemble_ci,
                                                                  aggregate_ci=aggregate_ci,
                                                                  message_indent=message_indent,
                                                                  verbose=verbose)
@@ -512,6 +485,8 @@ setMethod("extract_data", signature(object="familiarEnsemble"),
                                            cl=cl,
                                            ensemble_method=ensemble_method,
                                            bootstrap_ci_method=bootstrap_ci_method,
+                                           compute_model_ci=compute_model_ci,
+                                           compute_ensemble_ci=compute_ensemble_ci,
                                            aggregate_ci=aggregate_ci,
                                            confidence_level=confidence_level,
                                            message_indent=message_indent,
@@ -735,22 +710,16 @@ setMethod("extract_model_vimp", signature(object="familiarEnsemble"),
             }
             
             # Test if models are properly loaded
-            if(!is_model_loaded(object=object)){
-              ..error_ensemble_models_not_loaded()
-            }
+            if(!is_model_loaded(object=object)) ..error_ensemble_models_not_loaded()
             
             # Obtain aggregation method from stored settings, if required.
-            if(is.waive(aggregation_method)){
-              aggregation_method <- object@settings$aggregation
-            }
+            if(is.waive(aggregation_method)) aggregation_method <- object@settings$aggregation
             
             # Check aggregation method
             rank.check_aggregation_method(method=aggregation_method)
             
             # Obtain rank thresholds from stored settings, if required
-            if(is.waive(rank_threshold)){
-              rank_threshold <- object@settings$aggr_rank_threshold
-            }
+            if(is.waive(rank_threshold)) rank_threshold <- object@settings$aggr_rank_threshold
             
             # Check rank threshold. NULL is an allowed value.
             if(!is.null(rank_threshold)){
@@ -764,7 +733,7 @@ setMethod("extract_model_vimp", signature(object="familiarEnsemble"),
             raw_model_vimp <- data.table::rbindlist(lapply(object@model_list, extract_model_vimp))
             
             # Check for empty model_vimp
-            if(nrow(raw_model_vimp) == 0){
+            if(is_empty(raw_model_vimp)){
               return(list("vimp_table" = NULL,
                           "aggregation_method" = aggregation_method,
                           "rank_threshold" = rank_threshold))

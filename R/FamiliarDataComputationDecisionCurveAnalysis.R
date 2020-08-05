@@ -26,6 +26,8 @@ setGeneric("extract_decision_curve_data",
                     ensemble_method=waiver(),
                     confidence_level=waiver(),
                     bootstrap_ci_method=waiver(),
+                    compute_model_ci=waiver(),
+                    compute_ensemble_ci=waiver(),
                     aggregate_ci=waiver(),
                     eval_times=waiver(),
                     is_pre_processed=FALSE,
@@ -40,6 +42,8 @@ setMethod("extract_decision_curve_data", signature(object="familiarEnsemble"),
                    ensemble_method=waiver(),
                    confidence_level=waiver(),
                    bootstrap_ci_method=waiver(),
+                   compute_model_ci=waiver(),
+                   compute_ensemble_ci=waiver(),
                    aggregate_ci=waiver(),
                    eval_times=waiver(),
                    is_pre_processed=FALSE,
@@ -58,9 +62,7 @@ setMethod("extract_decision_curve_data", signature(object="familiarEnsemble"),
             }
             
             # Load eval_times from the object settings attribute, if it is not provided.
-            if(is.waive(eval_times)){
-              eval_times <- object@settings$eval_times
-            }
+            if(is.waive(eval_times)) eval_times <- object@settings$eval_times
             
             # Check eval_times argument
             if(object@outcome_type %in% c("survival")){
@@ -68,16 +70,12 @@ setMethod("extract_decision_curve_data", signature(object="familiarEnsemble"),
             }
             
             # Obtain ensemble method from stored settings, if required.
-            if(is.waive(ensemble_method)){
-              ensemble_method <- object@settings$ensemble_method
-            }
-            
+            if(is.waive(ensemble_method)) ensemble_method <- object@settings$ensemble_method
+
             # Load confidence alpha from object settings attribute if not
             # provided externally.
-            if(is.waive(confidence_level)){
-              confidence_level <- object@settings$confidence_level
-            }
-            
+            if(is.waive(confidence_level)) confidence_level <- object@settings$confidence_level
+
             # Check confidence_level input argument
             .check_number_in_valid_range(x=confidence_level, var_name="confidence_level",
                                          range=c(0.0, 1.0), closed=c(FALSE, FALSE))
@@ -87,16 +85,16 @@ setMethod("extract_decision_curve_data", signature(object="familiarEnsemble"),
                                             values=.get_available_ensemble_prediction_methods())
             
             # Load the bootstrap method
-            if(is.waive(bootstrap_ci_method)){
-              bootstrap_ci_method <- object@settings$bootstrap_ci_method
-            }
+            if(is.waive(bootstrap_ci_method)) bootstrap_ci_method <- object@settings$bootstrap_ci_method
             
             .check_parameter_value_is_valid(x=bootstrap_ci_method, var_name="bootstrap_ci_methpd",
                                             values=.get_available_bootstrap_confidence_interval_methods())
             
-            if(is.waive(aggregate_ci)){
-              aggregate_ci <- object@settings$aggregate_ci
-            }
+            # By default, compute confidence intervals for ensembles, but not
+            # for models.
+            if(is.waive(compute_model_ci)) compute_model_ci <- "none"
+            if(is.waive(compute_ensemble_ci)) compute_ensemble_ci <- "all"
+            if(is.waive(aggregate_ci)) aggregate_ci <- "all"
             
             # Test if models are properly loaded
             if(!is_model_loaded(object=object)) ..error_ensemble_models_not_loaded()
@@ -105,12 +103,13 @@ setMethod("extract_decision_curve_data", signature(object="familiarEnsemble"),
             dca_data <- universal_extractor(object=object,
                                             cl=cl,
                                             FUN=.extract_decision_curve_data,
-                                            individual_model_ci=FALSE,
                                             data=data,
                                             is_pre_processed=is_pre_processed,
                                             ensemble_method=ensemble_method,
                                             eval_times=eval_times,
                                             confidence_level=confidence_level,
+                                            compute_model_ci=any(c("all", "decision_curve_analyis") %in% compute_model_ci),
+                                            compute_ensemble_ci=any(c("all", "decision_curve_analyis") %in% compute_ensemble_ci),
                                             aggregate_ci=any(c("all", "decision_curve_analyis") %in% aggregate_ci),
                                             bootstrap_ci_method=bootstrap_ci_method,
                                             message_indent=message_indent + 1L,

@@ -750,15 +750,16 @@ setMethod("get_bootstrap_sample", signature(data="NULL"), function(data, ...) re
 setMethod("universal_extractor", signature(object="familiarEnsemble"),
           function(object,
                    FUN,
-                   individual_model_ci=FALSE,
+                   compute_model_ci=FALSE,
+                   compute_ensemble_ci=TRUE,
                    cl=NULL,
                    verbose=FALSE,
                    message_indent=0L,
                    ...){
             
             # Only pass cl for individual model extraction if
-            # individual_model_ci is TRUE.
-            if(individual_model_ci){
+            # compute_model_ci is TRUE.
+            if(compute_model_ci){
               cl_model <- NULL
               cl_internal <- cl
               
@@ -807,7 +808,7 @@ setMethod("universal_extractor", signature(object="familiarEnsemble"),
                                                 },
                                                 FUN2=FUN,
                                                 dots2=list(...),
-                                                determine_ci=individual_model_ci,
+                                                determine_ci=compute_model_ci,
                                                 cl2=cl_internal,
                                                 verbose=verbose,
                                                 message_indent=message_indent,
@@ -866,14 +867,13 @@ setMethod("universal_extractor", signature(object="familiarEnsemble"),
               
               # Set names.
               names(individual_model_data) <- element_names
-              
             }
             
             if(verbose) logger.message("Performing computations for the ensemble itself.",
                                        indent=message_indent)
             
             # Compute data for the ensemble itself.
-            ensemble_model_data <- do.call(FUN, args=c(list("determine_ci"=TRUE,
+            ensemble_model_data <- do.call(FUN, args=c(list("determine_ci"=compute_ensemble_ci,
                                                             "object"=object,
                                                             "cl"=cl,
                                                             "verbose"=verbose,

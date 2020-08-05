@@ -23,6 +23,8 @@ setGeneric("extract_performance",
                     eval_times=waiver(),
                     confidence_level=waiver(),
                     bootstrap_ci_method=waiver(),
+                    compute_model_ci=waiver(),
+                    compute_ensemble_ci=waiver(),
                     aggregate_ci=waiver(),
                     is_pre_processed=FALSE,
                     message_indent=0L,
@@ -39,6 +41,8 @@ setMethod("extract_performance", signature(object="familiarEnsemble"),
                    eval_times=waiver(),
                    confidence_level=waiver(),
                    bootstrap_ci_method=waiver(),
+                   compute_model_ci=waiver(),
+                   compute_ensemble_ci=waiver(),
                    aggregate_ci=waiver(),
                    is_pre_processed=FALSE,
                    message_indent=0L,
@@ -80,9 +84,9 @@ setMethod("extract_performance", signature(object="familiarEnsemble"),
             .check_parameter_value_is_valid(x=bootstrap_ci_method, var_name="bootstrap_ci_methpd",
                                             values=.get_available_bootstrap_confidence_interval_methods())
             
-            # Load the aggregate_ci parameter, if required.
-            if(is.waive(aggregate_ci)) aggregate_ci <- object@settings$aggregate_ci
-            
+            if(is.waive(compute_model_ci)) compute_model_ci <- "none"
+            if(is.waive(compute_ensemble_ci)) compute_ensemble_ci <- "all"
+            if(is.waive(aggregate_ci)) aggregate_ci <- "none"
             
             # Load metric(s) from the object settings attribute if not provided
             # externally.
@@ -98,13 +102,14 @@ setMethod("extract_performance", signature(object="familiarEnsemble"),
             performance_data <- universal_extractor(object=object,
                                                     cl=cl,
                                                     FUN=.extract_model_performance_data,
-                                                    individual_model_ci=FALSE,
                                                     data=data,
                                                     is_pre_processed=is_pre_processed,
                                                     ensemble_method=ensemble_method,
                                                     metric=metric,
                                                     eval_times=eval_times,
                                                     confidence_level=confidence_level,
+                                                    compute_model_ci=any(c("all", "model_performance") %in% compute_model_ci),
+                                                    compute_ensemble_ci=any(c("all", "model_performance") %in% compute_ensemble_ci),
                                                     aggregate_ci=any(c("all", "model_performance") %in% aggregate_ci),
                                                     bootstrap_ci_method=bootstrap_ci_method,
                                                     message_indent=message_indent + 1L,

@@ -1979,9 +1979,10 @@
 #'  If unset, the metric in the `optimisation_metric` variable is used.
 #'
 #'@param confidence_level (*optional*) Numeric value for the level at which
-#'  confidence are determined. In the case bootstraps are used to determine the
-#'  confidence intervals bootstrap estimation, `familiar` uses the rule of thumb
-#'  \eqn{n = 20 / ci.level} to determine the number of required bootstraps.
+#'  confidence intervals are determined. In the case bootstraps are used to
+#'  determine the confidence intervals bootstrap estimation, `familiar` uses the
+#'  rule of thumb \eqn{n = 20 / ci.level} to determine the number of required
+#'  bootstraps.
 #'
 #'  The default value is `0.95`.
 #'
@@ -1995,7 +1996,27 @@
 #'
 #'  Note that the standard method is not implemented because this method is
 #'  often not suitable due to non-normal distributions. The bias-corrected and
-#'  accelerated method is not implemented yet.
+#'  accelerated (BCa) method is not implemented yet.
+#'
+#'@param compute_model_ci (*optional*) This parameter can be set to enable
+#'  computation of bootstrap confidence intervals for individual models in
+#'  several parts of the evaluation. The parameter can take one or more of the
+#'  following values: `all`, `model_performance`, `auc_data`,
+#'  `decision_curve_analyis`, `permutation_vimp` as well as `true`, `false` and
+#'  `none`.
+#'
+#'  By default, bootstrap confidence intervals are not computed for individual
+#'  models.
+#'
+#'@param compute_ensemble_ci (*optional*) This parameter can be set to enable
+#'  computation of bootstrap confidence intervals for ensemble models in
+#'  several parts of the evaluation. The parameter can take one or more of the
+#'  following values: `all`, `model_performance`, `auc_data`,
+#'  `decision_curve_analyis`, `permutation_vimp` as well as `true`, `false` and
+#'  `none`.
+#'
+#'  By default, bootstrap confidence intervals are computed for ensemble
+#'  models.
 #'
 #'@param aggregate_ci (*optional*) Bootstraps are used to determine confidence
 #'  intervals. This information can be stored for export. However, in many cases
@@ -2004,10 +2025,11 @@
 #'  aggregate the bootstrap data by computing the confidence interval directly.
 #'
 #'  This parameter can take one or more of the following values: `all`,
-#'  `model_performance`, `auc_data`, `decision_curve_analyis`, as well as
-#'  `true`, `false` and `none`. By default, bootstrap data is aggregated by
-#'  computing confidence intervals for receiver-operating characteristic curves
-#'  and decision curves.
+#'  `model_performance`, `auc_data`, `decision_curve_analyis`,
+#'  `permutation_vimp` as well as `true`, `false` and `none`. By default,
+#'  bootstrap data is aggregated by computing confidence intervals for
+#'  receiver-operating characteristic curves, decision curves and permutation
+#'  variable importance.
 #'
 #'@param feature_cluster_method (*optional*) Method used to perform clustering
 #'  of features. The same methods as for the `cluster_method` configuration
@@ -2224,6 +2246,8 @@
                                        evaluation_metric=waiver(),
                                        confidence_level=waiver(),
                                        bootstrap_ci_method=waiver(),
+                                       compute_model_ci=waiver(),
+                                       compute_ensemble_ci=waiver(),
                                        aggregate_ci=waiver(),
                                        feature_cluster_method=waiver(),
                                        feature_cluster_cut_method=waiver(),
@@ -2275,19 +2299,60 @@
   .check_parameter_value_is_valid(x=settings$bootstrap_ci_method, var_name="bootstrap_ci_method",
                                   values=.get_available_bootstrap_confidence_interval_methods())
   
+  # List of available confidence interval elements.
+  evaluation_ci_elements <- c("all", "model_performance", "auc_data",
+                              "decision_curve_analyis", "permutation_vimp",
+                              "true", "false", "none")
+  
+  # Enable or disable computation of confidence intervals for individual models.
+  settings$compute_model_ci <- .parse_arg(x_config=config$compute_model_ci, x_var=compute_model_ci,
+                                          var_name="compute_model_ci", type="character_list", optional=TRUE,
+                                          default="none")
+  
+  settings$compute_model_ci <- tolower(settings$compute_model_ci)
+  .check_parameter_value_is_valid(x=settings$compute_model_ci, var_name="compute_model_ci",
+                                  values=evaluation_ci_elements)
+  
+  # Handle none, false, true and all values.
+  if(any(settings$compute_model_ci %in% c("none", "false"))){
+    settings$compute_model_ci <- NULL
+    
+  } else if(any(settings$compute_model_ci %in% c("true", "all"))){
+    settings$compute_model_ci <- "all"
+  }
+  
+  
+  # Enable or disable computation of confidence intervals for ensemble models.
+  settings$compute_ensemble_ci <- .parse_arg(x_config=config$compute_ensemble_ci, x_var=compute_ensemble_ci,
+                                             var_name="compute_ensemble_ci", type="character_list", optional=TRUE,
+                                             default="all")
+  
+  settings$compute_ensemble_ci <- tolower(settings$compute_ensemble_ci)
+  .check_parameter_value_is_valid(x=settings$compute_ensemble_ci, var_name="compute_ensemble_ci",
+                                  values=evaluation_ci_elements)
+  
+  # Handle none, false, true and all values.
+  if(any(settings$compute_ensemble_ci %in% c("none", "false"))){
+    settings$compute_ensemble_ci <- NULL
+    
+  } else if(any(settings$compute_ensemble_ci %in% c("true", "all"))){
+    settings$compute_ensemble_ci <- "all"
+  }
+  
   
   # Parts for which confidence intervals should be determined.
   settings$aggregate_ci <- .parse_arg(x_config=config$aggregate_ci, x_var=aggregate_ci,
-                                      var_name="aggregate_ci", type="character_list", optional=TRUE, default=c("auc_data", "decision_curve_analyis", "permutation_vimp"))
+                                      var_name="aggregate_ci", type="character_list", optional=TRUE,
+                                      default=c("auc_data", "decision_curve_analyis", "permutation_vimp"))
   
   settings$aggregate_ci <- tolower(settings$aggregate_ci)
   .check_parameter_value_is_valid(x=settings$aggregate_ci, var_name="aggregate_ci",
-                                  values=c("all", "model_performance", "auc_data", "decision_curve_analyis", "permutation_vimp",
-                                           "true", "false", "none"))
+                                  values=evaluation_ci_elements)
   
-  # Handle none, false
+  # Handle none, false, true and all values.
   if(any(settings$aggregate_ci %in% c("none", "false"))){
     settings$aggregate_ci <- NULL
+    
   } else if(any(settings$aggregate_ci %in% c("true", "all"))){
     settings$aggregate_ci <- "all"
   }

@@ -66,7 +66,8 @@ setMethod("extract_predictions", signature(object="familiarEnsemble"),
             performance_data <- universal_extractor(object=object,
                                                     cl=cl,
                                                     FUN=.extract_predictions,
-                                                    individual_model_ci=FALSE,
+                                                    compute_model_ci=FALSE,
+                                                    compute_ensemble_ci=FALSE,
                                                     data=data,
                                                     is_pre_processed=is_pre_processed,
                                                     ensemble_method=ensemble_method,
@@ -98,8 +99,8 @@ setMethod("extract_predictions", signature(object="familiarEnsemble"),
       
       # Reorder columns
       data.table::setcolorder(x=prediction_data,
-                              neworder=c(setdiff(colnames(prediction_data), c("predicted_outcome", "eval_time")),
-                                                 "eval_time", "predicted_outcome"))
+                              neworder=c(setdiff(colnames(prediction_data), c("predicted_outcome", "evaluation_time")),
+                                                 "evaluation_time", "predicted_outcome"))
       
       return(prediction_data)
     },

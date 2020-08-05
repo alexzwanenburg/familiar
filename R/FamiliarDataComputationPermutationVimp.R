@@ -27,6 +27,8 @@ setGeneric("extract_permutation_vimp",
                     eval_times=waiver(),
                     confidence_level=waiver(),
                     bootstrap_ci_method=waiver(),
+                    compute_model_ci=waiver(),
+                    compute_ensemble_ci=waiver(),
                     aggregate_ci=waiver(),
                     is_pre_processed=FALSE,
                     message_indent=0L,
@@ -49,6 +51,8 @@ setMethod("extract_permutation_vimp", signature(object="familiarEnsemble"),
                    eval_times=waiver(),
                    confidence_level=waiver(),
                    bootstrap_ci_method=waiver(),
+                   compute_model_ci=waiver(),
+                   compute_ensemble_ci=waiver(),
                    aggregate_ci=waiver(),
                    is_pre_processed=FALSE,
                    message_indent=0L,
@@ -90,8 +94,11 @@ setMethod("extract_permutation_vimp", signature(object="familiarEnsemble"),
             .check_parameter_value_is_valid(x=bootstrap_ci_method, var_name="bootstrap_ci_methpd",
                                             values=.get_available_bootstrap_confidence_interval_methods())
             
-            # Load the aggregate_ci parameter, if required.
-            if(is.waive(aggregate_ci)) aggregate_ci <- object@settings$aggregate_ci
+            # By default, compute confidence intervals for ensembles, but not
+            # for models.
+            if(is.waive(compute_model_ci)) compute_model_ci <- "none"
+            if(is.waive(compute_ensemble_ci)) compute_ensemble_ci <- "all"
+            if(is.waive(aggregate_ci)) aggregate_ci <- "all"
             
             # Load metric(s) from the object settings attribute if not provided
             # externally.
@@ -132,13 +139,14 @@ setMethod("extract_permutation_vimp", signature(object="familiarEnsemble"),
             vimp_data <- universal_extractor(object=object,
                                              cl=cl,
                                              FUN=.extract_permutation_vimp,
-                                             individual_model_ci=FALSE,
                                              data=data,
                                              is_pre_processed=is_pre_processed,
                                              ensemble_method=ensemble_method,
                                              metric=metric,
                                              eval_times=eval_times,
                                              confidence_level=confidence_level,
+                                             compute_model_ci=any(c("all", "permutation_vimp") %in% compute_model_ci),
+                                             compute_ensemble_ci=any(c("all", "permutation_vimp") %in% compute_ensemble_ci),
                                              aggregate_ci=any(c("all", "permutation_vimp") %in% aggregate_ci),
                                              bootstrap_ci_method=bootstrap_ci_method,
                                              similarity_table=feature_similarity_table,
@@ -525,7 +533,7 @@ setMethod("extract_permutation_vimp", signature(object="familiarEnsemble"),
   # Suppress NOTES due to non-standard evaluation in data.table
   name <- cluster_id <-  NULL
   
-  if(is.null(similarity_table)) {
+  if(is_empty(similarity_table)) {
     # Set the placeholder similarity threshold
     cluster_similarity_threshold <- ifelse(cluster_method %in% c("agnes", "diana", "hclust") & cluster_cut_method == "fixed_cut",
                                            1.0,

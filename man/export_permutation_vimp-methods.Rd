@@ -84,17 +84,10 @@ survival probabilities depend on time. If not provided explicitly, this
 parameter is read from settings used at creation of the underlying
 \code{familiarModel} objects. Only used for \code{survival} outcomes.}
     \item{\code{confidence_level}}{(\emph{optional}) Numeric value for the level at which
-confidence are determined. In the case bootstraps are used to determine the
-confidence intervals bootstrap estimation, \code{familiar} uses the rule of thumb
-\eqn{n = 20 / ci.level} to determine the number of required bootstraps.
-
-If not provided explicitly, this parameter is read from settings used at
-creation of the underlying \code{familiarModel} objects.
-
-#'@param confidence_level (\emph{optional}) Numeric value for the level at which
-confidence are determined. In the case bootstraps are used to determine the
-confidence intervals bootstrap estimation, \code{familiar} uses the rule of thumb
-\eqn{n = 20 / ci.level} to determine the number of required bootstraps.
+confidence intervals are determined. In the case bootstraps are used to
+determine the confidence intervals bootstrap estimation, \code{familiar} uses the
+rule of thumb \eqn{n = 20 / ci.level} to determine the number of required
+bootstraps.
 
 The default value is \code{0.95}.}
     \item{\code{bootstrap_ci_method}}{(\emph{optional}) Method used to determine bootstrap
@@ -107,7 +100,25 @@ implemented:
 
 Note that the standard method is not implemented because this method is
 often not suitable due to non-normal distributions. The bias-corrected and
-accelerated method is not implemented yet.}
+accelerated (BCa) method is not implemented yet.}
+    \item{\code{compute_model_ci}}{(\emph{optional}) This parameter can be set to enable
+computation of bootstrap confidence intervals for individual models in
+several parts of the evaluation. The parameter can take one or more of the
+following values: \code{all}, \code{model_performance}, \code{auc_data},
+\code{decision_curve_analyis}, \code{permutation_vimp} as well as \code{true}, \code{false} and
+\code{none}.
+
+By default, bootstrap confidence intervals are not computed for individual
+models.}
+    \item{\code{compute_ensemble_ci}}{(\emph{optional}) This parameter can be set to enable
+computation of bootstrap confidence intervals for ensemble models in
+several parts of the evaluation. The parameter can take one or more of the
+following values: \code{all}, \code{model_performance}, \code{auc_data},
+\code{decision_curve_analyis}, \code{permutation_vimp} as well as \code{true}, \code{false} and
+\code{none}.
+
+By default, bootstrap confidence intervals are computed for ensemble
+models.}
     \item{\code{aggregate_ci}}{(\emph{optional}) Bootstraps are used to determine confidence
 intervals. This information can be stored for export. However, in many cases
 this is not necessary, and keeping the bootstrap data can lead to large
@@ -115,10 +126,11 @@ this is not necessary, and keeping the bootstrap data can lead to large
 aggregate the bootstrap data by computing the confidence interval directly.
 
 This parameter can take one or more of the following values: \code{all},
-\code{model_performance}, \code{auc_data}, \code{decision_curve_analyis}, as well as
-\code{true}, \code{false} and \code{none}. By default, bootstrap data is aggregated by
-computing confidence intervals for receiver-operating characteristic curves
-and decision curves.}
+\code{model_performance}, \code{auc_data}, \code{decision_curve_analyis},
+\code{permutation_vimp} as well as \code{true}, \code{false} and \code{none}. By default,
+bootstrap data is aggregated by computing confidence intervals for
+receiver-operating characteristic curves, decision curves and permutation
+variable importance.}
     \item{\code{is_pre_processed}}{Flag that indicates whether the data was already
 pre-processed externally, e.g. normalised and clustered. Only used if the
 \code{data} argument is a \code{data.table} or \code{data.frame}.}

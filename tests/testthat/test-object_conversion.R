@@ -1,13 +1,13 @@
 # Create a dataset using the good dataset.
-data <- familiar:::test.create_small_good_data_set("continuous")
+data <- familiar:::test.create_small_good_data_set("survival")
 
 # Train a simple linear GLM using the good dataset.
 fam_model <- familiar:::train(data=data,
                               cluster_method="none",
                               imputation_method="simple",
                               hyperparameter_list=list("sign_size"=familiar:::get_n_features(data)),
-                              learner="glm_gaussian",
-                              hpo_metric="mse",
+                              learner="cox",
+                              hpo_metric="concordance_index",
                               vimp_aggregation_method="mean",
                               vimp_aggregation_rank_threshold=5)
 
@@ -21,19 +21,35 @@ testthat::test_that("Conversion of multiple familiarModel objects to familiarEns
 })
 
 testthat::test_that("Conversion of single familiarModel to familiarData works", {
-  testthat::expect_s4_class(familiar::as_familiar_data(object=fam_model, data=data, verbose=FALSE), "familiarData")
+  testthat::expect_s4_class(familiar::as_familiar_data(object=fam_model,
+                                                       data=data,
+                                                       compute_ensemble_ci=FALSE,
+                                                       verbose=FALSE),
+                            "familiarData")
 })
 
 testthat::test_that("Conversion of multiple familiarModel objects to familiarData works", {
-  testthat::expect_s4_class(familiar::as_familiar_data(object=list(fam_model, fam_model), data=data, verbose=FALSE), "familiarData")
+  testthat::expect_s4_class(familiar::as_familiar_data(object=list(fam_model, fam_model),
+                                                       data=data,
+                                                       compute_ensemble_ci=FALSE,
+                                                       verbose=FALSE),
+                            "familiarData")
 })
 
 testthat::test_that("Conversion of single familiarModel to familiarCollection works", {
-  testthat::expect_s4_class(familiar::as_familiar_collection(object=fam_model, data=data, verbose=FALSE), "familiarCollection")
+  testthat::expect_s4_class(familiar::as_familiar_collection(object=fam_model,
+                                                             data=data,
+                                                             compute_ensemble_ci=FALSE,
+                                                             verbose=FALSE),
+                            "familiarCollection")
 })
 
 testthat::test_that("Conversion of multiple familiarModel objects to familiarCollection works", {
-  testthat::expect_s4_class(familiar::as_familiar_collection(object=list(fam_model, fam_model), data=data, verbose=FALSE), "familiarCollection")
+  testthat::expect_s4_class(familiar::as_familiar_collection(object=list(fam_model, fam_model),
+                                                             data=data,
+                                                             compute_ensemble_ci=FALSE,
+                                                             verbose=FALSE),
+                            "familiarCollection")
 })
 
 #####familiarEnsemble-based test################################################
@@ -50,7 +66,11 @@ testthat::test_that("Conversion of multiple familiarEnsemble objects to familiar
 })
 
 testthat::test_that("Conversion of familiarEnsemble to familiarData works", {
-  testthat::expect_s4_class(familiar::as_familiar_data(object=fam_ensemble, data=data, verbose=FALSE), "familiarData")
+  testthat::expect_s4_class(familiar::as_familiar_data(object=fam_ensemble,
+                                                       data=data,
+                                                       compute_ensemble_ci=FALSE,
+                                                       verbose=FALSE),
+                            "familiarData")
 })
 
 testthat::test_that("Conversion of multiple familiarEnsemble objects to familiarData fails", {
@@ -58,7 +78,11 @@ testthat::test_that("Conversion of multiple familiarEnsemble objects to familiar
 })
 
 testthat::test_that("Conversion of familiarEnsemble to familiarCollection works", {
-  testthat::expect_s4_class(familiar::as_familiar_collection(object=fam_ensemble, data=data, verbose=FALSE), "familiarCollection")
+  testthat::expect_s4_class(familiar::as_familiar_collection(object=fam_ensemble,
+                                                             data=data,
+                                                             compute_ensemble_ci=FALSE,
+                                                             verbose=FALSE),
+                            "familiarCollection")
 })
 
 testthat::test_that("Conversion of multiple familiarEnsemble objects to familiarCollection fails", {
@@ -69,8 +93,12 @@ testthat::test_that("Conversion of multiple familiarEnsemble objects to familiar
 #####familiarData-based test####################################################
 
 # Create familiarData from fam_model objects.
-fam_data_1 <- familiar::as_familiar_data(object=list(fam_model, fam_model), data=data)
-fam_data_2 <- familiar::as_familiar_data(object=list(fam_model, fam_model), data=data)
+fam_data_1 <- familiar::as_familiar_data(object=list(fam_model, fam_model),
+                                         compute_ensemble_ci=FALSE,
+                                         data=data)
+fam_data_2 <- familiar::as_familiar_data(object=list(fam_model, fam_model),
+                                         compute_ensemble_ci=FALSE,
+                                         data=data)
 
 testthat::test_that("Conversion of familiarData to familiarEnsemble fails", {
   testthat::expect_error(familiar::as_familiar_ensemble(object=fam_data_1))
