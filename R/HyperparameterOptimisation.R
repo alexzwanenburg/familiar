@@ -117,11 +117,13 @@ run_hyperparameter_optimisation <- function(cl,
 
   # Message start of hyperparameter optimisation
   if(is_vimp){
-    logger.message(paste("\tHyperparameter optimisation: Starting parameter optimisation for the", fs_method,
-                         "feature selection method."))
+    logger.message(paste("Hyperparameter optimisation: Starting parameter optimisation for the", fs_method,
+                         "feature selection method."),
+                   indent=message_indent)
   } else {
-    logger.message(paste("\tHyperparameter optimisation: Starting parameter optimisation for the", learner,
-                         "learner, based on variable importances from the", fs_method, "feature selection method."))
+    logger.message(paste("Hyperparameter optimisation: Starting parameter optimisation for the", learner,
+                         "learner, based on variable importances from the", fs_method, "feature selection method."),
+                   indent=message_indent)
   }
 
   # Find optimised hyperparameters and scores by iterating over different
@@ -135,13 +137,14 @@ run_hyperparameter_optimisation <- function(cl,
                             MoreArgs=list("n_run_total"=length(iter_list),
                                           "cl"=cl_inner,
                                           "fs_method"=fs_method,
-                                          "learner"=learner))
+                                          "learner"=learner,
+                                          "message_indent"=message_indent))
   
   # Adapt list.
   hpo_list <- mapply(FUN=function(run, tuning_list){
     return(list("run_table"=run$run_table,
-                "param"=tuning_list$param,
-                "score"=tuning_list$full_score))
+                "param"=tuning_list$selected_parameters,
+                "score"=tuning_list$complete_score))
     
   }, run=iter_list, tuning_list=hpo_list, SIMPLIFY=FALSE)
   
@@ -150,145 +153,213 @@ run_hyperparameter_optimisation <- function(cl,
   
   # Message finish of hyperparameter optimisation
   if(is_vimp){
-    logger.message(paste("\tHyperparameter optimisation: Completed parameter optimisation for the", fs_method,
-                         "feature selection method."))
-    
-    logger.message(paste0("\nFeature selection: Proceeding with feature selection using the \"", fs_method, "\" method."))
+    logger.message(paste("Hyperparameter optimisation: Completed parameter optimisation for the", fs_method,
+                         "feature selection method."),
+                   indent=message_indent)
     
   } else {
-    logger.message(paste("\tHyperparameter optimisation: Completed parameter optimisation for the", learner,
-                         "learner, based on variable importances from the", fs_method, "feature selection method."))
-    
-    logger.message(paste0("\nModel building: Proceeding with model building using the \"",
-                          learner, "\" learner, based on variable importances from the \"",
-                          fs_method, "\" feature selection method."))
-  }
+    logger.message(paste("Hyperparameter optimisation: Completed parameter optimisation for the", learner,
+                         "learner, based on variable importances from the", fs_method, "feature selection method."),
+                   indent=message_indent)
 
+  }
+  
   # Return the hpo_list variable which contains the (optimised) hyperparameters.
   return(hpo_list)
 }
 
 
 
-hpo.perform_smbo <- function(run, run_id, n_run_total, cl, fs_method, learner=NULL){
+hpo.perform_smbo <- function(run, run_id, n_run_total, cl, fs_method, learner=NULL, message_indent=0L){
 
   # Suppress NOTES due to non-standard evaluation in data.table
   param_id <- NULL
-
-  if(is.null(learner)){
-    # In absence of a learner, we assume that feature selection is performed.
-    is_vimp <- TRUE
-  } else {
-    is_vimp <- FALSE
-  }
+  browser()
+  # In absence of a learner, we assume that feature selection is performed.
+  is_vimp <- is.null(learner)
 
   # Message
-  logger.message(paste0("\n\tStarting hyperparameter optimisation for run ", run_id, " of ", n_run_total, "."))
+  logger.message("\n")
+  logger.message(paste0("Starting hyperparameter optimisation for run ", run_id, " of ", n_run_total, "."),
+                 indent=message_indent)
   
-  # Get project list, file_paths and settings
-  proj_list <- get_project_list()
-  file_paths <- get_file_paths()
+  # Create an empty-placeholder return list.
+  empty_return_data <- list("selected_parameters"=NULL,
+                            "complete_score"=NULL)
+  
+  # Get project list, file_paths and settings.
   settings <- get_settings()
+  project_list <- get_project_list()
+  file_paths <- get_file_paths()
   
-  # Pre-process primary data. process_step is one of "fs" and "mb"
-  data_prmry <- apply_pre_processing(run=run, train_or_validate="train")
-
-  # Obtain the feature_info_list.
+  # Get list of feature information objects.
   feature_info_list <- get_feature_info_list(run=run)
   
-  # Load data table with feature ranks
-  if(!is_vimp) {
-    # Aggregate ranks for hyperparameter optimisation
-    dt_ranks <- rank.get_feature_ranks(run=run, fs_method=fs_method, settings=settings, proj_list=proj_list, file_paths=file_paths)
-    
-    # Check if the feature selection method is "none" or "random" -- these do not produce ranks during feature selection, but still require tuning
-    if(!fs_method %in% c("none", "random")){
-      # Maintain only columns of features with actual ranks, non-feature columns and signature features
-      data_prmry@data <- data_prmry@data[, unique(c(get_non_feature_columns(x=settings$data$outcome_type),
-                                                    dt_ranks$name, settings$data$signature)), with=FALSE]
-
-      # Check whether there are any features in dt_data_prmry
-      if(!has_feature_data(x=data_prmry)){
-        # Get hyper-parameters
-        param_list <- learner.get_model_hyperparameters(data=data_prmry,
-                                                        learner=learner,
-                                                        names_only=FALSE,
-                                                        outcome_type=data_prmry@outcome_type)
-
-        # Get an empty parameter table, with just column names and expected data types.
-        dt_param <- head(data.table::as.data.table(lapply(param_list, function(curr_param) (curr_param$range[1]))), 0)
-
-        # Return relevant data
-        return(list("param"=dt_param,
-                    "full_hpo_mdl"=NULL))
-      }
-    }
-  } else {
-    # While optimising for feature selection no data table with rankings is available.
-    dt_ranks <- NULL
-  }
-
-  # Load initial parameter configurations Two configuration generating
-  # algorithms are available. The first (randomise_grid=FALSE) creates a initial
-  # grid based on the init_config settings of the respective hyperparameter, and
-  # whatever the user provides. The second (randomise_grid=TRUE) creates a grid
-  # where the initial values are randomised, however respecting user provided
-  # settings and hyperparameters which may not be randomised. The param_list
-  # list of hyperparameters is first loaded from definitions provided in the
-  # source file of the learner. Subsequently, any user-specified settings are
-  # loaded and applied. Then configurations are created from the hyper-parameter
-  # list.
+  
+  ##### Create familiarModel or familiarVimpMethod object ----------------------
+  
   if(is_vimp){
+    
+    # Find required features.
+    required_features <- find_required_features(features=get_available_features(feature_info_list=feature_info_list,
+                                                                                exclude_signature=TRUE),
+                                                feature_info_list=feature_info_list)
+    
+    # Limit to required features. In principle, this removes signature features
+    # which are not assessed through variable importance.
+    feature_info_list <- feature_info_list[required_features]
+    
+    # Create the variable importance method object or familiar model object to
+    # compute variable importance with. Note that the hyperparameters will be
+    # set later.
+    fam_model <- promote_vimp_method(object=methods::new("familiarVimpMethod",
+                                                         outcome_type=settings$data$outcome_type,
+                                                         vimp_method=fs_method,
+                                                         outcome_info=.get_outcome_info(),
+                                                         feature_info=feature_info_list,
+                                                         req_feature_cols=required_features,
+                                                         run_table=run$run_table))
+    
+  } else {
+    
+    # Find required features. This will be updated once a signature size has been set.
+    required_features <- find_required_features(features=get_available_features(feature_info_list=feature_info_list,
+                                                                                exclude_signature=FALSE),
+                                                feature_info_list=feature_info_list)
+    
+    # Limit to required features. In principle, this removes signature features
+    # which are not assessed through variable importance.
+    feature_info_list <- feature_info_list[required_features]
+    
+    # Create familiar model object. The following need to be updated:
+    #
+    # * hyperparameters
+    # * req_feature_cols
+    # * signature
+    fam_model <- promote_learner(object=methods::new("familiarModel",
+                                                     outcome_type = settings$data$outcome_type,
+                                                     learner = learner,
+                                                     fs_method = fs_method,
+                                                     run_table = run$run_table,
+                                                     signature = selected_features,
+                                                     req_feature_cols =  required_features,
+                                                     feature_info = feature_info_list,
+                                                     outcome_info = .get_outcome_info()))
+  }
+  
+  
+  ##### Create and process dataObject ------------------------------------------
+  
+  # Create dataset.
+  primary_data <- methods::new("dataObject",
+                               data = NULL,
+                               preprocessing_level="none",
+                               outcome_type = settings$data$outcome_type,
+                               delay_loading = TRUE,
+                               perturb_level = tail(run$run_table, n=1)$perturb_level,
+                               load_validation = FALSE,
+                               aggregate_on_load = FALSE,
+                               outcome_info = create_outcome_info(settings=settings))
+  
+  # Pre-process input data.
+  primary_data <- process_input_data(object=fam_model,
+                                     data=primary_data)
+  
+  # Check that any data is present.
+  if(is_empty(primary_data)) return(empty_return_data)
+  
+  
+  ##### Create and update hyperparameter sets ----------------------------------
+  
+  # Obtain standard parameters.
+  parameter_list <- get_default_hyperparameters(object=fam_model,
+                                                data=primary_data)
+  
+  # Check that any parameters are present.
+  if(is_empty(parameter_list)) return(empty_return_data)
+  
+  # Load initial parameter configurations
+  #
+  # Two configuration generating algorithms are available. The first
+  # (randomise_grid=FALSE) creates a initial grid based on the init_config
+  # settings of the respective hyperparameter, and whatever the user provides.
+  # The second (randomise_grid=TRUE) creates a grid where the initial values are
+  # randomised, however respecting user provided settings and hyperparameters
+  # which may not be randomised. The parameter_list list of hyperparameters is
+  # first loaded from definitions provided in the source file of the learner.
+  # Subsequently, any user-specified settings are loaded and applied. Then
+  # configurations are created from the hyper-parameter list.
+  if(is_vimp){
+    
     # Get the list provided by the user, or generate it so we can fix the
     # sign_size parameter to a fixed value, if required.
     user_list <- settings$fs$param[[fs_method]]
-    if(is.null(user_list)) { user_list <- list() }
+    if(is.null(user_list)) user_list <- list()
     
     # Set the signature size. This parameter may not be used by all feature
     # selection methods, and will be ignored in that case.
-    user_list$sign_size <- get_n_features(x=data_prmry)
-    
-    # Acquire the preset parameter list and update it
-    param_list <- .get_preset_hyperparameters(data=data_prmry, fs_method=fs_method, names_only=FALSE)
-    param_list <- .update_hyperparameters(parameter_list=param_list, user_list=user_list)
-    
-    rm(user_list)
+    user_list$sign_size <- get_n_features(x=primary_data)
     
   } else {
-    # Obtain and update parameters for learners.
-    param_list <- .get_preset_hyperparameters(data=data_prmry, learner=learner, names_only=FALSE)
-    param_list <- .update_hyperparameters(parameter_list=param_list, user_list=settings$mb$hyper_param[[learner]])
+    # Retrieve any variables set by the user.
+    user_list <- settings$mb$hyper_param[[learner]]
   }
-
+  
+  # Update the parameter list With user variables.
+  parameter_list <- .update_hyperparameters(parameter_list=parameter_list,
+                                            user_list=user_list)
+  
   # Create initial set of configurations.
-  dt_param <- hpo.create_initial_hyperparameter_set(parameter_list=param_list, randomise_grid=settings$hpo$hpo_randomise_init_grid)
-
-  # Break early if there are no parameter or no random parameters.
-  if(is_empty(dt_param)){
-    # Return an empty set if there are no parameters.
-    return(list("param"=NULL, "full_hpo_mdl"=NULL))
-    
-  } else if(!.any_randomised_hyperparameters(parameter_list=param_list)){
-    # Return the set of parameters.
-    
+  parameter_table <- hpo.create_initial_hyperparameter_set(parameter_list=parameter_list,
+                                                          randomise_grid=settings$hpo$hpo_randomise_init_grid)
+  
+  if(is_empty(parameter_table)) return(empty_return_data)
+  
+  if(!.any_randomised_hyperparameters(parameter_list=parameter_list)){
     # Remove the param_id column variable.
-    dt_param[ ,":="("param_id"=NULL)]
-
+    parameter_table[ ,":="("param_id"=NULL)]
+    
     # Return relevant data
-    return(list("param"=dt_param, "full_hpo_mdl"=NULL))
+    return(list("selected_parameters"=parameter_table,
+                "complete_score"=NULL))
   }
-
+  
+  ##### Create metric objects --------------------------------------------------
+  
+  # Create metric objects.
+  metric_object_list <- lapply(settings$hpo$hpo_metric,
+                               as_metric,
+                               object=fam_model)
+  
+  # Add baseline values for each metric.
+  metric_object_list <- lapply(metric_object_list,
+                               set_metric_baseline_value,
+                               object=fam_model)
+  
+  ##### Obtain rank table ------------------------------------------------------
+  
+  if(!is_vimp){
+    # Load rank table (if any)
+    rank_table <- rank.get_feature_ranks(run=run,
+                                         fs_method=fs_method,
+                                         settings=settings,
+                                         proj_list=project_list,
+                                         file_paths=file_paths)
+  } else {
+    rank_table <- NULL
+  }
+  
   # If we arrive at this point, it means that there are optimisable parameters
   # present in the parameter list. Initialise list for hyperparameter
-  # configuration evaluations (dt_hpo_mdl)
+  # configuration evaluations.
   hpo_eval_list <- list()
 
   ################### SMBO - Initialisation ############################################
   # Generate data bootstrap samples
-  hpo_bootstrap_list <- .create_bootstraps(sample_identifiers = data_prmry@data$subject_id,
+  hpo_bootstrap_list <- .create_bootstraps(sample_identifiers = primary_data@data$subject_id,
                                            n_iter = settings$hpo$hpo_max_bootstraps,
                                            settings = settings,
-                                           data = data_prmry@data)
+                                           data = primary_data@data)
 
   # Generate a run list from bootstraps
   hpo_run_list <- .add_iteration_to_run(run=run,
@@ -298,18 +369,37 @@ hpo.perform_smbo <- function(run, run_id, n_run_total, cl, fs_method, learner=NU
                                         perturbation = "bootstrap")
   
   # Select hyperparameter bootstraps
-  sel_run_id <- sample(seq_len(settings$hpo$hpo_max_bootstraps), size=settings$hpo$hpo_bootstraps, replace=FALSE)
+  sel_run_id <- fam_sample(x=seq_len(settings$hpo$hpo_max_bootstraps),
+                           size=settings$hpo$hpo_bootstraps,
+                           replace=FALSE)
 
   # Set up hyperparameter runs
-  dt_hpo_run <- data.table::as.data.table(expand.grid(param_id=dt_param$param_id, run_id=sel_run_id, KEEP.OUT.ATTRS=FALSE, stringsAsFactors=FALSE))
+  hpo_run_table <- data.table::as.data.table(expand.grid(param_id=parameter_table$param_id,
+                                                         run_id=sel_run_id,
+                                                         KEEP.OUT.ATTRS=FALSE,
+                                                         stringsAsFactors=FALSE))
 
   # Message
-  logger.message(paste("\tCompute initial model performance based on",
-                       nrow(dt_hpo_run)/settings$hpo$hpo_bootstraps, "hyperparameter sets."))
+  logger.message(paste("Compute initial model performance based on",
+                       nrow(hpo_run_table) / settings$hpo$hpo_bootstraps, "hyperparameter sets."),
+                 indent=message_indent)
   
   # Build and evaluate models
+  hpo_score_table <- hpo.get_model_performance(cl=cl,
+                                               object=fam_model,
+                                               run_table=hpo_run_table,
+                                               run_list=hpo_run_list,
+                                               data=primary_data,
+                                               rank_table=rank_table,
+                                               parameter_table=parameter_table,
+                                               metric_objects=metric_object_list,
+                                               settings=settings)
+  
+  # Aggregate to single list
+  hpo_score_table <- data.table::rbindlist(hpo_score_table, use.names=TRUE)
+  
   pred_list          <- hpo.get_model_performance(cl = cl,
-                                                  dt_hpo_run = dt_hpo_run,
+                                                  hpo_run_table = hpo_run_table,
                                                   run_list = hpo_run_list,
                                                   data_obj = data_prmry,
                                                   dt_ranks = dt_ranks,
@@ -335,7 +425,7 @@ hpo.perform_smbo <- function(run, run_id, n_run_total, cl, fs_method, learner=NU
   logger.message(paste0("\tHyperparameter optimisation: Initialisation complete: ", dt_inc$summ_obj_score, "; ", param_str))
   
   # Clean up
-  rm(dt_hpo_run, pred_list, sel_run_id, dt_inc, param_str)
+  rm(hpo_run_table, pred_list, sel_run_id, dt_inc, param_str)
   
   smbo_iter     <- 0
   while(smbo_iter < settings$hpo$hpo_smbo_iter_max){
@@ -378,12 +468,12 @@ hpo.perform_smbo <- function(run, run_id, n_run_total, cl, fs_method, learner=NU
       dt_hpo_score  <- data.table::rbindlist(hpo_eval_list)
 
       # Create run table
-      dt_hpo_run    <- hpo.create_runoff_run_table(param_id_inc=param_id_inc, param_id_chal=param_id_chal,
+      hpo_run_table    <- hpo.create_runoff_run_table(param_id_inc=param_id_inc, param_id_chal=param_id_chal,
                                                    dt_score=dt_hpo_score, n_max=settings$hpo$hpo_max_bootstraps,
                                                    n_new=settings$hpo$hpo_bootstraps)
 
       # Check if there are any runs to perform
-      if(nrow(dt_hpo_run) == 0){ break() }
+      if(nrow(hpo_run_table) == 0){ break() }
 
       # Message
       logger.message(paste("\tIntensify step", intensify_iter + 1, "using", length(param_id_chal),
@@ -391,7 +481,7 @@ hpo.perform_smbo <- function(run, run_id, n_run_total, cl, fs_method, learner=NU
       
       # Build and evaluate models
       pred_list     <- hpo.get_model_performance(cl = cl,
-                                                 dt_hpo_run = dt_hpo_run,
+                                                 hpo_run_table = hpo_run_table,
                                                  run_list = hpo_run_list,
                                                  data_obj = data_prmry,
                                                  dt_ranks = dt_ranks,
@@ -409,7 +499,7 @@ hpo.perform_smbo <- function(run, run_id, n_run_total, cl, fs_method, learner=NU
       hpo_eval_list <- append(hpo_eval_list, list(dt_hpo_score))
 
       # Clean up
-      rm(dt_hpo_run, pred_list, dt_hpo_score)
+      rm(hpo_run_table, pred_list, dt_hpo_score)
 
       # Add scores from all runs
       dt_hpo_score  <- data.table::rbindlist(hpo_eval_list)
@@ -714,72 +804,58 @@ hpo.expected_improvement <- function(parameter_set, rf_model, incumbent_score){
 }
 
 
-hpo.evaluate_hyperparameters <- function(run, dt_param, dt_ranks, feature_info_list, data_obj, settings,
-                                         fs_method, learner=NULL, pb_conn=NULL, run_iter=NULL){
+hpo.evaluate_hyperparameters <- function(run,
+                                         parameter_table,
+                                         object,
+                                         data,
+                                         rank_table, 
+                                         data,
+                                         metric_objects,
+                                         settings){
 
+  browser()
   # Find parameter id and run id for the current run
-  param_id <- dt_param$param_id[1]
-  run_id   <- tail(run$run_table, 1)$run_id[1]
-
-  if(is.null(learner)){
-    # In absence of a learner, we assume that feature selection is performed, and is being optimised.
-    is_vimp <- TRUE
-  } else {
-    is_vimp <- FALSE
-  }
-
-  ############## Model building ##################################################
-  # Get parameter list
-  param_list    <- as.list(dt_param[, -c("param_id"), with=FALSE])
+  parameter_list <- as.list(parameter_table[, -c("param_id")])
+  param_id <- parameter_table$param_id[1]
+  run_id <- tail(run$run_table, 1)$run_id[1]
 
   # Select training data for current run
-  data_obj_tr   <- select_data_from_samples(data=data_obj, samples=run$train_samples)
-
-  if(!is_vimp){
-    # We are optimising model parameters for a learner.
-    
-    # Get signature.
-    sel_feat <- get_signature(feature_info_list=feature_info_list,
-                              dt_ranks=dt_ranks,
-                              fs_method=fs_method,
-                              param=param_list,
-                              settings=settings)
-
-    # Apply signature to data.
-    data_obj_tr <- apply_signature(data_obj=data_obj_tr, selected_feat=sel_feat)
-    
-    # Create familiar model
-    fam_model     <- methods::new("familiarModel",
-                                  outcome_type = data_obj@outcome_type,
-                                  learner = learner,
-                                  fs_method = fs_method,
-                                  run_table = run$run_table,
-                                  hyperparameters = param_list,
-                                  signature = sel_feat,
-                                  outcome_info = .get_outcome_info())
+  data_training <- select_data_from_samples(data=data,
+                                            samples=run$train_samples)
+  
+  if(!is(object, "familiarModel")){
+    ..error_reached_unreachable_code("hpo_evaluate_hyperparameters: object is not a familiarModel.")
+  }
+  
+  if(is.null(rank_table)){
+    # Update the familiar model (for variable importance)
+    object@hyperparameters <- parameter_list
+    object@run_table <- run$run_table
     
   } else {
-    # We are optimising model parameters for a (model-based) variable importance
-    # method.
-
-    # Create a familiarModel from variable.
-    fam_model <- promote_vimp_method(object=methods::new("familiarVimpMethod",
-                                                         outcome_type=data_obj@outcome_type,
-                                                         hyperparameters=param_list,
-                                                         vimp_method=fs_method,
-                                                         outcome_info=.get_outcome_info()))
+    # Get a signature based on hyperparameters.
+    selected_features <- get_signature(feature_info_list=fam_model@feature_info,
+                                       dt_ranks=rank_table,
+                                       fs_method=fam_model@fs_method,
+                                       param=parameter_list,
+                                       settings=settings)
     
-    # Update missing slots.
-    fam_model@run_table <- run$run_table
-
-    if(!is(fam_model, "familiarModel")){
-      ..error_reached_unreachable_code("hpo_evaluate_hyperparameters_feature_selection_method_is_not_model_based")
-    }
+    # Apply signature to data.
+    data_training <- apply_signature(data_obj=data_training,
+                                     selected_feat=selected_features)
+    
+    # Update various slots.
+    object@hyperparameters <- parameter_list
+    object@signature <- selected_features
+    object@run_table <- run$run_table
   }
 
-  # Train model
-  fam_model   <- .train(object=fam_model, data=data_obj_tr, get_additional_info=FALSE)
+  # Train model with the set of hyperparameters.
+  object <- .train(object=object,
+                   data=data_training,
+                   get_additional_info=FALSE)
   
+  # TODO: GOT HERE
   ############## Assess model performance ##############################
 
   # Assess performance on the development data
@@ -991,27 +1067,39 @@ hpo.get_best_parameter_set <- function(score_table, objective, n=1){
 
 
 
-hpo.get_model_performance <- function(cl, dt_hpo_run, run_list, data_obj, feature_info_list, dt_ranks, dt_param, settings, learner, fs_method){
-
+hpo.get_model_performance <- function(cl,
+                                      object,
+                                      run_table,
+                                      run_list,
+                                      data,
+                                      rank_table,
+                                      parameter_table,
+                                      metric_objects,
+                                      settings){
+  
   # Suppress NOTES due to non-standard evaluation in data.table
   param_id <- NULL
 
   # Prepare new hpo_run_list and parameter lists for the mapping operation.
-  hpo_run_list <- lapply(dt_hpo_run$run_id, function(ii, run_list) (run_list[[as.character(ii)]]), run_list=run_list)
-  parameter_list <- lapply(dt_hpo_run$param_id, function(ii, parameter_table) (parameter_table[param_id==ii]), parameter_table=dt_param)
+  hpo_run_list <- lapply(run_table$run_id,
+                         function(ii, run_list) (run_list[[as.character(ii)]]),
+                         run_list=run_list)
+  
+  parameter_list <- lapply(run_table$param_id,
+                           function(ii, parameter_table) (parameter_table[param_id==ii, ]),
+                           parameter_table=parameter_table)
   
   prediction_list <- fam_mapply_lb(cl=cl,
                                    assign=NULL,
                                    FUN=hpo.evaluate_hyperparameters,
                                    run=hpo_run_list,
-                                   dt_param=parameter_list,
+                                   parameter_table=parameter_list,
                                    progress_bar=!settings$hpo$do_parallel,
-                                   MoreArgs=list("dt_ranks"=dt_ranks,
-                                                 "feature_info_list"=feature_info_list,
-                                                 "data_obj"=data_obj,
-                                                 "settings"=settings,
-                                                 "learner"=learner,
-                                                 "fs_method"=fs_method))
+                                   MoreArgs=list("object"=object,
+                                                 "rank_table"=rank_table,
+                                                 "metric_objects"=metric_objects,
+                                                 "data"=data,
+                                                 "settings"=settings))
   
   # Return predictions
   return(prediction_list)
