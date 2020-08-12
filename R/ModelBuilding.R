@@ -1,4 +1,4 @@
-run_model_development <- function(cl, proj_list, settings, file_paths){
+run_model_development <- function(cl, proj_list, settings, file_paths, message_indent=0L){
   # Model building
 
   # Check which data object is required for performing model building
@@ -36,16 +36,18 @@ run_model_development <- function(cl, proj_list, settings, file_paths){
     # Message
     logger.message(paste0("\nModel building: starting model building using \"",
                           iter_methods$learner, "\" learner, based on \"",
-                          iter_methods$fs_method, "\" feature selection."))
+                          iter_methods$fs_method, "\" feature selection."),
+                   indent=message_indent)
     
     # Optimise hyperparameters of models used for model building
-    hpo_list      <- run_hyperparameter_optimisation(cl=cl,
-                                                     proj_list=proj_list,
-                                                     data_id=mb_data_id,
-                                                     settings=settings,
-                                                     file_paths=file_paths,
-                                                     fs_method=iter_methods$fs_method,
-                                                     learner=iter_methods$learner)
+    hpo_list <- run_hyperparameter_optimisation(cl=cl,
+                                                proj_list=proj_list,
+                                                data_id=mb_data_id,
+                                                settings=settings,
+                                                file_paths=file_paths,
+                                                fs_method=iter_methods$fs_method,
+                                                learner=iter_methods$learner,
+                                                message_indent=message_indent + 1L)
     
     # Build models
     fam_lapply_lb(cl=cl_mb,
@@ -57,7 +59,8 @@ run_model_development <- function(cl, proj_list, settings, file_paths){
 
     logger.message(paste0("Model building: model building using \"",
                           iter_methods$learner, "\" learner, based on \"",
-                          iter_methods$fs_method, "\" feature selection, has been completed."))
+                          iter_methods$fs_method, "\" feature selection, has been completed."),
+                   indent=message_indent)
   }
 }
 
@@ -77,7 +80,7 @@ build_model <- function(run, hpo_list){
                        outcome_type = settings$data$outcome_type,
                        delay_loading = TRUE,
                        perturb_level = tail(run$run_table, n=1)$perturb_level,
-                       load_validation =FALSE,
+                       load_validation = FALSE,
                        aggregate_on_load = FALSE,
                        outcome_info = create_outcome_info(settings=settings))
   

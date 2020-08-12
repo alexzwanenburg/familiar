@@ -163,8 +163,8 @@ vimp.get_fs_parameters <- function(data, method, outcome_type, names_only=FALSE)
   
   # Create familiarModel
   vimp_method_object <- methods::new("familiarVimpMethod",
-                              vimp_method=method,
-                              outcome_type=outcome_type)
+                                     vimp_method=method,
+                                     outcome_type=outcome_type)
   
   # Set up the specific model
   vimp_method_object <- promote_vimp_method(vimp_method_object)
