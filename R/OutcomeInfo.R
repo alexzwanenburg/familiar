@@ -144,7 +144,7 @@ get_outcome_info_from_backend <- function(){
 .aggregate_outcome_info <- function(x){
   
   # Suppress NOTES due to non-standard evaluation in data.table
-  min <- Q1 <- median <- Q3 <- max <- count <- NULL
+  min <- Q1 <- median <- Q3 <- max <- count <- incidence <- survival_probability <- survival_probability <- NULL
   
   # Copy the first outcome info object
   outcome_info <- x[[1]]
@@ -181,7 +181,7 @@ get_outcome_info_from_backend <- function(){
         # Add to list
         distr_list[[item]] <- fivenum_values
         
-      } else if(grepl(patter="frequency", x=item, fixed=TRUE)){
+      } else if(grepl(pattern="frequency", x=item, fixed=TRUE)){
         
         # Aggregate from list
         frequency_values <- lapply(x, function(outcome_info_object, item) (outcome_info_object@distribution[[item]]), item=item)
@@ -193,6 +193,76 @@ get_outcome_info_from_backend <- function(){
         
         # Summarise and add to list
         distr_list[[item]] <- frequency_values[, list("count"=mean(count)), by="outcome"]
+        
+      } else if(grepl(pattern="incidence", x=item, fixed=TRUE)){
+        browser()
+        # Identify unique times.
+        unique_times <- sort(unique(unlist(lapply(x, function(outcome_info_object, item) (outcome_info_object@distribution[[item]]$time), item=item))))
+        
+        # Interpolate at the unique times.
+        incidence_table <- lapply(x, function(outcome_info_object, item, unique_times){
+          browser()
+          
+          # Interpolate the data at the unique time points.
+          incidence <- stats::approx(x=outcome_info_object@distribution[[item]]$time,
+                                     y=outcome_info_object@distribution[[item]][[item]],
+                                     xout=unique_times,
+                                     method="linear",
+                                     rule=2,
+                                     yleft=0.0)$y
+          
+          return(data.table::data.table("time"=unique_times,
+                                        "incidence"=incidence))
+        },
+        item=item,
+        unique_times=unique_times)
+        
+        # Aggregate the incidence table.
+        incidence_table <- data.table::rbindlist(incidence_table)
+        
+        # Compute the mean incidence by each time point.
+        incidence_table <- incidence_table[, list("incidence"=mean(incidence)), by="time"]
+        
+        # Update the column name.
+        data.table::setnames(incidence_table, old="incidence", new=item)
+        
+        # Add to list
+        distr_list[[item]] <- incidence_table
+      
+      } else if(grepl(pattern="survival_probability", x=item, fixed=TRUE)) {
+        browser()
+        # Identify unique times.
+        unique_times <- sort(unique(unlist(lapply(x, function(outcome_info_object, item) (outcome_info_object@distribution[[item]]$time), item=item))))
+        
+        # Interpolate at the unique times.
+        survival_table <- lapply(x, function(outcome_info_object, item, unique_times){
+          browser()
+          
+          # Interpolate the data at the unique time points.
+          survival_probability <- stats::approx(x=outcome_info_object@distribution[[item]]$time,
+                                                y=outcome_info_object@distribution[[item]][[item]],
+                                                xout=unique_times,
+                                                method="linear",
+                                                rule=2,
+                                                yleft=1.0)$y
+          
+          survival_probabilityreturn(data.table::data.table("time"=unique_times,
+                                        "survival_probability"=survival_probability))
+        },
+        item=item,
+        unique_times=unique_times)
+        
+        # Aggregate the survival probability table.
+        survival_table <- data.table::rbindlist(survival_table)
+        
+        # Compute the mean survival prob by each time point.
+        survival_table <- survival_table[, list("survival_probability"=mean(survival_probability)), by="time"]
+        
+        # Update the column name.
+        data.table::setnames(survival_table, old="survival_probability", new=item)
+        
+        # Add to list
+        distr_list[[item]] <- survival_table
         
       } else {
         # Find mean value
@@ -233,7 +303,8 @@ get_outcome_info_from_backend <- function(){
 .compute_outcome_distribution_data <- function(object, data){
 
   # Suppress NOTES due to non-standard evaluation in data.table
-  repetition_id <- NULL
+  repetition_id <- event <- censored <- competing <- NULL
+  interval_survival <- interval_incidence_rate <- interval_censoring_rate <- NULL
   
   # Get standard outcome columns
   outcome_columns <- get_outcome_columns(x=data)
@@ -266,7 +337,39 @@ get_outcome_info_from_backend <- function(){
     # Mean value
     distr_list[["mean"]] <- mean(x$outcome, na.rm=TRUE)
     
+    distr_list[["median"]] <- stats::median(x$outcome, na.rm=TRUE)
+    
   } else if(object@outcome_type %in% c("survival", "competing_risk")){
+    
+    # Baseline survival
+    surv_group <- data.table::copy(x)
+    
+    # Count events and censoring at each time point.
+    surv_group[, list("event"=sum(outcome_event == 1),
+                      "censored"=sum(outcome_event == 0),
+                      "competing"=sum(outcome_event > 1)),
+               by="outcome_time"][order(outcome_time)]
+    
+    # Add group sizes at the start of each interval.
+    surv_group[, "n":=nrow(x) - shift(cumsum(event + censored + competing), n=1, fill=0, type="lag")]
+    
+    # Compute the incidence and censoring rates in the interval
+    surv_group[, ":="("interval_survival"= 1.0 - event / n,
+                      "interval_incidence_rate"=event/ n,
+                      "interval_censoring_rate"=censored / n)]
+    
+    # Compute the Kaplan-Meier survival estimator
+    surv_group[, ":="("survival_probability"=cumprod(interval_survival))]
+    
+    # Compute cumulative incidence and censoring rates.
+    surv_group[, ":="("cumulative_incidence"=cumsum(interval_survival * interval_incidence_rate),
+                      "cumulative_censoring"=cumsum(interval_survival * interval_censoring_rate))]
+    
+    # Rename the outcome_time column.
+    data.table::setnames(surv_group, old="outcome_time", new="time")
+    browser()
+    # TODO: check that the cumulative incidence for all event types at each time
+    # point equals 1 - survival probability.
     
     # Number of samples
     distr_list[["n"]] <- nrow(x)
@@ -279,6 +382,16 @@ get_outcome_info_from_backend <- function(){
     
     # Five-number summary of event
     distr_list[["event_fivenum"]] <- fivenum_summary(x[outcome_event == 1, ]$outcome_time, na.rm=TRUE)
+
+    # Survival probability
+    distr_list[["survival_probability"]] <- unique(surv_group[, c("time", "survival_probability")])
+    
+    # Cumulative incidence
+    distr_list[["cumulative_incidence"]] <- unique(surv_group[, c("time", "cumulative_incidence")])
+    
+    # Censoring rate
+    distr_list[["censoring_incidence"]] <- unique(surv_group[ , c("time", "censoring_incidence")])
+
     
   } else {
     ..error_no_known_outcome_type(object@outcome_type)
