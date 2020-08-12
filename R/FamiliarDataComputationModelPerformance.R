@@ -93,7 +93,7 @@ setMethod("extract_performance", signature(object="familiarEnsemble"),
             if(is.waive(metric)) metric <- object@settings$metric
             
             # Check metric input argument
-            sapply(metric, metric.check_outcome_type, outcome_type=object@outcome_type)
+            sapply(metric, metric.check_outcome_type, object=object)
             
             # Test if models are properly loaded
             if(!is_model_loaded(object=object)) ..error_ensemble_models_not_loaded()

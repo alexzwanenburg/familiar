@@ -105,7 +105,7 @@ setMethod("extract_permutation_vimp", signature(object="familiarEnsemble"),
             if(is.waive(metric)) metric <- object@settings$metric
 
             # Check metric input argument
-            sapply(metric, metric.check_outcome_type, outcome_type=object@outcome_type)
+            sapply(metric, metric.check_outcome_type, object=object)
             
             # Obtain cluster method from stored settings, if required.
             if(is.waive(feature_cluster_method)) feature_cluster_method <- object@settings$feature_cluster_method

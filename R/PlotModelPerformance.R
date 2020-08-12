@@ -440,7 +440,8 @@ setMethod("plot_model_performance", signature(object="familiarCollection"),
                                                 y_range=y_range,
                                                 y_n_breaks=y_n_breaks,
                                                 y_breaks=y_breaks,
-                                                annotate_performance=annotate_performance)
+                                                annotate_performance=annotate_performance,
+                                                outcome_type=object@outcome_type)
               
               # Check empty output
               if(is.null(p)) next()
@@ -519,7 +520,8 @@ setMethod("plot_model_performance", signature(object="familiarCollection"),
                                          y_range,
                                          y_n_breaks,
                                          y_breaks,
-                                         annotate_performance){
+                                         annotate_performance,
+                                         outcome_type){
   
   # Suppress NOTES due to non-standard evaluation in data.table
   value <- metric <- median <- ci_low <- ci_up <- NULL
@@ -533,7 +535,7 @@ setMethod("plot_model_performance", signature(object="familiarCollection"),
     if(is.null(y_range)){
       
       # Obtain default ranges for the metrics.
-      metric_ranges <- lapply(metrics, metric.get_metric_default_range)
+      metric_ranges <- lapply(metrics, metric.get_metric_default_range, outcome_type=outcome_type)
       
       # Give a name to the list elements.
       names(metric_ranges) <- metrics
@@ -607,7 +609,8 @@ setMethod("plot_model_performance", signature(object="familiarCollection"),
     # gradient_palette_range
     if(is.waive(gradient_palette_range)){
       if(length(metrics) == 1){
-        gradient_palette_range <- metric.get_metric_default_range(metric=metrics)
+        gradient_palette_range <- metric.get_metric_default_range(metric=metrics,
+                                                                  outcome_type=outcome_type)
         gradient_was_provided <- FALSE
         
       } else {
