@@ -101,9 +101,6 @@ build_model <- function(run, hpo_list){
   # Select features
   selected_features <- get_signature(feature_info_list=feature_info_list, dt_ranks=dt_ranks, fs_method=run$fs_method, param=param_list, settings=settings)
   
-  # Generate data object
-  # data_obj          <- apply_pre_processing(run=run, train_or_validate="train", selected_features=selected_features)
-  # 
   # Find features that are required for processing the data
   required_features <- find_required_features(features=selected_features, feature_info_list=feature_info_list)
 
