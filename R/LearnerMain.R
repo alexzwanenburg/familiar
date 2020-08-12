@@ -150,7 +150,7 @@ learner.check_outcome_type <- function(learner, outcome_type){
   # Check validity.
   learner_available <- is_available(fam_model)
   
-  # Check if the familiar model has been successfuly promoted.
+  # Check if the familiar model has been successfully promoted.
   if(!is_subclass(class(fam_model)[1], "familiarModel")){
     stop(paste0(learner, " is not a valid learner. Please check the vignette for available learners."))
   }

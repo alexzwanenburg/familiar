@@ -243,6 +243,10 @@ setMethod("get_non_feature_columns", signature(x="character"), function(x, sampl
   return(.get_non_feature_columns(outcome_type=x, sample_level_only=sample_level_only))
 })
 
+setMethod("get_non_feature_columns", signature(x="outcomeInfo"), function(x, sample_level_only=FALSE){
+  return(.get_non_feature_columns(outcome_type=x@outcome_type, sample_level_only=sample_level_only))
+})
+
 setMethod("get_non_feature_columns", signature(x="dataObject"), function(x, sample_level_only=FALSE){
   return(.get_non_feature_columns(outcome_type=x@outcome_type, sample_level_only=sample_level_only))
 })
@@ -526,10 +530,23 @@ setMethod("decode_categorical_variables_vimp", signature(object="data.table"),
 
 #####get_placeholder_prediction_table------------------------------------------
 setMethod("get_placeholder_prediction_table", signature(object="familiarModel", data="dataObject"),
-          function(object, data) return(get_placeholder_prediction_table(object=object, data=data@data)))
-            
+          function(object, data) return(get_placeholder_prediction_table(object=object@outcome_info, data=data@data)))
 
 setMethod("get_placeholder_prediction_table", signature(object="familiarModel", data="data.table"),
+          function(object, data) return(get_placeholder_prediction_table(object=object@outcome_info, data=data)))
+
+
+setMethod("get_placeholder_prediction_table", signature(object="familiarEnsemble", data="dataObject"),
+          function(object, data) return(get_placeholder_prediction_table(object=object@outcome_info, data=data@data)))
+
+setMethod("get_placeholder_prediction_table", signature(object="familiarEnsemble", data="data.table"),
+          function(object, data) return(get_placeholder_prediction_table(object=object@outcome_info, data=data)))
+
+
+setMethod("get_placeholder_prediction_table", signature(object="outcomeInfo", data="dataObject"),
+          function(object, data) return(get_placeholder_prediction_table(object=object, data=data@data)))
+
+setMethod("get_placeholder_prediction_table", signature(object="outcomeInfo", data="data.table"),
           function(object, data){
             
             # Find non-feature columns.
@@ -564,6 +581,8 @@ setMethod("get_placeholder_prediction_table", signature(object="familiarModel", 
             
             return(prediction_table)
           })
+
+
 
 
 #####bootstrapper---------------------------------------------------------------

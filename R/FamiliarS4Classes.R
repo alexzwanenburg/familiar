@@ -555,7 +555,7 @@ setClass("outcomeInfo",
 )
 
 
-####familiarModel####
+####familiarVimpMethod####
 setClass("familiarVimpMethod",
          slots = list(
            # Outcome type
@@ -582,4 +582,31 @@ setClass("familiarVimpMethod",
            req_feature_cols = NULL,
            run_table = NULL
          )
+)
+
+
+####familiarMetric#####
+setClass("familiarMetric",
+         slots = list(
+           # The metric itself.
+           metric = "character",
+           # The outcome type associated with the metric.
+           outcome_type = "character",
+           # The name of the metric, e.g. for plotting.
+           name = "character",
+           # The potential value range of the metric.
+           value_range = "numeric",
+           # The baseline value of the metric, e.g. to derive an objective
+           # function from.
+           baseline_value = "ANY",
+           # Flag that sets whether higher values denote better performance.
+           higher_better = "logical"
+         ),
+         prototype = list(
+           metric = NA_character_,
+           outcome_type = NA_character_,
+           name = NA_character_,
+           value_range = c(NA_real_, NA_real_),
+           baseline_value = NULL,
+           higher_better = TRUE)
 )

@@ -320,7 +320,8 @@ setMethod("plot_permutation_variable_importance", signature(object="familiarColl
             # 0.0 here.
             x <- lapply(split(x, by="metric"), function(x){
               
-              if(!metric.is_higher_score_better(metric=as.character(x$metric[1]))){
+              if(!metric.is_higher_score_better(metric=as.character(x$metric[1]),
+                                                outcome_type=object@outcome_type)){
                 # For metrics where lower scores mark better model performance,
                 # a feature is more important when the variable importance is
                 # more negative.

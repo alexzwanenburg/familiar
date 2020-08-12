@@ -1,44 +1,67 @@
-run_hyperparameter_optimisation <- function(cl, proj_list, data_id, settings, file_paths, fs_method, learner=NULL){
+run_hyperparameter_optimisation <- function(cl,
+                                            project_list,
+                                            data_id,
+                                            settings,
+                                            file_paths,
+                                            fs_method,
+                                            learner=NULL,
+                                            message_indent=0L){
 
-  # Hyper-parameters are parameters of a learner, such as the signature size or the number of trees in a random forest.
-  # The selection of hyper-parameters influences predictive performance of a model, often to a large extent. Therefore hyper-parameters
-  # require optimisation. There are various way to deal with this issue, for example grid search or random search, both of which can be
-  # computationally expensive for complex learners. An efficient, successful alternative is using a model-based strategy. In general,
-  # building a model using the learner of interest is the most time-consuming step in the process. Therefore, model building should be done
-  # only when necessary. The main idea behind model-based hyper-parameter optimisation is that a hyper-parameter model is trained and used to
-  # assess random configurations. Then the most interesting configurations, i.e. those which are expected tp provide good objective scores or
-  # are located in an unexplored region of the hyperparameter space, are actually build and assessed.
-  # The algorithm implemented here is SMAC ("Hutter, Frank, Holger H. Hoos, and Kevin Leyton-Brown. "Sequential Model-Based
-  # Optimization for General Algorithm Configuration." LION 5 (2011): 507-523"). The version implemented here varies from the original in the
-  # following ways:
-  # 1. The intensify step, where promising configurations are compared with the best known configuration, is done in parallel, not sequentially.
-  # 2. During the intensify step we assess the probability that a promising challenger configuration is at least as good as the best known
-  # configuration. If it is highly unlikely to be better (default: p>=0.05), we skip further intensification with that challenger. The non-parametric Wilcoxon
-  # signed-rank test is used to compare objective scores on the same bootstraps of the data.
-  # 3. Early stopping criteria are included for converging objective scores and unaltered best configurations over multiple iterations.
-  # 4. The initial grid may be randomised by setting \code{settings$hpo$hpo_randomise_init_grid}. User-provided hyper-parameter settings
-  # are never randomised.
-  # If not provided by the user, hyper-parameters and corresponding meta-data are sourced from the learner.
+  # Hyper-parameters are parameters of a learner, such as the signature size or
+  # the number of trees in a random forest. The selection of hyper-parameters
+  # influences predictive performance of a model, often to a large extent.
+  # Therefore hyper-parameters require optimisation. There are various way to
+  # deal with this issue, for example grid search or random search, both of
+  # which can be computationally expensive for complex learners. An efficient,
+  # successful alternative is using a model-based strategy. In general, building
+  # a model using the learner of interest is the most time-consuming step in the
+  # process. Therefore, model building should be done only when necessary. The
+  # main idea behind model-based hyper-parameter optimisation is that a
+  # hyper-parameter model is trained and used to assess random configurations.
+  # Then the most interesting configurations, i.e. those which are expected tp
+  # provide good objective scores or are located in an unexplored region of the
+  # hyperparameter space, are actually build and assessed.
+  #
+  # The algorithm implemented here is SMAC ("Hutter, Frank, Holger H. Hoos, and
+  # Kevin Leyton-Brown. "Sequential Model-Based Optimization for General
+  # Algorithm Configuration." LION 5 (2011): 507-523"). The version implemented
+  # here varies from the original in the following ways:
+  #
+  # 1. The intensify step, where promising configurations are compared with the
+  # best known configuration, is done in parallel, not sequentially.
+  #
+  # 2. During the intensify step we assess the probability that a promising
+  # challenger configuration is at least as good as the best known
+  # configuration. If it is highly unlikely to be better (default: p>=0.05), we
+  # skip further intensification with that challenger. The non-parametric
+  # Wilcoxon signed-rank test is used to compare objective scores on the same
+  # bootstraps of the data.
+  #
+  # 3. Early stopping criteria are included for converging objective scores and
+  # unaltered best configurations over multiple iterations.
+  #
+  # 4. The initial grid may be randomised by setting
+  # \code{settings$hpo$hpo_randomise_init_grid}. User-provided hyper-parameter
+  # settings are never randomised.
+  #
+  # If not provided by the user, hyper-parameters and corresponding meta-data
+  # are sourced from the learner.
 
   ################### General initialisation #######################################################
-
-  if(is.null(learner)){
-    # In absence of a learner, we assume that feature selection is performed.
-    is_vimp <- TRUE
-  } else {
-    is_vimp <- FALSE
-  }
+  
+  # In absence of a learner, we assume that feature selection is performed.
+  is_vimp <- is.null(learner)
   
   # Get directory and file name for the optimised hyper-parameter data
   if(is_vimp){
     dir_path  <- file.path(file_paths$fs_dir)
-    file_name_1 <- paste0(proj_list$project_id, "_", fs_method, "_hyperparameter_config.RData")
-    file_name_2 <- paste0(proj_list$project_id, "_", fs_method, "_hyperparameter_config.RDS")
+    file_name_1 <- paste0(project_list$project_id, "_", fs_method, "_hyperparameter_config.RData")
+    file_name_2 <- paste0(project_list$project_id, "_", fs_method, "_hyperparameter_config.RDS")
     
   } else {
     dir_path  <- file.path(file_paths$mb_dir, learner, fs_method)
-    file_name_1 <- paste0(proj_list$project_id, "_hyperparameter_config.RData")
-    file_name_2 <- paste0(proj_list$project_id, "_hyperparameter_config.RDS")
+    file_name_1 <- paste0(project_list$project_id, "_hyperparameter_config.RData")
+    file_name_2 <- paste0(project_list$project_id, "_hyperparameter_config.RDS")
   }
 
   # Generate full path to the hyper-parameter optimisation file
@@ -55,12 +78,16 @@ run_hyperparameter_optimisation <- function(cl, proj_list, data_id, settings, fi
   }
   
   # Check if the directory exists, and create it otherwise
-  if(!dir.exists(dir_path)) { dir.create(dir_path, recursive=TRUE) }
+  if(!dir.exists(dir_path)) dir.create(dir_path, recursive=TRUE)
 
   # Get the iteration list for the feature selection or model development step
   # for which hyperparameter optimisation is performed.
-  hpo_id_list <- getPreprocessingID(run=getRunList(iter_list=proj_list$iter_list, data_id=data_id, run_id=1))
-  iter_list   <- getRunList(iter_list=proj_list$iter_list, data_id=hpo_id_list$data)
+  hpo_id_list <- getPreprocessingID(run=getRunList(iter_list=project_list$iter_list,
+                                                   data_id=data_id,
+                                                   run_id=1))
+  
+  iter_list <- getRunList(iter_list=project_list$iter_list,
+                          data_id=hpo_id_list$data)
 
   # Load functions to cluster
   if(settings$hpo$do_parallel & (length(iter_list) >= length(cl) | length(cl) > 10)){
@@ -70,8 +97,9 @@ run_hyperparameter_optimisation <- function(cl, proj_list, data_id, settings, fi
     cl_inner <- NULL
     show_progress_bar <- TRUE
     
-    logger.message(paste0("\tHyperparameter optimisation: Load-balanced parallel processing is done in the outer loop. ",
-                          "No progress can be displayed."))
+    logger.message(paste0("Hyperparameter optimisation: Load-balanced parallel processing is done in the outer loop. ",
+                          "No progress can be displayed."),
+                   indent=message_indent)
     
   } else if(settings$hpo$do_parallel){
     # Perform an inner parallellisation.

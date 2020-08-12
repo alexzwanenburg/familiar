@@ -216,3 +216,13 @@ setGeneric(".vimp", function(object, ...) standardGeneric(".vimp"))
 setGeneric("promote_vimp_method", function(object, ...) standardGeneric("promote_vimp_method"))
 
 setGeneric("prepare_vimp_object", function(data, ...) standardGeneric("prepare_vimp_object"))
+
+
+#####familiarMetric #####
+setGeneric("is_higher_better", function(metric, ...) standardGeneric("is_higher_better"))
+
+setGeneric("compute_metric_score", function(metric, ...) standardGeneric("compute_metric_score"))
+
+setGeneric("compute_objective_score", function(metric, ...) standardGeneric("compute_objective_score"))
+
+setGeneric("set_metric_baseline_value", function(metric, ...) standardGeneric("set_metric_baseline_value"))
