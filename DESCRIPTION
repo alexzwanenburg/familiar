@@ -125,6 +125,8 @@ Collate:
     'MetricMain.R'
     'MetricObjectiveScore.R'
     'MetricRegression.R'
+    'MetricS4AUC.R'
+    'MetricS4.R'
     'ModelBuilding.R'
     'Normalisation.R'
     'OutcomeInfo.R'
