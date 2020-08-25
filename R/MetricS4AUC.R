@@ -7,6 +7,7 @@ setClass("familiarMetricAUCROC",
          prototype=methods::prototype(metric = "auc_roc",
                                       outcome_type = NA_character_,
                                       name = "Area under Receiver Operating Characteristic Curve",
+                                      baseline_value = 0.5,
                                       value_range = c(0.0, 1.0),
                                       higher_better = TRUE))
 
@@ -26,7 +27,7 @@ setMethod("is_available", signature(object="familiarMetricAUCROC"),
 
 #####compute_metric_score#####
 setMethod("compute_metric_score", signature(metric="familiarMetricAUCROC"),
-          function(metric, data){
+          function(metric, data, ...){
             
             # Suppress NOTES due to non-standard evaluation in data.table
             outcome <- NULL
@@ -36,9 +37,9 @@ setMethod("compute_metric_score", signature(metric="familiarMetricAUCROC"),
             n_classes <- length(outcome_classes)
             
             # Skip calculation if an AUC cannot be computed.
-            if(is_empty(data)) return(callNextMethid())
+            if(is_empty(data)) return(callNextMethod())
             if(n_classes <= 1) return(callNextMethod())
-            if(any_predictions_valid(prediction_table=data, outcome_type=metric@outcome_type)) return(callNextMethod())
+            if(!any_predictions_valid(prediction_table=data, outcome_type=metric@outcome_type)) return(callNextMethod())
             if(nrow(data) <= 1) return(callNextMethod())
             
             # Define class combinations (>1 in case of multinomial outcomes)
