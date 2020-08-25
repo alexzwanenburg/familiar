@@ -118,7 +118,6 @@ Collate:
     'LearnerSurvivalGrouping.R'
     'LearnerSurvivalProbability.R'
     'Logger.R'
-    'MetricAreaUnderCurve.R'
     'MetricBrierScore.R'
     'MetricConcordanceIndex.R'
     'MetricConfusionMatrix.R'

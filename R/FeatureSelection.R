@@ -28,7 +28,7 @@ run_feature_selection <- function(cl, proj_list, settings, file_paths, message_i
 
     # Optimise models used for feature selection
     hpo_list <- run_hyperparameter_optimisation(cl=cl,
-                                                proj_list=proj_list,
+                                                project_list=proj_list,
                                                 data_id=fs_data_id,
                                                 settings=settings,
                                                 file_paths=file_paths,

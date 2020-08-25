@@ -7,18 +7,29 @@ as_metric <- function(metric,
                       outcome_type=NULL,
                       ...){
   
+  # Find the outcome type
   if(is.null(outcome_type)){
-    if(is(object, "familiarModel") | is(object, "familiarEnsemble")) outcome_type <- object@outcome_type
+    if(is(object, "familiarModel") | is(object, "familiarEnsemble") | is(object, "familiarVimpMethod")) outcome_type <- object@outcome_type
   }
   
   if(metric %in% .get_available_auc_roc_metrics()){
     metric_object <- methods::new("familiarMetricAUCROC",
-                                  outcome_type=outcome_type,
-                                  ...)
+                                  outcome_type=outcome_type)
+    
   }
-  browser()
   
   return(metric_object)
+}
+
+
+
+.get_all_metrics <- function(){
+  # Returns a list of all metrics.
+  
+  metrics <- c(.get_available_auc_roc_metrics(),
+               NULL)
+  
+  return(metrics)
 }
 
 
@@ -34,17 +45,82 @@ setMethod("is_higher_better", signature(metric="familiarMetric"),
           function(metric, ...) return(metric@higher_better))
 
 
+#####is_higher_better#####
+setMethod("is_higher_better", signature(metric="character"),
+          function(metric, ...){
+            # Create metric objects.
+            metric_object_list <- lapply(metric, function(metric, dots) do.call(as_metric, args=dots),
+                                         dots=list(...))
+            
+            # Check that the metrics are available.
+            if(!all(sapply(metric_object_list, is_available))){
+              stop(paste0("is_higher_better: the following metrics are not available for ", metric_object_list[[1]]@outcome_type, " outcomes: ",
+                          paste_s(metric[!sapply(metric_object_list, is_available)])))
+            }
+            
+            # Determine which metrics have a higher value that is better.
+            higher_better_flags <- lapply(metric_object_list, is_higher_better)
+            
+            # Set metric names.
+            names(higher_better_flags) <- metric
+            
+            # Return flags.
+            return(unlist(higher_better_flags))
+          })
 
-#####compute_metric_score#####
+
+#####compute_metric_score (metric object)#####
+# This method should be defined for all subclasses.
 setMethod("compute_metric_score", signature(metric="familiarMetric"),
           function(metric, data, ...) return(NA_real_))
 
 
 
+#####compute_metric_score (character)######
+setMethod("compute_metric_score", signature(metric="character"),
+          function(metric, data, object, ...){
+            browser()
+            
+            if(!is(object, "familiarModel") | !is(object, "familiarEnsemble")){
+              stop("compute_metric_score: object should be a familiarModel or familiarEnsemble object.")
+            }
+            
+            # Create metric objects.
+            metric_object_list <- lapply(metric, as_metric, object=object)
+            
+            # Check that the metrics are available.
+            if(!all(sapply(metric_object_list, is_available))){
+              stop(paste0("compute_metric_score: the following metrics are not available for ", object@outcome_type, " outcomes: ",
+                          paste_s(metric[!sapply(metric_object_list, is_available)])))
+            }
+            
+            # Create prediction table, if one is absent.
+            if(is(data, "dataObject")){
+              data <- do.call(.predict, args=c(list("object"=object,
+                                                    "data"=data),
+                                               list(...)))
+            }
+            
+            # Compute metric values.
+            metric_values <- lapply(metric_object_list, function(metric, data, object, dots) do.call(compute_metric_score, args=c(list("metric"=metric,
+                                                                                                                                       "data"=data,
+                                                                                                                                       "object"=object),
+                                                                                                                                  dots)),
+                                    data=data,
+                                    object=object,
+                                    dots=list(...))
+          
+            # Set names.
+            names(metric_values) <- metric
+            
+            return(unlist(metric_values))
+          })
+
+
 #####compute_objective_score####
 setMethod("compute_objective_score", signature(metric="familiarMetric"),
           function(metric, data=NULL, value=NULL, ...){
-            browser()
+            
             # Check that a baseline value was set
             if(is.null(metric@baseline_value)){
               
@@ -93,10 +169,10 @@ setMethod("compute_objective_score", signature(metric="familiarMetric"),
 
 #####set_metric_baseline_value#####
 setMethod("set_metric_baseline_value", signature(metric="familiarMetric"),
-          function(metric, object=NULL, data=NULL){
-            browser()
+          function(metric, object=NULL, data){
+            
             # Obtain or create 
-            if(is(object, "familiarModel") | is(object, "familiarVimpMethod" | is(object, "familiarEnsemble"))){
+            if(is(object, "familiarModel") | is(object, "familiarVimpMethod") | is(object, "familiarEnsemble")){
               outcome_info <- object@outcome_info
               
             } else if(is(data, "dataObject")) {
@@ -129,7 +205,7 @@ setMethod("set_metric_baseline_value", signature(metric="familiarMetric"),
             if(metric@outcome_type %in% c("binomial", "multinomial")){
               
               # Get the frequency table and find the class with the majority.
-              frequency_table <- object@distribution$frequency
+              frequency_table <- outcome_info@distribution$frequency
               majority_class <- frequency_table$outcome[which.max(frequency_table$count)]
               
               # Fill the prediction_table.
@@ -151,21 +227,21 @@ setMethod("set_metric_baseline_value", signature(metric="familiarMetric"),
               } 
               
             } else if(metric@outcome_type %in% c("count", "continuous")){
-              
+              browser()
               # Baseline median value.
-              median_value <- object@distribution$median
+              median_value <- outcome_info@distribution$median
               
               # Fill the prediction_table.
               prediction_table[, "predicted_outcome":=median_value]
               
             } else if(metric@outcome_type %in% c("survival")){
-              
+              browser()
               # Median baseline survival
-              median_value <- sum(c(min(object@distribution$survival_probability$survival_probability),
-                                    max(object@distribution$survival_probability$survival_probability))) / 2.0
+              mean_survival_probability <- sum(c(min(object@distribution$survival_probability$survival_probability),
+                                                 max(object@distribution$survival_probability$survival_probability))) / 2.0
               
               # Fill the prediction_table.
-              prediction_table[, "predicted_outcome":=median_value]
+              prediction_table[, "predicted_outcome":=mean_survival_probability]
               
             } else {
               ..error_outcome_type_not_implemented(metric@outcome_type)
@@ -180,7 +256,7 @@ setMethod("set_metric_baseline_value", signature(metric="familiarMetric"),
 
 
 
-metric.check_outcome_type <- function(metric, object=NULL, outcome_type=NULL){
+metric.check_outcome_type <- function(metric, object=NULL, outcome_type=NULL, as_flag=FALSE){
   
   # Obtain outcome_type
   if(is.null(outcome_type) & !is.null(object)) outcome_type <- object@outcome_type
@@ -190,10 +266,15 @@ metric.check_outcome_type <- function(metric, object=NULL, outcome_type=NULL){
                              outcome_type=outcome_type)
   
   # Check if the metric is available.
+  metric_available <- is_available(metric_object)
+  
+  if(as_flag) return(metric_available)
+  
+  # Check if the metric is available.
   if(!is_subclass(class(metric_object)[1], "familiarMetric")){
     stop(paste0(metric, " is not a valid metric. Please check the vignette for available performance metrics."))
     
-  } else if(!is_available(metric_object)){
+  } else if(!metric_available){
     stop(paste0("The ", metric, " metric is not available for ", outcome_type, " outcomes."))
   }
 }
@@ -212,6 +293,7 @@ metric.get_metric_default_range <- function(metric, object=NULL, outcome_type=NU
   
   return(metric_object@value_range)
 }
+
 
 
 metric.is_higher_score_better <- function(metric, object=NULL, outcome_type=NULL){

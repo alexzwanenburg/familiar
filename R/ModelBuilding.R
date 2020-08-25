@@ -41,7 +41,7 @@ run_model_development <- function(cl, proj_list, settings, file_paths, message_i
     
     # Optimise hyperparameters of models used for model building
     hpo_list <- run_hyperparameter_optimisation(cl=cl,
-                                                proj_list=proj_list,
+                                                project_list=proj_list,
                                                 data_id=mb_data_id,
                                                 settings=settings,
                                                 file_paths=file_paths,

@@ -651,7 +651,9 @@ setMethod("plot_model_performance", signature(object="familiarCollection"),
     
     # Determine what direction a metric has.
     if(length(metrics) == 1){
-      invert_scale <- !metric.main(metric=metrics, purpose="higher_score_better")
+      invert_scale <- is_higher_better(metric=metrics,
+                                       outcome_type=outcome_type)
+      
     } else {
       invert_scale <- FALSE
     }

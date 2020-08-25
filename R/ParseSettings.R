@@ -1781,7 +1781,7 @@
 #'   * `stronger_balance`: Computes \eqn{s_{oob} - 2.0 |s_{oob} - s_{ib}|}.
 #'   Stronger penalty than in the `balance` objective.
 #'
-#' @param optimisation_metric (*optional*) Type of metric used to compute
+#' @param optimisation_metric (*optional*) One or more metrics used to compute
 #'   performance scores. See the vignette on performance metrics for the
 #'   available metrics.
 #'
@@ -1795,10 +1795,12 @@
 #'
 #'   * `concordance_index`: For `survival` models.
 #'
-#'   Currently, only one optimisation metric can be specified. Note that instead
-#'   of computing the actual metric, an objective version is computed for
-#'   hyperparameter optimisation, so that better performance always yields
-#'   higher values.
+#'   Multiple optimisation metrics can be specified. Actual metric values are
+#'   converted to an objective value by comparison with a baseline metric value
+#'   that derives from a trivial model, i.e. majority class for binomial and
+#'   multinomial outcomes, the median outcome for count and continuous outcomes
+#'   and a fixed risk or time for survival outcomes.
+#'   
 #' @param parallel_hyperparameter_optimisation (*optional*) Enable parallel
 #'   processing for hyperparameter optimisation. Defaults to `TRUE`. When set to
 #'   `FALSE`, this will disable the use of parallel processing while performing
@@ -1885,7 +1887,7 @@
   
   # Performance metric for hyperparameter optimisation
   settings$hpo_metric <- .parse_arg(x_config=config$optimisation_metric, x_var=optimisation_metric,
-                                    var_name="optimisation_metric", type="character", optional=TRUE, default=NULL)
+                                    var_name="optimisation_metric", type="character_list", optional=TRUE, default=NULL)
   
   # Set default metric
   if(is.null(settings$hpo_metric)){

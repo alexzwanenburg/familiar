@@ -798,7 +798,7 @@ well on both development and validation data.
 \item \code{stronger_balance}: Computes \eqn{s_{oob} - 2.0 |s_{oob} - s_{ib}|}.
 Stronger penalty than in the \code{balance} objective.
 }}
-    \item{\code{optimisation_metric}}{(\emph{optional}) Type of metric used to compute
+    \item{\code{optimisation_metric}}{(\emph{optional}) One or more metrics used to compute
 performance scores. See the vignette on performance metrics for the
 available metrics.
 
@@ -810,10 +810,11 @@ If unset, the following metrics are used by default:
 \item \code{concordance_index}: For \code{survival} models.
 }
 
-Currently, only one optimisation metric can be specified. Note that instead
-of computing the actual metric, an objective version is computed for
-hyperparameter optimisation, so that better performance always yields
-higher values.}
+Multiple optimisation metrics can be specified. Actual metric values are
+converted to an objective value by comparison with a baseline metric value
+that derives from a trivial model, i.e. majority class for binomial and
+multinomial outcomes, the median outcome for count and continuous outcomes
+and a fixed risk or time for survival outcomes.}
     \item{\code{parallel_hyperparameter_optimisation}}{(\emph{optional}) Enable parallel
 processing for hyperparameter optimisation. Defaults to \code{TRUE}. When set to
 \code{FALSE}, this will disable the use of parallel processing while performing

@@ -264,16 +264,10 @@ setMethod("extract_performance", signature(object="familiarEnsemble"),
                                         time,
                                         object){
   
-  # For 
-  if(is(object, "familiarEnsemble")) object <- object@model_list[[1]]
-  
-  # Calculate the score.
-  score <- metric.main(metric=metric,
-                       object=object,
-                       purpose="score",
-                       dt=data,
-                       outcome_type=object@outcome_type,
-                       na.rm=TRUE)
+  # Compute the metric score.
+  browser()
+  score <- compute_metric_score(metric=metric,
+                                object=object)
   
   if(!is.finite(score)) return(NULL)
   

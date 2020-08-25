@@ -62,8 +62,15 @@ testthat::test_that("AUC-ROC is correct", {
   expected_objective <- c(1.0, 0.0, 17/25, -1.0, 1.0, 0.0, 25/36, -1/3)
   
   # Iterate over the data sets.
-  for(ii in seq_len(length(data_list))){
+  for(ii in seq_along(data_list)){
 
+    # Create metric object.
+    metric_object <- as_metric(metric="auc_roc",
+                               outcome_type=ifelse(ii <= 4, "binomial", "multinomial"))
+    
+    # Check that the metric is available
+    testthat::expect_equal(familiar:::is_available(metric_object), TRUE)
+    
     # Compute the AUC.
     score <- familiar:::metric.auc.calc(dt=data_list[[ii]]$data,
                                         outcome_type=data_list[[ii]]$outcome_type,

@@ -311,7 +311,7 @@ hpo.perform_smbo <- function(run, run_id, n_run_total, cl, fs_method, learner=NU
   
   # Create initial set of configurations.
   parameter_table <- hpo.create_initial_hyperparameter_set(parameter_list=parameter_list,
-                                                          randomise_grid=settings$hpo$hpo_randomise_init_grid)
+                                                           randomise_grid=settings$hpo$hpo_randomise_init_grid)
   
   if(is_empty(parameter_table)) return(empty_return_data)
   
@@ -326,6 +326,10 @@ hpo.perform_smbo <- function(run, run_id, n_run_total, cl, fs_method, learner=NU
   
   ##### Create metric objects --------------------------------------------------
   
+  # Update the outcome_info attribute of the familiar model.
+  fam_model@outcome_info <- .compute_outcome_distribution_data(object=fam_model@outcome_info,
+                                                               data=primary_data)
+  
   # Create metric objects.
   metric_object_list <- lapply(settings$hpo$hpo_metric,
                                as_metric,
@@ -334,7 +338,8 @@ hpo.perform_smbo <- function(run, run_id, n_run_total, cl, fs_method, learner=NU
   # Add baseline values for each metric.
   metric_object_list <- lapply(metric_object_list,
                                set_metric_baseline_value,
-                               object=fam_model)
+                               object=fam_model,
+                               data=primary_data)
   
   ##### Obtain rank table ------------------------------------------------------
   
@@ -349,11 +354,11 @@ hpo.perform_smbo <- function(run, run_id, n_run_total, cl, fs_method, learner=NU
     rank_table <- NULL
   }
   
-  # If we arrive at this point, it means that there are optimisable parameters
-  # present in the parameter list. Initialise list for hyperparameter
-  # configuration evaluations.
-  hpo_metric_score_list <- list()
-  hpo_optimisation_score_list <- list()
+  # # If we arrive at this point, it means that there are optimisable parameters
+  # # present in the parameter list. Initialise list for hyperparameter
+  # # configuration evaluations.
+  # hpo_metric_score_list <- list()
+  # hpo_optimisation_score_list <- list()
 
   ################### SMBO - Initialisation ############################################
   # Generate data bootstrap samples
@@ -406,7 +411,8 @@ hpo.perform_smbo <- function(run, run_id, n_run_total, cl, fs_method, learner=NU
   # score.
   incumbent_set_data <- hpo.get_best_parameter_set(optimisation_score_table=hpo_optimisation_score_table,
                                                    optimisation_objective=settings$hpo$hpo_objective,
-                                                   n=1)
+                                                   n=1,
+                                                   method="percentile")
   
   # Message the user concerning the initial optimisation score.
   logger.message(paste0("Hyperparameter optimisation: Initialisation complete: ",
@@ -417,9 +423,7 @@ hpo.perform_smbo <- function(run, run_id, n_run_total, cl, fs_method, learner=NU
                  indent=message_indent)
   
   # Initialise vector to track old config scores and parameter ids
-  stop_list <- list("score"=numeric(0),
-                    "param_id"=integer(0),
-                    "conv_counter"=0)
+  stop_list <- hpo.initialise_stopping_criteria()
   
   smbo_iter <- 0
   while(smbo_iter < settings$hpo$hpo_smbo_iter_max){
@@ -427,145 +431,163 @@ hpo.perform_smbo <- function(run, run_id, n_run_total, cl, fs_method, learner=NU
     ################### SMBO - Intensify ############################################
 
     # Local neighbourhood + random hyperparameter randomisation for challenger configurations. This fu
-    challenger_set_data <- hpo.find_challenger_sets(parameter_table=parameter_table,
-                                                    score_table=hpo_score_table,
-                                                    parameter_list=parameter_list,
-                                                    smbo_iter=smbo_iter,
-                                                    settings=settings)
+    challenger_data <- hpo.find_challenger_sets(parameter_table=parameter_table,
+                                                score_table=hpo_score_table,
+                                                parameter_list=parameter_list,
+                                                smbo_iter=smbo_iter,
+                                                settings=settings)
     
-    dt_param_chal   <- hpo.find_challenger_sets(parameter_table=dt_param, score_table=dt_hpo_score, parameter_list=param_list,
-                                                smbo_iter=smbo_iter, settings=settings)
-
-    # Perform check - there are no random configurations selected
-    if(nrow(dt_param_chal)==0) { break() }
-
+    # Check that any challenger datasets were found. 
+    if(nrow(challenger_data) == 0) break()
+    
     # Add challenger parameters to the parameter table
-    dt_param        <- rbind(dt_param, dt_param_chal, use.names=TRUE)
-
+    parameter_table <- rbind(parameter_table,
+                             challenger_data,
+                             use.names=TRUE)
+    
     # Select only unique parameters
-    dt_param        <- unique(dt_param, by="param_id")
+    parameter_table <- unique(parameter_table,
+                              by="param_id")
 
     # Determine parameter ids from incumbent and challenger
-    param_id_inc    <- hpo.get_best_parameter_set(score_table=dt_hpo_score, objective=settings$hpo$hpo_objective, n=1)$param_id
-    param_id_chal   <- dt_param_chal$param_id
+    parameter_id_incumbent <- hpo.get_best_parameter_set(optimisation_score_table=hpo_optimisation_score_table,
+                                                         optimisation_objective=settings$hpo$hpo_objective,
+                                                         n=1,
+                                                         method="percentile")$param_id
+    
+    parameter_id_challenger <- challenger_data$param_id
 
     # Drop incumbent parameter id from the list of challengers
-    param_id_chal   <- param_id_chal[param_id_chal!=param_id_inc]
-
+    parameter_id_challenger <- setdiff(parameter_id_challenger, parameter_id_incumbent)
+    
     # Check if there are any challengers left
-    if(length(param_id_chal)==0) { break() }
-
-    rm(dt_param_chal)
+    if(length(parameter_id_challenger) == 0) break()
 
     # Start intensification rounds
     intensify_iter  <- 0
     while(intensify_iter < settings$hpo$hpo_intensify_max_iter){
 
-      # Concatenate all evaluations
-      dt_hpo_score  <- data.table::rbindlist(hpo_eval_list)
-
-      # Create run table
-      hpo_run_table    <- hpo.create_runoff_run_table(param_id_inc=param_id_inc, param_id_chal=param_id_chal,
-                                                   dt_score=dt_hpo_score, n_max=settings$hpo$hpo_max_bootstraps,
+      # Create run table.
+      hpo_run_table <- hpo.create_runoff_run_table(parameter_id_incumbent=parameter_id_incumbent,
+                                                   parameter_id_challenger=parameter_id_challenger,
+                                                   score_table=hpo_optimisation_score_table,
+                                                   n_max=settings$hpo$hpo_max_bootstraps,
                                                    n_new=settings$hpo$hpo_bootstraps)
 
-      # Check if there are any runs to perform
-      if(nrow(hpo_run_table) == 0){ break() }
+      # Check if there are any runs to perform.
+      if(nrow(hpo_run_table) == 0) break()
 
       # Message
-      logger.message(paste("\tIntensify step", intensify_iter + 1, "using", length(param_id_chal),
-                           "challenger hyperparameter sets."))
+      logger.message(paste("Intensify step", intensify_iter + 1, "using", length(parameter_id_challenger),
+                           "challenger hyperparameter sets."),
+                     indent=message_indent)
       
-      # Build and evaluate models
-      pred_list     <- hpo.get_model_performance(cl = cl,
-                                                 hpo_run_table = hpo_run_table,
-                                                 run_list = hpo_run_list,
-                                                 data_obj = data_prmry,
-                                                 dt_ranks = dt_ranks,
-                                                 dt_param = dt_param,
-                                                 feature_info_list = feature_info_list,
-                                                 settings = settings,
-                                                 learner = learner,
-                                                 fs_method = fs_method)
-
-      # Bind list of predictions to data table and convert to log-score
-      dt_hpo_score  <- metric.get_objective_score(dt=data.table::rbindlist(pred_list), metric=settings$hpo$hpo_metric,
-                                                  objective=settings$hpo$hpo_objective, outcome_type=settings$data$outcome_type)
-
-      # Add to configuration evaluation list
-      hpo_eval_list <- append(hpo_eval_list, list(dt_hpo_score))
-
-      # Clean up
-      rm(hpo_run_table, pred_list, dt_hpo_score)
-
-      # Add scores from all runs
-      dt_hpo_score  <- data.table::rbindlist(hpo_eval_list)
-
+      # Compute metric values for the bootstraps of the incumbent and challenger
+      # parameter sets.
+      intensify_score_table <- hpo.get_model_performance(cl=cl,
+                                                         object=fam_model,
+                                                         run_table=hpo_run_table,
+                                                         run_list=hpo_run_list,
+                                                         data=primary_data,
+                                                         rank_table=rank_table,
+                                                         parameter_table=parameter_table,
+                                                         metric_objects=metric_object_list,
+                                                         settings=settings)
+      
+      
+      # Compute the optimisation score. This creates a table with optimisation
+      # scores per bootstrap and parameter identifier.
+      intensify_optimisation_score_table <- metric.compute_optimisation_score(score_table=intensify_score_table,
+                                                                              optimisation_objective=settings$hpo$hpo_objective)
+      
+      # Find information regarding the dataset that has the highest optimisation
+      # score.
+      incumbent_set_data <- hpo.get_best_parameter_set(optimisation_score_table=hpo_optimisation_score_table,
+                                                       optimisation_objective=settings$hpo$hpo_objective,
+                                                       n=1,
+                                                       method="percentile")
+      
+      # Add new data to score and optimisation tables.
+      hpo_score_table <- rbind(hpo_score_table,
+                               intensify_score_table,
+                               use.names=TRUE)
+      
+      hpo_optimisation_score_table <- rbind(hpo_optimisation_score_table,
+                                            intensify_optimisation_score_table,
+                                            use.names=TRUE)
+      
       # Find scores and return parameter ids for challenger and incumbent
-      # Compared to the original SMAC algorithm, we actively eliminate unsuccesful challengers.
-      # To do so we determine the probability that the mean log score of a challenger will not exceed the incumbent score.
-      param_id_list <- hpo.compare_runoff_scores(dt_score=dt_hpo_score, param_id_inc=param_id_inc, param_id_chal=param_id_chal,
-                                                 objective=settings$hpo$hpo_objective, settings=settings)
-
+      # Compared to the original SMAC algorithm, we actively eliminate
+      # unsuccessful challengers. To do so we determine the probability that the
+      # optimisation score of a challenger does not exceed the incumbent score.
+      runoff_parameter_ids <- hpo.compare_runoff_scores(score_table=hpo_optimisation_score_table,
+                                                        parameter_id_incumbent=parameter_id_incumbent,
+                                                        parameter_id_challenger=parameter_id_challenger,
+                                                        objective=settings$hpo$hpo_objective,
+                                                        settings=settings)
+      
       # Extract parameter ids
-      param_id_inc  <- param_id_list$param_id_inc
-      param_id_chal <- param_id_list$param_id_chal
+      parameter_id_incumbent <- runoff_parameter_ids$parameter_id_incumbent
+      parameter_id_challenger <- runoff_parameter_ids$parameter_id_challenger
 
       # Check if there are challengers remaining
-      if(length(param_id_chal)==0) { break() }
+      if(length(parameter_id_challenger) == 0) break()
 
       # Update intensify iterator
-      intensify_iter     <- intensify_iter + 1
-
-      # Clean up
-      rm(dt_hpo_score, param_id_list)
+      intensify_iter <- intensify_iter + 1
     }
 
     ################### SMBO - Evaluate ############################################
     # We assess improvement to provide early stopping on non-improving incumbents
 
-    # Get all runs and determine incumbent parameter id
-    dt_hpo_score <- data.table::rbindlist(hpo_eval_list)
-    dt_inc       <- hpo.get_best_parameter_set(score_table=dt_hpo_score, objective=settings$hpo$hpo_objective, n=1)
-
+    # Get all runs and determine incumbent parameter id.
+    incumbent_set_data <- hpo.get_best_parameter_set(optimisation_score_table=hpo_optimisation_score_table,
+                                                     optimisation_objective=settings$hpo$hpo_objective,
+                                                     n=1,
+                                                     method="percentile")
+    
     # Update list with stopping criteria
-    stop_list    <- hpo.update_stopping_criteria(dt_score=dt_hpo_score, param_id_inc=dt_inc$param_id, stop_list=stop_list, settings=settings)
-
-    # Message progress
-    param_str    <- hpo.parse_parameters_to_string(id=param_id_inc, parameter_table=dt_param, parameter_list=param_list)
-    logger.message(paste0("\tHyperparameter optimisation: SMBO iteration ", smbo_iter+1, ": score ",
-                          dt_inc$summ_obj_score, "; ", param_str))
-
-    # Clean up
-    rm(dt_hpo_score, param_id_inc, param_str, dt_inc)
-
+    stop_list <- hpo.update_stopping_criteria(score_table=hpo_optimisation_score_table,
+                                              parameter_id_incumbent=incumbent_set_data$param_id,
+                                              stop_list=stop_list,
+                                              settings=settings)
+    
+    # Message progress.
+    logger.message(paste0("Hyperparameter optimisation: SMBO iteration ", smbo_iter + 1L, ": score ",
+                          incumbent_set_data$optimisation_score, "; ",
+                          hpo.parse_parameters_to_string(id=incumbent_set_data$param_id,
+                                                         parameter_table=parameter_table,
+                                                         parameter_list=parameter_list)),
+                   indent=message_indent)
+    
     # Break if the convergence counter reaches a certain number
-    if(stop_list$conv_counter >= settings$hpo$hpo_conv_stop){
+    if(stop_list$convergence_counter >= settings$hpo$hpo_conv_stop){
       # Message convergence
-      logger.message(paste0("\tHyperparameter optimisation: Optimisation stopped early as convergence was achieved."))
+      logger.message(paste0("Hyperparameter optimisation: Optimisation stopped early as convergence was achieved."),
+                     indent=message_indent)
 
       # Stop SMBO
       break()
     }
 
     # Update main iterator
-    smbo_iter <- smbo_iter + 1
-    ################### SMBO - Wrap-up and report ############################################
+    smbo_iter <- smbo_iter + 1L
   }
-
-  # Get all runs and determine incumbent parameter id
-  dt_hpo_score  <- data.table::rbindlist(hpo_eval_list)
-
-  # Select best parameter set
-  sel_param_id  <- hpo.get_best_parameter_set(score_table=dt_hpo_score, objective=settings$hpo$hpo_objective, n=1)$param_id
-
-  # Add corresponding hyper parameters and remove redundant columns
-  dt_sel_param <- dt_param[param_id==sel_param_id, ]
-  dt_sel_param[ ,"param_id":=NULL]
+  ################### SMBO - Wrap-up and report ############################################
+  browser()
+  # Get all runs and determine incumbent parameter id.
+  optimal_set_data <- hpo.get_best_parameter_set(optimisation_score_table=hpo_optimisation_score_table,
+                                                   optimisation_objective=settings$hpo$hpo_objective,
+                                                   n=1,
+                                                   method="percentile")
+  
+  # Add corresponding hyper parameters and remove redundant columns.
+  optimal_set_table <- parameter_table[param_id==optimal_set_data$param_id, ]
+  optimal_set_table[ ,"param_id":=NULL]
 
   # Return relevant data
-  return(list("param"=dt_sel_param,
-              "full_score"=dt_hpo_score))
+  return(list("selected_parameters"=optimal_set_table,
+              "complete_score"=hpo_score_table))
 }
 
 
@@ -650,59 +672,72 @@ hpo.random_forest_failure <- function(score_table, parameter_table){
 
 
 
-hpo.compare_runoff_scores <- function(dt_score, param_id_inc, param_id_chal, objective, settings){
+hpo.compare_runoff_scores <- function(score_table, parameter_id_incumbent,
+                                      parameter_id_challenger, objective, settings,
+                                      method="percentile"){
 
   # Suppress NOTES due to non-standard evaluation in data.table
-  param_id <- score_chal <- p_val <- NULL
+  param_id <- challenger_score <- p_value <- NULL
 
   # Determine scores and comparison p-values
-  dt_comp    <- dt_score[param_id %in% param_id_chal,
-                         hpo.compare_challenger_and_incumbent(dt_chal=.SD, dt_inc=dt_score[param_id==param_id_inc, ], objective=objective),
-                         by=list(param_id)]
-
+  comparison_table <- score_table[param_id %in% parameter_id_challenger,
+                                  hpo.compare_challenger_and_incumbent(challenger_score_table=.SD, 
+                                                                       incumbent_score_table=score_table[param_id==parameter_id_incumbent, ],
+                                                                       objective=objective,
+                                                                       method=method),
+                                  by=c("param_id")]
+  
   # Determine if there is a new incumbent score
-  if(any(dt_comp$score_chal > dt_comp$score_inc)){
-    # If a challenger beats the incumbent, replace the incumbent
-    param_id_inc_new  <- head(dt_comp[order(-score_chal)],1)$param_id
+  if(any(comparison_table$challenger_score > comparison_table$incumbent_score)){
+    # If a challenger beats the incumbent, replace the incumbent.
+    param_id_incumbent_new  <- head(comparison_table[order(-challenger_score)], n=1L)$param_id
 
-    # Remove new incumbent from the challengers and determine remaining challengers by against significance threshold alpha
-    param_id_chal_new <- dt_comp[param_id!=param_id_inc_new & p_val > settings$hpo$hpo_alpha, ]$param_id
+    # Remove new incumbent from the challengers and determine remaining
+    # challengers by against significance threshold alpha
+    param_id_challenger_new <- comparison_table[param_id != param_id_incumbent_new & p_value > settings$hpo$hpo_alpha, ]$param_id
 
-    # Add incumbent to the challengers
-    param_id_chal_new <- append(param_id_chal_new, param_id_inc)
+    # Add incumbent to the challengers.
+    param_id_challenger_new <- c(param_id_challenger_new, parameter_id_incumbent)
     
   } else {
-    # Challengers and incumbent remain and challengers are compared against the significance threshold
-    param_id_inc_new  <- param_id_inc
-    param_id_chal_new <- dt_comp[p_val > settings$hpo$hpo_alpha, ]$param_id
+    # Challengers and incumbent remain and challengers are compared against the
+    # significance threshold.
+    param_id_incumbent_new <- parameter_id_incumbent
+    param_id_challenger_new <- comparison_table[p_value > settings$hpo$hpo_alpha, ]$param_id
   }
 
-  return(list("param_id_inc"=param_id_inc_new, "param_id_chal"=param_id_chal_new))
+  return(list("parameter_id_incumbent"=param_id_incumbent_new,
+              "parameter_id_challenger"=param_id_challenger_new))
 }
 
 
 
-hpo.compare_challenger_and_incumbent <- function(dt_chal, dt_inc, objective){
-
+hpo.compare_challenger_and_incumbent <- function(challenger_score_table, incumbent_score_table, objective, method){
+browser()
   # Suppress NOTES due to non-standard evaluation in data.table
   run_id <- NULL
 
   # Find matching bootstrap ids
-  run_id_match    <- intersect(dt_chal$run_id, dt_inc$run_id)
+  run_id_match    <- intersect(challenger_data$run_id,
+                               incumbent_data$run_id)
 
-  # Calculate mean for challenger and incumbent for the matching bootstraps
-  score_chal <- metric.summarise_objective_scores(dt=dt_chal[run_id %in% run_id_match, ], objective=objective, as_vector=TRUE)
-  score_inc  <- metric.summarise_objective_scores(dt=dt_inc[run_id %in% run_id_match, ], objective=objective, as_vector=TRUE)
-
+  # Calculate the aggregate optimisation score for challenger and incumbent for
+  # the matching bootstraps.
+  challenger_score <- metric.summarise_optimisation_score(score_table=challenger_score_table[run_id %in% run_id_match, ],
+                                                          method=method)$optimisation_score
+  incumbent_score <- metric.summarise_optimisation_score(score_table=incumbent_score_table[run_id %in% run_id_match, ],
+                                                         method=method)$optimisation_score
 
   # Find p-value for matching means using paired wilcoxon rank test
-  p_val <- suppressWarnings(stats::wilcox.test(x=dt_chal[run_id %in% run_id_match, ][order(run_id_match)]$obj_score,
-                                               y=dt_inc[run_id %in% run_id_match, ][order(run_id_match)]$obj_score,
-                                               paired=TRUE, alternative="less")$p.value)
-
+  p_value <- suppressWarnings(stats::wilcox.test(x=challenger_score_table[run_id %in% run_id_match, ][order(run_id_match)]$optimisation_score,
+                                                 y=incumbent_score_table[run_id %in% run_id_match, ][order(run_id_match)]$optimisation_score,
+                                                 paired=TRUE,
+                                                 alternative="less")$p.value)
+  
   # Return list with data
-  return(list("score_chal"=score_chal, "score_inc"=score_inc, "p_val"=p_val))
-
+  return(list("challenger_score"=challenger_score,
+              "incumbent_score"=incumbent_score,
+              "p_value"=p_value))
 }
 
 
@@ -760,69 +795,95 @@ hpo.create_initial_hyperparameter_set <- function(parameter_list, randomise_grid
 }
 
 
-hpo.create_runoff_run_table <- function(param_id_inc, param_id_chal, dt_score, n_max, n_new){
+hpo.create_runoff_run_table <- function(parameter_id_incumbent, parameter_id_challenger, score_table, n_max, n_new){
 
   # Suppress NOTES due to non-standard evaluation in data.table
   param_id <- sampled <- run_id <- to_sample <- sample_id <- NULL
 
+  # Combine all parameter ids.
+  parameter_ids <- c(parameter_id_incumbent, parameter_id_challenger)
+  
   # Make a copy of dt_score and keep only relevant parameter ids and run ids
-  dt_score <- data.table::copy(dt_score)[, c("param_id","run_id")][param_id %in% c(param_id_inc, param_id_chal),][, "sampled":=TRUE]
+  score_table <- data.table::copy(score_table[param_id %in% parameter_ids,
+                                              c("param_id","run_id")])
+  
+  # Add a sampled column.
+  score_table[, "sampled":=TRUE]
 
   # Generate run data table
-  dt_run   <- data.table::as.data.table(expand.grid(param_id=c(param_id_inc, param_id_chal), run_id=seq_len(n_max), KEEP.OUT.ATTRS=FALSE, stringsAsFactors=FALSE))
+  run_table <- data.table::as.data.table(expand.grid(param_id=parameter_ids,
+                                                     run_id=seq_len(n_max),
+                                                     KEEP.OUT.ATTRS=FALSE,
+                                                     stringsAsFactors=FALSE))
 
-  # Mark those runs that have already been sampled
-  dt_run   <- merge(x=dt_run, y=dt_score, by=c("param_id", "run_id"), all.x=TRUE)
-  dt_run[is.na(sampled), "sampled":=FALSE]
+  # Mark those runs that have not been sampled yet. These have an NA-value for
+  # the sampled column.
+  run_table <- merge(x=run_table,
+                     y=score_table,
+                     by=c("param_id", "run_id"),
+                     all.x=TRUE)
+  run_table[is.na(sampled), "sampled":=FALSE]
 
   # Add a to_sample column to mark new samples to be made
   dt_run[, "to_sample":=FALSE]
 
   # Find all run ids that have sampled by the incumbent
-  run_id_inc  <- unique(dt_run[param_id==param_id_inc & sampled==TRUE, ]$run_id)
+  run_id_incumbent <- unique(run_table[param_id==parameter_id_incumbent & sampled==TRUE, ]$run_id)
 
   # Find all run ids that have been sampled by challengers
-  run_id_chal <- unique(dt_run[param_id %in% param_id_chal & sampled==TRUE, ]$run_id)
+  run_id_challenger <- unique(run_table[param_id %in% parameter_id_challenger & sampled==TRUE, ]$run_id)
 
-  # Determine run ids that have been sampled by challengers, but not by the incumbent
-  run_id_inc_new <- run_id_chal[!run_id_chal %in% run_id_inc]
+  # Determine run ids that have been sampled by challengers, but not by the
+  # incumbent.
+  run_id_incumbent_new <- setdiff(run_id_challenger, run_id_incumbent_new)
 
   # Identify if additional new bootstraps should be made
-  if(length(run_id_inc_new) < n_new){
+  if(length(run_id_incumbent_new) < n_new){
     # Sample n_sample new runs
-    n_sample <- n_new - length(run_id_inc_new)
+    n_sample <- n_new - length(run_id_incumbent_new)
 
-    # Determine which run ids have not been sampled by the incumbent
-    run_id_inc_unsample <- unique(dt_run[param_id==param_id_inc & sampled==FALSE, ]$run_id)
+    # Determine which run ids have not been sampled by the incumbent.
+    run_id_incumbent_new_samples <- unique(run_table[param_id==parameter_id_incumbent & sampled==FALSE, ]$run_id)
 
-    # Update n_sample to be the smallest of itself or the number of unsampled runs. This prevents an overflow beyond n_max.
-    n_sample <- min(c(n_sample, length(run_id_inc_unsample)))
+    # Update n_sample to be the smallest of itself or the number of unsampled
+    # runs. This prevents an overflow beyond n_max.
+    n_sample <- min(c(n_sample, length(run_id_incumbent_new_samples)))
 
-    # Sample and add to run_id_inc_new
+    # Sample and add to run_id_incumbent_new
     if(n_sample > 0){
-      run_id_inc_new <- append(run_id_inc_new, fam_sample(x=run_id_inc_unsample, size=n_sample, replace=FALSE))
+      run_id_incumbent_new <- c(run_id_incumbent_new,
+                                fam_sample(x=run_id_incumbent_new_samples,
+                                           size=n_sample,
+                                           replace=FALSE))
     }
+    
   } else {
-    # Sample up to n_new from run_id_inc_new
-    run_id_inc_new <- fam_sample(x=run_id_inc_new, size=n_new, replace=FALSE)
+    # Sample up to n_new from run_id_incumbent_new
+    run_id_incumbent_new <- fam_sample(x=run_id_incumbent_new, 
+                                       size=n_new,
+                                       replace=FALSE)
   }
-
   # Add new runs to the incumbent and applicable challengers
-  if(length(run_id_inc_new)>0){
-    dt_run[run_id %in% run_id_inc_new & sampled==FALSE, "to_sample":=TRUE]
+  if(length(run_id_incumbent_new) > 0){
+    run_table[run_id %in% run_id_incumbent_new & sampled==FALSE,
+              "to_sample":=TRUE]
   }
 
   # Add incumbent runs that have not been performed by the challengers to the sample
-  dt_run[param_id %in% param_id_chal & run_id %in% run_id_inc & sampled==FALSE, "to_sample":=TRUE]
+  run_table[param_id %in% parameter_id_challenger & run_id %in% run_id_incumbent & sampled==FALSE,
+            "to_sample":=TRUE]
 
   # Select only those runs that are to be sampled
-  dt_run <- dt_run[to_sample==TRUE, ]
+  run_table <- run_table[to_sample==TRUE, ]
 
   # Do not sample more than n_new for challengers
-  dt_run[param_id %in% param_id_chal, "sample_id":=sample(x=seq_len(.N), size=.N), by=param_id]
-  dt_run <- dt_run[(param_id==param_id_inc) | (param_id %in% param_id_chal & sample_id <= n_new), c("param_id", "run_id")]
+  run_table[param_id %in% parameter_id_challenger,
+            "sample_id":=fam_sample(x=seq_len(.N), size=.N), by="param_id"]
+  run_table <- run_table[(param_id == parameter_id_incumbent) |
+                           (param_id %in% parameter_id_challenger & sample_id <= n_new),
+                         c("param_id", "run_id")]
 
-  return(dt_run)
+  return(run_table)
 }
 
 
@@ -900,7 +961,6 @@ hpo.evaluate_hyperparameters <- function(run,
                                          object,
                                          data,
                                          rank_table, 
-                                         data,
                                          metric_objects,
                                          settings){
 
@@ -1022,11 +1082,11 @@ hpo.find_challenger_sets <- function(parameter_table, score_table, parameter_lis
   # parameter set.
   rf_optimisation_score <- hpo.random_forest_optimisation(score_table=optimisation_score_table,
                                                           parameter_table=parameter_table)
-  
-  # Create a random forest model to predict the fraction of failing models.
-  rf_prediction_failure <- hpo.random_forest_failure(score_table=optimisation_score_table,
-                                                     parameter_table=parameter_table)
-  
+  # 
+  # # Create a random forest model to predict the fraction of failing models.
+  # rf_prediction_failure <- hpo.random_forest_failure(score_table=optimisation_score_table,
+  #                                                    parameter_table=parameter_table)
+  # 
   # Find information regarding the dataset that has the highest optimisation
   # score.
   incumbent_set_data <- hpo.get_best_parameter_set(optimisation_score_table=optimisation_score_table,
@@ -1065,7 +1125,6 @@ hpo.find_challenger_sets <- function(parameter_table, score_table, parameter_lis
   incumbent_set_data=incumbent_set_data)
   
   
-  
   ###### Identify local sets ###################################################
   if(local_search){
   
@@ -1092,10 +1151,10 @@ hpo.find_challenger_sets <- function(parameter_table, score_table, parameter_lis
       iter_local_step <- iter_no_improv  <- 0
       
       # Select initial configuration for local search
-      selected_set  <- temp_parameter_table[param_id==best_param_id, ]
+      selected_set <- temp_parameter_table[param_id==best_param_id, ]
       
       # Determine the expected improvement for the currently selected set
-      selected_set_ei <- selected_set$ei[1]
+      selected_set_expected_improvement <- selected_set$expected_improvement[1]
       
       while(iter_local_step < n_local_steps & iter_no_improv < n_max_no_improv){
         
@@ -1104,23 +1163,27 @@ hpo.find_challenger_sets <- function(parameter_table, score_table, parameter_lis
                                                              parameter_list=parameter_list, local=TRUE)
         
         # Compute the expected improvement for the local set
-        local_random_set[, "ei":=hpo.expected_improvement(parameter_set=local_random_set, rf_model=rf_model, incumbent_score=incumbent_score)]
-        local_random_set_ei <- local_random_set$ei
+        local_random_set[, "expected_improvement":=hpo.expected_improvement(parameter_set=local_random_set,
+                                                                            rf_model=rf_model,
+                                                                            incumbent_set_data=incumbent_set_data,
+                                                                            method="percentile")]
+        
+        local_random_set_expected_improvement <- local_random_set$expected_improvement
         
         # Accept new configuration if there is an expected improvement
-        if(local_random_set_ei > selected_set_ei){
+        if(local_random_set_expected_improvement > selected_set_expected_improvement){
           
           # Add configuration to list
           local_sets <- append(local_sets, list(local_random_set))
           
           # Continue search from current set
           selected_set <- local_random_set
-          selected_set_ei <- local_random_set_ei
+          selected_set_expected_improvement <- local_random_set_expected_improvement
           
           # Update iterator
           iter_local_step <- iter_local_step + 1
           
-          # Reset iterator for no improvements in ei
+          # Reset iterator for no improvements in expected improvement.
           iter_no_improv  <- 0
           
         } else {
@@ -1141,24 +1204,34 @@ hpo.find_challenger_sets <- function(parameter_table, score_table, parameter_lis
                                                     random_sets)))
 
     # Select only unique parameter sets
-    new_sets <- unique(new_sets, by=names(parameter_list))
+    new_sets <- unique(new_sets,
+                       by=names(parameter_list))
     
     # Merge in original parameter-ids
-    new_sets <- merge(x=new_sets, y=parameter_table, by=names(parameter_list), all.x=TRUE, all.y=FALSE)
+    new_sets <- merge(x=new_sets,
+                      y=parameter_table,
+                      by=names(parameter_list),
+                      all.x=TRUE,
+                      all.y=FALSE)
     
     # Keep all sets except the incumbent, as it cannot have a run-off against itself.
     new_sets <- new_sets[param_id != incumbent_id | is.na(param_id)]
     
     # Sort by expected improvement and select up to 20 best
-    challenger_sets <- head(new_sets[(order(-ei))], n_challengers)
+    challenger_sets <- head(new_sets[(order(-expected_improvement))], n_challengers)
     
   } else {
 
     # Combine random sets into a data.table, but only select unique sets
-    new_sets <- unique(data.table::rbindlist(random_sets), by=names(parameter_list))
+    new_sets <- unique(data.table::rbindlist(random_sets),
+                       by=names(parameter_list))
     
     # Merge in original parameter set ids
-    new_sets <- merge(x=new_sets, y=parameter_table, by=names(parameter_list), all.x=TRUE, all.y=FALSE)
+    new_sets <- merge(x=new_sets,
+                      y=parameter_table,
+                      by=names(parameter_list),
+                      all.x=TRUE,
+                      all.y=FALSE)
     
     # Keep all sets except the incumbent, as it cannot have a run-off against itself.
     new_sets <- new_sets[param_id != incumbent_id | is.na(param_id)]
@@ -1169,12 +1242,13 @@ hpo.find_challenger_sets <- function(parameter_table, score_table, parameter_lis
     # Pad with challengers that contain parameter sets that were previously visited
     if(nrow(challenger_sets) < n_challengers){
       challenger_sets <- rbind(challenger_sets,
-                               head(new_sets[!is.na(param_id)], n=n_challengers-nrow(challenger_sets)))
+                               head(new_sets[!is.na(param_id)],
+                                    n=n_challengers-nrow(challenger_sets)))
     }
   }
   
   # Remove expected improvement
-  challenger_sets[, "ei":=NULL]
+  challenger_sets[, "expected_improvement":=NULL]
   
   # Provide a new parameter id for new configurations
   if(any(is.na(challenger_sets$param_id))){
@@ -1182,6 +1256,7 @@ hpo.find_challenger_sets <- function(parameter_table, score_table, parameter_lis
     # Find the largest existing parameter id
     max_param_id <- max(parameter_table$param_id)
     
+    # Generate parameter ids for new parameter sets. 
     challenger_sets[is.na(param_id), "param_id":= max_param_id + .I]
   }
   
@@ -1294,57 +1369,74 @@ hpo.get_model_performance <- function(cl,
 }
 
 
+hpo.initialise_stopping_criteria <- function(){
+  # Initialise the stop list.
+  return(list("score"=numeric(0),
+              "parameter_id"=integer(0),
+              "convergence_counter"= 0L))
+}
 
-hpo.update_stopping_criteria <- function(dt_score, param_id_inc, stop_list, settings){
 
+hpo.update_stopping_criteria <- function(score_table, parameter_id_incumbent, stop_list, settings, method="percentile"){
+  
   # Suppress NOTES due to non-standard evaluation in data.table
-  param_id <- obj_score <- NULL
+  param_id <- NULL
+  browser()
+  # Compute aggregate optimisation score.
+  summary_score_table <- metric.summarise_optimisation_score(score_table=score_table[param_id==parameter_id_incumbent, ],
+                                                             method=method)
+  
+  # Read the convergence counter.
+  convergence_counter <- stop_list$convergence_counter
 
-  # Calculate mean, sd and n for current run
-  dt_inc  <- dt_score[param_id==param_id_inc,
-                      list(mean=metric.summarise_objective_scores(dt=.SD, objective=settings$hpo$hpo_objective, as_vector=TRUE), sd=stats::sd(obj_score), n=.N),
-                      by=list(param_id)]
-
-  # Compare incumbent objective score with the minimum
-  score_range      <- metric.get_objective_score_range(metric=settings$hpo$hpo_metric, objective=settings$hpo$hpo_objective,
-                                                       outcome_type=settings$data$outcome_type)
-  above_min        <- dt_inc$mean[1] > min(score_range)
-
-  conv_counter     <- stop_list$conv_counter
-
-  # Assess covergence and stability
-  if(length(stop_list$score) >= 4 & above_min){
+  # Assess convergence and stability
+  if(length(stop_list$score) >= 4){
     # Calculate mean over last 4 incumbent scores and compare with incumbent
-    # Note that if the series is converging, the difference between the moving average over the last 4 incumbents
-    # and the current incumbent should be positive or 0.
-    mov_mean_score <- mean(tail(stop_list$score, 4))
-    diff_score     <- dt_inc$mean[1] - mov_mean_score
+    # Note that if the series is converging, the difference between the moving
+    # average over the last 4 incumbents and the current incumbent should be
+    # positive or 0.
+    recent_scores <- tail(stop_list$score, n=4L)
+    recent_parameter_id <- tail(stop_list$parameter_id, n=4L)
+    
+    # Determine the max absolute deviation from the mean.
+    max_abs_deviation <- max(abs(recent_scores - mean(recent_scores)))
 
     # Start counting convergence if:
-    #   1. convergence is positive and the rate of convergence has decreased below a fraction of the standard deviation
-    #   2. the param_id of the incumbent has not changed over the last iterations
-    if(diff_score >= 0  & diff_score < 0.1 * dt_inc$sd[1]){
-      conv_counter <- conv_counter + 1
-    } else if(all(tail(stop_list$param_id, 4) == dt_inc$param_id[1])) {
-      conv_counter <- conv_counter + 1
+    #
+    # 1. The maximum absolute deviation is below the tolerance.
+    #
+    # 2. the param_id of the incumbent dataset has not changed over the last
+    # iterations.
+    if(all(recent_parameter_id == parameter_id_incumbent)){
+      # Check if all recent optimal parameter sets are the same.
+      convergence_counter <- convergence_counter + 1L
+      
+    } else if(is.na(max_abs_deviation)){
+      # This means that a combination of parameters that leads to a correctly
+      # predicting model was not found.
+      convergence_counter <- 0L
+      
+    } else if(max_abs_deviation < 1E-2){
+      # Check if the 
+      convergence_counter <- convergence_counter + 1L
+      
     } else {
-      conv_counter <- 0
+      # This means that there is no convergence.
+      convergence_counter <- 0L
     }
   } else {
-    conv_counter <- 0
+    convergence_counter <- 0L
   }
 
-  # Append incumbent score to list of incumbent scores
-  stop_list$score        <- append(stop_list$score, dt_inc$mean[1])
-  stop_list$param_id     <- append(stop_list$param_id, dt_inc$param_id[1])
-  stop_list$conv_counter <- conv_counter
-
-  return(stop_list)
+  # Append new items to the stop list.
+  return(list("score"=c(stop_list$score, summary_score_table$optimisation_score),
+              "parameter_id"=c(stop_list$parameter_id, parameter_id_incumbent),
+              "convergence_counter"= convergence_counter))
 }
 
 
 hpo.randomise_hyperparameter_set <- function(parameter_table=NULL, parameter_list, local=TRUE){
-
+  browser()
   if(local & is_empty(parameter_table)){
     ..error_reached_unreachable_code("hpo.randomise_hyperparameter_set_no_values_for_local_search")
   }
@@ -1357,7 +1449,7 @@ hpo.randomise_hyperparameter_set <- function(parameter_table=NULL, parameter_lis
     
     # Remove param_id and ei from updated list
     updated_list$param_id <- NULL
-    updated_list$ei <- NULL
+    updated_list$expected_improvement <- NULL
     
     # Select one hyperparameter from the list of randomisable hyperparameters to
     # randomly update.
