@@ -42,60 +42,52 @@ setMethod("get_default_hyperparameters", signature(object="familiarRegressionVim
             param$drop_rate <- .set_hyperparameter(default=0.333, type="numeric", range=c(0, 1), randomise=FALSE)
             
             ##### Distribution family to use for linear regression #####
-            if(object@outcome_type == "binomial"){
-              learner_default <- "glm_logistic"
-              learner_range <- "glm_logistic"
-              
-            } else if(object@outcome_type == "multinomial") {
-              learner_default <- "glm_multinomial"
-              learner_range <- "glm_multinomial"
-              
-            } else if(object@outcome_type == "continuous") {
-              learner_default <- "glm_gaussian"
-              learner_range <- c("glm_gaussian", "glm_log", "glm_gaussian", "glm_inv_gaussian", "glm_poisson", "glm_log_poisson")
-              
-            } else if(object@outcome_type == "count"){
-              learner_default <- "glm_poisson"
-              learner_range <- c("glm_poisson", "glm_log_poisson")
-              
-            } else if(object@outcome_type == "survival"){
-              learner_default <- "cox"
-              learner_range <- c("cox", "survival_regr_weibull", "survival_regr_exponential", "survival_regr_gaussian", "survival_regr_logistic",
-                                 "survival_regr_lognormal", "survival_regr_loglogistic")
-              
-            } else {
-              ..error_outcome_type_not_implemented(outcome_type)
-            }
+            learner_default <- switch(object@outcome_type,
+                                      "binomial"="glm_logistic",
+                                      "multinomial"="glm_multinomial",
+                                      "continuous"="glm_gaussian",
+                                      "count"="glm_poisson",
+                                      "survival"="cox")
+            
+            # Set the learner range, i.e. all generalised linear models.
+            learner_range <- unique(c(.get_available_glm_learners(),
+                                      .get_available_cox_learners(),
+                                      .get_available_survival_regression_learners()))
+            
+            # Determine which learners are available for the outcome_type
+            learner_is_available <- sapply(learner_range,
+                                           learner.check_outcome_type,
+                                           outcome_type=object@outcome_type,
+                                           as_flag=TRUE)
             
             # Create the learner hyperparameter
-            param$learner <- .set_hyperparameter(default=learner_default, type="factor", range=learner_range, randomise=FALSE)
+            param$learner <- .set_hyperparameter(default=learner_default,
+                                                 type="factor",
+                                                 range=learner_range[learner_is_available],
+                                                 randomise=FALSE)
             
             ##### Metric for evaluation #####
-            if(object@outcome_type %in% c("binomial", "multinomial")){
-              metric_default <- "auc_roc"
-              metric_range <- c("auc_roc", "auc", "brier", "accuracy", "balanced_accuracy", "bac", "balanced_error_rate",
-                                "ber", "sensitivity", "recall", "true_positive_rate", "tpr", "specificity", "true_negative_rate",
-                                "tnr", "precision", "ppv", "npv", "false_discovery_rate", "fdr", "f1_score",  "kappa",
-                                "mcc", "matthews_correlation_coefficient", "informedness", "youden_j", "youden_index", "markedness")
-              
-            } else if(object@outcome_type == "continuous") {
-              metric_default <- "mse"
-              metric_range <- .get_available_regression_metrics()
-              
-            } else if(object@outcome_type == "count"){
-              metric_default <- "msle"
-              metric_range <- .get_available_regression_metrics()
-              
-            } else if(object@outcome_type == "survival"){
-              metric_default <- "concordance_index"
-              metric_range <- c("concordance_index", "global_concordance_index")
-
-            } else {
-              ..error_outcome_type_not_implemented(object@outcome_type)
-            }
+            metric_default <- switch(object@outcome_type,
+                                     "binomial"="auc_roc",
+                                     "multinomial"="auc_roc",
+                                     "continuous"="mse",
+                                     "count"="msle",
+                                     "survival"="concordance_index")
+            
+            # Get all available metrics.
+            metric_range <- .get_all_metrics()
+            
+            # Determine which of the metrics is available for the outcome type.
+            metric_is_available <- sapply(metric_range,
+                                          metric.check_outcome_type,
+                                          outcome_type=object@outcome_type,
+                                          as_flag=TRUE)
             
             # Create the metric hyperparameter
-            param$metric <- .set_hyperparameter(default=metric_default, type="factor", range=metric_range, randomise=FALSE)
+            param$metric <- .set_hyperparameter(default=metric_default,
+                                                type="factor",
+                                                range=metric_range[metric_is_available],
+                                                randomise=FALSE)
             
             return(param)
           })
@@ -106,7 +98,7 @@ setMethod("get_default_hyperparameters", signature(object="familiarRegressionVim
 setMethod("..vimp", signature(object="familiarRegressionVimp"),
           function(object, data, ...){
             # Suppress NOTES due to non-standard evaluation in data.table
-            score <- objective_score_mean <- name <- available <- NULL
+            score <- name <- available <- NULL
           
             if(is_empty(data)) return(callNextMethod())
             
@@ -118,10 +110,29 @@ setMethod("..vimp", signature(object="familiarRegressionVimp"),
 
             # Generate iteration list.
             iteration_list <- .create_bootstraps(sample_identifiers=data@data$subject_id,
-                                                n_iter=object@hyperparameters$n_bootstrap,
-                                                outcome_type=object@outcome_type,
-                                                data=data@data)
+                                                 n_iter=object@hyperparameters$n_bootstrap,
+                                                 outcome_type=object@outcome_type,
+                                                 data=data@data)
             
+            # Create a generic model.
+            fam_model <- promote_learner(object=methods::new("familiarModel",
+                                                             outcome_type = object@outcome_type,
+                                                             learner = object@hyperparameters$learner,
+                                                             fs_method = "none",
+                                                             feature_info = object@feature_info,
+                                                             outcome_info = .compute_outcome_distribution_data(object=object@outcome_info, data=data)))
+            
+            # Create metric objects.
+            metric_object_list <- lapply(object@hyperparameters$metric,
+                                         as_metric,
+                                         object=fam_model)
+            
+            # Add baseline values for each metric.
+            metric_object_list <- lapply(metric_object_list,
+                                         set_metric_baseline_value,
+                                         object=fam_model,
+                                         data=data)
+           
             # Generate score table.
             score_table <- data.table::data.table("name"=feature_columns,
                                                   "available"=TRUE,
@@ -132,7 +143,8 @@ setMethod("..vimp", signature(object="familiarRegressionVimp"),
             # Compute objective score for every feature.
             objective_score <- lapply(feature_columns,
                                       ..regression_vimp_assess_feature,
-                                      object=object,
+                                      fam_model=fam_model,
+                                      metric_objects=metric_object_list,
                                       data=data,
                                       iteration_list=iteration_list,
                                       fixed_set=NULL)
@@ -145,7 +157,7 @@ setMethod("..vimp", signature(object="familiarRegressionVimp"),
               
               # Create variable importance table.
               vimp_table <- data.table::data.table("name"=objective_score$name,
-                                                   "score"=objective_score$objective_score_mean)
+                                                   "score"=objective_score$score)
               
               # Add ranks.
               vimp_table[, "rank":=data.table::frank(-score, ties.method="min")]
@@ -157,8 +169,8 @@ setMethod("..vimp", signature(object="familiarRegressionVimp"),
             # Proceed with forward selection and multivariate regression.
             
             # Find the best performing feature.
-            max_objective_score <- max(objective_score$objective_score_mean)
-            best_feature <- objective_score[objective_score_mean == max_objective_score]$name
+            max_objective_score <- max(objective_score$score)
+            best_feature <- objective_score[score == max_objective_score]$name
             
             # Update the score_table.
             score_table[name %in% best_feature, ":="("score"=max_objective_score, 
@@ -173,7 +185,7 @@ setMethod("..vimp", signature(object="familiarRegressionVimp"),
             # Make dropped features unavailable.
             if(n_dropped > 0){
               # Identify the worst performing features.
-              bad_features <- tail(objective_score[(order(-objective_score_mean))], n=n_dropped)$name
+              bad_features <- tail(objective_score[(order(-score))], n=n_dropped)$name
               score_table[name %in% bad_features, "available":=FALSE]
             }
 
@@ -197,7 +209,8 @@ setMethod("..vimp", signature(object="familiarRegressionVimp"),
               # Compute objective score for every feature.
               objective_score <- lapply(available_features,
                                         ..regression_vimp_assess_feature,
-                                        object=object,
+                                        fam_model=fam_model,
+                                        metric_objects=metric_object_list,
                                         data=data,
                                         iteration_list=iteration_list,
                                         fixed_set=selected_features)
@@ -206,8 +219,8 @@ setMethod("..vimp", signature(object="familiarRegressionVimp"),
               objective_score <- data.table::rbindlist(objective_score)
               
               # Find the best performing feature.
-              max_objective_score <- max(objective_score$objective_score_mean)
-              best_feature <- objective_score[objective_score_mean == max_objective_score]$name
+              max_objective_score <- max(objective_score$score)
+              best_feature <- objective_score[score == max_objective_score]$name
               
               # Only continue adding, if the expected value changed.
               if(max_objective_score <= previous_objective_score) break()
@@ -225,13 +238,13 @@ setMethod("..vimp", signature(object="familiarRegressionVimp"),
               # Make dropped features unavailable.
               if(n_dropped > 0){
                 # Identify the worst performing features.
-                bad_features <- tail(objective_score[(order(-objective_score_mean))], n=n_dropped)$name
+                bad_features <- tail(objective_score[(order(-score))], n=n_dropped)$name
                 score_table[name %in% bad_features, "available":=FALSE]
               }
               
               # In addition, drop any features that do not improve upon the
               # previous best score.
-              bad_features <- objective_score[objective_score_mean < previous_objective_score]$name
+              bad_features <- objective_score[score < previous_objective_score]$name
               score_table[name %in% bad_features, "available":=FALSE]
               
               # Determine the features still available.
@@ -259,16 +272,17 @@ setMethod("..vimp", signature(object="familiarRegressionVimp"),
 
 
 
-..regression_vimp_assess_feature <- function(feature, object, data, iteration_list, fixed_set){
+..regression_vimp_assess_feature <- function(feature, fam_model, metric_objects, data, iteration_list, fixed_set){
 
   # Make local copy of the data prior to filtering features.
   data <- data.table::copy(data)
   
   # Remove features that are neither in feature nor fixed_set.
-  data <- filter_features(data, available_features=c(feature, fixed_set))
+  data <- filter_features(data,
+                          available_features=c(feature, fixed_set))
   
   # Iterate over bootstraps.
-  performance_data <- lapply(seq_along(iteration_list$train_list), function(bootstrap_id, data, object, iteration_list){
+  performance_data <- lapply(seq_along(iteration_list$train_list), function(bootstrap_id, data, fam_model, metric_objects, iteration_list){
     
     # Select train and test data.
     train_data <- select_data_from_samples(data=data,
@@ -276,56 +290,69 @@ setMethod("..vimp", signature(object="familiarRegressionVimp"),
     test_data <- select_data_from_samples(data=data,
                                           samples=iteration_list$valid_list[[bootstrap_id]])
     
-    # Create familiar model.
-    fam_model <- methods::new("familiarModel",
-                              outcome_type = object@outcome_type,
-                              learner = object@hyperparameters$learner,
-                              hyperparameters = list("sign_size"=length(c(feature, fixed_set))),
-                              outcome_info = object@outcome_info)
-    
-    # Promote the correct type.
-    fam_model <- promote_learner(object=fam_model)
+    # Update the familiar model
+    fam_model@hyperparameters$sign_size=length(c(feature, fixed_set))
     
     # Set additional parameters, e.g. the learner family.
-    fam_model <- ..set_vimp_parameters(object=fam_model, method=object@hyperparameters$learner)
+    fam_model <- ..set_vimp_parameters(object=fam_model,
+                                       method=fam_model@learner)
     
     # Train the model using the train data.
-    fam_model <- .train(object=fam_model, data=train_data, get_additional_info=FALSE)
+    fam_model <- .train(object=fam_model,
+                        data=train_data,
+                        get_additional_info=FALSE)
     
-    # Collect objective score for training data.
-    train_score <- assess_performance(object=fam_model,
-                                      newdata=train_data,
-                                      metric=object@hyperparameters$metric,
-                                      allow_recalibration=FALSE,
-                                      as_objective=TRUE,
-                                      na.rm=FALSE)
+    # Compute score using the metrics.
+    score_table <- mapply(function(data, data_set, object, metric_objects, settings){
+      
+      # Get metric names.
+      metric_names <- sapply(metric_objects, function(metric_object) metric_object@metric)
+      
+      # Predict for the in-bag and out-of-bag datasets.
+      prediction_table <- .predict(object=object,
+                                   data=data)
+      
+      # Compute objective scores.
+      metrics_objective_score <- sapply(metric_objects,
+                                        compute_objective_score,
+                                        data=prediction_table)
+      
+      # Return as data.table.
+      return(data.table::data.table("metric"=metric_names,
+                                    "data_set"=data_set,
+                                    "objective_score"=metrics_objective_score))
+    },
+    data=list(train_data, test_data),
+    data_set=c("training", "validation"),
+    MoreArgs=list("object"=fam_model,
+                  "metric_objects"=metric_objects),
+    SIMPLIFY=FALSE)
     
-    # Collect objective score for test data.
-    test_score <- assess_performance(object=fam_model,
-                                     newdata=test_data,
-                                     metric=object@hyperparameters$metric,
-                                     allow_recalibration=FALSE,
-                                     as_objective=TRUE,
-                                     na.rm=FALSE)
+    # Aggregate to a single table.
+    score_table <- data.table::rbindlist(score_table, use.names=TRUE)
     
-    # Generate data.table to return as output.
-    return(data.table::data.table("bootstrap_id"=bootstrap_id,
-                                  "obj_score_train"=train_score,
-                                  "obj_score_valid"=test_score))
+    # Add run id.
+    score_table[, ":="("run_id"=bootstrap_id)]
     
-  }, data=data, object=object, iteration_list=iteration_list)
+    # Set the column order.
+    data.table::setcolorder(score_table, neworder=c("run_id"))
+    
+    return(score_table)
+  },
+  data=data,
+  fam_model=fam_model,
+  metric_objects=metric_objects,
+  iteration_list=iteration_list)
   
-  # Combine performance data to a single table.
-  performance_data <- data.table::rbindlist(performance_data)
+  # Combine performance data to a single table and compute optimisation scores.
+  performance_data <- metric.compute_optimisation_score(score_table=data.table::rbindlist(performance_data),
+                                                        optimisation_objective="max_validation")
   
-  # Compute objective score from performance data.
-  performance_data <- metric.get_objective_score(performance_data,
-                                                 metric=object@hyperparameters$metric,
-                                                 objective="max_validation",
-                                                 outcome_type=object@outcome_type)
+  # Compute the summary score.
+  performance_data <- metric.summarise_optimisation_score(score_table=performance_data,
+                                                          method="median")
   
   # Return sample mean and standard deviation of the objective score.
   return(data.table::data.table("name"=feature,
-                                "objective_score_mean"=mean(performance_data$obj_score),
-                                "objective_score_sd"=stats::sd(performance_data$obj_score)))
+                                "score"=performance_data$optimisation_score))
 }
