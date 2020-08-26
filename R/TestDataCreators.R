@@ -183,6 +183,22 @@ test.create_one_sample_data_set <- function(outcome_type){
 
 
 
+test.create_all_identical_data_set <- function(outcome_type){
+  
+  # Create good dataset first and work from there.
+  data <- test.create_good_data_set(outcome_type=outcome_type)
+  
+  # Now keep only the first sample.
+  data@data <- head(data@data, n=1)
+  
+  # Fill the dataset with the same sample.
+  data@data <- data@data[rep.int(1L, 10)]
+  
+  return(data)
+}
+
+
+
 test.create_one_feature_data_set <- function(outcome_type){
   
   if(outcome_type == "survival"){
