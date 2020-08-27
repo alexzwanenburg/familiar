@@ -138,21 +138,28 @@ setMethod("compute_objective_score", signature(metric="familiarMetric"),
             # Get the baseline_value
             baseline_value <- metric@baseline_value
             
-            # Determine the optimal value, i.e. the best value attainable.
-            optimal_value <- ifelse(is_higher_better(metric),
-                                    max(metric@value_range),
-                                    min(metric@value_range))
-            
-            # If the baseline value is already perfect, use a small offset instead.
-            if(baseline_value == optimal_value) baseline_value <- ifelse(is_higher_better(metric), optimal_value - 1E-5, optimal_value + 1E-5)
-            
-            # Compute the objective_value
-            objective_value <- ifelse(is_higher_better(metric),
-                                      (value - baseline_value) / (optimal_value - baseline_value),
-                                      (baseline_value - value) / (baseline_value - optimal_value))
+            if(is.na(baseline_value)){
+              
+              # Set a NA value for the objective.
+              objective_value <- NA_real_
+              
+            } else {
+              # Determine the optimal value, i.e. the best value attainable.
+              optimal_value <- ifelse(is_higher_better(metric),
+                                      max(metric@value_range),
+                                      min(metric@value_range))
+              
+              # If the baseline value is already perfect, use a small offset instead.
+              if(baseline_value == optimal_value) baseline_value <- ifelse(is_higher_better(metric), optimal_value - 1E-5, optimal_value + 1E-5)
+              
+              # Compute the objective_value
+              objective_value <- ifelse(is_higher_better(metric),
+                                        (value - baseline_value) / (optimal_value - baseline_value),
+                                        (baseline_value - value) / (baseline_value - optimal_value))
+            }
             
             # Ensure that all objective scores fall in the [-1, 1] range.
-            if(is.na(objective_value)){
+            if(!is.finite(objective_value)){
               objective_value <- NA_real_
               
             } else if(objective_value < -1.0) {
