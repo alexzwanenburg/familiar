@@ -37,9 +37,13 @@ setMethod("compute_metric_score", signature(metric="familiarMetricAUCROC"),
             n_classes <- length(outcome_classes)
             
             # Skip calculation if an AUC cannot be computed.
-            if(is_empty(data)) return(callNextMethod())
             if(n_classes <= 1) return(callNextMethod())
-            if(!any_predictions_valid(prediction_table=data, outcome_type=metric@outcome_type)) return(callNextMethod())
+            
+            # Remove any entries that lack valid predictions.
+            data <- remove_nonvalid_predictions(prediction_table=data,
+                                                outcome_type=metric@outcome_type)
+            
+            if(is_empty(data)) return(callNextMethod())
             if(nrow(data) <= 1) return(callNextMethod())
             
             # Define class combinations (>1 in case of multinomial outcomes)

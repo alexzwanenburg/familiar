@@ -67,8 +67,8 @@ testthat::test_that("AUC-ROC is correct", {
   for(ii in seq_along(data_list)){
     
     # Create metric object.
-    metric_object <- as_metric(metric="auc_roc",
-                               outcome_type=data_list[[ii]]$outcome_type)
+    metric_object <- familiar:::as_metric(metric="auc_roc",
+                                          outcome_type=data_list[[ii]]$outcome_type)
     
     # Set baseline-value explicitly.
     metric_object@baseline_value <- 0.5
@@ -76,10 +76,11 @@ testthat::test_that("AUC-ROC is correct", {
     # Check that the metric is available
     testthat::expect_equal(familiar:::is_available(metric_object), TRUE)
     
-    # Compute the AUC-ROC score.
+    # Compute the metric value.
     score <- familiar:::compute_metric_score(metric=metric_object,
                                              data=data_list[[ii]]$data)
     
+    # Compute the objective score.
     objective_score <- familiar:::compute_objective_score(metric=metric_object,
                                                           data=data_list[[ii]]$data)
     
