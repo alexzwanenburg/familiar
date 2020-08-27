@@ -52,26 +52,37 @@ data_list <- list("good_binomial"    = list("data"=data_good_binomial,    "outco
                   "ok_multinomial"   = list("data"=data_ok_multinomial,   "outcome_type"="multinomial"),
                   "inv_multinomial"  = list("data"=data_inv_multinomial,  "outcome_type"="multinomial"))
 
+familiar:::test_all_metrics_available(metrics=familiar:::.get_available_brier_metrics())
+familiar:::test_all_metrics(metrics=familiar:::.get_available_brier_metrics())
 
-# 
-# ##### Brier score
-# testthat::test_that("Brier score is correct", {
-#   
-#   expected_score     <- c(0.0, 1/4, 0.18, 1.0, 0.0, 1/3, 391/2000, 1.0)
-#   expected_objective <- c(1.0, 3/4, 0.82, 0.0, 1.0, 2/3, 1609/2000, 0.0)
-#   
-#   for(ii in seq_len(length(data_list))){
-#     
-#     # Compute the AUC.
-#     score <- familiar:::metric.brier.calc(dt=data_list[[ii]]$data,
-#                                           outcome_type=data_list[[ii]]$outcome_type,
-#                                           metric="brier")
-#     
-#     obj_score <- familiar:::metric.brier.to_objective(score)
-#     
-#     # Test whether the Brier score is as expected.
-#     testthat::expect_equal(score, expected_score[ii])
-#     testthat::expect_equal(obj_score, expected_objective[ii])
-#   }
-#   
-# })
+##### Area under the curve #####################################################
+testthat::test_that("Brier score is correct", {
+  
+  expected_score     <- c(0.0, 1/4, 0.18, 1.0, 0.0, 1/3, 391/2000, 1.0)
+  expected_objective <- c(1.0, 3/4, 0.82, 0.0, 1.0, 2/3, 1609/2000, 0.0)
+  
+  # Iterate over the data sets.
+  for(ii in seq_along(data_list)){
+    
+    # Create metric object.
+    metric_object <- familiar:::as_metric(metric="brier",
+                                          outcome_type=data_list[[ii]]$outcome_type)
+    
+    # Set baseline-value explicitly.
+    metric_object@baseline_value <- 1.0
+    
+    # Check that the metric is available
+    testthat::expect_equal(familiar:::is_available(metric_object), TRUE)
+    
+    # Compute the metric score.
+    score <- familiar:::compute_metric_score(metric=metric_object,
+                                             data=data_list[[ii]]$data)
+    
+    objective_score <- familiar:::compute_objective_score(metric=metric_object,
+                                                          data=data_list[[ii]]$data)
+    
+    # Test the values.
+    testthat::expect_equal(score, expected_score[ii])
+    testthat::expect_equal(objective_score, expected_objective[ii])
+  }
+})
