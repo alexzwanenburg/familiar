@@ -544,7 +544,7 @@ any_predictions_valid <- function(prediction_table, outcome_type){
     return(FALSE)
   }
   
-  if(outcome_type %in% c("survival", "continuous", "count")){
+  if(outcome_type %in% c("survival", "continuous", "count", "competing_risk")){
     return(any(is.finite(prediction_table$predicted_outcome)))
     
   } else if(outcome_type %in% c("binomial", "multinomial")){
@@ -554,6 +554,24 @@ any_predictions_valid <- function(prediction_table, outcome_type){
     ..error_no_known_outcome_type(outcome_type)
   }
   
+}
+
+remove_nonvalid_predictions <- function(prediction_table, outcome_type){
+  
+  # Suppress NOTES due to non-standard evaluation in data.table
+  predicted_outcome <- predicted_class <- NULL
+  
+  if(is_empty(prediction_table)) return(prediction_table)
+  
+  if(outcome_type %in% c("survival", "continuous", "count", "competing_risk")){
+    return(prediction_table[is.finite(predicted_outcome), ])
+    
+  } else if(outcome_type %in% c("binomial", "multinomial")){
+    return(prediction_table[!is.na(predicted_class), ])
+    
+  } else {
+    ..error_no_known_outcome_type(outcome_type)
+  }
 }
 
 
