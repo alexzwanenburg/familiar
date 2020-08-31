@@ -1,6 +1,8 @@
 #' @include FamiliarS4Generics.R
 #' @include FamiliarS4Classes.R
 #' @include MetricS4AUC.R
+#' @include MetricS4Brier.R
+#' @include MetricS4ConfusionMatrixMetrics.R
 
 as_metric <- function(metric,
                       object=NULL,
@@ -16,8 +18,82 @@ as_metric <- function(metric,
     metric_object <- methods::new("familiarMetricAUCROC",
                                   outcome_type=outcome_type)
     
+  } else if(metric %in% .get_available_brier_metrics()){
+    metric_object <- methods::new("familiarMetricBrier",
+                                  outcome_type=outcome_type)
+    
+  } else if(metric %in% .get_available_accuracy_metrics()){
+    metric_object <- methods::new("familiarMetricAccuracy",
+                                  metric=metric,
+                                  outcome_type=outcome_type)
+    
+  } else if(metric %in% .get_available_balanced_accuracy_metrics()){
+    metric_object <- methods::new("familiarMetricBalancedAccuracy",
+                                  metric=metric,
+                                  outcome_type=outcome_type)
+    
+  } else if(metric %in% .get_available_balanced_error_rate_metrics()){
+    metric_object <- methods::new("familiarMetricBalancedErrorRate",
+                                  metric=metric,
+                                  outcome_type=outcome_type)
+    
+  } else if(metric %in% .get_available_cohen_kappa_metrics()){
+    metric_object <- methods::new("familiarMetricCohenKappa",
+                                  metric=metric,
+                                  outcome_type=outcome_type)
+    
+  } else if(metric %in% .get_available_f1_score_metrics()){
+    metric_object <- methods::new("familiarMetricF1Score",
+                                  metric=metric,
+                                  outcome_type=outcome_type)
+    
+  } else if(metric %in% .get_available_fdr_metrics()){
+    metric_object <- methods::new("familiarMetricFDR",
+                                  metric=metric,
+                                  outcome_type=outcome_type)
+    
+  } else if(metric %in% .get_available_informedness_metrics()){
+    metric_object <- methods::new("familiarMetricInformedness",
+                                  metric=metric,
+                                  outcome_type=outcome_type)
+    
+  } else if(metric %in% .get_available_markedness_metrics()){
+    metric_object <- methods::new("familiarMetricMarkedness",
+                                  metric=metric,
+                                  outcome_type=outcome_type)
+    
+  } else if(metric %in% .get_available_mcc_metrics()){
+    metric_object <- methods::new("familiarMetricMCC",
+                                  metric=metric,
+                                  outcome_type=outcome_type)
+    
+  } else if(metric %in% .get_available_npv_metrics()){
+    metric_object <- methods::new("familiarMetricNPV",
+                                  metric=metric,
+                                  outcome_type=outcome_type)
+    
+  } else if(metric %in% .get_available_ppv_metrics()){
+    metric_object <- methods::new("familiarMetricPPV",
+                                  metric=metric,
+                                  outcome_type=outcome_type)
+    
+  } else if(metric %in% .get_available_sensitivity_metrics()){
+    metric_object <- methods::new("familiarMetricSensitivity",
+                                  metric=metric,
+                                  outcome_type=outcome_type)
+    
+  } else if(metric %in% .get_available_specificity_metrics()){
+    metric_object <- methods::new("familiarMetricSpecificity",
+                                  metric=metric,
+                                  outcome_type=outcome_type)
+    
+  } else if(metric %in% .get_available_youden_metrics()){
+    metric_object <- methods::new("familiarMetricYouden",
+                                  metric=metric,
+                                  outcome_type=outcome_type)
+    
   }
-  
+
   return(metric_object)
 }
 
@@ -27,7 +103,8 @@ as_metric <- function(metric,
   # Returns a list of all metrics.
   
   metrics <- c(.get_available_auc_roc_metrics(),
-               NULL)
+               .get_available_brier_metrics(),
+               .get_available_confusion_matrix_metrics())
   
   return(metrics)
 }
@@ -138,7 +215,7 @@ setMethod("compute_objective_score", signature(metric="familiarMetric"),
             # Get the baseline_value
             baseline_value <- metric@baseline_value
             
-            if(is.na(baseline_value)){
+            if(!is.finite(baseline_value)){
               
               # Set a NA value for the objective.
               objective_value <- NA_real_
@@ -149,7 +226,8 @@ setMethod("compute_objective_score", signature(metric="familiarMetric"),
                                       max(metric@value_range),
                                       min(metric@value_range))
               
-              # If the baseline value is already perfect, use a small offset instead.
+              # If the baseline value is already perfect, use a small offset
+              # instead.
               if(baseline_value == optimal_value) baseline_value <- ifelse(is_higher_better(metric), optimal_value - 1E-5, optimal_value + 1E-5)
               
               # Compute the objective_value
@@ -257,6 +335,10 @@ setMethod("set_metric_baseline_value", signature(metric="familiarMetric"),
             # Compute metric value
             metric@baseline_value <- compute_metric_score(metric=metric,
                                                           data=prediction_table)
+            
+            # Check the baseline value is a finite value. If it isn't set the
+            # value to the extreme value of the range.
+            if(!is.finite(metric@baseline_value)) metric@baseline_value <- ifelse(is_higher_better(metric), min(metric@value_range), max(metric@value_range))
             
             return(metric)
           })

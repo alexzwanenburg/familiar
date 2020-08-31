@@ -27,7 +27,7 @@ Performance metrics for models with categorical outcomes, i.e. `binomial` and `m
 | balanced accuracy         | `bac`, `balanced_accuracy`        |   |
 | balanced error rate       | `ber`, `balanced_error_rate`      |   |
 | Brier score               | `brier`                           |   |
-| Cohen's kappa             | `kappa`                           |   | 
+| Cohen's kappa             | `kappa`, `cohen_kappa`            |   | 
 | f1 score                  | `f1_score`                        | × |
 | false discovery rate      | `fdr`, `false_discovery_rate`     | × |
 | informedness              | `informedness`                    | × |

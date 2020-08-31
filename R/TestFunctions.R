@@ -562,7 +562,8 @@ test_all_metrics_available <- function(metrics){
 
 test_all_metrics <- function(metrics,
                              except_one_sample=FALSE,
-                             except_identical=FALSE){
+                             except_identical=FALSE,
+                             except_same_prediction=FALSE){
   
   # Iterate over the outcome type.
   for(outcome_type in c("count", "continuous", "binomial", "multinomial", "survival")){
@@ -576,6 +577,16 @@ test_all_metrics <- function(metrics,
     one_feature_invariant_data <- test.create_one_feature_invariant_data_set(outcome_type)
     empty_data <- test.create_empty_data_set(outcome_type)
     bad_data <- test.create_bad_data_set(outcome_type)
+    
+    # Set exceptions per outcome type.
+    .except_one_sample <- except_one_sample
+    if(is.character(.except_one_sample)) .except_one_sample <- any(.except_one_sample == outcome_type)
+    
+    .except_identical <- except_identical
+    if(is.character(.except_identical)) .except_identical <- any(.except_identical == outcome_type)
+    
+    .except_same_prediction <- except_same_prediction
+    if(is.character(.except_same_prediction)) .except_same_prediction <- any(.except_same_prediction == outcome_type)
     
     # Iterate over metrics
     for(metric in metrics){
@@ -654,7 +665,7 @@ test_all_metrics <- function(metrics,
       
       # Test that metric values cannot be computed for a one-sample dataset.
       testthat::test_that(paste0("2. Model performance for ", outcome_type, " outcomes ",
-                                 ifelse(except_one_sample, "cannot", "can"),
+                                 ifelse(.except_one_sample, "cannot", "can"),
                                  " be assessed by the ", metric_object@name,
                                  " (", metric_object@metric, ") metric for a one-sample data set."), {
                                    
@@ -686,7 +697,7 @@ test_all_metrics <- function(metrics,
                                    
                                    # Expect that the score is a finite,
                                    # non-missing number, and NA otherwise.
-                                   if(except_one_sample){
+                                   if(.except_one_sample){
                                      testthat::expect_equal(is.na(score), TRUE)
                                    } else {
                                      testthat::expect_equal(data.table::between(score,
@@ -698,7 +709,7 @@ test_all_metrics <- function(metrics,
                                    # Expect that the objective score is a
                                    # non-missing number in the range [-1, 1] and
                                    # NA otherwise.
-                                   if(except_one_sample){
+                                   if(.except_one_sample){
                                      testthat::expect_equal(is.na(objective_score), TRUE)
                                    } else {
                                      testthat::expect_equal(data.table::between(objective_score,
@@ -738,7 +749,7 @@ test_all_metrics <- function(metrics,
       
       # Test that metric values can be computed for a dataset where are samples identical.
       testthat::test_that(paste0("4. Model performance for ", outcome_type, " outcomes ",
-                                 ifelse(except_identical, "cannot", "can"),
+                                 ifelse(.except_identical, "cannot", "can"),
                                  " be assessed by the ",
                                  metric_object@name, " (", metric_object@metric, ") metric for a dataset with identical samples."), {
                                    
@@ -760,7 +771,7 @@ test_all_metrics <- function(metrics,
                                    
                                    # Expect that the score is a finite,
                                    # non-missing number.
-                                   if(except_identical){
+                                   if(.except_identical){
                                      testthat::expect_equal(is.na(score), TRUE)
                                      
                                    } else {
@@ -773,7 +784,7 @@ test_all_metrics <- function(metrics,
                                    
                                    # Expect that the objective score is a
                                    # non-missing number in the range [-1, 1].
-                                   if(except_identical){
+                                   if(.except_identical){
                                      testthat::expect_equal(is.na(objective_score), TRUE)
                                      
                                    } else {
@@ -847,7 +858,7 @@ test_all_metrics <- function(metrics,
       
       # Test that metric values cannot be computed for a one-sample dataset.
       testthat::test_that(paste0("6. Model performance for ", outcome_type, " outcomes ",
-                                 ifelse(except_one_sample, "cannot", "can"),
+                                 ifelse(.except_one_sample, "cannot", "can"),
                                  " be assessed by the ", metric_object@name,
                                  " (", metric_object@metric, ") metric for a one-feature, one-sample data set."), {
                                    
@@ -879,7 +890,7 @@ test_all_metrics <- function(metrics,
                                    
                                    # Expect that the score is a finite,
                                    # non-missing number, and NA otherwise.
-                                   if(except_one_sample){
+                                   if(.except_one_sample){
                                      testthat::expect_equal(is.na(score), TRUE)
                                    } else {
                                      testthat::expect_equal(data.table::between(score,
@@ -891,7 +902,7 @@ test_all_metrics <- function(metrics,
                                    # Expect that the objective score is a
                                    # non-missing number in the range [-1, 1] and
                                    # NA otherwise.
-                                   if(except_one_sample){
+                                   if(.except_one_sample){
                                      testthat::expect_equal(is.na(objective_score), TRUE)
                                    } else {
                                      testthat::expect_equal(data.table::between(objective_score,
@@ -904,7 +915,9 @@ test_all_metrics <- function(metrics,
       
       # Test that metric values can be computed for the one-feature model with
       # invariant predicted outcomes for all samples.
-      testthat::test_that(paste0("7. Model performance for ", outcome_type, " outcomes can be assessed by the ",
+      testthat::test_that(paste0("7. Model performance for ", outcome_type, " outcomes ",
+                                 ifelse(.except_same_prediction, "can", "cannot"),
+                                 " be assessed by the ",
                                  metric_object@name, " (", metric_object@metric, ") metric for a one-feature data set with identical predictions."), {
                                    
                                    # Expect predictions to be made.
@@ -934,18 +947,27 @@ test_all_metrics <- function(metrics,
                                                                               object=model)
                                    
                                    # Expect that the score is a finite,
-                                   # non-missing number.
-                                   testthat::expect_equal(data.table::between(score,
-                                                                              lower=metric_object@value_range[1],
-                                                                              upper=metric_object@value_range[2]),
-                                                          TRUE)
+                                   # non-missing number, and NA otherwise.
+                                   if(.except_same_prediction){
+                                     testthat::expect_equal(is.na(score), TRUE)
+                                   } else {
+                                     testthat::expect_equal(data.table::between(score,
+                                                                                lower=metric_object@value_range[1],
+                                                                                upper=metric_object@value_range[2]),
+                                                            TRUE)
+                                   }
                                    
                                    # Expect that the objective score is a
-                                   # non-missing number in the range [-1, 1].
-                                   testthat::expect_equal(data.table::between(objective_score,
-                                                                              lower=-1.0,
-                                                                              upper=1.0),
-                                                          TRUE)
+                                   # non-missing number in the range [-1, 1] and
+                                   # NA otherwise.
+                                   if(.except_same_prediction){
+                                     testthat::expect_equal(is.na(objective_score), TRUE)
+                                   } else {
+                                     testthat::expect_equal(data.table::between(objective_score,
+                                                                                lower=-1.0,
+                                                                                upper=1.0),
+                                                            TRUE)
+                                   }
                                  })
       
       
