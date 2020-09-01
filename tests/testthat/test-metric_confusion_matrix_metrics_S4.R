@@ -1,5 +1,3 @@
-library(familiar)
-
 cm_metric_test <- function(metric, data_list, baseline_value, expected_score, expected_objective=NULL){
   
   # For several metrics the objective score and the expected score are the same.

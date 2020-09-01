@@ -3,6 +3,7 @@
 #' @include MetricS4AUC.R
 #' @include MetricS4Brier.R
 #' @include MetricS4ConfusionMatrixMetrics.R
+#' @include MetricS4Regression.R
 
 as_metric <- function(metric,
                       object=NULL,
@@ -92,6 +93,56 @@ as_metric <- function(metric,
                                   metric=metric,
                                   outcome_type=outcome_type)
     
+  } else if(metric %in% .get_available_mae_metrics()){
+    metric_object <- methods::new("familiarMetricMAE",
+                                  metric=metric,
+                                  outcome_type=outcome_type)
+    
+  } else if(metric %in% .get_available_mlae_metrics()){
+    metric_object <- methods::new("familiarMetricMLAE",
+                                  metric=metric,
+                                  outcome_type=outcome_type)
+    
+  } else if(metric %in% .get_available_mse_metrics()){
+    metric_object <- methods::new("familiarMetricMSE",
+                                  metric=metric,
+                                  outcome_type=outcome_type)
+    
+  } else if(metric %in% .get_available_msle_metrics()){
+    metric_object <- methods::new("familiarMetricMSLE",
+                                  metric=metric,
+                                  outcome_type=outcome_type)
+    
+  } else if(metric %in% .get_available_medea_metrics()){
+    metric_object <- methods::new("familiarMetricMedianAE",
+                                  metric=metric,
+                                  outcome_type=outcome_type)
+    
+  } else if(metric %in% .get_available_rmse_metrics()){
+    metric_object <- methods::new("familiarMetricRMSE",
+                                  metric=metric,
+                                  outcome_type=outcome_type)
+    
+  } else if(metric %in% .get_available_rmsle_metrics()){
+    metric_object <- methods::new("familiarMetricRMSLE",
+                                  metric=metric,
+                                  outcome_type=outcome_type)
+    
+  } else if(metric %in% .get_available_rmsle_metrics()){
+    metric_object <- methods::new("familiarMetricRMSLE",
+                                  metric=metric,
+                                  outcome_type=outcome_type)
+    
+  } else if(metric %in% .get_available_r_squared_metrics()){
+    metric_object <- methods::new("familiarMetricR2",
+                                  metric=metric,
+                                  outcome_type=outcome_type)
+    
+  } else if(metric %in% .get_available_explained_variance_metrics()){
+    metric_object <- methods::new("familiarMetricExplainedVariance",
+                                  metric=metric,
+                                  outcome_type=outcome_type)
+    
   }
 
   return(metric_object)
@@ -104,7 +155,8 @@ as_metric <- function(metric,
   
   metrics <- c(.get_available_auc_roc_metrics(),
                .get_available_brier_metrics(),
-               .get_available_confusion_matrix_metrics())
+               .get_available_confusion_matrix_metrics(),
+               .get_available_regression_metrics())
   
   return(metrics)
 }
@@ -312,7 +364,7 @@ setMethod("set_metric_baseline_value", signature(metric="familiarMetric"),
               } 
               
             } else if(metric@outcome_type %in% c("count", "continuous")){
-              browser()
+              
               # Baseline median value.
               median_value <- outcome_info@distribution$median
               
