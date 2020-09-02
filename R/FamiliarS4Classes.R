@@ -519,6 +519,8 @@ setClass("outcomeInfo",
            ordered = "logical",
            # Reference class of categorical outcomes.
            reference = "ANY",
+           # Max time for the outcome.
+           time = "numeric",
            # Censor indicator for survival outcomes, e.g. alive.
            censored = "character",
            # Event indicator for survival outcomes, e.g. recurrent disease.
@@ -543,6 +545,7 @@ setClass("outcomeInfo",
            levels = NULL,
            ordered = FALSE,
            reference = NA_character_,
+           time = Inf,
            censored = NA_character_,
            event = NA_character_,
            competing_risk = NA_character_,

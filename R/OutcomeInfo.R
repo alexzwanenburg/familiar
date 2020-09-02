@@ -21,6 +21,9 @@ create_outcome_info <- function(settings){
   }
   
   if(outcome_info@outcome_type %in% c("survival", "competing_risk")){
+    # Set maximum time
+    outcome_info@time <- ifelse(is.numeric(settings$eval$time_max), settings$eval$time_max, Inf)
+    
     # Set indicator for censoring
     outcome_info@censored <- as.character(settings$data$censoring_indicator)
     
@@ -58,6 +61,9 @@ create_outcome_info_from_data <- function(data){
   }
   
   if(outcome_info@outcome_type %in% c("survival", "competing_risk")){
+    # Set maximum time
+    outcome_info@time <- Inf
+    
     # Set indicator for censoring
     outcome_info@censored <- "0"
     
