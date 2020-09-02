@@ -74,8 +74,9 @@ setMethod("..vimp", signature(object="familiarConcordanceVimp"),
               
               # Compute concordance indices
               c_index <- sapply(feature_columns, function(feature, data){
-                return(metric.concordance_index.cindex_(x=data[[feature]],
-                                                        y=survival::Surv(data$outcome_time, data$outcome_event)))
+                return(..compute_concordance_index(x=data[[feature]],
+                                                   time=data$outcome_time,
+                                                   event=data$outcome_event))
 
               }, data=encoded_data$encoded_data@data)
               

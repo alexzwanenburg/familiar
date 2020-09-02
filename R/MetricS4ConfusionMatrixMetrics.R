@@ -44,21 +44,24 @@ setMethod("initialize", signature="familiarMetricCMAveraging",
           })
 
 
-.get_available_confusion_matrix_metrics <- function() return(c(.get_available_accuracy_metrics(),
-                                                               .get_available_balanced_accuracy_metrics(),
-                                                               .get_available_balanced_error_rate_metrics(),
-                                                               .get_available_cohen_kappa_metrics(),
-                                                               .get_available_f1_score_metrics(),
-                                                               .get_available_fdr_metrics(),
-                                                               .get_available_informedness_metrics(),
-                                                               .get_available_markedness_metrics(),
-                                                               .get_available_mcc_metrics(),
-                                                               .get_available_npv_metrics(),
-                                                               .get_available_ppv_metrics(),
-                                                               .get_available_sensitivity_metrics(),
-                                                               .get_available_specificity_metrics(),
-                                                               .get_available_youden_metrics()))
 
+.get_available_confusion_matrix_metrics <- function(){
+  return(c(.get_available_accuracy_metrics(),
+           .get_available_balanced_accuracy_metrics(),
+           .get_available_balanced_error_rate_metrics(),
+           .get_available_cohen_kappa_metrics(),
+           .get_available_f1_score_metrics(),
+           .get_available_fdr_metrics(),
+           .get_available_informedness_metrics(),
+           .get_available_markedness_metrics(),
+           .get_available_mcc_metrics(),
+           .get_available_npv_metrics(),
+           .get_available_ppv_metrics(),
+           .get_available_sensitivity_metrics(),
+           .get_available_specificity_metrics(),
+           .get_available_youden_metrics()))
+}
+  
 
 setMethod("is_available", signature(object="familiarMetricCM"),
           function(object, ...){

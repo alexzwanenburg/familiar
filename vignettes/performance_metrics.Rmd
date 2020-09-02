@@ -273,7 +273,7 @@ Performance metrics for models with survival outcomes, i.e. `survival`, are list
 
 | **method** | **tag** |
 |:-----------|:--------|
-| concordance index | `concordance_index` |
+| concordance index | `concordance_index`, `c_index`, `concordance_index_harrell`, `c_index_harrell` |
 
 ### Concordance index
 
