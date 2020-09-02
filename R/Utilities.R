@@ -655,6 +655,19 @@ get_mode <- function(x) {
 
 
 
+.sanitise_dots <- function(class, ...){
+  
+  dots <- list(...)
+  
+  if(length(dots) == 0) return(dots)
+  
+  slot_names <- names(methods::getSlots(class))
+  
+  return(dots[intersect(names(dots), slot_names)])
+}
+
+
+
 get_contrasts <- function(data, encoding_method="effect", drop_levels=TRUE, outcome_type=NULL, feature_columns=NULL){
   # Converts categorical data in to contrasts and return data table including contrast
   # TODO convert to S4 method.
