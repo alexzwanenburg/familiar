@@ -351,10 +351,10 @@ get_outcome_info_from_backend <- function(){
     surv_group <- data.table::copy(x)
     
     # Count events and censoring at each time point.
-    surv_group[, list("event"=sum(outcome_event == 1),
-                      "censored"=sum(outcome_event == 0),
-                      "competing"=sum(outcome_event > 1)),
-               by="outcome_time"][order(outcome_time)]
+    surv_group <- surv_group[, list("event"=sum(outcome_event == 1),
+                                    "censored"=sum(outcome_event == 0),
+                                    "competing"=sum(outcome_event > 1)),
+                             by="outcome_time"][order(outcome_time)]
     
     # Add group sizes at the start of each interval.
     surv_group[, "n":=nrow(x) - shift(cumsum(event + censored + competing), n=1, fill=0, type="lag")]
@@ -362,20 +362,28 @@ get_outcome_info_from_backend <- function(){
     # Compute the incidence and censoring rates in the interval
     surv_group[, ":="("interval_survival"= 1.0 - event / n,
                       "interval_incidence_rate"=event/ n,
-                      "interval_censoring_rate"=censored / n)]
+                      "interval_non_censoring_rate"=1.0 - censored / n)]
     
-    # Compute the Kaplan-Meier survival estimator
-    surv_group[, ":="("survival_probability"=cumprod(interval_survival))]
+    # Compute the Kaplan-Meier survival estimator and censoring estimator.
+    surv_group[, ":="("survival_probability"=cumprod(interval_survival),
+                      "cumulative_censoring"=1.0 - cumprod(interval_non_censoring_rate))]
     
     # Compute cumulative incidence and censoring rates.
-    surv_group[, ":="("cumulative_incidence"=cumsum(interval_survival * interval_incidence_rate),
-                      "cumulative_censoring"=cumsum(interval_survival * interval_censoring_rate))]
+    surv_group[, ":="("cumulative_incidence"=cumsum(shift(survival_probability, n=1L, fill=1.0, type="lag") * interval_incidence_rate))]
     
     # Rename the outcome_time column.
     data.table::setnames(surv_group, old="outcome_time", new="time")
-    browser()
-    # TODO: check that the cumulative incidence for all event types at each time
-    # point equals 1 - survival probability.
+    
+    # Retain only import
+    surv_group <- surv_group[, c("time", "survival_probability", "cumulative_incidence", "cumulative_censoring")]
+    
+    if(!any(surv_group$time == 0.0)){
+      surv_group <- rbind(data.table::data.table("time"=0.0,
+                                                 "survival_probability"=1.0,
+                                                 "cumulative_incidence"=0.0,
+                                                 "cumulative_censoring"=0.0),
+                          surv_group)
+    }
     
     # Number of samples
     distr_list[["n"]] <- nrow(x)
@@ -396,8 +404,7 @@ get_outcome_info_from_backend <- function(){
     distr_list[["cumulative_incidence"]] <- unique(surv_group[, c("time", "cumulative_incidence")])
     
     # Censoring rate
-    distr_list[["censoring_incidence"]] <- unique(surv_group[ , c("time", "censoring_incidence")])
-
+    distr_list[["censoring_incidence"]] <- unique(surv_group[ , c("time", "cumulative_censoring")])
     
   } else {
     ..error_no_known_outcome_type(object@outcome_type)
