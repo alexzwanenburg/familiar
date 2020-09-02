@@ -174,7 +174,7 @@ hpo.perform_smbo <- function(run, run_id, n_run_total, cl, fs_method, learner=NU
 
   # Suppress NOTES due to non-standard evaluation in data.table
   param_id <- NULL
-  browser()
+  
   # In absence of a learner, we assume that feature selection is performed.
   is_vimp <- is.null(learner)
 
@@ -221,7 +221,6 @@ hpo.perform_smbo <- function(run, run_id, n_run_total, cl, fs_method, learner=NU
                                                          run_table=run$run_table))
     
   } else {
-    
     # Find required features. This will be updated once a signature size has been set.
     required_features <- find_required_features(features=get_available_features(feature_info_list=feature_info_list,
                                                                                 exclude_signature=FALSE),
@@ -241,7 +240,6 @@ hpo.perform_smbo <- function(run, run_id, n_run_total, cl, fs_method, learner=NU
                                                      learner = learner,
                                                      fs_method = fs_method,
                                                      run_table = run$run_table,
-                                                     signature = selected_features,
                                                      req_feature_cols =  required_features,
                                                      feature_info = feature_info_list,
                                                      outcome_info = .get_outcome_info()))
@@ -340,25 +338,6 @@ hpo.perform_smbo <- function(run, run_id, n_run_total, cl, fs_method, learner=NU
                                set_metric_baseline_value,
                                object=fam_model,
                                data=primary_data)
-  
-  ##### Obtain rank table ------------------------------------------------------
-  
-  if(!is_vimp){
-    # Load rank table (if any)
-    rank_table <- rank.get_feature_ranks(run=run,
-                                         fs_method=fs_method,
-                                         settings=settings,
-                                         proj_list=project_list,
-                                         file_paths=file_paths)
-  } else {
-    rank_table <- NULL
-  }
-  
-  # # If we arrive at this point, it means that there are optimisable parameters
-  # # present in the parameter list. Initialise list for hyperparameter
-  # # configuration evaluations.
-  # hpo_metric_score_list <- list()
-  # hpo_optimisation_score_list <- list()
 
   ################### SMBO - Initialisation ############################################
   # Generate data bootstrap samples
@@ -384,7 +363,30 @@ hpo.perform_smbo <- function(run, run_id, n_run_total, cl, fs_method, learner=NU
                                                          run_id=sel_run_id,
                                                          KEEP.OUT.ATTRS=FALSE,
                                                          stringsAsFactors=FALSE))
-
+  
+  # Create a list of rank tables
+  if(!is_vimp){
+    # Load a previously generated rank table (if any).
+    rank_table <- rank.get_feature_ranks(run=run,
+                                         fs_method=fs_method,
+                                         settings=settings,
+                                         proj_list=project_list,
+                                         file_paths=file_paths)
+    
+    # Store as table.
+    rank_table_list <- lapply(seq_len(settings$hpo$hpo_max_bootstraps), function(ii, rank_table) (return(rank_table)), rank_table=rank_table)
+    names(rank_table_list) <- as.character(seq_len(settings$hpo$hpo_max_bootstraps))
+    
+  } else if(!is_vimp & FALSE){
+    # Generate a rank table for each of the bootstraps to avoid optimistic
+    # biases.
+    browser()
+    
+  } else {
+    rank_table_list <- NULL
+  }
+  
+  
   # Message
   logger.message(paste("Compute initial model performance based on",
                        nrow(hpo_run_table) / settings$hpo$hpo_bootstraps, "hyperparameter sets."),
@@ -397,11 +399,11 @@ hpo.perform_smbo <- function(run, run_id, n_run_total, cl, fs_method, learner=NU
                                                run_table=hpo_run_table,
                                                run_list=hpo_run_list,
                                                data=primary_data,
-                                               rank_table=rank_table,
+                                               rank_table_list=rank_table_list,
                                                parameter_table=parameter_table,
                                                metric_objects=metric_object_list,
                                                settings=settings)
-  
+  browser()
   # Compute the optimisation score. This creates a table with optimisation
   # scores per bootstrap and parameter identifier.
   hpo_optimisation_score_table <- metric.compute_optimisation_score(score_table=hpo_score_table,
@@ -489,7 +491,7 @@ hpo.perform_smbo <- function(run, run_id, n_run_total, cl, fs_method, learner=NU
                                                          run_table=hpo_run_table,
                                                          run_list=hpo_run_list,
                                                          data=primary_data,
-                                                         rank_table=rank_table,
+                                                         rank_table_list=rank_table_list,
                                                          parameter_table=parameter_table,
                                                          metric_objects=metric_object_list,
                                                          settings=settings)
@@ -963,8 +965,7 @@ hpo.evaluate_hyperparameters <- function(run,
                                          rank_table, 
                                          metric_objects,
                                          settings){
-
-  browser()
+  
   if(!is(object, "familiarModel")){
     ..error_reached_unreachable_code("hpo_evaluate_hyperparameters: object is not a familiarModel.")
   }
@@ -988,9 +989,9 @@ hpo.evaluate_hyperparameters <- function(run,
     
   } else {
     # Get a signature based on hyperparameters.
-    selected_features <- get_signature(feature_info_list=fam_model@feature_info,
+    selected_features <- get_signature(feature_info_list=object@feature_info,
                                        dt_ranks=rank_table,
-                                       fs_method=fam_model@fs_method,
+                                       fs_method=object@fs_method,
                                        param=parameter_list,
                                        settings=settings)
     
@@ -1013,7 +1014,7 @@ hpo.evaluate_hyperparameters <- function(run,
                    get_additional_info=FALSE)
   
   score_table <- mapply(function(data, data_set, object, metric_objects, settings){
-    browser()
+    
     # Get metric names.
     metric_names <- sapply(metric_objects, function(metric_object) metric_object@metric)
     
@@ -1332,14 +1333,14 @@ hpo.get_model_performance <- function(cl,
                                       run_table,
                                       run_list,
                                       data,
-                                      rank_table,
+                                      rank_table_list,
                                       parameter_table,
                                       metric_objects,
                                       settings){
   
   # Suppress NOTES due to non-standard evaluation in data.table
   param_id <- NULL
-
+  
   # Prepare new hpo_run_list and parameter lists for the mapping operation.
   hpo_run_list <- lapply(run_table$run_id,
                          function(ii, run_list) (run_list[[as.character(ii)]]),
@@ -1349,14 +1350,18 @@ hpo.get_model_performance <- function(cl,
                            function(ii, parameter_table) (parameter_table[param_id==ii, ]),
                            parameter_table=parameter_table)
   
+  rank_table_list <- lapply(run_table$run_id,
+                            function(ii, rank_table_list) (rank_table_list[[as.character(ii)]]),
+                            rank_table_list=rank_table_list)
+  
   score_table <- fam_mapply_lb(cl=cl,
                                assign=NULL,
                                FUN=hpo.evaluate_hyperparameters,
                                run=hpo_run_list,
+                               rank_table=rank_table_list,
                                parameter_table=parameter_list,
                                progress_bar=!settings$hpo$do_parallel,
                                MoreArgs=list("object"=object,
-                                             "rank_table"=rank_table,
                                              "metric_objects"=metric_objects,
                                              "data"=data,
                                              "settings"=settings))
@@ -1436,7 +1441,7 @@ hpo.update_stopping_criteria <- function(score_table, parameter_id_incumbent, st
 
 
 hpo.randomise_hyperparameter_set <- function(parameter_table=NULL, parameter_list, local=TRUE){
-  browser()
+  
   if(local & is_empty(parameter_table)){
     ..error_reached_unreachable_code("hpo.randomise_hyperparameter_set_no_values_for_local_search")
   }
