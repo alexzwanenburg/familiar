@@ -16,133 +16,188 @@ as_metric <- function(metric,
   }
   
   if(metric %in% .get_available_auc_roc_metrics()){
-    metric_object <- methods::new("familiarMetricAUCROC",
-                                  outcome_type=outcome_type)
+    metric_object <- do.call(methods::new, args=c(list("Class"="familiarMetricAUCROC",
+                                                       "metric"=metric,
+                                                       "outcome_type"=outcome_type),
+                                                  .sanitise_dots("familiarMetricAUCROC",
+                                                                 ...)))
     
   } else if(metric %in% .get_available_brier_metrics()){
-    metric_object <- methods::new("familiarMetricBrier",
-                                  outcome_type=outcome_type)
-    
+    metric_object <- do.call(methods::new, args=c(list("Class"="familiarMetricBrier",
+                                                       "metric"=metric,
+                                                       "outcome_type"=outcome_type),
+                                                  .sanitise_dots("familiarMetricBrier",
+                                                                 ...)))
+
   } else if(metric %in% .get_available_accuracy_metrics()){
-    metric_object <- methods::new("familiarMetricAccuracy",
-                                  metric=metric,
-                                  outcome_type=outcome_type)
-    
+    metric_object <- do.call(methods::new, args=c(list("Class"="familiarMetricAccuracy",
+                                                       "metric"=metric,
+                                                       "outcome_type"=outcome_type),
+                                                  .sanitise_dots("familiarMetricAccuracy",
+                                                                 ...)))
+
   } else if(metric %in% .get_available_balanced_accuracy_metrics()){
-    metric_object <- methods::new("familiarMetricBalancedAccuracy",
-                                  metric=metric,
-                                  outcome_type=outcome_type)
+    metric_object <- do.call(methods::new, args=c(list("Class"="familiarMetricBalancedAccuracy",
+                                                       "metric"=metric,
+                                                       "outcome_type"=outcome_type),
+                                                  .sanitise_dots("familiarMetricBalancedAccuracy",
+                                                                 ...)))
+
     
   } else if(metric %in% .get_available_balanced_error_rate_metrics()){
-    metric_object <- methods::new("familiarMetricBalancedErrorRate",
-                                  metric=metric,
-                                  outcome_type=outcome_type)
+    metric_object <- do.call(methods::new, args=c(list("Class"="familiarMetricBalancedErrorRate",
+                                                       "metric"=metric,
+                                                       "outcome_type"=outcome_type),
+                                                  .sanitise_dots("familiarMetricBalancedErrorRate",
+                                                                 ...)))
     
   } else if(metric %in% .get_available_cohen_kappa_metrics()){
-    metric_object <- methods::new("familiarMetricCohenKappa",
-                                  metric=metric,
-                                  outcome_type=outcome_type)
-    
+    metric_object <- do.call(methods::new, args=c(list("Class"="familiarMetricCohenKappa",
+                                                       "metric"=metric,
+                                                       "outcome_type"=outcome_type),
+                                                  .sanitise_dots("familiarMetricCohenKappa",
+                                                                 ...)))
+
   } else if(metric %in% .get_available_f1_score_metrics()){
-    metric_object <- methods::new("familiarMetricF1Score",
-                                  metric=metric,
-                                  outcome_type=outcome_type)
-    
+    metric_object <- do.call(methods::new, args=c(list("Class"="familiarMetricF1Score",
+                                                       "metric"=metric,
+                                                       "outcome_type"=outcome_type),
+                                                  .sanitise_dots("familiarMetricF1Score",
+                                                                 ...)))
+
   } else if(metric %in% .get_available_fdr_metrics()){
-    metric_object <- methods::new("familiarMetricFDR",
-                                  metric=metric,
-                                  outcome_type=outcome_type)
-    
+    metric_object <- do.call(methods::new, args=c(list("Class"="familiarMetricFDR",
+                                                       "metric"=metric,
+                                                       "outcome_type"=outcome_type),
+                                                  .sanitise_dots("familiarMetricFDR",
+                                                                 ...)))
+
   } else if(metric %in% .get_available_informedness_metrics()){
-    metric_object <- methods::new("familiarMetricInformedness",
-                                  metric=metric,
-                                  outcome_type=outcome_type)
+    metric_object <- do.call(methods::new, args=c(list("Class"="familiarMetricInformedness",
+                                                       "metric"=metric,
+                                                       "outcome_type"=outcome_type),
+                                                  .sanitise_dots("familiarMetricInformedness",
+                                                                 ...)))
     
   } else if(metric %in% .get_available_markedness_metrics()){
-    metric_object <- methods::new("familiarMetricMarkedness",
-                                  metric=metric,
-                                  outcome_type=outcome_type)
+    metric_object <- do.call(methods::new, args=c(list("Class"="familiarMetricMarkedness",
+                                                       "metric"=metric,
+                                                       "outcome_type"=outcome_type),
+                                                  .sanitise_dots("familiarMetricMarkedness",
+                                                                 ...)))
     
   } else if(metric %in% .get_available_mcc_metrics()){
-    metric_object <- methods::new("familiarMetricMCC",
-                                  metric=metric,
-                                  outcome_type=outcome_type)
+    metric_object <- do.call(methods::new, args=c(list("Class"="familiarMetricMCC",
+                                                       "metric"=metric,
+                                                       "outcome_type"=outcome_type),
+                                                  .sanitise_dots("familiarMetricMCC",
+                                                                 ...)))
     
   } else if(metric %in% .get_available_npv_metrics()){
-    metric_object <- methods::new("familiarMetricNPV",
-                                  metric=metric,
-                                  outcome_type=outcome_type)
+    metric_object <- do.call(methods::new, args=c(list("Class"="familiarMetricNPV",
+                                                       "metric"=metric,
+                                                       "outcome_type"=outcome_type),
+                                                  .sanitise_dots("familiarMetricNPV",
+                                                                 ...)))
     
   } else if(metric %in% .get_available_ppv_metrics()){
-    metric_object <- methods::new("familiarMetricPPV",
-                                  metric=metric,
-                                  outcome_type=outcome_type)
+    metric_object <- do.call(methods::new, args=c(list("Class"="familiarMetricPPV",
+                                                       "metric"=metric,
+                                                       "outcome_type"=outcome_type),
+                                                  .sanitise_dots("familiarMetricPPV",
+                                                                 ...)))
     
   } else if(metric %in% .get_available_sensitivity_metrics()){
-    metric_object <- methods::new("familiarMetricSensitivity",
-                                  metric=metric,
-                                  outcome_type=outcome_type)
+    metric_object <- do.call(methods::new, args=c(list("Class"="familiarMetricSensitivity",
+                                                       "metric"=metric,
+                                                       "outcome_type"=outcome_type),
+                                                  .sanitise_dots("familiarMetricSensitivity",
+                                                                 ...)))
     
   } else if(metric %in% .get_available_specificity_metrics()){
-    metric_object <- methods::new("familiarMetricSpecificity",
-                                  metric=metric,
-                                  outcome_type=outcome_type)
-    
+    metric_object <- do.call(methods::new, args=c(list("Class"="familiarMetricSpecificity",
+                                                       "metric"=metric,
+                                                       "outcome_type"=outcome_type),
+                                                  .sanitise_dots("familiarMetricSpecificity",
+                                                                 ...)))
+
   } else if(metric %in% .get_available_youden_metrics()){
-    metric_object <- methods::new("familiarMetricYouden",
-                                  metric=metric,
-                                  outcome_type=outcome_type)
+    metric_object <- do.call(methods::new, args=c(list("Class"="familiarMetricYouden",
+                                                       "metric"=metric,
+                                                       "outcome_type"=outcome_type),
+                                                  .sanitise_dots("familiarMetricYouden",
+                                                                 ...)))
     
   } else if(metric %in% .get_available_mae_metrics()){
-    metric_object <- methods::new("familiarMetricMAE",
-                                  metric=metric,
-                                  outcome_type=outcome_type)
+    metric_object <- do.call(methods::new, args=c(list("Class"="familiarMetricMAE",
+                                                       "metric"=metric,
+                                                       "outcome_type"=outcome_type),
+                                                  .sanitise_dots("familiarMetricMAE",
+                                                                 ...)))
     
   } else if(metric %in% .get_available_mlae_metrics()){
-    metric_object <- methods::new("familiarMetricMLAE",
-                                  metric=metric,
-                                  outcome_type=outcome_type)
+    metric_object <- do.call(methods::new, args=c(list("Class"="familiarMetricMLAE",
+                                                       "metric"=metric,
+                                                       "outcome_type"=outcome_type),
+                                                  .sanitise_dots("familiarMetricMLAE",
+                                                                 ...)))
     
   } else if(metric %in% .get_available_mse_metrics()){
-    metric_object <- methods::new("familiarMetricMSE",
-                                  metric=metric,
-                                  outcome_type=outcome_type)
+    metric_object <- do.call(methods::new, args=c(list("Class"="familiarMetricMSE",
+                                                       "metric"=metric,
+                                                       "outcome_type"=outcome_type),
+                                                  .sanitise_dots("familiarMetricMSE",
+                                                                 ...)))
     
   } else if(metric %in% .get_available_msle_metrics()){
-    metric_object <- methods::new("familiarMetricMSLE",
-                                  metric=metric,
-                                  outcome_type=outcome_type)
+    metric_object <- do.call(methods::new, args=c(list("Class"="familiarMetricMSLE",
+                                                       "metric"=metric,
+                                                       "outcome_type"=outcome_type),
+                                                  .sanitise_dots("familiarMetricMSLE",
+                                                                 ...)))
     
   } else if(metric %in% .get_available_medea_metrics()){
-    metric_object <- methods::new("familiarMetricMedianAE",
-                                  metric=metric,
-                                  outcome_type=outcome_type)
+    metric_object <- do.call(methods::new, args=c(list("Class"="familiarMetricMedianAE",
+                                                       "metric"=metric,
+                                                       "outcome_type"=outcome_type),
+                                                  .sanitise_dots("familiarMetricMedianAE",
+                                                                 ...)))
     
   } else if(metric %in% .get_available_rmse_metrics()){
-    metric_object <- methods::new("familiarMetricRMSE",
-                                  metric=metric,
-                                  outcome_type=outcome_type)
+    metric_object <- do.call(methods::new, args=c(list("Class"="familiarMetricRMSE",
+                                                       "metric"=metric,
+                                                       "outcome_type"=outcome_type),
+                                                  .sanitise_dots("familiarMetricRMSE",
+                                                                 ...)))
     
   } else if(metric %in% .get_available_rmsle_metrics()){
-    metric_object <- methods::new("familiarMetricRMSLE",
-                                  metric=metric,
-                                  outcome_type=outcome_type)
-    
-  } else if(metric %in% .get_available_rmsle_metrics()){
-    metric_object <- methods::new("familiarMetricRMSLE",
-                                  metric=metric,
-                                  outcome_type=outcome_type)
+    metric_object <- do.call(methods::new, args=c(list("Class"="familiarMetricRMSLE",
+                                                       "metric"=metric,
+                                                       "outcome_type"=outcome_type),
+                                                  .sanitise_dots("familiarMetricRMSLE",
+                                                                 ...)))
     
   } else if(metric %in% .get_available_r_squared_metrics()){
-    metric_object <- methods::new("familiarMetricR2",
-                                  metric=metric,
-                                  outcome_type=outcome_type)
+    metric_object <- do.call(methods::new, args=c(list("Class"="familiarMetricR2",
+                                                       "metric"=metric,
+                                                       "outcome_type"=outcome_type),
+                                                  .sanitise_dots("familiarMetricR2",
+                                                                 ...)))
     
   } else if(metric %in% .get_available_explained_variance_metrics()){
-    metric_object <- methods::new("familiarMetricExplainedVariance",
-                                  metric=metric,
-                                  outcome_type=outcome_type)
+    metric_object <- do.call(methods::new, args=c(list("Class"="familiarMetricExplainedVariance",
+                                                       "metric"=metric,
+                                                       "outcome_type"=outcome_type),
+                                                  .sanitise_dots("familiarMetricExplainedVariance",
+                                                                 ...)))
     
+  } else if(metric %in% .get_available_concordance_index_harrell()){
+    metric_object <- do.call(methods::new, args=c(list("Class"="familiarMetricConcordanceIndexHarrell",
+                                                       "metric"=metric,
+                                                       "outcome_type"=outcome_type,
+                                                       "object"=object),
+                                                  .sanitise_dots("familiarMetricConcordanceIndexHarrell",
+                                                                 ...)))
   }
 
   return(metric_object)
@@ -156,7 +211,8 @@ as_metric <- function(metric,
   metrics <- c(.get_available_auc_roc_metrics(),
                .get_available_brier_metrics(),
                .get_available_confusion_matrix_metrics(),
-               .get_available_regression_metrics())
+               .get_available_regression_metrics(),
+               .get_available_concordance_index_metrics())
   
   return(metrics)
 }
@@ -448,3 +504,74 @@ metric.is_higher_score_better <- function(metric, object=NULL, outcome_type=NULL
   
   return(metric_object@higher_better)
 }
+
+
+metric.compute_optimisation_score <- function(score_table,
+                                              optimisation_objective){
+  
+  # Select the correct optimisation function.
+  optimisation_function <- switch(optimisation_objective,
+                                  "max_validation" = metric.optim_score.max_validation,
+                                  "balanced" = metric.optim_score.balanced,
+                                  "stronger_balance" = metric.optim_score.stronger_balance)
+  
+  # Find identifier columns.
+  id_columns <- intersect(colnames(score_table),
+                          c("param_id", "run_id"))
+  
+  # Create formula
+  formula <- stats::reformulate(termlabels="data_set",
+                                response=paste0(c(id_columns, "metric"), collapse=" + "))
+  
+  # Cast objective score wide by data_set.
+  optimisation_table <- dcast(data=score_table[, mget(c(id_columns, "metric", "data_set", "objective_score"))],
+                              formula,
+                              value.var="objective_score")
+  
+  # Compute optimisation score based on objective scores.
+  optimisation_table <- optimisation_table[, list("optimisation_score"=optimisation_function(training=training,
+                                                                                             validation=validation)),
+                                           by=c(id_columns, "metric")]
+  
+  # Average optimisation score over metrics.
+  optimisation_table <- optimisation_table[, list("optimisation_score"=mean(optimisation_score, na.rm=TRUE)),
+                                           by=id_columns]
+  
+  return(optimisation_table)
+}
+
+
+
+metric.summarise_optimisation_score <- function(score_table, method){
+  # Calculates a summary objective score
+  
+  # Suppress NOTES due to non-standard evaluation in data.table
+  optimisation_score <- NULL
+  
+  # Find identifier columns.
+  id_columns <- intersect(colnames(score_table),
+                          "param_id")
+  
+  # Obtain the aggregation method.
+  aggregation_method <- switch(method,
+                               "percentile"=stats::median,
+                               "z_statistic"=mean,
+                               "median"=stats::median,
+                               "mean"=mean,
+                               "max"=max,
+                               "min"=min)
+  
+  # Compute the mean optimisation score, overall, or per parameter id.
+  score_table <- score_table[, list("optimisation_score"=aggregation_method(optimisation_score, na.rm=TRUE)),
+                             by=id_columns]
+  
+  return(score_table)
+}
+
+
+
+metric.optim_score.max_validation <- function(training=NULL, validation) return(validation)
+
+metric.optim_score.balanced <- function(training, validation) return(validation - abs(validation - training))
+
+metric.optim_score.stronger_balance <- function(training, validation) return(validation - 2.0 * abs(validation - training))
