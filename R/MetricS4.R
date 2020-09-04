@@ -542,7 +542,7 @@ metric.compute_optimisation_score <- function(score_table,
 
 
 
-metric.summarise_optimisation_score <- function(score_table, method){
+metric.summarise_optimisation_score <- function(score_table, method, replace_na=TRUE){
   # Calculates a summary objective score
   
   # Suppress NOTES due to non-standard evaluation in data.table
@@ -564,6 +564,9 @@ metric.summarise_optimisation_score <- function(score_table, method){
   # Compute the mean optimisation score, overall, or per parameter id.
   score_table <- score_table[, list("optimisation_score"=aggregation_method(optimisation_score, na.rm=TRUE)),
                              by=id_columns]
+  
+  # Replace NA entries with the minimum optimisation score.
+  if(replace_na) score_table[is.na(optimisation_score), optimisation_score:=-1.0]
   
   return(score_table)
 }
