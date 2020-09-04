@@ -264,9 +264,8 @@ setMethod("compute_metric_score", signature(metric="familiarMetric"),
 #####compute_metric_score (character)######
 setMethod("compute_metric_score", signature(metric="character"),
           function(metric, data, object, ...){
-            browser()
             
-            if(!is(object, "familiarModel") | !is(object, "familiarEnsemble")){
+            if(!is(object, "familiarModel") & !is(object, "familiarEnsemble")){
               stop("compute_metric_score: object should be a familiarModel or familiarEnsemble object.")
             }
             
@@ -287,10 +286,11 @@ setMethod("compute_metric_score", signature(metric="character"),
             }
             
             # Compute metric values.
-            metric_values <- lapply(metric_object_list, function(metric, data, object, dots) do.call(compute_metric_score, args=c(list("metric"=metric,
-                                                                                                                                       "data"=data,
-                                                                                                                                       "object"=object),
-                                                                                                                                  dots)),
+            metric_values <- lapply(metric_object_list,
+                                    function(metric, data, object, dots) do.call(compute_metric_score, args=c(list("metric"=metric,
+                                                                                                                   "data"=data,
+                                                                                                                   "object"=object),
+                                                                                                              dots)),
                                     data=data,
                                     object=object,
                                     dots=list(...))

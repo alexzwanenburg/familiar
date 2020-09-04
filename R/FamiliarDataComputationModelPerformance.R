@@ -265,8 +265,9 @@ setMethod("extract_performance", signature(object="familiarEnsemble"),
                                         object){
   
   # Compute the metric score.
-  browser()
   score <- compute_metric_score(metric=metric,
+                                data=data,
+                                time=time,
                                 object=object)
   
   if(!is.finite(score)) return(NULL)
