@@ -136,7 +136,7 @@ getProcessDataID <- function(proj_list, process_step){
 }
 
 
-.find_hyperparameters_for_run <- function(run, hpo_list){
+.find_hyperparameters_for_run <- function(run, hpo_list, allow_random_selection=FALSE){
 
   # Suppress NOTES due to non-standard evaluation in data.table
   data_id <- run_id <- NULL
@@ -158,13 +158,18 @@ getProcessDataID <- function(proj_list, process_step){
     }, run_id_list=run_id_list)
 
     # If there is a match, we step out of the loop
-    if(any(match_hpo)){
-      break()
-    }
+    if(any(match_hpo)) break()
   }
 
   # Extract the table of parameters
-  parameter_table <- hpo_list[match_hpo][[1]]$param
+  if(allow_random_selection & sum(match_hpo) > 1){
+    random_set <- sample(which(match_hpo), size=1)
+    
+    parameter_table <- hpo_list[[random_set]]$param
+    
+  } else {
+    parameter_table <- hpo_list[match_hpo][[1]]$param
+  }
 
   # The table of parameter may be empty
   if(is.null(parameter_table)){
