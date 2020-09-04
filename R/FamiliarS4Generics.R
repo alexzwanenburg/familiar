@@ -18,8 +18,6 @@ setGeneric("assess_calibration", function(object, ...) {standardGeneric("assess_
 
 setGeneric("compute_calibration_data", function(object, data, ...) {standardGeneric("compute_calibration_data")})
 
-setGeneric("assess_performance", function(object, ...) standardGeneric("assess_performance"))
-
 setGeneric("assign_risk_groups", function(object, prediction_data, ...) {standardGeneric("assign_risk_groups")})
 
 setGeneric("complete_familiar_ensemble", function(object, ...) standardGeneric("complete_familiar_ensemble"))

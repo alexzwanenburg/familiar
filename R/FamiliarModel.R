@@ -62,22 +62,6 @@ setMethod(".train", signature(object="familiarModel", data="dataObject"),
           })
 
 
-#####assess_performance (model)#####
-setMethod("assess_performance", signature(object="familiarModel"),
-          function(object, newdata, metric, allow_recalibration=TRUE, is_pre_processed=FALSE, time_max=NULL, as_objective=FALSE, na.rm=FALSE){
-            
-            # This function is the same for familiarModel and familiarEnsemble objects
-            return(.assess_performance(object=object,
-                                       data=newdata, 
-                                       metric=metric,
-                                       allow_recalibration=allow_recalibration,
-                                       is_pre_processed=is_pre_processed,
-                                       time=time_max,
-                                       as_objective=as_objective,
-                                       na.rm=na.rm))
-            
-          })
-
 #####assess_calibration (model)#####
 setMethod("assess_calibration", signature(object="familiarModel"),
           function(object, data, eval_times=NULL, is_pre_processed=FALSE){
@@ -169,13 +153,6 @@ setMethod("compute_calibration_data", signature(object="familiarModel", data="da
             return(.compute_calibration_data(object=object, data=data, time=time))
           })
 
-# #####compute_calibration_data (model, list)#####
-# setMethod("compute_calibration_data", signature(object="familiarModel", data="list"),
-#           function(object, data, time_max=NULL){
-#             
-#             # This function is the same for familiarModel and familiarEnsemble objects
-#             return(.compute_calibration_data(object=object, data=data, time=time))
-#           })
 
 #####save (model)#####
 setMethod("save", signature(list="familiarModel", file="character"),

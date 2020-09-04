@@ -153,29 +153,6 @@ setMethod("compute_calibration_data", signature(object="familiarEnsemble", data=
             return(.compute_calibration_data(object=object, data=data, time=time))
           })
 
-# #####compute_calibration_data (ensemble, list)#####
-# setMethod("compute_calibration_data", signature(object="familiarEnsemble", data="list"),
-#           function(object, data, time=NULL){
-#             
-#             # This function is the same for familiarModel and familiarEnsemble objects
-#             return(.compute_calibration_data(object=object, data=data, time=time))
-#           })
-
-
-#####assess_performance (ensemble)#####
-setMethod("assess_performance", signature(object="familiarEnsemble"),
-          function(object, newdata, metric, allow_recalibration=TRUE, is_pre_processed=FALSE, time_max=NULL, as_objective=FALSE, na.rm=FALSE){
-            
-            # This function is the same for familiarModel and familiarEnsemble objects
-            return(.assess_performance(object=object,
-                                       data=newdata,
-                                       metric=metric,
-                                       allow_recalibration=allow_recalibration,
-                                       is_pre_processed=is_pre_processed,
-                                       time=time_max,
-                                       as_objective=as_objective,
-                                       na.rm=na.rm))
-          })
 
 .get_available_risk_ensemble_methods <- function(){
   return(c("ensemble_mode", "ensemble_mean", "mean_threshold", "median_threshold"))
