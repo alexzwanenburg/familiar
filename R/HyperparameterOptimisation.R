@@ -179,7 +179,7 @@ hpo.perform_smbo <- function(run, run_id, n_run_total, cl, fs_method, learner=NU
   is_vimp <- is.null(learner)
 
   # Message
-  logger.message("\n")
+  logger.message("")
   logger.message(paste0("Starting hyperparameter optimisation for run ", run_id, " of ", n_run_total, "."),
                  indent=message_indent)
   
@@ -365,7 +365,7 @@ hpo.perform_smbo <- function(run, run_id, n_run_total, cl, fs_method, learner=NU
                                                          stringsAsFactors=FALSE))
   
   # Create a list of rank tables
-  if(!is_vimp & FALSE){
+  if(!is_vimp & !settings$hpo$hpo_determine_vimp){
     # Load a previously generated rank table (if any).
     rank_table <- rank.get_feature_ranks(run=run,
                                          fs_method=fs_method,
@@ -377,7 +377,7 @@ hpo.perform_smbo <- function(run, run_id, n_run_total, cl, fs_method, learner=NU
     rank_table_list <- lapply(seq_len(settings$hpo$hpo_max_bootstraps), function(ii, rank_table) (return(rank_table)), rank_table=rank_table)
     names(rank_table_list) <- as.character(seq_len(settings$hpo$hpo_max_bootstraps))
     
-  } else if(!is_vimp & TRUE){
+  } else if(!is_vimp & settings$hpo$hpo_determine_vimp){
     # Generate a rank table for each of the bootstraps to avoid optimistic
     # biases.
     rank_table_list <- hpo.compute_variable_importance(cl=cl,
@@ -414,12 +414,12 @@ hpo.perform_smbo <- function(run, run_id, n_run_total, cl, fs_method, learner=NU
   # Compute the optimisation score. This creates a table with optimisation
   # scores per bootstrap and parameter identifier.
   hpo_optimisation_score_table <- metric.compute_optimisation_score(score_table=hpo_score_table,
-                                                                    optimisation_objective=settings$hpo$hpo_objective)
+                                                                    optimisation_function=settings$hpo$hpo_optimisation_function)
   
   # Find information regarding the dataset that has the highest optimisation
   # score.
   incumbent_set_data <- hpo.get_best_parameter_set(optimisation_score_table=hpo_optimisation_score_table,
-                                                   optimisation_objective=settings$hpo$hpo_objective,
+                                                   optimisation_function=settings$hpo$hpo_optimisation_function,
                                                    n=1,
                                                    method="percentile")
   
@@ -460,7 +460,7 @@ hpo.perform_smbo <- function(run, run_id, n_run_total, cl, fs_method, learner=NU
 
     # Determine parameter ids from incumbent and challenger
     parameter_id_incumbent <- hpo.get_best_parameter_set(optimisation_score_table=hpo_optimisation_score_table,
-                                                         optimisation_objective=settings$hpo$hpo_objective,
+                                                         optimisation_function=settings$hpo$hpo_optimisation_function,
                                                          n=1,
                                                          method="percentile")$param_id
     
@@ -507,12 +507,12 @@ hpo.perform_smbo <- function(run, run_id, n_run_total, cl, fs_method, learner=NU
       # Compute the optimisation score. This creates a table with optimisation
       # scores per bootstrap and parameter identifier.
       intensify_optimisation_score_table <- metric.compute_optimisation_score(score_table=intensify_score_table,
-                                                                              optimisation_objective=settings$hpo$hpo_objective)
+                                                                              optimisation_function=settings$hpo$hpo_optimisation_function)
       
       # Find information regarding the dataset that has the highest optimisation
       # score.
       incumbent_set_data <- hpo.get_best_parameter_set(optimisation_score_table=hpo_optimisation_score_table,
-                                                       optimisation_objective=settings$hpo$hpo_objective,
+                                                       optimisation_function=settings$hpo$hpo_optimisation_function,
                                                        n=1,
                                                        method="percentile")
       
@@ -532,7 +532,7 @@ hpo.perform_smbo <- function(run, run_id, n_run_total, cl, fs_method, learner=NU
       runoff_parameter_ids <- hpo.compare_runoff_scores(score_table=hpo_optimisation_score_table,
                                                         parameter_id_incumbent=parameter_id_incumbent,
                                                         parameter_id_challenger=parameter_id_challenger,
-                                                        objective=settings$hpo$hpo_objective,
+                                                        objective=settings$hpo$hpo_optimisation_function,
                                                         settings=settings)
       
       # Extract parameter ids
@@ -551,14 +551,15 @@ hpo.perform_smbo <- function(run, run_id, n_run_total, cl, fs_method, learner=NU
     
     # Get all runs and determine incumbent parameter id.
     incumbent_set_data <- hpo.get_best_parameter_set(optimisation_score_table=hpo_optimisation_score_table,
-                                                     optimisation_objective=settings$hpo$hpo_objective,
+                                                     optimisation_function=settings$hpo$hpo_optimisation_function,
                                                      n=1,
                                                      method="percentile")
     
     # Update list with stopping criteria
     stop_list <- hpo.update_stopping_criteria(score_table=hpo_optimisation_score_table,
                                               parameter_id_incumbent=incumbent_set_data$param_id,
-                                              stop_list=stop_list)
+                                              stop_list=stop_list,
+                                              tolerance=settings$hpo$hpo_convergence_tolerance)
     
     # Message progress.
     logger.message(paste0("Hyperparameter optimisation: SMBO iteration ", smbo_iter + 1L, ": score ",
@@ -585,7 +586,7 @@ hpo.perform_smbo <- function(run, run_id, n_run_total, cl, fs_method, learner=NU
   
   # Get all runs and determine incumbent parameter id.
   optimal_set_data <- hpo.get_best_parameter_set(optimisation_score_table=hpo_optimisation_score_table,
-                                                   optimisation_objective=settings$hpo$hpo_objective,
+                                                   optimisation_function=settings$hpo$hpo_optimisation_function,
                                                    n=1,
                                                    method="percentile")
   
@@ -1086,7 +1087,7 @@ hpo.find_challenger_sets <- function(parameter_table, score_table, parameter_lis
   # Compute the optimisation score. This creates a table with optimisation
   # scores per bootstrap and parameter identifier.
   optimisation_score_table <- metric.compute_optimisation_score(score_table=score_table,
-                                                                optimisation_objective=settings$hpo$hpo_objective)
+                                                                optimisation_function=settings$hpo$hpo_optimisation_function)
   
   # Create a random forest model to predict the optimisation score for a given
   # parameter set.
@@ -1100,7 +1101,7 @@ hpo.find_challenger_sets <- function(parameter_table, score_table, parameter_lis
   # Find information regarding the dataset that has the highest optimisation
   # score.
   incumbent_set_data <- hpo.get_best_parameter_set(optimisation_score_table=optimisation_score_table,
-                                                   optimisation_objective=settings$hpo$hpo_objective,
+                                                   optimisation_function=settings$hpo$hpo_optimisation_function,
                                                    n=1,
                                                    method="percentile")
   
@@ -1273,7 +1274,7 @@ hpo.find_challenger_sets <- function(parameter_table, score_table, parameter_lis
 }
 
 
-hpo.get_best_parameter_set <- function(optimisation_score_table, optimisation_objective, n=1L, method="percentile"){
+hpo.get_best_parameter_set <- function(optimisation_score_table, optimisation_function, n=1L, method="percentile"){
   # Find the best configurations based on the optimisation score
 
   # Suppress NOTES due to non-standard evaluation in data.table
@@ -1410,7 +1411,7 @@ hpo.update_stopping_criteria <- function(score_table, parameter_id_incumbent, st
     recent_parameter_id <- tail(stop_list$parameter_id, n=4L)
     
     # Determine the max absolute deviation from the mean.
-    max_abs_deviation <- max(abs(recent_scores - mean(recent_scores)))
+    max_abs_deviation <- max(recent_scores) - min(recent_scores)
 
     # Start counting convergence if:
     #
@@ -1423,7 +1424,7 @@ hpo.update_stopping_criteria <- function(score_table, parameter_id_incumbent, st
       # predicting model was not found.
       convergence_counter <- 0L
       
-    } else if(max_abs_deviation < tolerance | all(recent_parameter_id == parameter_id_incumbent)){
+    } else if(max_abs_deviation <= tolerance | all(recent_parameter_id == parameter_id_incumbent)){
       # Check if all recent optimal parameter sets are the same or the result is
       # relatively stable.
       convergence_counter <- convergence_counter + 1L

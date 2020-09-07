@@ -507,10 +507,10 @@ metric.is_higher_score_better <- function(metric, object=NULL, outcome_type=NULL
 
 
 metric.compute_optimisation_score <- function(score_table,
-                                              optimisation_objective){
+                                              optimisation_function){
   
   # Select the correct optimisation function.
-  optimisation_function <- switch(optimisation_objective,
+  optimisation_function <- switch(optimisation_function,
                                   "max_validation" = metric.optim_score.max_validation,
                                   "balanced" = metric.optim_score.balanced,
                                   "stronger_balance" = metric.optim_score.stronger_balance)

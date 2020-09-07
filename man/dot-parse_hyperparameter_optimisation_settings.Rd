@@ -10,14 +10,17 @@ optimisation}
   parallel,
   outcome_type,
   optimisation_bootstraps = waiver(),
+  optimisation_determine_vimp = waiver(),
   smbo_random_initialisation = waiver(),
   max_smbo_iterations = waiver(),
   smbo_stop_convergent_iterations = waiver(),
+  smbo_stop_tolerance = waiver(),
   smbo_step_bootstraps = waiver(),
   smbo_intensify_steps = waiver(),
   smbo_intensify_stop_p_value = waiver(),
   objective = waiver(),
   optimisation_metric = waiver(),
+  acquisition_function = waiver(),
   parallel_hyperparameter_optimisation = waiver(),
   ...
 )
@@ -38,7 +41,24 @@ combinations of hyperparameters. The effect of the hyperparameters is then
 assessed by comparing in-bag and out-of-bag model performance.
 
 The default number of bootstraps is \code{200}. Hyperparameter optimisation may
-finish before exhausting the set of boostraps.}
+finish before exhausting the set of bootstraps.}
+
+\item{optimisation_determine_vimp}{(\emph{optional}) Logical value that indicates
+whether variable importance is determined separately for each of the
+bootstraps created during the optimisation process (\code{TRUE}) or the
+applicable results from the feature selection step are used (\code{FALSE}).
+
+Determining variable importance increases the initial computational
+overhead. However, it prevents positive biases for the out-of-bag data due
+to overlap of these data with the development data set used for the feature
+selection step. In this case, any hyperparameters of the variable
+importance method are not determined separately for each bootstrap, but
+those obtained during the feature selection step are used instead. In case
+multiple of such hyperparameter sets could be applicable, the set that will
+be used is randomly selected for each bootstrap.
+
+This parameter only affects hyperparameter optimisation of learners. The
+default is \code{TRUE}.}
 
 \item{smbo_random_initialisation}{(\emph{optional}) Logical indicating random
 (\code{TRUE}) or grid-based (\code{FALSE}) initialisation of combinations of
@@ -74,7 +94,16 @@ enable the algorithm to explore the hyperparameter space.}
 
 \item{smbo_stop_convergent_iterations}{(\emph{optional}) The number of subsequent
 convergent SMBO iterations required to stop hyperparameter optimisation
-early. The default value is \code{3}.}
+early. An iteration is convergent if the \emph{best} parameter set has not
+changed or the optimisation score over the 4 most recent iterations has not
+changed beyond the tolerance level in \code{smbo_stop_tolerance}.
+
+The default value is \code{3}.}
+
+\item{smbo_stop_tolerance}{(\emph{optional}) Tolerance for early stopping due to
+convergent optimisation score.
+
+The default value is \code{0.01}.}
 
 \item{smbo_step_bootstraps}{(\emph{optional}) The number of bootstraps taken from
 the set of \code{optimisation_bootstraps} bootstraps as data for the initial
@@ -109,7 +138,7 @@ The default value is \code{0.05}.}
 performance of a hyperparameter set. Model performance is assessed using
 the metric specified by \code{optimisation_metric} on the in-bag and out-of-bag
 samples of a bootstrap. These will be referred to as \eqn{s_{ib}} and
-\eqn{s_{oob}}, respectivily. The method indicated by \code{objective} computes a
+\eqn{s_{oob}}, respectively. The method indicated by \code{objective} computes a
 objective score from each pair of values. The following objective methods
 are available:
 \itemize{
@@ -139,6 +168,34 @@ converted to an objective value by comparison with a baseline metric value
 that derives from a trivial model, i.e. majority class for binomial and
 multinomial outcomes, the median outcome for count and continuous outcomes
 and a fixed risk or time for survival outcomes.}
+
+\item{acquisition_function}{(\emph{optional}) The acquisition function influences
+how new hyperparameter sets are selected.
+
+Any point in the hyperparameter space has a single, scalar, optimisation
+score value that is \emph{a priori} unknown. During the optimisation process,
+the algorithm samples from the hyperparameter space by selecting
+hyperparameter sets and computing the optimisation score value for one or
+more bootstraps. For each hyperparameter set the resulting values are
+distributed around the actual value. A random forest is then trained using
+all the resulting values.
+
+The random forest maps positions in the hyperparameter space to the 1D real
+space of optimisation values. The distribution of optimisation values at
+each point is captured by individual decision trees.
+
+The algorithm uses the random forest to search the hyperparameter space for
+hyperparameter sets that are either likely better than the best known set
+(\emph{exploitation}) or where there is considerable uncertainty
+(\emph{exploration}). The acquisition function quantifies this.
+
+The following acquisition functions are available:
+\itemize{
+\item \code{improvement_probability}: The probability that the expected optimisation
+value for a set \eqn{\mathbf{x}}  exceeds the highest known expected
+optimisation value \eqn{f'}: \deqn{a(\mathbf{x}) = P(X > f') = 1-\Phi(f';
+  )}.
+}}
 
 \item{parallel_hyperparameter_optimisation}{(\emph{optional}) Enable parallel
 processing for hyperparameter optimisation. Defaults to \code{TRUE}. When set to

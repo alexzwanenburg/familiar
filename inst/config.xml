@@ -128,12 +128,14 @@
       <parallel_model_development></parallel_model_development>
     </model_development>
     <hyperparameter_optimisation>
-      <!-- Objective function for hyperparameter optimisation (optional, default: balanced; otherwise max_validation, stronger_balance) -->
-      <objective></objective>
       <!-- Metric for assessing model performance (optional, default: depends on outcome type) -->
       <optimisation_metric></optimisation_metric>
+      <!-- Function for a computing optimisation score based on model performance metrics (optional, default: balanced; otherwise max_validation, stronger_balance) -->
+      <optimisation_function></optimisation_function>
       <!-- Maximum number of bootstraps to evaluate hyperparameters on (optional, default: 200) -->
       <optimisation_bootstraps></optimisation_bootstraps>
+      <!-- Whether variable importance should be computed seperately for each bootstrap (true) when optimising learner hyperparameters or the feature selection results should be used (false). (optional, default: true) -->
+      <optimisation_determine_vimp></optimisation_determine_vimp>
       <!-- Randomisation of the initial hyperparameter grid. (optional, default: true; otherwise will initialise using pre-determined hyperparameters) -->
       <smbo_random_initialisation></smbo_random_initialisation>
       <!-- Maximum number of iterations of sequential model based optimisation (optional, default: 20) -->
@@ -146,6 +148,8 @@
       <smbo_intensify_stop_p_value></smbo_intensify_stop_p_value>
       <!-- Number of additional SMBO iterations to perform after convergence has been reached (optional, default: 3) -->
       <smbo_stop_convergent_iterations></smbo_stop_convergent_iterations>
+      <!-- Tolerance level for convergence (optional, default: 1E-2) -->
+      <smbo_stop_tolerance></smbo_stop_tolerance>
       <!-- Parallel processing for hyperparameter optimisation (optional; default: true) -->
       <parallel_hyperparameter_optimisation></parallel_hyperparameter_optimisation>
     </hyperparameter_optimisation>

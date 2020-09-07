@@ -346,7 +346,7 @@ setMethod("..vimp", signature(object="familiarRegressionVimp"),
   
   # Combine performance data to a single table and compute optimisation scores.
   performance_data <- metric.compute_optimisation_score(score_table=data.table::rbindlist(performance_data),
-                                                        optimisation_objective="max_validation")
+                                                        optimisation_function="max_validation")
   
   # Compute the summary score.
   performance_data <- metric.summarise_optimisation_score(score_table=performance_data,
