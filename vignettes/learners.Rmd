@@ -13,6 +13,8 @@ vignette: >
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
+This work is licensed under a Creative Commons Attribution 4.0 International (CC-BY-4.0) license.
+
 # Learners
 
 Learning algorithms create models that relate input data to the outcome. Development data is used to train models, after which they can be used to predict outcomes for new data. Familiar implements several commonly used algorithms. This vignette describes the learners and their hyperparameters.
@@ -367,8 +369,6 @@ The following kernels are implemented:
 * Bessel kernel: `bessel`
 * ANOVA with radial basis function kernel: `anova`
 
-<!-- An outcome variable that represents `count`-type data is first transformed using a $\log(x+1)$ transformation. Predicted responses are then transformed to the original scale using the inverse $\exp(x)-1$ transformation. -->
-
 
 # Hyperparameter optimization
 Hyperparameter optimisation is conducted to select those model parameters for the given data set that are more likely to lead to generalisable results. Familiar implements an algorithm that is largely based on sequential model-based optimisation (SMBO) [@Hutter2011-ea].
@@ -378,20 +378,21 @@ The current algorithm does differ from the originally proposed algorithm in seve
 * The intensify step, where challenger configurations are compared with the best known configuration, is done in parallel, not sequentially.
 * During the intensify step the likelihood that a promising challenger configuration is at least as good as the best known configuration is assessed using a paired, non-parametric Wilcoxon signed-rank test. If it is highly unlikely to be better (default: $p \leq 0.05$), the candidate is eliminated from further intensification.
 * Early stopping criteria are included for converging objective scores and unaltered best configurations over multiple iterations.
-* Every second iteration, candidates are drawn randomly from both random configurations and random configurations in the local neighbourhood of the current best candidate, i.e. expected improvement is ignored. Originally, the algorithm only selected candidates on expected improvement. This change forces the algorithm to more fully explore the hyperparameter space.
-* Expected improvement is computed as $ei = \sigma \left(z \mathit{P}(z) + \mathit{D}(z)\right)$, with $z = -(f - mu)/\sigma$ [@Feurer2015-no]. Here $f$ is the objective score reached by the best configuration and $mu$ and $\sigma$ the mean and standard deviation in objective scores as predicted by the ensemble of trees in the random forest for a given set of hyperparameters, respectively. $\mathit{P}$ and $\mathit{D}$ are the probability distribution and density distribution functions for a normal distribution.
-* The metric for the objective score is not the logarithm of computation time, and can be chosen from any of the available performance metrics.
+* Every second iteration, candidates are drawn randomly from both random configurations and random configurations in the local neighbourhood of the current best candidate, i.e. the acquisition function (e.g. expected improvement) is ignored. Originally, the algorithm only selected candidates using the acquisition function. This change forces the algorithm to more fully explore the hyperparameter space.
+* The metric used for computing the optimisation score is not the logarithm of computation time, and can be chosen from any of the available performance metrics.
 
 In summary, the algorithm works as follows:
 
-1. An initial set of at most 100 unique hyperparameter configurations is randomly drawn from the hyperparameter space. Models are build using each set of hyperparameters and the objective score is computed for the in-bag and out-of-bag samples of several bootstraps.
-2. A random-forest is trained using the hyperparameters as input variables and the corresponding objective scores as response variables.
-3. Sequential model-based optimisation starts:
-  + The configuration with the best objective score is selected.
-  + New configurations are created both randomly and from the neighbourhood of the best configuration. Then a number of either the most promising candidates (based on expected improvement) or a set of randomly drawn configurations are used as candidate configuration.
-  + The challenger and incumbent configurations go through a number of intensify rounds. This is a run-off to determine which configuration produces the best objective score.
-  + The random forest is updated with the new data generated during the run-off.
-4. The above is repeated until the allowed number of iterations is exceeded, or the algorithm has converged to a stable solution.
+1. A set of bootstraps ($n$ equals `optimisation_bootstraps`) of the relevant development dataset is created.
+    + Variable importance is computed for the in-bag (IB) data of each bootstrap to avoid optimistic biases, unless `optimisation_determine_vimp` is `FALSE`.
+2. An initial set of at most 100 unique hyperparameter configurations is randomly drawn from the hyperparameter space. Models are build using each set of hyperparameters and optimisation scores are computed.
+3. A random-forest is trained using the hyperparameters as input variables and the corresponding optimisation scores as response variables. This model maps the hyperparameter space to optimisation scores.
+4. Sequential model-based optimisation starts:
+    + The configuration with the best optimisation score is selected.
+    + New configurations are created both randomly and from the neighbourhood of the best configuration. Alternatingly, a number of the most promising candidates (based on an acquisition function) or a set of randomly drawn configurations are used as candidate configurations.
+    + The candidate and incumbent configurations go through a number of intensify rounds. This is a run-off to determine which configuration produces the best optimisation score.
+    + The random forest is updated with the new data generated during the run-off.
+5. The above is repeated until the allowed number of iterations is exceeded, the algorithm has converged to a stable solution, or the hyperparameter space and the bootstraps have been exhausted.
 
 
 ## User-provided hyperparameters
@@ -414,13 +415,111 @@ hyperparameter = list("glm_logistic"=list("sign_size"=5))
 
 Hyperparameters with a single, manually provided value are not optimised. If more than one value is provided for a single hyperparameter, optimisation takes place within this range.
 
-## Computing the objective score
+## Computing the optimisation score
 
-The objective score is calculated from the performance metrics of models build with a specific hyperparameter set and subsequently validated on the in-bag (IB; development) and out-of-bag (OOB; validation) data. The performance score $s$ is transformed to its objective representation $s^*$. One of the following functions is then used to compute the objective score $f$ that is being maximised during hyperparameter optimisation:
+The optimisation score $s$ determines how good a set of hyperparameters is. An
+optimisation score is computed in two steps. First an objective score is
+computed to assess model performance for a set of hyperparameters. The
+optimisation score is computed subsequently.
 
-1. `max_validation`: $f=s^*_{OOB}$. A commonly used criterion that attempts to maximise the score on the OOB validation data.
-2. `balanced`: $f=s^*_{OOB} - \left|s^*_{OOB}-s^*_{IB}\right|$. A variation on `max_validation` with a penalty for differences in performance between the IB and OOB data. The underlying idea is that a good set of hyperparameters should lead to models that perform well on both development and validation data.
-3. `strong_balance`: $f=s^*_{OOB} - 2\left|s^*_{OOB}-s^*_{IB}\right|$. A variant of `balanced` with a stronger penalty term.
+An objective score $s'$ is computed from the performance metric value for a
+specific hyperparameter set for in-bag (IB; $s'_{\textrm{IB}}$) and out-of-bag
+data (OOB; $s'_{\textrm{OOB}}$). The objective score always lies in the interval
+$[-1.0, 1.0]$. An objective score of $1.0$ always indicates the best possible
+score. A score of $0.0$ indicates that the hyperparameter set leads to the same
+degree of performance as the best educated guess, i.e. the majority class (for
+binomial and multinomial outcomes), the median value (for continuous and count
+outcomes), or tied risk or survival times (for survival outcomes). Objective
+scores that are either missing or below $-1.0$ are truncated to the value of
+$-1.0$. In case multiple metrics are used to assess model performance, the mean
+of the respective objective scores is used.
+
+The optimisation score $s$ is subsequently computed using one of the following functions:
+
+1. `max_validation`: $s=s'_{\textrm{OOB}}$. A commonly used criterion that
+attempts to maximise the score on the OOB validation data.
+
+2. `balanced` (default): $s=s'_{\textrm{OOB}} - \left|s'_{\textrm{OOB}} - s'_{\textrm{IB}}\right|$.
+A variation on `max_validation` with a penalty for differences in performance
+between the IB and OOB data. The underlying idea is that a good set of
+hyperparameters should lead to models that perform well on both development and
+validation data.
+
+3. `strong_balance`: $s=s'_{\textrm{OOB}} - 2\left|s'_{\textrm{OOB}}-s'_{\textrm{IB}}\right|$.
+A variant of `balanced` with a stronger penalty term.
+
+The optimisation score is then used to select the best known hyperparameter set,
+i.e. the set that minimises the optimisation score, and to identify candidate
+hyperparameter sets as described in the following section. The optimisation
+function is set using the `optimisation_function` argument.
+
+
+## Acquisition functions
+
+Any point in the hyperparameter space has a single, scalar, optimisation
+score value that is *a priori* unknown. During the optimisation process,
+the algorithm samples from the hyperparameter space by selecting
+hyperparameter sets and computing the optimisation score for one or
+more bootstraps. For each hyperparameter set the resulting scores are
+distributed around the actual value. A random forest is then trained using
+all available optimisation scores.
+
+The random forest maps positions in the hyperparameter space to the 1D real
+space of optimisation scores: $f: \mathbf{X} \rightarrow \mathbf{S}$. The
+distribution of optimisation scores at each point in the hyperparameter space is
+captured by individual decision trees [@Hutter2011-ea].
+
+The algorithm then uses the random forest to search the hyperparameter space for
+hyperparameter sets that are either likely better than the best known set
+(*exploitation*) or where there is considerable uncertainty
+(*exploration*). The acquisition function quantifies this.
+
+The following acquisition functions are available in familiar
+[@Shahriari2016-kx]. Let $\nu=f(\mathbf{x})$ be the posterior distribution of
+hyperparameter set $\mathbf{x}$ based on the individual decision trees, and
+$\tau$ the best observed optimisation score. Let also $\mu(\mathbf{x})$ and
+$\sigma(\mathbf{x})$ be the sample mean and sample standard deviation for set
+$\mathbf{x}$ (implicitly for round $m$):
+
+* `improvement_probability`: The probability of improvement quantifies the
+probability that the expected optimisation score for a set $\mathbf{x}$ is
+better than the best observed optimisation score $\tau$:
+$$\alpha(\mathbf{x}) = P(\nu > \tau) = \Phi \left({\mu(\mathbf{x}) - \tau \over \sigma(\mathbf{x})}\right)$$
+Here $\Phi$ is the cumulative distribution function of a normal distribution,
+and  Note that this acquisition function is
+typically prone to convergence to local minima, although in our algorithm this
+may be mitigated by the alternating random search strategy.
+
+* `improvement_empirical_probability`: Similar to `improvement_probability`, but based
+directly on optimisation scores predicted by the individual decision trees:
+$$\alpha(\mathbf{x}) = P(\nu > \tau) = {1 \over N} \sum_{i=1}^N \left[\nu_i > \tau\right]$$,
+with $\left[\ldots\right]$ denoting an Iverson bracket.
+
+* `expected_improvement`: Expected improvement is based on an improvement
+function, and is be computed as follows:
+$$\alpha(\mathbf{x})=(\mu(\mathbf{x})-\tau) \Phi \left({\mu(\mathbf{x}) - \tau \over \sigma(\mathbf{x})}\right) + \sigma(\mathbf{x}) \phi\left({\mu(\mathbf{x}) - \tau \over \sigma(\mathbf{x})}\right)$$
+with $\phi$ denoting the normal probability density function. If $\sigma(\mathbf{x}) = 0$,
+$\alpha(\mathbf{x})=0$.
+
+* `upper_confidence_bound`: This acquisition function is based on the upper
+confidence bound of the distribution, and is defined as [@Srinivas2012-hq]:
+
+$$\alpha(\mathbf{x})=\mu(\mathbf{x}) + \beta \sigma(\mathbf{x})$$
+
+* `bayes_upper_confidence_bound`: Proposed by Kaufmann et al. [@Kaufmann2012-kh],
+the Bayesian upper confidence bound is defined as:
+
+$$\alpha(\mathbf{x}, t)=Q \left(1-{1 \over (t + 1) \log(n)^c}, \nu_t\right)$$
+Note that we here deviate from the original definition by substituting the
+original $t$ by $t+1$, and not constraining the posterior distribution $\nu$ to
+a known function. In the original, $n$ defines the number of rounds, with $t$
+the current round. In our algorithm, this is interpreted as $n$ being the total
+number of bootstraps, and $t$ the number of bootstraps already performed for the
+selected hyperparameter set $\mathbf{x}$. Hence our implementation is actually
+the same, aside from the lack of constraint on the posterior distribution.
+
+Based on the simulations and recommendations in Kaufmann et al. we choose
+parameter $c=0$.
 
 ## Configuration options
 
@@ -429,13 +528,15 @@ Hyperparameter optimization may be configured using the tags/arguments in the ta
 | **tag** / **argument** | **description** | **default** |
 |:----------:|:-------------------------|:-----------:|
 | `optimisation_bootstraps`  | Maximum number of bootstraps during optimisation | `200` |
+| `optimisation_determine_vimp` | If `TRUE`, compute variable importance for each bootstrap. If `FALSE` use variable importance computed during the feature selection step. | `TRUE` |
 | `smbo_random_initialisation` | If `TRUE` initial parameter sets are generated randomly from default ranges. If `FALSE`, the initial parameter sets are based on a grid in parameter space. | `TRUE` |
 | `max_smbo_iterations` | Maximum number of intensify iterations of the SMBO algorithm | `30` |
 | `smbo_stop_convergent_iterations` | Number of subsequent convergent SMBO iterations required to stop hyperparameter optimisation early. | `3` |
+| `smbo_stop_tolerance` | Tolerance for recent optimisation scores to determine convergence | `0.01` |
 | `smbo_step_bootstraps` | Number of bootstraps used within each step of an intensify iteration. | `5` |
 | `smbo_intensify_steps` | Number of intensify steps within each intensify iteration. | `3` |
 | `smbo_intensify_stop_p_value` | The p-value level at which the hypothesis that a challenger hyperparameter set and the incumbent set have the same performance is tested. If rejected, i.e. challenger performs worse than incumbent, the challenger leaves the run-off. | `0.05` |
-| `objective` | The objective function used (see *computing the objective score*). | `balanced` |
+| `optimisation_function` | The optimisation function used (see *computing the optimisation score*). | `balanced` |
 | `optimisation_metric` | The metric used for optimisation, e.g. `auc`. See the vignette on performance metrics for available options. | `auc_roc` (`binomial`, `multinomial`); `mse` (`continuous`); `msle` (`count`); and `concordance_index` (`survival`) |
 | `parallel_hyperparameter_optimisation` | Enables parallel processing for hyperparameter optimisation. Ignored if `parallel=FALSE`. | `TRUE` |
 
