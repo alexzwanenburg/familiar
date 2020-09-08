@@ -380,6 +380,24 @@ setMethod("preprocess_data", signature(data="dataObject", object="familiarEnsemb
     # Update pre-processing level externally from apply_signature, as
     # it is not limited to pre-processing per sé.
     data@preprocessing_level <- "signature"
+    
+  } else if(preprocessing_level_attained == "signature" & stop_at >= "signature"){
+    
+    if(length(object@req_feature_cols) > 0 & length(object@important_features) > 0 & has_feature_data(data)){
+      
+      # Select available features specific to the object.
+      if(all(object@req_feature_cols %in% get_feature_columns(data))){
+        data <- apply_signature(data_obj=data,
+                                selected_feat=object@req_feature_cols)
+        
+      } else if(all(object@important_features %in% get_feature_columns(data))) {
+        data <- apply_signature(data_obj=data,
+                                selected_feat=object@important_features)
+        
+      } else {
+        ..error_reached_unreachable_code(".pre_process_data: could not identify overlapping features")
+      }
+    }
   }
   
   if(preprocessing_level_attained < "transformation" & stop_at >= "transformation"){
