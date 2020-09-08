@@ -372,7 +372,7 @@ setMethod("preprocess_data", signature(data="dataObject", object="familiarEnsemb
     ..error_reached_unreachable_code("preprocess_data,dataObject,ANY: data were preprocessed at a higher level than required by stop_at.")
   }
   
-  if(preprocessing_level_attained <= "signature" & stop_at >= "signature"){
+  if(preprocessing_level_attained < "signature" & stop_at >= "signature"){
     # Apply the signature.
     data <- apply_signature(data_obj=data,
                             selected_feat=object@req_feature_cols)
