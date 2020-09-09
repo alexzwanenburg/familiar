@@ -554,8 +554,11 @@ metric.summarise_optimisation_score <- function(score_table, method, replace_na=
   
   # Obtain the aggregation method.
   aggregation_method <- switch(method,
-                               "percentile"=stats::median,
-                               "z_statistic"=mean,
+                               "improvement_empirical_probability"=stats::median,
+                               "improvement_probability"=mean,
+                               "expected_improvement"=mean,
+                               "upper_confidence_bound"=mean,
+                               "bayes_upper_confidence_bound"=mean,
                                "median"=stats::median,
                                "mean"=mean,
                                "max"=max,

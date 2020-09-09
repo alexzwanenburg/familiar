@@ -588,22 +588,6 @@ of hyperparameters that are unlikely to lead to better models improves
 computational efficiency.
 
 The default value is \code{0.05}.}
-    \item{\code{objective}}{(\emph{optional}) Type of objective used to determine the
-performance of a hyperparameter set. Model performance is assessed using
-the metric specified by \code{optimisation_metric} on the in-bag and out-of-bag
-samples of a bootstrap. These will be referred to as \eqn{s_{ib}} and
-\eqn{s_{oob}}, respectively. The method indicated by \code{objective} computes a
-objective score from each pair of values. The following objective methods
-are available:
-\itemize{
-\item \code{max_validation}: Uses the out-of-bag validation score \eqn{s_{oob}} as
-objective. This is a standard machine learning objective.
-\item \code{balanced} (default): Computes \eqn{s_{oob} - |s_{oob} - s_{ib}|}. This
-objective forces the algorithm to consider hyperparameter sets that perform
-well on both development and validation data.
-\item \code{stronger_balance}: Computes \eqn{s_{oob} - 2.0 |s_{oob} - s_{ib}|}.
-Stronger penalty than in the \code{balance} objective.
-}}
     \item{\code{optimisation_metric}}{(\emph{optional}) One or more metrics used to compute
 performance scores. See the vignette on performance metrics for the
 available metrics.
@@ -621,6 +605,24 @@ converted to an objective value by comparison with a baseline metric value
 that derives from a trivial model, i.e. majority class for binomial and
 multinomial outcomes, the median outcome for count and continuous outcomes
 and a fixed risk or time for survival outcomes.}
+    \item{\code{optimisation_function}}{(\emph{optional}) Type of optimisation function used
+to quantify the performance of a hyperparameter set. Model performance is
+assessed using the metric(s) specified by \code{optimisation_metric} on the
+in-bag and out-of-bag samples of a bootstrap. These values are converted to
+objective scores with a standardised interval of \eqn{[-1.0, 1.0]}, and are
+referred to as \eqn{s'_{ib}} and \eqn{s'_{oob}}, respectively. The function
+indicated by \code{optimisation_function} computes a objective score from each
+pair of values:
+\itemize{
+\item \code{max_validation}: Uses the out-of-bag validation objective score
+\eqn{s'_{oob}} as optimisation score. This function is widely used in
+machine learning.
+\item \code{balanced} (default): Computes \eqn{s'_{oob} - |s'_{oob} - s'_{ib}|}.
+This function forces the algorithm to consider hyperparameter sets that
+perform well on both development and validation data.
+\item \code{stronger_balance}: Computes \eqn{s'_{oob} - 2.0 |s'_{oob} - s'_{ib}|}.
+Stronger penalty than in the \code{balanced} objective.
+}}
     \item{\code{acquisition_function}}{(\emph{optional}) The acquisition function influences
 how new hyperparameter sets are selected.
 
@@ -639,14 +641,23 @@ each point is captured by individual decision trees.
 The algorithm uses the random forest to search the hyperparameter space for
 hyperparameter sets that are either likely better than the best known set
 (\emph{exploitation}) or where there is considerable uncertainty
-(\emph{exploration}). The acquisition function quantifies this.
+(\emph{exploration}). The acquisition function quantifies this (Shahriari et
+al., 2016).
 
-The following acquisition functions are available:
+The following acquisition functions are available, and are described in
+more detail in the \emph{learner algorithms} vignette:
 \itemize{
-\item \code{improvement_probability}: The probability that the expected optimisation
-value for a set \eqn{\mathbf{x}}  exceeds the highest known expected
-optimisation value \eqn{f'}: \deqn{a(\mathbf{x}) = P(X > f') = 1-\Phi(f';
-  )}.
+\item \code{improvement_probability}: The probability of improvement quantifies the
+probability that the expected optimisation score for a set is better than
+the best observed optimisation score
+\item \code{improvement_empirical_probability}: Similar to
+\code{improvement_probability}, but based directly on optimisation scores
+predicted by the individual decision trees.
+\item \code{expected_improvement} (default): Computes expected improvement.
+\item \code{upper_confidence_bound}: This acquisition function is based on the upper
+confidence bound of the distribution (Srinivas et al., 2012).
+\item \code{bayes_upper_confidence_bound}:This acquisition function is based on the
+upper confidence bound of the distribution (Kaufmann et al., 2012).
 }}
     \item{\code{parallel_hyperparameter_optimisation}}{(\emph{optional}) Enable parallel
 processing for hyperparameter optimisation. Defaults to \code{TRUE}. When set to
@@ -965,6 +976,15 @@ Reuse Integration (IRI) 377–384 (2012).
 optimization for general algorithm configuration. in Learning and
 Intelligent Optimization (ed. Coello, C. A. C.) 6683, 507–523 (Springer
 Berlin Heidelberg, 2011).
+\item Shahriari, B., Swersky, K., Wang, Z., Adams, R. P. & de Freitas, N.
+Taking the Human Out of the Loop: A Review of Bayesian Optimization. Proc.
+IEEE 104, 148–175 (2016)
+\item Srinivas, N., Krause, A., Kakade, S. M. & Seeger, M. W.
+Information-Theoretic Regret Bounds for Gaussian Process Optimization in
+the Bandit Setting. IEEE Trans. Inf. Theory 58, 3250–3265 (2012)
+\item Kaufmann, E., Cappé, O. & Garivier, A. On Bayesian upper confidence
+bounds for bandit problems. in Artificial intelligence and statistics
+592–600 (2012).
 \item Davison, A. C. & Hinkley, D. V. Bootstrap methods and their application.
 (Cambridge University Press, 1997).
 \item Efron, B. & Hastie, T. Computer Age Statistical Inference. (Cambridge

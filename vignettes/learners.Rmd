@@ -503,23 +503,28 @@ $\alpha(\mathbf{x})=0$.
 
 * `upper_confidence_bound`: This acquisition function is based on the upper
 confidence bound of the distribution, and is defined as [@Srinivas2012-hq]:
-
-$$\alpha(\mathbf{x})=\mu(\mathbf{x}) + \beta \sigma(\mathbf{x})$$
+$$\alpha(\mathbf{x}, t)=\mu(\mathbf{x}) + \beta_t \sigma(\mathbf{x})$$
+Here the parameter $\beta_t$ depends on the current round $t$, which in our
+implementation would be roughly equivalent to the maximum number of bootstraps
+performed for any of the hyperparameter sets, minus $1$. The $\beta_t$ parameter
+is then defined as $\beta_t= 2 \log(|D|(t+1)^2\pi^2/6\delta)$
+[@Srinivas2012-hq]. Here, $\delta \in [0,1]$ and $|D|$ the dimensionality of the
+hyperparameter space. For their experiments Srinivas et al. used $\delta=0.1$,
+and noted that scaling down $\beta_t$ by a factor $5$ improves the algorithm.
+Hence we use $\beta_t= {2 \over 5} \log\left({5 \over 3}|D|(t+1)^2\pi^2\right)$.
 
 * `bayes_upper_confidence_bound`: Proposed by Kaufmann et al. [@Kaufmann2012-kh],
 the Bayesian upper confidence bound is defined as:
-
 $$\alpha(\mathbf{x}, t)=Q \left(1-{1 \over (t + 1) \log(n)^c}, \nu_t\right)$$
-Note that we here deviate from the original definition by substituting the
-original $t$ by $t+1$, and not constraining the posterior distribution $\nu$ to
-a known function. In the original, $n$ defines the number of rounds, with $t$
-the current round. In our algorithm, this is interpreted as $n$ being the total
-number of bootstraps, and $t$ the number of bootstraps already performed for the
-selected hyperparameter set $\mathbf{x}$. Hence our implementation is actually
-the same, aside from the lack of constraint on the posterior distribution.
-
-Based on the simulations and recommendations in Kaufmann et al. we choose
-parameter $c=0$.
+with $Q$ being a quantile function. Note that we here deviate from the original
+definition by substituting the original $t$ by $t+1$, and not constraining the
+posterior distribution $\nu$ to a known function. In the original, $n$ defines
+the number of rounds, with $t$ the current round. In our algorithm, this is
+interpreted as $n$ being the total number of bootstraps, and $t$ the maximum
+number of bootstraps already performed for any of the hyperparameter sets. Hence
+our implementation is actually the same, aside from the lack of constraint on
+the posterior distribution. Based on the simulations and recommendations by
+Kaufmann et al. we choose parameter $c=0$.
 
 ## Configuration options
 

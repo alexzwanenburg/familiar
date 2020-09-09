@@ -424,9 +424,8 @@ hpo.perform_smbo <- function(run, run_id, n_run_total, cl, fs_method, learner=NU
   # Find information regarding the dataset that has the highest optimisation
   # score.
   incumbent_set_data <- hpo.get_best_parameter_set(optimisation_score_table=hpo_optimisation_score_table,
-                                                   optimisation_function=settings$hpo$hpo_optimisation_function,
                                                    n=1,
-                                                   method="percentile")
+                                                   acquisition_function=settings$hpo$hpo_acquisition_function)
   
   # Message the user concerning the initial optimisation score.
   logger.message(paste0("Hyperparameter optimisation: Initialisation complete: ",
@@ -465,9 +464,8 @@ hpo.perform_smbo <- function(run, run_id, n_run_total, cl, fs_method, learner=NU
 
     # Determine parameter ids from incumbent and challenger
     parameter_id_incumbent <- hpo.get_best_parameter_set(optimisation_score_table=hpo_optimisation_score_table,
-                                                         optimisation_function=settings$hpo$hpo_optimisation_function,
                                                          n=1,
-                                                         method="percentile")$param_id
+                                                         acquisition_function=settings$hpo$hpo_acquisition_function)$param_id
     
     parameter_id_challenger <- challenger_data$param_id
 
@@ -517,9 +515,8 @@ hpo.perform_smbo <- function(run, run_id, n_run_total, cl, fs_method, learner=NU
       # Find information regarding the dataset that has the highest optimisation
       # score.
       incumbent_set_data <- hpo.get_best_parameter_set(optimisation_score_table=hpo_optimisation_score_table,
-                                                       optimisation_function=settings$hpo$hpo_optimisation_function,
                                                        n=1,
-                                                       method="percentile")
+                                                       acquisition_function=settings$hpo$hpo_acquisition_function)
       
       # Add new data to score and optimisation tables.
       hpo_score_table <- rbind(hpo_score_table,
@@ -538,7 +535,8 @@ hpo.perform_smbo <- function(run, run_id, n_run_total, cl, fs_method, learner=NU
                                                         parameter_id_incumbent=parameter_id_incumbent,
                                                         parameter_id_challenger=parameter_id_challenger,
                                                         objective=settings$hpo$hpo_optimisation_function,
-                                                        settings=settings)
+                                                        settings=settings,
+                                                        acquisition_function=settings$hpo$hpo_acquisition_function)
       
       # Extract parameter ids
       parameter_id_incumbent <- runoff_parameter_ids$parameter_id_incumbent
@@ -556,15 +554,15 @@ hpo.perform_smbo <- function(run, run_id, n_run_total, cl, fs_method, learner=NU
     
     # Get all runs and determine incumbent parameter id.
     incumbent_set_data <- hpo.get_best_parameter_set(optimisation_score_table=hpo_optimisation_score_table,
-                                                     optimisation_function=settings$hpo$hpo_optimisation_function,
                                                      n=1,
-                                                     method="percentile")
+                                                     acquisition_function=settings$hpo$hpo_acquisition_function)
     
     # Update list with stopping criteria
     stop_list <- hpo.update_stopping_criteria(score_table=hpo_optimisation_score_table,
                                               parameter_id_incumbent=incumbent_set_data$param_id,
                                               stop_list=stop_list,
-                                              tolerance=settings$hpo$hpo_convergence_tolerance)
+                                              tolerance=settings$hpo$hpo_convergence_tolerance,
+                                              acquisition_function=settings$hpo$hpo_acquisition_function)
     
     # Message progress.
     logger.message(paste0("Hyperparameter optimisation: SMBO iteration ", smbo_iter + 1L, ": score ",
@@ -591,9 +589,8 @@ hpo.perform_smbo <- function(run, run_id, n_run_total, cl, fs_method, learner=NU
   
   # Get all runs and determine incumbent parameter id.
   optimal_set_data <- hpo.get_best_parameter_set(optimisation_score_table=hpo_optimisation_score_table,
-                                                   optimisation_function=settings$hpo$hpo_optimisation_function,
-                                                   n=1,
-                                                   method="percentile")
+                                                 n=1,
+                                                 acquisition_function=settings$hpo$hpo_acquisition_function)
   
   # Add corresponding hyper parameters and remove redundant columns.
   optimal_set_table <- parameter_table[param_id==optimal_set_data$param_id, ]
@@ -687,7 +684,7 @@ hpo.random_forest_failure <- function(score_table, parameter_table){
 
 hpo.compare_runoff_scores <- function(score_table, parameter_id_incumbent,
                                       parameter_id_challenger, objective, settings,
-                                      method="percentile"){
+                                      acquisition_function){
 
   # Suppress NOTES due to non-standard evaluation in data.table
   param_id <- challenger_score <- p_value <- NULL
@@ -697,7 +694,7 @@ hpo.compare_runoff_scores <- function(score_table, parameter_id_incumbent,
                                   hpo.compare_challenger_and_incumbent(challenger_score_table=.SD, 
                                                                        incumbent_score_table=score_table[param_id==parameter_id_incumbent, ],
                                                                        objective=objective,
-                                                                       method=method),
+                                                                       acquisition_function=acquisition_function),
                                   by=c("param_id")]
   
   # Determine if there is a new incumbent score
@@ -725,7 +722,7 @@ hpo.compare_runoff_scores <- function(score_table, parameter_id_incumbent,
 
 
 
-hpo.compare_challenger_and_incumbent <- function(challenger_score_table, incumbent_score_table, objective, method){
+hpo.compare_challenger_and_incumbent <- function(challenger_score_table, incumbent_score_table, objective, acquisition_function){
 
   # Suppress NOTES due to non-standard evaluation in data.table
   run_id <- optimisation_score <- NULL
@@ -741,9 +738,9 @@ hpo.compare_challenger_and_incumbent <- function(challenger_score_table, incumbe
   # Calculate the aggregate optimisation score for challenger and incumbent for
   # the matching bootstraps.
   challenger_score <- metric.summarise_optimisation_score(score_table=challenger_score_table,
-                                                          method=method)$optimisation_score
+                                                          method=acquisition_function)$optimisation_score
   incumbent_score <- metric.summarise_optimisation_score(score_table=incumbent_score_table,
-                                                         method=method)$optimisation_score
+                                                         method=acquisition_function)$optimisation_score
 
   # Find p-value for matching means using paired wilcoxon rank test
   p_value <- suppressWarnings(stats::wilcox.test(x=challenger_score_table[order(run_id_match)]$optimisation_score,
@@ -904,7 +901,7 @@ hpo.create_runoff_run_table <- function(parameter_id_incumbent, parameter_id_cha
 }
 
 
-hpo.expected_improvement <- function(parameter_set, rf_model, incumbent_set_data, method="percentile"){
+hpo.acquisition_function <- function(parameter_set, rf_model, acquisition_data, acquisition_function){
   # Compute expected improvement.
 
   # Predict objective scores for every tree using the configuration in the parameter table
@@ -914,61 +911,106 @@ hpo.expected_improvement <- function(parameter_set, rf_model, incumbent_set_data
                              num.threads=1L,
                              verbose=FALSE)
 
-  if(method == "z_statistic"){
+  if(acquisition_function == "improvement_probability"){
+    # The definition of probability of improvement is found in Shahriari, B.,
+    # Swersky, K., Wang, Z., Adams, R. P. & de Freitas, N. Taking the Human Out
+    # of the Loop: A Review of Bayesian Optimization. Proc. IEEE 104, 148–175
+    # (2016)
+    
     # Calculate predicted mean objective score and its standard deviation over
     # the trees.
-    m <- mean(prediction_list$predictions)
-    s <- stats::sd(prediction_list$predictions)
+    mu <- mean(prediction_list$predictions)
+    sigma <- stats::sd(prediction_list$predictions)
     
     # Get the incumbent score.
-    incumbent_score <- incumbent_set_data$optimisation_score
+    tau <- acquisition_data$tau
     
-    # Compute a inverse z-score, using the incumbent score as observed data X.
-    if(s > 0){
-      z <- (m - incumbent_score) / s
+    # Compute the probability of improvement.
+    alpha <- stats::pnorm((mu - tau) / sigma)
+    
+  } else if(acquisition_function == "improvement_empirical_probability"){
+    
+    # Compute the empirical probability of improvement.
+    alpha <- sum(prediction_list$predictions > acquisition_data$tau) / length(prediction_list$predictions)
+    
+  } else if(acquisition_function == "expected_improvement"){
+    # The definition of expected improvement is found in Shahriari, B., Swersky,
+    # K., Wang, Z., Adams, R. P. & de Freitas, N. Taking the Human Out of the
+    # Loop: A Review of Bayesian Optimization. Proc. IEEE 104, 148–175 (2016).
+    
+    # Calculate predicted mean objective score and its standard deviation over
+    # the trees.
+    mu <- mean(prediction_list$predictions)
+    sigma <- stats::sd(prediction_list$predictions)
+    
+    # Get the incumbent score.
+    tau <- acquisition_data$tau
+    
+    # Compute a z-score.
+    if(sigma > 0){
+      z <- (mu - tau) / sigma
     } else {
-      z <- m - incumbent_score
+      return(0.0)
     }
     
-    # The equation for expected improvement in "Hutter, Frank, Holger H. Hoos,
-    # and Kevin Leyton-Brown. "Sequential Model-Based Optimization for General
-    # Algorithm Configuration." LION 5 (2011): 507-523" is a log improvement.
-    # The current equation is based on recent code by the same authors:
-    # https://github.com/automl/SMAC3/blob/master/smac/optimizer/acquisition.py
-    # The arrangement of m and incumbent_score has been switched, as we expect
-    # to maximise incumbent_score, instead of minimising it.
-    expected_improvement <- (m - incumbent_score) * stats::pnorm(z) + s * stats::dnorm(z)
+    # Compute the expected improvement.
+    alpha <- (mu - tau) * stats::pnorm(z) + sigma * stats::dnorm(z)
     
-  } else if(method == "percentile") {
-    # Determine the number of trees that predict a score that exceeds the
-    # incumbent score. This is multiplied by the respective 10-90 percentile
-    # range. This directly incorporates uncertainty in the parameter space
-    # because localities that are rarely visited tend to have a wider spread in
-    # values, thus making it more likely to find a high positive improvement.
-    #
-    # Technically, an improvement is inspected only if the fraction of trees
-    # with a higher score exceeds 0.5, but we ignore it.
+  } else if(acquisition_function == "upper_confidence_bound"){
+    # The definition of upper confidence bound is adapted from Srinivas, N.,
+    # Krause, A., Kakade, S. M. & Seeger, M. W. Information-Theoretic Regret
+    # Bounds for Gaussian Process Optimization in the Bandit Setting. IEEE
+    # Trans. Inf. Theory 58, 3250–3265 (2012).
     
-    incumbent_score <- incumbent_set_data$optimisation_score
-    incumbent_range <- incumbent_set_data$optimisation_range
-    if(incumbent_range < 0.001) incumbent_range <- 0.001
+    # Calculate predicted mean objective score and its standard deviation over
+    # the trees.
+    mu <- mean(prediction_list$predictions)
+    sigma <- stats::sd(prediction_list$predictions)
     
-    # Compute prediction range.
-    prediction_range <- diff(quantile(prediction_list$predictions,
-                                      probs=c(0.1, 0.9),
-                                      names=FALSE,
-                                      na.rm=TRUE))
+    # Compute the beta parameter.
+    beta <- 2/5 * log(5/3 * ncol(parameter_set) * (acquisition_data$t + 1)^2 * pi^2)
     
-    if(prediction_range < 0.001) prediction_range <- 0.001
+    # Compute alpha
+    alpha <- mean + beta * sigma
     
-    # Compute the fraction of trees with values above the incumbent score.
-    positive_fraction <- sum(prediction_list$predictions >= incumbent_score) / length(prediction_list$predictions)
+  } else if(acquisition_function == "bayes_upper_confidence_bound"){
+    # The definition of the Bayesian upper confidence bound is adapted from
+    # Kaufmann, E., Cappé, O. & Garivier, A. On Bayesian upper confidence bounds
+    # for bandit problems. in Artificial intelligence and statistics 592–600
+    # (2012).
     
-    # Compute expected improvement.
-    expected_improvement <- positive_fraction * prediction_range / incumbent_range
+    # Compute the quantile we are interested in.
+    q <- 1.0 - 1.0 / (acquisition_data$t + 1)
+    
+    # Compute alpha
+    alpha <- stats::quantile(x=prediction_list$predictions,
+                             probs=q,
+                             names=FALSE)
+    
+  } else {
+    ..error_reached_unreachable_code(paste0("hpo.acquisition_function: unknown acquisition function: ", acquisition_function))
   }
   
-  return(expected_improvement)
+  return(alpha)
+}
+
+
+
+hpo.get_acquisition_function_parameters <- function(rf_model,
+                                                    n_bootstraps,
+                                                    optimisation_score_table,
+                                                    acquisition_function){
+  # Determine optimal score
+  tau <- hpo.get_best_parameter_set(optimisation_score_table=optimisation_score_table,
+                                    acquisition_function=acquisition_function,
+                                    n=1L)$optimisation_score
+  
+  # Determine round t
+  t <- max(optimisation_score_table[, list("n"=.N), by="param_id"]$n)
+
+  return(list("t"=t,
+              "tau"=tau,
+              "n"=n_bootstraps))
 }
 
 
@@ -1106,39 +1148,39 @@ hpo.find_challenger_sets <- function(parameter_table, score_table, parameter_lis
   # Find information regarding the dataset that has the highest optimisation
   # score.
   incumbent_set_data <- hpo.get_best_parameter_set(optimisation_score_table=optimisation_score_table,
-                                                   optimisation_function=settings$hpo$hpo_optimisation_function,
                                                    n=1,
-                                                   method="percentile")
+                                                   acquisition_function=settings$hpo$hpo_acquisition_function)
   
   # Set a flag for local search
   local_search <- smbo_iter %% 2 == 0
   
   # Update the incumbent data using predictions by the random forest.
-  incumbent_set_data <- hpo.get_model_based_descriptors(rf_model=rf_optimisation_model,
-                                                        parameter_id=incumbent_set_data$param_id,
-                                                        parameter_set=parameter_table[param_id == incumbent_set_data$param_id, ][, -c("param_id")],
-                                                        method="percentile")
+  acquisition_data <- hpo.get_acquisition_function_parameters(rf_model=rf_optimisation_model,
+                                                              n_bootstraps=settings$hpo$hpo_max_bootstraps,
+                                                              optimisation_score_table=optimisation_score_table,
+                                                              acquisition_function=settings$hpo$hpo_acquisition_function)
   
   
   ##### Generate random sets ###################################################
   n_random_sets <- 200
 
   # Generate random sets
-  random_sets <- lapply(seq_len(n_random_sets), function(ii, parameter_list, rf_optimisation_model, incumbent_set_data){
+  random_sets <- lapply(seq_len(n_random_sets), function(ii, parameter_list, rf_optimisation_model, acquisition_data){
     
     # Create random configuration
     random_set <- hpo.randomise_hyperparameter_set(parameter_list=parameter_list, local=FALSE)
     
     # Add the expected improvement
-    random_set[, "expected_improvement":=hpo.expected_improvement(parameter_set=random_set,
+    random_set[, "expected_improvement":=hpo.acquisition_function(parameter_set=random_set,
                                                                   rf_model=rf_optimisation_model,
-                                                                  incumbent_set_data=incumbent_set_data)]
+                                                                  acquisition_data=acquisition_data,
+                                                                  acquisition_function=settings$hpo$hpo_acquisition_function)]
     
     return(random_set)
   },
   parameter_list=parameter_list,
   rf_optimisation_model=rf_optimisation_model,
-  incumbent_set_data=incumbent_set_data)
+  acquisition_data=acquisition_data)
   
   
   ###### Identify local sets ###################################################
@@ -1148,10 +1190,10 @@ hpo.find_challenger_sets <- function(parameter_table, score_table, parameter_lis
     temp_parameter_table <- data.table::copy(parameter_table)
     
     # Compute expected improvement for the sets in the parameter table
-    temp_parameter_table[, "expected_improvement":=hpo.expected_improvement(parameter_set=.SD,
+    temp_parameter_table[, "expected_improvement":=hpo.acquisition_function(parameter_set=.SD,
                                                                             rf_model=rf_optimisation_model,
-                                                                            incumbent_set_data=incumbent_set_data,
-                                                                            method="percentile"),
+                                                                            acquisition_data=acquisition_data,
+                                                                            acquisition_function=settings$hpo$hpo_acquisition_function),
                          by=param_id]
     
     # Select the 10 best parameter sets
@@ -1179,10 +1221,10 @@ hpo.find_challenger_sets <- function(parameter_table, score_table, parameter_lis
                                                              parameter_list=parameter_list, local=TRUE)
         
         # Compute the expected improvement for the local set
-        local_random_set[, "expected_improvement":=hpo.expected_improvement(parameter_set=local_random_set,
+        local_random_set[, "expected_improvement":=hpo.acquisition_function(parameter_set=local_random_set,
                                                                             rf_model=rf_optimisation_model,
-                                                                            incumbent_set_data=incumbent_set_data,
-                                                                            method="percentile")]
+                                                                            acquisition_data=acquisition_data,
+                                                                            acquisition_function=settings$hpo$hpo_acquisition_function)]
         
         local_random_set_expected_improvement <- local_random_set$expected_improvement
         
@@ -1279,7 +1321,7 @@ hpo.find_challenger_sets <- function(parameter_table, score_table, parameter_lis
 }
 
 
-hpo.get_best_parameter_set <- function(optimisation_score_table, optimisation_function, n=1L, method="percentile"){
+hpo.get_best_parameter_set <- function(optimisation_score_table, n=1L, acquisition_function){
   # Find the best configurations based on the optimisation score
 
   # Suppress NOTES due to non-standard evaluation in data.table
@@ -1287,7 +1329,7 @@ hpo.get_best_parameter_set <- function(optimisation_score_table, optimisation_fu
 
   # Compute the summary score per parameter id.
   summary_table <- metric.summarise_optimisation_score(score_table=optimisation_score_table,
-                                                       method=method)
+                                                       method=acquisition_function)
   
   # Sort by decreasing optimisation score.
   summary_table[order(-optimisation_score)]
@@ -1296,44 +1338,6 @@ hpo.get_best_parameter_set <- function(optimisation_score_table, optimisation_fu
   best_parameter_data <- head(summary_table, n=n)
   
   return(best_parameter_data)
-}
-
-
-
-hpo.get_model_based_descriptors <- function(rf_model,
-                                            parameter_id=NULL,
-                                            parameter_set,
-                                            method="percentile"){
-  
-  # Suppress NOTES due to non-standard evaluation in data.table
-  optimisation_score <- NULL
-  
-  # Predict objective scores for every tree using the configuration in the
-  # parameter table.
-  prediction_list <- predict(rf_model,
-                             data=parameter_set,
-                             predict.all=TRUE,
-                             num.threads=1L,
-                             verbose=FALSE)
-  
-  if(method == "z_statistic"){
-    optimisation_score <- mean(prediction_list$predictions, na.rm=TRUE)
-    optimisation_range <- stats::sd(prediction_list$predictions, na.rm=TRUE)
-    
-  } else if(method == "percentile"){
-    optimisation_score <- stats::median(prediction_list$predictions, na.rm=TRUE)
-    optimisation_range <- diff(stats::quantile(prediction_list$predictions,
-                                               probs=c(0.1, 0.9),
-                                               names=FALSE,
-                                               na.rm=TRUE))
-    
-  } else {
-    ..error_reached_unreachable_code("hpo.get_model_based_descriptors: method is not implemented.")
-  }
-  
-  return(list("param_id"=parameter_id,
-              "optimisation_score"=optimisation_score,
-              "optimisation_range"=optimisation_range))
 }
   
 
@@ -1392,14 +1396,14 @@ hpo.initialise_stopping_criteria <- function(){
 }
 
 
-hpo.update_stopping_criteria <- function(score_table, parameter_id_incumbent, stop_list, tolerance=1E-2, method="percentile"){
+hpo.update_stopping_criteria <- function(score_table, parameter_id_incumbent, stop_list, tolerance=1E-2, acquisition_function){
   
   # Suppress NOTES due to non-standard evaluation in data.table
   param_id <- NULL
   
   # Compute aggregate optimisation score.
   summary_score_table <- metric.summarise_optimisation_score(score_table=score_table[param_id==parameter_id_incumbent, ],
-                                                             method=method,
+                                                             method=acquisition_function,
                                                              replace_na=FALSE)
   
   # Read the convergence counter.

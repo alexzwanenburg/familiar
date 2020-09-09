@@ -267,6 +267,18 @@
 #'   optimization for general algorithm configuration. in Learning and
 #'   Intelligent Optimization (ed. Coello, C. A. C.) 6683, 507–523 (Springer
 #'   Berlin Heidelberg, 2011).
+#'   
+#'   1. Shahriari, B., Swersky, K., Wang, Z., Adams, R. P. & de Freitas, N.
+#'   Taking the Human Out of the Loop: A Review of Bayesian Optimization. Proc.
+#'   IEEE 104, 148–175 (2016)
+#'
+#'   1. Srinivas, N., Krause, A., Kakade, S. M. & Seeger, M. W.
+#'   Information-Theoretic Regret Bounds for Gaussian Process Optimization in
+#'   the Bandit Setting. IEEE Trans. Inf. Theory 58, 3250–3265 (2012)
+#'
+#'   1. Kaufmann, E., Cappé, O. & Garivier, A. On Bayesian upper confidence
+#'   bounds for bandit problems. in Artificial intelligence and statistics
+#'   592–600 (2012).
 #'
 #'   1. Davison, A. C. & Hinkley, D. V. Bootstrap methods and their application.
 #'   (Cambridge University Press, 1997).
@@ -1846,15 +1858,27 @@
 #'   The algorithm uses the random forest to search the hyperparameter space for
 #'   hyperparameter sets that are either likely better than the best known set
 #'   (*exploitation*) or where there is considerable uncertainty
-#'   (*exploration*). The acquisition function quantifies this.
+#'   (*exploration*). The acquisition function quantifies this (Shahriari et
+#'   al., 2016).
 #'
-#'   The following acquisition functions are available:
+#'   The following acquisition functions are available, and are described in
+#'   more detail in the *learner algorithms* vignette:
 #'
-#'   * `improvement_probability`: The probability that the expected optimisation
-#'   value for a set \eqn{\mathbf{x}}  exceeds the highest known expected
-#'   optimisation value \eqn{f'}: \deqn{a(\mathbf{x}) = P(X > f') = 1-\Phi(f';
-#'   \mathbb{E}(\mathbf{x}), \textrm{Var}(\mathbf{X}))}.
+#'   * `improvement_probability`: The probability of improvement quantifies the
+#'   probability that the expected optimisation score for a set is better than
+#'   the best observed optimisation score
 #'
+#'   * `improvement_empirical_probability`: Similar to
+#'   `improvement_probability`, but based directly on optimisation scores
+#'   predicted by the individual decision trees.
+#'
+#'   * `expected_improvement` (default): Computes expected improvement.
+#'
+#'   * `upper_confidence_bound`: This acquisition function is based on the upper
+#'   confidence bound of the distribution (Srinivas et al., 2012).
+#'
+#'   * `bayes_upper_confidence_bound`:This acquisition function is based on the
+#'   upper confidence bound of the distribution (Kaufmann et al., 2012).
 #'
 #' @param parallel_hyperparameter_optimisation (*optional*) Enable parallel
 #'   processing for hyperparameter optimisation. Defaults to `TRUE`. When set to
@@ -1869,6 +1893,18 @@
 #'   model-based optimization for general algorithm configuration. in Learning
 #'   and Intelligent Optimization (ed. Coello, C. A. C.) 6683, 507–523 (Springer
 #'   Berlin Heidelberg, 2011).
+#'
+#'   1. Shahriari, B., Swersky, K., Wang, Z., Adams, R. P. & de Freitas, N.
+#'   Taking the Human Out of the Loop: A Review of Bayesian Optimization. Proc.
+#'   IEEE 104, 148–175 (2016)
+#'
+#'   1. Srinivas, N., Krause, A., Kakade, S. M. & Seeger, M. W.
+#'   Information-Theoretic Regret Bounds for Gaussian Process Optimization in
+#'   the Bandit Setting. IEEE Trans. Inf. Theory 58, 3250–3265 (2012)
+#'
+#'   1. Kaufmann, E., Cappé, O. & Garivier, A. On Bayesian upper confidence
+#'   bounds for bandit problems. in Artificial intelligence and statistics
+#'   592–600 (2012).
 #' @md
 #' @keywords internal
 .parse_hyperparameter_optimisation_settings <- function(config=NULL, parallel, outcome_type,
@@ -1954,6 +1990,13 @@
   .check_parameter_value_is_valid(x=settings$hpo_optimisation_function, var_name="optimisation_function",
                                   values=c("max_validation", "balanced", "stronger_balance"))
   
+  # Aqcuisition function
+  settings$hpo_acquisition_function <- .parse_arg(x_config=config$acquisition_function, x_var=acquisition_function,
+                                                  var_name="acquisition_function", type="character", optional=TRUE, default="expected_improvement")
+  
+  .check_parameter_value_is_valid(x=settings$hpo_acquisition_function, var_name="acquisition_function",
+                                  values=c("improvement_probability", "improvement_empirical_probability", "expected_improvement",
+                                           "upper_confidence_bound", "bayes_upper_confidence_bound"))
   
   # Performance metric for hyperparameter optimisation
   settings$hpo_metric <- .parse_arg(x_config=config$optimisation_metric, x_var=optimisation_metric,
