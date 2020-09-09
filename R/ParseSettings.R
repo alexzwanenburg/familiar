@@ -1944,7 +1944,7 @@
   settings$hpo_convergence_tolerance <- .parse_arg(x_config=config$smbo_stop_tolerance, x_var=smbo_stop_tolerance,
                                                    var_name="smbo_stop_tolerance", type="numeric", optional=TRUE, default=1E-2)
   
-  .check_number_in_valid_range(x=settings$hpo_converge_tolerance, var_name="smbo_stop_tolerance", range=c(0.0, 2.0), closed=c(FALSE, TRUE))
+  .check_number_in_valid_range(x=settings$hpo_convergence_tolerance, var_name="smbo_stop_tolerance", range=c(0.0, 2.0), closed=c(FALSE, TRUE))
   
   
   # Objective function
