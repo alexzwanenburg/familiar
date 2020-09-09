@@ -340,11 +340,11 @@ setMethod("extract_permutation_vimp", signature(object="familiarEnsemble"),
                                            ensemble_method=ensemble_method)
     
     if(determine_ci){
-      if(verbose & !is.null(time)) logger.message(paste0("Computing bootstrap confidence interval data for variable imputation of ",
+      if(verbose & !is.null(time)) logger.message(paste0("Computing bootstrap confidence interval data for variable importance of ",
                                                          paste_s(shuffled_features$name), ifelse(length(shuffled_features$name) == 1, " feature", " features"),
                                                          " at time ", time, "."),
                                                   indent=message_indent)
-      if(verbose & is.null(time)) logger.message(paste0("Computing bootstrap confidence interval data for variable imputation of ",
+      if(verbose & is.null(time)) logger.message(paste0("Computing bootstrap confidence interval data for variable importance of ",
                                                         paste_s(shuffled_features$name), ifelse(length(shuffled_features$name) == 1, " feature", " features"),
                                                         "."),
                                                  indent=message_indent)
