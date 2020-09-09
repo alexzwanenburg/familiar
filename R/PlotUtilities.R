@@ -301,7 +301,12 @@ plotting.add_cluster_name <- function(x, color_by=NULL, facet_by=NULL, singular_
     
     # Check if x is empty.
     if(is_empty(y)){
-      return(y)
+      if(data.table::is.data.table(y)){
+        y[, "cluster_name":=character(0)]
+        
+      } else {
+        return(y)
+      }
     }
     
     # This is for backward compatibility.
