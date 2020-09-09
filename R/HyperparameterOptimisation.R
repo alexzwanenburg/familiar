@@ -301,6 +301,11 @@ hpo.perform_smbo <- function(run, run_id, n_run_total, cl, fs_method, learner=NU
   } else {
     # Retrieve any variables set by the user.
     user_list <- settings$mb$hyper_param[[learner]]
+    
+    # Override sign_size for signature_only variable importance methods.
+    if(fs_method == "signature_only"){
+      user_list$sign_size <- length(settings$data$signature)
+    }
   }
   
   # Update the parameter list With user variables.
