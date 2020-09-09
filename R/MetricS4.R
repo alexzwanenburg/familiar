@@ -509,6 +509,9 @@ metric.is_higher_score_better <- function(metric, object=NULL, outcome_type=NULL
 metric.compute_optimisation_score <- function(score_table,
                                               optimisation_function){
   
+  # Suppress NOTES due to non-standard evaluation in data.table
+  optimisation_score <- training <- validation <- NULL
+  
   # Select the correct optimisation function.
   optimisation_function <- switch(optimisation_function,
                                   "max_validation" = metric.optim_score.max_validation,
@@ -524,9 +527,9 @@ metric.compute_optimisation_score <- function(score_table,
                                 response=paste0(c(id_columns, "metric"), collapse=" + "))
   
   # Cast objective score wide by data_set.
-  optimisation_table <- dcast(data=score_table[, mget(c(id_columns, "metric", "data_set", "objective_score"))],
-                              formula,
-                              value.var="objective_score")
+  optimisation_table <- data.table::dcast(data=score_table[, mget(c(id_columns, "metric", "data_set", "objective_score"))],
+                                          formula,
+                                          value.var="objective_score")
   
   # Compute optimisation score based on objective scores.
   optimisation_table <- optimisation_table[, list("optimisation_score"=optimisation_function(training=training,
