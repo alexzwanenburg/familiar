@@ -51,7 +51,7 @@
   
   # Split the data and compute confidence intervals.
   data <- fam_lapply(cl=cl,
-                     X=split(data, by=splitting_variables, keep.by=TRUE),
+                     X=split(data, by=splitting_variables, keep.by=TRUE, drop=TRUE),
                      FUN=function(data, target_column, confidence_level, bootstrap_ci_method){
                        
                        # Select point estimate and bootstrap estimates.
@@ -85,7 +85,6 @@
                      bootstrap_ci_method=bootstrap_ci_method,
                      progress_bar=verbose)
   
- 
   # Combine into a single dataset
   data <- data.table::rbindlist(data, use.names=TRUE)
   
