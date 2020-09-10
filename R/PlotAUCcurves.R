@@ -471,8 +471,18 @@ setMethod("plot_auc_roc_curve", signature(object="familiarCollection"),
   # Plot confidence intervals
   if(conf_int_style[1]!="none"){
     if(conf_int_style[1] == "step"){
-      p <- p + ggplot2::geom_step(mapping=ggplot2::aes(y=!!sym("ci_low"), linetype="dashed", na.rm=TRUE))
-      p <- p + ggplot2::geom_step(mapping=ggplot2::aes(y=!!sym("ci_up"), linetype="dashed", na.rm=TRUE))
+      p <- p + ggplot2::geom_step(mapping=ggplot2::aes(y=!!sym("ci_low"),
+                                                       colour=!!sym("color_breaks"),
+                                                       na.rm=TRUE),
+                                  linetype="dashed")
+      
+      p <- p + ggplot2::geom_step(mapping=ggplot2::aes(y=!!sym("ci_up"),
+                                                       colour=!!sym("color_breaks"),
+                                                       na.rm=TRUE),
+                                  linetype="dashed")
+      
+      p <- p + ggplot2::scale_linetype(guide=FALSE)
+      
       
     } else if(conf_int_style[1] == "ribbon"){
       
