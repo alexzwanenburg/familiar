@@ -1028,3 +1028,306 @@ test_all_metrics <- function(metrics,
   
 }
 
+
+test_plots <- function(plot_function,
+                       data_element,
+                       outcome_type_available=c("count", "continuous", "binomial", "multinomial", "survival"),
+                       except_one_sample=FALSE,
+                       except_identical=FALSE,
+                       except_same_prediction=FALSE,
+                       ...,
+                       plot_args=NULL,
+                       test_specific_config=FALSE,
+                       debug=FALSE){
+  
+  if(debug){
+    test_fun <- debug_test_that
+    
+  } else {
+    test_fun <- testthat::test_that
+  }
+  
+  # Iterate over the outcome type.
+  for(outcome_type in c("count", "continuous", "binomial", "multinomial", "survival")){
+    
+    # Obtain data.
+    full_data <- test.create_good_data_set(outcome_type)
+    identical_sample_data <- test.create_all_identical_data_set(outcome_type)
+    full_one_sample_data <- test.create_one_sample_data_set(outcome_type)
+    one_feature_data <- test.create_one_feature_data_set(outcome_type)
+    one_feature_one_sample_data <- test.create_one_feature_one_sample_data_set(outcome_type)
+    one_feature_invariant_data <- test.create_one_feature_invariant_data_set(outcome_type)
+    empty_data <- test.create_empty_data_set(outcome_type)
+    
+    # Set exceptions per outcome type.
+    .except_one_sample <- except_one_sample
+    if(is.character(.except_one_sample)) .except_one_sample <- any(.except_one_sample == outcome_type)
+    
+    .except_identical <- except_identical
+    if(is.character(.except_identical)) .except_identical <- any(.except_identical == outcome_type)
+    
+    .except_same_prediction <- except_same_prediction
+    if(is.character(.except_same_prediction)) .except_same_prediction <- any(.except_same_prediction == outcome_type)
+    
+    # Parse hyperparameter list
+    hyperparameters <- list("sign_size"=get_n_features(full_data),
+                            "family"=switch(outcome_type,
+                                            "continuous"="gaussian",
+                                            "count"="poisson",
+                                            "binomial"="binomial",
+                                            "multinomial"="multinomial",
+                                            "survival"="cox"))
+    
+    #####Full data set########################################################
+    
+    # Train the model.
+    model_full_1 <- suppressWarnings(train(data=full_data,
+                                      cluster_method="none",
+                                      imputation_method="simple",
+                                      fs_method="mim",
+                                      hyperparameter_list=hyperparameters,
+                                      learner="lasso",
+                                      time_max=1832))
+    
+    model_full_2 <- model_full_1
+    model_full_2@fs_method <- "mifs"
+    
+    # Create familiar data objects.
+    data_good_full_1 <- as_familiar_data(object=model_full_1, data=full_data, data_element=data_element, ...)
+    data_good_full_2 <- as_familiar_data(object=model_full_2, data=full_data, data_element=data_element, ...)
+    data_empty_full_1 <- as_familiar_data(object=model_full_1, data=empty_data, data_element=data_element, ...)
+    data_empty_full_2 <- as_familiar_data(object=model_full_2, data=empty_data, data_element=data_element, ...)
+    data_one_sample_full_1 <- as_familiar_data(object=model_full_1, data=full_one_sample_data, data_element=data_element, ...)
+    data_one_sample_full_2 <- as_familiar_data(object=model_full_2, data=full_one_sample_data, data_element=data_element, ...)
+    data_identical_full_1 <- as_familiar_data(object=model_full_1, data=identical_sample_data, data_element=data_element, ...)
+    data_identical_full_2 <- as_familiar_data(object=model_full_2, data=identical_sample_data, data_element=data_element, ...)
+    
+    # Create a completely intact dataset.
+    test_fun(paste0("1. Plots for ", outcome_type, " outcomes ",
+                    ifelse(outcome_type %in% outcome_type_available, "can", "cannot"),
+                    " be created for a complete data set."), {
+                      
+                      object <- list(data_good_full_1, data_good_full_2, data_good_full_1, data_good_full_2)
+                      object <- mapply(FUN=function(data, name){
+                        data@name <- name
+                        return(data)
+                      },
+                      data=object,
+                      name=c("development_1", "development_2", "validation_1", "validation_2"))
+                      
+                      collection <- suppressWarnings(as_familiar_collection(object, familiar_data_names=c("development", "development", "validation", "validation")))
+                      
+                      plot_list <- do.call(plot_function, args=c(list("object"=object), plot_args))
+                      if(outcome_type %in% outcome_type_available){
+                        testthat::expect_equal(inherits(plot_list[[1]], "ggplot") | inherits(plot_list[[1]], "gtable"), TRUE) 
+                        
+                      } else {
+                        testthat::expect_equal(is.null(plot_list), TRUE)
+                      }
+                    })
+    
+    # Go to next outcome type if only a specific configuration needs to be
+    # tested.
+    if(test_specific_config) next()
+    
+    # Create a dataset with a missing quadrant.
+    test_fun(paste0("2. Plots for ", outcome_type, " outcomes ",
+                    ifelse(outcome_type %in% outcome_type_available, "can", "cannot"),
+                    " be created for a dataset with some missing data."), {
+                      
+                      object <- list(data_good_full_1, data_good_full_2, data_empty_full_1, data_good_full_2)
+                      object <- mapply(FUN=function(data, name){
+                        data@name <- name
+                        return(data)
+                      },
+                      data=object,
+                      name=c("development_1", "development_2", "validation_1", "validation_2"))
+                      
+                      collection <- suppressWarnings(as_familiar_collection(object, familiar_data_names=c("development", "development", "validation", "validation")))
+                      
+                      plot_list <- do.call(plot_function, args=c(list("object"=object), plot_args))
+                      if(outcome_type %in% outcome_type_available){
+                        testthat::expect_equal(inherits(plot_list[[1]], "ggplot") | inherits(plot_list[[1]], "gtable"), TRUE) 
+                        
+                      } else {
+                        testthat::expect_equal(is.null(plot_list), TRUE)
+                      }
+                    })
+    
+    # Create a dataset with all missing quadrants
+    test_fun(paste0("3. Plots for ", outcome_type, " outcomes cannot",
+                    " be created for a dataset with completely missing data."), {
+                      
+                      object <- list(data_empty_full_1, data_empty_full_2, data_empty_full_1, data_empty_full_2)
+                      object <- mapply(FUN=function(data, name){
+                        data@name <- name
+                        return(data)
+                      },
+                      data=object,
+                      name=c("development_1", "development_2", "validation_1", "validation_2"))
+                      
+                      collection <- suppressWarnings(as_familiar_collection(object, familiar_data_names=c("development", "development", "validation", "validation")))
+                      
+                      plot_list <- do.call(plot_function, args=c(list("object"=object), plot_args))
+                      
+                      testthat::expect_equal(is.null(plot_list), TRUE)
+                    })
+    
+    # Create dataset with one-sample quadrants for validation
+    test_fun(paste0("4. Plots for ", outcome_type, " outcomes ",
+                    ifelse(outcome_type %in% outcome_type_available, "can", "cannot"),
+                    " be created for a dataset where some data only have one sample."), {
+                      
+                      object <- list(data_good_full_1, data_good_full_2, data_one_sample_full_1, data_one_sample_full_2)
+                      object <- mapply(FUN=function(data, name){
+                        data@name <- name
+                        return(data)
+                      },
+                      data=object,
+                      name=c("development_1", "development_2", "validation_1", "validation_2"))
+                      
+                      collection <- suppressWarnings(as_familiar_collection(object, familiar_data_names=c("development", "development", "validation", "validation")))
+                      
+                      plot_list <- do.call(plot_function, args=c(list("object"=object), plot_args))
+                      if(outcome_type %in% outcome_type_available){
+                        testthat::expect_equal(inherits(plot_list[[1]], "ggplot") | inherits(plot_list[[1]], "gtable"), TRUE) 
+                        
+                      } else {
+                        testthat::expect_equal(is.null(plot_list), TRUE)
+                      }
+                    })
+    
+    # Create dataset with some quadrants with identical data
+    test_fun(paste0("5. Plots for ", outcome_type, " outcomes ",
+                    ifelse(outcome_type %in% outcome_type_available, "can", "cannot"),
+                    " be created for a dataset where some data only have identical samples."), {
+                      
+                      object <- list(data_good_full_1, data_good_full_2, data_identical_full_1, data_identical_full_2)
+                      object <- mapply(FUN=function(data, name){
+                        data@name <- name
+                        return(data)
+                      },
+                      data=object,
+                      name=c("development_1", "development_2", "validation_1", "validation_2"))
+                      
+                      collection <- suppressWarnings(as_familiar_collection(object, familiar_data_names=c("development", "development", "validation", "validation")))
+                      
+                      plot_list <- do.call(plot_function, args=c(list("object"=object), plot_args))
+                      if(outcome_type %in% outcome_type_available){
+                        testthat::expect_equal(inherits(plot_list[[1]], "ggplot") | inherits(plot_list[[1]], "gtable"), TRUE) 
+                        
+                      } else {
+                        testthat::expect_equal(is.null(plot_list), TRUE)
+                      }
+                    })
+    
+    #####One-feature data set###################################################
+    
+    # Train the model.
+    model_one_1 <- suppressWarnings(train(data=one_feature_data,
+                                           cluster_method="none",
+                                           imputation_method="simple",
+                                           fs_method="mim",
+                                           hyperparameter_list=hyperparameters,
+                                           learner="lasso",
+                                           time_max=1832))
+    
+    model_one_2 <- model_one_1
+    model_one_2@fs_method <- "mifs"
+    
+    # Create familiar data objects.
+    data_good_one_1 <- as_familiar_data(object=model_one_1, data=one_feature_data, data_element=data_element, ...)
+    data_good_one_2 <- as_familiar_data(object=model_one_2, data=one_feature_data, data_element=data_element, ...)
+    data_one_sample_one_1 <- as_familiar_data(object=model_one_1, data=one_feature_one_sample_data, data_element=data_element, ...)
+    data_one_sample_one_2 <- as_familiar_data(object=model_one_2, data=one_feature_one_sample_data, data_element=data_element, ...)
+    data_identical_one_1 <- as_familiar_data(object=model_one_1, data=one_feature_invariant_data, data_element=data_element, ...)
+    data_identical_one_2 <- as_familiar_data(object=model_one_2, data=one_feature_invariant_data, data_element=data_element, ...)
+    
+    
+    # Create a completely intact, one sample dataset.
+    test_fun(paste0("6. Plots for ", outcome_type, " outcomes ",
+                    ifelse(outcome_type %in% outcome_type_available, "can", "cannot"),
+                    " be created for a complete one-feature data set."), {
+                      
+                      object <- list(data_good_one_1, data_good_one_2, data_good_one_1, data_good_one_2)
+                      object <- mapply(FUN=function(data, name){
+                        data@name <- name
+                        return(data)
+                      },
+                      data=object,
+                      name=c("development_1", "development_2", "validation_1", "validation_2"))
+                      
+                      collection <- suppressWarnings(as_familiar_collection(object, familiar_data_names=c("development", "development", "validation", "validation")))
+                      
+                      plot_list <- do.call(plot_function, args=c(list("object"=object), plot_args))
+                      if(outcome_type %in% outcome_type_available){
+                        testthat::expect_equal(inherits(plot_list[[1]], "ggplot") | inherits(plot_list[[1]], "gtable"), TRUE) 
+                        
+                      } else {
+                        testthat::expect_equal(is.null(plot_list), TRUE)
+                      }
+                    })
+    
+    # Create a dataset with a one-sample quadrant.
+    test_fun(paste0("7. Plots for ", outcome_type, " outcomes ",
+                    ifelse(outcome_type %in% outcome_type_available, "can", "cannot"),
+                    " be created for a dataset with some one-sample data."), {
+                      
+                      object <- list(data_good_one_1, data_good_one_2, data_one_sample_one_1, data_one_sample_one_2)
+                      object <- mapply(FUN=function(data, name){
+                        data@name <- name
+                        return(data)
+                      },
+                      data=object,
+                      name=c("development_1", "development_2", "validation_1", "validation_2"))
+                      
+                      collection <- suppressWarnings(as_familiar_collection(object, familiar_data_names=c("development", "development", "validation", "validation")))
+                      
+                      plot_list <- do.call(plot_function, args=c(list("object"=object), plot_args))
+                      if(outcome_type %in% outcome_type_available){
+                        testthat::expect_equal(inherits(plot_list[[1]], "ggplot") | inherits(plot_list[[1]], "gtable"), TRUE) 
+                        
+                      } else {
+                        testthat::expect_equal(is.null(plot_list), TRUE)
+                      }
+                    })
+    
+    # Create a dataset with all missing quadrants
+    test_fun(paste0("8. Plots for ", outcome_type, " outcomes ",
+                    ifelse(outcome_type %in% outcome_type_available, "can", "cannot"),
+                    " be created for a dataset with some invariant data."), {
+                      
+                      object <- list(data_good_one_1, data_good_one_2, data_identical_one_1, data_identical_one_2)
+                      object <- mapply(FUN=function(data, name){
+                        data@name <- name
+                        return(data)
+                      },
+                      data=object,
+                      name=c("development_1", "development_2", "validation_1", "validation_2"))
+                      
+                      collection <- suppressWarnings(as_familiar_collection(object, familiar_data_names=c("development", "development", "validation", "validation")))
+                      
+                      plot_list <- do.call(plot_function, args=c(list("object"=object), plot_args))
+                      if(outcome_type %in% outcome_type_available){
+                        testthat::expect_equal(inherits(plot_list[[1]], "ggplot") | inherits(plot_list[[1]], "gtable"), TRUE) 
+                        
+                      } else {
+                        testthat::expect_equal(is.null(plot_list), TRUE)
+                      }
+                    })
+  }
+}
+
+
+debug_test_that <- function(desc, code){
+  # This is a drop-in replacement for testthat::test_that that makes it easier
+  # to debug errors.
+  
+  if(!is.character(desc) || length(desc) != 1){
+    stop("\"desc\" should be a character string")
+  }
+  
+  # Execute the code
+  code <- substitute(code)
+  eval(code, envir=parent.frame())
+}
