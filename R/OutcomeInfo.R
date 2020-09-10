@@ -201,13 +201,12 @@ get_outcome_info_from_backend <- function(){
         distr_list[[item]] <- frequency_values[, list("count"=mean(count)), by="outcome"]
         
       } else if(grepl(pattern="incidence", x=item, fixed=TRUE)){
-        browser()
+        
         # Identify unique times.
         unique_times <- sort(unique(unlist(lapply(x, function(outcome_info_object, item) (outcome_info_object@distribution[[item]]$time), item=item))))
         
         # Interpolate at the unique times.
         incidence_table <- lapply(x, function(outcome_info_object, item, unique_times){
-          browser()
           
           # Interpolate the data at the unique time points.
           incidence <- stats::approx(x=outcome_info_object@distribution[[item]]$time,
@@ -236,13 +235,12 @@ get_outcome_info_from_backend <- function(){
         distr_list[[item]] <- incidence_table
       
       } else if(grepl(pattern="survival_probability", x=item, fixed=TRUE)) {
-        browser()
+        
         # Identify unique times.
         unique_times <- sort(unique(unlist(lapply(x, function(outcome_info_object, item) (outcome_info_object@distribution[[item]]$time), item=item))))
         
         # Interpolate at the unique times.
         survival_table <- lapply(x, function(outcome_info_object, item, unique_times){
-          browser()
           
           # Interpolate the data at the unique time points.
           survival_probability <- stats::approx(x=outcome_info_object@distribution[[item]]$time,
@@ -252,7 +250,7 @@ get_outcome_info_from_backend <- function(){
                                                 rule=2,
                                                 yleft=1.0)$y
           
-          survival_probabilityreturn(data.table::data.table("time"=unique_times,
+          return(data.table::data.table("time"=unique_times,
                                         "survival_probability"=survival_probability))
         },
         item=item,
