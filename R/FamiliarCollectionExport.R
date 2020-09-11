@@ -1774,7 +1774,7 @@ universal_exporter <- function(object,
                                   stats::reformulate(termlabels=setdiff(colnames(individual_export_data), c(target_column, "bootstrap_id")),
                                                      response="bootstrap_id",
                                                      intercept=FALSE),
-                                  value.var=targer_column)
+                                  value.var=target_column)
         } else {
           bootstrap_data <- NULL
         }
