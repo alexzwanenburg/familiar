@@ -337,7 +337,7 @@ test.create_one_feature_invariant_data_set <- function(outcome_type){
   feature_column <- get_feature_columns(data)
   
   # Set the feature to a fixed value.
-  data@data[, (feature_column):=1.0]
+  data@data[, (feature_column):=data@data[[feature_column]][1]]
   
   return(data)
 }
