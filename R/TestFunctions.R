@@ -1108,16 +1108,11 @@ test_plots <- function(plot_function,
                     " be created for a complete data set."), {
                       
                       object <- list(data_good_full_1, data_good_full_2, data_good_full_1, data_good_full_2)
-                      object <- mapply(FUN=function(data, name){
-                        data@name <- name
-                        return(data)
-                      },
-                      data=object,
-                      name=c("development_1", "development_2", "validation_1", "validation_2"))
-                      
+                      object <- mapply(set_data_set_names, object, c("development_1", "development_2", "validation_1", "validation_2"))
+
                       collection <- suppressWarnings(as_familiar_collection(object, familiar_data_names=c("development", "development", "validation", "validation")))
                       
-                      plot_list <- do.call(plot_function, args=c(list("object"=object), plot_args))
+                      plot_list <- do.call(plot_function, args=c(list("object"=collection), plot_args))
                       if(outcome_type %in% outcome_type_available){
                         testthat::expect_equal(inherits(plot_list[[1]], "ggplot") | inherits(plot_list[[1]], "gtable"), TRUE) 
                         
@@ -1136,16 +1131,11 @@ test_plots <- function(plot_function,
                     " be created for a dataset with some missing data."), {
                       
                       object <- list(data_good_full_1, data_good_full_2, data_empty_full_1, data_good_full_2)
-                      object <- mapply(FUN=function(data, name){
-                        data@name <- name
-                        return(data)
-                      },
-                      data=object,
-                      name=c("development_1", "development_2", "validation_1", "validation_2"))
+                      object <- mapply(set_data_set_names, object, c("development_1", "development_2", "validation_1", "validation_2"))
                       
                       collection <- suppressWarnings(as_familiar_collection(object, familiar_data_names=c("development", "development", "validation", "validation")))
                       
-                      plot_list <- do.call(plot_function, args=c(list("object"=object), plot_args))
+                      plot_list <- do.call(plot_function, args=c(list("object"=collection), plot_args))
                       if(outcome_type %in% outcome_type_available){
                         testthat::expect_equal(inherits(plot_list[[1]], "ggplot") | inherits(plot_list[[1]], "gtable"), TRUE) 
                         
@@ -1159,16 +1149,11 @@ test_plots <- function(plot_function,
                     " be created for a dataset with completely missing data."), {
                       
                       object <- list(data_empty_full_1, data_empty_full_2, data_empty_full_1, data_empty_full_2)
-                      object <- mapply(FUN=function(data, name){
-                        data@name <- name
-                        return(data)
-                      },
-                      data=object,
-                      name=c("development_1", "development_2", "validation_1", "validation_2"))
+                      object <- mapply(set_data_set_names, object, c("development_1", "development_2", "validation_1", "validation_2"))
                       
                       collection <- suppressWarnings(as_familiar_collection(object, familiar_data_names=c("development", "development", "validation", "validation")))
                       
-                      plot_list <- do.call(plot_function, args=c(list("object"=object), plot_args))
+                      plot_list <- do.call(plot_function, args=c(list("object"=collection), plot_args))
                       
                       testthat::expect_equal(is.null(plot_list), TRUE)
                     })
@@ -1179,16 +1164,11 @@ test_plots <- function(plot_function,
                     " be created for a dataset where some data only have one sample."), {
                       
                       object <- list(data_good_full_1, data_good_full_2, data_one_sample_full_1, data_one_sample_full_2)
-                      object <- mapply(FUN=function(data, name){
-                        data@name <- name
-                        return(data)
-                      },
-                      data=object,
-                      name=c("development_1", "development_2", "validation_1", "validation_2"))
+                      object <- mapply(set_data_set_names, object, c("development_1", "development_2", "validation_1", "validation_2"))
                       
                       collection <- suppressWarnings(as_familiar_collection(object, familiar_data_names=c("development", "development", "validation", "validation")))
                       
-                      plot_list <- do.call(plot_function, args=c(list("object"=object), plot_args))
+                      plot_list <- do.call(plot_function, args=c(list("object"=collection), plot_args))
                       if(outcome_type %in% outcome_type_available){
                         testthat::expect_equal(inherits(plot_list[[1]], "ggplot") | inherits(plot_list[[1]], "gtable"), TRUE) 
                         
@@ -1203,16 +1183,11 @@ test_plots <- function(plot_function,
                     " be created for a dataset where some data only have identical samples."), {
                       
                       object <- list(data_good_full_1, data_good_full_2, data_identical_full_1, data_identical_full_2)
-                      object <- mapply(FUN=function(data, name){
-                        data@name <- name
-                        return(data)
-                      },
-                      data=object,
-                      name=c("development_1", "development_2", "validation_1", "validation_2"))
+                      object <- mapply(set_data_set_names, object, c("development_1", "development_2", "validation_1", "validation_2"))
                       
                       collection <- suppressWarnings(as_familiar_collection(object, familiar_data_names=c("development", "development", "validation", "validation")))
                       
-                      plot_list <- do.call(plot_function, args=c(list("object"=object), plot_args))
+                      plot_list <- do.call(plot_function, args=c(list("object"=collection), plot_args))
                       if(outcome_type %in% outcome_type_available){
                         testthat::expect_equal(inherits(plot_list[[1]], "ggplot") | inherits(plot_list[[1]], "gtable"), TRUE) 
                         
@@ -1250,16 +1225,11 @@ test_plots <- function(plot_function,
                     " be created for a complete one-feature data set."), {
                       
                       object <- list(data_good_one_1, data_good_one_2, data_good_one_1, data_good_one_2)
-                      object <- mapply(FUN=function(data, name){
-                        data@name <- name
-                        return(data)
-                      },
-                      data=object,
-                      name=c("development_1", "development_2", "validation_1", "validation_2"))
+                      object <- mapply(set_data_set_names, object, c("development_1", "development_2", "validation_1", "validation_2"))
                       
                       collection <- suppressWarnings(as_familiar_collection(object, familiar_data_names=c("development", "development", "validation", "validation")))
                       
-                      plot_list <- do.call(plot_function, args=c(list("object"=object), plot_args))
+                      plot_list <- do.call(plot_function, args=c(list("object"=collection), plot_args))
                       if(outcome_type %in% outcome_type_available){
                         testthat::expect_equal(inherits(plot_list[[1]], "ggplot") | inherits(plot_list[[1]], "gtable"), TRUE) 
                         
@@ -1274,16 +1244,11 @@ test_plots <- function(plot_function,
                     " be created for a dataset with some one-sample data."), {
                       
                       object <- list(data_good_one_1, data_good_one_2, data_one_sample_one_1, data_one_sample_one_2)
-                      object <- mapply(FUN=function(data, name){
-                        data@name <- name
-                        return(data)
-                      },
-                      data=object,
-                      name=c("development_1", "development_2", "validation_1", "validation_2"))
+                      object <- mapply(set_data_set_names, object, c("development_1", "development_2", "validation_1", "validation_2"))
                       
                       collection <- suppressWarnings(as_familiar_collection(object, familiar_data_names=c("development", "development", "validation", "validation")))
                       
-                      plot_list <- do.call(plot_function, args=c(list("object"=object), plot_args))
+                      plot_list <- do.call(plot_function, args=c(list("object"=collection), plot_args))
                       if(outcome_type %in% outcome_type_available){
                         testthat::expect_equal(inherits(plot_list[[1]], "ggplot") | inherits(plot_list[[1]], "gtable"), TRUE) 
                         
@@ -1298,16 +1263,11 @@ test_plots <- function(plot_function,
                     " be created for a dataset with some invariant data."), {
                       
                       object <- list(data_good_one_1, data_good_one_2, data_identical_one_1, data_identical_one_2)
-                      object <- mapply(FUN=function(data, name){
-                        data@name <- name
-                        return(data)
-                      },
-                      data=object,
-                      name=c("development_1", "development_2", "validation_1", "validation_2"))
+                      object <- mapply(set_data_set_names, object, c("development_1", "development_2", "validation_1", "validation_2"))
                       
                       collection <- suppressWarnings(as_familiar_collection(object, familiar_data_names=c("development", "development", "validation", "validation")))
                       
-                      plot_list <- do.call(plot_function, args=c(list("object"=object), plot_args))
+                      plot_list <- do.call(plot_function, args=c(list("object"=collection), plot_args))
                       if(outcome_type %in% outcome_type_available){
                         testthat::expect_equal(inherits(plot_list[[1]], "ggplot") | inherits(plot_list[[1]], "gtable"), TRUE) 
                         
