@@ -384,7 +384,7 @@ setMethod("plot_decision_curve", signature(object="familiarCollection"),
             
             # Combine the data with intervention data before splitting
             intervention_data <- x$intervention_all
-            setnames(intervention_data, old="net_benefit", new="intervention_all")
+            data.table::setnames(intervention_data, old="net_benefit", new="intervention_all")
             
             x <- merge(x=x$data,
                        y=intervention_data,
@@ -552,16 +552,23 @@ setMethod("plot_decision_curve", signature(object="familiarCollection"),
   # Plot confidence intervals
   if(conf_int_style[1]!="none"){
     if(conf_int_style[1] == "step"){
-      p <- p + ggplot2::geom_step(mapping=ggplot2::aes(y=!!sym("ci_low"), linetype="dashed", na.rm=TRUE))
-      p <- p + ggplot2::geom_step(mapping=ggplot2::aes(y=!!sym("ci_up"), linetype="dashed", na.rm=TRUE))
+      p <- p + ggplot2::geom_step(mapping=ggplot2::aes(y=!!sym("ci_low"),
+                                                       colour=!!sym("color_breaks")),
+                                  linetype="dashed")
+      
+      p <- p + ggplot2::geom_step(mapping=ggplot2::aes(y=!!sym("ci_up"),
+                                                       colour=!!sym("color_breaks")),
+                                  linetype="dashed")
+      
+      # Remove linetype from the legend.
+      p <- p + ggplot2::scale_linetype(guide=FALSE)
       
     } else if(conf_int_style[1] == "ribbon"){
       
       p <- p + ggplot2::geom_ribbon(mapping=ggplot2::aes(ymin=!!sym("ci_low"),
                                                          ymax=!!sym("ci_up"),
                                                          fill=!!sym("color_breaks")),
-                                    alpha=conf_int_alpha,
-                                    na.rm=TRUE)
+                                    alpha=conf_int_alpha)
     }
   }
   
