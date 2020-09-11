@@ -289,7 +289,7 @@ setMethod("plot_decision_curve", signature(object="familiarCollection"),
                 n_class_or_time <- nlevels(x$data$pos_class)
                 
               } else if(object@outcome_type %in% c("survival")){
-                n_class_or_time <- uniqueN(x$data, "eval_time")
+                n_class_or_time <- data.table::uniqueN(x$data, by="evaluation_time")
                 
               } else {
                 ..error_outcome_type_not_implemented(object@outcome_type)
