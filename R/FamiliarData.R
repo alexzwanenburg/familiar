@@ -67,8 +67,8 @@ setMethod("add_identifiers", signature(data="ANY", object="familiarData"),
 
             if(nrow(data)>=1){
               
-              # Get the model name
-              data_set <- get_object_name(object=object, abbreviated=FALSE)
+              # Get the name of the data
+              data_set <- object@name
               
               # Insert "model_name" column
               data[, "data_set":=data_set]
@@ -88,7 +88,7 @@ setMethod("add_identifiers", signature(data="ANY", object="familiarData"),
               
             } else {
               # In case the table is empty, return an empty table with the model name attached.
-              empty_table <- data.table("data_set"=character(0))
+              empty_table <- data.table::data.table("data_set"=character(0))
               
               if(any(id_order == "fs_method")){
                 empty_table[, "fs_method":=character(0)]
