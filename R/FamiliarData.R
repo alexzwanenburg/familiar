@@ -49,9 +49,7 @@ setMethod("add_identifiers", signature(data="ANY", object="familiarData"),
           function(data, object, more_identifiers=NULL){
             # Adds identifying columns to a table
             
-            if(is.null(data)) {
-              return(NULL)
-            }
+            if(is_empty(data)) return(NULL)
             
             if(!inherits(data, "data.table")){
               stop("\"data\" should be a data.table.")
@@ -65,7 +63,7 @@ setMethod("add_identifiers", signature(data="ANY", object="familiarData"),
             }
             id_order <- c("data_set", more_identifiers)
 
-            if(nrow(data)>=1){
+            if(nrow(data) >= 1){
               
               # Get the name of the data
               data_set <- object@name
@@ -73,13 +71,9 @@ setMethod("add_identifiers", signature(data="ANY", object="familiarData"),
               # Insert "model_name" column
               data[, "data_set":=data_set]
               
-              if(any(id_order == "fs_method")){
-                data[, "fs_method":=object@fs_method]
-              }
+              if(any(id_order == "fs_method")) data[, "fs_method":=object@fs_method]
               
-              if(any(id_order == "learner")){
-                data[, "learner":=object@learner]
-              }
+              if(any(id_order == "learner")) data[, "learner":=object@learner]
               
               # Reorder columns and move model_name to the front
               data.table::setcolorder(data, neworder=id_order)
