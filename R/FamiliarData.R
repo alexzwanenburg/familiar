@@ -115,9 +115,9 @@ setMethod("add_identifiers", signature(data="ANY", object="familiarData"),
 #' @md
 #' @keywords internal
 setMethod("set_data_set_names", signature(x="familiarData"),
-          function(x){
+          function(x, new=NULL){
 
-            if(x@project_id == 0){
+            if(x@project_id == 0 & is.null(new)){
               # Generate a random object name. A project_id of 0 means that the
               # objects was auto-generated (i.e. through object conversion). We
               # randomly generate chracters and add a time stamp, so that
@@ -125,9 +125,12 @@ setMethod("set_data_set_names", signature(x="familiarData"),
               slot(object=x, name="name") <- paste0(as.character(as.numeric(format(Sys.time(),"%H%M%S"))),
                                                     "_", stringi::stri_rand_strings(1, 20, '[A-Z]'))
               
-            } else {
+            } else if(is.null(new)) {
               # Generate a sensible object name.
               slot(object=x, name="name") <- get_object_name(object=x)
+              
+            } else {
+              slot(object=x, name="name") <- new
             }
             
             return(x)
