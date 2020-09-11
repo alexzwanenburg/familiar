@@ -472,13 +472,11 @@ setMethod("plot_auc_roc_curve", signature(object="familiarCollection"),
   if(conf_int_style[1]!="none"){
     if(conf_int_style[1] == "step"){
       p <- p + ggplot2::geom_step(mapping=ggplot2::aes(y=!!sym("ci_low"),
-                                                       colour=!!sym("color_breaks"),
-                                                       na.rm=TRUE),
+                                                       colour=!!sym("color_breaks")),
                                   linetype="dashed")
       
       p <- p + ggplot2::geom_step(mapping=ggplot2::aes(y=!!sym("ci_up"),
-                                                       colour=!!sym("color_breaks"),
-                                                       na.rm=TRUE),
+                                                       colour=!!sym("color_breaks")),
                                   linetype="dashed")
       
       p <- p + ggplot2::scale_linetype(guide=FALSE)
@@ -489,8 +487,7 @@ setMethod("plot_auc_roc_curve", signature(object="familiarCollection"),
       p <- p + ggplot2::geom_ribbon(mapping=ggplot2::aes(ymin=!!sym("ci_low"),
                                                          ymax=!!sym("ci_up"),
                                                          fill=!!sym("color_breaks")),
-                                    alpha=conf_int_alpha,
-                                    na.rm=TRUE)
+                                    alpha=conf_int_alpha)
     }
   }
   
