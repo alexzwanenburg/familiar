@@ -19,7 +19,9 @@ collect_fs_vimp <- function(fam_data_list){
     fs_vimp_table <- fam_data_list[[ii]]@fs_vimp$vimp_table
     
     # Add identifiers
-    fs_vimp_table <- add_identifiers(data=fs_vimp_table, object=fam_data_list[[ii]], more_identifiers="fs_method")
+    fs_vimp_table <- add_identifiers(data=data.table::copy(fs_vimp_table),
+                                     object=fam_data_list[[ii]],
+                                     more_identifiers="fs_method")
     
   }, fam_data_list=fam_data_list))
   
@@ -51,7 +53,9 @@ collect_model_vimp <- function(fam_data_list){
     model_vimp_table <- fam_data_list[[ii]]@model_vimp$vimp_table
     
     # Add identifiers
-    model_vimp_table <- add_identifiers(data=model_vimp_table, object=fam_data_list[[ii]], more_identifiers=c("fs_method", "learner"))
+    model_vimp_table <- add_identifiers(data=data.table::copy(model_vimp_table),
+                                        object=fam_data_list[[ii]],
+                                        more_identifiers=c("fs_method", "learner"))
     
   }, fam_data_list=fam_data_list))
   
@@ -100,7 +104,9 @@ collect_hyperparameters <- function(fam_data_list){
     hyperparameter_table <- fam_data_list[[ii]]@hyperparameters
     
     # Add identifiers
-    hyperparameter_table <- add_identifiers(data=hyperparameter_table, object=fam_data_list[[ii]], more_identifiers=c("fs_method", "learner"))
+    hyperparameter_table <- add_identifiers(data=data.table::copy(hyperparameter_table),
+                                            object=fam_data_list[[ii]],
+                                            more_identifiers=c("fs_method", "learner"))
     
   }, fam_data_list=fam_data_list)
 
@@ -144,7 +150,9 @@ collect_calibration_info <- function(fam_data_list){
     calibr_info_table <- fam_data_list[[ii]]@calibration_info
     
     # Add identifiers
-    calibr_info_table <- add_identifiers(data=calibr_info_table, object=fam_data_list[[ii]], more_identifiers=c("fs_method", "learner"))
+    calibr_info_table <- add_identifiers(data=data.table::copy(calibr_info_table),
+                                         object=fam_data_list[[ii]],
+                                         more_identifiers=c("fs_method", "learner"))
     
   }, fam_data_list=fam_data_list))
   
@@ -176,7 +184,9 @@ collect_calibration_data <- function(fam_data_list){
     lin_test_table <- fam_obj@calibration_data$linear_test
     
     # Add identifiers
-    lin_test_table <- add_identifiers(data=lin_test_table, object=fam_obj, more_identifiers=c("fs_method", "learner"))
+    lin_test_table <- add_identifiers(data=data.table::copy(lin_test_table),
+                                      object=fam_obj,
+                                      more_identifiers=c("fs_method", "learner"))
     
   } ))
   
@@ -187,7 +197,9 @@ collect_calibration_data <- function(fam_data_list){
     gof_test_table <- fam_obj@calibration_data$gof_test
     
     # Add identifiers
-    gof_test_table <- add_identifiers(data=gof_test_table, object=fam_obj, more_identifiers=c("fs_method", "learner"))
+    gof_test_table <- add_identifiers(data=data.table::copy(gof_test_table),
+                                      object=fam_obj,
+                                      more_identifiers=c("fs_method", "learner"))
     
   }))
   
@@ -198,12 +210,16 @@ collect_calibration_data <- function(fam_data_list){
     raw_calibr_data <- fam_obj@calibration_data$data
     
     # Add identifiers
-    raw_calibr_data <- add_identifiers(data=raw_calibr_data, object=fam_obj, more_identifiers=c("fs_method", "learner"))
+    raw_calibr_data <- add_identifiers(data=data.table::copy(raw_calibr_data),
+                                       object=fam_obj,
+                                       more_identifiers=c("fs_method", "learner"))
     
   }))
   
   # Add to list
-  calibration_data_list <- list("linear_test"=lin_test_table, "gof_test"=gof_test_table, "data"=raw_calibr_data)
+  calibration_data_list <- list("linear_test"=lin_test_table,
+                                "gof_test"=gof_test_table,
+                                "data"=raw_calibr_data)
   
   return(calibration_data_list)
 }
@@ -270,8 +286,9 @@ collect_decision_curve_analysis_data <- function(fam_data_list){
 #' @return A list with aggregated cutoffs.
 #' @noRd
 collect_stratification_info <- function(fam_data_list){
-  # Stratification info (e.g. cutoffs) is shared between objects with the same feature selection method and data ids,
-  # as they are generated at model creation.
+  # Stratification info (e.g. cutoffs) is shared between objects with the same
+  # feature selection method and data ids, as they are generated at model
+  # creation.
   unique_entries <- .which_unique_data(fam_data_list=fam_data_list, by=c("fs_method", "learner"))
 
   # Select only unique entries
@@ -281,20 +298,18 @@ collect_stratification_info <- function(fam_data_list){
     strat_info_table <- fam_data_list[[ii]]@km_info
     
     # Check if the table is empty
-    if(is_empty(strat_info_table)){
-      return(NULL)
-    }
+    if(is_empty(strat_info_table)) return(NULL)
     
     # Add identifiers
-    strat_info_table <- add_identifiers(data=strat_info_table, object=fam_data_list[[ii]], more_identifiers=c("fs_method", "learner"))
+    strat_info_table <- add_identifiers(data=data.table::copy(strat_info_table),
+                                        object=fam_data_list[[ii]],
+                                        more_identifiers=c("fs_method", "learner"))
     
   }, fam_data_list=fam_data_list))
   
   # Check of the calibration info table is empty
-  if(ncol(stratification_info_table) == 0){
-    stratification_info_table <- NULL
-  }
-  
+  if(is_empty(stratification_info_table)) return(NULL)
+
   return(stratification_info_table)
 }
 
@@ -322,7 +337,8 @@ collect_stratification_data <- function(fam_data_list){
       if(is_empty(stratification_data)) return(NULL)
       
       # Add identifiers
-      stratification_data <- add_identifiers(data=stratification_data, object=fam_data,
+      stratification_data <- add_identifiers(data=data.table::copy(stratification_data),
+                                             object=fam_data,
                                              more_identifiers=c("fs_method", "learner"))
       
       return(stratification_data)
@@ -344,7 +360,8 @@ collect_stratification_data <- function(fam_data_list){
       if(is_empty(logrank_test_info)) return(NULL)
       
       # Add identifiers
-      logrank_test_info <- add_identifiers(data=logrank_test_info, object=fam_data,
+      logrank_test_info <- add_identifiers(data=data.table::copy(logrank_test_info),
+                                           object=fam_data,
                                            more_identifiers=c("fs_method", "learner"))
       
       return(logrank_test_info)
@@ -366,7 +383,8 @@ collect_stratification_data <- function(fam_data_list){
       if(is_empty(hr_test_info)) return(NULL)
       
       # Add identifiers
-      hr_test_info <- add_identifiers(data=hr_test_info, object=fam_data,
+      hr_test_info <- add_identifiers(data=data.table::copy(hr_test_info),
+                                      object=fam_data,
                                       more_identifiers=c("fs_method", "learner"))
       
       return(hr_test_info)
@@ -449,7 +467,8 @@ collect_univariate_analysis <- function(fam_data_list){
     univar_data_table <- fam_data_list[[ii]]@univariate_analysis$data
 
     # Add identifiers
-    univar_data_table <- add_identifiers(data=univar_data_table, object=fam_data_list[[ii]],
+    univar_data_table <- add_identifiers(data=data.table::copy(univar_data_table),
+                                         object=fam_data_list[[ii]],
                                          more_identifiers=c("fs_method", "learner"))
     
   }, fam_data_list=fam_data_list), fill=TRUE, use.names=TRUE)
@@ -486,7 +505,9 @@ collect_feature_expressions <- function(fam_data_list){
       
     } else {
       # Add identifiers
-      expression_table <- add_identifiers(data=expression_table, object=fam_obj, more_identifiers=c("fs_method", "learner"))
+      expression_table <- add_identifiers(data=data.table::copy(expression_table),
+                                          object=fam_obj,
+                                          more_identifiers=c("fs_method", "learner"))
     }
     
     return(list("data"=expression_table,
@@ -527,7 +548,7 @@ collect_mutual_correlation <- function(fam_data_list){
       
     } else {
       # Add identifiers
-      mutual_correlation_data <- add_identifiers(data=mutual_correlation_data,
+      mutual_correlation_data <- add_identifiers(data=data.table::copy(mutual_correlation_data),
                                                  object=fam_obj,
                                                  more_identifiers=c("fs_method", "learner"))
     }
@@ -623,7 +644,9 @@ universal_collector <- function(fam_data_list, data_slot, extra_data=NULL, more_
         if(is_empty(data)) return(NULL)
         
         # Add identifiers.
-        data <- add_identifiers(data=data, object=fam_obj, more_identifiers=more_identifiers)
+        data <- add_identifiers(data=data.table::copy(data),
+                                object=fam_obj,
+                                more_identifiers=more_identifiers)
         
         return(data)
       },
