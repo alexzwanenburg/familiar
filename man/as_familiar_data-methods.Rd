@@ -14,7 +14,7 @@ as_familiar_data(object, ...)
 
 \S4method{as_familiar_data}{familiarData}(object, ...)
 
-\S4method{as_familiar_data}{familiarEnsemble}(object, ...)
+\S4method{as_familiar_data}{familiarEnsemble}(object, name = NULL, ...)
 
 \S4method{as_familiar_data}{familiarModel}(object, ...)
 
