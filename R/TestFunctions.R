@@ -1267,7 +1267,7 @@ test_plots <- function(plot_function,
                       
                       collection <- suppressWarnings(as_familiar_collection(object, familiar_data_names=c("development", "development", "validation", "validation")))
                       
-                      plot_list <- do.call(plot_function, args=c(list("object"=collection), plot_args))
+                      plot_list <- suppressWarnings(do.call(plot_function, args=c(list("object"=collection), plot_args)))
                       if(outcome_type %in% outcome_type_available){
                         testthat::expect_equal(inherits(plot_list[[1]], "ggplot") | inherits(plot_list[[1]], "gtable"), TRUE) 
                         
