@@ -549,13 +549,19 @@ setMethod("plot_calibration_data", signature(object="familiarCollection"),
   
   # Split by facet. This generates a list of data splits with facetting
   # information that allows for positioning.
-  plot_layout_table <- plotting.get_plot_layout_table(x=x, facet_by=facet_by, facet_wrap_cols=facet_wrap_cols,
-                                                      x_label_shared=x_label_shared, y_label_shared=y_label_shared)
+  plot_layout_table <- plotting.get_plot_layout_table(x=x,
+                                                      facet_by=facet_by,
+                                                      facet_wrap_cols=facet_wrap_cols,
+                                                      x_label_shared=x_label_shared,
+                                                      y_label_shared=y_label_shared)
   
   # Split data into facets. This is done by row.
-  data_facet_list <- plotting.split_data_by_facet(x=x, plot_layout_table=plot_layout_table)
-  linear_test_facet_list <- plotting.split_data_by_facet(x=linear_test, plot_layout_table=plot_layout_table)
-  gof_test_facet_list <- plotting.split_data_by_facet(x=gof_test, plot_layout_table=plot_layout_table)
+  data_facet_list <- plotting.split_data_by_facet(x=x,
+                                                  plot_layout_table=plot_layout_table)
+  linear_test_facet_list <- plotting.split_data_by_facet(x=linear_test,
+                                                         plot_layout_table=plot_layout_table)
+  gof_test_facet_list <- plotting.split_data_by_facet(x=gof_test,
+                                                      plot_layout_table=plot_layout_table)
   
   # Placeholders for plots.
   figure_list <- list()
@@ -740,7 +746,7 @@ setMethod("plot_calibration_data", signature(object="familiarCollection"),
   }
   
   # Cast wide on the value of the intercept or slope coefficient.
-  linear_fit <- dcast(data=linear_test, cast_formula, value.var="coef_value")
+  linear_fit <- data.table::dcast(data=linear_test, cast_formula, value.var="coef_value")
   
   # Generate a guide table
   x_guide_list <- plotting.create_guide_table(x=x, color_by=color_by, discrete_palette=discrete_palette)
@@ -771,10 +777,10 @@ setMethod("plot_calibration_data", signature(object="familiarCollection"),
     }
     
     # Set colour.
-    p <- p + ggplot2::scale_fill_manual(name=legend_label$guide_color,
-                                        values=x_guide_list$guide_color$color_values,
-                                        breaks=x_guide_list$guide_color$color_breaks,
-                                        drop=FALSE)
+    p <- p + ggplot2::scale_colour_manual(name=legend_label$guide_color,
+                                          values=x_guide_list$guide_color$color_values,
+                                          breaks=x_guide_list$guide_color$color_breaks,
+                                          drop=FALSE)
     
   } else {
     
