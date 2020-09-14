@@ -25,3 +25,40 @@ familiar:::test_plots(plot_function=familiar:::plot_calibration_data,
                       test_specific_config=TRUE,
                       plot_args=list("show_calibration_fit"=FALSE,
                                      "show_goodness_of_fit"=FALSE))
+
+
+# Test alignment of different plots, with missing data.
+familiar:::test_plot_ordering(plot_function=familiar:::plot_calibration_data,
+                              data_element="calibration_data",
+                              outcome_type_available=c("count", "continuous", "binomial", "multinomial", "survival"))
+
+# Test alignment of different plots, with missing data.
+familiar:::test_plot_ordering(plot_function=familiar:::plot_calibration_data,
+                              data_element="calibration_data",
+                              outcome_type_available=c("count"),
+                              plot_args=list("facet_by"=c("fs_method", "learner"),
+                                             "color_by"=c("data_set")))
+
+familiar:::test_plot_ordering(plot_function=familiar:::plot_calibration_data,
+                              data_element="calibration_data",
+                              outcome_type_available=c("continuous"),
+                              plot_args=list("facet_by"=c("fs_method", "learner"),
+                                             "color_by"=c("data_set")))
+
+familiar:::test_plot_ordering(plot_function=familiar:::plot_calibration_data,
+                              data_element="calibration_data",
+                              outcome_type_available=c("binomial"),
+                              plot_args=list("facet_by"=c("fs_method", "learner"),
+                                             "color_by"=c("data_set")))
+
+familiar:::test_plot_ordering(plot_function=familiar:::plot_calibration_data,
+                              data_element="calibration_data",
+                              outcome_type_available=c("multinomial"),
+                              plot_args=list("facet_by"=c("fs_method", "learner"),
+                                             "color_by"=c("data_set", "pos_class")))
+
+familiar:::test_plot_ordering(plot_function=familiar:::plot_calibration_data,
+                              data_element="calibration_data",
+                              outcome_type_available=c("survival"),
+                              plot_args=list("facet_by"=c("fs_method", "learner"),
+                                             "color_by"=c("data_set")))
