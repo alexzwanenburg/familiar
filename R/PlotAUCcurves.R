@@ -234,8 +234,8 @@ setMethod("plot_auc_roc_curve", signature(object="familiarCollection"),
       # Determine the number of learners and feature_selection methods.
       n_learner <- nlevels(x$learner)
       n_fs_method <- nlevels(x$fs_method)
-      n_pos_class <- nlevels(x$pos_class)
-      
+      n_pos_class <- ifelse(object@outcome_type == "binomial", 1L, nlevels(x$pos_class))
+
       if(n_learner > 1 & n_fs_method > 1){
         # 
         split_by <- c("fs_method", "learner")
@@ -483,7 +483,6 @@ setMethod("plot_auc_roc_curve", signature(object="familiarCollection"),
       
       
     } else if(conf_int_style[1] == "ribbon"){
-      
       p <- p + ggplot2::geom_ribbon(mapping=ggplot2::aes(ymin=!!sym("ci_low"),
                                                          ymax=!!sym("ci_up"),
                                                          fill=!!sym("color_breaks")),
