@@ -1082,12 +1082,12 @@ test_plots <- function(plot_function,
     
     # Train the model.
     model_full_1 <- suppressWarnings(train(data=full_data,
-                                      cluster_method="none",
-                                      imputation_method="simple",
-                                      fs_method="mim",
-                                      hyperparameter_list=hyperparameters,
-                                      learner="lasso",
-                                      time_max=1832))
+                                           cluster_method="none",
+                                           imputation_method="simple",
+                                           fs_method="mim",
+                                           hyperparameter_list=hyperparameters,
+                                           learner="lasso",
+                                           time_max=1832))
     
     model_full_2 <- model_full_1
     model_full_2@fs_method <- "mifs"
@@ -1279,6 +1279,106 @@ test_plots <- function(plot_function,
                     })
   }
 }
+
+
+
+test_plot_ordering <- function(plot_function,
+                               data_element,
+                               outcome_type_available=c("count", "continuous", "binomial", "multinomial", "survival"),
+                               ...,
+                               plot_args=NULL,
+                               debug=FALSE){
+  
+  if(debug){
+    test_fun <- debug_test_that
+    
+  } else {
+    test_fun <- testthat::test_that
+  }
+  
+  # Iterate over the outcome type.
+  for(outcome_type in outcome_type_available){
+    
+    # Obtain data.
+    full_data <- test.create_good_data_set(outcome_type)
+    empty_data <- test.create_empty_data_set(outcome_type)
+    
+    ##### Train the lasso model ################################################
+    # Parse hyperparameter list
+    hyperparameters_lasso <- list("sign_size"=get_n_features(full_data),
+                                  "family"=switch(outcome_type,
+                                                  "continuous"="gaussian",
+                                                  "count"="poisson",
+                                                  "binomial"="binomial",
+                                                  "multinomial"="multinomial",
+                                                  "survival"="cox"))
+    
+    # Train the lasso model.
+    model_full_lasso_1 <- suppressWarnings(train(data=full_data,
+                                                 cluster_method="none",
+                                                 imputation_method="simple",
+                                                 fs_method="mim",
+                                                 hyperparameter_list=hyperparameters_lasso,
+                                                 learner="lasso",
+                                                 time_max=1832))
+    
+    model_full_lasso_2 <- model_full_lasso_1
+    model_full_lasso_2@fs_method <- "mifs"
+    
+    ##### Train the glm model ##################################################
+    # Parse hyperparameter list
+    hyperparameters_glm <- list("sign_size"=get_n_features(full_data),
+                                "family"=switch(outcome_type,
+                                                "continuous"="gaussian",
+                                                "count"="poisson",
+                                                "binomial"="logistic",
+                                                "multinomial"="multinomial",
+                                                "survival"="cox"))
+    
+    # Train the model.
+    model_full_glm_1 <- suppressWarnings(train(data=full_data,
+                                               cluster_method="none",
+                                               imputation_method="simple",
+                                               fs_method="mim",
+                                               hyperparameter_list=hyperparameters_glm,
+                                               learner="glm",
+                                               time_max=1832))
+    
+    model_full_glm_2 <- model_full_glm_1
+    model_full_glm_2@fs_method <- "mifs"
+    
+    ##### Create the plot ######################################################
+    
+    # Create familiar data objects.
+    data_good_full_lasso_1 <- as_familiar_data(object=model_full_lasso_1, data=full_data, data_element=data_element, ...)
+    data_good_full_lasso_2 <- as_familiar_data(object=model_full_lasso_2, data=full_data, data_element=data_element, ...)
+    data_good_full_glm_1 <- as_familiar_data(object=model_full_glm_1, data=full_data, data_element=data_element, ...)
+    data_good_full_glm_2 <- as_familiar_data(object=model_full_glm_2, data=full_data, data_element=data_element, ...)
+    data_empty_glm_1 <- as_familiar_data(object=model_full_glm_1, data=empty_data, data_element=data_element, ...)
+    data_empty_lasso_2 <- as_familiar_data(object=model_full_lasso_2, data=empty_data, data_element=data_element, ...)
+    
+    # Create a test dataset with multiple components
+    test_fun(paste0("Plots for ", outcome_type, " outcomes can be created."), {
+                      
+                      object <- list(data_good_full_lasso_1, data_empty_lasso_2, data_good_full_lasso_1, data_good_full_lasso_2,
+                                     data_good_full_glm_1, data_good_full_glm_2, data_empty_glm_1, data_good_full_glm_2)
+                      object <- mapply(set_data_set_names, object, c("development_lasso_1", "development_lasso_2", "validation_lasso_1", "validation_lasso_2",
+                                                                     "development_glm_1", "development_glm_2", "validation_glm_1", "validation_glm_2"))
+                      
+                      collection <- suppressWarnings(as_familiar_collection(object, familiar_data_names=c("development", "development", "validation", "validation",
+                                                                                                          "development", "development", "validation", "validation")))
+                      
+                      plot_list <- do.call(plot_function, args=c(list("object"=collection), plot_args))
+                      if(outcome_type %in% outcome_type_available){
+                        testthat::expect_equal(inherits(plot_list[[1]], "ggplot") | inherits(plot_list[[1]], "gtable"), TRUE) 
+                        
+                      } else {
+                        testthat::expect_equal(is.null(plot_list), TRUE)
+                      }
+                    })
+  }
+}
+
 
 
 debug_test_that <- function(desc, code){
