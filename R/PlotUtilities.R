@@ -1081,7 +1081,9 @@ plotting.create_legend_label <- function(user_label, color_by=NULL, linetype_by=
   # Waiver: no user input
   if(is.waive(user_label)){
     if(combine_legend){
-      legend_label <- gsub(x=paste0(unique(c(color_by, linetype_by)), collapse=" & "), pattern="_", replacement=" ")
+      legend_label <- stringi::stri_replace_all_fixed(str=paste0(unique(c(color_by, linetype_by)), collapse=" & "),
+                                                      pattern="_",
+                                                      replacement=" ")
       
       return(list("guide_color"=legend_label, "guide_linetype"=legend_label))
       
@@ -1089,14 +1091,18 @@ plotting.create_legend_label <- function(user_label, color_by=NULL, linetype_by=
       
       # Colour labels
       if(!is.null(color_by)){
-        color_guide_label <- sub(x=paste0(color_by, collapse=" & "), pattern="_", replacement=" ")
+        color_guide_label <- stringi::stri_replace_all_fixed(str=paste0(color_by, collapse=" & "),
+                                                             pattern="_",
+                                                             replacement=" ")
       } else {
         color_guide_label <- NULL
       }
       
       # Linetype labels
       if(!is.null(linetype_by)){
-        linetype_guide_label <- sub(x=paste0(linetype_by, collapse=" & "), pattern="_", replacement=" ")
+        linetype_guide_label <- stringi::stri_replace_all_fixed(str=paste0(linetype_by, collapse=" & "),
+                                                                pattern="_",
+                                                                replacement=" ")
       } else {
         linetype_guide_label <- NULL
       }
