@@ -95,7 +95,14 @@ plotting.get_theme <- function(use_theme=NULL){
 #' @return A sanitized list of splitting variables.
 #' @md
 #' @keywords internal
-plotting.check_data_handling <- function(x, split_by=NULL, color_by=NULL, linetype_by=NULL, facet_by=NULL, x_axis_by=NULL, y_axis_by=NULL, available=NULL){
+plotting.check_data_handling <- function(x,
+                                         split_by=NULL,
+                                         color_by=NULL,
+                                         linetype_by=NULL,
+                                         facet_by=NULL,
+                                         x_axis_by=NULL,
+                                         y_axis_by=NULL,
+                                         available=NULL){
 
   # Find unique variables
   splitting_vars <- c(split_by, color_by, linetype_by, facet_by, x_axis_by, y_axis_by)
@@ -1177,7 +1184,6 @@ plotting.create_guide_table <- function(x, color_by=NULL, linetype_by=NULL, disc
 
     # Extend guide table
     if(!is.null(color_by)){
-      
       # Generate breaks
       guide_table$color_breaks <- factor(breaks, levels=breaks)
       
