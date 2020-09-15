@@ -285,9 +285,12 @@ setMethod("plot_decision_curve", signature(object="familiarCollection"),
               n_learner <- nlevels(x$data$learner)
               n_fs_method <- nlevels(x$data$fs_method)
               
-              if(object@outcome_type %in% c("binomial", "multinomial")){
+              if(object@outcome_type %in% c("multinomial")){
                 n_class_or_time <- nlevels(x$data$pos_class)
                 
+              } else if(object@outcome_type %in% c("binomial")){
+                n_class_or_time <- 1L
+              
               } else if(object@outcome_type %in% c("survival")){
                 n_class_or_time <- data.table::uniqueN(x$data, by="evaluation_time")
                 
