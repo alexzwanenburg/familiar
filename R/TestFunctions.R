@@ -1036,12 +1036,13 @@ test_plots <- function(plot_function,
                        except_identical=FALSE,
                        except_same_prediction=FALSE,
                        ...,
-                       plot_args=NULL,
+                       plot_args=list(),
                        test_specific_config=FALSE,
                        debug=FALSE){
   
   if(debug){
     test_fun <- debug_test_that
+    plot_args$draw <- TRUE
     
   } else {
     test_fun <- testthat::test_that
@@ -1286,11 +1287,12 @@ test_plot_ordering <- function(plot_function,
                                data_element,
                                outcome_type_available=c("count", "continuous", "binomial", "multinomial", "survival"),
                                ...,
-                               plot_args=NULL,
+                               plot_args=list(),
                                debug=FALSE){
   
   if(debug){
     test_fun <- debug_test_that
+    plot_args$draw <- TRUE
     
   } else {
     test_fun <- testthat::test_that
