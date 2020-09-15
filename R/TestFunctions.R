@@ -1032,9 +1032,7 @@ test_all_metrics <- function(metrics,
 test_plots <- function(plot_function,
                        data_element,
                        outcome_type_available=c("count", "continuous", "binomial", "multinomial", "survival"),
-                       except_one_sample=FALSE,
-                       except_identical=FALSE,
-                       except_same_prediction=FALSE,
+                       always_available=FALSE,
                        ...,
                        plot_args=list(),
                        test_specific_config=FALSE,
@@ -1061,14 +1059,8 @@ test_plots <- function(plot_function,
     empty_data <- test.create_empty_data_set(outcome_type)
     
     # Set exceptions per outcome type.
-    .except_one_sample <- except_one_sample
-    if(is.character(.except_one_sample)) .except_one_sample <- any(.except_one_sample == outcome_type)
-    
-    .except_identical <- except_identical
-    if(is.character(.except_identical)) .except_identical <- any(.except_identical == outcome_type)
-    
-    .except_same_prediction <- except_same_prediction
-    if(is.character(.except_same_prediction)) .except_same_prediction <- any(.except_same_prediction == outcome_type)
+    .always_available <- always_available
+    if(is.character(.always_available)) .always_available <- any(.always_available == outcome_type)
     
     # Parse hyperparameter list
     hyperparameters <- list("sign_size"=get_n_features(full_data),
@@ -1148,7 +1140,8 @@ test_plots <- function(plot_function,
                     })
     
     # Create a dataset with all missing quadrants
-    test_fun(paste0("3. Plots for ", outcome_type, " outcomes cannot",
+    test_fun(paste0("3. Plots for ", outcome_type, " outcomes ",
+                    ifelse(.always_available, "can", "cannot"),
                     " be created for a dataset with completely missing data."), {
                       
                       object <- list(data_empty_full_1, data_empty_full_2, data_empty_full_1, data_empty_full_2)
@@ -1158,7 +1151,12 @@ test_plots <- function(plot_function,
                       
                       plot_list <- do.call(plot_function, args=c(list("object"=collection), plot_args))
                       
-                      testthat::expect_equal(is.null(plot_list), TRUE)
+                      if(.always_available){
+                        testthat::expect_equal(inherits(plot_list[[1]], "ggplot") | inherits(plot_list[[1]], "gtable"), TRUE) 
+                        
+                      } else {
+                        testthat::expect_equal(is.null(plot_list), TRUE)
+                      }
                     })
     
     # Create dataset with one-sample quadrants for validation
