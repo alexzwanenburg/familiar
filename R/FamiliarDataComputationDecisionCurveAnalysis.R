@@ -136,8 +136,14 @@ setMethod("extract_decision_curve_data", signature(object="familiarEnsemble"),
     # Check if any predictions are valid.
     if(!any_predictions_valid(prediction_data, outcome_type=object@outcome_type)) return(NULL)
     
+    # Determine class levels
+    outcome_class_levels <- get_outcome_class_levels(object)
+    
+    # Select only one outcome type for binomial outcomes.
+    if(object@outcome_type == "binomial") outcome_class_levels <- outcome_class_levels[2]
+    
     # Iterate over class levels.
-    dca_data <- lapply(get_outcome_class_levels(object),
+    dca_data <- lapply(outcome_class_levels,
                        .compute_dca_data_categorical,
                        data=prediction_data,
                        object=object,
