@@ -10,7 +10,7 @@
 
 
 
-.gtable_get_position <- function(g, element, where=NULL, partial_match=FALSE){
+.gtable_get_position <- function(g, element, where=NULL, partial_match=FALSE, allow_multiple=FALSE){
   
   # Find position.
   if(partial_match){
@@ -28,7 +28,13 @@
   
   if(is.null(where)){
     if(nrow(position) != 1){
-      stop(paste0("Multiple matches, please set where attribute."))
+      
+      if(allow_multiple){
+        browser()
+        
+      } else {
+        stop(paste0("Multiple matches, please set where attribute."))
+      }
     }
     
   } else if(where == "top"){
@@ -151,11 +157,43 @@
 
 
 
+.gtable_replace <- function(g, g_new, where, ref_element, partial_match=FALSE){
+  
+  if(length(g_new) == 0) return(g)
+  browser()
+  
+  # Find the name of the element
+  new_element_name <- g_new$layout$name
+  
+  # Find position.
+  if(partial_match){
+    # Based on partial matching.
+    grob_entry <- which(grepl(pattern=new_element_name, x=g$layout$name))
+    
+  } else {
+    # Based on exact matching.
+    grob_entry <- which(g$layout$name == new_element_name)
+  }
+  
+  if(length(grob_entry) == 0) ..error_reached_unreachable_code(".gtable_replace: no matching entry found.")
+  
+  if(length(grob_entry) > 1){
+    # Find the intended element.
+    
+    # Find the position of the reference element.
+    ref_position <- .gtable_get_position(g=g,
+                                         element=ref_element,
+                                         where=where,
+                                         partial_match=partial_match)
+  }
+  
+}
+
+
+
 .gtable_insert <- function(g, g_new, where="top", ref_element="panel", spacer=NULL, partial_match=FALSE){
   
-  if(length(g_new) == 0){
-    return(g)
-  }
+  if(length(g_new) == 0) return(g)
 
   # Create an offset.
   offset <- integer(4)
@@ -296,10 +334,19 @@
 }
 
 
-.gtable_insert_along <- function(g, g_new, where="top", ref_element="panel",
-                                 along_element=ref_element, spacer=NULL,
+.gtable_insert_along <- function(g,
+                                 g_new,
+                                 where="top",
+                                 ref_element="panel",
+                                 along_element=ref_element,
+                                 spacer=NULL,
+                                 attempt_replace=FALSE,
                                  partial_match_ref=FALSE,
                                  partial_match_along=FALSE){
+  
+  # Intended for inserting elements that stretch multiple along_elements. It can
+  # also be used for inserting elements directly (without along_elements) and/or
+  # replacing existing elements (attempt_replace=TRUE)
   
   if(length(g_new) == 0){
     return(g)
@@ -341,6 +388,23 @@
     }
   }
   
+  if(attempt_replace){
+    browser()
+    # Find if there is a grob with the same name at the intended position.
+    g_index <- .gtable_which_aligned(g,
+                                     element=g_new$layout$name,
+                                     ref_element=ref_element,
+                                     where=where,
+                                     partial_match_ref=partial_match_ref)
+    
+    if(!is.null(g_index)){
+      g$grobs[[g_index]] <- g_new
+      
+      g <- .gtable_update_layout(g)
+      
+      return(g)
+    }
+  }
   
   # Make room to insert the stuff.
   if(where == "top"){
@@ -437,6 +501,97 @@
 }
 
 
+
+.gtable_which_aligned <- function(g,
+                                  element,
+                                  ref_element,
+                                  where,
+                                  partial_match_ref=FALSE,
+                                  only_nearby=TRUE){
+  
+  # Identify the element that is located as close as possible to the reference
+  # element, and is aligned with it.
+  
+  # Find position of the reference element.
+  ref_position <- .gtable_get_position(g=g,
+                                       element=ref_element,
+                                       where=where,
+                                       partial_match=partial_match_ref)
+  
+  # As a list
+  ref_position <- as.list(ref_position)
+  
+  # Identify candidates
+  if(where == "top"){
+    # Any candidates should span the left-right extent of the reference element,
+    # and be entirely above it.
+    candidates <- which(g$layout$name == element &
+                          g$layout$l == ref_position$l &
+                          g$layout$r == ref_position$r &
+                          g$layout$t < ref_position$t &
+                          g$layout$b < ref_position$t)
+    
+  } else if(where == "bottom"){
+    # Any candidates should span the left-right extent of the reference element,
+    # and be entirely below it.
+    candidates <- which(g$layout$name == element &
+                          g$layout$l == ref_position$l &
+                          g$layout$r == ref_position$r &
+                          g$layout$t > ref_position$b &
+                          g$layout$b > ref_position$b)
+    
+    
+  } else if(where == "left"){
+    # Any candidates should span the top-bottom extent of the reference element,
+    # and be entirely to the left it.
+    candidates <- which(g$layout$name == element &
+                          g$layout$l < ref_position$l &
+                          g$layout$r < ref_position$l &
+                          g$layout$t == ref_position$t &
+                          g$layout$b == ref_position$b)
+    
+    
+  } else if(where == "right"){
+    # Any candidates should span the top-bottom extent of the reference element,
+    # and be entirely to the right it.
+    candidates <- which(g$layout$name == element &
+                          g$layout$l > ref_position$r &
+                          g$layout$r > ref_position$r &
+                          g$layout$t == ref_position$t &
+                          g$layout$b == ref_position$b)
+    
+  } else {
+    stop("Unknown where argument.")
+  }
+  
+  if(length(candidates) == 0) return(NULL)
+  
+  if(length(candidates) > 1 & only_nearby){
+    # Identify the candidate that is located nearest to the reference element.
+    layout_table <- g$layout[candidates, ]
+    
+    if(where == "top"){
+      distance <- ref_position$t - layout_table$t
+      
+    } else if(where == "bottom"){
+      distance <- layout_table$b - ref_position$b
+      
+    } else if(where == "left") {
+      distance <- ref_position$l - layout_table$l
+      
+    } else if(where == "right") {
+      distance <- layout_table$r - ref_position$r
+    }
+    
+    # Select the candidate with minimal distance.
+    candidates <- candidates[which.min(distance)[1]]
+  }
+  
+  return(candidates)
+}
+  
+
+
 .gtable_rename_element <- function(g, old, new, partial_match=FALSE){
   if(!.gtable_element_in_layout(g=g, element=old, partial_match=partial_match)){
     stop(".gtable_rename_element: element not found in layout table.")
@@ -456,4 +611,73 @@
   g$layout$name[updated_element] <- new
   
   return(g)
+}
+
+
+
+.gtable_update_layout <- function(g){
+  
+  ..get_height <- function(grob_id, g){
+    
+    # Identify the name of the grob.
+    grob_name <- g$layout$name[grob_id]
+    
+    # Identify the height of the grob.
+    if(grid::is.unit(g$grobs[[grob_id]]$heights)){
+      grob_height <- g$grobs[[grob_id]]$heights
+      
+    } else if(grid::is.unit(g$grobs[[grob_id]]$height)){
+      grob_height <- g$grobs[[grob_id]]$height
+      
+    } else {
+      grob_height <- NULL
+    }
+    
+    if(grid::is.unit(grob_height)){
+      if(grid::unitType(grob_height) == "npc") grob_height <- grid::unit(as.numeric(grob_height), "null")
+    }
+    
+    return(grob_height)
+  }
+  
+  # Update heights
+  new_heights <- replicate(grid::unit(0, "cm"), n=nrow(g), simplify=FALSE)
+  new_heights <- do.call(grid::unit.c, args=new_heights)
+  new_heights[1] <- grid::unit(1, "points")
+  new_heights[nrow(g)] <- grid::unit(1, "points")
+  
+  for(ii in seq_len(nrow(g))){
+    # Select candidates.
+    candidates <- which(g$layout$t == ii & g$layout$b == ii)
+    
+    # Skip if there are no candidates.
+    if(length(candidates) == 0) next()
+    
+    # Identify the height of the grobs.
+    grob_heights <- lapply(candidates, ..get_height, g=g)
+    
+    # Remove all empty heights.
+    grob_heights <- grob_heights[sapply(grob_heights, grid::is.unit)]
+    
+    if(length(grob_heights) == 0) next()
+    
+    # Select unique heights.
+    grob_heights <- unique(grob_heights)
+    
+    if(length(grob_heights) == 1){
+      # Set the grob height.
+      new_heights[ii] <- grob_heights[[1]]
+      
+    } else if(length(grob_heights) > 1){
+      # Take the max height of the row.
+      grob_heights <- do.call(grid::unit.c, args=grob_heights)
+      grob_heights <- max(grob_heights)
+      
+      # Set the grob height.
+      new_heights[ii] <- grob_heights
+    }
+  }
+  
+  browser()
+  
 }

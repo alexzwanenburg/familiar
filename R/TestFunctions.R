@@ -1033,6 +1033,7 @@ test_plots <- function(plot_function,
                        data_element,
                        outcome_type_available=c("count", "continuous", "binomial", "multinomial", "survival"),
                        always_available=FALSE,
+                       except_one_feature=FALSE,
                        ...,
                        plot_args=list(),
                        test_specific_config=FALSE,
@@ -1061,6 +1062,9 @@ test_plots <- function(plot_function,
     # Set exceptions per outcome type.
     .always_available <- always_available
     if(is.character(.always_available)) .always_available <- any(.always_available == outcome_type)
+    
+    .except_one_feature <- except_one_feature
+    if(is.character(.except_one_feature)) .except_one_feature <- any(.except_one_feature == outcome_type)
     
     # Parse hyperparameter list
     hyperparameters <- list("sign_size"=get_n_features(full_data),
@@ -1222,7 +1226,7 @@ test_plots <- function(plot_function,
     
     # Create a completely intact, one sample dataset.
     test_fun(paste0("6. Plots for ", outcome_type, " outcomes ",
-                    ifelse(outcome_type %in% outcome_type_available, "can", "cannot"),
+                    ifelse(outcome_type %in% outcome_type_available && !.except_one_feature, "can", "cannot"),
                     " be created for a complete one-feature data set."), {
                       
                       object <- list(data_good_one_1, data_good_one_2, data_good_one_1, data_good_one_2)
@@ -1231,7 +1235,7 @@ test_plots <- function(plot_function,
                       collection <- suppressWarnings(as_familiar_collection(object, familiar_data_names=c("development", "development", "validation", "validation")))
                       
                       plot_list <- do.call(plot_function, args=c(list("object"=collection), plot_args))
-                      if(outcome_type %in% outcome_type_available){
+                      if(outcome_type %in% outcome_type_available  && !.except_one_feature){
                         testthat::expect_equal(inherits(plot_list[[1]], "ggplot") | inherits(plot_list[[1]], "gtable"), TRUE) 
                         
                       } else {
@@ -1241,7 +1245,7 @@ test_plots <- function(plot_function,
     
     # Create a dataset with a one-sample quadrant.
     test_fun(paste0("7. Plots for ", outcome_type, " outcomes ",
-                    ifelse(outcome_type %in% outcome_type_available, "can", "cannot"),
+                    ifelse(outcome_type %in% outcome_type_available && !.except_one_feature, "can", "cannot"),
                     " be created for a dataset with some one-sample data."), {
                       
                       object <- list(data_good_one_1, data_good_one_2, data_one_sample_one_1, data_one_sample_one_2)
@@ -1250,7 +1254,7 @@ test_plots <- function(plot_function,
                       collection <- suppressWarnings(as_familiar_collection(object, familiar_data_names=c("development", "development", "validation", "validation")))
                       
                       plot_list <- do.call(plot_function, args=c(list("object"=collection), plot_args))
-                      if(outcome_type %in% outcome_type_available){
+                      if(outcome_type %in% outcome_type_available  && !.except_one_feature){
                         testthat::expect_equal(inherits(plot_list[[1]], "ggplot") | inherits(plot_list[[1]], "gtable"), TRUE) 
                         
                       } else {
@@ -1260,7 +1264,7 @@ test_plots <- function(plot_function,
     
     # Create a dataset with all missing quadrants
     test_fun(paste0("8. Plots for ", outcome_type, " outcomes ",
-                    ifelse(outcome_type %in% outcome_type_available, "can", "cannot"),
+                    ifelse(outcome_type %in% outcome_type_available && !.except_one_feature, "can", "cannot"),
                     " be created for a dataset with some invariant data."), {
                       
                       object <- list(data_good_one_1, data_good_one_2, data_identical_one_1, data_identical_one_2)
@@ -1269,7 +1273,7 @@ test_plots <- function(plot_function,
                       collection <- suppressWarnings(as_familiar_collection(object, familiar_data_names=c("development", "development", "validation", "validation")))
                       
                       plot_list <- suppressWarnings(do.call(plot_function, args=c(list("object"=collection), plot_args)))
-                      if(outcome_type %in% outcome_type_available){
+                      if(outcome_type %in% outcome_type_available  && !.except_one_feature){
                         testthat::expect_equal(inherits(plot_list[[1]], "ggplot") | inherits(plot_list[[1]], "gtable"), TRUE) 
                         
                       } else {
