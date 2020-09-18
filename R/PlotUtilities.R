@@ -777,34 +777,8 @@ plotting.compile_figure_data <- function(grobs,
       if(plot_layout_table[figure_id == ii]$has_axis_title_x) current_figure_list$axis_title_x <- element_grobs[[same_col_figure_id]]$axis_title_x
       if(plot_layout_table[figure_id == ii]$has_axis_title_y) current_figure_list$axis_title_y <- element_grobs[[same_row_figure_id]]$axis_title_y
       
-      if(keep_axis_text_x){
-        browser()
-        # Overwrite axis without text.
-        repl_element_grob <- element_grobs[[same_col_figure_id]]$axis_text_x_nt
-        
-        # Replace the element
-        replacement_grob <- .gtable_replace(g=replacement_grob,
-                                            g_new=repl_element_grob,
-                                            where="bottom",
-                                            ref_element="panel-main")
-        
-      } else {
-        current_figure_list$axis_text_x <- element_grobs[[same_col_figure_id]]$axis_text_x_nt
-      }
-      
-      if(keep_axis_text_y){
-        # Overwrite axis without text.
-        repl_element_grob <- element_grobs[[same_row_figure_id]]$axis_text_y_nt
-        
-        # Replace the element
-        replacement_grob <- .gtable_replace(g=replacement_grob,
-                                            g_new=repl_element_grob,
-                                            where="left",
-                                            ref_element="panel-main")
-        
-      } else {
-        current_figure_list$axis_text_y <- element_grobs[[same_row_figure_id]]$axis_text_y_nt
-      }
+      current_figure_list$axis_text_x <- element_grobs[[same_col_figure_id]]$axis_text_x_nt
+      current_figure_list$axis_text_y <- element_grobs[[same_row_figure_id]]$axis_text_y_nt
     }
     
     # Merge elements with the main element.
@@ -813,6 +787,7 @@ plotting.compile_figure_data <- function(grobs,
     
     # Add data to the figure list.
     figure_list <- c(figure_list, list(g))
+    
   }
   browser()
   return(figure_list)
@@ -1128,7 +1103,7 @@ plotting.reinsert_plot_elements <- function(g=NULL, elements=NULL, grob_list, gg
     # elements.
     for(ref_element in c("panel-main", "panel")){
       if(.gtable_element_in_layout(g=g, element=ref_element, partial_match=TRUE)){
-        browser()
+        
         # If the reference element exists, add and align along the panel(s).
         g <- .gtable_insert_along(g=g,
                                   g_new=grob_list$axis_text_x,
@@ -1157,10 +1132,11 @@ plotting.reinsert_plot_elements <- function(g=NULL, elements=NULL, grob_list, gg
         g <- .gtable_insert_along(g=g,
                                   g_new=grob_list$axis_text_x_nt,
                                   ref_element=ref_element,
-                                  along_element="panel",
+                                  along_element="panel-main",
                                   where="bottom",
-                                  partial_match_ref=TRUE,
-                                  partial_match_along=TRUE)
+                                  attempt_replace=TRUE,
+                                  partial_match_ref=FALSE,
+                                  partial_match_along=FALSE)
         
         break()
       }
@@ -1180,10 +1156,11 @@ plotting.reinsert_plot_elements <- function(g=NULL, elements=NULL, grob_list, gg
         g <- .gtable_insert_along(g=g,
                                   g_new=grob_list$axis_text_y,
                                   ref_element=ref_element,
-                                  along_element="panel",
+                                  along_element="panel-main",
                                   where="left",
-                                  partial_match_ref=TRUE,
-                                  partial_match_along=TRUE)
+                                  attempt_replace=TRUE,
+                                  partial_match_ref=FALSE,
+                                  partial_match_along=FALSE)
         
         break()
       }
@@ -1203,10 +1180,11 @@ plotting.reinsert_plot_elements <- function(g=NULL, elements=NULL, grob_list, gg
         g <- .gtable_insert_along(g=g,
                                   g_new=grob_list$axis_text_y_nt,
                                   ref_element=ref_element,
-                                  along_element="panel",
+                                  along_element="panel-main",
                                   where="left",
-                                  partial_match_ref=TRUE,
-                                  partial_match_along=TRUE)
+                                  attempt_replace=TRUE,
+                                  partial_match_ref=FALSE,
+                                  partial_match_along=FALSE)
         
         break()
       }
@@ -1367,7 +1345,7 @@ plotting.to_grob <- function(plots_or_grobs){
             grob_index <- which(g$layout$name == name)
             
             # Update the height in the layout table.
-            g$heights[g$layout[grob_index, "l"]] <- width
+            g$widths[g$layout[grob_index, "l"]] <- width
             
             # Update (or set) the height of the grob.
             g$grobs[[grob_index]]$widths <- width

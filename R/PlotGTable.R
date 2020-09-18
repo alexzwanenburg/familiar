@@ -389,7 +389,7 @@
   }
   
   if(attempt_replace){
-    browser()
+
     # Find if there is a grob with the same name at the intended position.
     g_index <- .gtable_which_aligned(g,
                                      element=g_new$layout$name,
@@ -398,8 +398,10 @@
                                      partial_match_ref=partial_match_ref)
     
     if(!is.null(g_index)){
+      # Replace the grob.
       g$grobs[[g_index]] <- g_new
       
+      # Update heights and widths to get the accurate figures.
       g <- .gtable_update_layout(g)
       
       return(g)
@@ -640,6 +642,30 @@
     return(grob_height)
   }
   
+  
+  ..get_width <- function(grob_id, g){
+    
+    # Identify the name of the grob.
+    grob_name <- g$layout$name[grob_id]
+    
+    # Identify the width of the grob.
+    if(grid::is.unit(g$grobs[[grob_id]]$widths)){
+      grob_width <- g$grobs[[grob_id]]$widths
+      
+    } else if(grid::is.unit(g$grobs[[grob_id]]$width)){
+      grob_width <- g$grobs[[grob_id]]$width
+      
+    } else {
+      grob_width <- NULL
+    }
+    
+    if(grid::is.unit(grob_width)){
+      if(grid::unitType(grob_width) == "npc") grob_width <- grid::unit(as.numeric(grob_width), "null")
+    }
+    
+    return(grob_width)
+  }
+  
   # Update heights
   new_heights <- replicate(grid::unit(0, "cm"), n=nrow(g), simplify=FALSE)
   new_heights <- do.call(grid::unit.c, args=new_heights)
@@ -664,6 +690,14 @@
     # Select unique heights.
     grob_heights <- unique(grob_heights)
     
+    # If the grob_heights are a mix of implicit and explicit heights, keep only
+    # explicit.
+    explicit_grob_heights <- sapply(grob_heights, grid::unitType) != "null"
+    implicit_grob_heights <- sapply(grob_heights, grid::unitType) == "null"
+    if(any(implicit_grob_heights) & !all(implicit_grob_heights)){
+      grob_heights <- grob_heights[explicit_grob_heights]
+    }
+    
     if(length(grob_heights) == 1){
       # Set the grob height.
       new_heights[ii] <- grob_heights[[1]]
@@ -678,6 +712,55 @@
     }
   }
   
-  browser()
+  # Update heights
+  new_widths <- replicate(grid::unit(0, "cm"), n=ncol(g), simplify=FALSE)
+  new_widths <- do.call(grid::unit.c, args=new_widths)
+  new_widths[1] <- grid::unit(1, "points")
+  new_widths[ncol(g)] <- grid::unit(1, "points")
   
+  for(ii in seq_len(ncol(g))){
+    # Select candidates.
+    candidates <- which(g$layout$l == ii & g$layout$r == ii)
+    
+    # Skip if there are no candidates.
+    if(length(candidates) == 0) next()
+    
+    # Identify the width of the grobs.
+    grob_widths <- lapply(candidates, ..get_width, g=g)
+    
+    # Remove all empty widths.
+    grob_widths <- grob_widths[sapply(grob_widths, grid::is.unit)]
+    
+    if(length(grob_widths) == 0) next()
+    
+    # Select unique widths.
+    grob_widths <- unique(grob_widths)
+    
+    # If the grob_widths are a mix of implicit and explicit width, keep only
+    # explicit.
+    explicit_grob_widths <- sapply(grob_widths, grid::unitType) != "null"
+    implicit_grob_widths <- sapply(grob_widths, grid::unitType) == "null"
+    if(any(implicit_grob_widths) & !all(implicit_grob_widths)){
+      grob_widths <- grob_widths[explicit_grob_widths]
+    }
+    
+    if(length(grob_widths) == 1){
+      # Set the grob width.
+      new_widths[ii] <- grob_widths[[1]]
+      
+    } else if(length(grob_widths) > 1){
+      # Take the max width of the column.
+      grob_widths <- do.call(grid::unit.c, args=grob_widths)
+      grob_widths <- max(grob_widths)
+      
+      # Set the grob width
+      new_widths[ii] <- grob_widths
+    }
+  }
+  
+  # Update heights and widths in the table.
+  g$heights <- new_heights
+  g$widths <- new_widths
+  
+  return(g)
 }
