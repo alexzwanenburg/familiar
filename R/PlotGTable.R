@@ -594,8 +594,11 @@
   
 
 
-.gtable_rename_element <- function(g, old, new, partial_match=FALSE){
+.gtable_rename_element <- function(g, old, new, partial_match=FALSE, allow_missing=FALSE){
   if(!.gtable_element_in_layout(g=g, element=old, partial_match=partial_match)){
+    
+    if(allow_missing) return(g)
+    
     stop(".gtable_rename_element: element not found in layout table.")
   }
   
@@ -636,7 +639,25 @@
     }
     
     if(grid::is.unit(grob_height)){
-      if(grid::unitType(grob_height) == "npc") grob_height <- grid::unit(as.numeric(grob_height), "null")
+      
+      if(is.list(grob_height)){
+        
+        grob_height <- lapply(grob_height, function(current_grob_height){
+          if(grid::unitType(current_grob_height) == "npc") current_grob_height <- grid::unit(as.numeric(current_grob_height), "null")
+          return(current_grob_height)
+        })
+        
+        # Sum the heights.
+        if(length(grob_height) == 1){
+          grob_height <- grob_height[[1]]
+          
+        } else {
+          grob_height <- sum(do.call(grid::unit.c, args=grob_height))
+        }
+        
+      } else if(grid::unitType(grob_height) == "npc"){
+        grob_height <- grid::unit(as.numeric(grob_height), "null")
+      }
     }
     
     return(grob_height)
@@ -660,7 +681,25 @@
     }
     
     if(grid::is.unit(grob_width)){
-      if(grid::unitType(grob_width) == "npc") grob_width <- grid::unit(as.numeric(grob_width), "null")
+      
+      if(is.list(grob_width)){
+        
+        grob_width <- lapply(grob_width, function(current_grob_width){
+          if(grid::unitType(current_grob_width) == "npc") current_grob_width <- grid::unit(as.numeric(current_grob_width), "null")
+          return(current_grob_width)
+        })
+        
+        # Sum the widths.
+        if(length(grob_width) == 1){
+          grob_width <- grob_width[[1]]
+          
+        } else {
+          grob_width <- sum(do.call(grid::unit.c, args=grob_width))
+        }
+        
+      } else if(grid::unitType(grob_width) == "npc"){
+        grob_width <- grid::unit(as.numeric(grob_width), "null")
+      } 
     }
     
     return(grob_width)

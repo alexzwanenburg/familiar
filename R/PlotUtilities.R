@@ -386,7 +386,7 @@ plotting.split_data_by_facet <- function(x, plot_layout_table=NULL, ...){
   
   # Derive facet_by
   facet_by <- setdiff(colnames(plot_layout_table),
-                      c("col_id", "row_id", "has_strip_x", "has_strip_y", "has_guide", "has_axis_title_x", "has_axis_title_y"))
+                      c("col_id", "row_id"))
   
   if(length(facet_by > 0)){
     # Merge the plot_layout_table into x. This will keep things in order. All
@@ -522,7 +522,7 @@ plotting.update_plot_layout_table <- function(plot_layout_table,
   if(is_empty(plot_layout_table)) return(plot_layout_table)
   
   if(!is.null(facet_wrap_cols)){
-    browser()
+    
     # Number of columns is provided using facet_wrap_cols.
     len_table <- nrow(plot_layout_table)
     n_cols <- facet_wrap_cols
@@ -539,8 +539,8 @@ plotting.update_plot_layout_table <- function(plot_layout_table,
                              "has_strip_y"=FALSE,
                              "has_axis_text_x"=!x_text_shared,
                              "has_axis_text_x"=!y_text_shared,
-                             "has_axis_title_x"=x_label_shared == "individual",
-                             "has_axis_title_y"=y_label_shared == "individual")]
+                             "has_axis_label_x"=x_label_shared == "individual",
+                             "has_axis_label_y"=y_label_shared == "individual")]
     
     for(current_col_id in seq_len(n_cols)){
       # Determine the bottom row.
@@ -548,25 +548,25 @@ plotting.update_plot_layout_table <- function(plot_layout_table,
       
       # Set x labels and text.
       if(x_text_shared) plot_layout_table[col_id == current_col_id & row_id == max_row_id, "has_axis_text_x":=TRUE]
-      if(x_label_shared == "column") plot_layout_table[col_id == current_col_id & row_id == max_row_id, "has_axis_title_x":=TRUE]
+      if(x_label_shared == "column") plot_layout_table[col_id == current_col_id & row_id == max_row_id, "has_axis_label_x":=TRUE]
     }
     
     if(y_text_shared) plot_layout_table[col_id == 1L, "has_axis_text_y":=TRUE]
-    if(y_label_shared == "row") plot_layout_table[col_id == 1L, "has_axis_title_y":=TRUE]
+    if(y_label_shared == "row") plot_layout_table[col_id == 1L, "has_axis_label_y":=TRUE]
     
   } else {
     
     # Update the column and row ids.
     plot_layout_table[, "col_id":=.GRP, by="col_id"]
     plot_layout_table[, "row_id":=.GRP, by="row_id"]
-    
+
     # Set default elements
-    plot_layout_table[, ":="("has_strip_x"=TRUE,
+    plot_layout_table[, ":="("has_strip_x"=FALSE,
                              "has_strip_y"=FALSE,
                              "has_axis_text_x"=!x_text_shared,
                              "has_axis_text_y"=!y_text_shared,
-                             "has_axis_title_x"=x_label_shared == "individual",
-                             "has_axis_title_y"=y_label_shared == "individual")]
+                             "has_axis_label_x"=x_label_shared == "individual",
+                             "has_axis_label_y"=y_label_shared == "individual")]
     
     # Determine the number of rows and columns
     n_cols <- max(plot_layout_table$col_id)
@@ -581,8 +581,8 @@ plotting.update_plot_layout_table <- function(plot_layout_table,
     if(y_text_shared) plot_layout_table[col_id == 1L, "has_axis_text_y":=TRUE]
     
     # Add axis labels
-    if(x_label_shared == "column") plot_layout_table[row_id == n_rows, "has_axis_title_x":=TRUE]
-    if(y_label_shared == "row") plot_layout_table[col_id == 1L, "has_axis_title_y":=TRUE]
+    if(x_label_shared == "column") plot_layout_table[row_id == n_rows, "has_axis_label_x":=TRUE]
+    if(y_label_shared == "row") plot_layout_table[col_id == 1L, "has_axis_label_y":=TRUE]
   }
   
   return(plot_layout_table)
@@ -719,12 +719,16 @@ plotting.compile_figure_data <- function(grobs,
   # Suppress NOTES due to non-standard evaluation in data.table
   figure_id <- is_present <- col_id <- row_id <- NULL
   
-  browser()
-  figure_list <- list()
+  # Create a placeholder list. This is done to prevent losing a connection
+  # between figure id and the length of the list in case entire columns or rows
+  # were removed from the plot_layout_table.
+  figure_list <- replicate(n=max(plot_layout_table$figure_id), NULL)
+  
   # Iterate over the plot layout table to compile all the data required to
   # create the sub-figures.
+  
   for(ii in plot_layout_table$figure_id){
-    
+
     current_figure_list <- list()
     if(plot_layout_table[figure_id == ii]$is_present){
       
@@ -734,23 +738,37 @@ plotting.compile_figure_data <- function(grobs,
       # Collect additional plot data.
       if(plot_layout_table[figure_id == ii]$has_strip_x) current_figure_list$strip_x <- element_grobs[[ii]]$strip_x
       if(plot_layout_table[figure_id == ii]$has_strip_y) current_figure_list$strip_y <- element_grobs[[ii]]$strip_y
-      if(plot_layout_table[figure_id == ii]$has_axis_title_x) current_figure_list$axis_title_x <- element_grobs[[ii]]$axis_title_x
-      if(plot_layout_table[figure_id == ii]$has_axis_title_y) current_figure_list$axis_title_y <- element_grobs[[ii]]$axis_title_y
+      
+      # Collect labels for the x-axis
+      if(plot_layout_table[figure_id == ii]$has_axis_label_x){
+        current_figure_list$axis_label_b <- element_grobs[[ii]]$axis_label_t
+        current_figure_list$axis_label_t <- element_grobs[[ii]]$axis_label_b
+      }
+      
+      # Collect labels for the y-axis.
+      if(plot_layout_table[figure_id == ii]$has_axis_label_y){
+        current_figure_list$axis_label_l <- element_grobs[[ii]]$axis_label_l
+        current_figure_list$axis_label_r <- element_grobs[[ii]]$axis_label_r
+      } 
       
       # Collect axis text data for the x-axis.
       if(plot_layout_table[figure_id == ii]$has_axis_text_x && !keep_axis_text_x){
-        current_figure_list$axis_text_x <- element_grobs[[ii]]$axis_text_x
+        current_figure_list$axis_text_b <- element_grobs[[ii]]$axis_text_b
+        current_figure_list$axis_text_t <- element_grobs[[ii]]$axis_text_t
         
       } else if(!keep_axis_text_x) {
-        current_figure_list$axis_text_x <- element_grobs[[ii]]$axis_text_x_nt
+        current_figure_list$axis_text_b <- element_grobs[[ii]]$axis_text_b_nt
+        current_figure_list$axis_text_t <- element_grobs[[ii]]$axis_text_t_nt
       }
       
       # Collect axis text data for the y-axis.
       if(plot_layout_table[figure_id == ii]$has_axis_text_y && !keep_axis_text_y){
-        current_figure_list$axis_text_y <- element_grobs[[ii]]$axis_text_y
+        current_figure_list$axis_text_l <- element_grobs[[ii]]$axis_text_l
+        current_figure_list$axis_text_r <- element_grobs[[ii]]$axis_text_r
         
       } else if(!keep_axis_text_y) {
-        current_figure_list$axis_text_y <- element_grobs[[ii]]$axis_text_y_nt
+        current_figure_list$axis_text_l <- element_grobs[[ii]]$axis_text_l_nt
+        current_figure_list$axis_text_r <- element_grobs[[ii]]$axis_text_r_nt
       }
       
     } else {
@@ -770,15 +788,22 @@ plotting.compile_figure_data <- function(grobs,
       same_col_figure_id <- plot_layout_table[is_present == TRUE & col_id == current_col_id]$figure_id[1]
       
       # Set the replacement dataset as the main dataset.
-      current_figure_list$main <- grobs[[ii]]
+      current_figure_list$main <- replacement_grob
       
       if(plot_layout_table[figure_id == ii]$has_strip_x) current_figure_list$strip_x <- element_grobs[[same_col_figure_id]]$strip_x
       if(plot_layout_table[figure_id == ii]$has_strip_y) current_figure_list$strip_y <- element_grobs[[same_row_figure_id]]$strip_y
-      if(plot_layout_table[figure_id == ii]$has_axis_title_x) current_figure_list$axis_title_x <- element_grobs[[same_col_figure_id]]$axis_title_x
-      if(plot_layout_table[figure_id == ii]$has_axis_title_y) current_figure_list$axis_title_y <- element_grobs[[same_row_figure_id]]$axis_title_y
       
-      current_figure_list$axis_text_x <- element_grobs[[same_col_figure_id]]$axis_text_x_nt
-      current_figure_list$axis_text_y <- element_grobs[[same_row_figure_id]]$axis_text_y_nt
+      # Collect labels for the x-axis.
+      if(plot_layout_table[figure_id == ii]$has_axis_label_x){
+        current_figure_list$axis_label_b <- element_grobs[[same_col_figure_id]]$axis_label_t
+        current_figure_list$axis_label_t <- element_grobs[[same_col_figure_id]]$axis_label_b
+      }
+      
+      # Collect labels for the y-axis
+      if(plot_layout_table[figure_id == ii]$has_axis_label_y){
+        current_figure_list$axis_label_l <- element_grobs[[same_row_figure_id]]$axis_label_l
+        current_figure_list$axis_label_r <- element_grobs[[same_row_figure_id]]$axis_label_r
+      }
     }
     
     # Merge elements with the main element.
@@ -786,12 +811,52 @@ plotting.compile_figure_data <- function(grobs,
                                          ggtheme=ggtheme)
     
     # Add data to the figure list.
-    figure_list <- c(figure_list, list(g))
-    
+    figure_list[[ii]] <- g
   }
-  browser()
+  
   return(figure_list)
 }
+
+
+
+plotting.add_global_plot_elements <- function(grobs,
+                                              element_grobs,
+                                              plot_layout_table,
+                                              ggtheme){
+  
+  # Suppress NOTES due to non-standard evaluation in data.table
+  is_present <- NULL
+  
+  figure_list <- list()
+  
+  # Select a figure that is present.
+  present_figure_id <- plot_layout_table[is_present == TRUE, ]$figure_id[1]
+  
+  # Add main grob
+  if(!gtable::is.gtable(grobs)) ..error_reached_unreachable_code("plotting.compile_plot_wide_data: grob is not a gtable.")
+  figure_list$main <- grobs
+  
+  # Add guide.
+  figure_list$guide <- element_grobs[[present_figure_id]]$guide
+  
+  # Determine if axis labels need to be added.
+  if(all(plot_layout_table$has_axis_label_x == FALSE)){
+    figure_list$axis_label_b <- element_grobs[[present_figure_id]]$axis_label_b
+    figure_list$axis_label_t <- element_grobs[[present_figure_id]]$axis_label_t
+  } 
+  
+  if(all(plot_layout_table$has_axis_label_y == FALSE)){
+    figure_list$axis_label_l <- element_grobs[[present_figure_id]]$axis_label_l
+    figure_list$axis_label_r <- element_grobs[[present_figure_id]]$axis_label_r
+  } 
+  
+  # Insert global elements.
+  g <- plotting.reinsert_plot_elements(grob_list=figure_list,
+                                       ggtheme=ggtheme)
+  
+  return(g)
+}
+  
 
 
 
@@ -813,19 +878,19 @@ plotting.arrange_figures <- function(grobs,
                                      figure_elements,
                                      element_grobs,
                                      ggtheme){
-  browser()
+
+  # Suppress NOTES due to non-standard evaluation in data.table
+  col_id <- row_id <- NULL
   
   figure_data <- plotting.compile_figure_data(grobs=grobs,
                                               element_grobs=element_grobs,
                                               plot_layout_table=plot_layout_table,
                                               ggtheme=ggtheme)
   
-  # Iterator
-  figure_id <- 1L
-  
   # Placeholder for final figure
   g <- NULL
   
+  # Determine the number of rows and columns.
   n_rows <- max(plot_layout_table$row_id)
   n_cols <- max(plot_layout_table$col_id)
   
@@ -838,17 +903,13 @@ plotting.arrange_figures <- function(grobs,
     # Populate the current row with figures.
     for(jj in seq_len(n_cols)){
       
+      selected_figure_id <- plot_layout_table[col_id == jj & row_id == ii]$figure_id
+      
       # Check if the iterator exceeds the maximum number of available figures.
-      if(figure_id > length(grobs)) break()
+      if(length(selected_figure_id) == 0) break()
       
       # Select the current grob.
-      current_grob <- grobs[[figure_id]]
-      
-      # Add elements to the grob (if any)
-      current_grob <- plotting.reinsert_plot_elements(g=current_grob,
-                                                      elements=panel_elements,
-                                                      grob_list=element_grobs,
-                                                      ggtheme=ggtheme)
+      current_grob <- figure_data[[selected_figure_id]]
       
       if(is.null(g_current_row)){
         # If the current row is still empty, copy the first figure.
@@ -865,9 +926,6 @@ plotting.arrange_figures <- function(grobs,
         # Add the figure to the current figure.
         g_current_row <- cbind(g_current_row, current_grob)
       }
-      
-      # Increment iterator
-      figure_id <- figure_id + 1L
     }
     
     # Populate the figure.
@@ -881,17 +939,43 @@ plotting.arrange_figures <- function(grobs,
     }
     
     # Check if the iterator exceeds the maximum number of available figures.
-    if(figure_id > length(grobs)) break()
+    if(length(selected_figure_id) == 0) break()
   }
   
-  # Re-insert elements.
-  g <- plotting.reinsert_plot_elements(g=g,
-                                       elements=figure_elements,
-                                       grob_list=element_grobs,
-                                       ggtheme=ggtheme)
+  # Identify data that should be re-inserted.
+  g <- plotting.add_global_plot_elements(grobs=g,
+                                         element_grobs=element_grobs,
+                                         plot_layout_table=plot_layout_table,
+                                         ggtheme=ggtheme)
   
   return(g)
 }
+
+
+plotting.rename_plot_elements <- function(g=g, extension="main"){
+  
+  # Main panel
+  g <- .gtable_rename_element(g=g, old="panel", new=paste0("panel-", extension), partial_match=TRUE, allow_missing=TRUE)
+  
+  # Left axis text and label
+  g <- .gtable_rename_element(g=g, old="axis-l", new=paste0("axis-l-", extension), partial_match=TRUE, allow_missing=TRUE)
+  g <- .gtable_rename_element(g=g, old="ylab-l", new=paste0("ylab-l-", extension), partial_match=TRUE, allow_missing=TRUE)
+  
+  # Bottom axis text and label
+  g <- .gtable_rename_element(g=g, old="axis-b", new=paste0("axis-b-", extension), partial_match=TRUE, allow_missing=TRUE)
+  g <- .gtable_rename_element(g=g, old="xlab-b", new=paste0("xlab-b-", extension), partial_match=TRUE, allow_missing=TRUE)
+  
+  # Right axis text and label
+  g <- .gtable_rename_element(g=g, old="axis-r", new=paste0("axis-r-", extension), partial_match=TRUE, allow_missing=TRUE)
+  g <- .gtable_rename_element(g=g, old="ylab-r", new=paste0("ylab-r-", extension), partial_match=TRUE, allow_missing=TRUE)
+  
+  # Top axis text and label
+  g <- .gtable_rename_element(g=g, old="axis-t", new=paste0("axis-t-", extension), partial_match=TRUE, allow_missing=TRUE)
+  g <- .gtable_rename_element(g=g, old="xlab-t", new=paste0("xlab-t-", extension), partial_match=TRUE, allow_missing=TRUE)
+  
+  return(g)
+}
+
 
 
 plotting.extract_plot_elements <- function(p){
@@ -904,20 +988,29 @@ plotting.extract_plot_elements <- function(p){
   # Export list of elements.
   if(is.null(g)) return(element_list)
   
+  # Update the names of the plot elements.
+  g <- plotting.rename_plot_elements(g=g,
+                                     extension="main")
+  
   # Legend
   element_list$guide <- .gtable_extract(g=g, element="guide-box", drop_empty=TRUE)
-  
-  # Axis title
-  element_list$axis_title_x <- .gtable_extract(g=g, element="xlab-b", drop_empty=TRUE)
-  element_list$axis_title_y <- .gtable_extract(g=g, element="ylab-l", drop_empty=TRUE)
+
+  # Axis label
+  element_list$axis_label_b <- .gtable_extract(g=g, element="xlab-b-main", drop_empty=TRUE)
+  element_list$axis_label_t <- .gtable_extract(g=g, element="xlab-t-main", drop_empty=TRUE)
+  element_list$axis_label_l <- .gtable_extract(g=g, element="ylab-l-main", drop_empty=TRUE)
+  element_list$axis_label_r <- .gtable_extract(g=g, element="ylab-r-main", drop_empty=TRUE)
   
   # Strip x
-  element_list$strip_x <- .gtable_extract(g=g, element="strip-t-", partial_match=TRUE, drop_empty=TRUE)
-  element_list$strip_y <- .gtable_extract(g=g, element="strip-r-", partial_match=TRUE, drop_empty=TRUE)
+  element_list$strip_x <- .gtable_extract(g=g, element="strip-t", partial_match=TRUE, drop_empty=TRUE)
+  element_list$strip_y <- .gtable_extract(g=g, element="strip-r", partial_match=TRUE, drop_empty=TRUE)
   
   # Axis text (with text)
-  element_list$axis_text_x <- .gtable_extract(g=g, element="axis-b-", partial_match=TRUE, drop_empty=TRUE)
-  element_list$axis_text_y <- .gtable_extract(g=g, element="axis-l-", partial_match=TRUE, drop_empty=TRUE)
+  element_list$axis_text_b <- .gtable_extract(g=g, element="axis-b-main", partial_match=TRUE, drop_empty=TRUE)
+  element_list$axis_text_t <- .gtable_extract(g=g, element="axis-t-main", partial_match=TRUE, drop_empty=TRUE) 
+  
+  element_list$axis_text_l <- .gtable_extract(g=g, element="axis-l-main", partial_match=TRUE, drop_empty=TRUE)
+  element_list$axis_text_r <- .gtable_extract(g=g, element="axis-r-main", partial_match=TRUE, drop_empty=TRUE)
   
   # Update plot by removing the axis text.
   p <- p + ggplot2::theme(axis.text.x=ggplot2::element_blank(),
@@ -926,9 +1019,16 @@ plotting.extract_plot_elements <- function(p){
   # Convert to grobs
   g <- plotting.to_grob(p)
   
+  # Update the names of the plot elements.
+  g <- plotting.rename_plot_elements(g=g,
+                                     extension="main")
+  
   # Axis text (without text)
-  element_list$axis_text_x_nt <- .gtable_extract(g=g, element="axis-b-", partial_match=TRUE, drop_empty=TRUE)
-  element_list$axis_text_y_nt <- .gtable_extract(g=g, element="axis-l-", partial_match=TRUE, drop_empty=TRUE)
+  element_list$axis_text_b_nt <- .gtable_extract(g=g, element="axis-b-main", partial_match=TRUE, drop_empty=TRUE)
+  element_list$axis_text_t_nt <- .gtable_extract(g=g, element="axis-t-main", partial_match=TRUE, drop_empty=TRUE) 
+  
+  element_list$axis_text_l_nt <- .gtable_extract(g=g, element="axis-l-main", partial_match=TRUE, drop_empty=TRUE)
+  element_list$axis_text_r_nt <- .gtable_extract(g=g, element="axis-r-main", partial_match=TRUE, drop_empty=TRUE)
   
   return(element_list)
 }
@@ -1096,8 +1196,8 @@ plotting.reinsert_plot_elements <- function(g=NULL, elements=NULL, grob_list, gg
   }
   
   
-  # Insert x-axis text
-  if("axis_text_x" %in% elements & !is.null(grob_list$axis_text_x)){
+  # Insert bottom x-axis text
+  if("axis_text_b" %in% elements & !is.null(grob_list$axis_text_b)){
     
     # Align to bottom of the plot, and iterate inward to find valid reference
     # elements.
@@ -1106,7 +1206,7 @@ plotting.reinsert_plot_elements <- function(g=NULL, elements=NULL, grob_list, gg
         
         # If the reference element exists, add and align along the panel(s).
         g <- .gtable_insert_along(g=g,
-                                  g_new=grob_list$axis_text_x,
+                                  g_new=grob_list$axis_text_b,
                                   ref_element=ref_element,
                                   along_element="panel-main",
                                   where="bottom",
@@ -1119,9 +1219,8 @@ plotting.reinsert_plot_elements <- function(g=NULL, elements=NULL, grob_list, gg
     }
   }
   
-  
-  # Insert x-axis ticks and line without text
-  if("axis_text_x_nt" %in% elements & !is.null(grob_list$axis_text_x_nt)){
+  # Insert top x-axis text
+  if("axis_text_t" %in% elements & !is.null(grob_list$axis_text_t)){
     
     # Align to bottom of the plot, and iterate inward to find valid reference
     # elements.
@@ -1130,10 +1229,10 @@ plotting.reinsert_plot_elements <- function(g=NULL, elements=NULL, grob_list, gg
         
         # If the reference element exists, add and align along the panel(s).
         g <- .gtable_insert_along(g=g,
-                                  g_new=grob_list$axis_text_x_nt,
+                                  g_new=grob_list$axis_text_t,
                                   ref_element=ref_element,
                                   along_element="panel-main",
-                                  where="bottom",
+                                  where="top",
                                   attempt_replace=TRUE,
                                   partial_match_ref=FALSE,
                                   partial_match_along=FALSE)
@@ -1144,8 +1243,8 @@ plotting.reinsert_plot_elements <- function(g=NULL, elements=NULL, grob_list, gg
   }
   
   
-  # Insert y-axis text
-  if("axis_text_y" %in% elements & !is.null(grob_list$axis_text_y)){
+  # Insert left y-axis text
+  if("axis_text_l" %in% elements & !is.null(grob_list$axis_text_l)){
     
     # Align to bottom of the plot, and iterate inward to find valid reference
     # elements.
@@ -1154,7 +1253,7 @@ plotting.reinsert_plot_elements <- function(g=NULL, elements=NULL, grob_list, gg
         
         # If the reference element exists, add and align along the panel(s).
         g <- .gtable_insert_along(g=g,
-                                  g_new=grob_list$axis_text_y,
+                                  g_new=grob_list$axis_text_l,
                                   ref_element=ref_element,
                                   along_element="panel-main",
                                   where="left",
@@ -1168,8 +1267,8 @@ plotting.reinsert_plot_elements <- function(g=NULL, elements=NULL, grob_list, gg
   }
   
   
-  # Insert y-axis ticks and line without text
-  if("axis_text_y_nt" %in% elements & !is.null(grob_list$axis_text_y_nt)){
+  # Insert right y-axis text
+  if("axis_text_r" %in% elements & !is.null(grob_list$axis_text_r)){
     
     # Align to bottom of the plot, and iterate inward to find valid reference
     # elements.
@@ -1178,10 +1277,10 @@ plotting.reinsert_plot_elements <- function(g=NULL, elements=NULL, grob_list, gg
         
         # If the reference element exists, add and align along the panel(s).
         g <- .gtable_insert_along(g=g,
-                                  g_new=grob_list$axis_text_y_nt,
+                                  g_new=grob_list$axis_text_r,
                                   ref_element=ref_element,
                                   along_element="panel-main",
-                                  where="left",
+                                  where="right",
                                   attempt_replace=TRUE,
                                   partial_match_ref=FALSE,
                                   partial_match_along=FALSE)
@@ -1192,21 +1291,23 @@ plotting.reinsert_plot_elements <- function(g=NULL, elements=NULL, grob_list, gg
   }
   
   
-  # Insert y-axis label
-  if("axis_title_y" %in% elements & !is.null(grob_list$axis_title_y)){
+  
+  # Insert y-axis label to the left.
+  if("axis_label_l" %in% elements & !is.null(grob_list$axis_label_l)){
     
     # Align to left of the plot, and iterate inward to find valid reference elements.
-    for(ref_element in c("axis-l", "panel-main", "panel")){
+    for(ref_element in c("axis-l-main", "axis-l", "panel-main", "panel")){
       if(.gtable_element_in_layout(g=g, element=ref_element, partial_match=TRUE)){
         
         # If the reference element exists, add and align along the panel(s).
         g <- .gtable_insert_along(g=g,
-                                  g_new=grob_list$axis_title_y,
+                                  g_new=grob_list$axis_label_l,
                                   ref_element=ref_element,
                                   along_element="panel",
                                   where="left",
-                                  partial_match_ref=TRUE,
-                                  partial_match_along=TRUE)
+                                  attempt_replace=TRUE,
+                                  partial_match_ref=FALSE,
+                                  partial_match_along=FALSE)
         
         break()
       }
@@ -1214,22 +1315,45 @@ plotting.reinsert_plot_elements <- function(g=NULL, elements=NULL, grob_list, gg
   }
   
   
-  # Insert x-axis label
-  if("axis_title_x" %in% elements & !is.null(grob_list$axis_title_x)){
+  # Insert y-axis label to the right.
+  if("axis_label_r" %in% elements & !is.null(grob_list$axis_label_r)){
     
-    # Align to bottom of the plot, and iterate inward to find valid reference
-    # elements.
-    for(ref_element in c("axis-b", "panel-main", "panel")){
+    # Align to right of the plot, and iterate inward to find valid reference elements.
+    for(ref_element in c("axis-r-main", "axis-r", "panel-main", "panel")){
       if(.gtable_element_in_layout(g=g, element=ref_element, partial_match=TRUE)){
         
         # If the reference element exists, add and align along the panel(s).
         g <- .gtable_insert_along(g=g,
-                                  g_new=grob_list$axis_title_x,
+                                  g_new=grob_list$axis_label_r,
+                                  ref_element=ref_element,
+                                  along_element="panel",
+                                  where="right",
+                                  attempt_replace=TRUE,
+                                  partial_match_ref=FALSE,
+                                  partial_match_along=FALSE)
+        
+        break()
+      }
+    }
+  }
+  
+  
+  # Insert x-axis label to the bottom.
+  if("axis_label_b" %in% elements & !is.null(grob_list$axis_label_b)){
+    
+    # Align to bottom of the plot, and iterate inward to find valid reference elements.
+    for(ref_element in c("axis-b-main", "axis-b", "panel-main", "panel")){
+      if(.gtable_element_in_layout(g=g, element=ref_element, partial_match=TRUE)){
+        
+        # If the reference element exists, add and align along the panel(s).
+        g <- .gtable_insert_along(g=g,
+                                  g_new=grob_list$axis_label_b,
                                   ref_element=ref_element,
                                   along_element="panel",
                                   where="bottom",
-                                  partial_match_ref=TRUE,
-                                  partial_match_along=TRUE)
+                                  attempt_replace=TRUE,
+                                  partial_match_ref=FALSE,
+                                  partial_match_along=FALSE)
         
         break()
       }
@@ -1237,21 +1361,22 @@ plotting.reinsert_plot_elements <- function(g=NULL, elements=NULL, grob_list, gg
   }
   
   
-  # Insert y-axis label
-  if("axis_title_y" %in% elements & !is.null(grob_list$axis_title_y)){
+  # Insert x-axis label to the top.
+  if("axis_label_t" %in% elements & !is.null(grob_list$axis_label_b)){
     
-    # Align to left of the plot, and iterate inward to find valid reference elements.
-    for(ref_element in c("axis-l", "panel-main", "panel")){
+    # Align to bottom of the plot, and iterate inward to find valid reference elements.
+    for(ref_element in c("axis-t-main", "axis-t", "panel-main", "panel")){
       if(.gtable_element_in_layout(g=g, element=ref_element, partial_match=TRUE)){
         
         # If the reference element exists, add and align along the panel(s).
         g <- .gtable_insert_along(g=g,
-                                  g_new=grob_list$axis_title_y,
+                                  g_new=grob_list$axis_label_t,
                                   ref_element=ref_element,
                                   along_element="panel",
-                                  where="left",
-                                  partial_match_ref=TRUE,
-                                  partial_match_along=TRUE)
+                                  where="top",
+                                  attempt_replace=TRUE,
+                                  partial_match_ref=FALSE,
+                                  partial_match_along=FALSE)
         
         break()
       }
