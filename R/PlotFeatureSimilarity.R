@@ -524,13 +524,8 @@ setMethod("plot_feature_similarity", signature(object="familiarCollection"),
     # Convert to grob.
     g_heatmap <- plotting.to_grob(p_heatmap)
     
-    # Rename panel to panel-main
-    if(!is.null(g_heatmap)){
-      g_heatmap <- .gtable_rename_element(g=g_heatmap,
-                                          old="panel",
-                                          new="panel-main",
-                                          partial_match=TRUE)
-    }
+    # Rename plot elements.
+    if(!is.null(g_heatmap)) g_heatmap <- plotting.rename_plot_elements(g=g_heatmap, extension="main")
     
     # Add dendrogram
     if(!is.null(show_dendrogram) & inherits(cluster_object, "hclust")){
@@ -646,13 +641,14 @@ setMethod("plot_feature_similarity", signature(object="familiarCollection"),
   gradient_colours <- plotting.get_palette(x=gradient_palette, palette_type=palette_type)
   if(invert_palette) gradient_colours <- rev(gradient_colours)
   
-  # Add gradient palette. If the legend is not shown, legend_label equals NULL.
-  p <- p + ggplot2::scale_fill_gradientn(name=legend_label,
-                                         colors=gradient_colours,
-                                         limits=range(gradient_palette_range),
-                                         oob=scales::squish)
+  if(length(gradient_palette_range) > 0){
+    # Add gradient palette. If the legend is not shown, legend_label equals NULL.
+    p <- p + ggplot2::scale_fill_gradientn(name=legend_label,
+                                           colors=gradient_colours,
+                                           limits=range(gradient_palette_range),
+                                           oob=scales::squish)
+  }
   
-
   # Show dendrogram determines where tick labels and axis labels are placed. By
   # default axes are located at the bottom and right.
   x_axis_position <- "bottom"
