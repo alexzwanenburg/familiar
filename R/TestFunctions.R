@@ -1090,8 +1090,14 @@ test_plots <- function(plot_function,
     model_full_2@fs_method <- "mifs"
     
     # Create familiar data objects.
-    data_good_full_1 <- as_familiar_data(object=model_full_1, data=full_data, data_element=data_element, ...)
-    data_good_full_2 <- as_familiar_data(object=model_full_2, data=full_data, data_element=data_element, ...)
+    data_good_full_1 <- as_familiar_data(object=model_full_1,
+                                         data=full_data,
+                                         data_element=data_element,
+                                         ...)
+    data_good_full_2 <- as_familiar_data(object=model_full_2,
+                                         data=full_data,
+                                         data_element=data_element,
+                                         ...)
     
     # Create a completely intact dataset.
     test_fun(paste0("1. Plots for ", outcome_type, " outcomes ",
@@ -1117,12 +1123,30 @@ test_plots <- function(plot_function,
     if(test_specific_config) next()
     
     # Create additional familiar data objects.
-    data_empty_full_1 <- as_familiar_data(object=model_full_1, data=empty_data, data_element=data_element, ...)
-    data_empty_full_2 <- as_familiar_data(object=model_full_2, data=empty_data, data_element=data_element, ...)
-    data_one_sample_full_1 <- as_familiar_data(object=model_full_1, data=full_one_sample_data, data_element=data_element, ...)
-    data_one_sample_full_2 <- as_familiar_data(object=model_full_2, data=full_one_sample_data, data_element=data_element, ...)
-    data_identical_full_1 <- as_familiar_data(object=model_full_1, data=identical_sample_data, data_element=data_element, ...)
-    data_identical_full_2 <- as_familiar_data(object=model_full_2, data=identical_sample_data, data_element=data_element, ...)
+    data_empty_full_1 <- as_familiar_data(object=model_full_1,
+                                          data=empty_data,
+                                          data_element=data_element,
+                                          ...)
+    data_empty_full_2 <- as_familiar_data(object=model_full_2,
+                                          data=empty_data,
+                                          data_element=data_element,
+                                          ...)
+    data_one_sample_full_1 <- as_familiar_data(object=model_full_1,
+                                               data=full_one_sample_data,
+                                               data_element=data_element,
+                                               ...)
+    data_one_sample_full_2 <- as_familiar_data(object=model_full_2,
+                                               data=full_one_sample_data,
+                                               data_element=data_element,
+                                               ...)
+    data_identical_full_1 <- as_familiar_data(object=model_full_1,
+                                              data=identical_sample_data,
+                                              data_element=data_element,
+                                              ...)
+    data_identical_full_2 <- as_familiar_data(object=model_full_2,
+                                              data=identical_sample_data,
+                                              data_element=data_element,
+                                              ...)
     
     # Create a dataset with a missing quadrant.
     test_fun(paste0("2. Plots for ", outcome_type, " outcomes ",
