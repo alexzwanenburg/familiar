@@ -954,6 +954,8 @@ plotting.arrange_figures <- function(grobs,
 
 plotting.rename_plot_elements <- function(g=g, extension="main"){
   
+  if(is.null(g)) return(g)
+  
   # Main panel
   g <- .gtable_rename_element(g=g, old="panel", new=paste0("panel-", extension), partial_match=TRUE, allow_missing=TRUE)
   
