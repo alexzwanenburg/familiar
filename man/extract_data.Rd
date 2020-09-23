@@ -13,7 +13,7 @@ extract_data(
   aggregation_method = waiver(),
   rank_threshold = waiver(),
   ensemble_method = waiver(),
-  risk_ensemble_method = waiver(),
+  stratification_ensemble_method = waiver(),
   eval_times = waiver(),
   metric = waiver(),
   feature_cluster_method = waiver(),
@@ -84,8 +84,8 @@ same sample. Available methods are:
 sample.
 }}
 
-\item{risk_ensemble_method}{Method for ensembling the risk group assignments
-from different models for the same sample.
+\item{stratification_ensemble_method}{Method for ensembling the risk group
+assignments from different models for the same sample.
 
 The following methods are available:
 \itemize{

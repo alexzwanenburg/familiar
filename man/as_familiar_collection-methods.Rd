@@ -124,8 +124,8 @@ same sample. Available methods are:
 \item \code{mean}: Use the mean of the predicted values as the ensemble value for a
 sample.
 }}
-    \item{\code{risk_ensemble_method}}{Method for ensembling the risk group assignments
-from different models for the same sample.
+    \item{\code{stratification_ensemble_method}}{Method for ensembling the risk group
+assignments from different models for the same sample.
 
 The following methods are available:
 \itemize{

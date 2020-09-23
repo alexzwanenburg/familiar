@@ -2568,7 +2568,7 @@
                                                var_name="stratification_ensemble_method", type="character", optional=TRUE, default="ensemble_mode")
   
   .check_parameter_value_is_valid(x=settings$strat_ensemble_method, var_name="stratification_ensemble_method",
-                                  values=.get_available_risk_ensemble_methods())
+                                  values=.get_available_stratification_ensemble_methods())
 
     
   # Study end time (this is used for plotting, and Uno's concordance index)
