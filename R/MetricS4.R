@@ -428,10 +428,10 @@ setMethod("set_metric_baseline_value", signature(metric="familiarMetric"),
               prediction_table[, "predicted_outcome":=median_value]
               
             } else if(metric@outcome_type %in% c("survival")){
-              browser()
+              
               # Median baseline survival
-              mean_survival_probability <- sum(c(min(object@distribution$survival_probability$survival_probability),
-                                                 max(object@distribution$survival_probability$survival_probability))) / 2.0
+              mean_survival_probability <- sum(c(min(outcome_info@distribution$survival_probability$survival_probability),
+                                                 max(outcome_info@distribution$survival_probability$survival_probability))) / 2.0
               
               # Fill the prediction_table.
               prediction_table[, "predicted_outcome":=mean_survival_probability]
