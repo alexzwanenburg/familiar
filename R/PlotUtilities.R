@@ -590,13 +590,6 @@ plotting.update_plot_layout_table <- function(plot_layout_table,
 
 
 
-plotting.update_facet_plot_elements <- function(p){
-  
-
-}
-
-
-
 plotting.get_panel_spacing <- function(ggtheme=NULL, axis){
   # Obtain spacing between panels. This determines distance between facets.
   
