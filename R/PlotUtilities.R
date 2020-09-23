@@ -401,7 +401,7 @@ plotting.split_data_by_facet <- function(x, plot_layout_table=NULL, ...){
   }
   
   # Split data by row, then column
-  split_data <- split(x, by=c("row_id", "col_id"), sorted=TRUE)
+  split_data <- split(x, by=c("col_id", "row_id"), sorted=TRUE)
   
   return(split_data)
 }
