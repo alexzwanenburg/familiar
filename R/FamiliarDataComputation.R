@@ -51,8 +51,8 @@ NULL
 #'
 #'  * `mean`: Use the mean of the predicted values as the ensemble value for a
 #'  sample.
-#'@param risk_ensemble_method Method for ensembling the risk group assignments
-#'  from different models for the same sample.
+#'@param stratification_ensemble_method Method for ensembling the risk group
+#'  assignments from different models for the same sample.
 #'
 #'  The following methods are available:
 #'
@@ -161,7 +161,7 @@ NULL
 #'
 #'  If not provided explicitly, this parameter is read from settings used at
 #'  creation of the underlying `familiarModel` objects.
-#'  
+#'
 #'@param icc_type String indicating the type of intraclass correlation
 #'  coefficient (`1`, `2` or `3`) that should be used to compute robustness for
 #'  features in repeated measurements during the evaluation of univariate
@@ -192,7 +192,7 @@ setGeneric("extract_data", function(object, data,
                                     aggregation_method=waiver(),
                                     rank_threshold=waiver(),
                                     ensemble_method=waiver(),
-                                    risk_ensemble_method=waiver(),
+                                    stratification_ensemble_method=waiver(),
                                     eval_times=waiver(),
                                     metric=waiver(),
                                     feature_cluster_method=waiver(),
@@ -223,7 +223,7 @@ setMethod("extract_data", signature(object="familiarEnsemble"),
                    aggregation_method=waiver(),
                    rank_threshold=waiver(),
                    ensemble_method=waiver(),
-                   risk_ensemble_method=waiver(),
+                   stratification_ensemble_method=waiver(),
                    eval_times=waiver(),
                    metric=waiver(),
                    feature_cluster_method=waiver(),
@@ -458,11 +458,13 @@ setMethod("extract_data", signature(object="familiarEnsemble"),
             # Compute log-rank tests
             if(data_element %in% c("all", "kaplan_meier_data")){
               stratification_data <- extract_stratification_data(object=object,
-                                                                 prediction_data=prediction_data,
-                                                                 risk_ensemble_method=risk_ensemble_method,
+                                                                 data=data,
+                                                                 ensemble_method=ensemble_method,
+                                                                 stratification_ensemble_method=stratification_ensemble_method,
                                                                  time_max=time_max,
                                                                  message_indent=message_indent,
                                                                  verbose=verbose)
+              
             } else {
               stratification_data <- NULL
             }
@@ -992,11 +994,10 @@ setMethod("extract_calibration_data", signature(object="familiarEnsemble"),
 #'@keywords internal
 setGeneric("extract_stratification_data", function(object,
                                                    data=NULL,
-                                                   prediction_data=NULL,
                                                    ensemble_method=waiver(),
                                                    time_max=waiver(),
                                                    risk_group_list=NULL,
-                                                   risk_ensemble_method=waiver(),
+                                                   stratification_ensemble_method=waiver(),
                                                    message_indent=0L,
                                                    verbose=FALSE,
                                                    ...) standardGeneric("extract_stratification_data"))
@@ -1004,19 +1005,16 @@ setGeneric("extract_stratification_data", function(object,
 setMethod("extract_stratification_data", signature(object="familiarEnsemble"),
           function(object,
                    data=NULL,
-                   prediction_data=NULL,
                    ensemble_method=waiver(),
                    time_max=waiver(),
                    risk_group_list=NULL,
-                   risk_ensemble_method=waiver(),
+                   stratification_ensemble_method=waiver(),
                    message_indent=0L,
                    verbose=FALSE,
                    ...){
             
             # Only assess stratification for survival outcomes.
-            if(!object@outcome_type %in% c("survival")){
-              return(NULL)
-            }
+            if(!object@outcome_type %in% c("survival")) return(NULL)
             
             # Message extraction start
             if(verbose){
@@ -1025,10 +1023,12 @@ setMethod("extract_stratification_data", signature(object="familiarEnsemble"),
             }
             
             # Assess stratification
-            return(assess_stratification(object=object, data=data, prediction_data=prediction_data,
-                                         ensemble_method=ensemble_method, time_max=time_max,
+            return(assess_stratification(object=object,
+                                         data=data,
+                                         ensemble_method=ensemble_method,
+                                         time_max=time_max,
                                          risk_group_list=risk_group_list,
-                                         risk_ensemble_method=risk_ensemble_method))
+                                         stratification_ensemble_method=stratification_ensemble_method))
           })
 
 

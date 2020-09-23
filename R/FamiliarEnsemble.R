@@ -154,24 +154,22 @@ setMethod("compute_calibration_data", signature(object="familiarEnsemble", data=
           })
 
 
-.get_available_risk_ensemble_methods <- function(){
+.get_available_stratification_ensemble_methods <- function(){
   return(c("ensemble_mode", "ensemble_mean", "mean_threshold", "median_threshold"))
 }
 
 
 #####assess_stratification (ensemble)#####
 setMethod("assess_stratification", signature(object="familiarEnsemble"),
-          function(object, data=NULL, prediction_data=NULL, ensemble_method=waiver(), time_max=waiver(),
-                   risk_group_list=NULL, risk_ensemble_method=waiver(), ...){
+          function(object,
+                   data=NULL,
+                   ensemble_method=waiver(),
+                   time_max=waiver(),
+                   risk_group_list=NULL,
+                   stratification_ensemble_method=waiver(), ...){
             
             # Only assess stratification for survival outcomes.
-            if(!object@outcome_type %in% c("survival")){
-              return(NULL)
-            }
-            
-            # ensemble_method are passed to extract_predictions.
-            # risk_ensemble_method is passed to assign_risk_groups
-            # The above arguments do not need to be checked here.
+            if(!object@outcome_type %in% c("survival")) return(NULL)
             
             # Load time_max from the object settings attribute, if it is not provided.
             if(is.waive(time_max) & object@outcome_type %in% c("survival")){
@@ -184,29 +182,24 @@ setMethod("assess_stratification", signature(object="familiarEnsemble"),
                                            range=c(0.0, Inf), closed=c(FALSE, TRUE))
             }
             
+            # Obtain ensemble method from stored settings, if required.
+            if(is.waive(ensemble_method)) ensemble_method <- object@settings$ensemble_method
+            
+            # Check ensemble_method argument
+            .check_parameter_value_is_valid(x=ensemble_method, var_name="ensemble_method",
+                                            values=.get_available_ensemble_prediction_methods())
+            
             # Test if models are properly loaded
-            if(!is_model_loaded(object=object)){
-              ..error_ensemble_models_not_loaded()
-            }
-            
-            # Generate prediction data
-            if(is.null(prediction_data) & is.null(risk_group_list)){
-              if(is_empty(data)){
-                stop("Input data is required to assess stratification into risk groups.")
-              }
-              
-              # Generate prediction data
-              prediction_data <- extract_predictions(object=object, data=data,
-                                                     ensemble_method=ensemble_method,
-                                                     time_max=time_max)
-            }
-            
+            if(!is_model_loaded(object=object)) ..error_ensemble_models_not_loaded()
+
             # Generate risk groups
             if(is.null(risk_group_list)){
               # Extract risk groups for kaplan-meier survival data
               risk_group_list <- assign_risk_groups(object=object,
-                                                    prediction_data=prediction_data,
-                                                    risk_ensemble_method=risk_ensemble_method,
+                                                    data=data,
+                                                    ensemble_method=ensemble_method,
+                                                    stratification_ensemble_method=stratification_ensemble_method,
+                                                    time=time_max,
                                                     verbose=FALSE)
             }
             
@@ -228,17 +221,20 @@ setMethod("assess_stratification", signature(object="familiarEnsemble"),
 
 
 #####assign_risk_groups#####
-setMethod("assign_risk_groups", signature(object="familiarEnsemble", prediction_data="list"),
-          function(object, prediction_data, risk_ensemble_method=waiver(), verbose=FALSE){
+setMethod("assign_risk_groups", signature(object="familiarEnsemble", data="dataObject"),
+          function(object,
+                   data,
+                   ensemble_method,
+                   time,
+                   stratification_ensemble_method=waiver(),
+                   verbose=FALSE){
             # Assign risk groups, perform log-rank tests and determine survival curves for each group
             
             # Suppress NOTES due to non-standard evaluation in data.table
             risk_group <- value <- NULL
             
             # Only assess stratification for survival outcomes.
-            if(!object@outcome_type %in% c("survival")){
-              return(NULL)
-            }
+            if(!object@outcome_type %in% c("survival")) return(NULL)
             
             # Message extraction start
             if(verbose){
@@ -246,76 +242,80 @@ setMethod("assign_risk_groups", signature(object="familiarEnsemble", prediction_
             }
             
             # Load risk ensemble method from object settings, if not provided.
-            if(is.waive(risk_ensemble_method)){
-              risk_ensemble_method <- object@settings$strat_ensemble_method
+            if(is.waive(stratification_ensemble_method)){
+              stratification_ensemble_method <- object@settings$strat_ensemble_method
             }
             
-            # Test risk_ensemble_method to see if it is valid.
-            .check_parameter_value_is_valid(x=risk_ensemble_method,
-                                            var_name="risk_ensemble_method",
-                                            values=.get_available_risk_ensemble_methods())
+            # Test stratification_ensemble_method to see if it is valid.
+            .check_parameter_value_is_valid(x=stratification_ensemble_method,
+                                            var_name="stratification_ensemble_method",
+                                            values=.get_available_stratification_ensemble_methods())
             
             # Test if models are properly loaded
-            if(!is_model_loaded(object=object)){
-              ..error_ensemble_models_not_loaded()
-            }
-            
-            # Check if predictions were generated
-            if(is_empty(prediction_data)){
-              return(NULL)
-            }
+            if(!is_model_loaded(object=object)) ..error_ensemble_models_not_loaded()
             
             # Determine the stratification methods
-            strat_methods <- extract_from_slot(object_list=object@model_list, slot_name="km_info",
-                                               slot_element="stratification_method", na.rm=TRUE)
-            strat_methods <- unique(strat_methods)
+            strat_methods <- unique(extract_from_slot(object_list=object@model_list,
+                                                      slot_name="km_info",
+                                                      slot_element="stratification_method",
+                                                      na.rm=TRUE))
             
             # Iterate over stratification methods
-            data <- lapply(strat_methods, function(strat_method, object, prediction_data, method){
-            
+            risk_group_data <- lapply(strat_methods, function(stratification_method, object, data, time, ensemble_method, method){
+              
               if(method %in% c("ensemble_mode", "ensemble_mean")){
                 # Use cut-offs on models and aggregate grouping
                 
-                # Assign risk group per model
-                data <- lapply(seq_len(length(object@model_list)), function(ii, object, pred_table_list, strat_method){
-                  
-                  if(!any_predictions_valid(pred_table_list[[ii]], outcome_type=object@outcome_type)){
-                    return(NULL)
-                  }
+                # Collect risk group data for each model.
+                risk_group_data <- lapply(object@model_list, function(object, data, time, stratification_method){
                   
                   # Assign risk groups
-                  data <- assign_risk_groups(object=object@model_list[[ii]], prediction_data=pred_table_list[[ii]],
-                                             stratification_method=strat_method)
+                  risk_group_data <- assign_risk_groups(object=object,
+                                                        data=data,
+                                                        stratification_method=stratification_method,
+                                                        time=time)[[stratification_method]]
                   
-                  # Extract the table and add the model name.
-                  data <- add_model_name(data=data[[1]], object=object@model_list[[ii]])
+                  if(is_empty(risk_group_data)) return(NULL)
                   
-                  return(data)
-                  
-                }, object=object, pred_table_list=prediction_data$single, strat_method=strat_method)
+                  return(risk_group_data)
+                },
+                data=data,
+                time=time,
+                stratification_method=stratification_method)
                 
                 # Parse data to single data.table
-                data <- data.table::rbindlist(data)
+                risk_group_data <- data.table::rbindlist(risk_group_data)
                 
-                if(is_empty(data)) return(NULL)
+                # Check that the data is not empty
+                if(is_empty(risk_group_data)) return(NULL)
                 
+                # Create risk groups according to the corresponding method.
                 if(method == "ensemble_mean"){
-                  data <- data[, list("risk_group"=learner.get_mean_risk_group(risk_group)), by=c("subject_id", "cohort_id", "repetition_id")]
+                  risk_group_data <- risk_group_data[, list("risk_group"=learner.get_mean_risk_group(risk_group)),
+                                                     by=c("subject_id", "cohort_id", "repetition_id", "outcome_time", "outcome_event")]
                   
                 } else if(method == "ensemble_mode"){
-                  data <- data[, list("risk_group"=get_mode(risk_group)), by=c("subject_id", "cohort_id", "repetition_id")]
+                  risk_group_data <- risk_group_data[, list("risk_group"=get_mode(risk_group)),
+                                                     by=c("subject_id", "cohort_id", "repetition_id", "outcome_time", "outcome_event")]
                 }
                 
               } else if(method %in% c("mean_threshold", "median_threshold")){
                 # Aggregate cut-offs and use ensemble predictions
                 
                 # Extract stratification parameters
-                km_parameters <- extract_from_slot(object_list=object@model_list, slot_name="km_info",
-                                                   slot_element="parameters", na.rm=TRUE)
+                km_parameters <- extract_from_slot(object_list=object@model_list,
+                                                   slot_name="km_info",
+                                                   slot_element="parameters",
+                                                   na.rm=TRUE)
                 
-                if(!any_predictions_valid(prediction_data$ensemble, outcome_type=object@outcome_type)){
-                  return(NULL)
-                }
+                # Predict values.
+                prediction_table <- .predict(object=object,
+                                            data=data,
+                                            time=time,
+                                            ensemble_method=ensemble_method)
+                
+                # Check if there are any valid predictions.
+                if(!any_predictions_valid(prediction_table=prediction_table, outcome_type=object@outcome_type)) return(NULL)
                 
                 # Collect cutoffs
                 cutoff <- lapply(km_parameters, function(km_info, strat_method){
@@ -327,7 +327,7 @@ setMethod("assign_risk_groups", signature(object="familiarEnsemble", prediction_
                   
                   return(cutoff_data)
                   
-                }, strat_method=strat_method)
+                }, strat_method=stratification_method)
                 
                 # Parse to list
                 cutoff <- data.table::rbindlist(cutoff)
@@ -345,39 +345,35 @@ setMethod("assign_risk_groups", signature(object="familiarEnsemble", prediction_
                 
                 # Get risk groups
                 risk_group <- learner.apply_risk_threshold(object=object,
-                                                           predicted_values=prediction_data$ensemble$predicted_outcome,
-                                                           cutoff=cutoff,
-                                                           learner=object@learner)
+                                                           predicted_values=prediction_table$predicted_outcome,
+                                                           cutoff=cutoff)
                 
                 # Generate data table
-                data <- data.table::data.table("subject_id"=prediction_data$ensemble$subject_id,
-                                               "cohort_id"=prediction_data$ensemble$cohort_id,
-                                               "repetition_id"=prediction_data$ensemble$repetition_id,
-                                               "risk_group"=risk_group)
+                risk_group_data <- prediction_table
+                risk_group_data[, ":="("predicted_outcome"=NULL,
+                                       "risk_group"=risk_group)]
                 
               }
               
-              # Extract survival information
-              survival_table <- prediction_data$ensemble[, c("subject_id", "cohort_id", "repetition_id",
-                                                             "outcome_time", "outcome_event"), with=FALSE]
-              
-              # Combine survival information and predicted risk groups
-              data <- merge(x=data, y=survival_table, by=c("subject_id", "cohort_id", "repetition_id"))
-              
               # Add stratification method
-              data[, "strat_method":=strat_method]
+              risk_group_data[, "strat_method":=stratification_method]
               
               # Add model name
-              data <- add_model_name(data=data, object=object)
+              risk_group_data <- add_model_name(data=risk_group_data, object=object)
               
-              return(data)
+              return(risk_group_data)
               
-            }, object=object, prediction_data=prediction_data, method=risk_ensemble_method)
+            },
+            object=object,
+            data=data,
+            ensemble_method=ensemble_method,
+            method=stratification_ensemble_method,
+            time=time)
             
             # Add names to the risk group list
-            names(data) <- strat_methods
+            names(risk_group_data) <- strat_methods
             
-            return(data)
+            return(risk_group_data)
           })
 
 

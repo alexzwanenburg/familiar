@@ -87,15 +87,14 @@ setMethod("assess_calibration", signature(object="familiarModel"),
           })
 
 #####assign_risk_groups (model)#####
-setMethod("assign_risk_groups", signature(object="familiarModel", prediction_data="data.frame"),
-          function(object, prediction_data, stratification_method=NULL){
+setMethod("assign_risk_groups", signature(object="familiarModel", data="dataObject"),
+          function(object,
+                   data,
+                   time,
+                   stratification_method=NULL){
 
-            # Check if predictions were generated
-            if(is.null(prediction_data)){
-              return(NULL)
-            }
-
-            # Allow for selection of a single method by setting stratification_method
+            # Allow for selection of a single method by setting
+            # stratification_method.
             if(is.null(stratification_method)){
               km_info_list <- object@km_info$parameters
             } else {
@@ -107,29 +106,36 @@ setMethod("assign_risk_groups", signature(object="familiarModel", prediction_dat
               km_info_list <- object@km_info$parameters[stratification_method]
             }
             
+            # Find predictions.
+            prediction_table <- .predict(object=object,
+                                         data=data,
+                                         time=time)
+            
+            if(is_empty(prediction_table)) return(NULL)
+            if(!any_predictions_valid(prediction_table=prediction_table, outcome_type=object@outcome_type)) return(NULL)
+            
             # Iterate over methods used to determine thresholds
-            data <- lapply(km_info_list, function(km_info, object, prediction_data, learner){
+            risk_group_data <- lapply(km_info_list, function(km_info, object, prediction_table, learner){
               
               # Assign risk group based on cutoff values stored in the familiarModel object
               risk_group <- learner.apply_risk_threshold(object=object,
-                                                         predicted_values=prediction_data$predicted_outcome,
-                                                         cutoff=km_info$cutoff,
-                                                         learner=learner)
+                                                         predicted_values=prediction_table$predicted_outcome,
+                                                         cutoff=km_info$cutoff)
               
               # Create a table to assign the risk group.
               data <- data.table::data.table("strat_method"=km_info$method,
-                                             "subject_id"=prediction_data$subject_id,
-                                             "cohort_id"=prediction_data$cohort_id,
-                                             "repetition_id"=prediction_data$repetition_id,
-                                             "outcome_time"=prediction_data$outcome_time,
-                                             "outcome_event"=prediction_data$outcome_event,
+                                             "subject_id"=prediction_table$subject_id,
+                                             "cohort_id"=prediction_table$cohort_id,
+                                             "repetition_id"=prediction_table$repetition_id,
+                                             "outcome_time"=prediction_table$outcome_time,
+                                             "outcome_event"=prediction_table$outcome_event,
                                              "risk_group"=risk_group)
               
               return(data)
               
-            }, object=object, prediction_data=prediction_data, learner=object@learner)
+            }, object=object, prediction_table=prediction_table, learner=object@learner)
             
-            return(data)
+            return(risk_group_data)
           })
 
 
@@ -356,3 +362,9 @@ setMethod("..vimp", signature(object="familiarModel"),
 ####has_calibration_info####
 setMethod("has_calibration_info", signature(object="familiarModel"),
           function(object) return(!is.null(object@calibration_info)))
+
+
+
+.get_available_risklike_prediction_types <- function(){
+  return(c("hazard_ratio", "cumulative_hazard", "survival_probability"))
+}
