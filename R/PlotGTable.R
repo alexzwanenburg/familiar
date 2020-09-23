@@ -157,40 +157,6 @@
 
 
 
-.gtable_replace <- function(g, g_new, where, ref_element, partial_match=FALSE){
-  
-  if(length(g_new) == 0) return(g)
-  browser()
-  
-  # Find the name of the element
-  new_element_name <- g_new$layout$name
-  
-  # Find position.
-  if(partial_match){
-    # Based on partial matching.
-    grob_entry <- which(grepl(pattern=new_element_name, x=g$layout$name))
-    
-  } else {
-    # Based on exact matching.
-    grob_entry <- which(g$layout$name == new_element_name)
-  }
-  
-  if(length(grob_entry) == 0) ..error_reached_unreachable_code(".gtable_replace: no matching entry found.")
-  
-  if(length(grob_entry) > 1){
-    # Find the intended element.
-    
-    # Find the position of the reference element.
-    ref_position <- .gtable_get_position(g=g,
-                                         element=ref_element,
-                                         where=where,
-                                         partial_match=partial_match)
-  }
-  
-}
-
-
-
 .gtable_insert <- function(g, g_new, where="top", ref_element="panel", spacer=NULL, partial_match=FALSE){
   
   if(length(g_new) == 0) return(g)
