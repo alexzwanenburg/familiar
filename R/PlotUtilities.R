@@ -1414,6 +1414,77 @@ plotting.replace_missing_grobs <- function(grobs){
 }
 
 
+plotting.create_empty_grob <- function(g, keep_implicit=FALSE){
+  
+  repl_grob <- g
+  
+  # Replace grobs by empty grobs.
+  repl_grob$grobs <- replicate(length(g),
+                               ggplot2::zeroGrob(),
+                               simplify=FALSE)
+  
+  # Identify the panel grobs.
+  if(keep_implicit){
+    
+    for(grob_id in which(grepl(pattern="panel", x=repl_grob$layout$name))){
+      
+      # Determine the location of the panel.
+      position <- as.list(repl_grob$layout[grob_id, c("t", "l", "b", "r")])
+      
+      if(position$t == position$b){
+        
+        # Identify the height of the original panel.
+        if(grid::is.unit(g$grobs[[grob_id]]$heights)){
+          grob_height <- g$grobs[[grob_id]]$heights
+          
+        } else if(grid::is.unit(g$grobs[[grob_id]]$height)){
+          grob_height <- g$grobs[[grob_id]]$height
+          
+        } else if(grid::is.unit(g$heights[position$t])){
+          grob_height <- g$heights[position$t]
+          
+        } else {
+          grob_height <- grid::unit(1.0, "null")
+        }
+        
+        if(as.numeric(grob_height) == 0){
+          grob_height <- grid::unit(1.0, "null")
+        }
+        
+        # Set the hight of the new panel.
+        repl_grob$grobs[[grob_id]]$height <- grob_height
+      }
+      
+      if(position$l == position$r){
+        
+        # Identify the height of the original panel.
+        if(grid::is.unit(g$grobs[[grob_id]]$widths)){
+          grob_width <- g$grobs[[grob_id]]$widths
+          
+        } else if(grid::is.unit(g$grobs[[grob_id]]$width)){
+          grob_width <- g$grobs[[grob_id]]$width
+          
+        } else if(grid::is.unit(g$widths[position$l])){
+          grob_width <- g$widths[position$l]
+          
+        } else {
+          grob_width <- grid::unit(1.0, "null")
+        }
+        
+        if(as.numeric(grob_width) == 0){
+          grob_width <- grid::unit(1.0, "null")
+        }
+        
+        # Set the hight of the new panel.
+        repl_grob$grobs[[grob_id]]$width <- grob_width
+      }
+    }
+  }
+  
+  return(repl_grob)
+}
+
+
 
 plotting.to_grob <- function(plots_or_grobs){
 
