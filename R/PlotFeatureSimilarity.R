@@ -564,7 +564,7 @@ setMethod("plot_feature_similarity", signature(object="familiarCollection"),
     # Add combined grob to list
     figure_list <- c(figure_list, list(g_heatmap))
     
-    # Add extract elements to the grob_element_list
+    # Add extract elements to the extracted_element_list
     extracted_element_list <- c(extracted_element_list, list(extracted_elements))
   }
   
