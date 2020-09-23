@@ -734,8 +734,8 @@ plotting.compile_figure_data <- function(grobs,
       
       # Collect labels for the x-axis
       if(plot_layout_table[figure_id == ii]$has_axis_label_x){
-        current_figure_list$axis_label_b <- element_grobs[[ii]]$axis_label_t
-        current_figure_list$axis_label_t <- element_grobs[[ii]]$axis_label_b
+        current_figure_list$axis_label_b <- element_grobs[[ii]]$axis_label_b
+        current_figure_list$axis_label_t <- element_grobs[[ii]]$axis_label_t
       }
       
       # Collect labels for the y-axis.
@@ -788,8 +788,8 @@ plotting.compile_figure_data <- function(grobs,
       
       # Collect labels for the x-axis.
       if(plot_layout_table[figure_id == ii]$has_axis_label_x){
-        current_figure_list$axis_label_b <- element_grobs[[same_col_figure_id]]$axis_label_t
-        current_figure_list$axis_label_t <- element_grobs[[same_col_figure_id]]$axis_label_b
+        current_figure_list$axis_label_b <- element_grobs[[same_col_figure_id]]$axis_label_b
+        current_figure_list$axis_label_t <- element_grobs[[same_col_figure_id]]$axis_label_t
       }
       
       # Collect labels for the y-axis
