@@ -467,7 +467,7 @@ setMethod("plot_feature_similarity", signature(object="familiarCollection"),
                                           show_dendrogram,
                                           dendrogram_height){
   
-  # Split by facet. This generates a list of data splits with facetting
+  # Split by facet. This generates a list of data splits with faceting
   # information that allows for positioning.
   plot_layout_table <- plotting.get_plot_layout_table(x=x,
                                                       facet_by=facet_by,
@@ -521,11 +521,9 @@ setMethod("plot_feature_similarity", signature(object="familiarCollection"),
     # Remove extracted elements from the heatmap.
     p_heatmap <- plotting.remove_plot_elements(p=p_heatmap)
     
-    # Convert to grob.
-    g_heatmap <- plotting.to_grob(p_heatmap)
-    
     # Rename plot elements.
-    if(!is.null(g_heatmap)) g_heatmap <- plotting.rename_plot_elements(g=g_heatmap, extension="main")
+    g_heatmap <- plotting.rename_plot_elements(g=plotting.to_grob(p_heatmap),
+                                               extension="main")
     
     # Add dendrogram
     if(!is.null(show_dendrogram) & inherits(cluster_object, "hclust")){
