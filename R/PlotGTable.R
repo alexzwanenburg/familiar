@@ -700,6 +700,7 @@
       } else if(grid::unitType(grob_width) == "npc"){
         grob_width <- grid::unit(as.numeric(grob_width), "null")
       } 
+      
     }
     
     return(grob_width)
@@ -723,7 +724,10 @@
     
     # Remove all empty heights.
     grob_heights <- grob_heights[sapply(grob_heights, grid::is.unit)]
+    if(length(grob_heights) == 0) next()
     
+    # Remove all heights equal to 0.0.
+    grob_heights <- grob_heights[sapply(grob_heights, function(grob_height) (as.numeric(grob_height) != 0.0))]
     if(length(grob_heights) == 0) next()
     
     # Select unique heights.
@@ -769,7 +773,10 @@
     
     # Remove all empty widths.
     grob_widths <- grob_widths[sapply(grob_widths, grid::is.unit)]
+    if(length(grob_widths) == 0) next()
     
+    # Remove all heights equal to 0.0.
+    grob_widths <- grob_widths[sapply(grob_widths, function(grob_width) (as.numeric(grob_width) != 0.0))]
     if(length(grob_widths) == 0) next()
     
     # Select unique widths.
