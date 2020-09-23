@@ -422,7 +422,7 @@ plotting.get_plot_layout_dims <- function(plot_layout_table=NULL, ...){
 
 
 plotting.get_plot_layout_table <- function(x, facet_by, facet_wrap_cols){
-
+  
   if(is.null(facet_by)){
     # Simple 1x1 layout without facets.
     plot_layout_table <- data.table::data.table("col_id"=1L,
@@ -721,7 +721,7 @@ plotting.compile_figure_data <- function(grobs,
   # create the sub-figures.
   
   for(ii in plot_layout_table$figure_id){
-
+    
     current_figure_list <- list()
     if(plot_layout_table[figure_id == ii]$is_present){
       
@@ -767,12 +767,8 @@ plotting.compile_figure_data <- function(grobs,
     } else {
       
       # In this case the main plot data is not present.
-      replacement_grob <- grobs[[plot_layout_table[is_present == TRUE]$figure_id[1]]]
-      
-      # Replace all table elements by zeroGrobs.
-      replacement_grob$grobs <- replicate(length(replacement_grob),
-                                          ggplot2::zeroGrob(),
-                                          simplify=FALSE)
+      replacement_grob <- plotting.create_empty_grob(g=grobs[[plot_layout_table[is_present == TRUE]$figure_id[1]]],
+                                                     keep_implicit=TRUE)
       
       # Identify existing grobs from the same row and from the same column.
       current_row_id <- plot_layout_table[figure_id == ii]$row_id
@@ -867,11 +863,9 @@ plotting.add_global_plot_elements <- function(grobs,
 #' @noRd
 plotting.arrange_figures <- function(grobs,
                                      plot_layout_table,
-                                     panel_elements,
-                                     figure_elements,
                                      element_grobs,
                                      ggtheme){
-
+  
   # Suppress NOTES due to non-standard evaluation in data.table
   col_id <- row_id <- NULL
   
@@ -927,6 +921,7 @@ plotting.arrange_figures <- function(grobs,
       g <- g_current_row
       
     } else {
+      
       # Use rbind.gtable to combine rows.
       g <- rbind(g, g_current_row)
     }
