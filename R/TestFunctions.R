@@ -21,7 +21,7 @@ test_all_learners_available <- function(learners){
       # Check if the learner is available for the outcome.
       if(is_available(object)){
         learner_available[learner] <- TRUE
-        break
+        break()
       }
     }
   }
