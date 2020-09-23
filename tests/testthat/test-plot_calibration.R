@@ -62,3 +62,14 @@ familiar:::test_plot_ordering(plot_function=familiar:::plot_calibration_data,
                               outcome_type_available=c("survival"),
                               plot_args=list("facet_by"=c("fs_method", "learner"),
                                              "color_by"=c("data_set")))
+
+familiar:::test_plot_ordering(plot_function=familiar:::plot_calibration_data,
+                              data_element="calibration_data",
+                              outcome_type_available=c("count", "continuous", "binomial", "survival"),
+                              plot_args=list("facet_by"=c("learner", "fs_method", "data_set")))
+
+familiar:::test_plot_ordering(plot_function=familiar:::plot_calibration_data,
+                              data_element="calibration_data",
+                              outcome_type_available=c("multinomial"),
+                              plot_args=list("facet_by"=c("learner", "fs_method", "data_set"),
+                                             "color_by"="pos_class"))
