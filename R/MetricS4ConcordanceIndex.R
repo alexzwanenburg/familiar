@@ -73,9 +73,7 @@ setMethod("compute_metric_score", signature(metric="familiarMetricConcordanceInd
                                                 data=data)
             
             # Invert the score for risk-like predictions.
-            if(metric@prediction_type %in% c("hazard_ratio", "cumulative_hazard", "survival_probability")){
-               score <- 1.0 - score
-            }
+            if(metric@prediction_type %in% .get_available_risklike_prediction_types()) score <- 1.0 - score
             
             return(score)
           })
