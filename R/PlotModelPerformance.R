@@ -369,6 +369,16 @@ setMethod("plot_model_performance", signature(object="familiarCollection"),
               if(!y_axis_by %in% c("fs_method", "learner", "data_set", split_variable)) stop("The y_axis_by argument should be one of fs_method, learner or data_set.")
             }
             
+            if(is.null(x_axis_by)){
+              x_axis_by <- setdiff(c("metric", "data_set", "fs_method", "learner", split_variable), c(split_by, color_by, facet_by, y_axis_by))
+              if(length(x_axis_by) == 0) stop("The x_axis_by argument should be set.")
+              if(length(x_axis_by) > 1 & "metric" %in% c(x_axis_by)){
+                x_axis_by <- "metric"
+              } else {
+                x_axis_by <- x_axis_by[1]
+              }
+            }
+            
             # x_label
             if(is.waive(x_label)){
               x_label <- switch(x_axis_by,
@@ -408,9 +418,7 @@ setMethod("plot_model_performance", signature(object="familiarCollection"),
             }
             
             # Store plots to list in case dir_path is absent.
-            if(is.null(dir_path)){
-              plot_list <- list()
-            }
+            if(is.null(dir_path)) plot_list <- list()
             
             # Iterate over data splits.
             for(ii in names(x_split)){
@@ -484,7 +492,7 @@ setMethod("plot_model_performance", signature(object="familiarCollection"),
                 
               } else {
                 # Store as list for export.
-                plot_list <- append(plot_list, list(p))
+                plot_list <- c(plot_list, list(p))
               }
             }
             

@@ -116,7 +116,7 @@ plotting.check_data_handling <- function(x,
                 ifelse(length(splitting_vars) == 1, " was assigned.", " were assigned.")))
     
   }
-
+  
   # Filter available down to those that have more than one variable
   filter_available <- available[sapply(available, function(ii, x) (data.table::uniqueN(x=x, by=ii) > 1), x=x)]
   
