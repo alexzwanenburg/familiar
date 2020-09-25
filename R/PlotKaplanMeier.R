@@ -443,7 +443,7 @@ setMethod("plot_kaplan_meier", signature(object="familiarCollection"),
                   
                 } else {
                   # Store as list
-                  sub_plot_list <- append(sub_plot_list, list(p))
+                  sub_plot_list <- c(sub_plot_list, list(p))
                 }
               }
               
@@ -558,7 +558,7 @@ setMethod("plot_kaplan_meier", signature(object="familiarCollection"),
                                                     extension="main")
     
     
-    if(show_survival_table){
+    if(show_survival_table & gtable::is.gtable(g_kaplan_meier)){
       # Survival tables
       p_survival_table <- .create_survival_table_subplot(x=km_split_list[[ii]],
                                                          color_by=color_by,
@@ -572,7 +572,7 @@ setMethod("plot_kaplan_meier", signature(object="familiarCollection"),
       g_survival_table <- .gtable_extract(g=plotting.to_grob(p_survival_table),
                                           element=c("panel", "axis-l"),
                                           partial_match=TRUE)
-      browser()
+      
       # Insert survival table into the kaplan-meier table. Use partial matching
       # to match elements from g_survival_table with those in g_kaplan_meier.
       g_kaplan_meier <- .gtable_insert(g=g_kaplan_meier,
@@ -590,12 +590,12 @@ setMethod("plot_kaplan_meier", signature(object="familiarCollection"),
     extracted_element_list <- c(extracted_element_list, list(extracted_elements))
   }
   
-  # Update the layout table.
+  # Update the layout table. Note that the axis text and labels share the same behaviour.
   plot_layout_table <- plotting.update_plot_layout_table(plot_layout_table=plot_layout_table,
                                                          grobs=figure_list,
-                                                         x_text_shared=FALSE,
+                                                         x_text_shared=x_label_shared,
                                                          x_label_shared=x_label_shared,
-                                                         y_text_shared=FALSE,
+                                                         y_text_shared=y_label_shared,
                                                          y_label_shared=y_label_shared,
                                                          facet_wrap_cols=facet_wrap_cols)
   
