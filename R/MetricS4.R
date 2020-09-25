@@ -241,7 +241,7 @@ setMethod("is_higher_better", signature(metric="familiarMetric"),
 setMethod("is_higher_better", signature(metric="character"),
           function(metric, ...){
             # Create metric objects.
-            metric_object_list <- lapply(metric, function(metric, dots) do.call(as_metric, args=dots),
+            metric_object_list <- lapply(metric, function(metric, dots) do.call(as_metric, args=c(list("metric"=metric), dots)),
                                          dots=list(...))
             
             # Check that the metrics are available.
