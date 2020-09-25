@@ -490,9 +490,9 @@ plotting.get_plot_layout_table <- function(x, facet_by, facet_wrap_cols){
 
 plotting.update_plot_layout_table <- function(plot_layout_table,
                                               grobs,
-                                              x_text_shared=FALSE,
+                                              x_text_shared="overall",
                                               x_label_shared="overall",
-                                              y_text_shared=FALSE,
+                                              y_text_shared="overall",
                                               y_label_shared="overall",
                                               facet_wrap_cols=NULL){
   
@@ -537,8 +537,8 @@ plotting.update_plot_layout_table <- function(plot_layout_table,
                              "row_id"=row_ids,
                              "has_strip_x"=TRUE,
                              "has_strip_y"=FALSE,
-                             "has_axis_text_x"=!x_text_shared,
-                             "has_axis_text_x"=!y_text_shared,
+                             "has_axis_text_x"=x_text_shared == "individual",
+                             "has_axis_text_y"=y_text_shared == "individual",
                              "has_axis_label_x"=x_label_shared == "individual",
                              "has_axis_label_y"=y_label_shared == "individual")]
     
@@ -546,12 +546,15 @@ plotting.update_plot_layout_table <- function(plot_layout_table,
       # Determine the bottom row.
       max_row_id <- max(plot_layout_table[col_id == current_col_id]$row_id)
       
-      # Set x labels and text.
-      if(x_text_shared) plot_layout_table[col_id == current_col_id & row_id == max_row_id, "has_axis_text_x":=TRUE]
+      # Set x labels and text. Note that even when "overall" is set, axis text
+      # should stick to the panels.
+      if(x_text_shared %in% c("column", "overall")) plot_layout_table[col_id == current_col_id & row_id == max_row_id, "has_axis_text_x":=TRUE]
       if(x_label_shared == "column") plot_layout_table[col_id == current_col_id & row_id == max_row_id, "has_axis_label_x":=TRUE]
     }
     
-    if(y_text_shared) plot_layout_table[col_id == 1L, "has_axis_text_y":=TRUE]
+    # Set y labels and text. Note that even when "overall" is set, axis text
+    # should stick to the panels.
+    if(y_text_shared %in% c("row", "overall")) plot_layout_table[col_id == 1L, "has_axis_text_y":=TRUE]
     if(y_label_shared == "row") plot_layout_table[col_id == 1L, "has_axis_label_y":=TRUE]
     
   } else {
@@ -563,8 +566,8 @@ plotting.update_plot_layout_table <- function(plot_layout_table,
     # Set default elements
     plot_layout_table[, ":="("has_strip_x"=FALSE,
                              "has_strip_y"=FALSE,
-                             "has_axis_text_x"=!x_text_shared,
-                             "has_axis_text_y"=!y_text_shared,
+                             "has_axis_text_x"=x_text_shared == "individual",
+                             "has_axis_text_y"=y_text_shared == "individual",
                              "has_axis_label_x"=x_label_shared == "individual",
                              "has_axis_label_y"=y_label_shared == "individual")]
     
@@ -576,9 +579,10 @@ plotting.update_plot_layout_table <- function(plot_layout_table,
     if(n_rows > 1) plot_layout_table[col_id == n_cols, "has_strip_y":=TRUE]
     if(n_cols > 1) plot_layout_table[row_id == 1L, "has_strip_x":=TRUE]
     
-    # Add axis text.
-    if(x_text_shared) plot_layout_table[row_id == n_rows, "has_axis_text_x":=TRUE]
-    if(y_text_shared) plot_layout_table[col_id == 1L, "has_axis_text_y":=TRUE]
+    # Add axis text. Note that even when "overall" is set, axis text should
+    # stick to the panels.
+    if(x_text_shared %in% c("column", "overall")) plot_layout_table[row_id == n_rows, "has_axis_text_x":=TRUE]
+    if(y_text_shared %in% c("row", "overall")) plot_layout_table[col_id == 1L, "has_axis_text_y":=TRUE]
     
     # Add axis labels
     if(x_label_shared == "column") plot_layout_table[row_id == n_rows, "has_axis_label_x":=TRUE]
