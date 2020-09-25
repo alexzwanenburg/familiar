@@ -712,6 +712,9 @@ plotting.compile_figure_data <- function(grobs,
   # Suppress NOTES due to non-standard evaluation in data.table
   figure_id <- is_present <- col_id <- row_id <- NULL
   
+  # Check whether the plot layout table is empty.
+  if(is_empty(plot_layout_table)) return(NULL)
+  
   # Create a placeholder list. This is done to prevent losing a connection
   # between figure id and the length of the list in case entire columns or rows
   # were removed from the plot_layout_table.
@@ -873,6 +876,8 @@ plotting.arrange_figures <- function(grobs,
                                               element_grobs=element_grobs,
                                               plot_layout_table=plot_layout_table,
                                               ggtheme=ggtheme)
+  
+  if(is_empty(figure_data)) return(NULL)
   
   # Placeholder for final figure
   g <- NULL
