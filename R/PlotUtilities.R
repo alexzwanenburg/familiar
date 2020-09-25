@@ -729,6 +729,8 @@ plotting.compile_figure_data <- function(grobs,
   
   for(ii in plot_layout_table$figure_id){
     
+    removed_axis_text_x <- removed_axis_text_y <- FALSE
+    
     current_figure_list <- list()
     if(plot_layout_table[figure_id == ii]$is_present){
       
@@ -757,6 +759,8 @@ plotting.compile_figure_data <- function(grobs,
         current_figure_list$axis_text_t <- element_grobs[[ii]]$axis_text_t
         
       } else if(!keep_axis_text_x) {
+        removed_axis_text_x <- TRUE
+        
         current_figure_list$axis_text_b <- element_grobs[[ii]]$axis_text_b_nt
         current_figure_list$axis_text_t <- element_grobs[[ii]]$axis_text_t_nt
       }
@@ -767,6 +771,8 @@ plotting.compile_figure_data <- function(grobs,
         current_figure_list$axis_text_r <- element_grobs[[ii]]$axis_text_r
         
       } else if(!keep_axis_text_y) {
+        removed_axis_text_y <- TRUE
+        
         current_figure_list$axis_text_l <- element_grobs[[ii]]$axis_text_l_nt
         current_figure_list$axis_text_r <- element_grobs[[ii]]$axis_text_r_nt
       }
@@ -805,6 +811,16 @@ plotting.compile_figure_data <- function(grobs,
     # Merge elements with the main element.
     g <- plotting.reinsert_plot_elements(grob_list=current_figure_list,
                                          ggtheme=ggtheme)
+    
+    if(removed_axis_text_x){
+      g <- plotting.update_axis_text_elements(g=g,
+                                              type="heights")
+    }
+    
+    if(removed_axis_text_y){
+      g <- plotting.update_axis_text_elements(g=g,
+                                              type="widths")
+    }
     
     # Add data to the figure list.
     figure_list[[ii]] <- g
@@ -1481,6 +1497,38 @@ plotting.create_empty_grob <- function(g, keep_implicit=FALSE){
   }
   
   return(repl_grob)
+}
+
+
+
+plotting.update_axis_text_elements <- function(g, type){
+  
+  if(type == "widths"){
+    elements_main <- c("axis-l-main", "axis-r-main")
+    elements_side <- c("axis-l", "axis-r")
+    
+  } else if(type == "heights") {
+    elements_main <- c("axis-t-main", "axis-b-main")
+    elements_side <- c("axis-t", "axis-b")
+  }
+  
+  for(grob_id in which(g$layout$name %in% elements_main)){
+    # Determine the location of the panel.
+    position <- as.list(g$layout[grob_id, c("t", "l", "b", "r")])
+    
+    if(type == "widths" & position$l != position$r) next()
+    if(type == "heights" & position$b != position$t) next()
+    
+    if(type == "widths" && any(g$layout$name %in% elements_side & g$layout$l == position$l)){
+      g$grobs[[grob_id]]$widths <- grid::unit(1.0, "npc")
+    }
+    
+    if(type == "heights" && any(g$layout$name %in% elements_side & g$layout$t == position$t)){
+      g$grobs[[grob_id]]$heights <- grid::unit(1.0, "npc")
+    }
+  }
+  
+  return(g)
 }
 
 

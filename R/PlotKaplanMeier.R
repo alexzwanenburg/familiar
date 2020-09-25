@@ -604,7 +604,7 @@ setMethod("plot_kaplan_meier", signature(object="familiarCollection"),
                                 plot_layout_table=plot_layout_table,
                                 element_grobs=extracted_element_list,
                                 ggtheme=ggtheme)
-  browser()
+  
   return(g)
 }
 
