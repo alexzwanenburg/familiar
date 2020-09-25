@@ -112,7 +112,7 @@ plotting.check_data_handling <- function(x,
     
   } else if(is.null(available) & length(splitting_vars) > 0){
     stop(paste0("The current plot has no required splitting variables defined, but ",
-                paste0(splitting_vars, collapse=", "),
+                paste_s(splitting_vars),
                 ifelse(length(splitting_vars) == 1, " was assigned.", " were assigned.")))
     
   }
@@ -126,9 +126,10 @@ plotting.check_data_handling <- function(x,
   } else if(!all(filter_available %in% splitting_vars)){
     missing_vars <- filter_available[!filter_available %in% splitting_vars]
     stop(paste0("The current plot requires ",
-                paste0(filter_available, collapse=", "),
-                " as splitting variables, but ",
-                paste0(missing_vars, collapse=", "),
+                paste_s(filter_available),
+                ifelse(length(filter_available) > 1, " as splitting variables", "as a splitting_variable"),
+                ", but ",
+                paste_s(missing_vars),
                 ifelse(length(missing_vars) == 1, " was not assigned.", " were not assigned.")))
   }
   
