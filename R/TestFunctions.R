@@ -1277,7 +1277,7 @@ test_plots <- function(plot_function,
                         testthat::expect_equal(all(!which_present), TRUE)
                         
                       } else {
-                        testthat::expect_equal(any(!which_present), FALSE)
+                        testthat::expect_equal(any(!which_present), TRUE)
                       }
                     })
     
