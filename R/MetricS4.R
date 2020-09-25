@@ -198,6 +198,12 @@ as_metric <- function(metric,
                                                        "object"=object),
                                                   .sanitise_dots("familiarMetricConcordanceIndexHarrell",
                                                                  ...)))
+  } else {
+    metric_object <- do.call(methods::new, args=(c(list("Class"="familiarMetric",
+                                                        "metric"=metric,
+                                                        "outcome_type"=outcome_type),
+                                                   .sanitise_dots("familiarMetric",
+                                                                  ...))))
   }
 
   return(metric_object)
@@ -228,6 +234,7 @@ setMethod("is_available", signature(object="familiarMetric"),
 #####is_higher_better#####
 setMethod("is_higher_better", signature(metric="familiarMetric"),
           function(metric, ...) return(metric@higher_better))
+
 
 
 #####is_higher_better#####
