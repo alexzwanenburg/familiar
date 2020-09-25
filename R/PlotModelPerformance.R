@@ -619,6 +619,13 @@ setMethod("plot_model_performance", signature(object="familiarCollection"),
       if(length(metrics) == 1){
         gradient_palette_range <- metric.get_metric_default_range(metric=metrics,
                                                                   outcome_type=outcome_type)
+        
+        # Replace a positive infinite value by the max range in the data.
+        if(gradient_palette_range[2] == Inf) gradient_palette_range[2] <- max(x[metric==metrics, value], na.rm=TRUE)
+
+        # Replace any negative infinite value by the min range in the data.
+        if(gradient_palette_range[1] == -Inf) gradient_palette_range[1] <- min(x[metric==metrics, value], na.rm=TRUE)
+
         gradient_was_provided <- FALSE
         
       } else {
