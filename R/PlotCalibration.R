@@ -675,9 +675,9 @@ setMethod("plot_calibration_data", signature(object="familiarCollection"),
   # Update the layout table.
   plot_layout_table <- plotting.update_plot_layout_table(plot_layout_table=plot_layout_table,
                                                          grobs=figure_list,
-                                                         x_text_shared=FALSE,
+                                                         x_text_shared=x_label_shared,
                                                          x_label_shared=x_label_shared,
-                                                         y_text_shared=FALSE,
+                                                         y_text_shared=y_label_shared,
                                                          y_label_shared=y_label_shared,
                                                          facet_wrap_cols=facet_wrap_cols)
   
