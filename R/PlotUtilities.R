@@ -1496,7 +1496,7 @@ plotting.to_grob <- function(plots_or_grobs){
     if(inherits(p, "familiar_ggplot")){
       
       # Convert to grob
-      g <- tryCatch(ggplot2::ggplotGrob(p), error=identity)
+      g <- suppressWarnings(tryCatch(ggplot2::ggplotGrob(p), error=identity))
       if(inherits(g, "error")) g <- NULL
       
       # Make changes to g according to p$custom_grob.
@@ -1541,7 +1541,7 @@ plotting.to_grob <- function(plots_or_grobs){
     } else if(inherits(p, "ggplot")){
       
       # Convert to grob
-      g <- tryCatch(ggplot2::ggplotGrob(p), error=identity)
+      g <- suppressWarnings(tryCatch(ggplot2::ggplotGrob(p), error=identity))
       if(inherits(g, "error")) g <- NULL
       
     } else if(inherits(p, "grob")){
