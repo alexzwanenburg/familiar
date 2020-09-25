@@ -1110,11 +1110,13 @@ test_plots <- function(plot_function,
                       collection <- suppressWarnings(as_familiar_collection(object, familiar_data_names=c("development", "development", "validation", "validation")))
                       
                       plot_list <- do.call(plot_function, args=c(list("object"=collection), plot_args))
+                      which_present <- .test_which_plot_present(plot_list)
+                      
                       if(outcome_type %in% outcome_type_available){
-                        testthat::expect_equal(inherits(plot_list[[1]], "ggplot") | inherits(plot_list[[1]], "gtable"), TRUE) 
+                        testthat::expect_equal(all(which_present), TRUE) 
                         
                       } else {
-                        testthat::expect_equal(is.null(plot_list), TRUE)
+                        testthat::expect_equal(all(!which_present), TRUE)
                       }
                     })
     
@@ -1159,11 +1161,13 @@ test_plots <- function(plot_function,
                       collection <- suppressWarnings(as_familiar_collection(object, familiar_data_names=c("development", "development", "validation", "validation")))
                       
                       plot_list <- do.call(plot_function, args=c(list("object"=collection), plot_args))
+                      which_present <- .test_which_plot_present(plot_list)
+                      
                       if(outcome_type %in% outcome_type_available){
-                        testthat::expect_equal(inherits(plot_list[[1]], "ggplot") | inherits(plot_list[[1]], "gtable"), TRUE) 
+                        testthat::expect_equal(any(which_present), TRUE) 
                         
                       } else {
-                        testthat::expect_equal(is.null(plot_list), TRUE)
+                        testthat::expect_equal(all(!which_present), TRUE)
                       }
                     })
     
@@ -1178,12 +1182,13 @@ test_plots <- function(plot_function,
                       collection <- suppressWarnings(as_familiar_collection(object, familiar_data_names=c("development", "development", "validation", "validation")))
                       
                       plot_list <- do.call(plot_function, args=c(list("object"=collection), plot_args))
+                      which_present <- .test_which_plot_present(plot_list)
                       
-                      if(.always_available){
-                        testthat::expect_equal(inherits(plot_list[[1]], "ggplot") | inherits(plot_list[[1]], "gtable"), TRUE) 
+                      if(outcome_type %in% outcome_type_available & .always_available){
+                        testthat::expect_equal(all(which_present), TRUE) 
                         
                       } else {
-                        testthat::expect_equal(is.null(plot_list), TRUE)
+                        testthat::expect_equal(all(!which_present), TRUE)
                       }
                     })
     
@@ -1198,11 +1203,13 @@ test_plots <- function(plot_function,
                       collection <- suppressWarnings(as_familiar_collection(object, familiar_data_names=c("development", "development", "validation", "validation")))
                       
                       plot_list <- do.call(plot_function, args=c(list("object"=collection), plot_args))
+                      which_present <- .test_which_plot_present(plot_list)
+                      
                       if(outcome_type %in% outcome_type_available){
-                        testthat::expect_equal(inherits(plot_list[[1]], "ggplot") | inherits(plot_list[[1]], "gtable"), TRUE) 
+                        testthat::expect_equal(any(which_present), TRUE) 
                         
                       } else {
-                        testthat::expect_equal(is.null(plot_list), TRUE)
+                        testthat::expect_equal(all(!which_present), TRUE)
                       }
                     })
     
@@ -1217,11 +1224,13 @@ test_plots <- function(plot_function,
                       collection <- suppressWarnings(as_familiar_collection(object, familiar_data_names=c("development", "development", "validation", "validation")))
                       
                       plot_list <- do.call(plot_function, args=c(list("object"=collection), plot_args))
+                      which_present <- .test_which_plot_present(plot_list)
+                      
                       if(outcome_type %in% outcome_type_available){
-                        testthat::expect_equal(inherits(plot_list[[1]], "ggplot") | inherits(plot_list[[1]], "gtable"), TRUE) 
+                        testthat::expect_equal(all(which_present), TRUE) 
                         
                       } else {
-                        testthat::expect_equal(is.null(plot_list), TRUE)
+                        testthat::expect_equal(all(!which_present), TRUE)
                       }
                     })
     
@@ -1259,11 +1268,16 @@ test_plots <- function(plot_function,
                       collection <- suppressWarnings(as_familiar_collection(object, familiar_data_names=c("development", "development", "validation", "validation")))
                       
                       plot_list <- do.call(plot_function, args=c(list("object"=collection), plot_args))
-                      if(outcome_type %in% outcome_type_available  && !.except_one_feature){
-                        testthat::expect_equal(inherits(plot_list[[1]], "ggplot") | inherits(plot_list[[1]], "gtable"), TRUE) 
+                      which_present <- .test_which_plot_present(plot_list)
+                      
+                      if(outcome_type %in% outcome_type_available & !.except_one_feature){
+                        testthat::expect_equal(all(which_present), TRUE) 
+                        
+                      } else if(!outcome_type %in% outcome_type_available){
+                        testthat::expect_equal(all(!which_present), TRUE)
                         
                       } else {
-                        testthat::expect_equal(is.null(plot_list), TRUE)
+                        testthat::expect_equal(any(!which_present), FALSE)
                       }
                     })
     
@@ -1278,15 +1292,20 @@ test_plots <- function(plot_function,
                       collection <- suppressWarnings(as_familiar_collection(object, familiar_data_names=c("development", "development", "validation", "validation")))
                       
                       plot_list <- do.call(plot_function, args=c(list("object"=collection), plot_args))
-                      if(outcome_type %in% outcome_type_available  && !.except_one_feature){
-                        testthat::expect_equal(inherits(plot_list[[1]], "ggplot") | inherits(plot_list[[1]], "gtable"), TRUE) 
+                      which_present <- .test_which_plot_present(plot_list)
+                      
+                      if(outcome_type %in% outcome_type_available & !.except_one_feature){
+                        testthat::expect_equal(any(which_present), TRUE) 
+                        
+                      } else if(!outcome_type %in% outcome_type_available){
+                        testthat::expect_equal(all(!which_present), TRUE)
                         
                       } else {
-                        testthat::expect_equal(is.null(plot_list), TRUE)
+                        testthat::expect_equal(any(!which_present), TRUE)
                       }
                     })
     
-    # Create a dataset with all missing quadrants
+    # Create a dataset with some identical data.
     test_fun(paste0("8. Plots for ", outcome_type, " outcomes ",
                     ifelse(outcome_type %in% outcome_type_available && !.except_one_feature, "can", "cannot"),
                     " be created for a dataset with some invariant data."), {
@@ -1297,11 +1316,16 @@ test_plots <- function(plot_function,
                       collection <- suppressWarnings(as_familiar_collection(object, familiar_data_names=c("development", "development", "validation", "validation")))
                       
                       plot_list <- suppressWarnings(do.call(plot_function, args=c(list("object"=collection), plot_args)))
-                      if(outcome_type %in% outcome_type_available  && !.except_one_feature){
-                        testthat::expect_equal(inherits(plot_list[[1]], "ggplot") | inherits(plot_list[[1]], "gtable"), TRUE) 
+                      which_present <- .test_which_plot_present(plot_list)
+                      
+                      if(outcome_type %in% outcome_type_available & !.except_one_feature){
+                        testthat::expect_equal(any(which_present), TRUE) 
+                        
+                      } else if(!outcome_type %in% outcome_type_available){
+                        testthat::expect_equal(all(!which_present), TRUE)
                         
                       } else {
-                        testthat::expect_equal(is.null(plot_list), TRUE)
+                        testthat::expect_equal(any(!which_present), TRUE)
                       }
                     })
   }
@@ -1397,11 +1421,13 @@ test_plot_ordering <- function(plot_function,
                                                                                                           "development", "development", "validation", "validation")))
                       
                       plot_list <- do.call(plot_function, args=c(list("object"=collection), plot_args))
+                      which_present <- .test_which_plot_present(plot_list)
+                      
                       if(outcome_type %in% outcome_type_available){
-                        testthat::expect_equal(inherits(plot_list[[1]], "ggplot") | inherits(plot_list[[1]], "gtable"), TRUE) 
+                        testthat::expect_equal(all(which_present), TRUE) 
                         
                       } else {
-                        testthat::expect_equal(is.null(plot_list), TRUE)
+                        testthat::expect_equal(all(!which_present), TRUE)
                       }
                     })
   }
@@ -1420,4 +1446,29 @@ debug_test_that <- function(desc, code){
   # Execute the code
   code <- substitute(code)
   eval(code, envir=parent.frame())
+}
+
+
+
+.test_which_plot_present <- function(p){
+  
+  # Check if the top element is null or empty.
+  if(is.null(p)) return(FALSE)
+  if(length(p) == 0) return(FALSE)
+  
+  # Check that the top element is a gtable or ggplot.
+  if(gtable::is.gtable(p) | ggplot2::is.ggplot(p)) return(TRUE)
+  
+  plot_present <- sapply(p, gtable::is.gtable) | sapply(p, ggplot2::is.ggplot)
+  if(any(plot_present)) return(plot_present)
+  
+  if(all(sapply(p, is.null))) return(!sapply(p, is.null))
+  
+  # If the code gets here, p is a nested list.
+  p <- unlist(p, recursive=FALSE)
+  
+  if(is.null(p)) return(FALSE)
+  if(length(p) == 0) return(FALSE)
+  
+  return(sapply(p, gtable::is.gtable) | sapply(p, ggplot2::is.ggplot))
 }
