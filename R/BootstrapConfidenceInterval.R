@@ -54,6 +54,9 @@
                      X=split(data, by=splitting_variables, keep.by=TRUE),
                      FUN=function(data, target_column, confidence_level, bootstrap_ci_method){
                        
+                       # Check that the split contains any data.
+                       if(is_empty(data)) return(NULL)
+                       
                        # Select point estimate and bootstrap estimates.
                        x0 <- data[bootstrap_id == 0, ][[target_column]]
                        xb <- data[bootstrap_id != 0, ][[target_column]]
