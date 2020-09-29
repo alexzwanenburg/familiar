@@ -101,6 +101,14 @@ implemented:
 Note that the standard method is not implemented because this method is
 often not suitable due to non-normal distributions. The bias-corrected and
 accelerated (BCa) method is not implemented yet.}
+    \item{\code{compute_model_data}}{(\emph{optional}) This parameter can be set to enable
+computation of data based on individual models. The parameter can take on or
+more of the following values: \code{all}, \code{model_performance}, \code{auc_data},
+\code{confusion_matrix}, \code{decision_curve_analyis}, \code{permutation_vimp},
+\code{performance_data}, as well as \code{true}, \code{false} and \code{none}.
+
+By default, data is computed for the ensemble as a whole, but not for
+underlying models.}
     \item{\code{compute_model_ci}}{(\emph{optional}) This parameter can be set to enable
 computation of bootstrap confidence intervals for individual models in
 several parts of the evaluation. The parameter can take one or more of the
@@ -109,16 +117,16 @@ following values: \code{all}, \code{model_performance}, \code{auc_data},
 \code{none}.
 
 By default, bootstrap confidence intervals are not computed for individual
-models.}
+models. Note that this parameter has no effect unless data is computed for
+individual models as well, which is managed by the \code{compute_model_data}
+parameter.}
     \item{\code{compute_ensemble_ci}}{(\emph{optional}) This parameter can be set to enable
-computation of bootstrap confidence intervals for ensemble models in
-several parts of the evaluation. The parameter can take one or more of the
-following values: \code{all}, \code{model_performance}, \code{auc_data},
-\code{decision_curve_analyis}, \code{permutation_vimp} as well as \code{true}, \code{false} and
-\code{none}.
+computation of bootstrap confidence intervals for ensemble models in several
+parts of the evaluation. The parameter can take one or more of the following
+values: \code{all}, \code{model_performance}, \code{auc_data}, \code{decision_curve_analyis},
+\code{permutation_vimp} as well as \code{true}, \code{false} and \code{none}.
 
-By default, bootstrap confidence intervals are computed for ensemble
-models.}
+By default, bootstrap confidence intervals are computed for ensemble models.}
     \item{\code{aggregate_ci}}{(\emph{optional}) Bootstraps are used to determine confidence
 intervals. This information can be stored for export. However, in many cases
 this is not necessary, and keeping the bootstrap data can lead to large

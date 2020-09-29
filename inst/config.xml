@@ -182,6 +182,8 @@
       <confidence_level></confidence_level>
       <!-- Method for bootstrap confidence interval (optional, default: bc) -->
       <bootstrap_ci_method></bootstrap_ci_method>
+      <!-- Compute data for individual models. Individual evaluation steps can be selected. Optional (default: none)-->
+      <compute_model_data></compute_model_data>
       <!-- Compute bootstraps confidence intervals for individual models. Individual evaluation steps can be selected. Optional (default: none) -->
       <compute_model_ci></compute_model_ci>
       <!-- Compute bootstraps confidence intervals for ensemble models. Individual evaluation steps can be selected. Optional (default: all) -->

@@ -27,6 +27,7 @@ setGeneric("extract_permutation_vimp",
                     eval_times=waiver(),
                     confidence_level=waiver(),
                     bootstrap_ci_method=waiver(),
+                    compute_model_data=waiver(),
                     compute_model_ci=waiver(),
                     compute_ensemble_ci=waiver(),
                     aggregate_ci=waiver(),
@@ -51,6 +52,7 @@ setMethod("extract_permutation_vimp", signature(object="familiarEnsemble"),
                    eval_times=waiver(),
                    confidence_level=waiver(),
                    bootstrap_ci_method=waiver(),
+                   compute_model_data=waiver(),
                    compute_model_ci=waiver(),
                    compute_ensemble_ci=waiver(),
                    aggregate_ci=waiver(),
@@ -96,6 +98,7 @@ setMethod("extract_permutation_vimp", signature(object="familiarEnsemble"),
             
             # By default, compute confidence intervals for ensembles, but not
             # for models.
+            if(is.waive(compute_model_data)) compute_model_data <- "none"
             if(is.waive(compute_model_ci)) compute_model_ci <- "none"
             if(is.waive(compute_ensemble_ci)) compute_ensemble_ci <- "all"
             if(is.waive(aggregate_ci)) aggregate_ci <- "all"
@@ -145,6 +148,7 @@ setMethod("extract_permutation_vimp", signature(object="familiarEnsemble"),
                                              metric=metric,
                                              eval_times=eval_times,
                                              confidence_level=confidence_level,
+                                             compute_model_data=any(c("all", "permutation_vimp", "TRUE") %in% compute_model_data),
                                              compute_model_ci=any(c("all", "permutation_vimp", "TRUE") %in% compute_model_ci),
                                              compute_ensemble_ci=any(c("all", "permutation_vimp", "TRUE") %in% compute_ensemble_ci),
                                              aggregate_ci=any(c("all", "permutation_vimp", "TRUE") %in% aggregate_ci),

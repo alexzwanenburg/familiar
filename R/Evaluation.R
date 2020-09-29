@@ -448,6 +448,7 @@ run_evaluation <- function(cl, proj_list, settings, file_paths){
                            sample_similarity_metric=settings$eval$sample_similarity_metric,
                            confidence_level = settings$eval$confidence_level,
                            bootstrap_ci_method = settings$eval$bootstrap_ci_method,
+                           compute_model_data = settings$eval$compute_model_data,
                            compute_model_ci = settings$eval$compute_model_ci,
                            compute_ensemble_ci = settings$eval$compute_ensemble_ci,
                            aggregate_ci = settings$eval$aggregate_ci,

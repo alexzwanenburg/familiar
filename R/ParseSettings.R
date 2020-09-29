@@ -2113,6 +2113,15 @@
 #'  often not suitable due to non-normal distributions. The bias-corrected and
 #'  accelerated (BCa) method is not implemented yet.
 #'
+#'@param compute_model_data (*optional*) This parameter can be set to enable
+#'  computation of data based on individual models. The parameter can take on or
+#'  more of the following values: `all`, `model_performance`, `auc_data`,
+#'  `confusion_matrix`, `decision_curve_analyis`, `permutation_vimp`,
+#'  `performance_data`, as well as `true`, `false` and `none`.
+#'
+#'  By default, data is computed for the ensemble as a whole, but not for
+#'  underlying models.
+#'
 #'@param compute_model_ci (*optional*) This parameter can be set to enable
 #'  computation of bootstrap confidence intervals for individual models in
 #'  several parts of the evaluation. The parameter can take one or more of the
@@ -2121,17 +2130,17 @@
 #'  `none`.
 #'
 #'  By default, bootstrap confidence intervals are not computed for individual
-#'  models.
+#'  models. Note that this parameter has no effect unless data is computed for
+#'  individual models as well, which is managed by the `compute_model_data`
+#'  parameter.
 #'
 #'@param compute_ensemble_ci (*optional*) This parameter can be set to enable
-#'  computation of bootstrap confidence intervals for ensemble models in
-#'  several parts of the evaluation. The parameter can take one or more of the
-#'  following values: `all`, `model_performance`, `auc_data`,
-#'  `decision_curve_analyis`, `permutation_vimp` as well as `true`, `false` and
-#'  `none`.
+#'  computation of bootstrap confidence intervals for ensemble models in several
+#'  parts of the evaluation. The parameter can take one or more of the following
+#'  values: `all`, `model_performance`, `auc_data`, `decision_curve_analyis`,
+#'  `permutation_vimp` as well as `true`, `false` and `none`.
 #'
-#'  By default, bootstrap confidence intervals are computed for ensemble
-#'  models.
+#'  By default, bootstrap confidence intervals are computed for ensemble models.
 #'
 #'@param aggregate_ci (*optional*) Bootstraps are used to determine confidence
 #'  intervals. This information can be stored for export. However, in many cases
@@ -2361,6 +2370,7 @@
                                        evaluation_metric=waiver(),
                                        confidence_level=waiver(),
                                        bootstrap_ci_method=waiver(),
+                                       compute_model_data=waiver(),
                                        compute_model_ci=waiver(),
                                        compute_ensemble_ci=waiver(),
                                        aggregate_ci=waiver(),
@@ -2418,6 +2428,15 @@
   evaluation_ci_elements <- c("all", "model_performance", "auc_data",
                               "decision_curve_analyis", "permutation_vimp",
                               "true", "false", "none")
+  
+  # Enable or disable computation of data for individual models.
+  settings$compute_model_data <- .parse_arg(x_config=config$compute_model_data, x_var=compute_model_data,
+                                            var_name="compute_model_data", type="character_list", optional=TRUE,
+                                            default="none")
+  
+  settings$compute_model_data <- tolower(settings$compute_model_data)
+  .check_parameter_value_is_valid(x=settings$compute_model_data, var_name="compute_model_data", 
+                                  values=c(evaluation_ci_elements, "performance_data", "confusion_matrix"))
   
   # Enable or disable computation of confidence intervals for individual models.
   settings$compute_model_ci <- .parse_arg(x_config=config$compute_model_ci, x_var=compute_model_ci,
