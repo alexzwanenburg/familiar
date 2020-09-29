@@ -325,6 +325,9 @@
   offset <- integer(4)
   names(offset) <- c("t", "l", "b", "r")
   
+  spacer_offset <- integer(4)
+  names(spacer_offset) <- c("t", "l", "b", "r")
+  
   # Find position to insert this element
   ref_position <- .gtable_get_position(g=g, element=ref_element, where=where, partial_match=partial_match_ref)
   
@@ -334,6 +337,9 @@
     # Add space to top.
     if(!is.null(spacer$t)){
       g_new <- gtable::gtable_add_rows(g_new, heights=spacer$t, pos=0)
+      
+      # This shifts the actual element downward.
+      spacer_offset[["t"]] <- spacer_offset[["b"]] <- 1L
     }
     
     # Add space to bottom.
@@ -346,6 +352,9 @@
     # Add space to left.
     if(!is.null(spacer$l)){
       g_new <- gtable::gtable_add_cols(g_new, widths=spacer$l, pos=0)
+      
+      # This shifts the actual element to the right.
+      spacer_offset[["r"]] <- spacer_offset[["l"]] <- 1L
     }
     
     # Add space to right.
@@ -421,7 +430,7 @@
   extent <- .gtable_get_extent(g=g, element=along_element, partial_match=partial_match_along)
   
   # Set new position
-  new_position <- ref_position - offset
+  new_position <- ref_position + spacer_offset - offset
   
   if(where %in% c("top", "bottom")){
     new_position[["l"]] <- extent[["l"]]
