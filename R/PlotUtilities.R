@@ -538,8 +538,8 @@ plotting.update_plot_layout_table <- function(plot_layout_table,
                              "row_id"=row_ids,
                              "has_strip_x"=TRUE,
                              "has_strip_y"=FALSE,
-                             "has_axis_text_x"=x_text_shared == "individual",
-                             "has_axis_text_y"=y_text_shared == "individual",
+                             "has_axis_text_x"=x_text_shared %in% c("individual", "FALSE"),
+                             "has_axis_text_y"=y_text_shared %in% c("individual", "FALSE"),
                              "has_axis_label_x"=x_label_shared == "individual",
                              "has_axis_label_y"=y_label_shared == "individual")]
     
@@ -549,13 +549,13 @@ plotting.update_plot_layout_table <- function(plot_layout_table,
       
       # Set x labels and text. Note that even when "overall" is set, axis text
       # should stick to the panels.
-      if(x_text_shared %in% c("column", "overall")) plot_layout_table[col_id == current_col_id & row_id == max_row_id, "has_axis_text_x":=TRUE]
+      if(x_text_shared %in% c("column", "overall", "TRUE")) plot_layout_table[col_id == current_col_id & row_id == max_row_id, "has_axis_text_x":=TRUE]
       if(x_label_shared == "column") plot_layout_table[col_id == current_col_id & row_id == max_row_id, "has_axis_label_x":=TRUE]
     }
     
     # Set y labels and text. Note that even when "overall" is set, axis text
     # should stick to the panels.
-    if(y_text_shared %in% c("row", "overall")) plot_layout_table[col_id == 1L, "has_axis_text_y":=TRUE]
+    if(y_text_shared %in% c("row", "overall", "TRUE")) plot_layout_table[col_id == 1L, "has_axis_text_y":=TRUE]
     if(y_label_shared == "row") plot_layout_table[col_id == 1L, "has_axis_label_y":=TRUE]
     
   } else {
@@ -567,8 +567,8 @@ plotting.update_plot_layout_table <- function(plot_layout_table,
     # Set default elements
     plot_layout_table[, ":="("has_strip_x"=FALSE,
                              "has_strip_y"=FALSE,
-                             "has_axis_text_x"=x_text_shared == "individual",
-                             "has_axis_text_y"=y_text_shared == "individual",
+                             "has_axis_text_x"=x_text_shared %in% c("individual", "FALSE"),
+                             "has_axis_text_y"=y_text_shared %in% c("individual", "FALSE"),
                              "has_axis_label_x"=x_label_shared == "individual",
                              "has_axis_label_y"=y_label_shared == "individual")]
     
@@ -582,8 +582,8 @@ plotting.update_plot_layout_table <- function(plot_layout_table,
     
     # Add axis text. Note that even when "overall" is set, axis text should
     # stick to the panels.
-    if(x_text_shared %in% c("column", "overall")) plot_layout_table[row_id == n_rows, "has_axis_text_x":=TRUE]
-    if(y_text_shared %in% c("row", "overall")) plot_layout_table[col_id == 1L, "has_axis_text_y":=TRUE]
+    if(x_text_shared %in% c("column", "overall", "TRUE")) plot_layout_table[row_id == n_rows, "has_axis_text_x":=TRUE]
+    if(y_text_shared %in% c("row", "overall", "TRUE")) plot_layout_table[col_id == 1L, "has_axis_text_y":=TRUE]
     
     # Add axis labels
     if(x_label_shared == "column") plot_layout_table[row_id == n_rows, "has_axis_label_x":=TRUE]
