@@ -750,7 +750,7 @@ setMethod("plot_permutation_variable_importance", signature(object="familiarColl
   }
   
   # Add a line to indicate 0.0, if 0.0 is included in the range.
-  if(x_range[1] < 0.0 & x_range[2] > 0.0){
+  if(x_range[1] <= 0.0 & x_range[2] >= 0.0){
     p <- p + ggplot2::geom_hline(yintercept=0.0,
                                  linetype="dotted")
   }
