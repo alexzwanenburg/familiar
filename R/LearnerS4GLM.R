@@ -272,9 +272,9 @@ setMethod("..predict", signature(object="familiarGLM", data="dataObject"),
               #####Multinomial outcomes######
               
               # Use the model for prediction.
-              model_predictions <- VGAM::predictvglm(object=object@model,
-                                                     newdata=encoded_data$encoded_data@data,
-                                                     type=type)
+              model_predictions <- suppressWarnings(VGAM::predictvglm(object=object@model,
+                                                                      newdata=encoded_data$encoded_data@data,
+                                                                      type=type))
               
               # Obtain class levels.
               class_levels <- get_outcome_class_levels(x=object)
