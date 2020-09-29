@@ -1098,6 +1098,7 @@ plotting.reinsert_plot_elements <- function(g=NULL, elements=NULL, grob_list, gg
                                     g_new=grob_list$guide,
                                     ref_element=ref_element,
                                     along_element="panel",
+                                    spacer=list("l"=plotting.get_legend_spacing(ggtheme=ggtheme, axis="y")),
                                     where=legend_position,
                                     partial_match_ref=TRUE,
                                     partial_match_along=TRUE)
@@ -1117,6 +1118,7 @@ plotting.reinsert_plot_elements <- function(g=NULL, elements=NULL, grob_list, gg
                                     g_new=grob_list$guide,
                                     ref_element=ref_element,
                                     along_element="panel",
+                                    spacer=list("r"=plotting.get_legend_spacing(ggtheme=ggtheme, axis="y")),
                                     where=legend_position,
                                     partial_match_ref=TRUE,
                                     partial_match_along=TRUE)
@@ -1136,6 +1138,7 @@ plotting.reinsert_plot_elements <- function(g=NULL, elements=NULL, grob_list, gg
                                     g_new=grob_list$guide,
                                     ref_element=ref_element,
                                     along_element="panel",
+                                    spacer=list("t"=plotting.get_legend_spacing(ggtheme=ggtheme, axis="x")),
                                     where=legend_position,
                                     partial_match_ref=TRUE,
                                     partial_match_along=TRUE)
@@ -1155,6 +1158,7 @@ plotting.reinsert_plot_elements <- function(g=NULL, elements=NULL, grob_list, gg
                                     g_new=grob_list$guide,
                                     ref_element=ref_element,
                                     along_element="panel",
+                                    spacer=list("b"=plotting.get_legend_spacing(ggtheme=ggtheme, axis="x")),
                                     where=legend_position,
                                     partial_match_ref=TRUE,
                                     partial_match_along=TRUE)
