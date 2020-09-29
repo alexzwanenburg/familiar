@@ -594,41 +594,40 @@ plotting.update_plot_layout_table <- function(plot_layout_table,
 }
 
 
+..get_plot_element_spacing <- function(ggtheme=NULL, axis, theme_element){
+  # Obtain spacing from a ggtheme element
+  
+  # Import default ggtheme in case none is provided.
+  if(!is(ggtheme, "theme")) ggtheme <- plotting.get_theme(use_theme=ggtheme)
+  
+  # Get spacing for the specific axis, if present.
+  spacing <- ggtheme[[paste0(theme_element, ".", axis)]]
+  
+  # Get spacing for the main element
+  if(is.null(spacing)) spacing <- ggtheme[[theme_element]]
+  
+  # If no spacing is provided, produce 0.0 length spacing.
+  if(!grid::is.unit(spacing)) spacing <- grid::unit(0.0, "pt")
+  
+  return(spacing)
+}
+
 
 plotting.get_panel_spacing <- function(ggtheme=NULL, axis){
   # Obtain spacing between panels. This determines distance between facets.
-  
-  # Import default ggtheme in case none is provided.
-  if(!is(ggtheme, "theme")) {
-    ggtheme <- plotting.get_theme(use_theme=ggtheme)
-  }
-  
-  if(axis == "x"){
-    # Obtain spacing from ggtheme.
-    panel_spacing <- ggtheme$panel.spacing.x
-    
-    # From more general element.
-    if(is.null(panel_spacing)){
-      panel_spacing <- ggtheme$panel.spacing
-    }
-    
-  } else if(axis == "y"){
-    # Obtain spacing from ggtheme.
-    panel_spacing <- ggtheme$panel.spacing.y
-    
-    # From more general element.
-    if(is.null(panel_spacing)){
-      panel_spacing <- ggtheme$panel.spacing
-    }
-  }
-  
-  # If no panel spacing is provided, produce 0.0 length spacing
-  if(!grid::is.unit(panel_spacing)){
-    panel_spacing <- grid::unit(0.0, "pt")
-  }
-  
-  return(panel_spacing)
+  return(..get_plot_element_spacing(ggtheme=ggtheme,
+                                    axis=axis,
+                                    theme_element="panel.spacing"))
 }
+
+
+plotting.get_legend_spacing <- function(ggtheme=NULL, axis){
+  # Obtain spacing between legend and the main panel.
+  return(..get_plot_element_spacing(ggtheme=ggtheme,
+                                    axis=axis,
+                                    theme_element="legend.box.spacing"))
+}
+
 
 
 plotting.get_geom_text_settings <- function(ggtheme=NULL){
