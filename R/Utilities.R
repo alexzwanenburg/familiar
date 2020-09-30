@@ -65,13 +65,16 @@ compute_univariable_p_values <- function(cl=NULL, data_obj, feature_columns){
 .univariate_cox_regression_test <- function(x, outcome_data){
   # Cox regression model for univariable analysis
   
+  # Suppress NOTES due to non-standard evaluation in data.table
+  value <- NULL
+  
   # Check if any data was provided.
   if(length(x) == 0) return(NA_real_)
   
   # Combine the feature value column with the outcome
-  data <- data.table("value"=x,
-                     "outcome_time"=outcome_data$outcome_time,
-                     "outcome_event"=outcome_data$outcome_event)
+  data <- data.table::data.table("value"=x,
+                                 "outcome_time"=outcome_data$outcome_time,
+                                 "outcome_event"=outcome_data$outcome_event)
   
   # Drop entries with missing feature values.
   data <- data[is.finite(value)]
@@ -118,11 +121,14 @@ compute_univariable_p_values <- function(cl=NULL, data_obj, feature_columns){
 .univariate_linear_regression_test <- function(x, outcome_data){
   # Gaussian regression for univariable analysis
   
+  # Suppress NOTES due to non-standard evaluation in data.table
+  value <- NULL
+  
   # Check if any data was provided.
   if(length(x) == 0) return(NA_real_)
   
   # Combine the feature value column with the outcome
-  data <- data.table("value"=x, "outcome"=outcome_data$outcome)
+  data <- data.table::data.table("value"=x, "outcome"=outcome_data$outcome)
   
   # Drop entries with missing feature values.
   data <- data[is.finite(value)]
@@ -168,11 +174,14 @@ compute_univariable_p_values <- function(cl=NULL, data_obj, feature_columns){
 .univariate_poisson_regression_test <- function(x, outcome_data){
   # Poisson regression for univariable analysis with count-type outcomes
   
+  # Suppress NOTES due to non-standard evaluation in data.table
+  value <- NULL
+  
   # Check if any data was provided.
   if(length(x) == 0) return(NA_real_)
   
   # Combine the feature value column with the outcome
-  data <- data.table("value"=x, "outcome"=outcome_data$outcome)
+  data <- data.table::data.table("value"=x, "outcome"=outcome_data$outcome)
   
   # Drop entries with missing feature values.
   data <- data[is.finite(value)]
@@ -225,7 +234,7 @@ compute_univariable_p_values <- function(cl=NULL, data_obj, feature_columns){
   if(length(x) == 0) return(NA_real_)
   
   # Combine the feature value column with the outcome
-  data <- data.table("value"=x, "outcome"=outcome_data$outcome)
+  data <- data.table::data.table("value"=x, "outcome"=outcome_data$outcome)
   
   # Drop entries with missing feature values.
   data <- data[is.finite(value)]
@@ -278,7 +287,7 @@ compute_univariable_p_values <- function(cl=NULL, data_obj, feature_columns){
   if(length(x) == 0) return(NA_real_)
   
   # Combine the feature value column with the outcome
-  data <- data.table("value"=x, "outcome"=outcome_data$outcome)
+  data <- data.table::data.table("value"=x, "outcome"=outcome_data$outcome)
   
   # Drop entries with missing feature values.
   data <- data[is.finite(value)]
