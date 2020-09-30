@@ -459,7 +459,7 @@ collect_univariate_analysis <- function(fam_data_list){
   # id, validation status and data perturb level.
   unique_entries <- .which_unique_data(fam_data_list=fam_data_list,
                                        by=c("pool_data_id", "is_validation", "data_perturb_level", "fs_method", "learner"))
-
+  
   # Select only unique entries
   univariate_data <- data.table::rbindlist(lapply(unique_entries, function(ii, fam_data_list){
     

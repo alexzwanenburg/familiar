@@ -1097,12 +1097,14 @@ setMethod("extract_univariate_analysis", signature(object="familiarEnsemble", da
               feature_linkage_method <- object@settings$feature_linkage_method
             }
             
-            # Obtain feature cluster cut method from stored settings, if required.
+            # Obtain feature cluster cut method from stored settings, if
+            # required.
             if(is.waive(feature_cluster_cut_method)){
               feature_cluster_cut_method <- object@settings$feature_cluster_cut_method
             }
             
-            # Obtain cluster similarity threshold from stored settings, if required.
+            # Obtain cluster similarity threshold from stored settings, if
+            # required.
             if(is.waive(feature_similarity_threshold)){
               feature_similarity_threshold <- object@settings$feature_similarity_threshold
             }
@@ -1147,46 +1149,24 @@ setMethod("extract_univariate_analysis", signature(object="familiarEnsemble", da
             }
             
             has_qvalue_package <- is_package_installed(name="qvalue", verbose=FALSE)
-
-            # Define an empty prototype table
-            empty_table <- data.table::data.table("model_name"=character(0),
-                                                  "name"=character(0),
-                                                  "cluster_id"=integer(0),
-                                                  "cluster_size"=integer(0),
-                                                  "p_value"=numeric(0),
-                                                  "p_value_corrected"=numeric(0))
             
-            if(has_qvalue_package){
-              empty_table <- cbind(empty_table, data.table::data.table("q_value"=numeric(0)))
-            }
+            # Check if the data object is empty -- return an empty table if this
+            # is the case.
+            if(is_empty(data)) return(NULL)
             
-            if(is_repeated_measurement) {
-              empty_table <- cbind(empty_table, data.table::data.table("icc"=numeric(0),
-                                                                       "icc_low"=numeric(0),
-                                                                       "icc_up"=numeric(0),
-                                                                       "icc_panel"=numeric(0),
-                                                                       "icc_panel_low"=numeric(0),
-                                                                       "icc_panel_up"=numeric(0)))
-            }
+            # Check if the number of samples is sufficient (>5), and return an
+            # empty table if not.
+            if(data.table::uniqueN(data@data, by="subject_id") <= 5) return(NULL)
             
-            # Check if the data object is empty -- return an empty table if this is the case
-            if(is_empty(data)){
-              return(list("data"=empty_table))
-            }
-            
-            # Check if the number of samples is sufficient (>5), and return an empty table if not.
-            if(data.table::uniqueN(data@data, by="subject_id") <= 5){
-              return(list("data"=empty_table))
-            }
-            
-            # Maintain only important features. The current set is based on the required features.
+            # Maintain only important features. The current set is based on the
+            # required features.
             data <- filter_features(data=data, available_features=object@important_features)
             
             # Determine feature columns
             feature_columns <- get_feature_columns(x=data)
             
             # Check if there are any features in the model.
-            if(length(feature_columns) == 0) return(list("data"=empty_table))
+            if(length(feature_columns) == 0) return(NULL)
             
             # Calculate univariate P values, based on aggregated data
             regr_p_values <- compute_univariable_p_values(cl=cl,
@@ -1215,8 +1195,8 @@ setMethod("extract_univariate_analysis", signature(object="familiarEnsemble", da
               univariate_data[, "q_value":=computed_q_value]
             }
             
-            # Determine whether robustness data can be added
-            # Check if repeated measurements are present, otherwise return no feature names.
+            # Determine whether robustness data can be added Check if repeated
+            # measurements are present, otherwise return no feature names.
             if(is_repeated_measurement){
               
               # Determine which columns actually contains numeric data
