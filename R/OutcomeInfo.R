@@ -76,7 +76,7 @@ create_outcome_info_from_data <- function(data){
     outcome_info@competing_risk <- as.character(setdiff(unique_na(data@data[[outcome_info@outcome_column[2]]]), c(0, 1)))
   }
   
-  return(outoutcome_info)
+  return(outcome_info)
 }
 
 
