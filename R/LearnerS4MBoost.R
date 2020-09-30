@@ -669,6 +669,9 @@ setMethod("..set_recalibration_model", signature(object="familiarMBoost", data="
 setMethod("..update_outcome", signature(object="familiarMBoost", data="dataObject"),
           function(object, data){
             
+            # Suppress NOTES due to non-standard evaluation in data.table
+            outcome <- NULL
+            
             if(is_empty(data)) return(data)
             
             if(object@outcome_type %in% c("count", "continuous") & object@hyperparameters$family %in% c("poisson")){
