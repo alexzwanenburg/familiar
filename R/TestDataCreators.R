@@ -218,11 +218,11 @@ test.create_one_feature_data_set <- function(outcome_type){
     data <- data[etype == 1]
     
     # Keep only first 100 samples for speed and only id, nodes, rx, extent and outcome.
-    data <- familiar:::as_data_object(data=data[1:100, ],
-                                      sample_id_column="id",
-                                      outcome_column=c("time", "status"),
-                                      outcome_type=outcome_type,
-                                      include_features=c("nodes"))
+    data <- as_data_object(data=data[1:100, ],
+                           sample_id_column="id",
+                           outcome_column=c("time", "status"),
+                           outcome_type=outcome_type,
+                           include_features=c("nodes"))
     
   } else if(outcome_type == "multinomial") {
     # Load iris data set.
@@ -392,10 +392,10 @@ test.create_wide_data_set <- function(outcome_type){
     data <- cbind(data, data.table::as.data.table(random_data))
     
     # Keep only first 100 samples for speed and only id, nodes, rx, extent and outcome.
-    data <- familiar:::as_data_object(data=data,
-                                      sample_id_column="id",
-                                      outcome_column=c("time", "status"),
-                                      outcome_type=outcome_type)
+    data <- as_data_object(data=data,
+                           sample_id_column="id",
+                           outcome_column=c("time", "status"),
+                           outcome_type=outcome_type)
     
   } else if(outcome_type == "multinomial"){
     # Load iris data set.
