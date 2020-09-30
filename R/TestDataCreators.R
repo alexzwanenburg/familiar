@@ -20,7 +20,7 @@ test.create_good_data_set <- function(outcome_type){
     
   } else if(outcome_type == "multinomial"){
     # Load iris data set.
-    data <- data.table::as.data.table(iris)
+    data <- data.table::as.data.table(datasets::iris)
     
     # Add sample identifier.
     data[,":="("sample_id"=.I)]
@@ -226,7 +226,7 @@ test.create_one_feature_data_set <- function(outcome_type){
     
   } else if(outcome_type == "multinomial") {
     # Load iris data set.
-    data <- data.table::as.data.table(iris)
+    data <- data.table::as.data.table(datasets::iris)
     
     # Add sample identifier.
     data[,":="("sample_id"=.I)]
@@ -385,7 +385,7 @@ test.create_wide_data_set <- function(outcome_type){
     data <- data[1:5, ]
     
     # Add twenty random features
-    random_data <- lapply(seq_len(20), function(ii, n) rnorm(n=n), n=nrow(data))
+    random_data <- lapply(seq_len(20), function(ii, n) stats::rnorm(n=n), n=nrow(data))
     names(random_data) <- paste0("random_", seq_len(20))
     
     # Add to dataset
@@ -399,7 +399,7 @@ test.create_wide_data_set <- function(outcome_type){
     
   } else if(outcome_type == "multinomial"){
     # Load iris data set.
-    data <- data.table::as.data.table(iris)
+    data <- data.table::as.data.table(datasets::iris)
     
     # Squeeze data
     data <- data[c(1, 2, 3, 80, 81, 82, 148, 149, 150)]
@@ -408,7 +408,7 @@ test.create_wide_data_set <- function(outcome_type){
     data[,":="("sample_id"=.I)]
     
     # Add twenty random features
-    random_data <- lapply(seq_len(20), function(ii, n) rnorm(n=n), n=nrow(data))
+    random_data <- lapply(seq_len(20), function(ii, n) stats::rnorm(n=n), n=nrow(data))
     names(random_data) <- paste0("random_", seq_len(20))
     
     # Add to dataset
@@ -446,7 +446,7 @@ test.create_wide_data_set <- function(outcome_type){
     data <- data[11:20, ]
     
     # Add twenty random features
-    random_data <- lapply(seq_len(20), function(ii, n) rnorm(n=n), n=nrow(data))
+    random_data <- lapply(seq_len(20), function(ii, n) stats::rnorm(n=n), n=nrow(data))
     names(random_data) <- paste0("random_", seq_len(20))
     
     # Add to dataset
@@ -480,7 +480,7 @@ test.create_wide_data_set <- function(outcome_type){
     data <- data[411:420, ]
     
     # Add twenty random features
-    random_data <- lapply(seq_len(20), function(ii, n) rnorm(n=n), n=nrow(data))
+    random_data <- lapply(seq_len(20), function(ii, n) stats::rnorm(n=n), n=nrow(data))
     names(random_data) <- paste0("random_", seq_len(20))
     
     # Add to dataset
@@ -517,7 +517,7 @@ test.create_wide_data_set <- function(outcome_type){
     data <- data[1:10, ]
     
     # Add twenty random features
-    random_data <- lapply(seq_len(20), function(ii, n) rnorm(n=n), n=nrow(data))
+    random_data <- lapply(seq_len(20), function(ii, n) stats::rnorm(n=n), n=nrow(data))
     names(random_data) <- paste0("random_", seq_len(20))
     
     # Add to dataset
