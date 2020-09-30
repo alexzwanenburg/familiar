@@ -98,7 +98,7 @@ test_all_learners_train_predict_vimp <- function(learners, hyperparameter_list=N
         
         if(outcome_type == "survival"){
           # Calibration info is present
-          testthat::expect_equal(familiar:::has_calibration_info(model), TRUE)
+          testthat::expect_equal(has_calibration_info(model), TRUE)
         }
       })
       
@@ -171,7 +171,7 @@ test_all_learners_train_predict_vimp <- function(learners, hyperparameter_list=N
       # Test that the model has variable importance.
       testthat::test_that(paste0("Model has variable importance for ", outcome_type, " and ", learner, "for the complete data set."), {
         # Extract the variable importance table.
-        vimp_table <- suppressWarnings(familiar:::..vimp(model))
+        vimp_table <- suppressWarnings(..vimp(model))
         
         if(has_vimp){
           # Get the number of features
@@ -182,7 +182,7 @@ test_all_learners_train_predict_vimp <- function(learners, hyperparameter_list=N
           
           # Expect that the names in the vimp table correspond to those of the
           # features.
-          testthat::expect_equal(all(vimp_table$name %in% familiar:::get_feature_columns(full_data)), TRUE)
+          testthat::expect_equal(all(vimp_table$name %in% get_feature_columns(full_data)), TRUE)
           
         } else {
           
@@ -212,7 +212,7 @@ test_all_learners_train_predict_vimp <- function(learners, hyperparameter_list=N
         
         if(outcome_type == "survival"){
           # Calibration info is present
-          testthat::expect_equal(familiar:::has_calibration_info(model), TRUE)
+          testthat::expect_equal(has_calibration_info(model), TRUE)
         }
       })
       
@@ -236,7 +236,7 @@ test_all_learners_train_predict_vimp <- function(learners, hyperparameter_list=N
         
         if(outcome_type == "survival"){
           # Calibration info is present
-          testthat::expect_equal(familiar:::has_calibration_info(model), TRUE)
+          testthat::expect_equal(has_calibration_info(model), TRUE)
         }
       })
       
@@ -315,7 +315,7 @@ test_all_learners_train_predict_vimp <- function(learners, hyperparameter_list=N
         
         if(outcome_type == "survival"){
           # Calibration info is absent.
-          testthat::expect_equal(familiar:::has_calibration_info(model), TRUE)
+          testthat::expect_equal(has_calibration_info(model), TRUE)
         }
       })
       
@@ -410,17 +410,17 @@ test_all_vimp_methods <- function(vimp_methods,
       #####Full data set########################################################
       
       # Process dataset.
-      vimp_object <- familiar:::prepare_vimp_object(data=full_data,
-                                                    vimp_method=vimp_method,
-                                                    vimp_method_parameter_list=hyperparameters,
-                                                    outcome_type=outcome_type,
-                                                    cluster_method="none",
-                                                    imputation_method="simple")
+      vimp_object <- prepare_vimp_object(data=full_data,
+                                         vimp_method=vimp_method,
+                                         vimp_method_parameter_list=hyperparameters,
+                                         outcome_type=outcome_type,
+                                         cluster_method="none",
+                                         imputation_method="simple")
       
       
       testthat::test_that(paste0("Variable importance can be computed for ", outcome_type, " with the ", vimp_method, " using a complete data set."), {
         
-        vimp_table <- suppressWarnings(familiar:::.vimp(vimp_object, full_data))
+        vimp_table <- suppressWarnings(.vimp(vimp_object, full_data))
         
         # Get the number of features
         n_features <- get_n_features(full_data)
@@ -430,13 +430,13 @@ test_all_vimp_methods <- function(vimp_methods,
         
         # Expect that the names in the vimp table correspond to those of the
         # features.
-        testthat::expect_equal(all(vimp_table$name %in% familiar:::get_feature_columns(full_data)), TRUE)
+        testthat::expect_equal(all(vimp_table$name %in% get_feature_columns(full_data)), TRUE)
       })
       
       
       testthat::test_that(paste0("Variable importance can be computed for ", outcome_type, " with the ", vimp_method, " using a complete data set with one invariant feature."), {
         
-        vimp_table <- suppressWarnings(familiar:::.vimp(vimp_object, full_one_invariant_data))
+        vimp_table <- suppressWarnings(.vimp(vimp_object, full_one_invariant_data))
         
         # Get the number of features
         n_features <- get_n_features(full_one_invariant_data)
@@ -446,13 +446,13 @@ test_all_vimp_methods <- function(vimp_methods,
         
         # Expect that the names in the vimp table correspond to those of the
         # features.
-        testthat::expect_equal(all(vimp_table$name %in% familiar:::get_feature_columns(full_one_invariant_data)), TRUE)
+        testthat::expect_equal(all(vimp_table$name %in% get_feature_columns(full_one_invariant_data)), TRUE)
       })
       
       
       testthat::test_that(paste0("Variable importance cannot be computed for ", outcome_type, " with the ", vimp_method, " using an empty data set."), {
         
-        vimp_table <- suppressWarnings(familiar:::.vimp(vimp_object, empty_data))
+        vimp_table <- suppressWarnings(.vimp(vimp_object, empty_data))
        
         # Expect that the vimp table has two rows.
         testthat::expect_equal(is_empty(vimp_table), TRUE)
@@ -461,7 +461,7 @@ test_all_vimp_methods <- function(vimp_methods,
       
       testthat::test_that(paste0("Variable importance cannot be computed for ", outcome_type, " with the ", vimp_method, " using a bad data set."), {
         
-        vimp_table <- suppressWarnings(familiar:::.vimp(vimp_object, bad_data))
+        vimp_table <- suppressWarnings(.vimp(vimp_object, bad_data))
         
         # Expect that the vimp table has two rows.
         testthat::expect_equal(is_empty(vimp_table), TRUE)
@@ -470,7 +470,7 @@ test_all_vimp_methods <- function(vimp_methods,
       
       testthat::test_that(paste0("Variable importance cannot be computed for ", outcome_type, " with the ", vimp_method, " using a one-sample data set."), {
         
-        vimp_table <- suppressWarnings(familiar:::.vimp(vimp_object, full_one_sample_data))
+        vimp_table <- suppressWarnings(.vimp(vimp_object, full_one_sample_data))
         
         # Expect that the vimp table has two rows.
         testthat::expect_equal(is_empty(vimp_table), TRUE)
@@ -480,7 +480,7 @@ test_all_vimp_methods <- function(vimp_methods,
       #####One-feature data set#################################################
       
       # Process dataset.
-      vimp_object <- familiar:::prepare_vimp_object(data=one_feature_data,
+      vimp_object <- prepare_vimp_object(data=one_feature_data,
                                                     vimp_method=vimp_method,
                                                     vimp_method_parameter_list=hyperparameters,
                                                     outcome_type=outcome_type,
@@ -490,20 +490,20 @@ test_all_vimp_methods <- function(vimp_methods,
       
       testthat::test_that(paste0("Variable importance can be computed for ", outcome_type, " with the ", vimp_method, " using a one-feature data set."), {
         
-        vimp_table <- suppressWarnings(familiar:::.vimp(vimp_object, one_feature_data))
+        vimp_table <- suppressWarnings(.vimp(vimp_object, one_feature_data))
         
         # Expect that the vimp table is not empty.
         testthat::expect_equal(nrow(vimp_table), 1)
         
         # Expect that the names in the vimp table correspond to those of the
         # features.
-        testthat::expect_equal(all(vimp_table$name %in% familiar:::get_feature_columns(one_feature_data)), TRUE)
+        testthat::expect_equal(all(vimp_table$name %in% get_feature_columns(one_feature_data)), TRUE)
       })
       
       
       testthat::test_that(paste0("Variable importance cannot be computed for ", outcome_type, " with the ", vimp_method, " using a one-feature data set with an invariant feature."), {
         
-        vimp_table <- suppressWarnings(familiar:::.vimp(vimp_object, one_feature_invariant_data))
+        vimp_table <- suppressWarnings(.vimp(vimp_object, one_feature_invariant_data))
         
         # Expect that the vimp table is empty.
         testthat::expect_equal(is_empty(vimp_table), TRUE)
@@ -512,7 +512,7 @@ test_all_vimp_methods <- function(vimp_methods,
       
       testthat::test_that(paste0("Variable importance cannot be computed for ", outcome_type, " with the ", vimp_method, " using a one-feature, one-sample data set."), {
         
-        vimp_table <- suppressWarnings(familiar:::.vimp(vimp_object, one_feature_one_sample_data))
+        vimp_table <- suppressWarnings(.vimp(vimp_object, one_feature_one_sample_data))
         
         # Expect that the vimp table is empty.
         testthat::expect_equal(is_empty(vimp_table), TRUE)
