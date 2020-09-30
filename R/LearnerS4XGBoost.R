@@ -327,6 +327,9 @@ setMethod("get_prediction_type", signature(object="familiarXGBoost"),
 setMethod("..train", signature(object="familiarXGBoost", data="dataObject"),
           function(object, data){
             
+            # Suppress NOTES due to non-standard evaluation in data.table
+            outcome <- NULL
+            
             # Aggregate repeated measurement data - xgboost does not facilitate
             # repeated measurements.
             data <- aggregate_data(data=data)
