@@ -1,5 +1,8 @@
 test.create_good_data_set <- function(outcome_type){
   
+  # Suppress NOTES due to non-standard evaluation in data.table
+  etype <- median_house_value <- NULL
+  
   if(outcome_type == "survival"){
     # Load colon dataset from the survival package.
     data <- data.table::as.data.table(survival::colon)
@@ -204,9 +207,12 @@ test.create_all_identical_data_set <- function(outcome_type){
 
 test.create_one_feature_data_set <- function(outcome_type){
   
+  # Suppress NOTES due to non-standard evaluation in data.table
+  etype <- median_house_value <- NULL
+  
   if(outcome_type == "survival"){
     # Load colon dataset from the survival package
-    data <- as.data.table(survival::colon)
+    data <- data.table::as.data.table(survival::colon)
     
     # Recurrence
     data <- data[etype == 1]
@@ -349,13 +355,16 @@ test.create_one_feature_invariant_data_set <- function(outcome_type){
 
 test.create_wide_data_set <- function(outcome_type){
   
+  # Suppress NOTES due to non-standard evaluation in data.table
+  etype <- median_house_value <- NULL
+  
   # Set random seed so that the same numbers are produced every time.
   set.seed(1844)
   
   if(outcome_type == "survival"){
     
     # Load colon dataset from the survival package
-    data <- as.data.table(survival::colon)
+    data <- data.table::as.data.table(survival::colon)
     
     # Recurrence
     data <- data[etype == 1]
@@ -537,6 +546,9 @@ test.create_wide_data_set <- function(outcome_type){
 
 
 test.create_bad_data_set <- function(outcome_type){
+  
+  # Suppress NOTES due to non-standard evaluation in data.table
+  outcome <- NULL
   
   # Create good dataset first and work from there.
   data <- test.create_good_data_set(outcome_type=outcome_type)
