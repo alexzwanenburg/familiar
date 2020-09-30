@@ -144,7 +144,6 @@ setMethod("train", signature(data="dataObject"),
             # Process data.
             data <- process_input_data(object=object,
                                        data=data,
-                                       is_pre_processed = is_pre_processed,
                                        stop_at="clustering")
             
             # Create bootstraps.
