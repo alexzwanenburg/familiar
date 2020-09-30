@@ -296,7 +296,7 @@ learner.calibration.categorical.prepare_data <- function(groups, probability_tab
 
 
 
-learner.calibration.regression <- function(object, data_obj){
+learner.calibration.regression <- function(object, data){
   # Calibration for regression problems is pretty straightforward. However, for
   # goodness-of-fit tests, we need to constrain expected and observed value
   # ranges to [0, 1]. To do so, we use the range of outcome values from the
@@ -312,7 +312,7 @@ learner.calibration.regression <- function(object, data_obj){
   # Get prediction table. Note that the ensemble_method argument may be ignored
   # unless object is a familiarEnsemble.
   prediction_table <- .predict(object=object,
-                               data=data_obj,
+                               data=data,
                                allow_recalibration=TRUE,
                                ensemble_method="median")
 
@@ -337,7 +337,8 @@ learner.calibration.regression <- function(object, data_obj){
   prediction_table[, ":="("expected"=(predicted_outcome - norm_shift) / norm_scale,
                           "observed"=(outcome - norm_shift) / norm_scale)]
   
-  # Repeatedly split into groups. The number of groups is determined using sturges rule
+  # Repeatedly split into groups. The number of groups is determined using
+  # sturges rule.
   repeated_groups <- lapply(seq_len(20), function(ii, x, sample_id) (create_randomised_groups(x=x, sample_id=sample_id)),
                             x=prediction_table$expected, sample_id=prediction_table$subject_id)
   
@@ -395,23 +396,3 @@ learner.calibration.regression.prepare_data <- function(groups, probability_tabl
   
   return(calibration_table)
 }
-
-
-# learner.calibration.regression.outcome_range <- function(data_obj){
-#   
-#   # Check for empty dataset.
-#   if(is_empty(data_obj@data)){
-#     return(NULL)
-#   }
-#   
-#   # Acquire range of observed outcome values
-#   outcome_range <- range(data_obj@data$outcome, na.rm=TRUE)
-#   
-#   if(!all(is.finite(outcome_range))){
-#     return(NULL)
-#     
-#   } else {
-#     return(data.table::data.table("min_value"=outcome_range[1],
-#                                   "max_value"=outcome_range[2]))
-#   }
-# }
