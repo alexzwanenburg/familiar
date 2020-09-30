@@ -535,7 +535,7 @@ setMethod("extract_permutation_vimp", signature(object="familiarEnsemble"),
                                      cluster_similarity_metric){
   
   # Suppress NOTES due to non-standard evaluation in data.table
-  name <- cluster_id <-  NULL
+  name <- cluster_id <- similarity_threshold <- NULL
   
   if(is_empty(similarity_table)) {
     # Set the placeholder similarity threshold
