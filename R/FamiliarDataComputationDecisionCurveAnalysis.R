@@ -367,7 +367,7 @@ setMethod("extract_decision_curve_data", signature(object="familiarEnsemble"),
 .compute_dca_data_survival_model <- function(data, x, evaluation_time, return_intervention=FALSE){
   
   # Suppress NOTES due to non-standard evaluation in data.table
-  predicted_outcome <- outcome_event <- death <- censored <- n <- NULL
+  predicted_outcome <- outcome_event <- outcome_time <- death <- censored <- n <- NULL
   
   # Prepare net benefit.
   net_benefit <- numeric(length(x))
