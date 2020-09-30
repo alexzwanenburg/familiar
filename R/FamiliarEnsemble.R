@@ -579,7 +579,7 @@ ensemble_prediction <- function(object, prediction_data, ensemble_method="mean")
     FUN <- mean
     
   } else if(ensemble_method == "median"){
-    FUN <- median
+    FUN <- stats::median
     
   } else {
     stop("Ensemble method ", ensemble_method, " has not been implemented.")
