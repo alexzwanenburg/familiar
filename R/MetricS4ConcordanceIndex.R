@@ -128,7 +128,7 @@ setMethod("compute_metric_score", signature(metric="familiarMetricConcordanceInd
   id.x <- id.y <- event.x <- event.y <- time.x <- time.y <- pred.x <- pred.y <- NULL
   
   # Generate a combinatorial data set
-  dt <- data.table("id_join"=1, "id"=seq_along(x), "pred"=x, "time"=time, "event"=event)
+  dt <- data.table::data.table("id_join"=1, "id"=seq_along(x), "pred"=x, "time"=time, "event"=event)
   dt <- merge(dt, dt, by="id_join", allow.cartesian=TRUE)[id.x < id.y, ][, ":="(id_join=NULL, id.x=NULL, id.y=NULL)]
   
   # Get only useful pairs (event-event with non-tied times; event-non-event with

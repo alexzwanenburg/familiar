@@ -286,7 +286,7 @@ setMethod("..vimp", signature(object="familiarCoreMultivariateMutualInfoVimp"),
     x <- stats::model.matrix(~.-1, data.frame(x))
     
     # Calculate concordance indices
-    ci <- apply(x, 2, function(x_data, y_data) metric.concordance_index.cindex_(x=x_data, y=y_data), y_data=y)
+    ci <- apply(x, 2, function(x_data, y_data) ..compute_concordance_index(x=x_data, time=y_data[, 1], event=y_data[, 2]), y_data=y)
     
     # Calculate mutual information from the concordance indices
     mi <- -0.5 * log(1.0 - (2.0 * (ci - 0.5))^2 + 1E-10)
@@ -296,7 +296,7 @@ setMethod("..vimp", signature(object="familiarCoreMultivariateMutualInfoVimp"),
     
   } else {
     # Compute the concordance index.
-    ci <- metric.concordance_index.cindex_(x=x, y=y)
+    ci <- ..compute_concordance_index(x=x, time=y[, 1], event=y[, 2])
     
     # Compute mutual information from the concordance index.
     mi <- -0.5 * log(1.0 - (2.0 * (ci - 0.5))^2 + 1E-10)
