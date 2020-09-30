@@ -102,7 +102,7 @@
     on.exit(RSclient::RS.close(rcon))
     
     # Send data.table to server
-    RSclient::RS.assign(rsc=rcon, name="master_data", value=backend_data, wait=TRUE)
+    RSclient::RS.assign(rsc=rcon, name="master_data", value=data, wait=TRUE)
     
   } else if(backend_type %in% c("socket_server")){
     # Start the separate r session thread that will run the socket server.
