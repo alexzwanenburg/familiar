@@ -283,10 +283,10 @@ setMethod("prepare_vimp_object", signature(data="data.table"),
             data <- do.call(as_data_object, args=c(list("data"=data),
                                                    list(...)))
             
-            return(do.call(vimp, args=c(list("data"=data,
-                                              "vimp_method"=vimp_method,
-                                              "vimp_method_parameter_list"=vimp_method_parameter_list),
-                                         list(...))))
+            return(do.call(prepare_vimp_object, args=c(list("data"=data,
+                                                            "vimp_method"=vimp_method,
+                                                            "vimp_method_parameter_list"=vimp_method_parameter_list),
+                                                       list(...))))
           })
 
 
