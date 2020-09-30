@@ -1232,7 +1232,7 @@ setMethod("export_confusion_matrix_data", signature(object="ANY"),
                               args=append(list("object"=object, "data_element"="confusion_matrix"), list(...)))
             
             return(do.call(export_confusion_matrix_data,
-                           args=append(list("object"=object, "dir_path"=dir_path, "export_raw"=FALSE,), list(...))))
+                           args=append(list("object"=object, "dir_path"=dir_path, "export_raw"=FALSE), list(...))))
           })
 
 
