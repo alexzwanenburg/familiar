@@ -308,9 +308,7 @@ plotting.add_cluster_name <- function(x, color_by=NULL, facet_by=NULL, singular_
   x <- lapply(x, function(y){
     
     # Check if x is empty.
-    if(is_empty(y)){
-      return(y)
-    }
+    if(is_empty(y)) return(NULL)
     
     # This is for backward compatibility.
     if(!all(c("cluster_id", "cluster_size") %in% colnames(y))){
