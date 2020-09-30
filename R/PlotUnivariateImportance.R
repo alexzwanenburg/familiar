@@ -31,7 +31,8 @@ NULL
 #'@param width (*optional*) Width of the plot. A default value is derived from
 #'  the number of facets.
 #'@param units (*optional*) Plot size unit. Either `cm` (default), `mm` or `in`.
-#'
+#'@param verbose Flag to indicate whether feedback should be provided for the
+#'  plotting.
 #'@inheritParams as_familiar_collection
 #'@inheritParams plotting.check_input_args
 #'@inheritParams plotting.check_data_handling
@@ -101,6 +102,7 @@ setGeneric("plot_univariate_importance",
                     width=waiver(),
                     height=waiver(),
                     units=waiver(),
+                    verbose=TRUE,
                     ...) standardGeneric("plot_univariate_importance"))
 
 #####plot_univariate_importance (generic)#####
@@ -132,6 +134,7 @@ setMethod("plot_univariate_importance", signature(object="ANY"),
                    width=waiver(),
                    height=waiver(),
                    units=waiver(),
+                   verbose=TRUE,
                    ...){
             
             # Attempt conversion to familiarCollection object.
@@ -163,7 +166,8 @@ setMethod("plot_univariate_importance", signature(object="ANY"),
                                      "significance_level_shown"=significance_level_shown,
                                      "width"=width,
                                      "height"=height,
-                                     "units"=units)))
+                                     "units"=units,
+                                     "verbose"=verbose)))
           })
 
 #####plot_univariate_importance (collection)#####
@@ -195,16 +199,17 @@ setMethod("plot_univariate_importance", signature(object="familiarCollection"),
                    width=waiver(),
                    height=waiver(),
                    units=waiver(),
+                   verbose=TRUE,
                    ...){
             
             ##### Check input arguments ########################################
 
             # Get input data.
             x <- export_univariate_analysis_data(object=object)
-
+            
             # Determine the metric column.
-            metric_col <- .plot_univariate_check_importance_metric(metric=importance_metric, x=x)
-            if(is.null(metric_col)){ return(NULL) }
+            metric_col <- .plot_univariate_check_importance_metric(metric=importance_metric, x=x, verbose=verbose)
+            if(is.null(metric_col)) return(NULL)
             
             # Update p-values below the machine precision (i.e. p=0.0). 
             x[eval(parse(text=metric_col)) <= 0.0, (metric_col):=2 * .Machine$double.eps]
@@ -213,9 +218,7 @@ setMethod("plot_univariate_importance", signature(object="familiarCollection"),
             x[, "log_value":=-log10(get(metric_col))]
             
             # ggtheme
-            if(!is(ggtheme, "theme")) {
-              ggtheme <- plotting.get_theme(use_theme=ggtheme)
-            }
+            if(!is(ggtheme, "theme")) ggtheme <- plotting.get_theme(use_theme=ggtheme)
 
             # significance_level_shown
             if(!is.null(significance_level_shown)){
@@ -297,16 +300,12 @@ setMethod("plot_univariate_importance", signature(object="familiarCollection"),
             }
             
             # Store plots to list in case no dir_path is provided
-            if(is.null(dir_path)){
-              plot_list <- list()
-            }
+            if(is.null(dir_path)) plot_list <- list()
             
             # Iterate over splits
             for(x_sub in x_split){
               
-              if(is_empty(x_sub)){
-                next()
-              }
+              if(is_empty(x_sub)) next()
               
               # Generate plot
               p <- .plot_univariate_importance(x=x_sub,
@@ -328,10 +327,10 @@ setMethod("plot_univariate_importance", signature(object="familiarCollection"),
                                                significance_level_shown=significance_level_shown)
               
               # Check empty output
-              if(is.null(p)){ next() }
+              if(is.null(p)) next()
               
               # Draw plot
-              if(draw){ plotting.draw(plot_or_grob=p) }
+              if(draw) plotting.draw(plot_or_grob=p)
               
               # Save and export
               if(!is.null(dir_path)){
@@ -421,9 +420,7 @@ setMethod("plot_univariate_importance", signature(object="familiarCollection"),
   x <- guide_list$data
 
   # Check if cluster information should be shown.
-  if(show_cluster){
-    x <- plotting.add_cluster_name(x=x, color_by=color_by, facet_by=facet_by)
-  }
+  if(show_cluster) x <- plotting.add_cluster_name(x=x, color_by=color_by, facet_by=facet_by)
   
   # Create basic plot
   p <- ggplot2::ggplot(data=x, mapping=ggplot2::aes(x=!!sym("name"), y=!!sym("log_value")))
@@ -533,7 +530,7 @@ setMethod("plot_univariate_importance", signature(object="familiarCollection"),
 
 
 
-.plot_univariate_check_importance_metric <- function(x, metric){
+.plot_univariate_check_importance_metric <- function(x, metric, verbose=TRUE){
   
   .check_parameter_value_is_valid(x=metric[1], var_name="importance_metric", values=c("fdr", "p_value", "q_value"))
   
@@ -544,15 +541,19 @@ setMethod("plot_univariate_importance", signature(object="familiarCollection"),
   
   # Check if the column is present.
   if(is.null(x[[metric_col]])){
-    warning(paste0("Univariate importance can not be plotted as the requested metric (",
-                   metric[1], ") was not found in the data."))
+    if(verbose){
+      warning(paste0("Univariate importance can not be plotted as the requested metric (",
+                     metric[1], ") was not found in the data."))
+    }
     
     return(NULL)
   }
   
   # Check if any values are valid.
   if(all(is.na(x[[metric_col]]))){
-    warning("Univariate importance can not be plotted as all values are NA.")
+    if(verbose){
+      warning("Univariate importance can not be plotted as all values are NA.")
+    }
     
     return(NULL)
   }

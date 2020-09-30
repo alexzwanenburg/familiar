@@ -91,8 +91,6 @@ NULL
 #'  time-to-event survival outcomes are determined. Only used for `survival`
 #'  outcome. If not specified, the values used when creating the underlying
 #'  `familiarData` objects are used.
-#'@param verbose Flag to indicate whether feedback should be provided for the
-#'  plotting.
 #'@inheritParams as_familiar_collection
 #'@inheritParams plot_univariate_importance
 #'@inheritParams plotting.check_input_args

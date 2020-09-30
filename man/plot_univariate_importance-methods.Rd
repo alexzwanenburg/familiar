@@ -32,6 +32,7 @@ plot_univariate_importance(
   width = waiver(),
   height = waiver(),
   units = waiver(),
+  verbose = TRUE,
   ...
 )
 
@@ -61,6 +62,7 @@ plot_univariate_importance(
   width = waiver(),
   height = waiver(),
   units = waiver(),
+  verbose = TRUE,
   ...
 )
 
@@ -90,6 +92,7 @@ plot_univariate_importance(
   width = waiver(),
   height = waiver(),
   units = waiver(),
+  verbose = TRUE,
   ...
 )
 }
@@ -178,6 +181,9 @@ the number of facets.}
 the number of features and the number of facets.}
 
 \item{units}{(\emph{optional}) Plot size unit. Either \code{cm} (default), \code{mm} or \verb{in}.}
+
+\item{verbose}{Flag to indicate whether feedback should be provided for the
+plotting.}
 
 \item{...}{
   Arguments passed on to \code{\link[=as_familiar_collection]{as_familiar_collection}}, \code{\link[ggplot2:ggsave]{ggplot2::ggsave}}
