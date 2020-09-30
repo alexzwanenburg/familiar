@@ -198,10 +198,10 @@ compute_univariable_p_values <- function(cl=NULL, data_obj, feature_columns){
   }
   
   # Construct model
-  model <- tryCatch(stats::glm(outcome~.,
-                               data=data,
-                               family=stats::poisson(link="log")),
-                    error=identity)
+  model <- suppressWarnings(tryCatch(stats::glm(outcome~.,
+                                                data=data,
+                                                family=stats::poisson(link="log")),
+                                     error=identity))
   
   # Check if the model did not converge.
   if(inherits(model, "error")) return(NA_real_)
@@ -251,10 +251,10 @@ compute_univariable_p_values <- function(cl=NULL, data_obj, feature_columns){
   }
   
   # Construct model
-  model <- tryCatch(stats::glm(outcome ~ .,
-                               data=data,
-                               family=stats::binomial(link="logit")),
-                    error=identity)
+  model <- suppressWarnings(tryCatch(stats::glm(outcome ~ .,
+                                                data=data,
+                                                family=stats::binomial(link="logit")),
+                                     error=identity))
   
   # Check if the model did not converge
   if(inherits(model, "error")) return(NA_real_)
@@ -304,10 +304,10 @@ compute_univariable_p_values <- function(cl=NULL, data_obj, feature_columns){
   }
 
   # Construct model
-  model <- tryCatch(VGAM::vglm(outcome ~ .,
-                               data=data,
-                               family=VGAM::multinomial()),
-                    error=identity)
+  model <- suppressWarnings(tryCatch(VGAM::vglm(outcome ~ .,
+                                                data=data,
+                                                family=VGAM::multinomial()),
+                                     error=identity))
   
   # Check if the model did not converge
   if(inherits(model, "error")) return(NA_real_)
