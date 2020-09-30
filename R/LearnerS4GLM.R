@@ -422,35 +422,35 @@ setMethod("..set_vimp_parameters", signature(object="familiarGLM"),
             if(family_str == ""){
               # If no family is specified, the default behaviour is to identify the family
               # through optimisation.
-              if(outcome_type=="binomial") {
+              if(object@outcome_type=="binomial") {
                 family_default <- c("logistic")
                 
-              } else if(outcome_type=="continuous"){
+              } else if(object@outcome_type=="continuous"){
                 family_default <- c("gaussian")
                 
-              } else if(outcome_type=="count"){
+              } else if(object@outcome_type=="count"){
                 family_default <- c("poisson")
                 
-              } else if(outcome_type=="multinomial") {
+              } else if(object@outcome_type=="multinomial") {
                 family_default <- "multinomial"
                 
-              } else if(outcome_type == "survival") {
+              } else if(object@outcome_type == "survival") {
                 family_default <- "cox"
                 
               } else {
-                ..error_outcome_type_not_implemented(outcome_type)
+                ..error_outcome_type_not_implemented(object@outcome_type)
               }
               
             } else if(family_str == "log") {
               # "log" is a collection of different families, that should be specified
               # according to the outcome type.
-              if(outcome_type=="binomial") {
+              if(object@outcome_type=="binomial") {
                 family_default <- "log_binomial"
                 
-              } else if(outcome_type=="continuous") {
+              } else if(object@outcome_type=="continuous") {
                 family_default <- c("log_gaussian")
                 
-              } else if(outcome_type=="count") {
+              } else if(object@outcome_type=="count") {
                 family_default <- "log_poisson"
               }
               
