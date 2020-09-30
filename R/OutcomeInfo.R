@@ -308,7 +308,8 @@ get_outcome_info_from_backend <- function(){
 
   # Suppress NOTES due to non-standard evaluation in data.table
   repetition_id <- event <- censored <- competing <- NULL
-  interval_survival <- interval_incidence_rate <- interval_censoring_rate <- NULL
+  interval_survival <- interval_incidence_rate <- interval_incidence_rate <- NULL
+  outcome_event <- outcome_time <- n <- interval_non_censoring_rate <- survival_probability <- NULL
   
   # Get standard outcome columns
   outcome_columns <- get_outcome_columns(x=data)
@@ -355,7 +356,7 @@ get_outcome_info_from_backend <- function(){
                              by="outcome_time"][order(outcome_time)]
     
     # Add group sizes at the start of each interval.
-    surv_group[, "n":=nrow(x) - shift(cumsum(event + censored + competing), n=1, fill=0, type="lag")]
+    surv_group[, "n":=nrow(x) - data.table::shift(cumsum(event + censored + competing), n=1, fill=0, type="lag")]
     
     # Compute the incidence and censoring rates in the interval
     surv_group[, ":="("interval_survival"= 1.0 - event / n,
@@ -367,7 +368,7 @@ get_outcome_info_from_backend <- function(){
                       "cumulative_censoring"=1.0 - cumprod(interval_non_censoring_rate))]
     
     # Compute cumulative incidence and censoring rates.
-    surv_group[, ":="("cumulative_incidence"=cumsum(shift(survival_probability, n=1L, fill=1.0, type="lag") * interval_incidence_rate))]
+    surv_group[, ":="("cumulative_incidence"=cumsum(data.table::shift(survival_probability, n=1L, fill=1.0, type="lag") * interval_incidence_rate))]
     
     # Rename the outcome_time column.
     data.table::setnames(surv_group, old="outcome_time", new="time")
