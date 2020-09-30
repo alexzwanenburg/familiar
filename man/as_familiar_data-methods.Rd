@@ -246,12 +246,16 @@ bootstrap data is aggregated by computing confidence intervals for
 receiver-operating characteristic curves, decision curves and permutation
 variable importance.}
   }}
+
+\item{name}{Name of the \code{familiarData} object. If not set, a name is
+automatically generated.}
 }
 \value{
 A \code{familiarData} object.
 }
 \description{
-Creates \code{familiarData} a object from \code{familiarEnsemble} or \code{familiarModel} objects.
+Creates \code{familiarData} a object from \code{familiarEnsemble} or
+\code{familiarModel} objects.
 }
 \details{
 The \code{data} argument is required if \code{familiarEnsemble} or

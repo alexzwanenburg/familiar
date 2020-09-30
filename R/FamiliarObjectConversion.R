@@ -90,11 +90,15 @@ setMethod("as_familiar_ensemble", signature(object="ANY"),
 
 #'@title Conversion to familiarData object.
 #'
-#'@description Creates `familiarData` a object from `familiarEnsemble` or `familiarModel` objects.
+#'@description Creates `familiarData` a object from `familiarEnsemble` or
+#'  `familiarModel` objects.
 #'
 #'@param object A `familiarData` object, or a `familiarEnsemble` or
 #'  `familiarModel` objects that will be internally converted to a
 #'  `familiarData` object. Paths to such objects can also be provided.
+#'
+#'@param name Name of the `familiarData` object. If not set, a name is
+#'  automatically generated.
 #'
 #'@inheritDotParams extract_data
 #'
