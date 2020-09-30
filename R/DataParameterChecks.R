@@ -437,7 +437,7 @@
                  "Columns for survival or competing risk outcomes should contain time (numeric values >= 0) and event status",
                  "(0 and 1 or FALSE and TRUE, or values according to censoring_indicator, event_indicator and competing_risk_indicator arguments) information."))
       
-    } else if(sum(time_cols) == 1 & sum(event_cols) == 1){
+    } else if(sum(time_cols) == 1 & sum(event_survival_cols) == 1 & sum(event_competing_risk_cols) == 1){
       # Only one column of either type. The test below yields 0 if these are different columns,
       # and 1 if they are the same column, in which case an error is raised.
       if(sum(time_cols * event_survival_cols) & sum(time_cols * event_competing_risk_cols)){
@@ -445,7 +445,7 @@
                    "However, data in the columns did not strictly correspond to these outcomes.",
                    "Check if a survival outcome was intended, and provide a single outcome column otherwise.",
                    "Columns for survival or competing risk outcomes should contain time (numeric values >= 0) and event status",
-                   "(0 and 1 or FALSE and TRUEm censoring_indicator, event_indicator and competing_risk_indicator arguments) information."))
+                   "(0 and 1 or FALSE and TRUE, censoring_indicator, event_indicator and competing_risk_indicator arguments) information."))
       }
     }
     
