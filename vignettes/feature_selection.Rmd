@@ -135,7 +135,7 @@ Computing mutual information requires that probability distributions of $x$ and 
 In familiar we therefore used to following three approaches to compute mutual information:
 
 1. For binomial and multinomial outcomes mutual information is computed using sample estimates. In case of continuous $x$, these are discretised into $\lceil 2 n^{1/3}\rceil$ bins, with $n$ the number of samples, after which computation is conducted as if $x$ was a categorical variable.
-2. For continuous and count outcomes, we use the approximation proposed by De Jay et al. after Gel'fand and Yaglom [@Gelfand1959-de; @De_Jay2013-y]: $I = -0.5\log(1-\rho(x,y)^2 + \epsilon)$, with $\rho(x,y)$ Spearman's correlation coefficient and $\epsilon$ a small positive number to prevent $\log(0)$.
+2. For continuous and count outcomes, we use the approximation proposed by De Jay et al. after Gel'fand and Yaglom [@Gelfand1959-de; @De_Jay2013-yl]: $I = -0.5\log(1-\rho(x,y)^2 + \epsilon)$, with $\rho(x,y)$ Spearman's correlation coefficient and $\epsilon$ a small positive number to prevent $\log(0)$.
 3. For survival outcomes the second method is adapted for use with a concordance index: $I  = -0.5 \log(1-(2*(ci-0.5))^2 + \epsilon)$, with $ci$ the concordance index.
 
 We opted to adapt the approach based on the outcome type as this ensures that a single consistent approach is used to assess all feature data in an analysis, thus making results comparable.
@@ -152,7 +152,7 @@ The remainder proceeds iteratively. The mutual information $I_{s,1j}$ between th
 
 The iterative process stops if there is no feature $j$ for which $I_{y,j} - \sum_{i\in S}  I_{s,ij} > 0$, with $S$ being the subset of selected features, or all features have been exhausted.
 
-To reduce the number of required computations, the implementation in familiar activily filters out any feature $j$ for which $I_{y,j} - \sum_{i\in S}  I_{s,ij} \leq 0$ at the earliest instance, as the $\sum_{i\in S}  I_{s,ij}$ term will monotonously increase.
+To reduce the number of required computations, the implementation in familiar actively filters out any feature $j$ for which $I_{y,j} - \sum_{i\in S}  I_{s,ij} \leq 0$ at the earliest instance, as the $\sum_{i\in S}  I_{s,ij}$ term will monotonously increase.
 
 ### Minimum redundancy maximum relevance
 
@@ -224,7 +224,7 @@ The permutation importance method is implemented by `random_forest_permutation` 
 
 ### Holdout permutation importance
 
-This variant on permutation importance (`random_forest_ranger_holdout_permutation`) is implemented using `ranger::holdoutRF`. Instead of using out-of-bag to compute feature importance, two cross-validation folds are used. A random forest is trained on either fold, and variable importance determined on the other [@Janitza2018-k].
+This variant on permutation importance (`random_forest_ranger_holdout_permutation`) is implemented using `ranger::holdoutRF`. Instead of using out-of-bag to compute feature importance, two cross-validation folds are used. A random forest is trained on either fold, and variable importance determined on the other [@Janitza2018-kl].
 
 The hold-out variable importance method implemented in the `randomForestSRC` package (`random_forest_holdout`) is implemented using `randomForestSRC::holdout.vimp`. It is similar to the previous variant, but does not cross-validation folds. Instead, out-of-bag prediction errors for models trained with and without each feature are compared.
 
