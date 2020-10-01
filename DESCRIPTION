@@ -1,18 +1,13 @@
 Package: familiar
 Title: End-To-End Machine Learning and Data Analysis Framework
-Version: 0.0.0.52
+Version: 0.0.0.53
 Authors@R: c(
    person("Alex", "Zwanenburg",
           email = "alexander.zwanenburg@nct-dresden.de",
           role = c("aut", "cre"),
           comment = c(ORCID = "0000-0002-0342-9545")),
    person("Steffen", "Löck", role="aut"),
-   person("Asier", "Rabasco", role="ctb"),
-   person("Iram", "Shahzadi", role="ctb"),
-   person("Shivaprasad", "Patil", role="ctb"),
-   person("Stefan", "Leger", role="ctb"),
-   person("Stefan", "Schmidt", role="ctb"),
-   person("Anne", "Dietert", role="ctb"))
+   person("Stefan", "Leger", role="ctb"))
 Description: Encapsulates the modelling and validation workflow for
    (big) data analysis. Automatically performs steps such as data normalization,
    dimensionality reduction, feature selection, hyper-parameter optimization,
