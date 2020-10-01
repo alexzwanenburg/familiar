@@ -95,25 +95,33 @@ learner.calibration.survival.prepare_data <- function(groups, probability_table,
       # Fit a Kaplan-Meier curve for the current group
       km_fit <- survival::survfit(Surv(time, event)~1, data=group_data)
       
-      # Get observed probability
-      obs_prob[jj] <- stats::approx(x=km_fit$time,
-                                    y=km_fit$surv,
+      if(length(km_fit$time) >= 2){
+        
+        # Get observed probability
+        obs_prob[jj] <- stats::approx(x=km_fit$time,
+                                      y=km_fit$surv,
+                                      xout=time_max,
+                                      method="linear",
+                                      rule=2)$y
+        
+        # Get expected probability
+        exp_prob[jj] <- mean(group_data$exp_prob)
+        
+        # Get group size
+        n_g[jj] <- length(groups[[jj]])
+        
+        # Get greenwood variance estimate.
+        km_var[jj] <- stats::approx(x=km_fit$time,
+                                    y=km_fit$std.err,
                                     xout=time_max,
                                     method="linear",
-                                    rule=2)$y
+                                    rule=2)$y^2
+      } else {
+        # Set NA values.
+        obs_prob[jj] <- exp_prob[jj] <- km_var[jj] <- NA_real_
+        n_g[jj] <- NA_integer_
+      }
       
-      # Get expected probability
-      exp_prob[jj] <- mean(group_data$exp_prob)
-      
-      # Get group size
-      n_g[jj] <- length(groups[[jj]])
-      
-      # Get greenwood variance estimate.
-      km_var[jj] <- stats::approx(x=km_fit$time,
-                                  y=km_fit$std.err,
-                                  xout=time_max,
-                                  method="linear",
-                                  rule=2)$y^2
     } else {
       # Set NA values.
       obs_prob[jj] <- exp_prob[jj] <- km_var[jj] <- NA_real_
