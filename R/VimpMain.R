@@ -163,8 +163,8 @@ vimp.get_fs_parameters <- function(data, method, outcome_type, names_only=FALSE)
   
   # Create familiarModel
   vimp_method_object <- methods::new("familiarVimpMethod",
-                              vimp_method=method,
-                              outcome_type=outcome_type)
+                                     vimp_method=method,
+                                     outcome_type=outcome_type)
   
   # Set up the specific model
   vimp_method_object <- promote_vimp_method(vimp_method_object)
@@ -283,10 +283,10 @@ setMethod("prepare_vimp_object", signature(data="data.table"),
             data <- do.call(as_data_object, args=c(list("data"=data),
                                                    list(...)))
             
-            return(do.call(vimp, args=c(list("data"=data,
-                                              "vimp_method"=vimp_method,
-                                              "vimp_method_parameter_list"=vimp_method_parameter_list),
-                                         list(...))))
+            return(do.call(prepare_vimp_object, args=c(list("data"=data,
+                                                            "vimp_method"=vimp_method,
+                                                            "vimp_method_parameter_list"=vimp_method_parameter_list),
+                                                       list(...))))
           })
 
 

@@ -1,3 +1,6 @@
+# Don't perform any further tests on CRAN due to time of running the complete test.
+testthat::skip_on_cran()
+
 familiar_data_creation_unit_test <- function(outcome_type){
   
   if(outcome_type == "count"){

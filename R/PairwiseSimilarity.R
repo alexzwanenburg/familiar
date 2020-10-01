@@ -6,28 +6,28 @@ similarity.compute_similarity <- function(x, y, x_categorical, y_categorical, si
   
   if(similarity_metric %in% c("cox_snell_r2", "nagelkerke_r2", "mcfadden_r2")){
     # Pseudo-R2 similarity measures
-    similarity <- similarity.pseudo_r2(x=x,
-                                       y=y,
-                                       x_categorical=x_categorical,
-                                       y_categorical=y_categorical,
-                                       similarity_metric=similarity_metric)
+    similarity <- suppressWarnings(similarity.pseudo_r2(x=x,
+                                                        y=y,
+                                                        x_categorical=x_categorical,
+                                                        y_categorical=y_categorical,
+                                                        similarity_metric=similarity_metric))
     
   } else if(similarity_metric %in% c("pearson", "kendall", "spearman")){
     # Correlation-based similarity measures
-    similarity <- similarity.correlation(x=x,
-                                         y=y,
-                                         x_categorical=x_categorical,
-                                         y_categorical=y_categorical,
-                                         similarity_metric=similarity_metric)
+    similarity <- suppressWarnings(similarity.correlation(x=x,
+                                                          y=y,
+                                                          x_categorical=x_categorical,
+                                                          y_categorical=y_categorical,
+                                                          similarity_metric=similarity_metric))
     
   } else if(similarity_metric %in% c("gower", "euclidean", "manhattan", "chebyshev", "cosine", "canberra", "bray_curtis")){
     # Distance-based similarity measures
-    similarity <- similarity.distance_based(x=x,
-                                            y=y,
-                                            x_categorical=x_categorical,
-                                            y_categorical=y_categorical,
-                                            similarity_metric=similarity_metric)
-     
+    similarity <- suppressWarnings(similarity.distance_based(x=x,
+                                                             y=y,
+                                                             x_categorical=x_categorical,
+                                                             y_categorical=y_categorical,
+                                                             similarity_metric=similarity_metric))
+    
   } else {
     ..error_reached_unreachable_code("similarity.compute_similarity: encountered unknown similarity metric")
   }

@@ -10,6 +10,7 @@ extract_confusion_matrix(
   cl = NULL,
   is_pre_processed = FALSE,
   ensemble_method = waiver(),
+  compute_model_data = waiver(),
   message_indent = 0L,
   verbose = FALSE,
   ...
@@ -35,6 +36,15 @@ same sample. Available methods are:
 \item \code{mean}: Use the mean of the predicted values as the ensemble value for a
 sample.
 }}
+
+\item{compute_model_data}{(\emph{optional}) This parameter can be set to enable
+computation of data based on individual models. The parameter can take on or
+more of the following values: \code{all}, \code{model_performance}, \code{auc_data},
+\code{confusion_matrix}, \code{decision_curve_analyis}, \code{permutation_vimp},
+\code{performance_data}, as well as \code{true}, \code{false} and \code{none}.
+
+By default, data is computed for the ensemble as a whole, but not for
+underlying models.}
 
 \item{message_indent}{Number of indentation steps for messages shown during
 computation and extraction of various data elements.}

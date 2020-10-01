@@ -195,10 +195,9 @@ setMethod("plot_feature_similarity", signature(object="familiarCollection"),
             
             # Get input data
             x <- export_feature_similarity(object=object)
-              
+            
             # Skip empty data.
-            if(is.null(x)) return(NULL)
-            if(length(x) == 0) return(NULL)
+            if(is_empty(x)) return(NULL)
             
             # Collect data sets, learners and feature selection methods, so that
             # splitting can be organised.
@@ -218,6 +217,9 @@ setMethod("plot_feature_similarity", signature(object="familiarCollection"),
             
             # Concatenate to a single data table.
             y <- data.table::rbindlist(y)
+            
+            # Check empty data
+            if(is_empty(y)) return(NULL)
             
             # Update labelling
             y$data_set <- factor(y$data_set, levels=unique(get_data_set_names(object)))
@@ -249,14 +251,10 @@ setMethod("plot_feature_similarity", signature(object="familiarCollection"),
             }
             
             # x_label
-            if(is.waive(x_label)){
-              x_label <- NULL
-            }
+            if(is.waive(x_label)) x_label <- NULL
             
             # y_label
-            if(is.waive(y_label)){
-              y_label <- NULL
-            }
+            if(is.waive(y_label)) y_label <- NULL
             
             # legend_label
             if(is.waive(legend_label)) legend_label <- NULL
@@ -346,9 +344,7 @@ setMethod("plot_feature_similarity", signature(object="familiarCollection"),
             }
             
             # Store plots to list in case dir_path is absent.
-            if(is.null(dir_path)){
-              plot_list <- list()
-            }
+            if(is.null(dir_path)) plot_list <- list()
             
             # Iterate over data splits.
             for(ii in names(y_split)){
@@ -471,19 +467,15 @@ setMethod("plot_feature_similarity", signature(object="familiarCollection"),
                                           show_dendrogram,
                                           dendrogram_height){
   
-  # Define elements that need to be shared. Note that "guide" and "strip_y" may
-  # be absent.
-  elements <- c("guide", "strip_x", "strip_y")
-  if(x_label_shared == "overall") { elements <- append(elements, "axis_title_x")}
-  if(y_label_shared == "overall") { elements <- append(elements, "axis_title_y")}
-  
-  # Split by facet. This generates a list of data splits with facetting
+  # Split by facet. This generates a list of data splits with faceting
   # information that allows for positioning.
-  plot_layout_table <- plotting.get_plot_layout_table(x=x, facet_by=facet_by, facet_wrap_cols=facet_wrap_cols,
-                                                      x_label_shared=x_label_shared, y_label_shared=y_label_shared)
+  plot_layout_table <- plotting.get_plot_layout_table(x=x,
+                                                      facet_by=facet_by,
+                                                      facet_wrap_cols=facet_wrap_cols)
   
   # Split data into facets. This is done by row.
-  x_split_list <- plotting.split_data_by_facet(x=x, plot_layout_table=plot_layout_table)
+  x_split_list <- plotting.split_data_by_facet(x=x,
+                                               plot_layout_table=plot_layout_table)
   
   # Create plots to join
   figure_list <- list()
@@ -523,44 +515,37 @@ setMethod("plot_feature_similarity", signature(object="familiarCollection"),
                                                     show_dendrogram=show_dendrogram,
                                                     similarity_metric=similarity_metric)
     
-    # Update theme to remove guide, facet labels, etc., based on notations in
-    # dataset x. The axis tick labels are kept, because we cannot guarantee that
-    # all heatmaps will have the same features and feature ordering.
-    p_heatmap <- plotting.update_facet_plot_elements(p=p_heatmap,
-                                                     x=x_split,
-                                                     keep_axis_labels_x=TRUE,
-                                                     keep_axis_labels_y=TRUE)
-    
     # Extract plot elements from the heatmap.
-    extracted_elements <- plotting.extract_plot_elements(p=p_heatmap, elements=elements)
+    extracted_elements <- plotting.extract_plot_elements(p=p_heatmap)
     
     # Remove extracted elements from the heatmap.
-    p_heatmap <- plotting.remove_plot_elements(p=p_heatmap, elements=elements)
+    p_heatmap <- plotting.remove_plot_elements(p=p_heatmap)
     
-    # Convert to grob.
-    g_heatmap <- plotting.to_grob(p_heatmap)
+    # Rename plot elements.
+    g_heatmap <- plotting.rename_plot_elements(g=plotting.to_grob(p_heatmap),
+                                               extension="main")
     
-    # Add dendogram
+    # Add dendrogram
     if(!is.null(show_dendrogram) & inherits(cluster_object, "hclust")){
-      # Obtain dendogram plotting data as line segments.
+      # Obtain dendrogram plotting data as line segments.
       dendro_data <- plotting.dendrogram_as_table(h=cluster_object,
                                                   similarity_metric=similarity_metric)
       
       for(position in show_dendrogram){
-        # Plot dendogram
+        # Plot dendrogram
         p_dendro <- .create_feature_similarity_dendrogram_plot(x=dendro_data,
-                                                              position=position,
-                                                              ggtheme=ggtheme,
-                                                              y_range=y_range,
-                                                              y_n_breaks=y_n_breaks,
-                                                              y_breaks=y_breaks,
-                                                              plot_height=dendrogram_height,
-                                                              rotate_x_tick_labels=rotate_x_tick_labels)
+                                                               position=position,
+                                                               ggtheme=ggtheme,
+                                                               y_range=y_range,
+                                                               y_n_breaks=y_n_breaks,
+                                                               y_breaks=y_breaks,
+                                                               plot_height=dendrogram_height,
+                                                               rotate_x_tick_labels=rotate_x_tick_labels)
         
         # Determine the axis element
         axis_element <- ifelse(position %in% c("top", "bottom"), "axis-l", "axis-b")
         
-        # Extract dendodram gtable, which consists of the panel and the height
+        # Extract dendrogram gtable, which consists of the panel and the height
         # axis.
         g_dendro <- .gtable_extract(g=plotting.to_grob(p_dendro),
                                     element=c("panel", axis_element),
@@ -571,32 +556,30 @@ setMethod("plot_feature_similarity", signature(object="familiarCollection"),
         g_heatmap <- .gtable_insert(g=g_heatmap,
                                     g_new=g_dendro,
                                     where=position,
-                                    ref_element="panel",
+                                    ref_element="panel-main",
                                     partial_match=TRUE)
       }
     }
     
-    # Re-introduce plot elements.
-    g_heatmap <- plotting.reinsert_plot_elements(g=g_heatmap,
-                                                 elements=c("strip_x", "strip_y"),
-                                                 grob_list=extracted_elements,
-                                                 ggtheme=ggtheme)
-    
     # Add combined grob to list
-    figure_list <- append(figure_list, list(g_heatmap))
+    figure_list <- c(figure_list, list(g_heatmap))
     
-    # Add extract elements to the grob_element_list
-    extracted_element_list <- .append_new(extracted_element_list, extracted_elements)
+    # Add extract elements to the extracted_element_list
+    extracted_element_list <- c(extracted_element_list, list(extracted_elements))
   }
   
-  # Obtain layout dimensions (rows, cols).
-  layout_dims <- plotting.get_plot_layout_dims(plot_layout_table=plot_layout_table)
+  # Update the layout table.
+  plot_layout_table <- plotting.update_plot_layout_table(plot_layout_table=plot_layout_table,
+                                                         grobs=figure_list,
+                                                         x_text_shared=FALSE,
+                                                         x_label_shared=x_label_shared,
+                                                         y_text_shared=FALSE,
+                                                         y_label_shared=y_label_shared,
+                                                         facet_wrap_cols=facet_wrap_cols)
   
   # Combine features.
   g <- plotting.arrange_figures(grobs=figure_list,
-                                n_rows=layout_dims[1],
-                                n_cols=layout_dims[2],
-                                elements=setdiff(elements, c("strip_x", "strip_y")),
+                                plot_layout_table=plot_layout_table,
                                 element_grobs=extracted_element_list,
                                 ggtheme=ggtheme)
   
@@ -620,7 +603,7 @@ setMethod("plot_feature_similarity", signature(object="familiarCollection"),
                                                show_dendrogram,
                                                similarity_metric){
   
-  if(is.null(gradient_palette_range)){
+  if(is.null(gradient_palette_range) && !is.null(similarity_metric)){
     # Find the palette range.
     gradient_palette_range <- similarity.metric_range(similarity_metric=similarity_metric)
   }
@@ -632,7 +615,10 @@ setMethod("plot_feature_similarity", signature(object="familiarCollection"),
   
   # Should the palette be inverted? This is because for some metrics, clusters
   # are those with least distance, not highest similarity.
-  invert_palette <- similarity.default_is_distance(similarity_metric=similarity_metric)
+  invert_palette <- FALSE
+  if(!is.null(similarity_metric)){
+    invert_palette <- similarity.default_is_distance(similarity_metric=similarity_metric)
+  }
   
   # Create basic plot
   p <- ggplot2::ggplot(data=x, mapping=ggplot2::aes(x=!!sym("feature_1"),
@@ -653,13 +639,14 @@ setMethod("plot_feature_similarity", signature(object="familiarCollection"),
   gradient_colours <- plotting.get_palette(x=gradient_palette, palette_type=palette_type)
   if(invert_palette) gradient_colours <- rev(gradient_colours)
   
-  # Add gradient palette. If the legend is not shown, legend_label equals NULL.
-  p <- p + ggplot2::scale_fill_gradientn(name=legend_label,
-                                         colors=gradient_colours,
-                                         limits=range(gradient_palette_range),
-                                         oob=scales::squish)
+  if(length(gradient_palette_range) > 0){
+    # Add gradient palette. If the legend is not shown, legend_label equals NULL.
+    p <- p + ggplot2::scale_fill_gradientn(name=legend_label,
+                                           colors=gradient_colours,
+                                           limits=range(gradient_palette_range),
+                                           oob=scales::squish)
+  }
   
-
   # Show dendrogram determines where tick labels and axis labels are placed. By
   # default axes are located at the bottom and right.
   x_axis_position <- "bottom"

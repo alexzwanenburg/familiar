@@ -65,13 +65,16 @@ compute_univariable_p_values <- function(cl=NULL, data_obj, feature_columns){
 .univariate_cox_regression_test <- function(x, outcome_data){
   # Cox regression model for univariable analysis
   
+  # Suppress NOTES due to non-standard evaluation in data.table
+  value <- NULL
+  
   # Check if any data was provided.
   if(length(x) == 0) return(NA_real_)
   
   # Combine the feature value column with the outcome
-  data <- data.table("value"=x,
-                     "outcome_time"=outcome_data$outcome_time,
-                     "outcome_event"=outcome_data$outcome_event)
+  data <- data.table::data.table("value"=x,
+                                 "outcome_time"=outcome_data$outcome_time,
+                                 "outcome_event"=outcome_data$outcome_event)
   
   # Drop entries with missing feature values.
   data <- data[is.finite(value)]
@@ -118,11 +121,14 @@ compute_univariable_p_values <- function(cl=NULL, data_obj, feature_columns){
 .univariate_linear_regression_test <- function(x, outcome_data){
   # Gaussian regression for univariable analysis
   
+  # Suppress NOTES due to non-standard evaluation in data.table
+  value <- NULL
+  
   # Check if any data was provided.
   if(length(x) == 0) return(NA_real_)
   
   # Combine the feature value column with the outcome
-  data <- data.table("value"=x, "outcome"=outcome_data$outcome)
+  data <- data.table::data.table("value"=x, "outcome"=outcome_data$outcome)
   
   # Drop entries with missing feature values.
   data <- data[is.finite(value)]
@@ -168,11 +174,14 @@ compute_univariable_p_values <- function(cl=NULL, data_obj, feature_columns){
 .univariate_poisson_regression_test <- function(x, outcome_data){
   # Poisson regression for univariable analysis with count-type outcomes
   
+  # Suppress NOTES due to non-standard evaluation in data.table
+  value <- NULL
+  
   # Check if any data was provided.
   if(length(x) == 0) return(NA_real_)
   
   # Combine the feature value column with the outcome
-  data <- data.table("value"=x, "outcome"=outcome_data$outcome)
+  data <- data.table::data.table("value"=x, "outcome"=outcome_data$outcome)
   
   # Drop entries with missing feature values.
   data <- data[is.finite(value)]
@@ -189,10 +198,10 @@ compute_univariable_p_values <- function(cl=NULL, data_obj, feature_columns){
   }
   
   # Construct model
-  model <- tryCatch(stats::glm(outcome~.,
-                               data=data,
-                               family=stats::poisson(link="log")),
-                    error=identity)
+  model <- suppressWarnings(tryCatch(stats::glm(outcome~.,
+                                                data=data,
+                                                family=stats::poisson(link="log")),
+                                     error=identity))
   
   # Check if the model did not converge.
   if(inherits(model, "error")) return(NA_real_)
@@ -225,7 +234,7 @@ compute_univariable_p_values <- function(cl=NULL, data_obj, feature_columns){
   if(length(x) == 0) return(NA_real_)
   
   # Combine the feature value column with the outcome
-  data <- data.table("value"=x, "outcome"=outcome_data$outcome)
+  data <- data.table::data.table("value"=x, "outcome"=outcome_data$outcome)
   
   # Drop entries with missing feature values.
   data <- data[is.finite(value)]
@@ -242,10 +251,10 @@ compute_univariable_p_values <- function(cl=NULL, data_obj, feature_columns){
   }
   
   # Construct model
-  model <- tryCatch(stats::glm(outcome ~ .,
-                               data=data,
-                               family=stats::binomial(link="logit")),
-                    error=identity)
+  model <- suppressWarnings(tryCatch(stats::glm(outcome ~ .,
+                                                data=data,
+                                                family=stats::binomial(link="logit")),
+                                     error=identity))
   
   # Check if the model did not converge
   if(inherits(model, "error")) return(NA_real_)
@@ -278,7 +287,7 @@ compute_univariable_p_values <- function(cl=NULL, data_obj, feature_columns){
   if(length(x) == 0) return(NA_real_)
   
   # Combine the feature value column with the outcome
-  data <- data.table("value"=x, "outcome"=outcome_data$outcome)
+  data <- data.table::data.table("value"=x, "outcome"=outcome_data$outcome)
   
   # Drop entries with missing feature values.
   data <- data[is.finite(value)]
@@ -295,10 +304,10 @@ compute_univariable_p_values <- function(cl=NULL, data_obj, feature_columns){
   }
 
   # Construct model
-  model <- tryCatch(VGAM::vglm(outcome ~ .,
-                               data=data,
-                               family=VGAM::multinomial()),
-                    error=identity)
+  model <- suppressWarnings(tryCatch(VGAM::vglm(outcome ~ .,
+                                                data=data,
+                                                family=VGAM::multinomial()),
+                                     error=identity))
   
   # Check if the model did not converge
   if(inherits(model, "error")) return(NA_real_)
@@ -544,7 +553,7 @@ any_predictions_valid <- function(prediction_table, outcome_type){
     return(FALSE)
   }
   
-  if(outcome_type %in% c("survival", "continuous", "count")){
+  if(outcome_type %in% c("survival", "continuous", "count", "competing_risk")){
     return(any(is.finite(prediction_table$predicted_outcome)))
     
   } else if(outcome_type %in% c("binomial", "multinomial")){
@@ -554,6 +563,24 @@ any_predictions_valid <- function(prediction_table, outcome_type){
     ..error_no_known_outcome_type(outcome_type)
   }
   
+}
+
+remove_nonvalid_predictions <- function(prediction_table, outcome_type){
+  
+  # Suppress NOTES due to non-standard evaluation in data.table
+  predicted_outcome <- predicted_class <- NULL
+  
+  if(is_empty(prediction_table)) return(prediction_table)
+  
+  if(outcome_type %in% c("survival", "continuous", "count", "competing_risk")){
+    return(prediction_table[is.finite(predicted_outcome), ])
+    
+  } else if(outcome_type %in% c("binomial", "multinomial")){
+    return(prediction_table[!is.na(predicted_class), ])
+    
+  } else {
+    ..error_no_known_outcome_type(outcome_type)
+  }
 }
 
 
@@ -633,6 +660,19 @@ get_mode <- function(x) {
   ux <- ux[which.max(tabulate(match(x, ux)))]
 
   return(ux)
+}
+
+
+
+.sanitise_dots <- function(class, ...){
+  
+  dots <- list(...)
+  
+  if(length(dots) == 0) return(dots)
+  
+  slot_names <- names(methods::getSlots(class))
+  
+  return(dots[intersect(names(dots), slot_names)])
 }
 
 

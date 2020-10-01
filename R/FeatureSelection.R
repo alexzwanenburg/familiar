@@ -1,4 +1,4 @@
-run_feature_selection <- function(cl, proj_list, settings, file_paths){
+run_feature_selection <- function(cl, proj_list, settings, file_paths, message_indent=0L){
 
   # Check which data object is required for performing feature selection
   fs_data_id <- getProcessDataID(proj_list=proj_list, process_step="fs")
@@ -23,15 +23,17 @@ run_feature_selection <- function(cl, proj_list, settings, file_paths){
   for(curr_fs_method in run_fs_methods){
 
     # Message
-    logger.message(paste0("\nFeature selection: starting feature selection using \"", curr_fs_method, "\" method."))
+    logger.message(paste0("\nFeature selection: starting feature selection using \"", curr_fs_method, "\" method."),
+                   indent=message_indent)
 
     # Optimise models used for feature selection
     hpo_list <- run_hyperparameter_optimisation(cl=cl,
-                                                proj_list=proj_list,
+                                                project_list=proj_list,
                                                 data_id=fs_data_id,
                                                 settings=settings,
                                                 file_paths=file_paths,
-                                                fs_method=curr_fs_method)
+                                                fs_method=curr_fs_method,
+                                                message_indent=message_indent + 1L)
     
     # Create variable importance information by iterating over the list of runs.
     vimp_list <- fam_mapply_lb(cl=cl_fs,
@@ -51,7 +53,8 @@ run_feature_selection <- function(cl, proj_list, settings, file_paths){
                                                                  file_paths=file_paths))
 
     # Message that feature selection has been completed.
-    logger.message(paste0("Feature selection: feature selection using \"", curr_fs_method, "\" method has been completed."))
+    logger.message(paste0("Feature selection: feature selection using \"", curr_fs_method, "\" method has been completed."),
+                   indent=message_indent)
   }
 }
 

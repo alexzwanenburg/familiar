@@ -51,8 +51,8 @@ NULL
 #'
 #'  * `mean`: Use the mean of the predicted values as the ensemble value for a
 #'  sample.
-#'@param risk_ensemble_method Method for ensembling the risk group assignments
-#'  from different models for the same sample.
+#'@param stratification_ensemble_method Method for ensembling the risk group
+#'  assignments from different models for the same sample.
 #'
 #'  The following methods are available:
 #'
@@ -161,7 +161,7 @@ NULL
 #'
 #'  If not provided explicitly, this parameter is read from settings used at
 #'  creation of the underlying `familiarModel` objects.
-#'  
+#'
 #'@param icc_type String indicating the type of intraclass correlation
 #'  coefficient (`1`, `2` or `3`) that should be used to compute robustness for
 #'  features in repeated measurements during the evaluation of univariate
@@ -192,7 +192,7 @@ setGeneric("extract_data", function(object, data,
                                     aggregation_method=waiver(),
                                     rank_threshold=waiver(),
                                     ensemble_method=waiver(),
-                                    risk_ensemble_method=waiver(),
+                                    stratification_ensemble_method=waiver(),
                                     eval_times=waiver(),
                                     metric=waiver(),
                                     feature_cluster_method=waiver(),
@@ -205,6 +205,7 @@ setGeneric("extract_data", function(object, data,
                                     sample_similarity_metric=waiver(),
                                     confidence_level=waiver(),
                                     bootstrap_ci_method=waiver(),
+                                    compute_model_data=waiver(),
                                     compute_model_ci=waiver(),
                                     compute_ensemble_ci=waiver(),
                                     aggregate_ci=waiver(),
@@ -223,7 +224,7 @@ setMethod("extract_data", signature(object="familiarEnsemble"),
                    aggregation_method=waiver(),
                    rank_threshold=waiver(),
                    ensemble_method=waiver(),
-                   risk_ensemble_method=waiver(),
+                   stratification_ensemble_method=waiver(),
                    eval_times=waiver(),
                    metric=waiver(),
                    feature_cluster_method=waiver(),
@@ -236,6 +237,7 @@ setMethod("extract_data", signature(object="familiarEnsemble"),
                    sample_similarity_metric=waiver(),
                    confidence_level=waiver(),
                    bootstrap_ci_method=waiver(),
+                   compute_model_data=waiver(),
                    compute_model_ci=waiver(),
                    compute_ensemble_ci=waiver(),
                    aggregate_ci=waiver(),
@@ -257,7 +259,7 @@ setMethod("extract_data", signature(object="familiarEnsemble"),
             object <- load_models(object=object)
             
             # Extract feature distance tables,
-            if(data_element %in% c("all", "mutual_correlation", "univariate_analysis", "feature_expressions")){
+            if(data_element %in% c("all", "mutual_correlation", "univariate_analysis", "feature_expressions", "permutation_vimp")){
               # Not for the fs_vimp and model_vimp data elements. This is
               # because these derive cluster information from consensus
               # clustering.
@@ -321,6 +323,7 @@ setMethod("extract_data", signature(object="familiarEnsemble"),
                                                            eval_times=eval_times,
                                                            confidence_level=confidence_level,
                                                            bootstrap_ci_method=bootstrap_ci_method,
+                                                           compute_model_data=compute_model_data,
                                                            compute_model_ci=compute_model_ci,
                                                            compute_ensemble_ci=compute_ensemble_ci,
                                                            aggregate_ci=aggregate_ci,
@@ -399,6 +402,7 @@ setMethod("extract_data", signature(object="familiarEnsemble"),
                                                      data=data,
                                                      cl=cl,
                                                      ensemble_method=ensemble_method,
+                                                     compute_model_data=compute_model_data,
                                                      eval_times=eval_times,
                                                      message_indent=message_indent,
                                                      verbose=verbose)
@@ -416,6 +420,7 @@ setMethod("extract_data", signature(object="familiarEnsemble"),
                                                             eval_times=eval_times,
                                                             confidence_level=confidence_level,
                                                             bootstrap_ci_method=bootstrap_ci_method,
+                                                            compute_model_data=compute_model_data,
                                                             compute_model_ci=compute_model_ci,
                                                             compute_ensemble_ci=compute_ensemble_ci,
                                                             aggregate_ci=aggregate_ci,
@@ -435,6 +440,7 @@ setMethod("extract_data", signature(object="familiarEnsemble"),
                                                                  eval_times=eval_times,
                                                                  confidence_level=confidence_level,
                                                                  bootstrap_ci_method=bootstrap_ci_method,
+                                                                 compute_model_data=compute_model_data,
                                                                  compute_model_ci=compute_model_ci,
                                                                  compute_ensemble_ci=compute_ensemble_ci,
                                                                  aggregate_ci=aggregate_ci,
@@ -458,11 +464,13 @@ setMethod("extract_data", signature(object="familiarEnsemble"),
             # Compute log-rank tests
             if(data_element %in% c("all", "kaplan_meier_data")){
               stratification_data <- extract_stratification_data(object=object,
-                                                                 prediction_data=prediction_data,
-                                                                 risk_ensemble_method=risk_ensemble_method,
+                                                                 data=data,
+                                                                 ensemble_method=ensemble_method,
+                                                                 stratification_ensemble_method=stratification_ensemble_method,
                                                                  time_max=time_max,
                                                                  message_indent=message_indent,
                                                                  verbose=verbose)
+              
             } else {
               stratification_data <- NULL
             }
@@ -485,6 +493,7 @@ setMethod("extract_data", signature(object="familiarEnsemble"),
                                            cl=cl,
                                            ensemble_method=ensemble_method,
                                            bootstrap_ci_method=bootstrap_ci_method,
+                                           compute_model_data=compute_model_data,
                                            compute_model_ci=compute_model_ci,
                                            compute_ensemble_ci=compute_ensemble_ci,
                                            aggregate_ci=aggregate_ci,
@@ -501,6 +510,7 @@ setMethod("extract_data", signature(object="familiarEnsemble"),
                                                                 data=data,
                                                                 cl=cl,
                                                                 ensemble_method=ensemble_method,
+                                                                compute_model_data=compute_model_data,
                                                                 message_indent=message_indent,
                                                                 verbose=verbose)
             } else {
@@ -992,11 +1002,10 @@ setMethod("extract_calibration_data", signature(object="familiarEnsemble"),
 #'@keywords internal
 setGeneric("extract_stratification_data", function(object,
                                                    data=NULL,
-                                                   prediction_data=NULL,
                                                    ensemble_method=waiver(),
                                                    time_max=waiver(),
                                                    risk_group_list=NULL,
-                                                   risk_ensemble_method=waiver(),
+                                                   stratification_ensemble_method=waiver(),
                                                    message_indent=0L,
                                                    verbose=FALSE,
                                                    ...) standardGeneric("extract_stratification_data"))
@@ -1004,19 +1013,16 @@ setGeneric("extract_stratification_data", function(object,
 setMethod("extract_stratification_data", signature(object="familiarEnsemble"),
           function(object,
                    data=NULL,
-                   prediction_data=NULL,
                    ensemble_method=waiver(),
                    time_max=waiver(),
                    risk_group_list=NULL,
-                   risk_ensemble_method=waiver(),
+                   stratification_ensemble_method=waiver(),
                    message_indent=0L,
                    verbose=FALSE,
                    ...){
             
             # Only assess stratification for survival outcomes.
-            if(!object@outcome_type %in% c("survival")){
-              return(NULL)
-            }
+            if(!object@outcome_type %in% c("survival")) return(NULL)
             
             # Message extraction start
             if(verbose){
@@ -1025,10 +1031,12 @@ setMethod("extract_stratification_data", signature(object="familiarEnsemble"),
             }
             
             # Assess stratification
-            return(assess_stratification(object=object, data=data, prediction_data=prediction_data,
-                                         ensemble_method=ensemble_method, time_max=time_max,
+            return(assess_stratification(object=object,
+                                         data=data,
+                                         ensemble_method=ensemble_method,
+                                         time_max=time_max,
                                          risk_group_list=risk_group_list,
-                                         risk_ensemble_method=risk_ensemble_method))
+                                         stratification_ensemble_method=stratification_ensemble_method))
           })
 
 
@@ -1089,12 +1097,14 @@ setMethod("extract_univariate_analysis", signature(object="familiarEnsemble", da
               feature_linkage_method <- object@settings$feature_linkage_method
             }
             
-            # Obtain feature cluster cut method from stored settings, if required.
+            # Obtain feature cluster cut method from stored settings, if
+            # required.
             if(is.waive(feature_cluster_cut_method)){
               feature_cluster_cut_method <- object@settings$feature_cluster_cut_method
             }
             
-            # Obtain cluster similarity threshold from stored settings, if required.
+            # Obtain cluster similarity threshold from stored settings, if
+            # required.
             if(is.waive(feature_similarity_threshold)){
               feature_similarity_threshold <- object@settings$feature_similarity_threshold
             }
@@ -1139,46 +1149,24 @@ setMethod("extract_univariate_analysis", signature(object="familiarEnsemble", da
             }
             
             has_qvalue_package <- is_package_installed(name="qvalue", verbose=FALSE)
-
-            # Define an empty prototype table
-            empty_table <- data.table::data.table("model_name"=character(0),
-                                                  "name"=character(0),
-                                                  "cluster_id"=integer(0),
-                                                  "cluster_size"=integer(0),
-                                                  "p_value"=numeric(0),
-                                                  "p_value_corrected"=numeric(0))
             
-            if(has_qvalue_package){
-              empty_table <- cbind(empty_table, data.table::data.table("q_value"=numeric(0)))
-            }
+            # Check if the data object is empty -- return an empty table if this
+            # is the case.
+            if(is_empty(data)) return(NULL)
             
-            if(is_repeated_measurement) {
-              empty_table <- cbind(empty_table, data.table::data.table("icc"=numeric(0),
-                                                                       "icc_low"=numeric(0),
-                                                                       "icc_up"=numeric(0),
-                                                                       "icc_panel"=numeric(0),
-                                                                       "icc_panel_low"=numeric(0),
-                                                                       "icc_panel_up"=numeric(0)))
-            }
+            # Check if the number of samples is sufficient (>5), and return an
+            # empty table if not.
+            if(data.table::uniqueN(data@data, by="subject_id") <= 5) return(NULL)
             
-            # Check if the data object is empty -- return an empty table if this is the case
-            if(is_empty(data)){
-              return(list("data"=empty_table))
-            }
-            
-            # Check if the number of samples is sufficient (>5), and return an empty table if not.
-            if(data.table::uniqueN(data@data, by="subject_id") <= 5){
-              return(list("data"=empty_table))
-            }
-            
-            # Maintain only important features. The current set is based on the required features.
+            # Maintain only important features. The current set is based on the
+            # required features.
             data <- filter_features(data=data, available_features=object@important_features)
             
             # Determine feature columns
             feature_columns <- get_feature_columns(x=data)
             
             # Check if there are any features in the model.
-            if(length(feature_columns) == 0) return(list("data"=empty_table))
+            if(length(feature_columns) == 0) return(NULL)
             
             # Calculate univariate P values, based on aggregated data
             regr_p_values <- compute_univariable_p_values(cl=cl,
@@ -1207,8 +1195,8 @@ setMethod("extract_univariate_analysis", signature(object="familiarEnsemble", da
               univariate_data[, "q_value":=computed_q_value]
             }
             
-            # Determine whether robustness data can be added
-            # Check if repeated measurements are present, otherwise return no feature names.
+            # Determine whether robustness data can be added Check if repeated
+            # measurements are present, otherwise return no feature names.
             if(is_repeated_measurement){
               
               # Determine which columns actually contains numeric data

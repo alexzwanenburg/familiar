@@ -23,6 +23,7 @@ setGeneric("extract_performance",
                     eval_times=waiver(),
                     confidence_level=waiver(),
                     bootstrap_ci_method=waiver(),
+                    compute_model_data=waiver(),
                     compute_model_ci=waiver(),
                     compute_ensemble_ci=waiver(),
                     aggregate_ci=waiver(),
@@ -41,6 +42,7 @@ setMethod("extract_performance", signature(object="familiarEnsemble"),
                    eval_times=waiver(),
                    confidence_level=waiver(),
                    bootstrap_ci_method=waiver(),
+                   compute_model_data=waiver(),
                    compute_model_ci=waiver(),
                    compute_ensemble_ci=waiver(),
                    aggregate_ci=waiver(),
@@ -84,6 +86,9 @@ setMethod("extract_performance", signature(object="familiarEnsemble"),
             .check_parameter_value_is_valid(x=bootstrap_ci_method, var_name="bootstrap_ci_methpd",
                                             values=.get_available_bootstrap_confidence_interval_methods())
             
+            # By default, compute confidence intervals for ensembles, but not
+            # for models.
+            if(is.waive(compute_model_data)) compute_model_data <- "none"
             if(is.waive(compute_model_ci)) compute_model_ci <- "none"
             if(is.waive(compute_ensemble_ci)) compute_ensemble_ci <- "all"
             if(is.waive(aggregate_ci)) aggregate_ci <- "none"
@@ -93,7 +98,7 @@ setMethod("extract_performance", signature(object="familiarEnsemble"),
             if(is.waive(metric)) metric <- object@settings$metric
             
             # Check metric input argument
-            sapply(metric, metric.check_outcome_type, outcome_type=object@outcome_type)
+            sapply(metric, metric.check_outcome_type, object=object)
             
             # Test if models are properly loaded
             if(!is_model_loaded(object=object)) ..error_ensemble_models_not_loaded()
@@ -108,9 +113,10 @@ setMethod("extract_performance", signature(object="familiarEnsemble"),
                                                     metric=metric,
                                                     eval_times=eval_times,
                                                     confidence_level=confidence_level,
-                                                    compute_model_ci=any(c("all", "model_performance") %in% compute_model_ci),
-                                                    compute_ensemble_ci=any(c("all", "model_performance") %in% compute_ensemble_ci),
-                                                    aggregate_ci=any(c("all", "model_performance") %in% aggregate_ci),
+                                                    compute_model_data=any(c("all", "model_performance", "TRUE") %in% compute_model_data),
+                                                    compute_model_ci=any(c("all", "model_performance", "TRUE") %in% compute_model_ci),
+                                                    compute_ensemble_ci=any(c("all", "model_performance", "TRUE") %in% compute_ensemble_ci),
+                                                    aggregate_ci=any(c("all", "model_performance", "TRUE") %in% aggregate_ci),
                                                     bootstrap_ci_method=bootstrap_ci_method,
                                                     message_indent=message_indent + 1L,
                                                     verbose=verbose)
@@ -264,16 +270,11 @@ setMethod("extract_performance", signature(object="familiarEnsemble"),
                                         time,
                                         object){
   
-  # For 
-  if(is(object, "familiarEnsemble")) object <- object@model_list[[1]]
-  
-  # Calculate the score.
-  score <- metric.main(metric=metric,
-                       object=object,
-                       purpose="score",
-                       dt=data,
-                       outcome_type=object@outcome_type,
-                       na.rm=TRUE)
+  # Compute the metric score.
+  score <- compute_metric_score(metric=metric,
+                                data=data,
+                                time=time,
+                                object=object)
   
   if(!is.finite(score)) return(NULL)
   

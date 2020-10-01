@@ -26,6 +26,7 @@ setGeneric("extract_auc_data", function(object,
                                         ensemble_method=waiver(),
                                         confidence_level=waiver(),
                                         bootstrap_ci_method=waiver(),
+                                        compute_model_data=waiver(),
                                         compute_model_ci=waiver(),
                                         compute_ensemble_ci=waiver(),
                                         aggregate_ci=waiver(),
@@ -42,6 +43,7 @@ setMethod("extract_auc_data", signature(object="familiarEnsemble"),
                    ensemble_method=waiver(),
                    confidence_level=waiver(),
                    bootstrap_ci_method=waiver(),
+                   compute_model_data=waiver(),
                    compute_model_ci=waiver(),
                    compute_ensemble_ci=waiver(),
                    aggregate_ci=waiver(),
@@ -79,6 +81,9 @@ setMethod("extract_auc_data", signature(object="familiarEnsemble"),
             .check_parameter_value_is_valid(x=bootstrap_ci_method, var_name="bootstrap_ci_methpd",
                                             values=.get_available_bootstrap_confidence_interval_methods())
             
+            # By default, compute confidence intervals for ensembles, but not
+            # for models.
+            if(is.waive(compute_model_data)) compute_model_data <- "none"
             if(is.waive(compute_model_ci)) compute_model_ci <- "none"
             if(is.waive(compute_ensemble_ci)) compute_ensemble_ci <- "all"
             if(is.waive(aggregate_ci)) aggregate_ci <- "all"
@@ -91,9 +96,10 @@ setMethod("extract_auc_data", signature(object="familiarEnsemble"),
                                             is_pre_processed=is_pre_processed,
                                             ensemble_method=ensemble_method,
                                             confidence_level=confidence_level,
-                                            compute_model_ci=any(c("all", "auc_data") %in% compute_model_ci),
-                                            compute_ensemble_ci=any(c("all", "auc_data") %in% compute_ensemble_ci),
-                                            aggregate_ci=any(c("all", "auc_data") %in% aggregate_ci),
+                                            compute_model_data=any(c("all", "auc_data", "TRUE") %in% compute_model_data),
+                                            compute_model_ci=any(c("all", "auc_data", "TRUE") %in% compute_model_ci),
+                                            compute_ensemble_ci=any(c("all", "auc_data", "TRUE") %in% compute_ensemble_ci),
+                                            aggregate_ci=any(c("all", "auc_data", "TRUE") %in% aggregate_ci),
                                             bootstrap_ci_method=bootstrap_ci_method,
                                             message_indent=message_indent + 1L,
                                             verbose=verbose)
@@ -119,8 +125,14 @@ setMethod("extract_auc_data", signature(object="familiarEnsemble"),
     # Check if any predictions are valid.
     if(!any_predictions_valid(prediction_data, outcome_type=object@outcome_type)) return(NULL)
     
+    # Determine class levels
+    outcome_class_levels <- get_outcome_class_levels(object)
+    
+    # Select only one outcome type for binomial outcomes.
+    if(object@outcome_type == "binomial") outcome_class_levels <- outcome_class_levels[2]
+    
     # Iterate over class levels.
-    roc_data <- lapply(get_outcome_class_levels(object),
+    roc_data <- lapply(outcome_class_levels,
                        .compute_roc_data_categorical,
                        data=prediction_data,
                        object=object,

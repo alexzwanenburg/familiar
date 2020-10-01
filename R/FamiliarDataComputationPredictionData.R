@@ -13,6 +13,7 @@ setGeneric("extract_predictions",
                     cl=NULL,
                     is_pre_processed=FALSE,
                     ensemble_method=waiver(),
+                    compute_model_data=waiver(),
                     eval_times=waiver(),
                     message_indent=0L,
                     verbose=FALSE,
@@ -25,6 +26,7 @@ setMethod("extract_predictions", signature(object="familiarEnsemble"),
                    cl=NULL,
                    is_pre_processed=FALSE,
                    ensemble_method=waiver(),
+                   compute_model_data=waiver(),
                    eval_times=waiver(),
                    message_indent=0L,
                    verbose=FALSE,
@@ -59,6 +61,9 @@ setMethod("extract_predictions", signature(object="familiarEnsemble"),
             # Test if models are properly loaded
             if(!is_model_loaded(object=object)) ..error_ensemble_models_not_loaded()
             
+            # By default, do not compute predictions using individual models.
+            if(is.waive(compute_model_data)) compute_model_data <- "none"
+            
             # Aggregate data. It does not make sense to keep duplicate rows here.
             data <- aggregate_data(data=data)
             
@@ -66,6 +71,7 @@ setMethod("extract_predictions", signature(object="familiarEnsemble"),
             performance_data <- universal_extractor(object=object,
                                                     cl=cl,
                                                     FUN=.extract_predictions,
+                                                    compute_model_data=any(c("all", "prediction_data", "TRUE") %in% compute_model_data),
                                                     compute_model_ci=FALSE,
                                                     compute_ensemble_ci=FALSE,
                                                     data=data,
@@ -77,6 +83,8 @@ setMethod("extract_predictions", signature(object="familiarEnsemble"),
             
             return(performance_data)
           })
+
+
 
 .extract_predictions <- function(object, data, eval_times, ensemble_method, is_pre_processed, ...){
   

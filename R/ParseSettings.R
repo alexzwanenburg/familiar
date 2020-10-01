@@ -267,6 +267,18 @@
 #'   optimization for general algorithm configuration. in Learning and
 #'   Intelligent Optimization (ed. Coello, C. A. C.) 6683, 507–523 (Springer
 #'   Berlin Heidelberg, 2011).
+#'   
+#'   1. Shahriari, B., Swersky, K., Wang, Z., Adams, R. P. & de Freitas, N.
+#'   Taking the Human Out of the Loop: A Review of Bayesian Optimization. Proc.
+#'   IEEE 104, 148–175 (2016)
+#'
+#'   1. Srinivas, N., Krause, A., Kakade, S. M. & Seeger, M. W.
+#'   Information-Theoretic Regret Bounds for Gaussian Process Optimization in
+#'   the Bandit Setting. IEEE Trans. Inf. Theory 58, 3250–3265 (2012)
+#'
+#'   1. Kaufmann, E., Cappé, O. & Garivier, A. On Bayesian upper confidence
+#'   bounds for bandit problems. in Artificial intelligence and statistics
+#'   592–600 (2012).
 #'
 #'   1. Davison, A. C. & Hinkley, D. V. Bootstrap methods and their application.
 #'   (Cambridge University Press, 1997).
@@ -1703,7 +1715,23 @@
 #'   assessed by comparing in-bag and out-of-bag model performance.
 #'
 #'   The default number of bootstraps is `200`. Hyperparameter optimisation may
-#'   finish before exhausting the set of boostraps.
+#'   finish before exhausting the set of bootstraps.
+#' @param optimisation_determine_vimp (*optional*) Logical value that indicates
+#'   whether variable importance is determined separately for each of the
+#'   bootstraps created during the optimisation process (`TRUE`) or the
+#'   applicable results from the feature selection step are used (`FALSE`).
+#'
+#'   Determining variable importance increases the initial computational
+#'   overhead. However, it prevents positive biases for the out-of-bag data due
+#'   to overlap of these data with the development data set used for the feature
+#'   selection step. In this case, any hyperparameters of the variable
+#'   importance method are not determined separately for each bootstrap, but
+#'   those obtained during the feature selection step are used instead. In case
+#'   multiple of such hyperparameter sets could be applicable, the set that will
+#'   be used is randomly selected for each bootstrap.
+#'
+#'   This parameter only affects hyperparameter optimisation of learners. The
+#'   default is `TRUE`.
 #' @param smbo_random_initialisation (*optional*) Logical indicating random
 #'   (`TRUE`) or grid-based (`FALSE`) initialisation of combinations of
 #'   hyperparameters. If random initialisation is selected, up to 200 unique
@@ -1736,7 +1764,15 @@
 #'   enable the algorithm to explore the hyperparameter space.
 #' @param smbo_stop_convergent_iterations (*optional*) The number of subsequent
 #'   convergent SMBO iterations required to stop hyperparameter optimisation
-#'   early. The default value is `3`.
+#'   early. An iteration is convergent if the *best* parameter set has not
+#'   changed or the optimisation score over the 4 most recent iterations has not
+#'   changed beyond the tolerance level in `smbo_stop_tolerance`.
+#'
+#'   The default value is `3`.
+#' @param smbo_stop_tolerance (*optional*) Tolerance for early stopping due to
+#'   convergent optimisation score.
+#'
+#'   The default value is `0.01`.
 #' @param smbo_step_bootstraps (*optional*) The number of bootstraps taken from
 #'   the set of `optimisation_bootstraps` bootstraps as data for the initial
 #'   SMBO step and the steps in each intensify iteration.
@@ -1763,25 +1799,8 @@
 #'   computational efficiency.
 #'
 #'   The default value is `0.05`.
-#' @param objective (*optional*) Type of objective used to determine the
-#'   performance of a hyperparameter set. Model performance is assessed using
-#'   the metric specified by `optimisation_metric` on the in-bag and out-of-bag
-#'   samples of a bootstrap. These will be referred to as \eqn{s_{ib}} and
-#'   \eqn{s_{oob}}, respectivily. The method indicated by `objective` computes a
-#'   objective score from each pair of values. The following objective methods
-#'   are available:
 #'
-#'   * `max_validation`: Uses the out-of-bag validation score \eqn{s_{oob}} as
-#'   objective. This is a standard machine learning objective.
-#'
-#'   * `balanced` (default): Computes \eqn{s_{oob} - |s_{oob} - s_{ib}|}. This
-#'   objective forces the algorithm to consider hyperparameter sets that perform
-#'   well on both development and validation data.
-#'
-#'   * `stronger_balance`: Computes \eqn{s_{oob} - 2.0 |s_{oob} - s_{ib}|}.
-#'   Stronger penalty than in the `balance` objective.
-#'
-#' @param optimisation_metric (*optional*) Type of metric used to compute
+#' @param optimisation_metric (*optional*) One or more metrics used to compute
 #'   performance scores. See the vignette on performance metrics for the
 #'   available metrics.
 #'
@@ -1795,10 +1814,72 @@
 #'
 #'   * `concordance_index`: For `survival` models.
 #'
-#'   Currently, only one optimisation metric can be specified. Note that instead
-#'   of computing the actual metric, an objective version is computed for
-#'   hyperparameter optimisation, so that better performance always yields
-#'   higher values.
+#'   Multiple optimisation metrics can be specified. Actual metric values are
+#'   converted to an objective value by comparison with a baseline metric value
+#'   that derives from a trivial model, i.e. majority class for binomial and
+#'   multinomial outcomes, the median outcome for count and continuous outcomes
+#'   and a fixed risk or time for survival outcomes.
+#'
+#' @param optimisation_function (*optional*) Type of optimisation function used
+#'   to quantify the performance of a hyperparameter set. Model performance is
+#'   assessed using the metric(s) specified by `optimisation_metric` on the
+#'   in-bag and out-of-bag samples of a bootstrap. These values are converted to
+#'   objective scores with a standardised interval of \eqn{[-1.0, 1.0]}, and are
+#'   referred to as \eqn{s'_{ib}} and \eqn{s'_{oob}}, respectively. The function
+#'   indicated by `optimisation_function` computes a objective score from each
+#'   pair of values:
+#'
+#'   * `max_validation`: Uses the out-of-bag validation objective score
+#'   \eqn{s'_{oob}} as optimisation score. This function is widely used in
+#'   machine learning.
+#'
+#'   * `balanced` (default): Computes \eqn{s'_{oob} - |s'_{oob} - s'_{ib}|}.
+#'   This function forces the algorithm to consider hyperparameter sets that
+#'   perform well on both development and validation data.
+#'
+#'   * `stronger_balance`: Computes \eqn{s'_{oob} - 2.0 |s'_{oob} - s'_{ib}|}.
+#'   Stronger penalty than in the `balanced` objective.
+#'
+#' @param acquisition_function (*optional*) The acquisition function influences
+#'   how new hyperparameter sets are selected.
+#'
+#'   Any point in the hyperparameter space has a single, scalar, optimisation
+#'   score value that is *a priori* unknown. During the optimisation process,
+#'   the algorithm samples from the hyperparameter space by selecting
+#'   hyperparameter sets and computing the optimisation score value for one or
+#'   more bootstraps. For each hyperparameter set the resulting values are
+#'   distributed around the actual value. A random forest is then trained using
+#'   all the resulting values.
+#'
+#'   The random forest maps positions in the hyperparameter space to the 1D real
+#'   space of optimisation values. The distribution of optimisation values at
+#'   each point is captured by individual decision trees.
+#'
+#'   The algorithm uses the random forest to search the hyperparameter space for
+#'   hyperparameter sets that are either likely better than the best known set
+#'   (*exploitation*) or where there is considerable uncertainty
+#'   (*exploration*). The acquisition function quantifies this (Shahriari et
+#'   al., 2016).
+#'
+#'   The following acquisition functions are available, and are described in
+#'   more detail in the *learner algorithms* vignette:
+#'
+#'   * `improvement_probability`: The probability of improvement quantifies the
+#'   probability that the expected optimisation score for a set is better than
+#'   the best observed optimisation score
+#'
+#'   * `improvement_empirical_probability`: Similar to
+#'   `improvement_probability`, but based directly on optimisation scores
+#'   predicted by the individual decision trees.
+#'
+#'   * `expected_improvement` (default): Computes expected improvement.
+#'
+#'   * `upper_confidence_bound`: This acquisition function is based on the upper
+#'   confidence bound of the distribution (Srinivas et al., 2012).
+#'
+#'   * `bayes_upper_confidence_bound`:This acquisition function is based on the
+#'   upper confidence bound of the distribution (Kaufmann et al., 2012).
+#'
 #' @param parallel_hyperparameter_optimisation (*optional*) Enable parallel
 #'   processing for hyperparameter optimisation. Defaults to `TRUE`. When set to
 #'   `FALSE`, this will disable the use of parallel processing while performing
@@ -1812,18 +1893,33 @@
 #'   model-based optimization for general algorithm configuration. in Learning
 #'   and Intelligent Optimization (ed. Coello, C. A. C.) 6683, 507–523 (Springer
 #'   Berlin Heidelberg, 2011).
+#'
+#'   1. Shahriari, B., Swersky, K., Wang, Z., Adams, R. P. & de Freitas, N.
+#'   Taking the Human Out of the Loop: A Review of Bayesian Optimization. Proc.
+#'   IEEE 104, 148–175 (2016)
+#'
+#'   1. Srinivas, N., Krause, A., Kakade, S. M. & Seeger, M. W.
+#'   Information-Theoretic Regret Bounds for Gaussian Process Optimization in
+#'   the Bandit Setting. IEEE Trans. Inf. Theory 58, 3250–3265 (2012)
+#'
+#'   1. Kaufmann, E., Cappé, O. & Garivier, A. On Bayesian upper confidence
+#'   bounds for bandit problems. in Artificial intelligence and statistics
+#'   592–600 (2012).
 #' @md
 #' @keywords internal
 .parse_hyperparameter_optimisation_settings <- function(config=NULL, parallel, outcome_type,
                                                         optimisation_bootstraps=waiver(),
+                                                        optimisation_determine_vimp=waiver(),
                                                         smbo_random_initialisation=waiver(),
                                                         max_smbo_iterations=waiver(),
                                                         smbo_stop_convergent_iterations=waiver(),
+                                                        smbo_stop_tolerance=waiver(),
                                                         smbo_step_bootstraps=waiver(),
                                                         smbo_intensify_steps=waiver(),
                                                         smbo_intensify_stop_p_value=waiver(),
-                                                        objective=waiver(),
+                                                        optimisation_function=waiver(),
                                                         optimisation_metric=waiver(),
+                                                        acquisition_function=waiver(),
                                                         parallel_hyperparameter_optimisation=waiver(),
                                                         ...){
   settings <- list()
@@ -1831,6 +1927,11 @@
   # Randomisation of initial parameter grid
   settings$hpo_randomise_init_grid <- .parse_arg(x_config=config$smbo_random_initialisation, x_var=smbo_random_initialisation,
                                                  var_name="smbo_random_initialisation", type="logical", optional=TRUE, default=TRUE)
+  
+  
+  # Variable importance for the bootstraps
+  settings$hpo_determine_vimp <- .parse_arg(x_config=config$optimisation_determine_vimp, x_var=optimisation_determine_vimp,
+                                            var_name="optimisation_determine_vimp", type="logical", optional=TRUE, default=TRUE)
   
   
   # Maximum number of bootstraps for hyperparameter evaluation
@@ -1868,24 +1969,38 @@
   .check_number_in_valid_range(x=settings$hpo_alpha, var_name="smbo_intensify_stop_p_value", range=c(0.0, 1.0), closed=c(FALSE, TRUE))
   
   
-  # Number of convergant iterations before stopping SMBO
+  # Number of converging iterations before stopping SMBO
   settings$hpo_conv_stop <- .parse_arg(x_config=config$smbo_stop_convergent_iterations, x_var=smbo_stop_convergent_iterations,
                                        var_name="smbo_stop_convergent_iterations", type="integer", optional=TRUE, default=3)
 
   .check_number_in_valid_range(x=settings$hpo_conv_stop, var_name="smbo_stop_convergent_iterations", range=c(1, Inf))
   
   
-  # Objective function
-  settings$hpo_objective <- .parse_arg(x_config=config$objective, x_var=objective,
-                                       var_name="objective", type="character", optional=TRUE, default="balanced")
+  # Convergence tolerance
+  settings$hpo_convergence_tolerance <- .parse_arg(x_config=config$smbo_stop_tolerance, x_var=smbo_stop_tolerance,
+                                                   var_name="smbo_stop_tolerance", type="numeric", optional=TRUE, default=1E-2)
   
-  .check_parameter_value_is_valid(x=settings$hpo_objective, var_name="objective",
+  .check_number_in_valid_range(x=settings$hpo_convergence_tolerance, var_name="smbo_stop_tolerance", range=c(0.0, 2.0), closed=c(FALSE, TRUE))
+  
+  
+  # Objective function
+  settings$hpo_optimisation_function <- .parse_arg(x_config=config$optimisation_function, x_var=optimisation_function,
+                                       var_name="optimisation_function", type="character", optional=TRUE, default="balanced")
+  
+  .check_parameter_value_is_valid(x=settings$hpo_optimisation_function, var_name="optimisation_function",
                                   values=c("max_validation", "balanced", "stronger_balance"))
   
+  # Aqcuisition function
+  settings$hpo_acquisition_function <- .parse_arg(x_config=config$acquisition_function, x_var=acquisition_function,
+                                                  var_name="acquisition_function", type="character", optional=TRUE, default="expected_improvement")
+  
+  .check_parameter_value_is_valid(x=settings$hpo_acquisition_function, var_name="acquisition_function",
+                                  values=c("improvement_probability", "improvement_empirical_probability", "expected_improvement",
+                                           "upper_confidence_bound", "bayes_upper_confidence_bound"))
   
   # Performance metric for hyperparameter optimisation
   settings$hpo_metric <- .parse_arg(x_config=config$optimisation_metric, x_var=optimisation_metric,
-                                    var_name="optimisation_metric", type="character", optional=TRUE, default=NULL)
+                                    var_name="optimisation_metric", type="character_list", optional=TRUE, default=NULL)
   
   # Set default metric
   if(is.null(settings$hpo_metric)){
@@ -1998,6 +2113,15 @@
 #'  often not suitable due to non-normal distributions. The bias-corrected and
 #'  accelerated (BCa) method is not implemented yet.
 #'
+#'@param compute_model_data (*optional*) This parameter can be set to enable
+#'  computation of data based on individual models. The parameter can take on or
+#'  more of the following values: `all`, `model_performance`, `auc_data`,
+#'  `confusion_matrix`, `decision_curve_analyis`, `permutation_vimp`,
+#'  `performance_data`, as well as `true`, `false` and `none`.
+#'
+#'  By default, data is computed for the ensemble as a whole, but not for
+#'  underlying models.
+#'
 #'@param compute_model_ci (*optional*) This parameter can be set to enable
 #'  computation of bootstrap confidence intervals for individual models in
 #'  several parts of the evaluation. The parameter can take one or more of the
@@ -2006,17 +2130,17 @@
 #'  `none`.
 #'
 #'  By default, bootstrap confidence intervals are not computed for individual
-#'  models.
+#'  models. Note that this parameter has no effect unless data is computed for
+#'  individual models as well, which is managed by the `compute_model_data`
+#'  parameter.
 #'
 #'@param compute_ensemble_ci (*optional*) This parameter can be set to enable
-#'  computation of bootstrap confidence intervals for ensemble models in
-#'  several parts of the evaluation. The parameter can take one or more of the
-#'  following values: `all`, `model_performance`, `auc_data`,
-#'  `decision_curve_analyis`, `permutation_vimp` as well as `true`, `false` and
-#'  `none`.
+#'  computation of bootstrap confidence intervals for ensemble models in several
+#'  parts of the evaluation. The parameter can take one or more of the following
+#'  values: `all`, `model_performance`, `auc_data`, `decision_curve_analyis`,
+#'  `permutation_vimp` as well as `true`, `false` and `none`.
 #'
-#'  By default, bootstrap confidence intervals are computed for ensemble
-#'  models.
+#'  By default, bootstrap confidence intervals are computed for ensemble models.
 #'
 #'@param aggregate_ci (*optional*) Bootstraps are used to determine confidence
 #'  intervals. This information can be stored for export. However, in many cases
@@ -2246,6 +2370,7 @@
                                        evaluation_metric=waiver(),
                                        confidence_level=waiver(),
                                        bootstrap_ci_method=waiver(),
+                                       compute_model_data=waiver(),
                                        compute_model_ci=waiver(),
                                        compute_ensemble_ci=waiver(),
                                        aggregate_ci=waiver(),
@@ -2303,6 +2428,15 @@
   evaluation_ci_elements <- c("all", "model_performance", "auc_data",
                               "decision_curve_analyis", "permutation_vimp",
                               "true", "false", "none")
+  
+  # Enable or disable computation of data for individual models.
+  settings$compute_model_data <- .parse_arg(x_config=config$compute_model_data, x_var=compute_model_data,
+                                            var_name="compute_model_data", type="character_list", optional=TRUE,
+                                            default="none")
+  
+  settings$compute_model_data <- tolower(settings$compute_model_data)
+  .check_parameter_value_is_valid(x=settings$compute_model_data, var_name="compute_model_data", 
+                                  values=c(evaluation_ci_elements, "performance_data", "confusion_matrix"))
   
   # Enable or disable computation of confidence intervals for individual models.
   settings$compute_model_ci <- .parse_arg(x_config=config$compute_model_ci, x_var=compute_model_ci,
@@ -2453,7 +2587,7 @@
                                                var_name="stratification_ensemble_method", type="character", optional=TRUE, default="ensemble_mode")
   
   .check_parameter_value_is_valid(x=settings$strat_ensemble_method, var_name="stratification_ensemble_method",
-                                  values=.get_available_risk_ensemble_methods())
+                                  values=.get_available_stratification_ensemble_methods())
 
     
   # Study end time (this is used for plotting, and Uno's concordance index)

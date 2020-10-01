@@ -136,7 +136,7 @@ by setting the opacity of the cells. \code{show_alpha} takes the following
 values:
 \itemize{
 \item \code{none}: Cell opacity is not altered. Diagonal and off-diagonal cells are
-completely opaque and transparant, respectively. Same as \code{show_alpha=FALSE}.
+completely opaque and transparent, respectively. Same as \code{show_alpha=FALSE}.
 \item \code{by_class}: Cell opacity is normalised by the number of instances for each
 observed outcome class in each confusion matrix.
 \item \code{by_matrix} (default): Cell opacity is normalised by the number of

@@ -27,6 +27,7 @@ setGeneric("extract_permutation_vimp",
                     eval_times=waiver(),
                     confidence_level=waiver(),
                     bootstrap_ci_method=waiver(),
+                    compute_model_data=waiver(),
                     compute_model_ci=waiver(),
                     compute_ensemble_ci=waiver(),
                     aggregate_ci=waiver(),
@@ -51,6 +52,7 @@ setMethod("extract_permutation_vimp", signature(object="familiarEnsemble"),
                    eval_times=waiver(),
                    confidence_level=waiver(),
                    bootstrap_ci_method=waiver(),
+                   compute_model_data=waiver(),
                    compute_model_ci=waiver(),
                    compute_ensemble_ci=waiver(),
                    aggregate_ci=waiver(),
@@ -96,6 +98,7 @@ setMethod("extract_permutation_vimp", signature(object="familiarEnsemble"),
             
             # By default, compute confidence intervals for ensembles, but not
             # for models.
+            if(is.waive(compute_model_data)) compute_model_data <- "none"
             if(is.waive(compute_model_ci)) compute_model_ci <- "none"
             if(is.waive(compute_ensemble_ci)) compute_ensemble_ci <- "all"
             if(is.waive(aggregate_ci)) aggregate_ci <- "all"
@@ -105,7 +108,7 @@ setMethod("extract_permutation_vimp", signature(object="familiarEnsemble"),
             if(is.waive(metric)) metric <- object@settings$metric
 
             # Check metric input argument
-            sapply(metric, metric.check_outcome_type, outcome_type=object@outcome_type)
+            sapply(metric, metric.check_outcome_type, object=object)
             
             # Obtain cluster method from stored settings, if required.
             if(is.waive(feature_cluster_method)) feature_cluster_method <- object@settings$feature_cluster_method
@@ -145,9 +148,10 @@ setMethod("extract_permutation_vimp", signature(object="familiarEnsemble"),
                                              metric=metric,
                                              eval_times=eval_times,
                                              confidence_level=confidence_level,
-                                             compute_model_ci=any(c("all", "permutation_vimp") %in% compute_model_ci),
-                                             compute_ensemble_ci=any(c("all", "permutation_vimp") %in% compute_ensemble_ci),
-                                             aggregate_ci=any(c("all", "permutation_vimp") %in% aggregate_ci),
+                                             compute_model_data=any(c("all", "permutation_vimp", "TRUE") %in% compute_model_data),
+                                             compute_model_ci=any(c("all", "permutation_vimp", "TRUE") %in% compute_model_ci),
+                                             compute_ensemble_ci=any(c("all", "permutation_vimp", "TRUE") %in% compute_ensemble_ci),
+                                             aggregate_ci=any(c("all", "permutation_vimp", "TRUE") %in% aggregate_ci),
                                              bootstrap_ci_method=bootstrap_ci_method,
                                              similarity_table=feature_similarity_table,
                                              cluster_method=feature_cluster_method,
@@ -340,11 +344,11 @@ setMethod("extract_permutation_vimp", signature(object="familiarEnsemble"),
                                            ensemble_method=ensemble_method)
     
     if(determine_ci){
-      if(verbose & !is.null(time)) logger.message(paste0("Computing bootstrap confidence interval data for variable imputation of ",
+      if(verbose & !is.null(time)) logger.message(paste0("Computing bootstrap confidence interval data for variable importance of the ",
                                                          paste_s(shuffled_features$name), ifelse(length(shuffled_features$name) == 1, " feature", " features"),
                                                          " at time ", time, "."),
                                                   indent=message_indent)
-      if(verbose & is.null(time)) logger.message(paste0("Computing bootstrap confidence interval data for variable imputation of ",
+      if(verbose & is.null(time)) logger.message(paste0("Computing bootstrap confidence interval data for variable importance of the ",
                                                         paste_s(shuffled_features$name), ifelse(length(shuffled_features$name) == 1, " feature", " features"),
                                                         "."),
                                                  indent=message_indent)
@@ -531,7 +535,7 @@ setMethod("extract_permutation_vimp", signature(object="familiarEnsemble"),
                                      cluster_similarity_metric){
   
   # Suppress NOTES due to non-standard evaluation in data.table
-  name <- cluster_id <-  NULL
+  name <- cluster_id <- similarity_threshold <- NULL
   
   if(is_empty(similarity_table)) {
     # Set the placeholder similarity threshold

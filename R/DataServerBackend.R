@@ -102,7 +102,7 @@
     on.exit(RSclient::RS.close(rcon))
     
     # Send data.table to server
-    RSclient::RS.assign(rsc=rcon, name="master_data", value=backend_data, wait=TRUE)
+    RSclient::RS.assign(rsc=rcon, name="master_data", value=data, wait=TRUE)
     
   } else if(backend_type %in% c("socket_server")){
     # Start the separate r session thread that will run the socket server.
@@ -397,10 +397,10 @@ start_rserve_server <- function(backend_type, server_port){
   if(!.is_rserve_server_started(server_port=server_port)) {
     
     if(backend_type == "rserve_coop"){
-      Rservecoop::Rserve(debug=FALSE, port=port, args=paste0("--no-save ","--RS-enable-control"))
+      Rservecoop::Rserve(debug=FALSE, port=server_port, args=paste0("--no-save ","--RS-enable-control"))
       
     } else if(backend_type == "rserve") {
-      Rserve::Rserve(debug=FALSE, port=port, args=paste0("--no-save ","--RS-enable-control"))
+      Rserve::Rserve(debug=FALSE, port=server_port, args=paste0("--no-save ","--RS-enable-control"))
       
     } else {
       ..error_reached_unreachable_code(paste0("start_rserve_server: encountered unknown type of backend ",

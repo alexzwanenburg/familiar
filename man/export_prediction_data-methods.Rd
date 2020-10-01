@@ -38,6 +38,14 @@ same sample. Available methods are:
 \item \code{mean}: Use the mean of the predicted values as the ensemble value for a
 sample.
 }}
+    \item{\code{compute_model_data}}{(\emph{optional}) This parameter can be set to enable
+computation of data based on individual models. The parameter can take on or
+more of the following values: \code{all}, \code{model_performance}, \code{auc_data},
+\code{confusion_matrix}, \code{decision_curve_analyis}, \code{permutation_vimp},
+\code{performance_data}, as well as \code{true}, \code{false} and \code{none}.
+
+By default, data is computed for the ensemble as a whole, but not for
+underlying models.}
     \item{\code{eval_times}}{One or more time points that are used for assessing
 calibration in survival problems. This is done as expected and observed
 survival probabilities depend on time. If not provided explicitly, this

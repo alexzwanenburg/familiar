@@ -95,25 +95,33 @@ learner.calibration.survival.prepare_data <- function(groups, probability_table,
       # Fit a Kaplan-Meier curve for the current group
       km_fit <- survival::survfit(Surv(time, event)~1, data=group_data)
       
-      # Get observed probability
-      obs_prob[jj] <- stats::approx(x=km_fit$time,
-                                    y=km_fit$surv,
+      if(length(km_fit$time) >= 2){
+        
+        # Get observed probability
+        obs_prob[jj] <- stats::approx(x=km_fit$time,
+                                      y=km_fit$surv,
+                                      xout=time_max,
+                                      method="linear",
+                                      rule=2)$y
+        
+        # Get expected probability
+        exp_prob[jj] <- mean(group_data$exp_prob)
+        
+        # Get group size
+        n_g[jj] <- length(groups[[jj]])
+        
+        # Get greenwood variance estimate.
+        km_var[jj] <- stats::approx(x=km_fit$time,
+                                    y=km_fit$std.err,
                                     xout=time_max,
                                     method="linear",
-                                    rule=2)$y
+                                    rule=2)$y^2
+      } else {
+        # Set NA values.
+        obs_prob[jj] <- exp_prob[jj] <- km_var[jj] <- NA_real_
+        n_g[jj] <- NA_integer_
+      }
       
-      # Get expected probability
-      exp_prob[jj] <- mean(group_data$exp_prob)
-      
-      # Get group size
-      n_g[jj] <- length(groups[[jj]])
-      
-      # Get greenwood variance estimate.
-      km_var[jj] <- stats::approx(x=km_fit$time,
-                                  y=km_fit$std.err,
-                                  xout=time_max,
-                                  method="linear",
-                                  rule=2)$y^2
     } else {
       # Set NA values.
       obs_prob[jj] <- exp_prob[jj] <- km_var[jj] <- NA_real_
@@ -296,7 +304,7 @@ learner.calibration.categorical.prepare_data <- function(groups, probability_tab
 
 
 
-learner.calibration.regression <- function(object, data_obj){
+learner.calibration.regression <- function(object, data){
   # Calibration for regression problems is pretty straightforward. However, for
   # goodness-of-fit tests, we need to constrain expected and observed value
   # ranges to [0, 1]. To do so, we use the range of outcome values from the
@@ -312,7 +320,7 @@ learner.calibration.regression <- function(object, data_obj){
   # Get prediction table. Note that the ensemble_method argument may be ignored
   # unless object is a familiarEnsemble.
   prediction_table <- .predict(object=object,
-                               data=data_obj,
+                               data=data,
                                allow_recalibration=TRUE,
                                ensemble_method="median")
 
@@ -337,7 +345,8 @@ learner.calibration.regression <- function(object, data_obj){
   prediction_table[, ":="("expected"=(predicted_outcome - norm_shift) / norm_scale,
                           "observed"=(outcome - norm_shift) / norm_scale)]
   
-  # Repeatedly split into groups. The number of groups is determined using sturges rule
+  # Repeatedly split into groups. The number of groups is determined using
+  # sturges rule.
   repeated_groups <- lapply(seq_len(20), function(ii, x, sample_id) (create_randomised_groups(x=x, sample_id=sample_id)),
                             x=prediction_table$expected, sample_id=prediction_table$subject_id)
   
@@ -395,23 +404,3 @@ learner.calibration.regression.prepare_data <- function(groups, probability_tabl
   
   return(calibration_table)
 }
-
-
-# learner.calibration.regression.outcome_range <- function(data_obj){
-#   
-#   # Check for empty dataset.
-#   if(is_empty(data_obj@data)){
-#     return(NULL)
-#   }
-#   
-#   # Acquire range of observed outcome values
-#   outcome_range <- range(data_obj@data$outcome, na.rm=TRUE)
-#   
-#   if(!all(is.finite(outcome_range))){
-#     return(NULL)
-#     
-#   } else {
-#     return(data.table::data.table("min_value"=outcome_range[1],
-#                                   "max_value"=outcome_range[2]))
-#   }
-# }

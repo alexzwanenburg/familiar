@@ -90,11 +90,15 @@ setMethod("as_familiar_ensemble", signature(object="ANY"),
 
 #'@title Conversion to familiarData object.
 #'
-#'@description Creates `familiarData` a object from `familiarEnsemble` or `familiarModel` objects.
+#'@description Creates `familiarData` a object from `familiarEnsemble` or
+#'  `familiarModel` objects.
 #'
 #'@param object A `familiarData` object, or a `familiarEnsemble` or
 #'  `familiarModel` objects that will be internally converted to a
 #'  `familiarData` object. Paths to such objects can also be provided.
+#'
+#'@param name Name of the `familiarData` object. If not set, a name is
+#'  automatically generated.
 #'
 #'@inheritDotParams extract_data
 #'
@@ -119,14 +123,15 @@ setMethod("as_familiar_data", signature(object="familiarData"),
 
 #'@rdname as_familiar_data-methods
 setMethod("as_familiar_data", signature(object="familiarEnsemble"),
-          function(object, ...){
+          function(object, name=NULL, ...){
             
             # Familiar data
             fam_data <- do.call(extract_data, args=append(list("object"=object),
                                                           list(...)))
               
-            # Set a placeholder name for the familiarData object
-            fam_data <- set_data_set_names(x=fam_data)
+            # Set a placeholder name or a user-provided name for the
+            # familiarData object.
+            fam_data <- set_data_set_names(x=fam_data, new=name)
             
             return(fam_data)
           })
@@ -317,7 +322,7 @@ setMethod("as_familiar_collection", signature(object="list"),
             if(!all(sapply(object, is, class2="familiarData"))){
               stop("Only familiarData objects can be used to construct a familiarCollection object.")
             }
-
+            
             # Obtain names of the familiarData objects.
             object_names <- sapply(object, function(fam_data_obj) (fam_data_obj@name))
             

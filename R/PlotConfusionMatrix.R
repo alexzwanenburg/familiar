@@ -19,7 +19,7 @@ NULL
 #'  values:
 #'
 #'  * `none`: Cell opacity is not altered. Diagonal and off-diagonal cells are
-#'  completely opaque and transparant, respectively. Same as `show_alpha=FALSE`.
+#'  completely opaque and transparent, respectively. Same as `show_alpha=FALSE`.
 #'
 #'  * `by_class`: Cell opacity is normalised by the number of instances for each
 #'  observed outcome class in each confusion matrix.
@@ -182,6 +182,7 @@ setMethod("plot_confusion_matrix", signature(object="familiarCollection"),
             # ggtheme
             if(!inherits(ggtheme, "theme")){
               ggtheme <- plotting.get_theme(use_theme=ggtheme)
+              ggtheme$panel.grid <- ggplot2::element_blank()
               
             } else if(is.waive(rotate_x_tick_labels)){
               rotate_x_tick_labels <- FALSE

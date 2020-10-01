@@ -7,11 +7,10 @@
 extract_stratification_data(
   object,
   data = NULL,
-  prediction_data = NULL,
   ensemble_method = waiver(),
   time_max = waiver(),
   risk_group_list = NULL,
-  risk_ensemble_method = waiver(),
+  stratification_ensemble_method = waiver(),
   message_indent = 0L,
   verbose = FALSE,
   ...
@@ -37,8 +36,8 @@ If not provided explicitly, this parameter is read from settings used at
 creation of the underlying \code{familiarModel} objects. Only used for \code{survival}
 outcomes.}
 
-\item{risk_ensemble_method}{Method for ensembling the risk group assignments
-from different models for the same sample.
+\item{stratification_ensemble_method}{Method for ensembling the risk group
+assignments from different models for the same sample.
 
 The following methods are available:
 \itemize{

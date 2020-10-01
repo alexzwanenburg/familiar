@@ -731,16 +731,12 @@ setMethod("plot_model_signature_ranks", signature(object="familiarCollection"),
   }
   
   # Store plots to list in case no dir_path is provided
-  if(is.null(dir_path)){
-    plot_list <- list()
-  }
+  if(is.null(dir_path)) plot_list <- list()
   
   # Iterate over splits
   for(x_sub in x_split){
     
-    if(is_empty(x_sub)){
-      next()
-    }
+    if(is_empty(x_sub)) next()
     
     # Generate plot
     p <- .create_feature_rank_plot(x=x_sub,
@@ -763,10 +759,10 @@ setMethod("plot_model_signature_ranks", signature(object="familiarCollection"),
                                    y_breaks=y_breaks)
     
     # Check empty output
-    if(is.null(p)){ next() }
+    if(is.null(p)) next()
     
     # Draw plot
-    if(draw){ plotting.draw(plot_or_grob=p) }
+    if(draw) plotting.draw(plot_or_grob=p)
     
     # Save and export
     if(!is.null(dir_path)){

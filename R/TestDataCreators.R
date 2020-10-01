@@ -1,5 +1,8 @@
 test.create_good_data_set <- function(outcome_type){
   
+  # Suppress NOTES due to non-standard evaluation in data.table
+  etype <- median_house_value <- NULL
+  
   if(outcome_type == "survival"){
     # Load colon dataset from the survival package.
     data <- data.table::as.data.table(survival::colon)
@@ -17,7 +20,7 @@ test.create_good_data_set <- function(outcome_type){
     
   } else if(outcome_type == "multinomial"){
     # Load iris data set.
-    data <- data.table::as.data.table(iris)
+    data <- data.table::as.data.table(datasets::iris)
     
     # Add sample identifier.
     data[,":="("sample_id"=.I)]
@@ -183,25 +186,47 @@ test.create_one_sample_data_set <- function(outcome_type){
 
 
 
+test.create_all_identical_data_set <- function(outcome_type){
+  
+  # Create good dataset first and work from there.
+  data <- test.create_good_data_set(outcome_type=outcome_type)
+  
+  # Now keep only the first sample.
+  data@data <- head(data@data, n=1)
+  
+  # Fill the dataset with the same sample.
+  data@data <- data@data[rep.int(1L, 10)]
+  
+  # Set unique subject ids.
+  data@data[, "subject_id":=.I]
+  
+  return(data)
+}
+
+
+
 test.create_one_feature_data_set <- function(outcome_type){
+  
+  # Suppress NOTES due to non-standard evaluation in data.table
+  etype <- median_house_value <- NULL
   
   if(outcome_type == "survival"){
     # Load colon dataset from the survival package
-    data <- as.data.table(survival::colon)
+    data <- data.table::as.data.table(survival::colon)
     
     # Recurrence
     data <- data[etype == 1]
     
     # Keep only first 100 samples for speed and only id, nodes, rx, extent and outcome.
-    data <- familiar:::as_data_object(data=data[1:100, ],
-                                      sample_id_column="id",
-                                      outcome_column=c("time", "status"),
-                                      outcome_type=outcome_type,
-                                      include_features=c("nodes"))
+    data <- as_data_object(data=data[1:100, ],
+                           sample_id_column="id",
+                           outcome_column=c("time", "status"),
+                           outcome_type=outcome_type,
+                           include_features=c("nodes"))
     
   } else if(outcome_type == "multinomial") {
     # Load iris data set.
-    data <- data.table::as.data.table(iris)
+    data <- data.table::as.data.table(datasets::iris)
     
     # Add sample identifier.
     data[,":="("sample_id"=.I)]
@@ -321,7 +346,7 @@ test.create_one_feature_invariant_data_set <- function(outcome_type){
   feature_column <- get_feature_columns(data)
   
   # Set the feature to a fixed value.
-  data@data[, (feature_column):=1.0]
+  data@data[, (feature_column):=data@data[[feature_column]][1]]
   
   return(data)
 }
@@ -330,13 +355,16 @@ test.create_one_feature_invariant_data_set <- function(outcome_type){
 
 test.create_wide_data_set <- function(outcome_type){
   
+  # Suppress NOTES due to non-standard evaluation in data.table
+  etype <- median_house_value <- NULL
+  
   # Set random seed so that the same numbers are produced every time.
   set.seed(1844)
   
   if(outcome_type == "survival"){
     
     # Load colon dataset from the survival package
-    data <- as.data.table(survival::colon)
+    data <- data.table::as.data.table(survival::colon)
     
     # Recurrence
     data <- data[etype == 1]
@@ -357,21 +385,21 @@ test.create_wide_data_set <- function(outcome_type){
     data <- data[1:5, ]
     
     # Add twenty random features
-    random_data <- lapply(seq_len(20), function(ii, n) rnorm(n=n), n=nrow(data))
+    random_data <- lapply(seq_len(20), function(ii, n) stats::rnorm(n=n), n=nrow(data))
     names(random_data) <- paste0("random_", seq_len(20))
     
     # Add to dataset
     data <- cbind(data, data.table::as.data.table(random_data))
     
     # Keep only first 100 samples for speed and only id, nodes, rx, extent and outcome.
-    data <- familiar:::as_data_object(data=data,
-                                      sample_id_column="id",
-                                      outcome_column=c("time", "status"),
-                                      outcome_type=outcome_type)
+    data <- as_data_object(data=data,
+                           sample_id_column="id",
+                           outcome_column=c("time", "status"),
+                           outcome_type=outcome_type)
     
   } else if(outcome_type == "multinomial"){
     # Load iris data set.
-    data <- data.table::as.data.table(iris)
+    data <- data.table::as.data.table(datasets::iris)
     
     # Squeeze data
     data <- data[c(1, 2, 3, 80, 81, 82, 148, 149, 150)]
@@ -380,7 +408,7 @@ test.create_wide_data_set <- function(outcome_type){
     data[,":="("sample_id"=.I)]
     
     # Add twenty random features
-    random_data <- lapply(seq_len(20), function(ii, n) rnorm(n=n), n=nrow(data))
+    random_data <- lapply(seq_len(20), function(ii, n) stats::rnorm(n=n), n=nrow(data))
     names(random_data) <- paste0("random_", seq_len(20))
     
     # Add to dataset
@@ -418,7 +446,7 @@ test.create_wide_data_set <- function(outcome_type){
     data <- data[11:20, ]
     
     # Add twenty random features
-    random_data <- lapply(seq_len(20), function(ii, n) rnorm(n=n), n=nrow(data))
+    random_data <- lapply(seq_len(20), function(ii, n) stats::rnorm(n=n), n=nrow(data))
     names(random_data) <- paste0("random_", seq_len(20))
     
     # Add to dataset
@@ -452,7 +480,7 @@ test.create_wide_data_set <- function(outcome_type){
     data <- data[411:420, ]
     
     # Add twenty random features
-    random_data <- lapply(seq_len(20), function(ii, n) rnorm(n=n), n=nrow(data))
+    random_data <- lapply(seq_len(20), function(ii, n) stats::rnorm(n=n), n=nrow(data))
     names(random_data) <- paste0("random_", seq_len(20))
     
     # Add to dataset
@@ -489,7 +517,7 @@ test.create_wide_data_set <- function(outcome_type){
     data <- data[1:10, ]
     
     # Add twenty random features
-    random_data <- lapply(seq_len(20), function(ii, n) rnorm(n=n), n=nrow(data))
+    random_data <- lapply(seq_len(20), function(ii, n) stats::rnorm(n=n), n=nrow(data))
     names(random_data) <- paste0("random_", seq_len(20))
     
     # Add to dataset
@@ -518,6 +546,9 @@ test.create_wide_data_set <- function(outcome_type){
 
 
 test.create_bad_data_set <- function(outcome_type){
+  
+  # Suppress NOTES due to non-standard evaluation in data.table
+  outcome <- NULL
   
   # Create good dataset first and work from there.
   data <- test.create_good_data_set(outcome_type=outcome_type)

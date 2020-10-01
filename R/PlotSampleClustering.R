@@ -55,9 +55,9 @@ NULL
 #'  A dendrogram can only be drawn from cluster methods that produce dendograms,
 #'  such as `hclust`. A dendogram can for example not be constructed using the
 #'  partioning around medioids method (`pam`).
-#'@param show_normalised_data (*optional*) Flag that determines whether the data shown
-#'  in the main heatmap is normalised using the same settings as within the
-#'  analysis (`fixed`; default), using a standardisation method
+#'@param show_normalised_data (*optional*) Flag that determines whether the data
+#'  shown in the main heatmap is normalised using the same settings as within
+#'  the analysis (`fixed`; default), using a standardisation method
 #'  (`set_normalisation`) that is applied separately to each dataset, or not at
 #'  all (`none`), which shows the data at the original scale, albeit with
 #'  batch-corrections.
@@ -171,6 +171,7 @@ setGeneric("plot_sample_clustering",
                     width=waiver(),
                     height=waiver(),
                     units=waiver(),
+                    verbose=TRUE,
                     ...) standardGeneric("plot_sample_clustering"))
 
 #####plot_sample_clustering (generic)#####
@@ -216,6 +217,7 @@ setMethod("plot_sample_clustering", signature(object="ANY"),
                    width=waiver(),
                    height=waiver(),
                    units=waiver(),
+                   verbose=TRUE,
                    ...){
             
             # Attempt conversion to familiarCollection object.
@@ -261,7 +263,8 @@ setMethod("plot_sample_clustering", signature(object="ANY"),
                                      "evaluation_times"=evaluation_times,
                                      "width"=width,
                                      "height"=height,
-                                     "units"=units)))
+                                     "units"=units,
+                                     "verbose"=verbose)))
           })
 
 
@@ -308,6 +311,7 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
                    width=waiver(),
                    height=waiver(),
                    units=waiver(),
+                   verbose=TRUE,
                    ...){
             
             # Get input data
@@ -369,14 +373,10 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
             }
             
             # x_label
-            if(is.waive(x_label)){
-              x_label <- NULL
-            }
+            if(is.waive(x_label)) x_label <- NULL
             
             # y_label
-            if(is.waive(y_label)){
-              y_label <- NULL
-            }
+            if(is.waive(y_label)) y_label <- NULL
             
             # rotate_x_tick_labels
             if(is.waive(rotate_x_tick_labels)) rotate_x_tick_labels <- TRUE
@@ -392,9 +392,7 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
             }
             
             # legend_label
-            if(is.waive(legend_label)){
-              legend_label <- ifelse(show_normalised_data == "none", "value", "norm. value")
-            }
+            if(is.waive(legend_label)) legend_label <- ifelse(show_normalised_data == "none", "value", "norm. value")
             
             # outcome_legend_label
             if(is.waive(outcome_legend_label)){
@@ -475,8 +473,10 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
               can_draw_feature_dendrogram <- sapply(x, function(list_entry) (inherits(list_entry$feature_cluster_object, "hclust")))
               
               if(all(!can_draw_feature_dendrogram)){
-                warning(paste0("Cannot draw the feature dendrogram as the cluster objects are not of the \"hclust\" class. ",
-                               "This may occur if partitioning around medioids is used for clustering."))
+                if(verbose){
+                  warning(paste0("Cannot draw the feature dendrogram as the cluster objects are not of the \"hclust\" class. ",
+                                 "This may occur if partitioning around medioids is used for clustering."))
+                }
                 
                 show_feature_dendrogram <- NULL
               }
@@ -512,8 +512,10 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
               can_draw_sample_dendrogram <- sapply(x, function(list_entry) (inherits(list_entry$feature_cluster_object, "hclust")))
               
               if(all(!can_draw_sample_dendrogram)){
-                warning(paste0("Cannot draw the sample dendrogram as the cluster objects are not of the \"hclust\" class. ",
-                               "This may occur if partitioning around medioids is used for clustering."))
+                if(verbose){
+                  warning(paste0("Cannot draw the sample dendrogram as the cluster objects are not of the \"hclust\" class. ",
+                                 "This may occur if partitioning around medioids is used for clustering."))
+                }
                 
                 can_draw_feature_dendrogram <- NULL
               }
@@ -595,9 +597,7 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
             }
             
             # Store plots to list in case dir_path is absent.
-            if(is.null(dir_path)){
-              plot_list <- list()
-            }
+            if(is.null(dir_path)) plot_list <- list()
             
             # Iterate over data splits.
             for(ii in names(y_split)){
@@ -968,12 +968,11 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
   # information that allows for positioning.
   plot_layout_table <- plotting.get_plot_layout_table(x=x,
                                                       facet_by=facet_by,
-                                                      facet_wrap_cols=facet_wrap_cols,
-                                                      x_label_shared=x_label_shared,
-                                                      y_label_shared=y_label_shared)
+                                                      facet_wrap_cols=facet_wrap_cols)
   
   # Split data into facets. This is done by row.
-  x_split_list <- plotting.split_data_by_facet(x=x, plot_layout_table=plot_layout_table)
+  x_split_list <- plotting.split_data_by_facet(x=x,
+                                               plot_layout_table=plot_layout_table)
   
   # Create plots to join
   figure_list <- list()
@@ -1021,28 +1020,15 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
                                             show_feature_dendrogram=show_feature_dendrogram,
                                             show_sample_dendrogram=show_sample_dendrogram)
     
-    # Update theme to remove guide, facet labels, etc., based on notations in
-    # dataset x. The axis tick labels are kept, because we cannot guarantee that
-    # all heatmaps will have the same feature, samples and respective ordering.
-    p_heatmap <- plotting.update_facet_plot_elements(p=p_heatmap,
-                                                     x=x_split,
-                                                     keep_axis_labels_x=TRUE,
-                                                     keep_axis_labels_y=TRUE)
-    
     # Extract plot elements from the heatmap.
-    extracted_elements <- plotting.extract_plot_elements(p=p_heatmap, elements=elements)
+    extracted_elements <- plotting.extract_plot_elements(p=p_heatmap)
     
     # Remove extracted elements from the heatmap.
-    p_heatmap <- plotting.remove_plot_elements(p=p_heatmap, elements=elements)
+    p_heatmap <- plotting.remove_plot_elements(p=p_heatmap)
     
-    # Convert to grob.
-    g_heatmap <- plotting.to_grob(p_heatmap)
-    
-    # Rename panel to panel-main
-    g_heatmap <- .gtable_rename_element(g=g_heatmap,
-                                        old="panel",
-                                        new="panel-main",
-                                        partial_match=TRUE)
+    # Rename plot elements.
+    g_heatmap <- plotting.rename_plot_elements(g=plotting.to_grob(p_heatmap),
+                                               extension="main")
     
     # Add sample dendogram
     if(!is.null(show_sample_dendrogram) & inherits(sample_cluster_object, "hclust")){
@@ -1135,13 +1121,11 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
                                   partial_match=TRUE)
     }
     
-    if(!is.null(show_outcome)){
+    if(!is.null(show_outcome) & gtable::is.gtable(g_heatmap)){
       
       # Find evaluation times (will still be NULL for outcome_type other than survival and competing_risk)
-      if(is.null(evaluation_times)){
-        evaluation_times <- data[[x_split$list_id]]$evaluation_times
-      }
-      
+      if(is.null(evaluation_times)) evaluation_times <- data[[x_split$list_id]]$evaluation_times
+
       # Create expression outcome plot.
       p_outcome <- .create_expression_outcome_plot(x=outcome_plot_data[[x_split$list_id]],
                                                    ggtheme=ggtheme,
@@ -1189,32 +1173,30 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
       g_outcome_guide <- NULL
     }
     
-    # Re-introduce plot elements.
-    g_heatmap <- plotting.reinsert_plot_elements(g=g_heatmap,
-                                                 elements=c("strip_x", "strip_y"),
-                                                 grob_list=extracted_elements,
-                                                 ggtheme=ggtheme)
+    # Combine main guide with the outcome guide
+    extracted_elements$guide <- plotting.combine_guides(g=list(extracted_elements$guide, g_outcome_guide),
+                                                        ggtheme=ggtheme,
+                                                        no_empty=FALSE)
     
     # Add combined grob to list
-    figure_list <- append(figure_list, list(g_heatmap))
+    figure_list <- c(figure_list, list(g_heatmap))
     
     # Add extract elements to the grob_element_list
-    extracted_element_list <- .append_new(extracted_element_list, extracted_elements)
+    extracted_element_list <- c(extracted_element_list, list(extracted_elements))
   }
   
-  # Combine main guide with the outcome guide
-  extracted_element_list$guide <- plotting.combine_guides(g=list(extracted_element_list$guide, g_outcome_guide),
-                                                          ggtheme=ggtheme,
-                                                          no_empty=FALSE)
-  
-  # Obtain layout dimensions (rows, cols).
-  layout_dims <- plotting.get_plot_layout_dims(plot_layout_table=plot_layout_table)
+  # Update the layout table.
+  plot_layout_table <- plotting.update_plot_layout_table(plot_layout_table=plot_layout_table,
+                                                         grobs=figure_list,
+                                                         x_text_shared=FALSE,
+                                                         x_label_shared=x_label_shared,
+                                                         y_text_shared=FALSE,
+                                                         y_label_shared=y_label_shared,
+                                                         facet_wrap_cols=facet_wrap_cols)
   
   # Combine features.
   g <- plotting.arrange_figures(grobs=figure_list,
-                                n_rows=layout_dims[1],
-                                n_cols=layout_dims[2],
-                                elements=setdiff(elements, c("strip_x", "strip_y")),
+                                plot_layout_table=plot_layout_table,
                                 element_grobs=extracted_element_list,
                                 ggtheme=ggtheme)
   
@@ -1472,7 +1454,6 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
   # Plot heatmap
   p <- p + ggplot2::geom_raster()
   
-  
   # Limit margins along the axis with samples so it will fit one-to-one with the
   # main heatmap.
   p <- p + ggplot2::scale_x_discrete(expand=c(0, 0))
@@ -1668,6 +1649,8 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
                                        sample_order,
                                        gradient_palette_range){
   
+  if(is_empty(x)) return(NULL)
+  
   # Replace categorical features by numerical values and scale to 0.05-.95 of
   # the z-range.
   categorical_features <- lapply(feature_info, function(feature){
@@ -1710,8 +1693,12 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
   }
   
   # Copy x and revert feature_1 and feature_2 so that all pairs are present.
-  x <- melt(data=x, measure.vars=names(feature_info), variable.name="feature", value.name="value",
-            variable.factor=TRUE, value.factor=FALSE)
+  x <- data.table::melt(data=x,
+                        measure.vars=names(feature_info),
+                        variable.name="feature",
+                        value.name="value",
+                        variable.factor=TRUE,
+                        value.factor=FALSE)
   
   # Change subject_id to sample
   data.table::setnames(x=x, old="subject_id", new="sample")

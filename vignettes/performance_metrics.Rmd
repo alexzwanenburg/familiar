@@ -27,7 +27,7 @@ Performance metrics for models with categorical outcomes, i.e. `binomial` and `m
 | balanced accuracy         | `bac`, `balanced_accuracy`        |   |
 | balanced error rate       | `ber`, `balanced_error_rate`      |   |
 | Brier score               | `brier`                           |   |
-| Cohen's kappa             | `kappa`                           |   | 
+| Cohen's kappa             | `kappa`, `cohen_kappa`            |   | 
 | f1 score                  | `f1_score`                        | × |
 | false discovery rate      | `fdr`, `false_discovery_rate`     | × |
 | informedness              | `informedness`                    | × |
@@ -223,8 +223,9 @@ Performance metrics for models with regression outcomes, i.e. `count` and `conti
 | mean squared error | `mse`, `mean_squared_error` |
 | mean squared log error | `msle`, `mean_squared_log_error` |
 | median absolute error | `medae`, `median_absolute_error`| 
-| R<sup>2</sup> score | `r2_score` |
+| R<sup>2</sup> score | `r2_score`, `r_squared` |
 | root mean square error | `rmse`, `root_mean_square_error` |
+| root mean square log error | `rmsle`, `root_mean_square_log_error` |
 
 Let $y$ be the set of observed values, and $\hat{y}$ the corresponding predicted values. The error is then $\epsilon = y-\hat{y}$.
 
@@ -256,12 +257,15 @@ The median absolute error is the median of absolute error $\left|\epsilon\right|
 
 The R<sup>2</sup> score is defined as:
 $$R^2 = 1 - \frac{\sum_i^N(\epsilon_i)^2}{\sum_i^N(y_i - \bar{y})^2}$$
+Here $\bar{y}$ denotes the mean value of $y$.
 
 ### Root mean square error
 
 The root mean square error is defined as $\sqrt{1/N \sum_i^N \left(\epsilon_i \right)^2}$.
 
-Here $\bar{y}$ denotes the mean value of $y$.
+### Root mean square log error
+
+The root mean square log error is defined as $\sqrt{1/N \sum_i^N \log\left(y_i + 1\right) - \log(\hat{y}_i + 1\right)^2}$. Note that this score only applies to observed and predicted values in the positive domain. It is not defined for negative values.
 
 ## Survival outcomes
 
@@ -269,7 +273,7 @@ Performance metrics for models with survival outcomes, i.e. `survival`, are list
 
 | **method** | **tag** |
 |:-----------|:--------|
-| concordance index | `concordance_index` |
+| concordance index | `concordance_index`, `c_index`, `concordance_index_harrell`, `c_index_harrell` |
 
 ### Concordance index
 

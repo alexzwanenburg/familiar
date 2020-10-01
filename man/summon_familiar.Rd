@@ -722,7 +722,23 @@ combinations of hyperparameters. The effect of the hyperparameters is then
 assessed by comparing in-bag and out-of-bag model performance.
 
 The default number of bootstraps is \code{200}. Hyperparameter optimisation may
-finish before exhausting the set of boostraps.}
+finish before exhausting the set of bootstraps.}
+    \item{\code{optimisation_determine_vimp}}{(\emph{optional}) Logical value that indicates
+whether variable importance is determined separately for each of the
+bootstraps created during the optimisation process (\code{TRUE}) or the
+applicable results from the feature selection step are used (\code{FALSE}).
+
+Determining variable importance increases the initial computational
+overhead. However, it prevents positive biases for the out-of-bag data due
+to overlap of these data with the development data set used for the feature
+selection step. In this case, any hyperparameters of the variable
+importance method are not determined separately for each bootstrap, but
+those obtained during the feature selection step are used instead. In case
+multiple of such hyperparameter sets could be applicable, the set that will
+be used is randomly selected for each bootstrap.
+
+This parameter only affects hyperparameter optimisation of learners. The
+default is \code{TRUE}.}
     \item{\code{smbo_random_initialisation}}{(\emph{optional}) Logical indicating random
 (\code{TRUE}) or grid-based (\code{FALSE}) initialisation of combinations of
 hyperparameters. If random initialisation is selected, up to 200 unique
@@ -755,7 +771,15 @@ minimal. This behaviour is suppressed during the first 4 iterations to
 enable the algorithm to explore the hyperparameter space.}
     \item{\code{smbo_stop_convergent_iterations}}{(\emph{optional}) The number of subsequent
 convergent SMBO iterations required to stop hyperparameter optimisation
-early. The default value is \code{3}.}
+early. An iteration is convergent if the \emph{best} parameter set has not
+changed or the optimisation score over the 4 most recent iterations has not
+changed beyond the tolerance level in \code{smbo_stop_tolerance}.
+
+The default value is \code{3}.}
+    \item{\code{smbo_stop_tolerance}}{(\emph{optional}) Tolerance for early stopping due to
+convergent optimisation score.
+
+The default value is \code{0.01}.}
     \item{\code{smbo_step_bootstraps}}{(\emph{optional}) The number of bootstraps taken from
 the set of \code{optimisation_bootstraps} bootstraps as data for the initial
 SMBO step and the steps in each intensify iteration.
@@ -782,23 +806,7 @@ of hyperparameters that are unlikely to lead to better models improves
 computational efficiency.
 
 The default value is \code{0.05}.}
-    \item{\code{objective}}{(\emph{optional}) Type of objective used to determine the
-performance of a hyperparameter set. Model performance is assessed using
-the metric specified by \code{optimisation_metric} on the in-bag and out-of-bag
-samples of a bootstrap. These will be referred to as \eqn{s_{ib}} and
-\eqn{s_{oob}}, respectivily. The method indicated by \code{objective} computes a
-objective score from each pair of values. The following objective methods
-are available:
-\itemize{
-\item \code{max_validation}: Uses the out-of-bag validation score \eqn{s_{oob}} as
-objective. This is a standard machine learning objective.
-\item \code{balanced} (default): Computes \eqn{s_{oob} - |s_{oob} - s_{ib}|}. This
-objective forces the algorithm to consider hyperparameter sets that perform
-well on both development and validation data.
-\item \code{stronger_balance}: Computes \eqn{s_{oob} - 2.0 |s_{oob} - s_{ib}|}.
-Stronger penalty than in the \code{balance} objective.
-}}
-    \item{\code{optimisation_metric}}{(\emph{optional}) Type of metric used to compute
+    \item{\code{optimisation_metric}}{(\emph{optional}) One or more metrics used to compute
 performance scores. See the vignette on performance metrics for the
 available metrics.
 
@@ -810,10 +818,65 @@ If unset, the following metrics are used by default:
 \item \code{concordance_index}: For \code{survival} models.
 }
 
-Currently, only one optimisation metric can be specified. Note that instead
-of computing the actual metric, an objective version is computed for
-hyperparameter optimisation, so that better performance always yields
-higher values.}
+Multiple optimisation metrics can be specified. Actual metric values are
+converted to an objective value by comparison with a baseline metric value
+that derives from a trivial model, i.e. majority class for binomial and
+multinomial outcomes, the median outcome for count and continuous outcomes
+and a fixed risk or time for survival outcomes.}
+    \item{\code{optimisation_function}}{(\emph{optional}) Type of optimisation function used
+to quantify the performance of a hyperparameter set. Model performance is
+assessed using the metric(s) specified by \code{optimisation_metric} on the
+in-bag and out-of-bag samples of a bootstrap. These values are converted to
+objective scores with a standardised interval of \eqn{[-1.0, 1.0]}, and are
+referred to as \eqn{s'_{ib}} and \eqn{s'_{oob}}, respectively. The function
+indicated by \code{optimisation_function} computes a objective score from each
+pair of values:
+\itemize{
+\item \code{max_validation}: Uses the out-of-bag validation objective score
+\eqn{s'_{oob}} as optimisation score. This function is widely used in
+machine learning.
+\item \code{balanced} (default): Computes \eqn{s'_{oob} - |s'_{oob} - s'_{ib}|}.
+This function forces the algorithm to consider hyperparameter sets that
+perform well on both development and validation data.
+\item \code{stronger_balance}: Computes \eqn{s'_{oob} - 2.0 |s'_{oob} - s'_{ib}|}.
+Stronger penalty than in the \code{balanced} objective.
+}}
+    \item{\code{acquisition_function}}{(\emph{optional}) The acquisition function influences
+how new hyperparameter sets are selected.
+
+Any point in the hyperparameter space has a single, scalar, optimisation
+score value that is \emph{a priori} unknown. During the optimisation process,
+the algorithm samples from the hyperparameter space by selecting
+hyperparameter sets and computing the optimisation score value for one or
+more bootstraps. For each hyperparameter set the resulting values are
+distributed around the actual value. A random forest is then trained using
+all the resulting values.
+
+The random forest maps positions in the hyperparameter space to the 1D real
+space of optimisation values. The distribution of optimisation values at
+each point is captured by individual decision trees.
+
+The algorithm uses the random forest to search the hyperparameter space for
+hyperparameter sets that are either likely better than the best known set
+(\emph{exploitation}) or where there is considerable uncertainty
+(\emph{exploration}). The acquisition function quantifies this (Shahriari et
+al., 2016).
+
+The following acquisition functions are available, and are described in
+more detail in the \emph{learner algorithms} vignette:
+\itemize{
+\item \code{improvement_probability}: The probability of improvement quantifies the
+probability that the expected optimisation score for a set is better than
+the best observed optimisation score
+\item \code{improvement_empirical_probability}: Similar to
+\code{improvement_probability}, but based directly on optimisation scores
+predicted by the individual decision trees.
+\item \code{expected_improvement} (default): Computes expected improvement.
+\item \code{upper_confidence_bound}: This acquisition function is based on the upper
+confidence bound of the distribution (Srinivas et al., 2012).
+\item \code{bayes_upper_confidence_bound}:This acquisition function is based on the
+upper confidence bound of the distribution (Kaufmann et al., 2012).
+}}
     \item{\code{parallel_hyperparameter_optimisation}}{(\emph{optional}) Enable parallel
 processing for hyperparameter optimisation. Defaults to \code{TRUE}. When set to
 \code{FALSE}, this will disable the use of parallel processing while performing
@@ -868,6 +931,14 @@ implemented:
 Note that the standard method is not implemented because this method is
 often not suitable due to non-normal distributions. The bias-corrected and
 accelerated (BCa) method is not implemented yet.}
+    \item{\code{compute_model_data}}{(\emph{optional}) This parameter can be set to enable
+computation of data based on individual models. The parameter can take on or
+more of the following values: \code{all}, \code{model_performance}, \code{auc_data},
+\code{confusion_matrix}, \code{decision_curve_analyis}, \code{permutation_vimp},
+\code{performance_data}, as well as \code{true}, \code{false} and \code{none}.
+
+By default, data is computed for the ensemble as a whole, but not for
+underlying models.}
     \item{\code{compute_model_ci}}{(\emph{optional}) This parameter can be set to enable
 computation of bootstrap confidence intervals for individual models in
 several parts of the evaluation. The parameter can take one or more of the
@@ -876,16 +947,16 @@ following values: \code{all}, \code{model_performance}, \code{auc_data},
 \code{none}.
 
 By default, bootstrap confidence intervals are not computed for individual
-models.}
+models. Note that this parameter has no effect unless data is computed for
+individual models as well, which is managed by the \code{compute_model_data}
+parameter.}
     \item{\code{compute_ensemble_ci}}{(\emph{optional}) This parameter can be set to enable
-computation of bootstrap confidence intervals for ensemble models in
-several parts of the evaluation. The parameter can take one or more of the
-following values: \code{all}, \code{model_performance}, \code{auc_data},
-\code{decision_curve_analyis}, \code{permutation_vimp} as well as \code{true}, \code{false} and
-\code{none}.
+computation of bootstrap confidence intervals for ensemble models in several
+parts of the evaluation. The parameter can take one or more of the following
+values: \code{all}, \code{model_performance}, \code{auc_data}, \code{decision_curve_analyis},
+\code{permutation_vimp} as well as \code{true}, \code{false} and \code{none}.
 
-By default, bootstrap confidence intervals are computed for ensemble
-models.}
+By default, bootstrap confidence intervals are computed for ensemble models.}
     \item{\code{aggregate_ci}}{(\emph{optional}) Bootstraps are used to determine confidence
 intervals. This information can be stored for export. However, in many cases
 this is not necessary, and keeping the bootstrap data can lead to large
@@ -1133,6 +1204,15 @@ Reuse Integration (IRI) 377–384 (2012).
 optimization for general algorithm configuration. in Learning and
 Intelligent Optimization (ed. Coello, C. A. C.) 6683, 507–523 (Springer
 Berlin Heidelberg, 2011).
+\item Shahriari, B., Swersky, K., Wang, Z., Adams, R. P. & de Freitas, N.
+Taking the Human Out of the Loop: A Review of Bayesian Optimization. Proc.
+IEEE 104, 148–175 (2016)
+\item Srinivas, N., Krause, A., Kakade, S. M. & Seeger, M. W.
+Information-Theoretic Regret Bounds for Gaussian Process Optimization in
+the Bandit Setting. IEEE Trans. Inf. Theory 58, 3250–3265 (2012)
+\item Kaufmann, E., Cappé, O. & Garivier, A. On Bayesian upper confidence
+bounds for bandit problems. in Artificial intelligence and statistics
+592–600 (2012).
 \item Davison, A. C. & Hinkley, D. V. Bootstrap methods and their application.
 (Cambridge University Press, 1997).
 \item Efron, B. & Hastie, T. Computer Age Statistical Inference. (Cambridge

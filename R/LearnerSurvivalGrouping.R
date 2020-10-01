@@ -37,8 +37,7 @@ learner.find_survival_grouping_thresholds <- function(object, data){
     # Find corresponding sizes of the generated groups
     risk_group <- learner.apply_risk_threshold(object=object,
                                                predicted_values=pred_table$predicted_outcome,
-                                               cutoff=cutoff,
-                                               learner=object@learner)
+                                               cutoff=cutoff)
     group_size <- learner.get_risk_group_sizes(risk_group=risk_group)
     
     # Populate method_list
@@ -122,22 +121,15 @@ learner.get_risk_group_sizes <- function(risk_group){
 
 
 
-learner.apply_risk_threshold <- function(object, predicted_values, cutoff, learner){
+learner.apply_risk_threshold <- function(object, predicted_values, cutoff){
   
   # Initialise risk group
   risk_group <- rep.int(1, times=length(predicted_values))
   
-  # Determine inversion. We assume that risk groups go from 1 (low risk) to k (high risk),
-  # with k-1 being the number of provided cutoff values.
-  if(get_prediction_type(object=object) %in% c("expected_survival_time")){
-    # Time-like
-    invert <- TRUE
-    
-  } else {
-    # Risk-like
-    invert <- FALSE
-  }
-
+  # Determine inversion. We assume that risk groups go from 1 (low risk) to k
+  # (high risk), with k-1 being the number of provided cutoff values.
+  invert <- !get_prediction_type(object=object) %in% .get_available_risklike_prediction_types()
+  
   # Iterate over cutoffs and define risk groups
   for(current_cutoff in cutoff){
     if(invert){

@@ -1,3 +1,6 @@
+# Don't perform any further tests on CRAN due to time of running the complete test.
+testthat::skip_on_cran()
+
 # Create a dataset using the good dataset.
 data <- familiar:::test.create_small_good_data_set("survival")
 

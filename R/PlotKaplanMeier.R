@@ -245,9 +245,8 @@ setMethod("plot_kaplan_meier", signature(object="familiarCollection"),
             x <- export_stratification_data(object=object)
             
             # Check empty input
-            # TODO return a warning if outcome_type is survival or competing_risk
-            if(is.null(x)){ return(NULL) }
-            if(length(x$data) == 0) { return(NULL) }
+            if(is.null(x)) return(NULL)
+            if(length(x$data) == 0) return(NULL)
             
             ##### Check input arguments ########################################
             
@@ -271,7 +270,7 @@ setMethod("plot_kaplan_meier", signature(object="familiarCollection"),
             }
             
             # x_range
-            if(is.null(x_range)) { x_range <- c(0, x$time_max) }
+            if(is.null(x_range)) x_range <- c(0, x$time_max)
             
             # x_breaks
             if(is.null(x_breaks)){
@@ -286,7 +285,7 @@ setMethod("plot_kaplan_meier", signature(object="familiarCollection"),
             }
             
             # y_range
-            if(is.null(y_range)){ y_range <- c(0, 1) }
+            if(is.null(y_range)) y_range <- c(0, 1)
             
             # y_breaks
             if(is.null(y_breaks)){
@@ -298,15 +297,13 @@ setMethod("plot_kaplan_meier", signature(object="familiarCollection"),
             }
             
             # conf_int
-            if(is.null(conf_int)) { conf_int <- 0.0 }
+            if(is.null(conf_int)) conf_int <- 0.0
             
             # conf_int_style
-            if(length(conf_int_style) > 1){ conf_int_style <- head(conf_int_style, n=1) }
+            if(length(conf_int_style) > 1) conf_int_style <- head(conf_int_style, n=1)
             
             # Store plots to list in case no dir_path is provided
-            if(is.null(dir_path)){
-              plot_list <- list()
-            }
+            if(is.null(dir_path)) plot_list <- list()
             
             # Iterate over the stratification methods
             for(current_strat_method in names(x$data)){
@@ -376,16 +373,12 @@ setMethod("plot_kaplan_meier", signature(object="familiarCollection"),
               
               # Create a sub_plot_list for all plots that are generated for the
               # current stratification method.
-              if(is.null(dir_path)){
-                sub_plot_list <- list()
-              }
+              if(is.null(dir_path)) sub_plot_list <- list()
               
               # Iterate over splits
               for(x_sub in x_split){
                 
-                if(is_empty(x_sub)){
-                  next()
-                }
+                if(is_empty(x_sub)) next()
                 
                 # Create plot
                 p <- .plot_kaplan_meier(x=x_sub,
@@ -417,10 +410,10 @@ setMethod("plot_kaplan_meier", signature(object="familiarCollection"),
                                         show_survival_table=show_survival_table)
                 
                 # Check empty output
-                if(is.null(p)){ next() }
+                if(is.null(p)) next()
 
                 # Draw plot
-                if(draw){ plotting.draw(plot_or_grob=p) }
+                if(draw) plotting.draw(plot_or_grob=p)
                 
                 # Save and export
                 if(!is.null(dir_path)){
@@ -450,7 +443,7 @@ setMethod("plot_kaplan_meier", signature(object="familiarCollection"),
                   
                 } else {
                   # Store as list
-                  sub_plot_list <- append(sub_plot_list, list(p))
+                  sub_plot_list <- c(sub_plot_list, list(p))
                 }
               }
               
@@ -471,36 +464,49 @@ setMethod("plot_kaplan_meier", signature(object="familiarCollection"),
 
 
 .plot_kaplan_meier <- function(x,
-                               color_by, linetype_by, facet_by, facet_wrap_cols,
+                               color_by,
+                               linetype_by,
+                               facet_by,
+                               facet_wrap_cols,
                                combine_legend,
-                               ggtheme, discrete_palette,
-                               x_label, x_label_shared,
-                               y_label, y_label_shared,
-                               legend_label, plot_title, plot_sub_title, caption,
-                               x_range, x_breaks,
-                               y_range, y_breaks,
-                               conf_int, conf_int_style, conf_int_alpha,
-                               censoring, censor_shape,
-                               show_logrank, show_survival_table){
+                               ggtheme,
+                               discrete_palette,
+                               x_label,
+                               x_label_shared,
+                               y_label,
+                               y_label_shared,
+                               legend_label,
+                               plot_title,
+                               plot_sub_title,
+                               caption,
+                               x_range,
+                               x_breaks,
+                               y_range,
+                               y_breaks,
+                               conf_int,
+                               conf_int_style,
+                               conf_int_alpha,
+                               censoring,
+                               censor_shape,
+                               show_logrank,
+                               show_survival_table){
 
   # Prepare the data for plotting
   km_data <- lapply(split(x, by=unique(c(color_by, linetype_by, facet_by))), .prepare_km_plot_data, conf_int=conf_int, x_range=x_range)
   km_data <- data.table::rbindlist(km_data)
   
-  # Define elements that need to be shared. Note that "guide" and "strip_y" may
-  # be absent.
-  elements <- c("guide", "strip_y")
-  if(x_label_shared == "overall") { elements <- append(elements, "axis_title_x")}
-  if(y_label_shared == "overall") { elements <- append(elements, "axis_title_y")}
-
-  # Split by facet. This generates a list of data splits with facetting
+  # Split by facet. This generates a list of data splits with faceting
   # information that allows for positioning.
-  plot_layout_table <- plotting.get_plot_layout_table(x=km_data, facet_by=facet_by, facet_wrap_cols=facet_wrap_cols,
-                                                      x_label_shared=x_label_shared, y_label_shared=y_label_shared)
+  plot_layout_table <- plotting.get_plot_layout_table(x=km_data,
+                                                      facet_by=facet_by,
+                                                      facet_wrap_cols=facet_wrap_cols)
   
   # Split data into facets. This is done by row.
-  data_split_list <- plotting.split_data_by_facet(x=x, plot_layout_table=plot_layout_table)
-  km_split_list <- plotting.split_data_by_facet(x=km_data, plot_layout_table=plot_layout_table)
+  data_split_list <- plotting.split_data_by_facet(x=x,
+                                                  plot_layout_table=plot_layout_table)
+  
+  km_split_list <- plotting.split_data_by_facet(x=km_data,
+                                                plot_layout_table=plot_layout_table)
 
   # Create plots to join
   figure_list <- list()
@@ -541,19 +547,18 @@ setMethod("plot_kaplan_meier", signature(object="familiarCollection"),
                                          censor_shape=censor_shape,
                                          show_logrank=show_logrank)
     
-    # Update theme to remove guide, facet labels, based on notations in data set x
-    p_kaplan_meier <- plotting.update_facet_plot_elements(p=p_kaplan_meier, x=km_split_list[[ii]])
+    # Extract plot elements from the Kaplan-Meier plot.
+    extracted_elements <- plotting.extract_plot_elements(p=p_kaplan_meier)
     
-    # Extract plot elements from kaplan-meier plot.
-    extracted_elements <- plotting.extract_plot_elements(p=p_kaplan_meier, elements=elements)
+    # Remove extracted elements from the Kaplan-Meier plot.
+    p_kaplan_meier <- plotting.remove_plot_elements(p=p_kaplan_meier)
     
-    # Remove extracted elements from the plot.
-    p_kaplan_meier <- plotting.remove_plot_elements(p=p_kaplan_meier, elements=elements)
+    # Rename plot elements.
+    g_kaplan_meier <- plotting.rename_plot_elements(g=plotting.to_grob(p_kaplan_meier),
+                                                    extension="main")
     
-    # Convert to grob
-    g_kaplan_meier <- plotting.to_grob(p_kaplan_meier)
     
-    if(show_survival_table){
+    if(show_survival_table & gtable::is.gtable(g_kaplan_meier)){
       # Survival tables
       p_survival_table <- .create_survival_table_subplot(x=km_split_list[[ii]],
                                                          color_by=color_by,
@@ -563,9 +568,6 @@ setMethod("plot_kaplan_meier", signature(object="familiarCollection"),
                                                          x_range=x_range,
                                                          x_breaks=x_breaks)
       
-      # Update theme to remove guide, facet labels, based on notations in data set x
-      p_survival_table <- plotting.update_facet_plot_elements(p=p_survival_table, x=km_split_list[[ii]])
-
       # Extract survival gtable, which consists of the panel and the left axis.
       g_survival_table <- .gtable_extract(g=plotting.to_grob(p_survival_table),
                                           element=c("panel", "axis-l"),
@@ -576,32 +578,30 @@ setMethod("plot_kaplan_meier", signature(object="familiarCollection"),
       g_kaplan_meier <- .gtable_insert(g=g_kaplan_meier,
                                        g_new=g_survival_table,
                                        where="bottom",
-                                       ref_element="xlab-b",
+                                       ref_element="xlab-b-main",
                                        partial_match=TRUE)
       
     }
     
-    # Re-introduce plot elements
-    g_kaplan_meier <- plotting.reinsert_plot_elements(g=g_kaplan_meier,
-                                                      elements="strip_y",
-                                                      grob_list=extracted_elements,
-                                                      ggtheme=ggtheme)
-    
     # Add combined grob to list
-    figure_list <- append(figure_list, list(g_kaplan_meier))
+    figure_list <- c(figure_list, list(g_kaplan_meier))
     
-    # Add extract elements to the grob_element_list
-    extracted_element_list <- .append_new(extracted_element_list, extracted_elements)
+    # Add extract elements to the extracted_element_list
+    extracted_element_list <- c(extracted_element_list, list(extracted_elements))
   }
   
-  # Obtain layout dimensions (rows, cols).
-  layout_dims <- plotting.get_plot_layout_dims(plot_layout_table=plot_layout_table)
+  # Update the layout table. Note that the axis text and labels share the same behaviour.
+  plot_layout_table <- plotting.update_plot_layout_table(plot_layout_table=plot_layout_table,
+                                                         grobs=figure_list,
+                                                         x_text_shared=x_label_shared,
+                                                         x_label_shared=x_label_shared,
+                                                         y_text_shared=y_label_shared,
+                                                         y_label_shared=y_label_shared,
+                                                         facet_wrap_cols=facet_wrap_cols)
   
   # Combine features.
   g <- plotting.arrange_figures(grobs=figure_list,
-                                n_rows=layout_dims[1],
-                                n_cols=layout_dims[2],
-                                elements=setdiff(elements, "strip_y"),
+                                plot_layout_table=plot_layout_table,
                                 element_grobs=extracted_element_list,
                                 ggtheme=ggtheme)
   
@@ -614,7 +614,7 @@ setMethod("plot_kaplan_meier", signature(object="familiarCollection"),
   # Suppress NOTES due to non-standard evaluation in data.table
   surv <- surv_lower <- surv_upper <- time <- NULL
   
-  if(is_empty(x)){ return(NULL) }
+  if(is_empty(x)) return(NULL)
   
   # Use survfit to get kaplan-meier curves for each group
   if(conf_int > 0){

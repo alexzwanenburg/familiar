@@ -541,21 +541,19 @@ setMethod("plot_calibration_data", signature(object="familiarCollection"),
                                    gof_test,
                                    outcome_type){
   
-  # Define elements that need to be shared. Note that "guide" and "strip_y" may
-  # be absent.
-  elements <- c("guide", "strip_y")
-  if(x_label_shared == "overall") { elements <- append(elements, "axis_title_x")}
-  if(y_label_shared == "overall") { elements <- append(elements, "axis_title_y")}
-  
-  # Split by facet. This generates a list of data splits with facetting
+  # Split by facet. This generates a list of data splits with faceting
   # information that allows for positioning.
-  plot_layout_table <- plotting.get_plot_layout_table(x=x, facet_by=facet_by, facet_wrap_cols=facet_wrap_cols,
-                                                      x_label_shared=x_label_shared, y_label_shared=y_label_shared)
+  plot_layout_table <- plotting.get_plot_layout_table(x=x,
+                                                      facet_by=facet_by,
+                                                      facet_wrap_cols=facet_wrap_cols)
   
   # Split data into facets. This is done by row.
-  data_facet_list <- plotting.split_data_by_facet(x=x, plot_layout_table=plot_layout_table)
-  linear_test_facet_list <- plotting.split_data_by_facet(x=linear_test, plot_layout_table=plot_layout_table)
-  gof_test_facet_list <- plotting.split_data_by_facet(x=gof_test, plot_layout_table=plot_layout_table)
+  data_facet_list <- plotting.split_data_by_facet(x=x,
+                                                  plot_layout_table=plot_layout_table)
+  linear_test_facet_list <- plotting.split_data_by_facet(x=linear_test,
+                                                         plot_layout_table=plot_layout_table)
+  gof_test_facet_list <- plotting.split_data_by_facet(x=gof_test,
+                                                      plot_layout_table=plot_layout_table)
   
   # Placeholders for plots.
   figure_list <- list()
@@ -587,20 +585,17 @@ setMethod("plot_calibration_data", signature(object="familiarCollection"),
                                               gof_test=gof_test_facet_list[[ii]],
                                               outcome_type=outcome_type)
     
-    # Update theme to remove guide, facet labels, etc., based on notations in
-    # dataset x.
-    p_calibration <- plotting.update_facet_plot_elements(p=p_calibration, x=data_facet_list[[ii]])
-    
-    # Extract plot elements from the calibration plot.
-    extracted_elements <- plotting.extract_plot_elements(p=p_calibration, elements=elements)
+    # Extract plot elements from the main calibration plot.
+    extracted_elements <- plotting.extract_plot_elements(p=p_calibration)
     
     # Remove extracted elements from the plot.
-    p_calibration <- plotting.remove_plot_elements(p=p_calibration, elements=elements)
+    p_calibration <- plotting.remove_plot_elements(p=p_calibration)
     
-    # Convert to grob.
-    g_calibration <- plotting.to_grob(p_calibration)
+    # Rename plot elements.
+    g_calibration <- plotting.rename_plot_elements(g=plotting.to_grob(p_calibration),
+                                                   extension="main")
     
-    if(show_density){
+    if(show_density & gtable::is.gtable(g_calibration)){
       
       if(outcome_type %in% c("binomial", "multinomial")){
         # Procedure for binomial/multinomial outcomes. Separate density plots
@@ -633,17 +628,17 @@ setMethod("plot_calibration_data", signature(object="familiarCollection"),
                                              element="panel",
                                              partial_match=TRUE)
         
-        # Insert the panel elements
-        g_calibration <- .gtable_insert(g=g_calibration,
-                                        g_new=g_margin_negative,
-                                        where="top",
-                                        ref_element="panel",
-                                        partial_match=TRUE)
-        
+        # Insert the panel element
         g_calibration <- .gtable_insert(g=g_calibration,
                                         g_new=g_margin_positive,
                                         where="top",
-                                        ref_element="panel",
+                                        ref_element="panel-main",
+                                        partial_match=TRUE)
+        
+        g_calibration <- .gtable_insert(g=g_calibration,
+                                        g_new=g_margin_negative,
+                                        where="top",
+                                        ref_element="panel-main",
                                         partial_match=TRUE)
         
       } else {
@@ -665,32 +660,30 @@ setMethod("plot_calibration_data", signature(object="familiarCollection"),
         g_calibration <- .gtable_insert(g=g_calibration,
                                         g_new=g_margin,
                                         where="top",
-                                        ref_element="panel",
+                                        ref_element="panel-main",
                                         partial_match=TRUE)
       }
     }
     
-    # Re-introduce plot elements
-    g_calibration <- plotting.reinsert_plot_elements(g=g_calibration,
-                                                     elements="strip_y",
-                                                     grob_list=extracted_elements,
-                                                     ggtheme=ggtheme)
-    
     # Add combined grob to list
-    figure_list <- append(figure_list, list(g_calibration))
+    figure_list <- c(figure_list, list(g_calibration))
     
     # Add extract elements to the grob_element_list
-    extracted_element_list <- .append_new(extracted_element_list, extracted_elements)
+    extracted_element_list <- c(extracted_element_list, list(extracted_elements))
   }
   
-  # Obtain layout dimensions (rows, cols).
-  layout_dims <- plotting.get_plot_layout_dims(plot_layout_table=plot_layout_table)
+  # Update the layout table.
+  plot_layout_table <- plotting.update_plot_layout_table(plot_layout_table=plot_layout_table,
+                                                         grobs=figure_list,
+                                                         x_text_shared=x_label_shared,
+                                                         x_label_shared=x_label_shared,
+                                                         y_text_shared=y_label_shared,
+                                                         y_label_shared=y_label_shared,
+                                                         facet_wrap_cols=facet_wrap_cols)
   
   # Combine features.
   g <- plotting.arrange_figures(grobs=figure_list,
-                                n_rows=layout_dims[1],
-                                n_cols=layout_dims[2],
-                                elements=setdiff(elements, "strip_y"),
+                                plot_layout_table=plot_layout_table,
                                 element_grobs=extracted_element_list,
                                 ggtheme=ggtheme)
   
@@ -740,7 +733,7 @@ setMethod("plot_calibration_data", signature(object="familiarCollection"),
   }
   
   # Cast wide on the value of the intercept or slope coefficient.
-  linear_fit <- dcast(data=linear_test, cast_formula, value.var="coef_value")
+  linear_fit <- data.table::dcast(data=linear_test, cast_formula, value.var="coef_value")
   
   # Generate a guide table
   x_guide_list <- plotting.create_guide_table(x=x, color_by=color_by, discrete_palette=discrete_palette)
@@ -748,7 +741,7 @@ setMethod("plot_calibration_data", signature(object="familiarCollection"),
   
   # Extract data
   x <- x_guide_list$data
-
+  
   # Create basic plot
   p <- ggplot2::ggplot(data=x, mapping=ggplot2::aes(x=!!sym("expected"), y=!!sym("observed")))
   p <- p + ggtheme
@@ -771,10 +764,10 @@ setMethod("plot_calibration_data", signature(object="familiarCollection"),
     }
     
     # Set colour.
-    p <- p + ggplot2::scale_fill_manual(name=legend_label$guide_color,
-                                        values=x_guide_list$guide_color$color_values,
-                                        breaks=x_guide_list$guide_color$color_breaks,
-                                        drop=FALSE)
+    p <- p + ggplot2::scale_colour_manual(name=legend_label$guide_color,
+                                          values=x_guide_list$guide_color$color_values,
+                                          breaks=x_guide_list$guide_color$color_breaks,
+                                          drop=FALSE)
     
   } else {
     

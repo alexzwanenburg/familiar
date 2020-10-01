@@ -310,7 +310,7 @@
                                      reference=NULL){
 
   # Suppress NOTES due to non-standard evaluation in data.table
-  subject_id <- cohort_id <- NULL
+  subject_id <- cohort_id <- N <- NULL
 
   # Check if the input data has any samples
   if(is_empty(data)){ ..error_data_set_is_empty() }

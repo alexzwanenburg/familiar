@@ -1232,7 +1232,7 @@ setMethod("export_confusion_matrix_data", signature(object="ANY"),
                               args=append(list("object"=object, "data_element"="confusion_matrix"), list(...)))
             
             return(do.call(export_confusion_matrix_data,
-                           args=append(list("object"=object, "dir_path"=dir_path, "export_raw"=FALSE,), list(...))))
+                           args=append(list("object"=object, "dir_path"=dir_path, "export_raw"=FALSE), list(...))))
           })
 
 
@@ -1770,11 +1770,11 @@ universal_exporter <- function(object,
         
         if(!is_empty(data$bootstrap_data)){
           # Cast wide by bootstrap id.
-          bootstrap_data <- dcast(data=data$bootstrap_data,
-                                  stats::reformulate(termlabels=setdiff(colnames(individual_export_data), c(target_column, "bootstrap_id")),
-                                                     response="bootstrap_id",
-                                                     intercept=FALSE),
-                                  value.var=targer_column)
+          bootstrap_data <- data.table::dcast(data=data$bootstrap_data,
+                                              stats::reformulate(termlabels=setdiff(colnames(data$bootstrap_data), c(target_column, "bootstrap_id")),
+                                                                 response="bootstrap_id",
+                                                                 intercept=FALSE),
+                                              value.var=target_column)
         } else {
           bootstrap_data <- NULL
         }
@@ -1783,7 +1783,7 @@ universal_exporter <- function(object,
           
           # Parse model data.
           write_data <- data$model_data
-          setnames(export_data, old=target_column, new="model")
+          data.table::setnames(export_data, old=target_column, new="model")
           
           # Specify identifier columns
           id_columns <- setdiff(colnames(write_data), c("model", "ci_low", "ci_up"))

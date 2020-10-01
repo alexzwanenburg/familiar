@@ -369,6 +369,16 @@ setMethod("plot_model_performance", signature(object="familiarCollection"),
               if(!y_axis_by %in% c("fs_method", "learner", "data_set", split_variable)) stop("The y_axis_by argument should be one of fs_method, learner or data_set.")
             }
             
+            if(is.null(x_axis_by)){
+              x_axis_by <- setdiff(c("metric", "data_set", "fs_method", "learner", split_variable), c(split_by, color_by, facet_by, y_axis_by))
+              if(length(x_axis_by) == 0) stop("The x_axis_by argument should be set.")
+              if(length(x_axis_by) > 1 & "metric" %in% c(x_axis_by)){
+                x_axis_by <- "metric"
+              } else {
+                x_axis_by <- x_axis_by[1]
+              }
+            }
+            
             # x_label
             if(is.waive(x_label)){
               x_label <- switch(x_axis_by,
@@ -408,9 +418,7 @@ setMethod("plot_model_performance", signature(object="familiarCollection"),
             }
             
             # Store plots to list in case dir_path is absent.
-            if(is.null(dir_path)){
-              plot_list <- list()
-            }
+            if(is.null(dir_path)) plot_list <- list()
             
             # Iterate over data splits.
             for(ii in names(x_split)){
@@ -440,7 +448,8 @@ setMethod("plot_model_performance", signature(object="familiarCollection"),
                                                 y_range=y_range,
                                                 y_n_breaks=y_n_breaks,
                                                 y_breaks=y_breaks,
-                                                annotate_performance=annotate_performance)
+                                                annotate_performance=annotate_performance,
+                                                outcome_type=object@outcome_type)
               
               # Check empty output
               if(is.null(p)) next()
@@ -483,7 +492,7 @@ setMethod("plot_model_performance", signature(object="familiarCollection"),
                 
               } else {
                 # Store as list for export.
-                plot_list <- append(plot_list, list(p))
+                plot_list <- c(plot_list, list(p))
               }
             }
             
@@ -519,7 +528,8 @@ setMethod("plot_model_performance", signature(object="familiarCollection"),
                                          y_range,
                                          y_n_breaks,
                                          y_breaks,
-                                         annotate_performance){
+                                         annotate_performance,
+                                         outcome_type){
   
   # Suppress NOTES due to non-standard evaluation in data.table
   value <- metric <- median <- ci_low <- ci_up <- NULL
@@ -533,7 +543,7 @@ setMethod("plot_model_performance", signature(object="familiarCollection"),
     if(is.null(y_range)){
       
       # Obtain default ranges for the metrics.
-      metric_ranges <- lapply(metrics, metric.get_metric_default_range)
+      metric_ranges <- lapply(metrics, metric.get_metric_default_range, outcome_type=outcome_type)
       
       # Give a name to the list elements.
       names(metric_ranges) <- metrics
@@ -607,7 +617,15 @@ setMethod("plot_model_performance", signature(object="familiarCollection"),
     # gradient_palette_range
     if(is.waive(gradient_palette_range)){
       if(length(metrics) == 1){
-        gradient_palette_range <- metric.get_metric_default_range(metric=metrics)
+        gradient_palette_range <- metric.get_metric_default_range(metric=metrics,
+                                                                  outcome_type=outcome_type)
+        
+        # Replace a positive infinite value by the max range in the data.
+        if(gradient_palette_range[2] == Inf) gradient_palette_range[2] <- max(x[metric==metrics, value], na.rm=TRUE)
+
+        # Replace any negative infinite value by the min range in the data.
+        if(gradient_palette_range[1] == -Inf) gradient_palette_range[1] <- min(x[metric==metrics, value], na.rm=TRUE)
+
         gradient_was_provided <- FALSE
         
       } else {
@@ -648,7 +666,9 @@ setMethod("plot_model_performance", signature(object="familiarCollection"),
     
     # Determine what direction a metric has.
     if(length(metrics) == 1){
-      invert_scale <- !metric.main(metric=metrics, purpose="higher_score_better")
+      invert_scale <- !is_higher_better(metric=metrics,
+                                        outcome_type=outcome_type)
+      
     } else {
       invert_scale <- FALSE
     }

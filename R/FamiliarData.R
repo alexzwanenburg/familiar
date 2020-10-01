@@ -49,9 +49,7 @@ setMethod("add_identifiers", signature(data="ANY", object="familiarData"),
           function(data, object, more_identifiers=NULL){
             # Adds identifying columns to a table
             
-            if(is.null(data)) {
-              return(NULL)
-            }
+            if(is_empty(data)) return(NULL)
             
             if(!inherits(data, "data.table")){
               stop("\"data\" should be a data.table.")
@@ -65,21 +63,17 @@ setMethod("add_identifiers", signature(data="ANY", object="familiarData"),
             }
             id_order <- c("data_set", more_identifiers)
 
-            if(nrow(data)>=1){
+            if(nrow(data) >= 1){
               
-              # Get the model name
-              data_set <- get_object_name(object=object, abbreviated=FALSE)
+              # Get the name of the data
+              data_set <- object@name
               
               # Insert "model_name" column
               data[, "data_set":=data_set]
               
-              if(any(id_order == "fs_method")){
-                data[, "fs_method":=object@fs_method]
-              }
+              if(any(id_order == "fs_method")) data[, "fs_method":=object@fs_method]
               
-              if(any(id_order == "learner")){
-                data[, "learner":=object@learner]
-              }
+              if(any(id_order == "learner")) data[, "learner":=object@learner]
               
               # Reorder columns and move model_name to the front
               data.table::setcolorder(data, neworder=id_order)
@@ -88,7 +82,7 @@ setMethod("add_identifiers", signature(data="ANY", object="familiarData"),
               
             } else {
               # In case the table is empty, return an empty table with the model name attached.
-              empty_table <- data.table("data_set"=character(0))
+              empty_table <- data.table::data.table("data_set"=character(0))
               
               if(any(id_order == "fs_method")){
                 empty_table[, "fs_method":=character(0)]
@@ -115,9 +109,9 @@ setMethod("add_identifiers", signature(data="ANY", object="familiarData"),
 #' @md
 #' @keywords internal
 setMethod("set_data_set_names", signature(x="familiarData"),
-          function(x){
+          function(x, new=NULL){
 
-            if(x@project_id == 0){
+            if(x@project_id == 0 & is.null(new)){
               # Generate a random object name. A project_id of 0 means that the
               # objects was auto-generated (i.e. through object conversion). We
               # randomly generate chracters and add a time stamp, so that
@@ -125,9 +119,12 @@ setMethod("set_data_set_names", signature(x="familiarData"),
               slot(object=x, name="name") <- paste0(as.character(as.numeric(format(Sys.time(),"%H%M%S"))),
                                                     "_", stringi::stri_rand_strings(1, 20, '[A-Z]'))
               
-            } else {
+            } else if(is.null(new)) {
               # Generate a sensible object name.
               slot(object=x, name="name") <- get_object_name(object=x)
+              
+            } else {
+              slot(object=x, name="name") <- new
             }
             
             return(x)

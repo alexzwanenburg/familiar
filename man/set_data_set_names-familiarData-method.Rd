@@ -4,7 +4,7 @@
 \alias{set_data_set_names,familiarData-method}
 \title{Name dataset}
 \usage{
-\S4method{set_data_set_names}{familiarData}(x)
+\S4method{set_data_set_names}{familiarData}(x, new = NULL)
 }
 \arguments{
 \item{x}{A \code{familiarData} object.}

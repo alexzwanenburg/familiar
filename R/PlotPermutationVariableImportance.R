@@ -320,7 +320,8 @@ setMethod("plot_permutation_variable_importance", signature(object="familiarColl
             # 0.0 here.
             x <- lapply(split(x, by="metric"), function(x){
               
-              if(!metric.is_higher_score_better(metric=as.character(x$metric[1]))){
+              if(!metric.is_higher_score_better(metric=as.character(x$metric[1]),
+                                                outcome_type=object@outcome_type)){
                 # For metrics where lower scores mark better model performance,
                 # a feature is more important when the variable importance is
                 # more negative.
@@ -749,7 +750,7 @@ setMethod("plot_permutation_variable_importance", signature(object="familiarColl
   }
   
   # Add a line to indicate 0.0, if 0.0 is included in the range.
-  if(x_range[1] < 0.0 & x_range[2] > 0.0){
+  if(x_range[1] <= 0.0 & x_range[2] >= 0.0){
     p <- p + ggplot2::geom_hline(yintercept=0.0,
                                  linetype="dotted")
   }

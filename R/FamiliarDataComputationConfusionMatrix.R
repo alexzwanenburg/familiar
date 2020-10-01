@@ -14,6 +14,7 @@ setGeneric("extract_confusion_matrix", function(object,
                                                 cl=NULL,
                                                 is_pre_processed=FALSE,
                                                 ensemble_method=waiver(),
+                                                compute_model_data=waiver(),
                                                 message_indent=0L,
                                                 verbose=FALSE,
                                                 ...) standardGeneric("extract_confusion_matrix"))
@@ -25,6 +26,7 @@ setMethod("extract_confusion_matrix", signature(object="familiarEnsemble"),
                    cl=NULL,
                    is_pre_processed=FALSE,
                    ensemble_method=waiver(),
+                   compute_model_data=waiver(),
                    message_indent=0L,
                    verbose=FALSE){
             
@@ -41,10 +43,14 @@ setMethod("extract_confusion_matrix", signature(object="familiarEnsemble"),
             # Obtain ensemble method from stored settings, if required.
             if(is.waive(ensemble_method)) ensemble_method <- object@settings$ensemble_method
             
+            # By default, don't compute confusion matrices for individual models.
+            if(is.waive(compute_model_data)) compute_model_data <- "none"
+            
             # Extract data for the individual models and the ensemble.
             confusion_matrix_data <- universal_extractor(object=object,
                                                          cl=cl,
                                                          FUN=.extract_confusion_matrix,
+                                                         compute_model_data=any(c("all", "confusion_matrix", "TRUE") %in% compute_model_data),
                                                          compute_model_ci=FALSE,
                                                          compute_ensemble_ci=FALSE,
                                                          data=data,
