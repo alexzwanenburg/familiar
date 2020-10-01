@@ -366,7 +366,15 @@ test_all_vimp_methods_available <- function(vimp_methods){
 
 
 test_all_vimp_methods <- function(vimp_methods,
-                                  hyperparameter_list=NULL){
+                                  hyperparameter_list=NULL,
+                                  debug=FALSE){
+  
+  if(debug){
+    test_fun <- debug_test_that
+    
+  } else {
+    test_fun <- testthat::test_that
+  }
   
   # Iterate over the outcome type.
   for(outcome_type in c("count", "continuous", "binomial", "multinomial", "survival")){
@@ -418,7 +426,7 @@ test_all_vimp_methods <- function(vimp_methods,
                                          imputation_method="simple")
       
       
-      testthat::test_that(paste0("Variable importance can be computed for ", outcome_type, " with the ", vimp_method, " using a complete data set."), {
+      test_fun(paste0("Variable importance can be computed for ", outcome_type, " with the ", vimp_method, " using a complete data set."), {
         
         vimp_table <- suppressWarnings(.vimp(vimp_object, full_data))
         
@@ -434,7 +442,7 @@ test_all_vimp_methods <- function(vimp_methods,
       })
       
       
-      testthat::test_that(paste0("Variable importance can be computed for ", outcome_type, " with the ", vimp_method, " using a complete data set with one invariant feature."), {
+      test_fun(paste0("Variable importance can be computed for ", outcome_type, " with the ", vimp_method, " using a complete data set with one invariant feature."), {
         
         vimp_table <- suppressWarnings(.vimp(vimp_object, full_one_invariant_data))
         
@@ -450,7 +458,7 @@ test_all_vimp_methods <- function(vimp_methods,
       })
       
       
-      testthat::test_that(paste0("Variable importance cannot be computed for ", outcome_type, " with the ", vimp_method, " using an empty data set."), {
+      test_fun(paste0("Variable importance cannot be computed for ", outcome_type, " with the ", vimp_method, " using an empty data set."), {
         
         vimp_table <- suppressWarnings(.vimp(vimp_object, empty_data))
        
@@ -459,7 +467,7 @@ test_all_vimp_methods <- function(vimp_methods,
       })
       
       
-      testthat::test_that(paste0("Variable importance cannot be computed for ", outcome_type, " with the ", vimp_method, " using a bad data set."), {
+      test_fun(paste0("Variable importance cannot be computed for ", outcome_type, " with the ", vimp_method, " using a bad data set."), {
         
         vimp_table <- suppressWarnings(.vimp(vimp_object, bad_data))
         
@@ -468,7 +476,7 @@ test_all_vimp_methods <- function(vimp_methods,
       })
       
       
-      testthat::test_that(paste0("Variable importance cannot be computed for ", outcome_type, " with the ", vimp_method, " using a one-sample data set."), {
+      test_fun(paste0("Variable importance cannot be computed for ", outcome_type, " with the ", vimp_method, " using a one-sample data set."), {
         
         vimp_table <- suppressWarnings(.vimp(vimp_object, full_one_sample_data))
         
@@ -488,7 +496,7 @@ test_all_vimp_methods <- function(vimp_methods,
                                                     imputation_method="simple")
       
       
-      testthat::test_that(paste0("Variable importance can be computed for ", outcome_type, " with the ", vimp_method, " using a one-feature data set."), {
+      test_fun(paste0("Variable importance can be computed for ", outcome_type, " with the ", vimp_method, " using a one-feature data set."), {
         
         vimp_table <- suppressWarnings(.vimp(vimp_object, one_feature_data))
         
@@ -501,7 +509,7 @@ test_all_vimp_methods <- function(vimp_methods,
       })
       
       
-      testthat::test_that(paste0("Variable importance cannot be computed for ", outcome_type, " with the ", vimp_method, " using a one-feature data set with an invariant feature."), {
+      test_fun(paste0("Variable importance cannot be computed for ", outcome_type, " with the ", vimp_method, " using a one-feature data set with an invariant feature."), {
         
         vimp_table <- suppressWarnings(.vimp(vimp_object, one_feature_invariant_data))
         
@@ -510,7 +518,7 @@ test_all_vimp_methods <- function(vimp_methods,
       })
       
       
-      testthat::test_that(paste0("Variable importance cannot be computed for ", outcome_type, " with the ", vimp_method, " using a one-feature, one-sample data set."), {
+      test_fun(paste0("Variable importance cannot be computed for ", outcome_type, " with the ", vimp_method, " using a one-feature, one-sample data set."), {
         
         vimp_table <- suppressWarnings(.vimp(vimp_object, one_feature_one_sample_data))
         
