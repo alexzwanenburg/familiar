@@ -76,6 +76,9 @@ data_list <- list("good_binomial"    = list("data"=data_good_binomial,    "outco
 
 familiar:::test_all_metrics_available(metrics=familiar:::.get_available_confusion_matrix_metrics())
 
+# Don't perform any further tests on CRAN due to time of running the complete test.
+testthat::skip_on_cran()
+
 ##### Confusion matrix #########################################################
 testthat::test_that("confusion matrix is correct", {
   # Good binomial

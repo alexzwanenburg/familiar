@@ -1,3 +1,6 @@
+# Don't perform any further tests on CRAN due to time of running the complete test.
+testthat::skip_on_cran()
+
 familiar:::test_plots(plot_function=familiar:::plot_auc_roc_curve,
                       data_element="auc_data",
                       outcome_type_available=c("binomial", "multinomial"))

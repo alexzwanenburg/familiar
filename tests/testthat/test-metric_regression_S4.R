@@ -51,6 +51,9 @@ data_list <- list("good" = list("data"=good_data),
 
 familiar:::test_all_metrics_available(metrics=familiar:::.get_available_regression_metrics())
 
+# Don't perform any further tests on CRAN due to time of running the complete test.
+testthat::skip_on_cran()
+
 #### Mean absolute error #######################################################
 familiar:::test_all_metrics(metrics=familiar:::.get_available_mae_metrics(),
                             except_one_sample=FALSE,

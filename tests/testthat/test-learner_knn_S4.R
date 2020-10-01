@@ -2,6 +2,9 @@
 familiar:::test_all_learners_available(learners=familiar:::.get_available_linear_knn_learners(show_general=TRUE))
 familiar:::test_all_learners_available(learners=familiar:::.get_available_radial_knn_learners(show_general=TRUE))
 
+# Don't perform any further tests on CRAN due to time of running the complete test.
+testthat::skip_on_cran()
+
 familiar:::test_all_learners_train_predict_vimp(learners=familiar:::.get_available_linear_knn_learners(show_general=FALSE),
                                                 hyperparameter_list=list("binomial"=list("k"=3),
                                                                          "multinomial"=list("k"=3)),

@@ -1,6 +1,10 @@
 # First test if all selectable learners are also available
 familiar:::test_all_learners_available(learners=familiar:::.get_available_cox_learners(show_general=TRUE))
 
+# Don't perform any further tests on CRAN due to time of running the test.
+testthat::skip_on_cran()
+
+# Generic test
 familiar:::test_all_learners_train_predict_vimp(learners=familiar:::.get_available_cox_learners(show_general=TRUE))
 
 

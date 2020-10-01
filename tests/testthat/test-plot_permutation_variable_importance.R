@@ -1,3 +1,7 @@
+# Don't perform any further tests on CRAN due to time of running the complete test.
+testthat::skip_on_cran()
+
+# Generic test.
 familiar:::test_plots(plot_function=familiar:::plot_permutation_variable_importance,
                       data_element="permutation_vimp",
                       compute_ensemble_ci=FALSE,

@@ -1,6 +1,9 @@
 # First test if all selectable learners are also available
 familiar:::test_all_learners_available(learners=familiar:::.get_available_rfsrc_learners(show_general=TRUE))
 
+# Don't perform any further tests on CRAN due to time of running the complete test.
+testthat::skip_on_cran()
+
 familiar:::test_all_learners_train_predict_vimp(learners=familiar:::.get_available_rfsrc_learners(show_general=FALSE),
                                                 hyperparameter_list=list("count"=list("n_tree"=4,
                                                                                       "sample_size"=0.50,
@@ -209,7 +212,7 @@ testthat::test_that("Random forest SRC model has variable importance", {
   testthat::expect_equal(all(familiar:::get_feature_columns(good_data) %in% vimp_table$name), TRUE)
   
   # Expect that cell_shape_uniformity has rank 1 and clump_thickness has rank 2.
-  testthat::expect_equal(vimp_table[rank == 1, ]$name, "cell_shape_uniformity")
+  testthat::expect_equal(vimp_table[rank == 1, ]$name %in% c("cell_shape_uniformity", "bare_nuclei"), TRUE)
   
   # Disabled test because vimp by the random forest is unstable.
   # testthat::expect_equal(vimp_table[rank == 2, ]$name, "marginal_adhesion")

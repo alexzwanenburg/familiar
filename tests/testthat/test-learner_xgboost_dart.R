@@ -1,6 +1,9 @@
 # First test if all selectable learners are also available
 familiar:::test_all_learners_available(learners=familiar:::.get_available_xgboost_dart_learners(show_general=TRUE))
 
+# Don't perform any further tests on CRAN due to time of running the complete test.
+testthat::skip_on_cran()
+
 familiar:::test_all_learners_train_predict_vimp(learners=familiar:::.get_available_xgboost_dart_learners(show_general=FALSE),
                                                 hyperparameter_list=list("count"=list("n_boost" = 2,
                                                                                       "learning_rate" = -1,

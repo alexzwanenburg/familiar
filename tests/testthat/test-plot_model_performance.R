@@ -1,4 +1,7 @@
+# Don't perform any further tests on CRAN due to time of running the complete test.
+testthat::skip_on_cran()
 
+# Generic test.
 familiar:::test_plots(plot_function=familiar:::plot_model_performance,
                       data_element="model_performance",
                       outcome_type_available=c("count", "continuous", "binomial", "multinomial", "survival"))

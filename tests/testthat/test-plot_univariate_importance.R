@@ -1,3 +1,6 @@
+# Don't perform any further tests on CRAN due to time of running the complete test.
+testthat::skip_on_cran()
+
 # FDR-crrected p-values
 familiar:::test_plots(plot_function=familiar::plot_univariate_importance,
                       data_element="univariate_analysis",

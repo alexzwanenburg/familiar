@@ -3,6 +3,9 @@ familiar:::test_all_learners_available(learners=familiar:::.get_available_glmnet
 familiar:::test_all_learners_available(learners=familiar:::.get_available_glmnet_lasso_learners(show_general=TRUE))
 familiar:::test_all_learners_available(learners=familiar:::.get_available_glmnet_elastic_net_learners(show_general=TRUE))
 
+# Don't perform any further tests on CRAN due to time of running the complete test.
+testthat::skip_on_cran()
+
 familiar:::test_all_learners_train_predict_vimp(learners=familiar:::.get_available_glmnet_ridge_learners(show_general=FALSE))
 familiar:::test_all_learners_train_predict_vimp(learners=familiar:::.get_available_glmnet_lasso_learners(show_general=FALSE))
 familiar:::test_all_learners_train_predict_vimp(learners=familiar:::.get_available_glmnet_elastic_net_learners(show_general=FALSE),

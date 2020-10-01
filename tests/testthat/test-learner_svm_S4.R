@@ -5,6 +5,11 @@ familiar:::test_all_learners_available(learners=familiar:::.get_available_svm_nu
 familiar:::test_all_learners_available(learners=familiar:::.get_available_svm_eps_learners(show_general=TRUE))
 familiar:::test_all_learners_available(learners=familiar:::.get_available_svm_eps_bound_learners(show_general=TRUE))
 
+# Don't perform any further tests on CRAN due to time of running the complete test.
+testthat::skip_on_cran()
+
+testthat::skip("Skipping svm tests. Some tests appear to get stuck when run with devtools::test as part of a complete test. Initialisation issues?")
+
 familiar:::test_all_learners_train_predict_vimp(learners=familiar:::.get_available_svm_c_learners(show_general=FALSE),
                                                 hyperparameter_list=list("binomial"=list("c"=-1.0,
                                                                                          "sigma"=1.0,
@@ -71,6 +76,7 @@ familiar:::test_all_learners_train_predict_vimp(learners=familiar:::.get_availab
 #                                                                                             "offset"=0.0,
 #                                                                                             "order"=1.0)),
 #                                                 has_vimp=FALSE)
+
 
 familiar:::test_all_learners_train_predict_vimp(learners=familiar:::.get_available_svm_eps_learners(show_general=FALSE),
                                                 hyperparameter_list=list("count"=list("c"=-1.0,
