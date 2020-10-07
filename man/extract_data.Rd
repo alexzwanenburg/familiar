@@ -214,8 +214,8 @@ The default value is \code{0.95}.}
 confidence intervals (Efron and Hastie, 2016). The following methods are
 implemented:
 \itemize{
-\item \code{percentile}: Confidence intervals obtained using the percentile method.
-\item \code{bc} (default): Bias-corrected confidence intervals.
+\item \code{percentile} (default): Confidence intervals obtained using the percentile method.
+\item \code{bc}: Bias-corrected confidence intervals.
 }
 
 Note that the standard method is not implemented because this method is

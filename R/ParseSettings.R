@@ -2105,9 +2105,9 @@
 #'  confidence intervals (Efron and Hastie, 2016). The following methods are
 #'  implemented:
 #'
-#'  * `percentile`: Confidence intervals obtained using the percentile method.
+#'  * `percentile` (default): Confidence intervals obtained using the percentile method.
 #'
-#'  * `bc` (default): Bias-corrected confidence intervals.
+#'  * `bc`: Bias-corrected confidence intervals.
 #'
 #'  Note that the standard method is not implemented because this method is
 #'  often not suitable due to non-normal distributions. The bias-corrected and
@@ -2419,7 +2419,7 @@
   
   # Bootstrap confidence interval.
   settings$bootstrap_ci_method <- .parse_arg(x_config=config$bootstrap_ci_method, x_var=bootstrap_ci_method,
-                                             var_name="bootstrap_ci_method", type="character", optional=TRUE, default="bc")
+                                             var_name="bootstrap_ci_method", type="character", optional=TRUE, default="percentile")
   
   .check_parameter_value_is_valid(x=settings$bootstrap_ci_method, var_name="bootstrap_ci_method",
                                   values=.get_available_bootstrap_confidence_interval_methods())

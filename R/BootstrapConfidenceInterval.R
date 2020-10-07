@@ -156,20 +156,13 @@
                                      confidence_level=confidence_level,
                                      bootstrap_ci_method="percentile")
       
-      # Replace the median in the list by the point estimate.
-      summary_list$median <- x_0
-      
-      # Check boundary issues where the point estimate lays outside the
-      # confidence interval.
-      if(x_0 < summary_list$ci_low) summary_list$ci_low <- x_0
-      if(x_0 > summary_list$ci_up) summary_list$ci_up <- x_0
-  
       return(summary_list)
     }
     
     # Define the z-statistic for bounds of the confidence interval.
     z_alpha <- stats::qnorm(c((1.0 - confidence_level) / 2.0,
-                              1.0 - (1.0 - confidence_level) / 2.0))
+                              1.0 - (1.0 - confidence_level) / 2.0,
+                              0.5))
     
     # Define bias-corrected percentiles.
     percentiles <- stats::pnorm((2.0 * z_0 + z_alpha))
@@ -178,11 +171,10 @@
     percentile_values <- stats::quantile(x, probs=percentiles, names=FALSE)
     
     # Generate a summary list
-    summary_list <- list("median"=x_0,
+    summary_list <- list("median"=percentile_values[3],
                          "ci_low"=percentile_values[1],
                          "ci_up"=percentile_values[2])
   }
-  
   
   return(summary_list)
 }
