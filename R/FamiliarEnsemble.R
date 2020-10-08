@@ -573,6 +573,10 @@ ensemble_prediction <- function(object, prediction_data, ensemble_method="mean")
     ..error_no_known_outcome_type(outcome_type=object@outcome_type)
   }
   
+  # Also determine if novelty is part of the columns.
+  if("novelty" %in% colnames(prediction_data)){
+    prediction_columns <- c(prediction_columns, "novelty")
+  }
   
   # Set the ensemble aggregation function.
   if(ensemble_method == "mean"){

@@ -5,7 +5,7 @@ NULL
 
 #####.predict (model)#####
 setMethod(".predict", signature(object="familiarModel"),
-          function(object, data, allow_recalibration=TRUE, is_pre_processed=FALSE, time=NULL, type=NULL, ...) {
+          function(object, data, allow_recalibration=TRUE, is_pre_processed=FALSE, time=NULL, type=NULL, novelty=FALSE, ...) {
             
             # Prepare input data
             data <- process_input_data(object=object,
@@ -43,6 +43,11 @@ setMethod(".predict", signature(object="familiarModel"),
             data.table::setcolorder(prediction_table,
                                     neworder=colnames(get_placeholder_prediction_table(object=object, data=data)))
             
+            # Add novelty.
+            if(novelty){
+              prediction_table$novelty <- .predict_novelty(object=object,
+                                                           data=data)
+            }
             
             return(prediction_table)  
           })
@@ -50,7 +55,7 @@ setMethod(".predict", signature(object="familiarModel"),
 
 #####.predict (ensemble)#####
 setMethod(".predict", signature(object="familiarEnsemble"),
-          function(object, data, allow_recalibration=TRUE, is_pre_processed=FALSE, time=NULL, type=NULL, dir_path=NULL, ensemble_method="median", ...) {
+          function(object, data, allow_recalibration=TRUE, is_pre_processed=FALSE, time=NULL, type=NULL, dir_path=NULL, ensemble_method="median", novelty=FALSE, ...) {
             # Predict function for a model ensemble. This will always return
             # ensemble information, and not details corresponding to the
             # individual models.
@@ -66,7 +71,8 @@ setMethod(".predict", signature(object="familiarEnsemble"),
                                    allow_recalibration=allow_recalibration,
                                    is_pre_processed=is_pre_processed,
                                    time=time,
-                                   type=type)
+                                   type=type,
+                                   novelty=novelty)
             
             ##### Ensemble predictions #####
             
@@ -77,4 +83,25 @@ setMethod(".predict", signature(object="familiarEnsemble"),
             
             # Return data
             return(prediction_data)
+          })
+
+
+#####.predict_novelty#####
+setMethod(".predict_novelty", signature(object="familiarModel"),
+          function(object, data, is_pre_processed=FALSE){
+            
+            # Prepare input data
+            data <- process_input_data(object=object,
+                                       data=data,
+                                       is_pre_processed=is_pre_processed,
+                                       stop_at="clustering")
+            
+            # Return NA if there is no novelty detector.
+            if(is.null(object@novelty_detector)) return(rep(NA_real_, times=nrow(data@data)))
+            
+            # Return empty if there is no data.
+            if(is_empty(data)) return(numeric(0))
+            
+            return(predict(object=object@novelty_detector,
+                           newdata=data@data))
           })

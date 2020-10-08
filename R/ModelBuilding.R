@@ -134,6 +134,10 @@ build_model <- function(run, hpo_list){
   # Train model
   fam_model <- .train(object=fam_model, data=data, get_additional_info=TRUE)
 
+  # Add novelty detector
+  fam_model <- .train_novelty_detector(object=fam_model,
+                                       data=data)
+  
   # Save model
   save(list=fam_model, file=file_paths$mb_dir)
 }

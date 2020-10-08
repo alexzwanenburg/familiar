@@ -1,5 +1,8 @@
 # Development
 
+## Major changes:
+* Added novelty detection.
+
 ## Minor changes:
 * The default method for bootstrap confidence intervals (bootstrap_ci_method) is now the percentile method, which replaces the bias-corrected (bc) method.
 * The value returned for the bias-corrected bootstrap confidence interval method is now the bias-corrected median, not the point estimate. This harmonises the behaviour of the percentile and bias-corrected confidence interval methods. The bias-corrected median can be viewed as an optimism correction of the point estimate.

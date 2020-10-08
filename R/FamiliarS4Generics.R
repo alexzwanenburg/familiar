@@ -4,9 +4,13 @@ setGeneric("save")
 # Predict method. This is a standard method converted to S4.
 setGeneric(".predict", function(object, data, ...) standardGeneric(".predict"))
 
+setGeneric(".predict_novelty", function(object, data, ...) standardGeneric(".predict_novelty"))
+
 setGeneric("train", function(data, ...) standardGeneric("train"))
 
 setGeneric(".train", function(object, data, ...) standardGeneric(".train"))
+
+setGeneric(".train_novelty_detector", function(object, data, ...) standardGeneric(".train_novelty_detector"))
 
 setGeneric("model_is_trained", function(object, ...) standardGeneric("model_is_trained"))
 

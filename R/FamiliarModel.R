@@ -31,7 +31,9 @@ setMethod(".train", signature(object="familiarModel", data="dataObject"),
             # Extract information required for assessing model performance,
             # calibration (e.g. baseline survival) etc.
             if(get_additional_info){
-              # Remove duplicate subject_id from the data prior to obtaining fut
+
+              # Remove duplicate subject_id from the data prior to obtaining
+              # additional data.
               data <- aggregate_data(data=data)
               
               # Create calibration models and add to the object. Not all models
@@ -48,9 +50,6 @@ setMethod(".train", signature(object="familiarModel", data="dataObject"),
               # survival outcomes.
               object <- ..set_risk_stratification_thresholds(object=object, data=data)
               
-              # TODO Novelty detector
-              object@novelty_detector <- NULL
-              
               # Add column data
               object <- add_data_column_info(object=object)
             }
@@ -60,6 +59,39 @@ setMethod(".train", signature(object="familiarModel", data="dataObject"),
             
             return(object)
           })
+
+
+#####.train_novelty_detector#####
+setMethod(".train_novelty_detector", signature(object="familiarModel", data="dataObject"),
+          function(object, data, is_pre_processed=FALSE) {
+            # Train method for model training
+            
+            # Check if the class of object is a subclass of familiarModel.
+            if(!is_subclass(class(object)[1], "familiarModel")) object <- promote_learner(object)
+            
+            # Process data, if required.
+            data <- process_input_data(object=object,
+                                       data=data,
+                                       is_pre_processed = is_pre_processed,
+                                       stop_at="clustering")
+            
+            # Check if there are any data entries. The familiar model cannot be
+            # trained otherwise
+            if(is_empty(x=data)) return(object)
+            
+            # Check the number of features in data; if it has no features, the
+            # familiar model can not be trained
+            if(!has_feature_data(x=data)) return(object)
+            
+            # Create a isolation forest.
+            detector <- isotree::isolation.forest(df=data@data[, mget(get_feature_columns(data))])
+            
+            # Add the detector to the familiarModel object.
+            object@novelty_detector <- detector
+            
+            return(object)
+          })
+
 
 
 #####assess_calibration (model)#####

@@ -97,6 +97,7 @@ setMethod("extract_predictions", signature(object="familiarEnsemble"),
                                   data=data,
                                   time=time,
                                   ensemble_method=ensemble_method,
+                                  novelty=TRUE,
                                   is_pre_processed=is_pre_processed)
       
       # Check that the prediction data is not empty.

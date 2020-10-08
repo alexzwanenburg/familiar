@@ -290,7 +290,7 @@ setMethod("plot_feature_similarity", signature(object="familiarCollection"),
               
               if(all(!can_draw_dendrogram)){
                 warning(paste0("Cannot draw dendrogram as the cluster objects are not of the \"hclust\" class. ",
-                               "This may occur if partitioning around medioids is used for clustering."))
+                               "This may occur if partitioning around medioids is used for clustering or only one feature is present."))
                 
                 show_dendrogram <- NULL
               }

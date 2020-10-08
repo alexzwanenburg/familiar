@@ -475,7 +475,7 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
               if(all(!can_draw_feature_dendrogram)){
                 if(verbose){
                   warning(paste0("Cannot draw the feature dendrogram as the cluster objects are not of the \"hclust\" class. ",
-                                 "This may occur if partitioning around medioids is used for clustering."))
+                                 "This may occur if partitioning around medioids is used for clustering or only one feature is present."))
                 }
                 
                 show_feature_dendrogram <- NULL
@@ -514,7 +514,7 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
               if(all(!can_draw_sample_dendrogram)){
                 if(verbose){
                   warning(paste0("Cannot draw the sample dendrogram as the cluster objects are not of the \"hclust\" class. ",
-                                 "This may occur if partitioning around medioids is used for clustering."))
+                                 "This may occur if partitioning around medioids is used for clustering or only one sample is present."))
                 }
                 
                 can_draw_feature_dendrogram <- NULL
