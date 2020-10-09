@@ -59,9 +59,9 @@ is currently not a valid choice for \code{outcome_type}.}
 \item{include_features}{(\emph{optional}) Feature columns that are specifically
 included in the data set. By default all features are included. Cannot
 overlap with \code{exclude_features}, but may overlap \code{signature}. Features in
-\code{signature} are always included. If both \code{exclude_features} and
-\code{include_features} are provided, \code{include_features} takes precedence,
-provided that there is no overlap between the two.}
+\code{signature} and \code{novelty_features} are always included. If both
+\code{exclude_features} and \code{include_features} are provided, \code{include_features}
+takes precedence, provided that there is no overlap between the two.}
 
 \item{class_levels}{(\emph{optional}) Class levels for \code{binomial} or \code{multinomial}
 outcomes. This argument can be used to specify the ordering of levels for
@@ -70,7 +70,7 @@ present in the outcome column.}
 
 \item{censoring_indicator}{(\strong{recommended}) Indicator for right-censoring in
 \code{survival} and \code{competing_risk} analyses. \code{familiar} will automatically
-recognise \code{0}, \code{false}, \code{f}, \code{n}, \code{no} ascensoring indicators, including
+recognise \code{0}, \code{false}, \code{f}, \code{n}, \code{no} as censoring indicators, including
 different capitalisations. If this parameter is set, it replaces the
 default values.}
 

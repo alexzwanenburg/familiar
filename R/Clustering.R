@@ -3,8 +3,11 @@ add_cluster_info <- function(cl=NULL, feature_info_list, data_obj, settings, ver
   # Suppress NOTES due to non-standard evaluation in data.table
   name <- cluster_id <- weight <- cluster_size <-  NULL
   
-  # Determine feature columns
-  feature_columns <- get_available_features(feature_info_list=feature_info_list, data_obj=data_obj, exclude_signature=TRUE)
+  # Determine feature columns. Novelty features are clustered.
+  feature_columns <- get_available_features(feature_info_list=feature_info_list,
+                                            data_obj=data_obj,
+                                            exclude_signature=TRUE,
+                                            exclude_novelty=FALSE)
   
   if(length(feature_columns) <= 2 | settings$prep$cluster_method=="none"){
     # Message that no clustering was performed

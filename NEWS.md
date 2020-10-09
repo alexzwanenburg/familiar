@@ -1,7 +1,8 @@
 # Development
 
 ## Major changes:
-* Added novelty detection.
+* Added novelty detection. This required new attributes for several objects. Changes are **not backward compatible**:
+    * Added novelty_features parameter that can be used to specify features that should be used for novelty detection.
 
 ## Minor changes:
 * The default method for bootstrap confidence intervals (bootstrap_ci_method) is now the percentile method, which replaces the bias-corrected (bc) method.

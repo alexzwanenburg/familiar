@@ -131,8 +131,6 @@ summon_familiar <- function(formula=NULL, data=NULL, cl=NULL, config=NULL, confi
                                    event_indicator=settings$data$event_indicator,
                                    competing_risk_indicator=settings$data$competing_risk_indicator)
   
-
-  
   # Derive experimental design
   experiment_setup <- extract_experimental_setup(experimental_design=settings$data$exp_design,
                                                  file_dir=file_paths$iterations_dir)
@@ -162,7 +160,9 @@ summon_familiar <- function(formula=NULL, data=NULL, cl=NULL, config=NULL, confi
   }
   
   # Generate feature info
-  feature_info_list <- .get_feature_info_data(data=data, file_paths=file_paths, project_id=project_info$project_id,
+  feature_info_list <- .get_feature_info_data(data=data,
+                                              file_paths=file_paths,
+                                              project_id=project_info$project_id,
                                               outcome_type=settings$data$outcome_type)
 
   # Identify if an external cluster is provided, and required.

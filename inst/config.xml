@@ -40,8 +40,10 @@
       <censoring_indicator></censoring_indicator>
       <!-- Indicator for competing risks in competing risk analysis (recommended) -->
       <competing_risk_indicator></competing_risk_indicator>
-      <!-- Signature, column names for features that should always be included in a model  (optional) -->
+      <!-- Signature, column names for features that should always be included in a model (optional) -->
       <signature></signature>
+      <!-- Novelty feature, column names for features that should be included for novelty detection (optional) -->
+      <novelty_features></novelty_features>
       <!-- Names of features/columns which are to be removed (optional) -->
       <exclude_features></exclude_features>
       <!-- Names of features/columns that should be exclusively selected (optional) -->

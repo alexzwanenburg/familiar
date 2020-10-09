@@ -70,7 +70,7 @@ and \code{competing_risk} analyses. \code{familiar} will automatically recognise
 capitalisations. If this parameter is set, it replaces the default values.}
     \item{\code{censoring_indicator}}{(\strong{recommended}) Indicator for right-censoring in
 \code{survival} and \code{competing_risk} analyses. \code{familiar} will automatically
-recognise \code{0}, \code{false}, \code{f}, \code{n}, \code{no} ascensoring indicators, including
+recognise \code{0}, \code{false}, \code{f}, \code{n}, \code{no} as censoring indicators, including
 different capitalisations. If this parameter is set, it replaces the
 default values.}
     \item{\code{competing_risk_indicator}}{(\strong{recommended}) Indicator for competing
@@ -80,17 +80,19 @@ unset, all values other than those specified by the \code{event_indicator} and
 risks.}
     \item{\code{signature}}{(\emph{optional}) One or more names of feature columns that are
 considered part of a specific signature. Features specified here will
-always be used for modeling. Ranking from feature selection has no effect
+always be used for modelling. Ranking from feature selection has no effect
 for these features.}
+    \item{\code{novelty_features}}{(\emph{optional}) One or more names of feature columns
+that should be included for the purpose of novelty detection.}
     \item{\code{exclude_features}}{(\emph{optional}) Feature columns that will be removed
-from the data set. Cannot overlap with features in \code{signature} or
-\code{include_features}.}
+from the data set. Cannot overlap with features in \code{signature},
+\code{novelty_features} or \code{include_features}.}
     \item{\code{include_features}}{(\emph{optional}) Feature columns that are specifically
 included in the data set. By default all features are included. Cannot
 overlap with \code{exclude_features}, but may overlap \code{signature}. Features in
-\code{signature} are always included. If both \code{exclude_features} and
-\code{include_features} are provided, \code{include_features} takes precedence,
-provided that there is no overlap between the two.}
+\code{signature} and \code{novelty_features} are always included. If both
+\code{exclude_features} and \code{include_features} are provided, \code{include_features}
+takes precedence, provided that there is no overlap between the two.}
     \item{\code{experimental_design}}{(\strong{required}) Defines what the experiment looks
 like, e.g. \code{cv(bt(fs,20)+mb,3,2)+ev} for 2 times repeated 3-fold
 cross-validation with nested feature selection on 20 bootstraps and

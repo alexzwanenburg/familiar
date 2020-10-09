@@ -431,7 +431,7 @@
 #'
 #' @param censoring_indicator (**recommended**) Indicator for right-censoring in
 #'   `survival` and `competing_risk` analyses. `familiar` will automatically
-#'   recognise `0`, `false`, `f`, `n`, `no` ascensoring indicators, including
+#'   recognise `0`, `false`, `f`, `n`, `no` as censoring indicators, including
 #'   different capitalisations. If this parameter is set, it replaces the
 #'   default values.
 #'
@@ -443,17 +443,23 @@
 #'
 #' @param signature (*optional*) One or more names of feature columns that are
 #'   considered part of a specific signature. Features specified here will
-#'   always be used for modeling. Ranking from feature selection has no effect
+#'   always be used for modelling. Ranking from feature selection has no effect
 #'   for these features.
+#'
+#' @param novelty_features (*optional*) One or more names of feature columns
+#'   that should be included for the purpose of novelty detection.
+#'
 #' @param exclude_features (*optional*) Feature columns that will be removed
-#'   from the data set. Cannot overlap with features in `signature` or
-#'   `include_features`.
+#'   from the data set. Cannot overlap with features in `signature`,
+#'   `novelty_features` or `include_features`.
+#'
 #' @param include_features (*optional*) Feature columns that are specifically
 #'   included in the data set. By default all features are included. Cannot
 #'   overlap with `exclude_features`, but may overlap `signature`. Features in
-#'   `signature` are always included. If both `exclude_features` and
-#'   `include_features` are provided, `include_features` takes precedence,
-#'   provided that there is no overlap between the two.
+#'   `signature` and `novelty_features` are always included. If both
+#'   `exclude_features` and `include_features` are provided, `include_features`
+#'   takes precedence, provided that there is no overlap between the two.
+#'
 #' @param experimental_design (**required**) Defines what the experiment looks
 #'   like, e.g. `cv(bt(fs,20)+mb,3,2)+ev` for 2 times repeated 3-fold
 #'   cross-validation with nested feature selection on 20 bootstraps and
@@ -540,6 +546,7 @@
                                        competing_risk_indicator=waiver(),
                                        class_levels=waiver(),
                                        signature=waiver(),
+                                       novelty_features=waiver(),
                                        exclude_features=waiver(),
                                        include_features=waiver(),
                                        experimental_design=waiver(),
@@ -630,25 +637,25 @@
   settings$signature <- .parse_arg(x_config=config$signature, x_var=signature,
                                    var_name="signature", type="character_list", optional=TRUE, default=NULL)
   
-  if(!is.null(settings$signature)){
-    settings$signature <- check_column_name(settings$signature)
-  }
+  if(!is.null(settings$signature)) settings$signature <- check_column_name(settings$signature)
+  
+  # Novelty features
+  settings$novelty_features <- .parse_arg(x_config=config$novelty_features, x_var=novelty_features,
+                                          var_name="novelty_features", type="character_list", optional=TRUE, default=NULL)
+  
+  if(!is.null(settings$novelty_features)) settings$novelty_features <- check_column_name(settings$novelty_features)
   
   # Included features
   settings$include_features <- .parse_arg(x_config=config$include_features, x_var=include_features,
                                           var_name="include_features", type="character_list", optional=TRUE, default=NULL)
   
-  if(!is.null(settings$include_features)){
-    settings$include_features <- check_column_name(settings$include_features)
-  }
+  if(!is.null(settings$include_features)) settings$include_features <- check_column_name(settings$include_features)
   
   # Excluded features
   settings$exclude_features <- .parse_arg(x_config=config$exclude_features, x_var=exclude_features,
                                           var_name="exclude_features", type="character_list", optional=TRUE, default=NULL)
   
-  if(!is.null(settings$exclude_features)){
-    settings$exclude_features <- check_column_name(settings$exclude_features)
-  }
+  if(!is.null(settings$exclude_features)) settings$exclude_features <- check_column_name(settings$exclude_features)
   
   return(settings)
 }

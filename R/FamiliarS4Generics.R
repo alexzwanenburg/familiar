@@ -144,6 +144,8 @@ setGeneric("is_available", function(object, ...) standardGeneric("is_available")
 
 setGeneric("is_in_signature", function(object, ...) standardGeneric("is_in_signature"))
 
+setGeneric("is_in_novelty", function(object, ...) standardGeneric("is_in_novelty"))
+
 setGeneric("update_removed_status", function(object, ...) standardGeneric("update_removed_status"))
 
 

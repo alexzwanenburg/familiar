@@ -90,8 +90,10 @@
     
     # Attempt to determine the outcome_col from the set difference of all features and the union
     # of signature, include_features and exclude_features.
-    outcome_col <- setdiff(predictor_vars, union(union(settings$data$exclude_features, settings$data$include_features),
-                                                 settings$data$signature))
+    outcome_col <- setdiff(predictor_vars, c(settings$data$exclude_features,
+                                             settings$data$include_features,
+                                             settings$data$signature,
+                                             settings$data$novelty_features))
     
     if(length(outcome_col) == 1){
       warning(paste(outcome_col, "was selected as an outcome column. It is recommended",
@@ -178,6 +180,24 @@
     }
   }
   
+  #####novelty_features-----------------------------------
+  if(!is.null(settings$data$novelty_features)){
+    # Check for overlap with exclude_features
+    overlap_cols <- intersect(settings$data$novelty_features, settings$data$exclude_features)
+    if(length(overlap_cols) > 0){
+      stop(paste("One or more columns were provided that both appear in novelty_features and",
+                 "among the features that should be removed. There can be no overlap. Found:",
+                 paste0(overlap_cols, collapse=", ")))
+    }
+    
+    # Check if all features in novelty_features appear in the data
+    missing_cols <- settings$data$novelty_features[!settings$data$novelty_features %in% predictor_vars]
+    if(length(missing_cols) > 0){
+      stop(paste("One or more features assigned to novelty_features were not found in the data set:",
+                 paste0(missing_cols, sep=", ")))
+    }
+  }
+  
   #####exclude_features----------------------------
   if(!is.null(settings$data$exclude_features)){
     
@@ -216,11 +236,14 @@
   # Determine which features should go to include_features.
   if(!is.null(settings$data$exclude_features)){
     # Select everything but the features marked for exclusion
-    settings$data$include_features <- setdiff(predictor_vars, settings$data$exclude_features)
+    settings$data$include_features <- setdiff(predictor_vars,
+                                              settings$data$exclude_features)
     
   } else if(!is.null(settings$data$include_features)){
     # Select features marked for inclusion and signature, in so far as these do not overlap.
-    settings$data$include_features <- union(settings$data$include_features, settings$data$signature)
+    settings$data$include_features <- unique(c(settings$data$include_features,
+                                               settings$data$signature,
+                                               settings$data$novelty_features))
     
   } else {
     # Select all available predictor variables.

@@ -47,9 +47,7 @@ check_pre_processing <- function(cl, data_id, file_paths, project_id){
     list_name <- .get_feature_info_list_name(data_id=pre_process_data_id, run_id=run_id)
     
     # Determine if the pre-processing data has already been stored
-    if(!is.null(feature_info_list[[list_name]])){
-      next()
-    }
+    if(!is.null(feature_info_list[[list_name]])) next()
     
     logger.message(paste0("\nPre-processing: Starting preprocessing for run ", run_id, " of ", length(all_runs), "."))
     
@@ -75,11 +73,15 @@ determine_pre_processing_parameters <- function(cl, data_id, run_id){
   feature_info_list <- get_feature_info_from_backend()
   
   # Add workflow control info
-  feature_info_list  <- add_control_info(feature_info_list=feature_info_list, data_id=data_id, run_id=run_id)
+  feature_info_list <- add_control_info(feature_info_list=feature_info_list, data_id=data_id, run_id=run_id)
   
   # Add signature feature info
-  feature_info_list  <- add_signature_info(feature_info_list=feature_info_list, signature=settings$data$signature)
+  feature_info_list <- add_signature_info(feature_info_list=feature_info_list, signature=settings$data$signature)
 
+  # Add novelty feature info
+  feature_info_list <- add_novelty_info(feature_info_list=feature_info_list,
+                                        novelty_features=settings$data$novelty_features)
+  
   # Find the run list
   run_list     <- getRunList(iter_list=get_project_list()$iter_list, data_id=data_id, run_id=run_id)
   run_subj_id  <- unique(getSubjectIDs(run=run_list, train_or_validate="train"))

@@ -23,19 +23,19 @@ identifier column.}
 
 \item{signature}{(\emph{optional}) One or more names of feature columns that are
 considered part of a specific signature. Features specified here will
-always be used for modeling. Ranking from feature selection has no effect
+always be used for modelling. Ranking from feature selection has no effect
 for these features.}
 
 \item{exclude_features}{(\emph{optional}) Feature columns that will be removed
-from the data set. Cannot overlap with features in \code{signature} or
-\code{include_features}.}
+from the data set. Cannot overlap with features in \code{signature},
+\code{novelty_features} or \code{include_features}.}
 
 \item{include_features}{(\emph{optional}) Feature columns that are specifically
 included in the data set. By default all features are included. Cannot
 overlap with \code{exclude_features}, but may overlap \code{signature}. Features in
-\code{signature} are always included. If both \code{exclude_features} and
-\code{include_features} are provided, \code{include_features} takes precedence,
-provided that there is no overlap between the two.}
+\code{signature} and \code{novelty_features} are always included. If both
+\code{exclude_features} and \code{include_features} are provided, \code{include_features}
+takes precedence, provided that there is no overlap between the two.}
 
 \item{other_id_column}{Character string indicating another identifier column.}
 

@@ -101,9 +101,7 @@ add_signature_info <- function(feature_info_list, signature=NULL){
   # Sets the in_signature flag on features in the signature variable.
   
   # Check if there is a signature
-  if(is.null(signature)){
-    return(feature_info_list)
-  }
+  if(is.null(signature)) return(feature_info_list)
   
   # Set signature status
   upd_list <- lapply(signature, function(signature_feature, feature_info_list){
@@ -125,6 +123,37 @@ add_signature_info <- function(feature_info_list, signature=NULL){
   
   # Copy into the list
   feature_info_list[signature] <- upd_list
+  
+  return(feature_info_list)
+}
+
+
+add_novelty_info <- function(feature_info_list, novelty_features=NULL){
+  # Sets the in_novelty flag on features in the novelty_features variable.
+  
+  # Check if there is a signature
+  if(is.null(novelty_features)) return(feature_info_list)
+  
+  # Set signature status
+  upd_list <- lapply(novelty_features, function(novelty_feature, feature_info_list){
+    
+    # Obtain object
+    object <- feature_info_list[[novelty_feature]]
+    
+    # Mark signature
+    object@in_novelty <- TRUE
+    
+    # Update removed status
+    object <- update_removed_status(object=object)
+    
+    return(object)
+  }, feature_info_list=feature_info_list)
+  
+  # Update the names
+  names(upd_list) <- novelty_features
+  
+  # Copy into the list
+  feature_info_list[novelty_features] <- upd_list
   
   return(feature_info_list)
 }
@@ -652,7 +681,7 @@ find_unimportant_features <- function(cl=NULL, feature_info_list, data_obj, sett
 }
 
 
-get_available_features <- function(feature_info_list, data_obj=NULL, exclude_signature=FALSE){
+get_available_features <- function(feature_info_list, data_obj=NULL, exclude_signature=FALSE, exclude_novelty=FALSE){
   # Determine the intersect of features a removed slot == FALSE and 
   # available columns in dt (if not NULL).
   
@@ -661,11 +690,11 @@ get_available_features <- function(feature_info_list, data_obj=NULL, exclude_sig
   if(!is.null(data_obj)){
     available_data_features <- get_feature_columns(x=data_obj)
     
-    # The set of available features is the intersect of both
+    # The set of available features is the intersect of both.
     available_features <- intersect(available_list_features, available_data_features)
   } else {
     
-    # The set of available features is equal to available_list_features
+    # The set of available features is equal to available_list_features.
     available_features <- available_list_features
   }
   
@@ -673,8 +702,18 @@ get_available_features <- function(feature_info_list, data_obj=NULL, exclude_sig
     # Determine the features in the signature
     signature_features <- names(feature_info_list)[sapply(feature_info_list, is_in_signature)]
     
-    # Exclude these from the available features, e.g. for operations that only work on non-signature features
+    # Exclude these from the available features, e.g. for operations that only
+    # work on non-signature features.
     available_features <- setdiff(available_features, signature_features)
+  }
+  
+  if(exclude_novelty){
+    # Determine the features that are specifically novelty features.
+    novelty_features <- names(feature_info_list)[sapply(feature_info_list, is_in_novelty)]
+    
+    # Exclude these from the available features, e.g. for operations that only
+    # work on non-signature features.
+    available_features <- setdiff(available_features, novelty_features)
   }
   
   return(available_features)
@@ -683,9 +722,7 @@ get_available_features <- function(feature_info_list, data_obj=NULL, exclude_sig
 
 find_required_features <- function(features, feature_info_list){
 
-  if(length(features) == 0){
-    return(features)
-  }
+  if(length(features) == 0) return(features)
   
   # Make sure that the input features are original features
   features <- features_before_clustering(features=features, feature_info_list=feature_info_list)
@@ -1070,6 +1107,14 @@ setMethod("is_in_signature", signature(object="featureInfo"),
           })
 
 
+#####is_in_novelty#####
+setMethod("is_in_novelty", signature(object="featureInfo"),
+          function(object){
+            
+            return(object@in_novelty)
+          })
+
+
 ####is_available####
 setMethod("is_available", signature(object="featureInfo"),
           function(object) {
@@ -1087,6 +1132,8 @@ setMethod("update_removed_status", signature(object="featureInfo"),
             if(object@removed_unknown_type){
               object@removed <- TRUE
             } else if(object@in_signature){
+              object@removed <- FALSE
+            } else if(object@in_novelty){
               object@removed <- FALSE
             } else if(object@removed_missing_values){
               object@removed <- TRUE
