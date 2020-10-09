@@ -121,7 +121,7 @@ build_model <- function(run, hpo_list){
                             hyperparameters = param_list,
                             hyperparameter_data = NULL,
                             signature = selected_features,
-                            req_feature_cols =  required_features,
+                            required_features =  required_features,
                             important_features = important_features,
                             feature_info = feature_info_list,
                             outcome_info = .get_outcome_info(),

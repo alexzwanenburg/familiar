@@ -61,7 +61,7 @@ setMethod("promote_vimp_method", signature(object="familiarVimpMethod"),
                                      hyperparameters = object@hyperparameters,
                                      outcome_info = object@outcome_info,
                                      feature_info = object@feature_info,
-                                     req_feature_cols = object@req_feature_cols,
+                                     required_features = object@required_features,
                                      run_table = object@run_table)
               
               # Promote to the correct subclass.
@@ -77,7 +77,7 @@ setMethod("promote_vimp_method", signature(object="familiarVimpMethod"),
                                      hyperparameters = object@hyperparameters,
                                      outcome_info = object@outcome_info,
                                      feature_info = object@feature_info,
-                                     req_feature_cols = object@req_feature_cols,
+                                     required_features = object@required_features,
                                      run_table = object@run_table)
               
               # Promote to the correct subclass.
@@ -93,7 +93,7 @@ setMethod("promote_vimp_method", signature(object="familiarVimpMethod"),
                                      hyperparameters = object@hyperparameters,
                                      outcome_info = object@outcome_info,
                                      feature_info = object@feature_info,
-                                     req_feature_cols = object@req_feature_cols,
+                                     required_features = object@required_features,
                                      run_table = object@run_table)
               
               # Promote to the correct subclass.
@@ -109,7 +109,7 @@ setMethod("promote_vimp_method", signature(object="familiarVimpMethod"),
                                      hyperparameters = object@hyperparameters,
                                      outcome_info = object@outcome_info,
                                      feature_info = object@feature_info,
-                                     req_feature_cols = object@req_feature_cols,
+                                     required_features = object@required_features,
                                      run_table = object@run_table)
               
               # Promote to the correct subclass.
@@ -128,7 +128,7 @@ setMethod("promote_vimp_method", signature(object="familiarVimpMethod"),
                                      hyperparameters = object@hyperparameters,
                                      outcome_info = object@outcome_info,
                                      feature_info = object@feature_info,
-                                     req_feature_cols = object@req_feature_cols,
+                                     required_features = object@required_features,
                                      run_table = object@run_table)
               
               # Promote to the correct subclass.
@@ -388,8 +388,8 @@ setMethod("prepare_vimp_object", signature(data="dataObject"),
                                    hyperparameters = param_list,
                                    outcome_info = data@outcome_info,
                                    feature_info = feature_info_list,
-                                   req_feature_cols = find_required_features(features=get_feature_columns(data),
-                                                                             feature_info_list=feature_info_list))
+                                   required_features = find_required_features(features=get_feature_columns(data),
+                                                                              feature_info_list=feature_info_list))
             
             # Promote object to correct subclass.
             object <- promote_vimp_method(object)

@@ -25,9 +25,12 @@ setClass("familiarModel",
            fs_method = "character",
            # Features included in the model
            signature = "ANY",
-           # Required features for complete reconstruction, including imputation
-           req_feature_cols = "ANY",
-           # Features that are required for reconstruction, without imputation (i.e. features that are in the signature directly or as part of a cluster)
+           # Required features for complete reconstruction, including
+           # imputation.
+           required_features = "ANY",
+           # Features that are required for reconstruction, without imputation
+           # (i.e. features that are in the signature directly or as part of a
+           # cluster).
            important_features = "ANY",
            # Run table for the current model
            run_table = "ANY",
@@ -57,7 +60,7 @@ setClass("familiarModel",
            learner = NA_character_,
            fs_method = NA_character_,
            signature = NULL,
-           req_feature_cols = NULL,
+           required_features = NULL,
            important_features = NULL,
            calibration_info = NULL,
            km_info = NULL,
@@ -87,7 +90,7 @@ setClass("familiarEnsemble",
            # Data required for feature pre-processing
            feature_info = "ANY",
            # Required features for complete reconstruction, including imputation
-           req_feature_cols = "ANY",
+           required_features = "ANY",
            # Features that are required for reconstruction, without imputation (i.e. features that are in the signature directly or as part of a cluster)
            important_features = "ANY",
            # Set of run tables for the current ensemble. This is only required for processing internal data.
@@ -111,7 +114,7 @@ setClass("familiarEnsemble",
            learner = NA_character_,
            fs_method = NA_character_,
            feature_info = NULL,
-           req_feature_cols = NULL,
+           required_features = NULL,
            important_features = NULL,
            run_table = NULL,
            calibration_info = NULL,
@@ -142,7 +145,7 @@ setClass("familiarData",
            # Hyperparameter data, e.g. for visualising the hyperparameter space.
            hyperparameter_data = "ANY",
            # Required features to update the data
-           req_feature_cols = "ANY",
+           required_features = "ANY",
            # Features that are required for reconstruction, without imputation
            # (i.e. features that are in the signature directly or as part of a
            # cluster)
@@ -200,7 +203,7 @@ setClass("familiarData",
            permutation_vimp = NULL,
            hyperparameters = NULL,
            hyperparameter_data = NULL,
-           req_feature_cols = NULL,
+           required_features = NULL,
            important_features = NULL,
            learner = NA_character_,
            fs_method = NA_character_,
@@ -239,7 +242,7 @@ setClass("familiarData",
 #' @slot permutation_vimp ANY.
 #' @slot hyperparameters ANY.
 #' @slot hyperparameter_data ANY.
-#' @slot req_feature_cols ANY.
+#' @slot required_features ANY.
 #' @slot important_features ANY. 
 #' @slot learner character. 
 #' @slot fs_method character. 
@@ -289,7 +292,7 @@ setClass("familiarCollection",
            # Hyperparameter data, e.g. for visualising the hyperparameter space.
            hyperparameter_data = "ANY",
            # Required features to update the data
-           req_feature_cols = "ANY",
+           required_features = "ANY",
            # Important features, e.g. features that ended up in a signature
            # individually or as part of a cluster
            important_features = "ANY",
@@ -352,7 +355,7 @@ setClass("familiarCollection",
            permutation_vimp = NULL,
            hyperparameters = NULL,
            hyperparameter_data = NULL,
-           req_feature_cols = NULL,
+           required_features = NULL,
            important_features = NULL,
            learner = NA_character_,
            fs_method = NA_character_,
@@ -572,7 +575,7 @@ setClass("familiarVimpMethod",
            # Data required for feature pre-processing
            feature_info = "ANY",
            # Required features for complete reconstruction, including imputation
-           req_feature_cols = "ANY",
+           required_features = "ANY",
            # Run table for the current vimp method
            run_table = "ANY"
          ),
@@ -582,7 +585,7 @@ setClass("familiarVimpMethod",
            vimp_method = NA_character_,
            outcome_info = NULL,
            feature_info = NULL,
-           req_feature_cols = NULL,
+           required_features = NULL,
            run_table = NULL
          )
 )

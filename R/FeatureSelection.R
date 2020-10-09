@@ -97,13 +97,13 @@ compute_variable_importance <- function(run, fs_method, hpo_list, proj_list, set
   # Create the variable importance method object or familiar model object to
   # compute variable importance with.
   vimp_object <- methods::new("familiarVimpMethod",
-                              outcome_type=data@outcome_type,
-                              hyperparameters=parameter_list,
-                              vimp_method=fs_method,
-                              outcome_info=.get_outcome_info(),
-                              feature_info=feature_info_list,
-                              req_feature_cols=required_features,
-                              run_table=run$run_table)
+                              outcome_type = data@outcome_type,
+                              hyperparameters = parameter_list,
+                              vimp_method = fs_method,
+                              outcome_info = .get_outcome_info(),
+                              feature_info = feature_info_list,
+                              required_features = required_features,
+                              run_table = run$run_table)
 
   # Compute variable importance.
   vimp_table <- .vimp(object=vimp_object, data=data)

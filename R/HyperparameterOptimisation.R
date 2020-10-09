@@ -217,7 +217,7 @@ hpo.perform_smbo <- function(run, run_id, n_run_total, cl, fs_method, learner=NU
                                                          vimp_method=fs_method,
                                                          outcome_info=.get_outcome_info(),
                                                          feature_info=feature_info_list,
-                                                         req_feature_cols=required_features,
+                                                         required_features=required_features,
                                                          run_table=run$run_table))
     
   } else {
@@ -233,14 +233,14 @@ hpo.perform_smbo <- function(run, run_id, n_run_total, cl, fs_method, learner=NU
     # Create familiar model object. The following need to be updated:
     #
     # * hyperparameters
-    # * req_feature_cols
+    # * required_features
     # * signature
     fam_model <- promote_learner(object=methods::new("familiarModel",
                                                      outcome_type = settings$data$outcome_type,
                                                      learner = learner,
                                                      fs_method = fs_method,
                                                      run_table = run$run_table,
-                                                     req_feature_cols =  required_features,
+                                                     required_features =  required_features,
                                                      feature_info = feature_info_list,
                                                      outcome_info = .get_outcome_info()))
   }
@@ -1676,7 +1676,7 @@ hpo.compute_variable_importance <- function(cl=NULL,
                               vimp_method = fs_method,
                               outcome_info = fam_model@outcome_info,
                               feature_info = fam_model@feature_info,
-                              req_feature_cols= fam_model@req_feature_cols,
+                              required_features = fam_model@required_features,
                               run_table = run$run_table)
   
   # Compute variable importance.

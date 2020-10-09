@@ -182,7 +182,7 @@ setMethod("load_delayed_data", signature(data="dataObject", object="ANY"),
             iter_list <- get_project_list()$iter_list
 
             # Read required features
-            req_feature_cols <- object@req_feature_cols
+            required_features <- object@required_features
             
             # Get columns in data frame which are not features, but identifiers and outcome instead
             non_feature_cols <- get_non_feature_columns(x=object)
@@ -207,7 +207,7 @@ setMethod("load_delayed_data", signature(data="dataObject", object="ANY"),
             
             # Prepare a new data object
             new_data <- methods::new("dataObject",
-                                     data = get_data_from_backend(sample_identifiers=uniq_subj_id, column_names=c(non_feature_cols, req_feature_cols)),
+                                     data = get_data_from_backend(sample_identifiers=uniq_subj_id, column_names=c(non_feature_cols, required_features)),
                                      preprocessing_level="none",
                                      outcome_type = data@outcome_type,
                                      delay_loading = FALSE,
@@ -255,7 +255,7 @@ setMethod("load_delayed_data", signature(data="dataObject", object="familiarEnse
             settings  <- get_settings()
             
             # Read required features
-            req_feature_cols <- object@req_feature_cols
+            required_features <- object@required_features
             
             # Get columns in data frame which are not features, but identifiers and outcome instead
             non_feature_cols <- get_non_feature_columns(x=object)
@@ -306,7 +306,7 @@ setMethod("load_delayed_data", signature(data="dataObject", object="familiarEnse
             
             # Prepare a new data object
             new_data <- methods::new("dataObject",
-                                     data = get_data_from_backend(sample_identifiers=uniq_subj_id, column_names=c(non_feature_cols, req_feature_cols)),
+                                     data = get_data_from_backend(sample_identifiers=uniq_subj_id, column_names=c(non_feature_cols, required_features)),
                                      preprocessing_level="none",
                                      outcome_type = data@outcome_type,
                                      delay_loading = FALSE,
@@ -375,7 +375,7 @@ setMethod("preprocess_data", signature(data="dataObject", object="familiarEnsemb
   if(preprocessing_level_attained < "signature" & stop_at >= "signature"){
     # Apply the signature.
     data <- apply_signature(data_obj=data,
-                            selected_feat=object@req_feature_cols)
+                            selected_feat=object@required_features)
     
     # Update pre-processing level externally from apply_signature, as
     # it is not limited to pre-processing per sé.
@@ -383,12 +383,12 @@ setMethod("preprocess_data", signature(data="dataObject", object="familiarEnsemb
     
   } else if(preprocessing_level_attained == "signature" & stop_at >= "signature"){
     
-    if(length(object@req_feature_cols) > 0 & length(object@important_features) > 0 & has_feature_data(data)){
+    if(length(object@required_features) > 0 & length(object@important_features) > 0 & has_feature_data(data)){
       
       # Select available features specific to the object.
-      if(all(object@req_feature_cols %in% get_feature_columns(data))){
+      if(all(object@required_features %in% get_feature_columns(data))){
         data <- apply_signature(data_obj=data,
-                                selected_feat=object@req_feature_cols)
+                                selected_feat=object@required_features)
         
       } else if(all(object@important_features %in% get_feature_columns(data))) {
         data <- apply_signature(data_obj=data,

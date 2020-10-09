@@ -147,7 +147,7 @@ setMethod(".construct_label_table", signature(x="familiarCollection"),
               data <- slot(x, "fs_method")
               
             } else if(upd_slot == "feature_labels") {
-              data <- unique(c(slot(x, "req_feature_cols"), x@fs_vimp$vimp_table$name))
+              data <- unique(c(slot(x, "required_features"), x@fs_vimp$vimp_table$name))
               
             } else if(upd_slot == "km_group_labels") {
               data <- unique(c("low", "moderate", "high", unlist(sapply(names(x@km_data), function(curr_method)(levels(x@km_data[[curr_method]]$data$risk_group))))))

@@ -17,7 +17,7 @@ setMethod("complete_familiar_ensemble", signature(object="familiarEnsemble"),
             object@outcome_info <- .aggregate_outcome_info(x=lapply(object@model_list, function(list_elem) (list_elem@outcome_info)))
               
             # Find all required features
-            required_features <- unique(unlist(lapply(object@model_list, function(fam_model) (fam_model@req_feature_cols))))
+            required_features <- unique(unlist(lapply(object@model_list, function(fam_model) (fam_model@required_features))))
             
             # Find all important features
             important_features <- unique(unlist(lapply(object@model_list, function(fam_model) (fam_model@important_features))))
@@ -37,7 +37,7 @@ setMethod("complete_familiar_ensemble", signature(object="familiarEnsemble"),
                                          data_column_info = object@model_list[[1]]@data_column_info,
                                          learner = object@learner,
                                          fs_method = object@fs_method,
-                                         req_feature_cols = required_features,
+                                         required_features = required_features,
                                          important_features = important_features,
                                          feature_info = feature_info_list,
                                          run_table = object@run_table,
