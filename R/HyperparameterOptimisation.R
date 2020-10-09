@@ -1053,11 +1053,11 @@ hpo.evaluate_hyperparameters <- function(run,
                                        settings=settings)
     
     # Apply signature to data.
-    data_training <- apply_signature(data_obj=data_training,
-                                     selected_feat=selected_features)
+    data_training <- select_features(data=data_training,
+                                     features=selected_features)
     
-    data_validation <- apply_signature(data_obj=data_validation,
-                                       selected_feat=selected_features)
+    data_validation <- select_features(data=data_validation,
+                                       features=selected_features)
     
     # Update various slots.
     object@hyperparameters <- parameter_list

@@ -247,14 +247,3 @@ get_signature <- function(feature_info_list, dt_ranks, fs_method, param, setting
 
   return(sel_feat_cols)
 }
-
-
-apply_signature <- function(data_obj, selected_feat) {
-  # Get non-feature columns
-  non_feat_cols  <- get_non_feature_columns(x=data_obj)
-
-  # Create slice and maintain only selected features
-  data_obj@data <- data_obj@data[, c(non_feat_cols, selected_feat), with=FALSE]
-
-  return(data_obj)
-}

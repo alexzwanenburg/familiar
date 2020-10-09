@@ -357,7 +357,7 @@ setMethod("preprocess_data", signature(data="dataObject", object="familiarEnsemb
                                                                          stop_at=stop_at))
 
 
-.pre_process_data <- function(data, object, stop_at){
+.pre_process_data <- function(data, object, stop_at, keep_novelty=FALSE){
   
   # Convert the preprocessing_level attained and the requested
   # stopping level to ordinals.
@@ -374,10 +374,10 @@ setMethod("preprocess_data", signature(data="dataObject", object="familiarEnsemb
   
   if(preprocessing_level_attained < "signature" & stop_at >= "signature"){
     # Apply the signature.
-    data <- apply_signature(data_obj=data,
-                            selected_feat=object@required_features)
+    data <- select_features(data=data,
+                            features=object@required_features)
     
-    # Update pre-processing level externally from apply_signature, as
+    # Update pre-processing level externally as
     # it is not limited to pre-processing per sé.
     data@preprocessing_level <- "signature"
     
@@ -387,12 +387,12 @@ setMethod("preprocess_data", signature(data="dataObject", object="familiarEnsemb
       
       # Select available features specific to the object.
       if(all(object@required_features %in% get_feature_columns(data))){
-        data <- apply_signature(data_obj=data,
-                                selected_feat=object@required_features)
+        data <- select_features(data=data,
+                                features=object@required_features)
         
       } else if(all(object@important_features %in% get_feature_columns(data))) {
-        data <- apply_signature(data_obj=data,
-                                selected_feat=object@important_features)
+        data <- select_features(data=data,
+                                features=object@important_features)
         
       } else {
         ..error_reached_unreachable_code(".pre_process_data: could not identify overlapping features")
@@ -431,10 +431,12 @@ setMethod("preprocess_data", signature(data="dataObject", object="familiarEnsemb
   }
   
   if(is(object, "familiarModel") & stop_at >= "clustering"){
+    
+    
     # Select only the signature (if present)
     if(!is.null(object@signature)){
-      data <- apply_signature(data_obj=data,
-                              selected_feat=object@signature)
+      data <- select_features(data=data,
+                              features=object@signature)
     }
   }
   
@@ -1025,21 +1027,26 @@ setMethod("update_with_replacement", signature(data="data.table"),
 #####select_features#####
 setMethod("select_features", signature(data="dataObject"),
           function(data, features){
-            # Allows for selection of samples
+            # Allows for slicing the data.
             
             # Find non-feature columns
             non_feature_columns <- get_non_feature_columns(x=data)
             
             # Check if features are present as column name
-            if(!all(features %in% colnames(data@data))){
-              logger.stop("Not all features were found in the data set.")
+            if(length(features) > 0){
+              if(!all(features %in% colnames(data@data))){
+                logger.stop("Not all features were found in the data set.")
+              }
+              
+            } else {
+              warning("No features were selected.")
             }
             
-            # Select features
-            dt <- data.table::copy(data@data[, c(non_feature_columns, features), with=FALSE])
+            # Define the selected columns
+            selected_columns <- unique(c(non_feature_columns, features))
             
-            # Substitute in data 
-            data@data <- dt
+            # Select features
+            data@data <- data.table::copy(data@data[, mget(selected_columns)])
             
             return(data)
           })
