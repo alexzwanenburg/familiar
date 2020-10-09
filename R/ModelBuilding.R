@@ -164,10 +164,6 @@ add_model_data_to_run_list <- function(methods, run_list, proj_list, settings, f
     (append(run_list[[ii]], c("mb_file"=dt$mb_file[ii], "fs_method"=fs_method, "learner"=learner))),
     dt=dt_run, run_list=run_list, fs_method=fs_method, learner=learner)
 
-  # # Determine if the directory where the model building files will be stored exists, and create it otherwise
-  # mb_dir    <- unique(dirname(dt_run$mb_file))
-  # if(!dir.exists(mb_dir)){ dir.create(mb_dir, recursive=TRUE) }
-
   # Filter runs corresponding to existing models from the run list
   if(filter_existing == TRUE) {
     # Find the model directory

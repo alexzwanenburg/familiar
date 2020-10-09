@@ -84,7 +84,8 @@ setMethod(".train_novelty_detector", signature(object="familiarModel", data="dat
             if(!has_feature_data(x=data)) return(object)
             
             # Create a isolation forest.
-            detector <- isotree::isolation.forest(df=data@data[, mget(get_feature_columns(data))])
+            detector <- isotree::isolation.forest(df=data@data[, mget(get_feature_columns(data))],
+                                                  nthreads=1L)
             
             # Add the detector to the familiarModel object.
             object@novelty_detector <- detector
