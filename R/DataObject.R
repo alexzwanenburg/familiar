@@ -432,12 +432,20 @@ setMethod("preprocess_data", signature(data="dataObject", object="familiarEnsemb
   
   if(is(object, "familiarModel") & stop_at >= "clustering"){
     
+    # Select features.
+    features <- object@model_features
+    if(keep_novelty) features <- unique(c(features, object@novelty_features))
     
-    # Select only the signature (if present)
-    if(!is.null(object@signature)){
-      data <- select_features(data=data,
-                              features=object@signature)
-    }
+    # Return data if there are no features.
+    if(length(features) == 0) return(data)
+    # Determine the features after clustering.
+    features <- features_after_clustering(features=features,
+                                          feature_info_list=object@feature_info)
+    
+    # Create a slice of the data for the feature set.
+    data <- select_features(data=data,
+                            features=features)
+    # 
   }
   
   return(data)

@@ -23,8 +23,6 @@ setClass("familiarModel",
            learner = "character",
            # Name of feature selection method
            fs_method = "character",
-           # Features included in the model
-           signature = "ANY",
            # Required features for complete reconstruction, including
            # imputation.
            required_features = "ANY",
@@ -59,7 +57,6 @@ setClass("familiarModel",
            novelty_detector = NULL,
            learner = NA_character_,
            fs_method = NA_character_,
-           signature = NULL,
            required_features = NULL,
            important_features = NULL,
            calibration_info = NULL,

@@ -1061,7 +1061,6 @@ hpo.evaluate_hyperparameters <- function(run,
     
     # Update various slots.
     object@hyperparameters <- parameter_list
-    object@signature <- selected_features
     object@run_table <- run$run_table
   }
 
