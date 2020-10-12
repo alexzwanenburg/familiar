@@ -1332,7 +1332,7 @@ hpo.get_best_parameter_set <- function(optimisation_score_table, n=1L, acquisiti
                                                        method=acquisition_function)
   
   # Sort by decreasing optimisation score.
-  summary_table[order(-optimisation_score)]
+  summary_table <- summary_table[order(-optimisation_score)]
   
   # Average objective score over known available in the score table.
   best_parameter_data <- head(summary_table, n=n)
