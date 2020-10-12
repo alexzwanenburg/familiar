@@ -736,12 +736,26 @@ find_required_features <- function(features, feature_info_list){
 }
 
 
-find_important_features <- function(features, feature_info_list){
+find_model_features <- function(features, feature_info_list){
   
   # Important features are original features
   features <- features_before_clustering(features=features, feature_info_list=feature_info_list)
   
   return(features)
+}
+
+
+find_novelty_features <- function(model_features=NULL, feature_info_list){
+  
+  # Find additional features that should be used for novelty detection.
+  novelty_features <- unlist(lapply(feature_info_list, function(feature_info) {
+    # Check if the feature is a novelty feature.
+    if(!feature_info@in_novelty) return(NULL)
+    
+    return(feature_info@name)
+  }))
+  
+  return(union(model_features, novelty_features))
 }
 
 
@@ -810,22 +824,34 @@ get_cluster_table <- function(feature_info_list, selected_features=NULL){
   
   # Return an empty table in case there are no selected columns
   if(length(selected_features) == 0){
-    return(data.table::data.table("name"=character(0), "type"=character(0), "cluster_name"=character(0), "invert"=logical(0), "weight"=logical(0)))
+    return(data.table::data.table("name"=character(0),
+                                  "type"=character(0),
+                                  "cluster_name"=character(0),
+                                  "invert"=logical(0),
+                                  "weight"=logical(0)))
   }
   
   # Generate a cluster table
-  cluster_table <- rbindlist(lapply(selected_features, function(ii, feature_info_list){
+  cluster_table <- data.table::rbindlist(lapply(selected_features, function(ii, feature_info_list){
     
     # Get featureInfo for the current feature
     object <- feature_info_list[[ii]]
     
     if(is.null(object@cluster_parameters)){
       # Do not collect data from features that do not form clusters
-      return(data.table::data.table("name"=character(0), "type"=character(0), "cluster_name"=character(0), "invert"=logical(0), "weight"=logical(0)))
+      return(data.table::data.table("name"=character(0),
+                                    "type"=character(0),
+                                    "cluster_name"=character(0),
+                                    "invert"=logical(0),
+                                    "weight"=logical(0)))
        
     } else if(object@cluster_parameters$weight == 0.0){
       # Do not collect data from features that have no weight.
-      return(data.table::data.table("name"=character(0), "type"=character(0), "cluster_name"=character(0), "invert"=logical(0), "weight"=logical(0)))
+      return(data.table::data.table("name"=character(0),
+                                    "type"=character(0),
+                                    "cluster_name"=character(0),
+                                    "invert"=logical(0),
+                                    "weight"=logical(0)))
       
     } else {
       return(data.table::data.table("name" = object@name,

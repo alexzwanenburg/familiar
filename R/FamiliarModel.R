@@ -73,7 +73,8 @@ setMethod(".train_novelty_detector", signature(object="familiarModel", data="dat
             data <- process_input_data(object=object,
                                        data=data,
                                        is_pre_processed = is_pre_processed,
-                                       stop_at="clustering")
+                                       stop_at="clustering",
+                                       keep_novelty=TRUE)
             
             # Check if there are any data entries. The familiar model cannot be
             # trained otherwise
@@ -82,6 +83,15 @@ setMethod(".train_novelty_detector", signature(object="familiarModel", data="dat
             # Check the number of features in data; if it has no features, the
             # familiar model can not be trained
             if(!has_feature_data(x=data)) return(object)
+            
+            # Replace any ordered variables by factors. We do this because
+            # ordered features can not be handled using isotree.
+            ordered_features <- colnames(data@data)[sapply(data@data, is.ordered)]
+            for(current_feature in ordered_features){
+              data@data[[current_feature]] <- factor(x=data@data[[current_feature]],
+                                                     levels=levels(data@data[[current_feature]]),
+                                                     ordered=FALSE)
+            }
             
             # Create a isolation forest.
             detector <- isotree::isolation.forest(df=data@data[, mget(get_feature_columns(data))],

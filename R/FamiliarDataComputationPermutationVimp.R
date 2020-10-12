@@ -302,7 +302,7 @@ setMethod("extract_permutation_vimp", signature(object="familiarEnsemble"),
   # Maintain only important features. The current set is based on the
   # required features.
   data <- filter_features(data=data,
-                          available_features=object@important_features)
+                          available_features=object@model_features)
   
   # Derive feature information
   feature_cluster_info <- .select_feature_clusters(available_features=get_feature_columns(data),

@@ -168,7 +168,7 @@ setMethod("create_data_object", signature(object="familiarEnsemble", data="ANY")
 
 #####load_delayed_data (model)#####
 setMethod("load_delayed_data", signature(data="dataObject", object="ANY"),
-          function(data, object, stop_at){
+          function(data, object, stop_at, keep_novelty=FALSE){
             # Loads data from internal memory
 
             if(!(is(object, "familiarModel") | is(object, "familiarVimpMethod"))){
@@ -217,7 +217,10 @@ setMethod("load_delayed_data", signature(data="dataObject", object="ANY"),
                                      sample_set_on_load = data@sample_set_on_load)
             
             # Preprocess data
-            new_data <- preprocess_data(data=new_data, object=object, stop_at=stop_at)
+            new_data <- preprocess_data(data=new_data,
+                                        object=object,
+                                        stop_at=stop_at,
+                                        keep_novelty=keep_novelty)
             
             # Recreate iteration
             new_data <- select_data_from_samples(data=new_data, samples=run_subj_id)
@@ -239,16 +242,14 @@ setMethod("load_delayed_data", signature(data="dataObject", object="ANY"),
 
 #####load_delayed_data (ensemble)#####
 setMethod("load_delayed_data", signature(data="dataObject", object="familiarEnsemble"),
-          function(data, object, stop_at="clustering"){
+          function(data, object, stop_at="clustering", keep_novelty=FALSE){
             # Loads data from internal memory -- for familiarEnsemble objects
             
             # Suppress NOTES due to non-standard evaluation in data.table
             perturb_level <- NULL
             
             # Check if loading was actually delayed
-            if(!data@delay_loading){
-              return(data)
-            }
+            if(!data@delay_loading) return(data)
             
             # Read project list and settings
             iter_list <- get_project_list()$iter_list
@@ -316,7 +317,10 @@ setMethod("load_delayed_data", signature(data="dataObject", object="familiarEnse
                                      sample_set_on_load = data@sample_set_on_load)
             
             # Preprocess data
-            new_data <- preprocess_data(data=new_data, object=object, stop_at=stop_at)
+            new_data <- preprocess_data(data=new_data,
+                                        object=object,
+                                        stop_at=stop_at,
+                                        keep_novelty=keep_novelty)
             
             # Recreate iteration
             new_data <- select_data_from_samples(data=new_data, samples=run_subj_id)
@@ -338,23 +342,26 @@ setMethod("load_delayed_data", signature(data="dataObject", object="familiarEnse
 
 #####preprocess_data (vimp method)#####
 setMethod("preprocess_data", signature(data="dataObject", object="familiarVimpMethod"),
-          function(data, object, stop_at="clustering") .pre_process_data(data=data,
-                                                                         object=object,
-                                                                         stop_at=stop_at))
+          function(data, object, stop_at="clustering", keep_novelty=FALSE) .pre_process_data(data=data,
+                                                                                             object=object,
+                                                                                             stop_at=stop_at,
+                                                                                             keep_novelty=keep_novelty))
 
 
 #####preprocess_data (model)#####
 setMethod("preprocess_data", signature(data="dataObject", object="familiarModel"),
-          function(data, object, stop_at="clustering") .pre_process_data(data=data,
-                                                                         object=object,
-                                                                         stop_at=stop_at))
+          function(data, object, stop_at="clustering", keep_novelty=FALSE) .pre_process_data(data=data,
+                                                                                             object=object,
+                                                                                             stop_at=stop_at,
+                                                                                             keep_novelty=keep_novelty))
 
 
 #####preprocess_data (ensemble)#####
 setMethod("preprocess_data", signature(data="dataObject", object="familiarEnsemble"),
-          function(data, object, stop_at="clustering") .pre_process_data(data=data,
-                                                                         object=object,
-                                                                         stop_at=stop_at))
+          function(data, object, stop_at="clustering", keep_novelty=FALSE) .pre_process_data(data=data,
+                                                                                             object=object,
+                                                                                             stop_at=stop_at,
+                                                                                             keep_novelty=keep_novelty))
 
 
 .pre_process_data <- function(data, object, stop_at, keep_novelty=FALSE){
@@ -383,16 +390,20 @@ setMethod("preprocess_data", signature(data="dataObject", object="familiarEnsemb
     
   } else if(preprocessing_level_attained == "signature" & stop_at >= "signature"){
     
-    if(length(object@required_features) > 0 & length(object@important_features) > 0 & has_feature_data(data)){
+    required_features <- object@required_features
+    selected_features <- object@model_features
+    if(keep_novelty) selected_features <- union(selected_features, object@novelty_features)
+    
+    if(length(required_features) > 0 & length(selected_features) > 0 & has_feature_data(data)){
       
       # Select available features specific to the object.
-      if(all(object@required_features %in% get_feature_columns(data))){
+      if(all(required_features %in% get_feature_columns(data))){
         data <- select_features(data=data,
-                                features=object@required_features)
+                                features=required_features)
         
-      } else if(all(object@important_features %in% get_feature_columns(data))) {
+      } else if(all(selected_features %in% get_feature_columns(data))) {
         data <- select_features(data=data,
-                                features=object@important_features)
+                                features=selected_features)
         
       } else {
         ..error_reached_unreachable_code(".pre_process_data: could not identify overlapping features")
@@ -434,10 +445,11 @@ setMethod("preprocess_data", signature(data="dataObject", object="familiarEnsemb
     
     # Select features.
     features <- object@model_features
-    if(keep_novelty) features <- unique(c(features, object@novelty_features))
+    if(keep_novelty) features <- union(features, object@novelty_features)
     
     # Return data if there are no features.
     if(length(features) == 0) return(data)
+    
     # Determine the features after clustering.
     features <- features_after_clustering(features=features,
                                           feature_info_list=object@feature_info)
@@ -445,7 +457,6 @@ setMethod("preprocess_data", signature(data="dataObject", object="familiarEnsemb
     # Create a slice of the data for the feature set.
     data <- select_features(data=data,
                             features=features)
-    # 
   }
   
   return(data)
@@ -455,26 +466,29 @@ setMethod("preprocess_data", signature(data="dataObject", object="familiarEnsemb
 
 #####process_input_data (vimp method)#####
 setMethod("process_input_data", signature(object="familiarVimpMethod", data="ANY"),
-          function(object, data, is_pre_processed=FALSE, stop_at="clustering") .process_input_data(object=object,
-                                                                                                   data=data,
-                                                                                                   is_pre_processed=is_pre_processed,
-                                                                                                   stop_at=stop_at))
+          function(object, data, is_pre_processed=FALSE, stop_at="clustering", keep_novelty=FALSE) .process_input_data(object=object,
+                                                                                                                       data=data,
+                                                                                                                       is_pre_processed=is_pre_processed,
+                                                                                                                       stop_at=stop_at,
+                                                                                                                       keep_novelty=keep_novelty))
 
 #####process_input_data (model)#####
 setMethod("process_input_data", signature(object="familiarModel", data="ANY"),
-          function(object, data, is_pre_processed=FALSE, stop_at="clustering") .process_input_data(object=object,
-                                                                                                   data=data,
-                                                                                                   is_pre_processed=is_pre_processed,
-                                                                                                   stop_at=stop_at))
+          function(object, data, is_pre_processed=FALSE, stop_at="clustering", keep_novelty=FALSE) .process_input_data(object=object,
+                                                                                                                       data=data,
+                                                                                                                       is_pre_processed=is_pre_processed,
+                                                                                                                       stop_at=stop_at,
+                                                                                                                       keep_novelty=keep_novelty))
 
 #####process_input_data (ensemble)#####
 setMethod("process_input_data", signature(object="familiarEnsemble", data="ANY"),
-          function(object, data, is_pre_processed=FALSE, stop_at="clustering") .process_input_data(object=object,
-                                                                                                   data=data,
-                                                                                                   is_pre_processed=is_pre_processed,
-                                                                                                   stop_at=stop_at))
+          function(object, data, is_pre_processed=FALSE, stop_at="clustering", keep_novelty=FALSE) .process_input_data(object=object,
+                                                                                                                       data=data,
+                                                                                                                       is_pre_processed=is_pre_processed,
+                                                                                                                       stop_at=stop_at,
+                                                                                                                       keep_novelty=keep_novelty))
 
-.process_input_data <- function(object, data, is_pre_processed, stop_at){
+.process_input_data <- function(object, data, is_pre_processed, stop_at, keep_novelty=FALSE){
   # Check whether data is a dataObject, and create one otherwise
   if(!is(data, "dataObject")){
     data <- create_data_object(object=object, data=data, is_pre_processed=is_pre_processed)
@@ -482,11 +496,17 @@ setMethod("process_input_data", signature(object="familiarEnsemble", data="ANY")
   
   # Load data from internal memory, if not provided otherwise
   if(data@delay_loading){
-    data <- load_delayed_data(data=data, object=object, stop_at=stop_at)
+    data <- load_delayed_data(data=data,
+                              object=object,
+                              stop_at=stop_at,
+                              keep_novelty=keep_novelty)
   }
   
   # Pre-process data in case it has not been pre-processed
-  data <- preprocess_data(data=data, object=object, stop_at=stop_at)
+  data <- preprocess_data(data=data,
+                          object=object,
+                          stop_at=stop_at,
+                          keep_novelty=keep_novelty)
   
   # Return data
   return(data)

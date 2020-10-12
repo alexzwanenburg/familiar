@@ -126,6 +126,7 @@ setMethod("extract_predictions", signature(object="familiarEnsemble"),
     prediction_data <- .predict(object=object,
                                 data=data,
                                 ensemble_method=ensemble_method,
+                                novelty=TRUE,
                                 is_pre_processed=is_pre_processed)
   }
   

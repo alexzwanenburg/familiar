@@ -26,10 +26,10 @@ setClass("familiarModel",
            # Required features for complete reconstruction, including
            # imputation.
            required_features = "ANY",
-           # Features that are required for reconstruction, without imputation
-           # (i.e. features that are in the signature directly or as part of a
-           # cluster).
-           important_features = "ANY",
+           # Features that are required for the model.
+           model_features = "ANY",
+           # Features that are required for novelty detection.
+           novelty_features = "ANY",
            # Run table for the current model
            run_table = "ANY",
            # Information required to assess model calibrations (e.g. baseline survival)
@@ -58,7 +58,8 @@ setClass("familiarModel",
            learner = NA_character_,
            fs_method = NA_character_,
            required_features = NULL,
-           important_features = NULL,
+           model_features = NULL,
+           novelty_features = NULL,
            calibration_info = NULL,
            km_info = NULL,
            run_table = NULL,
@@ -89,7 +90,7 @@ setClass("familiarEnsemble",
            # Required features for complete reconstruction, including imputation
            required_features = "ANY",
            # Features that are required for reconstruction, without imputation (i.e. features that are in the signature directly or as part of a cluster)
-           important_features = "ANY",
+           model_features = "ANY",
            # Set of run tables for the current ensemble. This is only required for processing internal data.
            run_table = "ANY",
            # Information required to assess model calibrations (e.g. baseline survival)
@@ -112,7 +113,7 @@ setClass("familiarEnsemble",
            fs_method = NA_character_,
            feature_info = NULL,
            required_features = NULL,
-           important_features = NULL,
+           model_features = NULL,
            run_table = NULL,
            calibration_info = NULL,
            settings = NULL,
@@ -146,7 +147,7 @@ setClass("familiarData",
            # Features that are required for reconstruction, without imputation
            # (i.e. features that are in the signature directly or as part of a
            # cluster)
-           important_features = "ANY",
+           model_features = "ANY",
            # Name of learner
            learner = "character",
            # Name of feature selection method
@@ -201,7 +202,7 @@ setClass("familiarData",
            hyperparameters = NULL,
            hyperparameter_data = NULL,
            required_features = NULL,
-           important_features = NULL,
+           model_features = NULL,
            learner = NA_character_,
            fs_method = NA_character_,
            pooling_table = NULL,
@@ -240,7 +241,7 @@ setClass("familiarData",
 #' @slot hyperparameters ANY.
 #' @slot hyperparameter_data ANY.
 #' @slot required_features ANY.
-#' @slot important_features ANY. 
+#' @slot model_features ANY. 
 #' @slot learner character. 
 #' @slot fs_method character. 
 #' @slot prediction_data ANY.
@@ -292,7 +293,7 @@ setClass("familiarCollection",
            required_features = "ANY",
            # Important features, e.g. features that ended up in a signature
            # individually or as part of a cluster
-           important_features = "ANY",
+           model_features = "ANY",
            # Name of learner
            learner = "character",
            # Name of feature selection method
@@ -353,7 +354,7 @@ setClass("familiarCollection",
            hyperparameters = NULL,
            hyperparameter_data = NULL,
            required_features = NULL,
-           important_features = NULL,
+           model_features = NULL,
            learner = NA_character_,
            fs_method = NA_character_,
            prediction_data = NULL,

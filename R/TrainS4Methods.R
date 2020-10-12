@@ -94,8 +94,8 @@ setMethod("train", signature(data="dataObject"),
                                                         feature_info_list=feature_info_list)
             
             # Find important features, i.e. those that constitute the signature either individually or as part of a cluster
-            important_features <- find_important_features(features=selected_features,
-                                                          feature_info_list=feature_info_list)
+            model_features <- find_model_features(features=selected_features,
+                                                  feature_info_list=feature_info_list)
             
             #####Prepare hyperparameters########################################
             
@@ -130,7 +130,7 @@ setMethod("train", signature(data="dataObject"),
                                    fs_method = "none",
                                    hyperparameters = param_list,
                                    required_features =  required_features,
-                                   important_features = important_features,
+                                   model_features = model_features,
                                    run_table = get_placeholder_run_table(),
                                    feature_info = feature_info_list,
                                    outcome_info = outcome_info,

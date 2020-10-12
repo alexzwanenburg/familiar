@@ -11,9 +11,23 @@ setMethod(".predict", signature(object="familiarModel"),
             data <- process_input_data(object=object,
                                        data=data,
                                        is_pre_processed=is_pre_processed,
-                                       stop_at="clustering")
+                                       stop_at="clustering",
+                                       keep_novelty=novelty)
+            
+            # Add novelty.
+            if(novelty){
+              # Determine novelty
+              novelty_values <- .predict_novelty(object=object,
+                                                 data=data)
+              
+              # Keep only model features in data.
+              data <- select_features(data=data,
+                                      features=features_after_clustering(features=object@model_features,
+                                                                         feature_info_list=object@feature_info))
+            }
             
             if(is.null(type)){
+              
               # Predict using the model and the standard type.
               prediction_table <- ..predict(object=object,
                                             data=data,
@@ -43,11 +57,8 @@ setMethod(".predict", signature(object="familiarModel"),
             data.table::setcolorder(prediction_table,
                                     neworder=colnames(get_placeholder_prediction_table(object=object, data=data)))
             
-            # Add novelty.
-            if(novelty){
-              prediction_table$novelty <- .predict_novelty(object=object,
-                                                           data=data)
-            }
+            # Add novelty to the prediction table
+            if(novelty) prediction_table[, "novelty":=novelty_values]
             
             return(prediction_table)  
           })
@@ -94,13 +105,22 @@ setMethod(".predict_novelty", signature(object="familiarModel"),
             data <- process_input_data(object=object,
                                        data=data,
                                        is_pre_processed=is_pre_processed,
-                                       stop_at="clustering")
+                                       stop_at="clustering",
+                                       keep_novelty=TRUE)
             
             # Return NA if there is no novelty detector.
             if(is.null(object@novelty_detector)) return(rep(NA_real_, times=nrow(data@data)))
             
             # Return empty if there is no data.
             if(is_empty(data)) return(numeric(0))
+            
+            # Find and replace ordered features.
+            ordered_features <- colnames(data@data)[sapply(data@data, is.ordered)]
+            for(current_feature in ordered_features){
+              data@data[[current_feature]] <- factor(x=data@data[[current_feature]],
+                                                     levels=levels(data@data[[current_feature]]),
+                                                     ordered=FALSE)
+            }
             
             return(predict(object=object@novelty_detector,
                            newdata=data@data))

@@ -99,13 +99,24 @@ build_model <- function(run, hpo_list){
   feature_info_list <- get_feature_info_list(run=run)
   
   # Select features
-  selected_features <- get_signature(feature_info_list=feature_info_list, dt_ranks=dt_ranks, fs_method=run$fs_method, param=param_list, settings=settings)
+  signature_features <- get_signature(feature_info_list=feature_info_list,
+                                      dt_ranks=dt_ranks,
+                                      fs_method=run$fs_method,
+                                      param=param_list,
+                                      settings=settings)
   
-  # Find features that are required for processing the data
-  required_features <- find_required_features(features=selected_features, feature_info_list=feature_info_list)
-
-  # Find important features, i.e. those that constitute the signature either individually or as part of a cluster
-  important_features <- find_important_features(features=selected_features, feature_info_list=feature_info_list)
+  # Find important features, i.e. those that constitute the signature either
+  # individually or as part of a cluster.
+  model_features <- find_model_features(features=signature_features,
+                                        feature_info_list=feature_info_list)
+  
+  # Find novelty features.
+  novelty_features <- find_novelty_features(model_features=model_features,
+                                            feature_info_list=feature_info_list)
+  
+  
+  # Set the required features
+  required_features <- union(model_features, novelty_features)
   
   # Find pre-processing data
   feature_info_list <- feature_info_list[required_features]
@@ -120,9 +131,9 @@ build_model <- function(run, hpo_list){
                             run_table = run$run_table,
                             hyperparameters = param_list,
                             hyperparameter_data = NULL,
-                            signature = selected_features,
                             required_features =  required_features,
-                            important_features = important_features,
+                            model_features = model_features,
+                            novelty_features = novelty_features,
                             feature_info = feature_info_list,
                             outcome_info = .get_outcome_info(),
                             project_id = proj_list$project_id,
@@ -132,8 +143,10 @@ build_model <- function(run, hpo_list){
   fam_model <- add_package_version(object=fam_model)
 
   # Train model
-  fam_model <- .train(object=fam_model, data=data, get_additional_info=TRUE)
-
+  fam_model <- .train(object=fam_model,
+                      data=data,
+                      get_additional_info=TRUE)
+  
   # Add novelty detector
   fam_model <- .train_novelty_detector(object=fam_model,
                                        data=data)

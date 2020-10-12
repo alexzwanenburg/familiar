@@ -535,7 +535,7 @@ setMethod("extract_data", signature(object="familiarEnsemble"),
                                      hyperparameters = hyperparameter_info,
                                      hyperparameter_data = NULL,
                                      required_features = object@required_features,
-                                     important_features = object@important_features,
+                                     model_features = object@model_features,
                                      learner = object@learner,
                                      fs_method = object@fs_method,
                                      pooling_table = pooling_table,
@@ -1160,7 +1160,8 @@ setMethod("extract_univariate_analysis", signature(object="familiarEnsemble", da
             
             # Maintain only important features. The current set is based on the
             # required features.
-            data <- filter_features(data=data, available_features=object@important_features)
+            data <- filter_features(data=data,
+                                    available_features=object@model_features)
             
             # Determine feature columns
             feature_columns <- get_feature_columns(x=data)
@@ -1509,7 +1510,7 @@ setMethod("extract_feature_expression", signature(object="familiarEnsemble", dat
             if(is_empty(data)) return(NULL)
             
             # Determine signature features
-            model_features <- object@important_features
+            model_features <- object@model_features
             
             # Maintain only important features. The current set is based on the
             # important features of the model, i.e. those that end up in the
@@ -1549,7 +1550,7 @@ setMethod("extract_feature_expression", signature(object="familiarEnsemble", dat
                                                                  cluster_method=feature_cluster_method)
             } else {
               # Replacement for empty feature similarity tables
-              feature_order_table <- data.table::data.table("name"=object@important_features)
+              feature_order_table <- data.table::data.table("name"=object@model_features)
               feature_order_table[, "label_order":=.I]
               
               # Placeholder cluster object
@@ -1666,7 +1667,7 @@ setMethod("extract_feature_similarity_table", signature(object="familiarEnsemble
             
             # Maintain only important features. The current set is based on the
             # required features.
-            data <- filter_features(data=data, available_features=object@important_features)
+            data <- filter_features(data=data, available_features=object@model_features)
             
             # Identify eligible columns.
             feature_columns <- get_feature_columns(x=data)
@@ -1752,7 +1753,7 @@ setMethod("extract_sample_similarity_table", signature(object="familiarEnsemble"
             
             # Maintain only important features. The current set is based on the
             # required features.
-            data <- filter_features(data=data, available_features=object@important_features)
+            data <- filter_features(data=data, available_features=object@model_features)
             
             # Aggregate features.
             data <- aggregate_data(data=data)
