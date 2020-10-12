@@ -1,6 +1,6 @@
 Package: familiar
 Title: End-To-End Machine Learning and Data Analysis Framework
-Version: 0.0.0.53
+Version: 0.0.0.54
 Authors@R: c(
    person("Alex", "Zwanenburg",
           email = "alexander.zwanenburg@nct-dresden.de",
@@ -89,6 +89,7 @@ Collate:
     'FamiliarEnsemble.R'
     'FamiliarModel.R'
     'FamiliarObjectConversion.R'
+    'FamiliarObjectUpdate.R'
     'FamiliarSharedS4Methods.R'
     'FamiliarVimpMethod.R'
     'FeatureInfo.R'
