@@ -108,35 +108,46 @@ setMethod(".train_novelty_detector", signature(object="familiarModel", data="dat
 setMethod("show", signature(object="familiarModel"),
           function(object){
             if(!model_is_trained(object)){
-              print(paste0("A ", object@learner, " model (class: ", class(object)[1],
-                           ") that was not successfully trained (v", object@familiar_version, ")."))
+              cat(paste0("A ", object@learner, " model (class: ", class(object)[1],
+                         ") that was not successfully trained (v", object@familiar_version, ").\n"))
               
             } else {
-              print(paste0("A ", object@learner, " model (class: ", class(object)[1],
-                           "; v", object@familiar_version, ")."))
-              browser()
+              cat(paste0("A ", object@learner, " model (class: ", class(object)[1],
+                         "; v", object@familiar_version, ").\n"))
+              
+              cat(paste0("\n--------------- Model details ---------------"))
+              
               # Model details
               show(object@model)
               
+              cat(paste0("---------------------------------------------\n"))
+              
               # Outcome details
+              cat("\nThe following outcome was modelled:\n")
               show(object@outcome_info)
               
+              # Details concerning hyperparameters.
+              cat("\nThe model was trained using the following hyperparameters:\n")
+              invisible(lapply(names(object@hyperparameters), function(x, object){
+                cat(paste0("  ", x, ": ", object@hyperparameters[[x]], "\n"))
+              }, object=object))
+              
               # Details concerning variable importance.
-              print(paste0("Variable importance was determined using the ", object@fs_method, " variable importance method."))
+              cat(paste0("\nVariable importance was determined using the ", object@fs_method, " variable importance method.\n"))
               
               # Details concerning model features:
-              print("\nModel features: The following features are used by the model:")
+              cat("\nThe following features were used in the model:\n")
               lapply(object@model_features, function(x, object) show(object@feature_info[[x]]), object=object)
               
               # Details concerning novelty features:
               if(is.null(object@novelty_detector)){
-                print("\nNovelty: No novelty detector was trained.")
+                cat("\nNo novelty detector was trained.\n")
                 
               } else if(setequal(object@model_features, object@novelty_features)){
-                print("\nNovelty: A novelty detector was trained using the model features.")
+                cat("\nA novelty detector was trained using the model features.\n")
                 
               } else {
-                print("\nNovelty: A novelty detector was trained using the model features, and additionally: ")
+                cat("\nA novelty detector was trained using the model features above, and additionally:\n\n")
                 
                 # Identify novelty features that were set in addition to model
                 # features.
@@ -144,16 +155,7 @@ setMethod("show", signature(object="familiarModel"),
                 
                 lapply(novelty_features, function(x, object) show(object@feature_info[[x]]), object=object)
               }
-              
-              # Details concerning hyperparameters.
-              print("\nHyperparameters: The model was trained using the following hyperparameters:")
-              invisible(lapply(names(object@hyperparameters), function(x, object){
-                print(paste0(x, ": ", object@hyperparameters[[x]]))
-              }, object=object))
-              
             }
-            
-            
           })
 
 

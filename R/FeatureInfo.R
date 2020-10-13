@@ -1187,7 +1187,7 @@ setMethod("show", signature(object="featureInfo"),
                            ".\n")
               }
             }
-            browser()
+            
             # Batch normalisation parameters
             batch_norm_str <- paste0(sapply(seq_along(object@batch_normalisation_parameters), function(ii, x){
               
@@ -1211,6 +1211,9 @@ setMethod("show", signature(object="featureInfo"),
               
               return(batch_norm_str)
             }, x=object@batch_normalisation_parameters))
+            
+            # Replace by default placeholder.
+            if(batch_norm_str == "") batch_norm_str <- character(0L)
             
             # Clustering
             # Placeholder string
@@ -1245,7 +1248,6 @@ setMethod("show", signature(object="featureInfo"),
             if(length(normalisation_str) > 0) cat(normalisation_str)
             if(length(batch_norm_str) > 0) cat(batch_norm_str)
             if(length(cluster_str) > 0) cat(cluster_str)
-            
           })
 
 

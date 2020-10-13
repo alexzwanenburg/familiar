@@ -420,8 +420,13 @@ get_outcome_info_from_backend <- function(){
 setMethod("show", signature(object="outcomeInfo"),
           function(object){
             # Basic outcome information.
-            outcome_str <- paste0("outcome: ", object@name, " (", object@outcome_type, ")")
+            outcome_name <- object@name
+            if(length(outcome_name) == 0) outcome_name <- "outcome"
             
+            # Form basic string.
+            outcome_str <- paste0(outcome_name, " (", object@outcome_type, ")")
+            
+            # Adapt string per outcome-type
             if(object@outcome_type %in% c("binomial")){
               
               # Show the reference class.
@@ -429,15 +434,15 @@ setMethod("show", signature(object="outcomeInfo"),
               outcome_classes[1] <- paste0(outcome_classes[1], " (reference)")
               
               # Add to the outcome string.
-              outcome_str <- paste0(outcome_str, ", with classes: ", paste_s(outcome_classes), ".")
+              outcome_str <- paste0(outcome_str, ", with classes: ", paste_s(outcome_classes), ".\n")
               
             } else if(object@outcome_type %in% c("multinomial")){
               # Show the outcome classes.
-              outcome_str <- paste0(outcome_str, ", with classes: ", paste_s(object@levels), ".")
+              outcome_str <- paste0(outcome_str, ", with classes: ", paste_s(object@levels), ".\n")
               
             } else if(object@outcome_type %in% c("count", "continuous")){
               # No further details provided.
-              outcome_str <- paste0(outcome_str, ".")
+              outcome_str <- paste0(outcome_str, ".\n")
               
             } else if(object@outcome_type %in% c("survival")){
               # Show the censoring and event values.
@@ -445,7 +450,7 @@ setMethod("show", signature(object="outcomeInfo"),
               event_str <- paste0("event: ", paste_s(object@event))
               
               # Add to outcome string.
-              outcome_str <- paste0(outcome_str, ", with ", censoring_str, "; and ", event_str, ".")
+              outcome_str <- paste0(outcome_str, ", with ", censoring_str, "; and ", event_str, ".\n")
               
             } else if(object@outcome_type %in% c("competing_risk")){
               # Show the censoring and event values.
@@ -455,12 +460,12 @@ setMethod("show", signature(object="outcomeInfo"),
                                            paste_s(object@competing_risk))
               
               # Add to outcome string.
-              outcome_str <- paste0(outcome_str, ", with ", censoring_str, "; ", event_str, "; and ", competing_risk_str, ".")
+              outcome_str <- paste0(outcome_str, ", with ", censoring_str, "; ", event_str, "; and ", competing_risk_str, ".\n")
               
             } else {
               ..error_no_known_outcome_type(object@outcome_type)
             }
             
             # Print to terminal.
-            print(paste0(outcome_str))
+            cat(paste0(outcome_str))
           })
