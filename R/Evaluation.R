@@ -149,7 +149,7 @@ run_evaluation <- function(cl, proj_list, settings, file_paths){
   # Re-check which ensembles exist
   data_set_list[, "fam_ensemble_exists":=file.exists(fam_ensemble)]
   if(!all(data_set_list$fam_ensemble_exists)){
-    ..error_reached_unreachable_code(".prepare_familiar_data_sets_not_all_familiarEnsemble_objects_were_created.")
+    ..error_reached_unreachable_code(".prepare_familiar_data_sets: not all familiarEnsemble objects were created.")
   }
 
   # Find any new familiarData objects that may have to be created.
@@ -410,7 +410,7 @@ run_evaluation <- function(cl, proj_list, settings, file_paths){
                         " of ", pool_data_table$n_sets, "."))
   
   # Load the familiarEnsemble
-  fam_ensemble <- readRDS(pool_data_table$fam_ensemble)
+  fam_ensemble <- load_familiar_object(pool_data_table$fam_ensemble)
   
   # Define a dataObject with delayed reading. This enables the proper selection
   # of development and training data for each familiarModel used in the
@@ -538,7 +538,7 @@ run_evaluation <- function(cl, proj_list, settings, file_paths){
     
   } else {
     # Read from drive.
-    fam_collection <- readRDS(fam_collection_file)
+    fam_collection <- load_familiar_object(fam_collection_file)
   }
   
   logger.message(paste0("\nEvaluation: Exporting data from collection ", collection_info$collection_name))

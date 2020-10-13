@@ -75,8 +75,6 @@ setMethod("plot_all", signature(object="familiarCollection"),
                                                             "dir_path"=dir_path),
                                                        list(...)))
             
-            # Decision curve analysis.
-            
           })
 
 #####plot_all (list)#####

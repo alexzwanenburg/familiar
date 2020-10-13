@@ -428,21 +428,19 @@ setMethod("load_familiar_object", signature(object="character"),
             # Load object
             fam_object <- lapply(object, readRDS)
             
-            # Check that objects are of one class.
-            object_class <- unique(sapply(fam_object, class))
-            
-            if(length(object_class) > 1){
-              stop(paste0("Found objects that do not have the same class: ", paste0(object_class, collapse=", ")))
+            # Check that all objects have the correct class.
+            if(!(all(sapply(fam_object, is, class2="familiarModel")) |
+                 all(sapply(fam_object, is, class2="familiarEnsemble")) |
+                 all(sapply(fam_object, is, class2="familiarData")) |
+                 all(sapply(fam_object, is, class2="familiarCollection")))){
+              stop(paste0("Could not load familiar objects because they are not uniquely familiarModel, familiarEnsemble, familiarData or familiarCollection objects."))
             }
             
-            if(!object_class %in% c("familiarModel", "familiarEnsemble", "familiarData", "familiarCollection")){
-              stop(paste0("The loaded object is not a familiar S4 object. Found: ", object_class))
-            }
+            # Update the objects for backward compatibility
+            fam_object <- lapply(fam_object, update_object)
             
             # Unlist if the input is singular.
-            if(length(object) == 1){
-              fam_object <- fam_object[[1]]
-            }
+            if(length(object) == 1) fam_object <- fam_object[[1]]
             
             return(fam_object)
           })

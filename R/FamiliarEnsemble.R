@@ -425,11 +425,11 @@ setMethod("load_models", signature(object="familiarEnsemble"),
                 
                 # Check if the file can be read. If it is the case, the model is loaded, and the path it was on is stored.
                 if(file.exists(file_path_1)){
-                  loaded_model <- readRDS(file_path_1)
+                  loaded_model <- load_familiar_object(file_path_1)
                   selected_path <- file_path_1
                   
                 } else if(file.exists(file_path_2)) {
-                  loaded_model <- readRDS(file_path_2)
+                  loaded_model <- load_familiar_object(file_path_2)
                   selected_path <- file_path_2
                   
                 } else {

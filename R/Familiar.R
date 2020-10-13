@@ -426,15 +426,15 @@ get_project_list <- function(){
   model_files <- sapply(model_files, function(x, dir_path) (file.path(dir_path, x)), dir_path=file_paths$mb_dir)
   
   # Load familiarModel files and add to list
-  familiar_list$familiarModel <- lapply(model_files, readRDS)
+  familiar_list$familiarModel <- load_familiar_object(model_files)
   
   
   # Find familiarEnsemble files
-  ensemble_files <- list.files(path=file_paths$mb_dir, pattern="ensemble.RDS|pool.RDS", recursive=TRUE)
+  ensemble_files <- list.files(path=file_paths$mb_dir, pattern="ensemble.RDS", recursive=TRUE)
   ensemble_files <- sapply(ensemble_files, function(x, dir_path) (file.path(dir_path, x)), dir_path=file_paths$mb_dir)
   
   # Load familiarEnsemble files and add to list
-  familiar_list$familiarEnsemble <- lapply(ensemble_files, readRDS)
+  familiar_list$familiarEnsemble <- load_familiar_object(ensemble_files)
   
   
   # Find familiarData files
@@ -442,15 +442,15 @@ get_project_list <- function(){
   data_files <- sapply(data_files, function(x, dir_path) (file.path(dir_path, x)), dir_path=file_paths$fam_data_dir)
   
   # Load familiarData files and add to list
-  familiar_list$familiarData <- lapply(data_files, readRDS)
+  familiar_list$familiarData <- load_familiar_object(data_files)
   
   
   # Find familiarCollection files
-  coll_files <- list.files(path=file_paths$fam_coll_dir, pattern="collection.RDS")
+  coll_files <- list.files(path=file_paths$fam_coll_dir, pattern="ensemble.RDS|pooled_data.RDS")
   coll_files <- sapply(coll_files, function(x, dir_path) (file.path(dir_path, x)), dir_path=file_paths$fam_coll_dir)
   
   # Load familiarCollection files and add to list
-  familiar_list$familiarCollection <- lapply(coll_files, readRDS)
+  familiar_list$familiarCollection <- load_familiar_object(coll_files)
   
   return(familiar_list)
 }
