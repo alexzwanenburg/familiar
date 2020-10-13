@@ -1123,6 +1123,131 @@ collect_and_aggregate_feature_info <- function(feature, object, stop_at="imputat
 }
 
 
+#####show (featureInfo)#####
+setMethod("show", signature(object="featureInfo"),
+          function(object){
+            
+            # Determine the feature type.
+            if(object@feature_type == "factor"){
+              if(object@ordered){
+                feature_type <- "ordinal"
+              } else {
+                feature_type <- "categorical"
+              }
+              
+            } else {
+              feature_type <- "numeric"
+            }
+            
+            # Initialise the feature string.
+            feature_str <- paste0(object@name, " (", feature_type, ")")
+            
+            if(feature_type == "categorical"){
+              # Show levels, including which level is the reference.
+              classes_str <- object@levels
+              classes_str[1] <- paste0(classes_str, ("reference"))
+             
+              feature_str <- paste0(feature_str, ", with levels: ", paste_s(classes_str))
+              
+            } else if(feature_type == "ordinal"){
+              # Show ordered levels of the ordinal.
+              feature_str <- paste0(feature_str, ", with levels: ", paste0(object@levels, collapse= " < "))
+              
+            }
+
+            # Transformation parameters.
+            # Placeholder string
+            transform_str <- character(0L)
+            
+            # Attempt to create an actual descriptor, if meaningful.
+            if(object@transformation_parameters$transform_method != "none"){
+              if(object@transformation_parameters$transform_lambda != 1.0){
+                transform_str <- paste0("  transformation (",
+                                        object@transformation_parameters$transform_method,
+                                        ") with \u03BB = ",
+                                        object@transformation_parameters$transform_lambda,
+                                        ".\n")
+              }
+            }
+            
+            # Normalisation parameters
+            # Placeholder string
+            normalisation_str <- character(0L)
+            
+            # Attempt to create an actual descriptor, if meaningful.
+            if(object@normalisation_parameters$norm_method != "none"){
+              if(object@normalisation_parameters$norm_shift != 0.0 &
+                 object@normalisation_parameters$norm_scale != 1.0){
+                normalisation_str <- paste0("  normalisation (",
+                           object@normalisation_parameters$norm_method,
+                           ") with shift = ",
+                           object@normalisation_parameters$norm_shift,
+                           " and scale = ",
+                           object@normalisation_parameters$norm_scale,
+                           ".\n")
+              }
+            }
+            browser()
+            # Batch normalisation parameters
+            batch_norm_str <- paste0(sapply(seq_along(object@batch_normalisation_parameters), function(ii, x){
+              
+              # Placeholder string
+              batch_norm_str <- ""
+              
+              # Attempt to create an actual descriptor, if meaningful.
+              if(x[[ii]]$norm_method != "none"){
+                if(x[[ii]]$norm_shift != 0.0 & x[[ii]]$norm_scale != 1.0){
+                  batch_norm_str <- paste0("  batch-normalisation (",
+                                           x[[ii]]$norm_method,
+                                           ") for ",
+                                           names(x)[ii],
+                                           " with shift = ",
+                                           x[[ii]]$norm_shift,
+                                           " and scale = ",
+                                           x[[ii]]$norm_scale,
+                                           ".\n")
+                }
+              }
+              
+              return(batch_norm_str)
+            }, x=object@batch_normalisation_parameters))
+            
+            # Clustering
+            # Placeholder string
+            cluster_str <- character(0L)
+            
+            # Attempt to create an actual descriptor, if meaningful.
+            if(!is.null(object@cluster_parameters)){
+              if(object@cluster_parameters$cluster_size > 1){
+                cluster_str <- paste0("  forms cluster (",
+                                      object@cluster_parameters$method,
+                                      ") with ",
+                                      paste_s(setdiff(object@cluster_parameters$required_features, object@name)),
+                                      ".\n")
+              }
+            }
+            
+            # Make the feature string complete, depending on additional
+            # information.
+            if(length(transform_str) == 0 &
+               length(normalisation_str) == 0 &
+               length(batch_norm_str) == 0 &
+               length(cluster_str) == 0){
+              feature_str <- paste0(feature_str, ".\n")
+              
+            } else {
+              feature_str <- paste0(feature_str, ":\n")
+            }
+            
+            # Export to console.
+            cat(feature_str)
+            if(length(transform_str) > 0) cat(transform_str)
+            if(length(normalisation_str) > 0) cat(normalisation_str)
+            if(length(batch_norm_str) > 0) cat(batch_norm_str)
+            if(length(cluster_str) > 0) cat(cluster_str)
+            
+          })
+
 
 
 #####is_in_signature#####

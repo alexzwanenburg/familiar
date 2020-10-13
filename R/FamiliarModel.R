@@ -104,6 +104,59 @@ setMethod(".train_novelty_detector", signature(object="familiarModel", data="dat
           })
 
 
+#####show (model)#####
+setMethod("show", signature(object="familiarModel"),
+          function(object){
+            if(!model_is_trained(object)){
+              print(paste0("A ", object@learner, " model (class: ", class(object)[1],
+                           ") that was not successfully trained (v", object@familiar_version, ")."))
+              
+            } else {
+              print(paste0("A ", object@learner, " model (class: ", class(object)[1],
+                           "; v", object@familiar_version, ")."))
+              browser()
+              # Model details
+              show(object@model)
+              
+              # Outcome details
+              show(object@outcome_info)
+              
+              # Details concerning variable importance.
+              print(paste0("Variable importance was determined using the ", object@fs_method, " variable importance method."))
+              
+              # Details concerning model features:
+              print("\nModel features: The following features are used by the model:")
+              lapply(object@model_features, function(x, object) show(object@feature_info[[x]]), object=object)
+              
+              # Details concerning novelty features:
+              if(is.null(object@novelty_detector)){
+                print("\nNovelty: No novelty detector was trained.")
+                
+              } else if(setequal(object@model_features, object@novelty_features)){
+                print("\nNovelty: A novelty detector was trained using the model features.")
+                
+              } else {
+                print("\nNovelty: A novelty detector was trained using the model features, and additionally: ")
+                
+                # Identify novelty features that were set in addition to model
+                # features.
+                novelty_features <- setdiff(object@novelty_features, object@model_features)
+                
+                lapply(novelty_features, function(x, object) show(object@feature_info[[x]]), object=object)
+              }
+              
+              # Details concerning hyperparameters.
+              print("\nHyperparameters: The model was trained using the following hyperparameters:")
+              invisible(lapply(names(object@hyperparameters), function(x, object){
+                print(paste0(x, ": ", object@hyperparameters[[x]]))
+              }, object=object))
+              
+            }
+            
+            
+          })
+
+
 
 #####assess_calibration (model)#####
 setMethod("assess_calibration", signature(object="familiarModel"),
