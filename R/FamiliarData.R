@@ -2,6 +2,36 @@
 #' @include FamiliarS4Classes.R
 NULL
 
+
+#####show (familiarData)#####
+setMethod("show", signature(object="familiarData"),
+          function(object){
+            
+            # Create an initial descriptor.
+            data_str <- paste0("A dataset (", object@name, "; v", object@familiar_version, ")")
+            
+            # Add the generating ensemble, if available.
+            if(length(object@generating_ensemble) > 0){
+              data_str <- paste0(data_str, " created using ", object@generating_ensemble, ".\n")
+              
+            } else {
+              data_str <- paste0(data_str, ".\n")
+            }
+            cat(data_str)
+            
+            # Details concerning the generating ensemble.
+            cat(paste0("\nThe ensemble that created this dataset contained of one or more ",
+                       object@learner,
+                       " models with variable importance computed by the ",
+                       object@fs_method,
+                       " variable importance method.\n"))
+            
+            # Outcome details
+            cat("\nThe following outcome was modelled:\n")
+            show(object@outcome_info)
+          })
+
+
 #####save (familiarData)#####
 setMethod("save", signature(list="familiarData", file="character"),
           function(list, file) {
