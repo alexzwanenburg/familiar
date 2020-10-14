@@ -526,3 +526,17 @@ setMethod("get_object_name", signature(object="familiarCollection"),
             
             return(object_name)
           })
+
+
+#####show (collection)######
+setMethod("show", signature(object="familiarCollection"),
+          function(object){
+            
+            # Create an initial descriptor.
+            cat(paste0("A collection of datasets (", object@collection_name, "; v", object@familiar_version, "):\n"))
+            lapply(object@data_sets, function(x) cat(paste0("  ", x, "\n")))
+            
+            # Outcome details
+            cat("\nThe collection contains data for the following outcome:\n")
+            show(object@outcome_info)
+          })
