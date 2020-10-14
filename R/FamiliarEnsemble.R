@@ -53,6 +53,63 @@ setMethod("complete_familiar_ensemble", signature(object="familiarEnsemble"),
           })
 
 
+setMethod("show", signature(object="familiarEnsemble"),
+          function(object){
+            
+            # Flag to show additional information.
+            show_additional_information <- TRUE
+            
+            if(!is_model_loaded(object)){
+              cat(paste0("An ensemble of ", length(object@model_list), " ",
+                         object@learner, " ",
+                         ifelse(length(object@model_list) == 1, "model", "models"),
+                         " (v", object@familiar_version, ").\n"))
+              
+            } else {
+              cat(paste0("An ensemble of ", length(object@model_list), " ",
+                         object@learner, " ",
+                         ifelse(length(object@model_list) == 1, "model", "models"),
+                         " (v", object@familiar_version, ").\n"))
+              
+              # Determine how many models are trained.
+              model_trained <- sapply(object@model_list, model_is_trained)
+              
+              if(length(model_trained) == 1){
+                show(object@model_list[[1]])
+                
+                # Update the flag to prevent showing too much information.
+                show_additional_information <- FALSE
+                
+              } else {
+                if(all(model_trained)){
+                  cat("All models were successfully trained.\n")
+                  
+                } else if(any(model_trained)){
+                  cat(paste0(sum(model_trained), " of ", length(model_trained), " models were successfully trained.\n"))
+                  
+                } else {
+                  cat("No model was successfully trained.\n")
+                }
+                
+              }
+            }
+            
+            if(show_additional_information){
+              
+              # Outcome details
+              cat("\nThe following outcome was modelled:\n")
+              show(object@outcome_info)
+              
+              # Details concerning variable importance.
+              cat(paste0("\nVariable importance was determined using the ", object@fs_method, " variable importance method.\n"))
+              
+              # Details concerning model features:
+              cat("\nThe following features were used in the ensemble:\n")
+              lapply(object@model_features, function(x, object) cat(.show_simple_feature_info(object@feature_info[[x]], line_end=".\n")), object=object)
+            }
+          })
+
+
 
 #####extract_calibration_info#####
 setMethod("extract_calibration_info", signature(object="familiarEnsemble"),

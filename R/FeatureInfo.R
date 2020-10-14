@@ -1123,37 +1123,45 @@ collect_and_aggregate_feature_info <- function(feature, object, stop_at="imputat
 }
 
 
+.show_simple_feature_info <- function(object, line_end=""){
+  # Determine the feature type.
+  if(object@feature_type == "factor"){
+    if(object@ordered){
+      feature_type <- "ordinal"
+    } else {
+      feature_type <- "categorical"
+    }
+    
+  } else {
+    feature_type <- "numeric"
+  }
+  
+  # Initialise the feature string.
+  feature_str <- paste0(object@name, " (", feature_type, ")")
+  
+  if(feature_type == "categorical"){
+    # Show levels, including which level is the reference.
+    classes_str <- object@levels
+    classes_str[1] <- paste0(classes_str, ("reference"))
+    
+    feature_str <- paste0(feature_str, ", with levels: ", paste_s(classes_str))
+    
+  } else if(feature_type == "ordinal"){
+    # Show ordered levels of the ordinal.
+    feature_str <- paste0(feature_str, ", with levels: ", paste0(object@levels, collapse= " < "))
+    
+  }
+  
+  return(paste0(feature_str, line_end))
+}
+
+
 #####show (featureInfo)#####
 setMethod("show", signature(object="featureInfo"),
           function(object){
             
-            # Determine the feature type.
-            if(object@feature_type == "factor"){
-              if(object@ordered){
-                feature_type <- "ordinal"
-              } else {
-                feature_type <- "categorical"
-              }
-              
-            } else {
-              feature_type <- "numeric"
-            }
-            
-            # Initialise the feature string.
-            feature_str <- paste0(object@name, " (", feature_type, ")")
-            
-            if(feature_type == "categorical"){
-              # Show levels, including which level is the reference.
-              classes_str <- object@levels
-              classes_str[1] <- paste0(classes_str, ("reference"))
-             
-              feature_str <- paste0(feature_str, ", with levels: ", paste_s(classes_str))
-              
-            } else if(feature_type == "ordinal"){
-              # Show ordered levels of the ordinal.
-              feature_str <- paste0(feature_str, ", with levels: ", paste0(object@levels, collapse= " < "))
-              
-            }
+            # Create basic feature string.
+            feature_str <- .show_simple_feature_info(object=object)
 
             # Transformation parameters.
             # Placeholder string
