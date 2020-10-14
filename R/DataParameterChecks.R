@@ -121,6 +121,7 @@
     stop(paste("Only one or two (in case of survival endpoints), may be specified"))
   }
   
+  
   #####outcome_type--------------------------------
   if(is.null(settings$data$outcome_type)){
     
@@ -256,7 +257,7 @@
   if(is.null(settings$data$outcome_name) & !settings$data$outcome_type %in% c("survival", "competing_risk")){
     settings$data$outcome_name <- settings$data$outcome_col[1]
     
-  } else if(is.null(settings$data$outcome)){
+  } else if(is.null(settings$data$outcome_col)){
     settings$data$outcome_name <- character(0L)
   }
   

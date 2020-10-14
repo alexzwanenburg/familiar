@@ -172,7 +172,7 @@ summon_familiar <- function(formula=NULL, data=NULL, cl=NULL, config=NULL, confi
   } else {
     is_external_cluster <- FALSE
   }
-
+  
   # Assign objects that should be accessible everywhere to the familiar global
   # environment. Note that .assign_data_to_backend will also start backend
   # server processes.
