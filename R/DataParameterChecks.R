@@ -257,8 +257,8 @@
   if(is.null(settings$data$outcome_name) & !settings$data$outcome_type %in% c("survival", "competing_risk")){
     settings$data$outcome_name <- settings$data$outcome_col[1]
     
-  } else if(is.null(settings$data$outcome_col)){
-    settings$data$outcome_name <- character(0L)
+  } else if(is.null(settings$data$outcome_name)){
+    settings$data$outcome_name <- "outcome"
   }
   
   return(settings)

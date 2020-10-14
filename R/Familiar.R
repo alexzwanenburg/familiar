@@ -116,9 +116,6 @@ summon_familiar <- function(formula=NULL, data=NULL, cl=NULL, config=NULL, confi
   # Update settings
   settings <- .update_initial_settings(formula=formula, data=data, settings=settings)
   
-  # Create a generic outcome object
-  outcome_info <- create_outcome_info(settings=settings)
-  
   # Parse data
   data <- .finish_data_preparation(data = data,
                                    sample_id_column = settings$data$sample_col,
@@ -140,6 +137,9 @@ summon_familiar <- function(formula=NULL, data=NULL, cl=NULL, config=NULL, confi
   
   # Import remaining settings
   settings <- .parse_general_settings(config=config, data=data, settings=settings, ...)
+  
+  # Create a generic outcome object
+  outcome_info <- create_outcome_info(settings=settings)
   
   # Define iterations etc.
   project_info <- .get_iteration_data(file_dir=file_paths$iterations_dir, data=data,
