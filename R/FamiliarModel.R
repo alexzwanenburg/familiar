@@ -441,7 +441,7 @@ setMethod("..set_recalibration_model", signature(object="familiarModel", data="d
 setMethod("..set_risk_stratification_thresholds", signature(object="familiarModel", data="dataObject"),
           function(object, data){
             
-            if(object@outcome_type %in% c("survival")){
+            if(object@outcome_type %in% c("survival", "competing_risk") & model_is_trained(object)){
               object@km_info <- learner.find_survival_grouping_thresholds(object=object, data=data)
             } else {
               object@km_info <- NULL
