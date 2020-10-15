@@ -34,6 +34,10 @@ setMethod(".vimp", signature(object="familiarVimpMethod"),
                                        is_pre_processed=is_pre_processed,
                                        stop_at="clustering")
             
+            # Check again if data is absent because data may not have been
+            # loaded in the check above.
+            if(is_empty(data)) return(get_placeholder_vimp_table())
+            
             # Identify invariant features and remove them.
             invariant_features <- get_feature_columns(x=data)[sapply(get_feature_columns(x=data), function(feature, data) is_singular_data(data[, get(feature)]), data=data@data)]
             
@@ -73,6 +77,10 @@ setMethod(".vimp", signature(object="familiarModel"),
                                        data=data,
                                        is_pre_processed=is_pre_processed,
                                        stop_at="clustering")
+            
+            # Check again if data is absent because data may not have been
+            # loaded in the check above.
+            if(is_empty(data)) return(get_placeholder_vimp_table())
             
             # Identify invariant features and remove them.
             invariant_features <- get_feature_columns(x=data)[sapply(get_feature_columns(x=data), function(feature, data) is_singular_data(data[, get(feature)]), data=data@data)]
