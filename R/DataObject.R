@@ -79,6 +79,7 @@ setMethod("as_data_object", signature(data="ANY"),
           function(data,
                    sample_id_column=waiver(),
                    batch_id_column=waiver(),
+                   series_id_column=waiver(),
                    ...){
             
             # Create a local copy of batch_id_column to pass on to .load_data.
@@ -97,15 +98,25 @@ setMethod("as_data_object", signature(data="ANY"),
               batch_id_column_local <- batch_id_column
             }
             
+            # Create a local copy of series_id_column to pass on to .load_data
+            if(is.waive(series_id_column)){
+              series_id_column_local <- NULL
+              
+            } else {
+              series_id_column_local <- series_id_column
+            }
+            
             # Load data and convert to data.table
             data <- .load_data(data=data,
                                sample_id_column=sample_id_column_local,
-                               batch_id_column=batch_id_column_local)
+                               batch_id_column=batch_id_column_local,
+                               series_id_column=series_id_column_local)
             
             # Pass on to data.table method.
             return(do.call(as_data_object, args=c(list("data"=data,
                                                        "sample_id_column"=sample_id_column,
-                                                       "batch_id_column"=batch_id_column),
+                                                       "batch_id_column"=batch_id_column,
+                                                       "series_id_column"=series_id_column),
                                                   list(...))))
           })
 
@@ -118,8 +129,9 @@ setMethod("extract_settings_from_data", signature(data="dataObject"),
             }
             
             # Sample identifier column
-            settings$data$sample_col <- "subject_id"
-            settings$data$batch_col <- "cohort_id"
+            settings$data$sample_col <- "sample_id"
+            settings$data$batch_col <- "batch_id"
+            settings$data$series_col <- "series_id"
             settings$data$outcome_col <- get_outcome_columns(data)
             settings$data$outcome_type <- data@outcome_type
             settings$data$outcome_name <- get_outcome_name(data@outcome_info)
@@ -585,7 +597,8 @@ setMethod("aggregate_data", signature(data="dataObject"),
               return(data)
             }
             
-            # Identify the columns containing outcome and subject and cohort identifiers
+            # Identify the columns containing outcome, sample, and batch
+            # identifiers.
             id_cols <- get_non_feature_columns(x=data, sample_level_only=TRUE)
             
             # Determine the number of different entries
@@ -901,7 +914,7 @@ setMethod("batch_normalise_features", signature(data="dataObject"),
             # Apply batch-normalisation
             batch_normalised_list <- lapply(feature_columns, function(ii, data, feature_info_list){
               
-              x <- batch_normalise.apply_normalisation(x=data@data[, c(ii, "subject_id", "cohort_id", "repetition_id"), with=FALSE],
+              x <- batch_normalise.apply_normalisation(x=data@data[, mget(c(ii, get_id_columns()))],
                                                        feature_info=feature_info_list[[ii]])
               
               return(x)

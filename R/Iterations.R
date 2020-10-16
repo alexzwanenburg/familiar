@@ -32,31 +32,39 @@
   } else {
   
     # Check whether iter_list already exists as a file
-    iteration_list   <- .load_iterations(file_dir=file_dir)
+    iteration_list <- .load_iterations(file_dir=file_dir)
     
     if(iteration_list$iteration_file_exists){
       
       # Update iterations to check for new external validation data
-      new_iteration_list <- .create_iterations(data=data, experiment_setup=experiment_setup,
-                                               settings=settings, override_external_validation=TRUE,
+      new_iteration_list <- .create_iterations(data=data,
+                                               experiment_setup=experiment_setup,
+                                               settings=settings,
+                                               override_external_validation=TRUE,
                                                iteration_list=iteration_list$iteration_list)
       
       # Save to file and without generating new project id
-      project_id     <- .save_iterations(file_dir=file_dir, iteration_list=new_iteration_list,
-                                         project_id=iteration_list$project_id,
-                                         experiment_setup=experiment_setup)
+      project_id <- .save_iterations(file_dir=file_dir,
+                                     iteration_list=new_iteration_list,
+                                     project_id=iteration_list$project_id,
+                                     experiment_setup=experiment_setup)
       
     } else {
       # Create training and validation data iterations
-      new_iteration_list <- .create_iterations(data=data, experiment_setup=experiment_setup, settings=settings)
+      new_iteration_list <- .create_iterations(data=data,
+                                               experiment_setup=experiment_setup,
+                                               settings=settings)
       
       # Save to file and generate project id
-      project_id     <- .save_iterations(file_dir=file_dir, iteration_list=new_iteration_list,
-                                         experiment_setup=experiment_setup)
+      project_id <- .save_iterations(file_dir=file_dir,
+                                     iteration_list=new_iteration_list,
+                                     experiment_setup=experiment_setup)
     }
   }
   
-  return(list("iter_list"=new_iteration_list, "project_id"=project_id, "experiment_setup"=experiment_setup))
+  return(list("iter_list"=new_iteration_list,
+              "project_id"=project_id,
+              "experiment_setup"=experiment_setup))
 }
 
 
@@ -87,52 +95,52 @@
     iter_files <- list.files(path=file_dir, pattern="*_iterations.RDS", full.names=FALSE)
     
     # If no files match the iteration files, return a FALSE
-    if(length(iter_files) == 0){
-      return (list("iteration_file_exists"=FALSE))
-    }
+    if(length(iter_files) == 0) return(list("iteration_file_exists"=FALSE))
     
     # Extract date strings from file name
-    dt_files <- data.table::data.table("file_name"=iter_files)
-    dt_files[, "file_prefix_num":=paste0(stringi::stri_extract_all_regex(str=file_name, pattern="[0-9]")[[1]], collapse=""), by=file_name]
-    dt_files <- dt_files[!is.na(file_prefix_num),]
+    file_table <- data.table::data.table("file_name"=iter_files)
+    file_table[, "file_prefix_num":=paste0(stringi::stri_extract_all_regex(str=file_name, pattern="[0-9]")[[1]], collapse=""), by=file_name]
+    file_table <- file_table[!is.na(file_prefix_num),]
     
     # If no date strings were found (i.e. backup files), return a FALSE
-    if(nrow(dt_files)==0) {
-      return (list("iteration_file_exists"=FALSE))
-    }
+    if(nrow(file_table)==0) return (list("iteration_file_exists"=FALSE))
     
     # Select most recent file
-    dt_files[, "file_prefix_num":=as.numeric(file_prefix_num)]
+    file_table[, "file_prefix_num":=as.numeric(file_prefix_num)]
     
     # From list of iteration files present in the data.
-    select_file <- dt_files[file_prefix_num==max(file_prefix_num), ]$file_name[1]
-    project_id  <- dt_files[file_prefix_num==max(file_prefix_num), ]$file_prefix_num[1]
+    select_file <- file_table[file_prefix_num==max(file_prefix_num), ]$file_name[1]
+    project_id  <- file_table[file_prefix_num==max(file_prefix_num), ]$file_prefix_num[1]
     
     # Ask whether a new file should be used
     input_answer <- "dummy"
     while(!tolower(input_answer) %in% c("y", "n")){
       input_answer <- readline(prompt=paste0("Latest iteration file found is: ", select_file, ". Do you wish to create a new iterations file [y/n]?: "))
-      if(!tolower(input_answer) %in% c("y", "n")) { message("Only y (yes) or n (no) are valid entries. Please retry.") }
+      if(!tolower(input_answer) %in% c("y", "n")) message("Only y (yes) or n (no) are valid entries. Please retry.")
     }
     
     # If the answer is yes, create a new iterations while
     if(input_answer=="y"){
       return (list("iteration_file_exists"=FALSE))
-    } else {
       
+    } else {
       # If the answer is no: load file
       iteration_list <- readRDS(file=file.path(file_dir, select_file))
       
       # For backward compatibility: iteration_list only contains an iteration_list, but the latter is not nested.
       if(is.null(iteration_list$iteration_list)){
-        return(list("iteration_file_exists"=TRUE, "iteration_list"=iteration_list, "project_id"=project_id))
+        return(list("iteration_file_exists"=TRUE,
+                    "iteration_list"=iteration_list,
+                    "project_id"=project_id))
         
       } else {
-        return(list("iteration_file_exists"=TRUE, "iteration_list"=iteration_list$iteration_list, "project_id"=project_id))
+        return(list("iteration_file_exists"=TRUE,
+                    "iteration_list"=iteration_list$iteration_list,
+                    "project_id"=project_id))
       }
     }
+    
   } else {
-
     # From user-provided iteration file
     select_file <- basename(iteration_file)
     project_id <- as.numeric(paste0(stringi::stri_extract_all_regex(str=select_file, pattern="[0-9]")[[1]], collapse=""))
@@ -155,7 +163,9 @@
            "The most likely cause is that the iteration file was generated with familiar version < 0.0.0.41."))
     }
     
-    return(list("iteration_file_exists"=TRUE, "iteration_list"=iteration_list$iteration_list, "project_id"=project_id,
+    return(list("iteration_file_exists"=TRUE,
+                "iteration_list"=iteration_list$iteration_list,
+                "project_id"=project_id,
                 "experiment_setup"=iteration_list$experiment_setup))
   }
 }
@@ -164,7 +174,7 @@
 .create_iterations <- function(data, experiment_setup, settings, override_external_validation=FALSE, iteration_list=NULL){
 
   # Suppress NOTES due to non-standard evaluation in data.table
-  main_data_id <- cohort_id <- subject_id <- NULL
+  main_data_id <- batch_id <- sample_id <- NULL
   
   # Get unique main data ids
   main_data_ids <- unique(experiment_setup$main_data_id)
@@ -177,62 +187,73 @@
     logger.message("Creating iterations: Starting creation of iterations.")
     
     while(length(iteration_list) < length(main_data_ids)){
+      
       for(curr_main_data_id in main_data_ids){
-        dt_sub              <- experiment_setup[main_data_id==curr_main_data_id, ]
+        # Set up the subset_table
+        subset_table <- experiment_setup[main_data_id==curr_main_data_id, ]
         
         # Check if the current data has already been processed
-        if(!is.null(iteration_list[[as.character(curr_main_data_id)]])) { next() }
+        if(!is.null(iteration_list[[as.character(curr_main_data_id)]])) next()
         
         # Check if the required reference data exists
-        curr_ref_data_id    <- dt_sub$ref_data_id[1]
-        curr_pert_method    <- dt_sub$perturb_method[1]
-        if(is.null(iteration_list[[as.character(curr_ref_data_id)]]) & curr_pert_method!="main" ) {
-          next()
-        }
+        curr_ref_data_id <- subset_table$ref_data_id[1]
+        curr_pert_method <- subset_table$perturb_method[1]
+        if(is.null(iteration_list[[as.character(curr_ref_data_id)]]) & curr_pert_method != "main" ) next()
         
         # Determine number of reference iterations
-        ref_run_list        <- getRunList(iter_list=iteration_list, data_id=curr_ref_data_id)
+        ref_run_list <- .get_run_list(iteration_list=iteration_list,
+                                      data_id=curr_ref_data_id)
         
         # Create an empty run list
-        run_list            <- list()
+        run_list <- list()
         
         # Check if the current perturbation method is "main"
-        if(curr_pert_method=="main"){
+        if(curr_pert_method == "main"){
           ##### New main data ###########################################
           
           # Determine if external validation is required
-          ext_val_required  <- dt_sub$external_validation[1]
+          external_validation_required <- subset_table$external_validation[1]
           
-          # In case of external validation, find cohorts matching the train_cohorts
-          all_cohorts       <- unique(data$cohort_id)
+          # In case of external validation, find cohorts matching the
+          # train_cohorts.
+          all_cohorts <- unique(data$batch_id)
           
           # Check whether the requested train cohorts are provided
-          if(is.null(settings$data$train_cohorts) & ext_val_required) {
+          if(is.null(settings$data$train_cohorts) & external_validation_required) {
             logger.stop("Creating iterations: Training cohorts were not provided, but are required for external validation.")
+            
           } else if (is.null(settings$data$train_cohorts)) {
-            # Assume that all data is used for training when external validation is not required, but no specific cohorts are specified.
-            train_cohorts <- unique(data$cohort_id)
+            # Assume that all data is used for training when external validation
+            # is not required, but no specific cohorts are specified.
+            train_cohorts <- unique(data$batch_id)
+            
           } else {
             # This is the ideal situation: training cohort names are provided.
-            train_cohorts     <- settings$data$train_cohorts
-            if(!all(train_cohorts %in% all_cohorts)){ logger.warning(paste0("Creating iterations: Cohorts ", vectorAsString(ref_names=train_cohorts[!train_cohorts %in% all_cohorts]), " were not found in the data table.")) }
+            train_cohorts <- settings$data$train_cohorts
+            
+            # Check if all training cohorts actually exist.
+            if(!all(train_cohorts %in% all_cohorts)) ..warning_missing_cohorts(x=train_cohorts[!train_cohorts %in% all_cohorts])
           }
           
           # Handle validation cohorts
-          if(ext_val_required==TRUE){
-            # Check whether validation cohorts are provided
+          if(external_validation_required==TRUE){
+            # Check whether validation cohorts are provided.
             if(!is.null(settings$data$valid_cohorts)) {
-              # Extract validation cohorts from settings
-              valid_cohorts <- settings$data$valid_cohorts
-              if(!all(valid_cohorts %in% all_cohorts)){ logger.warning(paste0("Creating iterations: Cohorts ", vectorAsString(ref_names=valid_cohorts[!valid_cohorts %in% all_cohorts]), " were not found in the data table.")) }
+              # Extract validation cohorts from settings.
+              validation_cohorts <- settings$data$valid_cohorts
+              
+              # Check if all validation cohorts actually exist.
+              if(!all(validation_cohorts %in% all_cohorts)) ..warning_missing_cohorts(x=validation_cohorts[!validation_cohorts %in% all_cohorts])
+
             } else {
               # Extract validation cohorts from data
-              valid_cohorts <- all_cohorts[!all_cohorts %in% train_cohorts]
-              if(length(valid_cohorts)==0){ logger.warning("Creating iterations: No validation cohorts could be found.") }
+              validation_cohorts <- all_cohorts[!all_cohorts %in% train_cohorts]
+              if(length(validation_cohorts)==0) logger.warning("Creating iterations: No validation cohorts could be found.")
             }
+            
           } else {
             # Don't use validation cohorts if only training data is available
-            valid_cohorts   <- character()
+            validation_cohorts <- character()
           }
           
           # Extract lists of training and validation subjects
@@ -240,38 +261,45 @@
           valid_samples <- list()
           
           # Add training cohort subjects to train_samples
-          train_samples[[1]]   <- unique(data[cohort_id %in% train_cohorts, subject_id])
+          train_samples[[1]] <- unique(data[batch_id %in% train_cohorts, c("batch_id", "sample_id", "series_id")])
           
           # Add validation cohort subjects to valid_samples (if present)
-          if(length(valid_cohorts)>0){
-            valid_samples[[1]] <- unique(data[cohort_id %in% valid_cohorts, subject_id])
+          if(length(validation_cohorts)>0){
+            valid_samples[[1]] <- unique(data[batch_id %in% validation_cohorts, c("batch_id", "sample_id", "series_id")])
           }
           
           # Generate a run list for the "main" data perturbation
-          run_list <- .create_iteration_run_list(data_id=curr_main_data_id, train_samples=train_samples, valid_samples=valid_samples,
-                                                 can_pre_process=TRUE, perturbation=curr_pert_method)
+          run_list <- .create_iteration_run_list(data_id=curr_main_data_id,
+                                                 train_samples=train_samples,
+                                                 valid_samples=valid_samples,
+                                                 can_pre_process=TRUE,
+                                                 perturbation=curr_pert_method)
           
           # Clean variables
-          rm(ext_val_required, train_cohorts, train_samples, valid_cohorts, valid_samples)
+          rm(external_validation_required, train_cohorts, train_samples, validation_cohorts, valid_samples)
         }
         
         # Check if the current perturbation method is "imbalance part"
         if(curr_pert_method=="imbalance_part"){
           ##### New imbalance partitions ###########################################
-          
+          browser()
           # Iterate over runs of the reference data
           for(run in ref_run_list){
-            # Generate partitations for generating balanced data sets. Note that these partitations
-            # do not generate any validation data
-            partition <- .create_balanced_partitions(sample_identifiers=getSubjectIDs(run=run, train_or_validate="train"),
+            # Generate partitions for generating balanced data sets. Note that
+            # these partitions do not generate any validation data.
+            partition <- .create_balanced_partitions(sample_identifiers=.get_sample_identifiers(run=run, train_or_validate="train"),
                                                      settings=settings,
                                                      data=data)
             
             # Append runs to the run list
             run_list <- append(run_list,
-                               .add_iteration_to_run(run, data_id=curr_main_data_id, run_id_offset=length(run_list),
-                                                     train_samples=partition, valid_samples=list(),
-                                                     can_pre_process=TRUE, perturbation=curr_pert_method))
+                               .add_iteration_to_run(run,
+                                                     data_id=curr_main_data_id,
+                                                     run_id_offset=length(run_list),
+                                                     train_samples=partition,
+                                                     valid_samples=list(),
+                                                     can_pre_process=TRUE,
+                                                     perturbation=curr_pert_method))
           }
           
           # Clean variables
@@ -284,20 +312,26 @@
           ##### New bootstrap data ###########################################
           
           # Determine number of bootstrap iterations
-          n_iter            <- dt_sub$perturb_n_rep[1]
+          n_iter <- subset_table$perturb_n_rep[1]
           
           # Iterate over runs of the reference data
           for(run in ref_run_list){
-            # Create bootstraps. Bootstraps contain both training and validation data.
-            # However, they are not separately pre-processed.
-            bt_iter_list <- .create_bootstraps(sample_identifiers=getSubjectIDs(run=run, train_or_validate="train"),
-                                               n_iter=n_iter, settings=settings, data=data)
+            # Create bootstraps. Bootstraps contain both training and validation
+            # data. However, they are not separately pre-processed.
+            bt_iter_list <- .create_bootstraps(sample_identifiers=.get_sample_identifiers(run=run, train_or_validate="train"),
+                                               n_iter=n_iter,
+                                               settings=settings,
+                                               data=data)
             
             # Append runs to the run list
             run_list <- append(run_list,
-                               .add_iteration_to_run(run, data_id=curr_main_data_id, run_id_offset=length(run_list),
-                                                     train_samples=bt_iter_list$train_list, valid_samples=bt_iter_list$valid_list,
-                                                     can_pre_process=FALSE, perturbation=curr_pert_method))
+                               .add_iteration_to_run(run,
+                                                     data_id=curr_main_data_id,
+                                                     run_id_offset=length(run_list),
+                                                     train_samples=bt_iter_list$train_list,
+                                                     valid_samples=bt_iter_list$valid_list,
+                                                     can_pre_process=FALSE,
+                                                     perturbation=curr_pert_method))
           }
           
           # Clean variables
@@ -310,20 +344,27 @@
           ##### New cross-validation data ###########################################
           
           # Determine number of cross-validation repetitions and folds
-          n_rep            <- dt_sub$perturb_n_rep[1]
-          n_folds          <- dt_sub$perturb_n_folds[1]
+          n_rep            <- subset_table$perturb_n_rep[1]
+          n_folds          <- subset_table$perturb_n_folds[1]
           
           # Iterate over runs of the reference data
           for(run in ref_run_list){
             # Create repeated cross-validations
-            cv_iter_list <- .create_repeated_cv(sample_identifiers=getSubjectIDs(run=run, train_or_validate="train"),
-                                                n_rep=n_rep, n_folds=n_folds, settings=settings, data=data)
+            cv_iter_list <- .create_repeated_cv(sample_identifiers=.get_sample_identifiers(run=run, train_or_validate="train"),
+                                                n_rep=n_rep,
+                                                n_folds=n_folds,
+                                                settings=settings,
+                                                data=data)
             
             # Append runs to the run list
             run_list <- append(run_list,
-                               .add_iteration_to_run(run, data_id=curr_main_data_id, run_id_offset=length(run_list),
-                                                     train_samples=cv_iter_list$train_list, valid_samples=cv_iter_list$valid_list,
-                                                     can_pre_process=TRUE, perturbation=curr_pert_method))
+                               .add_iteration_to_run(run,
+                                                     data_id=curr_main_data_id,
+                                                     run_id_offset=length(run_list),
+                                                     train_samples=cv_iter_list$train_list,
+                                                     valid_samples=cv_iter_list$valid_list,
+                                                     can_pre_process=TRUE,
+                                                     perturbation=curr_pert_method))
             
           }
           # Clean variables
@@ -338,8 +379,8 @@
           # Iterate over runs of the reference data
           for(run in ref_run_list){
             # Get subjectIDs
-            sample_ids <- getSubjectIDs(run=run, train_or_validate="train")
-            n_samples <- data.table::uniqueN(sample_ids)
+            sample_ids <- .get_sample_identifiers(run=run, train_or_validate="train")
+            n_samples <- data.table::uniqueN(sample_ids$sample_id)
             
             # Create repeated cross-validations
             cv_iter_list <- .create_cv(sample_identifiers=sample_ids,
@@ -350,9 +391,13 @@
             
             # Append runs to the run list
             run_list  <- append(run_list,
-                                .add_iteration_to_run(run, data_id=curr_main_data_id, run_id_offset=length(run_list),
-                                                      train_samples=cv_iter_list$train_list, valid_samples=cv_iter_list$valid_list,
-                                                      can_pre_process=TRUE, perturbation=curr_pert_method))
+                                .add_iteration_to_run(run,
+                                                      data_id=curr_main_data_id,
+                                                      run_id_offset=length(run_list),
+                                                      train_samples=cv_iter_list$train_list,
+                                                      valid_samples=cv_iter_list$valid_list,
+                                                      can_pre_process=TRUE,
+                                                      perturbation=curr_pert_method))
           }
           
           # Clean variables
@@ -360,7 +405,8 @@
         }
         
         # Add to iteration list
-        iteration_list[[as.character(curr_main_data_id)]] <- list("run"=run_list, "main_data_id"=curr_main_data_id)
+        iteration_list[[as.character(curr_main_data_id)]] <- list("run"=run_list,
+                                                                  "main_data_id"=curr_main_data_id)
         
         # Clean variables
         rm(run_list, ref_run_list, curr_main_data_id)
@@ -369,38 +415,48 @@
     
     logger.message("Creating iterations: Finished creation of iterations.")
     
-  } else if(override_external_validation==TRUE) {
-    if(is.null(iteration_list)) { stop("iteration_list should be provided.") }
+  } else if(override_external_validation) {
+    
+    if(is.null(iteration_list)) stop("iteration_list should be provided.")
     ##### Update external validation iterations #####
     
     # Update external validation
     # Determine if external validation is required and skip otherwise
-    ext_val_required  <- experiment_setup[main_data_id==1, ]$external_validation[1]
-    if(ext_val_required==TRUE){
+    external_validation_required  <- experiment_setup[main_data_id==1, ]$external_validation[1]
+    if(external_validation_required){
       
       # In case of external validation, find cohorts matching the train_cohorts
-      all_cohorts       <- unique(data$cohort_id)
+      all_cohorts <- unique(data$batch_id)
       
       # Check whether validation cohorts are provided
       if(!is.null(settings$data$valid_cohorts)) {
         # Extract validation cohorts from settings
-        valid_cohorts <- settings$data$valid_cohorts
-        if(!all(valid_cohorts %in% all_cohorts)){ logger.warning(paste0("Creating iterations: Cohorts ", vectorAsString(ref_names=valid_cohorts[!valid_cohorts %in% all_cohorts]), " were not found in the data table.")) }
+        validation_cohorts <- settings$data$valid_cohorts
+        if(!all(validation_cohorts %in% all_cohorts)){
+          ..warning_missing_cohorts(x=validation_cohorts[!validation_cohorts %in% all_cohorts])
+        }
+        
       } else {
         # Extract validation cohorts from data by selecting all non-training cohorts
-        if(is.null(settings$data$train_cohorts)) { logger.stop("Creating iterations: Training cohorts were not provided.") }
+        if(is.null(settings$data$train_cohorts)) {
+          logger.stop("Creating iterations: Training cohorts were not provided.")
+        }
         
         # Extract train cohorts from settings
         train_cohorts     <- settings$data$train_cohorts
-        if(!all(train_cohorts %in% all_cohorts)){ logger.warning(paste0("Creating iterations: Cohorts ", vectorAsString(ref_names=train_cohorts[!train_cohorts %in% all_cohorts]), " were not found in the data table.")) }
+        if(!all(train_cohorts %in% all_cohorts)){
+          ..warning_missing_cohorts(x=train_cohorts[!train_cohorts %in% all_cohorts])
+        }
         
         # Extract validation cohorts from data
-        valid_cohorts <- all_cohorts[!all_cohorts %in% train_cohorts]
-        if(length(valid_cohorts)==0){ logger.warning("Creating iterations: No validation cohorts could be found.") }
+        validation_cohorts <- all_cohorts[!all_cohorts %in% train_cohorts]
+        if(length(validation_cohorts)==0){
+          logger.warning("Creating iterations: No validation cohorts could be found.")
+        }
       }
       
       # Update validation subjects to iter list
-      iteration_list[[as.character(1)]]$run[[as.character(1)]]$valid_samples <- unique(data[cohort_id %in% valid_cohorts, subject_id])
+      iteration_list[[as.character(1)]]$run[[as.character(1)]]$valid_samples <- unique(data[batch_id %in% validation_cohorts, c("batch_id", "sample_id", "series_id")])
       
     } else {
       # Remove external validation subject
@@ -414,7 +470,8 @@
 
 
 .save_iterations <- function(file_dir, iteration_list, project_id=NULL, experiment_setup) {
-  # Check if an existing project identifier is provided, otherwise generate a new one
+  # Check if an existing project identifier is provided, otherwise generate a
+  # new one.
   if(is.null(project_id)){
     # Generate project id from system time
     project_id <- as.numeric(format(Sys.time(),"%Y%m%d%H%M%S"))
@@ -443,28 +500,32 @@
 
   # Start an empty run list
   run_list <- list()
-
+  
   for(ii in seq_len(length(train_samples))){
 
     # Create new run table
-    dt_run <- data.table::data.table("data_id"=data_id,
-                                     "run_id"=ii,
-                                     "can_pre_process"=can_pre_process,
-                                     "perturbation"=perturbation,
-                                     "perturb_level"=1)
-
-    # Add run to list
-    run_list[[as.character(ii)]]$run_table       <- dt_run
-    run_list[[as.character(ii)]]$train_samples   <- train_samples[[ii]]
+    run_table <- data.table::data.table("data_id"=data_id,
+                                        "run_id"=ii,
+                                        "can_pre_process"=can_pre_process,
+                                        "perturbation"=perturbation,
+                                        "perturb_level"=1)
+    
+    # Add run_table to the list.
+    run_list[[as.character(ii)]]$run_table <- run_table
+    
+    # Add samples for model development to the list.
+    run_list[[as.character(ii)]]$train_samples <- train_samples[[ii]]
+    
+    # Add validation samples to the list.
     if(length(valid_samples) >= ii){
       run_list[[as.character(ii)]]$valid_samples <- valid_samples[[ii]]
+      
     } else {
       run_list[[as.character(ii)]]$valid_samples <- NULL
     }
   }
 
   return(run_list)
-
 }
 
 
@@ -534,7 +595,7 @@
   # Cross-validation
 
   # Suppress NOTES due to non-standard evaluation in data.table
-  subject_id <- outcome <- fold_id <- NULL
+  sample_id <- outcome <- fold_id <- NULL
 
   # Set outcome_type from settings
   if(is.null(outcome_type)) {
@@ -555,50 +616,50 @@
   # sample_identifiers exist, only unique sample_identifiers are maintained.
   # This is intentional behaviour.
   if(stratify==FALSE){
-    dt_sub <- unique(data[subject_id %in% sample_identifiers, c("subject_id")])
+    subset_table <- unique(data[sample_id %in% sample_identifiers, c("sample_id")])
     
   } else if(outcome_type=="survival") {
     # For stratifying survival data we require the event status.
     # Event status (including NA) are transcoded.
-    dt_sub <- unique(data[subject_id %in% sample_identifiers, c("subject_id", "outcome_event")])
-    setnames(dt_sub, "outcome_event", "outcome")
+    subset_table <- unique(data[sample_id %in% sample_identifiers, c("sample_id", "outcome_event")])
+    setnames(subset_table, "outcome_event", "outcome")
     
     # Transcode event status
-    dt_sub[, "outcome":=factor(outcome)]
-    dt_sub$outcome <- addNA(dt_sub$outcome, ifany=TRUE)
-    dt_sub$outcome <- as.numeric(dt_sub$outcome)
+    subset_table[, "outcome":=factor(outcome)]
+    subset_table$outcome <- addNA(subset_table$outcome, ifany=TRUE)
+    subset_table$outcome <- as.numeric(subset_table$outcome)
     
   } else if(outcome_type %in% c("binomial", "multinomial")) {
     # For stratifying categorical data we require the outcome data as is.
     # Redundant factors are dropped and remaining factors (including NA) are transcoded
-    dt_sub <- unique(data[subject_id %in% sample_identifiers, c("subject_id", "outcome")])
+    subset_table <- unique(data[sample_id %in% sample_identifiers, c("sample_id", "outcome")])
     
     # Transcode class level
-    dt_sub$outcome <- addNA(dt_sub$outcome, ifany=TRUE)
-    dt_sub$outcome <- droplevels(dt_sub$outcome)
-    dt_sub$outcome <- as.numeric(dt_sub$outcome)
+    subset_table$outcome <- addNA(subset_table$outcome, ifany=TRUE)
+    subset_table$outcome <- droplevels(subset_table$outcome)
+    subset_table$outcome <- as.numeric(subset_table$outcome)
     
   } else if(outcome_type == "competing_risk") {
     ..error_outcome_type_not_implemented(outcome_type)
   }
 
   # Check if the number of folds exceeds the number of data points
-  if(n_folds > nrow(dt_sub)) {
+  if(n_folds > nrow(subset_table)) {
     stop("Number of cross-validation folds exceeds the number of available data points." )
     
   } else if(stratify==TRUE){
     # Determine levels in stratified data
-    if(n_folds > nrow(dt_sub) - data.table::uniqueN(dt_sub$outcome) + 1){
+    if(n_folds > nrow(subset_table) - data.table::uniqueN(subset_table$outcome) + 1){
       warning("Cannot perform stratified cross-validation as the number of folds is too high.")
       stratify <- FALSE
     }
   }
   
   # Add fold id to each entry
-  dt_sub[, "fold_id":=0]
+  subset_table[, "fold_id":=0]
 
   # Determine fold size
-  fold_size <- nrow(dt_sub) %/% n_folds
+  fold_size <- nrow(subset_table) %/% n_folds
 
   # Initiate training and validation lists
   train_list <- list(); valid_list <- list()
@@ -607,64 +668,64 @@
     # For unstratified data
     for(ii in 1:n_folds){
       # Consider available data points
-      dt_unassigned <- dt_sub[fold_id==0,]
+      dt_unassigned <- subset_table[fold_id==0,]
 
       # Choose subject id for current fold
-      curr_sample_identifiers <- fam_sample(x=dt_unassigned$subject_id, size=fold_size, replace=FALSE)
+      curr_sample_identifiers <- fam_sample(x=dt_unassigned$sample_id, size=fold_size, replace=FALSE)
 
       # Update data table with fold id
-      dt_sub[subject_id %in% curr_sample_identifiers, "fold_id":=as.double(ii)]
+      subset_table[sample_id %in% curr_sample_identifiers, "fold_id":=as.double(ii)]
     }
 
     # Update remaining data points by random assignment to a fold
-    n_unassigned <- nrow(dt_sub[fold_id==0,])
+    n_unassigned <- nrow(subset_table[fold_id==0,])
     if(n_unassigned>0){
-      dt_sub[fold_id==0, "fold_id":=as.double(sample.int(n_folds, size=n_unassigned, replace=FALSE))]
+      subset_table[fold_id==0, "fold_id":=as.double(sample.int(n_folds, size=n_unassigned, replace=FALSE))]
     }
 
     # Assign training and validation folds
     for(ii in 1:n_folds){
-      train_id <- dt_sub[fold_id!=ii,]$subject_id
-      valid_id <- dt_sub[fold_id==ii,]$subject_id
+      train_id <- subset_table[fold_id!=ii,]$sample_id
+      valid_id <- subset_table[fold_id==ii,]$sample_id
 
       train_list[[ii]] <- train_id
       valid_list[[ii]] <- valid_id
     }
   } else {
     # For stratified data
-    unique_levels <- unique(dt_sub$outcome)
+    unique_levels <- unique(subset_table$outcome)
     for(jj in unique_levels){
       # Get fold size for the available data points
-      level_fold_size <- nrow(dt_sub[outcome==jj, ]) %/% n_folds
+      level_fold_size <- nrow(subset_table[outcome==jj, ]) %/% n_folds
 
       if(level_fold_size>0){
         for(ii in 1:n_folds){
           # Consider available data points
-          dt_unassigned <- dt_sub[fold_id==0 & outcome==jj,]
+          dt_unassigned <- subset_table[fold_id==0 & outcome==jj,]
 
           # Choose subject id for current fold
-          curr_sample_identifiers <- fam_sample(x=dt_unassigned$subject_id, size=level_fold_size, replace=FALSE)
+          curr_sample_identifiers <- fam_sample(x=dt_unassigned$sample_id, size=level_fold_size, replace=FALSE)
 
           # Update data table with fold id
-          dt_sub[subject_id %in% curr_sample_identifiers, "fold_id":=as.double(ii)]
+          subset_table[sample_id %in% curr_sample_identifiers, "fold_id":=as.double(ii)]
         }
         # Update remaining data points by random assignment to a fold
-        n_unassigned <- nrow(dt_sub[fold_id==0 & outcome==jj,])
+        n_unassigned <- nrow(subset_table[fold_id==0 & outcome==jj,])
         if(n_unassigned>0){
-          dt_sub[fold_id==0 & outcome==jj, "fold_id":=as.double(sample.int(n_folds, size=n_unassigned, replace=FALSE))]
+          subset_table[fold_id==0 & outcome==jj, "fold_id":=as.double(sample.int(n_folds, size=n_unassigned, replace=FALSE))]
         }
       }
     }
 
     # Assign to training and validation sets
     for(ii in 1:n_folds){
-      train_id <- dt_sub[fold_id!=ii,]$subject_id
-      valid_id <- dt_sub[fold_id==ii,]$subject_id
+      train_id <- subset_table[fold_id!=ii,]$sample_id
+      valid_id <- subset_table[fold_id==ii,]$sample_id
 
       # Assign rare outcomes
       for(jj in unique_levels){
         # Get unassigned subject ids for the current outcome category: these are rare categories that occur less than n_folds times
-        unassigned_id  <- dt_sub[fold_id==0 & outcome==jj,]$subject_id
+        unassigned_id  <- subset_table[fold_id==0 & outcome==jj,]$sample_id
 
         # Do not assign if there are none or 1 instances to assign
         if(length(unassigned_id)<2){ next() }
@@ -681,7 +742,7 @@
   
   if(return_fold_id==TRUE){
     
-    return(dt_sub)
+    return(subset_table)
     
   } else {
     
@@ -694,48 +755,57 @@
 .create_bootstraps <- function(sample_identifiers, n_iter, settings=NULL, outcome_type=NULL, data=NULL, stratify=TRUE){
 
   # Suppress NOTES due to non-standard evaluation in data.table
-  subject_id <- outcome <- NULL
-
+  sample_id <- outcome <- NULL
+  browser()
   # Set outcome_type from settings
-  if(is.null(outcome_type)) {
-    outcome_type <- settings$data$outcome_type
-  }
+  if(is.null(outcome_type)) outcome_type <- settings$data$outcome_type
 
   # Check stratification for continuous data
-  if(outcome_type %in% c("continuous", "count")){
-    stratify <- FALSE
-  }
+  if(outcome_type %in% c("continuous", "count")) stratify <- FALSE
   
   # Check stratification for absent data
-  if(is.null(data)) {
-    stratify <- FALSE
-  }
+  if(is_empty(data)) stratify <- FALSE
 
-  # Select data based on subject id - note that even if duplicate sample_identifiers exist,
-  # only unique sample_identifiers are maintained - this is intentional.
-  if(stratify==FALSE){
-    dt_sub <- unique(data[subject_id %in% sample_identifiers, c("subject_id")])
+  if(!stratify){
+    # Select data based on sample id - note that even if duplicate
+    # sample_identifiers exist, only unique sample_identifiers are maintained -
+    # this is intentional.
+    subset_table <- merge(x=unique(data[, c("batch_id", "sample_id", "series_id")]),
+                          y=sample_identifiers,
+                          by=c("batch_id", "sample_id", "series_id"),
+                          all=FALSE)
     
-  } else if(outcome_type=="survival") {
+  } else if(outcome_type == "survival") {
     # For stratifying survival data we require the event status.
     # Event status (including NA) are transcoded.
-    dt_sub <- unique(data[subject_id %in% sample_identifiers, c("subject_id", "outcome_event")])
-    setnames(dt_sub, "outcome_event", "outcome")
+    subset_table <- merge(x=unique(data[, c("batch_id", "sample_id", "series_id", "outcome_event")]),
+                          y=sample_identifiers,
+                          by=c("batch_id", "sample_id", "series_id"),
+                          all=FALSE)
+    
+    # subset_table <- unique(data[sample_id %in% sample_identifiers, c("sample_id", "outcome_event")])
+    data.table::setnames(subset_table, "outcome_event", "outcome")
     
     # Transcode event status
-    dt_sub[, "outcome":=factor(outcome)]
-    dt_sub$outcome <- addNA(dt_sub$outcome, ifany=TRUE)
-    dt_sub$outcome <- as.numeric(dt_sub$outcome)
+    subset_table[, "outcome":=factor(outcome)]
+    subset_table$outcome <- addNA(subset_table$outcome, ifany=TRUE)
+    subset_table$outcome <- as.numeric(subset_table$outcome)
     
   } else if(outcome_type %in% c("binomial", "multinomial")){
     # For stratifying categorical data we require the outcome data as is.
-    # Redundant factors are dropped and remaining factors (including NA) are transcoded
-    dt_sub <- unique(data[subject_id %in% sample_identifiers, c("subject_id", "outcome")])
+    # Redundant factors are dropped and remaining factors (including NA) are
+    # transcoded
+    subset_table <- merge(x=unique(data[, c("batch_id", "sample_id", "series_id", "outcome")]),
+                          y=sample_identifiers,
+                          by=c("batch_id", "sample_id", "series_id"),
+                          all=FALSE)
+    
+    # subset_table <- unique(data[sample_id %in% sample_identifiers, c("sample_id", "outcome")])
     
     # Transcode classes
-    dt_sub$outcome <- addNA(dt_sub$outcome, ifany=TRUE)
-    dt_sub$outcome <- droplevels(dt_sub$outcome)
-    dt_sub$outcome <- as.numeric(dt_sub$outcome)
+    subset_table$outcome <- addNA(subset_table$outcome, ifany=TRUE)
+    subset_table$outcome <- droplevels(subset_table$outcome)
+    subset_table$outcome <- as.numeric(subset_table$outcome)
     
   } else if(outcome_type=="competing_risk"){
     ..error_no_known_outcome_type(outcome_type)
@@ -749,9 +819,9 @@
   ii <- jj <- 1
   while(ii <= n_iter & jj <= 2 * n_iter){
 
-    if(stratify==FALSE){
+    if(!stratify){
       # Sample training data with replacement
-      train_id <- fam_sample(x=dt_sub$subject_id, size=nrow(dt_sub), replace=TRUE)
+      train_id <- fam_sample(x=subset_table$sample_id, size=nrow(subset_table), replace=TRUE)
 
       # Determine out-of-bag data (no overlap with training subject ids)
       valid_id <- unique(sample_identifiers[!sample_identifiers %in% train_id])
@@ -771,11 +841,32 @@
       train_id <- NULL
 
       # Iterate over different outcome levels and bootstrap
-      unique_levels <- unique(dt_sub$outcome)
+      unique_levels <- unique(subset_table$outcome)
+      
+      # TODO: Check how this interacts with series_id. We want to prevent
+      #enlarging the training set, while at the same time keeping samples from
+      #ending up in both training and validation.
+      
+      # TODO: Change fam_sample to additionally select from data.tables.
+      
+      browser()
+      
+      # The approach used here does the following:
+      #
+      # * The frequency of each outcome is determined.
+      #
+      # * Outcome levels are randomly ordered, and iterated over.
+      #
+      # * Samples are drawn for this level, up to the frequency for the
+      # particular outcome.
+      #
+      # * Corresponding samples are made unavailable for further selection. The
+      # frequency of each outcome is updated, by subtracting those already
+      # present.
       
       for(curr_level in unique_levels){
         # Find the sample identifiers for the current class/event status
-        level_sample_identifiers <- dt_sub[outcome==curr_level, ]$subject_id
+        level_sample_identifiers <- subset_table[outcome==curr_level, ]$sample_id
         
         # Sample samples with replacement for the current class/event status
         train_id <- c(train_id,
@@ -815,7 +906,7 @@
   # Methods to address class imbalance
 
   # Suppress NOTES due to non-standard evaluation in data.table
-  subject_id <- class_id <- N <- base_samples <- part_id <- NULL
+  sample_id <- class_id <- N <- base_samples <- part_id <- NULL
 
   # Class imbalance should only be addressed if the outcome data is categorical.
   if(!settings$data$outcome_type %in% c("binomial", "multinomial")){
@@ -824,14 +915,14 @@
 
   # For creating imbalance partitions based on categorical data we require the outcome data as is.
   # Redundant factors are dropped and remaining factors (including NA) are transcoded
-  dt_sub         <- unique(data[subject_id %in% sample_identifiers, c("subject_id", "outcome")])
-  dt_sub$outcome <- addNA(dt_sub$outcome, ifany=TRUE)
-  dt_sub$outcome <- droplevels(dt_sub$outcome)
-  dt_sub$outcome <- as.numeric(dt_sub$outcome)
-  data.table::setnames(dt_sub, "outcome", "class_id")
+  subset_table         <- unique(data[sample_id %in% sample_identifiers, c("sample_id", "outcome")])
+  subset_table$outcome <- addNA(subset_table$outcome, ifany=TRUE)
+  subset_table$outcome <- droplevels(subset_table$outcome)
+  subset_table$outcome <- as.numeric(subset_table$outcome)
+  data.table::setnames(subset_table, "outcome", "class_id")
 
   # Count the number of class instances
-  dt_class_count <- dt_sub[, .N, by=class_id]
+  dt_class_count <- subset_table[, .N, by=class_id]
 
   if(settings$data$imbalance_method %in% c("full_undersampling", "random_undersampling")){
     # Create empty train_list
@@ -883,7 +974,7 @@
     dt_part[, "random_samples":=n_small-base_samples]
 
     # Start the drawing process
-    dt_sub[, "part_id":=0]
+    subset_table[, "part_id":=0]
 
     # Iterate over partition_id to add subjects to the trainlist
     for(ii in partition_id){
@@ -895,10 +986,10 @@
 
         if(n_base_samples > 0){
           # Randomly select up to n_base_samples subject ids with the current class that were not selected before.
-          base_subjects   <- fam_sample(x=dt_sub[class_id==jj & part_id==0]$subject_id, size=n_base_samples, replace=FALSE)
+          base_subjects   <- fam_sample(x=subset_table[class_id==jj & part_id==0]$sample_id, size=n_base_samples, replace=FALSE)
 
-          # Mark selected base subjects in dt_sub
-          dt_sub[subject_id %in% base_subjects, "part_id":=ii]
+          # Mark selected base subjects in subset_table
+          subset_table[sample_id %in% base_subjects, "part_id":=ii]
         } else {
           base_subjects   <- character(0)
         }
@@ -908,7 +999,7 @@
 
         if(n_random_samples > 0){
           # Randomly select up to n_random_samples subject ids with the current class that were not selected for this partition
-          random_subjects <- fam_sample(x=dt_sub[class_id==jj & part_id!=ii]$subject_id, size=n_random_samples, replace=FALSE)
+          random_subjects <- fam_sample(x=subset_table[class_id==jj & part_id!=ii]$sample_id, size=n_random_samples, replace=FALSE)
         } else {
           random_subjects <- character(0)
         }

@@ -1,13 +1,19 @@
 # Development
 
 ## Major changes:
-* Added novelty detection. This required new attributes for several objects. Changes are **not backward compatible**:
-    * Added novelty_features parameter that can be used to specify features that should be used for novelty detection.
+* Added novelty detection:
+    * Added `novelty_features` parameter that can be used to specify features that should be used for novelty detection.
+* Added `show` methods for objects that are typically written to drive, such as familiarModel, familiarEnsemble, familiarData and familiarCollection objects.
+* Added `update_object` methods that allow for backward compatibility when updating slots of respective objects.
 
 ## Minor changes:
-* The default method for bootstrap confidence intervals (bootstrap_ci_method) is now the percentile method, which replaces the bias-corrected (bc) method.
+* The default method for bootstrap confidence intervals (`bootstrap_ci_method`) is now the percentile (`percentile`) method, which replaces the bias-corrected (`bc`) method.
 * The value returned for the bias-corrected bootstrap confidence interval method is now the bias-corrected median, not the point estimate. This harmonises the behaviour of the percentile and bias-corrected confidence interval methods. The bias-corrected median can be viewed as an optimism correction of the point estimate.
 
+## Bug fixes:
+* Fixed an error that would cause hyperparameter optimisation to not select the optimal set of hyperparameters.
+* Fixed an error that would cause feature selection to fail when all features in the data are also set to be in the signature.
+* Fixed an error that occurred when attempting to create risk groups from models that were not successfully trained.
 
 # Version 0.0.0.53 (Pre-release)
 

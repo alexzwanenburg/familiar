@@ -121,7 +121,7 @@ determine_pre_processing_parameters <- function(cl, data_id, run_id){
   
   ##### Remove samples with missing outcome data #####
   if(verbose){
-    n_samples_current <- uniqueN(data@data, by=c("subject_id", "cohort_id"))
+    n_samples_current <- uniqueN(data@data, by=c("sample_id", "batch_id"))
     logger.message(paste0("Pre-processing: ", n_samples_current, " samples were initially available."))
   }
   
@@ -130,7 +130,7 @@ determine_pre_processing_parameters <- function(cl, data_id, run_id){
   if(is_empty(data)) stop("The provided training dataset lacks outcome data.")
   
   if(verbose){
-    n_samples_remain <- uniqueN(data@data, by=c("subject_id", "cohort_id"))
+    n_samples_remain <- uniqueN(data@data, by=c("sample_id", "batch_id"))
     
     n_samples_removed <- n_samples_current - n_samples_remain
     logger.message(paste0("Pre-processing: ", n_samples_removed,
@@ -180,7 +180,7 @@ determine_pre_processing_parameters <- function(cl, data_id, run_id){
   
   # Message how many subjects were removed
   if(verbose){
-    n_samples_remain <- uniqueN(data@data, by=c("subject_id", "cohort_id"))
+    n_samples_remain <- uniqueN(data@data, by=c("sample_id", "batch_id"))
     logger.message(paste0("Pre-processing: ", n_samples_current-n_samples_remain,
                           " samples were removed because of missing feature data. ",
                           n_samples_remain, " samples remain."))

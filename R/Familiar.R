@@ -120,6 +120,7 @@ summon_familiar <- function(formula=NULL, data=NULL, cl=NULL, config=NULL, confi
   data <- .finish_data_preparation(data = data,
                                    sample_id_column = settings$data$sample_col,
                                    batch_id_column = settings$data$batch_col,
+                                   series_id_column = settings$data$series_col,
                                    outcome_column = settings$data$outcome_col,
                                    outcome_type = settings$data$outcome_type,
                                    include_features = settings$data$include_features,
@@ -133,17 +134,24 @@ summon_familiar <- function(formula=NULL, data=NULL, cl=NULL, config=NULL, confi
                                                  file_dir=file_paths$iterations_dir)
   
   # Check experiment settings
-  settings <- .update_experimental_design_settings(section_table=experiment_setup, data=data, settings=settings)
+  settings <- .update_experimental_design_settings(section_table=experiment_setup,
+                                                   data=data,
+                                                   settings=settings)
   
   # Import remaining settings
-  settings <- .parse_general_settings(config=config, data=data, settings=settings, ...)
+  settings <- .parse_general_settings(config=config,
+                                      data=data,
+                                      settings=settings,
+                                      ...)
   
   # Create a generic outcome object
   outcome_info <- create_outcome_info(settings=settings)
   
   # Define iterations etc.
-  project_info <- .get_iteration_data(file_dir=file_paths$iterations_dir, data=data,
-                                      experiment_setup=experiment_setup, settings=settings)
+  project_info <- .get_iteration_data(file_dir=file_paths$iterations_dir,
+                                      data=data,
+                                      experiment_setup=experiment_setup,
+                                      settings=settings)
   
   # In case the iterations are loaded from a iterations file provided by the
   # user, perform some checks on the experimental design given the current data

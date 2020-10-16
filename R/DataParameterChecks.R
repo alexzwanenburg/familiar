@@ -58,7 +58,7 @@
                                    signature=settings$data$signature,
                                    exclude_features=settings$data$exclude_features,
                                    include_features=settings$data$include_features,
-                                   other_id_column=settings$data$batch_col,
+                                   other_id_column=c(settings$data$batch_col, settings$data$series_col),
                                    outcome_column=settings$data$outcome_col,
                                    col_type="sample")
     
@@ -75,12 +75,30 @@
                                    signature=settings$data$signature,
                                    exclude_features=settings$data$exclude_features,
                                    include_features=settings$data$include_features,
-                                   other_id_column=settings$data$sample_col,
+                                   other_id_column=c(settings$data$sample_col, settings$data$series_col), 
                                    outcome_column=settings$data$outcome_col,
                                    col_type="batch")
     
     # Remove the batch identifier column from the set of predictors
     predictor_vars <- predictor_vars[!predictor_vars %in% settings$data$batch_col]
+  }
+  
+  
+  #####series_col-------------------------------------------------------
+  if(!is.null(settings$data$series_col)){
+    
+    # Check input
+    .check_input_identifier_column(id_column=settings$data$series_col,
+                                   data=data,
+                                   signature=settings$data$signature,
+                                   exclude_features=settings$data$exclude_features,
+                                   include_features=settings$data$include_features,
+                                   other_id_column=c(settings$data$batch_col, settings$data$sample_col),
+                                   outcome_column=settings$data$outcome_col,
+                                   col_type="series")
+    
+    # Remove the batch identifier column from the set of predictors
+    predictor_vars <- predictor_vars[!predictor_vars %in% settings$data$series_col]
   }
 
   
@@ -293,7 +311,7 @@
   }
   
   # Determine the available batch identifiers
-  available_batch_ids <- unique(data$cohort_id)
+  available_batch_ids <- unique(data$batch_id)
   
   # Determine what happens if batch identifiers are not specified for both
   # development and validation.

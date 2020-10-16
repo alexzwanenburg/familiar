@@ -32,8 +32,24 @@ selectDataFromSubjects <- function(dt, subj_id){
   return(dt)
 }
 
+.get_run_list <- function(iteration_list, data_id, run_id=NULL){
+  
+  # Return an empty list if data_id equals 0.
+  if(data_id == 0) return(list())
+  
+  # Return part of the run list.
+  if(is.null(run_id)){
+    return(iteration_list[[as.character(data_id)]]$run)
+    
+  } else {
+    return(iteration_list[[as.character(data_id)]]$run[[as.character(run_id)]])
+  }
+}
+
 
 getRunList <- function(iter_list, data_id, run_id=NULL){
+  .Deprecated(".get_run_list")
+  
   # If data_id is 0, an empty list is returned
   if(data_id==0){
     return(list())
@@ -68,8 +84,33 @@ getIterID <- function(run, perturb_level=NULL){
 }
 
 
-getSubjectIDs <- function(run=NULL, iter_list=NULL, data_id=NULL, run_id=NULL, train_or_validate){
+.get_sample_identifiers <- function(run=NULL, iteration_list=NULL, data_id=NULL, run_id=NULL, train_or_validate){
+  
+  # Get run from iter_list if not provided directly.
+  if(is.null(run)){
+    run <- .get_run_list(iteration_list=iteration_list,
+                         data_id=data_id,
+                         run_id=run_id)
+  }
+  
+  # Extract training or validation data - note that run$valid_samples can be NULL.
+  if(train_or_validate == "train"){
+    samples <- run$train_samples
+    
+  } else {
+    samples <- run$valid_samples
+  }
+  
+  if(!data.table::is.data.table(samples)){
+    samples <- data.table::data.table("sample_id"=samples)
+  }
+  
+  return(samples)
+}
 
+
+getSubjectIDs <- function(run=NULL, iter_list=NULL, data_id=NULL, run_id=NULL, train_or_validate){
+  .Deprecated(".get_sample_identifiers")
   # Get run from iter_list if not provided directly.
   if(is.null(run)){
     run <- getRunList(iter_list=iter_list, data_id=data_id, run_id=run_id)
