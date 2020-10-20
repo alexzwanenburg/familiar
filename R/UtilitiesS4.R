@@ -239,39 +239,39 @@ setMethod("get_outcome_columns", signature(x="familiarEnsemble"), function(x){
 
 
 #####get_non_feature_columns--------------------------------------------------------
-setMethod("get_non_feature_columns", signature(x="character"), function(x, sample_level_only=FALSE){
-  return(.get_non_feature_columns(outcome_type=x, sample_level_only=sample_level_only))
+setMethod("get_non_feature_columns", signature(x="character"), function(x, id_depth="repetition"){
+  return(.get_non_feature_columns(outcome_type=x, id_depth=id_depth))
 })
 
-setMethod("get_non_feature_columns", signature(x="outcomeInfo"), function(x, sample_level_only=FALSE){
-  return(.get_non_feature_columns(outcome_type=x@outcome_type, sample_level_only=sample_level_only))
+setMethod("get_non_feature_columns", signature(x="outcomeInfo"), function(x, id_depth="repetition"){
+  return(.get_non_feature_columns(outcome_type=x@outcome_type, id_depth=id_depth))
 })
 
-setMethod("get_non_feature_columns", signature(x="dataObject"), function(x, sample_level_only=FALSE){
-  return(.get_non_feature_columns(outcome_type=x@outcome_type, sample_level_only=sample_level_only))
+setMethod("get_non_feature_columns", signature(x="dataObject"), function(x, id_depth="repetition"){
+  return(.get_non_feature_columns(outcome_type=x@outcome_type, id_depth=id_depth))
 })
 
-setMethod("get_non_feature_columns", signature(x="familiarVimpMethod"), function(x, sample_level_only=FALSE){
-  return(.get_non_feature_columns(outcome_type=x@outcome_type, sample_level_only=sample_level_only))
+setMethod("get_non_feature_columns", signature(x="familiarVimpMethod"), function(x, id_depth="repetition"){
+  return(.get_non_feature_columns(outcome_type=x@outcome_type, id_depth=id_depth))
 })
 
-setMethod("get_non_feature_columns", signature(x="familiarModel"), function(x, sample_level_only=FALSE){
-  return(.get_non_feature_columns(outcome_type=x@outcome_type, sample_level_only=sample_level_only))
+setMethod("get_non_feature_columns", signature(x="familiarModel"), function(x, id_depth="repetition"){
+  return(.get_non_feature_columns(outcome_type=x@outcome_type, id_depth=id_depth))
 })
 
-setMethod("get_non_feature_columns", signature(x="familiarEnsemble"), function(x, sample_level_only=FALSE){
-  return(.get_non_feature_columns(outcome_type=x@outcome_type, sample_level_only=sample_level_only))
+setMethod("get_non_feature_columns", signature(x="familiarEnsemble"), function(x, id_depth="repetition"){
+  return(.get_non_feature_columns(outcome_type=x@outcome_type, id_depth=id_depth))
 })
 
 # Internal function
-.get_non_feature_columns <- function(outcome_type, sample_level_only=FALSE){
+.get_non_feature_columns <- function(outcome_type, id_depth="repetition"){
   # Returns column names in data table which are not features
   
   # Find outcome columns
   outcome_columns <- get_outcome_columns(x=outcome_type)
   
   # Find the id-columns
-  id_columns <- get_id_columns(sample_level_only=sample_level_only)
+  id_columns <- get_id_columns(id_depth=id_depth)
   
   # Generate the names of the non-feature columns
   return(c(outcome_columns, id_columns))
@@ -696,10 +696,15 @@ setMethod("get_bootstrap_sample", signature(data="dataObject"),
               
             } else if(length(data@sample_set_on_load) > 0){
               
-              # Reshuffle the samples.
-              data@sample_set_on_load <- fam_sample(x=unique(data@sample_set_on_load),
-                                                    size=length(data@sample_set_on_load),
-                                                    replace=TRUE)
+              if(data.table::is.data.table(data@sample_set_on_load)){
+                data@sample_set_on_load <- get_bootstrap_sample(data=data@sample_set_on_load)
+                
+              } else {
+                # Reshuffle the samples -- This is for backward compatibility.
+                data@sample_set_on_load <- fam_sample(x=unique(data@sample_set_on_load),
+                                                      size=length(data@sample_set_on_load),
+                                                      replace=TRUE)
+              }
               
             } else {
               ..error_reached_unreachable_code("get_boostrap_sample,dataObject: could not identify a suitable method for bootstrapping.")
@@ -711,12 +716,9 @@ setMethod("get_bootstrap_sample", signature(data="dataObject"),
 setMethod("get_bootstrap_sample", signature(data="data.table"),
           function(data, ...){
             
-            # Suppress NOTES due to non-standard evaluation in data.table
-            repetition_id <- series_id <- NULL
-            
             # Find identifier columns at the sample level, i.e. excluding
             # repetitions and series.
-            id_columns <- intersect(get_id_columns(sample_level_only=TRUE), colnames(data))
+            id_columns <- intersect(get_id_columns(id_depth="sample"), colnames(data))
             
             if(length(id_columns) == 0){
               # Sample rows.
@@ -728,26 +730,27 @@ setMethod("get_bootstrap_sample", signature(data="data.table"),
               data <- data[row_ids, ]
               
             } else {
+              browser()
               # List unique samples.
               id_table <- unique(data[, mget(id_columns)])
-              
-              # Determine the number of samples to drawn
-              all_id_columns <- intersect(get_id_columns(), colnames(data))
-              all_id_table <- data[, mget(all_id_columns)]
-              
-              # Select only the first repetition.
-              if("repetition_id" %in% all_id_columns){
-                all_id_table <- all_id_table[repetition_id == 1]
-              }
-              
-              # Select only the first series.
-              if("series_id" %in% all_id_columns){
-                all_id_table <- all_id_table[series_id == 1]
-              }
+              # 
+              # # Determine the number of samples to drawn
+              # all_id_columns <- intersect(get_id_columns(), colnames(data))
+              # all_id_table <- data[, mget(all_id_columns)]
+              # 
+              # # Select only the first repetition.
+              # if("repetition_id" %in% all_id_columns){
+              #   all_id_table <- all_id_table[repetition_id == 1]
+              # }
+              # 
+              # # Select only the first series.
+              # if("series_id" %in% all_id_columns){
+              #   all_id_table <- all_id_table[series_id == 1]
+              # }
               
               # Sample the unique rows of the identifier table.
               row_ids <- fam_sample(x=seq_len(nrow(id_table)),
-                                    size=nrow(all_id_table),
+                                    size=nrow(id_table),
                                     replace=TRUE)
               
               # Create subsample.
@@ -755,7 +758,10 @@ setMethod("get_bootstrap_sample", signature(data="data.table"),
               
               # Merge the subsampled identifier table with the data (removing
               # duplicates).
-              data <- merge(id_table, unique(data), by=id_columns, all.x=FALSE, all.y=FALSE,
+              data <- merge(x=id_table,
+                            y=unique(data),
+                            by=id_columns,
+                            all=FALSE,
                             allow.cartesian=TRUE)
             }
             
@@ -929,3 +935,129 @@ setMethod("universal_extractor", signature(object="familiarEnsemble"),
                         "ensemble"=ensemble_model_data))
           })
 
+
+#####fam_sample-----------------------------------------------------------------
+setMethod("fam_sample", signature(x="ANY"),
+          function(x, size=NULL, replace=FALSE, prob=NULL, ...){
+            # This function prevents the documented behaviour of the sample
+            # function, where if x is positive, numeric and only has one
+            # element, it interprets x as a series of x, i.e. x=seq_len(x).
+            # That's bad news if x is a sample identifier.
+            
+            # Set size if it is unset.
+            if(is.null(size)) size <- length(x)
+            
+            if(length(x) == 1){
+              
+              # Check that size is not greater than 1, if items are to be drawn
+              # without replacement.
+              if(!replace & size > 1){
+                stop("cannot take a sample larger than the population when 'replace = FALSE'")
+              }
+              
+              return(rep_len(x=x, length.out=size))
+              
+            } else {
+              # If x is a vector, array or list with multiple elements, then all
+              # of the above is not an issue, and we can make use of sample.
+              
+              return(sample(x=x, size=size, replace=replace, prob=prob))
+            }
+          })
+
+
+setMethod("fam_sample", signature(x="data.table"),
+          function(x, size=NULL, replace=FALSE, prob=NULL, ...){
+            # This function prevents the documented behaviour of the sample
+            # function, where if x is positive, numeric and only has one
+            # element, it interprets x as a series of x, i.e. x=seq_len(x).
+            # That's bad news if x is a sample identifier.
+            
+            # Suppress NOTES due to non-standard evaluation in data.table
+            ..prob <- NULL
+            
+            # Make a local copy of x to prevent changing by reference.
+            x <- data.table::copy(x)
+            
+            # Get id columns
+            id_columns <- get_id_columns("sample")
+            
+            # Check if prob equals NULL, and set to FALSE if it is.
+            if(is.null(prob)) prob <- FALSE
+            
+            # Check that batch_id and sample_id columns are present.
+            if(!all(id_columns %in% colnames(x))){
+              ..error_reached_unreachable_code("fam_sample,data.table: batch_id or sample_id columns are not present in x.")
+            }
+            
+            # Check that the prob column is present.
+            if(is.logical(prob)){
+              if(prob & !"prob" %in% colnames(x)){
+                ..error_reached_unreachable_code("fam_sample,data.table: prob column is not present in x.")
+              }
+              
+              # Select unique samples.
+              x <- unique(x, by=id_columns)
+              
+              # Set probability to 1.0 for all samples.
+              if(!prob) x[, "prob":=1.0]
+              
+            } else {
+              # Assume that the prob argument is provided as a separate vector
+              if(length(x) == nrow(x)){
+                # In this case, assume that prob can be inserted as a new
+                # column.
+                
+                # Assign prob.
+                x[, "prob":=..prob]
+                
+                # Select unique samples.
+                x <- unique(x, by=id_columns)
+                
+              } else {
+                ..error_reached_unreachable_code("fam_sample,data.table: the length of prob does not equal the number of instances in x.")
+              }
+            }
+            
+            # Set size if it is unset.
+            if(is.null(size)) size <- nrow(x)
+            
+            # Sample x.
+            if(nrow(x) == 1){
+              
+              # Check that size is not greater than 1, if items are to be drawn
+              # without replacement.
+              if(!replace & size > 1){
+                stop("cannot take a sample larger than the population when 'replace = FALSE'")
+              }
+              
+              # Get row-ids
+              row_id <- rep_len(x=1L, length.out=size)
+              
+              # Create output table y.
+              y <- x[row_id, mget(id_columns)]
+              
+            } else {
+              # If x has a multiple instances, then all of the above is not an
+              # issue, and we can use the standard implementation of sample.
+              
+              # Use default prob=NULL if all probabilities in x are 1.0.
+              if(all(x$prob == 1.0)){
+                prob <- NULL
+                
+              } else {
+                prob <- x$prob
+              }
+              
+              # Get sampled row identifiers.
+              row_id <- sample(x=seq_len(nrow(x)),
+                               size=size,
+                               replace=replace,
+                               prob=prob)
+              
+              # Create output table y.
+              y <- x[row_id, mget(id_columns)]
+            }
+            
+            return(y)
+          })

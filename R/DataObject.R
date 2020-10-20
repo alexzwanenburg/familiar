@@ -597,9 +597,9 @@ setMethod("aggregate_data", signature(data="dataObject"),
               return(data)
             }
             
-            # Identify the columns containing outcome, sample, and batch
+            # Identify the columns containing outcome, series, sample, and batch
             # identifiers.
-            id_cols <- get_non_feature_columns(x=data, sample_level_only=TRUE)
+            id_cols <- get_non_feature_columns(x=data, id_depth="series")
             
             # Determine the number of different entries
             

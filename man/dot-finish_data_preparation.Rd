@@ -8,6 +8,7 @@
   data,
   sample_id_column,
   batch_id_column,
+  series_id_column,
   outcome_column,
   outcome_type,
   include_features,
@@ -85,9 +86,10 @@ unset, all values other than those specified by the \code{event_indicator} and
 \code{censoring_indicator} parameters are considered to indicate competing
 risks.}
 
-\item{reference}{list with class levels (\code{levels}) and ordering (\code{ordered}) per list entry. Each list entry
-should have the name of the corresponding feature. The intended use is that \code{featureInfo} objects
-are parsed to generate such a reference.}
+\item{reference}{list with class levels (\code{levels}) and ordering (\code{ordered})
+per list entry. Each list entry should have the name of the corresponding
+feature. The intended use is that \code{featureInfo} objects are parsed to
+generate such a reference.}
 }
 \value{
 data.table with expected column names.
@@ -96,12 +98,12 @@ data.table with expected column names.
 Internal function for finalising generic data processing
 }
 \details{
-This function is used to update data.table provided by loading the data. When part
-of the main familiar workflow, this function is used after .parse_initial_settings
---> .load_data --> .update_initial_settings.
+This function is used to update data.table provided by loading the
+data. When part of the main familiar workflow, this function is used after
+.parse_initial_settings --> .load_data --> .update_initial_settings.
 
-When used to parse external data (e.g. in conjunction with familiarModel) it follows
-after .load_data. Hence the function contains several checks which are otherwise part of
-.update_initial_settings.
+When used to parse external data (e.g. in conjunction with familiarModel)
+it follows after .load_data. Hence the function contains several checks
+which are otherwise part of .update_initial_settings.
 }
 \keyword{internal}

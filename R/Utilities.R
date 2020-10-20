@@ -791,14 +791,21 @@ get_placeholder_vimp_table <- function(){
 
 
 
-get_id_columns <- function(sample_level_only=FALSE){
-  # Generate the names of the non-feature columns
-  if(sample_level_only){
-    return(c("sample_id", "batch_id", "series_id"))
-    
-  } else {
-    return(c("sample_id", "batch_id", "series_id", "repetition_id"))
+get_id_columns <- function(id_depth="repetition"){
+  
+  # Check that until_depth is correctly specified.
+  if(!id_depth %in% c("batch", "sample", "series", "repetition")){
+    ..error_value_not_allowed(x=id_depth, var_name="id_depth", values=c("batch", "sample", "series", "repetition"))
   }
+  
+  # Generate the names of the non-feature columns
+  id_columns <- switch(id_depth,
+                       "batch" = "batch_id",
+                       "sample" = c("batch_id", "sample_id"),
+                       "series" = c("batch_id", "sample_id", "series_id"),
+                       "repetition" = c("batch_id", "sample_id", "series_id", "repetition_id"))
+  
+  return(id_columns)
 }
 
 
@@ -1343,31 +1350,6 @@ quiet <- function(x) {
   }
   
   return(append(l, new))
-}
-
-
-fam_sample <- function(x, size, replace=FALSE, prob=NULL){
-  # This function prevents the documented behaviour of the sample function,
-  # where if x is positive, numeric and only has one element, it interprets x as
-  # a series of x, i.e. x=seq_len(x). That's bad news if x is a sample
-  # identifier.
-  
-  if(length(x) == 1){
-    
-    # Check that size is not greater than 1, if items are to be drawn without
-    # replacement.
-    if(!replace & size > 1){
-      stop("cannot take a sample larger than the population when 'replace = FALSE'")
-    }
-    
-    return(rep_len(x=x, length.out=size))
-    
-  } else {
-    # If x is a vector, array or list with multiple elements, then all of the
-    # above is not an issue, and we can make use of sample.
-    
-    return(sample(x=x, size=size, replace=replace, prob=prob))
-  }
 }
 
 

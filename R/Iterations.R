@@ -179,6 +179,10 @@
   # Get unique main data ids
   main_data_ids <- unique(experiment_setup$main_data_id)
   
+  # Get names of the standard id columns
+  id_columns <- get_id_columns(id_depth="series")
+  batch_id_column <- get_id_columns(id_depth="batch")
+  
   ##### Generate new iterations #####
   
   if(is.null(iteration_list)){
@@ -190,7 +194,7 @@
       
       for(curr_main_data_id in main_data_ids){
         # Set up the subset_table
-        subset_table <- experiment_setup[main_data_id==curr_main_data_id, ]
+        subset_table <- experiment_setup[main_data_id == curr_main_data_id, ]
         
         # Check if the current data has already been processed
         if(!is.null(iteration_list[[as.character(curr_main_data_id)]])) next()
@@ -216,7 +220,7 @@
           
           # In case of external validation, find cohorts matching the
           # train_cohorts.
-          all_cohorts <- unique(data$batch_id)
+          all_cohorts <- unique(data[[batch_id_column]])
           
           # Check whether the requested train cohorts are provided
           if(is.null(settings$data$train_cohorts) & external_validation_required) {
@@ -225,7 +229,7 @@
           } else if (is.null(settings$data$train_cohorts)) {
             # Assume that all data is used for training when external validation
             # is not required, but no specific cohorts are specified.
-            train_cohorts <- unique(data$batch_id)
+            train_cohorts <- unique(data[[batch_id_column]])
             
           } else {
             # This is the ideal situation: training cohort names are provided.
@@ -261,11 +265,11 @@
           valid_samples <- list()
           
           # Add training cohort subjects to train_samples
-          train_samples[[1]] <- unique(data[batch_id %in% train_cohorts, c("batch_id", "sample_id", "series_id")])
+          train_samples[[1]] <- unique(data[batch_id %in% train_cohorts, mget(id_columns)])
           
           # Add validation cohort subjects to valid_samples (if present)
           if(length(validation_cohorts)>0){
-            valid_samples[[1]] <- unique(data[batch_id %in% validation_cohorts, c("batch_id", "sample_id", "series_id")])
+            valid_samples[[1]] <- unique(data[batch_id %in% validation_cohorts, mget(id_columns)])
           }
           
           # Generate a run list for the "main" data perturbation
@@ -322,7 +326,7 @@
                                                n_iter=n_iter,
                                                settings=settings,
                                                data=data)
-            
+            browser()
             # Append runs to the run list
             run_list <- append(run_list,
                                .add_iteration_to_run(run,
@@ -344,8 +348,8 @@
           ##### New cross-validation data ###########################################
           
           # Determine number of cross-validation repetitions and folds
-          n_rep            <- subset_table$perturb_n_rep[1]
-          n_folds          <- subset_table$perturb_n_folds[1]
+          n_rep <- subset_table$perturb_n_rep[1]
+          n_folds <- subset_table$perturb_n_folds[1]
           
           # Iterate over runs of the reference data
           for(run in ref_run_list){
@@ -426,7 +430,7 @@
     if(external_validation_required){
       
       # In case of external validation, find cohorts matching the train_cohorts
-      all_cohorts <- unique(data$batch_id)
+      all_cohorts <- unique(data[[batch_id_column]])
       
       # Check whether validation cohorts are provided
       if(!is.null(settings$data$valid_cohorts)) {
@@ -456,7 +460,7 @@
       }
       
       # Update validation subjects to iter list
-      iteration_list[[as.character(1)]]$run[[as.character(1)]]$valid_samples <- unique(data[batch_id %in% validation_cohorts, c("batch_id", "sample_id", "series_id")])
+      iteration_list[[as.character(1)]]$run[[as.character(1)]]$valid_samples <- unique(data[batch_id %in% validation_cohorts, mget(id_columns)])
       
     } else {
       # Remove external validation subject
@@ -755,8 +759,11 @@
 .create_bootstraps <- function(sample_identifiers, n_iter, settings=NULL, outcome_type=NULL, data=NULL, stratify=TRUE){
 
   # Suppress NOTES due to non-standard evaluation in data.table
-  sample_id <- outcome <- NULL
-  browser()
+  outcome <- prob <- NULL
+  
+  # Obtain id columns
+  id_columns <- get_id_columns(id_depth="series")
+  
   # Set outcome_type from settings
   if(is.null(outcome_type)) outcome_type <- settings$data$outcome_type
 
@@ -770,17 +777,17 @@
     # Select data based on sample id - note that even if duplicate
     # sample_identifiers exist, only unique sample_identifiers are maintained -
     # this is intentional.
-    subset_table <- merge(x=unique(data[, c("batch_id", "sample_id", "series_id")]),
+    subset_table <- merge(x=unique(data[, mget(id_columns)]),
                           y=sample_identifiers,
-                          by=c("batch_id", "sample_id", "series_id"),
+                          by=id_columns,
                           all=FALSE)
     
   } else if(outcome_type == "survival") {
     # For stratifying survival data we require the event status.
     # Event status (including NA) are transcoded.
-    subset_table <- merge(x=unique(data[, c("batch_id", "sample_id", "series_id", "outcome_event")]),
+    subset_table <- merge(x=unique(data[, mget(c(id_columns, "outcome_event"))]),
                           y=sample_identifiers,
-                          by=c("batch_id", "sample_id", "series_id"),
+                          by=id_columns,
                           all=FALSE)
     
     # subset_table <- unique(data[sample_id %in% sample_identifiers, c("sample_id", "outcome_event")])
@@ -795,9 +802,9 @@
     # For stratifying categorical data we require the outcome data as is.
     # Redundant factors are dropped and remaining factors (including NA) are
     # transcoded
-    subset_table <- merge(x=unique(data[, c("batch_id", "sample_id", "series_id", "outcome")]),
+    subset_table <- merge(x=unique(data[, mget(c(id_columns, "outcome"))]),
                           y=sample_identifiers,
-                          by=c("batch_id", "sample_id", "series_id"),
+                          by=id_columns,
                           all=FALSE)
     
     # subset_table <- unique(data[sample_id %in% sample_identifiers, c("sample_id", "outcome")])
@@ -811,6 +818,9 @@
     ..error_no_known_outcome_type(outcome_type)
   }
 
+  # Determine sample-id columns
+  sample_id_columns <- get_id_columns(id_depth="sample")
+  
   # Initiate training and validation lists
   train_list <- list()
   valid_list <- list()
@@ -821,13 +831,25 @@
 
     if(!stratify){
       # Sample training data with replacement
-      train_id <- fam_sample(x=subset_table$sample_id, size=nrow(subset_table), replace=TRUE)
-
-      # Determine out-of-bag data (no overlap with training subject ids)
-      valid_id <- unique(sample_identifiers[!sample_identifiers %in% train_id])
+      train_id <- fam_sample(x=subset_table, replace=TRUE)
+      
+      # Merge train_id with subset_table.
+      # TODO: check if allow.cartesian needs to be set.
+      train_id <- merge(x=train_id,
+                        y=subset_table,
+                        by=sample_id_columns,
+                        all=FALSE,
+                        allow.cartesian=TRUE)
+      
+      # Select only relevant columns.
+      train_id <- train_id[, mget(id_columns)]
+      
+      # Determine the out-of-bag data.
+      valid_id <- data.table::fsetdiff(x=subset_table[, mget(id_columns)],
+                                       y=train_id)
       
       # Check for empty out-of-bag sets and re-run experiment if this happens.
-      if(length(valid_id) == 0){
+      if(nrow(valid_id) == 0){
         jj <- jj + 1
         next()
       }
@@ -837,49 +859,95 @@
       valid_list[[ii]] <- valid_id
       
     } else {
-      # Initiate train_id
-      train_id <- NULL
-
-      # Iterate over different outcome levels and bootstrap
-      unique_levels <- unique(subset_table$outcome)
-      
-      # TODO: Check how this interacts with series_id. We want to prevent
-      #enlarging the training set, while at the same time keeping samples from
-      #ending up in both training and validation.
-      
-      # TODO: Change fam_sample to additionally select from data.tables.
-      
-      browser()
-      
       # The approach used here does the following:
-      #
-      # * The frequency of each outcome is determined.
       #
       # * Outcome levels are randomly ordered, and iterated over.
       #
       # * Samples are drawn for this level, up to the frequency for the
       # particular outcome.
       #
-      # * Corresponding samples are made unavailable for further selection. The
-      # frequency of each outcome is updated, by subtracting those already
+      # * The frequency of each outcome is updated, by subtracting those already
       # present.
       
-      for(curr_level in unique_levels){
-        # Find the sample identifiers for the current class/event status
-        level_sample_identifiers <- subset_table[outcome==curr_level, ]$sample_id
+      # Initiate train_id
+      train_id <- NULL
+
+      # Randomise the order in which outcome-levels are generated.
+      unique_levels <- fam_sample(x=unique(subset_table$outcome),
+                                  replace=FALSE)
+      
+      # List that tabulates the frequency of the outcomes in the in-bag training
+      # folds.
+      level_frequency <- lapply(unique_levels, function(x)(0L))
+      names(level_frequency) <- unique_levels
+      
+      # Iterate over levels.
+      for(current_level in unique_levels){
         
-        # Sample samples with replacement for the current class/event status
-        train_id <- c(train_id,
-                      fam_sample(x=level_sample_identifiers,
-                                 size=length(level_sample_identifiers),
-                                 replace=TRUE))
+        # Make local copy.
+        x <- data.table::copy(subset_table)
+        
+        # Add probabilities for the current outcome level.
+        x <- x[, list("prob"=sum(outcome == current_level) / .N), by=sample_id_columns]
+        
+        # Remove all instances where prob equals zero.
+        x <- x[prob > 0.0]
+        
+        # Determine the size.
+        sample_size <- nrow(x) - level_frequency[[current_level]]
+        
+        # Skip if sample_size is lower than 0, e.g. because samples with this
+        # outcome were selected earlier.
+        if(sample_size <= 0) next()
+        
+        # Sample training data with replacement.
+        current_train_id <- fam_sample(x=x,
+                                       size=sample_size,
+                                       replace=TRUE,
+                                       prob=TRUE)
+        
+        # Merge train_id with subset_table.
+        # TODO: check if allow.cartesian needs to be set.
+        current_train_id <- merge(x=current_train_id,
+                                  y=subset_table,
+                                  by=sample_id_columns,
+                                  all=FALSE,
+                                  allow.cartesian=TRUE)
+        
+        # Add to train_id
+        train_id <- data.table::rbindlist(list(train_id,
+                                               current_train_id))
+        
+        # Update the level frequency.
+        level_frequency <- lapply(unique_levels, function(ii, x, series_id_columns, sample_id_columns){
+          # Count duplicates.
+          x <- x[outcome==ii, list("level_present"=.N), by=series_id_columns]
+          
+          if(nrow(x) == 0) return(0L)
+          
+          # Select unique samples.
+          x <- unique(x, by=sample_id_columns)
+          
+          # Sum over level_present
+          return(sum(x$level_present))
+          
+        }, x=train_id,
+        series_id_columns = id_columns,
+        sample_id_columns = sample_id_columns)
+        
+        # Add names.
+        names(level_frequency) <- unique_levels
       }
 
-      # Determine out-of-bag data
-      valid_id <- unique(sample_identifiers[!sample_identifiers %in% train_id])
+      # Select only relevant columns.
+      train_id <- train_id[, mget(id_columns)]
+      
+      # Determine the out-of-bag data.
+      valid_id <- data.table::fsetdiff(x=subset_table[, mget(id_columns)],
+                                       y=train_id)
 
       # Check for empty out-of-bag sets and re-run sampling if this happens.
-      if(length(valid_id) == 0){
+      if(nrow(valid_id) == 0){
         jj <- jj + 1
         next()
       }
