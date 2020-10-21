@@ -268,8 +268,14 @@ setMethod("..train", signature(object="familiarGLMnet", data="dataObject"),
               outcome_data <- data@data$outcome
             }
             
+            # TODO: Check that this works.
+            browser()
+            
+            # Determine id columns
+            id_columns <- get_id_columns("series")
+
             # Generate folds using our own fold generating algorithm to handle repeated measurements
-            fold_table <- .create_cv(sample_identifiers = unique(encoded_data$encoded_data@data$subject_id),
+            fold_table <- .create_cv(sample_identifiers = unique(encoded_data$encoded_data@data, by=id_columns),
                                      n_folds = object@hyperparameters$n_folds,
                                      outcome_type = object@outcome_type,
                                      data = encoded_data$encoded_data@data,
@@ -279,8 +285,8 @@ setMethod("..train", signature(object="familiarGLMnet", data="dataObject"),
             # Order according to subject_id in encoded_data$encoded_data@data so
             # that fold_id corresponds to the correct rows.
             fold_table <- merge(x=fold_table,
-                                y=encoded_data$encoded_data@data[, "subject_id"],
-                                by="subject_id")
+                                y=encoded_data$encoded_data@data[, mget(id_columns)],
+                                by=id_columns)
             
             # Train the model.
             if(is(object, "familiarGLMnetRidge")){

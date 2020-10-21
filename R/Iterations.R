@@ -181,6 +181,7 @@
   
   # Get names of the standard id columns
   id_columns <- get_id_columns(id_depth="series")
+  sample_id_columns <- get_id_columns(id_depth="sample")
   batch_id_column <- get_id_columns(id_depth="batch")
   
   ##### Generate new iterations #####
@@ -189,7 +190,7 @@
     iteration_list     <- list()
     
     logger.message("Creating iterations: Starting creation of iterations.")
-    
+    browser()
     while(length(iteration_list) < length(main_data_ids)){
       
       for(curr_main_data_id in main_data_ids){
@@ -326,7 +327,7 @@
                                                n_iter=n_iter,
                                                settings=settings,
                                                data=data)
-            browser()
+            
             # Append runs to the run list
             run_list <- append(run_list,
                                .add_iteration_to_run(run,
@@ -382,12 +383,15 @@
           
           # Iterate over runs of the reference data
           for(run in ref_run_list){
-            # Get subjectIDs
-            sample_ids <- .get_sample_identifiers(run=run, train_or_validate="train")
-            n_samples <- data.table::uniqueN(sample_ids$sample_id)
+            # Find the available samples.
+            sample_identifiers <- .get_sample_identifiers(run=run, train_or_validate="train")
+            
+            # Determine the number of samples.
+            n_samples <- data.table::uniqueN(sample_identifiers, by=sample_id_columns)
+            
             
             # Create repeated cross-validations
-            cv_iter_list <- .create_cv(sample_identifiers=sample_ids,
+            cv_iter_list <- .create_cv(sample_identifiers=sample_identifiers,
                                        n_folds=n_samples,
                                        settings=settings,
                                        data=data,
@@ -543,9 +547,7 @@
   run_list <- list()
 
   # If data_id is not provided, the run_list will be treated a custom run, and will receive a data_id of -1
-  if(is.null(data_id)){
-    data_id <- -1
-    }
+  if(is.null(data_id)) data_id <- -1
 
   # Find the current perturbation level based on the input run
   curr_perturb_level <- max(run$run_table$perturb_level) + 1
@@ -556,15 +558,23 @@
     run_id <- run_id_offset + ii
 
     # Add run to existing run table.
-    dt_run <- rbind(run$run_table,
-                    data.table::data.table("data_id"=data_id, "run_id"=run_id, "can_pre_process"=can_pre_process,
-                                           "perturbation"=perturbation, "perturb_level"=curr_perturb_level))
+    run_table <- rbind(run$run_table,
+                       data.table::data.table("data_id"=data_id,
+                                              "run_id"=run_id,
+                                              "can_pre_process"=can_pre_process,
+                                              "perturbation"=perturbation,
+                                              "perturb_level"=curr_perturb_level))
 
-    # Add run to list
-    run_list[[as.character(run_id)]]$run_table <- dt_run
+    # Add run_table to the list.
+    run_list[[as.character(run_id)]]$run_table <- run_table
+    
+    # Add samples for model development to the list.
     run_list[[as.character(run_id)]]$train_samples <- train_samples[[ii]]
+    
+    # Add validation samples to the list.
     if(length(valid_samples) >= ii){
       run_list[[as.character(run_id)]]$valid_samples <- valid_samples[[ii]]
+      
     } else {
       run_list[[as.character(run_id)]]$valid_samples <- NULL
     }
@@ -576,21 +586,30 @@
 
 
 .create_repeated_cv <- function(sample_identifiers, n_rep, n_folds, settings, data=NULL, stratify=TRUE){
-  # Repeated cross validation - a wrapper around the .create_cv function
+  # This function wraps the .create_cv function
 
   # Initiate lists for training and validation data
-  train_list <- list(); valid_list <- list()
+  train_list <- list()
+  valid_list <- list()
 
   # Iterate over iterations
   for(ii in 1:n_rep){
-    cv_iter_list <- .create_cv(sample_identifiers=sample_identifiers, n_folds=n_folds, settings=settings, data=data, stratify=stratify)
-    train_list   <- append(train_list, cv_iter_list$train_list)
-    valid_list   <- append(valid_list, cv_iter_list$valid_list)
+    # Create cross-validation subsets.
+    cv_iter_list <- .create_cv(sample_identifiers=sample_identifiers,
+                               n_folds=n_folds,
+                               settings=settings,
+                               data=data,
+                               stratify=stratify)
+    
+    # Add new subsets to the list.
+    train_list <- append(train_list, cv_iter_list$train_list)
+    valid_list <- append(valid_list, cv_iter_list$valid_list)
 
     rm(cv_iter_list)
   }
 
-  return(list("train_list"=train_list, "valid_list"=valid_list))
+  return(list("train_list"=train_list,
+              "valid_list"=valid_list))
 }
 
 
@@ -599,158 +618,203 @@
   # Cross-validation
 
   # Suppress NOTES due to non-standard evaluation in data.table
-  sample_id <- outcome <- fold_id <- NULL
+  sample_id <- outcome <- fold_id <- sample_order_id <- n <- i.n <- NULL
 
+  # Obtain id columns
+  id_columns <- get_id_columns(id_depth="series")
+  
   # Set outcome_type from settings
-  if(is.null(outcome_type)) {
-    outcome_type <- settings$data$outcome_type
-  }
+  if(is.null(outcome_type)) outcome_type <- settings$data$outcome_type
 
   # Check stratification for continuous data
-  if(outcome_type %in% c("continuous", "count")){
-    stratify <- FALSE
-  }
+  if(outcome_type %in% c("continuous", "count")) stratify <- FALSE
   
   # Do not stratify absent data
-  if(is.null(data)) {
-    stratify <- FALSE
-  }
-
-  # Select data based on sample identifiers. Note that even if duplicate
-  # sample_identifiers exist, only unique sample_identifiers are maintained.
-  # This is intentional behaviour.
-  if(stratify==FALSE){
-    subset_table <- unique(data[sample_id %in% sample_identifiers, c("sample_id")])
+  if(is_empty(data)) stratify <- FALSE
+  
+  if(!stratify){
+    # Select data based on sample id - note that even if duplicate
+    # sample_identifiers exist, only unique sample_identifiers are maintained -
+    # this is intentional.
+    subset_table <- merge(x=unique(data[, mget(id_columns)]),
+                          y=sample_identifiers,
+                          by=id_columns,
+                          all=FALSE)
     
-  } else if(outcome_type=="survival") {
+  } else if(outcome_type == "survival") {
     # For stratifying survival data we require the event status.
     # Event status (including NA) are transcoded.
-    subset_table <- unique(data[sample_id %in% sample_identifiers, c("sample_id", "outcome_event")])
-    setnames(subset_table, "outcome_event", "outcome")
+    subset_table <- merge(x=unique(data[, mget(c(id_columns, "outcome_event"))]),
+                          y=sample_identifiers,
+                          by=id_columns,
+                          all=FALSE)
+    
+    data.table::setnames(subset_table, "outcome_event", "outcome")
     
     # Transcode event status
     subset_table[, "outcome":=factor(outcome)]
     subset_table$outcome <- addNA(subset_table$outcome, ifany=TRUE)
     subset_table$outcome <- as.numeric(subset_table$outcome)
     
-  } else if(outcome_type %in% c("binomial", "multinomial")) {
+  } else if(outcome_type %in% c("binomial", "multinomial")){
     # For stratifying categorical data we require the outcome data as is.
-    # Redundant factors are dropped and remaining factors (including NA) are transcoded
-    subset_table <- unique(data[sample_id %in% sample_identifiers, c("sample_id", "outcome")])
+    # Redundant factors are dropped and remaining factors (including NA) are
+    # transcoded
+    subset_table <- merge(x=unique(data[, mget(c(id_columns, "outcome"))]),
+                          y=sample_identifiers,
+                          by=id_columns,
+                          all=FALSE)
     
-    # Transcode class level
+    # Transcode classes
     subset_table$outcome <- addNA(subset_table$outcome, ifany=TRUE)
     subset_table$outcome <- droplevels(subset_table$outcome)
     subset_table$outcome <- as.numeric(subset_table$outcome)
     
-  } else if(outcome_type == "competing_risk") {
-    ..error_outcome_type_not_implemented(outcome_type)
+  } else if(outcome_type %in% c("competing_risk", "multi_label")){
+    ..error_no_known_outcome_type(outcome_type)
   }
-
+  
+  # Determine sample-id columns
+  sample_id_columns <- get_id_columns(id_depth="sample")
+  
+  # Determine the number of samples.
+  n_samples <- data.table::uniqueN(subset_table, by=sample_id_columns)
+  
   # Check if the number of folds exceeds the number of data points
-  if(n_folds > nrow(subset_table)) {
+  if(n_folds > n_samples) {
     stop("Number of cross-validation folds exceeds the number of available data points." )
     
-  } else if(stratify==TRUE){
+  } else if(stratify){
     # Determine levels in stratified data
-    if(n_folds > nrow(subset_table) - data.table::uniqueN(subset_table$outcome) + 1){
+    if(n_folds > n_samples - data.table::uniqueN(subset_table$outcome) + 1){
       warning("Cannot perform stratified cross-validation as the number of folds is too high.")
       stratify <- FALSE
     }
   }
   
   # Add fold id to each entry
-  subset_table[, "fold_id":=0]
+  subset_table[, "fold_id":=0L]
 
-  # Determine fold size
-  fold_size <- nrow(subset_table) %/% n_folds
 
   # Initiate training and validation lists
-  train_list <- list(); valid_list <- list()
+  train_list <- valid_list <- list()
 
-  if(stratify==FALSE){
-    # For unstratified data
+  if(!stratify){
+    # Determine fold size
+    fold_size <- n_samples %/% n_folds
+    
+    # Iterate over the folds.
     for(ii in 1:n_folds){
-      # Consider available data points
-      dt_unassigned <- subset_table[fold_id==0,]
-
       # Choose subject id for current fold
-      curr_sample_identifiers <- fam_sample(x=dt_unassigned$sample_id, size=fold_size, replace=FALSE)
-
-      # Update data table with fold id
-      subset_table[sample_id %in% curr_sample_identifiers, "fold_id":=as.double(ii)]
+      current_train_id <- fam_sample(x=subset_table[fold_id == 0L],
+                                     size=fold_size,
+                                     replace=FALSE)
+      
+      # Join subset-table based on selected samples, and set the fold id.
+      # See https://stackoverflow.com/questions/46978735/updating-a-data-table-column-based-on-matching-to-another-data-table.
+      subset_table[current_train_id, "fold_id":=ii, on=.NATURAL]
     }
 
-    # Update remaining data points by random assignment to a fold
-    n_unassigned <- nrow(subset_table[fold_id==0,])
-    if(n_unassigned>0){
-      subset_table[fold_id==0, "fold_id":=as.double(sample.int(n_folds, size=n_unassigned, replace=FALSE))]
+    # Update remaining data points by random assignment to a fold.
+    n_unassigned <- nrow(subset_table[fold_id==0])
+    if(n_unassigned > 0){
+      subset_table[fold_id == 0,
+                   "fold_id":=sample.int(n_folds, size=n_unassigned, replace=FALSE)]
     }
 
     # Assign training and validation folds
     for(ii in 1:n_folds){
-      train_id <- subset_table[fold_id!=ii,]$sample_id
-      valid_id <- subset_table[fold_id==ii,]$sample_id
+      train_id <- subset_table[fold_id != ii, mget(id_columns)]
+      valid_id <- subset_table[fold_id == ii, mget(id_columns)]
 
       train_list[[ii]] <- train_id
       valid_list[[ii]] <- valid_id
     }
+    
   } else {
     # For stratified data
     unique_levels <- unique(subset_table$outcome)
-    for(jj in unique_levels){
-      # Get fold size for the available data points
-      level_fold_size <- nrow(subset_table[outcome==jj, ]) %/% n_folds
-
-      if(level_fold_size>0){
-        for(ii in 1:n_folds){
-          # Consider available data points
-          dt_unassigned <- subset_table[fold_id==0 & outcome==jj,]
-
-          # Choose subject id for current fold
-          curr_sample_identifiers <- fam_sample(x=dt_unassigned$sample_id, size=level_fold_size, replace=FALSE)
-
-          # Update data table with fold id
-          subset_table[sample_id %in% curr_sample_identifiers, "fold_id":=as.double(ii)]
-        }
-        # Update remaining data points by random assignment to a fold
-        n_unassigned <- nrow(subset_table[fold_id==0 & outcome==jj,])
-        if(n_unassigned>0){
-          subset_table[fold_id==0 & outcome==jj, "fold_id":=as.double(sample.int(n_folds, size=n_unassigned, replace=FALSE))]
-        }
+    
+    # Determine the frequency of sample outcomes per fold.
+    level_frequency <- subset_table[, list("n"=.N %/% n_folds), by="outcome"]
+    
+    # Iterate over folds
+    for(ii in 1:n_folds){
+      
+      # Copy the fold_level frequency.
+      fold_level_frequency <- data.table::copy(level_frequency)
+      
+      # Get all available data.
+      available_data <- subset_table[fold_id == 0L]
+      
+      # Check that any data are available.
+      if(nrow(available_data) == 0) next()
+      
+      # Determine the frequency of outcome levels for each sample.
+      available_data <- available_data[, list("n"=.N), by=c(sample_id_columns, "outcome")]
+      
+      # Order available data randomly.
+      sample_order <- fam_sample(x=available_data,
+                                 replace=FALSE)
+      
+      # Set sample_order_id. This will be used to order available_data.
+      sample_order[, "sample_order_id":=.I]
+      
+      # Merge with available_data
+      available_data <- merge(x=available_data,
+                              y=sample_order,
+                              by=sample_id_columns)[order(sample_order_id)]
+      
+      # Iterate over samples. For each sample we check whether it can be added
+      # to the fold.
+      for(current_sample in split(available_data, by="sample_order_id")){
+        
+        # Determine if the sample can be added.
+        safe_to_add <- all(sapply(unique_levels, function(ii, level_frequency, current_sample){
+          
+          # Find the frequency of the outcome.
+          x <- current_sample[outcome == ii]$n
+          if(length(x) == 0) x <- 0L
+          
+          # Check that the frequency of the outcome in the sample does not
+          # exceed the number of required samples.
+          return(level_frequency[outcome == ii]$n - x >= 0)
+        },
+        level_frequency=fold_level_frequency,
+        current_sample=current_sample))
+        
+        if(!safe_to_add) next()
+        
+        # If the check passes, we need to add the sample to the fold, and update
+        # level_frequency_fold.
+        fold_level_frequency[current_sample, "n":=n - i.n, on="outcome"]
+        
+        # Add to fold.
+        current_sample <- unique(current_sample[, mget(sample_id_columns)])
+        subset_table[current_sample, "fold_id":=ii, on=.NATURAL]
+        
+        # Skip further samples if no more samples need to be added to the fold.
+        if(all(fold_level_frequency$n == 0)) break()
       }
     }
 
-    # Assign to training and validation sets
+    # Assign to training and validation sets. Note that any unassigned samples
+    # are assigned to the training folds.
     for(ii in 1:n_folds){
-      train_id <- subset_table[fold_id!=ii,]$sample_id
-      valid_id <- subset_table[fold_id==ii,]$sample_id
-
-      # Assign rare outcomes
-      for(jj in unique_levels){
-        # Get unassigned subject ids for the current outcome category: these are rare categories that occur less than n_folds times
-        unassigned_id  <- subset_table[fold_id==0 & outcome==jj,]$sample_id
-
-        # Do not assign if there are none or 1 instances to assign
-        if(length(unassigned_id)<2){ next() }
-
-        # Assign 1 to validation folds and remaining to training
-        valid_id <- c(valid_id, fam_sample(x=unassigned_id, size=1))
-        train_id <- c(train_id, unassigned_id[!unassigned_id %in% valid_id])
-      }
-
-      train_list[[ii]] <- train_id
-      valid_list[[ii]] <- valid_id
+      train_list[[ii]] <- subset_table[fold_id != ii, mget(id_columns)]
+      valid_list[[ii]] <- subset_table[fold_id == ii, mget(id_columns)]
     }
   }
   
-  if(return_fold_id==TRUE){
+  if(return_fold_id){
+    n_missing <- nrow(subset_table[fold_id == 0L])
+    if(n_missing > 0) subset_table[fold_id == 0L, "fold_id":=sample.int(n_folds, size=n_missing, replace=TRUE)]
     
-    return(subset_table)
+    return(subset_table[, c(mget(id_columns), "fold_id")])
     
   } else {
-    
-    return(list("train_list"=train_list, "valid_list"=valid_list))
+    return(list("train_list"=train_list,
+                "valid_list"=valid_list))
   }
 }
 
@@ -790,7 +854,6 @@
                           by=id_columns,
                           all=FALSE)
     
-    # subset_table <- unique(data[sample_id %in% sample_identifiers, c("sample_id", "outcome_event")])
     data.table::setnames(subset_table, "outcome_event", "outcome")
     
     # Transcode event status
@@ -807,14 +870,12 @@
                           by=id_columns,
                           all=FALSE)
     
-    # subset_table <- unique(data[sample_id %in% sample_identifiers, c("sample_id", "outcome")])
-    
     # Transcode classes
     subset_table$outcome <- addNA(subset_table$outcome, ifany=TRUE)
     subset_table$outcome <- droplevels(subset_table$outcome)
     subset_table$outcome <- as.numeric(subset_table$outcome)
     
-  } else if(outcome_type=="competing_risk"){
+  } else if(outcome_type %in% c("competing_risk", "multi_label")){
     ..error_no_known_outcome_type(outcome_type)
   }
 
@@ -822,8 +883,7 @@
   sample_id_columns <- get_id_columns(id_depth="sample")
   
   # Initiate training and validation lists
-  train_list <- list()
-  valid_list <- list()
+  train_list <- valid_list <- list()
 
   # Iterate over iterations
   ii <- jj <- 1
@@ -834,7 +894,6 @@
       train_id <- fam_sample(x=subset_table, replace=TRUE)
       
       # Merge train_id with subset_table.
-      # TODO: check if allow.cartesian needs to be set.
       train_id <- merge(x=train_id,
                         y=subset_table,
                         by=sample_id_columns,
@@ -907,7 +966,6 @@
                                        prob=TRUE)
         
         # Merge train_id with subset_table.
-        # TODO: check if allow.cartesian needs to be set.
         current_train_id <- merge(x=current_train_id,
                                   y=subset_table,
                                   by=sample_id_columns,
@@ -975,7 +1033,7 @@
 
   # Suppress NOTES due to non-standard evaluation in data.table
   sample_id <- class_id <- N <- base_samples <- part_id <- NULL
-
+  browser()
   # Class imbalance should only be addressed if the outcome data is categorical.
   if(!settings$data$outcome_type %in% c("binomial", "multinomial")){
     logger.stop(paste0("Creating iterations: Imbalance partitions (ip) are only available with binomial and multinomial outcomes."))
