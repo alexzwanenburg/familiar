@@ -1017,20 +1017,35 @@
 }
 
 
-.create_balanced_partitions <- function(sample_identifiers, data, settings) {
+.create_balanced_partitions <- function(data,
+                                        sample_identifiers=NULL,
+                                        settings=NULL,
+                                        outcome_type=NULL,
+                                        imbalance_method=NULL,
+                                        imbalance_n_partitions=NULL) {
   # Methods to address class imbalance
 
   # Suppress NOTES due to non-standard evaluation in data.table
-  outcome <- n <- partition <- i.n <- sample_order_id <- NULL
-  browser()
+  outcome <- n <- partition <- i.n <- sample_order_id <- keep <- cumulative_n <- NULL
+  
+  if(is.null(outcome_type)) outcome_type <- settings$data$outcome_type
+  if(is.null(imbalance_method)) imbalance_method <- settings$data$imbalance_method
+  if(is.null(imbalance_n_partitions)) imbalance_n_partitions <- settings$data$imbalance_n_partitions
+  
   # Class imbalance should only be addressed if the outcome data is categorical.
-  if(!settings$data$outcome_type %in% c("binomial", "multinomial")){
+  if(!outcome_type %in% c("binomial", "multinomial")){
     logger.stop(paste0("Creating iterations: Imbalance partitions (ip) are only available with binomial and multinomial outcomes."))
   }
   
   # Obtain id columns
   id_columns <- get_id_columns(id_depth="series")
   sample_id_columns <- get_id_columns(id_depth="sample")
+  
+  # Set sample identifiers, if not provided. Note that is only the case during
+  # unit testing.
+  if(is.null(sample_identifiers)){
+    sample_identifiers <- unique(data[, mget(id_columns)])
+  }
   
   # For creating imbalance partitions based on categorical data we require the
   # outcome data as is. Redundant factors are dropped and remaining factors
@@ -1044,10 +1059,11 @@
   subset_table$outcome <- addNA(subset_table$outcome, ifany=TRUE)
   subset_table$outcome <- droplevels(subset_table$outcome)
 
-  # Determine the frequency of sample outcomes.
-  level_frequency <- subset_table[, list("n"=.N), by="outcome"]
-
-  if(settings$data$imbalance_method %in% c("full_undersampling", "random_undersampling")){
+  # Determine the frequency of sample outcomes, and order by frequency.
+  level_frequency <- subset_table[, list("n"=.N), by="outcome"][order(n)]
+  class_order <- level_frequency$outcome
+  
+  if(imbalance_method %in% c("full_undersampling", "random_undersampling")){
     
     # Create empty train_list
     train_list <- list()
@@ -1059,8 +1075,10 @@
     if(n_small / (n_large + n_small) > 0.3) warning("Imbalance partitions are not required as data are not severely imbalanced.")
     
     # Set up the basic partition by selecting all data that are required for the
-    # minority class. First determine the smallest class.
+    # minority class. First determine the smallest class(es) and then the
+    # majority classes (if any).
     minority_class <- level_frequency[n == n_small]$outcome
+    majority_class <- setdiff(class_order, minority_class)
     
     # Update subset_table by assigning all samples that contain the minority
     # class to the base partition.
@@ -1073,16 +1091,16 @@
     n_partitions <- ceiling(class_ratio - floor(class_ratio) * 0.1)
     
     # Determine the number of partitions.
-    if(settings$data$imbalance_method == "random_undersampling"){
+    if(imbalance_method == "random_undersampling"){
       
       # Set randomisation flag.
       randomise <- n_partitions > 1
       
       if(n_partitions > 1){
         # Use setting provided by the user.
-        n_partitions <- settings$data$imbalance_n_partitions
+        n_partitions <- imbalance_n_partitions
         
-      } else if(n_partitions != settings$data$imbalance_n_partitions){
+      } else if(n_partitions != imbalance_n_partitions){
         # In case the number of unique partitions is 1, and the user-provided
         # setting is not 1, create only one partition and warn the user.
         warning("Only one unique partition can be created.")
@@ -1111,100 +1129,176 @@
       # partitions.
       available_data <- subset_table[is.na(partition) | partition != "base"]
       
-      # Check that any data are available.
-      if(nrow(available_data) == 0){
+      # Check that any data are available, or that we can create a meaningful
+      # partition using additional data.
+      if(nrow(available_data) == 0 | all(partition_level_frequency$n == 0) | length(majority_class) == 0){
         # If no data are available, copy the dataset that was based on the
-        # minority class, and break from the loop.
+        # minority class(es), and break from the loop.
         train_list[[ii]] <- subset_table[partition == "base", mget(id_columns)]
         break()
       }
       
-      # Randomly Order samples.
-      #
-      # In case of random partitioning, all available samples are randomly
-      # ordered. Otherwise, for full partitioning, we first randomly order any
-      # unassigned samples (if any), and then order any previously assigned
-      # samples (if any). This is done in order that any intermediate classes
-      # will be sufficiently represented in the data.
-      #
-      # Note that we cannot directly select and insert samples by outcome level,
-      # because a sample may contain multiple series with different outcomes.
-      if(randomise){
-        # For random partitioning.
+      # Iterate over majority classes.
+      for(current_class in majority_class){
         
-        # Order available data randomly.
-        sample_order <- fam_sample(x=available_data,
-                                   replace=FALSE)
+        # Select only data where the current class is present.
+        partition_data <- available_data[available_data[outcome == current_class, mget(sample_id_columns)], on=.NATURAL]
         
-        # Set sample_order_id. This will be used to order available_data.
-        sample_order[, "sample_order_id":=.I]
-        
-      } else {
-        # For full partitioning.
-        unassigned_available_data <- available_data[is.na(partition)]
-        assigned_available_data <- data.table::fsetdiff(available_data, unassigned_available_data)
-        
-        # Initial sample order offset.
-        sample_order_offset <- 0L
-        
-        # Initialise datasets.
-        assigned_sample_order <- unassigned_sample_order <- NULL
-        
-        if(nrow(unassigned_available_data) > 0){
+        # Randomly order samples.
+        #
+        # In case of random partitioning, all available samples are randomly
+        # ordered. Otherwise, for full partitioning, we first randomly order any
+        # unassigned samples (if any), and then order any previously assigned
+        # samples (if any). This is done in order that any intermediate classes
+        # will be sufficiently represented in the data.
+        #
+        # Note that we cannot directly select and insert samples by outcome level,
+        # because a sample may contain multiple series with different outcomes.
+        if(randomise){
+          # For random partitioning.
           
           # Order available data randomly.
-          unassigned_sample_order <- fam_sample(x=unassigned_available_data,
+          sample_order <- fam_sample(x=partition_data,
+                                     replace=FALSE)
+          
+          # Set sample_order_id. This will be used to order partition_data.
+          sample_order[, "sample_order_id":=.I]
+          
+        } else {
+          # For full partitioning.
+          unassigned_partition_data <- partition_data[is.na(partition)]
+          assigned_partition_data <- data.table::fsetdiff(partition_data, unassigned_partition_data)
+          
+          # Initial sample order offset.
+          sample_order_offset <- 0L
+          
+          # Initialise datasets.
+          assigned_sample_order <- unassigned_sample_order <- NULL
+          
+          if(nrow(unassigned_partition_data) > 0){
+            
+            # Order available data randomly.
+            unassigned_sample_order <- fam_sample(x=unassigned_partition_data,
+                                                  replace=FALSE)
+            
+            # Set sample_order_id. This will be used to order available_data.
+            unassigned_sample_order[, "sample_order_id":=.I]
+            
+            # Update the sample order offset.
+            sample_order_offset <- nrow(unassigned_sample_order)
+          }
+          
+          if(nrow(assigned_partition_data) > 0){
+            # Order available data randomly.
+            assigned_sample_order <- fam_sample(x=assigned_partition_data,
                                                 replace=FALSE)
+            
+            # Set sample_order_id. This will be used to order available_data.
+            assigned_sample_order[, "sample_order_id":=.I + sample_order_offset]
+          }
           
-          # Set sample_order_id. This will be used to order available_data.
-          unassigned_sample_order[, "sample_order_id":=.I]
-          
-          # Update the sample order offset.
-          sample_order_offset <- nrow(unassigned_sample_order)
+          # Determine sample order.
+          sample_order <- data.table::rbindlist(list(unassigned_sample_order, assigned_sample_order))
         }
         
-        if(nrow(assigned_available_data) > 0){
-          # Order available data randomly.
-          assigned_sample_order <- fam_sample(x=assigned_available_data,
-                                              replace=FALSE)
+        # Merge with available_data
+        partition_data <- merge(x=partition_data,
+                                y=sample_order,
+                                by=sample_id_columns)[order(sample_order_id)]
+        
+        # Determine the frequency of outcome levels for each sample.
+        partition_data <- partition_data[, list("n"=.N), by=c(sample_id_columns, "outcome", "sample_order_id")]
+
+        # From here on we select the samples and add them to the partition. This
+        # proceeds according to the following steps:
+        #
+        # * Remove all samples that would not fit the current partition, because
+        # adding the sample would increase the frequency of any class beyond
+        # what is required.
+        #
+        # * Select those samples that are valid in the sense that they would not
+        # cause the number of instances for any outcome to be exceeded. This is
+        # done in the order established above according to the sample_order_id.
+        # These samples are assigned to the partition.
+        #
+        # * Update the frequency for each class that should still be obtained to
+        # complete the outcome.
+        #
+        # * Use the updated frequency to remove all samples that were not
+        # previously selected and that would not fit the current partition any
+        # more.
+        #
+        # * Iterate over any remaining samples to add them to the partition.
+        
+        # Remove any samples that would exceed the required total instances for
+        # each level. First mark the instances that do not exceed the required
+        # number of samples.
+        partition_data[partition_level_frequency, "keep":=n <= i.n, on="outcome"]
+        
+        # Then mark the corresponding samples, and only keep those.
+        partition_data[, "keep":=all(keep), by=c(sample_id_columns, "outcome", "sample_order_id")]
+        partition_data <- partition_data[keep == TRUE]
+        
+        # Now, we select those samples which will surely be included. First,
+        # determine the cumulative sum for each outcome.
+        partition_data[, "cumulative_n":=cumsum(n), by="outcome"]
+        
+        # Mark the samples where the cumulative sum of outcomes would not exceed
+        # the required number.
+        partition_data[partition_level_frequency, "keep":=cumulative_n <= i.n, on="outcome"]
+        
+        # Mark the corresponding samples.
+        partition_data[, "keep":=all(keep), by=c(sample_id_columns, "outcome", "sample_order_id")]
+        
+        # Mark the data in the subset table.
+        subset_table[unique(partition_data[keep == TRUE, mget(sample_id_columns)]), "partition":=as.character(ii), on=.NATURAL]
+        
+        # Update partition level frequency
+        partition_level_frequency[partition_data[keep == TRUE, list("n"=sum(n)), by="outcome"], "n":=n - i.n, on="outcome"]
+        
+        # Determine if the outcome level was filled to the required level.
+        if(partition_level_frequency[outcome == current_class]$n == 0) next()
+        
+        # Select remaining data to complete 
+        partition_data <- partition_data[keep == FALSE]
+        
+        # Check that any data actually has been selected.
+        if(nrow(partition_data) == 0) next()
+        
+        # Remove any samples that would exceed the required total instances for
+        # each level. First mark the instances that do not exceed the required
+        # number of samples.
+        partition_data[partition_level_frequency, "keep":=n <= i.n, on="outcome"]
+        
+        # Then mark the corresponding samples, and only keep those.
+        partition_data[, "keep":=all(keep), by=c(sample_id_columns, "outcome", "sample_order_id")]
+        partition_data <- partition_data[keep == TRUE, ]
+        
+        # Check that any data actually has been selected.
+        if(nrow(partition_data) == 0) next()
+        
+        # Iterate over the remaining samples. For each sample we check whether
+        # it can be added to the partition.
+        for(current_sample in split(partition_data, by="sample_order_id")){
           
-          # Set sample_order_id. This will be used to order available_data.
-          assigned_sample_order[, "sample_order_id":=.I + sample_order_offset]
+          # Determine if the sample can be added.
+          safe_to_add <- all(partition_level_frequency[current_sample, list("n"=n - i.n), on="outcome"]$n >= 0)
+          
+          # Skip to next sample, if the current sample cannot be added due to
+          # constraints.
+          if(!safe_to_add) next()
+          
+          # If the check passes, we need to add the sample to the fold, and update
+          # level_frequency_fold.
+          partition_level_frequency[current_sample, "n":=n - i.n, on="outcome"]
+          
+          # Mark the sample as being assigned. Note that randomised undersampling
+          # ignores this.
+          subset_table[unique(current_sample[, mget(sample_id_columns)]), "partition":=as.character(ii), on=.NATURAL]
+          
+          # Skip further samples if no more samples need to be added to the fold.
+          if(all(partition_level_frequency$n == 0)) break()
         }
-        
-        # Determine sample order.
-        sample_order <- data.table::rbindlist(list(unassigned_sample_order, assigned_sample_order))
-      }
-      
-      # Merge with available_data
-      available_data <- merge(x=available_data,
-                              y=sample_order,
-                              by=sample_id_columns)[order(sample_order_id)]
-      
-      # Determine the frequency of outcome levels for each sample.
-      available_data <- available_data[, list("n"=.N), by=c(sample_id_columns, "outcome", "sample_order_id")]
-      
-      # Iterate over samples. For each sample we check whether it can be added
-      # to the partition.
-      for(current_sample in split(available_data, by="sample_order_id")){
-        
-        # Determine if the sample can be added.
-        safe_to_add <- all(partition_level_frequency[current_sample, list("n"=n - i.n), on="outcome"]$n >= 0)
-        
-        # Skip to next sample, if the current sample cannot be added due to
-        # constraints.
-        if(!safe_to_add) next()
-        
-        # If the check passes, we need to add the sample to the fold, and update
-        # level_frequency_fold.
-        partition_level_frequency[current_sample, "n":=n - i.n, on="outcome"]
-        
-        # Mark the sample as being assigned. Note that randomised undersampling
-        # ignores this.
-        subset_table[unique(current_sample[, mget(sample_id_columns)]), "partition":=as.character(ii), on=.NATURAL]
-        
-        # Skip further samples if no more samples need to be added to the fold.
-        if(all(partition_level_frequency$n == 0)) break()
       }
       
       # Select samples.
@@ -1242,7 +1336,7 @@
                     "train_list"=train_list),
       SIMPLIFY=FALSE)
     }
-    browser()
+    
     # Return list with partitions
     return(train_list)
   }
