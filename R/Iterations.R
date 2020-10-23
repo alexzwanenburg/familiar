@@ -286,8 +286,8 @@
         
         # Check if the current perturbation method is "imbalance part"
         if(curr_pert_method=="imbalance_part"){
-          ##### New imbalance partitions ###########################################
-          browser()
+          ##### New imbalance partitions #######################################
+          
           # Iterate over runs of the reference data
           for(run in ref_run_list){
             # Generate partitions for generating balanced data sets. Note that
@@ -770,18 +770,7 @@
       for(current_sample in split(available_data, by="sample_order_id")){
         
         # Determine if the sample can be added.
-        safe_to_add <- all(sapply(unique_levels, function(ii, level_frequency, current_sample){
-          
-          # Find the frequency of the outcome.
-          x <- current_sample[outcome == ii]$n
-          if(length(x) == 0) x <- 0L
-          
-          # Check that the frequency of the outcome in the sample does not
-          # exceed the number of required samples.
-          return(level_frequency[outcome == ii]$n - x >= 0)
-        },
-        level_frequency=fold_level_frequency,
-        current_sample=current_sample))
+        safe_to_add <- all(fold_level_frequency[current_sample, list("n"=n - i.n), on="outcome"]$n >= 0)
         
         if(!safe_to_add) next()
         
@@ -1032,111 +1021,229 @@
   # Methods to address class imbalance
 
   # Suppress NOTES due to non-standard evaluation in data.table
-  sample_id <- class_id <- N <- base_samples <- part_id <- NULL
+  outcome <- n <- partition <- i.n <- sample_order_id <- NULL
   browser()
   # Class imbalance should only be addressed if the outcome data is categorical.
   if(!settings$data$outcome_type %in% c("binomial", "multinomial")){
     logger.stop(paste0("Creating iterations: Imbalance partitions (ip) are only available with binomial and multinomial outcomes."))
   }
-
-  # For creating imbalance partitions based on categorical data we require the outcome data as is.
-  # Redundant factors are dropped and remaining factors (including NA) are transcoded
-  subset_table         <- unique(data[sample_id %in% sample_identifiers, c("sample_id", "outcome")])
+  
+  # Obtain id columns
+  id_columns <- get_id_columns(id_depth="series")
+  sample_id_columns <- get_id_columns(id_depth="sample")
+  
+  # For creating imbalance partitions based on categorical data we require the
+  # outcome data as is. Redundant factors are dropped and remaining factors
+  # (including NA) are transcoded
+  subset_table <- merge(x=unique(data[, mget(c(id_columns, "outcome"))]),
+                        y=sample_identifiers,
+                        by=id_columns,
+                        all=FALSE)
+  
+  # Transcode classes
   subset_table$outcome <- addNA(subset_table$outcome, ifany=TRUE)
   subset_table$outcome <- droplevels(subset_table$outcome)
-  subset_table$outcome <- as.numeric(subset_table$outcome)
-  data.table::setnames(subset_table, "outcome", "class_id")
 
-  # Count the number of class instances
-  dt_class_count <- subset_table[, .N, by=class_id]
+  # Determine the frequency of sample outcomes.
+  level_frequency <- subset_table[, list("n"=.N), by="outcome"]
 
   if(settings$data$imbalance_method %in% c("full_undersampling", "random_undersampling")){
+    
     # Create empty train_list
-    train_list   <- list()
+    train_list <- list()
 
-    # Get the number of each class and identify the number of partitions
-    n_small <- min(dt_class_count$N)
-    n_large <- max(dt_class_count$N)
+    # Get the number of each class and identify the number of partitions.
+    n_small <- min(level_frequency$n)
+    n_large <- max(level_frequency$n)
 
-    # Set the number of partitions
+    if(n_small / (n_large + n_small) > 0.3) warning("Imbalance partitions are not required as data are not severely imbalanced.")
+    
+    # Set up the basic partition by selecting all data that are required for the
+    # minority class. First determine the smallest class.
+    minority_class <- level_frequency[n == n_small]$outcome
+    
+    # Update subset_table by assigning all samples that contain the minority
+    # class to the base partition.
+    subset_table[subset_table[outcome %in% minority_class, mget(sample_id_columns)], "partition":="base", on=.NATURAL]
+    
+    # Determine the number of partitions while allowing the majority class to
+    # be up to 10% bigger. This should leave sufficient margin for a slight
+    # discrepancy in class levels, when adding any remaining random elements.
+    class_ratio <- n_large / n_small
+    n_partitions <- ceiling(class_ratio - floor(class_ratio) * 0.1)
+    
+    # Determine the number of partitions.
     if(settings$data$imbalance_method == "random_undersampling"){
-      n_partitions <- settings$data$imbalance_n_partitions
+      
+      # Set randomisation flag.
+      randomise <- n_partitions > 1
+      
+      if(n_partitions > 1){
+        # Use setting provided by the user.
+        n_partitions <- settings$data$imbalance_n_partitions
+        
+      } else if(n_partitions != settings$data$imbalance_n_partitions){
+        # In case the number of unique partitions is 1, and the user-provided
+        # setting is not 1, create only one partition and warn the user.
+        warning("Only one unique partition can be created.")
+      }
+      
     } else {
-      n_partitions <- ceiling(n_large/n_small)
+      # Set randomise to FALSE.
+      randomise <- FALSE
     }
-
-    # Generate partition ids
-    partition_id <- as.numeric(seq_len(n_partitions))
-
-    # Set the base number of subjects for each class in each partition
-    dt_class_count[,"base_samples":=floor(N/n_partitions)]
-
-    # Correct the number of base samples so that it is not larger than the number of instances of the smallest class
-    dt_class_count[base_samples>n_small, "base_samples":=n_small]
-
-    # Set the number of subjects that should be randomly assigned to a partition. This should be zero if:
-    # - the number of base samples is greater or equal to n_small
-    dt_class_count[,"n_remain":=0]
-    dt_class_count[base_samples<n_small,"n_remain":=N-base_samples*n_partitions]
-
-    # Create a data table
-    dt_part <- data.table::as.data.table(expand.grid(part_id=partition_id, class_id=sort(dt_class_count$class_id), stringsAsFactors=FALSE))
-    dt_part <- merge(x=dt_part, y=dt_class_count[,c("class_id", "base_samples")], by="class_id")
-
-    # Iterate over class_id and add remaining
-    for(curr_class_id in dt_class_count$class_id){
-      n_remain <- dt_class_count[class_id==curr_class_id, ]$n_remain
-      if(n_remain > 0){
-
-        # Randomly select the partition id to which a sample is added.
-        sel_part_id <- fam_sample(x=partition_id, size=n_remain, replace=FALSE)
-
-        # Increase sample counter by 1
-        dt_part[class_id==curr_class_id & part_id %in% sel_part_id, "base_samples":=base_samples+1]
+    
+    # Determine how much of the levels are occupied by the base partition.
+    level_frequency[subset_table[partition == "base", list("n"=.N), by="outcome"], "n":=n - i.n, on="outcome"]
+    level_frequency[n < 0, "n":=0L]
+    level_frequency[n > n_small, "n":=n_small]
+    
+    for(ii in seq_len(n_partitions)){
+      # Copy the fold_level frequency.
+      partition_level_frequency <- data.table::copy(level_frequency)
+      
+      # Get all available data.
+      #
+      # Undersampling should use any data not assigned to the base minority
+      # class dataset. This includes samples that may have been assigned to
+      # other partitions. Such assigned samples will be treated at the same
+      # priority for random partitions, and a lower priority for full
+      # partitions.
+      available_data <- subset_table[is.na(partition) | partition != "base"]
+      
+      # Check that any data are available.
+      if(nrow(available_data) == 0){
+        # If no data are available, copy the dataset that was based on the
+        # minority class, and break from the loop.
+        train_list[[ii]] <- subset_table[partition == "base", mget(id_columns)]
+        break()
       }
-    }
-
-    # Determine how many samples need to be randomly added to get up to n_small samples for the class.
-    dt_part[, "random_samples":=n_small-base_samples]
-
-    # Start the drawing process
-    subset_table[, "part_id":=0]
-
-    # Iterate over partition_id to add subjects to the trainlist
-    for(ii in partition_id){
-      # Iterate over the classes
-      train_list[[ii]]    <- character(0)
-      for(jj in sort(dt_class_count$class_id)){
-        # Get the number of base samples
-        n_base_samples    <- dt_part[class_id==jj & part_id==ii]$base_samples
-
-        if(n_base_samples > 0){
-          # Randomly select up to n_base_samples subject ids with the current class that were not selected before.
-          base_subjects   <- fam_sample(x=subset_table[class_id==jj & part_id==0]$sample_id, size=n_base_samples, replace=FALSE)
-
-          # Mark selected base subjects in subset_table
-          subset_table[sample_id %in% base_subjects, "part_id":=ii]
-        } else {
-          base_subjects   <- character(0)
+      
+      # Randomly Order samples.
+      #
+      # In case of random partitioning, all available samples are randomly
+      # ordered. Otherwise, for full partitioning, we first randomly order any
+      # unassigned samples (if any), and then order any previously assigned
+      # samples (if any). This is done in order that any intermediate classes
+      # will be sufficiently represented in the data.
+      #
+      # Note that we cannot directly select and insert samples by outcome level,
+      # because a sample may contain multiple series with different outcomes.
+      if(randomise){
+        # For random partitioning.
+        
+        # Order available data randomly.
+        sample_order <- fam_sample(x=available_data,
+                                   replace=FALSE)
+        
+        # Set sample_order_id. This will be used to order available_data.
+        sample_order[, "sample_order_id":=.I]
+        
+      } else {
+        # For full partitioning.
+        unassigned_available_data <- available_data[is.na(partition)]
+        assigned_available_data <- data.table::fsetdiff(available_data, unassigned_available_data)
+        
+        # Initial sample order offset.
+        sample_order_offset <- 0L
+        
+        # Initialise datasets.
+        assigned_sample_order <- unassigned_sample_order <- NULL
+        
+        if(nrow(unassigned_available_data) > 0){
+          
+          # Order available data randomly.
+          unassigned_sample_order <- fam_sample(x=unassigned_available_data,
+                                                replace=FALSE)
+          
+          # Set sample_order_id. This will be used to order available_data.
+          unassigned_sample_order[, "sample_order_id":=.I]
+          
+          # Update the sample order offset.
+          sample_order_offset <- nrow(unassigned_sample_order)
         }
-
-        # Get the number of random samples to draw from other partitions
-        n_random_samples  <- dt_part[class_id==jj & part_id==ii]$random_samples
-
-        if(n_random_samples > 0){
-          # Randomly select up to n_random_samples subject ids with the current class that were not selected for this partition
-          random_subjects <- fam_sample(x=subset_table[class_id==jj & part_id!=ii]$sample_id, size=n_random_samples, replace=FALSE)
-        } else {
-          random_subjects <- character(0)
+        
+        if(nrow(assigned_available_data) > 0){
+          # Order available data randomly.
+          assigned_sample_order <- fam_sample(x=assigned_available_data,
+                                              replace=FALSE)
+          
+          # Set sample_order_id. This will be used to order available_data.
+          assigned_sample_order[, "sample_order_id":=.I + sample_order_offset]
         }
-
-        # Add to trainlist
-        train_list[[ii]] <- append(train_list[[ii]], c(base_subjects, random_subjects))
+        
+        # Determine sample order.
+        sample_order <- data.table::rbindlist(list(unassigned_sample_order, assigned_sample_order))
       }
+      
+      # Merge with available_data
+      available_data <- merge(x=available_data,
+                              y=sample_order,
+                              by=sample_id_columns)[order(sample_order_id)]
+      
+      # Determine the frequency of outcome levels for each sample.
+      available_data <- available_data[, list("n"=.N), by=c(sample_id_columns, "outcome", "sample_order_id")]
+      
+      # Iterate over samples. For each sample we check whether it can be added
+      # to the partition.
+      for(current_sample in split(available_data, by="sample_order_id")){
+        
+        # Determine if the sample can be added.
+        safe_to_add <- all(partition_level_frequency[current_sample, list("n"=n - i.n), on="outcome"]$n >= 0)
+        
+        # Skip to next sample, if the current sample cannot be added due to
+        # constraints.
+        if(!safe_to_add) next()
+        
+        # If the check passes, we need to add the sample to the fold, and update
+        # level_frequency_fold.
+        partition_level_frequency[current_sample, "n":=n - i.n, on="outcome"]
+        
+        # Mark the sample as being assigned. Note that randomised undersampling
+        # ignores this.
+        subset_table[unique(current_sample[, mget(sample_id_columns)]), "partition":=as.character(ii), on=.NATURAL]
+        
+        # Skip further samples if no more samples need to be added to the fold.
+        if(all(partition_level_frequency$n == 0)) break()
+      }
+      
+      # Select samples.
+      train_list[[ii]] <- subset_table[partition %in% c("base", as.character(ii)), mget(id_columns)]
     }
-
+    
+    # Update the number of partitions to the actual number of partitions.
+    n_partitions <- length(train_list)
+    
+    # In case of static, full, undersampling divide any remaining samples among
+    # the partitions.
+    if(!randomise & any(is.na(subset_table$partition))){
+      
+      # Select unassigned samples.
+      available_data <- subset_table[is.na(partition)]
+      
+      # Determine the number of unassigned samples.
+      n_unassigned_samples <- data.table::uniqueN(available_data, by=sample_id_columns)
+      
+      # Generate partition_ids for unassigned samples.
+      partition_ids <- rep_len(x=seq_len(n_partitions),
+                               length.out=n_unassigned_samples)
+      
+      # Set partition_id.
+      available_data[, "partition_id":=partition_ids[.GRP], by=sample_id_columns]
+      
+      # Split by partition id and assign to train_list.
+      train_list[seq_len(max(partition_ids))] <- mapply(function(ii, unassigned_data, train_list, id_columns){
+        return(data.table::rbindlist(list(train_list[[ii]],
+                                          unassigned_data[, mget(id_columns)])))
+      },
+      seq_len(max(partition_ids)),
+      split(available_data, by="partition_id"),
+      MoreArgs=list("id_columns"=id_columns,
+                    "train_list"=train_list),
+      SIMPLIFY=FALSE)
+    }
+    browser()
     # Return list with partitions
     return(train_list)
   }
-
 }
