@@ -554,8 +554,10 @@ find_unimportant_features <- function(cl=NULL, feature_info_list, data_obj, sett
   
   # Generate bootstraps
   n_iter         <- 10
-  iter_list      <- .create_bootstraps(sample_identifiers=get_unique_samples(data=data_obj), n_iter=n_iter,
-                                       settings=settings, data=data_obj@data, stratify=TRUE)
+  iter_list      <- .create_bootstraps(n_iter=n_iter,
+                                       settings=settings,
+                                       data=data_obj@data,
+                                       stratify=TRUE)
   
   
   ##### Calculate metric values over the full data #####

@@ -388,8 +388,7 @@
             
             # Determine the number of samples.
             n_samples <- data.table::uniqueN(sample_identifiers, by=sample_id_columns)
-            
-            
+
             # Create repeated cross-validations
             cv_iter_list <- .create_cv(sample_identifiers=sample_identifiers,
                                        n_folds=n_samples,
@@ -614,11 +613,11 @@
 
 
 
-.create_cv <- function(sample_identifiers, n_folds, settings=NULL, outcome_type=NULL, data=NULL, stratify=TRUE, return_fold_id=FALSE){
+.create_cv <- function(data, n_folds, sample_identifiers=NULL, settings=NULL, outcome_type=NULL, stratify=TRUE, return_fold_id=FALSE){
   # Cross-validation
 
   # Suppress NOTES due to non-standard evaluation in data.table
-  sample_id <- outcome <- fold_id <- sample_order_id <- n <- i.n <- NULL
+  outcome <- fold_id <- sample_order_id <- n <- i.n <- NULL
 
   # Obtain id columns
   id_columns <- get_id_columns(id_depth="series")
@@ -631,6 +630,12 @@
   
   # Do not stratify absent data
   if(is_empty(data)) stratify <- FALSE
+  
+  # Set sample identifiers, if not provided. Note that is only the case during
+  # unit testing.
+  if(is.null(sample_identifiers)){
+    sample_identifiers <- unique(data[, mget(id_columns)])
+  }
   
   if(!stratify){
     # Select data based on sample id - note that even if duplicate
@@ -809,7 +814,7 @@
 
 
 
-.create_bootstraps <- function(sample_identifiers, n_iter, settings=NULL, outcome_type=NULL, data=NULL, stratify=TRUE){
+.create_bootstraps <- function(data, n_iter, sample_identifiers=NULL, settings=NULL, outcome_type=NULL, data=NULL, stratify=TRUE){
 
   # Suppress NOTES due to non-standard evaluation in data.table
   outcome <- prob <- NULL
@@ -820,6 +825,12 @@
   # Set outcome_type from settings
   if(is.null(outcome_type)) outcome_type <- settings$data$outcome_type
 
+  # Set sample identifiers, if not provided. Note that is only the case during
+  # unit testing.
+  if(is.null(sample_identifiers)){
+    sample_identifiers <- unique(data[, mget(id_columns)])
+  }
+  
   # Check stratification for continuous data
   if(outcome_type %in% c("continuous", "count")) stratify <- FALSE
   

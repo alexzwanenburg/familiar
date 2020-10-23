@@ -346,8 +346,7 @@ hpo.perform_smbo <- function(run, run_id, n_run_total, cl, fs_method, learner=NU
 
   ################### SMBO - Initialisation ############################################
   # Generate data bootstrap samples
-  hpo_bootstrap_list <- .create_bootstraps(sample_identifiers = primary_data@data$subject_id,
-                                           n_iter = settings$hpo$hpo_max_bootstraps,
+  hpo_bootstrap_list <- .create_bootstraps(n_iter = settings$hpo$hpo_max_bootstraps,
                                            settings = settings,
                                            data = primary_data@data)
 

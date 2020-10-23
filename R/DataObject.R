@@ -547,16 +547,18 @@ setMethod("select_data_from_samples", signature(data="dataObject", samples="ANY"
                 data@data <- merge(dt_iter, data@data, by="subject_id", all.x=FALSE, all.y=FALSE)
                 
               } else if(!is.null(samples) & is.null(data@sample_set_on_load)) {
-                # Use samples from the samples function argument. allow.cartesian is set to true to allow
-                # use with repeated measurements.
+                # Use samples from the samples function argument.
+                # allow.cartesian is set to true to allow use with repeated
+                # measurements.
                 dt_iter   <- data.table::data.table("subject_id"=samples)
                 data@data <- merge(dt_iter, data@data, by="subject_id", all.x=FALSE, all.y=FALSE,
                                    allow.cartesian=TRUE)
                 
               } else {
-                # Use samples that appear both as function argument and within the sample_set_on_load attribute.
-                # The sample_set_on_load attribute is used as a filter. allow.cartesian is set to true to allow
-                # use with repeated measurements.
+                # Use samples that appear both as function argument and within
+                # the sample_set_on_load attribute. The sample_set_on_load
+                # attribute is used as a filter. allow.cartesian is set to true
+                # to allow use with repeated measurements.
                 samples <- samples[samples %in% data@sample_set_on_load]
                 dt_iter <- data.table::data.table("subject_id"=samples)
                 data@data <- merge(dt_iter, data@data, by="subject_id", all.x=FALSE, all.y=FALSE,
