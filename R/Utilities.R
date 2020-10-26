@@ -791,19 +791,29 @@ get_placeholder_vimp_table <- function(){
 
 
 
-get_id_columns <- function(id_depth="repetition"){
+get_id_columns <- function(id_depth="repetition", single_column=NULL){
   
   # Check that until_depth is correctly specified.
   if(!id_depth %in% c("batch", "sample", "series", "repetition")){
     ..error_value_not_allowed(x=id_depth, var_name="id_depth", values=c("batch", "sample", "series", "repetition"))
   }
   
-  # Generate the names of the non-feature columns
-  id_columns <- switch(id_depth,
-                       "batch" = "batch_id",
-                       "sample" = c("batch_id", "sample_id"),
-                       "series" = c("batch_id", "sample_id", "series_id"),
-                       "repetition" = c("batch_id", "sample_id", "series_id", "repetition_id"))
+  if(is.null(single_column)){
+    # Generate the names of the non-feature columns
+    id_columns <- switch(id_depth,
+                         "batch" = "batch_id",
+                         "sample" = c("batch_id", "sample_id"),
+                         "series" = c("batch_id", "sample_id", "series_id"),
+                         "repetition" = c("batch_id", "sample_id", "series_id", "repetition_id"))
+    
+  } else {
+    id_columns <- switch(single_column,
+                         "batch" = "batch_id",
+                         "sample" = "sample_id",
+                         "series" = "series_id",
+                         "repetition" = "repetition_id")
+  }
+  
   
   return(id_columns)
 }
