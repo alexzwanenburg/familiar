@@ -1156,7 +1156,7 @@ setMethod("extract_univariate_analysis", signature(object="familiarEnsemble", da
             
             # Check if the number of samples is sufficient (>5), and return an
             # empty table if not.
-            if(data.table::uniqueN(data@data, by="subject_id") <= 5) return(NULL)
+            if(data.table::uniqueN(data@data, by=get_id_columns(id_depth="sample")) <= 5) return(NULL)
             
             # Maintain only important features. The current set is based on the
             # required features.
@@ -1221,7 +1221,7 @@ setMethod("extract_univariate_analysis", signature(object="familiarEnsemble", da
                                        x=data@data[, mget(numeric_columns)],
                                        feature=numeric_columns,
                                        progress_bar=FALSE,
-                                       MoreArgs=list("id_data"=data@data[, c("subject_id", "cohort_id", "repetition_id")],
+                                       MoreArgs=list("id_data"=data@data[, mget(get_id_columns(id_depth="repetition"))],
                                                      "type"=icc_type))
                 
                 # Merge with univariate_data
