@@ -55,10 +55,12 @@ run_evaluation <- function(cl, proj_list, settings, file_paths){
   project_id <- project_list$project_id
   
   # Check which data object is required for performing model building
-  mb_data_id <- getProcessDataID(proj_list=project_list, process_step="mb")
+  mb_data_id <- .get_process_step_data_identifier(project_list=project_list,
+                                                  process_step="mb")
   
   # Get runs
-  run_list <- getRunList(iter_list=project_list$iter_list, data_id=mb_data_id)
+  run_list <- .get_run_list(iteration_list=project_list$iter_list,
+                            data_id=mb_data_id)
   
   # Get list of data collection pools
   data_sets <- data.table::rbindlist(.get_ensemble_structure_info(run_list=run_list,
@@ -88,7 +90,8 @@ run_evaluation <- function(cl, proj_list, settings, file_paths){
                 by=c("learner", "fs_method")]
   
   # Add paths to data
-  data_set_list[, "data_dir_path":=get_object_dir_path(dir_path=file_paths$fam_data_dir, object_type="familiarData")]
+  data_set_list[, "data_dir_path":=get_object_dir_path(dir_path=file_paths$fam_data_dir,
+                                                       object_type="familiarData")]
   
   # Set paths to familiar ensembles
   data_set_list[, "fam_ensemble":=get_object_file_name(dir_path=model_dir_path,

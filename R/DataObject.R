@@ -191,7 +191,7 @@ setMethod("load_delayed_data", signature(data="dataObject", object="ANY"),
             if(!data@delay_loading) return(data)
 
             # Read project list and settings
-            iter_list <- get_project_list()$iter_list
+            iteration_list <- get_project_list()$iter_list
 
             # Read required features
             required_features <- object@required_features
@@ -199,14 +199,19 @@ setMethod("load_delayed_data", signature(data="dataObject", object="ANY"),
             # Get columns in data frame which are not features, but identifiers and outcome instead
             non_feature_cols <- get_non_feature_columns(x=object)
             
-            # Get subject ids
-            run_id_list <- getIterID(run=list("run_table"=object@run_table), perturb_level=data@perturb_level)
-            run_subj_id <- getSubjectIDs(iter_list=iter_list, data_id=run_id_list$data, run_id=run_id_list$run,
-                                         train_or_validate=ifelse(data@load_validation, "valid", "train"))
+            # Find the identifiers for the current run.
+            run_id_list <- .get_iteration_identifiers(run=list("run_table"=object@run_table),
+                                                      perturb_level=data@perturb_level)
+            browser()
+            # Derive sample identifiers based on the selected iteration data.
+            sample_identifiers <- .get_sample_identifiers(iteration_list=iteration_list,
+                                                          data_id=run_id_list$data,
+                                                          run_id=run_id_list$run,
+                                                          train_or_validate=ifelse(data@load_validation, "valid", "train"))
             
-            # Check subjects and select unique subjects
-            if(!is.null(run_subj_id)){
-              uniq_subj_id <- unique(run_subj_id)
+            # Currently select only unique samples from the backend.
+            if(!is_empty(sample_identifiers)){
+              unique_sample_identifiers <- unique(sample_identifiers)
               
             } else {
               # Return an updated data object, but without data
@@ -219,7 +224,8 @@ setMethod("load_delayed_data", signature(data="dataObject", object="ANY"),
             
             # Prepare a new data object
             new_data <- methods::new("dataObject",
-                                     data = get_data_from_backend(sample_identifiers=uniq_subj_id, column_names=c(non_feature_cols, required_features)),
+                                     data = get_data_from_backend(sample_identifiers=unique_sample_identifiers,
+                                                                  column_names=c(non_feature_cols, required_features)),
                                      preprocessing_level="none",
                                      outcome_type = data@outcome_type,
                                      delay_loading = FALSE,
@@ -234,8 +240,10 @@ setMethod("load_delayed_data", signature(data="dataObject", object="ANY"),
                                         stop_at=stop_at,
                                         keep_novelty=keep_novelty)
             
-            # Recreate iteration
-            new_data <- select_data_from_samples(data=new_data, samples=run_subj_id)
+            # Recreate iteration. Note that we here also use duplicate samples
+            # to recreate e.g. bootstraps.
+            new_data <- select_data_from_samples(data=new_data,
+                                                 samples=sample_identifiers)
             
             # Aggregate data if required
             if(new_data@aggregate_on_load){
@@ -264,8 +272,8 @@ setMethod("load_delayed_data", signature(data="dataObject", object="familiarEnse
             if(!data@delay_loading) return(data)
             
             # Read project list and settings
-            iter_list <- get_project_list()$iter_list
-            settings  <- get_settings()
+            iteration_list <- get_project_list()$iter_list
+            settings <- get_settings()
             
             # Read required features
             required_features <- object@required_features
@@ -284,29 +292,33 @@ setMethod("load_delayed_data", signature(data="dataObject", object="familiarEnse
             # Remove duplicate rows
             combined_run_table <- unique(combined_run_table)
             
-            # Check length and extract sample ids.
+            # Check length and extract sample identifiers.
             if(nrow(combined_run_table) == 1){
-              run_subj_id <- getSubjectIDs(iter_list=iter_list,
-                                           data_id=combined_run_table$data_id,
-                                           run_id=combined_run_table$run_id,
-                                           train_or_validate=ifelse(data@load_validation, "valid", "train"))
+              sample_identifiers <- .get_sample_identifiers(iteration_list=iteration_list,
+                                                            data_id=combined_run_table$data_id,
+                                                            run_id=combined_run_table$run_id,
+                                                            train_or_validate=ifelse(data@load_validation, "valid", "train"))
               
             } else {
-              # Extract all subject ids. This happens if the the data is pooled.
-              run_subj_id <- unlist(lapply(seq_len(nrow(combined_run_table)), function(ii, run_table, iter_list, train_or_validate){
-                return(getSubjectIDs(iter_list=iter_list,
-                                     data_id=run_table$data_id[ii],
-                                     run_id=run_table$run_id[ii],
-                                     train_or_validate=train_or_validate))
-              }, run_table=combined_run_table, iter_list=iter_list, train_or_validate=ifelse(data@load_validation, "valid", "train")))
+              # Extract all sample identifiers. This happens if the the data is pooled.
+              sample_identifiers <- data.table::rbindlist(lapply(seq_len(nrow(combined_run_table)), function(ii, run_table, iteration_list, train_or_validate){
+               sample_identifiers <- .get_sample_identifiers(iteration_list=iteration_list,
+                                                             data_id=run_table$data_id[ii],
+                                                             run_id=run_table$run_id[ii],
+                                                             train_or_validate=train_or_validate)
+               return(sample_identifiers)
+              },
+              run_table=combined_run_table,
+              iter_list=iteration_list,
+              train_or_validate=ifelse(data@load_validation, "valid", "train")))
               
-              # Select only unique subject ids.
-              run_subj_id <- unique(run_subj_id)
+              # Select only unique sample identifiers.
+              sample_identifiers <- unique(sample_identifiers)
             }
             
-            # Check subjects and select unique subjects
-            if(!is.null(run_subj_id)){
-              uniq_subj_id   <- unique(run_subj_id)
+            # Currently select only unique samples from the backend.
+            if(!is_empty(sample_identifiers)){
+              unique_sample_identifiers <- unique(sample_identifiers)
               
             } else {
               # Return an updated data object, but without data
@@ -319,7 +331,8 @@ setMethod("load_delayed_data", signature(data="dataObject", object="familiarEnse
             
             # Prepare a new data object
             new_data <- methods::new("dataObject",
-                                     data = get_data_from_backend(sample_identifiers=uniq_subj_id, column_names=c(non_feature_cols, required_features)),
+                                     data = get_data_from_backend(sample_identifiers=unique_sample_identifiers,
+                                                                  column_names=c(non_feature_cols, required_features)),
                                      preprocessing_level="none",
                                      outcome_type = data@outcome_type,
                                      delay_loading = FALSE,
@@ -334,8 +347,10 @@ setMethod("load_delayed_data", signature(data="dataObject", object="familiarEnse
                                         stop_at=stop_at,
                                         keep_novelty=keep_novelty)
             
-            # Recreate iteration
-            new_data <- select_data_from_samples(data=new_data, samples=run_subj_id)
+            # Recreate iteration. Note that we here also use duplicate samples
+            # to recreate e.g. bootstraps.
+            new_data <- select_data_from_samples(data=new_data,
+                                                 samples=sample_identifiers)
             
             # Aggregate data if required
             if(new_data@aggregate_on_load){
@@ -536,22 +551,30 @@ setMethod("select_data_from_samples", signature(data="dataObject", samples="ANY"
               data@sample_set_on_load <- samples
               
             } else {
+              browser()
+              # Determine the names of the id-columns, up to the series level.
+              id_columns <- get_id_columns(id_depth="series")
               
-              if(is.null(samples) & is.null(data@sample_set_on_load)) {
+              if(is_empty(samples) & is.null(data@sample_set_on_load)) {
                 # Return an empty data set if no samples are provided
                 data@data <- head(data@data, n=0)
                 
-              } else if(is.null(samples) & !is.null(data@sample_set_on_load)) {
+              } else if(is_empty(samples) & !is.null(data@sample_set_on_load)) {
                 # Use samples in the sample_set_on_load attribute.
-                dt_iter   <- data.table::data.table("subject_id"=data@sample_set_on_load)
-                data@data <- merge(dt_iter, data@data, by="subject_id", all.x=FALSE, all.y=FALSE)
+                data@data <- merge(x=data@sample_set_on_load,
+                                   y=data@data,
+                                   by=id_columns,
+                                   all=FALSE,
+                                   allow.cartesian=TRUE)
                 
-              } else if(!is.null(samples) & is.null(data@sample_set_on_load)) {
+              } else if(!is_empty(samples) & is.null(data@sample_set_on_load)) {
                 # Use samples from the samples function argument.
                 # allow.cartesian is set to true to allow use with repeated
                 # measurements.
-                dt_iter   <- data.table::data.table("subject_id"=samples)
-                data@data <- merge(dt_iter, data@data, by="subject_id", all.x=FALSE, all.y=FALSE,
+                data@data <- merge(x=samples,
+                                   y=data@data,
+                                   by=id_columns,
+                                   all=FALSE,
                                    allow.cartesian=TRUE)
                 
               } else {
@@ -559,24 +582,25 @@ setMethod("select_data_from_samples", signature(data="dataObject", samples="ANY"
                 # the sample_set_on_load attribute. The sample_set_on_load
                 # attribute is used as a filter. allow.cartesian is set to true
                 # to allow use with repeated measurements.
-                samples <- samples[samples %in% data@sample_set_on_load]
-                dt_iter <- data.table::data.table("subject_id"=samples)
-                data@data <- merge(dt_iter, data@data, by="subject_id", all.x=FALSE, all.y=FALSE,
-                                   allow.cartesian=TRUE)
-                
+                samples <- data.table::fintersect(samples, data@sample_set_on_load)
+
+                if(is_empty(samples)){
+                  # Return an empty data set if no samples are left.
+                  data@data <- head(data@data, n=0)
+                  
+                } else {
+                  data@data <- merge(x=samples,
+                                     y=data@data,
+                                     by=id_columns,
+                                     all=FALSE,
+                                     allow.cartesian=TRUE)
+                }
               }
             }
             
             return(data)
           })
 
-
-#####get_unique_samples#####
-setMethod("get_unique_samples", signature(data="dataObject"),
-          function(data){
-
-            return(unique(data@data$subject_id))
-          })
 
 
 #####aggregate_data#####

@@ -1,37 +1,3 @@
-selectData <- function(dt, proj_list, main_data_id, main_run_id, process_step){
-  # Selects data from data table dt based on current run
-
-  if(process_step %in% c("fs", "mb", "model_eval_train")){
-    iter_subjects <- proj_list$iter_list[[as.character(main_data_id)]]$train_id[[main_run_id]]
-  } else if (process_step == "model_eval_valid") {
-    iter_subjects <- proj_list$iter_list[[as.character(main_data_id)]]$valid_id[[main_run_id]]
-  }
-
-  # Make subselection based on iter_subjects
-  dt <- selectDataFromSubjects(dt=dt, subj_id=iter_subjects)
-
-  return(dt)
-}
-
-
-selectDataFromSubjects <- function(dt, subj_id){
-
-  # Suppress NOTES due to non-standard evaluation in data.table
-  cohort_id <- NULL
-
-  # Check if any subjects are returned, otherwise return an empty data set dt
-  if(is.null(subj_id)) { return( head(dt,0) ) }
-
-  # Select subjects by merging on subject_id - this allows the same subjects to be present multiple times when bootstrapping
-  dt_iter <- data.table::data.table("subject_id"=subj_id)
-  dt      <- merge(dt_iter, dt, by="subject_id", all.x=TRUE, all.y=FALSE, allow.cartesian=TRUE)
-
-  # Some subjects may have been previously removed due to lack of data: therefore we only use data with a valid cohort_id.
-  dt <- dt[!is.na(cohort_id), ]
-
-  return(dt)
-}
-
 .get_run_list <- function(iteration_list, data_id, run_id=NULL){
   
   # Return an empty list if data_id equals 0.
@@ -46,42 +12,6 @@ selectDataFromSubjects <- function(dt, subj_id){
   }
 }
 
-
-getRunList <- function(iter_list, data_id, run_id=NULL){
-  .Deprecated(".get_run_list")
-  
-  # If data_id is 0, an empty list is returned
-  if(data_id==0){
-    return(list())
-  }
-
-  if(is.null(run_id)){
-    return(iter_list[[as.character(data_id)]]$run)
-  } else {
-    return(iter_list[[as.character(data_id)]]$run[[as.character(run_id)]])
-  }
-}
-
-
-getIterID <- function(run, perturb_level=NULL){
-  # Extract the runs
-  dt <- run$run_table
-
-  # Set the perturbation level
-  if(is.null(perturb_level)){
-    perturb_level_ <- tail(dt, n=1)$perturb_level
-  } else {
-    perturb_level_ <- perturb_level
-  }
-
-  # Get the corresponding row
-  dt <- dt[perturb_level==perturb_level_,]
-
-  # Extract data and run ids
-  id_list <- list("data"=dt$data_id[1], "run"=dt$run_id[1], "perturb_level"=dt$perturb_level[1], "perturbation"=dt$perturbation[1])
-
-  return(id_list)
-}
 
 
 .get_sample_identifiers <- function(run=NULL, iteration_list=NULL, data_id=NULL, run_id=NULL, train_or_validate){
@@ -109,72 +39,91 @@ getIterID <- function(run, perturb_level=NULL){
 }
 
 
-getSubjectIDs <- function(run=NULL, iter_list=NULL, data_id=NULL, run_id=NULL, train_or_validate){
-  .Deprecated(".get_sample_identifiers")
-  # Get run from iter_list if not provided directly.
-  if(is.null(run)){
-    run <- getRunList(iter_list=iter_list, data_id=data_id, run_id=run_id)
-  }
 
-  # Extract training or validation data - note that run$valid_samples can be NULL.
-  if(train_or_validate=="train"){
-    return(run$train_samples)
+.get_iteration_identifiers <- function(run, perturb_level=NULL){
+  # Extract the runs
+  run_table <- run$run_table
+  
+  # Set the perturbation level that will be returned.
+  if(is.null(perturb_level)){
+    perturb_level_ <- tail(run_table, n=1)$perturb_level
+    
   } else {
-    return(run$valid_samples)
+    perturb_level_ <- perturb_level
   }
+  
+  # Get the corresponding row
+  run_table <- run_table[perturb_level==perturb_level_, ]
+  
+  # Extract data and run identifiers.
+  id_list <- list("data"=run_table$data_id[1],
+                  "run"=run_table$run_id[1],
+                  "perturb_level"=run_table$perturb_level[1],
+                  "perturbation"=run_table$perturbation[1])
+  
+  return(id_list)
 }
 
 
-
-getPreprocessingID <- function(run){
-  # Find the identifiers for the data and run that may be pre-processed
-
+.get_preprocessing_iteration_identifiers <- function(run){
+  # Find the identifiers for the data and run identifiers that allow for
+  # pre-processing.
+  
   # Suppress NOTES due to non-standard evaluation in data.table
   can_pre_process <- NULL
-
-  # Extract the runs
-  dt <- run$run_table
-
+  
+  # Extract the run table
+  run_table <- run$run_table
+  
   # Find the last entry that is available for pre-processing
-  dt <- tail(dt[can_pre_process==TRUE, ],n=1)
-
-  # Extract data and run ids
-  id_list <- list("data"=dt$data_id[1], "run"=dt$run_id[1], "perturb_level"=dt$perturb_level[1])
-
+  run_table <- tail(run_table[can_pre_process==TRUE, ],n=1)
+  
+  # Extract data and run identifiers.
+  id_list <- list("data"=run_table$data_id[1],
+                  "run"=run_table$run_id[1],
+                  "perturb_level"=run_table$perturb_level[1],
+                  "perturbation"=run_table$perturbation[1])
+  
   return(id_list)
-
 }
 
 
 
-getProcessDataID <- function(proj_list, process_step){
-  # Get the main data id for a process
-
+.get_process_step_data_identifier <- function(project_list, process_step){
+  # Get the main data id for a step in the overall modelling process.
+  
   # Suppress NOTES due to non-standard evaluation in data.table
   feat_sel <- model_building <- external_validation <- NULL
-
+  
   # Load experiment data table
-  dt_exp <- proj_list$experiment_setup
-
+  experiment_table <- project_list$experiment_setup
+  
   if(process_step=="fs"){
-    # Find row on dt_exp where feature selection takes place and extract the main data id
-    main_data_id <- dt_exp[feat_sel==TRUE, ]$main_data_id[1]
-  }
-  if(process_step %in% c("mb")) {
-    # Find row where model building takes place and extract the main data id
-    main_data_id <- dt_exp[model_building==TRUE, ]$main_data_id[1]
-  }
-  if(process_step=="ev") {
-    # Check if external validation is present; otherwise return an illegal main data id
-    if(any(dt_exp$external_validation)){
-      main_data_id <- dt_exp[external_validation==TRUE, ]$main_data_id[1]
+    # Find row on where feature selection takes place and extract the main data
+    # id.
+    main_data_id <- experiment_table[feat_sel==TRUE, ]$main_data_id[1]
+    
+  } else if(process_step %in% c("mb")) {
+    # Find row where model building takes place and extract the main data id.
+    main_data_id <- experiment_table[model_building==TRUE, ]$main_data_id[1]
+    
+  } else if(process_step=="ev") {
+    # Check if external validation is present; otherwise return an illegal main
+    # data id.
+    if(any(experiment_table$external_validation)){
+      main_data_id <- experiment_table[external_validation==TRUE, ]$main_data_id[1]
+      
     } else {
-      main_data_id <- -1
+      main_data_id <- -1L
     }
+    
+  } else {
+    ..error_reached_unreachable_code(paste0(".get_process_step_data_identifier: encountered unknown process step code: ", process_step))
   }
-
+  
   return(main_data_id)
 }
+
 
 
 .find_hyperparameters_for_run <- function(run, hpo_list, allow_random_selection=FALSE){
@@ -184,7 +133,7 @@ getProcessDataID <- function(proj_list, process_step){
 
   # Identify the right entry on hpo_list
   for(ii in rev(run$run_table$perturb_level)){
-    run_id_list <- getIterID(run=run, perturb_level=ii)
+    run_id_list <- .get_iteration_identifiers(run=run, perturb_level=ii)
 
     # Check whether there are any matching data and run ids by determining the number of rows in the table after matching
     match_hpo <- sapply(hpo_list, function(iter_hpo, run_id_list){

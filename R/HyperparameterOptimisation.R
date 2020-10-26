@@ -82,15 +82,15 @@ run_hyperparameter_optimisation <- function(cl=NULL,
 
   # Get the iteration list for the feature selection or model development step
   # for which hyperparameter optimisation is performed.
-  hpo_id_list <- getPreprocessingID(run=getRunList(iter_list=project_list$iter_list,
-                                                   data_id=data_id,
-                                                   run_id=1))
+  hpo_id_list <- .get_preprocessing_iteration_identifiers(run=.get_run_list(iteration_list=project_list$iter_list,
+                                                                            data_id=data_id,
+                                                                            run_id=1L))
   
-  iter_list <- getRunList(iter_list=project_list$iter_list,
-                          data_id=hpo_id_list$data)
-
+  iteration_list <- .get_run_list(iteration_list=project_list$iter_list,
+                                  data_id=hpo_id_list$data)
+  
   # Load functions to cluster
-  if(settings$hpo$do_parallel & (length(iter_list) >= length(cl) | length(cl) > 10)){
+  if(settings$hpo$do_parallel & (length(iteration_list) >= length(cl) | length(cl) > 10)){
     # Perform an outer parallellisation.
     outer_parallel <- TRUE
     cl_outer <- cl
@@ -131,10 +131,10 @@ run_hyperparameter_optimisation <- function(cl=NULL,
   hpo_list <- fam_mapply_lb(cl=cl_outer,
                             assign="all",
                             FUN=hpo.perform_smbo,
-                            run=iter_list,
-                            run_id=seq_along(iter_list),
+                            run=iteration_list,
+                            run_id=seq_along(iteration_list),
                             progress_bar=show_progress_bar,
-                            MoreArgs=list("n_run_total"=length(iter_list),
+                            MoreArgs=list("n_run_total"=length(iteration_list),
                                           "cl"=cl_inner,
                                           "fs_method"=fs_method,
                                           "learner"=learner,
@@ -146,7 +146,10 @@ run_hyperparameter_optimisation <- function(cl=NULL,
                 "param"=tuning_list$selected_parameters,
                 "score"=tuning_list$complete_score))
     
-  }, run=iter_list, tuning_list=hpo_list, SIMPLIFY=FALSE)
+  },
+  run=iteration_list,
+  tuning_list=hpo_list,
+  SIMPLIFY=FALSE)
   
   # Store to disk as RDS file
   saveRDS(object=hpo_list, file=hpo_file_rds)

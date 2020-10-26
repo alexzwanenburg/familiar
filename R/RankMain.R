@@ -11,7 +11,7 @@ rank.get_vimp_table <- function(run, fs_method, proj_list, file_paths, decluster
   # Try and identify matching data and run ids between vimp_list entries and run$run_table
   # Start at the bottom and try to match.
   for(ii in rev(run$run_table$perturb_level)){
-    run_id_list <- getIterID(run=run, perturb_level=ii)
+    run_id_list <- .get_iteration_identifiers(run=run, perturb_level=ii)
     
     # Check whether there are any matching data and run ids by determining the number of rows in the table after matching
     match_vimp <- sapply(vimp_list, function(iter_vimp, run_id_list) (nrow(iter_vimp$run_table[data_id==run_id_list$data & run_id==run_id_list$run])>0),

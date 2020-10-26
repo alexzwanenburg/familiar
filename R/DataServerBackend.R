@@ -180,9 +180,6 @@ get_data_from_backend <- function(backend_type=NULL, server_port=NULL, sample_id
 .get_data_from_backend <- function(sample_identifiers=NULL, column_names=NULL){
   # This is the support function that operates on the processes 
   
-  # Suppress NOTES due to non-standard evaluation in data.table
-  subject_id <- NULL
-  
   # Identify the environment where the master_data object lives.
   if(exists("familiar_global_env")){
     if(exists("master_data", where=familiar_global_env)){
@@ -210,11 +207,13 @@ get_data_from_backend <- function(backend_type=NULL, server_port=NULL, sample_id
     
   } else if(!is.null(sample_identifiers) & is.null(column_names)){
     # Get entire rows from the dataset.
-    x <- data.table::copy(get("master_data", envir=data_env)[subject_id %in% sample_identifiers])
+    browser()
+    x <- data.table::copy(get("master_data", envir=data_env)[sample_identifiers, on=.NATURAL])
     
   } else {
+    browser()
     # Get certain columns and rows from the dataset.
-    x <- data.table::copy(get("master_data", envir=data_env)[subject_id %in% sample_identifiers, mget(column_names)])
+    x <- data.table::copy(get("master_data", envir=data_env)[sample_identifiers, mget(column_names), on=.NATURAL])
   }
   
   return(x)

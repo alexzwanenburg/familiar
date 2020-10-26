@@ -1,14 +1,19 @@
-run_model_development <- function(cl, proj_list, settings, file_paths, message_indent=0L){
+run_model_development <- function(cl, project_list, settings, file_paths, message_indent=0L){
   # Model building
 
   # Check which data object is required for performing model building
-  mb_data_id <- getProcessDataID(proj_list=proj_list, process_step="mb")
-
+  mb_data_id <- .get_process_step_data_identifier(project_list=project_list,
+                                                  process_step="mb")
+  
   # Check whether pre-processing has been conducted
-  check_pre_processing(cl=cl, data_id=mb_data_id, file_paths=file_paths, project_id=proj_list$project_id)
+  check_pre_processing(cl=cl,
+                       data_id=mb_data_id,
+                       file_paths=file_paths,
+                       project_id=project_list$project_id)
 
   # Get runs
-  run_list <- getRunList(iter_list=proj_list$iter_list, data_id=mb_data_id)
+  run_list <- .get_run_list(iteration_list=project_list$iter_list,
+                            data_id=mb_data_id)
 
   # Identify combinations of feature selection methods and learners
   run_methods <- get_fs_learner_combinations(settings=settings)
@@ -24,14 +29,15 @@ run_model_development <- function(cl, proj_list, settings, file_paths, message_i
   for(iter_methods in run_methods){
 
     # Check which runs have been completed and skip if all methods were analysed
-    iter_run_list <- add_model_data_to_run_list(methods=iter_methods, run_list=run_list,
-                                                proj_list=proj_list, settings=settings,
-                                                file_paths=file_paths, filter_existing=TRUE)
+    iter_run_list <- add_model_data_to_run_list(methods=iter_methods,
+                                                run_list=run_list,
+                                                proj_list=project_list,
+                                                settings=settings,
+                                                file_paths=file_paths,
+                                                filter_existing=TRUE)
     
     # Skip if all learners were assessed
-    if(length(iter_run_list)==0) {
-      next()
-    }
+    if(length(iter_run_list)==0) next()
 
     # Message
     logger.message(paste0("\nModel building: starting model building using \"",
@@ -41,7 +47,7 @@ run_model_development <- function(cl, proj_list, settings, file_paths, message_i
     
     # Optimise hyperparameters of models used for model building
     hpo_list <- run_hyperparameter_optimisation(cl=cl,
-                                                project_list=proj_list,
+                                                project_list=project_list,
                                                 data_id=mb_data_id,
                                                 settings=settings,
                                                 file_paths=file_paths,

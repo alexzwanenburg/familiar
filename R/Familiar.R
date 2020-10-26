@@ -221,10 +221,10 @@ summon_familiar <- function(formula=NULL, data=NULL, cl=NULL, config=NULL, confi
   
   
   # Start feature selection
-  run_feature_selection(cl=cl, proj_list=project_info, settings=settings, file_paths=file_paths)
+  run_feature_selection(cl=cl, project_list=project_info, settings=settings, file_paths=file_paths)
   
   # Start model building
-  run_model_development(cl=cl, proj_list=project_info, settings=settings, file_paths=file_paths)
+  run_model_development(cl=cl, project_list=project_info, settings=settings, file_paths=file_paths)
   
   # Start evaluation
   run_evaluation(cl=cl, proj_list=project_info, settings=settings, file_paths=file_paths)

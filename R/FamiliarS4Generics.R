@@ -46,8 +46,6 @@ setGeneric("load_delayed_data", function(data, object, ...) standardGeneric("loa
 
 setGeneric("select_data_from_samples", function(data, samples, ...) standardGeneric("select_data_from_samples"))
 
-setGeneric("get_unique_samples", function(data, ...) standardGeneric("get_unique_samples"))
-
 setGeneric("filter_features", function(data, ...) standardGeneric("filter_features"))
 
 setGeneric("filter_missing_outcome", function(data, ...) standardGeneric("filter_missing_outcome"))

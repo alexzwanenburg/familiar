@@ -624,9 +624,9 @@ setMethod("extract_fs_vimp", signature(object="familiarEnsemble"),
             }
             
             # Define the run table -> at the pooling level
-            run <- getRunList(iter_list=project_list$iter_list,
-                              data_id=object@run_table$ensemble_data_id,
-                              run_id=object@run_table$ensemble_run_id)
+            run <- .get_run_list(iteration_list=project_list$iter_list,
+                                 data_id=object@run_table$ensemble_data_id,
+                                 run_id=object@run_table$ensemble_run_id)
             
             # Obtain variable importance table
             vimp_table <- rank.get_vimp_table(run=run,
