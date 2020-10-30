@@ -1,8 +1,8 @@
 run_feature_selection <- function(cl, project_list, settings, file_paths, message_indent=0L){
 
   # Check which data object is required for performing feature selection
-  fs_data_id <- .get_preprocessing_iteration_identifiers(project_list=project_list,
-                                                         process_step="fs")
+  fs_data_id <- .get_process_step_data_identifier(project_list=project_list,
+                                                  process_step="fs")
   
   # Get feature selection methods that still need to be checked
   run_fs_methods <- .find_missing_feature_selection_data(proj_list=project_list,
