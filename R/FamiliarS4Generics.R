@@ -168,6 +168,8 @@ setGeneric("get_n_features", function(x, ...) standardGeneric("get_n_features"))
 
 setGeneric("has_feature_data", function(x, ...) standardGeneric("has_feature_data"))
 
+setGeneric("get_unique_row_names", function(x, ...) standardGeneric("get_unique_row_names"))
+
 setGeneric("get_class_probability_name", function(x, ...) standardGeneric("get_class_probability_name"))
 
 setGeneric("encode_categorical_variables", function(object, data, ...) standardGeneric("encode_categorical_variables"))

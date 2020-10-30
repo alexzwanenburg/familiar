@@ -326,6 +326,43 @@ setMethod("has_feature_data", signature(x="dataObject"), function(x, outcome_typ
 })
 
 
+#####get_unique_row_names------------------------------------------------------
+setMethod("get_unique_row_names", signature(x="data.table"), function(x, include_batch=NULL, include_series=NULL){
+  if(is_empty(x)) return(character(0L))
+  
+  if(is.null(include_batch)){
+    # Determine if batch identifiers should be included, i.e. the same sample
+    # identifiers appear in different batches.
+    include_batch <- any(unique(x[, mget(get_id_columns(id_depth="sample"))])[, list("n"=.N), by=mget(get_id_columns(single_column="sample"))]$n > 1)
+  }
+  
+  if(is.null(include_series)){
+    # Determine if series identifiers should be included, i.e. any unique sample
+    # has multiple series.
+    include_series <- any(unique(x[, mget(get_id_columns(id_depth="series"))])[, list("n"=.N), by=mget(get_id_columns(id_depth="sample"))]$n > 1)
+  }
+  
+  # Get sample names.
+  row_names <- as.character(x[[get_id_columns(single_column="sample")]])
+  
+  if(any(c(include_batch, include_series))){
+    add_string <- " ("
+    
+    if(include_batch) add_string <- paste0(add_string, x[[get_id_columns(single_column="batch")]])
+    if(include_batch & include_series) add_string <- paste0(add_string, "; ")
+    if(include_series) add_string <- paste0(add_string, x[[get_id_columns(single_column="series")]])
+    
+    row_names <- paste0(row_names, add_string, ")")
+  }
+  
+  return(row_names)
+})
+
+setMethod("get_unique_row_names", signature(x="dataObject"), function(x, include_batch=NULL, include_series=NULL){
+  return(get_unique_row_names(x=x@data, include_batch=include_batch, include_series=include_series))
+})
+
+
 
 #####encode_categorical_variables-------------------------------------------------------------
 setMethod("encode_categorical_variables", signature(data="dataObject", object="ANY"),
