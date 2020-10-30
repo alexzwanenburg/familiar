@@ -26,7 +26,7 @@ setMethod("train", signature(data="dataObject"),
             settings <- extract_settings_from_data(data)
             
             # Update some missing settings that can be fixed within this method.
-            settings$data$train_cohorts <- unique(data@data[["cohort_id"]])
+            settings$data$train_cohorts <- unique(data@data[[get_id_columns(single_column="batch")]])
             
             # Parse the remaining settings that are important. Remove
             # outcome_type from ... This prevents an error caused by multiple

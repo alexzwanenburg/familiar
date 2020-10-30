@@ -55,6 +55,7 @@ setMethod("as_data_object", signature(data="data.table"),
             data <- .finish_data_preparation(data = data,
                                              sample_id_column = settings$data$sample_col,
                                              batch_id_column = settings$data$batch_col,
+                                             series_id_column = settings$data$series_col,
                                              outcome_column = settings$data$outcome_col,
                                              outcome_type = settings$data$outcome_type,
                                              include_features = settings$data$include_features,
@@ -129,9 +130,9 @@ setMethod("extract_settings_from_data", signature(data="dataObject"),
             }
             
             # Sample identifier column
-            settings$data$sample_col <- "sample_id"
-            settings$data$batch_col <- "batch_id"
-            settings$data$series_col <- "series_id"
+            settings$data$sample_col <- get_id_columns(single_column="sample")
+            settings$data$batch_col <- get_id_columns(single_column="batch")
+            settings$data$series_col <- get_id_columns(single_column="series")
             settings$data$outcome_col <- get_outcome_columns(data)
             settings$data$outcome_type <- data@outcome_type
             settings$data$outcome_name <- get_outcome_name(data@outcome_info)
@@ -202,7 +203,7 @@ setMethod("load_delayed_data", signature(data="dataObject", object="ANY"),
             # Find the identifiers for the current run.
             run_id_list <- .get_iteration_identifiers(run=list("run_table"=object@run_table),
                                                       perturb_level=data@perturb_level)
-            browser()
+            
             # Derive sample identifiers based on the selected iteration data.
             sample_identifiers <- .get_sample_identifiers(iteration_list=iteration_list,
                                                           data_id=run_id_list$data,
@@ -300,7 +301,8 @@ setMethod("load_delayed_data", signature(data="dataObject", object="familiarEnse
                                                             train_or_validate=ifelse(data@load_validation, "valid", "train"))
               
             } else {
-              # Extract all sample identifiers. This happens if the the data is pooled.
+              # Extract all sample identifiers. This happens if the the data is
+              # pooled.
               sample_identifiers <- data.table::rbindlist(lapply(seq_len(nrow(combined_run_table)), function(ii, run_table, iteration_list, train_or_validate){
                sample_identifiers <- .get_sample_identifiers(iteration_list=iteration_list,
                                                              data_id=run_table$data_id[ii],
@@ -309,7 +311,7 @@ setMethod("load_delayed_data", signature(data="dataObject", object="familiarEnse
                return(sample_identifiers)
               },
               run_table=combined_run_table,
-              iter_list=iteration_list,
+              iteration_list=iteration_list,
               train_or_validate=ifelse(data@load_validation, "valid", "train")))
               
               # Select only unique sample identifiers.
@@ -551,7 +553,7 @@ setMethod("select_data_from_samples", signature(data="dataObject", samples="ANY"
               data@sample_set_on_load <- samples
               
             } else {
-              browser()
+              
               # Determine the names of the id-columns, up to the series level.
               id_columns <- get_id_columns(id_depth="series")
               

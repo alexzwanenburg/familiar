@@ -198,7 +198,7 @@ test.create_all_identical_data_set <- function(outcome_type){
   data@data <- data@data[rep.int(1L, 10)]
   
   # Set unique subject ids.
-  data@data[, "subject_id":=.I]
+  data@data[, "sample_id":=.I]
   
   return(data)
 }

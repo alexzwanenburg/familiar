@@ -493,7 +493,7 @@ find_non_robust_features <- function(cl=NULL, feature_info_list, data_obj, setti
                          x=data_obj@data[, mget(numeric_columns)],
                          feature=numeric_columns,
                          progress_bar=FALSE,
-                         MoreArgs=list("id_data"=data_obj@data[, c("subject_id", "cohort_id", "repetition_id")],
+                         MoreArgs=list("id_data"=data_obj@data[, mget(get_id_columns())],
                                        "type"=icc_type))
   
   # Combine ICC data from list

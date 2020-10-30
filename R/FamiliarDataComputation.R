@@ -1574,12 +1574,16 @@ setMethod("extract_feature_expression", signature(object="familiarEnsemble", dat
                                                                 cluster_method=sample_cluster_method)
             } else {
               # Replacement for empty sample similarity tables
-              sample_order_table <- data.table::data.table("name"=expression_data$subject_id)
+              sample_order_table <- data.table::data.table("sample_name"=get_unique_row_names(expression_data))
               sample_order_table[, "label_order":=.I]
               
               # Placeholder cluster object
               h_sample <- NULL
             }
+            
+            # Add sample_name to expression_data
+            row_names <- get_unique_row_names(expression_data)
+            expression_data[, ":="("sample_name"=row_names, "batch_id"=NULL, "sample_id"=NULL, "series_id"=NULL, "repetition_id"=NULL)]
             
             # Add model name.
             expression_data <- add_model_name(data=expression_data, object=object)
@@ -1663,7 +1667,7 @@ setMethod("extract_feature_similarity_table", signature(object="familiarEnsemble
             
             # Check if the number of samples is sufficient (>5), and return an
             # empty table if not.
-            if(data.table::uniqueN(data@data, by="subject_id") <= 5) return(empty_similarity_table)
+            if(data.table::uniqueN(data@data, by=get_id_columns(id_depth="series")) <= 5) return(empty_similarity_table)
             
             # Maintain only important features. The current set is based on the
             # required features.
@@ -1749,7 +1753,7 @@ setMethod("extract_sample_similarity_table", signature(object="familiarEnsemble"
             
             # Check if the number of samples is sufficient to form pairs (>= 2),
             # and return an empty table if not.
-            if(data.table::uniqueN(data@data, by="subject_id") < 2) return(empty_similarity_table)
+            if(data.table::uniqueN(data@data, by=get_id_columns(id_depth="series")) < 2) return(empty_similarity_table)
             
             # Maintain only important features. The current set is based on the
             # required features.
@@ -1767,7 +1771,7 @@ setMethod("extract_sample_similarity_table", signature(object="familiarEnsemble"
             
             # Compute the similarity table
             sample_similarity_table <- cluster.get_samplewise_similarity_table(cl=cl,
-                                                                               data_obj=data,
+                                                                               data=data,
                                                                                similarity_metric=sample_similarity_metric,
                                                                                verbose=verbose,
                                                                                message_indent=message_indent + 1L)

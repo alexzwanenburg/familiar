@@ -49,7 +49,7 @@ setMethod("get_default_hyperparameters", signature(object="familiarRFSRC"),
             if(is.null(data)) return(param)
             
             # Get the number of samples
-            n_samples <- nrow(unique(data@data, by=c("subject_id", "cohort_id")))
+            n_samples <- data.table::uniqueN(data@data, by=get_id_columns(id_depth="series"))
             
             ###### Signature size ########################################################
             param$sign_size <- .get_default_sign_size(data_obj=data)

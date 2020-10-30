@@ -241,9 +241,12 @@ cluster.get_samplewise_similarity_table <- function(cl=NULL,
                            similarity_metric=similarity_metric,
                            categorical_mask=categorical_mask)
   
+  # Create unique row names.
+  row_names <- get_unique_row_names(x=data_obj)
+  
   # Transform similarity scores into a data.table.
-  similarity_table  <- data.table::data.table("sample_1"=data_obj@data$subject_id[combinations[1, ]],
-                                              "sample_2"=data_obj@data$subject_id[combinations[2, ]],
+  similarity_table  <- data.table::data.table("sample_1"=row_names[combinations[1, ]],
+                                              "sample_2"=row_names[combinations[2, ]],
                                               "value"=similarity)
   
   return(similarity_table)

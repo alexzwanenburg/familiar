@@ -1125,7 +1125,7 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
       
       # Find evaluation times (will still be NULL for outcome_type other than survival and competing_risk)
       if(is.null(evaluation_times)) evaluation_times <- data[[x_split$list_id]]$evaluation_times
-
+      
       # Create expression outcome plot.
       p_outcome <- .create_expression_outcome_plot(x=outcome_plot_data[[x_split$list_id]],
                                                    ggtheme=ggtheme,
@@ -1700,13 +1700,13 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
                         variable.factor=TRUE,
                         value.factor=FALSE)
   
-  # Change subject_id to sample
-  data.table::setnames(x=x, old="subject_id", new="sample")
+  # Change sample_name to sample
+  data.table::setnames(x=x, old="sample_name", new="sample")
   
   # Set feature and sample order
   x$feature <- factor(x$feature, levels=feature_order$name[order(feature_order$label_order)])
   x$sample <- factor(x$sample, levels=sample_order$name[order(sample_order$label_order)])
-
+  
   return(x)
 }
 
@@ -1715,10 +1715,10 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
 .process_expression_generic_outcome <- function(x){
   
   # Keep only one copy for each sample.
-  x <- data.table::copy(x[, c("subject_id", "outcome")])
+  x <- data.table::copy(x[, c("sample_name", "outcome")])
   
   # Rename columns
-  data.table::setnames(x, old=c("subject_id", "outcome"), new=c("sample", "value"))
+  data.table::setnames(x, old=c("sample_name", "outcome"), new=c("sample", "value"))
   
   # Set evaluation point (which is on the y-axis)
   x$evaluation_point <- factor("1", levels="1")
@@ -1736,7 +1736,7 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
   sapply(evaluation_times, .check_number_in_valid_range, var_name="evaluation_times", range=c(0.0, Inf), closed=c(FALSE, TRUE))
  
   # Keep only one copy for each sample.
-  x <- data.table::copy(x[, c("subject_id", "outcome_time", "outcome_event")])
+  x <- data.table::copy(x[, c("sample_name", "outcome_time", "outcome_event")])
   
   plot_data <- lapply(evaluation_times, function(eval_time, x){
     # Make a copy with the relevant data.
@@ -1767,7 +1767,7 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
   plot_data$evaluation_point <- factor(plot_data$evaluation_point, levels=evaluation_times)
   
   # Change subject_id to sample
-  data.table::setnames(plot_data, old="subject_id", new="sample")
+  data.table::setnames(plot_data, old="sample_name", new="sample")
   
   return(plot_data)
 }

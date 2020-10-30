@@ -13,7 +13,7 @@ get_baseline_survival <- function(data){
   if(!data@outcome_type %in% c("survival")) ..error_reached_unreachable_code("get_baseline_survival: outcome_type is not survival.")
   
   # Extract relevant information regarding survival.
-  survival_data <- unique(data@data[, c("subject_id", "cohort_id", "outcome_time", "outcome_event"), with=FALSE])
+  survival_data <- unique(data@data[, mget(c(get_id_columns(id_depth="series"), "outcome_time", "outcome_event"))])
   
   # Make a local copy.
   survival_data <- data.table::copy(survival_data)

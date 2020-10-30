@@ -207,11 +207,9 @@ get_data_from_backend <- function(backend_type=NULL, server_port=NULL, sample_id
     
   } else if(!is.null(sample_identifiers) & is.null(column_names)){
     # Get entire rows from the dataset.
-    browser()
     x <- data.table::copy(get("master_data", envir=data_env)[sample_identifiers, on=.NATURAL])
     
   } else {
-    browser()
     # Get certain columns and rows from the dataset.
     x <- data.table::copy(get("master_data", envir=data_env)[sample_identifiers, mget(column_names), on=.NATURAL])
   }

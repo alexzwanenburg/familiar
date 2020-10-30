@@ -52,7 +52,7 @@ add_batch_normalisation_parameters <- function(cl=NULL, feature_info_list, data_
   categorical_features <- setdiff(feature_columns, numeric_features)
   
   # Find available batches in the data
-  available_batch_ids <- unique(data_obj@data$cohort_id)
+  available_batch_ids <- unique(data_obj@data[[get_id_columns(single_column="batch")]])
   
   # Find batches already known in feature_info_list
   known_batches <- names(feature_info_list[[1]]@batch_normalisation_parameters)
@@ -150,7 +150,7 @@ batch_normalise.set_basic_normalisation_parameters <- function(cl=NULL,
 batch_normalise.get_normalisation_per_feature <- function(feature, feature_info_list, data, batch_normalisation_method, batches){
   
   # Suppress NOTES due to non-standard evaluation in data.table
-  cohort_id <- NULL
+  batch_id <- NULL
   
   # Get object corresponding to the current featues
   object <- feature_info_list[[feature]]
@@ -159,7 +159,7 @@ batch_normalise.get_normalisation_per_feature <- function(feature, feature_info_
   batch_parameter_list <- lapply(batches, function(batch_identifier, object, data, feature, batch_normalisation_method){
     
     # Extract vector of values
-    x <- data[cohort_id==batch_identifier, ][[feature]]
+    x <- data[batch_id==batch_identifier, ][[feature]]
     
     # Obtain batch normalisaton for the curent feature
     batch_normalisation_parameters <- batch_normalise.get_normalisation_parameters(x=x,
@@ -188,7 +188,7 @@ batch_normalise.set_combat_normalisation_parameters <- function(cl=NULL,
                                                                 progress_bar=TRUE){
   
   # Suppress NOTES due to non-standard evaluation in data.table
-  cohort_id <- feature <- NULL
+  batch_id <- feature <- NULL
   
   # Check length of features
   if(length(features) == 0){
@@ -207,7 +207,7 @@ batch_normalise.set_combat_normalisation_parameters <- function(cl=NULL,
   }
   
   # Isolate the dataset
-  x <- data.table::copy(data[cohort_id %in% batches, c("cohort_id", features), with=FALSE])
+  x <- data.table::copy(data[batch_id %in% batches, mget(c(get_id_columns(single_column="batch"), features))])
   
   # Obtain combat batch parameters. This is a data.table
   batch_parameters <- combat.get_normalisation_parameters(x=x,
@@ -218,6 +218,9 @@ batch_normalise.set_combat_normalisation_parameters <- function(cl=NULL,
   # Update feature info list with batch parameters.
   updated_feature_info_list <- lapply(features, function(current_feature, batch_parameters, feature_info_list){
 
+    # Determine the name of the batch identifier column.
+    batch_id_column <- get_id_columns(single_column="batch")
+    
     # Identify the current featureInfo object from feature_info_list.
     object <- feature_info_list[[current_feature]]
     
@@ -225,7 +228,7 @@ batch_normalise.set_combat_normalisation_parameters <- function(cl=NULL,
     feature_batch_parameters <- batch_parameters[feature==current_feature]
     
     # Parse the batch_parameters table to a list
-    batch_parameter_list <- lapply(split(feature_batch_parameters, by="cohort_id", sorted=FALSE), function(x){
+    batch_parameter_list <- lapply(split(feature_batch_parameters, by=batch_id_column, sorted=FALSE), function(x){
       return(list("norm_method"=x$norm_method[1],
                   "norm_shift"=x$norm_shift[1],
                   "norm_scale"=x$norm_scale[1],
@@ -233,7 +236,7 @@ batch_normalise.set_combat_normalisation_parameters <- function(cl=NULL,
     })
     
     # Set names to the parameter list
-    names(batch_parameter_list) <- feature_batch_parameters$cohort_id
+    names(batch_parameter_list) <- feature_batch_parameters[[batch_id_column]]
     
     # Add to list of existing batch normalisation parameters (if any)
     object@batch_normalisation_parameters <- append(object@batch_normalisation_parameters,
@@ -357,11 +360,11 @@ batch_normalise.apply_normalisation <- function(x, feature_info, invert=FALSE){
   x[, "order_index_id":=.I]
   
   # Iterate over batches to determine the transformed data.
-  y <- lapply(split(x, by="cohort_id", sorted=FALSE, keep.by=TRUE),
+  y <- lapply(split(x, by=get_id_columns(id_depth="batch"), sorted=FALSE, keep.by=TRUE),
               function(x, feature_info, invert){
                 
                 # Identify the id of the current batch
-                current_batch_id <- x$cohort_id[1]
+                current_batch_id <- x[[get_id_columns(single_column="batch")]][1]
                 
                 # Find the batch-normalisation parameters
                 norm_param <- feature_info@batch_normalisation_parameters[[as.character(current_batch_id)]]

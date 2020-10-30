@@ -235,7 +235,7 @@ learner.check_model_prediction_type <- function(learner, outcome_type){
   outcome_type <- data_obj@outcome_type
   
   # Determine the number of samples and features
-  n_samples <- nrow(unique(data_obj@data, by=c("subject_id", "cohort_id")))
+  n_samples <- data.table::uniqueN(data_obj@data, by=get_id_columns(id_depth="series"))
   n_features <- get_n_features(data_obj)
   
   # Determine the actual range of features dynamically.

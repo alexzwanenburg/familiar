@@ -19,9 +19,7 @@ learner.calibration.survival <- function(object, data, time){
                                 ensemble_method="median")
   
   # Check for empty predictions.
-  if(is_empty(probability_table)){
-    return(create_empty_calibration_table(outcome_type=outcome_type))
-  }
+  if(is_empty(probability_table)) return(create_empty_calibration_table(outcome_type=outcome_type))
   
   # Check for failed predictions.
   if(!any_predictions_valid(probability_table, outcome_type=outcome_type)){
@@ -38,10 +36,16 @@ learner.calibration.survival <- function(object, data, time){
   
   # Repeatedly split into groups. The number of groups is determined using
   # sturges rule.
-  repeated_groups <- lapply(seq_len(20), function(ii, x, y, sample_id){
-    return(create_randomised_groups(x=x, y=y, sample_id=sample_id, n_min_y_in_group=4))
+  repeated_groups <- lapply(seq_len(20), function(ii, x, y, sample_identifiers){
+    return(create_randomised_groups(x=x,
+                                    y=y,
+                                    sample_identifiers=sample_identifiers,
+                                    n_min_y_in_group=4))
     
-  }, x=probability_table$exp_prob, y=probability_table$event, sample_id=probability_table$subject_id)
+  },
+  x=probability_table$exp_prob,
+  y=probability_table$event,
+  sample_identifiers=probability_table[, mget(get_id_columns(id_depth="series"))])
   
   # Iterate over groups and add details by comparing the kaplan-meier survival
   # curve within each group at time_max with the mean survival probability in
@@ -54,7 +58,10 @@ learner.calibration.survival <- function(object, data, time){
                                                                                  time_max=time_max,
                                                                                  ii=ii))
                                 
-                              }, probability_table=probability_table, outcome_type=outcome_type, time_max=time)
+                              },
+                              probability_table=probability_table,
+                              outcome_type=outcome_type,
+                              time_max=time)
   
   # Concatenate to table.
   calibration_table <- data.table::rbindlist(calibration_table)
@@ -75,9 +82,6 @@ learner.calibration.survival <- function(object, data, time){
 
 learner.calibration.survival.prepare_data <- function(groups, probability_table, outcome_type, time_max, ii){
   
-  # Suppress NOTES due to non-standard evaluation in data.table
-  subject_id <- NULL
-  
   # Placeholder variables
   obs_prob <- exp_prob <- n_g <- km_var <- numeric(length(groups))
   
@@ -88,7 +92,7 @@ learner.calibration.survival.prepare_data <- function(groups, probability_table,
   for(jj in seq_along(groups)){
     
     # Find data for the current group
-    group_data <- probability_table[subject_id %in% groups[[jj]]]
+    group_data <- probability_table[groups[[jj]], on=.NATURAL]
     
     if(nrow(group_data) >= 2){
     
@@ -164,9 +168,7 @@ learner.calibration.categorical <- function(object, data){
                                 allow_recalibration=TRUE,
                                 ensemble_method="median")
 
-  if(is_empty(probability_table)){
-    return(create_empty_calibration_table(outcome_type=outcome_type))
-  }
+  if(is_empty(probability_table)) return(create_empty_calibration_table(outcome_type=outcome_type))
 
   # Calibrate binomial and multinomial scores
   if(outcome_type == "binomial"){
@@ -212,16 +214,17 @@ learner.calibration.categorical.assess_class <- function(pos_class, probability_
   # Identify the real outcome columns
   outc_col <- get_outcome_columns(x=outcome_type)
 
+  # Find sample identifiers.
+  sample_identifiers <- get_id_columns(id_depth="series")
+  
   # Create a local copy of the data table
-  probability_table <- data.table::copy(probability_table[,c("subject_id", outc_col, pos_col_name), with=FALSE])
+  probability_table <- data.table::copy(probability_table[, mget(c(sample_identifiers, outc_col, pos_col_name))])
 
   # Only select instances with known outcomes and probabilities
   probability_table <- probability_table[!(is.na(get(outc_col)) | is.na(get(pos_col_name))), ]
 
   # Check that there is actually any data to work with
-  if(is_empty(probability_table)){
-    return(create_empty_calibration_table(outcome_type=outcome_type))
-  }
+  if(is_empty(probability_table)) return(create_empty_calibration_table(outcome_type=outcome_type))
 
   # Rename columns to standard names
   data.table::setnames(probability_table, c(outc_col, pos_col_name), c("obs_class", "exp_prob"))
@@ -233,9 +236,13 @@ learner.calibration.categorical.assess_class <- function(pos_class, probability_
   probability_table <- probability_table[order(exp_prob)]
 
   # Repeatedly split into groups. The number of groups is determined using sturges rule
-  repeated_groups <- lapply(seq_len(20), function(ii, x, sample_id) (create_randomised_groups(x=x, sample_id=sample_id)),
-                            x=probability_table$exp_prob, sample_id=probability_table$subject_id)
-
+  repeated_groups <- lapply(seq_len(20), function(ii, x, sample_identifiers){
+    return(create_randomised_groups(x=x, sample_identifiers=sample_identifiers))
+    
+  },
+  x=probability_table$exp_prob,
+  sample_identifiers=probability_table[, mget(sample_identifiers)])
+  
   # Iterate over groups
   calibration_table <- lapply(seq_len(length(repeated_groups)),
                               function(ii, groups, probability_table, outcome_type){
@@ -244,7 +251,9 @@ learner.calibration.categorical.assess_class <- function(pos_class, probability_
                                                                                     outcome_type=outcome_type,
                                                                                     ii=ii))
                                 
-                              }, probability_table=probability_table, outcome_type=outcome_type)
+                              },
+                              probability_table=probability_table,
+                              outcome_type=outcome_type)
   
   # Combine to a single list.
   calibration_table <- data.table::rbindlist(calibration_table)
@@ -265,30 +274,30 @@ learner.calibration.categorical.assess_class <- function(pos_class, probability_
 
 learner.calibration.categorical.prepare_data <- function(groups, probability_table, outcome_type, ii){
   
-  # Suppress NOTES due to non-standard evaluation in data.table
-  subject_id <- NULL
-  
-  obs_prob <- exp_prob <- n_g <- n_pos <- n_neg <- numeric(length(groups))
+   obs_prob <- exp_prob <- n_g <- n_pos <- n_neg <- numeric(length(groups))
   
   # Check that the groups list contains at least one entry.
   if(is_empty(groups)) return(NULL)
-  
+   
   # Get oberved and expected probabilities over the groups
-  for(jj in seq_len(length(groups))){
+  for(jj in seq_along(groups)){
+    # Find data for the current group
+    group_data <- probability_table[groups[[jj]], on=.NATURAL]
+    
     # Mean expected probability in a group.
-    exp_prob[jj] <- mean(probability_table[subject_id %in% groups[[jj]]]$exp_prob)
+    exp_prob[jj] <- mean(group_data$exp_prob)
     
     # Observed proportion of positive class in a group.
-    obs_prob[jj] <- mean(probability_table[subject_id %in% groups[[jj]]]$obs_class)
+    obs_prob[jj] <- mean(group_data$obs_class)
     
     # Number of samples in the group
-    n_g[jj] <- length(groups[[jj]])
+    n_g[jj] <- nrow(group_data)
     
     # Number of samples with the positive class in each group.
-    n_pos[jj] <- sum(probability_table[subject_id %in% groups[[jj]]]$obs_class)
+    n_pos[jj] <- sum(group_data$obs_class)
     
     # Number of samples with the negative class in each group.
-    n_neg[jj] <- sum(!probability_table[subject_id %in% groups[[jj]]]$obs_class)
+    n_neg[jj] <- sum(!group_data$obs_class)
   }
   
   # Create table
@@ -347,8 +356,12 @@ learner.calibration.regression <- function(object, data){
   
   # Repeatedly split into groups. The number of groups is determined using
   # sturges rule.
-  repeated_groups <- lapply(seq_len(20), function(ii, x, sample_id) (create_randomised_groups(x=x, sample_id=sample_id)),
-                            x=prediction_table$expected, sample_id=prediction_table$subject_id)
+  repeated_groups <- lapply(seq_len(20), function(ii, x, sample_identifiers){
+    return(create_randomised_groups(x=x, sample_identifiers=sample_identifiers))
+    
+  },
+  x=prediction_table$expected,
+  sample_identifiers=prediction_table[, mget(get_id_columns(id_depth="series"))])
   
   # Iterate over groups
   calibration_table <- lapply(seq_len(length(repeated_groups)),
@@ -358,7 +371,9 @@ learner.calibration.regression <- function(object, data){
                                                                                    outcome_type=outcome_type,
                                                                                    ii=ii))
                                 
-                                } , probability_table=prediction_table, outcome_type=outcome_type)
+                              },
+                              probability_table=prediction_table,
+                              outcome_type=outcome_type)
   
   # Concatenate to a single table
   calibration_table <- data.table::rbindlist(calibration_table)
@@ -375,25 +390,25 @@ learner.calibration.regression <- function(object, data){
 
 
 learner.calibration.regression.prepare_data <- function(groups, probability_table, outcome_type, ii){
-  
-  # Suppress NOTES due to non-standard evaluation in data.table
-  subject_id <- NULL
-  
+
   obs_prob <- exp_prob <- n_g <- numeric(length(groups))
   
   # Check that the groups list contains at least one entry.
   if(is_empty(groups)) return(NULL)
   
-  # Get oberved and expected probabilities over the groups
-  for(jj in seq_len(length(groups))){
+  # Get observed and expected probabilities over the groups
+  for(jj in seq_along(groups)){
+    # Find data for the current group
+    group_data <- probability_table[groups[[jj]], on=.NATURAL]
+    
     # Mean expected probability in a group.
-    exp_prob[jj] <- mean(probability_table[subject_id %in% groups[[jj]]]$expected)
+    exp_prob[jj] <- mean(group_data$expected)
     
     # Observed proportion of positive class in a group.
-    obs_prob[jj] <- mean(probability_table[subject_id %in% groups[[jj]]]$observed)
+    obs_prob[jj] <- mean(group_data$observed)
     
     # Number of samples in the group
-    n_g[jj] <- length(groups[[jj]])
+    n_g[jj] <- nrow(group_data)
   }
   
   # Create table

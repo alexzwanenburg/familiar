@@ -32,7 +32,7 @@ setMethod(".train", signature(object="familiarModel", data="dataObject"),
             # calibration (e.g. baseline survival) etc.
             if(get_additional_info){
 
-              # Remove duplicate subject_id from the data prior to obtaining
+              # Remove duplicate samples from the data prior to obtaining
               # additional data.
               data <- aggregate_data(data=data)
               
@@ -221,13 +221,9 @@ setMethod("assign_risk_groups", signature(object="familiarModel", data="dataObje
                                                          cutoff=km_info$cutoff)
               
               # Create a table to assign the risk group.
-              data <- data.table::data.table("strat_method"=km_info$method,
-                                             "subject_id"=prediction_table$subject_id,
-                                             "cohort_id"=prediction_table$cohort_id,
-                                             "repetition_id"=prediction_table$repetition_id,
-                                             "outcome_time"=prediction_table$outcome_time,
-                                             "outcome_event"=prediction_table$outcome_event,
-                                             "risk_group"=risk_group)
+              data <- data.table::copy(prediction_table[, mget(c(get_id_columns(), get_outcome_columns(object@outcome_type)))])
+              data[, ":="("strat_method"=km_info$method,
+                          "risk_group"=risk_group)]
               
               return(data)
               
@@ -319,33 +315,34 @@ setMethod("add_package_version", signature(object="familiarModel"),
 
 
 setMethod("add_data_column_info", signature(object="familiarModel"),
-          function(object, sample_id_column=NULL, batch_id_column=NULL){
+          function(object, sample_id_column=NULL, batch_id_column=NULL, series_id_column=NULL){
             
             # Don't determine new column information if this information is
             # already present.
             if(!is.null(object@data_column_info)) return(object)
             
-            if(is.null(sample_id_column) & is.null(batch_id_column)){
+            if(is.null(sample_id_column) & is.null(batch_id_column) & is.null(series_id_column)){
               # Load settings to find identifier columns
               settings <- get_settings()
               
               # Read from settings. If not set, these will be NULL.
               sample_id_column <- settings$data$sample_col
               batch_id_column <- settings$data$batch_col
+              series_id_column <- settings$data$series_col
             }
             
             # Replace any missing.
             if(is.null(sample_id_column)) sample_id_column <- NA_character_
-            
             if(is.null(batch_id_column)) batch_id_column <- NA_character_
+            if(is.null(series_id_column)) series_id_column <- NA_character_
             
             # Repetition column ids are only internal.
             repetition_id_column <- NA_character_
             
             # Create table
-            data_info_table <- data.table::data.table("type"=c("sample_id_column", "batch_id_column", "repetition_id_column"),
-                                                      "internal"=c("subject_id", "cohort_id", "repetition_id"),
-                                                      "external"=c(sample_id_column, batch_id_column, repetition_id_column))
+            data_info_table <- data.table::data.table("type"=c("batch_id_column", "sample_id_column", "series_id_column", "repetition_id_column"),
+                                                      "internal"=get_id_columns(),
+                                                      "external"=c(batch_id_column, sample_id_column, series_id_column, repetition_id_column))
             
             if(object@outcome_type %in% c("survival", "competing_risk")){
               

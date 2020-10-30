@@ -8,7 +8,7 @@ Creates randomised groups, e.g. for tests that depend on splitting (continuous) 
 create_randomised_groups(
   x,
   y = NULL,
-  sample_id = NULL,
+  sample_identifiers,
   n_max_groups = NULL,
   n_min_groups = NULL,
   n_min_y_in_group = NULL,
@@ -21,7 +21,7 @@ create_randomised_groups(
 
 \item{y}{Vector with markers, e.g. the events. Should be 0 or 1 (for an event).}
 
-\item{sample_id}{Vector with sample_ids. If provided, lists of sample_ids groups will be returned, and integers otherwise.}
+\item{sample_identifiers}{data.table with sample_identifiers. If provide, a list of grouped sample_identifiers will be returned, and integers otherwise.}
 
 \item{n_max_groups}{Maximum number of groups that need to be formed.}
 

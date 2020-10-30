@@ -2401,7 +2401,7 @@
                                        ...){
   
   # Suppress NOTES due to non-standard evaluation in data.table
-  outcome_event <- cohort_id <- NULL
+  outcome_event <- batch_id <- NULL
   
   settings <- list()
   
@@ -2615,7 +2615,7 @@
         settings$time_max <- max(settings$eval_times)
       } else {
         # 98th percentile of all outcome times.
-        settings$time_max <- stats::quantile(data[outcome_event==1 & cohort_id %in% development_batch_id]$outcome_time, probs=0.98, names=FALSE)
+        settings$time_max <- stats::quantile(data[outcome_event==1 & batch_id %in% development_batch_id]$outcome_time, probs=0.98, names=FALSE)
       }
     }
     

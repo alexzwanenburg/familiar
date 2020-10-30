@@ -349,11 +349,11 @@ setMethod("assign_risk_groups", signature(object="familiarEnsemble", data="dataO
                 # Create risk groups according to the corresponding method.
                 if(method == "ensemble_mean"){
                   risk_group_data <- risk_group_data[, list("risk_group"=learner.get_mean_risk_group(risk_group)),
-                                                     by=c("subject_id", "cohort_id", "repetition_id", "outcome_time", "outcome_event")]
+                                                     by=c(get_id_columns(), "outcome_time", "outcome_event")]
                   
                 } else if(method == "ensemble_mode"){
                   risk_group_data <- risk_group_data[, list("risk_group"=get_mode(risk_group)),
-                                                     by=c("subject_id", "cohort_id", "repetition_id", "outcome_time", "outcome_event")]
+                                                     by=c(get_id_columns(), "outcome_time", "outcome_event")]
                 }
                 
               } else if(method %in% c("mean_threshold", "median_threshold")){

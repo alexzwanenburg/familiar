@@ -6,7 +6,7 @@
 #'
 #' @param x Vector with data used for sorting. Groups are formed based on adjacent values.
 #' @param y Vector with markers, e.g. the events. Should be 0 or 1 (for an event).
-#' @param sample_id Vector with sample_ids. If provided, lists of sample_ids groups will be returned, and integers otherwise.
+#' @param sample_identifiers data.table with sample_identifiers. If provide, a list of grouped sample_identifiers will be returned, and integers otherwise.
 #' @param n_max_groups Maximum number of groups that need to be formed.
 #' @param n_min_groups Minimum number of groups that need to be formed.
 #' @param n_min_y_in_group Minimum number of y=1 in each group for a valid group.
@@ -16,7 +16,7 @@
 #' @return List of group sample ids or indices.
 #' @md
 #' @keywords internal
-create_randomised_groups <- function(x, y=NULL, sample_id=NULL, n_max_groups=NULL, n_min_groups=NULL, n_min_y_in_group=NULL, n_groups_init=30, fast_mode=TRUE){
+create_randomised_groups <- function(x, y=NULL, sample_identifiers, n_max_groups=NULL, n_min_groups=NULL, n_min_y_in_group=NULL, n_groups_init=30, fast_mode=TRUE){
   # Creates randomised groups, e.g. for tests that depend on splitting (continuous) data into groups, such as the Hosmer-Lemeshow test
   # - Determine maximum number of groups: either 10 or number so that each group has 5 events (if smaller).
   # - Determine minimum number of groups (half the maximum, or 2). Groups cannot the exceed corresponding group size
@@ -66,16 +66,14 @@ create_randomised_groups <- function(x, y=NULL, sample_id=NULL, n_max_groups=NUL
     n_min_groups <- min(c(n_max_groups, ceiling(1.0 * n_x^(1/3))))
   }
 
-  # - Generate sample_id if not provided
-  if(is.null(sample_id)){
-    sample_id <- seq_len(n_x)
-  }
-
   # Some checks
   if(n_max_groups < n_min_groups | n_max_groups > n_x | n_max_groups < 2){
     return(NULL)
   }
 
+  # Populate the generic table.
+  dt <- data.table::copy(sample_identifiers[, mget(get_id_columns(id_depth="series"))])
+  
   if(fast_mode){
 
     ###############################################################
@@ -83,7 +81,8 @@ create_randomised_groups <- function(x, y=NULL, sample_id=NULL, n_max_groups=NUL
     ##############################################################
 
     # Create table
-    dt_agg <- data.table::data.table("sample_id"=sample_id, "x"=x, "y"=y)[order(x)]
+    dt_agg <- data.table::copy(dt)
+    dt_agg <- dt_agg[, ":="("x"=x, "y"=y)][order(x)]
 
     # Initial loop counter
     loop_iter <- 0
@@ -152,7 +151,7 @@ create_randomised_groups <- function(x, y=NULL, sample_id=NULL, n_max_groups=NUL
 
     ##### Setup #####
     # Create table
-    dt <- data.table::data.table("sample_id"=sample_id, "x"=x, "y"=y)[order(x)]
+    dt <- dt[, ":="("x"=x, "y"=y)][order(x)]
 
     # Create initial groups
     init_group_size <- ceiling(n_x/n_groups_init)
@@ -374,8 +373,8 @@ create_randomised_groups <- function(x, y=NULL, sample_id=NULL, n_max_groups=NUL
     }
   }
 
-  # Get sample ids for each group
-  out_groups <- lapply(unique(dt_agg$group_id), function(sel_group_id, dt) (dt[group_id==sel_group_id]$sample_id), dt=dt_agg)
-
+  # Get sample identifiers for each group
+  out_groups <- split(dt_agg[, mget(c(get_id_columns(id_depth="series"), "group_id"))], by="group_id", keep.by=FALSE)
+  
   return(out_groups)
 }

@@ -358,27 +358,32 @@ compute_icc <- function(x, feature, id_data, type="1"){
   # systematically biased.
   
   # Suppress NOTES due to non-standard evaluation in data.table
-  value <- mu <- subject_id <- cohort_id <- repetition_id <- bj <- ai <- NULL
+  value <- mu <- bj <- ai <- NULL
+  
+  # Determine identifier columns.
+  sample_id_columns <- get_id_columns(id_depth="series")
+  repetition_id_column <- get_id_columns(single_column="repetition_id")
   
   # Create data table from x and combine with id_data
   data <- data.table::data.table("value"=x)
   data <- cbind(id_data, data)
   
   # Calculate each parameter in the equation
-  data[,"mu":=mean(value, na.rm=TRUE)][,"bj":=mean(value, na.rm=TRUE)-mu, by=list(subject_id,cohort_id)][,"ai":=mean(value, na.rm=TRUE)-mu, by=list(repetition_id)][,"eij":=value-mu-bj-ai]
+  data[,"mu":=mean(value, na.rm=TRUE)][,"bj":=mean(value, na.rm=TRUE)-mu, by=sample_id_columns][,"ai":=mean(value, na.rm=TRUE)-mu, by=repetition_id_column][,"eij":=value-mu-bj-ai]
   
   # Calculate
-  n_subjects <- data.table::uniqueN(data, by="subject_id")
-  n_raters   <- data.table::uniqueN(data, by="repetition_id")
+  n_samples <- data.table::uniqueN(data, by=sample_id_columns)
+  n_raters   <- data.table::uniqueN(data, by=repetition_id_column)
   
-  # Calculate mean squared errors: msb between subjects (bj), msj between raters (ai), mse of error (eij) and msw of error with rater (ai + eij)
-  if(n_subjects > 1){
-    msb <- sum(data$bj^2, na.rm=TRUE) / (n_subjects-1)
+  # Calculate mean squared errors: msb between subjects (bj), msj between raters
+  # (ai), mse of error (eij) and msw of error with rater (ai + eij).
+  if(n_samples > 1){
+    msb <- sum(data$bj^2, na.rm=TRUE) / (n_samples-1)
   }
   
   if(type=="1"){
     # Calculate mean squared of error with rater
-    msw       <- (sum(data$eij^2, na.rm=TRUE) + sum(data$ai^2, na.rm=TRUE)) / (n_subjects * (n_raters-1))
+    msw       <- (sum(data$eij^2, na.rm=TRUE) + sum(data$ai^2, na.rm=TRUE)) / (n_samples * (n_raters-1))
     
     # Calculate icc for individual rater and rater panel
     if(msb==0 & msw==0) {
@@ -391,8 +396,8 @@ compute_icc <- function(x, feature, id_data, type="1"){
       
       # Fisher score
       s_fisher         <- msb/msw
-      s_fisher_low     <- s_fisher / stats::qf(0.975, n_subjects-1, n_subjects * (n_raters-1))
-      s_fisher_up      <- s_fisher / stats::qf(0.025, n_subjects-1, n_subjects * (n_raters-1))
+      s_fisher_low     <- s_fisher / stats::qf(0.975, n_samples-1, n_samples * (n_raters-1))
+      s_fisher_up      <- s_fisher / stats::qf(0.025, n_samples-1, n_samples * (n_raters-1))
       
       # Calcuate confidence intervals from fisher score
       icc_ci_low       <- (s_fisher_low - 1) / (s_fisher_low + n_raters - 1)
@@ -405,7 +410,7 @@ compute_icc <- function(x, feature, id_data, type="1"){
   if(type=="2"){
     # Calculate mean squared error (mse) and mean squared rater error (msj)
     msj <- sum(data$ai^2, na.rm=TRUE) / (n_raters-1)
-    mse <- sum(data$eij^2, na.rm=TRUE) / ((n_subjects-1) * (n_raters-1))
+    mse <- sum(data$eij^2, na.rm=TRUE) / ((n_samples-1) * (n_raters-1))
     
     # Calculate icc for individual rater and rater panel
     if(msb==0 & mse==0) {
@@ -413,19 +418,19 @@ compute_icc <- function(x, feature, id_data, type="1"){
       icc_panel <- 1
       icc_ci_low <- 1; icc_ci_up <- 1; icc_panel_ci_low <- 1; icc_panel_ci_up <- 1
     } else {
-      icc       <- (msb-mse) / (msb+ (n_raters-1) * mse + (n_raters/n_subjects) * (msj-mse))
-      icc_panel <- (msb-mse) / (msb + (msj-mse)/n_subjects)
+      icc       <- (msb-mse) / (msb+ (n_raters-1) * mse + (n_raters/n_samples) * (msj-mse))
+      icc_panel <- (msb-mse) / (msb + (msj-mse)/n_samples)
       
       # Determine confidence intervals
-      vn <- (n_raters-1)*(n_subjects-1) * (n_raters*icc*msj/mse +  n_subjects*(1+(n_raters-1)*icc) - n_raters*icc)^2
-      vd <- (n_subjects-1) * n_raters^2 * icc^2 * (msj/mse)^2   + (n_subjects*(1+(n_raters-1)*icc) - n_raters*icc)^2
+      vn <- (n_raters-1)*(n_samples-1) * (n_raters*icc*msj/mse +  n_samples*(1+(n_raters-1)*icc) - n_raters*icc)^2
+      vd <- (n_samples-1) * n_raters^2 * icc^2 * (msj/mse)^2   + (n_samples*(1+(n_raters-1)*icc) - n_raters*icc)^2
       v  <- vn/vd
-      thresh_low       <- stats::qf(0.975, n_subjects-1, v)
-      thresh_up        <- stats::qf(0.025, n_subjects-1, v)
+      thresh_low       <- stats::qf(0.975, n_samples-1, v)
+      thresh_up        <- stats::qf(0.025, n_samples-1, v)
       
       # Calcuate confidence intervals from fisher score
-      icc_ci_low       <- n_subjects * (msb - thresh_low*mse) / (thresh_low*(n_raters*msj+(n_raters*n_subjects-n_raters-n_subjects)*mse) + n_subjects*msb)
-      icc_ci_up        <- n_subjects * (msb - thresh_up*mse)  / (thresh_up*(n_raters*msj+(n_raters*n_subjects-n_raters-n_subjects)*mse)  + n_subjects*msb)
+      icc_ci_low       <- n_samples * (msb - thresh_low*mse) / (thresh_low*(n_raters*msj+(n_raters*n_samples-n_raters-n_samples)*mse) + n_samples*msb)
+      icc_ci_up        <- n_samples * (msb - thresh_up*mse)  / (thresh_up*(n_raters*msj+(n_raters*n_samples-n_raters-n_samples)*mse)  + n_samples*msb)
       icc_panel_ci_low <- icc_ci_low * n_raters / (1 + icc_ci_low*(n_raters-1) )
       icc_panel_ci_up  <- icc_ci_up * n_raters /  (1 + icc_ci_up*(n_raters-1) )
     }
@@ -433,7 +438,7 @@ compute_icc <- function(x, feature, id_data, type="1"){
   
   if(type=="3"){
     # Calculate mean squared error (mse)
-    mse <- sum(data$eij^2, na.rm=TRUE) / ((n_subjects-1) * (n_raters-1))
+    mse <- sum(data$eij^2, na.rm=TRUE) / ((n_samples-1) * (n_raters-1))
     
     # Calculate icc for individual rater and rater panel
     if(msb==0 & mse==0) {
@@ -446,8 +451,8 @@ compute_icc <- function(x, feature, id_data, type="1"){
       
       # Fisher score
       s_fisher     <- msb/mse
-      s_fisher_low <- s_fisher / stats::qf(0.975, n_subjects-1, (n_subjects-1) * (n_raters-1))
-      s_fisher_up  <- s_fisher / stats::qf(0.025, n_subjects-1, (n_subjects-1) * (n_raters-1))
+      s_fisher_low <- s_fisher / stats::qf(0.975, n_samples-1, (n_samples-1) * (n_raters-1))
+      s_fisher_up  <- s_fisher / stats::qf(0.025, n_samples-1, (n_samples-1) * (n_raters-1))
       
       # Calcuate confidence intervals from fisher score
       icc_ci_low       <- (s_fisher_low - 1) / (s_fisher_low + n_raters - 1)
@@ -817,7 +822,6 @@ get_id_columns <- function(id_depth="repetition", single_column=NULL){
   
   return(id_columns)
 }
-
 
 
 get_object_file_name <- function(learner, fs_method, project_id, data_id, run_id, pool_data_id=NULL, pool_run_id=NULL,

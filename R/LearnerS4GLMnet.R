@@ -140,7 +140,7 @@ setMethod("get_default_hyperparameters", signature(object="familiarGLMnet"),
             if(fam != "") fam <- stringi::stri_replace_first_regex(str=fam, pattern="_", replace="")
             
             # Determine number of subjects
-            n_samples <- data.table::uniqueN(data@data, by=c("subject_id", "cohort_id"))
+            n_samples <- data.table::uniqueN(data@data, by=get_id_columns(id_depth="series"))
             
             ##### Signature size ###############################################
             param$sign_size <- .get_default_sign_size(data_obj=data)
@@ -268,9 +268,6 @@ setMethod("..train", signature(object="familiarGLMnet", data="dataObject"),
               outcome_data <- data@data$outcome
             }
             
-            # TODO: Check that this works.
-            browser()
-            
             # Determine id columns
             id_columns <- get_id_columns("series")
 
@@ -281,7 +278,7 @@ setMethod("..train", signature(object="familiarGLMnet", data="dataObject"),
                                      stratify = FALSE,
                                      return_fold_id = TRUE)
             
-            # Order according to subject_id in encoded_data$encoded_data@data so
+            # Order according to samples in encoded_data$encoded_data@data so
             # that fold_id corresponds to the correct rows.
             fold_table <- merge(x=fold_table,
                                 y=encoded_data$encoded_data@data[, mget(id_columns)],

@@ -174,7 +174,7 @@
 .create_iterations <- function(data, experiment_setup, settings, override_external_validation=FALSE, iteration_list=NULL){
 
   # Suppress NOTES due to non-standard evaluation in data.table
-  main_data_id <- batch_id <- sample_id <- NULL
+  main_data_id <- NULL
   
   # Get unique main data ids
   main_data_ids <- unique(experiment_setup$main_data_id)
@@ -190,7 +190,7 @@
     iteration_list     <- list()
     
     logger.message("Creating iterations: Starting creation of iterations.")
-    browser()
+    
     while(length(iteration_list) < length(main_data_ids)){
       
       for(curr_main_data_id in main_data_ids){
@@ -408,7 +408,7 @@
           }
           
           # Clean variables
-          rm(cv_iter_list, run, n_samples, sample_ids)
+          rm(cv_iter_list, run, n_samples, sample_identifiers)
         }
         
         # Add to iteration list
@@ -720,11 +720,23 @@
       subset_table[current_train_id, "fold_id":=ii, on=.NATURAL]
     }
 
-    # Update remaining data points by random assignment to a fold.
-    n_unassigned <- nrow(subset_table[fold_id==0])
-    if(n_unassigned > 0){
-      subset_table[fold_id == 0,
-                   "fold_id":=sample.int(n_folds, size=n_unassigned, replace=FALSE)]
+    # Update remaining samples by random assignment to a fold.
+    unassigned_data <- unique(subset_table[fold_id==0, mget(sample_id_columns)], by=sample_id_columns)
+    if(nrow(unassigned_data) > 0){
+      # Randomly assign fold identifier.
+      unassigned_data[, "fold_id":=sample.int(n_folds, size=nrow(unassigned_data), replace=FALSE)]
+      
+      # Merge back the series identifier back into unassigned_data, and keep the
+      # updated fold identifier.
+      unassigned_data <- merge(x=unassigned_data,
+                               y=subset_table[fold_id==0, mget(id_columns)],
+                               by=sample_id_columns,
+                               all=FALSE)
+      
+      # Add unassigned samples to the subset table.
+      subset_table <- data.table::rbindlist(list(subset_table[fold_id!=0],
+                                                 unassigned_data), use.names=TRUE)
+      
     }
 
     # Assign training and validation folds
@@ -791,6 +803,24 @@
         if(all(fold_level_frequency$n == 0)) break()
       }
     }
+    
+    # Determine if all data was assigned.
+    unassigned_data <- unique(subset_table[fold_id==0, mget(sample_id_columns)], by=sample_id_columns)
+    if(nrow(unassigned_data) > 0){
+      # Randomly assign fold identifier.
+      unassigned_data[, "fold_id":=sample.int(n_folds, size=nrow(unassigned_data), replace=FALSE)]
+      
+      # Merge back the series identifier back into unassigned_data, and keep the
+      # updated fold identifier.
+      unassigned_data <- merge(x=unassigned_data,
+                               y=subset_table[fold_id==0, mget(id_columns)],
+                               by=sample_id_columns,
+                               all=FALSE)
+      
+      # Add unassigned samples to the subset table.
+      subset_table <- data.table::rbindlist(list(subset_table[fold_id!=0],
+                                                 unassigned_data), use.names=TRUE)
+    }
 
     # Assign to training and validation sets. Note that any unassigned samples
     # are assigned to the training folds.
@@ -801,10 +831,7 @@
   }
   
   if(return_fold_id){
-    n_missing <- nrow(subset_table[fold_id == 0L])
-    if(n_missing > 0) subset_table[fold_id == 0L, "fold_id":=sample.int(n_folds, size=n_missing, replace=TRUE)]
-    
-    return(subset_table[, c(mget(id_columns), "fold_id")])
+    return(subset_table[, mget(c(id_columns, "fold_id"))])
     
   } else {
     return(list("train_list"=train_list,
@@ -814,7 +841,7 @@
 
 
 
-.create_bootstraps <- function(data, n_iter, sample_identifiers=NULL, settings=NULL, outcome_type=NULL, data=NULL, stratify=TRUE){
+.create_bootstraps <- function(data, n_iter, sample_identifiers=NULL, settings=NULL, outcome_type=NULL, stratify=TRUE){
 
   # Suppress NOTES due to non-standard evaluation in data.table
   outcome <- prob <- NULL
