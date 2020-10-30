@@ -767,24 +767,9 @@ setMethod("get_bootstrap_sample", signature(data="data.table"),
               data <- data[row_ids, ]
               
             } else {
-              browser()
               # List unique samples.
               id_table <- unique(data[, mget(id_columns)])
-              # 
-              # # Determine the number of samples to drawn
-              # all_id_columns <- intersect(get_id_columns(), colnames(data))
-              # all_id_table <- data[, mget(all_id_columns)]
-              # 
-              # # Select only the first repetition.
-              # if("repetition_id" %in% all_id_columns){
-              #   all_id_table <- all_id_table[repetition_id == 1]
-              # }
-              # 
-              # # Select only the first series.
-              # if("series_id" %in% all_id_columns){
-              #   all_id_table <- all_id_table[series_id == 1]
-              # }
-              
+
               # Sample the unique rows of the identifier table.
               row_ids <- fam_sample(x=seq_len(nrow(id_table)),
                                     size=nrow(id_table),
