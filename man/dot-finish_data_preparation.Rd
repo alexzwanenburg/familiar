@@ -23,12 +23,40 @@
 \item{data}{data.table with feature data}
 
 \item{sample_id_column}{(\strong{recommended}) Name of the column containing
-sample or subject identifiers. This parameter is required if more than one
-dataset is provided.}
+sample or subject identifiers. See \code{batch_id_column} above for more
+details.
+
+If unset, every row will be identified as a single sample.}
 
 \item{batch_id_column}{(\strong{recommended}) Name of the column containing batch
 or cohort identifiers. This parameter is required if more than one dataset
-is provided, or if external validation is performed.}
+is provided, or if external validation is performed.
+
+In familiar any row of data is organised by four identifiers:
+\itemize{
+\item The batch identifier \code{batch_id_column}: This denotes the group to which a
+set of samples belongs, e.g. patients from a single study, samples measured
+in a batch, etc. The batch identifier is used for batch normalisation, as
+well as selection of development and validation datasets.
+\item The sample identifier \code{sample_id_column}: This denotes the sample level,
+e.g. data from a single individual. Subsets of data, e.g. bootstraps or
+cross-validation folds, are created at this level.
+\item The series identifier \code{series_id_column}: Indicates measurements on a
+single sample that may not share the same outcome value, e.g. a time
+series, or the number of cells in a view.
+\item The repetition identifier: Indicates repeated measurements in a single
+series where any feature values may differ, but the outcome does not.
+Repetition identifiers are always implicitly set when multiple entries for
+the same series of the same sample in the same batch that share the same
+outcome are encountered.
+}}
+
+\item{series_id_column}{(\strong{optional}) Name of the column containing series
+identifiers, which distinguish between measurements that are part of a
+series for a single sample. See \code{batch_id_column} above for more details.
+
+If unset, rows which share the same batch and sample identifiers but have a
+different outcome are assigned unique series identifiers.}
 
 \item{outcome_column}{(\strong{recommended}) Name of the column containing the
 outcome of interest. May be identified from a formula, if a formula is

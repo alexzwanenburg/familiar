@@ -46,7 +46,8 @@ setMethod("as_data_object", signature(data="data.table"),
             # Prepare data.table.
             data <- .load_data(data=data,
                                sample_id_column=settings$data$sample_col,
-                               batch_id_column=settings$data$batch_col)
+                               batch_id_column=settings$data$batch_col,
+                               series_id_column=settings$data$series_col)
             
             # Update settings
             settings <- .update_initial_settings(data=data, settings=settings)

@@ -365,12 +365,42 @@
 #' Internal function for parsing settings related to the computational setup
 #'
 #' @param config A list of settings, e.g. from an xml file.
-#' @param sample_id_column (**recommended**) Name of the column containing
-#'   sample or subject identifiers. This parameter is required if more than one
-#'   dataset is provided.
 #' @param batch_id_column (**recommended**) Name of the column containing batch
 #'   or cohort identifiers. This parameter is required if more than one dataset
 #'   is provided, or if external validation is performed.
+#'
+#'   In familiar any row of data is organised by four identifiers:
+#'
+#'   * The batch identifier `batch_id_column`: This denotes the group to which a
+#'   set of samples belongs, e.g. patients from a single study, samples measured
+#'   in a batch, etc. The batch identifier is used for batch normalisation, as
+#'   well as selection of development and validation datasets.
+#'
+#'   * The sample identifier `sample_id_column`: This denotes the sample level,
+#'   e.g. data from a single individual. Subsets of data, e.g. bootstraps or
+#'   cross-validation folds, are created at this level.
+#'
+#'   * The series identifier `series_id_column`: Indicates measurements on a
+#'   single sample that may not share the same outcome value, e.g. a time
+#'   series, or the number of cells in a view.
+#'
+#'   * The repetition identifier: Indicates repeated measurements in a single
+#'   series where any feature values may differ, but the outcome does not.
+#'   Repetition identifiers are always implicitly set when multiple entries for
+#'   the same series of the same sample in the same batch that share the same
+#'   outcome are encountered.
+#'
+#' @param sample_id_column (**recommended**) Name of the column containing
+#'   sample or subject identifiers. See `batch_id_column` above for more
+#'   details.
+#'
+#'   If unset, every row will be identified as a single sample.
+#' @param series_id_column (**optional**) Name of the column containing series
+#'   identifiers, which distinguish between measurements that are part of a
+#'   series for a single sample. See `batch_id_column` above for more details.
+#'
+#'   If unset, rows which share the same batch and sample identifiers but have a
+#'   different outcome are assigned unique series identifiers.
 #' @param development_batch_id (*optional*) One or more batch or cohort
 #'   identifiers to constitute data sets for development. Defaults to all, or
 #'   all minus the identifiers in `validation_batch_id` for external validation.
@@ -534,8 +564,9 @@
 #' @md
 #' @keywords internal
 .parse_experiment_settings <- function(config=NULL,
-                                       sample_id_column=waiver(),
                                        batch_id_column=waiver(),
+                                       sample_id_column=waiver(),
+                                       series_id_column=waiver(),
                                        development_batch_id=waiver(),
                                        validation_batch_id=waiver(),
                                        outcome_name=waiver(),
@@ -584,13 +615,21 @@
     settings$sample_col <- check_column_name(settings$sample_col)
   }
   
-  # Cohort identifier column
+  # Batch identifier column
   settings$batch_col  <- .parse_arg(x_config=config$batch_id_column, x_var=batch_id_column,
                                     var_name="batch_id_column", type="character", optional=TRUE, default=NULL)
   
   # Update column name
   if(!is.null(settings$batch_col)){
     settings$batch_col <- check_column_name(settings$batch_col)
+  }
+  
+  # Series identifier column
+  settings$series_col <- .parse_arg(x_config=config$series_id_column, x_var=series_id_column,
+                                    var_name="series_id_column", type="character", optional=TRUE, default=NULL)
+  
+  if(!is.null(settings$series_col)){
+    settings$series_col <- check_column_name(settings$series_col)
   }
   
   # Development cohort identifier
