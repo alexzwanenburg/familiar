@@ -594,3 +594,99 @@ test.create_small_bad_data_set <- function(outcome_type){
   
   return(data)
 }
+
+
+
+test_create_synthetic_series_data <- function(outcome_type, n_batch=3, n_samples=10, n_series=3, n_rep=3){
+  
+  # Suppress NOTES due to non-standard evaluation in data.table
+  batch_id <- NULL
+  
+  # Set random seed so that the same numbers are produced every time.
+  set.seed(1844)
+  browser()
+  # Determine the number of series instances.
+  n_series_instances <- n_batch * n_samples * n_series
+  
+  # Draw random numbers for three features.
+  feature_1 <- stats::runif(n=n_series_instances, min=0.0, max=1.0)
+  feature_2 <- stats::runif(n=n_series_instances, min=0.0, max=2.0)
+  feature_3 <- stats::runif(n=n_series_instances, min=0.0, max=3.0)
+  
+  # Determine the raw outcome.
+  outcome_raw <- feature_1 + feature_2 + feature_3
+  
+  if(outcome_type == "binomial"){
+    # Convert to 0, 1
+    outcome_value <- outcome_raw > 3.0
+    outcome_value <- factor(x=outcome_value,
+                            levels=c(FALSE, TRUE),
+                            labels=c("0", "1"))
+    
+  } else if(outcome_type == "multinomial"){
+    # Convert to 0 (x < 2), 1 (2 < x 4), 2 (4 < x < 6)
+    outcome_value <- floor(outcome_raw / 2)
+    outcome_value[outcome_value==3.0] <- 2.0
+    outcome_value <- factor(x=outcome_value,
+                            levels=c(0.0, 1.0, 2.0),
+                            labels=c("0", "1", "2"))
+    
+  } else if(outcome_type == "continuous"){
+    outcome_value <- outcome_raw
+    
+  } else if(outcome_type == "count"){
+    outcome_value <- round(outcome_raw * 100)
+    
+  } else if(outcome_type == "survival"){
+    # Outcome follows an exponential distribution.
+    outcome_time <- exp(outcome_value)
+    outcome_event <- rep_len(1, length.out=n_series_instances)
+    
+  } else {
+    ..error_outcome_type_not_implemented(outcome_type)
+  }
+  
+  # Create basic table. Sample identifiers are explicitly repeated for different
+  # batches.
+  data <- data.table::data.table("batch_id"=rep(seq_len(n_batch), each=n_samples * n_series),
+                                 "sample_id"=rep(seq_len(n_samples), each=n_series, times=n_batch),
+                                 "series_id"=rep(seq_len(n_series), times=n_batch * n_samples),
+                                 "feature_1"=feature_1,
+                                 "feature_2"=feature_2,
+                                 "feature_3"=feature_3)
+  
+  # Add outcome.
+  if(outcome_type %in% "survival"){
+    data[, ":="("outcome_time"=outcome_time, "outcome_event"=outcome_event)]
+    outcome_column <- c("outcome_time", "outcome_event")
+  } else {
+    data[, ":="("outcome"=outcome_value)]
+    outcome_column <- "outcome"
+  }
+  
+  # Create batch-offsets
+  data[,":="("feature_1"=feature_1 + batch_id - 1.0,
+             "feature_2"=feature_2 + batch_id - 1.0,
+             "feature_3"=feature_3 + batch_id - 1.0)]
+  
+  # Create repetitions.
+  if(n_rep > 1){
+    repeated_rows <- rep(seq_len(n_series_instances), each=n_rep)
+    data <- data[repeated_rows, ]
+    
+    # Add some noise to features.
+    data[,":="("feature_1"=feature_1 + stats::rnorm(n=n_rep * n_series_instances, mean=0.0, sd=0.125),
+               "feature_2"=feature_2 + stats::rnorm(n=n_rep * n_series_instances, mean=0.0, sd=0.125),
+               "feature_3"=feature_3 + stats::rnorm(n=n_rep * n_series_instances, mean=0.0, sd=0.125))]
+  }
+  
+  # Convert to a data object.
+  data <- as_data_object(data=data,
+                         batch_id_column="batch_id",
+                         sample_id_column="sample_id",
+                         series_id_column="series_id",
+                         outcome_column=outcome_column,
+                         outcome_type=outcome_type)
+  
+  return(data)
+}
