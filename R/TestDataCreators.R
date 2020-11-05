@@ -604,7 +604,7 @@ test_create_synthetic_series_data <- function(outcome_type, n_batch=3, n_samples
   
   # Set random seed so that the same numbers are produced every time.
   set.seed(1844)
-  browser()
+  
   # Determine the number of series instances.
   n_series_instances <- n_batch * n_samples * n_series
   
@@ -639,7 +639,7 @@ test_create_synthetic_series_data <- function(outcome_type, n_batch=3, n_samples
     
   } else if(outcome_type == "survival"){
     # Outcome follows an exponential distribution.
-    outcome_time <- exp(outcome_value)
+    outcome_time <- exp(outcome_raw)
     outcome_event <- rep_len(1, length.out=n_series_instances)
     
   } else {
