@@ -1,4 +1,4 @@
-add_batch_normalisation_parameters <- function(cl=NULL, feature_info_list, data_obj, settings=NULL){
+add_batch_normalisation_parameters <- function(cl=NULL, feature_info_list, data_obj, settings=NULL, batch_normalisation_method=NULL){
   # Find batch normalisation parameters and add them to the feature_info_list
 
   # Check if the feature_info_list is empty. This may occur for empty models.
@@ -7,10 +7,10 @@ add_batch_normalisation_parameters <- function(cl=NULL, feature_info_list, data_
   }
   
   # Find the batch_normalisation_method.
-  if(!is.null(settings)){
+  if(!is.null(settings) & is.null(batch_normalisation_method)){
     batch_normalisation_method <- settings$prep$batch_normalisation_method
     
-  } else {
+  } else if(is.null(batch_normalisation_method)){
     
     # Attempt to identify the methods from feature_info_list
     batch_normalisation_parameter_lists <- extract_from_slot(object_list=feature_info_list,
