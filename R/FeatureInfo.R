@@ -1170,13 +1170,15 @@ setMethod("show", signature(object="featureInfo"),
             transform_str <- character(0L)
             
             # Attempt to create an actual descriptor, if meaningful.
-            if(object@transformation_parameters$transform_method != "none"){
-              if(object@transformation_parameters$transform_lambda != 1.0){
-                transform_str <- paste0("  transformation (",
-                                        object@transformation_parameters$transform_method,
-                                        ") with \u03BB = ",
-                                        object@transformation_parameters$transform_lambda,
-                                        ".\n")
+            if(!is.null(object@transformation_parameters)){
+              if(object@transformation_parameters$transform_method != "none"){
+                if(object@transformation_parameters$transform_lambda != 1.0){
+                  transform_str <- paste0("  transformation (",
+                                          object@transformation_parameters$transform_method,
+                                          ") with \u03BB = ",
+                                          object@transformation_parameters$transform_lambda,
+                                          ".\n")
+                }
               }
             }
             
@@ -1185,45 +1187,55 @@ setMethod("show", signature(object="featureInfo"),
             normalisation_str <- character(0L)
             
             # Attempt to create an actual descriptor, if meaningful.
-            if(object@normalisation_parameters$norm_method != "none"){
-              if(object@normalisation_parameters$norm_shift != 0.0 &
-                 object@normalisation_parameters$norm_scale != 1.0){
-                normalisation_str <- paste0("  normalisation (",
-                           object@normalisation_parameters$norm_method,
-                           ") with shift = ",
-                           object@normalisation_parameters$norm_shift,
-                           " and scale = ",
-                           object@normalisation_parameters$norm_scale,
-                           ".\n")
+            if(!is.null(object@normalisation_parameters)){
+              if(object@normalisation_parameters$norm_method != "none"){
+                if(object@normalisation_parameters$norm_shift != 0.0 &
+                   object@normalisation_parameters$norm_scale != 1.0){
+                  normalisation_str <- paste0("  normalisation (",
+                                              object@normalisation_parameters$norm_method,
+                                              ") with shift = ",
+                                              object@normalisation_parameters$norm_shift,
+                                              " and scale = ",
+                                              object@normalisation_parameters$norm_scale,
+                                              ".\n")
+                }
               }
             }
             
             # Batch normalisation parameters
-            batch_norm_str <- paste0(sapply(seq_along(object@batch_normalisation_parameters), function(ii, x){
-              
-              # Placeholder string
-              batch_norm_str <- ""
-              
-              # Attempt to create an actual descriptor, if meaningful.
-              if(x[[ii]]$norm_method != "none"){
-                if(x[[ii]]$norm_shift != 0.0 & x[[ii]]$norm_scale != 1.0){
-                  batch_norm_str <- paste0("  batch-normalisation (",
-                                           x[[ii]]$norm_method,
-                                           ") for ",
-                                           names(x)[ii],
-                                           " with shift = ",
-                                           x[[ii]]$norm_shift,
-                                           " and scale = ",
-                                           x[[ii]]$norm_scale,
-                                           ".\n")
+            if(!is.null(object@batch_normalisation_parameters)){
+              batch_norm_str <- sapply(seq_along(object@batch_normalisation_parameters), function(ii, x){
+                
+                # Placeholder string
+                batch_norm_str <- ""
+                
+                # Attempt to create an actual descriptor, if meaningful.
+                if(x[[ii]]$norm_method != "none"){
+                  if(x[[ii]]$norm_shift != 0.0 & x[[ii]]$norm_scale != 1.0){
+                    batch_norm_str <- paste0("  batch-normalisation (",
+                                             x[[ii]]$norm_method,
+                                             ") for ",
+                                             names(x)[ii],
+                                             " with shift = ",
+                                             x[[ii]]$norm_shift,
+                                             " and scale = ",
+                                             x[[ii]]$norm_scale,
+                                             ".\n")
+                  }
                 }
-              }
+                
+                return(batch_norm_str)
+              }, x=object@batch_normalisation_parameters)
               
-              return(batch_norm_str)
-            }, x=object@batch_normalisation_parameters))
-            
-            # Replace by default placeholder.
-            if(batch_norm_str == "") batch_norm_str <- character(0L)
+              # Collate the string.
+              batch_norm_str <- paste0(batch_norm_str, collapse="")
+              
+              # Replace by default placeholder.
+              if(batch_norm_str == "") batch_norm_str <- character(0L)
+              
+            } else {
+              batch_norm_str <- character(0L)
+            }
             
             # Clustering
             # Placeholder string
