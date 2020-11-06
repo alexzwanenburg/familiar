@@ -1144,7 +1144,7 @@ collect_and_aggregate_feature_info <- function(feature, object, stop_at="imputat
   if(feature_type == "categorical"){
     # Show levels, including which level is the reference.
     classes_str <- object@levels
-    classes_str[1] <- paste0(classes_str, ("reference"))
+    classes_str[1] <- paste0(classes_str[1], " (reference)")
     
     feature_str <- paste0(feature_str, ", with levels: ", paste_s(classes_str))
     
@@ -1210,7 +1210,7 @@ setMethod("show", signature(object="featureInfo"),
                 batch_norm_str <- ""
                 
                 # Attempt to create an actual descriptor, if meaningful.
-                if(x[[ii]]$norm_method != "none"){
+                if(!x[[ii]]$norm_method %in% c("none", "unknown")){
                   if(x[[ii]]$norm_shift != 0.0 & x[[ii]]$norm_scale != 1.0){
                     batch_norm_str <- paste0("  batch-normalisation (",
                                              x[[ii]]$norm_method,
