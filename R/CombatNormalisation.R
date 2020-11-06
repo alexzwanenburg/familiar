@@ -31,7 +31,7 @@ combat.get_normalisation_parameters <- function(x, batch_normalisation_method, c
   
   # Filter table x so that only valid entries remain. First add the is_valid
   # column to x through merging.
-  x <- merge(x=x, y=aggregate_table[, mget(c(batch_id_column, "feature", "is_valid")), with=FALSE], by=c(batch_id_column, "feature"))
+  x <- merge(x=x, y=aggregate_table[, mget(c(batch_id_column, "feature", "is_valid"))], by=c(batch_id_column, "feature"))
   
   # Then filter by valid feature value and is_valid. This table is called z,
   # after the name for standardized data in Johnson et al. Note that overall
@@ -170,7 +170,7 @@ combat.iterative_parametric_bayes_solver <- function(z, tolerance=0.0001, max_it
   
   # Get the batch identifier column.
   batch_id_column <- get_id_columns(single_column="batch")
-  browser()
+  
   # Limit z_short to the current batch.
   current_batch_id <- z[[batch_id_column]][1]
   z_short <- data.table::copy(z_short[batch_id == current_batch_id])
@@ -265,7 +265,7 @@ combat.non_parametric_bayes_solver <- function(z, n_sample_features=50, cl=NULL,
   
   # Limit z_short to the current batch.
   current_batch_id <- z[[batch_id_column]][1]
-  browser()
+  
   # Select the current cohort from z_short. Note that like in sva and other
   # codes, we interpret the g"=1...G in the supplement of Johnson et al. to
   # indicate that the current feature is not directly considered.
@@ -283,26 +283,36 @@ combat.non_parametric_bayes_solver <- function(z, n_sample_features=50, cl=NULL,
   # Make selection
   z_short <- droplevels(z_short[feature %in% selected_features])
   
-  w_ig <- sapply(split(z_short, by="feature", sorted=FALSE),
-                 function(prior_pair, x){
-                   # Compute sum((x-gamma_hat)^2) term in the product of the
-                   # probability density functions of the normal distribution
-                   # over x.
-                   sum_squared_error <- sum((x - prior_pair$gamma_hat[1])^2)
-                   
-                   # Compute w_ig" = L(Z_ig | gamma_hat_ig", delta_hat_squared_ig")
-                   # for the current feature in g".
-                   w_ig <- 1.0 / (2.0 * pi * prior_pair$delta_hat_squared[1])^(length(x)/2) * exp(-sum_squared_error / (2 * prior_pair$delta_hat_squared[1]))
-                   
-                   return(w_ig)
-                 }, x=z$value)
+  # Compute data for the weights w_ig that are used to reconstruct gamma_star
+  # and delta_star_squared for the selected feature in the calling function.
+  # (the selected_features variable contains the set difference of all
+  # difference and the feature in the calling features.)
+  weight_data <- lapply(split(z_short, by="feature", sorted=FALSE),
+                        function(prior_pair, x){
+                          # Compute sum((x-gamma_hat)^2) term in the product of the
+                          # probability density functions of the normal distribution
+                          # over x.
+                          sum_squared_error <- sum((x - prior_pair$gamma_hat[1])^2)
+                          
+                          # Compute w_ig" = L(Z_ig | gamma_hat_ig", delta_hat_squared_ig")
+                          # for the current feature in g".
+                          w_ig <- 1.0 / (2.0 * pi * prior_pair$delta_hat_squared[1])^(length(x)/2) * exp(-sum_squared_error / (2 * prior_pair$delta_hat_squared[1]))
+                          
+                          # Replace NaNs and other problematic values.
+                          if(!is.finite(w_ig)) w_ig <- 0.0
+                          
+                          return(data.table::data.table("feature"=prior_pair$feature[1],
+                                                        "w"=w_ig,
+                                                        "gamma_hat"=prior_pair$gamma_hat[1],
+                                                        "delta_hat_squared"=prior_pair$delta_hat_squared[1]))
+                        }, x=z$value)
   
-  # Replace NaNs and other problematic values.
-  w_ig[!is.finite(w_ig)] <- 0.0
+  # Combine to data.table
+  weight_data <- data.table::rbindlist(weight_data)
   
   # Compute gamma_star and delta_star_squared according to Johnson et al.
-  gamma_star <- sum(w_ig * z_short$gamma_hat) / sum(w_ig)
-  delta_star_squared <- sum(w_ig * z_short$delta_hat_squared) / sum(w_ig)
+  gamma_star <- sum(weight_data$w * weight_data$gamma_hat) / sum(weight_data$w)
+  delta_star_squared <- sum(weight_data$w * weight_data$delta_hat_squared) / sum(weight_data$w)
   
   return(data.table::data.table("batch_id"=z[[batch_id_column]][1],
                                 "feature"=z$feature[1],
