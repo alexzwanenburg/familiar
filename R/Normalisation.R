@@ -1,8 +1,12 @@
-add_normalisation_parameters <- function(cl=NULL, feature_info_list, data_obj, settings){
+add_normalisation_parameters <- function(cl=NULL, feature_info_list, data_obj, settings=NULL, normalisation_method=NULL){
   # Find normalisation parameters and add them to the feature_info_list
   
   # Determine which columns contain feature data
   feature_columns <- get_feature_columns(x=data_obj)
+  
+  if(is.null(normalisation_method)){
+    normalisation_method <- settings$prep$normalisation_method
+  }
   
   # Determine transformation parameters by iterating over the features
   upd_list <- lapply(feature_columns, function(ii, feature_info_list, data_obj, normalisation_method){
@@ -14,7 +18,10 @@ add_normalisation_parameters <- function(cl=NULL, feature_info_list, data_obj, s
     object@normalisation_parameters <- normalise.get_normalisation_parameters(x=data_obj@data[[ii]], norm_method=normalisation_method)
     
     return(object)
-  }, feature_info_list=feature_info_list, data_obj=data_obj, normalisation_method=settings$prep$normalisation_method)
+  },
+  feature_info_list=feature_info_list,
+  data_obj=data_obj,
+  normalisation_method=normalisation_method)
   
   # Set names of the updated list
   names(upd_list) <- feature_columns
