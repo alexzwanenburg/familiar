@@ -694,3 +694,61 @@ test_create_synthetic_series_data <- function(outcome_type, n_batch=3, n_samples
   
   return(data)
 }
+
+
+
+test_create_synthetic_series_one_sample_data <- function(outcome_type, n_numeric=3L){
+  
+  # Create test data.
+  data <- test_create_synthetic_series_data(outcome_type=outcome_type,
+                                            n_numeric=n_numeric)
+  
+  # Select the first instance
+  data@data <- head(data@data, n=1L)
+  
+  return(data)
+}
+
+
+
+test_create_synthetic_series_invariant_feature_data <- function(outcome_type, n_numeric=3L){
+  
+  # Create test data.
+  data <- test_create_synthetic_series_data(outcome_type=outcome_type,
+                                            n_numeric=n_numeric)
+  
+  # Select the first instance
+  data@data$feature_1 <- data@data$feature_1[1]
+  data@data$feature_2 <- data@data$feature_2[1]
+  data@data$feature_3 <- data@data$feature_3[1]
+  
+  return(data)
+}
+
+
+
+test_create_synthetic_series_na_data <- function(outcome_type, n_numeric=3L, n_missing_frac=0.1){
+  
+  # Create test data.
+  data <- test_create_synthetic_series_data(outcome_type=outcome_type,
+                                            n_numeric=n_numeric)
+  
+  # Select which rows will be updated.
+  n_rows <- nrow(data@data)
+  na_rows <- sample(seq_len(n_rows), size=ceiling(n_missing_frac * n_rows), replace=FALSE)
+  
+  # Identify the feature columns.
+  feature_columns <- get_feature_columns(data)
+  
+  # Update feature columns.
+  for(feature in feature_columns){
+    if(is.factor(data@data[[feature]])){
+      data@data[na_rows, (feature):=NA]
+      
+    } else {
+      data@data[na_rows, (feature):=NA_real_]
+    }
+  }
+  
+  return(data)
+}
