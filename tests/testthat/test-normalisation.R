@@ -306,3 +306,200 @@ for(n_numeric_features in c(3, 2, 1, 0)){
     })
   }
 }
+
+
+#### NA-value test #############################################################
+for(n_numeric_features in c(3, 2, 1, 0)){
+  
+  data <- familiar:::test_create_synthetic_series_na_data(outcome_type=outcome_type, n_numeric=n_numeric_features)
+  
+  for(normalisation_method in familiar:::.get_available_normalisation_methods()){
+    
+    testthat::test_that(paste0("Normalisation is correctly performed using the ",
+                               normalisation_method, " method and ",
+                               n_numeric_features, " numeric features for a dataset with some NA data."), {
+      # Make a copy of the data.
+      data_copy <- data.table::copy(data)
+      
+      # Create a list of featureInfo objects.
+      feature_info_list <- familiar:::.get_feature_info_data(data=data_copy@data,
+                                                             file_paths=NULL,
+                                                             project_id=character(),
+                                                             outcome_type=outcome_type)[[1]]
+      
+      # Update the feature info list.
+      feature_info_list <- familiar:::add_normalisation_parameters(feature_info_list=feature_info_list,
+                                                                   data_obj=data_copy,
+                                                                   normalisation_method=normalisation_method)
+      
+      # Act as if the data has been transformed.
+      data_copy@preprocessing_level <- "transformation"
+      
+      # Perform a normalisation.
+      data_copy <- familiar:::normalise_features(data=data_copy,
+                                                 feature_info_list=feature_info_list)
+      
+      
+      # Test whether the features are normalised (unless none).
+      if(normalisation_method == "none"){
+        # Check that the data is not altered.
+        testthat::expect_equal(data.table::fsetequal(data_copy@data, data@data), TRUE)
+        
+      } else {
+        for(feature in familiar:::get_feature_columns(data_copy)){
+          
+          # Determine if the feature is numeric.
+          if(feature_info_list[[feature]]@feature_type == "numeric"){
+            
+            # Compute mean.
+            x <- mean(data_copy@data[[feature]], na.rm=TRUE)
+            
+            if(normalisation_method %in% c("normalisation", "normalisation_trim", "normalisation_winsor")){
+              # Check that the feature is correctly centred around 0.
+              testthat::expect_equal(x < 0.7 & x > 0.3, TRUE)
+              
+            } else {
+              # Check that the feature is correctly centred around 0.
+              testthat::expect_equal(x < 0.2 & x > -0.2, TRUE)
+            }
+          } else {
+            # For categorical features test that the none batch normalisation
+            # method is present.
+            x <- feature_info_list[[feature]]@normalisation_parameters$norm_method == "none"
+            
+            testthat::expect_equal(x, TRUE)
+          }
+        }
+      }
+    })
+  }
+}
+
+
+#### One-sample test ###########################################################
+for(n_numeric_features in c(3, 2, 1, 0)){
+  
+  data <- familiar:::test_create_synthetic_series_one_sample_data(outcome_type=outcome_type, n_numeric=n_numeric_features)
+  
+  for(normalisation_method in familiar:::.get_available_normalisation_methods()){
+    
+    testthat::test_that(paste0("Normalisation is correctly performed using the ",
+                               normalisation_method, " method and ",
+                               n_numeric_features, " numeric features for a dataset with one sample."), {
+                                 # Make a copy of the data.
+                                 data_copy <- data.table::copy(data)
+                                 
+                                 # Create a list of featureInfo objects.
+                                 feature_info_list <- familiar:::.get_feature_info_data(data=data_copy@data,
+                                                                                        file_paths=NULL,
+                                                                                        project_id=character(),
+                                                                                        outcome_type=outcome_type)[[1]]
+                                 
+                                 # Update the feature info list.
+                                 feature_info_list <- familiar:::add_normalisation_parameters(feature_info_list=feature_info_list,
+                                                                                              data_obj=data_copy,
+                                                                                              normalisation_method=normalisation_method)
+                                 
+                                 # Act as if the data has been transformed.
+                                 data_copy@preprocessing_level <- "transformation"
+                                 
+                                 # Perform a normalisation.
+                                 data_copy <- familiar:::normalise_features(data=data_copy,
+                                                                            feature_info_list=feature_info_list)
+                                 
+                                 
+                                 # Test whether the features are normalised (unless none).
+                                 if(normalisation_method == "none"){
+                                   # Check that the data is not altered.
+                                   testthat::expect_equal(data.table::fsetequal(data_copy@data, data@data), TRUE)
+                                   
+                                 } else {
+                                   for(feature in familiar:::get_feature_columns(data_copy)){
+                                     
+                                     # Determine if the feature is numeric.
+                                     if(feature_info_list[[feature]]@feature_type == "numeric"){
+                                       
+                                       # Expect that shift and scale parameters are 0 and 1, respectively.
+                                       x_shift <- feature_info_list[[feature]]@normalisation_parameters$norm_shift
+                                       x_scale <- feature_info_list[[feature]]@normalisation_parameters$norm_scale
+                                       
+                                       testthat::expect_equal(x_shift, 0.0)
+                                       testthat::expect_equal(x_scale, 1.0)
+                                       
+                                     } else {
+                                       # For categorical features test that the none batch normalisation
+                                       # method is present.
+                                       x <- feature_info_list[[feature]]@normalisation_parameters$norm_method == "none"
+                                       
+                                       testthat::expect_equal(x, TRUE)
+                                     }
+                                   }
+                                 }
+                               })
+  }
+}
+
+
+
+#### Invariant feature test ###########################################################
+for(n_numeric_features in c(3, 2, 1, 0)){
+  
+  data <- familiar:::test_create_synthetic_series_invariant_feature_data(outcome_type=outcome_type, n_numeric=n_numeric_features)
+  
+  for(normalisation_method in familiar:::.get_available_normalisation_methods()){
+    
+    testthat::test_that(paste0("Normalisation is correctly performed using the ",
+                               normalisation_method, " method and ",
+                               n_numeric_features, " numeric features for a dataset with invariant features."), {
+                                 # Make a copy of the data.
+                                 data_copy <- data.table::copy(data)
+                                 
+                                 # Create a list of featureInfo objects.
+                                 feature_info_list <- familiar:::.get_feature_info_data(data=data_copy@data,
+                                                                                        file_paths=NULL,
+                                                                                        project_id=character(),
+                                                                                        outcome_type=outcome_type)[[1]]
+                                 
+                                 # Update the feature info list.
+                                 feature_info_list <- familiar:::add_normalisation_parameters(feature_info_list=feature_info_list,
+                                                                                              data_obj=data_copy,
+                                                                                              normalisation_method=normalisation_method)
+                                 
+                                 # Act as if the data has been transformed.
+                                 data_copy@preprocessing_level <- "transformation"
+                                 
+                                 # Perform a normalisation.
+                                 data_copy <- familiar:::normalise_features(data=data_copy,
+                                                                            feature_info_list=feature_info_list)
+                                 
+                                 
+                                 # Test whether the features are normalised (unless none).
+                                 if(normalisation_method == "none"){
+                                   # Check that the data is not altered.
+                                   testthat::expect_equal(data.table::fsetequal(data_copy@data, data@data), TRUE)
+                                   
+                                 } else {
+                                   for(feature in familiar:::get_feature_columns(data_copy)){
+                                     
+                                     # Determine if the feature is numeric.
+                                     if(feature_info_list[[feature]]@feature_type == "numeric"){
+                                       
+                                       # Expect that shift and scale parameters are 0 and 1, respectively.
+                                       x_shift <- feature_info_list[[feature]]@normalisation_parameters$norm_shift
+                                       x_scale <- feature_info_list[[feature]]@normalisation_parameters$norm_scale
+                                       
+                                       testthat::expect_equal(x_shift, 0.0)
+                                       testthat::expect_equal(x_scale, 1.0)
+                                       
+                                     } else {
+                                       # For categorical features test that the none batch normalisation
+                                       # method is present.
+                                       x <- feature_info_list[[feature]]@normalisation_parameters$norm_method == "none"
+                                       
+                                       testthat::expect_equal(x, TRUE)
+                                     }
+                                   }
+                                 }
+                               })
+  }
+}
