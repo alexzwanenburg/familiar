@@ -5,15 +5,19 @@
     * Added `novelty_features` parameter that can be used to specify features that should be used for novelty detection.
 * Added `show` methods for objects that are typically written to drive, such as familiarModel, familiarEnsemble, familiarData and familiarCollection objects.
 * Added `update_object` methods that allow for backward compatibility when updating slots of respective objects.
+* Added support for series-like data. These can be time series, or multiple measurements were the outcome of interest may change. Subsampling, e.g. through cross-validation or bootstraps still respects samples. This means that different series instances of the same sample are always kept together for subsampling. The series column in the data set can be set using the `series_id_column` parameter.
 
 ## Minor changes:
 * The default method for bootstrap confidence intervals (`bootstrap_ci_method`) is now the percentile (`percentile`) method, which replaces the bias-corrected (`bc`) method.
 * The value returned for the bias-corrected bootstrap confidence interval method is now the bias-corrected median, not the point estimate. This harmonises the behaviour of the percentile and bias-corrected confidence interval methods. The bias-corrected median can be viewed as an optimism correction of the point estimate.
+* Several attribute slots for S4 familiarModel, familiarEnsemble, familiarData and familiarCollection objects were removed, revised or added. Changes are backward compatible due to the new `update_object` method.
 
 ## Bug fixes:
 * Fixed an error that would cause hyperparameter optimisation to not select the optimal set of hyperparameters.
 * Fixed an error that would cause feature selection to fail when all features in the data are also set to be in the signature.
 * Fixed an error that occurred when attempting to create risk groups from models that were not successfully trained.
+* Fixed an error in ComBat batch normalisation caused by invariant or NA features in one or more batches.
+* Fixed a bug that would incorrectly assign samples to wrong subsamples (e.g. in-bag or out-of-bag data). This only occurred if the same sample identifier exists in different batches.
 
 # Version 0.0.0.53 (Pre-release)
 
