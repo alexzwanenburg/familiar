@@ -38,19 +38,6 @@ add_batch_normalisation_parameters <- function(cl=NULL, feature_info_list, data_
     }
   }
   
-  # Determine which columns contain feature data
-  feature_columns <- get_feature_columns(x=data_obj)
-  
-  # Split features into numerical and categorical features
-  numeric_features <- intersect(feature_columns, sapply(feature_info_list, function(list_entry){
-    if(list_entry@feature_type=="numeric") {
-      return(list_entry@name)
-    } else {
-      return(NULL)
-    }
-  }))
-  categorical_features <- setdiff(feature_columns, numeric_features)
-  
   # Find available batches in the data
   available_batch_ids <- unique(data_obj@data[[get_id_columns(single_column="batch")]])
   
@@ -59,9 +46,14 @@ add_batch_normalisation_parameters <- function(cl=NULL, feature_info_list, data_
   
   # Return if all batches are already known.
   unknown_batches <- setdiff(available_batch_ids, known_batches)
-  if(length(unknown_batches) == 0){
-    return(feature_info_list)
-  }
+  if(length(unknown_batches) == 0) return(feature_info_list)
+  
+  # Determine which columns contain feature data
+  feature_columns <- get_feature_columns(x=data_obj)
+  
+  # Split features into numeric and categorical features.
+  numeric_features <- feature_columns[sapply(feature_info_list, function(list_entry) (list_entry@feature_type == "numeric"))]
+  categorical_features <- setdiff(feature_columns, numeric_features)
   
   # Obtain normalisation parameters for numeric features
   if(batch_normalisation_method %in% .get_available_batch_normalisation_methods("basic")){
@@ -179,6 +171,7 @@ batch_normalise.get_normalisation_per_feature <- function(feature, feature_info_
 }
 
 
+
 batch_normalise.set_combat_normalisation_parameters <- function(cl=NULL,
                                                                 features,
                                                                 feature_info_list,
@@ -191,10 +184,9 @@ batch_normalise.set_combat_normalisation_parameters <- function(cl=NULL,
   batch_id <- feature <- NULL
   
   # Check length of features
-  if(length(features) == 0){
-    return(NULL)
+  if(length(features) == 0) return(NULL)
     
-  } else if(length(features) < 3){
+  if(length(features) < 3){
     # Combat using cross-feature information, which is impossible to obtain for
     # less than three features.
     return(batch_normalise.set_basic_normalisation_parameters(cl=cl,
