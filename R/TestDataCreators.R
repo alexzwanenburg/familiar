@@ -740,8 +740,8 @@ test_create_synthetic_series_one_feature_invariant_data <- function(outcome_type
   data <- test_create_synthetic_series_data(outcome_type=outcome_type,
                                             n_numeric=n_numeric)
   
-  # Select the first instance for feature 1.
-  data@data$feature_1 <- data@data$feature_1[1]
+  # Select the first instance for feature 2.
+  data@data$feature_2 <- data@data$feature_2[1]
   
   return(data)
 }
@@ -778,18 +778,18 @@ test_create_synthetic_series_na_data <- function(outcome_type, n_numeric=4L, n_m
 
 test_create_synthetic_series_one_feature_all_na_data <- function(outcome_type, n_numeric=4L){
   # Suppress NOTES due to non-standard evaluation in data.table
-  feature_1 <- NULL
+  feature_2 <- NULL
   
   # Create test data.
   data <- test_create_synthetic_series_data(outcome_type=outcome_type,
                                             n_numeric=n_numeric)
   
   # Set the first feature column to NA.
-  if(is.factor(data@data[["feature_1"]])){
-    data@data[, feature_1:=NA]
+  if(is.factor(data@data[["feature_2"]])){
+    data@data[, feature_2:=NA]
     
   } else {
-    data@data[, feature_1:=NA_real_]
+    data@data[, feature_2:=NA_real_]
   }
   
   return(data)

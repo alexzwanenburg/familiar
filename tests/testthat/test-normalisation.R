@@ -419,7 +419,7 @@ for(n_numeric_features in c(4, 3, 2, 1, 0)){
                                      # Determine if the feature is numeric.
                                      if(feature_info_list[[feature]]@feature_type == "numeric"){
                                        
-                                       if(feature == "feature_1"){
+                                       if(feature == "feature_2"){
                                          # Expect that shift and scale parameters are 0 and 1, respectively.
                                          x_shift <- feature_info_list[[feature]]@normalisation_parameters$norm_shift
                                          x_scale <- feature_info_list[[feature]]@normalisation_parameters$norm_scale
@@ -564,7 +564,7 @@ for(n_numeric_features in c(4, 3, 2, 1, 0)){
                                      # Determine if the feature is numeric.
                                      if(feature_info_list[[feature]]@feature_type == "numeric"){
                                        
-                                       if(feature == "feature_1"){
+                                       if(feature == "feature_2"){
                                          # Expect that shift and scale parameters are 0 and 1, respectively.
                                          x_shift <- feature_info_list[[feature]]@normalisation_parameters$norm_shift
                                          x_scale <- feature_info_list[[feature]]@normalisation_parameters$norm_scale
