@@ -1,6 +1,6 @@
 combat.get_normalisation_parameters <- function(x, batch_normalisation_method, cl=NULL, progress_bar=TRUE){
   # Suppress NOTES due to non-standard evaluation in data.table
-  value <- n <- n_valid_features <- is_valid <- NULL
+  value <- n <- is_valid <- invariant <- n_features <- NULL
   gamma_hat <- norm_method <- NULL
   
   # Get the batch identifier column.
@@ -15,31 +15,36 @@ combat.get_normalisation_parameters <- function(x, batch_normalisation_method, c
   
   # Convert the table from wide to long format
   x <- data.table::melt(x, id.vars=batch_id_column, variable.name="feature", value.name="value")
+
+  # Sum the number of instances with a valid value, and determine whether all
+  # values are singular.
+  aggregate_table <- x[, list("n"=sum(is.finite(value)),
+                              "invariant"=is_singular_data(value)),
+                       by=c(batch_id_column, "feature")]
   
-  # Determine the number of valid samples per feature in each batch
-  x[, "n":=sum(is.finite(value)), by=c(batch_id_column, "feature")]
+  # A feature/batch combination is valid if it is not invariant and has
+  # sufficient instances with a finite value.
+  aggregate_table[, "is_valid":=invariant==FALSE & n >= min_valid_samples]
   
-  # Obtain aggregate table.
-  aggregate_table <- unique(x[, mget(c(batch_id_column, "feature", "n"))])
+  # Determine the number of features available in each batch.
+  aggregate_table[, "n_features":=sum(is_valid), by=c(batch_id_column)]
   
-  # Determine the number of features with sufficient samples in each batch.
-  aggregate_table[, "n_valid_features":=sum(n >= min_valid_features), by=batch_id_column]
+  # If a batch does not have sufficient features (3 or more), mark as invalid.
+  aggregate_table[n_features < min_valid_features, "is_valid":=FALSE]
   
-  # Determine which entries in the table can be used.
-  aggregate_table[, "is_valid":=FALSE]
-  aggregate_table[n >= min_valid_samples & n_valid_features >= min_valid_features, "is_valid":=TRUE]
-  
-  # Filter table x so that only valid entries remain. First add the is_valid
-  # column to x through merging.
-  x <- merge(x=x, y=aggregate_table[, mget(c(batch_id_column, "feature", "is_valid"))], by=c(batch_id_column, "feature"))
-  
-  # Then filter by valid feature value and is_valid. This table is called z,
+  # Drop invariant and n_features columns, as these are no longer required.
+  aggregate_table[, ":="("n_features"=NULL, "invariant"=NULL)]
+
+  # First select for which combat can be used. This table is called z,
   # after the name for standardized data in Johnson et al. Note that overall
   # standardisation is conducted prior to batch-normalisation in familiar, and
   # is external to this function.
-  z <- data.table::copy(x[is.finite(value) & is_valid==TRUE])
+  z <- x[aggregate_table[is_valid == TRUE], on=.NATURAL]
   
   if(!is_empty(z)){
+    # Remove NA or infinite values.
+    z <- z[is.finite(value)]
+    
     # Determine the mean (gamma_hat) of each feature in each batch.
     z[, "gamma_hat":=mean(value), by=c(batch_id_column, "feature")]
   
@@ -68,9 +73,9 @@ combat.get_normalisation_parameters <- function(x, batch_normalisation_method, c
     combat_batch_parameters <- list()
   }
   
-  # Take invalid entries and try to push them through a normal
+  # Take invalid batches and features and push them through a normal
   # batch-standardisation scheme.
-  z <- data.table::copy(x[is_valid == FALSE])
+  z <- x[aggregate_table[is_valid == FALSE], on=.NATURAL]
   
   if(!is_empty(z)){
     # Obtain normal parameters
@@ -242,7 +247,7 @@ combat.non_parametric_bayes_solver <- function(z, n_sample_features=50, cl=NULL,
   # Iterate over batches and features to obtain batch parameters.
   batch_parameters <- fam_lapply(cl=cl,
                                  assign=NULL,
-                                 X=split(z, by=c(get_id_columns(single_column="batch"), "feature")),
+                                 X=split(z, by=c(get_id_columns(single_column="batch"), "feature"), drop=TRUE),
                                  FUN=.combat.non_parametric_bayes_solver,
                                  progress_bar=progress_bar,
                                  z_short=z_short,
@@ -328,7 +333,7 @@ combat.non_combat_solver <- function(z, cl=NULL, progress_bar=TRUE){
   # Extract parameters for each feature in each batch.
   batch_parameters <- fam_lapply(cl=cl,
                                  assign=NULL,
-                                 X=split(z, by=c(get_id_columns(single_column="batch"), "feature")),
+                                 X=split(z, by=c(get_id_columns(single_column="batch"), "feature"), drop=TRUE),
                                  FUN=.combat.non_combat_solver,
                                  progress_bar=progress_bar)
   
@@ -340,6 +345,7 @@ combat.non_combat_solver <- function(z, cl=NULL, progress_bar=TRUE){
 
 
 .combat.non_combat_solver <- function(z){
+  
   # Obtain batch parameters using per-batch standardisation.
   batch_parameters <- batch_normalise.get_normalisation_parameters(z$value, norm_method="standardisation")
   
