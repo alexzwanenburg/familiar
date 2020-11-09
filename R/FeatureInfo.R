@@ -912,7 +912,7 @@ collect_and_aggregate_feature_info <- function(feature, object, stop_at="imputat
   
   # Suppress NOTES due to non-standard evaluation in data.table
   norm_method <- norm_shift <- norm_scale <- n <- batch_id <- NULL
-  min <- Q1 <- median <- Q3 <- max <- count <- NULL
+  min <- Q1 <- median <- Q3 <- max <- count <- all_none <- NULL
   
   # Find all featureInfo objects for the current feature
   feature_info_list <- lapply(object@model_list, function(fam_model, feature){
@@ -1067,12 +1067,27 @@ collect_and_aggregate_feature_info <- function(feature, object, stop_at="imputat
   
   # Check if the table contains data
   if(!is_empty(batch_parameter_table)){
-
-    # Aggregate and summarise data.
-    batch_parameter_table <- batch_parameter_table[, list("norm_method"=get_mode(norm_method),
-                                                          "norm_shift"=mean(norm_shift, na.rm=TRUE),
+    
+    # Try to avoid none, if possible. The none method can be due to features
+    # being NA or invariant, and we would like to use valid results for such
+    # feature instead. We first find out for which batches none occurs.
+    none_entries <- batch_parameter_table[, list("all_none"=all(norm_method == "none")), by="batch_id"]
+    
+    # Join table on batch_id to add in the all_none column.
+    batch_parameter_table <- batch_parameter_table[none_entries, on=.NATURAL]
+    
+    # Select only normalisation
+    batch_parameter_table <- batch_parameter_table[(all_none == FALSE & norm_method != "none") | all_none == TRUE]
+    
+    # Identify the most common (non-none, if any) method per batch.
+    selected_normalisation_method <- batch_parameter_table[, list("norm_method"=get_mode(norm_method)),
+                                                           by="batch_id"]
+    
+    # Compute the shift and scale parameters for this method.
+    batch_parameter_table <- batch_parameter_table[selected_normalisation_method, on=.NATURAL]
+    batch_parameter_table <- batch_parameter_table[, list("norm_shift"=mean(norm_shift, na.rm=TRUE),
                                                           "norm_scale"=mean(norm_scale, na.rm=TRUE),
-                                                          "n"=stats::median(n, na.rm=TRUE)), by="batch_id"]
+                                                          "n"=stats::median(n, na.rm=TRUE)), by=c("batch_id", "norm_method")]
     
     # Identify batch names.
     batch_names <- batch_parameter_table$batch_id

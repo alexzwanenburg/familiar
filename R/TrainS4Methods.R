@@ -147,7 +147,8 @@ setMethod("train", signature(data="dataObject"),
             
             # Create bootstraps.
             if(create_bootstrap){
-              data <- select_data_from_samples(data=data, samples=fam_sample(x=data@data$subject_id,
+              browser()
+              data <- select_data_from_samples(data=data, samples=fam_sample(x=data@data,
                                                                              size=nrow(data@data),
                                                                              replace=TRUE))
             }
