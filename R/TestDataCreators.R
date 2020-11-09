@@ -597,7 +597,7 @@ test.create_small_bad_data_set <- function(outcome_type){
 
 
 
-test_create_synthetic_series_data <- function(outcome_type, n_batch=3, n_samples=10, n_series=3, n_rep=3, n_numeric=3L){
+test_create_synthetic_series_data <- function(outcome_type, n_batch=3, n_samples=10, n_series=3, n_rep=3, n_numeric=4L){
   
   # Suppress NOTES due to non-standard evaluation in data.table
   batch_id <- NULL
@@ -611,10 +611,11 @@ test_create_synthetic_series_data <- function(outcome_type, n_batch=3, n_samples
   # Draw random numbers for three features.
   feature_1 <- stats::runif(n=n_series_instances, min=0.0, max=1.0)
   feature_2 <- stats::runif(n=n_series_instances, min=0.0, max=2.0)
-  feature_3 <- stats::runif(n=n_series_instances, min=0.0, max=3.0)
+  feature_3 <- stats::runif(n=n_series_instances, min=0.0, max=2.0)
+  feature_4 <- stats::runif(n=n_series_instances, min=0.0, max=1.0)
   
   # Determine the raw outcome.
-  outcome_raw <- feature_1 + feature_2 + feature_3
+  outcome_raw <- feature_1 + feature_2 + feature_3 + feature_4
   
   if(outcome_type == "binomial"){
     # Convert to 0, 1
@@ -653,12 +654,14 @@ test_create_synthetic_series_data <- function(outcome_type, n_batch=3, n_samples
                                  "series_id"=rep(seq_len(n_series), times=n_batch * n_samples),
                                  "feature_1"=feature_1,
                                  "feature_2"=feature_2,
-                                 "feature_3"=feature_3)
+                                 "feature_3"=feature_3,
+                                 "feature_4"=feature_4)
   
   # Add outcome.
   if(outcome_type %in% "survival"){
     data[, ":="("outcome_time"=outcome_time, "outcome_event"=outcome_event)]
     outcome_column <- c("outcome_time", "outcome_event")
+    
   } else {
     data[, ":="("outcome"=outcome_value)]
     outcome_column <- "outcome"
@@ -667,7 +670,8 @@ test_create_synthetic_series_data <- function(outcome_type, n_batch=3, n_samples
   # Create batch-offsets
   data[,":="("feature_1"=feature_1 + batch_id - 1.0,
              "feature_2"=feature_2 + batch_id - 1.0,
-             "feature_3"=feature_3 + batch_id - 1.0)]
+             "feature_3"=feature_3 + batch_id - 1.0,
+             "feature_4"=feature_4 + batch_id - 1.0)]
   
   # Create repetitions.
   if(n_rep > 1){
@@ -677,12 +681,14 @@ test_create_synthetic_series_data <- function(outcome_type, n_batch=3, n_samples
     # Add some noise to features.
     data[,":="("feature_1"=feature_1 + stats::rnorm(n=n_rep * n_series_instances, mean=0.0, sd=0.125),
                "feature_2"=feature_2 + stats::rnorm(n=n_rep * n_series_instances, mean=0.0, sd=0.125),
-               "feature_3"=feature_3 + stats::rnorm(n=n_rep * n_series_instances, mean=0.0, sd=0.125))]
+               "feature_3"=feature_3 + stats::rnorm(n=n_rep * n_series_instances, mean=0.0, sd=0.125),
+               "feature_4"=feature_4 + stats::rnorm(n=n_rep * n_series_instances, mean=0.0, sd=0.125))]
   }
   
-  if(n_numeric < 3) data$feature_1 <- factor(floor(data$feature_1))
-  if(n_numeric < 2) data$feature_2 <- factor(floor(data$feature_2))
-  if(n_numeric < 1) data$feature_3 <- factor(floor(data$feature_3))
+  if(n_numeric < 4) data$feature_1 <- factor(floor(data$feature_1))
+  if(n_numeric < 3) data$feature_2 <- factor(floor(data$feature_2))
+  if(n_numeric < 2) data$feature_3 <- factor(floor(data$feature_3))
+  if(n_numeric < 1) data$feature_4 <- factor(floor(data$feature_4))
   
   # Convert to a data object.
   data <- as_data_object(data=data,
@@ -697,7 +703,7 @@ test_create_synthetic_series_data <- function(outcome_type, n_batch=3, n_samples
 
 
 
-test_create_synthetic_series_one_sample_data <- function(outcome_type, n_numeric=3L){
+test_create_synthetic_series_one_sample_data <- function(outcome_type, n_numeric=4L){
   
   # Create test data.
   data <- test_create_synthetic_series_data(outcome_type=outcome_type,
@@ -711,7 +717,7 @@ test_create_synthetic_series_one_sample_data <- function(outcome_type, n_numeric
 
 
 
-test_create_synthetic_series_invariant_feature_data <- function(outcome_type, n_numeric=3L){
+test_create_synthetic_series_invariant_feature_data <- function(outcome_type, n_numeric=4L){
   
   # Create test data.
   data <- test_create_synthetic_series_data(outcome_type=outcome_type,
@@ -721,13 +727,28 @@ test_create_synthetic_series_invariant_feature_data <- function(outcome_type, n_
   data@data$feature_1 <- data@data$feature_1[1]
   data@data$feature_2 <- data@data$feature_2[1]
   data@data$feature_3 <- data@data$feature_3[1]
+  data@data$feature_4 <- data@data$feature_4[1]
   
   return(data)
 }
 
 
 
-test_create_synthetic_series_na_data <- function(outcome_type, n_numeric=3L, n_missing_frac=0.1){
+test_create_synthetic_series_one_feature_invariant_data <- function(outcome_type, n_numeric=4L){
+  
+  # Create test data.
+  data <- test_create_synthetic_series_data(outcome_type=outcome_type,
+                                            n_numeric=n_numeric)
+  
+  # Select the first instance for feature 1.
+  data@data$feature_1 <- data@data$feature_1[1]
+  
+  return(data)
+}
+
+
+
+test_create_synthetic_series_na_data <- function(outcome_type, n_numeric=4L, n_missing_frac=0.1){
   
   # Create test data.
   data <- test_create_synthetic_series_data(outcome_type=outcome_type,
@@ -748,6 +769,27 @@ test_create_synthetic_series_na_data <- function(outcome_type, n_numeric=3L, n_m
     } else {
       data@data[na_rows, (feature):=NA_real_]
     }
+  }
+  
+  return(data)
+}
+
+
+
+test_create_synthetic_series_one_feature_all_na_data <- function(outcome_type, n_numeric=4L){
+  # Suppress NOTES due to non-standard evaluation in data.table
+  feature_1 <- NULL
+  
+  # Create test data.
+  data <- test_create_synthetic_series_data(outcome_type=outcome_type,
+                                            n_numeric=n_numeric)
+  
+  # Set the first feature column to NA.
+  if(is.factor(data@data[["feature_1"]])){
+    data@data[, feature_1:=NA]
+    
+  } else {
+    data@data[, feature_1:=NA_real_]
   }
   
   return(data)
