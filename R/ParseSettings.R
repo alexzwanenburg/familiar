@@ -1419,7 +1419,7 @@
                                           var_name="transformation_method", type="character", optional=TRUE, default="yeo_johnson")
   
   .check_parameter_value_is_valid(x=settings$transform_method, var_name="transformation_method",
-                                  values=c("none", "yeo_johnson", "yeo_johnson_trim", "yeo_johnson_winsor", "box_cox", "box_cox_trim", "box_cox_winsor"))
+                                  values=.get_available_transformation_methods())
   
   # Normalisation method
   settings$normalisation_method <- .parse_arg(x_config=config$normalisation_method, x_var=normalisation_method,
