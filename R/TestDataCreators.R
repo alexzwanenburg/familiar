@@ -600,7 +600,7 @@ test.create_small_bad_data_set <- function(outcome_type){
 test_create_synthetic_series_data <- function(outcome_type, n_batch=3, n_samples=10, n_series=3, n_rep=3, n_numeric=4L){
   
   # Suppress NOTES due to non-standard evaluation in data.table
-  batch_id <- NULL
+  batch_id <- feature_1 <- feature_2 <- feature_3 <- feature_4 <- NULL
   
   # Set random seed so that the same numbers are produced every time.
   set.seed(1844)
@@ -683,6 +683,12 @@ test_create_synthetic_series_data <- function(outcome_type, n_batch=3, n_samples
                "feature_2"=feature_2 + stats::rnorm(n=n_rep * n_series_instances, mean=0.0, sd=0.125),
                "feature_3"=feature_3 + stats::rnorm(n=n_rep * n_series_instances, mean=0.0, sd=0.125),
                "feature_4"=feature_4 + stats::rnorm(n=n_rep * n_series_instances, mean=0.0, sd=0.125))]
+    
+    
+    data[feature_1 <= 0.0, "feature_1":=0.01]
+    data[feature_2 <= 0.0, "feature_2":=0.01]
+    data[feature_3 <= 0.0, "feature_3":=0.01]
+    data[feature_4 <= 0.0, "feature_4":=0.01]
   }
   
   if(n_numeric < 4) data$feature_1 <- factor(floor(data$feature_1))
