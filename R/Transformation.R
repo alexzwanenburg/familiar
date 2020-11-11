@@ -111,34 +111,21 @@ transformation.get_transform_parameters <- function(x, transform_method, feature
   }
   
   if(transform_method %in% .get_available_transformation_methods("box_cox")){
-    # Box-Cox transformations (inverse, logarithmic, square root, linear,
-    # squared).
-    lambda <- c(-2.0, -1.0, -0.5, 0.0, 0.3333, 0.5, 1.0, 1.5, 2.0)
-    y_list <- lapply(lambda, transformation.box_cox, x=x)
-    scores <- lapply(seq_along(lambda), function(ii, x, y_list, lambda){
-      return(.transformation.box_cox_loglik(x=x, y=y_list[[ii]], lambda=lambda[ii]))
-    },
-    x=x,
-    y_list=y_list,
-    lambda=lambda)
+    # Box-Cox transformations.
+    lambda <- c(-10, 10)
+    opt_lambda <- stats::optimise(..box_cox_loglik, interval=lambda, x=x, maximum=TRUE)
     
   } else if(transform_method %in% .get_available_transformation_methods("yeo_johnson")){
-    # Yeo-Johnson transformations (1.0 is linear).
-    lambda <- c(-2.0, -1.0, -0.5, 0.0, 0.33333, 0.5, 1.0, 1.5, 2.0)
-    y_list <- lapply(lambda, transformation.yeo_johnson, x=x)
-    scores <- sapply(seq_along(lambda), function(ii, x, y_list, lambda){
-      return(.transformation.yeo_johnson_loglik(x=x, y=y_list[[ii]], lambda=lambda[ii]))
-    },
-    x=x,
-    y_list=y_list,
-    lambda=lambda)
+    # Yeo-Johnson transformations.
+    lambda <- c(-10, 10)
+    opt_lambda <- stats::optimise(..yeo_johnson_loglik, interval=lambda, x=x, maximum=TRUE)
     
   } else {
     ..error_reached_unreachable_code("transformation.get_transform_parameters_unknown_transformation")
   }
 
   # Select optimal lambda that maximises log-likelihood score.
-  opt_lambda <- lambda[which.max(scores)]
+  opt_lambda <- round(opt_lambda$maximum, digits=1)
   
   # Return transformation
   return(list("transform_method"=transform_method,
@@ -226,7 +213,7 @@ transformation.yeo_johnson <- function(lambda, x, invert=FALSE){
       }
     }
     
-    if (any(neg_index)){
+    if(any(neg_index)){
       if(lambda == 2.0){
         y[neg_index] <- -log1p(-x[neg_index])
         
@@ -239,42 +226,41 @@ transformation.yeo_johnson <- function(lambda, x, invert=FALSE){
   return(y)
 }
 
-.transformation.box_cox_loglik <- function(x, y, lambda){
-  # Compute log-likelihood of box-cox transformation
-  
-  # Remove non-finite values
-  valid_values <- is.finite(y)
-  x <- x[valid_values]
-  y <- y[valid_values]
-  
-  # Find the number of samples
+
+..box_cox_loglik <- function(lambda, x){
+  # Determine length.
   n <- length(x)
   
-  # Find the mean of y
-  y_mean <- mean(y)
+  # Transform x under the provided lambda.
+  y <- transformation.box_cox(lambda=lambda, x=x)
   
-  # Compute the log-likelihood
-  llf <- (lambda - 1.0) * sum(log(x)) - n / 2.0 * log(sum((y - y_mean)^2.0) / n)
+  # Compute the estimates of the mean mu and variance sigma squared for y.
+  mu_hat <- mean(y)
+  sigma_hat_squared <- 1 /n * sum((y - mu_hat)^2)
+  
+  # Compute the log likelihood under the assumption that the transformed
+  # variable y follows the normal distribution.
+  llf <- (lambda - 1.0) * sum(log(x)) - n / 2.0 * log(sigma_hat_squared)
   
   return(llf)
 }
 
-.transformation.yeo_johnson_loglik <- function(x, y, lambda){
-  # Compute log-likelihood of yeo-johnson transform
+
+..yeo_johnson_loglik <- function(lambda, x){
   
-  # Remove non-finite values
-  valid_values <- is.finite(y)
-  x <- x[valid_values]
-  y <- y[valid_values]
-  
-  # Find the number of samples
+  # Determine length.
   n <- length(x)
   
-  # Find the mean of y
-  y_mean <- mean(y)
+  # Transform x under the provided lambda.
+  y <- transformation.yeo_johnson(lambda=lambda, x=x)
   
-  # Compute the log-likelihood
-  llf <- (lambda - 1.0) * sum(sign(x) * log1p(abs(x))) - n / 2.0 * log(sum((y - y_mean)^2.0) /n)
+  # Compute the estimates of the mean mu and variance sigma squared for y.
+  mu_hat <- mean(y)
+  sigma_hat_squared <- 1 /n * sum((y - mu_hat)^2)
+  
+  # Compute the log likelihood under the assumption that the transformed
+  # variable y follows the normal distribution.
+  llf <- (lambda - 1.0) * sum(sign(x) * log1p(abs(x))) - n /2.0 * log(sigma_hat_squared)
   
   return(llf)
 }

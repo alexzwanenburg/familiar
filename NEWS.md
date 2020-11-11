@@ -11,6 +11,7 @@
 * The default method for bootstrap confidence intervals (`bootstrap_ci_method`) is now the percentile (`percentile`) method, which replaces the bias-corrected (`bc`) method.
 * The value returned for the bias-corrected bootstrap confidence interval method is now the bias-corrected median, not the point estimate. This harmonises the behaviour of the percentile and bias-corrected confidence interval methods. The bias-corrected median can be viewed as an optimism correction of the point estimate.
 * Several attribute slots for S4 familiarModel, familiarEnsemble, familiarData and familiarCollection objects were removed, revised or added. Changes are backward compatible due to the new `update_object` method.
+* Lambda parameters of Box-Cox and Yeo-Johnson transformations are now determined using `stats::optimise`. The previous, fixed, settings were sensible for Box-Cox, but the Yeo-Johnson method benefits from a wider selection. This does not affect backward compatibility.
 
 ## Bug fixes:
 * Fixed an error that would cause hyperparameter optimisation to not select the optimal set of hyperparameters.
