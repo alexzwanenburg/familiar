@@ -47,6 +47,43 @@ for(n_numeric_features in c(4, 3, 2, 1, 0)){
           }
         }
       }
+      
+      # Assert that inverting the transformation produces the original dataset.
+      data_restored <- familiar:::transform_features(data=data_copy,
+                                                     feature_info_list=feature_info_list,
+                                                     invert=TRUE)
+      
+      # Iterate over features and compare. They should be equal
+      for(feature in familiar:::get_feature_columns(data_restored)){
+        # Expect that values are similar to a tolerance.
+        testthat::expect_equal(data_restored@data[[feature]], data@data[[feature]])
+      }
+      
+      # Assert that aggregating the transformation parameters works as expected.
+      aggr_transform_parameters <- familiar:::..collect_and_aggregate_transformation_info(feature_info_list=feature_info_list)
+      if(n_numeric_features > 0 & transformation_method != "none"){
+        # Expect that the selected transformation method matches the selected
+        # method.
+        testthat::expect_equal(aggr_transform_parameters$parameters$transform_method, transformation_method)
+        
+        # Expect that the lambda is not NA.
+        testthat::expect_equal(is.na(aggr_transform_parameters$parameters$transform_lambda), FALSE)
+        
+        # Expect that instance mask is equal to the number of numeric features.
+        testthat::expect_equal(sum(aggr_transform_parameters$instance_mask) > 0, TRUE)
+        testthat::expect_equal(sum(aggr_transform_parameters$instance_mask) <= n_numeric_features, TRUE)
+        
+      } else {
+        # Expect that the selected transformation method matches the selected
+        # method.
+        testthat::expect_equal(aggr_transform_parameters$parameters$transform_method, "none")
+        
+        # Expect that the lambda is not NA.
+        testthat::expect_equal(is.na(aggr_transform_parameters$parameters$transform_lambda), TRUE)
+        
+        # Expect that instance mask is equal to the number of numeric features.
+        testthat::expect_equal(sum(aggr_transform_parameters$instance_mask) == familiar:::get_n_features(data_copy), TRUE)
+      }
     })
   }
 }
