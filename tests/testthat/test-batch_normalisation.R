@@ -8,73 +8,148 @@ for(n_numeric_features in c(4, 3, 2, 1, 0)){
   
   for(batch_normalisation_method in familiar:::.get_available_batch_normalisation_methods()){
     
-    testthat::test_that(paste0("Batch normalisation is correctly performed using the ", batch_normalisation_method, " method and ", n_numeric_features, " numeric features."), {
-      # Make a copy of the data.
-      data_copy <- data.table::copy(data)
-      
-      # Create a list of featureInfo objects.
-      feature_info_list <- familiar:::.get_feature_info_data(data=data_copy@data,
-                                                             file_paths=NULL,
-                                                             project_id=character(),
-                                                             outcome_type=outcome_type)[[1]]
-      
-      # Combat requires global standardisation
-      if(batch_normalisation_method %in% familiar:::.get_available_batch_normalisation_methods("combat")){
-        feature_info_list <- familiar:::add_normalisation_parameters(feature_info_list=feature_info_list,
-                                                                     data_obj=data_copy,
-                                                                     normalisation_method="standardisation")
-        
-        # Act as if the data has been transformed.
-        data_copy@preprocessing_level <- "transformation"
-        
-        # Perform a global normalisation.
-        data_copy <- familiar:::normalise_features(data=data_copy,
-                                                   feature_info_list=feature_info_list)
-      }
-      
-      # Determine batch parameters.
-      feature_info_list <- familiar:::add_batch_normalisation_parameters(feature_info_list=feature_info_list,
-                                                                         data_obj=data_copy,
-                                                                         batch_normalisation_method=batch_normalisation_method)
-      
-      # Assume that the data is pre-processed.
-      data_copy@preprocessing_level <- "normalisation"
-      
-      # Attempt to batch normalise the data.
-      data_copy <- familiar:::batch_normalise_features(data=data_copy, feature_info_list=feature_info_list)
-      
-      # Test whether the features are normalised (unless none).
-      if(batch_normalisation_method == "none"){
-        # Check that the data is not altered.
-        testthat::expect_equal(data.table::fsetequal(data_copy@data, data@data), TRUE)
-        
-      } else {
-        for(feature in familiar:::get_feature_columns(data_copy)){
-          
-          # Determine if the feature is numeric.
-          if(feature_info_list[[feature]]@feature_type == "numeric"){
-            
-            # Compute mean.
-            x <- mean(data_copy@data[[feature]], na.rm=TRUE)
-            
-            if(batch_normalisation_method %in% c("normalisation", "normalisation_trim", "normalisation_winsor")){
-              # Check that the feature is correctly centred around 0.
-              testthat::expect_equal(x < 0.7 & x > 0.3, TRUE)
-              
-            } else {
-              # Check that the feature is correctly centred around 0.
-              testthat::expect_equal(x < 0.2 & x > -0.2, TRUE)
-            }
-          } else {
-            # For categorical features test that the none batch normalisation
-            # method is present.
-            x <- all(sapply(feature_info_list[[feature]]@batch_normalisation_parameters, function(batch_param) (batch_param$norm_method)) == "none")
-            
-            testthat::expect_equal(x, TRUE)
-          }
-        }
-      }
-    })
+    testthat::test_that(paste0("Batch normalisation is correctly performed using the ",
+                               batch_normalisation_method, " method and ",
+                               n_numeric_features, " numeric features."), {
+                                 # Make a copy of the data.
+                                 data_copy <- data.table::copy(data)
+                                 
+                                 # Create a list of featureInfo objects.
+                                 feature_info_list <- familiar:::.get_feature_info_data(data=data_copy@data,
+                                                                                        file_paths=NULL,
+                                                                                        project_id=character(),
+                                                                                        outcome_type=outcome_type)[[1]]
+                                 
+                                 # Combat requires global standardisation
+                                 if(batch_normalisation_method %in% familiar:::.get_available_batch_normalisation_methods("combat")){
+                                   feature_info_list <- familiar:::add_normalisation_parameters(feature_info_list=feature_info_list,
+                                                                                                data_obj=data_copy,
+                                                                                                normalisation_method="standardisation")
+                                   
+                                   # Act as if the data has been transformed.
+                                   data_copy@preprocessing_level <- "transformation"
+                                   
+                                   # Perform a global normalisation.
+                                   data_copy <- familiar:::normalise_features(data=data_copy,
+                                                                              feature_info_list=feature_info_list)
+                                 }
+                                 
+                                 # Determine batch parameters.
+                                 feature_info_list <- familiar:::add_batch_normalisation_parameters(feature_info_list=feature_info_list,
+                                                                                                    data_obj=data_copy,
+                                                                                                    batch_normalisation_method=batch_normalisation_method)
+                                 
+                                 # Assume that the data is pre-processed.
+                                 data_copy@preprocessing_level <- "normalisation"
+                                 
+                                 # Attempt to batch normalise the data.
+                                 data_copy <- familiar:::batch_normalise_features(data=data_copy, feature_info_list=feature_info_list)
+                                 
+                                 # Test whether the features are normalised (unless none).
+                                 if(batch_normalisation_method == "none"){
+                                   # Check that the data is not altered.
+                                   testthat::expect_equal(data.table::fsetequal(data_copy@data, data@data), TRUE)
+                                   
+                                 } else {
+                                   # Iterate over the different batches to determine if batch corrections
+                                   # were performed correctly.
+                                   for(x in split(data_copy@data, by="batch_id")){
+                                     
+                                     # Find the current batch identifier.
+                                     current_batch_id <- x[["batch_id"]][1]
+                                     
+                                     # Iterate over features.
+                                     for(feature in familiar:::get_feature_columns(data_copy)){
+                                       
+                                       # Determine if the feature is numeric.
+                                       if(feature_info_list[[feature]]@feature_type == "numeric"){
+                                         # Compute mean.
+                                         mu <- mean(x[[feature]], na.rm=TRUE)
+                                         
+                                         if(batch_normalisation_method %in% c("normalisation", "normalisation_trim", "normalisation_winsor")){
+                                           # Check that the feature is correctly centred around 0.5.
+                                           testthat::expect_equal(mu < 0.7 & mu > 0.3, TRUE)
+                                           
+                                         } else if(batch_normalisation_method %in% familiar:::.get_available_batch_normalisation_methods("combat")){
+                                           # Check that the feature is correctly centred around 0, but with
+                                           # wider margins for the non-parametric method Check also that
+                                           # the overall mean is around 0.
+                                           if(batch_normalisation_method %in% c("combat", "combat_np", "combat_non_parametric")){
+                                             testthat::expect_equal(mu < 0.5 & mu > -0.5, TRUE)
+                                             
+                                           } else {
+                                             testthat::expect_equal(mu < 0.2 & mu > -0.2, TRUE)
+                                           }
+                                           
+                                           # Check overall mean.
+                                           mu_t <- mean(data_copy@data[[feature]], na.rm=TRUE)
+                                           testthat::expect_equal(mu_t < 0.2 & mu_t > -0.2, TRUE)
+                                           
+                                         } else {
+                                           # Check that the feature is correctly centred around 0.
+                                           testthat::expect_equal(mu < 0.2 & mu > -0.2, TRUE)
+                                         }
+                                         
+                                       } else {
+                                         # For categorical features test that the none batch normalisation
+                                         # method is present.
+                                         categorical_norm_method <- feature_info_list[[feature]]@batch_normalisation_parameters[[current_batch_id]]$norm_method == "none"
+                                         
+                                         testthat::expect_equal(categorical_norm_method, TRUE)
+                                       }
+                                     }
+                                   }
+                                 }
+                                 
+                                 # Assert that inverting the transformation produces the original dataset.
+                                 data_restored <- familiar:::batch_normalise_features(data=data_copy,
+                                                                                      feature_info_list=feature_info_list,
+                                                                                      invert=TRUE)
+                                 
+                                 # Inverse the global normalisation.
+                                 if(batch_normalisation_method %in% familiar:::.get_available_batch_normalisation_methods("combat")){
+                                   # Perform a global normalisation.
+                                   data_restored <- familiar:::normalise_features(data=data_restored,
+                                                                                  feature_info_list=feature_info_list,
+                                                                                  invert=TRUE)
+                                 }
+                                 
+                                 # Iterate over features and compare. They should be equal.
+                                 for(feature in familiar:::get_feature_columns(data_restored)){
+                                   # Expect that values are similar to a tolerance.
+                                   testthat::expect_equal(data_restored@data[[feature]], data@data[[feature]])
+                                 }
+                                 
+                                 # Assert that aggregating the batch normalisation parameters works as expected.
+                                 aggr_batch_normalisation_parameters <- familiar:::..collect_and_aggregate_batch_normalisation_info(feature_info_list=feature_info_list)
+                                 
+                                 for(current_batch_normalisation_parameters in aggr_batch_normalisation_parameters){
+                                   
+                                   if(n_numeric_features > 0 & batch_normalisation_method != "none"){
+                                     # Expect that the selected transformation method matches the selected
+                                     # method, except for combat methods.
+                                     if(n_numeric_features <= 2 & batch_normalisation_method %in% familiar:::.get_available_batch_normalisation_methods("combat")){
+                                       testthat::expect_equal(current_batch_normalisation_parameters$norm_method, "standardisation")
+                                       
+                                     } else {
+                                       testthat::expect_equal(current_batch_normalisation_parameters$norm_method, batch_normalisation_method)
+                                     }
+                                     
+                                     # Expect that the shift and scale parameters are not NA.
+                                     testthat::expect_equal(is.na(current_batch_normalisation_parameters$norm_shift), FALSE)
+                                     testthat::expect_equal(is.na(current_batch_normalisation_parameters$norm_scale), FALSE)
+                                     
+                                   } else {
+                                     # Expect that the selected transformation method matches the selected
+                                     # method.
+                                     testthat::expect_equal(current_batch_normalisation_parameters$norm_method, "none")
+                                     
+                                     # Expect that the shift and scale parameters are NA..
+                                     testthat::expect_equal(is.na(current_batch_normalisation_parameters$norm_shift), TRUE)
+                                     testthat::expect_equal(is.na(current_batch_normalisation_parameters$norm_scale), TRUE)
+                                   }
+                                 }
+                               })
   }
 }
 
@@ -130,28 +205,52 @@ for(n_numeric_features in c(4, 3, 2, 1, 0)){
                                    testthat::expect_equal(data.table::fsetequal(data_copy@data, data@data), TRUE)
                                    
                                  } else {
-                                   for(feature in familiar:::get_feature_columns(data_copy)){
+                                   # Iterate over the different batches to determine if batch corrections
+                                   # were performed correctly.
+                                   for(x in split(data_copy@data, by="batch_id")){
                                      
-                                     # Determine if the feature is numeric.
-                                     if(feature_info_list[[feature]]@feature_type == "numeric"){
+                                     # Find the current batch identifier.
+                                     current_batch_id <- x[["batch_id"]][1]
+                                     
+                                     # Iterate over features.
+                                     for(feature in familiar:::get_feature_columns(data_copy)){
                                        
-                                       # Compute mean.
-                                       x <- mean(data_copy@data[[feature]], na.rm=TRUE)
-                                       
-                                       if(batch_normalisation_method %in% c("normalisation", "normalisation_trim", "normalisation_winsor")){
-                                         # Check that the feature is correctly centred around 0.
-                                         testthat::expect_equal(x < 0.7 & x > 0.3, TRUE)
+                                       # Determine if the feature is numeric.
+                                       if(feature_info_list[[feature]]@feature_type == "numeric"){
+                                         # Compute mean.
+                                         mu <- mean(x[[feature]], na.rm=TRUE)
+                                         
+                                         if(batch_normalisation_method %in% c("normalisation", "normalisation_trim", "normalisation_winsor")){
+                                           # Check that the feature is correctly centred around 0.5.
+                                           testthat::expect_equal(mu < 0.7 & mu > 0.3, TRUE)
+                                           
+                                         } else if(batch_normalisation_method %in% familiar:::.get_available_batch_normalisation_methods("combat")){
+                                           # Check that the feature is correctly centred around 0, but with
+                                           # wider margins for the non-parametric method Check also that
+                                           # the overall mean is around 0.
+                                           if(batch_normalisation_method %in% c("combat", "combat_np", "combat_non_parametric")){
+                                             testthat::expect_equal(mu < 0.5 & mu > -0.5, TRUE)
+                                             
+                                           } else {
+                                             testthat::expect_equal(mu < 0.2 & mu > -0.2, TRUE)
+                                           }
+                                           
+                                           # Check overall mean.
+                                           mu_t <- mean(data_copy@data[[feature]], na.rm=TRUE)
+                                           testthat::expect_equal(mu_t < 0.2 & mu_t > -0.2, TRUE)
+                                           
+                                         } else {
+                                           # Check that the feature is correctly centred around 0.
+                                           testthat::expect_equal(mu < 0.2 & mu > -0.2, TRUE)
+                                         }
                                          
                                        } else {
-                                         # Check that the feature is correctly centred around 0.
-                                         testthat::expect_equal(x < 0.2 & x > -0.2, TRUE)
+                                         # For categorical features test that the none batch normalisation
+                                         # method is present.
+                                         categorical_norm_method <- feature_info_list[[feature]]@batch_normalisation_parameters[[current_batch_id]]$norm_method == "none"
+                                         
+                                         testthat::expect_equal(categorical_norm_method, TRUE)
                                        }
-                                     } else {
-                                       # For categorical features test that the none batch normalisation
-                                       # method is present.
-                                       x <- all(sapply(feature_info_list[[feature]]@batch_normalisation_parameters, function(batch_param) (batch_param$norm_method)) == "none")
-                                       
-                                       testthat::expect_equal(x, TRUE)
                                      }
                                    }
                                  }
@@ -217,12 +316,12 @@ for(n_numeric_features in c(4, 3, 2, 1, 0)){
                                      if(feature_info_list[[feature]]@feature_type == "numeric"){
                                        
                                        if(feature == "feature_2"){
-                                       # Expect that shift and scale parameters are 0 and 1, respectively.
-                                       x_shift <- sapply(feature_info_list[[feature]]@batch_normalisation_parameters, function(batch_param) (batch_param$norm_shift))
-                                       x_scale <- sapply(feature_info_list[[feature]]@batch_normalisation_parameters, function(batch_param) (batch_param$norm_scale))
-                                       
-                                       testthat::expect_equal(all(x_shift == 0.0), TRUE)
-                                       testthat::expect_equal(all(x_scale == 1.0), TRUE)
+                                         # Expect that shift and scale parameters are 0 and 1, respectively.
+                                         x_shift <- sapply(feature_info_list[[feature]]@batch_normalisation_parameters, function(batch_param) (batch_param$norm_shift))
+                                         x_scale <- sapply(feature_info_list[[feature]]@batch_normalisation_parameters, function(batch_param) (batch_param$norm_scale))
+                                         
+                                         testthat::expect_equal(all(is.na(x_shift)), TRUE)
+                                         testthat::expect_equal(all(is.na(x_scale)), TRUE)
                                        
                                        } else {
                                          # Compute mean.
@@ -313,8 +412,8 @@ for(n_numeric_features in c(4, 3, 2, 1, 0)){
                                        x_shift <- sapply(feature_info_list[[feature]]@batch_normalisation_parameters, function(batch_param) (batch_param$norm_shift))
                                        x_scale <- sapply(feature_info_list[[feature]]@batch_normalisation_parameters, function(batch_param) (batch_param$norm_scale))
                                        
-                                       testthat::expect_equal(all(x_shift == 0.0), TRUE)
-                                       testthat::expect_equal(all(x_scale == 1.0), TRUE)
+                                       testthat::expect_equal(all(is.na(x_shift)), TRUE)
+                                       testthat::expect_equal(all(is.na(x_scale)), TRUE)
                                        
                                      } else {
                                        # For categorical features test that the none batch normalisation
@@ -391,8 +490,8 @@ for(n_numeric_features in c(4, 3, 2, 1, 0)){
                                          x_shift <- sapply(feature_info_list[[feature]]@batch_normalisation_parameters, function(batch_param) (batch_param$norm_shift))
                                          x_scale <- sapply(feature_info_list[[feature]]@batch_normalisation_parameters, function(batch_param) (batch_param$norm_scale))
                                          
-                                         testthat::expect_equal(all(x_shift == 0.0), TRUE)
-                                         testthat::expect_equal(all(x_scale == 1.0), TRUE)
+                                         testthat::expect_equal(all(is.na(x_shift)), TRUE)
+                                         testthat::expect_equal(all(is.na(x_scale)), TRUE)
                                          
                                        } else {
                                          # Compute mean.
@@ -481,8 +580,8 @@ for(n_numeric_features in c(4, 3, 2, 1, 0)){
                                        x_shift <- sapply(feature_info_list[[feature]]@batch_normalisation_parameters, function(batch_param) (batch_param$norm_shift))
                                        x_scale <- sapply(feature_info_list[[feature]]@batch_normalisation_parameters, function(batch_param) (batch_param$norm_scale))
                                        
-                                       testthat::expect_equal(all(x_shift == 0.0), TRUE)
-                                       testthat::expect_equal(all(x_scale == 1.0), TRUE)
+                                       testthat::expect_equal(all(is.na(x_shift)), TRUE)
+                                       testthat::expect_equal(all(is.na(x_scale)), TRUE)
                                        
                                      } else {
                                        # For categorical features test that the none batch normalisation
