@@ -323,7 +323,7 @@ batch_normalise.replace_unknown_parameters <- function(parameter_set, known_para
   # Check if there are any known parameters that can be used for imputation.
   if(length(known_parameters) == 0){
     # Return none in case there is no data that can be used for imputation.
-    return(list("norm_method"="none", "norm_shift"=0, "norm_scale"=1))
+    return(list("norm_method"="none", "norm_shift"=NA_real_, "norm_scale"=NA_real_))
   }
   
   # Procedure for other standardardisation methods
@@ -364,18 +364,13 @@ batch_normalise.apply_normalisation <- function(x, feature_info, invert=FALSE){
                 # Determine the normalisation method
                 norm_method <- norm_param$norm_method[1]
                 
-                if(norm_method %in% .get_available_batch_normalisation_methods("basic")){
+                if(norm_method %in% .get_available_batch_normalisation_methods("all")){
                   y <- normalise.apply_normalisation(x = x[[feature_info@name]],
                                                      norm_param = norm_param,
                                                      invert = invert)
-                  
-                } else if(norm_method %in% .get_available_batch_normalisation_methods("combat")){
-                  y <- combat.apply_normalisation(x = x[[feature_info@name]],
-                                                  norm_param = norm_param,
-                                                  invert = invert)
-                  
+
                 } else {
-                  ..error_reached_unreachable_code("batch_normalise.apply_normalisation_unknwon_batch_normalisation_method")
+                  ..error_reached_unreachable_code(paste0("batch_normalise.apply_normalisation: encountered an unknown batch normalisation method: ", norm_method))
                 }
               
                 # Return y

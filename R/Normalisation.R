@@ -135,11 +135,13 @@ normalise.apply_normalisation <- function(x, norm_param, invert=FALSE){
 
   norm_method <- norm_param$norm_method
   
+  if(is.null(norm_param)) return(x)
+  
   if(norm_method=="none"){
     # No normalisation was performed.
     y <- x
     
-  } else if(norm_method %in% .get_available_normalisation_methods()){
+  } else if(norm_method %in% union(.get_available_normalisation_methods(), .get_available_batch_normalisation_methods())){
 
     if(is.finite(norm_param$norm_scale) & is.finite(norm_param$norm_shift)){
       if(invert){

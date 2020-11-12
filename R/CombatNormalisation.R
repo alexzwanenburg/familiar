@@ -81,8 +81,8 @@ combat.get_normalisation_parameters <- function(x, batch_normalisation_method, c
     # Obtain normal parameters
     normal_batch_parameters <- combat.non_combat_solver(z=z, cl=cl, progress_bar=progress_bar)
     
-    # Update the norm_method. Note that any "unknown" is not updated.
-    normal_batch_parameters[norm_method != "unknown", "norm_method":=batch_normalisation_method]
+    # Update the norm_method. Note that any "unknown" or "none" is not updated.
+    normal_batch_parameters[!norm_method %in% c("unknown", "none"), "norm_method":=batch_normalisation_method]
     normal_batch_parameters <- list(normal_batch_parameters)
     
   } else {
@@ -93,27 +93,6 @@ combat.get_normalisation_parameters <- function(x, batch_normalisation_method, c
   batch_parameters <- data.table::rbindlist(append(combat_batch_parameters, normal_batch_parameters), use.names=TRUE)
   
   return(batch_parameters)
-}
-
-
-combat.apply_normalisation <- function(x, norm_param, invert){
-
-  # Find the normalisation method
-  norm_method <- norm_param$norm_method[1]
-  
-  if(norm_method %in% .get_available_batch_normalisation_methods("combat")){
-    
-    if(invert){
-      y <- x * norm_param$norm_scale[1] + norm_param$norm_shift[1]
-    } else {
-      # Shift and scale parameters for standard and quantile methods
-      y <- (x - norm_param$norm_shift[1]) / (norm_param$norm_scale[1])
-    }
-    return(y)
-    
-  } else {
-    ..error_reached_unreachable_code("combat.apply_normalisation_unknown_normalisation_method")
-  }
 }
 
 
