@@ -805,6 +805,7 @@ setMethod("transform_features", signature(data="dataObject"),
             
             # Update the preprocessing level.
             if(!invert) data@preprocessing_level <- "transformation"
+            if(invert) data@preprocessing_level <- "signature"
             
             # Check if data is empty
             if(is_empty(data)) return(data)
@@ -867,6 +868,7 @@ setMethod("normalise_features", signature(data="dataObject"),
             
             # Update the preprocessing_level.
             if(!invert) data@preprocessing_level <- "normalisation"
+            if(invert) data@preprocessing_level <- "transformation"
             
             # Check if data is empty
             if(is_empty(data)) return(data)
@@ -915,20 +917,21 @@ setMethod("normalise_features", signature(data="data.table"),
 
 #####batch_normalise_features#########
 setMethod("batch_normalise_features", signature(data="dataObject"),
-          function(data, feature_info_list, cl=NULL){
+          function(data, feature_info_list, cl=NULL, invert=FALSE){
             
             # Check if batch normalisation was already performed.
-            if(.as_preprocessing_level(data) >= "batch_normalisation"){
+            if(!invert & .as_preprocessing_level(data) >= "batch_normalisation"){
               ..error_reached_unreachable_code("batch_normalise_features,dataObject: attempting to batch normalise data that are already batch normalised.")
             }
             
             # Check if the previous step (normalisation) was conducted.
-            if(.as_preprocessing_level(data) < "normalisation"){
+            if(!invert & .as_preprocessing_level(data) < "normalisation"){
               ..error_reached_unreachable_code("batch_normalise_features,dataObject: data should be normalised globally prior to batch normalisation.")
             }
             
-            # Update the attained processing level.
-            data@preprocessing_level <- "batch_normalisation"
+            # Update the preprocessing_level.
+            if(!invert) data@preprocessing_level <- "batch_normalisation"
+            if(invert) data@preprocessing_level <- "normalisation"
             
             # Check if data is empty
             if(is_empty(data)) return(data)
@@ -941,13 +944,17 @@ setMethod("batch_normalise_features", signature(data="dataObject"),
                                                                     data_obj=data)
             
             # Apply batch-normalisation
-            batch_normalised_list <- lapply(feature_columns, function(ii, data, feature_info_list){
+            batch_normalised_list <- lapply(feature_columns, function(ii, data, feature_info_list, invert){
               
               x <- batch_normalise.apply_normalisation(x=data@data[, mget(c(ii, get_id_columns()))],
-                                                       feature_info=feature_info_list[[ii]])
+                                                       feature_info=feature_info_list[[ii]],
+                                                       invert=invert)
               
               return(x)
-            }, data=data, feature_info_list=feature_info_list)
+            },
+            data=data,
+            feature_info_list=feature_info_list,
+            invert=invert)
             
             # Update name of data in columns
             names(batch_normalised_list) <- feature_columns
