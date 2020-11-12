@@ -1027,83 +1027,11 @@ collect_and_aggregate_feature_info <- function(feature, object, stop_at="imputat
   
   if(stop_at == "normalisation") return(feature_info)
   
+  # Extract batch normalisation parameter data.
+  batch_normalisation_parameter_data <- ..collect_and_aggregate_batch_normalisation_info(feature_info_list=feature_info_list)
+ 
   
-  # Parse all existing parameters
-  batch_parameter_list <- lapply(feature_info_list, function(current_feature_info) {
-    
-    # Return NULL if parameters are missing.
-    if(is.null(current_feature_info@batch_normalisation_parameters)){
-      return(NULL)
-    }
-    
-    # Extract hyperparameters from each batch for the current featureInfo object.
-    parameter_table <- lapply(names(current_feature_info@batch_normalisation_parameters), function(batch_name, current_feature_info){
-
-      # Parse hyperparameters for in each batch to a ble
-      parameter_table <- data.table::as.data.table(current_feature_info@batch_normalisation_parameters[[batch_name]])
-      
-      # Add batch identifier
-      parameter_table[, "batch_id":=batch_name]
-      
-      return(parameter_table)
-      
-    }, current_feature_info=current_feature_info)
-    
-    # Combine list of parameter tables to a single table
-    parameter_table <- data.table::rbindlist(parameter_table)
-    
-    return(parameter_table)
-  })
   
-  # Combine list of parameter table into a single table.
-  batch_parameter_table <- data.table::rbindlist(batch_parameter_list)
-  
-  # Check if the table contains data
-  if(!is_empty(batch_parameter_table)){
-    
-    # Try to avoid none, if possible. The none method can be due to features
-    # being NA or invariant, and we would like to use valid results for such
-    # feature instead. We first find out for which batches none occurs.
-    none_entries <- batch_parameter_table[, list("all_none"=all(norm_method == "none")), by="batch_id"]
-    
-    # Join table on batch_id to add in the all_none column.
-    batch_parameter_table <- batch_parameter_table[none_entries, on=.NATURAL]
-    
-    # Select only normalisation
-    batch_parameter_table <- batch_parameter_table[(all_none == FALSE & norm_method != "none") | all_none == TRUE]
-    
-    # Identify the most common (non-none, if any) method per batch.
-    selected_normalisation_method <- batch_parameter_table[, list("norm_method"=get_mode(norm_method)),
-                                                           by="batch_id"]
-    
-    # Compute the shift and scale parameters for this method.
-    batch_parameter_table <- batch_parameter_table[selected_normalisation_method, on=.NATURAL]
-    batch_parameter_table <- batch_parameter_table[, list("norm_shift"=mean(norm_shift, na.rm=TRUE),
-                                                          "norm_scale"=mean(norm_scale, na.rm=TRUE),
-                                                          "n"=stats::median(n, na.rm=TRUE)), by=c("batch_id", "norm_method")]
-    
-    # Identify batch names.
-    batch_names <- batch_parameter_table$batch_id
-    
-    # Parse the aggregated batch normalisation parameters into lists.
-    batch_parameter_list <- lapply(batch_names, function(batch_name, parameter_table){
-      
-      # Find list of batch parameters by converting the single-row table for the
-      # current batch to a list.
-      parameter_list <- as.list(parameter_table[batch_id==batch_name])
-      
-      # Remove the batch_id list element.
-      parameter_list$batch_id <- NULL
-      
-      return(parameter_list)
-    }, parameter_table=batch_parameter_table)
-    
-    # Give each list entry the corresponding name.
-    names(batch_parameter_list) <- batch_names
-    
-    # Update feature_info
-    feature_info@batch_normalisation_parameters <- batch_parameter_list
-  }
   
   if(stop_at == "batch_normalisation"){
     return(feature_info)
@@ -1285,6 +1213,115 @@ collect_and_aggregate_feature_info <- function(feature, object, stop_at="imputat
   return(list("parameters"=normalisation_parameter_list,
               "instance_mask"=valid_instance_mask))
   
+}
+
+
+..collect_and_aggregate_batch_normalisation_info <- function(feature_info_list){
+  # Aggregate batch normalisation parameters. This function exists so that it
+  # can be tested as part of a unit test.
+  
+  # Suppress NOTES due to non-standard evaluation in data.table
+  is_valid <- norm_method <- norm_shift <- NULL
+  
+  # Get the batch identifier column.
+  batch_id_column <- get_id_columns(single_column="batch")
+  
+  # Aggregate all existing parameters to a table.
+  batch_parameters <- lapply(feature_info_list, function(current_feature_info, batch_id_column) {
+    
+    # Return NULL if parameters are missing.
+    if(is.null(current_feature_info@batch_normalisation_parameters)) return(NULL)
+    
+    # Extract batch parameters from each batch for the current featureInfo object.
+    parameter_table <- lapply(names(current_feature_info@batch_normalisation_parameters), function(batch_name, current_feature_info, batch_id_column){
+      
+      # Parse hyperparameters for in each batch to a ble
+      parameter_table <- data.table::as.data.table(current_feature_info@batch_normalisation_parameters[[batch_name]])
+      
+      # Add batch identifier
+      parameter_table[, (batch_id_column):=batch_name]
+      
+      return(parameter_table)
+      
+    },
+    current_feature_info=current_feature_info,
+    batch_id_column=batch_id_column)
+    
+    # Combine list of parameter tables to a single table
+    parameter_table <- data.table::rbindlist(parameter_table)
+    
+    return(parameter_table)
+  },
+  batch_id_column=batch_id_column)
+  
+  # Combine list of parameter table into a single table.
+  batch_parameters <- data.table::rbindlist(batch_parameters)
+  
+  if(is_empty(batch_parameters)) return(NULL)
+  
+  # Get all batch identifiers
+  # batch_ids <- unique(batch_parameters[[batch_id_column]])
+  
+  # Extract batch parameters.
+  batch_parameter_list <- lapply(split(batch_parameters, by=batch_id_column), function(batch_parameters){
+    
+    if(all(batch_parameters$norm_method == "none")){
+      # If all batch normalisation methods across the feature instances are
+      # none, none of the parameters are valid.
+      batch_parameters[, "is_valid":=FALSE]
+      
+      # Set default parameters.
+      batch_parameter_list <- list("norm_method" = "none",
+                                   "norm_shift" = NA_real_,
+                                   "norm_scale" = NA_real_,
+                                   "n" = 0L)
+      
+    } else {
+      # This means that are some batch normalisation methods that are not
+      # "none".
+      
+      # Set the is_valid flag for all entries that have a batch normalisation
+      # method other than "none".
+      batch_parameters[, "is_valid":=norm_method != "none"]
+      
+      if(all(is.na(batch_parameters[is_valid == TRUE]$norm_shift))){
+        # Mark all instances as invalid.
+        batch_parameters[is.na(norm_shift), "is_valid":=FALSE]
+        
+        # Set default parameters.
+        batch_parameter_list <- list("norm_method" = "none",
+                                     "norm_shift" = NA_real_,
+                                     "norm_scale" = NA_real_,
+                                     "n" = 0L)
+        
+      } else {
+        # Mark those instances with NA shift as invalid.
+        batch_parameters[is.na(norm_shift), "is_valid":=FALSE]
+        
+        # Get the most common normalisation method.
+        selected_batch_normalisation_method <- get_mode(batch_parameters[is_valid == TRUE]$norm_method)
+        
+        # Set all instances with normalisation methods that are not equal to the
+        # selected method to invalid.
+        batch_parameters[norm_method != selected_batch_normalisation_method, "is_valid":=FALSE]
+        
+        # From the remaining, select the average shift and scale parameters.
+        selected_batch_normalisation_shift <- mean(batch_parameters[is_valid == TRUE]$norm_shift)
+        selected_batch_normalisation_scale <- mean(batch_parameters[is_valid == TRUE]$norm_scale)
+        selected_n <- as.integer(median(batch_parameters[is_valid == TRUE]$n))
+        
+        # Set the normalisation parameter.
+        batch_parameter_list <- list("norm_method" = selected_batch_normalisation_method,
+                                     "norm_shift" = selected_batch_normalisation_shift,
+                                     "norm_scale" = selected_batch_normalisation_scale,
+                                     "n" = selected_n)
+      }
+      
+      return(batch_parameter_list)
+    }
+  })
+  
+  return(batch_parameter_list)
 }
 
 
