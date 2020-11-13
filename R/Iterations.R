@@ -844,7 +844,8 @@
 .create_bootstraps <- function(data, n_iter, sample_identifiers=NULL, settings=NULL, outcome_type=NULL, stratify=TRUE){
 
   # Suppress NOTES due to non-standard evaluation in data.table
-  outcome <- prob <- NULL
+  outcome <- outcome_present <- NULL
+  keep <- sample_order_id <- cumulative_n <- i.n <- n <- NULL
   
   # Obtain id columns
   id_columns <- get_id_columns(id_depth="series")
@@ -864,11 +865,11 @@
   # Check stratification for absent data
   if(is_empty(data)) stratify <- FALSE
 
-  if(!stratify){
+  if(outcome_type %in% c("continuous", "count")){
     # Select data based on sample id - note that even if duplicate
     # sample_identifiers exist, only unique sample_identifiers are maintained -
     # this is intentional.
-    subset_table <- merge(x=unique(data[, mget(id_columns)]),
+    subset_table <- merge(x=unique(data[, mget(c(id_columns, "outcome"))]),
                           y=sample_identifiers,
                           by=id_columns,
                           all=FALSE)
@@ -886,8 +887,7 @@
     # Transcode event status
     subset_table[, "outcome":=factor(outcome)]
     subset_table$outcome <- addNA(subset_table$outcome, ifany=TRUE)
-    subset_table$outcome <- as.numeric(subset_table$outcome)
-    
+
   } else if(outcome_type %in% c("binomial", "multinomial")){
     # For stratifying categorical data we require the outcome data as is.
     # Redundant factors are dropped and remaining factors (including NA) are
@@ -900,8 +900,7 @@
     # Transcode classes
     subset_table$outcome <- addNA(subset_table$outcome, ifany=TRUE)
     subset_table$outcome <- droplevels(subset_table$outcome)
-    subset_table$outcome <- as.numeric(subset_table$outcome)
-    
+
   } else if(outcome_type %in% c("competing_risk", "multi_label")){
     ..error_no_known_outcome_type(outcome_type)
   }
@@ -915,7 +914,7 @@
   # Iterate over iterations
   ii <- jj <- 1
   while(ii <= n_iter & jj <= 2 * n_iter){
-
+    
     if(!stratify){
       # Sample training data with replacement
       train_id <- fam_sample(x=subset_table, replace=TRUE)
@@ -926,6 +925,47 @@
                         by=sample_id_columns,
                         all=FALSE,
                         allow.cartesian=TRUE)
+      
+      # Check that any rare outcome classes are actually present in the training
+      # data. This prevents issues with modelling and model evaluation later on.
+      if(outcome_type %in% c("binomial", "multinomial", "survival")){
+        # Check if all outcome data are presents.
+        missing_levels <- setdiff(levels(subset_table$outcome), unique(train_id$outcome))
+        
+        if(length(missing_levels) > 0){
+          
+          # Integrate outcome levels in a table to keep track.
+          missing_level_data <- data.table::data.table("outcome"=levels(subset_table$outcome),
+                                                       "outcome_present"=TRUE)
+          
+          # Flag outcome levels as not present if they are missing.
+          missing_level_data[outcome %in% missing_levels, "outcome_present":=FALSE]
+          
+          # Iterate over missing levels and remove them by adding a sample that
+          # contains an outcome of the level.
+          while(any(missing_level_data$outcome_present == FALSE)){
+            # Select the missing outcome level.
+            missing_level <- missing_level_data[outcome_present == FALSE]$outcome[1]
+            
+            # Select an additional sample that contains the missing level.
+            additional_data <- fam_sample(subset_table[outcome == missing_level], size=1L)
+            
+            # Select the data corresponding to the sample.
+            additional_data <- merge(x=additional_data,
+                                     y=subset_table,
+                                     by=sample_id_columns,
+                                     all=FALSE,
+                                     allow.cartesian=TRUE)
+            
+            # Flag any missing levels that are now included in the data as present.
+            missing_level_data[additional_data[, "outcome"], "outcome_present":=TRUE, on=.NATURAL]
+            
+            # Update train_id.
+            train_id <- data.table::rbindlist(list(train_id, additional_data))
+          }
+        }
+      }
+      
       
       # Select only relevant columns.
       train_id <- train_id[, mget(id_columns)]
@@ -945,92 +985,172 @@
       valid_list[[ii]] <- valid_id
       
     } else {
-      # The approach used here does the following:
+      # From here on we select the samples by iterating over classes, from minor
+      # to major. In each iteration we do the following.
       #
-      # * Outcome levels are randomly ordered, and iterated over.
+      # * Select all samples that contain the currently selected class.
       #
-      # * Samples are drawn for this level, up to the frequency for the
-      # particular outcome.
+      # * Remove all samples that would not fit the current partition, because
+      # adding the sample would increase the frequency of any class beyond what
+      # is required.
       #
-      # * The frequency of each outcome is updated, by subtracting those already
-      # present.
+      # * Resample with replacement. The order is fixed by setting a
+      # sample_order_id column.
+      #
+      # * Select those samples that are valid in the sense that they would not
+      # cause the number of instances for any outcome to be exceeded. This is
+      # done in the order established above according to the sample_order_id.
+      # These samples are assigned to the in-bag partition.
+      #
+      # * Update the frequency for each class that should still be obtained to
+      # complete the outcome stratfication.
+      #
+      # * Use the updated frequency to remove all samples that were not
+      # previously selected and that would not fit the current partition any
+      # more.
+      #
+      # * Iterate over any remaining samples to add them to the partition.
+      #
+      # * Repeat the above for the next smallest class. We start with the
+      # smallest classes so that there can be no out-of-bag data that contains a
+      # "new" class.
       
-      # Initiate train_id
-      train_id <- NULL
-
-      # Randomise the order in which outcome-levels are generated.
-      unique_levels <- fam_sample(x=unique(subset_table$outcome),
-                                  replace=FALSE)
+      # Determine the frequency of sample outcomes, and order by increasing
+      # frequency.
+      level_frequency <- subset_table[, list("n"=.N), by="outcome"][order(n)]
+      class_order <- level_frequency$outcome
       
-      # List that tabulates the frequency of the outcomes in the in-bag training
-      # folds.
-      level_frequency <- lapply(unique_levels, function(x)(0L))
-      names(level_frequency) <- unique_levels
+      # Initially mark all data as available.
+      available_data <- data.table::copy(subset_table)
       
-      # Iterate over levels.
-      for(current_level in unique_levels){
+      # Create list to store data in.
+      partition_train_list <- list()
+      
+      # Iterate over majority classes.
+      for(current_class in class_order){
         
-        # Make local copy.
-        x <- data.table::copy(subset_table)
+        # Skip if the number of required samples for the outcome class is 0.
+        if(level_frequency[outcome == current_class]$n == 0) next()
         
-        # Add probabilities for the current outcome level.
-        x <- x[, list("prob"=sum(outcome == current_level) / .N), by=sample_id_columns]
+        # Select only data where the current class is present.
+        partition_data <- available_data[unique(available_data[outcome == current_class, mget(sample_id_columns)]), on=.NATURAL]
         
-        # Remove all instances where prob equals zero.
-        x <- x[prob > 0.0]
+        # Determine the frequency of outcome levels for each sample.
+        partition_data <- partition_data[, list("n"=.N), by=c(sample_id_columns, "outcome")]
         
-        # Determine the size.
-        sample_size <- nrow(x) - level_frequency[[current_level]]
+        # Remove any samples that would exceed the required total instances for
+        # each level. First mark the instances that do not exceed the required
+        # number of samples.
+        partition_data[level_frequency, "keep":=n <= i.n, on="outcome"]
+        partition_data[, "keep":=all(keep), by=c(sample_id_columns)]
+        partition_data <- partition_data[keep == TRUE]
         
-        # Skip if sample_size is lower than 0, e.g. because samples with this
-        # outcome were selected earlier.
-        if(sample_size <= 0) next()
+        if(is_empty(partition_data)) next()
         
-        # Sample training data with replacement.
-        current_train_id <- fam_sample(x=x,
-                                       size=sample_size,
-                                       replace=TRUE,
-                                       prob=TRUE)
+        # Randomly order samples.
+        # Note that we cannot directly select and insert samples by outcome level,
+        # because a sample may contain multiple series with different outcomes.
         
-        # Merge train_id with subset_table.
-        current_train_id <- merge(x=current_train_id,
-                                  y=subset_table,
-                                  by=sample_id_columns,
-                                  all=FALSE,
-                                  allow.cartesian=TRUE)
+        # Order available data randomly, with replacement.
+        sample_order <- fam_sample(x=partition_data,
+                                   size=level_frequency[outcome == current_class]$n,
+                                   replace=TRUE)
         
-        # Add to train_id
-        train_id <- data.table::rbindlist(list(train_id,
-                                               current_train_id))
+        # Set sample_order_id. This will be used to order partition_data.
+        sample_order[, "sample_order_id":=.I]
         
-        # Update the level frequency.
-        level_frequency <- lapply(unique_levels, function(ii, x, series_id_columns, sample_id_columns){
-          # Count duplicates.
-          x <- x[outcome==ii, list("level_present"=.N), by=series_id_columns]
+        # Order the samples in partition data.
+        partition_data <- merge(x=partition_data,
+                                y=sample_order,
+                                by=sample_id_columns,
+                                allow.cartesian=TRUE)[order(sample_order_id)]
+        
+        # Now, we select those samples which will surely be included. First,
+        # determine the cumulative sum for each outcome.
+        partition_data[, "cumulative_n":=cumsum(n), by="outcome"]
+        
+        # Mark the samples where the cumulative sum of outcomes would not exceed
+        # the required number.
+        partition_data[level_frequency, "keep":=cumulative_n <= i.n, on="outcome"]
+        
+        # Mark the corresponding samples.
+        partition_data[, "keep":=all(keep), by=c(sample_id_columns, "sample_order_id")]
+        
+        # Add the selected data to the list. Note that the partition_data can
+        # have multiple rows for the same sample_order_id, and we therefore
+        # first select unique rows for each selected sample_order_id and from
+        # this dataset then select the sample identifier columns.
+        partition_train_list <- c(partition_train_list, list(unique(partition_data[keep == TRUE, mget(c(sample_id_columns, "sample_order_id"))])[, mget(sample_id_columns)]))
+        
+        # Update partition level frequency
+        level_frequency[partition_data[keep == TRUE, list("n"=sum(n)), by="outcome"], "n":=n - i.n, on="outcome"]
+        
+        # Determine if the outcome level was filled to the required level.
+        if(level_frequency[outcome == current_class]$n == 0) next()
+        
+        # Select remaining data to complete 
+        partition_data <- partition_data[keep == FALSE]
+        
+        # Check that any data actually has been selected.
+        if(nrow(partition_data) == 0) next()
+        
+        # Remove any samples that would exceed the required total instances for
+        # each level. First mark the instances that do not exceed the required
+        # number of samples.
+        partition_data[level_frequency, "keep":=n <= i.n, on="outcome"]
+        
+        # Then mark the corresponding samples, and only keep those.
+        partition_data[, "keep":=all(keep), by=c(sample_id_columns, "sample_order_id")]
+        partition_data <- partition_data[keep == TRUE, ]
+        
+        # Check that any data actually has been selected.
+        if(nrow(partition_data) == 0) next()
+        
+        # Iterate over the remaining samples. For each sample we check whether
+        # it can be added to the partition.
+        for(current_sample in split(partition_data, by="sample_order_id")){
           
-          if(nrow(x) == 0) return(0L)
+          # Determine if the sample can be added.
+          safe_to_add <- all(level_frequency[current_sample, list("n"=n - i.n), on="outcome"]$n >= 0)
           
-          # Select unique samples.
-          x <- unique(x, by=sample_id_columns)
+          # Skip to next sample, if the current sample cannot be added due to
+          # constraints.
+          if(!safe_to_add) next()
           
-          # Sum over level_present
-          return(sum(x$level_present))
+          # If the check passes, we need to add the sample to the fold, and the
+          # update level frequency.
+          level_frequency[current_sample, "n":=n - i.n, on="outcome"]
           
-        }, x=train_id,
-        series_id_columns = id_columns,
-        sample_id_columns = sample_id_columns)
+          # Add the selected sample to the list.
+          partition_train_list <- c(partition_train_list, list(unique(current_sample[, mget(sample_id_columns)])))
+          
+          # Skip further samples if no more samples need to be added to the fold.
+          if(any(level_frequency$n == 0)) break()
+        }
         
-        # Add names.
-        names(level_frequency) <- unique_levels
+        # Mark all samples that lack the current outcome as available; or rather
+        # mark all samples that have the current outcome as unavailable.
+        available_data[, "is_available":=!any(outcome == current_class), by=c(sample_id_columns)]
       }
-
+      
+      # Select samples.
+      train_id <- data.table::rbindlist(partition_train_list)
+      
+      # Merge train_id with subset_table.
+      train_id <- merge(x=train_id,
+                        y=subset_table,
+                        by=sample_id_columns,
+                        all=FALSE,
+                        allow.cartesian=TRUE)
+      
       # Select only relevant columns.
       train_id <- train_id[, mget(id_columns)]
+      
       
       # Determine the out-of-bag data.
       valid_id <- data.table::fsetdiff(x=subset_table[, mget(id_columns)],
                                        y=train_id)
-
+      
       # Check for empty out-of-bag sets and re-run sampling if this happens.
       if(nrow(valid_id) == 0){
         jj <- jj + 1
@@ -1046,7 +1166,7 @@
     ii <- ii + 1
     jj <- jj + 1
   }
-
+  
   if(ii != n_iter + 1){
     stop(paste("Could not form", n_iter, "bootstraps with out-of-bag data. The data set may be too small."))
   }
