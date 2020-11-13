@@ -597,7 +597,7 @@ test.create_small_bad_data_set <- function(outcome_type){
 
 
 
-test_create_synthetic_series_data <- function(outcome_type, n_batch=3, n_samples=10, n_series=3, n_rep=3, n_numeric=4L){
+test_create_synthetic_series_data <- function(outcome_type, n_batch=3, n_samples=10, n_series=3, n_rep=3, n_numeric=4L, rare_outcome=FALSE){
   
   # Suppress NOTES due to non-standard evaluation in data.table
   batch_id <- feature_1 <- feature_2 <- feature_3 <- feature_4 <- NULL
@@ -628,9 +628,18 @@ test_create_synthetic_series_data <- function(outcome_type, n_batch=3, n_samples
     # Convert to 0 (x < 2), 1 (2 < x 4), 2 (4 < x < 6)
     outcome_value <- floor(outcome_raw / 2)
     outcome_value[outcome_value==3.0] <- 2.0
-    outcome_value <- factor(x=outcome_value,
-                            levels=c(0.0, 1.0, 2.0),
-                            labels=c("0", "1", "2"))
+    
+    if(rare_outcome){
+      outcome_value[length(outcome_value)] <- 3.0
+      outcome_value <- factor(x=outcome_value,
+                              levels=c(0.0, 1.0, 2.0, 3.0),
+                              labels=c("0", "1", "2", "3"))
+      
+    } else {
+      outcome_value <- factor(x=outcome_value,
+                              levels=c(0.0, 1.0, 2.0),
+                              labels=c("0", "1", "2"))
+    }
     
   } else if(outcome_type == "continuous"){
     outcome_value <- outcome_raw
