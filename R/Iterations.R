@@ -386,15 +386,11 @@
             # Find the available samples.
             sample_identifiers <- .get_sample_identifiers(run=run, train_or_validate="train")
             
-            # Determine the number of samples.
-            n_samples <- data.table::uniqueN(sample_identifiers, by=sample_id_columns)
-
-            # Create repeated cross-validations
-            cv_iter_list <- .create_cv(sample_identifiers=sample_identifiers,
-                                       n_folds=n_samples,
-                                       settings=settings,
-                                       data=data,
-                                       stratify=FALSE)
+            
+            # Create leave-one-out cross-validation.
+            cv_iter_list <- .create_loocv(sample_identifiers=sample_identifiers,
+                                          settings=settings,
+                                          data=data)
             
             # Append runs to the run list
             run_list  <- append(run_list,
@@ -584,7 +580,7 @@
 
 
 
-.create_repeated_cv <- function(sample_identifiers, n_rep, n_folds, settings, data=NULL, stratify=TRUE){
+.create_repeated_cv <- function(data, sample_identifiers=NULL, n_rep, n_folds, settings=NULL, outcome_type=NULL, stratify=TRUE){
   # This function wraps the .create_cv function
 
   # Initiate lists for training and validation data
@@ -597,6 +593,7 @@
     cv_iter_list <- .create_cv(sample_identifiers=sample_identifiers,
                                n_folds=n_folds,
                                settings=settings,
+                               outcome_type=outcome_type,
                                data=data,
                                stratify=stratify)
     
@@ -609,6 +606,35 @@
 
   return(list("train_list"=train_list,
               "valid_list"=valid_list))
+}
+
+
+.create_loocv <- function(data, sample_identifiers=NULL, settings=NULL, outcome_type=NULL){
+  
+  # Determine the number of samples.
+  if(is.null(sample_identifiers)){
+    # Obtain id columns
+    id_columns <- get_id_columns(id_depth="series")
+    
+    # Identify unique sample identifiers.
+    sample_identifiers <- unique(data[, mget(id_columns)])
+  }
+  
+  # Determine sample-id columns
+  sample_id_columns <- get_id_columns(id_depth="sample")
+  
+  # Determine the number of samples.
+  n_samples <- data.table::uniqueN(sample_identifiers, by=sample_id_columns)
+  
+  # Create iterations.
+  loocv_iter_list <- .create_cv(sample_identifiers=sample_identifiers,
+                                data=data,
+                                n_folds=n_samples,
+                                settings=settings,
+                                outcome_type=outcome_type,
+                                stratify=FALSE)
+  
+  return(loocv_iter_list)
 }
 
 
