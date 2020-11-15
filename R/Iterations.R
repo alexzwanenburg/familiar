@@ -637,7 +637,7 @@
     sample_identifiers <- unique(data[, mget(id_columns)])
   }
   
-  if(!stratify){
+  if(outcome_type %in% c("count", "continuous")){
     # Select data based on sample id - note that even if duplicate
     # sample_identifiers exist, only unique sample_identifiers are maintained -
     # this is intentional.
@@ -700,13 +700,68 @@
   # Add fold id to each entry
   subset_table[, "fold_id":=0L]
 
+  # Determine fold size
+  fold_size <- n_samples %/% n_folds
 
   # Initiate training and validation lists
   train_list <- valid_list <- list()
-
+  
+  # Make sure that any rare outcome levels are always assigned to the training
+  # folds, not validation folds. This concerns all samples where an outcome
+  # level appears so rarely that all instances of it could be assigned to a
+  # single fold. In practice this means the training folds should be
+  # pre-assigned at least one instance of every outcome level. This is done
+  # below.
+  #
+  # Note that the number of formable folds may be affected.
+  if(outcome_type %in% c("binomial", "multinomial", "survival", "multi_label")){
+    
+    # Iterate, because by hard-assigning samples to the training set and
+    # decreasing the fold size, we may actually encounter other outcome levels
+    # that are at risk. We break from the loop if there are no such outcome
+    # levels.
+    while(TRUE){
+      # Determine the frequency samples with each outcome, leaving out any
+      # pre-assigned samples (fold-id equal to -1).
+      level_frequency <- subset_table[fold_id==0L, list("n"=.N > 0L), by=c(id_columns, "outcome")][, list("n"=sum(n)), by=c("outcome")][order(n)]
+      
+      # Determine which outcome levels occur in the same number or fewer samples
+      # than the fold size, and could therefore be entirely assigned to a single
+      # (validation) fold.
+      level_frequency[, "assign_to_training":= n <= fold_size]
+      
+      # Ensure that these outcomes have not been pre-assigned (fold-id equal to
+      # -1)
+      level_frequency[subset_table[fold_id==-1L], "assign_to_training":=FALSE, on=.NATURAL]
+      
+      # Break from loop if no samples need to be selected.
+      if(all(level_frequency$assign_to_training == FALSE)) break()
+      
+      # Select the first outcome at risk. This is the minority outcome class on
+      # the first iteration.
+      outcome_level_training <- level_frequency[assign_to_training == TRUE]$outcome[1]
+      
+      # Randomly select one sample with the given outcome.
+      sample_training <- fam_sample(subset_table[fold_id == 0L & outcome == outcome_level_training],
+                                    size=1L)
+      
+      # Pre-assign the selected sample.
+      subset_table[sample_training, "fold_id":=-1L, on=.NATURAL]
+      
+      # Update n_samples and n_folds
+      n_samples <- n_samples - 1
+      
+      # Check that if n_folds is now larger than n_samples (e.g. LOOCV), that
+      # n_folds is equalised again so that there is always one validation
+      # sample.
+      if(n_samples < n_folds) n_folds <- n_samples
+      
+      # Update fold size.
+      fold_size <- n_samples %/% n_folds
+    }
+  }
+  
   if(!stratify){
-    # Determine fold size
-    fold_size <- n_samples %/% n_folds
     
     # Iterate over the folds.
     for(ii in 1:n_folds){
@@ -734,7 +789,7 @@
                                all=FALSE)
       
       # Add unassigned samples to the subset table.
-      subset_table <- data.table::rbindlist(list(subset_table[fold_id!=0],
+      subset_table <- data.table::rbindlist(list(subset_table[fold_id!=0, mget(c("fold_id", id_columns))],
                                                  unassigned_data), use.names=TRUE)
       
     }
@@ -749,14 +804,11 @@
     }
     
   } else {
-    # For stratified data
-    unique_levels <- unique(subset_table$outcome)
-    
     # Determine the frequency of sample outcomes per fold.
-    level_frequency <- subset_table[, list("n"=.N %/% n_folds), by="outcome"]
+    level_frequency <- subset_table[fold_id == 0L, list("n"=.N %/% n_folds), by="outcome"]
     
     # Iterate over folds
-    for(ii in 1:n_folds){
+    for(ii in seq_len(n_folds)){
       
       # Copy the fold_level frequency.
       fold_level_frequency <- data.table::copy(level_frequency)
@@ -807,8 +859,11 @@
     # Determine if all data was assigned.
     unassigned_data <- unique(subset_table[fold_id==0, mget(sample_id_columns)], by=sample_id_columns)
     if(nrow(unassigned_data) > 0){
-      # Randomly assign fold identifier.
-      unassigned_data[, "fold_id":=sample.int(n_folds, size=nrow(unassigned_data), replace=FALSE)]
+      # Randomly order unassigned data.
+      unassigned_data <- fam_sample(unassigned_data)
+      
+      # Assign fold id.
+      unassigned_data[, "fold_id":=rep_len(x=seq_len(n_folds), length.out=nrow(unassigned_data))]
       
       # Merge back the series identifier back into unassigned_data, and keep the
       # updated fold identifier.
@@ -818,7 +873,7 @@
                                all=FALSE)
       
       # Add unassigned samples to the subset table.
-      subset_table <- data.table::rbindlist(list(subset_table[fold_id!=0],
+      subset_table <- data.table::rbindlist(list(subset_table[fold_id!=0, mget(c(id_columns, "fold_id"))],
                                                  unassigned_data), use.names=TRUE)
     }
 
@@ -1406,10 +1461,12 @@
         partition_data[partition_level_frequency, "keep":=cumulative_n <= i.n, on="outcome"]
         
         # Mark the corresponding samples.
+        # TODO: check that this should be done by outcome ... seems unlikely.
+        browser()
         partition_data[, "keep":=all(keep), by=c(sample_id_columns, "outcome", "sample_order_id")]
         
         # Mark the data in the subset table.
-        subset_table[unique(partition_data[keep == TRUE, mget(sample_id_columns)]), "partition":=as.character(ii), on=.NATURAL]
+        subset_table[partition_data[keep == TRUE, mget(sample_id_columns)], "partition":=as.character(ii), on=.NATURAL]
         
         # Update partition level frequency
         partition_level_frequency[partition_data[keep == TRUE, list("n"=sum(n)), by="outcome"], "n":=n - i.n, on="outcome"]
