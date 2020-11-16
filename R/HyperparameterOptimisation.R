@@ -333,6 +333,10 @@ hpo.perform_smbo <- function(run, run_id, n_run_total, cl, fs_method, learner=NU
   fam_model@outcome_info <- .compute_outcome_distribution_data(object=fam_model@outcome_info,
                                                                data=primary_data)
   
+  # Update hyperparameters to set any fixed parameters. This is necessary if a
+  # metric depends on the model.
+  fam_model@hyperparameters <- lapply(parameter_list, function(list_entry) list_entry$init_config)
+  
   # Create metric objects.
   metric_object_list <- lapply(settings$hpo$hpo_metric,
                                as_metric,
