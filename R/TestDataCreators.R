@@ -718,6 +718,30 @@ test_create_synthetic_series_data <- function(outcome_type, n_batch=3, n_samples
 
 
 
+test_create_synthetic_series_one_outcome <- function(outcome_type, n_numeric=4L){
+  
+  # Create test data.
+  data <- test_create_synthetic_series_data(outcome_type=outcome_type,
+                                            n_numeric=n_numeric)
+  
+  if(outcome_type %in% c("binomial", "multinomial")){
+    data@data[, "outcome":="0"]
+    
+  } else if(outcome_type %in% c("count", "continuous")){
+    data@data[, "outcome":=1]
+    
+  } else if(outcome_type == "survival"){
+    data@data[, ":="("outcome_time"=1.25, "outcome_event"=1)]
+    
+  } else {
+    ..error_outcome_type_not_implemented(outcome_type)
+  }
+  
+  return(data)
+}
+
+
+
 test_create_synthetic_series_one_sample_data <- function(outcome_type, n_numeric=4L){
   
   # Create test data.
