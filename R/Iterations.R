@@ -1350,12 +1350,32 @@
       randomise <- FALSE
     }
     
-    # Determine how much of the levels are occupied by the base partition.
+    # Determine how much of the levels are occupied by the base partition, and
+    # how many levels remain to be set.
+    level_frequency[, "n":=n_small]
     level_frequency[subset_table[partition == "base", list("n"=.N), by="outcome"], "n":=n - i.n, on="outcome"]
     level_frequency[n < 0, "n":=0L]
-    level_frequency[n > n_small, "n":=n_small]
+
+    # Throw an error if no further partitions can be formed aside from the base.
+    # This basically means that the minority class is too small.
+    if(all(level_frequency$n == 0L) & any(is.na(subset_table$partition))){
+      stop(paste0("The minority class may contain too few instances (", n_small, ") to allow for balanced partitioning. ",
+                  "This error occurs when all samples containing the minority class also completely fill out the allowed space for majority classes. ",
+                  "Thus, no other samples that contain a non-minority class could be selected. We would recommend to either increase the data available, ",
+                  "or remove all instances of the minority class."))
+    }
     
-    for(ii in seq_len(n_partitions)){
+    # Initialise iterator.
+    ii <- 0
+    
+    while(TRUE) {
+      # Update the iterator
+      ii <- ii + 1L
+      
+      # Set a warning flag that tracks classes for which no samples were
+      # assigned.
+      no_class_assigned <- NULL
+      
       # Copy the fold_level frequency.
       partition_level_frequency <- data.table::copy(level_frequency)
       
@@ -1368,20 +1388,28 @@
       # partitions.
       available_data <- subset_table[is.na(partition) | partition != "base"]
       
+      # Break if partitions have been exhausted.
+      if(imbalance_method == "random_undersampling" & ii > n_partitions) break()
+      
       # Check that any data are available, or that we can create a meaningful
       # partition using additional data.
       if(nrow(available_data) == 0 | all(partition_level_frequency$n == 0) | length(majority_class) == 0){
-        # If no data are available, copy the dataset that was based on the
-        # minority class(es), and break from the loop.
-        train_list[[ii]] <- subset_table[partition == "base", mget(id_columns)]
+        # If no data are available in the first iteration, copy the dataset that
+        # was based on the minority class(es), and break from the loop.
+        if(ii <- 1){
+          train_list[[ii]] <- subset_table[partition == "base", mget(id_columns)]
+        }
         break()
       }
+      
+      # Break if all data have been assigned.
+      if(imbalance_method == "full_undersampling" & all(!is.na(subset_table$partition))) break()
       
       # Iterate over majority classes.
       for(current_class in majority_class){
         
         # Select only data where the current class is present.
-        partition_data <- available_data[available_data[outcome == current_class, mget(sample_id_columns)], on=.NATURAL]
+        partition_data <- available_data[unique(available_data[outcome == current_class, mget(sample_id_columns)]), on=.NATURAL]
         
         # Randomly order samples.
         #
@@ -1475,8 +1503,17 @@
         partition_data[partition_level_frequency, "keep":=n <= i.n, on="outcome"]
         
         # Then mark the corresponding samples, and only keep those.
-        partition_data[, "keep":=all(keep), by=c(sample_id_columns, "outcome", "sample_order_id")]
+        partition_data[, "keep":=all(keep), by=c(sample_id_columns, "sample_order_id")]
         partition_data <- partition_data[keep == TRUE]
+        
+        if(nrow(partition_data) == 0){
+          # At this point none of the samples with the current class have been
+          # assigned. If partition_data is empty, that means that the samples
+          # with this class were skipped, perhaps because samples selected from
+          # previous classes already created a balanced set.
+          no_class_assigned <- c(no_class_assigned, current_class)
+          next()
+        }
         
         # Now, we select those samples which will surely be included. First,
         # determine the cumulative sum for each outcome.
@@ -1487,9 +1524,7 @@
         partition_data[partition_level_frequency, "keep":=cumulative_n <= i.n, on="outcome"]
         
         # Mark the corresponding samples.
-        # TODO: check that this should be done by outcome ... seems unlikely.
-        browser()
-        partition_data[, "keep":=all(keep), by=c(sample_id_columns, "outcome", "sample_order_id")]
+        partition_data[, "keep":=all(keep), by=c(sample_id_columns, "sample_order_id")]
         
         # Mark the data in the subset table.
         subset_table[partition_data[keep == TRUE, mget(sample_id_columns)], "partition":=as.character(ii), on=.NATURAL]
@@ -1512,7 +1547,7 @@
         partition_data[partition_level_frequency, "keep":=n <= i.n, on="outcome"]
         
         # Then mark the corresponding samples, and only keep those.
-        partition_data[, "keep":=all(keep), by=c(sample_id_columns, "outcome", "sample_order_id")]
+        partition_data[, "keep":=all(keep), by=c(sample_id_columns, "sample_order_id")]
         partition_data <- partition_data[keep == TRUE, ]
         
         # Check that any data actually has been selected.
@@ -1544,39 +1579,27 @@
       
       # Select samples.
       train_list[[ii]] <- subset_table[partition %in% c("base", as.character(ii)), mget(id_columns)]
+      
+      # Check that any unassigned samples are not completely covered by
+      # no_class_assigned.
+      if(!is.null(no_class_assigned) & imbalance_method == "full_undersampling"){
+        if(any(is.na(subset_table$partition))){
+          if(all(subset_table[is.na(partition)]$outcome %in% no_class_assigned)){
+            # Determine the number of samples that cannot be assigned.
+            n_samples_not_assigned <- data.table::uniqueN(subset_table[is.na(partition), mget(sample_id_columns)])
+            
+            # Throw warning.
+            logger.warning(paste0(n_samples_not_assigned,
+                                  ifelse(n_samples_not_assigned > 1, " samples", " sample"),
+                                  " could not be assigned during undersampling for balance correction."))
+            break()
+          } 
+        }
+      }
     }
     
     # Update the number of partitions to the actual number of partitions.
     n_partitions <- length(train_list)
-    
-    # In case of static, full, undersampling divide any remaining samples among
-    # the partitions.
-    if(!randomise & any(is.na(subset_table$partition))){
-      
-      # Select unassigned samples.
-      available_data <- subset_table[is.na(partition)]
-      
-      # Determine the number of unassigned samples.
-      n_unassigned_samples <- data.table::uniqueN(available_data, by=sample_id_columns)
-      
-      # Generate partition_ids for unassigned samples.
-      partition_ids <- rep_len(x=seq_len(n_partitions),
-                               length.out=n_unassigned_samples)
-      
-      # Set partition_id.
-      available_data[, "partition_id":=partition_ids[.GRP], by=sample_id_columns]
-      
-      # Split by partition id and assign to train_list.
-      train_list[seq_len(max(partition_ids))] <- mapply(function(ii, unassigned_data, train_list, id_columns){
-        return(data.table::rbindlist(list(train_list[[ii]],
-                                          unassigned_data[, mget(id_columns)])))
-      },
-      seq_len(max(partition_ids)),
-      split(available_data, by="partition_id"),
-      MoreArgs=list("id_columns"=id_columns,
-                    "train_list"=train_list),
-      SIMPLIFY=FALSE)
-    }
     
     # Return list with partitions
     return(train_list)
