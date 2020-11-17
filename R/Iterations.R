@@ -711,9 +711,13 @@
   # Determine the number of samples.
   n_samples <- data.table::uniqueN(subset_table, by=sample_id_columns)
   
+  if(n_folds < 2){
+    stop("The number of cross-validation folds should be at least 2.")
+  }
+  
   # Check if the number of folds exceeds the number of data points
   if(n_folds > n_samples) {
-    stop("Number of cross-validation folds exceeds the number of available data points." )
+    stop("The number of cross-validation folds exceeds the number of available data points." )
     
   } else if(stratify){
     # Determine levels in stratified data
