@@ -2,7 +2,6 @@ set.seed(1844)
 
 
 ##### Full undersampling #######################################################
-
 for(outcome_type in c("binomial", "multinomial")){
   # Create synthetic dataset.
   data <- familiar:::test_create_synthetic_series_data(outcome_type=outcome_type, rare_outcome=FALSE)
@@ -137,6 +136,38 @@ for(outcome_type in c("binomial", "multinomial")){
 }
 
 
+for(outcome_type in c("binomial", "multinomial")){
+  # Create synthetic dataset with one outcome.
+  
+  testthat::test_that(paste0("Full undersampling for correcting outcome imbalances for ", 
+                             outcome_type, " with odd data functions correctly."), {
+                               
+                               # One outcome-data
+                               data <- familiar:::test_create_synthetic_series_one_outcome(outcome_type=outcome_type)
+                               
+                               # Create subsample.
+                               subsample_data <- suppressWarnings(familiar:::.create_balanced_partitions(data=data@data,
+                                                                                                         outcome_type=outcome_type,
+                                                                                                         imbalance_method="full_undersampling"))
+                               # Expect a list. This is sort of a placeholder
+                               # because the partitioning should work.
+                               testthat::expect_type(subsample_data, "list")
+                               
+                               # One sample data.
+                               data <- familiar:::test_create_synthetic_series_one_sample_data(outcome_type=outcome_type)
+                               
+                               # Create subsample
+                               subsample_data <- suppressWarnings(familiar:::.create_balanced_partitions(data=data@data,
+                                                                                                         outcome_type=outcome_type,
+                                                                                                         imbalance_method="full_undersampling"))
+                               
+                               # Expect a list. This is sort of a placeholder
+                               # because the partitioning should work.
+                               testthat::expect_type(subsample_data, "list")
+                             })
+}
+
+
 ##### Random undersampling #######################################################
 for(outcome_type in c("binomial", "multinomial")){
   # Create synthetic dataset.
@@ -204,6 +235,7 @@ for(outcome_type in c("binomial", "multinomial")){
 }
 
 
+
 for(outcome_type in c("binomial", "multinomial")){
   # Create synthetic dataset.
   data <- familiar:::test_create_synthetic_series_data(outcome_type=outcome_type, n_series=1L, n_samples=30, rare_outcome=FALSE)
@@ -263,6 +295,40 @@ for(outcome_type in c("binomial", "multinomial")){
                                  # minority class are selected.
                                  testthat::expect_equal(all(frequency_table$partition_occurrence == minority_class_n), TRUE)
                                }
+                             })
+}
+
+
+for(outcome_type in c("binomial", "multinomial")){
+  # Create synthetic dataset with one outcome.
+  
+  testthat::test_that(paste0("Random undersampling for correcting outcome imbalances for ", 
+                             outcome_type, " with odd data functions correctly."), {
+                               
+                               # One outcome-data
+                               data <- familiar:::test_create_synthetic_series_one_outcome(outcome_type=outcome_type)
+                               
+                               # Create subsample.
+                               subsample_data <- suppressWarnings(familiar:::.create_balanced_partitions(data=data@data,
+                                                                                                         outcome_type=outcome_type,
+                                                                                                         imbalance_n_partitions=3L,
+                                                                                                         imbalance_method="random_undersampling"))
+                               # Expect a list. This is sort of a placeholder
+                               # because the partitioning should work.
+                               testthat::expect_type(subsample_data, "list")
+                               
+                               # One sample data.
+                               data <- familiar:::test_create_synthetic_series_one_sample_data(outcome_type=outcome_type)
+                               
+                               # Create subsample
+                               subsample_data <- suppressWarnings(familiar:::.create_balanced_partitions(data=data@data,
+                                                                                                         outcome_type=outcome_type,
+                                                                                                         imbalance_n_partitions=3L,
+                                                                                                         imbalance_method="random_undersampling"))
+                               
+                               # Expect a list. This is sort of a placeholder
+                               # because the partitioning should work.
+                               testthat::expect_type(subsample_data, "list")
                              })
 }
 
@@ -412,6 +478,51 @@ for(outcome_type in c("binomial", "multinomial", "continuous", "count", "surviva
 }
 
 
+for(outcome_type in c("binomial", "multinomial", "continuous", "count", "survival")){
+  # Create synthetic dataset with one outcome.
+  
+  if(outcome_type %in% c("binomial", "multinomial", "survival")){
+    available_stratify_options <- c(FALSE, TRUE)
+    
+  } else {
+    available_stratify_options <- FALSE
+  }
+  
+  n_folds <- 3L
+  
+  for(stratify in available_stratify_options){
+    
+    testthat::test_that(paste0("Cross-validation ", ifelse(stratify, "(stratified) ", ""),
+                               "for ", outcome_type, " with odd data functions correctly."), {
+                                 
+                                 # One outcome-data
+                                 data <- familiar:::test_create_synthetic_series_one_outcome(outcome_type=outcome_type)
+                                 
+                                 # Create subsample.
+                                 subsample_data <- suppressWarnings(familiar:::.create_cv(data=data@data,
+                                                                                          n_folds=n_folds,
+                                                                                          stratify=stratify,
+                                                                                          outcome_type=outcome_type))
+                                 # Expect a list. This is sort of a placeholder
+                                 # because cross-validation should work even
+                                 # when the outcome value is singular.
+                                 testthat::expect_type(subsample_data, "list")
+                                 
+                                 # One sample data.
+                                 data <- familiar:::test_create_synthetic_series_one_sample_data(outcome_type=outcome_type)
+                                 
+                                 # Create subsample. We expect an error because
+                                 # you can't do cross-validation with a single
+                                 # sample.
+                                 subsample_data <- testthat::expect_error(suppressWarnings(familiar:::.create_cv(data=data@data,
+                                                                                                                 n_folds=n_folds,
+                                                                                                                 stratify=stratify,
+                                                                                                                 outcome_type=outcome_type)))
+                               })
+  }
+}
+  
+  
 
 ##### Repeated cross-validation ################################################
 for(outcome_type in c("binomial", "multinomial", "continuous", "count", "survival")){
@@ -558,6 +669,53 @@ for(outcome_type in c("binomial", "multinomial", "continuous", "count", "surviva
 }
 
 
+for(outcome_type in c("binomial", "multinomial", "continuous", "count", "survival")){
+  # Create synthetic dataset with one outcome.
+  
+  if(outcome_type %in% c("binomial", "multinomial", "survival")){
+    available_stratify_options <- c(FALSE, TRUE)
+    
+  } else {
+    available_stratify_options <- FALSE
+  }
+  
+  n_folds <- 3L
+
+  for(stratify in available_stratify_options){
+    
+    testthat::test_that(paste0("Repeated cross-validation ", ifelse(stratify, "(stratified) ", ""),
+                               "for ", outcome_type, " with odd data functions correctly."), {
+                                 
+                                 # One outcome-data
+                                 data <- familiar:::test_create_synthetic_series_one_outcome(outcome_type=outcome_type)
+                                 
+                                 # Create subsample.
+                                 subsample_data <- suppressWarnings(familiar:::.create_repeated_cv(data=data@data,
+                                                                                                   n_rep=3L,
+                                                                                                   n_folds=n_folds,
+                                                                                                   stratify=stratify,
+                                                                                                   outcome_type=outcome_type))
+                                 # Expect a list. This is sort of a placeholder
+                                 # because cross-validation should work even
+                                 # when the outcome value is singular.
+                                 testthat::expect_type(subsample_data, "list")
+                                 
+                                 # One sample data.
+                                 data <- familiar:::test_create_synthetic_series_one_sample_data(outcome_type=outcome_type)
+                                 
+                                 # Create subsample. We expect an error because
+                                 # you can't do cross-validation with a single
+                                 # sample.
+                                 subsample_data <- testthat::expect_error(suppressWarnings(familiar:::.create_repeated_cv(data=data@data,
+                                                                                                                          n_rep=3L,
+                                                                                                                          n_folds=n_folds,
+                                                                                                                          stratify=stratify,
+                                                                                                                          outcome_type=outcome_type)))
+                               })
+  }
+}
+
+
 
 ##### Leave-one-out cross-validation ###########################################
 for(outcome_type in c("binomial", "multinomial", "continuous", "count", "survival")){
@@ -679,6 +837,34 @@ for(outcome_type in c("binomial", "multinomial", "continuous", "count", "surviva
                                  }
                                }
                              })
+}
+
+
+for(outcome_type in c("binomial", "multinomial", "continuous", "count", "survival")){
+  
+    testthat::test_that(paste0("Repeated cross-validation for ",
+                               outcome_type, " with odd data functions correctly."), {
+                                 
+                                 # One outcome-data
+                                 data <- familiar:::test_create_synthetic_series_one_outcome(outcome_type=outcome_type)
+                                 
+                                 # Create subsample.
+                                 subsample_data <- suppressWarnings(familiar:::.create_loocv(data=data@data,
+                                                                                             outcome_type=outcome_type))
+                                 # Expect a list. This is sort of a placeholder
+                                 # because cross-validation should work even
+                                 # when the outcome value is singular.
+                                 testthat::expect_type(subsample_data, "list")
+                                 
+                                 # One sample data.
+                                 data <- familiar:::test_create_synthetic_series_one_sample_data(outcome_type=outcome_type)
+                                 
+                                 # Create subsample. We expect an error because
+                                 # you can't do cross-validation with a single
+                                 # sample.
+                                 subsample_data <- testthat::expect_error(suppressWarnings(familiar:::.create_loocv(data=data@data,
+                                                                                                                    outcome_type=outcome_type)))
+                               })
 }
 
 
@@ -817,6 +1003,50 @@ for(outcome_type in c("binomial", "multinomial", "continuous", "count", "surviva
                                                             0)
                                    }
                                  }
+                               })
+  }
+}
+
+
+for(outcome_type in c("binomial", "multinomial", "continuous", "count", "survival")){
+  # Create synthetic dataset with one outcome.
+  
+  if(outcome_type %in% c("binomial", "multinomial", "survival")){
+    available_stratify_options <- c(FALSE, TRUE)
+    
+  } else {
+    available_stratify_options <- FALSE
+  }
+  
+  for(stratify in available_stratify_options){
+    
+    testthat::test_that(paste0("Bootstrap ", ifelse(stratify, "(stratified) ", ""),
+                               "for ", outcome_type, " with odd data functions correctly."), {
+                                 
+                                 # One outcome-data
+                                 data <- familiar:::test_create_synthetic_series_one_outcome(outcome_type=outcome_type)
+                                 
+                                 # Create subsample.
+                                 subsample_data <- familiar:::.create_bootstraps(data=data@data,
+                                                                                 n_iter=20,
+                                                                                 stratify=stratify,
+                                                                                 outcome_type=outcome_type)
+                                 
+                                 # Expect a list. This is sort of a placeholder
+                                 # because cross-validation should work even
+                                 # when the outcome value is singular.
+                                 testthat::expect_type(subsample_data, "list")
+                                 
+                                 # One sample data.
+                                 data <- familiar:::test_create_synthetic_series_one_sample_data(outcome_type=outcome_type)
+                                 
+                                 # Create subsample. We expect an error because
+                                 # you can't do cross-validation with a single
+                                 # sample.
+                                 subsample_data <- testthat::expect_error(familiar:::.create_bootstraps(data=data@data,
+                                                                                                        n_iter=20,
+                                                                                                        stratify=stratify,
+                                                                                                        outcome_type=outcome_type))
                                })
   }
 }
