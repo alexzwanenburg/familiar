@@ -1,6 +1,273 @@
 set.seed(1844)
 
 
+##### Full undersampling #######################################################
+
+for(outcome_type in c("binomial", "multinomial")){
+  # Create synthetic dataset.
+  data <- familiar:::test_create_synthetic_series_data(outcome_type=outcome_type, rare_outcome=FALSE)
+  n_rep <- 3L
+  
+  testthat::test_that(paste0("Full undersampling for correcting outcome imbalances for ", 
+                             outcome_type, " functions correctly."), {
+                               
+                               # Create subsample.
+                               subsample_data <- suppressWarnings(familiar:::.create_balanced_partitions(data=data@data,
+                                                                                                         outcome_type=outcome_type,
+                                                                                                         imbalance_method="full_undersampling"))
+                               
+                               # Check that none of the training folds are the same.
+                               if(length(subsample_data) > 1){
+                                 for(ii in 1:(length(subsample_data) - 1)){
+                                   for(jj in (ii+1):length(subsample_data)){
+                                     testthat::expect_equal(data.table::fsetequal(subsample_data[[ii]],
+                                                                                  subsample_data[[jj]]),
+                                                            FALSE)
+                                   }
+                                 }
+                               }
+                               
+                               # Determine the minority class.
+                               
+                               
+                               for(ii in seq_along(subsample_data)){
+                                 # Assert that all samples in the subsample are unique (not duplicated).
+                                 testthat::expect_equal(anyDuplicated(subsample_data[[ii]]), 0)
+                                 
+                                 # Check that sampling creates a dataset identical to the development subsample.
+                                 train_data <- familiar:::select_data_from_samples(data=data,
+                                                                                   samples=subsample_data[[ii]])
+                                 
+                                 # Test that the samples and series are selected.
+                                 testthat::expect_equal(data.table::fsetequal(train_data@data[repetition_id==1L, mget(familiar:::get_id_columns(id_depth="series"))],
+                                                                              subsample_data[[ii]]),
+                                                        TRUE)
+                                 
+                                 # Test that repetitions are likewise selected.
+                                 testthat::expect_equal(nrow(train_data@data),
+                                                        n_rep * nrow(subsample_data[[ii]]))
+                                 
+                                 # Assert that outcomes the minority class is
+                                 # now selected as least as often as other
+                                 # classes.
+                                 original_table <- unique(data@data, by=familiar:::get_id_columns(id_depth="series"))[, list("n"=.N), by="outcome"][order(n)]
+                                 minority_class_n <- min(original_table$n)
+                                 minority_class <- original_table[n == minority_class_n]$outcome[1]
+                                 
+                                 frequency_table <- unique(train_data@data, by=familiar:::get_id_columns(id_depth="series"))[, list("partition_occurrence"=.N), by="outcome"]
+                                 
+                                 # Assert that all instances of the minority
+                                 # class are selected.
+                                 testthat::expect_equal(frequency_table[outcome == minority_class]$partition_occurrence, minority_class_n)
+                                 
+                                 # Assert that all instances similar to the
+                                 # minority class are selected.
+                                 testthat::expect_equal(all(frequency_table$partition_occurrence <= minority_class_n), TRUE)
+                               }
+                             })
+}
+
+
+for(outcome_type in c("binomial", "multinomial")){
+  # Create synthetic dataset.
+  data <- familiar:::test_create_synthetic_series_data(outcome_type=outcome_type, n_series=1L, n_samples=30, rare_outcome=FALSE)
+  n_rep <- 3L
+  
+  testthat::test_that(paste0("Full undersampling for correcting outcome imbalances for ", 
+                             outcome_type, " without multiple series functions correctly."), {
+                               
+                               # Create subsample.
+                               subsample_data <- suppressWarnings(familiar:::.create_balanced_partitions(data=data@data,
+                                                                                                         outcome_type=outcome_type,
+                                                                                                         imbalance_method="full_undersampling"))
+                               
+                               # Check that none of the training folds are the same.
+                               if(length(subsample_data) > 1){
+                                 for(ii in 1:(length(subsample_data) - 1)){
+                                   for(jj in (ii+1):length(subsample_data)){
+                                     testthat::expect_equal(data.table::fsetequal(subsample_data[[ii]],
+                                                                                  subsample_data[[jj]]),
+                                                            FALSE)
+                                   }
+                                 }
+                               }
+                               
+                               # The union of the datasets is the original
+                               # dataset.
+                               testthat::expect_equal(data.table::fsetequal(unique(data.table::rbindlist(subsample_data)),
+                                                                            unique(data@data[, mget(familiar:::get_id_columns(id_depth="series"))])),
+                                                      TRUE)
+                               
+                               
+                               for(ii in seq_along(subsample_data)){
+                                 # Assert that all samples in the subsample are unique (not duplicated).
+                                 testthat::expect_equal(anyDuplicated(subsample_data[[ii]]), 0)
+                                 
+                                 # Check that sampling creates a dataset identical to the development subsample.
+                                 train_data <- familiar:::select_data_from_samples(data=data,
+                                                                                   samples=subsample_data[[ii]])
+                                 
+                                 # Test that the samples and series are selected.
+                                 testthat::expect_equal(data.table::fsetequal(train_data@data[repetition_id==1L, mget(familiar:::get_id_columns(id_depth="series"))],
+                                                                              subsample_data[[ii]]),
+                                                        TRUE)
+                                 
+                                 # Test that repetitions are likewise selected.
+                                 testthat::expect_equal(nrow(train_data@data),
+                                                        n_rep * nrow(subsample_data[[ii]]))
+                                 
+                                 # Assert that outcomes the minority class is
+                                 # now selected as least as often as other
+                                 # classes.
+                                 original_table <- unique(data@data, by=familiar:::get_id_columns(id_depth="series"))[, list("n"=.N), by="outcome"][order(n)]
+                                 minority_class_n <- min(original_table$n)
+                                 minority_class <- original_table[n == minority_class_n]$outcome[1]
+                                 
+                                 frequency_table <- unique(train_data@data, by=familiar:::get_id_columns(id_depth="series"))[, list("partition_occurrence"=.N), by="outcome"]
+                                 
+                                 # Assert that all instances of the minority
+                                 # class are selected.
+                                 testthat::expect_equal(frequency_table[outcome == minority_class]$partition_occurrence, minority_class_n)
+                                 
+                                 # Assert that all instances similar to the
+                                 # minority class are selected.
+                                 testthat::expect_equal(all(frequency_table$partition_occurrence == minority_class_n), TRUE)
+                               }
+                             })
+}
+
+
+##### Random undersampling #######################################################
+for(outcome_type in c("binomial", "multinomial")){
+  # Create synthetic dataset.
+  data <- familiar:::test_create_synthetic_series_data(outcome_type=outcome_type, rare_outcome=FALSE)
+  n_rep <- 3L
+  
+  testthat::test_that(paste0("Random undersampling for correcting outcome imbalances for ", 
+                             outcome_type, " functions correctly."), {
+                               
+                               # Create subsample.
+                               subsample_data <- suppressWarnings(familiar:::.create_balanced_partitions(data=data@data,
+                                                                                                         outcome_type=outcome_type,
+                                                                                                         imbalance_n_partitions=3L,
+                                                                                                         imbalance_method="random_undersampling"))
+                               
+                               # Check that none of the training folds are the same.
+                               if(length(subsample_data) > 1){
+                                 for(ii in 1:(length(subsample_data) - 1)){
+                                   for(jj in (ii+1):length(subsample_data)){
+                                     testthat::expect_equal(data.table::fsetequal(subsample_data[[ii]],
+                                                                                  subsample_data[[jj]]),
+                                                            FALSE)
+                                   }
+                                 }
+                               }
+                               
+                               # Check that at most 3 (the number specified) partitions are created.
+                               testthat::expect_lte(length(subsample_data), 3L)
+                               
+                               for(ii in seq_along(subsample_data)){
+                                 # Assert that all samples in the subsample are unique (not duplicated).
+                                 testthat::expect_equal(anyDuplicated(subsample_data[[ii]]), 0)
+                                 
+                                 # Check that sampling creates a dataset identical to the development subsample.
+                                 train_data <- familiar:::select_data_from_samples(data=data,
+                                                                                   samples=subsample_data[[ii]])
+                                 
+                                 # Test that the samples and series are selected.
+                                 testthat::expect_equal(data.table::fsetequal(train_data@data[repetition_id==1L, mget(familiar:::get_id_columns(id_depth="series"))],
+                                                                              subsample_data[[ii]]),
+                                                        TRUE)
+                                 
+                                 # Test that repetitions are likewise selected.
+                                 testthat::expect_equal(nrow(train_data@data),
+                                                        n_rep * nrow(subsample_data[[ii]]))
+                                 
+                                 # Assert that outcomes the minority class is
+                                 # now selected as least as often as other
+                                 # classes.
+                                 original_table <- unique(data@data, by=familiar:::get_id_columns(id_depth="series"))[, list("n"=.N), by="outcome"][order(n)]
+                                 minority_class_n <- min(original_table$n)
+                                 minority_class <- original_table[n == minority_class_n]$outcome[1]
+                                 
+                                 frequency_table <- unique(train_data@data, by=familiar:::get_id_columns(id_depth="series"))[, list("partition_occurrence"=.N), by="outcome"]
+                                 
+                                 # Assert that all instances of the minority
+                                 # class are selected.
+                                 testthat::expect_equal(frequency_table[outcome == minority_class]$partition_occurrence, minority_class_n)
+                                 
+                                 # Assert that all instances similar to the
+                                 # minority class are selected.
+                                 testthat::expect_equal(all(frequency_table$partition_occurrence <= minority_class_n), TRUE)
+                               }
+                             })
+}
+
+
+for(outcome_type in c("binomial", "multinomial")){
+  # Create synthetic dataset.
+  data <- familiar:::test_create_synthetic_series_data(outcome_type=outcome_type, n_series=1L, n_samples=30, rare_outcome=FALSE)
+  n_rep <- 3L
+  
+  testthat::test_that(paste0("Random undersampling for correcting outcome imbalances for ", 
+                             outcome_type, " without multiple series functions correctly."), {
+                               
+                               # Create subsample.
+                               subsample_data <- suppressWarnings(familiar:::.create_balanced_partitions(data=data@data,
+                                                                                                         outcome_type=outcome_type,
+                                                                                                         imbalance_n_partitions=3L,
+                                                                                                         imbalance_method="random_undersampling"))
+                               
+                               # Check that none of the training folds are the same.
+                               if(length(subsample_data) > 1){
+                                 for(ii in 1:(length(subsample_data) - 1)){
+                                   for(jj in (ii+1):length(subsample_data)){
+                                     testthat::expect_equal(data.table::fsetequal(subsample_data[[ii]],
+                                                                                  subsample_data[[jj]]),
+                                                            FALSE)
+                                   }
+                                 }
+                               }
+
+                               for(ii in seq_along(subsample_data)){
+                                 # Assert that all samples in the subsample are unique (not duplicated).
+                                 testthat::expect_equal(anyDuplicated(subsample_data[[ii]]), 0)
+                                 
+                                 # Check that sampling creates a dataset identical to the development subsample.
+                                 train_data <- familiar:::select_data_from_samples(data=data,
+                                                                                   samples=subsample_data[[ii]])
+                                 
+                                 # Test that the samples and series are selected.
+                                 testthat::expect_equal(data.table::fsetequal(train_data@data[repetition_id==1L, mget(familiar:::get_id_columns(id_depth="series"))],
+                                                                              subsample_data[[ii]]),
+                                                        TRUE)
+                                 
+                                 # Test that repetitions are likewise selected.
+                                 testthat::expect_equal(nrow(train_data@data),
+                                                        n_rep * nrow(subsample_data[[ii]]))
+                                 
+                                 # Assert that outcomes the minority class is
+                                 # now selected as least as often as other
+                                 # classes.
+                                 original_table <- unique(data@data, by=familiar:::get_id_columns(id_depth="series"))[, list("n"=.N), by="outcome"][order(n)]
+                                 minority_class_n <- min(original_table$n)
+                                 minority_class <- original_table[n == minority_class_n]$outcome[1]
+                                 
+                                 frequency_table <- unique(train_data@data, by=familiar:::get_id_columns(id_depth="series"))[, list("partition_occurrence"=.N), by="outcome"]
+                                 
+                                 # Assert that all instances of the minority
+                                 # class are selected.
+                                 testthat::expect_equal(frequency_table[outcome == minority_class]$partition_occurrence, minority_class_n)
+                                 
+                                 # Assert that all instances similar to the
+                                 # minority class are selected.
+                                 testthat::expect_equal(all(frequency_table$partition_occurrence == minority_class_n), TRUE)
+                               }
+                             })
+}
+
+
+
 ##### Cross-validation #########################################################
 for(outcome_type in c("binomial", "multinomial", "continuous", "count", "survival")){
   
