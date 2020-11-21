@@ -184,7 +184,12 @@
   # If the cluster doesn't start, return a NULL
   if(is.null(cl)) return(NULL)
   
-  # Load familiar and data.table libraries to each cluster.
+  # Set library paths to avoid issues with non-standard library locations.
+  libs <- .libPaths()
+  parallel::clusterExport(cl=cl, varlist="libs", envir=environment())
+  parallel::clusterEvalQ(cl=cl, .libPaths(libs))
+  
+  # Load familiar and data.table libraries to each cluster node.
   parallel::clusterEvalQ(cl=cl, library(familiar))
   
   # Check if anything needs to be loaded
