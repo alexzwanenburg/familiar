@@ -597,13 +597,13 @@ test.create_small_bad_data_set <- function(outcome_type){
 
 
 
-test_create_synthetic_series_data <- function(outcome_type, n_batch=3, n_samples=10, n_series=3, n_rep=3, n_numeric=4L, rare_outcome=FALSE){
+test_create_synthetic_series_data <- function(outcome_type, n_batch=3, n_samples=10, n_series=3, n_rep=3, n_numeric=4L, rare_outcome=FALSE, random_seed=1844){
   
   # Suppress NOTES due to non-standard evaluation in data.table
   batch_id <- feature_1 <- feature_2 <- feature_3 <- feature_4 <- NULL
   
   # Set random seed so that the same numbers are produced every time.
-  set.seed(1844)
+  set.seed(random_seed)
   
   # Determine the number of series instances.
   n_series_instances <- n_batch * n_samples * n_series
@@ -832,4 +832,67 @@ test_create_synthetic_series_one_feature_all_na_data <- function(outcome_type, n
   }
   
   return(data)
+}
+
+
+test_create_multiple_synthetic_series <- function(outcome_type){
+  # The idea here is to create multiple synthetic datasets that together
+  # represent extreme variation in data composition.
+  
+  ..extend_feature_set <- function(data){
+    # Get feature columns.
+    original_feature_columns <- get_feature_columns(data)
+    
+    # Find new feature columns for the correlated features
+    new_feature_columns <- paste0("feature_", seq_along(original_feature_columns) + length(original_feature_columns))
+    
+    # Add in correlated features.
+    for(ii in seq_along(original_feature_columns)){
+      data@data[, (new_feature_columns[ii]):=get(original_feature_columns[ii])]
+    }
+    
+    return(data)
+  }
+
+  # Draw the first dataset.
+  data_1 <- test_create_synthetic_series_data(outcome_type=outcome_type,
+                                              n_numeric=3L,
+                                              n_samples=20,
+                                              random_seed=1)
+  
+  # Add correlated features.
+  data_1 <- ..extend_feature_set(data_1)
+  
+  # Draw the second dataset.
+  data_2 <- test_create_synthetic_series_data(outcome_type=outcome_type,
+                                              n_numeric=3L,
+                                              n_samples=20,
+                                              random_seed=2)
+  # Do not add correlated features to dataset 2.
+  
+  # Draw a third dataset.
+  data_3 <- test_create_synthetic_series_data(outcome_type=outcome_type,
+                                              n_numeric=3L,
+                                              n_samples=20,
+                                              random_seed=3)
+  
+  # Add correlated features, but remove the original features.
+  data_3 <- ..extend_feature_set(data_3)
+  data_3@data[, ":="("feature_1"=NULL,
+                     "feature_2"=NULL,
+                     "feature_3"=NULL,
+                     "feature_4"=NULL)]
+  
+  # Draw a fourth dataset that cannot be used for training, e.g. contains just
+  # one sample.
+  data_4 <- test_create_synthetic_series_one_outcome(outcome_type=outcome_type,
+                                                     n_numeric=3L)
+  
+  # Add correlated features.
+  data_4 <- ..extend_feature_set(data_4)
+  
+  return(list("set_1"=data_1,
+              "set_2"=data_2,
+              "set_3"=data_3,
+              "set_4"=data_4))
 }
