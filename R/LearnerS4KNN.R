@@ -48,8 +48,8 @@ setMethod("get_default_hyperparameters", signature(object="familiarKNN"),
             # names only.
             if(is.null(data)) return(param)
             
-            # Get the number of subjects
-            n_samples <- nrow(data@data)
+            # Get the number of unique series.
+            n_samples <- data.table::uniqueN(data@data, by=get_id_columns(id_depth="series"))
             n_classes <- length(get_outcome_class_levels(x=data))
             
             
