@@ -1444,11 +1444,39 @@ setMethod("show", signature(object="featureInfo"),
             # Attempt to create an actual descriptor, if meaningful.
             if(!is.null(object@cluster_parameters)){
               if(object@cluster_parameters$cluster_size > 1){
-                cluster_str <- paste0("  forms cluster (",
-                                      object@cluster_parameters$method,
-                                      ") with ",
-                                      paste_s(setdiff(object@cluster_parameters$required_features, object@name)),
-                                      ".\n")
+                
+                # Find the feature(s) required to form the cluster.
+                cluster_feature_names <- object@cluster_parameters$required_features
+                
+                if(length(cluster_feature_names) == 1){
+                  # Only one feature is required to form the cluster.
+                  if(cluster_feature_names == object@name){
+                    # The current feature is the reference feature.
+                    cluster_str <- paste0("  forms cluster (",
+                                          object@cluster_parameters$method,
+                                          ") with ",
+                                          object@cluster_parameters$cluster_size - 1,
+                                          " other features, and is the reference feature.\n")
+                    
+                  } else {
+                    # The current feature is not the reference feature.
+                    cluster_str <- paste0("  forms cluster (",
+                                          object@cluster_parameters$method,
+                                          ") with ",
+                                          object@cluster_parameters$cluster_size - 1,
+                                          " other features, with ",
+                                          cluster_feature_names,
+                                          " as the reference feature.\n")
+                  }
+                  
+                } else {
+                  # Multiple features are required to form the cluster.
+                  cluster_str <- paste0("  forms cluster (",
+                                        object@cluster_parameters$method,
+                                        ") with ",
+                                        paste_s(setdiff(cluster_feature_names, object@name)),
+                                        ".\n")
+                }
               }
             }
             
