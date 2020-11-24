@@ -60,7 +60,7 @@ setMethod("extract_permutation_vimp", signature(object="familiarEnsemble"),
                    message_indent=0L,
                    verbose=FALSE,
                    ...){
-
+            
             # Message extraction start
             if(verbose){
               logger.message(paste0("Computing permutation variable importance for models in the dataset."),
@@ -297,7 +297,7 @@ setMethod("extract_permutation_vimp", signature(object="familiarEnsemble"),
   # Perform some checks to see if there is sufficient data to perform a half-way
   # meaningful analysis.
   if(is_empty(data)) return(NULL)
-  if(nrow(data@data) < 5) return(NULL)
+  if(data.table::uniqueN(data@data, by=get_id_columns(id_depth="sample")) < 5) return(NULL)
   
   # Maintain only important features. The current set is based on the
   # required features.
