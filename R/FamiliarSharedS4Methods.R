@@ -244,7 +244,7 @@ setMethod("has_bad_training_data", signature(object="ANY", data="dataObject"),
             # One cannot train without data or on a single sample.
             if(is_empty(data)) return(TRUE)
             
-            if(nrow(data@data) < 2) return(TRUE)
+            if(data.table::uniqueN(data@data, by=get_id_columns(id_depth="sample")) < 2) return(TRUE)
             
             if(object@outcome_type == "survival"){
               
