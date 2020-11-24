@@ -17,8 +17,11 @@ add_cluster_info <- function(cl=NULL, feature_info_list, data_obj, settings, ver
   }
   
   # Find distances
-  dist_mat <- cluster.get_distance_matrix(cl=cl, data_obj=data_obj, feature_columns=feature_columns,
-                                          settings=settings, verbose=TRUE)
+  dist_mat <- cluster.get_distance_matrix(cl=cl,
+                                          data_obj=data_obj,
+                                          feature_columns=feature_columns,
+                                          settings=settings,
+                                          verbose=verbose)
 
   # Determine if there are any reasonable cluster candidates
   if(all(dist_mat > similarity.to_distance(x=settings$prep$cluster_sim_thresh,
@@ -37,7 +40,7 @@ add_cluster_info <- function(cl=NULL, feature_info_list, data_obj, settings, ver
                                              data_obj=data_obj,
                                              feature_info_list=feature_info_list,
                                              settings=settings,
-                                             verbose=TRUE)
+                                             verbose=verbose)
 
   # Generate the update list
   upd_list <- lapply(cluster_table$name, function(ii, feature_info_list, cluster_table, cluster_repr_method){
@@ -69,8 +72,9 @@ add_cluster_info <- function(cl=NULL, feature_info_list, data_obj, settings, ver
   n_clusters          <- data.table::uniqueN(cluster_table[cluster_size > 1]$cluster_id)
   n_singular_clusters <- data.table::uniqueN(cluster_table[cluster_size == 1]$cluster_id)
   
-  logger.message(paste0("Pre-processing: ", n_clusters, " non-singular ", ifelse(n_clusters==1, "cluster was", "clusters were"), " formed. ",
-                        n_clusters + n_singular_clusters, " features remain."))
+  if(verbose) logger.message(paste0("Pre-processing: ", n_clusters, " non-singular ",
+                                    ifelse(n_clusters==1, "cluster was", "clusters were"), " formed. ",
+                                    n_clusters + n_singular_clusters, " features remain."))
   
   return(feature_info_list)
 }
