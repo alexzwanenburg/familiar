@@ -450,16 +450,20 @@ setMethod("load_familiar_object", signature(object="list"),
           function(object){
             
             # Load all objects in the list. 
-            object <- lapply(object, load_familiar_object)
+            fam_object <- lapply(object, load_familiar_object)
             
-            # Check that objects are of one class.
-            object_class <- unique(sapply(object, class))
-            
-            if(length(object_class) > 1){
-              stop(paste0("Found objects that do not have the same class: ", paste0(object_class, collapse=", ")))
+            # Check that all objects have the correct class.
+            if(!(all(sapply(fam_object, is, class2="familiarModel")) |
+                 all(sapply(fam_object, is, class2="familiarEnsemble")) |
+                 all(sapply(fam_object, is, class2="familiarData")) |
+                 all(sapply(fam_object, is, class2="familiarCollection")))){
+              stop(paste0("Could not load familiar objects because they are not uniquely familiarModel, familiarEnsemble, familiarData or familiarCollection objects."))
             }
             
-            return(object)
+            # Update the objects for backward compatibility
+            fam_object <- lapply(fam_object, update_object)
+            
+            return(fam_object)
           })
 
 #####load_familiar_object (generic)#####
