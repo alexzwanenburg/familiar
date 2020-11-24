@@ -19,7 +19,9 @@
 * Fixed an error that occurred when attempting to create risk groups from models that were not successfully trained.
 * Fixed an error in ComBat batch normalisation caused by invariant or NA features in one or more batches.
 * Fixed a bug that would incorrectly assign samples to wrong subsamples (e.g. in-bag or out-of-bag data). This only occurred if the same sample identifier exists in different batches.
-* Fixed an error that occurred prior to hyperparameter optimisation because a model-dependendent hyperparameter required to create a metric object may not have been set.
+* Fixed an error that occurred prior to hyperparameter optimisation because a model-dependent hyperparameter required to create a metric object may not have been set.
+* Fixed an error when attempting to perform parallel processing with familiar installed on a non-standard library path.
+* Fixed an issue where the `verbose` argument was not respected when determining clusters of features.
 
 # Version 0.0.0.53 (Pre-release)
 
