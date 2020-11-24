@@ -250,7 +250,9 @@ setMethod("has_bad_training_data", signature(object="ANY", data="dataObject"),
               
               # Check that not all data are censored.
               censoring_variable <- outcome_info@censored
-              if(all(data@data$outcome_event == censoring_variable)) return(TRUE)
+              if(length(censoring_variable) > 0){
+                if(all(data@data$outcome_event == censoring_variable)) return(TRUE)
+              }
               if(all(data@data$outcome_event == 0)) return(TRUE)
               
               # Check that not all data have the same survival time.

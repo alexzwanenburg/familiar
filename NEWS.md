@@ -22,6 +22,7 @@
 * Fixed an error that occurred prior to hyperparameter optimisation because a model-dependent hyperparameter required to create a metric object may not have been set.
 * Fixed an error when attempting to perform parallel processing with familiar installed on a non-standard library path.
 * Fixed an issue where the `verbose` argument was not respected when determining clusters of features.
+* Fixed an issue where absence of censoring for time-to-event data would lead to models not being created.
 
 # Version 0.0.0.53 (Pre-release)
 
