@@ -1037,6 +1037,7 @@ test_all_metrics <- function(metrics,
 }
 
 
+
 test_plots <- function(plot_function,
                        data_element,
                        outcome_type_available=c("count", "continuous", "binomial", "multinomial", "survival"),
@@ -1055,6 +1056,7 @@ test_plots <- function(plot_function,
     test_fun <- testthat::test_that
   }
   
+  
   # Iterate over the outcome type.
   for(outcome_type in c("count", "continuous", "binomial", "multinomial", "survival")){
     
@@ -1066,6 +1068,7 @@ test_plots <- function(plot_function,
     one_feature_one_sample_data <- test.create_one_feature_one_sample_data_set(outcome_type)
     one_feature_invariant_data <- test.create_one_feature_invariant_data_set(outcome_type)
     empty_data <- test.create_empty_data_set(outcome_type)
+    multi_data <- test_create_multiple_synthetic_series(outcome_type=outcome_type)
     
     # Set exceptions per outcome type.
     .always_available <- always_available
@@ -1084,7 +1087,7 @@ test_plots <- function(plot_function,
                                             "survival"="cox"))
     
     #####Full data set########################################################
-    
+
     # Train the model.
     model_full_1 <- suppressWarnings(train(data=full_data,
                                            cluster_method="none",
@@ -1131,6 +1134,23 @@ test_plots <- function(plot_function,
     # Go to next outcome type if only a specific configuration needs to be
     # tested.
     if(test_specific_config) next()
+    
+    # Ensemble from multiple datasets.
+    multi_model_set <- suppressWarnings(lapply(multi_data,
+                                               train,
+                                               cluster_method="hclust",
+                                               imputation_method="simple",
+                                               fs_method="mim",
+                                               hyperparameter_list=hyperparameters,
+                                               learner="lasso",
+                                               cluster_similarity_threshold=0.7,
+                                               time_max=1832))
+
+    # Create data from ensemble of multiple models
+    multi_model_full <- as_familiar_data(object=multi_model_set,
+                                         data=multi_data[[1]],
+                                         data_element=data_element,
+                                         ...)
     
     # Create additional familiar data objects.
     data_empty_full_1 <- as_familiar_data(object=model_full_1,
@@ -1242,6 +1262,26 @@ test_plots <- function(plot_function,
                       }
                     })
     
+    test_fun(paste0("6. Plots for ", outcome_type, " outcomes ",
+                    ifelse(outcome_type %in% outcome_type_available, "can", "cannot"),
+                    " be created for a dataset created from an ensemble of multiple models."), {
+                      
+                      object <- list(multi_model_full)
+                      object <- mapply(set_data_set_names, object, c("development_1"))
+                      
+                      collection <- suppressWarnings(as_familiar_collection(object, familiar_data_names=c("development")))
+                      
+                      plot_list <- do.call(plot_function, args=c(list("object"=collection), plot_args))
+                      which_present <- .test_which_plot_present(plot_list)
+                      
+                      if(outcome_type %in% outcome_type_available){
+                        testthat::expect_equal(all(which_present), TRUE) 
+                        
+                      } else {
+                        testthat::expect_equal(all(!which_present), TRUE)
+                      }
+                    })
+    
     #####One-feature data set###################################################
     
     # Train the model.
@@ -1266,7 +1306,7 @@ test_plots <- function(plot_function,
     
     
     # Create a completely intact, one sample dataset.
-    test_fun(paste0("6. Plots for ", outcome_type, " outcomes ",
+    test_fun(paste0("7. Plots for ", outcome_type, " outcomes ",
                     ifelse(outcome_type %in% outcome_type_available && !.except_one_feature, "can", "cannot"),
                     " be created for a complete one-feature data set."), {
                       
@@ -1290,7 +1330,7 @@ test_plots <- function(plot_function,
                     })
     
     # Create a dataset with a one-sample quadrant.
-    test_fun(paste0("7. Plots for ", outcome_type, " outcomes ",
+    test_fun(paste0("8. Plots for ", outcome_type, " outcomes ",
                     ifelse(outcome_type %in% outcome_type_available && !.except_one_feature, "can", "cannot"),
                     " be created for a dataset with some one-sample data."), {
                       
@@ -1314,7 +1354,7 @@ test_plots <- function(plot_function,
                     })
     
     # Create a dataset with some identical data.
-    test_fun(paste0("8. Plots for ", outcome_type, " outcomes ",
+    test_fun(paste0("9. Plots for ", outcome_type, " outcomes ",
                     ifelse(outcome_type %in% outcome_type_available && !.except_one_feature, "can", "cannot"),
                     " be created for a dataset with some invariant data."), {
                       
