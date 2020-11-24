@@ -321,8 +321,8 @@ get_outcome_info_from_backend <- function(){
   distr_list <- list()
   
   # Find outcome data
-  x <- data.table::copy(data@data[repetition_id == 1, mget(outcome_columns)])
-  
+  x <- data.table::copy(unique(data@data, by=get_id_columns(id_depth="series")))
+
   if(object@outcome_type %in% c("binomial", "multinomial")){
     
     # Number of samples
@@ -446,21 +446,39 @@ setMethod("show", signature(object="outcomeInfo"),
               
             } else if(object@outcome_type %in% c("survival")){
               # Show the censoring and event values.
-              censoring_str <- paste0("censoring: ", paste_s(object@censored))
-              event_str <- paste0("event: ", paste_s(object@event))
-              
-              # Add to outcome string.
-              outcome_str <- paste0(outcome_str, ", with ", censoring_str, "; and ", event_str, ".\n")
+              if(length(object@censored) > 0){
+                censoring_str <- paste0("censoring: ", paste_s(object@censored))
+                event_str <- paste0("event: ", paste_s(object@event))
+                
+                # Add to outcome string.
+                outcome_str <- paste0(outcome_str, ", with ", censoring_str, "; and ", event_str, ".\n")
+                
+              } else {
+                event_str <- paste0("event: ", paste_s(object@event))
+                
+                # Add to outcome string.
+                outcome_str <- paste0(outcome_str, ", without censoring; and ", event_str, ".\n")
+              }
               
             } else if(object@outcome_type %in% c("competing_risk")){
-              # Show the censoring and event values.
-              censoring_str <- paste0("censoring: ", paste_s(object@censored))
+              if(length(object@censored) > 0){
+                censoring_str <- paste0("with censoring: ", paste_s(object@censored))
+               
+              } else {
+                censoring_str <- "without censoring"
+              }
+              
+              if(length(object@competing_risk) > 0){
+                competing_risk_str <- paste0(ifelse(length(object@competing_risk) > 1, "competing risks: ", "competing risk: "),
+                                             paste_s(object@competing_risk))
+              } else {
+                competing_risk_str <- "no competing risks"
+              }
+              
               event_str <- paste0("event: ", paste_s(object@event))
-              competing_risk_str <- paste0(ifelse(length(object@competing_risk) > 1, "competing risks: ", "competing risk: "),
-                                           paste_s(object@competing_risk))
               
               # Add to outcome string.
-              outcome_str <- paste0(outcome_str, ", with ", censoring_str, "; ", event_str, "; and ", competing_risk_str, ".\n")
+              outcome_str <- paste0(outcome_str, ", ", censoring_str, "; ", event_str, "; and ", competing_risk_str, ".\n")
               
             } else {
               ..error_no_known_outcome_type(object@outcome_type)
