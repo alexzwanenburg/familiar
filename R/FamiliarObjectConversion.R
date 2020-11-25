@@ -280,12 +280,12 @@ setMethod("as_familiar_collection", signature(object="familiarModel"),
 #'@rdname as_familiar_collection-methods
 setMethod("as_familiar_collection", signature(object="list"),
           function(object, familiar_data_names=NULL, collection_name=NULL, ...){
-
+            
             # Load familiar objects. This does nothing if the list already
             # contains only familiar S4 objects, but will load any files from
             # the path and will check uniqueness of classes.
             object <- load_familiar_object(object=object)
-
+            
             # Return the object if it contains a single familiarCollection.
             if(length(object) == 1 & all(sapply(object, is, class2="familiarCollection"))){
               return(object[[1]])
@@ -439,11 +439,17 @@ setMethod("load_familiar_object", signature(object="character"),
             # Update the objects for backward compatibility
             fam_object <- lapply(fam_object, update_object)
             
+            # If all the object(s) are familiarEnsemble, check the model list.
+            if(all(sapply(fam_object, is, class2="familiarEnsemble"))){
+              fam_object <- mapply(..update_model_list, object=fam_object, dir_path=object)
+            }
+            
             # Unlist if the input is singular.
             if(length(object) == 1) fam_object <- fam_object[[1]]
             
             return(fam_object)
           })
+
 
 #####load_familiar_object (list)#####
 setMethod("load_familiar_object", signature(object="list"),
