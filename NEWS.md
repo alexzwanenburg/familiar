@@ -5,7 +5,7 @@
     * Added `novelty_features` parameter that can be used to specify features that should be used for novelty detection.
 * Added `show` methods for objects that are typically written to drive, such as familiarModel, familiarEnsemble, familiarData and familiarCollection objects.
 * Added `update_object` methods that allow for backward compatibility when updating slots of respective objects.
-* Added support for series-like data. These can be time series, or multiple measurements were the outcome of interest may change. Subsampling, e.g. through cross-validation or bootstraps still respects samples. This means that different series instances of the same sample are always kept together for subsampling. The series column in the data set can be set using the `series_id_column` parameter.
+* Added support for series-like data. These can be time series, or multiple measurements were the outcome of interest may change. Subsampling, e.g. through cross-validation or bootstraps still respects samples. This means that different series instances of the same sample are always kept together for subsampling. The series column in the data set can be set using the `series_id_column` parameter. This required changes to what iteration data is stored. This should not cause any issues with post-hoc analyses, but is not **not backward compatible** when updating familiar prior to completing the modelling and evaluation process.
 
 ## Minor changes:
 * The default method for bootstrap confidence intervals (`bootstrap_ci_method`) is now the percentile (`percentile`) method, which replaces the bias-corrected (`bc`) method.
@@ -30,7 +30,7 @@
 
 ## Major changes:
 * All metrics are now implemented as S4 objects, with associated methods. Moreover all metrics now have unit tests.
-* All plotting algorithms now have unit tests which should increase stability of the code. Resulting code fixes are **not backward compatible**: you may need to recreate the familiarData objects for binomial endpoints.
+* All plotting algorithms now have unit tests which should increase stability of the code. Resulting code fixes are **not backward compatible**: you may need to recreate the `familiarData` objects for binomial endpoints.
 * Hyperparameter optimisation now has additional parameters:
     * optimisation_determine_vimp: Allows for determining variable importance for each of the bootstraps used during hyperparameter optimisation to avoid positive biases.
     * optimisation_function: replaces the objective parameter.
