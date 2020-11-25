@@ -24,6 +24,7 @@
 * Fixed an issue where the `verbose` argument was not respected when determining clusters of features.
 * Fixed an issue where absence of censoring for time-to-event data would lead to models not being created.
 * Fixed an issue where NA would not be removed from the results in the `extract_from_slot` function.
+* Fixed an issue where information would be missing in `familiarEnsemble` objects because the first `familiarModel` in the ensemble was not trained. This information cannot be added retroactively.
 
 # Version 0.0.0.53 (Pre-release)
 

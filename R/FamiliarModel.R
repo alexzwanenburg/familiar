@@ -17,16 +17,19 @@ setMethod(".train", signature(object="familiarModel", data="dataObject"),
                                        is_pre_processed = is_pre_processed,
                                        stop_at="clustering")
             
+            # Set the training flag
+            can_train <- TRUE
+            
             # Check if there are any data entries. The familiar model cannot be
             # trained otherwise
-            if(is_empty(x=data)) return(object)
+            if(is_empty(x=data)) can_train <- FALSE
             
             # Check the number of features in data; if it has no features, the
             # familiar model can not be trained
-            if(!has_feature_data(x=data)) return(object)
+            if(!has_feature_data(x=data)) can_train <- FALSE
             
             # Train a new model based on data.
-            object <- ..train(object=object, data=data)
+            if(can_train) object <- ..train(object=object, data=data)
             
             # Extract information required for assessing model performance,
             # calibration (e.g. baseline survival) etc.
@@ -38,7 +41,7 @@ setMethod(".train", signature(object="familiarModel", data="dataObject"),
               
               # Create calibration models and add to the object. Not all models
               # require recalibration.
-              object <- ..set_recalibration_model(object=object, data=data)
+              if(can_train) object <- ..set_recalibration_model(object=object, data=data)
               
               # Extract data required for assessing calibration. Not all outcome
               # types require calibration info. Currently calibration
@@ -48,7 +51,7 @@ setMethod(".train", signature(object="familiarModel", data="dataObject"),
               
               # Set stratification thresholds. This is currently only done for
               # survival outcomes.
-              object <- ..set_risk_stratification_thresholds(object=object, data=data)
+              if(can_train) object <- ..set_risk_stratification_thresholds(object=object, data=data)
               
               # Add column data
               object <- add_data_column_info(object=object)
