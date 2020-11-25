@@ -26,6 +26,14 @@ setGeneric("assign_risk_groups", function(object, data, ...) standardGeneric("as
 
 setGeneric("complete_familiar_ensemble", function(object, ...) standardGeneric("complete_familiar_ensemble"))
 
+setGeneric("..get_model_file_path", function(ii, object, ...) standardGeneric("..get_model_file_path"))
+
+setGeneric("..get_model", function(ii, object, ...) standardGeneric("..get_model"))
+
+setGeneric("..can_detach_models", function(ii, object, ...) standardGeneric("..can_detach_models"))
+
+setGeneric("..update_model_list", function(object, ...) standardGeneric("..update_model_list"))
+
 setGeneric("load_models", function(object, ...) standardGeneric("load_models"))
 
 setGeneric("is_model_loaded", function(object, ...) standardGeneric("is_model_loaded"))

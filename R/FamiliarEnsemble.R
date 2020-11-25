@@ -436,8 +436,301 @@ setMethod("assign_risk_groups", signature(object="familiarEnsemble", data="dataO
 
 #####get_prediction_type#####
 setMethod("get_prediction_type", signature(object="familiarEnsemble"),
-          function(object){
-            return(get_prediction_type(object@model_list[[1]]))
+          function(object, ...){
+            return(do.call(get_prediction_type, args=c(list("object" = ..get_model(object=object, ii=1)),
+                                                       list(...))))
+          })
+
+
+
+#####..get_model (numeric, familiarEnsemble) ######
+setMethod("..get_model", signature(ii="numeric", object="familiarEnsemble"),
+          function(ii, object){
+            if(ii > length(object@model_list)) ..error_reached_unreachable_code(paste0("..get_model,familiarEnsemble: the requested index (", ii,
+                                                                                       ") exceeds the total number of models in the ensemble (", length(object@model_list)))
+            
+            # If the model is already attached, dispatch to calling function.
+            if(is(object@model_list[[ii]], "familiarModel")) return(object@model_list[[ii]])
+            
+            # If the model has been detached, load, and then dispatch.
+            # First check if the file exists.
+            if(!file.exists(object@model_list[[ii]])){
+              
+              model_file_name <- ..get_model_file_path(ii=ii, object=object)
+              
+              # Obtain the directory path stored in the file_paths environment
+              # variable (if any).
+              mb_dir_path <- tryCatch({get_file_paths()$mb_dir}, error=function(err)(return(NULL)))
+             
+              # Using the file directory indicated by the file_paths environment
+              # variable.
+              if(!is.null(mb_dir_path)){
+                # File is directly located in the given directory
+                file_path_1 <- file.path(mb_dir_path,
+                                         basename(object@model_list[[ii]]))
+                
+                if(file.exists(file_path_1)) return(load_familiar_object(file_path_1))
+                
+                # File is located in a subdirectory of mb_dir_path.
+                file_path_2 <- file.path(get_object_dir_path(dir_path=mb_dir_path,
+                                                             object_type="familiarModel",
+                                                             learner=object@learner,
+                                                             fs_method=object@fs_method),
+                                         basename(object@model_list[[ii]]))
+                
+                if(file.exists(file_path_2)) return(load_familiar_object(file_path_2))
+              }
+              
+              # Using the model_dir_path slot of the ensemble.
+              if(!is.null(object@model_dir_path)){
+                # File is directly located in the given directory
+                file_path_1 <- file.path(object@model_dir_path,
+                                         basename(object@model_list[[ii]]))
+                
+                if(file.exists(file_path_1)) return(load_familiar_object(file_path_1))
+              }
+              
+              stop(paste0("..get_model,familiarEnsemble: cannot find the indicated familiarModel", object@model_list[[ii]]))
+              
+            } else {
+              return(load_familiar_object(object@model_list[[ii]]))
+            }
+          })
+
+
+
+#####..get_model (missing, familiarEnsemble) ######
+setMethod("..get_model", signature(ii="missing", object="familiarEnsemble"),
+          function(ii, object, ...){
+            
+            # Dispatch get_model.
+            return(lapply(seq_along(object@model_list), ..get_model, object=object, ...))
+          })
+
+
+
+#####..get_model_file_path (numeric, familiarEnsemble) ######
+setMethod("..get_model_file_path", signature(ii="numeric", object="familiarEnsemble"),
+          function(ii, object, dir_path=NULL){
+            
+            if(ii > length(object@model_list)) ..error_reached_unreachable_code(paste0("..get_model_file_path,familiarEnsemble: the requested index (", ii,
+                                                                                       ") exceeds the total number of models in the ensemble (", length(object@model_list)))
+            
+            # There are three directories a file can be located, namely:
+            #
+            # * dir_path: a user-specified path
+            #
+            # * mb_dir_path: based on file_paths environment variable
+            #
+            # * model_dir_path: based on the directory path stored with the
+            # object.
+            #
+            # These possibilities are ordered by precedence.
+
+            # Try to find dir_path
+            if(!is.null(dir_path)){
+              
+              # Check if the dir_path actually points to a file, and strip the
+              # file instead. Note that file.exists also returns TRUE if the
+              # path is a directory.
+              if(file.exists(dir_path) & !dir.exists(dir_path)) dir_path <- dirname(dir_path)
+              
+              # If the directory does not exist, set to NULL.
+              if(!dir.exists(dir_path)) dir_path <- NULL
+            }
+            
+            # Obtain the directory path stored in the file_paths environment
+            # variable (if any).
+            mb_dir_path <- tryCatch({get_file_paths()$mb_dir}, error=function(err)(return(NULL)))
+            
+            # Obtain the directory path from the familiarEnsemble object.
+            model_dir_path <- object@model_dir_path
+            
+            # Identify the basic model file name.
+            if(is(object@model_list[[ii]], "familiarModel")){
+              # Generate the file name from the model.
+              model_file_name <- get_object_name(object=object@model_list[[ii]], abbreviated=FALSE)
+              model_file_name <- paste0(model_file_name, ".RDS")
+              
+            } else {
+              # Generate the file name from the stored string.
+              model_file_name <- basename(object@model_list[[ii]])
+            }
+              
+            # Using the user-provided dir_path
+            if(!is.null(dir_path)){
+              # File is directly located in the given directory
+              file_path_1 <- file.path(dir_path,
+                                       model_file_name)
+              
+              if(file.exists(file_path_1)) return(file_path_1)
+              
+              # File is located in a subdirectory of dir_path.
+              file_path_2 <- file.path(get_object_dir_path(dir_path=dir_path,
+                                                           object_type="familiarModel",
+                                                           learner=object@learner,
+                                                           fs_method=object@fs_method),
+                                       model_file_name)
+              
+              if(file.exists(file_path_2)) return(file_path_2)
+            }
+            
+            # Using the file directory indicated by the file_paths environment
+            # variable.
+            if(!is.null(mb_dir_path)){
+              # File is directly located in the given directory
+              file_path_3 <- file.path(mb_dir_path,
+                                       model_file_name)
+              
+              if(file.exists(file_path_3)) return(file_path_3)
+              
+              # File is located in a subdirectory of dir_path.
+              file_path_4 <- file.path(get_object_dir_path(dir_path=mb_dir_path,
+                                                           object_type="familiarModel",
+                                                           learner=object@learner,
+                                                           fs_method=object@fs_method),
+                                       model_file_name)
+              
+              if(file.exists(file_path_4)) return(file_path_4)
+            }
+            
+            # Using the model_dir_path slot of the ensemble. This takes least
+            # precedence, as this might have changed after creating the ensemble
+            # method.
+            if(!is.na(model_dir_path)){
+              # File is directly located in the given directory.
+              file_path_5 <- file.path(model_dir_path,
+                                       model_file_name)
+              
+              if(file.exists(file_path_5)) return(file_path_5)
+              
+              # File is located in a subdirectory of model_dir_path.
+              file_path_6 <- file.path(get_object_dir_path(dir_path=model_dir_path,
+                                                           object_type="familiarModel",
+                                                           learner=object@learner,
+                                                           fs_method=object@fs_method),
+                                       model_file_name)
+              
+              if(file.exists(file_path_6)) return(file_path_6)
+            }
+            
+            # Explicitly return NULL if the model could not be found on any
+            # known paths.
+            return(NULL)
+          })
+
+
+
+#####..get_model_file_path (missing, familiarEnsemble) ######
+setMethod("..get_model_file_path", signature(ii="missing", object="familiarEnsemble"),
+          function(ii, object, ...){
+            
+            # Dispatch get_model.
+            return(lapply(seq_along(object@model_list), ..get_model_file_path, object=object, ...))
+          })
+
+
+
+#####..update_model_list#####
+setMethod("..update_model_list", signature(object="familiarEnsemble"),
+          function(object, dir_path=NULL, auto_detach=FALSE){
+            
+            # Determine if models can detach. Models cannot detach if detaching
+            # them would lead them to be lost, i.e. there are no files on a
+            # known drive location drive.
+            if(!..can_detach_models(object=object, dir_path=dir_path)){
+              auto_detach <- FALSE
+              object@auto_detach <- FALSE
+              object@model_dir_path <- NA_character_
+            }
+            
+            if(auto_detach | object@auto_detach) object <- detach_models(object)
+            
+            for(ii in seq_along(object@model_list)){
+              
+              # Skip if the current entry is an attached familiarModel object.
+              if(is(object@model_list[[ii]], "familiarModel")) next()
+              
+              # Stop if the current entry is not a character.
+              if(!is.character(object@model_list[[ii]])) stop("The current entry in the model list is not a character string or a familiarModel object.")
+              
+              # Skip if the entry points to a file and not a directory.
+              if(file.exists(object@model_list[[ii]]) & !dir.exists(object@model_list[[ii]])) next()
+              
+              # Identify the file path, if any.
+              model_file_path <- ..get_model_file_path(ii=ii, object=object, dir_path=dir_path)
+              
+              # If there is a file path, add this to the model list, and update
+              # the model_dir_path attribute.
+              if(!is.null(model_file_path)){
+                object@model_list[[ii]] <- model_file_path
+                object@model_dir_path <- dirname(model_file_path)
+              }
+            }
+            
+            # Check if the models are either attached or are located on a known
+            # drive location.
+            model_exists <- sapply(object@model_list, function(list_entry){
+              if(is(list_entry, "familiarModel")){
+                return(TRUE)
+                
+              } else if(file.exists(list_entry)){
+                return(TRUE)
+                
+              } else {
+                return(FALSE)
+              }
+            })
+            
+            # Throw an error if any model does not exist.
+            if(any(!model_exists)) stop(paste0("The following models in the ensemble could not be found: ",
+                                               paste_s(unlist(object@model_list[!model_exists]))))
+            
+            # Check the model_dir_path slot if auto_detach is on. In that case
+            # model_dir_path is required to find the models.
+            if(auto_detach | object@auto_detach){
+              
+              # Check if all models are attached, because in that case we may
+              # still need to determine the drive location.
+              if(is_model_loaded(object)){
+                # Identify the file path, if any.
+                model_file_path <- ..get_model_file_path(ii=1, object=object, dir_path=dir_path)
+                
+                # Set the model_file_path explicitly.
+                if(!is.null(model_file_path)) object@model_dir_path <- dirname(model_file_path)
+              }
+              
+              # Check that a model directory path has been set and exists.
+              if(is.na(object@model_dir_path)) stop("The model directory could not be established.")
+              if(!dir.exists(object@model_dir_path)) stop("The model directory could not be established.")
+            }
+            
+            return(object)
+          })
+
+
+
+#####..can_detach_models (numeric, familiarEnsemble) #######
+setMethod("..can_detach_models", signature(ii="numeric", object="familiarEnsemble"),
+          function(ii, object, dir_path=NULL){
+            # Check whether a model can be detached without losing it. We do
+            # this by checking whether a valid file path can be generated. If
+            # not, ..get_model_file_path will return NULL.
+            model_file_path <- ..get_model_file_path(ii=ii, object=object, dir_path=dir_path)
+            
+            return(!is.null(model_file_path))
+          })
+
+
+
+#####..can_detach_models (missing, familiarEnsemble) #######
+setMethod("..can_detach_models", signature(ii="missing", object="familiarEnsemble"),
+          function(ii, object, dir_path=NULL){
+            # Check whether a model can be detached without losing it.
+            can_detach <- sapply(seq_along(object@model_list), ..can_detach_models, object=object, dir_path=dir_path)
+            
+            # Return TRUE when all models can be detached.
+            return(all(can_detach))
           })
 
 
@@ -446,70 +739,20 @@ setMethod("get_prediction_type", signature(object="familiarEnsemble"),
 setMethod("load_models", signature(object="familiarEnsemble"),
           function(object, dir_path=NULL){
 
-            # Check if the models are already loaded
-            if(is_model_loaded(object=object)){
-              return(object)
-              
-            } else {
-              # Create a place holder model list
-              model_list <- list()
-
-              # Attempt to create a dir_path if it is not provided.
-              if(is.null(dir_path)){
-
-                file_paths <- tryCatch({get_file_paths()}, error=function(err)(return(NULL)))
-                
-                if(is.null(file_paths)){
-                  stop("A path to the main directory containing the familiarData objects is required. This is typically the path to the \"trained_models\" folder.")
-                  
-                } else {
-                  # Get the model directory from file_paths
-                  dir_path <- file_paths$mb_dir
-                }
-              }
-              
-              # Iterate over the different models by name
-              for(file_name in object@model_list){
-
-                # Generate file path
-                file_path_1 <- normalizePath(file.path(get_object_dir_path(dir_path=dir_path, object_type="familiarModel",
-                                                                           learner=object@learner, fs_method=object@fs_method),
-                                                       file_name), mustWork=FALSE)
-                
-                # Generate a second file path in case the first one does not work
-                file_path_2 <- normalizePath(file.path(get_object_dir_path(dir_path=dir_path, object_type="familiarModel",
-                                                                           file_name)), mustWork=FALSE)
-                
-                # Check if the file can be read. If it is the case, the model is loaded, and the path it was on is stored.
-                if(file.exists(file_path_1)){
-                  loaded_model <- load_familiar_object(file_path_1)
-                  selected_path <- file_path_1
-                  
-                } else if(file.exists(file_path_2)) {
-                  loaded_model <- load_familiar_object(file_path_2)
-                  selected_path <- file_path_2
-                  
-                } else {
-                  logger.stop(paste0("Model file could not be found at ", file_path_1, " or ", file_path_2,
-                                     ". Please check whether the path is correct."))
-                }
-                
-                # Check if the file is a familiarModel
-                if(!is(loaded_model, "familiarModel")){
-                  logger.stop(paste0("The model at ", selected_path, " is not a familiarModel object."))
-                }
-                
-                # Add to model list
-                model_list <- append(model_list, loaded_model)
-                
-              }
-
-              # Append list of model to object and return object
-              object@model_list <- model_list
-
-              return(object)
+            # Update model list as a precaution. This also checks that models
+            # can actually be attached.
+            object <- ..update_model_list(object=object,
+                                          dir_path=dir_path)
+            
+            # Do not attach models if auto_detach is set to TRUE.
+            if(!object@auto_detach){
+              object@model_list <- ..get_model(object=object)
             }
+            
+            return(object)
           })
+
+
 
 #####is_model_loaded#####
 setMethod("is_model_loaded", signature(object="familiarEnsemble"),
@@ -517,32 +760,38 @@ setMethod("is_model_loaded", signature(object="familiarEnsemble"),
             return(all(sapply(object@model_list, is, class2="familiarModel")))
           })
 
+
 #####detach_models#####
 setMethod("detach_models", signature(object="familiarEnsemble"),
           function(object){
             # Unload the models in the familiarEnsemble
-            if(is(object@model_list[[1]], "familiarModel")){
-              model_list <- list()
+            model_list <- object@model_list
+            
+            # Iterate over the entries in the model list.
+            for(ii in seq_along(object@model_list)){
               
-              # Iterate over the familiar models
-              for(fam_model in object@model_list){
+              # Check if the entry contains a familiarModel object that can be detached.
+              if(is(object@model_list[[ii]], "familiarModel")){
                 
-                # Generate the file name
-                model_name <- get_object_name(object=fam_model, abbreviated=FALSE)
-                model_name <- paste0(model_name, ".RDS")
-                
-                # Append to list
-                model_list <- append(model_list, model_name)
+                # Check if the model can be detached.
+                if(..can_detach_models(ii=ii, object=object)){
+                  
+                  # Get the model file name.
+                  model_file_name <- ..get_model_file_path(ii=ii, object=object)
+                  
+                  # Update the entry
+                  model_list[[ii]] <- model_file_name
+                }
               }
-              
-              # Append the model list to the object and return the object
-              object@model_list <- model_list
-              
-              return(object)
-            } else {
-              return(object)
             }
+            
+            # Attach the model list to the object and return the object.
+            object@model_list <- model_list
+            
+            return(object)
           })
+
+
 
 #####add_model_name (ensemble)#####
 setMethod("add_model_name", signature(data="ANY", object="familiarEnsemble"),
