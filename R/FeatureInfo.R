@@ -908,14 +908,13 @@ trim_unused_features_from_list <- function(feature_info_list){
 
 
 
-collect_and_aggregate_feature_info <- function(feature, object, stop_at="imputation"){
+.collect_and_aggregate_feature_info <- function(feature, object, model_list, stop_at="imputation"){
   
   # Suppress NOTES due to non-standard evaluation in data.table
-  norm_method <- norm_shift <- norm_scale <- n <- batch_id <- NULL
-  min <- Q1 <- median <- Q3 <- max <- count <- all_none <- NULL
+  min <- Q1 <- median <- Q3 <- max <- count <- NULL
   
   # Find all featureInfo objects for the current feature
-  feature_info_list <- lapply(object@model_list, function(fam_model, feature){
+  feature_info_list <- lapply(model_list, function(fam_model, feature){
     if(is.null(fam_model@feature_info[[feature]])){
       return(NULL)
     } else {
