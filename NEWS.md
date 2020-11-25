@@ -23,6 +23,7 @@
 * Fixed an error when attempting to perform parallel processing with familiar installed on a non-standard library path.
 * Fixed an issue where the `verbose` argument was not respected when determining clusters of features.
 * Fixed an issue where absence of censoring for time-to-event data would lead to models not being created.
+* Fixed an issue where NA would not be removed from the results in the `extract_from_slot` function.
 
 # Version 0.0.0.53 (Pre-release)
 
