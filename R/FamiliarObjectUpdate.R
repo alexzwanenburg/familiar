@@ -40,6 +40,9 @@ setMethod("update_object", signature(object="familiarModel"),
             
             if(!methods::validObject(object)) stop("Could not update the familiarModel object to the most recent definition.")
             
+            # Update package version.
+            object <- add_package_version(object=object)
+            
             return(object)
           })
 
@@ -65,6 +68,9 @@ setMethod("update_object", signature(object="familiarEnsemble"),
             
             if(!methods::validObject(object)) stop("Could not update the familiarEnsemble object to the most recent definition.")
             
+            # Update package version.
+            object <- add_package_version(object=object)
+            
             return(object)
           })
 
@@ -86,6 +92,9 @@ setMethod("update_object", signature(object="familiarData"),
             
             if(!methods::validObject(object)) stop("Could not update the familiarData object to the most recent definition.")
             
+            # Update package version.
+            object <- add_package_version(object=object)
+            
             return(object)
           })
 
@@ -106,6 +115,9 @@ setMethod("update_object", signature(object="familiarCollection"),
             }
             
             if(!methods::validObject(object)) stop("Could not update the familiarCollection object to the most recent definition.")
+            
+            # Update package version.
+            object <- add_package_version(object=object)
             
             return(object)
           })
