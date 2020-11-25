@@ -5,36 +5,52 @@ NULL
 #####complete_familiar_ensemble#####
 setMethod("complete_familiar_ensemble", signature(object="familiarEnsemble"),
           function(object, dir_path=NULL) {
-            # Fills out missing data from a familiarEnsemble based on attached models and internal logic
-            # Four slots are expected to be filled: model_list, run_table, learner, fs_method
-            # The remaining slots are set here.
-            
+            # Fills out missing data from a familiarEnsemble based on attached
+            # models and internal logic.
+
             # Load models
-            object <- load_models(object=object, dir_path=dir_path)
+            object <- ..update_model_list(object=object, dir_path=dir_path)
+            model_list <- ..get_model(object=object)
             
-            # Add outcome_type and class levels to object.
-            object@outcome_type <- object@model_list[[1]]@outcome_type
-            object@outcome_info <- .aggregate_outcome_info(x=lapply(object@model_list, function(list_elem) (list_elem@outcome_info)))
+            # Determine which models were trained.
+            mask <- sapply(model_list, model_is_trained)
+            
+            # If no models were trained, select all models, otherwise select
+            # only the models that were trained.
+            if(any(mask)) model_list <- model_list[mask]
+            
+            # Add outcome_type and outcome_info to object. These slots are
+            # required in some of the other aggregators.
+            object@outcome_type <- model_list[[1]]@outcome_type
+            object@outcome_info <- .aggregate_outcome_info(x=lapply(model_list, function(list_elem) (list_elem@outcome_info)))
               
             # Find all required features
-            required_features <- unique(unlist(lapply(object@model_list, function(fam_model) (fam_model@required_features))))
+            required_features <- unique(unlist(lapply(model_list, function(fam_model) (fam_model@required_features))))
             
             # Find all important features
-            model_features <- unique(unlist(lapply(object@model_list, function(fam_model) (fam_model@model_features))))
+            model_features <- unique(unlist(lapply(model_list, function(fam_model) (fam_model@model_features))))
             
             # Aggregate feature information
-            feature_info_list <- lapply(required_features, collect_and_aggregate_feature_info, object=object, stop_at="imputation")
+            feature_info_list <- lapply(required_features,
+                                        .collect_and_aggregate_feature_info,
+                                        object=object,
+                                        model_list=model_list,
+                                        stop_at="imputation")
+            
+            # Add name to features.
             names(feature_info_list) <- required_features
             
             # Aggregate calibration info
-            calibration_info <- extract_calibration_info(object=object)
-
-            # Generate a new version of the ensemble to avoid unnecessary copying
+            calibration_info <- .collect_and_aggregate_calibration_info(model_list=model_list,
+                                                                        outcome_type=object@outcome_type)
+            
+            # Generate a new version of the ensemble to avoid unnecessary
+            # copying.
             fam_ensemble <- methods::new("familiarEnsemble",
                                          model_list = object@model_list,
                                          outcome_type = object@outcome_type,
                                          outcome_info = object@outcome_info,
-                                         data_column_info = object@model_list[[1]]@data_column_info,
+                                         data_column_info = model_list[[1]]@data_column_info,
                                          learner = object@learner,
                                          fs_method = object@fs_method,
                                          required_features = required_features,
@@ -42,9 +58,11 @@ setMethod("complete_familiar_ensemble", signature(object="familiarEnsemble"),
                                          feature_info = feature_info_list,
                                          run_table = object@run_table,
                                          calibration_info = calibration_info,
-                                         settings = object@model_list[[1]]@settings,
-                                         is_anonymised = all(extract_from_slot(object_list=object@model_list, slot_name="is_anonymised")),
-                                         project_id = object@model_list[[1]]@project_id)
+                                         model_dir_path = object@model_dir_path,
+                                         auto_detach = object@auto_detach,
+                                         settings = model_list[[1]]@settings,
+                                         is_anonymised = all(extract_from_slot(object_list=model_list, slot_name="is_anonymised")),
+                                         project_id = model_list[[1]]@project_id)
             
             # Add package version to the ensemble
             fam_ensemble <- add_package_version(object=fam_ensemble)
