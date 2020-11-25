@@ -111,74 +111,6 @@ setMethod("show", signature(object="familiarEnsemble"),
 
 
 
-#####extract_calibration_info#####
-setMethod("extract_calibration_info", signature(object="familiarEnsemble"),
-          function(object){
-
-            # Suppress NOTES due to non-standard evaluation in data.table
-            min_value <- max_value <- NULL
-            
-            # Collect all survival tables
-            calibration_data <- lapply(object@model_list, function(fam_model) (fam_model@calibration_info))
-
-            # Remove empty entries
-            calibration_data[sapply(calibration_data, is.null)] <- NULL
-            
-            if(length(calibration_data) == 0){
-              return(NULL)
-            }
-            
-            if(object@outcome_type == "survival"){
-              # Find the unique times at which survival was estimated
-              eval_times <- sort(unique(unlist(sapply(calibration_data, function(survival_table) (survival_table$time)))))
-              
-              # Interpolate calibration data at the evaluating points
-              calibration_data <- lapply(calibration_data, function(survival_table, eval_times){
-                
-                # Find columns to iterate over
-                surv_columns <- colnames(survival_table)
-                surv_columns <- surv_columns[!surv_columns=="time"]
-                
-                # Define initial table
-                interp_table <- data.table::data.table("time"=eval_times)
-                for(current_col in surv_columns){
-                  # Interpolated the columns at all the time points
-                  interp_table[, (current_col):=stats::approx(x=survival_table$time, y=survival_table[[current_col]],
-                                                              xout=eval_times, rule=2, method="linear")$y]
-                  
-                  # Handle infinites appearing in e.g. the variance column
-                  interp_table[is.infinite(get(current_col)), (current_col):=as.double(NA)]
-                }
-                
-                return(interp_table)
-              }, eval_times=eval_times)
-              
-              # Concatenate the list of tables into one
-              calibration_data <- data.table::rbindlist(calibration_data)
-              
-              # Find columns to iterate over
-              surv_columns <- colnames(calibration_data)
-              surv_columns <- surv_columns[!surv_columns=="time"]
-              
-              # Compute the mean survival information for each time point
-              calibration_data <- calibration_data[, lapply(.SD, mean, na.rm=TRUE), by="time", .SDcols=surv_columns]
-              
-            } else if(object@outcome_type %in% c("continuous", "count")){
-              
-              # Concatenate to single matrix.
-              calibration_data <- data.table::rbindlist(calibration_data)
-              
-              # Extract min and max values.
-              calibration_data <- calibration_data[,  list("min_value"=min(min_value),
-                                                           "max_value"=max(max_value))]
-            }
-            
-            # Return calibration data
-            return(calibration_data)
-})
-
-
-
 #####assess_calibration (ensemble)#####
 setMethod("assess_calibration", signature(object="familiarEnsemble"),
           function(object, data, eval_times=NULL, is_pre_processed=FALSE){
@@ -925,4 +857,67 @@ ensemble_prediction <- function(object, prediction_data, ensemble_method="mean")
   names(ensemble_pred) <- prediction_columns
 
   return(ensemble_pred)
+}
+
+
+
+.collect_and_aggregate_calibration_info <- function(model_list, outcome_type){
+  # Suppress NOTES due to non-standard evaluation in data.table
+  min_value <- max_value <- NULL
+  
+  # Collect all survival tables
+  calibration_data <- lapply(model_list, function(fam_model) (fam_model@calibration_info))
+  
+  # Remove empty entries
+  calibration_data[sapply(calibration_data, is.null)] <- NULL
+  
+  if(length(calibration_data) == 0) return(NULL)
+  
+  if(outcome_type == "survival"){
+    # Find the unique times at which survival was estimated
+    eval_times <- sort(unique(unlist(sapply(calibration_data, function(survival_table) (survival_table$time)))))
+    
+    # Interpolate calibration data at the evaluating points
+    calibration_data <- lapply(calibration_data, function(survival_table, eval_times){
+      
+      # Find columns to iterate over
+      surv_columns <- colnames(survival_table)
+      surv_columns <- surv_columns[!surv_columns=="time"]
+      
+      # Define initial table
+      interp_table <- data.table::data.table("time"=eval_times)
+      for(current_col in surv_columns){
+        # Interpolated the columns at all the time points
+        interp_table[, (current_col):=stats::approx(x=survival_table$time, y=survival_table[[current_col]],
+                                                    xout=eval_times, rule=2, method="linear")$y]
+        
+        # Handle infinites appearing in e.g. the variance column
+        interp_table[is.infinite(get(current_col)), (current_col):=as.double(NA)]
+      }
+      
+      return(interp_table)
+    }, eval_times=eval_times)
+    
+    # Concatenate the list of tables into one
+    calibration_data <- data.table::rbindlist(calibration_data)
+    
+    # Find columns to iterate over
+    surv_columns <- colnames(calibration_data)
+    surv_columns <- surv_columns[!surv_columns=="time"]
+    
+    # Compute the mean survival information for each time point
+    calibration_data <- calibration_data[, lapply(.SD, mean, na.rm=TRUE), by="time", .SDcols=surv_columns]
+    
+  } else if(outcome_type %in% c("continuous", "count")){
+    
+    # Concatenate to single matrix.
+    calibration_data <- data.table::rbindlist(calibration_data)
+    
+    # Extract min and max values.
+    calibration_data <- calibration_data[,  list("min_value"=min(min_value),
+                                                 "max_value"=max(max_value))]
+  }
+  
+  # Return calibration data
+  return(calibration_data)
 }

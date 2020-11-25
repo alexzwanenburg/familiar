@@ -14,8 +14,6 @@ setGeneric(".train_novelty_detector", function(object, data, ...) standardGeneri
 
 setGeneric("model_is_trained", function(object, ...) standardGeneric("model_is_trained"))
 
-setGeneric("extract_calibration_info", function(object, ...) standardGeneric("extract_calibration_info"))
-
 setGeneric("assess_stratification", function(object, ...) standardGeneric("assess_stratification"))
 
 setGeneric("assess_calibration", function(object, ...) standardGeneric("assess_calibration"))
