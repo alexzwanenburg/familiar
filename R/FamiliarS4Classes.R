@@ -73,35 +73,48 @@ setClass("familiarModel",
 #####familiarEnsemble#####
 setClass("familiarEnsemble",
          slots = list(
-           # Model container
+           # Model container.
            model_list = "ANY",
-           # Model outcome type
+           # Model outcome type.
            outcome_type = "character",
            # Outcome info, such as class levels, mean values etc.
            outcome_info = "ANY",
            # Info related to the columns in the dataset.
            data_column_info = "ANY",
-           # Name of learner
+           # Name of learner.
            learner = "character",
-           # Name of feature selection method
+           # Name of feature selection method.
            fs_method = "character",
-           # Data required for feature pre-processing
+           # Data required for feature pre-processing.
            feature_info = "ANY",
-           # Required features for complete reconstruction, including imputation
+           # Required features for complete reconstruction, including
+           # imputation.
            required_features = "ANY",
-           # Features that are required for reconstruction, without imputation (i.e. features that are in the signature directly or as part of a cluster)
+           # Features that are required for reconstruction, without imputation
+           # (i.e. features that are in the signature directly or as part of a
+           # cluster)
            model_features = "ANY",
-           # Set of run tables for the current ensemble. This is only required for processing internal data.
+           # Set of run tables for the current ensemble. This is only required
+           # for processing internal data.
            run_table = "ANY",
-           # Information required to assess model calibrations (e.g. baseline survival)
+           # Information required to assess model calibrations (e.g. baseline
+           # survival)
            calibration_info = "ANY",
-           # Evaluation settings. This allows default values for external use of existing models.
+           # Path to the model directory. Required for auto-detaching.
+           model_dir_path = "character",
+           # Flag that signals auto-detaching. This means that models are loaded
+           # and discarded one-by-one. This saves memory, but comes at the cost
+           # of IO overhead. Moreover, its not possible if the models are not
+           # stored on drive in the first place.
+           auto_detach = "logical",
+           # Evaluation settings. This allows default values for external use of
+           # existing models.
            settings = "ANY",
-           # Flags anonymisation of the model
+           # Flags anonymisation of the model.
            is_anonymised = "logical",
-           # Project identifier for consistency tracking
+           # Project identifier for consistency tracking.
            project_id = "ANY",
-           # Package version for backward compatibility
+           # Package version for backward compatibility checks.
            familiar_version = "ANY"
          ),
          prototype = list(
@@ -116,6 +129,8 @@ setClass("familiarEnsemble",
            model_features = NULL,
            run_table = NULL,
            calibration_info = NULL,
+           model_dir_path = NA_character_,
+           auto_detach = FALSE,
            settings = NULL,
            is_anonymised = FALSE,
            project_id = NULL,

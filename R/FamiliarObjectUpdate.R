@@ -57,6 +57,10 @@ setMethod("update_object", signature(object="familiarEnsemble"),
               # Rename important_features to model_features
               attr(object, "model_features") <- attr(object, "important_features")
               attr(object, "important_features") <- NULL
+              
+              # Set default model_dir_path and auto_detach attributes.
+              attr(object, "model_dir_path") <- NA_character_
+              attr(object, "auto_detach") <- FALSE
             }
             
             if(!methods::validObject(object)) stop("Could not update the familiarEnsemble object to the most recent definition.")
