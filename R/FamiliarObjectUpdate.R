@@ -36,6 +36,15 @@ setMethod("update_object", signature(object="familiarModel"),
               
               # Remove signature altogether.
               attr(object, "signature") <- NULL
+              
+              # Check that the model has been successfully trained. Since
+              # version 0.0.0.54, features from models that have not been
+              # trained will not be retained for further evaluation.
+              if(!model_is_trained(object)){
+                object@required_features <- NULL
+                object@model_features <- NULL
+                object@novelty_features <- NULL
+              }
             }
             
             if(!methods::validObject(object)) stop("Could not update the familiarModel object to the most recent definition.")

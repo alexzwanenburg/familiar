@@ -60,6 +60,13 @@ setMethod(".train", signature(object="familiarModel", data="dataObject"),
             # Add outcome distribution data
             object@outcome_info <- .compute_outcome_distribution_data(object=object@outcome_info, data=data)
             
+            # Empty slots if a model can not be trained.
+            if(!can_train){
+              object@required_features <- NULL
+              object@model_features <- NULL
+              object@novelty_features <- NULL
+            }
+            
             return(object)
           })
 
