@@ -4,9 +4,13 @@ NULL
 
 #'@title Update familiar S4 objects to the most recent version.
 #'
-#'@description Creates `familiarEnsemble` a object from `familiarModel` objects.
+#'@description Provides backward compatibility for familiar objects exported to
+#'  a file. This mitigates compatibility issues when working with files that
+#'  become outdated as new versions of familiar are released, e.g. because slots
+#'  have been removed.
 #'
-#'@param object A `familiarModel`, a `familiarEnsemble`, a `familiarData` or `familiarCollection` object.
+#'@param object A `familiarModel`, a `familiarEnsemble`, a `familiarData` or
+#'  `familiarCollection` object.
 #'@param ... Unused arguments.
 #'
 #'@return An up-to-date version of the respective S4 object.
@@ -15,7 +19,7 @@ NULL
 #'@rdname update_object-methods
 setGeneric("update_object", function(object, ...) standardGeneric("update_object"))
 
-
+##### update_object (familiarModel) #####
 #'@rdname update_object-methods
 setMethod("update_object", signature(object="familiarModel"),
           function(object, ...){
@@ -56,6 +60,7 @@ setMethod("update_object", signature(object="familiarModel"),
           })
 
 
+##### update_object (familiarEnsemble) #####
 #'@rdname update_object-methods
 setMethod("update_object", signature(object="familiarEnsemble"),
           function(object, ...){
@@ -84,6 +89,7 @@ setMethod("update_object", signature(object="familiarEnsemble"),
           })
 
 
+##### update_object (familiarData) #####
 #'@rdname update_object-methods
 setMethod("update_object", signature(object="familiarData"),
           function(object, ...){
@@ -108,6 +114,7 @@ setMethod("update_object", signature(object="familiarData"),
           })
 
 
+##### update_object (familiarCollection) #####
 #'@rdname update_object-methods
 setMethod("update_object", signature(object="familiarCollection"),
           function(object, ...){
