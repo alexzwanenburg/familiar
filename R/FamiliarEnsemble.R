@@ -31,14 +31,19 @@ setMethod("complete_familiar_ensemble", signature(object="familiarEnsemble"),
             model_features <- unique(unlist(lapply(model_list, function(fam_model) (fam_model@model_features))))
             
             # Aggregate feature information
-            feature_info_list <- lapply(required_features,
-                                        .collect_and_aggregate_feature_info,
-                                        object=object,
-                                        model_list=model_list,
-                                        stop_at="imputation")
-            
-            # Add name to features.
-            names(feature_info_list) <- required_features
+            if(length(required_features) > 0){
+              feature_info_list <- lapply(required_features,
+                                          .collect_and_aggregate_feature_info,
+                                          object=object,
+                                          model_list=model_list,
+                                          stop_at="imputation")
+              
+              # Add name to features.
+              names(feature_info_list) <- required_features
+              
+            } else {
+              feature_info_list <- NULL
+            }
             
             # Aggregate calibration info
             calibration_info <- .collect_and_aggregate_calibration_info(model_list=model_list,
