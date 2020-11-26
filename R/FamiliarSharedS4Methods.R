@@ -6,11 +6,14 @@
     stop("The \".assess_calibration\" function is only applicable to objects of the \"familiarModel\" or \"familiarEnsemble\" classes.")
   }
   
-  # Check data consistency of external data. We cannot transfer pre-processing state beyond this function
+  # Check data consistency of external data. We cannot transfer pre-processing
+  # state beyond this function.
   if(!is(data, "dataObject")){
-    data <- create_data_object(object=object,
-                               data=data,
-                               is_pre_processed=is_pre_processed)
+    data <- as_data_object(object=object,
+                           data=data)
+    
+    # Set pre-processing level.
+    data@preprocessing_level=ifelse(is_pre_processed, "clustering", "none")
   }
   
   # Check if eval_times are provided, and load from settings attribute otherwise.

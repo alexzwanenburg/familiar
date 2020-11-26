@@ -46,8 +46,6 @@ setGeneric("get_object_name", function(object, ...) standardGeneric("get_object_
 
 setGeneric("process_input_data", function(object, data, ...) standardGeneric("process_input_data"))
 
-setGeneric("create_data_object", function(object, data, ...) standardGeneric("create_data_object"))
-
 setGeneric("load_delayed_data", function(data, object, ...) standardGeneric("load_delayed_data"))
 
 setGeneric("select_data_from_samples", function(data, samples, ...) standardGeneric("select_data_from_samples"))

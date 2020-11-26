@@ -147,38 +147,6 @@ setMethod("extract_settings_from_data", signature(data="dataObject"),
           })
 
 
-#####create_data_object (vimp method)#####
-setMethod("create_data_object", signature(object="familiarVimpMethod", data="ANY"),
-          function(object, data, is_pre_processed=FALSE) .create_data_object(object=object,
-                                                                             data=data,
-                                                                             is_pre_processed=is_pre_processed))
-
-#####create_data_object (model)#####
-setMethod("create_data_object", signature(object="familiarModel", data="ANY"),
-          function(object, data, is_pre_processed=FALSE) .create_data_object(object=object,
-                                                                             data=data,
-                                                                             is_pre_processed=is_pre_processed))
-          
-          
-#####create_data_object (ensemble)#####
-setMethod("create_data_object", signature(object="familiarEnsemble", data="ANY"),
-          function(object, data, is_pre_processed=FALSE) .create_data_object(object=object,
-                                                                             data=data,
-                                                                             is_pre_processed=is_pre_processed))
-
-.create_data_object <- function(object, data, is_pre_processed){
-  # Skip checks if the data already is a data objects
-  if(is(data, "dataObject")) return(data)
-  
-  # TODO check input data consistency, i.e. column naming etc.
-  new_data <- methods::new("dataObject",
-                           data=data,
-                           preprocessing_level=ifelse(is_pre_processed, "clustering", "none"),
-                           outcome_type=object@outcome_type)
-  
-  return(new_data)
-}
-
 
 #####load_delayed_data (model)#####
 setMethod("load_delayed_data", signature(data="dataObject", object="ANY"),
@@ -521,7 +489,11 @@ setMethod("process_input_data", signature(object="familiarEnsemble", data="ANY")
 .process_input_data <- function(object, data, is_pre_processed, stop_at, keep_novelty=FALSE){
   # Check whether data is a dataObject, and create one otherwise
   if(!is(data, "dataObject")){
-    data <- create_data_object(object=object, data=data, is_pre_processed=is_pre_processed)
+    data <- as_data_object(data=data,
+                           object=object)
+    
+    # Set pre-processing level.
+    data@preprocessing_level=ifelse(is_pre_processed, "clustering", "none")
   }
   
   # Load data from internal memory, if not provided otherwise

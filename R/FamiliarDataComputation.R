@@ -250,9 +250,11 @@ setMethod("extract_data", signature(object="familiarEnsemble"),
             
             # Check whether data is a dataObject, and create one otherwise.
             if(!is(data, "dataObject")){
-              data <- create_data_object(object=object,
-                                         data=data,
-                                         is_pre_processed=is_pre_processed)
+              data <- as_data_object(data=data,
+                                     object=object)
+              
+              # Set pre-processing level.
+              data@preprocessing_level=ifelse(is_pre_processed, "clustering", "none")
             }
             
             # Load models
