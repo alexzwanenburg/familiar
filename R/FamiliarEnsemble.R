@@ -406,40 +406,13 @@ setMethod("..get_model", signature(ii="numeric", object="familiarEnsemble"),
             # First check if the file exists.
             if(!file.exists(object@model_list[[ii]])){
               
+              # Obtain the file name of the model.
               model_file_name <- ..get_model_file_path(ii=ii, object=object)
               
-              # Obtain the directory path stored in the file_paths environment
-              # variable (if any).
-              mb_dir_path <- tryCatch({get_file_paths()$mb_dir}, error=function(err)(return(NULL)))
-             
-              # Using the file directory indicated by the file_paths environment
-              # variable.
-              if(!is.null(mb_dir_path)){
-                # File is directly located in the given directory
-                file_path_1 <- file.path(mb_dir_path,
-                                         basename(object@model_list[[ii]]))
-                
-                if(file.exists(file_path_1)) return(load_familiar_object(file_path_1))
-                
-                # File is located in a subdirectory of mb_dir_path.
-                file_path_2 <- file.path(get_object_dir_path(dir_path=mb_dir_path,
-                                                             object_type="familiarModel",
-                                                             learner=object@learner,
-                                                             fs_method=object@fs_method),
-                                         basename(object@model_list[[ii]]))
-                
-                if(file.exists(file_path_2)) return(load_familiar_object(file_path_2))
-              }
+              # Load the model if the file exists.
+              if(!is.null(model_file_name)) return(load_familiar_object(model_file_name))
               
-              # Using the model_dir_path slot of the ensemble.
-              if(!is.null(object@model_dir_path)){
-                # File is directly located in the given directory
-                file_path_1 <- file.path(object@model_dir_path,
-                                         basename(object@model_list[[ii]]))
-                
-                if(file.exists(file_path_1)) return(load_familiar_object(file_path_1))
-              }
-              
+              # If no model could be found, throw an error.
               stop(paste0("..get_model,familiarEnsemble: cannot find the indicated familiarModel", object@model_list[[ii]]))
               
             } else {
