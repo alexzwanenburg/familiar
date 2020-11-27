@@ -257,8 +257,8 @@ setMethod("extract_data", signature(object="familiarEnsemble"),
               data@preprocessing_level=ifelse(is_pre_processed, "clustering", "none")
             }
             
-            # Load models
-            object <- load_models(object=object)
+            # Load models, and drop any models that were not trained.
+            object <- load_models(object=object, drop_untrained=TRUE)
             
             # Extract feature distance tables,
             if(data_element %in% c("all", "mutual_correlation", "univariate_analysis", "feature_expressions", "permutation_vimp")){
