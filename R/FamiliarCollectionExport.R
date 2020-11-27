@@ -384,7 +384,7 @@ setMethod("export_permutation_vimp", signature(object="ANY"),
             
             # Attempt conversion to familiarCollection object.
             object <- do.call(as_familiar_collection,
-                              args=append(list("object"=object, "data_element"="prediction_data"), list(...)))
+                              args=append(list("object"=object, "data_element"="permutation_vimp"), list(...)))
             
             return(do.call(export_permutation_vimp,
                            args=append(list("object"=object, "dir_path"=dir_path, "export_raw"=export_raw), list(...))))

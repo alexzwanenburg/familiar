@@ -48,17 +48,44 @@ for Box-Cox, but the Yeo-Johnson method benefits from a wider selection. This
 does not affect backward compatibility.
 
 ## Bug fixes:
-* Fixed an error that would cause hyperparameter optimisation to not select the optimal set of hyperparameters.
-* Fixed an error that would cause feature selection to fail when all features in the data are also set to be in the signature.
-* Fixed an error that occurred when attempting to create risk groups from models that were not successfully trained.
-* Fixed an error in ComBat batch normalisation caused by invariant or NA features in one or more batches.
-* Fixed a bug that would incorrectly assign samples to wrong subsamples (e.g. in-bag or out-of-bag data). This only occurred if the same sample identifier exists in different batches.
-* Fixed an error that occurred prior to hyperparameter optimisation because a model-dependent hyperparameter required to create a metric object may not have been set.
-* Fixed an error when attempting to perform parallel processing with familiar installed on a non-standard library path.
-* Fixed an issue where the `verbose` argument was not respected when determining clusters of features.
-* Fixed an issue where absence of censoring for time-to-event data would lead to models not being created.
-* Fixed an issue where NA would not be removed from the results in the `extract_from_slot` function.
-* Fixed an issue where information would be missing in `familiarEnsemble` objects because the first `familiarModel` in the ensemble was not trained. This information cannot be added retroactively.
+* Fixed an error that would cause hyperparameter optimisation to not select the
+optimal set of hyperparameters.
+
+* Fixed an error that would cause feature selection to fail when all features in
+the data are also set to be in the signature.
+
+* Fixed an error that occurred when attempting to create risk groups from models
+that were not successfully trained.
+
+* Fixed an error in ComBat batch normalisation caused by invariant or NA
+features in one or more batches.
+
+* Fixed a bug that would incorrectly assign samples to wrong subsamples (e.g.
+in-bag or out-of-bag data). This only occurred if the same sample identifier
+exists in different batches.
+
+* Fixed an error that occurred prior to hyperparameter optimisation because a
+model-dependent hyperparameter required to create a metric object may not have
+been set.
+
+* Fixed an error when attempting to perform parallel processing with familiar
+installed on a non-standard library path.
+
+* Fixed an issue where the `verbose` argument was not respected when forming
+clusters of features.
+
+* Fixed an issue where absence of censoring for time-to-event data would lead to
+models not being created.
+
+* Fixed an issue where NA would not be removed from the results in the
+`extract_from_slot` function.
+
+* Fixed an issue where information would be missing in `familiarEnsemble`
+objects because the first `familiarModel` in the ensemble was not trained. This
+information cannot be added retroactively.
+
+* Fixed an issue that would cause `export_permutation_vimp` to export the wrong
+data when called by the user.
 
 # Version 0.0.0.53 (Pre-release)
 
