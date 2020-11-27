@@ -429,11 +429,23 @@ setMethod("..train", signature(object="familiarModel", data="NULL"),
             return(object)
           })
 
-#####..predict#####
+
+
+
+#####..predict (familiarModel, dataObject)#####
 setMethod("..predict", signature(object="familiarModel", data="dataObject"),
           function(object, data, ...) return(get_placeholder_prediction_table(object=object, data=data)))
 
-#####..predict_survival_probability####
+#####..predict (character, dataObject)#####
+setMethod("..predict", signature(object="character", data="dataObject"),
+          function(object, data, ...){
+            # Load object.
+            object <- load_familiar_object(object)
+            
+            return(do.call(..predict, args=c(list("object"=object,
+                                                  "data"=data))))
+          })
+
 setMethod("..predict_survival_probability", signature(object="familiarModel", data="dataObject"),
           function(object, data, time) return(get_placeholder_prediction_table(object=object, data=data)))
 
