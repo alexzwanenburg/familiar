@@ -644,3 +644,162 @@
   
   return(data)
 }
+
+
+update_data_set <- function(data, object){
+  
+  # Check if the classes of the input is correct.
+  if(!data.table::is.data.table(data)) stop("update_data_set: data is not a data.table")
+  if(!(is(object, "familiarModel") | is(object, "familiarEnsemble"))) stop("update_data_set: object is not a familiarModel or a familiarEnsemble.")
+  
+  # Find the outcome column
+  outcome_column <- get_outcome_columns(outcome_type)
+  
+  # Start warning list.
+  warning_list <- NULL
+  
+  ##### Check outcome ##########################################################
+  
+  # Checks for categorical / ordinal outcomes.
+  if(object@outcome_type %in% c("binomial", "multinomial")){
+    if(is(object@outcome_info, "outcomeInfo")){
+      # Update the outcome column if the outcome data is ordinal.
+      if(object@outcome_info@ordered & !is.ordered(data[[outcome_column]])){
+        data[[outcome_column]] <- ordered(data[[outcome_column]], levels=object@outcome_info@levels)
+        
+      } else if(!object@outcome_info@ordered & !is.factor(data[[outcome_column]])){
+        data[[outcome_column]] <- factor(data[[outcome_column]], levels=object@outcome_info@levels)
+      }
+      
+      # Check that the data does not have extra levels.
+      extra_levels <- setdiff(levels(data[[outcome_column]]),
+                              object@outcome_info@levels)
+                              
+      if(length(extra_levels > 0)){
+        warning_list <- c(warning_list,
+                          paste0("The outcome column contains the following ",
+                                 ifelse(length(extra_levels) > 1, "levels", "level"),
+                                 " that were not found in the original dataset: ",
+                                 paste_s(extra_levels), "; original: ", paste_s(object@outcome_info@levels)))
+      } else {
+        # Ensure that order is correct.
+        data[[outcome_column]] <- factor(data[[outcome_column]],
+                                         levels=object@outcome_info@levels,
+                                         ordered=object@outcome_info@ordered)
+      }
+    }
+  }
+  
+  # TODO: When we start supporting transformation and normalisation
+  # parameters for outcome, process the data here.
+  if(object@outcome_type %in% c("count", "continuous")){
+    if(is(object@outcome_info, "outcomeInfo")){
+      if(!is.null(object@outcome_info@transformation_parameters | !is.null(object@outcome_info@normalisation_parameters))){
+        browser()
+      }
+    }
+  }
+  
+  ##### Check columns ##########################################################
+  
+  # Get all column names.
+  all_columns <- colnames(data)
+  
+  # Check that the non-feature columns are present.
+  non_feature_columns <- get_non_feature_columns(object@outcome_type)
+  missing_non_feature_columns <- setdiff(non_feature_columns, all_columns)
+  
+  if(length(missing_non_feature_columns) > 0){
+    warning_list <- c(warning_list,
+                      paste0("The following non-feature ",
+                             ifelse(length(missing_non_feature_columns) > 1, "columns are", "column is"),
+                             " missing in the dataset: ",
+                             paste_s(missing_non_feature_columns)))
+  }
+  
+  # Remove non-feature columns from the check.
+  all_columns <- setdiff(all_columns, non_feature_columns)
+  
+  # Check that the feature columns for required_features, and if not, for the
+  # union of model_features and novelty_features are present.
+  required_features <- object@required_features
+  model_and_novelty_features <- union(object@model_features, object@novelty_features)
+  
+  if(length(required_features) > 0 & length(model_and_novelty_features) > 0){
+    if(all(required_features %in% all_columns)){
+      available_features <- required_features
+      
+    } else if(all(model_and_novelty_features %in% all_columns)){
+      available_features <- model_and_novelty_features
+      
+    } else {
+      # At least one model / novelty feature is missing.
+      missing_feature_columns <- setdiff(model_and_novelty_features, all_columns)
+      warning_list <- c(warning_list,
+                        paste0("The following feature ",
+                               ifelse(length(missing_feature_columns) > 1, "columns are", "column is"),
+                               " missing in the dataset: ",
+                               paste_s(missing_feature_columns)))
+      
+      # Select features that are available.
+      available_features <- intersect(model_and_novelty_features, all_columns)
+      
+      if(length(available_features) == 0){
+        warning_list <- c(warning_list,
+                          paste0("No additional feature-specific details could be assessed because none of the features appear in the dataset."))
+      }
+    }
+  }
+  
+  ##### Check features #########################################################
+  feature_info_list <- object@feature_info[available_features]
+  
+  # Iterate over features.
+  for(feature in available_features){
+    # Select the feature info object for the current feature.
+    feature_info <- feature_info_list[[feature]]
+    
+    if(feature_info@feature_type == "numeric"){
+      # For numeric features determine whether the feature in the data is numeric.
+      if(!is.numeric(data[[feature]])){
+        warning_list <- c(warning_list,
+                          paste0("The ", feature, " column contain a numeric feature. Found: ", typeof(data[[feature]])))
+      }
+      
+    } else if(feature_info@feature_type == "factor"){
+      # For categorical and ordinal features determine whether there are any
+      # unknown levels in the data.
+      if(is.factor(data[[feature]])){
+        levels_present <- levels(data[[feature]])
+        
+      } else {
+        levels_present <- unique(data[[feature]])
+      }
+      
+      # Check for extra levels. Note that fewer levels is fine.
+      extra_levels <- setdiff(levels_present, feature_info@levels)
+      
+      if(length(extra_levels > 0)){
+        warning_list <- c(warning_list,
+                          paste0("The ", feature, " column contains the following ",
+                                 ifelse(length(extra_levels) > 1, "levels", "level"),
+                                 " that were not found in the original dataset: ",
+                                 paste_s(extra_levels), "; original: ", paste_s(feature_info@levels)))
+      } else {
+        # Ensure that order of levels in the data is correct.
+        data[[feature]] <- factor(data[[feature]],
+                                  levels=feature_info@levels,
+                                  ordered=feature_info@ordered)
+      }
+      
+    } else {
+      ..error_reached_unreachable_code(paste0("update_data_set: unknown feature type encountered: ", feature_info@feature_type))
+    }
+  }
+  
+  # Raise an error in case there was any error for any feature.
+  if(length(warning_list) > 0) stop(paste(warning_list, collapse="\n\n"))
+  
+  return(data)
+}
+

@@ -5,14 +5,16 @@ NULL
 
 #####as_data_object (dataObject)#####
 setMethod("as_data_object", signature(data="dataObject"),
-          function(data, ...) return(data))
+          function(data, object=NULL, ...) return(data))
 
 
 #####as_data_object (data.table)#####
 setMethod("as_data_object", signature(data="data.table"),
           function(data,
+                   object=NULL,
                    sample_id_column=waiver(),
                    batch_id_column=waiver(),
+                   series_id_column=waiver(),
                    development_batch_id=waiver(),
                    validation_batch_id=waiver(),
                    outcome_name=waiver(),
@@ -25,11 +27,149 @@ setMethod("as_data_object", signature(data="data.table"),
                    exclude_features=waiver(),
                    include_features=waiver(),
                    ...){
+
+            # Suppress NOTES due to non-standard evaluation in data.table
+            type <- NULL
             
-            # Load settings from ellipsis
+            # Determine whether the object contains data concerning columns, and
+            # outcome. Note that user-provided names always take precedence.
+            has_model_object <- is(object, "familiarModel") | is(object, "familiarEnsemble")
+            
+            # Attempt to identify a sample identifier column.
+            if(is.waive(sample_id_column)){
+              
+              if(has_model_object){
+                if(!is_empty(object@data_column_info)){
+                  # Find the sample id column stored with the model.
+                  model_sample_id_column <- object@data_column_info[type == "sample_id_column"]$external
+                  
+                  # Check that the model actually has a column name (not
+                  # character(0)) that is not NA, and set this column name.
+                  if(length(model_sample_id_column) > 0){
+                    if(!is.na(model_sample_id_column)) sample_id_column <- model_sample_id_column
+                  }
+                }
+              }
+            }
+            
+            # Attempt to identify a batch identifier column.
+            if(is.waive(batch_id_column)){
+              
+              if(has_model_object){
+                if(!is_empty(object@data_column_info)){
+                  # Find the batch id column stored with the model.
+                  model_batch_id_column <- object@data_column_info[type == "batch_id_column"]$external
+                  
+                  # Check that the model actually has a column name (not
+                  # character(0)) that is not NA, and set this column name.
+                  if(length(model_batch_id_column) > 0){
+                    if(!is.na(model_batch_id_column)) batch_id_column <- model_batch_id_column
+                  }
+                }
+              }
+            }
+            
+            # Attempt to identify a series identifier column.
+            if(is.waive(series_id_column)){
+              
+              if(has_model_object){
+                if(!is_empty(object@data_column_info)){
+                  # Find the series id column stored with the model.
+                  model_series_id_column <- object@data_column_info[type == "series_id_column"]$external
+                  
+                  # Check that the model actually has a column name (not
+                  # character(0)) that is not NA, and set this column name.
+                  if(length(model_series_id_column) > 0){
+                    if(!is.na(model_series_id_column)) series_id_column <- model_series_id_column
+                  }
+                }
+              }
+            }
+            
+            # Development and validation batch ids are not incorporated into
+            # familiarModel or familiarEnsemble objects.
+            
+            # Attempt to identify the name of the outcome.
+            if(is.waive(outcome_name)){
+              
+              if(has_model_object){
+                if(is(object@outcome_info, "outcomeInfo")){
+                  
+                  # Check that the outcome name is not empty.
+                  if(length(object@outcome_info@name) > 1) outcome_name <- object@outcome_info@name
+                }
+              }
+            }
+            
+            # Attempt to identify the outcome columns.
+            if(is.waive(outcome_column)){
+              
+              if(has_model_object){
+                if(!is_empty(object@data_column_info)){
+                  # Find the model columns.
+                  outcome_column <- object@data_column_info[type == "outcome_column"]$external
+                }
+              }
+            }
+            
+            # Attempt to identify the type of outcome.
+            if(is.waive(outcome_type)){
+              if(has_model_object){
+                outcome_type <- object@outcome_type
+              }
+            }
+            
+            # Attempt to identify the event indicator.
+            if(is.waive(event_indicator)){
+              
+              if(has_model_object){
+                if(is(object@outcome_info, "outcomeInfo")){
+                  if(length(object@outcome_info@event) > 0){
+                    if(!is.na(object@outcome_info@event)) event_indicator <- object@outcome_info@event
+                  }
+                }
+              }
+            }
+            
+            # Attempt to identify the censoring indicator.
+            if(is.waive(censoring_indicator)){
+              
+              if(has_model_object){
+                if(is(object@outcome_info, "outcomeInfo")){
+                  if(length(object@outcome_info@censored) > 0){
+                    if(!is.na(object@outcome_info@censored)) censoring_indicator <- object@outcome_info@censored
+                  }
+                }
+              }
+            }
+            
+            # Attempt to identify the competing risk indicator.
+            if(is.waive(competing_risk_indicator)){
+              
+              if(has_model_object){
+                if(is(object@outcome_info, "outcomeInfo")){
+                  if(length(object@outcome_info@competing_risk) > 0){
+                    if(!is.na(object@outcome_info@competing_risk)) competing_risk_indicator <- object@outcome_info@competing_risk
+                  }
+                }
+              }
+            }
+            
+            # Attempt to identify class levels of the outcome.
+            if(is.waive(class_levels)){
+              
+              if(has_model_object){
+                if(is(object@outcome_info, "outcomeInfo")){
+                  if(length(object@outcome_info@levels) > 0) class_levels <- object@outcome_info@levels
+                }
+              }
+            }
+            
+            # Load settings from input.
             settings <- do.call(.parse_initial_settings, args=c(list("experimental_design"="fs+mb",
                                                                      "sample_id_column"=sample_id_column,
                                                                      "batch_id_column"=batch_id_column,
+                                                                     "series_id_column"=series_id_column,
                                                                      "development_batch_id"=development_batch_id,
                                                                      "validation_batch_id"=validation_batch_id,
                                                                      "outcome_name"=outcome_name,
@@ -65,12 +205,24 @@ setMethod("as_data_object", signature(data="data.table"),
                                              event_indicator=settings$data$event_indicator,
                                              competing_risk_indicator=settings$data$competing_risk_indicator)
             
+            # Update the dataset according to the feature info list.
+            if(has_model_object) data <- update_data_set(data=data, object=object)
+            
+            # Add outcome information, preferentially from the familiarModel or
+            # familiarEnsemble, as it is more complete.
+            if(has_model_object){
+              outcome_info <- object@outcome_info
+              
+            } else {
+              outcome_info <- create_outcome_info(settings=settings)
+            }
+            
             # Convert to dataObject
             data <- methods::new("dataObject",
                                  data = data,
                                  preprocessing_level="none",
                                  outcome_type = settings$data$outcome_type,
-                                 outcome_info = create_outcome_info(settings=settings))
+                                 outcome_info = outcome_info)
             
             return(data)
           })
@@ -79,14 +231,36 @@ setMethod("as_data_object", signature(data="data.table"),
 #####as_data_object (ANY)#####
 setMethod("as_data_object", signature(data="ANY"),
           function(data,
+                   object=NULL,
                    sample_id_column=waiver(),
                    batch_id_column=waiver(),
                    series_id_column=waiver(),
                    ...){
             
-            # Create a local copy of batch_id_column to pass on to .load_data.
+            # Suppress NOTES due to non-standard evaluation in data.table
+            type <- NULL
+            
+            # Determine whether the object contains data concerning columns.
+            # Note that user-provided names always take precedence.
+            has_model_object <- FALSE
+            if(is(object, "familiarModel") | is(object, "familiarEnsemble")){
+              if(!is_empty(object@data_column_info)) has_model_object <- TRUE
+            }
+            
+            # Create a local copy of sample_id_column to pass on to .load_data.
             if(is.waive(sample_id_column)){
               sample_id_column_local <- NULL
+              
+              if(has_model_object){
+                # Find the sample id column stored with the model.
+                model_sample_id_column <- object@data_column_info[type == "sample_id_column"]$external
+                
+                # Check that the model actually has a column name (not
+                # character(0)) that is not NA, and set this column name.
+                if(length(model_sample_id_column) > 0){
+                  if(!is.na(model_sample_id_column)) sample_id_column_local <- model_sample_id_column
+                }
+              }
               
             } else {
               sample_id_column_local <- sample_id_column
@@ -96,6 +270,17 @@ setMethod("as_data_object", signature(data="ANY"),
             if(is.waive(batch_id_column)){
               batch_id_column_local <- NULL
               
+              if(has_model_object){
+                # Find the batch id column stored with the model.
+                model_batch_id_column <- object@data_column_info[type == "batch_id_column"]$external
+                
+                # Check that the model actually has a column name (not
+                # character(0)) that is not NA, and set this column name.
+                if(length(model_batch_id_column) > 0){
+                  if(!is.na(model_batch_id_column)) batch_id_column_local <- model_batch_id_column
+                }
+              }
+              
             } else {
               batch_id_column_local <- batch_id_column
             }
@@ -103,6 +288,17 @@ setMethod("as_data_object", signature(data="ANY"),
             # Create a local copy of series_id_column to pass on to .load_data
             if(is.waive(series_id_column)){
               series_id_column_local <- NULL
+              
+              if(has_model_object){
+                # Find the series id column stored with the model.
+                model_series_id_column <- object@data_column_info[type == "series_id_column"]$external
+                
+                # Check that the model actually has a column name (not
+                # character(0)) that is not NA, and set this column name.
+                if(length(model_series_id_column) > 0){
+                  if(!is.na(model_series_id_column)) series_id_column_local <- model_series_id_column
+                }
+              }
               
             } else {
               series_id_column_local <- series_id_column
@@ -116,11 +312,14 @@ setMethod("as_data_object", signature(data="ANY"),
             
             # Pass on to data.table method.
             return(do.call(as_data_object, args=c(list("data"=data,
+                                                       "object"=object,
                                                        "sample_id_column"=sample_id_column,
                                                        "batch_id_column"=batch_id_column,
                                                        "series_id_column"=series_id_column),
                                                   list(...))))
           })
+
+
 
 
 setMethod("extract_settings_from_data", signature(data="dataObject"),
