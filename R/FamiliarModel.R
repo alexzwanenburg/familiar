@@ -299,7 +299,9 @@ setMethod("get_object_name", signature(object="familiarModel"),
             return(model_name)
           })
 
-#####model_is_trained (model)#####
+
+
+#####model_is_trained (familiarModel)#####
 setMethod("model_is_trained", signature(object="familiarModel"),
           function(object){
             # Check if a model was trained
@@ -312,6 +314,15 @@ setMethod("model_is_trained", signature(object="familiarModel"),
               # stated using the model_trained element
               return(TRUE)
             }
+          })
+
+#####model_is_trained (character)#####
+setMethod("model_is_trained", signature(object="character"),
+          function(object){
+            # Load object.
+            object <- load_familiar_object(object)
+            
+            return(do.call(model_is_trained, args=c(list("object"=object))))
           })
 
 
