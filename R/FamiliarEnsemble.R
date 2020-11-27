@@ -27,8 +27,11 @@ setMethod("complete_familiar_ensemble", signature(object="familiarEnsemble"),
             # Find all required features
             required_features <- unique(unlist(lapply(model_list, function(fam_model) (fam_model@required_features))))
             
-            # Find all important features
+            # Find all important features for the model.
             model_features <- unique(unlist(lapply(model_list, function(fam_model) (fam_model@model_features))))
+            
+            # Find all important features for novelty detection.
+            novelty_features <- unique(unlist(lapply(model_list, function(fam_model) (fam_model@novelty_features))))
             
             # Aggregate feature information
             if(length(required_features) > 0){
@@ -60,6 +63,7 @@ setMethod("complete_familiar_ensemble", signature(object="familiarEnsemble"),
                                          fs_method = object@fs_method,
                                          required_features = required_features,
                                          model_features = model_features,
+                                         novelty_features = novelty_features,
                                          feature_info = feature_info_list,
                                          run_table = object@run_table,
                                          calibration_info = calibration_info,

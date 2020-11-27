@@ -75,6 +75,10 @@ setMethod("update_object", signature(object="familiarEnsemble"),
               attr(object, "model_features") <- attr(object, "important_features")
               attr(object, "important_features") <- NULL
               
+              # Introduce missing novelty_features slot by copying
+              # model_features.
+              attr(object, "novelty_features") <- attr(object, "model_features")
+              
               # Set default model_dir_path and auto_detach attributes.
               attr(object, "model_dir_path") <- NA_character_
               attr(object, "auto_detach") <- FALSE

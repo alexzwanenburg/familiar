@@ -94,6 +94,8 @@ setClass("familiarEnsemble",
            # (i.e. features that are in the signature directly or as part of a
            # cluster)
            model_features = "ANY",
+           # Features that are required for novelty detection.
+           novelty_features = "ANY",
            # Set of run tables for the current ensemble. This is only required
            # for processing internal data.
            run_table = "ANY",
@@ -127,6 +129,7 @@ setClass("familiarEnsemble",
            feature_info = NULL,
            required_features = NULL,
            model_features = NULL,
+           novelty_features = NULL,
            run_table = NULL,
            calibration_info = NULL,
            model_dir_path = NA_character_,
