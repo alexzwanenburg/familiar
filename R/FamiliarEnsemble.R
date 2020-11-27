@@ -669,8 +669,11 @@ setMethod("..can_detach_models", signature(ii="missing", object="familiarEnsembl
 
 #####load_models#####
 setMethod("load_models", signature(object="familiarEnsemble"),
-          function(object, dir_path=NULL){
+          function(object, dir_path=NULL, drop_untrained=FALSE){
 
+            # Skip if there no models on the list.
+            if(length(object@model_list) == 0) return(object)
+            
             # Update model list as a precaution. This also checks that models
             # can actually be attached.
             object <- ..update_model_list(object=object,
@@ -679,6 +682,15 @@ setMethod("load_models", signature(object="familiarEnsemble"),
             # Do not attach models if auto_detach is set to TRUE.
             if(!object@auto_detach){
               object@model_list <- ..get_model(object=object)
+            }
+            
+            # Drop models that were not trained.
+            if(drop_untrained){
+              # Determine which models have been trained.
+              trained_model_mask <- sapply(object@model_list, model_is_trained)
+              
+              # Drop untrained models.
+              object@model_list <- object@model_list[trained_model_mask]
             }
             
             return(object)
