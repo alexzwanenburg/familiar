@@ -393,13 +393,24 @@ setMethod("assign_risk_groups", signature(object="familiarEnsemble", data="dataO
           })
 
 
-#####get_prediction_type#####
+#####get_prediction_type (familiarEnsemble)#####
 setMethod("get_prediction_type", signature(object="familiarEnsemble"),
           function(object, ...){
-            return(do.call(get_prediction_type, args=c(list("object" = ..get_model(object=object, ii=1)),
+            # This dispatches to get_prediction_type for the familiarModel
+            # subclass if a model is attached, and to character if not. The
+            # latter option then loads the familiarModel.
+            return(do.call(get_prediction_type, args=c(list("object"=object@model_list[[1]]),
                                                        list(...))))
           })
 
+#####get_prediction_type (character)#####
+setMethod("get_prediction_type", signature(object="character"),
+          function(object, ...){
+            object <- load_familiar_object(object)
+            
+            return(do.call(get_prediction_type, args=c(list("object"=object),
+                                                       list(...))))
+          })
 
 
 #####..get_model (numeric, familiarEnsemble) ######
