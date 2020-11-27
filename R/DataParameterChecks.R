@@ -778,6 +778,10 @@
     settings$data$competing_risk_indicator <- NULL
   }
   
+  # Make sure that columns are organised as time, event
+  time_column <- setdiff(settings$data$outcome_col, event_column)
+  settings$data$outcome_col <- c(time_column, event_column)
+  
   return(settings)
 }
 
