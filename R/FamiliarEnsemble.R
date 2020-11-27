@@ -689,7 +689,18 @@ setMethod("load_models", signature(object="familiarEnsemble"),
 #####is_model_loaded#####
 setMethod("is_model_loaded", signature(object="familiarEnsemble"),
           function(object){
-            return(all(sapply(object@model_list, is, class2="familiarModel")))
+            if(length(object@model_list) > 0 & !object@auto_detach){
+              # Check that all models are present.
+              return(all(sapply(object@model_list, is, class2="familiarModel")))
+              
+            } else if(length(object@model_list) > 0 & object@auto_detach) {
+              # Return TRUE if all models are dynamically loaded.
+              return(TRUE)
+              
+            } else {
+              # If there are no models, return TRUE.
+              return(TRUE)
+            }
           })
 
 
@@ -768,7 +779,6 @@ setMethod("model_is_trained", signature(object="familiarEnsemble"),
             } else {
               # Iterate over the models and check if any was trained
               return(any(sapply(object@model_list, model_is_trained)))
-              
             }
           })
 
