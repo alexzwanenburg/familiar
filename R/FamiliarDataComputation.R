@@ -853,7 +853,7 @@ setGeneric("extract_hyperparameters", function(object,
                                                verbose=FALSE,
                                                ...) standardGeneric("extract_hyperparameters"))
 
-#####extract_hyperparameters#####
+#####extract_hyperparameters (familiarEnsemble)#####
 setMethod("extract_hyperparameters", signature(object="familiarEnsemble"),
           function(object,
                    message_indent=0L,
@@ -867,22 +867,37 @@ setMethod("extract_hyperparameters", signature(object="familiarEnsemble"),
             }
             
             # Test if models are properly loaded
-            if(!is_model_loaded(object=object)){
-              ..error_ensemble_models_not_loaded()
-            }
+            if(!is_model_loaded(object=object)) ..error_ensemble_models_not_loaded()
+            
+            # Test if the any of the models in the ensemble were trained.
+            if(!model_is_trained(object)) return(NULL)
             
             # Collect hyperparameters
-            hyperparameter_info <- data.table::rbindlist(lapply(object@model_list, function(fam_model){
-              # Parse as data.table
-              data <- data.table::as.data.table(fam_model@hyperparameters)
-              
-              # Add model name column
-              data <- add_model_name(data=data, object=fam_model)
-              
-              return(data)
-            } ))
+            hyperparameter_info <- data.table::rbindlist(lapply(object@model_list, extract_hyperparameters))
             
             return(hyperparameter_info)
+          })
+
+#####extract_hyperparameters (familiarModel)#####
+setMethod("extract_hyperparameters", signature(object="familiarObject"),
+          function(object, ...){
+            # Parse hyperparameters as data.table
+            data <- data.table::as.data.table(object@hyperparameters)
+            
+            # Add model name column
+            data <- add_model_name(data=data,
+                                   object=object)
+            
+            return(data)
+          })
+
+#####extract_hyperparameters (character)#####
+setMethod("extract_hyperparameters", signature(object="familiarObject"),
+          function(object, ...){
+            # Load object.
+            object <- load_familiar_object(object)
+            
+            return(do.call(extract_hyperparameters, args=list("object"=object)))
           })
 
 
