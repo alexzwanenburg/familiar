@@ -106,6 +106,9 @@ summon_familiar <- function(formula=NULL, data=NULL, cl=NULL, config=NULL, confi
     data <- file_paths$data
   }
   
+  # Make sure to remove the directory if it is on the temporary path.
+  if(file_paths$is_temporary) on.exit(unlink(file_paths$experiment_dir, recursive=TRUE), add=TRUE)
+  
   ##### Load data -------------------------------------------------------------------
   # Parse experiment and data settings
   settings <- .parse_initial_settings(config=config, ...)
@@ -247,15 +250,11 @@ summon_familiar <- function(formula=NULL, data=NULL, cl=NULL, config=NULL, confi
     # familiarCollection objects.
     familiar_list <- .import_all_familiar_objects(file_paths=file_paths)
     
-    # Remove the temporary folder
-    unlink(x=file_paths$experiment_dir, recursive=TRUE)
-    
     # Return list with objects
     return(familiar_list)
     
   } else {
-    
-    return(invisible())
+    return(invisible(TRUE))
   }
 }
 
