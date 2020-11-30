@@ -826,6 +826,9 @@ setMethod("universal_extractor", signature(object="familiarEnsemble"),
                                                   X=object@model_list,
                                                   FUN=function(object, FUN2, determine_ci, cl2, dots2, verbose=FALSE, message_indent=0L){
                                                     
+                                                    # Load the object if it is not a familiarModel, but a character.
+                                                    if(is.character(object)) object <- load_familiar_object(object)
+                                                    
                                                     # Execute the function that computes the data.
                                                     results <- do.call(FUN2, args=c(list("determine_ci"=determine_ci,
                                                                                          "object"=object,
