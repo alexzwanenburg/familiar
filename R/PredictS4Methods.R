@@ -15,14 +15,28 @@ setMethod(".predict", signature(object="familiarEnsemble"),
             object <- load_models(object, dir_path=dir_path)
             
             # Extract predictions for each individual model
-            predict_list <- lapply(object@model_list,
-                                   .predict,
-                                   data=data,
-                                   allow_recalibration=allow_recalibration,
-                                   is_pre_processed=is_pre_processed,
-                                   time=time,
-                                   type=type,
-                                   novelty=novelty)
+            if(length(object@model_list) > 0){
+              predict_list <- lapply(object@model_list,
+                                     .predict,
+                                     data=data,
+                                     allow_recalibration=allow_recalibration,
+                                     is_pre_processed=is_pre_processed,
+                                     time=time,
+                                     type=type,
+                                     novelty=novelty)
+              
+            } else {
+              # Process data
+              data <- process_input_data(object=object,
+                                         data=data,
+                                         is_pre_processed=is_pre_processed,
+                                         stop_at="clustering",
+                                         keep_novelty=novelty)
+              
+              # Generate a placehold table.
+              predict_list <- list(get_placeholder_prediction_table(object=object, data=data))
+            }
+            
             
             ##### Ensemble predictions #####
             # Generate ensemble predictions
