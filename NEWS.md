@@ -6,9 +6,6 @@
     * Added `novelty_features` parameter that can be used to specify features
     that should be used for novelty detection.
 
-* Added `show` methods for objects that are typically written to drive, such as
-familiarModel, familiarEnsemble, familiarData and familiarCollection objects.
-
 * Added `update_object` methods that allow for backward compatibility when
 updating slots of respective objects.
 
@@ -22,9 +19,6 @@ not cause any issues with post-hoc analyses, but is not **not backward
 compatible** when updating familiar prior to completing the modelling and
 evaluation process.
 
-* The `as_data_object` method can now be used with `familiarModel` and
-`familiarEnsemble` objects to check whether the input data can be correctly
-formatted, and will provide meaningful errors if not.
 
 ## Minor changes:
 
@@ -46,6 +40,16 @@ Changes are backward compatible due to the new `update_object` method.
 determined using `stats::optimise`. The previous, fixed, settings were sensible
 for Box-Cox, but the Yeo-Johnson method benefits from a wider selection. This
 does not affect backward compatibility.
+
+* The `as_data_object` method can now be used with `familiarModel` and
+`familiarEnsemble` objects to check whether the input data can be correctly
+formatted, and will provide meaningful errors if not.
+
+* Added `show` methods for objects that are typically written to drive, such as
+`familiarModel`, `familiarEnsemble`, `familiarData` and `familiarCollection`
+objects.
+
+
 
 ## Bug fixes:
 * Fixed an error that would cause hyperparameter optimisation to not select the
@@ -87,18 +91,33 @@ information cannot be added retroactively.
 * Fixed an issue that would cause `export_permutation_vimp` to export the wrong
 data when called by the user.
 
+
+
+
 # Version 0.0.0.53 (Pre-release)
 
 ## Major changes:
-* All metrics are now implemented as S4 objects, with associated methods. Moreover all metrics now have unit tests.
-* All plotting algorithms now have unit tests which should increase stability of the code. Resulting code fixes are **not backward compatible**: you may need to recreate the `familiarData` objects for binomial endpoints.
+* All metrics are now implemented as S4 objects, with associated methods.
+Moreover all metrics now have unit tests.
+
+* All plotting algorithms now have unit tests which should increase stability of
+the code. Resulting code fixes are **not backward compatible**: you may need to
+recreate the `familiarData` objects for binomial endpoints.
+
 * Hyperparameter optimisation now has additional parameters:
-    * optimisation_determine_vimp: Allows for determining variable importance for each of the bootstraps used during hyperparameter optimisation to avoid positive biases.
-    * optimisation_function: replaces the objective parameter.
-    * smbo_stop_tolerance: tolerance for a optimisation score to be convergent.
-    * acquisition_function: an acquisition function can now be selected.
+    * `optimisation_determine_vimp`: Allows for determining variable importance
+    for each of the bootstraps used during hyperparameter optimisation to avoid
+    positive biases.
+    * `optimisation_function`: replaces the objective parameter.
+    * `smbo_stop_tolerance`: tolerance for a optimisation score to be convergent.
+    * `acquisition_function`: an acquisition function can now be selected.
+
 * Hyperparameter optimisation can now be performed using multiple optimisation metrics instead of one.
 
+
+
 ## Minor changes:
-* Data computation for individual models can now be explicitly set using the compute_model_data parameter.
+* Data computation for individual models can now be explicitly set using the
+`compute_model_data` parameter.
+
 * Many bugs were fixed.
