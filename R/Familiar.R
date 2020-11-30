@@ -110,11 +110,23 @@ summon_familiar <- function(formula=NULL, data=NULL, cl=NULL, config=NULL, confi
   # Parse experiment and data settings
   settings <- .parse_initial_settings(config=config, ...)
   
-  # Load data
-  data <- do.call(.load_data, args=append(list("data"=data), settings$data))
-  
-  # Update settings
-  settings <- .update_initial_settings(formula=formula, data=data, settings=settings)
+  if(is(data, "dataObject")){
+    # Reconstitute settings from the data.
+    new_settings <- extract_settings_from_data(data)
+    
+    # Replace settings with new settings.
+    settings$data[names(new_settings$data)] <- new_settings$data
+    
+    # Extract data as a data.table.
+    data <- data@data
+    
+  } else {
+    # Load data.
+    data <- do.call(.load_data, args=append(list("data"=data), settings$data))
+    
+    # Update settings
+    settings <- .update_initial_settings(formula=formula, data=data, settings=settings)
+  }
   
   # Parse data
   data <- .finish_data_preparation(data = data,
