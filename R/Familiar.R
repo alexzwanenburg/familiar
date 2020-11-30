@@ -84,7 +84,7 @@ summon_familiar <- function(formula=NULL, data=NULL, cl=NULL, config=NULL, confi
   # Disable multithreading on data.table to prevent reduced performance due to
   # resource collisions with familiar parallelisation.
   data.table::setDTthreads(1L)
-  on.exit(data.table::setDTthreads(0L))
+  on.exit(data.table::setDTthreads(0L), add=TRUE)
   
 
   ##### Load configuration file -----------------------------------
@@ -140,7 +140,7 @@ summon_familiar <- function(formula=NULL, data=NULL, cl=NULL, config=NULL, confi
                                    censoring_indicator=settings$data$censoring_indicator,
                                    event_indicator=settings$data$event_indicator,
                                    competing_risk_indicator=settings$data$competing_risk_indicator)
-  
+
   # Derive experimental design
   experiment_setup <- extract_experimental_setup(experimental_design=settings$data$exp_design,
                                                  file_dir=file_paths$iterations_dir)
@@ -215,12 +215,13 @@ summon_familiar <- function(formula=NULL, data=NULL, cl=NULL, config=NULL, confi
   
   # Make sure that backend server will close after the process finishes.
   on.exit(shutdown_backend_server(backend_type=settings$run$backend_type,
-                                  server_port=settings$run$server_port))
+                                  server_port=settings$run$server_port),
+          add=TRUE)
   
   if(settings$run$parallel & !settings$run$restart_cluster & !is_external_cluster){
     # Start local cluster in the overall process.
     cl <- .restart_cluster(cl=NULL, assign="all")
-    on.exit(.terminate_cluster(cl))
+    on.exit(.terminate_cluster(cl), add=TRUE)
     
   } else if(settings$run$parallel & settings$run$restart_cluster & !is_external_cluster){
     # Start processes locally.
