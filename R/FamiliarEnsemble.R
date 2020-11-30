@@ -695,7 +695,7 @@ setMethod("..can_detach_models", signature(ii="missing", object="familiarEnsembl
 
 #####load_models#####
 setMethod("load_models", signature(object="familiarEnsemble"),
-          function(object, dir_path=NULL, drop_untrained=FALSE){
+          function(object, dir_path=NULL, suppress_auto_detach=FALSE, drop_untrained=FALSE){
 
             # Skip if there no models on the list.
             if(length(object@model_list) == 0) return(object)
@@ -706,7 +706,7 @@ setMethod("load_models", signature(object="familiarEnsemble"),
                                           dir_path=dir_path)
             
             # Do not attach models if auto_detach is set to TRUE.
-            if(!object@auto_detach){
+            if(!object@auto_detach | suppress_auto_detach){
               object@model_list <- ..get_model(object=object)
             }
             
