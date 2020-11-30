@@ -3,7 +3,41 @@
 NULL
 
 
-#####.predict (model)#####
+#####.predict (familiarEnsemble)#####
+setMethod(".predict", signature(object="familiarEnsemble"),
+          function(object, data, allow_recalibration=TRUE, is_pre_processed=FALSE, time=NULL, type=NULL, dir_path=NULL, ensemble_method="median", novelty=FALSE, ...) {
+            # Predict function for a model ensemble. This will always return
+            # ensemble information, and not details corresponding to the
+            # individual models.
+            
+            # Test if the models are loaded, and load the models if they are
+            # not.
+            object <- load_models(object, dir_path=dir_path)
+            
+            # Extract predictions for each individual model
+            predict_list <- lapply(object@model_list,
+                                   .predict,
+                                   data=data,
+                                   allow_recalibration=allow_recalibration,
+                                   is_pre_processed=is_pre_processed,
+                                   time=time,
+                                   type=type,
+                                   novelty=novelty)
+            
+            ##### Ensemble predictions #####
+            
+            # Generate ensemble predictions
+            prediction_data <- ensemble_prediction(object=object,
+                                                   prediction_data=data.table::rbindlist(predict_list),
+                                                   ensemble_method=ensemble_method)
+            
+            # Return data
+            return(prediction_data)
+          })
+
+
+
+#####.predict (familiarModel)#####
 setMethod(".predict", signature(object="familiarModel"),
           function(object, data, allow_recalibration=TRUE, is_pre_processed=FALSE, time=NULL, type=NULL, novelty=FALSE, ...) {
             
@@ -64,40 +98,20 @@ setMethod(".predict", signature(object="familiarModel"),
           })
 
 
-#####.predict (ensemble)#####
-setMethod(".predict", signature(object="familiarEnsemble"),
-          function(object, data, allow_recalibration=TRUE, is_pre_processed=FALSE, time=NULL, type=NULL, dir_path=NULL, ensemble_method="median", novelty=FALSE, ...) {
-            # Predict function for a model ensemble. This will always return
-            # ensemble information, and not details corresponding to the
-            # individual models.
+#####.predict (character)#####
+setMethod(".predict", signature(object="character"),
+          function(object, ...){
             
-            # Test if the models are loaded, and load the models if they are
-            # not.
-            object <- load_models(object, dir_path=dir_path)
+            # Load object.
+            object <- load_familiar_object(object)
             
-            # Extract predictions for each individual model
-            predict_list <- lapply(object@model_list,
-                                   .predict,
-                                   data=data,
-                                   allow_recalibration=allow_recalibration,
-                                   is_pre_processed=is_pre_processed,
-                                   time=time,
-                                   type=type,
-                                   novelty=novelty)
-            
-            ##### Ensemble predictions #####
-            
-            # Generate ensemble predictions
-            prediction_data <- ensemble_prediction(object=object,
-                                                   prediction_data=data.table::rbindlist(predict_list),
-                                                   ensemble_method=ensemble_method)
-            
-            # Return data
-            return(prediction_data)
+            return(do.call(.predict, args=c(list("object"=object),
+                                            list(...))))
           })
 
 
-#####.predict_novelty#####
+
+#####.predict_novelty (familiarModel)#####
 setMethod(".predict_novelty", signature(object="familiarModel"),
           function(object, data, is_pre_processed=FALSE){
             
@@ -124,4 +138,16 @@ setMethod(".predict_novelty", signature(object="familiarModel"),
             
             return(predict(object=object@novelty_detector,
                            newdata=data@data))
+          })
+
+
+#####.predict_novelty (character)#####
+setMethod(".predict_novelty", signature(object="character"),
+          function(object, ...){
+            
+            # Load object.
+            object <- load_familiar_object(object)
+            
+            return(do.call(.predict_novelty, args=c(list("object"=object),
+                                                    list(...))))
           })
