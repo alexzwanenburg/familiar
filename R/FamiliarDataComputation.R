@@ -916,7 +916,7 @@ setGeneric("extract_km_cutoffs", function(object,
                                           verbose=FALSE,
                                           ...) standardGeneric("extract_km_cutoffs"))
 
-#####extract_km_cutoffs#####
+#####extract_km_cutoffs (familiarEnsemble)#####
 setMethod("extract_km_cutoffs", signature(object="familiarEnsemble"),
           function(object,
                    message_indent=0L,
@@ -932,34 +932,48 @@ setMethod("extract_km_cutoffs", signature(object="familiarEnsemble"),
             }
             
             # Test if models are properly loaded
-            if(!is_model_loaded(object=object)){
-              ..error_ensemble_models_not_loaded()
-            }
+            if(!is_model_loaded(object=object)) ..error_ensemble_models_not_loaded()
+            
+            # Test if any model in the ensemble was successfully trained.
+            if(!model_is_trained(object=object)) return(NULL)
             
             # Collect Kaplan-Meier stratification parameters
-            km_cut_off_info <- data.table::rbindlist(lapply(object@model_list, function(fam_model){
-              
-              if(is_empty(fam_model@km_info$parameters)) return(NULL)
-              
-              # Iterate over stratification parameters
-              data <- data.table::rbindlist(lapply(fam_model@km_info$parameters, function(method_list){
-                
-                # Extract information
-                data <- data.table::data.table("stratification_method"=method_list$method, "cutoff"=method_list$cutoff,
-                                               "index"=seq_len(length(method_list$cutoff)))
-                
-                return(data)
-              }))
-              
-              # Add model name column
-              data <- add_model_name(data=data, object=fam_model)
-              
-              return(data)
-            } ))
+            km_cut_off_info <- data.table::rbindlist(lapply(object@model_list, extract_km_cutoffs))
             
             return(km_cut_off_info)
           })
 
+#####extract_km_cutoffs (familiarModel)#####
+setMethod("extract_km_cutoffs", signature(object="familiarModel"),
+          function(object, ...){
+            
+            if(is_empty(object@km_info$parameters)) return(NULL)
+            
+            # Iterate over stratification parameters
+            data <- data.table::rbindlist(lapply(object@km_info$parameters, function(method_list){
+              
+              # Extract information
+              data <- data.table::data.table("stratification_method"=method_list$method,
+                                             "cutoff"=method_list$cutoff,
+                                             "index"=seq_len(length(method_list$cutoff)))
+              
+              return(data)
+            }))
+            
+            # Add model name column
+            data <- add_model_name(data=data, object=object)
+            
+            return(data)
+          })
+
+#####extract_km_cutoffs (character)#####
+setMethod("extract_km_cutoffs", signature(object="character"),
+          function(object, ...){
+            # Load object.
+            object <- load_familiar_object(object)
+            
+            return(do.call(extract_km_cutoffs, args=list("object"=object)))
+          })
 
 
 #'@title Internal function to extract calibration data.
