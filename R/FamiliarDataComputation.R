@@ -1028,9 +1028,10 @@ setMethod("extract_calibration_data", signature(object="familiarEnsemble"),
             }
             
             # Test if models are properly loaded
-            if(!is_model_loaded(object=object)){
-              ..error_ensemble_models_not_loaded()
-            }
+            if(!is_model_loaded(object=object)) ..error_ensemble_models_not_loaded()
+
+            # Test if any model in the ensemble was successfully trained.
+            if(!model_is_trained(object=object)) return(NULL)
             
             # This function is the same for familiarModel and familiarEnsemble objects
             return(assess_calibration(object=object, data=data, eval_times=eval_times, is_pre_processed=is_pre_processed))
