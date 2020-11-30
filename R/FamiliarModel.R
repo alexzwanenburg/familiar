@@ -184,11 +184,6 @@ setMethod("assess_calibration", signature(object="familiarModel"),
               .check_number_in_valid_range(eval_times, var_name="eval_times", range=c(0.0, Inf), closed=c(FALSE, TRUE))
             }
             
-            # Test if models are properly loaded
-            if(!is_model_loaded(object=object)){
-              ..error_ensemble_models_not_loaded()
-            }
-            
             # This function is the same for familiarModel and familiarEnsemble objects
             return(.assess_calibration(object=object, data=data, eval_times=eval_times, is_pre_processed=is_pre_processed))
             
