@@ -51,13 +51,13 @@
 .check_number_in_valid_range <- function(x, var_name, range, closed=c(TRUE, TRUE)){
 
   # Interpret single input range value as range containing only one value.
-  if(length(range)==1){ range <- c(range, range) }
+  if(length(range)==1) range <- c(range, range)
   
   # Set lower limit to -Inf
-  if(is.na(range[1])){ range[1] <- -Inf }
+  if(is.na(range[1])) range[1] <- -Inf
   
   # Set upper limit to Inf
-  if(is.na(range[2])){ range[2] <- Inf }
+  if(is.na(range[2])) range[2] <- Inf
   
   # Some internal checks that should never be triggered.
   if(length(x) != 1){
@@ -68,7 +68,14 @@
     ..error_reached_unreachable_code(".check_number_in_valid_range_inverted_range")
   }
   
-  is_outside_range <- ifelse(closed[1], x < range[1], x <= range[1]) | ifelse(closed[2], x > range[2], x >= range[2])
+  if(!is.na(x)){
+    is_outside_range <- ifelse(closed[1], x < range[1], x <= range[1]) | ifelse(closed[2], x > range[2], x >= range[2])
+    
+  } else {
+    # NA-values are outside the valid range.
+    is_outside_range <- TRUE
+  }
+  
   
   if(is_outside_range){
     ..error_value_outside_allowed_range(x, var_name, range)
