@@ -889,7 +889,7 @@ setMethod("extract_hyperparameters", signature(object="familiarEnsemble"),
           })
 
 #####extract_hyperparameters (familiarModel)#####
-setMethod("extract_hyperparameters", signature(object="familiarObject"),
+setMethod("extract_hyperparameters", signature(object="familiarModel"),
           function(object, ...){
             # Parse hyperparameters as data.table
             data <- data.table::as.data.table(object@hyperparameters)
@@ -902,7 +902,7 @@ setMethod("extract_hyperparameters", signature(object="familiarObject"),
           })
 
 #####extract_hyperparameters (character)#####
-setMethod("extract_hyperparameters", signature(object="familiarObject"),
+setMethod("extract_hyperparameters", signature(object="character"),
           function(object, ...){
             # Load object.
             object <- load_familiar_object(object)
