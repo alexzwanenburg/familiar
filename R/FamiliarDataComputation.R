@@ -210,6 +210,7 @@ setGeneric("extract_data", function(object, data,
                                     compute_ensemble_ci=waiver(),
                                     aggregate_ci=waiver(),
                                     icc_type=waiver(),
+                                    dynamic_model_loading=FALSE,
                                     message_indent=0L,
                                     verbose=FALSE,
                                     data_element="all", ...) standardGeneric("extract_data"))
@@ -242,11 +243,20 @@ setMethod("extract_data", signature(object="familiarEnsemble"),
                    compute_ensemble_ci=waiver(),
                    aggregate_ci=waiver(),
                    icc_type=waiver(),
+                   dynamic_model_loading=FALSE,
                    message_indent=0L,
                    verbose=FALSE,
                    data_element="all",
                    ...){
             # Generates a familiarData object from the ensemble.
+            
+            # Check the dynamic_model_loading parameter because it is used here.
+            .check_parameter_value_is_valid(x=dynamic_model_loading, var_name="dynamic_model_loading",
+                                            values=c(FALSE, TRUE))
+            
+            # Set auto-detach here. Note that, if TRUE, load_models may reset it
+            # to FALSE if models cannot be detached.
+            object@auto_detach <- dynamic_model_loading
             
             # Check whether data is a dataObject, and create one otherwise.
             if(!is(data, "dataObject")){

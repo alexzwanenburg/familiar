@@ -387,8 +387,8 @@ run_evaluation <- function(cl, proj_list, settings, file_paths){
                                learner=ensemble_table$learner[1],
                                fs_method=ensemble_table$fs_method[1])
   
-  # Load models
-  fam_ensemble <- load_models(object=fam_ensemble, dir_path=dir_path)
+  # Load models and prevent auto-detaching.
+  fam_ensemble <- load_models(object=fam_ensemble, dir_path=dir_path, suppress_auto_detach=TRUE)
 
   # Create a run table
   fam_ensemble@run_table <- list("run_table"=lapply(fam_ensemble@model_list, function(fam_model) fam_model@run_table),
@@ -455,6 +455,7 @@ run_evaluation <- function(cl, proj_list, settings, file_paths){
                            compute_model_ci = settings$eval$compute_model_ci,
                            compute_ensemble_ci = settings$eval$compute_ensemble_ci,
                            aggregate_ci = settings$eval$aggregate_ci,
+                           dynamic_model_loading = settings$eval$auto_detach,
                            icc_type= settings$eval$icc_type,
                            message_indent=1L,
                            verbose=TRUE)
