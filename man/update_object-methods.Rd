@@ -19,7 +19,8 @@ update_object(object, ...)
 \S4method{update_object}{familiarCollection}(object, ...)
 }
 \arguments{
-\item{object}{A \code{familiarModel}, a \code{familiarEnsemble}, a \code{familiarData} or \code{familiarCollection} object.}
+\item{object}{A \code{familiarModel}, a \code{familiarEnsemble}, a \code{familiarData} or
+\code{familiarCollection} object.}
 
 \item{...}{Unused arguments.}
 }
@@ -27,5 +28,8 @@ update_object(object, ...)
 An up-to-date version of the respective S4 object.
 }
 \description{
-Creates \code{familiarEnsemble} a object from \code{familiarModel} objects.
+Provides backward compatibility for familiar objects exported to
+a file. This mitigates compatibility issues when working with files that
+become outdated as new versions of familiar are released, e.g. because slots
+have been removed.
 }
