@@ -25,7 +25,6 @@ setMethod(".predict", signature(object="familiarEnsemble"),
                                    novelty=novelty)
             
             ##### Ensemble predictions #####
-            
             # Generate ensemble predictions
             prediction_data <- ensemble_prediction(object=object,
                                                    prediction_data=data.table::rbindlist(predict_list),
@@ -100,12 +99,13 @@ setMethod(".predict", signature(object="familiarModel"),
 
 #####.predict (character)#####
 setMethod(".predict", signature(object="character"),
-          function(object, ...){
+          function(object, data, ...){
             
             # Load object.
             object <- load_familiar_object(object)
             
-            return(do.call(.predict, args=c(list("object"=object),
+            return(do.call(.predict, args=c(list("object"=object,
+                                                 "data"=data),
                                             list(...))))
           })
 
