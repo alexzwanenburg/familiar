@@ -2,13 +2,48 @@
 #' @include FamiliarS4Classes.R
 NULL
 
+#'@title Creates a valid data object from input data.
+#'
+#'@description Creates `dataObject` a object from input data. Input data can be
+#'  a `data.frame` or `data.table`, a path to such tables on a local or network
+#'  drive, or a path to tabular data that may be converted to these formats.
+#'
+#'  In addition, a `familiarEnsemble` or `familiarModel` object can be passed
+#'  along to check whether the data are formatted correctly, e.g. by checking
+#'  the levels of categorical features, whether all expected columns are
+#'  present, etc.
+#'
+#'@param data A `data.frame` or `data.table`, a path to such tables on a local
+#'  or network drive, or a path to tabular data that may be converted to these
+#'  formats.
+#'
+#'@param object A `familiarEnsemble` or `familiarModel` object that is used to
+#'  check consistency of these objects.
+#'
+#'@inheritParams .parse_experiment_settings
+#'
+#'@details You can specify settings for your data manually, e.g. the column for
+#'  sample identifiers (`sample_id_column`). This prevents you from having to
+#'  change the column name externally. In the case you provide a `familiarModel`
+#'  or `familiarEnsemble` for the `object` argument, any parameters you provide
+#'  take precedence over parameters specified by the object.
+#'
+#'@return A `dataObject` object.
+#'@exportMethod as_data_object
+#'@md
+#'@rdname as_data_object-methods
+
+#####as_data_object (generic)#####
+setGeneric("as_data_object", function(data, ...) standardGeneric("as_data_object"))
 
 #####as_data_object (dataObject)#####
+#'@rdname as_data_object-methods
 setMethod("as_data_object", signature(data="dataObject"),
           function(data, object=NULL, ...) return(data))
 
 
 #####as_data_object (data.table)#####
+#'@rdname as_data_object-methods
 setMethod("as_data_object", signature(data="data.table"),
           function(data,
                    object=NULL,
@@ -229,6 +264,7 @@ setMethod("as_data_object", signature(data="data.table"),
 
 
 #####as_data_object (ANY)#####
+#'@rdname as_data_object-methods
 setMethod("as_data_object", signature(data="ANY"),
           function(data,
                    object=NULL,
@@ -321,7 +357,7 @@ setMethod("as_data_object", signature(data="ANY"),
 
 
 
-
+#####extract_settings_from_data####
 setMethod("extract_settings_from_data", signature(data="dataObject"),
           function(data, settings=NULL){
             

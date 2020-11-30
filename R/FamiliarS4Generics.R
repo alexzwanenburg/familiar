@@ -82,7 +82,6 @@ setGeneric("has_calibration_info", function(object) standardGeneric("has_calibra
 
 setGeneric("extract_settings_from_data", function(data, ...) standardGeneric("extract_settings_from_data"))
 
-setGeneric("as_data_object", function(data, ...) standardGeneric("as_data_object"))
 
 ##### Methods to see and update labels of data in familiarCollection objects.
 setGeneric(".set_labels", function(x, ...) standardGeneric(".set_labels"))
