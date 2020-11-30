@@ -311,7 +311,7 @@
   }
   
   # Determine the available batch identifiers
-  available_batch_ids <- unique(data$batch_id)
+  available_batch_ids <- unique(data[[get_id_columns(single_column="batch")]])
   
   # Determine what happens if batch identifiers are not specified for both
   # development and validation.
