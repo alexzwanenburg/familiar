@@ -460,8 +460,25 @@ setMethod("..predict", signature(object="character", data="dataObject"),
                                                   "data"=data))))
           })
 
+
+
+#####..predict_survival_probability (familiarModel, dataObject)####
 setMethod("..predict_survival_probability", signature(object="familiarModel", data="dataObject"),
           function(object, data, time) return(get_placeholder_prediction_table(object=object, data=data)))
+
+
+#####..predict (character, dataObject)#####
+setMethod("..predict_survival_probability", signature(object="character", data="dataObject"),
+          function(object, data, ...){
+            # Load object.
+            object <- load_familiar_object(object)
+            
+            return(do.call(..predict_survival_probability, args=c(list("object"=object,
+                                                                       "data"=data),
+                                                                  list(...))))
+          })
+
+
 
 #####..set_calibration_info#####
 setMethod("..set_calibration_info", signature(object="familiarModel"),
