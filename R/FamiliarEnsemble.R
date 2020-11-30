@@ -446,8 +446,13 @@ setMethod("..get_model", signature(ii="numeric", object="familiarEnsemble"),
 setMethod("..get_model", signature(ii="missing", object="familiarEnsemble"),
           function(ii, object, ...){
             
-            # Dispatch get_model.
-            return(lapply(seq_along(object@model_list), ..get_model, object=object, ...))
+            if(length(object@model_list) > 0){
+              # Dispatch get_model.
+              return(lapply(seq_along(object@model_list), ..get_model, object=object, ...))
+              
+            } else {
+              return(NULL)
+            }
           })
 
 
@@ -613,25 +618,27 @@ setMethod("..update_model_list", signature(object="familiarEnsemble"),
             
             # Check if the models are either attached or are located on a known
             # drive location.
-            model_exists <- sapply(object@model_list, function(list_entry){
-              if(is(list_entry, "familiarModel")){
-                return(TRUE)
-                
-              } else if(file.exists(list_entry)){
-                return(TRUE)
-                
-              } else {
-                return(FALSE)
-              }
-            })
-            
-            # Throw an error if any model does not exist.
-            if(any(!model_exists)) stop(paste0("The following models in the ensemble could not be found: ",
-                                               paste_s(unlist(object@model_list[!model_exists]))))
+            if(length(object@model_list) > 0){
+              model_exists <- sapply(object@model_list, function(list_entry){
+                if(is(list_entry, "familiarModel")){
+                  return(TRUE)
+                  
+                } else if(file.exists(list_entry)){
+                  return(TRUE)
+                  
+                } else {
+                  return(FALSE)
+                }
+              })
+              
+              # Throw an error if any model does not exist.
+              if(any(!model_exists)) stop(paste0("The following models in the ensemble could not be found: ",
+                                                 paste_s(unlist(object@model_list[!model_exists]))))
+            }
             
             # Check the model_dir_path slot if auto_detach is on. In that case
             # model_dir_path is required to find the models.
-            if(auto_detach | object@auto_detach){
+            if((auto_detach | object@auto_detach) & length(object@model_list) > 0){
               
               # Check if all models are attached, because in that case we may
               # still need to determine the drive location.
@@ -669,11 +676,19 @@ setMethod("..can_detach_models", signature(ii="numeric", object="familiarEnsembl
 #####..can_detach_models (missing, familiarEnsemble) #######
 setMethod("..can_detach_models", signature(ii="missing", object="familiarEnsemble"),
           function(ii, object, dir_path=NULL){
-            # Check whether a model can be detached without losing it.
-            can_detach <- sapply(seq_along(object@model_list), ..can_detach_models, object=object, dir_path=dir_path)
             
-            # Return TRUE when all models can be detached.
-            return(all(can_detach))
+            # Check if there are any models in the ensemble.
+            if(length(object@model_list) > 0){
+              
+              # Check whether a model can be detached without losing it.
+              can_detach <- sapply(seq_along(object@model_list), ..can_detach_models, object=object, dir_path=dir_path)
+              
+              # Return TRUE when all models can be detached.
+              return(all(can_detach))
+              
+            } else {
+              return(TRUE)
+            }
           })
 
 
