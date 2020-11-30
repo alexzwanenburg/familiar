@@ -3,7 +3,7 @@
 ## Major changes:
 
 * Added novelty detection:
-    * Added `novelty_features` parameter that can be used to specify features
+    * Added a `novelty_features` parameter that can be used to specify features
     that should be used for novelty detection.
 
 * Added `update_object` methods that allow for backward compatibility when
@@ -18,6 +18,12 @@ parameter. This required changes to what iteration data is stored. This should
 not cause any issues with post-hoc analyses, but is not **not backward
 compatible** when updating familiar prior to completing the modelling and
 evaluation process.
+
+* Improved flexibility of the evaluation process that is conducted to explain and assess models:
+    * Added `dynamic_model_loading` parameter that supports dynamic loading of
+    models to an ensemble. This reduces the memory footprint at the cost of IO
+    overhead as the models are read from the disk or network when required. By
+    default, all models are statically attached to an ensemble.
 
 
 ## Minor changes:

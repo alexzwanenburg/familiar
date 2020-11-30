@@ -31,6 +31,7 @@ extract_data(
   compute_ensemble_ci = waiver(),
   aggregate_ci = waiver(),
   icc_type = waiver(),
+  dynamic_model_loading = FALSE,
   message_indent = 0L,
   verbose = FALSE,
   data_element = "all",
@@ -214,7 +215,8 @@ The default value is \code{0.95}.}
 confidence intervals (Efron and Hastie, 2016). The following methods are
 implemented:
 \itemize{
-\item \code{percentile} (default): Confidence intervals obtained using the percentile method.
+\item \code{percentile} (default): Confidence intervals obtained using the percentile
+method.
 \item \code{bc}: Bias-corrected confidence intervals.
 }
 
@@ -270,6 +272,14 @@ features in repeated measurements during the evaluation of univariate
 importance. These types correspond to the types in Shrout and Fleiss (1979).
 If not provided explicitly, this parameter is read from settings used at
 creation of the underlying \code{familiarModel} objects.}
+
+\item{dynamic_model_loading}{(\emph{optional}) Enables dynamic loading of models
+during the evaluation process, if \code{TRUE}. Defaults to \code{FALSE}. Dynamic
+loading of models may reduce the overall memory footprint, at the cost of
+increased disk or network IO. Models can only be dynamically loaded if they
+are found at an accessible disk or network location. Setting this parameter
+to \code{TRUE} may help if parallel processing causes out-of-memory issues during
+evaluation.}
 
 \item{message_indent}{Number of indentation steps for messages shown during
 computation and extraction of various data elements.}

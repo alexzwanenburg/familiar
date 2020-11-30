@@ -210,6 +210,8 @@
       <time_max></time_max>
       <!-- Time points at which calibration for survival models is assessed (optional, default: same as end_time; multiple values possible) -->
       <evaluation_times></evaluation_times>
+      <!-- Flags dynamic loading of models during evaluation (optional, default: False) -->
+      <dynamic_model_loading></dynamic_model_loading>
       <!-- Parallel processing for evaluation (optional; default: true) -->
       <parallel_evaluation></parallel_evaluation>
     </evaluation>

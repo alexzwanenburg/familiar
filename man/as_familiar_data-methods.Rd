@@ -200,7 +200,8 @@ The default value is \code{0.95}.}
 confidence intervals (Efron and Hastie, 2016). The following methods are
 implemented:
 \itemize{
-\item \code{percentile} (default): Confidence intervals obtained using the percentile method.
+\item \code{percentile} (default): Confidence intervals obtained using the percentile
+method.
 \item \code{bc}: Bias-corrected confidence intervals.
 }
 
@@ -245,6 +246,13 @@ This parameter can take one or more of the following values: \code{all},
 bootstrap data is aggregated by computing confidence intervals for
 receiver-operating characteristic curves, decision curves and permutation
 variable importance.}
+    \item{\code{dynamic_model_loading}}{(\emph{optional}) Enables dynamic loading of models
+during the evaluation process, if \code{TRUE}. Defaults to \code{FALSE}. Dynamic
+loading of models may reduce the overall memory footprint, at the cost of
+increased disk or network IO. Models can only be dynamically loaded if they
+are found at an accessible disk or network location. Setting this parameter
+to \code{TRUE} may help if parallel processing causes out-of-memory issues during
+evaluation.}
   }}
 
 \item{name}{Name of the \code{familiarData} object. If not set, a name is

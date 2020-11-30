@@ -2151,7 +2151,8 @@
 #'  confidence intervals (Efron and Hastie, 2016). The following methods are
 #'  implemented:
 #'
-#'  * `percentile` (default): Confidence intervals obtained using the percentile method.
+#'  * `percentile` (default): Confidence intervals obtained using the percentile
+#'  method.
 #'
 #'  * `bc`: Bias-corrected confidence intervals.
 #'
@@ -2382,6 +2383,13 @@
 #'  If unset, `evaluation_times` will be equal to `time_max`.
 #'
 #'  This parameter is only relevant for `survival` outcomes.
+#'@param dynamic_model_loading (*optional*) Enables dynamic loading of models
+#'  during the evaluation process, if `TRUE`. Defaults to `FALSE`. Dynamic
+#'  loading of models may reduce the overall memory footprint, at the cost of
+#'  increased disk or network IO. Models can only be dynamically loaded if they
+#'  are found at an accessible disk or network location. Setting this parameter
+#'  to `TRUE` may help if parallel processing causes out-of-memory issues during
+#'  evaluation.
 #'@param parallel_evaluation (*optional*) Enable parallel processing for
 #'  hyperparameter optimisation. Defaults to `TRUE`. When set to `FALSE`, this
 #'  will disable the use of parallel processing while performing optimisation,
@@ -2436,6 +2444,7 @@
                                        stratification_ensemble_method=waiver(),
                                        time_max=waiver(),
                                        evaluation_times=waiver(),
+                                       dynamic_model_loading=waiver(),
                                        parallel_evaluation=waiver(),
                                        ...){
   
@@ -2668,12 +2677,16 @@
     sapply(settings$eval_times, .check_number_in_valid_range, var_name="evaluation_time", range=c(0.0, Inf), closed=c(FALSE, TRUE))
   }
   
+  # Dynamic loading of models during evaluation.
+  settings$auto_detach <- .parse_arg(x_config=config$dynamic_model_loading, x_var=dynamic_model_loading,
+                                     var_name="dynamic_model_loading", type="logical", optional=TRUE, default=FALSE)
+  
   # Parallelisation switch for parallel processing
   settings$do_parallel <- .parse_arg(x_config=config$parallel_evaluation, x_var=parallel_evaluation,
                                      var_name="parallel_evaluation", type="logical", optional=TRUE, default=TRUE)
   
   # Disable if parallel is FALSE
-  if(!parallel) { settings$do_parallel <- FALSE }
+  if(!parallel) settings$do_parallel <- FALSE
   
   # Return list of settings
   return(settings)

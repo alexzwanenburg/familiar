@@ -706,7 +706,8 @@ The default value is \code{0.95}.}
 confidence intervals (Efron and Hastie, 2016). The following methods are
 implemented:
 \itemize{
-\item \code{percentile} (default): Confidence intervals obtained using the percentile method.
+\item \code{percentile} (default): Confidence intervals obtained using the percentile
+method.
 \item \code{bc}: Bias-corrected confidence intervals.
 }
 
@@ -920,6 +921,13 @@ observed survival probabilities depend on time.
 If unset, \code{evaluation_times} will be equal to \code{time_max}.
 
 This parameter is only relevant for \code{survival} outcomes.}
+    \item{\code{dynamic_model_loading}}{(\emph{optional}) Enables dynamic loading of models
+during the evaluation process, if \code{TRUE}. Defaults to \code{FALSE}. Dynamic
+loading of models may reduce the overall memory footprint, at the cost of
+increased disk or network IO. Models can only be dynamically loaded if they
+are found at an accessible disk or network location. Setting this parameter
+to \code{TRUE} may help if parallel processing causes out-of-memory issues during
+evaluation.}
     \item{\code{parallel_evaluation}}{(\emph{optional}) Enable parallel processing for
 hyperparameter optimisation. Defaults to \code{TRUE}. When set to \code{FALSE}, this
 will disable the use of parallel processing while performing optimisation,
