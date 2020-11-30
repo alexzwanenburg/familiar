@@ -545,7 +545,11 @@ test.create_wide_data_set <- function(outcome_type){
 
 
 
-test.create_bad_data_set <- function(outcome_type){
+test.create_bad_data_set <- function(outcome_type, add_na_data=FALSE){
+  # add_na_data argument is intended for integration tests, where we have to
+  # circumvent a check on the outcome classes. We do this by keeping these
+  # classes in, and assigning NA to rows of one class, causing the data to pass
+  # the check, but have the rows be removed afterwards.
   
   # Suppress NOTES due to non-standard evaluation in data.table
   outcome <- NULL
@@ -559,11 +563,51 @@ test.create_bad_data_set <- function(outcome_type){
     
   } else if(outcome_type == "multinomial"){
     # For multinomial data, having not all classes is bad.
-    data@data <- data@data[outcome %in% c("setosa", "versicolor"), ]
+    
+    if(add_na_data){
+      # Assign NA to the rows containing the virginica class.
+      
+      # Identify the feature columns.
+      feature_columns <- get_feature_columns(data)
+      
+      # Update feature columns.
+      for(feature in feature_columns){
+        if(is.factor(data@data[[feature]])){
+          data@data[outcome == "virginica", (feature):=NA]
+          
+        } else {
+          data@data[outcome == "virginica", (feature):=NA_real_]
+        }
+      }
+      
+    } else {
+      # Select 2 of 3 classes by leaving virginica out.
+      data@data <- data@data[outcome %in% c("setosa", "versicolor"), ]
+    }
     
   } else if(outcome_type == "binomial" ){
     # For binomial data, having a single class is bad.
-    data@data[, "outcome":="benign"]
+    
+    if(add_na_data){
+      # Assign NA to the rows containing the malignant class.
+      
+      # Identify the feature columns.
+      feature_columns <- get_feature_columns(data)
+      
+      # Update feature columns.
+      for(feature in feature_columns){
+        if(is.factor(data@data[[feature]])){
+          data@data[outcome == "malignant", (feature):=NA]
+          
+        } else {
+          data@data[outcome == "malignant", (feature):=NA_real_]
+        }
+      }
+      
+    } else {
+      # Assign everything to the benign class.
+      data@data[, "outcome":="benign"]
+    }
     
   } else if(outcome_type == "continuous"){
     # For continuous data, it would be bad if all outcome values are invariant.
