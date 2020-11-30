@@ -687,6 +687,9 @@ get_available_features <- function(feature_info_list, data_obj=NULL, exclude_sig
   # Determine the intersect of features a removed slot == FALSE and 
   # available columns in dt (if not NULL).
   
+  # Check that any features are available.
+  if(length(feature_info_list) == 0) return(NULL)
+  
   available_list_features <- names(feature_info_list)[sapply(feature_info_list, is_available)]
   
   if(!is.null(data_obj)){
