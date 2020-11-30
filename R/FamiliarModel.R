@@ -189,7 +189,7 @@ setMethod("assess_calibration", signature(object="familiarModel"),
             
           })
 
-#####assign_risk_groups (model)#####
+#####assign_risk_groups (familiarModel, dataObject)#####
 setMethod("assign_risk_groups", signature(object="familiarModel", data="dataObject"),
           function(object,
                    data,
@@ -238,13 +238,30 @@ setMethod("assign_risk_groups", signature(object="familiarModel", data="dataObje
           })
 
 
-######assess_stratification (model)######
+
+#####assign_risk_groups (character, dataObject)#############
+setMethod("assign_risk_groups", signature(object="character", data="dataObject"),
+          function(object, data, ...){
+            # Load object.
+            object <- load_familiar_object(object)
+            
+            return(do.call(assign_risk_groups, args=c(list("object"=object,
+                                                  "data"=data),
+                                             list(...))))
+          })
+
+
+
+
+######assess_stratification (familiarModel)######
 setMethod("assess_stratification", signature(object="familiarModel"),
           function(object, ...){
+            # TODO DEPRECATE This method is not used at the moment.
+            browser()
             
             # Convert to familiarEnsemble to simply calls.
             object <- as_familiar_ensemble(object=object)
-            
+
             return(do.call(assess_stratification, args=append(list("object"=object),
                                                               list(...))))
           })
@@ -321,7 +338,8 @@ setMethod("model_is_trained", signature(object="character"),
           })
 
 
-#####add_package_version (model)#####
+
+#####add_package_version (familiarModel)#####
 setMethod("add_package_version", signature(object="familiarModel"),
           function(object){
             
@@ -330,6 +348,7 @@ setMethod("add_package_version", signature(object="familiarModel"),
           })
 
 
+#####add_data_column_info (familiarModel)#####
 setMethod("add_data_column_info", signature(object="familiarModel"),
           function(object, sample_id_column=NULL, batch_id_column=NULL, series_id_column=NULL){
             
@@ -403,7 +422,8 @@ setMethod("get_default_hyperparameters", signature(object="familiarModel"),
           function(object, ...) return(list()))
 
 
-#####..train#####
+
+#####..train (familiarModel, dataObject)#####
 setMethod("..train", signature(object="familiarModel", data="dataObject"),
           function(object, data){
             
@@ -413,8 +433,7 @@ setMethod("..train", signature(object="familiarModel", data="dataObject"),
             return(object)
           })
 
-
-#####..train#####
+#####..train (familiarModel, NULL)#####
 setMethod("..train", signature(object="familiarModel", data="NULL"),
           function(object, data){
             
