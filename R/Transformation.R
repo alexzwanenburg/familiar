@@ -113,19 +113,30 @@ transformation.get_transform_parameters <- function(x, transform_method, feature
   if(transform_method %in% .get_available_transformation_methods("box_cox")){
     # Box-Cox transformations.
     lambda <- c(-10, 10)
-    opt_lambda <- stats::optimise(..box_cox_loglik, interval=lambda, x=x, maximum=TRUE)
+    opt_lambda <- suppressWarnings(stats::optimise(..box_cox_loglik,
+                                                   interval=lambda,
+                                                   x=x,
+                                                   maximum=TRUE))
     
   } else if(transform_method %in% .get_available_transformation_methods("yeo_johnson")){
     # Yeo-Johnson transformations.
     lambda <- c(-10, 10)
-    opt_lambda <- stats::optimise(..yeo_johnson_loglik, interval=lambda, x=x, maximum=TRUE)
+    opt_lambda <- suppressWarnings(stats::optimise(..yeo_johnson_loglik,
+                                                   interval=lambda,
+                                                   x=x,
+                                                   maximum=TRUE))
     
   } else {
     ..error_reached_unreachable_code("transformation.get_transform_parameters_unknown_transformation")
   }
 
   # Select optimal lambda that maximises log-likelihood score.
-  opt_lambda <- round(opt_lambda$maximum, digits=1)
+  if(is.finite(opt_lambda$objective)){
+    opt_lambda <- round(opt_lambda$maximum, digits=1)
+    
+  } else {
+    opt_lambda <- 1.0
+  }
   
   # Return transformation
   return(list("transform_method"=transform_method,
@@ -238,6 +249,9 @@ transformation.yeo_johnson <- function(lambda, x, invert=FALSE){
   mu_hat <- mean(y)
   sigma_hat_squared <- 1 /n * sum((y - mu_hat)^2)
   
+  # Log-likelihood cannot be determined if the sigma estimate equals 0.0
+  if(sigma_hat_squared == 0) return(NA_real_)
+  
   # Compute the log likelihood under the assumption that the transformed
   # variable y follows the normal distribution.
   llf <- (lambda - 1.0) * sum(log(x)) - n / 2.0 * log(sigma_hat_squared)
@@ -257,6 +271,9 @@ transformation.yeo_johnson <- function(lambda, x, invert=FALSE){
   # Compute the estimates of the mean mu and variance sigma squared for y.
   mu_hat <- mean(y)
   sigma_hat_squared <- 1 /n * sum((y - mu_hat)^2)
+  
+  # Log-likelihood cannot be determined if the sigma estimate equals 0.0
+  if(sigma_hat_squared == 0) return(NA_real_)
   
   # Compute the log likelihood under the assumption that the transformed
   # variable y follows the normal distribution.
