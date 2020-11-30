@@ -249,6 +249,16 @@ setMethod("assign_risk_groups", signature(object="familiarEnsemble", data="dataO
                    verbose=FALSE){
             # Assign risk groups, perform log-rank tests and determine survival curves for each group
             
+            ..get_stratification_method <- function(ii, object){
+              # Extract stratification methods from the underlying models.
+              
+              # (dynamically) load the familiar model.
+              fam_model <- ..get_model(ii=ii, object=object)
+              
+              # Return the stratification method(s) in the model.
+              return(fam_model@km_info$stratification_method)
+            }
+            
             # Suppress NOTES due to non-standard evaluation in data.table
             risk_group <- value <- NULL
             
@@ -273,11 +283,12 @@ setMethod("assign_risk_groups", signature(object="familiarEnsemble", data="dataO
             # Test if models are properly loaded
             if(!is_model_loaded(object=object)) ..error_ensemble_models_not_loaded()
             
+            # Test if any models have been trained.
+            if(!model_is_trained(object=object)) return(NULL)
+            
             # Determine the stratification methods
-            strat_methods <- unique(extract_from_slot(object_list=object@model_list,
-                                                      slot_name="km_info",
-                                                      slot_element="stratification_method",
-                                                      na.rm=TRUE))
+            strat_methods <- lapply(seq_along(object@model_list), ..get_stratification_method, object=object)
+            strat_methods <- unique(unlist(strat_methods))
             
             # Iterate over stratification methods
             risk_group_data <- lapply(strat_methods, function(stratification_method, object, data, time, ensemble_method, method){
