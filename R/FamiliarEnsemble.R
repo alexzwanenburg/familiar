@@ -175,7 +175,7 @@ setMethod("compute_calibration_data", signature(object="familiarEnsemble", data=
 }
 
 
-#####assess_stratification (ensemble)#####
+#####assess_stratification (familiarEnsemble)#####
 setMethod("assess_stratification", signature(object="familiarEnsemble"),
           function(object,
                    data=NULL,
@@ -208,6 +208,9 @@ setMethod("assess_stratification", signature(object="familiarEnsemble"),
             # Test if models are properly loaded
             if(!is_model_loaded(object=object)) ..error_ensemble_models_not_loaded()
 
+            # Check that any models are trained.
+            if(!model_is_trained(object=object)) return(NULL)
+            
             # Generate risk groups
             if(is.null(risk_group_list)){
               # Extract risk groups for kaplan-meier survival data
