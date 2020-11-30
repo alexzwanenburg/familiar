@@ -706,7 +706,7 @@ setGeneric("extract_model_vimp", function(object,
                                           verbose=FALSE,
                                           ...) standardGeneric("extract_model_vimp"))
 
-#####extract_model_vimp (ensemble)#####
+#####extract_model_vimp (familiarEnsemble)#####
 setMethod("extract_model_vimp", signature(object="familiarEnsemble"),
           function(object,
                    aggregation_method=waiver(),
@@ -740,6 +740,13 @@ setMethod("extract_model_vimp", signature(object="familiarEnsemble"),
             
             # Suppress NOTES due to non-standard evaluation in data.table
             rank <- NULL
+            
+            # Check that any model has been successfully trained.
+            if(!model_is_trained(object)){
+              return(list("vimp_table" = NULL,
+                          "aggregation_method" = aggregation_method,
+                          "rank_threshold" = rank_threshold))
+            }
             
             # Get variable importance from individual models
             raw_model_vimp <- data.table::rbindlist(lapply(object@model_list, extract_model_vimp))
@@ -802,7 +809,7 @@ setMethod("extract_model_vimp", signature(object="familiarEnsemble"),
             return(vimp_info)
           })
 
-#####extract_model_vimp (model)#####
+#####extract_model_vimp (familiarModel)#####
 setMethod("extract_model_vimp", signature(object="familiarModel"),
           function(object, ...){
             
@@ -814,10 +821,22 @@ setMethod("extract_model_vimp", signature(object="familiarModel"),
                               "run_id"=tail(object@run_table, n=1)$run_id)]
             
             # Decluster data
-            model_vimp <- rank.decluster_vimp_table(vimp_table=model_vimp, feature_info_list=object@feature_info)
+            model_vimp <- rank.decluster_vimp_table(vimp_table=model_vimp,
+                                                    feature_info_list=object@feature_info)
             
             return(model_vimp)
           })
+
+#####extract_model_vimp (character)######
+setMethod("extract_model_vimp", signature(object="character"),
+          function(object, ...){
+            # Load object.
+            object <- load_familiar_object(object)
+            
+            return(do.call(extract_model_vimp, args=c(list("object"=object),
+                                                      list(...))))
+          })
+
 
 
 #'@title Internal function to extract hyperparameters from models.
