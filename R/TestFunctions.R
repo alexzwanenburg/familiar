@@ -1483,6 +1483,74 @@ test_plot_ordering <- function(plot_function,
 
 
 
+integrated_test <- function(..., debug=FALSE){
+  
+  if(debug){
+    test_fun <- debug_test_that
+    suppress_fun <- identity
+    
+  } else {
+    test_fun <- testthat::test_that
+    suppress_fun <- test_suppress
+  }
+  
+  for(outcome_type in c("count", "continuous", "binomial", "multinomial", "survival")){
+    
+    test_fun(paste0("Experiment for a good dataset with ", outcome_type, " outcome functions correctly."), {
+
+      # Create datasets
+      full_data <- test.create_good_data_set(outcome_type)
+
+      # Parse hyperparameter list
+      hyperparameters <- list("sign_size"=get_n_features(full_data),
+                              "family"=switch(outcome_type,
+                                              "continuous"="gaussian",
+                                              "count"="poisson",
+                                              "binomial"="binomial",
+                                              "multinomial"="multinomial",
+                                              "survival"="cox"))
+
+      output <- suppress_fun(summon_familiar(data=full_data,
+                                             learner="lasso",
+                                             hyperparameter=list("lasso"=hyperparameters),
+                                             ...))
+
+      testthat::expect_equal(is.null(output), FALSE)
+    })
+
+    
+    test_fun(paste0("Experiment for a bad dataset with ", outcome_type, " outcome functions correctly."), {
+      
+      # Create datasets. We explicitly insert NA data to pass an initial
+      # plausibility check.
+      bad_data <- test.create_bad_data_set(outcome_type=outcome_type,
+                                           add_na_data=TRUE)
+      
+      # Parse hyperparameter list
+      hyperparameters <- list("sign_size"=get_n_features(bad_data),
+                              "family"=switch(outcome_type,
+                                              "continuous"="gaussian",
+                                              "count"="poisson",
+                                              "binomial"="binomial",
+                                              "multinomial"="multinomial",
+                                              "survival"="cox"))
+      
+      # Note that we set a very high feature_max_fraction_missing to deal with
+      # NA rows in the dataset. Also time is explicitly set to prevent an error.
+      output <- suppress_fun(summon_familiar(data=bad_data,
+                                             learner="lasso",
+                                             hyperparameter=list("lasso"=hyperparameters),
+                                             feature_max_fraction_missing=0.95,
+                                             time_max=1832,
+                                             ...))
+      
+      testthat::expect_equal(is.null(output), FALSE) 
+    })
+  }
+}
+
+
+
 debug_test_that <- function(desc, code){
   # This is a drop-in replacement for testthat::test_that that makes it easier
   # to debug errors.
@@ -1494,6 +1562,13 @@ debug_test_that <- function(desc, code){
   # Execute the code
   code <- substitute(code)
   eval(code, envir=parent.frame())
+}
+
+
+
+test_suppress <- function(expr){
+  
+  return(quiet(suppressMessages(suppressWarnings(expr))))
 }
 
 
