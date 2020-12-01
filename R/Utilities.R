@@ -930,7 +930,9 @@ extract_from_slot <- function(object_list, slot_name, slot_element=NULL, na.rm=F
     slot_values <- slot_values[!sapply(slot_values, is.null)]
     
     # Then remove NA
-    slot_values <- slot_values[!sapply(slot_values, is.na)]
+    if(is.numeric(slot_values) | is.logical(slot_values) | is.character(slot_values)){
+      slot_values <- slot_values[!sapply(slot_values, is.na)]
+    }
     
     # Check if the slot values are numeric, and remove infinite values if so
     if(is.numeric(slot_values)){
