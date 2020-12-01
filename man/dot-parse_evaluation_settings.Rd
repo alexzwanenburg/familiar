@@ -19,6 +19,7 @@
   prep_cluster_similarity_threshold,
   prep_cluster_similarity_metric,
   evaluate_top_level_only = waiver(),
+  skip_evaluation_elements = waiver(),
   ensemble_method = waiver(),
   evaluation_metric = waiver(),
   confidence_level = waiver(),
@@ -98,6 +99,43 @@ are not computed and shown. When the flag is \code{false}, results are computed
 from both the global layer and the next lower level.
 
 Setting the flag to \code{true} saves computation time.}
+
+\item{skip_evaluation_elements}{(\emph{optional}) Specifies which evaluation steps,
+if any, should be skipped as part of the evaluation process. Defaults to
+\code{none}, which means that all relevant evaluation steps are performed. It can
+have one or more of the following values:
+\itemize{
+\item \code{none}, \code{false}: no steps are skipped.
+\item \code{auc_data}: data for assessing and plotting the area under the receiver
+operating characteristic curve are not computed.
+\item \code{calibration_data}: data for assessing and plotting model calibration are
+not computed.
+\item \code{confusion_matrix}: data for assessing and plotting a confusion matrix are
+not collected.
+\item \code{decision_curve_analyis}: data for performing a decision curve analysis
+are not computed.
+\item \code{feature_expressions}: data for assessing and plotting sample clustering
+are not computed.
+\item \code{fs_vimp}: data for assessing and plotting feature selection-based
+variable importance are not collected.
+\item \code{hyperparameters}: data for assessing model hyperparameters are not
+collected.
+\item \code{kaplan_meier_data}: data for assessing and plotting Kaplan-Meier survival
+curves are not collected.
+\item \code{model_performance}: data for assessing and visualising model performance
+are not created.
+\item \code{model_vimp}: data for assessing and plotting model-based variable
+importance are not collected.
+\item \code{mutual_correlation}: data for assessing and plotting feature clusters are
+not computed.
+\item \code{permutation_vimp}: data for assessing and plotting model-agnostic
+permutation variable importance are not computed.
+\item \code{prediction_data}: predictions for each sample are not made and exported.
+\item \code{stratification_data}: data for assessing stratification into risk groups
+are not computed.
+\item \code{univariate_analysis}: data for assessing and plotting univariate feature
+importance are not computed.
+}}
 
 \item{ensemble_method}{(\emph{optional}) Method for ensembling predictions from
 models for the same sample. Available methods are:

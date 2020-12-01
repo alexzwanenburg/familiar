@@ -2120,6 +2120,56 @@
 #'  from both the global layer and the next lower level.
 #'
 #'  Setting the flag to `true` saves computation time.
+#'@param skip_evaluation_elements (*optional*) Specifies which evaluation steps,
+#'  if any, should be skipped as part of the evaluation process. Defaults to
+#'  `none`, which means that all relevant evaluation steps are performed. It can
+#'  have one or more of the following values:
+#'
+#'  * `none`, `false`: no steps are skipped.
+#'
+#'  * `auc_data`: data for assessing and plotting the area under the receiver
+#'  operating characteristic curve are not computed.
+#'
+#'  * `calibration_data`: data for assessing and plotting model calibration are
+#'  not computed.
+#'
+#'  * `confusion_matrix`: data for assessing and plotting a confusion matrix are
+#'  not collected.
+#'
+#'  * `decision_curve_analyis`: data for performing a decision curve analysis
+#'  are not computed.
+#'
+#'  * `feature_expressions`: data for assessing and plotting sample clustering
+#'  are not computed.
+#'
+#'  * `fs_vimp`: data for assessing and plotting feature selection-based
+#'  variable importance are not collected.
+#'
+#'  * `hyperparameters`: data for assessing model hyperparameters are not
+#'  collected.
+#'
+#'  * `kaplan_meier_data`: data for assessing and plotting Kaplan-Meier survival
+#'  curves are not collected.
+#'
+#'  * `model_performance`: data for assessing and visualising model performance
+#'  are not created.
+#'
+#'  * `model_vimp`: data for assessing and plotting model-based variable
+#'  importance are not collected.
+#'
+#'  * `mutual_correlation`: data for assessing and plotting feature clusters are
+#'  not computed.
+#'
+#'  * `permutation_vimp`: data for assessing and plotting model-agnostic
+#'  permutation variable importance are not computed.
+#'
+#'  * `prediction_data`: predictions for each sample are not made and exported.
+#'
+#'  * `stratification_data`: data for assessing stratification into risk groups
+#'  are not computed.
+#'
+#'  * `univariate_analysis`: data for assessing and plotting univariate feature
+#'  importance are not computed.
 #'@param ensemble_method (*optional*) Method for ensembling predictions from
 #'  models for the same sample. Available methods are:
 #'
@@ -2420,6 +2470,7 @@
                                        prep_cluster_similarity_threshold,
                                        prep_cluster_similarity_metric,
                                        evaluate_top_level_only=waiver(),
+                                       skip_evaluation_elements=waiver(),
                                        ensemble_method=waiver(),
                                        evaluation_metric=waiver(),
                                        confidence_level=waiver(),
@@ -2456,6 +2507,23 @@
   # Flag that limits the depth of the evaluation.
   settings$pool_only <- .parse_arg(x_config=config$evaluate_top_level_only, x_var=evaluate_top_level_only,
                                    var_name="evaluate_top_level_only", type="logical", optional=TRUE, default=TRUE)
+  
+  # Specify any specific elements of the evaluation to skip.
+  settings$evaluation_data_elements <- .parse_arg(x_config=config$skip_evaluation_elements, x_var=skip_evaluation_elements,
+                                                  var_name="skip_evaluation_elements", type="character_list", optional=TRUE, default="none")
+  
+  settings$evaluation_data_elements <- tolower(settings$evaluation_data_elements)
+  .check_parameter_value_is_valid(x=settings$evaluation_data_elements, var_name="skip_evaluation_elements",
+                                  values=c(.get_available_data_elements(), "none", "false"))
+  
+  if(any(settings$evaluation_data_elements %in% c("none", "false"))){
+    settings$evaluation_data_elements <- NULL
+  }
+  
+  # Instead of specifying the elements to skip, we specify the elements to keep.
+  settings$evaluation_data_elements <- setdiff(.get_available_data_elements(),
+                                               settings$evaluation_data_elements)
+  
   
   # Method for ensemble predictions
   settings$ensemble_method <- .parse_arg(x_config=config$ensemble_method, x_var=ensemble_method,

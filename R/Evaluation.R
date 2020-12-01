@@ -434,6 +434,7 @@ run_evaluation <- function(cl, proj_list, settings, file_paths){
   fam_data <- extract_data(object = fam_ensemble,
                            data = data_obj,
                            cl=cl,
+                           data_element = settings$eval$evaluation_data_elements,
                            time_max = settings$eval$time_max,
                            eval_times = settings$eval$eval_times,
                            aggregation_method = settings$eval$aggregation,

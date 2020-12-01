@@ -905,7 +905,7 @@ setMethod("export_stratification_cutoff", signature(object="ANY"),
             
             # Attempt conversion to familiarCollection object.
             object <- do.call(as_familiar_collection,
-                              args=append(list("object"=object, "data_element"="kaplan_meier_info"), list(...)))
+                              args=append(list("object"=object, "data_element"="stratification_data"), list(...)))
             
             return(do.call(export_stratification_cutoff,
                            args=append(list("object"=object, "dir_path"=dir_path), list(...))))

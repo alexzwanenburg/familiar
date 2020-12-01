@@ -2,6 +2,18 @@
 #' @include FamiliarS4Classes.R
 NULL
 
+.get_available_data_elements <- function(confidence_interval_only = FALSE){
+  if(confidence_interval_only){
+    return(c("auc_data", "decision_curve_analyis", "model_performance", "permutation_vimp"))
+    
+  } else {
+    return(c("auc_data", "calibration_data", "confusion_matrix", "decision_curve_analyis", "feature_expressions",
+             "fs_vimp", "hyperparameters", "kaplan_meier_data", "model_performance",
+             "model_vimp", "mutual_correlation", "permutation_vimp", "prediction_data",
+             "stratification_data", "univariate_analysis"))
+  }
+}
+
 #'@title Internal function to create a familiarData object.
 #'
 #'@description Compute various data related to model performance and calibration
@@ -185,7 +197,9 @@ NULL
 #'  assessing rater reliability. Psychol. Bull. 86, 420–428 (1979).
 #'@md
 #'@keywords internal
-setGeneric("extract_data", function(object, data,
+setGeneric("extract_data", function(object,
+                                    data,
+                                    data_element,
                                     is_pre_processed=FALSE,
                                     cl=NULL,
                                     time_max=waiver(),
@@ -212,13 +226,13 @@ setGeneric("extract_data", function(object, data,
                                     icc_type=waiver(),
                                     dynamic_model_loading=FALSE,
                                     message_indent=0L,
-                                    verbose=FALSE,
-                                    data_element="all", ...) standardGeneric("extract_data"))
+                                    verbose=FALSE, ...) standardGeneric("extract_data"))
 
 #####extract_data#####
 setMethod("extract_data", signature(object="familiarEnsemble"),
           function(object,
                    data,
+                   data_element,
                    is_pre_processed=FALSE,
                    cl=NULL,
                    time_max=waiver(),
@@ -246,11 +260,16 @@ setMethod("extract_data", signature(object="familiarEnsemble"),
                    dynamic_model_loading=FALSE,
                    message_indent=0L,
                    verbose=FALSE,
-                   data_element="all",
                    ...){
             # Generates a familiarData object from the ensemble.
             
-            # Check the dynamic_model_loading parameter because it is used here.
+            # Check the data_element argument.
+            if(length(data_element) > 0){
+              .check_parameter_value_is_valid(x=data_element, var_name="data_element",
+                                              values=.get_available_data_elements())
+            }
+            
+            # Check the dynamic_model_loading argument because it is used here.
             .check_parameter_value_is_valid(x=dynamic_model_loading, var_name="dynamic_model_loading",
                                             values=c(FALSE, TRUE))
             
@@ -271,7 +290,7 @@ setMethod("extract_data", signature(object="familiarEnsemble"),
             object <- load_models(object=object, drop_untrained=TRUE)
             
             # Extract feature distance tables,
-            if(data_element %in% c("all", "mutual_correlation", "univariate_analysis", "feature_expressions", "permutation_vimp")){
+            if(any(c("mutual_correlation", "univariate_analysis", "feature_expressions", "permutation_vimp") %in% data_element)){
               # Not for the fs_vimp and model_vimp data elements. This is
               # because these derive cluster information from consensus
               # clustering.
@@ -285,7 +304,7 @@ setMethod("extract_data", signature(object="familiarEnsemble"),
                                                                            verbose=verbose)
             }
 
-            if(data_element %in% c("all", "feature_expressions")){
+            if(any(c("feature_expressions") %in% data_element)){
               # Compute a table containing the pairwise distance between samples.
               sample_similarity_table <- extract_sample_similarity_table(object=object,
                                                                          data=data,
@@ -296,7 +315,7 @@ setMethod("extract_data", signature(object="familiarEnsemble"),
             }
 
             # Extract feature variable importance
-            if(data_element %in% c("all", "fs_vimp")){
+            if(any(c("fs_vimp") %in% data_element)){
               fs_vimp_info <- extract_fs_vimp(object=object,
                                               aggregation_method=aggregation_method,
                                               rank_threshold=rank_threshold,
@@ -308,7 +327,7 @@ setMethod("extract_data", signature(object="familiarEnsemble"),
 
 
             # Extract model-based variable importance
-            if(data_element %in% c("all", "model_vimp")){
+            if(any(c("model_vimp") %in% data_element)){
               model_vimp_info <- extract_model_vimp(object=object,
                                                     aggregation_method=aggregation_method,
                                                     rank_threshold=rank_threshold,
@@ -320,7 +339,7 @@ setMethod("extract_data", signature(object="familiarEnsemble"),
             
             
             # Assess permutation variable importance
-            if(data_element %in% c("all", "permutation_vimp")){
+            if(any(c("permutation_vimp") %in% data_element)){
               permutation_vimp <- extract_permutation_vimp(object=object,
                                                            data=data,
                                                            cl=cl,
@@ -347,7 +366,7 @@ setMethod("extract_data", signature(object="familiarEnsemble"),
             
             
             # Create mutual correlation information
-            if(data_element %in% c("all", "mutual_correlation")){
+            if(any(c("mutual_correlation") %in% data_element)){
               mutual_corr_info <- extract_mutual_correlation(object=object,
                                                              data=data,
                                                              feature_similarity_table=feature_similarity_table,
@@ -361,7 +380,7 @@ setMethod("extract_data", signature(object="familiarEnsemble"),
             }
 
             # Expression heatmap data
-            if(data_element %in% c("all", "feature_expressions")){
+            if(any(c("feature_expressions") %in% data_element)){
               expression_info <- extract_feature_expression(object=object,
                                                             data=data,
                                                             feature_similarity_table,
@@ -381,7 +400,7 @@ setMethod("extract_data", signature(object="familiarEnsemble"),
 
 
             # Univariate analysis
-            if(data_element %in% c("all", "univariate_analysis")){
+            if(any(c("univariate_analysis") %in% data_element)){
               univar_info <- extract_univariate_analysis(object=object,
                                                          data=data,
                                                          cl=cl,
@@ -400,16 +419,17 @@ setMethod("extract_data", signature(object="familiarEnsemble"),
 
 
             # Extract hyper-parameters
-            if(data_element %in% c("all", "hyperparameters")){
+            if(any(c("hyperparameters") %in% data_element)){
               hyperparameter_info <- extract_hyperparameters(object=object,
                                                              message_indent=message_indent,
                                                              verbose=verbose)
             } else {
               hyperparameter_info <- NULL
             }
-
+            
+            
             # Create predictions.
-            if(data_element %in% c("all", "prediction_data")){
+            if(any(c("prediction_data") %in% data_element)){
               prediction_data <- extract_predictions(object=object,
                                                      data=data,
                                                      cl=cl,
@@ -423,7 +443,7 @@ setMethod("extract_data", signature(object="familiarEnsemble"),
             }
             
             # Compute model performance based on the prediction_data
-            if(data_element %in% c("all", "model_performance")){
+            if(any(c("model_performance") %in% data_element)){
               model_performance_data <- extract_performance(object=object,
                                                             data=data,
                                                             cl=cl,
@@ -444,7 +464,7 @@ setMethod("extract_data", signature(object="familiarEnsemble"),
             }
             
             # Compute the decision curve analysis data.
-            if(data_element %in% c("all", "decision_curve_analyis")){
+            if(any(c("decision_curve_analyis") %in% data_element)){
               decision_curve_data <- extract_decision_curve_data(object=object,
                                                                  data=data,
                                                                  cl=cl,
@@ -465,7 +485,7 @@ setMethod("extract_data", signature(object="familiarEnsemble"),
             
             
             # Extract information regarding stratification
-            if(data_element %in% c("all", "kaplan_meier_info")){
+            if(any(c("stratification_data") %in% data_element)){
               km_info <- extract_km_cutoffs(object=object,
                                             message_indent=message_indent,
                                             verbose=verbose)
@@ -473,8 +493,9 @@ setMethod("extract_data", signature(object="familiarEnsemble"),
               km_info <- NULL
             }
             
-            # Compute log-rank tests
-            if(data_element %in% c("all", "kaplan_meier_data")){
+            
+            # Compute stratification tests
+            if(any(c("kaplan_meier_data") %in% data_element)){
               stratification_data <- extract_stratification_data(object=object,
                                                                  data=data,
                                                                  ensemble_method=ensemble_method,
@@ -488,7 +509,7 @@ setMethod("extract_data", signature(object="familiarEnsemble"),
             }
             
             # Extract calibration data
-            if(data_element %in% c("all", "calibration_data")){
+            if(any(c("calibration_data") %in% data_element)){
               calibration_data <- extract_calibration_data(object=object,
                                                            data=data,
                                                            eval_times=eval_times,
@@ -499,7 +520,7 @@ setMethod("extract_data", signature(object="familiarEnsemble"),
             }
             
             # Extract AUC data
-            if(data_element %in% c("all", "auc_data")){
+            if(any(c("auc_data") %in% data_element)){
               auc_data <- extract_auc_data(object=object,
                                            data=data,
                                            cl=cl,
@@ -517,7 +538,7 @@ setMethod("extract_data", signature(object="familiarEnsemble"),
             }
             
             # Extract confusion matrix data.
-            if(data_element %in% c("all", "confusion_matrix")){
+            if(any(c("confusion_matrix") %in% data_element)){
               confusion_matrix_info <- extract_confusion_matrix(object=object,
                                                                 data=data,
                                                                 cl=cl,

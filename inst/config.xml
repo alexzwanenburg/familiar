@@ -162,6 +162,8 @@
     <evaluation>
       <!-- Evaluate only the most important experiment level (true), or additionally evaluate underlying levels (false) (optional, default: true)-->
       <evaluate_top_level_only></evaluate_top_level_only>
+      <!-- Evaluation steps that should be skipped (optional, default: none) -->
+      <skip_evaluation_elements></skip_evaluation_elements>
       <!-- Method for clustering features (optional, default: same as cluster_method) -->
       <feature_cluster_method></feature_cluster_method>
       <!-- Linkage method for clustering features (optional, default: same as cluster_linkage_method) -->

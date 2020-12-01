@@ -7,6 +7,7 @@
 extract_data(
   object,
   data,
+  data_element,
   is_pre_processed = FALSE,
   cl = NULL,
   time_max = waiver(),
@@ -34,7 +35,6 @@ extract_data(
   dynamic_model_loading = FALSE,
   message_indent = 0L,
   verbose = FALSE,
-  data_element = "all",
   ...
 )
 }
@@ -44,6 +44,11 @@ extract_data(
 
 \item{data}{A \code{dataObject} object, \code{data.table} or \code{data.frame} that
 constitutes the data that are used to compute}
+
+\item{data_element}{String indicating which data elements are to be extracted.
+Default is \code{all}, but specific elements can be specified to speed up
+computations if not all elements are to be computed. This is an internal
+parameter that is set by, e.g. the \code{export_model_vimp} method.}
 
 \item{is_pre_processed}{Flag that indicates whether the data was already
 pre-processed externally, e.g. normalised and clustered. Only used if the
@@ -286,11 +291,6 @@ computation and extraction of various data elements.}
 
 \item{verbose}{Flag to indicate whether feedback should be provided on the
 computation and extraction of various data elements.}
-
-\item{data_element}{String indicating which data elements are to be extracted.
-Default is \code{all}, but specific elements can be specified to speed up
-computations if not all elements are to be computed. This is an internal
-parameter that is set by, e.g. the \code{export_model_vimp} method.}
 
 \item{...}{Unused arguments.}
 }
