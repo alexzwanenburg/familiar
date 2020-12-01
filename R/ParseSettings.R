@@ -356,7 +356,11 @@
                                        dots))
 
   # Set the general parallel switch to FALSE if all workflow steps disabled parallel processing.
-  settings$run$parallel <- settings$prep$do_parallel | settings$fs$do_parallel | settings$mb$do_parallel | settings$hpo$do_parallel | settings$eval$do_parallel
+  settings$run$parallel <- (settings$prep$do_parallel |
+                              settings$fs$do_parallel |
+                              settings$mb$do_parallel |
+                              settings$hpo$do_parallel %in% c("TRUE", "inner", "outer") |
+                              settings$eval$do_parallel %in% c("TRUE", "inner", "outer"))
     
   return(settings)
 }
@@ -1929,7 +1933,11 @@
 #' @param parallel_hyperparameter_optimisation (*optional*) Enable parallel
 #'   processing for hyperparameter optimisation. Defaults to `TRUE`. When set to
 #'   `FALSE`, this will disable the use of parallel processing while performing
-#'   optimisation, regardless of the settings of the `parallel` parameter.
+#'   optimisation, regardless of the settings of the `parallel` parameter. The
+#'   parameter moreover specifies whether parallelisation takes place within the
+#'   optimisation algorithm (`inner`, default), or in an outer loop ( `outer`)
+#'   over learners, data subsamples, etc.
+#'
 #'   `parallel_hyperparameter_optimisation` is ignored if `parallel=FALSE`.
 #' @param ... Unused arguments.
 #'
@@ -2070,10 +2078,13 @@
   
   # Parallelisation switch for parallel processing
   settings$do_parallel <- .parse_arg(x_config=config$parallel_hyperparameter_optimisation, x_var=parallel_hyperparameter_optimisation,
-                                     var_name="parallel_hyperparameter_optimisation", type="logical", optional=TRUE, default=TRUE)
+                                     var_name="parallel_hyperparameter_optimisation", type="character", optional=TRUE, default="TRUE")
+  
+  .check_parameter_value_is_valid(x=settings$do_parallel, var_name="parallel_hyperparameter_optimisation",
+                                  values=c("TRUE", "FALSE", "inner", "outer"))
   
   # Disable if parallel is FALSE
-  if(!parallel) { settings$do_parallel <- FALSE }
+  if(!parallel) settings$do_parallel <- "FALSE"
   
   return(settings) 
 }
@@ -2443,7 +2454,11 @@
 #'@param parallel_evaluation (*optional*) Enable parallel processing for
 #'  hyperparameter optimisation. Defaults to `TRUE`. When set to `FALSE`, this
 #'  will disable the use of parallel processing while performing optimisation,
-#'  regardless of the settings of the `parallel` parameter.
+#'  regardless of the settings of the `parallel` parameter. The parameter
+#'  moreover specifies whether parallelisation takes place within the
+#'  evaluation process steps (`inner`, default), or in an outer loop ( `outer`)
+#'  over learners, data subsamples, etc.
+#'
 #'  `parallel_evaluation` is ignored if `parallel=FALSE`.
 #'@param ... Unused arguments.
 #'
@@ -2753,8 +2768,15 @@
   settings$do_parallel <- .parse_arg(x_config=config$parallel_evaluation, x_var=parallel_evaluation,
                                      var_name="parallel_evaluation", type="logical", optional=TRUE, default=TRUE)
   
+  # Parallelisation switch for parallel processing
+  settings$do_parallel <- .parse_arg(x_config=config$parallel_evaluation, x_var=parallel_evaluation,
+                                     var_name="parallel_evaluation", type="character", optional=TRUE, default="TRUE")
+  
+  .check_parameter_value_is_valid(x=settings$do_parallel, var_name="parallel_evaluation",
+                                  values=c("TRUE", "FALSE", "inner", "outer"))
+  
   # Disable if parallel is FALSE
-  if(!parallel) settings$do_parallel <- FALSE
+  if(!parallel) settings$do_parallel <- "FALSE"
   
   # Return list of settings
   return(settings)

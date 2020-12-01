@@ -24,9 +24,17 @@ evaluation process.
     models to an ensemble. This reduces the memory footprint at the cost of IO
     overhead as the models are read from the disk or network when required. By
     default, all models are statically attached to an ensemble.
+    
     * Added `skip_evaluation_elements` parameter that allows skipping one or
     more steps of the evaluation process. This is useful if some evaluations are
-    not relevant to you.
+    not relevant.
+    
+    * Updated `parallel_hyperparameter_optimisation` and `parallel_evaluation`
+    to allow for specifying whether parallelisation should take place inside
+    (`inner`) or outside (`outer`) the respective processes. For `outer` the
+    parallelisation takes place over different subsamples, learners, etc. This
+    may provide an increase in processing speed, at the cost of less feedback
+    and a higher memory footprint.
 
 
 ## Minor changes:

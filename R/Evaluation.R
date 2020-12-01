@@ -1,9 +1,7 @@
 run_evaluation <- function(cl, proj_list, settings, file_paths){
   # performs evaluation of the data
   
-  if(!settings$eval$do_parallel){
-    cl <- NULL
-  }
+  if(settings$eval$do_parallel == "FALSE") cl <- NULL
   
   # Extract data from ensembles
   data_set_list <- .prepare_familiar_data_sets(cl=cl, only_pooling=settings$eval$pool_only)
@@ -170,27 +168,20 @@ run_evaluation <- function(cl, proj_list, settings, file_paths){
     
     logger.message("\nEvaluation: Processing data to create familiarData objects.")
     
-    # Allow automated switching between internal and external loops.
-    if(settings$eval$do_parallel & nrow(new_data_table) > length(cl)){
-      # Perform parallelisation of the outer loop.
-      outer_parallel <- show_progress_bar <- TRUE
-      cl_outer <- cl
-      cl_inner <- NULL
-     
-      logger.message(paste0("Evaluation: Parallel processing is done in the outer loop. ",
-                            "No progress can be displayed."))
-      
-    } else if(settings$eval$do_parallel){
-      # Perform parallelisation in the internal processes.
-      outer_parallel <- show_progress_bar <- FALSE
-      cl_outer <- NULL
+    # Set outer vs. inner loop parallelisation.
+    if(settings$eval$do_parallel %in% c("TRUE", "inner")){
       cl_inner <- cl
+      cl_outer <- NULL
+      
+    } else if(settings$eval$do_parallel %in% c("outer")){
+      cl_inner <- NULL
+      cl_outer <- cl
+      
+      if(!is.null(cl_outer)) logger.message(paste0("Evaluation: Parallel processing is done in the outer loop. ",
+                                                   "No progress can be displayed."))
       
     } else {
-      # No parallelisation is conducted.
-      outer_parallel <- show_progress_bar <- FALSE
-      cl_outer <- NULL
-      cl_inner <- NULL
+      cl_inner <- cl_outer <- NULL
     }
     
     # Perform the necessary computations to create familiarData objects.
@@ -198,7 +189,7 @@ run_evaluation <- function(cl, proj_list, settings, file_paths){
                   assign="all",
                   FUN=.create_familiar_data_runtime,
                   pool_data_table=split(new_data_table, by="fam_data"),
-                  progress_bar=show_progress_bar,
+                  progress_bar=!is.null(cl_outer),
                   MoreArgs=list("cl"=cl_inner,
                                 "dir_path"=file_paths$fam_data_dir))
   }  

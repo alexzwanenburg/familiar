@@ -89,32 +89,21 @@ run_hyperparameter_optimisation <- function(cl=NULL,
   iteration_list <- .get_run_list(iteration_list=project_list$iter_list,
                                   data_id=hpo_id_list$data)
   
-  # Load functions to cluster
-  if(settings$hpo$do_parallel & (length(iteration_list) >= length(cl) | length(cl) > 10)){
-    # Perform an outer parallellisation.
-    outer_parallel <- TRUE
-    cl_outer <- cl
-    cl_inner <- NULL
-    show_progress_bar <- TRUE
-    
-    logger.message(paste0("Hyperparameter optimisation: Load-balanced parallel processing is done in the outer loop. ",
-                          "No progress can be displayed."),
-                   indent=message_indent)
-    
-  } else if(settings$hpo$do_parallel){
-    # Perform an inner parallellisation.
-    outer_parallel <- FALSE
-    cl_outer <- NULL
+  if(settings$hpo$do_parallel %in% c("TRUE", "inner")){
     cl_inner <- cl
-    show_progress_bar <- FALSE
-    
-  } else {
-    outer_parallel <- FALSE
     cl_outer <- NULL
+    
+  } else if(settings$hpo$do_parallel %in% c("outer")){
     cl_inner <- NULL
-    show_progress_bar <- FALSE
+    cl_outer <- cl
+    
+    if(!is.null(cl_outer)) logger.message(paste0("Hyperparameter optimisation: Load-balanced parallel processing is done in the outer loop. ",
+                                                 "No progress can be displayed."),
+                                          indent=message_indent)
+  } else {
+    cl_inner <- cl_outer <- NULL
   }
-
+  
   # Message start of hyperparameter optimisation
   if(is_vimp){
     logger.message(paste("Hyperparameter optimisation: Starting parameter optimisation for the", fs_method,
@@ -133,7 +122,7 @@ run_hyperparameter_optimisation <- function(cl=NULL,
                             FUN=hpo.perform_smbo,
                             run=iteration_list,
                             run_id=seq_along(iteration_list),
-                            progress_bar=show_progress_bar,
+                            progress_bar=!is.null(cl_outer),
                             MoreArgs=list("n_run_total"=length(iteration_list),
                                           "cl"=cl_inner,
                                           "fs_method"=fs_method,
@@ -1379,7 +1368,7 @@ hpo.get_model_performance <- function(cl,
                                run=hpo_run_list,
                                rank_table=rank_table_list,
                                parameter_table=parameter_list,
-                               progress_bar=!settings$hpo$do_parallel,
+                               progress_bar=is.null(cl),
                                MoreArgs=list("object"=object,
                                              "metric_objects"=metric_objects,
                                              "data"=data,

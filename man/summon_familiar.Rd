@@ -909,7 +909,11 @@ upper confidence bound of the distribution (Kaufmann et al., 2012).
     \item{\code{parallel_hyperparameter_optimisation}}{(\emph{optional}) Enable parallel
 processing for hyperparameter optimisation. Defaults to \code{TRUE}. When set to
 \code{FALSE}, this will disable the use of parallel processing while performing
-optimisation, regardless of the settings of the \code{parallel} parameter.
+optimisation, regardless of the settings of the \code{parallel} parameter. The
+parameter moreover specifies whether parallelisation takes place within the
+optimisation algorithm (\code{inner}, default), or in an outer loop ( \code{outer})
+over learners, data subsamples, etc.
+
 \code{parallel_hyperparameter_optimisation} is ignored if \code{parallel=FALSE}.}
     \item{\code{evaluate_top_level_only}}{(\emph{optional}) Flag that signals that only
 evaluation at the most global experiment level is required. Consider a
@@ -1214,7 +1218,11 @@ evaluation.}
     \item{\code{parallel_evaluation}}{(\emph{optional}) Enable parallel processing for
 hyperparameter optimisation. Defaults to \code{TRUE}. When set to \code{FALSE}, this
 will disable the use of parallel processing while performing optimisation,
-regardless of the settings of the \code{parallel} parameter.
+regardless of the settings of the \code{parallel} parameter. The parameter
+moreover specifies whether parallelisation takes place within the
+evaluation process steps (\code{inner}, default), or in an outer loop ( \code{outer})
+over learners, data subsamples, etc.
+
 \code{parallel_evaluation} is ignored if \code{parallel=FALSE}.}
   }}
 }
