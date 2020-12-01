@@ -332,11 +332,26 @@ setMethod("assign_risk_groups", signature(object="familiarEnsemble", data="dataO
               } else if(method %in% c("mean_threshold", "median_threshold")){
                 # Aggregate cut-offs and use ensemble predictions
                 
-                # Extract stratification parameters
-                km_parameters <- extract_from_slot(object_list=object@model_list,
-                                                   slot_name="km_info",
-                                                   slot_element="parameters",
-                                                   na.rm=TRUE)
+                ..get_stratification_parameters <- function(ii, object, stratification_method){
+                  # Extract stratification parameters from the underlying models.
+                  
+                  # (dynamically) load the familiar model.
+                  fam_model <- ..get_model(ii=ii, object=object)
+                  
+                  # Return the stratification method(s) in the model.
+                  return(fam_model@km_info$parameters[[stratification_method]])
+                }
+                
+                # Extract stratification parameters.
+                stratification_parameters <- lapply(seq_along(object@model_list), ..get_stratification_parameters,
+                                                    object=object,
+                                                    stratification_method=stratification_method)
+                
+                # Remove NULL entries.
+                stratification_parameters <- stratification_parameters[!sapply(stratification_parameters, is.null)]
+                
+                # Check that there are any stratification parameters.
+                if(length(stratification_parameters) == 0) return(NULL)
                 
                 # Predict values.
                 prediction_table <- .predict(object=object,
@@ -348,11 +363,14 @@ setMethod("assign_risk_groups", signature(object="familiarEnsemble", data="dataO
                 if(!any_predictions_valid(prediction_table=prediction_table, outcome_type=object@outcome_type)) return(NULL)
                 
                 # Collect cutoffs
-                cutoff <- lapply(km_parameters, function(km_info, strat_method){
-                  if(strat_method == km_info$method){
-                    cutoff_data <- data.table::data.table("value"=km_info$cutoff, "index"=seq_len(length(km_info$cutoff)))
+                cutoff <- lapply(stratification_parameters, function(strat_param_set, strat_method){
+                  if(strat_method == strat_param_set$method){
+                    cutoff_data <- data.table::data.table("value"=strat_param_set$cutoff,
+                                                          "index"=seq_along(strat_param_set$cutoff))
+                    
                   } else {
-                    cutoff_data <- data.table::data.table("value"=numeric(0), "index"=integer(0))
+                    cutoff_data <- data.table::data.table("value"=numeric(0),
+                                                          "index"=integer(0))
                   }
                   
                   return(cutoff_data)
