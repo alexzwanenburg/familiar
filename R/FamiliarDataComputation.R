@@ -199,7 +199,7 @@ NULL
 #'@keywords internal
 setGeneric("extract_data", function(object,
                                     data,
-                                    data_element,
+                                    data_element=waiver(),
                                     is_pre_processed=FALSE,
                                     cl=NULL,
                                     time_max=waiver(),
@@ -232,7 +232,7 @@ setGeneric("extract_data", function(object,
 setMethod("extract_data", signature(object="familiarEnsemble"),
           function(object,
                    data,
-                   data_element,
+                   data_element=waiver(),
                    is_pre_processed=FALSE,
                    cl=NULL,
                    time_max=waiver(),
@@ -262,6 +262,8 @@ setMethod("extract_data", signature(object="familiarEnsemble"),
                    verbose=FALSE,
                    ...){
             # Generates a familiarData object from the ensemble.
+            
+            if(is.waive(data_element)) data_element <- .get_available_data_elements()
             
             # Check the data_element argument.
             if(length(data_element) > 0){

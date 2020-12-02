@@ -7,7 +7,7 @@
 extract_data(
   object,
   data,
-  data_element,
+  data_element = waiver(),
   is_pre_processed = FALSE,
   cl = NULL,
   time_max = waiver(),
