@@ -236,3 +236,9 @@ setGeneric("compute_metric_score", function(metric, ...) standardGeneric("comput
 setGeneric("compute_objective_score", function(metric, ...) standardGeneric("compute_objective_score"))
 
 setGeneric("set_metric_baseline_value", function(metric, ...) standardGeneric("set_metric_baseline_value"))
+
+
+#####familiarDataElement#####
+setGeneric("extract_dispatcher", function(object, proto_data_element, ...) standardGeneric("extract_dispatcher"))
+
+setGeneric("identify_element_sets", function(x, ...) standardGeneric("identify_element_sets"))

@@ -60,6 +60,8 @@ setMethod("is_empty", signature(x="list"), function(x){
 
 setMethod("is_empty", signature(x="vector"), function(x) length(x) == 0)
 
+setMethod("is_empty", signature(x="familiarDataElement"), function(x) return(is_empty(x@data)))
+
 #####get_outcome_class_levels---------------------------------------------------
 setMethod("get_outcome_class_levels", signature(x="outcomeInfo"), function(x){
   if(x@outcome_type %in% c("binomial", "multinomial")){
@@ -791,6 +793,7 @@ setMethod("get_bootstrap_sample", signature(data="data.table"),
           })
 
 setMethod("get_bootstrap_sample", signature(data="NULL"), function(data, ...) return(NULL))
+
 
 
 #####universal_extractor--------------------------------------------------------

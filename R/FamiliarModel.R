@@ -283,6 +283,7 @@ setMethod("save", signature(list="familiarModel", file="character"),
           })
 
 
+
 #####add_model_name (model)#####
 setMethod("add_model_name", signature(data="ANY", object="familiarModel"),
           function(data, object){
@@ -290,6 +291,35 @@ setMethod("add_model_name", signature(data="ANY", object="familiarModel"),
             # This is the same for objects of the familiarModel and familiarEnsemble classes
             return(.add_model_name(data=data, object=object))
           })
+
+#####add_model_name (familiarDataElement, familiarModel)------------------------
+setMethod("add_model_name", signature(data="familiarDataElement", object="familiarModel"),
+          function(data, object){
+            
+            # Determine the model name
+            model_name <- get_object_name(object=object, abbreviated=TRUE)
+            
+            if(is.null(data@identifiers)){
+              data@identifiers <- list("model_name" = model_name)
+              
+            } else {
+              data@identifiers[["model_name"]] <- model_name
+            }
+
+            return(data)
+          })
+
+#####add_model_name (familiarDataElement, character)----------------------------
+setMethod("add_model_name", signature(data="familiarDataElement", object="character"),
+          function(data, object){
+            # Load object.
+            object <- load_familiar_object(object)
+            
+            return(do.call(add_model_name, args=c(list("data"=data,
+                                                       "object"=object))))
+          })
+
+
 
 #####get_object_name (model)#####
 setMethod("get_object_name", signature(object="familiarModel"),

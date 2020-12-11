@@ -1,3 +1,10 @@
+#' @include FamiliarS4Generics.R
+#' @include FamiliarS4Classes.R
+NULL
+
+setClass("familiarDataElementModelPerformance",
+         contains="familiarDataElement",
+         prototype = methods::prototype(value_column="value"))
 
 #'@title Internal function to extract performance metrics.
 #'
@@ -21,12 +28,11 @@ setGeneric("extract_performance",
                     metric=waiver(),
                     ensemble_method=waiver(),
                     eval_times=waiver(),
+                    detail_level=waiver(),
+                    estimation_type=waiver(),
+                    aggregate_results=waiver(),
                     confidence_level=waiver(),
                     bootstrap_ci_method=waiver(),
-                    compute_model_data=waiver(),
-                    compute_model_ci=waiver(),
-                    compute_ensemble_ci=waiver(),
-                    aggregate_ci=waiver(),
                     is_pre_processed=FALSE,
                     message_indent=0L,
                     verbose=FALSE,
@@ -40,12 +46,11 @@ setMethod("extract_performance", signature(object="familiarEnsemble"),
                    metric=waiver(),
                    ensemble_method=waiver(),
                    eval_times=waiver(),
+                   detail_level=waiver(),
+                   estimation_type=waiver(),
+                   aggregate_results=waiver(),
                    confidence_level=waiver(),
                    bootstrap_ci_method=waiver(),
-                   compute_model_data=waiver(),
-                   compute_model_ci=waiver(),
-                   compute_ensemble_ci=waiver(),
-                   aggregate_ci=waiver(),
                    is_pre_processed=FALSE,
                    message_indent=0L,
                    verbose=FALSE,
@@ -86,12 +91,27 @@ setMethod("extract_performance", signature(object="familiarEnsemble"),
             .check_parameter_value_is_valid(x=bootstrap_ci_method, var_name="bootstrap_ci_methpd",
                                             values=.get_available_bootstrap_confidence_interval_methods())
             
-            # By default, compute confidence intervals for ensembles, but not
-            # for models.
-            if(is.waive(compute_model_data)) compute_model_data <- "none"
-            if(is.waive(compute_model_ci)) compute_model_ci <- "none"
-            if(is.waive(compute_ensemble_ci)) compute_ensemble_ci <- "all"
-            if(is.waive(aggregate_ci)) aggregate_ci <- "none"
+            # Check the level detail
+            if(is.waive(detail_level)) detail_level <- object@settings$detail_level
+            
+            .check_parameter_value_is_valid(x=detail_level, var_name="detail_level",
+                                            values=c("ensemble", "hybrid", "model"))
+            
+            # Check the estimation type
+            if(is.waive(estimation_type)) detail_level <- object@settings$estimation_type
+            
+            .check_parameter_value_is_valid(x=estimation_type, var_name="estimation_type",
+                                            values=c("point", "bias_correction", "bc", "bootstrap_confidence_interval", "bci"))
+            
+            # Check whether results should be aggregated.
+            if(is.waive(aggregate_results)) aggregate_results <- object@settings$aggregate_results
+            
+            aggregate_results <- tolower(aggregate_results)
+            .check_parameter_value_is_valid(x=aggregate_results, var_name="aggregate_results",
+                                            values=c(.get_available_data_elements(confidence_interval_only=TRUE),
+                                                     "true", "false", "none", "all", "default"))
+            # Set as TRUE/FALSE
+            aggregate_results <- any(aggregate_results %in% c("true", "all", "model_performance"))
             
             # Load metric(s) from the object settings attribute if not provided
             # externally.
@@ -102,6 +122,28 @@ setMethod("extract_performance", signature(object="familiarEnsemble"),
             
             # Test if models are properly loaded
             if(!is_model_loaded(object=object)) ..error_ensemble_models_not_loaded()
+            
+            # Generate a prototype data element.
+            proto_data_element <- new("familiarDataElementModelPerformance",
+                                      detail_level = detail_level,
+                                      estimation_type = estimation_type,
+                                      confidence_level = confidence_level,
+                                      bootstrap_ci_method = bootstrap_ci_method)
+            
+            # Generate elements to send to dispatch.
+            performance_data <- extract_dispatcher(FUN=.extract_model_performance_data,
+                                                   has_internal_bootstrap=TRUE,
+                                                   cl=cl,
+                                                   object=object,
+                                                   data=data,
+                                                   proto_data_element=proto_data_element,
+                                                   is_pre_processed=is_pre_processed,
+                                                   ensemble_method=ensemble_method,
+                                                   metric=metric,
+                                                   eval_times=eval_times,
+                                                   aggregate_results=aggregate_results,
+                                                   message_indent=message_indent + 1L,
+                                                   verbose=verbose)
             
             # Extract data for the individual models and the ensemble.
             performance_data <- universal_extractor(object=object,

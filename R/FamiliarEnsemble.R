@@ -814,6 +814,25 @@ setMethod("add_model_name", signature(data="ANY", object="familiarEnsemble"),
             return(.add_model_name(data=data, object=object))
           })
 
+
+#####add_model_name (familiarDataElement, familiarEnsemble)------------------------
+setMethod("add_model_name", signature(data="familiarDataElement", object="familiarEnsemble"),
+          function(data, object){
+            
+            # Determine the model name
+            model_name <- get_object_name(object=object, abbreviated=TRUE)
+            
+            if(is.null(data@identifiers)){
+              data@identifiers <- list("model_name" = model_name)
+              
+            } else {
+              data@identifiers[["model_name"]] <- model_name
+            }
+            
+            return(data)
+          })
+
+
 ######get_object_name (ensemble)#####
 setMethod("get_object_name", signature(object="familiarEnsemble"),
           function(object, abbreviated=FALSE){

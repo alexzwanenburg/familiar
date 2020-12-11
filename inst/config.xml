@@ -184,6 +184,12 @@
       <ensemble_method></ensemble_method>
       <!-- Metric(s) for assessing model performance (optional, default: same as metric for hyperparameter_optimisation, multiple possible) -->
       <evaluation_metric></evaluation_metric>
+      <!-- Level at which evaluation steps are computed (optional, default: hybrid) -->
+      <detail_level></detail_level>
+      <!-- Type of estimate being computed (optional, default: bootstrap_confidence_interval) -->
+      <estimation_type></estimation_type>
+      <!-- Whether results should be aggregated at run-time (optional: default) --> 
+      <aggregate_results></aggregate_results>
       <!-- Confidence level for confidence intervals (optional, default: 0.95) -->
       <confidence_level></confidence_level>
       <!-- Method for bootstrap confidence interval (optional, default: percentile) -->

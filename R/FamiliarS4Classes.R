@@ -632,3 +632,42 @@ setClass("familiarMetric",
            baseline_value = NULL,
            higher_better = TRUE)
 )
+
+
+
+####familiarDataElement#####
+setClass("familiarDataElement",
+         slots = list(
+           # The primary results.
+           data = "ANY",
+           # Identifiers of the data, e.g. the generating model name, the
+           # feature-selection method and learner.
+           identifiers = "ANY",
+           # The level of detail at which the data was computed.
+           detail_level = "character",
+           # The kind of estimation for which the data was computed, e.g.
+           # bias-corrected estimates.
+           estimation_type = "character",
+           # The confidence level for which data was computed. Only set if the
+           # correct estimation type is set.
+           confidence_level = "numeric",
+           # The method used to compute the bootstrap confidence intervals from
+           # the data.
+           bootstrap_ci_method = "character",
+           # The column that contains the relevant data. Useful for merging and
+           # identifying bootstraps.
+           value_column = "character",
+           # Flag that signals whether the data is aggregated, e.g. by computing
+           # confidence intervals and a bias-corrected value.
+           is_aggregated = "logical"
+         ),
+         prototype = list(
+           data = NULL,
+           identifiers = NULL,
+           detail_level = NA_character_,
+           estimation_type = NA_character_,
+           confidence_level = NA_real_,
+           bootstrap_ci_method = NA_character_,
+           value_column = NA_character_,
+           is_aggregated = FALSE)
+)

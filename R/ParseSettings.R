@@ -2190,6 +2190,8 @@
 #'  * `mean`: Use the mean of the predicted values as the ensemble value for a
 #'  sample.
 #'
+#'  This parameter is only used if `detail_level` is `ensemble`.
+#'
 #'@param evaluation_metric (*optional*) One or more metrics for assessing model
 #'  performance. See the vignette on performance metrics for the available
 #'  metrics.
@@ -2199,6 +2201,71 @@
 #'  depends on the value of `confidence_level` (Davison and Hinkley, 1997).
 #'
 #'  If unset, the metric in the `optimisation_metric` variable is used.
+#'
+#'@param detail_level (*optional*) Sets the level at which results are computed
+#'  and aggregated.
+#'
+#'  * `ensemble`: Results are computed at the ensemble level, i.e. over all
+#'  models in the ensemble. This means that, for example, bias-corrected
+#'  estimates of model performance are assessed by creating (at least) 20
+#'  bootstraps and computing the model performance of the ensemble model for
+#'  each bootstrap.
+#'
+#'  * `hybrid` (default): Results are computed at the level of models in an
+#'  ensemble. This means that, for example, bias-corrected estimates of model
+#'  performance are directly computed using the models in the ensemble. If there
+#'  are at least 20 trained models in the ensemble, performance is computed for
+#'  each model, in contrast to `ensemble` where performance is computed for the
+#'  ensemble of models. If there are less than 20 trained models in the
+#'  ensemble, bootstraps are created so that at least 20 point estimates can be
+#'  made.
+#'
+#'  * `model` (to be implemented): Results are computed at the model level. This
+#'  means that, for example, bias-corrected estimates of model performance are
+#'  assessed by creating (at least) 20 bootstraps and computing the performance
+#'  of the model for each bootstrap.
+#'
+#'  Note that each level of detail has a different interpretation for bootstrap
+#'  confidence intervals. For `ensemble` and `model` these are the confidence
+#'  intervals for the ensemble and an individual model, respectively. That is,
+#'  the confidence interval describes the range where an estimate produced by a
+#'  respective ensemble or model trained on a repeat of the experiment may be
+#'  found with the probability of the confidence level. For `hybrid`, it
+#'  represents the range where any single model trained on a repeat of the
+#'  experiment may be found with the probability of the confidence level. By
+#'  definition, confidence intervals obtained using `hybrid` are at least as
+#'  wide as those for `ensemble`. `hybrid` offers the correct interpretation if
+#'  the goal of the analysis is to assess the result of a single, unspecified,
+#'  model.
+#'
+#'  `hybrid` is generally computationally less expensive then `ensemble`, which
+#'  in turn is somewhat expensive than `model`, though the 
+#'
+#'@param estimation_type (*optional*) Sets the type of estimation that should be
+#'  possible. This has the following options:
+#'
+#'  * `point`: Point estimates.
+#'
+#'  * `bias_correction` or `bc`: Bias-corrected estimates. A bias-corrected
+#'  estimate is computed from (at least) 20 point estimates, and `familiar` may
+#'  bootstrap the data to create them.
+#'
+#'  * `bootstrap_confidence_interval` or `bci` (default): Bias-corrected
+#'  estimates with bootstrap confidence intervals (Efron and Hastie, 2016). The
+#'  number of point estimates required depends on the `confidence_level`
+#'  parameter, and `familiar` may bootstrap the data to create them.
+#'
+#'@param aggregate_results (*optional*) Flag that signifies whether results
+#'  should be aggregated during evaluation. If `estimation_type` is
+#'  `bias_correction` or `bc`, aggregation leads to a single bias-corrected
+#'  estimate. If `estimation_type` is `bootstrap_confidence_interval` or `bci`,
+#'  aggregation leads to a single bias-corrected estimate with lower and upper
+#'  boundaries of the confidence interval. This has no effect if
+#'  `estimation_type` is `point`.
+#'
+#'  The default value is `default`, which is equal to `TRUE` except when
+#'  assessing metrics to assess model performance, as the default violin plot
+#'  requires underlying data.
 #'
 #'@param confidence_level (*optional*) Numeric value for the level at which
 #'  confidence intervals are determined. In the case bootstraps are used to
@@ -2225,7 +2292,7 @@
 #'  computation of data based on individual models. The parameter can take on or
 #'  more of the following values: `all`, `model_performance`, `auc_data`,
 #'  `confusion_matrix`, `decision_curve_analyis`, `permutation_vimp`,
-#'  `performance_data`, as well as `true`, `false` and `none`.
+#'  `model_performance`, as well as `true`, `false` and `none`.
 #'
 #'  By default, data is computed for the ensemble as a whole, but not for
 #'  underlying models.
@@ -2455,9 +2522,9 @@
 #'  hyperparameter optimisation. Defaults to `TRUE`. When set to `FALSE`, this
 #'  will disable the use of parallel processing while performing optimisation,
 #'  regardless of the settings of the `parallel` parameter. The parameter
-#'  moreover specifies whether parallelisation takes place within the
-#'  evaluation process steps (`inner`, default), or in an outer loop ( `outer`)
-#'  over learners, data subsamples, etc.
+#'  moreover specifies whether parallelisation takes place within the evaluation
+#'  process steps (`inner`, default), or in an outer loop ( `outer`) over
+#'  learners, data subsamples, etc.
 #'
 #'  `parallel_evaluation` is ignored if `parallel=FALSE`.
 #'@param ... Unused arguments.
@@ -2488,6 +2555,9 @@
                                        skip_evaluation_elements=waiver(),
                                        ensemble_method=waiver(),
                                        evaluation_metric=waiver(),
+                                       detail_level=waiver(),
+                                       estimation_type=waiver(),
+                                       aggregate_results=waiver(),
                                        confidence_level=waiver(),
                                        bootstrap_ci_method=waiver(),
                                        compute_model_data=waiver(),
@@ -2554,6 +2624,46 @@
   
   sapply(settings$metric, metric.check_outcome_type, outcome_type=outcome_type)
   
+  
+  # Level at which evaluations are computed.
+  settings$detail_level <- .parse_arg(x_config=config$detail_level, x_var=detail_level,
+                                      var_name="detail_level", type="character", optional=TRUE, default="hybrid")
+  
+  .check_parameter_value_is_valid(x=settings$detail_level, var_name="detail_level",
+                                  values=c("ensemble", "hybrid", "model"))
+  
+  if(settings$detail_level == "model") stop("\"model\" as a detail_level still requires implementation.")
+  
+  
+  # Type of estimation performed.
+  settings$estimation_type <- .parse_arg(x_config=config$estimation_type, x_var=estimation_type,
+                                         var_name="estimation_type", type="character", optional=TRUE, default="bootstrap_confidence_interval")
+  
+  .check_parameter_value_is_valid(x=settings$estimation_type, var_name="estimation_type",
+                                  values=c("point", "bias_correction", "bc", "bootstrap_confidence_interval", "bci"))
+  
+  
+  # Aggregate results.
+  settings$aggregate_results <- .parse_arg(x_config=config$aggregate_results, x_var=aggregate_results,
+                                           var_name="aggregate_results", type="character_list", optional=TRUE, default="default")
+  
+  settings$aggregate_results <- tolower(settings$aggregate_results)
+  .check_parameter_value_is_valid(x=settings$aggregate_results, var_name="aggregate_results",
+                                  values=c(.get_available_data_elements(confidence_interval_only=TRUE),
+                                           "true", "false", "none", "all", "default"))
+  
+  # Handle none, false, true, all and default values.
+  if(any(settings$aggregate_results %in% c("none", "false"))){
+    settings$aggregate_results <- "none"
+    
+  } else if(any(settings$aggregate_results %in% c("true", "all"))){
+    settings$aggregate_results <- "all"
+    
+  } else if(any(settings$aggregate_results %in% c("default"))){
+    # Do not aggregate results for evaluation steps where model performance is
+    # evaluated.
+    settings$aggregate_results <- setdiff(.get_available_data_elements(confidence_interval_only=TRUE), "model_performance")
+  }
   
   # Bootstrap confidence interval.
   settings$bootstrap_ci_method <- .parse_arg(x_config=config$bootstrap_ci_method, x_var=bootstrap_ci_method,

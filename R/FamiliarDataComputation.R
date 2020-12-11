@@ -2,6 +2,7 @@
 #' @include FamiliarS4Classes.R
 NULL
 
+
 .get_available_data_elements <- function(confidence_interval_only = FALSE){
   if(confidence_interval_only){
     return(c("auc_data", "decision_curve_analyis", "model_performance", "permutation_vimp"))
@@ -217,6 +218,9 @@ setGeneric("extract_data", function(object,
                                     sample_cluster_method=waiver(),
                                     sample_linkage_method=waiver(),
                                     sample_similarity_metric=waiver(),
+                                    detail_level=waiver(),
+                                    estimation_type=waiver(),
+                                    aggregate_results=waiver(),
                                     confidence_level=waiver(),
                                     bootstrap_ci_method=waiver(),
                                     compute_model_data=waiver(),
@@ -250,6 +254,9 @@ setMethod("extract_data", signature(object="familiarEnsemble"),
                    sample_cluster_method=waiver(),
                    sample_linkage_method=waiver(),
                    sample_similarity_metric=waiver(),
+                   detail_level=waiver(),
+                   estimation_type=waiver(),
+                   aggregate_results=waiver(),
                    confidence_level=waiver(),
                    bootstrap_ci_method=waiver(),
                    compute_model_data=waiver(),
@@ -452,12 +459,11 @@ setMethod("extract_data", signature(object="familiarEnsemble"),
                                                             metric=metric,
                                                             ensemble_method=ensemble_method,
                                                             eval_times=eval_times,
+                                                            detail_level=detail_level,
+                                                            estimation_type=estimation_type,
+                                                            aggregate_results=aggregate_results,
                                                             confidence_level=confidence_level,
                                                             bootstrap_ci_method=bootstrap_ci_method,
-                                                            compute_model_data=compute_model_data,
-                                                            compute_model_ci=compute_model_ci,
-                                                            compute_ensemble_ci=compute_ensemble_ci,
-                                                            aggregate_ci=aggregate_ci,
                                                             message_indent=message_indent,
                                                             verbose=verbose)
               
@@ -1862,3 +1868,461 @@ setMethod("extract_sample_similarity_table", signature(object="familiarEnsemble"
             
             return(sample_similarity_table)
           })
+
+
+
+#####identify_element_sets (list)-----------------------------------------------
+setMethod("identify_element_sets", signature(x="list"),
+          function(x, ...){
+            
+            # Check that that the list is not empty.
+            if(is_empty(x)) return(NULL)
+            
+            # Iterate over list.
+            id_table <- lapply(x, identify_element_sets)
+            browser()
+            # Combine to table and add group ids and model ids.
+            id_table <- data.table::rbindlist(id_table, use.names=TRUE)
+            
+            # Add group identifier
+            id_table[unique(id_table), "group_id":=.I, on=.NATURAL]
+            
+            # Add element identifier.
+            id_table[, "element_id":=.I]
+            
+            return(id_table)
+          })
+
+#####identify_element_sets (familiarDataElement)--------------------------------
+setMethod("identify_element_sets", signature(x="familiarDataElement"),
+          function(x, ignore_estimation_type=FALSE, ...){
+            
+            # Get the identifiers and the detail level and combine to a list.
+            id_list <- c(x@identifiers,
+                         list("detail_level"=x@detail_level))
+            
+            # Add the estimation type if it is not to be ignored.
+            if(!ignore_estimation_type) id_list <- c(id_list, list("estimation_type"=x@estimation_type))
+            
+            return(data.table::data.table(id_list))
+          })
+
+
+
+#####extract_dispatcher---------------------------------------------------------
+
+#'@title Internal function to dispatch extraction functions.
+#'
+#'@description This function provides a unified access point to extraction
+#'  functions. Some of these functions require bootstrapping and result
+#'  aggregation, which are handled here.
+#'
+#'@param FUN Extraction function or method to which data and parameters are
+#'  dispatched.
+#'@param object A `familiarEnsemble` object.
+#'@param proto_data_element A `familiarDataElement` object, or an object that
+#'  inherits from it.
+#'@param aggregate_results A logical flag indicating whether results should be
+#'  aggregated.
+#'@param has_internal_bootstrap A logical flag that indicates whether `FUN` has
+#'  internal bootstrapping capabilities.
+#'
+#'@inheritParams extract_data
+#'
+#'@details This function first determines how many data points need to be
+#'  evaluated to complete the desired estimation, i.e. 1 for point estimates, 20
+#'  for bias-corrected estimates, and 20 / (1 - confidence level) for bootstrap
+#'  confidence intervals.
+#'
+#'  Subsequently, we determine the number of models. This number is used to set
+#'  external or internal clusters, the number of bootstraps, and to evaluate
+#'  whether the estimation can be done in case `FUN` does not support
+#'  bootstrapping.
+#'
+#'@return A list of `familiarDataElement` objects.
+#'@md
+#'@keywords internal
+setMethod("extract_dispatcher", signature(object="familiarEnsemble", proto_data_element="familiarDataElement"),
+          function(cl=NULL,
+                   FUN,
+                   object,
+                   proto_data_element,
+                   aggregate_results,
+                   has_internal_bootstrap,
+                   ...,
+                   verbose=TRUE){
+            
+            # Check that any models were trained.
+            
+            
+            # Determine the number of instances we need to find the estimates.
+            if(proto_data_element@estimation_type == "point"){
+              n_instances <- 1L
+              
+            } else if(proto_data_element@estimation_type %in% c("bias_correction", "bc")) {
+              n_instances <- 20L
+              
+            } else if(proto_data_element@estimation_type %in% c("bootstrap_confidence_interval", "bci")){
+              n_instances <- ceiling(20 / (1.00 - proto_data_element@confidence_level))
+            }
+            
+            # Determine the number of models we need to evaluate.
+            if(proto_data_element@detail_level == "ensemble"){
+              n_models <- 1L
+              
+            } else {
+              n_models <- length(object@model_list)
+            }
+            
+            
+            # Check if the proposed analysis can be executed.
+            if(!has_internal_bootstrap &
+               n_instances > 1L &
+               !(proto_data_element@detail_level == "hybrid" & n_models >= n_instances)){
+              # The required number of instances cannot be created from models
+              # alone.
+              
+              # Add a message
+              if(verbose) message("extract_dispatcher,familiarEnsemble,familiarDataElement: the requested ")
+              
+              # Set the detail level to ensemble.
+              if(proto_data_element@detail_level == "hybrid"){
+                # Only one ensemble model is formed.
+                proto_data_element@detail_level <- "ensemble"
+                n_models <- 1L
+              } 
+              
+              # Set the estimation type to point estimates.
+              proto_data_element@estimation_type <- "point"
+              n_instances <- 1L
+            } 
+            
+            
+            # Determine the number of bootstraps that should be computed
+            # internally.
+            if(has_internal_bootstrap){
+              if(proto_data_element@detail_level == "hybrid"){
+                n_bootstraps <- ceiling(n_instances / n_models)
+                
+              } else {
+                n_bootstraps <- n_instances
+              }
+              
+            } else {
+              n_bootstraps <- 0L
+            }
+            
+            # If one bootstrap is required, that means no bootstraps are
+            # required.
+            if(n_bootstraps <= 1L) n_bootstraps <- 0L
+            
+            
+            # Determine the number of parallel cluster nodes.
+            n_nodes <- length(cl)
+            
+            # Determine whether we should perform parallel processing across
+            # models or internally.
+            if(n_nodes > 1){
+              if(n_models == 1){
+                # No need to perform parallelisation across models, when there
+                # is only 1 model.
+                parallel_external <- FALSE
+                
+              } else if(n_bootstraps == 0) {
+                # No need to perform internal parallelisation in case this is
+                # not necessary. This check is hit when has_internal_bootstrap
+                # is false.
+                parallel_external <- TRUE
+                
+              } else if(n_models >= 0.80 * n_nodes){
+                # Perform external parallelisation if the number of models would
+                # occupy at least 80% of the nodes. This is because the parallel
+                # overhead in any internal bootstrapping takes up more time.
+                parallel_external <- TRUE
+                
+              } else if(n_models > n_bootstraps){
+                # Perform external parallelisation if the number of bootstraps
+                # would underutilize the nodes compared to the number of nodes.
+                parallel_external <- TRUE
+                
+              } else {
+                parallel_external <- FALSE
+              }
+              
+            } else {
+              # Back-up when the number of nodes is 1 or none.
+              parallel_external <- FALSE
+            }
+
+            
+            # Dispatch for ensemble models.
+            if(proto_data_element@detail_level == "ensemble"){
+              x <- do.call(.extract_dispatcher_ensemble, args=c(list("cl"=cl,
+                                                                     "FUN"=FUN,
+                                                                     "object"=object,
+                                                                     "proto_data_element"=proto_data_element,
+                                                                     "aggregate_results"=aggregate_results,
+                                                                     "n_instances"=n_instances,
+                                                                     "n_bootstraps"=n_bootstraps,
+                                                                     "parallel_external"=parallel_external,
+                                                                     "verbose"=verbose),
+                                                                list(...)))
+
+            } else if(proto_data_element@detail_level == "hybrid"){
+              
+              
+            } else if(proto_data_element@detail_level == "model"){
+              x <- do.call(.extract_dispatcher_model, args=c(list("cl"=cl,
+                                                                  "FUN"=FUN,
+                                                                  "object"=object,
+                                                                  "proto_data_element"=proto_data_element,
+                                                                  "aggregate_results"=aggregate_results,
+                                                                  "n_instances"=n_instances,
+                                                                  "n_bootstraps"=n_bootstraps,
+                                                                  "parallel_external"=parallel_external,
+                                                                  "verbose"=verbose),
+                                                             list(...)))
+              
+            } else {
+              ..error_reached_unreachable_code(paste0("extract_dispatcher: encountered an unknown detail_level attribute: ",
+                                                      proto_data_element@detail_level))
+            }
+            
+            
+          })
+            
+
+.extract_dispatcher_ensemble <- function(cl=NULL,
+                                         FUN,
+                                         object,
+                                         proto_data_element,
+                                         aggregate_results,
+                                         n_instances,
+                                         n_bootstraps,
+                                         parallel_external,
+                                         ...){
+  
+  # Add ensemble model name.
+  proto_data_element <- add_model_name(proto_data_element, object=object)
+  
+  # Never perform outer-loop parallelisation when dispatching for ensemble-level
+  # details.
+  x <- do.call(FUN, args=c(list("cl"=cl,
+                                "object"=object,
+                                "proto_data_element"=proto_data_element,
+                                "aggregate_results"= aggregate_results & n_instances == n_bootstraps,
+                                "n_instances"=n_instances,
+                                "n_bootstraps"=n_bootstraps),
+                           list(...)))
+  
+  # Merge data elements together.
+  x <- merge_data_elements(x)
+  
+  # Aggregate results if required.
+  if(aggregate_results & n_instances == n_bootstraps){
+    x <- .compute_data_element_estimates(x)
+  }
+  
+  return(x)
+}
+
+
+
+.extract_dispatcher_hybrid <- function(cl=NULL,
+                                      FUN,
+                                      object,
+                                      proto_data_element,
+                                      aggregate_results,
+                                      n_instances,
+                                      n_bootstraps,
+                                      parallel_external,
+                                      ...,
+                                      verbose=FALSE){
+  
+  # Add ensemble model name.
+  proto_data_element <- add_model_name(proto_data_element, object=object)
+  
+  if(parallel_external){
+    x <- fam_mapply(cl=cl,
+                    FUN=FUN,
+                    object=object@model_list,
+                    MoreArgs=c(list("proto_data_element"=proto_data_element,
+                                    "aggregate_results"=FALSE,
+                                    "n_instances"=n_instances,
+                                    "n_bootstraps"=n_bootstraps,
+                                    "verbose"=verbose),
+                               list(...)),
+                    progress_bar = verbose & length(object@model_list) > 1)
+    
+  } else {
+    x <- fam_mapply(cl=NULL,
+                    FUN=FUN,
+                    object=object@model_list,
+                    MoreArgs=c(list("cl"=cl,
+                                    "proto_data_element"=proto_data_element,
+                                    "aggregate_results"=FALSE,
+                                    "n_instances"=n_instances,
+                                    "n_bootstraps"=n_bootstraps,
+                                    "verbose"=verbose),
+                               list(...)),
+                    progress_bar = verbose & length(object@model_list) > 1)
+  }
+  
+  # Merge data elements together.
+  x <- merge_data_elements(x, add_model_name=TRUE)
+  
+  # Create point estimate from the data.
+  if(proto_data_element@estimation_type %in% c("bootstrap_confidence_interval", "bci")){
+    x <- add_point_estimate_from_elements(x)
+  }
+  
+  # Aggregate results if required.
+  if(aggregate_results & n_instances == n_bootstraps){
+    x <- .compute_data_element_estimates(x)
+  }
+  
+  return(x)
+}
+
+
+
+.extract_dispatcher_model <- function(cl=NULL,
+                                      FUN,
+                                      object,
+                                      proto_data_element,
+                                      aggregate_results,
+                                      n_instances,
+                                      n_bootstraps,
+                                      parallel_external,
+                                      ...,
+                                      verbose=FALSE){
+  
+  # Create a list of data-elements.
+  proto_data_element <- rep.int(list(proto_data_element),
+                                times=length(object@model_list))
+  
+  # Add model (not ensemble) names to the prototype data elements.
+  proto_data_element <- mapply(add_model_name,
+                               data=proto_data_element,
+                               object=object@model_list)
+  
+  if(parallel_external){
+    x <- fam_mapply(cl=cl,
+                    FUN=FUN,
+                    object=object@model_list,
+                    proto_data_element=proto_data_element,
+                    MoreArgs=c(list("aggregate_results"=aggregate_results & n_instances == n_bootstraps,
+                                    "n_instances"=n_instances,
+                                    "n_bootstraps"=n_bootstraps,
+                                    "verbose"=verbose),
+                               list(...)),
+                    progress_bar = verbose & length(object@model_list) > 1)
+    
+  } else {
+    x <- fam_mapply(cl=NULL,
+                    FUN=FUN,
+                    object=object@model_list,
+                    proto_data_element=proto_data_element,
+                    MoreArgs=c(list("cl"=cl,
+                                    "aggregate_results"=aggregate_results & n_instances == n_bootstraps,
+                                    "n_instances"=n_instances,
+                                    "n_bootstraps"=n_bootstraps,
+                                    "verbose"=verbose),
+                               list(...)),
+                    progress_bar = verbose & length(object@model_list) > 1)
+  }
+  
+  # Merge data elements together.
+  x <- merge_data_elements(x)
+  
+  # Aggregate results if required.
+  if(aggregate_results & n_instances == n_bootstraps){
+    x <- .compute_data_element_estimates(x)
+  }
+  
+  return(x)
+}
+
+
+
+
+.extract_dispatcher_bootstrap <- function(cl=NULL,
+                                          FUN,
+                                          proto_data_element,
+                                          aggregate_results,
+                                          n_instances,
+                                          n_bootstraps,
+                                          ...,
+                                          verbose=FALSE){
+  
+  # Generate data elements for dispatch. For bootstrap confidence interval
+  # estimations, check that the bootstraps are not divided across objects, e.g.
+  # for the hybrid detail level. The number of instances is the number of
+  # instances required for the overall analysis, as determined in
+  # extract_dispatcher.
+  if(proto_data_element@estimation_type %in% c("bootstrap_confidence_interval", "bci") &
+     n_instances == n_bootstraps &
+     n_instances > 1 &
+     n_bootstraps > 1){
+    
+    # Prepare a point estimate data element, since bootstrap confidence
+    # intervals require this.
+    point_est_data_element <- proto_data_element
+    point_est_data_element@estimation_type <- "point"
+    
+    # Generate data elements that need to filled out.
+    data_elements <- c(list(point_est_data_element),
+                       rep.int(list(proto_data_element), times=n_bootstraps))
+    
+    # Define the number of bootstraps that should be defined in FUN. These are 0
+    # (for the point estimate) and 1.
+    subsample_required <- c(FALSE, rep.int(x=TRUE, times=n_bootstraps))
+    
+  } else if (n_bootstraps >= 1){
+    # Point estimates are generated elsewhere or not required.
+    data_elements <- rep.int(list(proto_data_element), times=n_bootstraps)
+    
+    # Require a subsample.
+    subsample_required <- rep.int(x=TRUE, times=n_bootstraps)
+    
+  } else {
+    # Do not require a subsample of the data.
+    data_elements <- list(proto_data_element)
+    subsample_required <- FALSE
+  }
+  
+  # If the number of bootstraps is 0 or 1, we avoid sending to a node.
+  if(n_bootstraps <= 1) cl <- NULL
+  
+  # Dispatch function to nodes.
+  x <- fam_mapply(cl=cl,
+                  FUN=FUN,
+                  proto_data_element = data_elements,
+                  subsample_required = subsample_required,
+                  MoreArgs = c(list("verbose"=verbose),
+                             list(...)),
+                  progress_bar = verbose & any(subsample_required) & n_bootstraps == n_instances)
+  
+  # Merge data elements together.
+  x <- merge_data_elements(x)
+  
+  # Aggregate results if required.
+  if(aggregate_results & n_instances == n_bootstraps){
+    x <- .compute_data_element_estimates(x)
+  }
+  
+  return(x)
+}
+
+
+  
+add_point_estimate_from_elements <- function(x){
+  
+  # Find any unique elements that have not been aggregated and are not empty.
+  id_table <- identify_element_sets(x, ignore_estimation_type=TRUE)
+  
+  split(id_table)
+  # TODO: ensure that this goes to a loop that allows for return point-estimates.
+}
+
+
