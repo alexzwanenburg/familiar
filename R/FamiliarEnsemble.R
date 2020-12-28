@@ -823,10 +823,10 @@ setMethod("add_model_name", signature(data="familiarDataElement", object="famili
             model_name <- get_object_name(object=object, abbreviated=TRUE)
             
             if(is.null(data@identifiers)){
-              data@identifiers <- list("model_name" = model_name)
+              data@identifiers <- list("ensemble_model_name" = model_name)
               
             } else {
-              data@identifiers[["model_name"]] <- model_name
+              data@identifiers[["ensemble_model_name"]] <- model_name
             }
             
             return(data)

@@ -58,7 +58,7 @@ accelerated (BCa) method is not implemented yet.}
 computation of data based on individual models. The parameter can take on or
 more of the following values: \code{all}, \code{model_performance}, \code{auc_data},
 \code{confusion_matrix}, \code{decision_curve_analyis}, \code{permutation_vimp},
-\code{performance_data}, as well as \code{true}, \code{false} and \code{none}.
+\code{model_performance}, as well as \code{true}, \code{false} and \code{none}.
 
 By default, data is computed for the ensemble as a whole, but not for
 underlying models.}

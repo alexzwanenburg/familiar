@@ -242,3 +242,11 @@ setGeneric("set_metric_baseline_value", function(metric, ...) standardGeneric("s
 setGeneric("extract_dispatcher", function(object, proto_data_element, ...) standardGeneric("extract_dispatcher"))
 
 setGeneric("identify_element_sets", function(x, ...) standardGeneric("identify_element_sets"))
+
+setGeneric("merge_data_elements", function(x, ...) standardGeneric("merge_data_elements"))
+
+setGeneric("add_data_element_identifier", function(x, ...) standardGeneric("add_data_element_identifier"))
+
+setGeneric("add_data_element_bootstrap", function(x, ...) standardGeneric("add_data_element_bootstrap"))
+
+setGeneric(".identifier_as_data_attribute", function(x, ...) standardGeneric(".identifier_as_data_attribute"))

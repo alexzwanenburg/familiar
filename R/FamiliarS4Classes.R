@@ -657,6 +657,8 @@ setClass("familiarDataElement",
            # The column that contains the relevant data. Useful for merging and
            # identifying bootstraps.
            value_column = "character",
+           # The column(s) required for grouping the data. Useful for determining confidence intervals.
+           grouping_column = "ANY",
            # Flag that signals whether the data is aggregated, e.g. by computing
            # confidence intervals and a bias-corrected value.
            is_aggregated = "logical"
@@ -669,5 +671,6 @@ setClass("familiarDataElement",
            confidence_level = NA_real_,
            bootstrap_ci_method = NA_character_,
            value_column = NA_character_,
+           grouping_column = NULL,
            is_aggregated = FALSE)
 )

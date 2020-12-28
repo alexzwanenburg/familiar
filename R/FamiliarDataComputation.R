@@ -298,6 +298,27 @@ setMethod("extract_data", signature(object="familiarEnsemble"),
             # Load models, and drop any models that were not trained.
             object <- load_models(object=object, drop_untrained=TRUE)
             
+            #### FOR TESTING PURPOSES ONLY
+            if(any(c("model_performance") %in% data_element)){
+              model_performance_data <- extract_performance(object=object,
+                                                            data=data,
+                                                            cl=cl,
+                                                            metric=metric,
+                                                            ensemble_method=ensemble_method,
+                                                            eval_times=eval_times,
+                                                            detail_level=detail_level,
+                                                            estimation_type=estimation_type,
+                                                            aggregate_results=aggregate_results,
+                                                            confidence_level=confidence_level,
+                                                            bootstrap_ci_method=bootstrap_ci_method,
+                                                            message_indent=message_indent,
+                                                            verbose=verbose)
+              
+            } else {
+              model_performance_data <- NULL
+            }
+            
+            
             # Extract feature distance tables,
             if(any(c("mutual_correlation", "univariate_analysis", "feature_expressions", "permutation_vimp") %in% data_element)){
               # Not for the fs_vimp and model_vimp data elements. This is
@@ -1870,6 +1891,146 @@ setMethod("extract_sample_similarity_table", signature(object="familiarEnsemble"
           })
 
 
+#####add_data_element_identifier (list)-----------------------------------------
+setMethod("add_data_element_identifier", signature(x="list"),
+          function(x, ...){
+            # Add identifier to every data element.
+            data_elements <- unlist(lapply(x, add_data_element_identifier, ...))
+            
+            return(data_elements)
+          })
+
+#####add_data_element_identifier (familiarDataElement)--------------------------
+setMethod("add_data_element_identifier", signature(x="familiarDataElement"),
+          function(x, ...){
+            
+            # Get dots, which contains the identifier to be set.
+            dots <- list(...)
+            
+            if(length(dots) > 1) ..error_reached_unreachable_code("add_data_element_identifier: can only add one identifier at a time.")
+            
+            # Find the name of the identifier.
+            identifier_name <- names(dots)
+            
+            # Iterate over values and create a separate data element for each value.
+            data_elements <- lapply(dots[[identifier_name]], function(value, x, identifier_name){
+              
+              # Find the list of previous identifiers, or create a new one.
+              identifier_list <- x@identifiers
+              if(is.null(identifier_list)) identifier_list <- list()
+              
+              # Add value to identifier list.
+              identifier_list[[identifier_name]] <- value
+              
+              # Combine old and new identifiers.
+              x@identifiers <- identifier_list
+              
+              return(x)
+            },
+            x=x,
+            identifier_name=identifier_name)
+            
+            return(data_elements)
+          })
+
+
+#####add_data_element_bootstrap (list)------------------------------------------
+setMethod("add_data_element_bootstrap", signature(x="list"),
+          function(x, n_bootstraps, n_instances, ...){
+            
+            if(n_bootstraps > 0){
+              # Repeat elements.
+              data_element <- rep(x, each=n_bootstraps)
+              
+              # Set bootstrap to TRUE
+              bootstrap <- rep(TRUE, times=length(x) * n_bootstraps)
+              
+              # Iterate over elements to check whether a point estimate should
+              # be computed in addition.
+              for(current_element in x){
+                if(current_element@detail_level %in% c("ensemble", "model") &
+                   current_element@estimation_type %in% c("bci", "bootstrap_confidence_interval")){
+                  
+                  # Add a new element that estimates the point estimate.
+                  new_element <- current_element
+                  new_element@estimation_type <- "point"
+                  
+                  # Add the element to the list of elements.
+                  data_element <- c(data_element, new_element)
+                  bootstrap <- c(bootstrap, FALSE)
+                }
+              }
+              
+            } else {
+              # Use the list x of data_elements.
+              data_element <- x
+              
+              # No bootstraps need to be created.
+              bootstrap <- rep(FALSE, times=length(x))
+            }
+            
+            return(list("data_element"=data_element,
+                        "bootstrap"=bootstrap))
+          })
+
+
+#####add_data_element_bootstrap (list)------------------------------------------
+setMethod("add_data_element_bootstrap", signature(x="familiarDataElement"),
+          function(x, ...){
+            
+            return(add_data_element_bootstrap(x=list(x),
+                                              ...))
+          })
+
+#####.identifier_as_data_attribute----------------------------------------------
+setMethod(".identifier_as_data_attribute", signature(x="familiarDataElement"),
+          function(x, identifier){
+            if(length(identifier) == 0) ..error_reached_unreachable_code(".identifier_as_data_attribute: Cannot pass an empty identifier.")
+            
+            # If an "all" value is passed (e.g. during export), all identifiers
+            # are added to the data.
+            if(any(identifier == "all")) identifier <- names(x@identifiers)
+            
+            # Determine which of the identifiers is actually present. If none
+            # are present, return x.
+            identifier_present <- intersect(identifier, names(x@identifiers))
+            if(length(identifier_present) == 0) return(x)
+            
+            # Determine the indices of the selected list elements.
+            identifier_index <- which(names(x@identifiers) %in% identifier_present)
+            
+            # Find values.
+            identifier_values <- x@identifiers[identifier_index]
+            
+            # Remove identifiers from list.
+            x@identifiers[identifier_index] <- NULL
+            
+            if(data.table::is.data.table(x@data)){
+              # The data element is a data.table.
+              
+              # Iterate over identifier names.
+              for(id_name in names(identifier_values)){
+                # Add identifier to the dataset.
+                data.table::set(x=x@data,
+                                j=id_name,
+                                value=identifier_values[[id_name]])
+              }
+              
+            } else if(is.list(x@data)){
+              # Determine the number of instances in x@data
+              n_instances <- length(x@data[[1]])
+              
+              # Set length og
+              new_data <- lapply(identifier_values, function(x, n) (rep(x, times=n)), n=n_instances)
+              names(new_data) <- names(identifier_values)
+              
+              # Add identifiers to the list.
+              x@data <- c(x@data, new_data)
+            }
+            
+            return(x)
+          })
+
 
 #####identify_element_sets (list)-----------------------------------------------
 setMethod("identify_element_sets", signature(x="list"),
@@ -1880,12 +2041,12 @@ setMethod("identify_element_sets", signature(x="list"),
             
             # Iterate over list.
             id_table <- lapply(x, identify_element_sets)
-            browser()
+            
             # Combine to table and add group ids and model ids.
             id_table <- data.table::rbindlist(id_table, use.names=TRUE)
             
-            # Add group identifier
-            id_table[unique(id_table), "group_id":=.I, on=.NATURAL]
+            # Add group identifier.
+            id_table[, "group_id":=.GRP, by=c(colnames(id_table))] 
             
             # Add element identifier.
             id_table[, "element_id":=.I]
@@ -1904,7 +2065,97 @@ setMethod("identify_element_sets", signature(x="familiarDataElement"),
             # Add the estimation type if it is not to be ignored.
             if(!ignore_estimation_type) id_list <- c(id_list, list("estimation_type"=x@estimation_type))
             
-            return(data.table::data.table(id_list))
+            return(data.table::as.data.table(id_list))
+          })
+
+
+
+#####merge_data_elements (list)-------------------------------------------------
+setMethod("merge_data_elements", signature(x="list"),
+          function(x, ...){
+            
+            # Check that the list is not empty.
+            if(is_empty(x)) return(NULL)
+            
+            # Flatten (nested) lists.
+            x <- unlist(x)
+            if(!is.list(x)) x <- list(x)
+            
+            # Run familiarDataElement-specific analysis. This means that we pass
+            # the first element as x with the list of elements.
+            return(merge_data_elements(x=x[[1]], x_list=x, ...))
+          })
+
+
+#####merge_data_elements (familiarDataElement)----------------------------------
+setMethod("merge_data_elements", signature(x="familiarDataElement"),
+          function(x, x_list, as_data=NULL, ...){
+            
+            # Move identifiers from the identifiers attribute to the data
+            # attribute. The primary reason for doing so is to group and merge
+            # similar elements, byt e.g. from different models.
+            if(!is.null(as_data)) x_list <- lapply(x_list, .identifier_as_data_attribute, identifier=as_data)
+            
+            # Identify items that can be joined.
+            id_table <- identify_element_sets(x=x_list, ...)
+            
+            # Identify the element identifiers that should be grouped.
+            grouped_data_element_ids <- lapply(split(id_table[, c("element_id", "group_id")], by="group_id"), function(id_table) (id_table$element_id))
+            
+            # List of data elements.
+            data_elements <- list()
+            
+            for(current_group_data_element_ids in grouped_data_element_ids){
+              # Copy the first data element in the group and use it as a
+              # prototype.
+              prototype_data_element <- x_list[[current_group_data_element_ids[1]]]
+              
+              if(any(sapply(x_list[current_group_data_element_ids], function(x) (data.table::is.data.table(x@data))))){
+                # Data attribute contains data.table.
+                data_attribute <- lapply(x_list[current_group_data_element_ids], function(x) (x@data))
+                
+                # Combine data attributes.
+                data_attribute <- data.table::rbindlist(data_attribute,
+                                                        use.names=TRUE,
+                                                        fill=TRUE)
+                
+                # Set data attribute.
+                prototype_data_element@data <- data_attribute
+                
+              } else if(any(sapply(x_list[current_group_data_element_ids], function(x) (is.list(x@data))))) {
+                # Data attribute contains data.table.
+                element_names <- unique(unlist(lapply(x_list[current_group_data_element_ids], function(x) (names(x@data)))))
+                
+                # Iterate over different names in the list.
+                data_attribute <- lapply(element_names, function(ii, x){
+                  # Find values for the element.
+                  element_values <- unlist(lapply(x,
+                                                  function(x, ii) (x@data[[ii]]),
+                                                  ii=ii))
+                  
+                  return(element_values)
+                },
+                x=x_list[current_group_data_element_ids])
+                
+                # Set names.
+                names(data_attribute) <- element_names
+                
+                # Set data attribute.
+                prototype_data_element@data <- data_attribute
+                
+              } else if(all(sapply(x_list[current_group_data_element_ids], function(x) (is_empty(x@data))))) {
+                # All data attributes are unset. We don't need to do anything.
+                
+              } else {
+                # Unknown data type.
+                ..error_reached_unreachable_code("merge_data_elements,familiarDataElement: data attribute is neither data.table, list, or empty.")
+              }
+              
+              # Add merged data element to the list.
+              data_elements <- c(data_elements, list(prototype_data_element))
+            }
+            
+            return(data_elements)
           })
 
 
@@ -1953,7 +2204,7 @@ setMethod("extract_dispatcher", signature(object="familiarEnsemble", proto_data_
                    verbose=TRUE){
             
             # Check that any models were trained.
-            
+            if(!model_is_trained(object)) return(NULL)
             
             # Determine the number of instances we need to find the estimates.
             if(proto_data_element@estimation_type == "point"){
@@ -2054,24 +2305,36 @@ setMethod("extract_dispatcher", signature(object="familiarEnsemble", proto_data_
               parallel_external <- FALSE
             }
 
-            
+            browser()
             # Dispatch for ensemble models.
             if(proto_data_element@detail_level == "ensemble"){
-              x <- do.call(.extract_dispatcher_ensemble, args=c(list("cl"=cl,
-                                                                     "FUN"=FUN,
-                                                                     "object"=object,
-                                                                     "proto_data_element"=proto_data_element,
-                                                                     "aggregate_results"=aggregate_results,
-                                                                     "n_instances"=n_instances,
-                                                                     "n_bootstraps"=n_bootstraps,
-                                                                     "parallel_external"=parallel_external,
-                                                                     "verbose"=verbose),
-                                                                list(...)))
+              # Dispatch for results aggregated at the ensemble level.
+              x <- .extract_dispatcher_ensemble(cl=cl,
+                                                FUN=FUN,
+                                                object=object,
+                                                proto_data_element=proto_data_element,
+                                                aggregate_results=aggregate_results,
+                                                n_instances=n_instances,
+                                                n_bootstraps=n_bootstraps,
+                                                parallel_external=parallel_external,
+                                                verbose=verbose,
+                                                ...)
 
             } else if(proto_data_element@detail_level == "hybrid"){
-              
+              # Dispatch for results aggregated with hybrid details.
+              x <- .extract_dispatcher_hybrid(cl=cl,
+                                              FUN=FUN,
+                                              object=object,
+                                              proto_data_element=proto_data_element,
+                                              aggregate_results=aggregate_results,
+                                              n_instances=n_instances,
+                                              n_bootstraps=n_bootstraps,
+                                              parallel_external=parallel_external,
+                                              verbose=verbose,
+                                              ...)
               
             } else if(proto_data_element@detail_level == "model"){
+              # Dispatch for results aggregated at the model level.
               x <- do.call(.extract_dispatcher_model, args=c(list("cl"=cl,
                                                                   "FUN"=FUN,
                                                                   "object"=object,
@@ -2087,8 +2350,8 @@ setMethod("extract_dispatcher", signature(object="familiarEnsemble", proto_data_
               ..error_reached_unreachable_code(paste0("extract_dispatcher: encountered an unknown detail_level attribute: ",
                                                       proto_data_element@detail_level))
             }
-            
-            
+            browser()
+            return(x)
           })
             
 
@@ -2100,7 +2363,8 @@ setMethod("extract_dispatcher", signature(object="familiarEnsemble", proto_data_
                                          n_instances,
                                          n_bootstraps,
                                          parallel_external,
-                                         ...){
+                                         ...,
+                                         verbose=FALSE){
   
   # Add ensemble model name.
   proto_data_element <- add_model_name(proto_data_element, object=object)
@@ -2112,12 +2376,13 @@ setMethod("extract_dispatcher", signature(object="familiarEnsemble", proto_data_
                                 "proto_data_element"=proto_data_element,
                                 "aggregate_results"= aggregate_results & n_instances == n_bootstraps,
                                 "n_instances"=n_instances,
-                                "n_bootstraps"=n_bootstraps),
+                                "n_bootstraps"=n_bootstraps,
+                                "progress_bar"= verbose),
                            list(...)))
   
   # Merge data elements together.
   x <- merge_data_elements(x)
-  
+  browser()
   # Aggregate results if required.
   if(aggregate_results & n_instances == n_bootstraps){
     x <- .compute_data_element_estimates(x)
@@ -2129,15 +2394,15 @@ setMethod("extract_dispatcher", signature(object="familiarEnsemble", proto_data_
 
 
 .extract_dispatcher_hybrid <- function(cl=NULL,
-                                      FUN,
-                                      object,
-                                      proto_data_element,
-                                      aggregate_results,
-                                      n_instances,
-                                      n_bootstraps,
-                                      parallel_external,
-                                      ...,
-                                      verbose=FALSE){
+                                       FUN,
+                                       object,
+                                       proto_data_element,
+                                       aggregate_results,
+                                       n_instances,
+                                       n_bootstraps,
+                                       parallel_external,
+                                       ...,
+                                       verbose=FALSE){
   
   # Add ensemble model name.
   proto_data_element <- add_model_name(proto_data_element, object=object)
@@ -2150,7 +2415,8 @@ setMethod("extract_dispatcher", signature(object="familiarEnsemble", proto_data_
                                     "aggregate_results"=FALSE,
                                     "n_instances"=n_instances,
                                     "n_bootstraps"=n_bootstraps,
-                                    "verbose"=verbose),
+                                    "verbose"=verbose,
+                                    "progress_bar"= verbose & length(object@model_list) == 1),
                                list(...)),
                     progress_bar = verbose & length(object@model_list) > 1)
     
@@ -2163,19 +2429,21 @@ setMethod("extract_dispatcher", signature(object="familiarEnsemble", proto_data_
                                     "aggregate_results"=FALSE,
                                     "n_instances"=n_instances,
                                     "n_bootstraps"=n_bootstraps,
-                                    "verbose"=verbose),
+                                    "verbose"=verbose,
+                                    "progress_bar"= verbose & length(object@model_list) == 1),
                                list(...)),
                     progress_bar = verbose & length(object@model_list) > 1)
   }
   
-  # Merge data elements together.
-  x <- merge_data_elements(x, add_model_name=TRUE)
+  # Merge data elements together. The model_name identifier gets added as data
+  # instead.
+  x <- merge_data_elements(x, as_data="model_name")
   
   # Create point estimate from the data.
   if(proto_data_element@estimation_type %in% c("bootstrap_confidence_interval", "bci")){
-    x <- add_point_estimate_from_elements(x)
+    x <- .add_point_estimate_from_elements(x)
   }
-  
+  browser()
   # Aggregate results if required.
   if(aggregate_results & n_instances == n_bootstraps){
     x <- .compute_data_element_estimates(x)
@@ -2214,7 +2482,8 @@ setMethod("extract_dispatcher", signature(object="familiarEnsemble", proto_data_
                     MoreArgs=c(list("aggregate_results"=aggregate_results & n_instances == n_bootstraps,
                                     "n_instances"=n_instances,
                                     "n_bootstraps"=n_bootstraps,
-                                    "verbose"=verbose),
+                                    "verbose"=verbose,
+                                    "progress_bar"= verbose & length(object@model_list) == 1),
                                list(...)),
                     progress_bar = verbose & length(object@model_list) > 1)
     
@@ -2227,14 +2496,15 @@ setMethod("extract_dispatcher", signature(object="familiarEnsemble", proto_data_
                                     "aggregate_results"=aggregate_results & n_instances == n_bootstraps,
                                     "n_instances"=n_instances,
                                     "n_bootstraps"=n_bootstraps,
-                                    "verbose"=verbose),
+                                    "verbose"=verbose,
+                                    "progress_bar"= verbose & length(object@model_list) == 1),
                                list(...)),
                     progress_bar = verbose & length(object@model_list) > 1)
   }
   
   # Merge data elements together.
   x <- merge_data_elements(x)
-  
+  browser()
   # Aggregate results if required.
   if(aggregate_results & n_instances == n_bootstraps){
     x <- .compute_data_element_estimates(x)
@@ -2246,83 +2516,148 @@ setMethod("extract_dispatcher", signature(object="familiarEnsemble", proto_data_
 
 
 
-.extract_dispatcher_bootstrap <- function(cl=NULL,
-                                          FUN,
-                                          proto_data_element,
-                                          aggregate_results,
-                                          n_instances,
-                                          n_bootstraps,
-                                          ...,
-                                          verbose=FALSE){
-  
-  # Generate data elements for dispatch. For bootstrap confidence interval
-  # estimations, check that the bootstraps are not divided across objects, e.g.
-  # for the hybrid detail level. The number of instances is the number of
-  # instances required for the overall analysis, as determined in
-  # extract_dispatcher.
-  if(proto_data_element@estimation_type %in% c("bootstrap_confidence_interval", "bci") &
-     n_instances == n_bootstraps &
-     n_instances > 1 &
-     n_bootstraps > 1){
-    
-    # Prepare a point estimate data element, since bootstrap confidence
-    # intervals require this.
-    point_est_data_element <- proto_data_element
-    point_est_data_element@estimation_type <- "point"
-    
-    # Generate data elements that need to filled out.
-    data_elements <- c(list(point_est_data_element),
-                       rep.int(list(proto_data_element), times=n_bootstraps))
-    
-    # Define the number of bootstraps that should be defined in FUN. These are 0
-    # (for the point estimate) and 1.
-    subsample_required <- c(FALSE, rep.int(x=TRUE, times=n_bootstraps))
-    
-  } else if (n_bootstraps >= 1){
-    # Point estimates are generated elsewhere or not required.
-    data_elements <- rep.int(list(proto_data_element), times=n_bootstraps)
-    
-    # Require a subsample.
-    subsample_required <- rep.int(x=TRUE, times=n_bootstraps)
-    
-  } else {
-    # Do not require a subsample of the data.
-    data_elements <- list(proto_data_element)
-    subsample_required <- FALSE
-  }
-  
-  # If the number of bootstraps is 0 or 1, we avoid sending to a node.
-  if(n_bootstraps <= 1) cl <- NULL
-  
-  # Dispatch function to nodes.
-  x <- fam_mapply(cl=cl,
-                  FUN=FUN,
-                  proto_data_element = data_elements,
-                  subsample_required = subsample_required,
-                  MoreArgs = c(list("verbose"=verbose),
-                             list(...)),
-                  progress_bar = verbose & any(subsample_required) & n_bootstraps == n_instances)
-  
-  # Merge data elements together.
-  x <- merge_data_elements(x)
-  
-  # Aggregate results if required.
-  if(aggregate_results & n_instances == n_bootstraps){
-    x <- .compute_data_element_estimates(x)
-  }
-  
-  return(x)
-}
+# .extract_dispatcher_bootstrap <- function(cl=NULL,
+#                                           FUN,
+#                                           proto_data_element,
+#                                           aggregate_results,
+#                                           n_instances,
+#                                           n_bootstraps,
+#                                           ...,
+#                                           verbose=FALSE){
+#   
+#   # Generate data elements for dispatch. For bootstrap confidence interval
+#   # estimations, check that the bootstraps are not divided across objects, e.g.
+#   # for the hybrid detail level. The number of instances is the number of
+#   # instances required for the overall analysis, as determined in
+#   # extract_dispatcher.
+#   if(proto_data_element@estimation_type %in% c("bootstrap_confidence_interval", "bci") &
+#      n_instances == n_bootstraps &
+#      n_instances > 1 &
+#      n_bootstraps > 1){
+#     
+#     # Prepare a point estimate data element, since bootstrap confidence
+#     # intervals require this.
+#     point_est_data_element <- proto_data_element
+#     point_est_data_element@estimation_type <- "point"
+#     
+#     # Generate data elements that need to filled out.
+#     data_elements <- c(list(point_est_data_element),
+#                        rep.int(list(proto_data_element), times=n_bootstraps))
+#     
+#     # Define the number of bootstraps that should be defined in FUN. These are 0
+#     # (for the point estimate) and 1.
+#     subsample_required <- c(FALSE, rep.int(x=TRUE, times=n_bootstraps))
+#     
+#   } else if (n_bootstraps >= 1){
+#     # Point estimates are generated elsewhere or not required.
+#     data_elements <- rep.int(list(proto_data_element), times=n_bootstraps)
+#     
+#     # Require a subsample.
+#     subsample_required <- rep.int(x=TRUE, times=n_bootstraps)
+#     
+#   } else {
+#     # Do not require a subsample of the data.
+#     data_elements <- list(proto_data_element)
+#     subsample_required <- FALSE
+#   }
+#   
+#   # If the number of bootstraps is 0 or 1, we avoid sending to a node.
+#   if(n_bootstraps <= 1) cl <- NULL
+#   
+#   # Dispatch function to nodes.
+#   x <- fam_mapply(cl=cl,
+#                   FUN=FUN,
+#                   proto_data_element = data_elements,
+#                   subsample_required = subsample_required,
+#                   MoreArgs = c(list("verbose"=verbose),
+#                              list(...)),
+#                   progress_bar = verbose & any(subsample_required) & n_bootstraps == n_instances)
+#   
+#   # Merge data elements together.
+#   x <- merge_data_elements(x)
+#   
+#   # Aggregate results if required.
+#   if(aggregate_results & n_instances == n_bootstraps){
+#     x <- .compute_data_element_estimates(x)
+#   }
+#   
+#   return(x)
+# }
 
 
   
-add_point_estimate_from_elements <- function(x){
-  
+.add_point_estimate_from_elements <- function(x){
+  browser()
   # Find any unique elements that have not been aggregated and are not empty.
   id_table <- identify_element_sets(x, ignore_estimation_type=TRUE)
   
-  split(id_table)
-  # TODO: ensure that this goes to a loop that allows for return point-estimates.
+  # Identify the element identifiers that should be grouped.
+  grouped_data_element_ids <- lapply(split(id_table[, c("element_id", "group_id")], by="group_id"), function(id_table) (id_table$element_id))
+  
+  # List of data elements.
+  data_elements <- list()
+  
+  for(current_group_data_element_ids in grouped_data_element_ids){
+    
+    # Check that there is no point estimate present in the current table.
+    if(any(sapply(x[current_group_data_element_ids], function(x) (x@estimation_type == "point")))) next()
+    
+    # Set conversion back to list, in case this is required.
+    data_as_list <- FALSE
+    
+    # Copy the first data element in the group and use it as a
+    # prototype.
+    prototype_data_element <- x[[current_group_data_element_ids[1]]]
+    
+    # Set point estimate.
+    prototype_data_element@estimation_type <- "point"
+    
+    # Check if all data are empty.
+    if(all(sapply(x[current_group_data_element_ids], function(x) (is_empty(x@data))))){
+      
+      # Add empty element to data_elements and skip to the next
+      data_elements <- c(data_elements,
+                         list(prototype_data_element))
+      
+      next()
+    }
+    
+    # Extract the data.
+    if(any(sapply(x[current_group_data_element_ids], function(x) (data.table::is.data.table(x@data))))){
+      # Data attribute contains data.table.
+      data <- lapply(x[current_group_data_element_ids], function(x) (x@data))
+      
+    } else if(any(sapply(x[current_group_data_element_ids], function(x) (is.list(x@data))))) {
+      # Convert all lists to data tables.
+      data <- lapply(x[current_group_data_element_ids], function(x) (data.table::as.data.table(x@data)))
+      
+      # Convert back to list in the end.
+      data_as_list <- TRUE
+    }
+    
+    # Combine data attributes.
+    data <- data.table::rbindlist(data,
+                                  use.names=TRUE,
+                                  fill=TRUE)
+    
+    # Compute the mean value as point estimate.
+    data <- data[, list("value"=mean(get(prototype_data_element@value_column), na.rm=TRUE)),
+                 by=c(prototype_data_element@grouping_column)]
+    
+    # Rename the "value" column to the actual name.
+    data.table::setnames(data, old="value", new=prototype_data_element@value_column)
+    
+    # Convert to list again, if necessary.
+    if(data_as_list) data <- as.list(data)
+    
+    # Update data attribute with point estimate.
+    prototype_data_element@data <- data
+    
+    # Add merged data element to the list.
+    data_elements <- c(data_elements, list(prototype_data_element))
+  }
+  
+  return(data_elements)
 }
 
 

@@ -239,6 +239,66 @@ computation and extraction of various data elements.}
 Default is \code{all}, but specific elements can be specified to speed up
 computations if not all elements are to be computed. This is an internal
 parameter that is set by, e.g. the \code{export_model_vimp} method.}
+    \item{\code{detail_level}}{(\emph{optional}) Sets the level at which results are computed
+and aggregated.
+\itemize{
+\item \code{ensemble}: Results are computed at the ensemble level, i.e. over all
+models in the ensemble. This means that, for example, bias-corrected
+estimates of model performance are assessed by creating (at least) 20
+bootstraps and computing the model performance of the ensemble model for
+each bootstrap.
+\item \code{hybrid} (default): Results are computed at the level of models in an
+ensemble. This means that, for example, bias-corrected estimates of model
+performance are directly computed using the models in the ensemble. If there
+are at least 20 trained models in the ensemble, performance is computed for
+each model, in contrast to \code{ensemble} where performance is computed for the
+ensemble of models. If there are less than 20 trained models in the
+ensemble, bootstraps are created so that at least 20 point estimates can be
+made.
+\item \code{model} (to be implemented): Results are computed at the model level. This
+means that, for example, bias-corrected estimates of model performance are
+assessed by creating (at least) 20 bootstraps and computing the performance
+of the model for each bootstrap.
+}
+
+Note that each level of detail has a different interpretation for bootstrap
+confidence intervals. For \code{ensemble} and \code{model} these are the confidence
+intervals for the ensemble and an individual model, respectively. That is,
+the confidence interval describes the range where an estimate produced by a
+respective ensemble or model trained on a repeat of the experiment may be
+found with the probability of the confidence level. For \code{hybrid}, it
+represents the range where any single model trained on a repeat of the
+experiment may be found with the probability of the confidence level. By
+definition, confidence intervals obtained using \code{hybrid} are at least as
+wide as those for \code{ensemble}. \code{hybrid} offers the correct interpretation if
+the goal of the analysis is to assess the result of a single, unspecified,
+model.
+
+\code{hybrid} is generally computationally less expensive then \code{ensemble}, which
+in turn is somewhat expensive than \code{model}, though the}
+    \item{\code{estimation_type}}{(\emph{optional}) Sets the type of estimation that should be
+possible. This has the following options:
+\itemize{
+\item \code{point}: Point estimates.
+\item \code{bias_correction} or \code{bc}: Bias-corrected estimates. A bias-corrected
+estimate is computed from (at least) 20 point estimates, and \code{familiar} may
+bootstrap the data to create them.
+\item \code{bootstrap_confidence_interval} or \code{bci} (default): Bias-corrected
+estimates with bootstrap confidence intervals (Efron and Hastie, 2016). The
+number of point estimates required depends on the \code{confidence_level}
+parameter, and \code{familiar} may bootstrap the data to create them.
+}}
+    \item{\code{aggregate_results}}{(\emph{optional}) Flag that signifies whether results
+should be aggregated during evaluation. If \code{estimation_type} is
+\code{bias_correction} or \code{bc}, aggregation leads to a single bias-corrected
+estimate. If \code{estimation_type} is \code{bootstrap_confidence_interval} or \code{bci},
+aggregation leads to a single bias-corrected estimate with lower and upper
+boundaries of the confidence interval. This has no effect if
+\code{estimation_type} is \code{point}.
+
+The default value is \code{default}, which is equal to \code{TRUE} except when
+assessing metrics to assess model performance, as the default violin plot
+requires underlying data.}
     \item{\code{confidence_level}}{(\emph{optional}) Numeric value for the level at which
 confidence intervals are determined. In the case bootstraps are used to
 determine the confidence intervals bootstrap estimation, \code{familiar} uses the
@@ -262,7 +322,7 @@ accelerated (BCa) method is not implemented yet.}
 computation of data based on individual models. The parameter can take on or
 more of the following values: \code{all}, \code{model_performance}, \code{auc_data},
 \code{confusion_matrix}, \code{decision_curve_analyis}, \code{permutation_vimp},
-\code{performance_data}, as well as \code{true}, \code{false} and \code{none}.
+\code{model_performance}, as well as \code{true}, \code{false} and \code{none}.
 
 By default, data is computed for the ensemble as a whole, but not for
 underlying models.}

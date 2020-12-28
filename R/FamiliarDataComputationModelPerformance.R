@@ -98,7 +98,7 @@ setMethod("extract_performance", signature(object="familiarEnsemble"),
                                             values=c("ensemble", "hybrid", "model"))
             
             # Check the estimation type
-            if(is.waive(estimation_type)) detail_level <- object@settings$estimation_type
+            if(is.waive(estimation_type)) estimation_type <- object@settings$estimation_type
             
             .check_parameter_value_is_valid(x=estimation_type, var_name="estimation_type",
                                             values=c("point", "bias_correction", "bc", "bootstrap_confidence_interval", "bci"))
@@ -128,7 +128,8 @@ setMethod("extract_performance", signature(object="familiarEnsemble"),
                                       detail_level = detail_level,
                                       estimation_type = estimation_type,
                                       confidence_level = confidence_level,
-                                      bootstrap_ci_method = bootstrap_ci_method)
+                                      bootstrap_ci_method = bootstrap_ci_method,
+                                      value_column = "value")
             
             # Generate elements to send to dispatch.
             performance_data <- extract_dispatcher(FUN=.extract_model_performance_data,
@@ -144,191 +145,110 @@ setMethod("extract_performance", signature(object="familiarEnsemble"),
                                                    aggregate_results=aggregate_results,
                                                    message_indent=message_indent + 1L,
                                                    verbose=verbose)
-            
-            # Extract data for the individual models and the ensemble.
-            performance_data <- universal_extractor(object=object,
-                                                    cl=cl,
-                                                    FUN=.extract_model_performance_data,
-                                                    data=data,
-                                                    is_pre_processed=is_pre_processed,
-                                                    ensemble_method=ensemble_method,
-                                                    metric=metric,
-                                                    eval_times=eval_times,
-                                                    confidence_level=confidence_level,
-                                                    compute_model_data=any(c("all", "model_performance", "TRUE") %in% compute_model_data),
-                                                    compute_model_ci=any(c("all", "model_performance", "TRUE") %in% compute_model_ci),
-                                                    compute_ensemble_ci=any(c("all", "model_performance", "TRUE") %in% compute_ensemble_ci),
-                                                    aggregate_ci=any(c("all", "model_performance", "TRUE") %in% aggregate_ci),
-                                                    bootstrap_ci_method=bootstrap_ci_method,
-                                                    message_indent=message_indent + 1L,
-                                                    verbose=verbose)
-            
+            browser()
+           
             return(performance_data)
           })
 
 
 
-.extract_model_performance_data <- function(object, eval_times, determine_ci, bootstrap_ci_method,
-                                            aggregate_ci, confidence_level, verbose, cl, message_indent, ...){
+.extract_model_performance_data <- function(object,
+                                            proto_data_element,
+                                            eval_times=NULL,
+                                            aggregate_results,
+                                            verbose,
+                                            cl,
+                                            message_indent,
+                                            ...){
   
-  if(object@outcome_type %in% c("survival")){
-    # Compute performance data at each of the evaluation time points.
-    performance_data <- lapply(eval_times,
-                               ..extract_model_performance_data,
-                               object=object,
-                               determine_ci=determine_ci,
-                               confidence_level=confidence_level,
-                               bootstrap_ci_method=bootstrap_ci_method,
-                               cl=cl,
-                               verbose=verbose,
-                               message_indent=message_indent,
-                               ...)
-    
-    # Concatenate lists.
-    performance_data <- list("model_data"=rbind_list_list(performance_data, "model_data"),
-                             "bootstrap_data"=rbind_list_list(performance_data, "bootstrap_data"),
-                             "confidence_level"=confidence_level)
+  # Add model name.
+  proto_data_element <- add_model_name(proto_data_element, object=object)
+  
+  # Add evaluation time as a identifier to the data element.
+  if(length(eval_times) > 0 & object@outcome_type == "survival"){
+    data_elements <- add_data_element_identifier(x=proto_data_element, evaluation_time=eval_times)
     
   } else {
-    # Compute performance data.
-    performance_data <- do.call(..extract_model_performance_data,
-                                args=c(list("object"=object,
-                                            "determine_ci"=determine_ci,
-                                            "bootstrap_ci_method"=bootstrap_ci_method,
-                                            "confidence_level"=confidence_level,
-                                            "cl"=cl,
-                                            "verbose"=verbose,
-                                            "message_indent"=message_indent),
-                                       list(...)))
+    data_elements <- list(proto_data_element)
   }
   
-  if(determine_ci & aggregate_ci){
-  
-    # Aggregate the data by computing the bootstrap confidence intervals.
-    performance_data$model_data <- .compute_bootstrap_ci(x0=performance_data$model_data,
-                                                         xb=performance_data$bootstrap_data,
-                                                         target_column="value",
-                                                         bootstrap_ci_method=bootstrap_ci_method,
-                                                         additional_splitting_variable="metric",
-                                                         confidence_level=confidence_level,
-                                                         cl=cl,
-                                                         verbose=verbose,
-                                                         message_indent=message_indent)
-    
-    # Set the bootstrap_data to NULL.
-    performance_data$bootstrap_data <- NULL
-    
-  } else if(determine_ci){
-    # Add the bootstrap confidence interval method
-    performance_data$bootstrap_ci_method <- bootstrap_ci_method
-  }
+  # Iterate over data elements.
+  performance_data <- lapply(data_elements,
+                             ..extract_model_performance_data,
+                             object=object,
+                             aggregate_results=aggregate_results,
+                             verbose=verbose,
+                             cl=cl,
+                             message_indent=message_indent,
+                             ...)
   
   return(performance_data)
 }
 
 
 
-..extract_model_performance_data <- function(eval_times=NULL, object, data, cl=NULL, is_pre_processed,
-                                             ensemble_method, metric, confidence_level,
-                                             determine_ci, bootstrap_ci_method, verbose, message_indent=0L){
-  
-  # Perform a safety check.
-  if(length(eval_times) > 1) ..error_reached_unreachable_code("..extract_model_performance_data: more than one value for eval_times")
+..extract_model_performance_data <- function(data_element,
+                                             object,
+                                             data,
+                                             cl=NULL,
+                                             is_pre_processed,
+                                             ensemble_method,
+                                             metric,
+                                             aggregate_results,
+                                             progress_bar=FALSE,
+                                             ...){
   
   # Predict class probabilities.
   prediction_data <- .predict(object=object,
                               data=data,
-                              time=eval_times,
+                              time=data_element@identifiers$evaluation_time,
                               ensemble_method=ensemble_method,
                               is_pre_processed=is_pre_processed)
   
   # Check if any predictions are valid.
   if(!any_predictions_valid(prediction_data, outcome_type=object@outcome_type)) return(NULL)
   
-  # Iterate over class levels.
-  performance_data <- lapply(metric,
-                             .compute_model_performance,
-                             data=prediction_data,
-                             object=object,
-                             time=eval_times,
-                             confidence_level=confidence_level,
-                             determine_ci=determine_ci,
-                             cl=cl,
-                             message_indent=message_indent,
-                             verbose=verbose)
+  # Add metric as an identifier.
+  data_elements <- add_data_element_identifier(x=data_element,
+                                               metric=metric)
   
-  # Concatenate lists.
-  performance_data <- list("model_data"=rbind_list_list(performance_data, "model_data"),
-                           "bootstrap_data"=rbind_list_list(performance_data, "bootstrap_data"),
-                           "confidence_level"=confidence_level)
+  # Add bootstrap data.
+  bootstrap_data <- add_data_element_bootstrap(x=data_elements,
+                                              ...)
   
-  return(performance_data)
+  # Iterate over elements.
+  data_elements <- fam_mapply(cl=cl,
+                              assign=NULL,
+                              FUN=.compute_model_performance,
+                              data_element=bootstrap_data$data_element,
+                              bootstrap=bootstrap_data$bootstrap,
+                              MoreArgs=list("object"=object,
+                                            "data"=prediction_data),
+                              progress_bar=progress_bar)
+  
+  # Merge data elements
+  data_elements <- merge_data_elements(data_elements)
+  
+  if(aggregate_results) data_elements <- .compute_data_element_estimates(x=data_elements)
+  
+  return(data_elements)
 }
 
 
 
-.compute_model_performance <- function(metric, data, object, time=NULL, confidence_level,
-                                       determine_ci, cl=NULL, message_indent=0L, verbose){
+.compute_model_performance <- function(data_element, object, data, bootstrap){
   
-  # Check if the data has more than 1 row.
-  if(nrow(data) <= 1) return(list("confidence_level"=confidence_level))
+  # Bootstrap the data.
+  if(bootstrap) data <- get_bootstrap_sample(data=data)
   
-  # Compute data from the model.
-  model_data <- ..compute_model_performance(metric=metric,
-                                            data=data,
-                                            time=time,
-                                            object=object)
-  
-  if(determine_ci){
-    if(verbose & !is.null(time)) logger.message(paste0("Computing bootstrap confidence interval data for the \"", metric, "\" metric at time ", time, "."),
-                                                indent=message_indent)
-    if(verbose & is.null(time)) logger.message(paste0("Computing bootstrap confidence interval data for the \"", metric, "\" metric."),
-                                               indent=message_indent)
-    
-    # Bootstrap the data.
-    bootstrap_data <- bootstrapper(data=data,
-                                   alpha= 1.0 - confidence_level,
-                                   FUN=..compute_model_performance,
-                                   metric=metric,
-                                   time=time,
-                                   object=object,
-                                   cl=cl,
-                                   verbose=verbose)
-    
-  } else {
-    bootstrap_data <- NULL
-  }
-  
-  # Add to list and return
-  return(list("model_data"=model_data,
-              "bootstrap_data"=bootstrap_data,
-              "confidence_level"=confidence_level))
-}
-
-
-
-..compute_model_performance <- function(metric,
-                                        data,
-                                        time,
-                                        object){
-  
-  # Compute the metric score.
-  score <- compute_metric_score(metric=metric,
+  # Compute the score
+  score <- compute_metric_score(metric=data_element@identifiers$metric,
+                                object=object,
                                 data=data,
-                                time=time,
-                                object=object)
+                                time=data_element@identifiers$evaluation_time)
   
-  if(!is.finite(score)) return(NULL)
+  # Set the value, if finite.
+  if(is.finite(score)) data_element@data <- list("value"=unname(score))
   
-  if(!is.null(time)){
-    performance_data <- data.table::data.table("evaluation_time"=time,
-                                               "metric"=metric,
-                                               "value"=score)
-    
-  } else {
-    performance_data <- data.table::data.table("metric"=metric,
-                                               "value"=score)
-  }
-  
-  return(performance_data)
+  return(data_element)
 }
