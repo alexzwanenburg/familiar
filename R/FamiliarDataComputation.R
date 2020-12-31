@@ -298,26 +298,6 @@ setMethod("extract_data", signature(object="familiarEnsemble"),
             # Load models, and drop any models that were not trained.
             object <- load_models(object=object, drop_untrained=TRUE)
             
-            #### FOR TESTING PURPOSES ONLY
-            if(any(c("model_performance") %in% data_element)){
-              model_performance_data <- extract_performance(object=object,
-                                                            data=data,
-                                                            cl=cl,
-                                                            metric=metric,
-                                                            ensemble_method=ensemble_method,
-                                                            eval_times=eval_times,
-                                                            detail_level=detail_level,
-                                                            estimation_type=estimation_type,
-                                                            aggregate_results=aggregate_results,
-                                                            confidence_level=confidence_level,
-                                                            bootstrap_ci_method=bootstrap_ci_method,
-                                                            message_indent=message_indent,
-                                                            verbose=verbose)
-              
-            } else {
-              model_performance_data <- NULL
-            }
-            
             
             # Extract feature distance tables,
             if(any(c("mutual_correlation", "univariate_analysis", "feature_expressions", "permutation_vimp") %in% data_element)){
@@ -2201,6 +2181,7 @@ setMethod("extract_dispatcher", signature(object="familiarEnsemble", proto_data_
                    aggregate_results,
                    has_internal_bootstrap,
                    ...,
+                   message_indent=0L,
                    verbose=TRUE){
             
             # Check that any models were trained.
@@ -2317,7 +2298,9 @@ setMethod("extract_dispatcher", signature(object="familiarEnsemble", proto_data_
                                          n_instances = n_instances,
                                          n_models = n_models,
                                          n_nodes = n_nodes,
-                                         parallel_external = parallel_external)
+                                         parallel_external = parallel_external,
+                                         message_indent = message_indent,
+                                         verbose = verbose)
             
             # Dispatch for ensemble models.
             if(proto_data_element@detail_level == "ensemble"){
@@ -2330,6 +2313,7 @@ setMethod("extract_dispatcher", signature(object="familiarEnsemble", proto_data_
                                                 n_instances=n_instances,
                                                 n_bootstraps=n_bootstraps,
                                                 parallel_external=parallel_external,
+                                                message_indent = message_indent,
                                                 verbose=verbose,
                                                 ...)
 
@@ -2343,6 +2327,7 @@ setMethod("extract_dispatcher", signature(object="familiarEnsemble", proto_data_
                                               n_instances=n_instances,
                                               n_bootstraps=n_bootstraps,
                                               parallel_external=parallel_external,
+                                              message_indent = message_indent,
                                               verbose=verbose,
                                               ...)
               
@@ -2356,6 +2341,7 @@ setMethod("extract_dispatcher", signature(object="familiarEnsemble", proto_data_
                                              n_instances=n_instances,
                                              n_bootstraps=n_bootstraps,
                                              parallel_external=parallel_external,
+                                             message_indent = message_indent,
                                              verbose=verbose,
                                              ...)
               
@@ -2383,12 +2369,15 @@ setMethod("extract_dispatcher", signature(object="familiarEnsemble", proto_data_
   proto_data_element <- add_model_name(proto_data_element,
                                        object=object)
   
+  # Set flag for interval aggregation.
+  aggregate_internal <- aggregate_results & n_instances == n_bootstraps & n_bootstraps > 0
+  
   # Never perform outer-loop parallelisation when dispatching for ensemble-level
   # details.
   x <- FUN(cl = cl,
            object = object,
            proto_data_element = proto_data_element,
-           aggregate_results = aggregate_results & n_instances == n_bootstraps,
+           aggregate_results = aggregate_internal,
            n_instances = n_instances,
            n_bootstraps = n_bootstraps,
            verbose = verbose,
@@ -2458,7 +2447,7 @@ setMethod("extract_dispatcher", signature(object="familiarEnsemble", proto_data_
   if(proto_data_element@estimation_type %in% c("bootstrap_confidence_interval", "bci")){
     x <- .add_point_estimate_from_elements(x)
   }
-  browser()
+  
   # Aggregate results if required.
   if(aggregate_results){
     x <- .compute_data_element_estimates(x)
@@ -2489,12 +2478,15 @@ setMethod("extract_dispatcher", signature(object="familiarEnsemble", proto_data_
                                data=proto_data_element,
                                object=object@model_list)
   
+  # Set flag for interval aggregation.
+  aggregate_internal <- aggregate_results & n_instances == n_bootstraps & n_bootstraps > 0
+  
   if(parallel_external){
     x <- fam_mapply(cl=cl,
                     FUN=FUN,
                     object=object@model_list,
                     proto_data_element=proto_data_element,
-                    MoreArgs=c(list("aggregate_results"=aggregate_results & n_instances == n_bootstraps,
+                    MoreArgs=c(list("aggregate_results" = aggregate_internal,
                                     "n_instances"=n_instances,
                                     "n_bootstraps"=n_bootstraps,
                                     "verbose"=verbose,
@@ -2508,7 +2500,7 @@ setMethod("extract_dispatcher", signature(object="familiarEnsemble", proto_data_
                     object=object@model_list,
                     proto_data_element=proto_data_element,
                     MoreArgs=c(list("cl"=cl,
-                                    "aggregate_results"=aggregate_results & n_instances == n_bootstraps,
+                                    "aggregate_results" = aggregate_internal,
                                     "n_instances"=n_instances,
                                     "n_bootstraps"=n_bootstraps,
                                     "verbose"=verbose,
@@ -2519,7 +2511,7 @@ setMethod("extract_dispatcher", signature(object="familiarEnsemble", proto_data_
   
   # Merge data elements together.
   x <- merge_data_elements(x)
-  browser()
+  
   # Aggregate results if required.
   if(aggregate_results){
     x <- .compute_data_element_estimates(x)
@@ -2602,7 +2594,7 @@ setMethod("extract_dispatcher", signature(object="familiarEnsemble", proto_data_
 
   
 .add_point_estimate_from_elements <- function(x){
-  browser()
+  
   # Find any unique elements that have not been aggregated and are not empty.
   id_table <- identify_element_sets(x, ignore_estimation_type=TRUE)
   
@@ -2677,7 +2669,7 @@ setMethod("extract_dispatcher", signature(object="familiarEnsemble", proto_data_
     data_elements <- c(data_elements, list(prototype_data_element))
   }
   
-  return(data_elements)
+  return(c(x, data_elements))
 }
 
 
@@ -2757,7 +2749,7 @@ setMethod("extract_dispatcher", signature(object="familiarEnsemble", proto_data_
       aggregated_data_element@data <- data
       
     } else if(any(current_estimation_types %in% c("bc", "bias_correction"))){
-      browser()
+      
       # Check the number of elements.
       if(length(current_estimation_types) != 1L) ..error_reached_unreachable_code(".compute_data_element_estimates: exactly one data element is required for bias corrected estimates.")
       
@@ -2766,7 +2758,7 @@ setMethod("extract_dispatcher", signature(object="familiarEnsemble", proto_data_
       
       if(length(current_data_elements[[1]]@grouping_column > 0)){
         # Split table by grouping column and compute bias corrected estimate.
-        data <- lapply(split(data, by=current_data_elements[[1]]@grouping_column),
+        data <- lapply(split(bootstrap_values, by=current_data_elements[[1]]@grouping_column),
                        ..compute_bias_corrected_estimate,
                        value_column = current_data_elements[[1]]@value_column,
                        grouping_column = current_data_elements[[1]]@grouping_column)
@@ -2776,8 +2768,8 @@ setMethod("extract_dispatcher", signature(object="familiarEnsemble", proto_data_
         
       } else {
         # Compute in absence of grouping columns.
-        data <- ..compute_bootstrap_confidence_estimate(x = data,
-                                                        value_column = current_data_elements[[1]]@value_column)
+        data <- ..compute_bias_corrected_estimate(x = bootstrap_values,
+                                                  value_column = current_data_elements[[1]]@value_column)
       }
       
       # Update the data attribute.
@@ -2785,12 +2777,40 @@ setMethod("extract_dispatcher", signature(object="familiarEnsemble", proto_data_
       aggregated_data_element@data <- data
       
     } else if(any(current_estimation_types %in% c("point"))){
-      browser()
+      # This follows the same procedure as for bias-corrected estimates. For
+      # ensemble and hybrid detail levels a single value needs to be generated.
+      # However, in the case of hybrid detail level, a point estimate is created
+      # for each model, and requires aggregation.
+      
+      # Select values.
+      bootstrap_values <- data.table::as.data.table(current_data_elements[current_estimation_types %in% c("point")][[1]]@data)
+      
+      if(length(current_data_elements[[1]]@grouping_column > 0)){
+        # Split table by grouping column and compute bias corrected estimate.
+        data <- lapply(split(bootstrap_values, by=current_data_elements[[1]]@grouping_column),
+                       ..compute_bias_corrected_estimate,
+                       value_column = current_data_elements[[1]]@value_column,
+                       grouping_column = current_data_elements[[1]]@grouping_column)
+        
+        # Combine to single table
+        data <- data.table::rbindlist(data, use.names=TRUE, fill=TRUE)
+        
+      } else {
+        # Compute in absence of grouping columns.
+        data <- ..compute_bias_corrected_estimate(x = bootstrap_values,
+                                                  value_column = current_data_elements[[1]]@value_column)
+      }
+      
+      # Update the data attribute.
+      aggregated_data_element <- current_data_elements[[1]]
+      aggregated_data_element@data <- data
+      
       # Check the number of elements.
       if(length(current_estimation_types) != 1L) ..error_reached_unreachable_code(".compute_data_element_estimates: exactly one data element is required for point estimates.")
       
       # The aggregated point element is itself.
       aggregated_data_element <- current_data_elements[[1]]
+      aggregated_data_element@data <- data
       
     } else {
       ..error_reached_unreachable_code(paste0(".compute_data_element_estimates: unknown estimation type: ", paste_s(current_estimation_types)))
@@ -2839,7 +2859,7 @@ setMethod("extract_dispatcher", signature(object="familiarEnsemble", proto_data_
 
 
 ..compute_bias_corrected_estimate <- function(x, value_column, grouping_column=NULL){
-  browser()
+  
   # Compute the bias-corrected estimate.
   bc_estimate <- ..bootstrap_bias_correction(x = x[[value_column]])
   
@@ -2885,18 +2905,45 @@ setMethod("extract_dispatcher", signature(object="familiarEnsemble", proto_data_
   
   # Set the detail level string.
   detail_level_str <- switch(detail_level,
-                             "ensemble" = "the ensemble model as a whole",
+                             "ensemble" = "the ensemble model as a whole. ",
                              "hybrid" = paste0("the ensemble model from the ",
-                                               ifelse(n_models > 1, paste0(n_models, " underlying models"), paste0(" single underlying model"))),
-                             "model" = paste0("each of the ",
-                                              ifelse(n_models > 1, paste0(n_models, " models"), paste0(" single model")),
-                                              " in the ensemble"))
-  # Bootstraps.
+                                               ifelse(n_models > 1,
+                                                      paste0(n_models, " underlying models. "),
+                                                      paste0("single underlying model. "))),
+                             "model" = paste0(ifelse(n_models > 1,
+                                                     paste0("each of the ", n_models, " models"),
+                                                     paste0("the single model")),
+                                              " in the ensemble. "))
   
-  browser()
-  paste0("Computing the ",
-         estimator_str,
-         " of the value(s) of interest for ",
-         detail_level_str, ". ",
-         "")
+  # Bootstraps.
+  if(n_bootstraps > 0L){
+    bootstrap_str <- paste0(n_bootstraps, " bootstrap samples are obtained ",
+                            ifelse(n_models > 1L,
+                                   paste0("for each model (total: ", n_instances, "). "),
+                                   "in total. "))
+    
+  } else {
+    bootstrap_str <- ""
+  }
+  
+  # Parallelisation.
+  if(n_nodes > 1L){
+    if(parallel_external){
+      parallel_str <- paste0("Computation is parallelised over models.")
+      
+    } else {
+      parallel_str <- paste0("Computation is parallelised over bootstraps.")
+    }
+    
+  } else {
+    parallel_str <- ""
+  }
+  
+  logger.message(paste0("Computing the ",
+                        estimator_str,
+                        " of the value(s) of interest for ",
+                        detail_level_str,
+                        bootstrap_str,
+                        parallel_str),
+                 indent=message_indent)
 }

@@ -2632,8 +2632,6 @@
   .check_parameter_value_is_valid(x=settings$detail_level, var_name="detail_level",
                                   values=c("ensemble", "hybrid", "model"))
   
-  if(settings$detail_level == "model") stop("\"model\" as a detail_level still requires implementation.")
-  
   
   # Type of estimation performed.
   settings$estimation_type <- .parse_arg(x_config=config$estimation_type, x_var=estimation_type,
