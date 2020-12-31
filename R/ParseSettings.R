@@ -2239,7 +2239,7 @@
 #'  model.
 #'
 #'  `hybrid` is generally computationally less expensive then `ensemble`, which
-#'  in turn is somewhat expensive than `model`, though the 
+#'  in turn is somewhat less expensive than `model`.
 #'
 #'@param estimation_type (*optional*) Sets the type of estimation that should be
 #'  possible. This has the following options:

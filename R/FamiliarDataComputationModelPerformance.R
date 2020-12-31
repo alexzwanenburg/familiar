@@ -58,7 +58,7 @@ setMethod("extract_performance", signature(object="familiarEnsemble"),
             
             # Message extraction start
             if(verbose){
-              logger.message(paste0("Computing performance metrics for models on the dataset."),
+              logger.message(paste0("Computing model performance metrics on the dataset."),
                              indent=message_indent)
             }
             
@@ -156,9 +156,7 @@ setMethod("extract_performance", signature(object="familiarEnsemble"),
                                             proto_data_element,
                                             eval_times=NULL,
                                             aggregate_results,
-                                            verbose,
                                             cl,
-                                            message_indent,
                                             ...){
   
   # Add model name.
@@ -177,9 +175,7 @@ setMethod("extract_performance", signature(object="familiarEnsemble"),
                              ..extract_model_performance_data,
                              object=object,
                              aggregate_results=aggregate_results,
-                             verbose=verbose,
                              cl=cl,
-                             message_indent=message_indent,
                              ...)
   
   return(performance_data)
@@ -196,7 +192,16 @@ setMethod("extract_performance", signature(object="familiarEnsemble"),
                                              metric,
                                              aggregate_results,
                                              progress_bar=FALSE,
+                                             verbose=FALSE,
+                                             message_indent,
                                              ...){
+  
+  # Message the user concerning the time at which metrics are computed. This is
+  # only relevant for survival analysis.
+  if(length(data_element@identifiers$evaluation_time) > 0 & progress_bar){
+    logger.message(paste0("Computing metric value at time ", data_element@identifiers$evaluation_time, "."),
+                   indent=message_indent)
+  }
   
   # Predict class probabilities.
   prediction_data <- .predict(object=object,

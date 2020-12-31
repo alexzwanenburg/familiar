@@ -178,3 +178,20 @@
   
   return(summary_list)
 }
+
+
+..bootstrap_bias_correction <- function(x){
+  
+  # Define empty summary list.
+  empty_list <- list("median"=NA_real_)
+  
+  # Select finite values.
+  x <- x[is.finite(x)]
+  
+  if(length(x) == 0) return(empty_list)
+  
+  # Compute the median value over the bootstraps.
+  summary_list <- list("median" = stats::median(x))
+  
+  return(summary_list)
+}

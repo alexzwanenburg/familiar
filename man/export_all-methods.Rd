@@ -218,7 +218,7 @@ the goal of the analysis is to assess the result of a single, unspecified,
 model.
 
 \code{hybrid} is generally computationally less expensive then \code{ensemble}, which
-in turn is somewhat expensive than \code{model}, though the}
+in turn is somewhat less expensive than \code{model}.}
     \item{\code{estimation_type}}{(\emph{optional}) Sets the type of estimation that should be
 possible. This has the following options:
 \itemize{
