@@ -725,7 +725,10 @@ setMethod("bootstrapper", signature(data="data.table"),
 
 #####get_bootstrap_sample------------------------------------------------------
 setMethod("get_bootstrap_sample", signature(data="dataObject"),
-          function(data, ...){
+          function(data, seed=NULL, ...){
+            
+            # Set seed for reproducible results.
+            if(!is.null(seed)) set.seed(seed)
             
             if(.as_preprocessing_level(data) > "none"){
               # Indicating that some preprocessing has taken please.
@@ -753,7 +756,10 @@ setMethod("get_bootstrap_sample", signature(data="dataObject"),
           })
 
 setMethod("get_bootstrap_sample", signature(data="data.table"),
-          function(data, ...){
+          function(data, seed=NULL, ...){
+            
+            # Set seed for reproducible results.
+            if(!is.null(seed)) set.seed(seed)
             
             # Find identifier columns at the sample level, i.e. excluding
             # repetitions and series.
@@ -792,7 +798,7 @@ setMethod("get_bootstrap_sample", signature(data="data.table"),
             return(data)
           })
 
-setMethod("get_bootstrap_sample", signature(data="NULL"), function(data, ...) return(NULL))
+setMethod("get_bootstrap_sample", signature(data="NULL"), function(data, seed=NULL, ...) return(NULL))
 
 
 

@@ -145,8 +145,7 @@ setMethod("extract_performance", signature(object="familiarEnsemble"),
                                                    aggregate_results=aggregate_results,
                                                    message_indent=message_indent + 1L,
                                                    verbose=verbose)
-            browser()
-           
+            
             return(performance_data)
           })
 
@@ -227,6 +226,7 @@ setMethod("extract_performance", signature(object="familiarEnsemble"),
                               FUN=.compute_model_performance,
                               data_element=bootstrap_data$data_element,
                               bootstrap=bootstrap_data$bootstrap,
+                              bootstrap_seed = bootstrap_data$seed,
                               MoreArgs=list("object"=object,
                                             "data"=prediction_data),
                               progress_bar=progress_bar)
@@ -241,10 +241,11 @@ setMethod("extract_performance", signature(object="familiarEnsemble"),
 
 
 
-.compute_model_performance <- function(data_element, object, data, bootstrap){
+.compute_model_performance <- function(data_element, object, data, bootstrap, bootstrap_seed){
   
   # Bootstrap the data.
-  if(bootstrap) data <- get_bootstrap_sample(data=data)
+  if(bootstrap) data <- get_bootstrap_sample(data=data,
+                                             seed=bootstrap_seed)
   
   # Compute the score
   score <- compute_metric_score(metric=data_element@identifiers$metric,

@@ -1916,7 +1916,7 @@ setMethod("add_data_element_identifier", signature(x="familiarDataElement"),
 
 #####add_data_element_bootstrap (list)------------------------------------------
 setMethod("add_data_element_bootstrap", signature(x="list"),
-          function(x, n_bootstraps, n_instances, ...){
+          function(x, n_bootstraps, n_instances, bootstrap_seed_offset, ...){
             
             if(n_bootstraps > 0){
               # Repeat elements.
@@ -1924,6 +1924,9 @@ setMethod("add_data_element_bootstrap", signature(x="list"),
               
               # Set bootstrap to TRUE
               bootstrap <- rep(TRUE, times=length(x) * n_bootstraps)
+              
+              # Set the seeds for the bootstraps to allow for reproducibility.
+              bootstrap_seed <- rep(seq(n_bootstraps) + bootstrap_seed_offset, times=length(x))
               
               # Iterate over elements to check whether a point estimate should
               # be computed in addition.
@@ -1938,6 +1941,7 @@ setMethod("add_data_element_bootstrap", signature(x="list"),
                   # Add the element to the list of elements.
                   data_element <- c(data_element, new_element)
                   bootstrap <- c(bootstrap, FALSE)
+                  bootstrap_seed <- c(bootstrap_seed, -1)
                 }
               }
               
@@ -1947,14 +1951,18 @@ setMethod("add_data_element_bootstrap", signature(x="list"),
               
               # No bootstraps need to be created.
               bootstrap <- rep(FALSE, times=length(x))
+              
+              # No seed is set
+              bootstrap_seed <- NULL
             }
             
             return(list("data_element"=data_element,
-                        "bootstrap"=bootstrap))
+                        "bootstrap"=bootstrap,
+                        "seed"=bootstrap_seed))
           })
 
 
-#####add_data_element_bootstrap (list)------------------------------------------
+#####add_data_element_bootstrap (familiarDataElement)---------------------------
 setMethod("add_data_element_bootstrap", signature(x="familiarDataElement"),
           function(x, ...){
             
@@ -2349,7 +2357,7 @@ setMethod("extract_dispatcher", signature(object="familiarEnsemble", proto_data_
               ..error_reached_unreachable_code(paste0("extract_dispatcher: encountered an unknown detail_level attribute: ",
                                                       proto_data_element@detail_level))
             }
-            browser()
+            
             return(x)
           })
             
@@ -2376,6 +2384,7 @@ setMethod("extract_dispatcher", signature(object="familiarEnsemble", proto_data_
   # details.
   x <- FUN(cl = cl,
            object = object,
+           bootstrap_seed_offset = 0,
            proto_data_element = proto_data_element,
            aggregate_results = aggregate_internal,
            n_instances = n_instances,
@@ -2415,6 +2424,7 @@ setMethod("extract_dispatcher", signature(object="familiarEnsemble", proto_data_
     x <- fam_mapply(cl=cl,
                     FUN=FUN,
                     object=object@model_list,
+                    bootstrap_seed_offset = seq(from=0, by=n_bootstraps, length.out=length(object@model_list)),
                     MoreArgs=c(list("proto_data_element"=proto_data_element,
                                     "aggregate_results"=FALSE,
                                     "n_instances"=n_instances,
@@ -2428,6 +2438,7 @@ setMethod("extract_dispatcher", signature(object="familiarEnsemble", proto_data_
     x <- fam_mapply(cl=NULL,
                     FUN=FUN,
                     object=object@model_list,
+                    bootstrap_seed_offset = seq(from=0, by=n_bootstraps, length.out=length(object@model_list)),
                     MoreArgs=c(list("cl"=cl,
                                     "proto_data_element"=proto_data_element,
                                     "aggregate_results"=FALSE,
@@ -2485,6 +2496,7 @@ setMethod("extract_dispatcher", signature(object="familiarEnsemble", proto_data_
     x <- fam_mapply(cl=cl,
                     FUN=FUN,
                     object=object@model_list,
+                    bootstrap_seed_offset = seq(from=0, by=n_bootstraps, length.out=length(object@model_list)),
                     proto_data_element=proto_data_element,
                     MoreArgs=c(list("aggregate_results" = aggregate_internal,
                                     "n_instances"=n_instances,
@@ -2498,6 +2510,7 @@ setMethod("extract_dispatcher", signature(object="familiarEnsemble", proto_data_
     x <- fam_mapply(cl=NULL,
                     FUN=FUN,
                     object=object@model_list,
+                    bootstrap_seed_offset = seq(from=0, by=n_bootstraps, length.out=length(object@model_list)),
                     proto_data_element=proto_data_element,
                     MoreArgs=c(list("cl"=cl,
                                     "aggregate_results" = aggregate_internal,
