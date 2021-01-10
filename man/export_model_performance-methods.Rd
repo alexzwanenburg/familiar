@@ -6,11 +6,26 @@
 \alias{export_model_performance,ANY-method}
 \title{Extract and export metrics for model performance.}
 \usage{
-export_model_performance(object, dir_path = NULL, export_raw = FALSE, ...)
+export_model_performance(
+  object,
+  dir_path = NULL,
+  aggregate_results = FALSE,
+  ...
+)
 
-\S4method{export_model_performance}{familiarCollection}(object, dir_path = NULL, export_raw = FALSE, ...)
+\S4method{export_model_performance}{familiarCollection}(
+  object,
+  dir_path = NULL,
+  aggregate_results = FALSE,
+  ...
+)
 
-\S4method{export_model_performance}{ANY}(object, dir_path = NULL, export_raw = FALSE, ...)
+\S4method{export_model_performance}{ANY}(
+  object,
+  dir_path = NULL,
+  aggregate_results = FALSE,
+  ...
+)
 }
 \arguments{
 \item{object}{A \code{familiarCollection} object, or other other objects from which
@@ -18,9 +33,6 @@ a \code{familiarCollection} can be extracted. See details for more information.}
 
 \item{dir_path}{Path to folder where extracted data should be saved. \code{NULL}
 will allow export as a structured list of data.tables.}
-
-\item{export_raw}{Allows export of raw data. Only used when exporting model
-performance information.}
 
 \item{...}{
   Arguments passed on to \code{\link[=extract_performance]{extract_performance}}, \code{\link[=as_familiar_collection]{as_familiar_collection}}

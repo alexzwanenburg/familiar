@@ -6,11 +6,29 @@
 \alias{export_all,ANY-method}
 \title{Extract and export all data.}
 \usage{
-export_all(object, dir_path = NULL, export_raw = FALSE, ...)
+export_all(
+  object,
+  dir_path = NULL,
+  export_raw = FALSE,
+  aggregate_results = waiver(),
+  ...
+)
 
-\S4method{export_all}{familiarCollection}(object, dir_path = NULL, export_raw = FALSE, ...)
+\S4method{export_all}{familiarCollection}(
+  object,
+  dir_path = NULL,
+  export_raw = FALSE,
+  aggregate_results = waiver(),
+  ...
+)
 
-\S4method{export_all}{ANY}(object, dir_path = NULL, export_raw = FALSE, ...)
+\S4method{export_all}{ANY}(
+  object,
+  dir_path = NULL,
+  export_raw = FALSE,
+  aggregate_results = waiver(),
+  ...
+)
 }
 \arguments{
 \item{object}{A \code{familiarCollection} object, or other other objects from which

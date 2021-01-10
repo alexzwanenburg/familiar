@@ -1913,6 +1913,12 @@ setMethod("add_data_element_identifier", signature(x="familiarDataElement"),
             return(data_elements)
           })
 
+#####add_data_element_identifier (ANY)--------------------------
+setMethod("add_data_element_identifier", signature(x="ANY"),
+          function(x, ...){
+            return(NULL)
+          })
+
 
 #####add_data_element_bootstrap (list)------------------------------------------
 setMethod("add_data_element_bootstrap", signature(x="list"),
@@ -1972,7 +1978,7 @@ setMethod("add_data_element_bootstrap", signature(x="familiarDataElement"),
 
 #####.identifier_as_data_attribute----------------------------------------------
 setMethod(".identifier_as_data_attribute", signature(x="familiarDataElement"),
-          function(x, identifier){
+          function(x, identifier, as_grouping_column=TRUE){
             if(length(identifier) == 0) ..error_reached_unreachable_code(".identifier_as_data_attribute: Cannot pass an empty identifier.")
             
             # If an "all" value is passed (e.g. during export), all identifiers
@@ -1984,6 +1990,7 @@ setMethod(".identifier_as_data_attribute", signature(x="familiarDataElement"),
             identifier_present <- intersect(identifier, names(x@identifiers))
             if(length(identifier_present) == 0) return(x)
             
+            if(as_grouping_column) x@grouping_column <- unique(c(x@grouping_column, identifier_present))
             # Determine the indices of the selected list elements.
             identifier_index <- which(names(x@identifiers) %in% identifier_present)
             
@@ -2077,12 +2084,15 @@ setMethod("merge_data_elements", signature(x="list"),
 
 #####merge_data_elements (familiarDataElement)----------------------------------
 setMethod("merge_data_elements", signature(x="familiarDataElement"),
-          function(x, x_list, as_data=NULL, ...){
+          function(x, x_list, as_data=NULL, as_grouping_column=TRUE, force_data_table=FALSE,...){
             
             # Move identifiers from the identifiers attribute to the data
             # attribute. The primary reason for doing so is to group and merge
             # similar elements, byt e.g. from different models.
-            if(!is.null(as_data)) x_list <- lapply(x_list, .identifier_as_data_attribute, identifier=as_data)
+            if(!is.null(as_data)) x_list <- lapply(x_list,
+                                                   .identifier_as_data_attribute,
+                                                   identifier=as_data,
+                                                   as_grouping_column=as_grouping_column)
             
             # Identify items that can be joined.
             id_table <- identify_element_sets(x=x_list, ...)
@@ -2128,6 +2138,9 @@ setMethod("merge_data_elements", signature(x="familiarDataElement"),
                 # Set names.
                 names(data_attribute) <- element_names
                 
+                # Force to data attribute.
+                if(force_data_table) data_attribute <- data.table::as.data.table(data_attribute)
+                
                 # Set data attribute.
                 prototype_data_element@data <- data_attribute
                 
@@ -2145,6 +2158,296 @@ setMethod("merge_data_elements", signature(x="familiarDataElement"),
             
             return(data_elements)
           })
+
+
+
+#####collect (list)-------------------------------------------------------------
+setMethod("collect", signature(x="list"),
+          function(x, data_slot, identifiers=c("data_set", "fs_method", "learner"), ...){
+            
+            # Collect from all 
+            collected_data_elements <- lapply(x,
+                                              collect,
+                                              data_slot=data_slot,
+                                              identifiers=identifiers)
+            
+            # Flatten (nested) lists.
+            collected_data_elements <- unlist(collected_data_elements)
+            if(!is.list(collected_data_elements)) collected_data_elements <- list(collected_data_elements)
+            
+            # Select unique elements. First identify which elements are present.
+            id_table <- identify_element_sets(collected_data_elements)
+            
+            # Identify the first element id in each group.
+            unique_elements <- sapply(split(id_table, by="group_id"), function(x) (head(x$element_id, n=1L)))
+            
+            # Keep unique elements.
+            collected_data_elements <- collected_data_elements[unique_elements]
+            
+            return(collected_data_elements)
+          })
+
+#####collect (familiarData)-----------------------------------------------------
+setMethod("collect", signature(x="familiarData"),
+          function(x, data_slot, identifiers, ...){
+            
+            # Collect data elements.
+            collected_data_elements <- slot(x, name=data_slot)
+            
+            if(is_empty(collected_data_elements)) return(NULL)
+            
+            # Add elements
+            if("data_set" %in% identifiers){
+              collected_data_elements <- add_data_element_identifier(x=collected_data_elements,
+                                                                     data_set=x@name)
+            }
+            
+            if("fs_method" %in% identifiers){
+              collected_data_elements <- add_data_element_identifier(x=collected_data_elements,
+                                                                     fs_method=x@fs_method)
+            }
+            
+            if("learner" %in% identifiers){
+              collected_data_elements <- add_data_element_identifier(x=collected_data_elements,
+                                                                     learner=x@learner)
+            }
+            
+            return(collected_data_elements)
+          })
+
+
+#####.export (familiarCollection)------------------------------------------------
+setMethod(".export", signature(x="familiarCollection"),
+          function(x, data_slot, dir_path=NULL, type, subtype,...){
+            
+            # Get the back element.
+            data_elements <- slot(x, name=data_slot)
+            browser()
+            if(is_empty(data_elements)) return(NULL)
+            
+            if(is(data_elements, "familiarDataElement")){
+              data <- .export(x=data_elements,
+                              x_list=list(data_elements),
+                              ...)
+              
+            } else {
+              data <- .export(x=data_elements[[1]],
+                              x_list=data_elements,
+                              ...)
+            }
+            
+            # Apply labels.
+            data <- .apply_labels(data=data,
+                                  object=x)
+            
+            # Check that the data variable is not empty
+            if(is_empty(data)) return(NULL)
+            
+            if(is.null(data)){
+              # Export data.
+              return(data)
+              
+            } else {
+              
+              # Check that the data variable is a data.table.
+              if(!data.table::is.data.table(data)) ..error_reached_unreachable_code(".export,familiarCollection: data is not a single data.table.")
+              
+              # Export to file
+              .export_to_file(data=data,
+                              object=x,
+                              dir_path=dir_path,
+                              type=type,
+                              subtype=paste(subtype, type, sep="_"))
+              
+              return(NULL)
+            }
+          })
+
+#####.export (familiarDataElement)-----------------------------------------------
+setMethod(".export", signature(x="familiarDataElement"),
+          function(x, x_list, aggregate_results=FALSE, ...){
+            
+            if(aggregate_results){
+              x_list <- .compute_data_element_estimates(x_list)
+            }
+            
+            # Merge data elements.
+            x <- merge_data_elements(x=x_list,
+                                     as_data="all",
+                                     as_grouping_column=TRUE,
+                                     force_data_table=TRUE)
+            
+            return(x)
+          })
+
+
+
+
+
+# universal_exporter <- function(object,
+#                                dir_path=NULL,
+#                                export_raw=FALSE,
+#                                data_slot,
+#                                extra_data=NULL,
+#                                target_column,
+#                                splitting_variable=NULL,
+#                                main_type,
+#                                sub_type=NULL){
+#   
+#   # Extract list of lists
+#   main_list <- slot(object=object, name=data_slot)
+#   
+#   # This list will be filled.
+#   export_list <- list()
+#   
+#   for(type in c("individual", "ensemble")){
+#     # Confidence level
+#     confidence_level <- main_list[[type]]$confidence_level
+#     
+#     # Apply labels.
+#     data <- .apply_labels(data=main_list[[type]], object=object)
+#     
+#     if(!export_raw){
+#       # Export summarised data.
+#       
+#       # Find present elements in the list.
+#       present_elements <- names(main_list[[type]])
+#       
+#       # Find elements that are not related data.tables.
+#       simple_elements <- setdiff(present_elements,
+#                                  c("model_data", "bootstrap_data", extra_data))
+#       
+#       # Copy simple elements.
+#       export_data <- main_list[[type]][simple_elements]
+#       
+#       # Parse data with bootstrap confidence intervals, if required.
+#       export_data <- c(export_data,
+#                        list("data"=.compute_bootstrap_ci(x0=data$model_data,
+#                                                          xb=data$bootstrap_data,
+#                                                          target_column=target_column,
+#                                                          bootstrap_ci_method=data$bootstrap_ci_method,
+#                                                          additional_splitting_variable=splitting_variable,
+#                                                          confidence_level=confidence_level)))
+#       
+#       if(!is.null(extra_data)){
+#         
+#         # Retrieve extra data.
+#         extra_export_data <- lapply(extra_data, function(list_element, data) data[[list_element]], data=data)
+#         
+#         # Rename exported data.
+#         names(extra_export_data) <- extra_data
+#         
+#         # Join the two lists.
+#         export_data <- c(export_data, extra_export_data)
+#       }
+#       
+#       
+#       if(!is.null(dir_path)){
+#         # Export to file.
+#         
+#         # Extract the summarised model data.
+#         write_data <- export_data$data
+#         
+#         if(!is.null(extra_data)){
+#           
+#           # Identify the identifier columns
+#           id_columns <- setdiff(colnames(write_data),
+#                                 c(target_column, "ci_low", "ci_up"))
+#           
+#           for(current_data_set in extra_data){
+#             
+#             # Skip empty datasets.
+#             if(is_empty(export_data[[current_data_set]])) next()
+#             
+#             # Parse current dataset
+#             current_data <- export_data[[current_data_set]]
+#             data.table::setnames(current_data, old=target_column, new=current_data_set)
+#             
+#             # Merge with summarised data.
+#             write_data <- merge(x=write_data,
+#                                 y=current_data,
+#                                 by=id_columns)
+#           }
+#         }
+#         
+#         # Export model performances of the models
+#         .export_to_file(data=write_data, object=object, dir_path=dir_path,
+#                         type=main_type, subtype=paste(sub_type, type, sep="_")) 
+#       }
+#       
+#     } else {
+#       # Export all the data.
+#       
+#       if(!is.null(dir_path)){
+#         # Prepare data for writing by combining, model, intervention
+#         # and bootstrap data into a single table before writing it to
+#         # a folder.
+#         
+#         if(!is_empty(data$bootstrap_data)){
+#           # Cast wide by bootstrap id.
+#           bootstrap_data <- data.table::dcast(data=data$bootstrap_data,
+#                                               stats::reformulate(termlabels=setdiff(colnames(data$bootstrap_data), c(target_column, "bootstrap_id")),
+#                                                                  response="bootstrap_id",
+#                                                                  intercept=FALSE),
+#                                               value.var=target_column)
+#         } else {
+#           bootstrap_data <- NULL
+#         }
+#         
+#         if(!is_empty(data$model_data)){
+#           
+#           # Parse model data.
+#           write_data <- data$model_data
+#           data.table::setnames(export_data, old=target_column, new="model")
+#           
+#           # Specify identifier columns
+#           id_columns <- setdiff(colnames(write_data), c("model", "ci_low", "ci_up"))
+#           
+#           if(!is.null(bootstrap_data)){
+#             write_data <- merge(x=write_data,
+#                                 y=bootstrap_data,
+#                                 by=id_columns)
+#           }
+#           
+#         } else {
+#           write_data <- NULL
+#         }
+#         
+#         if(!is.null(write_data) & !is.null(extra_data)){
+#           
+#           for(current_data_set in extra_data){
+#             
+#             # Skip empty datasets.
+#             if(is_empty(write_data[[current_data_set]])) next()
+#             
+#             # Parse current dataset
+#             current_data <- data[[current_data_set]]
+#             data.table::setnames(current_data, old=target_column, new=current_data_set)
+#             
+#             # Merge with summarised data.
+#             write_data <- merge(x=write_data,
+#                                 y=current_data,
+#                                 by=id_columns)
+#           }
+#         }
+#         
+#         # Export data to file.
+#         .export_to_file(data=export_data, object=object, dir_path=dir_path,
+#                         type=main_type, subtype=paste(sub_type, type, sep="_"))
+#         
+#       } else {
+#         # Data is exported directly.
+#         export_data <- data
+#       }
+#     }
+#     
+#     # Add export data to list.
+#     export_list[[type]] <- export_data
+#   }
+#   
+#   # Return list of data.
+#   if(is.null(dir_path)) return(export_list)
+# }
 
 
 
@@ -2451,8 +2754,8 @@ setMethod("extract_dispatcher", signature(object="familiarEnsemble", proto_data_
   }
   
   # Merge data elements together. The model_name identifier gets added as data
-  # instead.
-  x <- merge_data_elements(x, as_data="model_name")
+  # instead, but not as a grouping column.
+  x <- merge_data_elements(x, as_data="model_name", as_grouping_column=FALSE)
   
   # Create point estimate from the data.
   if(proto_data_element@estimation_type %in% c("bootstrap_confidence_interval", "bci")){

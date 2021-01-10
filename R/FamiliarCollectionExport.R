@@ -35,14 +35,14 @@ NULL
 #'@md
 #'@rdname export_all-methods
 setGeneric("export_all",
-           function(object, dir_path=NULL, export_raw=FALSE, ...) standardGeneric("export_all"))
+           function(object, dir_path=NULL, export_raw=FALSE, aggregate_results=waiver(), ...) standardGeneric("export_all"))
 
 
 #####export_all (collection)#####
 
 #'@rdname export_all-methods
 setMethod("export_all", signature(object="familiarCollection"),
-          function(object, dir_path=NULL, export_raw=FALSE, ...){
+          function(object, dir_path=NULL, export_raw=FALSE, aggregate_results=waiver(), ...){
             
             # Export feature selection variable importance
             fs_vimp <- export_fs_vimp(object=object, dir_path=dir_path)
@@ -69,7 +69,16 @@ setMethod("export_all", signature(object="familiarCollection"),
             calibration_data <- export_calibration_data(object=object, dir_path=dir_path)
             
             # Export model performance
-            model_performance <- export_model_performance(object=object, dir_path=dir_path, export_raw=export_raw)
+            if(is.waive(aggregate_results)){
+              model_performance <- export_model_performance(object=object,
+                                                            dir_path=dir_path,
+                                                            aggregate_results=TRUE)
+            } else {
+              model_performance <- export_model_performance(object=object,
+                                                            dir_path=dir_path,
+                                                            aggregate_results=aggregate_results)
+            }
+            
             
             # Export confusion matrix
             confusion_matrix <- export_confusion_matrix_data(object=object, dir_path=dir_path, export_raw=export_raw)
@@ -116,13 +125,18 @@ setMethod("export_all", signature(object="familiarCollection"),
 
 #'@rdname export_all-methods
 setMethod("export_all", signature(object="ANY"),
-          function(object, dir_path=NULL, ...){
+          function(object, dir_path=NULL, aggregate_results=waiver(), ...){
             
             # Attempt conversion to familiarCollection object.
-            object <- do.call(as_familiar_collection, args=append(list("object"=object), list(...)))
+            object <- do.call(as_familiar_collection, args=c(list("object"=object,
+                                                                  "aggregate_results"=aggregate_results),
+                                                             list(...)))
             
             return(do.call(export_all,
-                           args=append(list("object"=object, "dir_path"=dir_path), list(...))))
+                           args=c(list("object"=object,
+                                       "dir_path"=dir_path,
+                                       "aggregate_results"=aggregate_results),
+                                  list(...))))
           })
 
 
@@ -1071,39 +1085,43 @@ setMethod("export_stratification_data", signature(object="ANY"),
 #'@md
 #'@rdname export_model_performance-methods
 setGeneric("export_model_performance",
-           function(object, dir_path=NULL, export_raw=FALSE, ...) standardGeneric("export_model_performance"))
+           function(object, dir_path=NULL, aggregate_results=FALSE, ...) standardGeneric("export_model_performance"))
 
 #####export_model_performance (collection)#####
 
 #'@rdname export_model_performance-methods
 setMethod("export_model_performance", signature(object="familiarCollection"),
-          function(object, dir_path=NULL, export_raw=FALSE, ...){
+          function(object, dir_path=NULL, aggregate_results=FALSE, ...){
             
-            return(universal_exporter(object=object,
-                                      dir_path=dir_path,
-                                      export_raw=export_raw,
-                                      data_slot="model_performance",
-                                      extra_data=NULL,
-                                      target_column="value",
-                                      splitting_variable="metric",
-                                      main_type="performance",
-                                      sub_type="metric"))
+            return(.export(x=object,
+                           data_slot="model_performance",
+                           dir_path=dir_path,
+                           aggregate_results=aggregate_results,
+                           main_type="performance",
+                           subtype="metric"))
           })
           
 #####export_model_performance (generic)#####
 
 #'@rdname export_model_performance-methods
 setMethod("export_model_performance", signature(object="ANY"),
-          function(object, dir_path=NULL, export_raw=FALSE, ...){
+          function(object, dir_path=NULL, aggregate_results=FALSE, ...){
             
             # Attempt conversion to familiarCollection object.
             object <- do.call(as_familiar_collection,
-                              args=append(list("object"=object, "data_element"="model_performance"), list(...)))
+                              args=c(list("object"=object,
+                                          "data_element"="model_performance",
+                                          "aggregate_results"=aggregate_results),
+                                     list(...)))
             
             return(do.call(export_model_performance,
-                           args=append(list("object"=object, "dir_path"=dir_path, "export_raw"=export_raw),
-                                       list(...))))
+                           args=c(list("object"=object,
+                                       "dir_path"=dir_path,
+                                       "aggregate_results"=aggregate_results),
+                                  list(...))))
           })
+
+
 
 #####export_auc_data#####
 
@@ -1538,34 +1556,34 @@ setMethod(".export_to_file", signature(data="ANY", object="familiarCollection", 
             }
           })
 
-#####.apply_labels#####
-setMethod(".apply_labels", signature(data="ANY", object="familiarCollection"),
+#####.apply_labels (data.table, familiarCollection)#####
+setMethod(".apply_labels", signature(data="data.table", object="familiarCollection"),
           function(data, object){
-            
+            browser()
             # Return NULL for empty input
             if(is_empty(data)) return(NULL)
             
             # Check if data has the expected class.
-            if(!data.table::is.data.table(data)){
-              
-              if(is.list(data)){
-                # Get the names of the list elements.
-                element_names <- names(data)
-                
-                # Update underlying data
-                data <- lapply(data, .apply_labels, object=object)
-                
-                # Set the names
-                names(data) <- element_names
-                
-                return(data)
-              } else if(is.numeric(data) | is.character(data) | is.logical(data) | is.factor(data)){
-                return(data)
-                
-              } else {
-                stop(paste0("\"data\" is expected to be a \"data.frame\" or \"data.table\", or a list of these. Found: ", paste(class(data), sep=", "), "."))
-              }
-            }
+            # if(!data.table::is.data.table(data)){
+            #   
+            #   if(is.list(data)){
+            #     # Get the names of the list elements.
+            #     element_names <- names(data)
+            #     
+            #     # Update underlying data
+            #     data <- lapply(data, .apply_labels, object=object)
+            #     
+            #     # Set the names
+            #     names(data) <- element_names
+            #     
+            #     return(data)
+            #   } else if(is.numeric(data) | is.character(data) | is.logical(data) | is.factor(data)){
+            #     return(data)
+            #     
+            #   } else {
+            #     stop(paste0("\"data\" is expected to be a \"data.frame\" or \"data.table\", or a list of these. Found: ", paste(class(data), sep=", "), "."))
+            #   }
+            # }
 
             # Make sure that a local copy is updated
             data <- data.table::copy(data)
@@ -1666,6 +1684,33 @@ setMethod(".apply_labels", signature(data="ANY", object="familiarCollection"),
             data <- droplevels(x=data)
             
             return(data)
+          })
+
+
+#####.apply_labels (familiarDataElement, familiarCollection)#####
+setMethod(".apply_labels", signature(data="familiarDataElement", object="familiarCollection"),
+          function(data, object){
+            
+            return(.apply_labels(data=data@data,
+                                 object=object))
+          })
+
+#####.apply_labels (list, familiarCollection)#####
+setMethod(".apply_labels", signature(data="list", object="familiarCollection"),
+          function(data, object){
+            
+            return(lapply(data,
+                          .apply_labels,
+                          object=object))
+          })
+
+
+#####.apply_labels (ANY, familiarCollection)#####
+setMethod(".apply_labels", signature(data="ANY", object="familiarCollection"),
+          function(data, object){
+            # This is the fall-back option for empty data.
+            
+            return(NULL)
           })
 
 

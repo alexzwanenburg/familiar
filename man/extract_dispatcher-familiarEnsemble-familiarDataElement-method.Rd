@@ -12,6 +12,7 @@
   aggregate_results,
   has_internal_bootstrap,
   ...,
+  message_indent = 0L,
   verbose = TRUE
 )
 }
@@ -34,6 +35,9 @@ aggregated.}
 internal bootstrapping capabilities.}
 
 \item{...}{Unused arguments.}
+
+\item{message_indent}{Number of indentation steps for messages shown during
+computation and extraction of various data elements.}
 
 \item{verbose}{Flag to indicate whether feedback should be provided on the
 computation and extraction of various data elements.}

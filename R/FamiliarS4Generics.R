@@ -135,6 +135,8 @@ setGeneric(".summarise_model_performance", function(object, ...) standardGeneric
 
 setGeneric(".export_to_file", function(data, object, dir_path, ...) standardGeneric(".export_to_file"))
 
+setGeneric(".export", function(x, ...) standardGeneric(".export"))
+
 ##### conversion & loading #####
 # Additional methods are documented in FamiliarObjectConversion.R
 setGeneric("load_familiar_object", function(object, ...) standardGeneric("load_familiar_object"))
@@ -250,3 +252,5 @@ setGeneric("add_data_element_identifier", function(x, ...) standardGeneric("add_
 setGeneric("add_data_element_bootstrap", function(x, ...) standardGeneric("add_data_element_bootstrap"))
 
 setGeneric(".identifier_as_data_attribute", function(x, ...) standardGeneric(".identifier_as_data_attribute"))
+
+setGeneric("collect", function(x, ...) standardGeneric("collect"))
