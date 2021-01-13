@@ -248,30 +248,42 @@ setMethod("plot_model_performance", signature(object="familiarCollection"),
               # For the heatmap we require aggregated data.
               
               # Load the data.
-              x <- export_model_performance(object=object, export_raw=FALSE)
-              x <- x$ensemble$data
-              
-              # Check that the data is not empty.
-              if(is_empty(x)) return(NULL)
+              x <- export_model_performance(object=object, aggregate_results=TRUE)
+              browser()
               
             } else {
               # For other data we require de-aggregated data.
               
               # Load the data.
-              x <- export_model_performance(object=object, export_raw=TRUE)
+              x <- export_model_performance(object=object, aggregate_results=FALSE)
+              browser()
               
-              if(is_empty(x$ensemble$bootstrap_data) & !is_empty(x$ensemble$model_data)){
+              # Check that data are disaggregated
+              if(any(sapply(x, function(x) (x@is_aggregated)))){
                 warning(paste0("Creating a ", plot_type, " requires de-aggregated data, which are not available."))
-                return(NULL)
-                
-              } else if(is_empty(x$ensemble$bootstrap_data)){
                 return(NULL)
               }
               
-              x <- x$ensemble$bootstrap_data
+              # Check that data are not point estimates.
+              if(all(sapply(x, function(x) (x@estimation_type == "point")))){
+                warning(paste0("Creating a ", plot_type, " requires bias-corrected estimates or bootstrap confidence interval estimates instead of point estimates."))
+                return(NULL)
+              }
             }
             
-            # 
+            # Check that the data are not empty.
+            if(is_empty(x)) return(NULL)
+            
+            # Check that the data are not evaluated at the model level.
+            if(all(sapply(x, function(x) (x@detail_level == "model")))){
+              ..warning_no_comparison_between_models()
+              return(NULL)
+            }
+            
+            # Get data directly
+            browser()
+            
+            # Add evaluation time as a splitting variable.
             if(object@outcome_type %in% c("survival")){
               split_variable <- "evaluation_time"
               

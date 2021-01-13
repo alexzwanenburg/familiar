@@ -2243,7 +2243,7 @@ setMethod(".export", signature(x="familiarCollection"),
             # Check that the data variable is not empty
             if(is_empty(data)) return(NULL)
             
-            if(is.null(data)){
+            if(is.null(dir_path)){
               # Export data.
               return(data)
               

@@ -1691,8 +1691,144 @@ setMethod(".apply_labels", signature(data="data.table", object="familiarCollecti
 setMethod(".apply_labels", signature(data="familiarDataElement", object="familiarCollection"),
           function(data, object){
             
-            return(.apply_labels(data=data@data,
-                                 object=object))
+            # Return NULL for empty input
+            if(is_empty(data)) return(NULL)
+            
+            # Make sure that a local copy is updated
+            x <- data.table::copy(data@data)
+            
+            # Check which labels are present, based on column names
+            columns <- colnames(x)
+            
+            # Determine whether certain columns are present.
+            has_data_set <- "data_set" %in% columns
+            has_learner <- "learner" %in% columns
+            has_fs_method <- "fs_method" %in% columns
+            has_feature <- any(c("name", "feature_1", "feature_2", "feature") %in% columns)
+            has_risk_group <- any(c("risk_group", "risk_group_1", "risk_group_2", "reference_group") %in% columns)
+            has_multiclass_outcome <- any(c("pos_class", "positive_class", "outcome") %in% columns) & object@outcome_type == "multinomial"
+            has_categorical_outcome <- any(c("observed_outcome", "expected_outcome") %in% columns) & object@outcome_type %in% c("binomial", "multinomial")
+            has_evaluation_time <- any(c("evaluation_time", "eval_time") %in% columns) & object@outcome_type %in% c("survival", "competing_risk")
+            has_performance_metric <- any(c("metric") %in% columns)
+            has_model_name <- any(c("ensemble_model_name", "model_name") %in% columns)
+            
+            # Apply levels
+            if(has_data_set){
+              x$data_set <- factor(x=x$data_set,
+                                   levels=get_data_set_name_levels(x=object),
+                                   labels=get_data_set_names(x=object))
+            }
+            
+            if(has_learner){
+              x$learner <- factor(x=x$learner,
+                                  levels=get_learner_name_levels(x=object),
+                                  labels=get_learner_names(x=object))
+            }
+            
+            if(has_fs_method){
+              x$fs_method <- factor(x=x$fs_method,
+                                    levels=get_fs_method_name_levels(x=object),
+                                    labels=get_fs_method_names(x=object))
+            }
+            
+            if(has_feature){
+              for(current_column_name in c("name", "feature_1", "feature_2", "feature")){
+                if(!is.null(x[[current_column_name]])){
+                  x[[current_column_name]] <- factor(x=x[[current_column_name]],
+                                               levels=get_feature_name_levels(x=object),
+                                               labels=get_feature_names(x=object))
+                }
+              }
+            }
+            
+            if(has_risk_group){
+              for(current_column_name in c("risk_group", "risk_group_1", "risk_group_2", "reference_group")){
+                if(!is.null(x[[current_column_name]])){
+                  x[[current_column_name]] <- factor(x=x[[current_column_name]],
+                                               levels=get_risk_group_name_levels(x=object),
+                                               labels=get_risk_group_names(x=object))
+                }
+              }
+            }
+            
+            if(has_multiclass_outcome){
+              for(current_column_name in c("pos_class", "positive_class", "outcome")){
+                if(!is.null(x[[current_column_name]])){
+                  x[[current_column_name]] <- factor(x=x[[current_column_name]],
+                                               levels=get_class_name_levels(x=object),
+                                               labels=get_class_names(x=object))
+                }
+              }
+            }
+            
+            if(has_categorical_outcome){
+              # For confusion matrices.
+              for(current_column_name in c("observed_outcome", "expected_outcome")){
+                if(!is.null(x[[current_column_name]])){
+                  x[[current_column_name]] <- factor(x=x[[current_column_name]],
+                                               levels=get_class_name_levels(x=object),
+                                               labels=get_class_names(x=object))
+                }
+              }
+            }
+            
+            if(has_evaluation_time){
+              for(current_column_name in c("evaluation_time", "eval_time")){
+                if(!is.null(x[[current_column_name]])){
+                  x[[current_column_name]] <- factor(x=x[[current_column_name]],
+                                               levels=sort(unique(x[[current_column_name]])))
+                }
+              }
+            }
+            
+            if(has_performance_metric){
+              for(current_column_name in c("metric")){
+                if(!is.null(x[[current_column_name]])){
+                  x[[current_column_name]] <- factor(x=x[[current_column_name]],
+                                               levels=sort(unique(x[[current_column_name]])))
+                }
+              }
+            }
+            
+            if(has_model_name){
+              for(current_column_name in c("ensemble_model_name", "model_name")){
+                if(!is.null(x[[current_column_name]])){
+                  x[[current_column_name]] <- factor(x=x[[current_column_name]],
+                                                     levels=sort(unique(x[[current_column_name]])))
+                }
+              }
+            }
+            
+            # Drop unused levels
+            x <- droplevels(x=x)
+            
+            # Order columns. Grouping columns appear on the left, whereas value
+            # columns appear on the right. First we identify the grouping
+            # columns. Note that not all 
+            grouping_columns <- c("data_set", "fs_method", "learner",
+                                  "ensemble_model_name", "model_name",
+                                  "evaluation_time", "eval_time",
+                                  "name", "feature_1", "feature_2", "feature",
+                                  "pos_class", "positive_class",
+                                  "metric")
+            
+            # Find the grouping columns actually present
+            grouping_columns <- intersect(grouping_columns, columns)
+            
+            # Then identify the value columns.
+            value_columns <- data@value_column
+            if(data@is_aggregated & data@estimation_type %in% c("bci", "bootstrap_confidence_interval")) value_columns <- c(value_columns, "ci_low", "ci_up")
+            
+            # Find any remaining columns.
+            remaining_columns <- setdiff(columns, c(grouping_columns, value_columns))
+            
+            # Order columns.
+            data.table::setcolorder(x=x, neworder=c(grouping_columns, remaining_columns, value_columns))
+            
+            # Replace data attribute.
+            data@data <- x
+            
+            return(data)
           })
 
 #####.apply_labels (list, familiarCollection)#####
