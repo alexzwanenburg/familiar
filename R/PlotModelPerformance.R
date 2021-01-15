@@ -249,14 +249,17 @@ setMethod("plot_model_performance", signature(object="familiarCollection"),
               
               # Load the data.
               x <- export_model_performance(object=object, aggregate_results=TRUE)
-              browser()
+              
+              # Check that the data are not empty.
+              if(is_empty(x)) return(NULL)
               
             } else {
-              # For other data we require de-aggregated data.
-              
+
               # Load the data.
               x <- export_model_performance(object=object, aggregate_results=FALSE)
-              browser()
+              
+              # Check that the data are not empty.
+              if(is_empty(x)) return(NULL)
               
               # Check that data are disaggregated
               if(any(sapply(x, function(x) (x@is_aggregated)))){
@@ -269,10 +272,11 @@ setMethod("plot_model_performance", signature(object="familiarCollection"),
                 warning(paste0("Creating a ", plot_type, " requires bias-corrected estimates or bootstrap confidence interval estimates instead of point estimates."))
                 return(NULL)
               }
+              
+              # For bootstrap confidence interval select only the bci data.
+              bci_data <- sapply(x, function(x) (x@estimation_type %in% c("bci", "bootstrap_confidence_interval")))
+              if(any(bci_data)) x <- x[bci_data]
             }
-            
-            # Check that the data are not empty.
-            if(is_empty(x)) return(NULL)
             
             # Check that the data are not evaluated at the model level.
             if(all(sapply(x, function(x) (x@detail_level == "model")))){
@@ -280,8 +284,18 @@ setMethod("plot_model_performance", signature(object="familiarCollection"),
               return(NULL)
             }
             
-            # Get data directly
-            browser()
+            # Obtain data element from list.
+            if(is.list(x)){
+              if(is_empty(x)) return(NULL)
+              
+              if(length(x) > 1) ..error_reached_unreachable_code("plot_model_performance: list of data elements contains unmerged elements.")
+              
+              # Get x directly.
+              x <- x[[1]]
+            }
+            
+            # Check that the data are not empty.
+            if(is_empty(x)) return(NULL)
             
             # Add evaluation time as a splitting variable.
             if(object@outcome_type %in% c("survival")){
@@ -297,7 +311,7 @@ setMethod("plot_model_performance", signature(object="familiarCollection"),
                 # Split by metric.
                 split_by <- c("metric")
                 
-                # Set facetting variables.
+                # Set faceting variables.
                 facet_by <- c("data_set", split_variable)
                 
                 # Set x-axis variables.
@@ -308,8 +322,8 @@ setMethod("plot_model_performance", signature(object="familiarCollection"),
                 
               } else {
                 # Determine the number of learners and feature_selection methods.
-                n_learner <- nlevels(x$learner)
-                n_fs_method <- nlevels(x$fs_method)
+                n_learner <- nlevels(x@data$learner)
+                n_fs_method <- nlevels(x@data$fs_method)
                 
                 # Split by metric.
                 split_by <- c("metric")
@@ -346,7 +360,7 @@ setMethod("plot_model_performance", signature(object="familiarCollection"),
                 color_by <- NULL
               }
               
-              split_var_list <- plotting.check_data_handling(x=x,
+              split_var_list <- plotting.check_data_handling(x=x@data,
                                                              split_by=split_by,
                                                              facet_by=facet_by,
                                                              x_axis_by=x_axis_by,
@@ -360,7 +374,7 @@ setMethod("plot_model_performance", signature(object="familiarCollection"),
               }
               
               # Check splitting variables and generate sanitised output
-              split_var_list <- plotting.check_data_handling(x=x,
+              split_var_list <- plotting.check_data_handling(x=x@data,
                                                              split_by=split_by,
                                                              color_by=color_by,
                                                              facet_by=facet_by,
@@ -423,10 +437,10 @@ setMethod("plot_model_performance", signature(object="familiarCollection"),
             
             # Split data.
             if(!is.null(split_by)){
-              x_split <- split(x, by=split_by, drop=FALSE)
+              x_split <- split(x@data, by=split_by, drop=FALSE)
               
             } else {
-              x_split <- list("null.name"=x)
+              x_split <- list("null.name"=x@data)
             }
             
             # Store plots to list in case dir_path is absent.
