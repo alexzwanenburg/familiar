@@ -2034,6 +2034,10 @@ setMethod("identify_element_sets", signature(x="list"),
             # Check that that the list is not empty.
             if(is_empty(x)) return(NULL)
             
+            # Check for empty elements.
+            empty_elements <- sapply(x, is_empty)
+            if(all(empty_elements)) return(NULL)
+            
             # Iterate over list.
             id_table <- lapply(x, identify_element_sets, ...)
             
@@ -2063,6 +2067,12 @@ setMethod("identify_element_sets", signature(x="familiarDataElement"),
             return(data.table::as.data.table(id_list))
           })
 
+#####identify_element_sets (NULL)--------------------------------
+setMethod("identify_element_sets", signature(x="NULL"),
+          function(x, ignore_estimation_type=FALSE, ...){
+            return(NULL)
+          })
+
 
 
 #####merge_data_elements (list)-------------------------------------------------
@@ -2075,6 +2085,10 @@ setMethod("merge_data_elements", signature(x="list"),
             # Flatten (nested) lists.
             x <- unlist(x)
             if(!is.list(x)) x <- list(x)
+            
+            # Check that at least one of the data elements in the list is not
+            # empty.
+            if(all(sapply(x, is_empty))) return(NULL)
             
             # Run familiarDataElement-specific analysis. This means that we pass
             # the first element as x with the list of elements.
@@ -2178,6 +2192,9 @@ setMethod("collect", signature(x="list"),
             # Select unique elements. First identify which elements are present.
             id_table <- identify_element_sets(collected_data_elements)
             
+            # Check that the identifier table is not empty.
+            if(is_empty(id_table)) return(NULL)
+            
             # Identify the first element id in each group.
             unique_elements <- sapply(split(id_table, by="group_id"), function(x) (head(x$element_id, n=1L)))
             
@@ -2222,7 +2239,7 @@ setMethod(".export", signature(x="familiarCollection"),
             
             # Get the back element.
             data_elements <- slot(x, name=data_slot)
-            browser()
+            
             if(is_empty(data_elements)) return(NULL)
             
             if(is(data_elements, "familiarDataElement")){
@@ -2911,6 +2928,8 @@ setMethod("extract_dispatcher", signature(object="familiarEnsemble", proto_data_
   
 .add_point_estimate_from_elements <- function(x){
   
+  if(is_empty(x)) return(NULL)
+    
   # Find any unique elements that have not been aggregated and are not empty.
   id_table <- identify_element_sets(x, ignore_estimation_type=TRUE)
   
