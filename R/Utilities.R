@@ -1429,3 +1429,30 @@ paste_s <- function(...){
                 levels=preprocessing_levels,
                 ordered=TRUE))
 }
+
+
+.flatten_nested_list <- function(x){
+  
+  # Identify names of elements.
+  element_names <- unique(unlist(lapply(x, names)))
+  
+  # Create a flattened list.
+  flattened_list <- lapply(element_names, function(element_name, x){
+    
+    # Obtain content stored in each element.
+    element_content <- NULL
+    
+    # Iterate over nested lists, and contents of the element.
+    for(ii in seq_along(x)){
+      element_content <- c(element_content, x[[ii]][[element_name]])
+    }
+    
+    return(element_content)
+  },
+  x = x)
+  
+  # Set names of the list elements.
+  names(flattened_list) <- element_names
+  
+  return(flattened_list)
+}

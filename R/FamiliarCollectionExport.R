@@ -319,92 +319,6 @@ setMethod("export_model_vimp", signature(object="ANY"),
           })
 
 
-#####export_permutation_vimp#####
-
-#'@title Extract and export permutation variable importance.
-#'
-#'@description Extract and export model-based variable importance from a
-#'  familiarCollection.
-#'
-#'@inheritParams export_all
-#'
-#'@inheritDotParams extract_permutation_vimp
-#'@inheritDotParams as_familiar_collection
-#'
-#'@details Data, such as permutation variable importance and calibration
-#'  information, is usually collected from a `familiarCollection` object.
-#'  However, you can also provide one or more `familiarData` objects, that will
-#'  be internally converted to a `familiarCollection` object. It is also
-#'  possible to provide a `familiarEnsemble` or one or more `familiarModel`
-#'  objects together with the data from which data is computed prior to export.
-#'  Paths to the previously mentioned files can also be provided.
-#'
-#'  All parameters aside from `object` and `dir_path` are only used if `object`
-#'  is not a `familiarCollection` object, or a path to one.
-#'
-#'  Permutation Variable importance assesses the improvement in model
-#'  performance due to a feature. For this purpose, the performance of the model
-#'  is measured as normal, and is measured again with a dataset where the values
-#'  of the feature in question have been randomly permuted. The difference
-#'  between both performance measurements is the permutation variable
-#'  importance.
-#'
-#'  In familiar, this basic concept is extended in several ways:
-#'
-#'  * Point estimates of variable importance are based on multiple (21) random
-#'  permutations. The difference between model performance on the normal dataset
-#'  and the median performance measurement of the randomly permuted datasets is
-#'  used as permutation variable importance.
-#'
-#'  * Confidence intervals for the ensemble model are determined using bootstrap
-#'  methods.
-#'
-#'  * Permutation variable importance is assessed for any metric specified using
-#'  the `metric` argument.
-#'
-#'  * Permutation variable importance can take into account similarity between
-#'  features and permute similar features simultaneously.
-#'
-#'@return A data.table (if `dir_path` is not provided), or nothing, as all data
-#'  is exported to `csv` files.
-#'@exportMethod export_permutation_vimp
-#'@md
-#'@rdname export_permutation_vimp-methods
-setGeneric("export_permutation_vimp",
-           function(object, dir_path=NULL, ...) standardGeneric("export_permutation_vimp"))
-
-#####export_permutation_vimp (collection)#####
-
-#'@rdname export_permutation_vimp-methods
-setMethod("export_permutation_vimp", signature(object="familiarCollection"),
-          function(object, dir_path=NULL, export_raw=FALSE, ...){
-            
-            return(universal_exporter(object=object,
-                                      dir_path=dir_path,
-                                      export_raw=export_raw,
-                                      data_slot="permutation_vimp",
-                                      extra_data=NULL,
-                                      target_column="value",
-                                      splitting_variable=c("metric", "feature"),
-                                      main_type="variable_importance",
-                                      sub_type="permutation"))
-          })
-
-#####export_permutation_vimp (generic)#####
-
-#'@rdname export_permutation_vimp-methods
-setMethod("export_permutation_vimp", signature(object="ANY"),
-          function(object, dir_path=NULL, export_raw=FALSE, ...){
-            
-            # Attempt conversion to familiarCollection object.
-            object <- do.call(as_familiar_collection,
-                              args=append(list("object"=object, "data_element"="permutation_vimp"), list(...)))
-            
-            return(do.call(export_permutation_vimp,
-                           args=append(list("object"=object, "dir_path"=dir_path, "export_raw"=export_raw), list(...))))
-          })
-
-
 #####export_hyperparameters#####
 
 #'@title Extract and export model hyperparameters.
@@ -1050,75 +964,6 @@ setMethod("export_stratification_data", signature(object="ANY"),
             
             return(do.call(export_stratification_data,
                            args=append(list("object"=object, "dir_path"=dir_path), list(...))))
-          })
-
-
-#####export_model_performance#####
-
-#'@title Extract and export metrics for model performance.
-#'
-#'@description Extract and export metrics for model performance of models in a
-#'  familiarCollection.
-#'
-#'@inheritParams export_all
-#'
-#'@inheritDotParams extract_performance
-#'@inheritDotParams as_familiar_collection
-#'
-#'@details Data is usually collected from a `familiarCollection` object.
-#'  However, you can also provide one or more `familiarData` objects, that will
-#'  be internally converted to a `familiarCollection` object. It is also
-#'  possible to provide a `familiarEnsemble` or one or more `familiarModel`
-#'  objects together with the data from which data is computed prior to export.
-#'  Paths to the previous files can also be provided.
-#'
-#'  All parameters aside from `object` and `dir_path` are only used if `object`
-#'  is not a `familiarCollection` object, or a path to one.
-#'
-#'  Performance of individual and ensemble models is exported. For ensemble
-#'  models, a credibility interval is determined using bootstrapping for each
-#'  metric.
-#'
-#'@return A list of data.tables (if `dir_path` is not provided), or nothing, as
-#'  all data is exported to `csv` files.
-#'@exportMethod export_model_performance
-#'@md
-#'@rdname export_model_performance-methods
-setGeneric("export_model_performance",
-           function(object, dir_path=NULL, aggregate_results=FALSE, ...) standardGeneric("export_model_performance"))
-
-#####export_model_performance (collection)#####
-
-#'@rdname export_model_performance-methods
-setMethod("export_model_performance", signature(object="familiarCollection"),
-          function(object, dir_path=NULL, aggregate_results=FALSE, ...){
-            
-            return(.export(x=object,
-                           data_slot="model_performance",
-                           dir_path=dir_path,
-                           aggregate_results=aggregate_results,
-                           main_type="performance",
-                           subtype="metric"))
-          })
-          
-#####export_model_performance (generic)#####
-
-#'@rdname export_model_performance-methods
-setMethod("export_model_performance", signature(object="ANY"),
-          function(object, dir_path=NULL, aggregate_results=FALSE, ...){
-            
-            # Attempt conversion to familiarCollection object.
-            object <- do.call(as_familiar_collection,
-                              args=c(list("object"=object,
-                                          "data_element"="model_performance",
-                                          "aggregate_results"=aggregate_results),
-                                     list(...)))
-            
-            return(do.call(export_model_performance,
-                           args=c(list("object"=object,
-                                       "dir_path"=dir_path,
-                                       "aggregate_results"=aggregate_results),
-                                  list(...))))
           })
 
 
@@ -1798,9 +1643,6 @@ setMethod(".apply_labels", signature(data="familiarDataElement", object="familia
                 }
               }
             }
-            
-            # Drop unused levels
-            x <- droplevels(x=x)
             
             # Order columns. Grouping columns appear on the left, whereas value
             # columns appear on the right. First we identify the grouping

@@ -210,7 +210,7 @@ setMethod("plot_permutation_variable_importance", signature(object="familiarColl
             
             # Get input data.
             x <- export_permutation_vimp(object=object)
-            
+            browser()
             # Check whether input data is present.
             if(is.null(x)) return(NULL)
             if(is_empty(x$ensemble$data)) return(NULL)

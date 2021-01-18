@@ -258,3 +258,72 @@ setMethod("extract_performance", signature(object="familiarEnsemble"),
   
   return(data_element)
 }
+
+
+#####export_model_performance#####
+
+#'@title Extract and export metrics for model performance.
+#'
+#'@description Extract and export metrics for model performance of models in a
+#'  familiarCollection.
+#'
+#'@inheritParams export_all
+#'
+#'@inheritDotParams extract_performance
+#'@inheritDotParams as_familiar_collection
+#'
+#'@details Data is usually collected from a `familiarCollection` object.
+#'  However, you can also provide one or more `familiarData` objects, that will
+#'  be internally converted to a `familiarCollection` object. It is also
+#'  possible to provide a `familiarEnsemble` or one or more `familiarModel`
+#'  objects together with the data from which data is computed prior to export.
+#'  Paths to the previous files can also be provided.
+#'
+#'  All parameters aside from `object` and `dir_path` are only used if `object`
+#'  is not a `familiarCollection` object, or a path to one.
+#'
+#'  Performance of individual and ensemble models is exported. For ensemble
+#'  models, a credibility interval is determined using bootstrapping for each
+#'  metric.
+#'
+#'@return A list of data.tables (if `dir_path` is not provided), or nothing, as
+#'  all data is exported to `csv` files.
+#'@exportMethod export_model_performance
+#'@md
+#'@rdname export_model_performance-methods
+setGeneric("export_model_performance",
+           function(object, dir_path=NULL, aggregate_results=FALSE, ...) standardGeneric("export_model_performance"))
+
+#####export_model_performance (collection)#####
+
+#'@rdname export_model_performance-methods
+setMethod("export_model_performance", signature(object="familiarCollection"),
+          function(object, dir_path=NULL, aggregate_results=FALSE, ...){
+            
+            return(.export(x=object,
+                           data_slot="model_performance",
+                           dir_path=dir_path,
+                           aggregate_results=aggregate_results,
+                           main_type="performance",
+                           subtype="metric"))
+          })
+
+#####export_model_performance (generic)#####
+
+#'@rdname export_model_performance-methods
+setMethod("export_model_performance", signature(object="ANY"),
+          function(object, dir_path=NULL, aggregate_results=FALSE, ...){
+            
+            # Attempt conversion to familiarCollection object.
+            object <- do.call(as_familiar_collection,
+                              args=c(list("object"=object,
+                                          "data_element"="model_performance",
+                                          "aggregate_results"=aggregate_results),
+                                     list(...)))
+            
+            return(do.call(export_model_performance,
+                           args=c(list("object"=object,
+                                       "dir_path"=dir_path,
+                                       "aggregate_results"=aggregate_results),
+                                  list(...))))
+          })

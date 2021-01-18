@@ -4,8 +4,9 @@ testthat::skip_on_cran()
 # Generic test.
 familiar:::test_plots(plot_function=familiar:::plot_permutation_variable_importance,
                       data_element="permutation_vimp",
-                      compute_ensemble_ci=FALSE,
-                      outcome_type_available=c("count", "continuous", "binomial", "multinomial", "survival"))
+                      outcome_type_available=c("count", "continuous", "binomial", "multinomial", "survival"),
+                      estimation_type="point",
+                      debug=TRUE)
 
 # Point line confidence intervals.
 familiar:::test_plot_ordering(plot_function=familiar:::plot_permutation_variable_importance,

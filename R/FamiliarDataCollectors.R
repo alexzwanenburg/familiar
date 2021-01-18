@@ -251,15 +251,15 @@ collect_prediction_data <- function(fam_data_list){
 #'
 #' @return A list with aggregated model performance information.
 #' @noRd
-collect_model_performance <- function(fam_data_list){
-  # Model performance data is not shared between different data objects. We
-  # don't need to identify unique entries.
-  
-  return(universal_collector(fam_data_list=fam_data_list,
-                             data_slot="model_performance",
-                             extra_data=NULL,
-                             more_identifiers=c("fs_method", "learner")))
-}
+# collect_model_performance <- function(fam_data_list){
+#   # Model performance data is not shared between different data objects. We
+#   # don't need to identify unique entries.
+#   
+#   return(universal_collector(fam_data_list=fam_data_list,
+#                              data_slot="model_performance",
+#                              extra_data=NULL,
+#                              more_identifiers=c("fs_method", "learner")))
+# }
 
 
 

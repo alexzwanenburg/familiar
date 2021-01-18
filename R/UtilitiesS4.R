@@ -759,7 +759,9 @@ setMethod("get_bootstrap_sample", signature(data="data.table"),
           function(data, seed=NULL, ...){
             
             # Set seed for reproducible results.
-            if(!is.null(seed)) set.seed(seed)
+            if(!is.null(seed)){
+              if(seed != -1) set.seed(seed)
+            }
             
             # Find identifier columns at the sample level, i.e. excluding
             # repetitions and series.

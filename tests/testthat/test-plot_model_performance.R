@@ -1,7 +1,7 @@
 # Don't perform any further tests on CRAN due to time of running the complete test.
 testthat::skip_on_cran()
 
-debug_flag <- TRUE
+debug_flag <- FALSE
 
 # Generic test.
 familiar:::test_plots(plot_function=familiar:::plot_model_performance,

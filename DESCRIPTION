@@ -86,6 +86,7 @@ Collate:
     'FamiliarDataComputationPermutationVimp.R'
     'FamiliarDataComputationPredictionData.R'
     'FamiliarDataComputationROCCurve.R'
+    'FamiliarDataElement.R'
     'FamiliarEnsemble.R'
     'FamiliarModel.R'
     'FamiliarObjectConversion.R'

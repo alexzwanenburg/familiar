@@ -1,3 +1,14 @@
+#' @include FamiliarS4Generics.R
+#' @include FamiliarS4Classes.R
+NULL
+
+setClass("familiarDataElementPermutationVimp",
+         contains="familiarDataElement",
+         slots=list("similarity_metric"="character"),
+         prototype = methods::prototype(value_column="value",
+                                        grouping_column=c("feature", "metric"),
+                                        similarity_metric=NA_character_))
+
 
 #'@title Internal function to extract permutation variable importance.
 #'
@@ -25,12 +36,11 @@ setGeneric("extract_permutation_vimp",
                     feature_similarity_threshold=waiver(),
                     metric=waiver(),
                     eval_times=waiver(),
+                    detail_level=waiver(),
+                    estimation_type=waiver(),
+                    aggregate_results=waiver(),
                     confidence_level=waiver(),
                     bootstrap_ci_method=waiver(),
-                    compute_model_data=waiver(),
-                    compute_model_ci=waiver(),
-                    compute_ensemble_ci=waiver(),
-                    aggregate_ci=waiver(),
                     is_pre_processed=FALSE,
                     message_indent=0L,
                     verbose=FALSE,
@@ -50,12 +60,11 @@ setMethod("extract_permutation_vimp", signature(object="familiarEnsemble"),
                    feature_similarity_threshold=waiver(),
                    metric=waiver(),
                    eval_times=waiver(),
+                   detail_level=waiver(),
+                   estimation_type=waiver(),
+                   aggregate_results=waiver(),
                    confidence_level=waiver(),
                    bootstrap_ci_method=waiver(),
-                   compute_model_data=waiver(),
-                   compute_model_ci=waiver(),
-                   compute_ensemble_ci=waiver(),
-                   aggregate_ci=waiver(),
                    is_pre_processed=FALSE,
                    message_indent=0L,
                    verbose=FALSE,
@@ -96,12 +105,27 @@ setMethod("extract_permutation_vimp", signature(object="familiarEnsemble"),
             .check_parameter_value_is_valid(x=bootstrap_ci_method, var_name="bootstrap_ci_methpd",
                                             values=.get_available_bootstrap_confidence_interval_methods())
             
-            # By default, compute confidence intervals for ensembles, but not
-            # for models.
-            if(is.waive(compute_model_data)) compute_model_data <- "none"
-            if(is.waive(compute_model_ci)) compute_model_ci <- "none"
-            if(is.waive(compute_ensemble_ci)) compute_ensemble_ci <- "all"
-            if(is.waive(aggregate_ci)) aggregate_ci <- "all"
+            # Check the level detail
+            if(is.waive(detail_level)) detail_level <- object@settings$detail_level
+            
+            .check_parameter_value_is_valid(x=detail_level, var_name="detail_level",
+                                            values=c("ensemble", "hybrid", "model"))
+            
+            # Check the estimation type
+            if(is.waive(estimation_type)) estimation_type <- object@settings$estimation_type
+            
+            .check_parameter_value_is_valid(x=estimation_type, var_name="estimation_type",
+                                            values=c("point", "bias_correction", "bc", "bootstrap_confidence_interval", "bci"))
+            
+            # Check whether results should be aggregated.
+            if(is.waive(aggregate_results)) aggregate_results <- object@settings$aggregate_results
+            
+            aggregate_results <- tolower(aggregate_results)
+            .check_parameter_value_is_valid(x=aggregate_results, var_name="aggregate_results",
+                                            values=c(.get_available_data_elements(confidence_interval_only=TRUE),
+                                                     "true", "false", "none", "all", "default"))
+            # Set as TRUE/FALSE
+            aggregate_results <- any(aggregate_results %in% c("true", "all", "permutation_vimp"))
             
             # Load metric(s) from the object settings attribute if not provided
             # externally.
@@ -138,157 +162,102 @@ setMethod("extract_permutation_vimp", signature(object="familiarEnsemble"),
             # Test if models are properly loaded
             if(!is_model_loaded(object=object)) ..error_ensemble_models_not_loaded()
             
-            # Extract data for the individual models and the ensemble.
-            vimp_data <- universal_extractor(object=object,
-                                             cl=cl,
-                                             FUN=.extract_permutation_vimp,
-                                             data=data,
-                                             is_pre_processed=is_pre_processed,
-                                             ensemble_method=ensemble_method,
-                                             metric=metric,
-                                             eval_times=eval_times,
-                                             confidence_level=confidence_level,
-                                             compute_model_data=any(c("all", "permutation_vimp", "TRUE") %in% compute_model_data),
-                                             compute_model_ci=any(c("all", "permutation_vimp", "TRUE") %in% compute_model_ci),
-                                             compute_ensemble_ci=any(c("all", "permutation_vimp", "TRUE") %in% compute_ensemble_ci),
-                                             aggregate_ci=any(c("all", "permutation_vimp", "TRUE") %in% aggregate_ci),
-                                             bootstrap_ci_method=bootstrap_ci_method,
-                                             similarity_table=feature_similarity_table,
-                                             cluster_method=feature_cluster_method,
-                                             cluster_linkage=feature_linkage_method,
-                                             cluster_cut_method=feature_cluster_cut_method,
-                                             cluster_similarity_threshold=feature_similarity_threshold,
-                                             cluster_similarity_metric=feature_similarity_metric,
-                                             message_indent=message_indent + 1L,
-                                             verbose=verbose)
+            # Generate a prototype data element.
+            proto_data_element <- new("familiarDataElementPermutationVimp",
+                                      detail_level = detail_level,
+                                      estimation_type = estimation_type,
+                                      confidence_level = confidence_level,
+                                      bootstrap_ci_method = bootstrap_ci_method,
+                                      similarity_metric = feature_similarity_metric)
             
+            # Generate elements and dispatch.
+            vimp_data <- extract_dispatcher(FUN=.extract_permutation_vimp,
+                                            has_internal_bootstrap=TRUE,
+                                            cl=cl,
+                                            object=object,
+                                            data=data,
+                                            proto_data_element=proto_data_element,
+                                            is_pre_processed=is_pre_processed,
+                                            ensemble_method=ensemble_method,
+                                            metric=metric,
+                                            eval_times=eval_times,
+                                            aggregate_results=aggregate_results,
+                                            similarity_table=feature_similarity_table,
+                                            cluster_method=feature_cluster_method,
+                                            cluster_linkage=feature_linkage_method,
+                                            cluster_cut_method=feature_cluster_cut_method,
+                                            cluster_similarity_threshold=feature_similarity_threshold,
+                                            cluster_similarity_metric=feature_similarity_metric,
+                                            message_indent=message_indent + 1L,
+                                            verbose=verbose)
+            browser()
             return(vimp_data)
           })
 
 
 
-.extract_permutation_vimp <- function(cl,
-                                      object,
-                                      data,
-                                      is_pre_processed,
-                                      eval_times,
-                                      ensemble_method,
-                                      metric,
-                                      determine_ci,
-                                      bootstrap_ci_method,
-                                      aggregate_ci,
-                                      confidence_level,
-                                      similarity_table,
-                                      cluster_method,
-                                      cluster_linkage,
-                                      cluster_cut_method,
-                                      cluster_similarity_threshold,
-                                      cluster_similarity_metric,
-                                      verbose,
-                                      message_indent){
+.extract_permutation_vimp <- function(object,
+                                      proto_data_element,
+                                      eval_times=NULL,
+                                      aggregate_results,
+                                      cl,
+                                      ...){
   
-  if(object@outcome_type %in% c("survival")){
-    # Compute permutation variable importance data at each of the evaluation time points.
-    vimp_data <- lapply(eval_times,
-                        ..extract_permutation_vimp,
-                        object=object,
-                        data=data,
-                        cl=cl,
-                        metric=metric,
-                        is_pre_processed=is_pre_processed,
-                        ensemble_method=ensemble_method,
-                        determine_ci=determine_ci,
-                        confidence_level=confidence_level,
-                        similarity_table=similarity_table,
-                        cluster_method=cluster_method,
-                        cluster_linkage=cluster_linkage,
-                        cluster_cut_method=cluster_cut_method,
-                        cluster_similarity_threshold=cluster_similarity_threshold,
-                        cluster_similarity_metric=cluster_similarity_metric,
-                        verbose=verbose,
-                        message_indent=message_indent)
-    
-    # Concatenate lists.
-    vimp_data <- list("model_data"=rbind_list_list(vimp_data, "model_data"),
-                      "bootstrap_data"=rbind_list_list(vimp_data, "bootstrap_data"),
-                      "confidence_level"=confidence_level)
+  # Add model name.
+  proto_data_element <- add_model_name(proto_data_element, object=object)
+  
+  # Add evaluation time as a identifier to the data element.
+  if(length(eval_times) > 0 & object@outcome_type == "survival"){
+    data_elements <- add_data_element_identifier(x=proto_data_element, evaluation_time=eval_times)
     
   } else {
-    # Compute permutation variable importance data.
-    vimp_data <- ..extract_permutation_vimp(object=object,
-                                            data=data,
-                                            is_pre_processed=is_pre_processed,
-                                            cl=cl,
-                                            metric=metric,
-                                            ensemble_method=ensemble_method,
-                                            determine_ci=determine_ci,
-                                            confidence_level=confidence_level,
-                                            similarity_table=similarity_table,
-                                            cluster_method=cluster_method,
-                                            cluster_linkage=cluster_linkage,
-                                            cluster_cut_method=cluster_cut_method,
-                                            cluster_similarity_threshold=cluster_similarity_threshold,
-                                            cluster_similarity_metric=cluster_similarity_metric,
-                                            verbose=verbose,
-                                            message_indent=message_indent)
+    data_elements <- list(proto_data_element)
   }
   
-  if(determine_ci & aggregate_ci){
-    
-    # Aggregate the data by computing the bootstrap confidence intervals.
-    vimp_data$model_data <- .compute_bootstrap_ci(x0=vimp_data$model_data,
-                                                  xb=vimp_data$bootstrap_data,
-                                                  target_column="value",
-                                                  bootstrap_ci_method=bootstrap_ci_method,
-                                                  additional_splitting_variable=c("metric", "feature", "similarity_threshold"),
-                                                  confidence_level=confidence_level,
-                                                  cl=cl,
-                                                  verbose=verbose,
-                                                  message_indent=message_indent)
-    
-    # Set the bootstrap_data to NULL.
-    vimp_data$bootstrap_data <- NULL
-    
-  } else if(determine_ci){
-    # Add the bootstrap confidence interval method
-    vimp_data$bootstrap_ci_method <- bootstrap_ci_method
-  }
-  
-  # Add the similarity metric, if appropriate.
-  if(cluster_method %in% c("agnes", "diana", "hclust") & cluster_cut_method == "fixed_cut"){
-    vimp_data$similarity_metric=cluster_similarity_metric
-  }
+  # Iterate over data elements
+  vimp_data <- lapply(data_elements,
+                      ..extract_permutation_vimp,
+                      object=object,
+                      aggregate_results=aggregate_results,
+                      cl=cl,
+                      ...)
   
   return(vimp_data)
 }
 
 
 
-..extract_permutation_vimp <- function(eval_times=NULL,
+..extract_permutation_vimp <- function(data_element,
                                        object,
                                        data,
                                        is_pre_processed,
                                        cl,
-                                       metric,
-                                       n_reshuffle=21,
                                        ensemble_method,
-                                       determine_ci,
-                                       confidence_level,
                                        similarity_table,
                                        cluster_method,
                                        cluster_linkage,
                                        cluster_cut_method,
                                        cluster_similarity_threshold,
                                        cluster_similarity_metric,
-                                       verbose,
-                                       message_indent){
+                                       aggregate_results,
+                                       progress_bar=FALSE,
+                                       verbose=FALSE,
+                                       message_indent,
+                                       ...){
 
-  # Perform a safety check.
-  if(length(eval_times) > 1) ..error_reached_unreachable_code("..extract_permutation_vimp: more than one value for eval_times")
+  # Compute prediction data.
+  prediction_data <- .predict(object=object,
+                              data=data,
+                              time=data_element@identifiers$evaluation_time,
+                              ensemble_method=ensemble_method,
+                              is_pre_processed=is_pre_processed)
   
-  # Load input data. We stop at the signature step because we want to work with
-  # the unclustered input features, but may need to apply model-specific
-  # preprocessing steps later on.
+  # Check if any predictions are valid.
+  if(!any_predictions_valid(prediction_data, outcome_type=object@outcome_type)) return(NULL)
+  
+  # Explicitly load input data. We stop at the signature step because we want to
+  # work with the unclustered input features, but may need to apply
+  # model-specific preprocessing steps later on.
   data <- process_input_data(object=object,
                              data=data,
                              is_pre_processed=is_pre_processed,
@@ -299,6 +268,12 @@ setMethod("extract_permutation_vimp", signature(object="familiarEnsemble"),
   if(is_empty(data)) return(NULL)
   if(data.table::uniqueN(data@data, by=get_id_columns(id_depth="sample")) < 5) return(NULL)
   
+  # Message the user concerning the time at which metrics are computed. This is
+  # only relevant for survival analysis.
+  if(length(data_element@identifiers$evaluation_time) > 0 & progress_bar){
+    logger.message(paste0("Computing permutation variable importance at time ", data_element@identifiers$evaluation_time, "."),
+                   indent=message_indent)
+  }
   # Maintain only important features. The current set is based on the
   # required features.
   data <- filter_features(data=data,
@@ -312,216 +287,174 @@ setMethod("extract_permutation_vimp", signature(object="familiarEnsemble"),
                                                    cluster_cut_method=cluster_cut_method,
                                                    cluster_similarity_threshold=cluster_similarity_threshold,
                                                    cluster_similarity_metric=cluster_similarity_metric)
+
+  # Create full list of all instances that should be evaluated.
+  bootstrap_data <- lapply(feature_cluster_info$feature_clusters,
+                           .create_permutation_data_elements,
+                           data_element = data_element,
+                           similarity_threshold = feature_cluster_info$similarity_threshold,
+                           ...)
   
-  # Iterate over features.
-  vimp_data <-lapply(feature_cluster_info$feature_clusters, function(shuffled_features,
-                                                                     object,
-                                                                     data,
-                                                                     cl,
-                                                                     confidence_level,
-                                                                     determine_ci,
-                                                                     time,
-                                                                     metric,
-                                                                     n_reshuffle,
-                                                                     ensemble_method,
-                                                                     similarity_threshold,
-                                                                     message_indent,
-                                                                     verbose){
-    
-    # Identify the similarity threshold for which the current feature sets form
-    # a cluster.
-    n <- shuffled_features$n_thresholds_same_cluster[1]
-    similarity_threshold_used <- head(similarity_threshold[similarity_threshold <= shuffled_features$similarity_threshold[1]], n=n)
-    
-    # Compute the point estimate for permutation vimp.
-    vimp_data <- .compute_permutation_vimp(shuffled_features=shuffled_features$name,
-                                           object=object,
-                                           data=data,
-                                           time=time,
-                                           metric=metric,
-                                           n_reshuffle=n_reshuffle,
-                                           similarity_threshold=similarity_threshold_used,
-                                           ensemble_method=ensemble_method)
-    
-    if(determine_ci){
-      if(verbose & !is.null(time)) logger.message(paste0("Computing bootstrap confidence interval data for variable importance of the ",
-                                                         paste_s(shuffled_features$name), ifelse(length(shuffled_features$name) == 1, " feature", " features"),
-                                                         " at time ", time, "."),
-                                                  indent=message_indent)
-      if(verbose & is.null(time)) logger.message(paste0("Computing bootstrap confidence interval data for variable importance of the ",
-                                                        paste_s(shuffled_features$name), ifelse(length(shuffled_features$name) == 1, " feature", " features"),
-                                                        "."),
-                                                 indent=message_indent)
-      
-      # Bootstrap the data.
-      bootstrap_data <- bootstrapper(data=data,
-                                     alpha= 1.0 - confidence_level,
-                                     FUN=.compute_permutation_vimp,
-                                     shuffled_features=shuffled_features$name,
-                                     object=object,
-                                     time=time,
-                                     metric=metric,
-                                     n_reshuffle=1L,
-                                     similarity_threshold=similarity_threshold_used,
-                                     ensemble_method=ensemble_method,
-                                     cl=cl,
-                                     verbose=verbose)
-      
-    } else {
-      bootstrap_data <- NULL
-    }
-    
-    return(list("model_data"=vimp_data,
-                "bootstrap_data"=bootstrap_data))
-  },
-  object=object,
-  data=data,
-  cl=cl,
-  confidence_level=confidence_level,
-  determine_ci=determine_ci,
-  time=eval_times,
-  metric=metric,
-  n_reshuffle=n_reshuffle,
-  ensemble_method=ensemble_method,
-  similarity_threshold=feature_cluster_info$similarity_threshold,
-  message_indent=message_indent,
-  verbose=verbose)
+  # Flatten the instance list.
+  bootstrap_data <- .flatten_nested_list(bootstrap_data)
+  browser()
+  # Iterate over elements.
+  data_elements <- fam_mapply(cl=cl,
+                              assign=NULL,
+                              FUN = .compute_permutation_vimp,
+                              data_element = bootstrap_data$data_element,
+                              bootstrap = bootstrap_data$bootstrap,
+                              bootstrap_seed = bootstrap_data$seed,
+                              shuffled_features = bootstrap_data$feature,
+                              similarity_threshold = bootstrap_data$similarity_threshold,
+                              n_shuffles = bootstrap_data$n_shuffle,
+                              MoreArgs=c(list("object"=object,
+                                              "data" = data,
+                                              "prediction_data" = prediction_data,
+                                              "ensemble_method" = ensemble_method),
+                                         list(...)),
+                              progress_bar = progress_bar)
   
-  # Concatenate lists.
-  vimp_data <- list("model_data"=rbind_list_list(vimp_data, "model_data"),
-                    "bootstrap_data"=rbind_list_list(vimp_data, "bootstrap_data"),
-                    "confidence_level"=confidence_level)
+  # Merge data elements
+  data_elements <- merge_data_elements(data_elements)
   
-  return(vimp_data)
+  # Aggregate results, if required.
+  if(aggregate_results) data_elements <- .compute_data_element_estimates(x=data_elements)
+  
+  return(data_elements)
 }
 
 
 
-.compute_permutation_vimp <- function(shuffled_features,
+.compute_permutation_vimp <- function(data_element,
+                                      bootstrap,
+                                      bootstrap_seed,
+                                      shuffled_features,
+                                      similarity_threshold,
+                                      n_shuffles,
                                       object,
                                       data,
-                                      time,
-                                      metric,
-                                      n_reshuffle,
-                                      similarity_threshold,
-                                      ensemble_method){
- 
-  # Make the unshuffled prediction.
-  unshuffled_prediction <- .predict(object=object,
-                                    data=data,
-                                    time=time,
-                                    ensemble_method=ensemble_method)
+                                      prediction_data,
+                                      ...){
+  
+  # Suppress NOTES due to non-standard evaluation in data.table
+  value <- unpermuted <- permuted <- NULL
+  
+  # Bootstrap the data.
+  if(bootstrap) data <- get_bootstrap_sample(data=data,
+                                             seed=bootstrap_seed)
+  
+  # Bootstrap the prediction data.
+  if(bootstrap) prediction_data <- get_bootstrap_sample(data=prediction_data,
+                                                        seed=bootstrap_seed)
   
   # Check if any predictions are valid.
-  if(!any_predictions_valid(unshuffled_prediction, outcome_type=object@outcome_type)) return(NULL)
+  if(!any_predictions_valid(prediction_data, outcome_type=object@outcome_type)) return(NULL)
   
-  # Compute the unshuffled metrics.
-  unshuffled_metrics <- lapply(metric,
-                               ..compute_model_performance,
-                               data=unshuffled_prediction,
-                               time=time,
-                               object=object)
+  # Determine metric scores for the real (unshuffled) data
+  scores <- ..compute_permutation_vimp(data_element = data_element,
+                                       object=object,
+                                       data = NULL,
+                                       prediction_data = prediction_data,
+                                       shuffled_features = NULL,
+                                       ...)
   
-  # Concatenate lists
-  unshuffled_metrics <- data.table::rbindlist(unshuffled_metrics)
+  # Determine metric scores for the shuffled data.
+  for(ii in seq_len(n_shuffles)){
+    scores <- c(scores,
+                ..compute_permutation_vimp(data_element = data_element,
+                                           object=object,
+                                           data = data,
+                                           prediction_data = NULL,
+                                           shuffled_features = shuffled_features,
+                                           ...))
+  }
   
-  # Determine the reshuffles.
-  shuffle_ids <- lapply(seq_len(n_reshuffle), function(ii, n) sample.int(n=n), n=nrow(data@data))
+  # Combine to single data.table
+  scores <- data.table::rbindlist(scores, use.names=TRUE)
   
-  # Compute data from shuffled datasets.
-  shuffled_metrics <- lapply(shuffle_ids,
-                             .compute_shuffle_permutation_vimp,
-                             shuffled_features=shuffled_features,
-                             object=object,
-                             data=data,
-                             time=time,
-                             metric=metric,
-                             ensemble_method=ensemble_method)
+  # Determine median score.
+  scores <- scores[, list("value"=stats::median(value, na.rm=TRUE)), by=c("metric", "is_shuffled")]
+ 
+  # Cast wide and compute difference between unshuffled and shuffled values.
+  scores <- data.table::dcast(data=scores,
+                              metric ~ is_shuffled,
+                              value.var = "value")
   
-  # Concatenate lists
-  shuffled_metrics <- data.table::rbindlist(shuffled_metrics)
+  # Rename FALSE and TRUE columns to something that will not cause issues.
+  data.table::setnames(scores,
+                       old=c("FALSE", "TRUE"),
+                       new=c("permuted", "unpermuted"))
   
-  # Check if any data was returned.
-  if(is_empty(shuffled_metrics)) return(NULL)
+  # Compute the difference between permuted and unpermuted values.
+  scores[, "value":=unpermuted - permuted]
   
-  permutation_data <- lapply(metric, function(selected_metric,
-                                              unshuffled_metrics,
-                                              shuffled_metrics,
-                                              time,
-                                              similarity_threshold,
-                                              shuffled_features){
-    
-    # Obtain the unshuffled values.
-    unshuffled_value <- unshuffled_metrics[metric==selected_metric]$value
-    
-    # Obtain the shuffled values.
-    shuffled_value <- shuffled_metrics[metric==selected_metric]$value
-    
-    if(length(shuffled_value) == 0) return(NULL)
-    
-    # Compute the median value.
-    shuffled_value <- stats::median(shuffled_value, na.rm=TRUE)
-    
-    # Check that the median value is finite.
-    if(!is.finite(shuffled_value)) return(NULL)
-    
-    # Return data.
-    if(!is.null(time)){
-      return(data.table::data.table("feature"=rep(shuffled_features, times=length(similarity_threshold)),
-                                    "evaluation_time"=time,
-                                    "similarity_threshold"=rep(similarity_threshold, each=length(shuffled_features)),
-                                    "metric"=selected_metric,
-                                    "value"=unshuffled_value - shuffled_value))
-      
-    } else {
-      return(data.table::data.table("feature"=rep(shuffled_features, times=length(similarity_threshold)),
-                                    "similarity_threshold"=rep(similarity_threshold, each=length(shuffled_features)),
-                                    "metric"=selected_metric,
-                                    "value"=unshuffled_value - shuffled_value))
-    }
-  },
-  unshuffled_metrics=unshuffled_metrics,
-  shuffled_metrics=shuffled_metrics,
-  time=time,
-  similarity_threshold=similarity_threshold,
-  shuffled_features=shuffled_features)
+  # Determine the number of metrics.
+  n_metrics <- nrow(scores)
   
-  return(data.table::rbindlist(permutation_data))
+  # Add features.
+  scores <- scores[rep(seq_len(n_metrics), each=length(shuffled_features))]
+  scores[, ":="("feature"=rep(shuffled_features, times=n_metrics),
+                "permuted"=NULL,
+                "unpermuted"=NULL)]
+  
+  # Store to data element.
+  data_element@data <- scores
+  
+  # Add similarity threshold as an identifier. This ensures that data are
+  # unchanged are multiplied.
+  data_elements <- add_data_element_identifier(x=data_element,
+                                               similarity_threshold=similarity_threshold)
+  
+  return(data_elements)
 }
 
 
-
-.compute_shuffle_permutation_vimp <- function(shuffle_id,
-                                              shuffled_features,
-                                              object,
-                                              data,
-                                              time,
-                                              metric,
-                                              ensemble_method){
+..compute_permutation_vimp <- function(data_element,
+                                       object,
+                                       metric,
+                                       data=NULL,
+                                       prediction_data=NULL,
+                                       shuffled_features=NULL,
+                                       ensemble_method,
+                                       is_pre_processed,
+                                       ...){
   
-  # Make a local copy of data
-  data@data <- data.table::copy(data@data)
+  # Generate prediction data if it does not exist.
+  if(is.null(prediction_data)){
+    
+    if(!is.null(shuffled_features)){
+      
+      # Make local copy of data to avoid updating by reference.
+      data@data <- data.table::copy(data@data)
+      
+      # Shuffle row entries.
+      shuffle_id <-  sample.int(n=nrow(data@data))
+      
+      # Iterate over features and shuffle them. Check that the feature appears
+      # in the data.
+      for(ii in shuffled_features){
+        if(ii %in% colnames(data@data)) data.table::set(x=data@data, j=ii, value=data@data[[ii]][shuffle_id])
+      }
+    }
+    
+    # Create prediction based on data.
+    prediction_data <- .predict(object=object,
+                                data=data,
+                                time=data_element@identifiers$evaluation_time,
+                                ensemble_method=ensemble_method)
+  }
   
-  # Iterate over features and shuffle them.
-  for(ii in shuffled_features) data.table::set(x=data@data, j=ii, value=data@data[[ii]][shuffle_id])
+  # Compute score.
+  score <- sapply(metric,
+                  compute_metric_score,
+                  object=object,
+                  data=prediction_data,
+                  time=data_element@identifiers$evaluation_time)
   
-  # Predict for the shuffled data
-  shuffled_prediction <- .predict(object=object,
-                                  data=data,
-                                  time=time,
-                                  ensemble_method=ensemble_method)
-  
-  # Check if any predictions are valid.
-  if(!any_predictions_valid(shuffled_prediction, outcome_type=object@outcome_type)) return(NULL)
-  
-  # Compute the unshuffled metrics.
-  shuffled_metrics <- lapply(metric,
-                             ..compute_model_performance,
-                             data=shuffled_prediction,
-                             time=time,
-                             object=object)
-  
-  return(data.table::rbindlist(shuffled_metrics))
+  return(list(data.table::data.table("metric"=metric,
+                                     "value"=score,
+                                     "is_shuffled"=!is.null(shuffled_features))))
 }
 
 
@@ -640,3 +573,129 @@ setMethod("extract_permutation_vimp", signature(object="familiarEnsemble"),
   return(list("similarity_threshold"=similarity_thresholds_used,
               "feature_clusters"=cluster_list))
 }
+
+
+
+.create_permutation_data_elements <- function(feature_cluster,
+                                              data_element,
+                                              similarity_threshold,
+                                              ...){
+
+  # Add bootstraps (if required).
+  bootstrap_data <- add_data_element_bootstrap(x=data_element,
+                                               ...)
+  
+  # Add features.
+  bootstrap_data$features <- lapply(seq_along(bootstrap_data$data_element),
+                                    function(ii, feature) (feature),
+                                    feature=feature_cluster$name)
+  
+  # Identify the similarity threshold for which the current feature sets form
+  # a cluster.
+  n <- feature_cluster$n_thresholds_same_cluster[1]
+  used_similarity_threshold <- head(similarity_threshold[similarity_threshold <= feature_cluster$similarity_threshold[1]], n=n)
+  
+  # Add similarity threshold.
+  bootstrap_data$similarity_threshold <- lapply(seq_along(bootstrap_data$data_element),
+                                                function(ii, similarity_threshold) (similarity_threshold),
+                                                similarity_threshold = used_similarity_threshold)
+  
+  # Add number of shuffles. We don't introduce additional shuffles except for
+  # point estimates.
+  n_shuffles <- ifelse(data_element@estimation_type == "point", 20, 1)
+  
+  # Add shuffles.
+  bootstrap_data$n_shuffles <- rep(n_shuffles, times=length(bootstrap_data$data_element))
+  
+  return(bootstrap_data)
+}
+
+
+
+#####export_permutation_vimp#####
+
+#'@title Extract and export permutation variable importance.
+#'
+#'@description Extract and export model-based variable importance from a
+#'  familiarCollection.
+#'
+#'@inheritParams export_all
+#'
+#'@inheritDotParams extract_permutation_vimp
+#'@inheritDotParams as_familiar_collection
+#'
+#'@details Data, such as permutation variable importance and calibration
+#'  information, is usually collected from a `familiarCollection` object.
+#'  However, you can also provide one or more `familiarData` objects, that will
+#'  be internally converted to a `familiarCollection` object. It is also
+#'  possible to provide a `familiarEnsemble` or one or more `familiarModel`
+#'  objects together with the data from which data is computed prior to export.
+#'  Paths to the previously mentioned files can also be provided.
+#'
+#'  All parameters aside from `object` and `dir_path` are only used if `object`
+#'  is not a `familiarCollection` object, or a path to one.
+#'
+#'  Permutation Variable importance assesses the improvement in model
+#'  performance due to a feature. For this purpose, the performance of the model
+#'  is measured as normal, and is measured again with a dataset where the values
+#'  of the feature in question have been randomly permuted. The difference
+#'  between both performance measurements is the permutation variable
+#'  importance.
+#'
+#'  In familiar, this basic concept is extended in several ways:
+#'
+#'  * Point estimates of variable importance are based on multiple (21) random
+#'  permutations. The difference between model performance on the normal dataset
+#'  and the median performance measurement of the randomly permuted datasets is
+#'  used as permutation variable importance.
+#'
+#'  * Confidence intervals for the ensemble model are determined using bootstrap
+#'  methods.
+#'
+#'  * Permutation variable importance is assessed for any metric specified using
+#'  the `metric` argument.
+#'
+#'  * Permutation variable importance can take into account similarity between
+#'  features and permute similar features simultaneously.
+#'
+#'@return A data.table (if `dir_path` is not provided), or nothing, as all data
+#'  is exported to `csv` files.
+#'@exportMethod export_permutation_vimp
+#'@md
+#'@rdname export_permutation_vimp-methods
+setGeneric("export_permutation_vimp",
+           function(object, dir_path=NULL, aggregate_results=TRUE, ...) standardGeneric("export_permutation_vimp"))
+
+#####export_permutation_vimp (collection)#####
+
+#'@rdname export_permutation_vimp-methods
+setMethod("export_permutation_vimp", signature(object="familiarCollection"),
+          function(object, dir_path=NULL, aggregate_results=TRUE, ...){
+            
+            return(.export(x=object,
+                           data_slot="permutation_vimp",
+                           dir_path=dir_path,
+                           aggregate_results=aggregate_results,
+                           main_type="variable_importance",
+                           subtype="permutation"))
+          })
+
+#####export_permutation_vimp (generic)#####
+
+#'@rdname export_permutation_vimp-methods
+setMethod("export_permutation_vimp", signature(object="ANY"),
+          function(object, dir_path=NULL,  aggregate_results=TRUE, ...){
+            
+            # Attempt conversion to familiarCollection object.
+            object <- do.call(as_familiar_collection,
+                              args=c(list("object"=object,
+                                          "data_element"="permutation_vimp",
+                                          "aggregate_results"=aggregate_results),
+                                     list(...)))
+            
+            return(do.call(export_permutation_vimp,
+                           args=c(list("object"=object,
+                                       "dir_path"=dir_path,
+                                       "aggregate_results"=aggregate_results),
+                                  list(...))))
+          })
