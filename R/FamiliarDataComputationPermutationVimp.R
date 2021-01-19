@@ -190,7 +190,7 @@ setMethod("extract_permutation_vimp", signature(object="familiarEnsemble"),
                                             cluster_similarity_metric=feature_similarity_metric,
                                             message_indent=message_indent + 1L,
                                             verbose=verbose)
-            browser()
+            
             return(vimp_data)
           })
 
@@ -297,7 +297,7 @@ setMethod("extract_permutation_vimp", signature(object="familiarEnsemble"),
   
   # Flatten the instance list.
   bootstrap_data <- .flatten_nested_list(bootstrap_data)
-  browser()
+  
   # Iterate over elements.
   data_elements <- fam_mapply(cl=cl,
                               assign=NULL,
@@ -544,11 +544,13 @@ setMethod("extract_permutation_vimp", signature(object="familiarEnsemble"),
     data.table::setcolorder(cluster_table, c("name", "similarity_threshold", "cluster_id", "cluster_size"))
     
     # Combine with all singleton features.
-    cluster_table <- rbind(data.table::data.table("name"=available_features,
-                                                  "similarity_threshold"=Inf,
-                                                  "cluster_id"=seq_along(available_features),
-                                                  "cluster_size"=1L),
-                           cluster_table)
+    cluster_table <- data.table::rbindlist(c(list(data.table::data.table("name"=available_features,
+                                                                         "similarity_threshold"=Inf,
+                                                                         "cluster_id"=seq_along(available_features),
+                                                                         "cluster_size"=1L)),
+                                                  list(cluster_table)),
+                                           use.names=TRUE,
+                                           fill=TRUE)
     
     # Remove features that are not available.
     cluster_table <- cluster_table[name %in% available_features]
