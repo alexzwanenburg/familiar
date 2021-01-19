@@ -306,6 +306,12 @@ setMethod("merge_data_elements", signature(x="familiarDataElement"),
           })
 
 
+setMethod("merge_data_elements", signature(x="NULL"),
+          function(x, ...){
+            return(NULL)
+          })
+
+
 
 #####collect (list)-------------------------------------------------------------
 setMethod("collect", signature(x="list"),
