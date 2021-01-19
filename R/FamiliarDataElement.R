@@ -79,7 +79,7 @@ setMethod("add_data_element_bootstrap", signature(x="list"),
                   # Add the element to the list of elements.
                   data_element <- c(data_element, new_element)
                   bootstrap <- c(bootstrap, FALSE)
-                  bootstrap_seed <- c(bootstrap_seed, -1)
+                  bootstrap_seed <- c(bootstrap_seed, NA)
                 }
               }
               
@@ -91,7 +91,7 @@ setMethod("add_data_element_bootstrap", signature(x="list"),
               bootstrap <- rep(FALSE, times=length(x))
               
               # No seed is set
-              bootstrap_seed <- rep(-1, times=length(x))
+              bootstrap_seed <- rep(NA, times=length(x))
             }
             
             return(list("data_element"=data_element,
