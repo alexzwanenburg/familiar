@@ -209,15 +209,30 @@ setMethod("plot_permutation_variable_importance", signature(object="familiarColl
             ##### Check input arguments ########################################
             
             # Get input data.
-            x <- export_permutation_vimp(object=object)
-            browser()
-            # Check whether input data is present.
-            if(is.null(x)) return(NULL)
-            if(is_empty(x$ensemble$data)) return(NULL)
+            x <- export_permutation_vimp(object=object, aggregate_results=TRUE)
             
-            similarity_metric <- x$ensemble$similarity_metric
-            x <- x$ensemble$data
+            # Check that the data are not empty (e.g. NULL).
+            if(is_empty(x)) return(NULL)
             
+            # Check that the data are not evaluated at the model level.
+            if(all(sapply(x, function(x) (x@detail_level == "model")))){
+              ..warning_no_comparison_between_models()
+              return(NULL)
+            }
+            
+            # Obtain data element from list.
+            if(is.list(x)){
+              if(is_empty(x)) return(NULL)
+              
+              if(length(x) > 1) ..error_reached_unreachable_code("plot_model_performance: list of data elements contains unmerged elements.")
+              
+              # Get x directly.
+              x <- x[[1]]
+            }
+            
+            # Check that the data are not empty.
+            if(is_empty(x)) return(NULL)
+
             # ggtheme
             if(!is(ggtheme, "theme")) ggtheme <- plotting.get_theme(use_theme=ggtheme)
             
@@ -226,30 +241,30 @@ setMethod("plot_permutation_variable_importance", signature(object="familiarColl
             
             # Set the style of the confidence interval to none, in case no
             # confidence interval data is present.
-            if(is_empty(x$ci_low) | is_empty(x$ci_up)) conf_int_style <- "none"
+            if(!x@estimation_type %in% c("bci", "bootstrap_confidence_interval")) conf_int_style <- "none"
 
             # Encode the similarity_threshold as a factor.
-            if(all(is.finite(x$similarity_threshold))){
+            if(all(is.finite(x@data$similarity_threshold))){
               # In this case the data originates from dendrograms that have been
               # cut at a certain height.
               
               # Obtain unique similarity thresholds.
-              similarity_values <- rev(sort(unique(x$similarity_threshold)))
+              similarity_values <- rev(sort(unique(x@data$similarity_threshold)))
               
               # Convert to factor, and add nicely formatted labels.
-              x$similarity_threshold <- factor(x$similarity_threshold,
-                                               levels=similarity_values,
-                                               labels=format(x=similarity_values, nsmall=1L))
+              x@data$similarity_threshold <- factor(x@data$similarity_threshold,
+                                                    levels=similarity_values,
+                                                    labels=format(x=similarity_values, nsmall=1L))
               
-            } else if(all(is.infinite(x$similarity_threshold))) {
+            } else if(all(is.infinite(x@data$similarity_threshold))) {
               # This happens when data is not based on fixed cuts of a
               # dendrogram.
-              x$similarity_threshold <- factor(x$similarity_threshold,
-                                               levels=c(-Inf, Inf),
-                                               labels=c("clustered", "individual"))
+              x@data$similarity_threshold <- factor(x@data$similarity_threshold,
+                                                    levels=c(-Inf, Inf),
+                                                    labels=c("clustered", "individual"))
               
               # Remove unused levels.
-              x$similarity_threshold <- droplevels(x$similarity_threshold)
+              x@data$similarity_threshold <- droplevels(x@data$similarity_threshold)
               
             } else {
               stop("Combinations of results from different types of clustering algorithms cannot plotted in one figure.")
@@ -271,7 +286,7 @@ setMethod("plot_permutation_variable_importance", signature(object="familiarColl
             if(object@outcome_type %in% c("survival")) available_splitting_variables <- c(available_splitting_variables, "evaluation_time")
             
             # Check splitting variables and generate sanitised output.
-            split_var_list <- plotting.check_data_handling(x=x,
+            split_var_list <- plotting.check_data_handling(x=x@data,
                                                            split_by=split_by,
                                                            color_by=color_by,
                                                            facet_by=facet_by,
@@ -294,7 +309,7 @@ setMethod("plot_permutation_variable_importance", signature(object="familiarColl
                          x=legend_label$guide_color,
                          fixed=TRUE)){
                   
-                  if(all(levels(x$"similarity_threshold") %in% c("clustered", "individual"))){
+                  if(all(levels(x@data$similarity_threshold) %in% c("clustered", "individual"))){
                     legend_label$guide_color <- sub(pattern="similarity threshold",
                                                     replacement="clustering",
                                                     x=legend_label$guide_color,
@@ -302,7 +317,7 @@ setMethod("plot_permutation_variable_importance", signature(object="familiarColl
                     
                   } else {
                     legend_label$guide_color <- sub(pattern="similarity threshold",
-                                                    replacement=paste0(similarity_metric, " threshold"),
+                                                    replacement=paste0(x@similarity_metric, " threshold"),
                                                     x=legend_label$guide_color,
                                                     fixed=TRUE)
                   }
@@ -318,10 +333,10 @@ setMethod("plot_permutation_variable_importance", signature(object="familiarColl
             # more positive a value is. To facilitate comparisons and avoid
             # confusion, we mirror values for the first type of metrics around
             # 0.0 here.
-            x <- lapply(split(x, by="metric"), function(x){
+            x@data <- lapply(split(x@data, by="metric"), function(x, outcome_type){
               
               if(!metric.is_higher_score_better(metric=as.character(x$metric[1]),
-                                                outcome_type=object@outcome_type)){
+                                                outcome_type=outcome_type)){
                 # For metrics where lower scores mark better model performance,
                 # a feature is more important when the variable importance is
                 # more negative.
@@ -337,16 +352,18 @@ setMethod("plot_permutation_variable_importance", signature(object="familiarColl
               }
               
               return(x)
-            })
+            },
+            outcome_type = object@outcome_type)
             
             # Recombine dataset.
-            x <- data.table::rbindlist(x, use.names=TRUE)
+            x@data <- data.table::rbindlist(x@data, use.names=TRUE)
             
             
             if("metric" %in% facet_by | "metric" %in% color_by){
               available_metrics <- "combined"
+              
             } else {
-              available_metrics <- levels(x$metric)
+              available_metrics <- levels(x@data$metric)
             }
             
             # x_range depends on the 95% confidence intervals of individual
@@ -355,14 +372,14 @@ setMethod("plot_permutation_variable_importance", signature(object="familiarColl
             # interval data are absent).
             if(is.null(x_range)){
               # Iterate over metrics to determine the interval.
-              x_range <- lapply(split(x, by="metric"), function(x, conf_int_style){
+              x_range <- lapply(split(x@data, by="metric"), function(x, conf_int_style){
                 if(conf_int_style == "none"){
-                  interval <- data.table::data.table("min_value"=min(c(x$value, 0.0)),
-                                                     "max_value"=max(c(x$value, 0.0)))
+                  interval <- data.table::data.table("min_value"=min(c(x$value, 0.0), na.rm=TRUE),
+                                                     "max_value"=max(c(x$value, 0.0), na.rm=TRUE))
                   
                 } else {
-                  interval <- data.table::data.table("min_value"=min(c(x$ci_low, 0.0)),
-                                                     "max_value"=max(c(x$ci_up, 0.0)))
+                  interval <- data.table::data.table("min_value"=min(c(x$ci_low, 0.0), na.rm=TRUE),
+                                                     "max_value"=max(c(x$ci_up, 0.0), na.rm=TRUE))
                 }
                 
                 return(interval)
@@ -373,8 +390,8 @@ setMethod("plot_permutation_variable_importance", signature(object="familiarColl
               if("metric" %in% facet_by | "metric" %in% color_by){
                 # Concatenate to a single data.table.
                 x_range <- data.table::rbindlist(x_range)
-                x_range <- list("combined"=data.table::data.table("min_value"=min(x_range$min_value),
-                                                                  "max_value"=max(x_range$max_value)))
+                x_range <- list("combined"=data.table::data.table("min_value"=min(x_range$min_value, na.rm=TRUE),
+                                                                  "max_value"=max(x_range$max_value, na.rm=TRUE)))
               }
               
             } else if(is.list(x_range)){
@@ -480,9 +497,9 @@ setMethod("plot_permutation_variable_importance", signature(object="familiarColl
             
             # Split data
             if(!is.null(split_by)){
-              x_split <- split(x, by=split_by)
+              x_split <- split(x@data, by=split_by)
             } else {
-              x_split <- list(x)
+              x_split <- list(x@data)
             }
             
             # Store plots to list in case no dir_path is provided
@@ -491,7 +508,11 @@ setMethod("plot_permutation_variable_importance", signature(object="familiarColl
             # Iterate over splits
             for(x_sub in x_split){
               
+              # Check that the table is not empty.
               if(is_empty(x_sub)) next()
+              
+              # Check that the table contains finite values.
+              if(all(is.na(x_sub$value))) next()
               
               # Generate plot
               p <- .plot_permutation_variable_importance(x=x_sub,
