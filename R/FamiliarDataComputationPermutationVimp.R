@@ -384,7 +384,7 @@ setMethod("extract_permutation_vimp", signature(object="familiarEnsemble"),
   # Rename FALSE and TRUE columns to something that will not cause issues.
   data.table::setnames(scores,
                        old=c("FALSE", "TRUE"),
-                       new=c("permuted", "unpermuted"))
+                       new=c("unpermuted", "permuted"))
   
   # Compute the difference between permuted and unpermuted values.
   scores[, "value":=unpermuted - permuted]
