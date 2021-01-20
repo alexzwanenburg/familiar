@@ -1559,29 +1559,37 @@ setMethod(".apply_labels", signature(data="familiarDataElement", object="familia
             
             # Apply levels
             if(has_data_set){
-              x$data_set <- factor(x=x$data_set,
-                                   levels=get_data_set_name_levels(x=object),
-                                   labels=get_data_set_names(x=object))
+              data.table::set(x,
+                              j="data_set",
+                              value = factor(x=x$data_set,
+                                             levels=get_data_set_name_levels(x=object),
+                                             labels=get_data_set_names(x=object)))
             }
             
             if(has_learner){
-              x$learner <- factor(x=x$learner,
-                                  levels=get_learner_name_levels(x=object),
-                                  labels=get_learner_names(x=object))
+              data.table::set(x,
+                              j="learner",
+                              value = factor(x=x$learner,
+                                             levels=get_learner_name_levels(x=object),
+                                             labels=get_learner_names(x=object)))
             }
             
             if(has_fs_method){
-              x$fs_method <- factor(x=x$fs_method,
-                                    levels=get_fs_method_name_levels(x=object),
-                                    labels=get_fs_method_names(x=object))
+              data.table::set(x,
+                              j="fs_method",
+                              value = factor(x=x$fs_method,
+                                             levels=get_fs_method_name_levels(x=object),
+                                             labels=get_fs_method_names(x=object)))
             }
             
             if(has_feature){
               for(current_column_name in c("name", "feature_1", "feature_2", "feature")){
                 if(!is.null(x[[current_column_name]])){
-                  x[[current_column_name]] <- factor(x=x[[current_column_name]],
-                                               levels=get_feature_name_levels(x=object),
-                                               labels=get_feature_names(x=object))
+                  data.table::set(x,
+                                  j=current_column_name,
+                                  value = factor(x=x[[current_column_name]],
+                                                 levels=get_feature_name_levels(x=object),
+                                                 labels=get_feature_names(x=object)))
                 }
               }
             }
@@ -1589,9 +1597,11 @@ setMethod(".apply_labels", signature(data="familiarDataElement", object="familia
             if(has_risk_group){
               for(current_column_name in c("risk_group", "risk_group_1", "risk_group_2", "reference_group")){
                 if(!is.null(x[[current_column_name]])){
-                  x[[current_column_name]] <- factor(x=x[[current_column_name]],
-                                               levels=get_risk_group_name_levels(x=object),
-                                               labels=get_risk_group_names(x=object))
+                  data.table::set(x,
+                                  j=current_column_name,
+                                  value = factor(x=x[[current_column_name]],
+                                                 levels=get_risk_group_name_levels(x=object),
+                                                 labels=get_risk_group_names(x=object)))
                 }
               }
             }
@@ -1599,9 +1609,11 @@ setMethod(".apply_labels", signature(data="familiarDataElement", object="familia
             if(has_multiclass_outcome){
               for(current_column_name in c("pos_class", "positive_class", "outcome")){
                 if(!is.null(x[[current_column_name]])){
-                  x[[current_column_name]] <- factor(x=x[[current_column_name]],
-                                               levels=get_class_name_levels(x=object),
-                                               labels=get_class_names(x=object))
+                  data.table::set(x,
+                                  j=current_column_name,
+                                  value = factor(x=x[[current_column_name]],
+                                                 levels=get_class_name_levels(x=object),
+                                                 labels=get_class_names(x=object)))
                 }
               }
             }
@@ -1610,9 +1622,11 @@ setMethod(".apply_labels", signature(data="familiarDataElement", object="familia
               # For confusion matrices.
               for(current_column_name in c("observed_outcome", "expected_outcome")){
                 if(!is.null(x[[current_column_name]])){
-                  x[[current_column_name]] <- factor(x=x[[current_column_name]],
-                                               levels=get_class_name_levels(x=object),
-                                               labels=get_class_names(x=object))
+                  data.table::set(x,
+                                  j=current_column_name,
+                                  value = factor(x=x[[current_column_name]],
+                                                 levels=get_class_name_levels(x=object),
+                                                 labels=get_class_names(x=object)))
                 }
               }
             }
@@ -1620,8 +1634,10 @@ setMethod(".apply_labels", signature(data="familiarDataElement", object="familia
             if(has_evaluation_time){
               for(current_column_name in c("evaluation_time", "eval_time")){
                 if(!is.null(x[[current_column_name]])){
-                  x[[current_column_name]] <- factor(x=x[[current_column_name]],
-                                               levels=sort(unique(x[[current_column_name]])))
+                  data.table::set(x,
+                                  j=current_column_name,
+                                  value = factor(x=x[[current_column_name]],
+                                                 levels=sort(unique(x[[current_column_name]]))))
                 }
               }
             }
@@ -1629,8 +1645,10 @@ setMethod(".apply_labels", signature(data="familiarDataElement", object="familia
             if(has_performance_metric){
               for(current_column_name in c("metric")){
                 if(!is.null(x[[current_column_name]])){
-                  x[[current_column_name]] <- factor(x=x[[current_column_name]],
-                                               levels=sort(unique(x[[current_column_name]])))
+                  data.table::set(x,
+                                  j=current_column_name,
+                                  value = factor(x=x[[current_column_name]],
+                                                 levels=sort(unique(x[[current_column_name]]))))
                 }
               }
             }
@@ -1638,8 +1656,10 @@ setMethod(".apply_labels", signature(data="familiarDataElement", object="familia
             if(has_model_name){
               for(current_column_name in c("ensemble_model_name", "model_name")){
                 if(!is.null(x[[current_column_name]])){
-                  x[[current_column_name]] <- factor(x=x[[current_column_name]],
-                                                     levels=sort(unique(x[[current_column_name]])))
+                  data.table::set(x,
+                                  j=current_column_name,
+                                  value = factor(x=x[[current_column_name]],
+                                                 levels=sort(unique(x[[current_column_name]]))))
                 }
               }
             }
