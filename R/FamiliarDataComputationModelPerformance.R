@@ -88,7 +88,7 @@ setMethod("extract_performance", signature(object="familiarEnsemble"),
             # Load the bootstrap method
             if(is.waive(bootstrap_ci_method)) bootstrap_ci_method <- object@settings$bootstrap_ci_method
             
-            .check_parameter_value_is_valid(x=bootstrap_ci_method, var_name="bootstrap_ci_methpd",
+            .check_parameter_value_is_valid(x=bootstrap_ci_method, var_name="bootstrap_ci_method",
                                             values=.get_available_bootstrap_confidence_interval_methods())
             
             # Check the level detail
