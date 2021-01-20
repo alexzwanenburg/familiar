@@ -434,13 +434,13 @@ collect_auc_data <- function(fam_data_list){
 #'
 #' @return A list with aggregated confusion matrices.
 #' @noRd
-collect_confusion_matrix_data <- function(fam_data_list){
-  
-  return(universal_collector(fam_data_list=fam_data_list,
-                             data_slot="confusion_matrix",
-                             extra_data=NULL,
-                             more_identifiers=c("fs_method", "learner")))
-}
+# collect_confusion_matrix_data <- function(fam_data_list){
+#   
+#   return(universal_collector(fam_data_list=fam_data_list,
+#                              data_slot="confusion_matrix",
+#                              extra_data=NULL,
+#                              more_identifiers=c("fs_method", "learner")))
+# }
 
 
 

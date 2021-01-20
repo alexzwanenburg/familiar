@@ -170,12 +170,21 @@ setMethod("plot_confusion_matrix", signature(object="familiarCollection"),
             # Get input data.
             x <- export_confusion_matrix_data(object=object)
             
-            # Check for empty data
-            if(is.null(x)) return(NULL)
-            if(is_empty(x$ensemble$data)) return(NULL)
+            # Check that the data are not empty.
+            if(is_empty(x)) return(NULL)
             
-            # Extract the data for the ensemble.
-            x <- data.table::copy(x$ensemble$data)
+            # Obtain data element from list.
+            if(is.list(x)){
+              if(is_empty(x)) return(NULL)
+              
+              if(length(x) > 1) ..error_reached_unreachable_code("plot_model_performance: list of data elements contains unmerged elements.")
+              
+              # Get x directly.
+              x <- x[[1]]
+            }
+            
+            # Check that the data are not empty.
+            if(is_empty(x)) return(NULL)
             
             ##### Check input arguments ------------------------------------------------
             
@@ -220,7 +229,7 @@ setMethod("plot_confusion_matrix", signature(object="familiarCollection"),
             }
             
             # Check splitting variables and generate sanitised output
-            split_var_list <- plotting.check_data_handling(x=x,
+            split_var_list <- plotting.check_data_handling(x=x@data,
                                                            split_by=split_by,
                                                            facet_by=facet_by,
                                                            available=c("fs_method", "learner", "data_set"))
@@ -243,18 +252,18 @@ setMethod("plot_confusion_matrix", signature(object="familiarCollection"),
                                       rotate_x_tick_labels=rotate_x_tick_labels)
             
             # Add a class_matches column
-            x[, "class_matches":=observed_outcome == expected_outcome]
+            x@data[, "class_matches":=observed_outcome == expected_outcome]
             
             if(show_alpha == "none"){
               # Full opacity on diagonal, full transparancy for off-diagonal
               # cells.
-              x[, "alpha":=as.double(class_matches)]
+              x@data[, "alpha":=as.double(class_matches)]
 
             } else {
               # Determine the alpha level (opacity) of the fills in the
               # confusion matrix. This is determined by the number of instances
               # of observed classes.
-              max_observations <- x[, list("total_observed"=sum(count)), by=c("observed_outcome", facet_by, split_by)]
+              max_observations <- x@data[, list("total_observed"=sum(count)), by=c("observed_outcome", facet_by, split_by)]
               
               if(show_alpha == "by_class"){
                 # Nothing extra needed
@@ -281,18 +290,20 @@ setMethod("plot_confusion_matrix", signature(object="familiarCollection"),
               }
               
               # Merge back into x and compute the alpha level (opacity).
-              x <- merge(x=x, y=max_observations, by=c("observed_outcome", facet_by, split_by))
-              x[, "alpha":=count / total_observed]
+              x@data <- merge(x=x@data,
+                              y=max_observations,
+                              by=c("observed_outcome", facet_by, split_by))
+              x@data[, "alpha":=count / total_observed]
             }
             
             ##### Create plots ---------------------------------------------------------
             
             # Split data
             if(!is.null(split_by)){
-              x_split <- split(x, by=split_by)
+              x_split <- split(x@data, by=split_by)
               
             } else {
-              x_split <- list("null.name"=x)
+              x_split <- list("null.name"=x@data)
             }
             
             # Store plots to list in case dir_path is absent.

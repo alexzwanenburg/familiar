@@ -8,9 +8,9 @@ extract_confusion_matrix(
   object,
   data,
   cl = NULL,
-  is_pre_processed = FALSE,
   ensemble_method = waiver(),
-  compute_model_data = waiver(),
+  detail_level = waiver(),
+  is_pre_processed = FALSE,
   message_indent = 0L,
   verbose = FALSE,
   ...
@@ -26,10 +26,6 @@ constitutes the data that are used to compute}
 \item{cl}{Cluster created using the \code{parallel} package. This cluster is then
 used to speed up computation through parallelisation.}
 
-\item{is_pre_processed}{Flag that indicates whether the data was already
-pre-processed externally, e.g. normalised and clustered. Only used if the
-\code{data} argument is a \code{data.table} or \code{data.frame}.}
-
 \item{ensemble_method}{Method for ensembling predictions from models for the
 same sample. Available methods are:
 \itemize{
@@ -37,14 +33,47 @@ same sample. Available methods are:
 sample.
 }}
 
-\item{compute_model_data}{(\emph{optional}) This parameter can be set to enable
-computation of data based on individual models. The parameter can take on or
-more of the following values: \code{all}, \code{model_performance}, \code{auc_data},
-\code{confusion_matrix}, \code{decision_curve_analyis}, \code{permutation_vimp},
-\code{model_performance}, as well as \code{true}, \code{false} and \code{none}.
+\item{detail_level}{(\emph{optional}) Sets the level at which results are computed
+and aggregated.
+\itemize{
+\item \code{ensemble}: Results are computed at the ensemble level, i.e. over all
+models in the ensemble. This means that, for example, bias-corrected
+estimates of model performance are assessed by creating (at least) 20
+bootstraps and computing the model performance of the ensemble model for
+each bootstrap.
+\item \code{hybrid} (default): Results are computed at the level of models in an
+ensemble. This means that, for example, bias-corrected estimates of model
+performance are directly computed using the models in the ensemble. If there
+are at least 20 trained models in the ensemble, performance is computed for
+each model, in contrast to \code{ensemble} where performance is computed for the
+ensemble of models. If there are less than 20 trained models in the
+ensemble, bootstraps are created so that at least 20 point estimates can be
+made.
+\item \code{model} (to be implemented): Results are computed at the model level. This
+means that, for example, bias-corrected estimates of model performance are
+assessed by creating (at least) 20 bootstraps and computing the performance
+of the model for each bootstrap.
+}
 
-By default, data is computed for the ensemble as a whole, but not for
-underlying models.}
+Note that each level of detail has a different interpretation for bootstrap
+confidence intervals. For \code{ensemble} and \code{model} these are the confidence
+intervals for the ensemble and an individual model, respectively. That is,
+the confidence interval describes the range where an estimate produced by a
+respective ensemble or model trained on a repeat of the experiment may be
+found with the probability of the confidence level. For \code{hybrid}, it
+represents the range where any single model trained on a repeat of the
+experiment may be found with the probability of the confidence level. By
+definition, confidence intervals obtained using \code{hybrid} are at least as
+wide as those for \code{ensemble}. \code{hybrid} offers the correct interpretation if
+the goal of the analysis is to assess the result of a single, unspecified,
+model.
+
+\code{hybrid} is generally computationally less expensive then \code{ensemble}, which
+in turn is somewhat less expensive than \code{model}.}
+
+\item{is_pre_processed}{Flag that indicates whether the data was already
+pre-processed externally, e.g. normalised and clustered. Only used if the
+\code{data} argument is a \code{data.table} or \code{data.frame}.}
 
 \item{message_indent}{Number of indentation steps for messages shown during
 computation and extraction of various data elements.}

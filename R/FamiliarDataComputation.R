@@ -551,13 +551,13 @@ setMethod("extract_data", signature(object="familiarEnsemble"),
                                                                 data=data,
                                                                 cl=cl,
                                                                 ensemble_method=ensemble_method,
-                                                                compute_model_data=compute_model_data,
+                                                                detail_level=detail_level,
                                                                 message_indent=message_indent,
                                                                 verbose=verbose)
             } else {
               confusion_matrix_info <- NULL
             }
-            
+
             # Set up a placehold pooling table. This may need to be adepted.
             pooling_table <- data.table::data.table("ensemble_data_id"=object@run_table$ensemble_data_id,
                                                     "ensemble_run_id"=object@run_table$ensemble_run_id,
