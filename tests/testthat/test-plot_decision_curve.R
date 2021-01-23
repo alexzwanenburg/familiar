@@ -29,22 +29,15 @@ familiar:::test_plots(plot_function=familiar:::plot_decision_curve,
 familiar:::test_plots(plot_function=familiar:::plot_decision_curve,
                       outcome_type_available=c("binomial", "multinomial", "survival"),
                       data_element="decision_curve_analyis",
-                      compute_ensemble_ci=FALSE,
+                      estimation_type="point",
                       test_specific_config=TRUE,
                       debug=debug_flag)
 
-# Test without pre-aggregation of confidence interval
-familiar:::test_plots(plot_function=familiar:::plot_decision_curve,
-                      outcome_type_available=c("binomial", "multinomial", "survival"),
-                      data_element="decision_curve_analyis",
-                      aggregate_ci=FALSE,
-                      test_specific_config=TRUE,
-                      debug=debug_flag)
 
 # Test alignment of different plots, with missing data.
 familiar:::test_plot_ordering(plot_function=familiar:::plot_decision_curve,
                               data_element="decision_curve_analyis",
-                              compute_ensemble_ci=FALSE,
+                              estimation_type="point",
                               outcome_type_available=c("binomial", "multinomial", "survival"),
                               debug=debug_flag)
 
