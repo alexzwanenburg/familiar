@@ -9,13 +9,12 @@ extract_decision_curve_data(
   data,
   cl = NULL,
   ensemble_method = waiver(),
+  eval_times = waiver(),
+  detail_level = waiver(),
+  estimation_type = waiver(),
+  aggregate_results = waiver(),
   confidence_level = waiver(),
   bootstrap_ci_method = waiver(),
-  compute_model_data = waiver(),
-  compute_model_ci = waiver(),
-  compute_ensemble_ci = waiver(),
-  aggregate_ci = waiver(),
-  eval_times = waiver(),
   is_pre_processed = FALSE,
   message_indent = 0L,
   verbose = FALSE,
@@ -39,6 +38,75 @@ same sample. Available methods are:
 sample.
 }}
 
+\item{eval_times}{One or more time points that are used for assessing
+calibration in survival problems. This is done as expected and observed
+survival probabilities depend on time. If not provided explicitly, this
+parameter is read from settings used at creation of the underlying
+\code{familiarModel} objects. Only used for \code{survival} outcomes.}
+
+\item{detail_level}{(\emph{optional}) Sets the level at which results are computed
+and aggregated.
+\itemize{
+\item \code{ensemble}: Results are computed at the ensemble level, i.e. over all
+models in the ensemble. This means that, for example, bias-corrected
+estimates of model performance are assessed by creating (at least) 20
+bootstraps and computing the model performance of the ensemble model for
+each bootstrap.
+\item \code{hybrid} (default): Results are computed at the level of models in an
+ensemble. This means that, for example, bias-corrected estimates of model
+performance are directly computed using the models in the ensemble. If there
+are at least 20 trained models in the ensemble, performance is computed for
+each model, in contrast to \code{ensemble} where performance is computed for the
+ensemble of models. If there are less than 20 trained models in the
+ensemble, bootstraps are created so that at least 20 point estimates can be
+made.
+\item \code{model} (to be implemented): Results are computed at the model level. This
+means that, for example, bias-corrected estimates of model performance are
+assessed by creating (at least) 20 bootstraps and computing the performance
+of the model for each bootstrap.
+}
+
+Note that each level of detail has a different interpretation for bootstrap
+confidence intervals. For \code{ensemble} and \code{model} these are the confidence
+intervals for the ensemble and an individual model, respectively. That is,
+the confidence interval describes the range where an estimate produced by a
+respective ensemble or model trained on a repeat of the experiment may be
+found with the probability of the confidence level. For \code{hybrid}, it
+represents the range where any single model trained on a repeat of the
+experiment may be found with the probability of the confidence level. By
+definition, confidence intervals obtained using \code{hybrid} are at least as
+wide as those for \code{ensemble}. \code{hybrid} offers the correct interpretation if
+the goal of the analysis is to assess the result of a single, unspecified,
+model.
+
+\code{hybrid} is generally computationally less expensive then \code{ensemble}, which
+in turn is somewhat less expensive than \code{model}.}
+
+\item{estimation_type}{(\emph{optional}) Sets the type of estimation that should be
+possible. This has the following options:
+\itemize{
+\item \code{point}: Point estimates.
+\item \code{bias_correction} or \code{bc}: Bias-corrected estimates. A bias-corrected
+estimate is computed from (at least) 20 point estimates, and \code{familiar} may
+bootstrap the data to create them.
+\item \code{bootstrap_confidence_interval} or \code{bci} (default): Bias-corrected
+estimates with bootstrap confidence intervals (Efron and Hastie, 2016). The
+number of point estimates required depends on the \code{confidence_level}
+parameter, and \code{familiar} may bootstrap the data to create them.
+}}
+
+\item{aggregate_results}{(\emph{optional}) Flag that signifies whether results
+should be aggregated during evaluation. If \code{estimation_type} is
+\code{bias_correction} or \code{bc}, aggregation leads to a single bias-corrected
+estimate. If \code{estimation_type} is \code{bootstrap_confidence_interval} or \code{bci},
+aggregation leads to a single bias-corrected estimate with lower and upper
+boundaries of the confidence interval. This has no effect if
+\code{estimation_type} is \code{point}.
+
+The default value is \code{default}, which is equal to \code{TRUE} except when
+assessing metrics to assess model performance, as the default violin plot
+requires underlying data.}
+
 \item{confidence_level}{(\emph{optional}) Numeric value for the level at which
 confidence intervals are determined. In the case bootstraps are used to
 determine the confidence intervals bootstrap estimation, \code{familiar} uses the
@@ -59,54 +127,6 @@ method.
 Note that the standard method is not implemented because this method is
 often not suitable due to non-normal distributions. The bias-corrected and
 accelerated (BCa) method is not implemented yet.}
-
-\item{compute_model_data}{(\emph{optional}) This parameter can be set to enable
-computation of data based on individual models. The parameter can take on or
-more of the following values: \code{all}, \code{model_performance}, \code{auc_data},
-\code{confusion_matrix}, \code{decision_curve_analyis}, \code{permutation_vimp},
-\code{model_performance}, as well as \code{true}, \code{false} and \code{none}.
-
-By default, data is computed for the ensemble as a whole, but not for
-underlying models.}
-
-\item{compute_model_ci}{(\emph{optional}) This parameter can be set to enable
-computation of bootstrap confidence intervals for individual models in
-several parts of the evaluation. The parameter can take one or more of the
-following values: \code{all}, \code{model_performance}, \code{auc_data},
-\code{decision_curve_analyis}, \code{permutation_vimp} as well as \code{true}, \code{false} and
-\code{none}.
-
-By default, bootstrap confidence intervals are not computed for individual
-models. Note that this parameter has no effect unless data is computed for
-individual models as well, which is managed by the \code{compute_model_data}
-parameter.}
-
-\item{compute_ensemble_ci}{(\emph{optional}) This parameter can be set to enable
-computation of bootstrap confidence intervals for ensemble models in several
-parts of the evaluation. The parameter can take one or more of the following
-values: \code{all}, \code{model_performance}, \code{auc_data}, \code{decision_curve_analyis},
-\code{permutation_vimp} as well as \code{true}, \code{false} and \code{none}.
-
-By default, bootstrap confidence intervals are computed for ensemble models.}
-
-\item{aggregate_ci}{(\emph{optional}) Bootstraps are used to determine confidence
-intervals. This information can be stored for export. However, in many cases
-this is not necessary, and keeping the bootstrap data can lead to large
-\code{familiarData} and \code{familiarCollection} objects. This provides the option to
-aggregate the bootstrap data by computing the confidence interval directly.
-
-This parameter can take one or more of the following values: \code{all},
-\code{model_performance}, \code{auc_data}, \code{decision_curve_analyis},
-\code{permutation_vimp} as well as \code{true}, \code{false} and \code{none}. By default,
-bootstrap data is aggregated by computing confidence intervals for
-receiver-operating characteristic curves, decision curves and permutation
-variable importance.}
-
-\item{eval_times}{One or more time points that are used for assessing
-calibration in survival problems. This is done as expected and observed
-survival probabilities depend on time. If not provided explicitly, this
-parameter is read from settings used at creation of the underlying
-\code{familiarModel} objects. Only used for \code{survival} outcomes.}
 
 \item{is_pre_processed}{Flag that indicates whether the data was already
 pre-processed externally, e.g. normalised and clustered. Only used if the

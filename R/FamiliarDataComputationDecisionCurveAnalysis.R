@@ -1,7 +1,11 @@
 #' @include FamiliarS4Generics.R
 #' @include FamiliarS4Classes.R
-#' @include FamiliarDataComputation.R
 NULL
+
+setClass("familiarDataElementDecisionCurve",
+         contains="familiarDataElement",
+         prototype = methods::prototype(value_column="net_benefit",
+                                        grouping_column="threshold_probability"))
 
 #'@title Internal function to extract decision curve analysis data.
 #'
@@ -24,13 +28,12 @@ setGeneric("extract_decision_curve_data",
                     data,
                     cl=NULL,
                     ensemble_method=waiver(),
+                    eval_times=waiver(),
+                    detail_level=waiver(),
+                    estimation_type=waiver(),
+                    aggregate_results=waiver(),
                     confidence_level=waiver(),
                     bootstrap_ci_method=waiver(),
-                    compute_model_data=waiver(),
-                    compute_model_ci=waiver(),
-                    compute_ensemble_ci=waiver(),
-                    aggregate_ci=waiver(),
-                    eval_times=waiver(),
                     is_pre_processed=FALSE,
                     message_indent=0L,
                     verbose=FALSE,
@@ -41,13 +44,12 @@ setMethod("extract_decision_curve_data", signature(object="familiarEnsemble"),
                    data,
                    cl=NULL,
                    ensemble_method=waiver(),
+                   eval_times=waiver(),
+                   detail_level=waiver(),
+                   estimation_type=waiver(),
+                   aggregate_results=waiver(),
                    confidence_level=waiver(),
                    bootstrap_ci_method=waiver(),
-                   compute_model_data=waiver(),
-                   compute_model_ci=waiver(),
-                   compute_ensemble_ci=waiver(),
-                   aggregate_ci=waiver(),
-                   eval_times=waiver(),
                    is_pre_processed=FALSE,
                    message_indent=0L,
                    verbose=FALSE,
@@ -89,47 +91,77 @@ setMethod("extract_decision_curve_data", signature(object="familiarEnsemble"),
             # Load the bootstrap method
             if(is.waive(bootstrap_ci_method)) bootstrap_ci_method <- object@settings$bootstrap_ci_method
             
-            .check_parameter_value_is_valid(x=bootstrap_ci_method, var_name="bootstrap_ci_methpd",
+            .check_parameter_value_is_valid(x=bootstrap_ci_method, var_name="bootstrap_ci_method",
                                             values=.get_available_bootstrap_confidence_interval_methods())
             
-            # By default, compute confidence intervals for ensembles, but not
-            # for models.
-            if(is.waive(compute_model_data)) compute_model_data <- "none"
-            if(is.waive(compute_model_ci)) compute_model_ci <- "none"
-            if(is.waive(compute_ensemble_ci)) compute_ensemble_ci <- "all"
-            if(is.waive(aggregate_ci)) aggregate_ci <- "all"
+            # Check the level detail
+            if(is.waive(detail_level)) detail_level <- object@settings$detail_level
             
+            .check_parameter_value_is_valid(x=detail_level, var_name="detail_level",
+                                            values=c("ensemble", "hybrid", "model"))
+            
+            # Check the estimation type
+            if(is.waive(estimation_type)) estimation_type <- object@settings$estimation_type
+            
+            .check_parameter_value_is_valid(x=estimation_type, var_name="estimation_type",
+                                            values=c("point", "bias_correction", "bc", "bootstrap_confidence_interval", "bci"))
+            
+            # Check whether results should be aggregated.
+            if(is.waive(aggregate_results)) aggregate_results <- object@settings$aggregate_results
+            
+            aggregate_results <- tolower(aggregate_results)
+            .check_parameter_value_is_valid(x=aggregate_results, var_name="aggregate_results",
+                                            values=c(.get_available_data_elements(confidence_interval_only=TRUE),
+                                                     "true", "false", "none", "all", "default"))
+            # Set as TRUE/FALSE
+            aggregate_results <- any(aggregate_results %in% c("true", "all", "decision_curve_analyis"))
+
             # Test if models are properly loaded
             if(!is_model_loaded(object=object)) ..error_ensemble_models_not_loaded()
             
-            # Extract data for the individual models and the ensemble.
-            dca_data <- universal_extractor(object=object,
-                                            cl=cl,
-                                            FUN=.extract_decision_curve_data,
-                                            data=data,
-                                            is_pre_processed=is_pre_processed,
-                                            ensemble_method=ensemble_method,
-                                            eval_times=eval_times,
-                                            confidence_level=confidence_level,
-                                            compute_model_data=any(c("all", "decision_curve_analyis", "TRUE") %in% compute_model_data),
-                                            compute_model_ci=any(c("all", "decision_curve_analyis", "TRUE") %in% compute_model_ci),
-                                            compute_ensemble_ci=any(c("all", "decision_curve_analyis", "TRUE") %in% compute_ensemble_ci),
-                                            aggregate_ci=any(c("all", "decision_curve_analyis", "TRUE") %in% aggregate_ci),
-                                            bootstrap_ci_method=bootstrap_ci_method,
-                                            message_indent=message_indent + 1L,
-                                            verbose=verbose)
+            # Generate a prototype data element.
+            proto_data_element <- new("familiarDataElementDecisionCurve",
+                                      detail_level = detail_level,
+                                      estimation_type = estimation_type,
+                                      confidence_level = confidence_level,
+                                      bootstrap_ci_method = bootstrap_ci_method)
+            
+            # Generate elements to send to dispatch.
+            dca_data <- extract_dispatcher(FUN=.extract_decision_curve_data,
+                                           has_internal_bootstrap=TRUE,
+                                           cl=cl,
+                                           object=object,
+                                           data=data,
+                                           proto_data_element=proto_data_element,
+                                           is_pre_processed=is_pre_processed,
+                                           ensemble_method=ensemble_method,
+                                           eval_times=eval_times,
+                                           aggregate_results=aggregate_results,
+                                           message_indent=message_indent + 1L,
+                                           verbose=verbose)
             
             return(dca_data)
           })
 
 
-.extract_decision_curve_data <- function(object, data, cl=NULL, is_pre_processed, ensemble_method,
-                                         eval_times, confidence_level, aggregate_ci, determine_ci,
-                                         bootstrap_ci_method, verbose, message_indent=0L){
+.extract_decision_curve_data <- function(object,
+                                         data,
+                                         proto_data_element,
+                                         eval_times=NULL,
+                                         cl,
+                                         ensemble_method,
+                                         is_pre_processed,
+                                         ...){
   
+  # Add model name.
+  proto_data_element <- add_model_name(proto_data_element, object=object)
   
-  if(object@outcome_type %in% c("binomial", "multinomial")){
-    # Iterate over outcome classes.
+  # Add evaluation time as a identifier to the data element.
+  if(length(eval_times) > 0 & object@outcome_type == "survival"){
+    data_elements <- add_data_element_identifier(x=proto_data_element,
+                                                 evaluation_time=eval_times)
+    
+  } else if(object@outcome_type %in% c("binomial", "multinomial")){
     
     # Predict class probabilities.
     prediction_data <- .predict(object=object,
@@ -143,130 +175,113 @@ setMethod("extract_decision_curve_data", signature(object="familiarEnsemble"),
     # Determine class levels
     outcome_class_levels <- get_outcome_class_levels(object)
     
-    # Select only one outcome type for binomial outcomes.
+    # Select only one outcome class for binomial outcomes.
     if(object@outcome_type == "binomial") outcome_class_levels <- outcome_class_levels[2]
     
-    # Iterate over class levels.
-    dca_data <- lapply(outcome_class_levels,
+    # Add positive class as an identifier.
+    data_elements <- add_data_element_identifier(x=proto_data_element,
+                                                 positive_class=outcome_class_levels)
+    
+  } else {
+    data_elements <- list(proto_data_element)
+  }
+  
+  # Dispatch to function
+  if(object@outcome_type %in% c("binomial", "multinomial")){
+    
+    dca_data <- lapply(data_elements,
                        .compute_dca_data_categorical,
                        data=prediction_data,
                        object=object,
-                       confidence_level=confidence_level,
-                       determine_ci=determine_ci,
                        cl=cl,
-                       message_indent=message_indent,
-                       verbose=verbose)
-    
-    # Concatenate lists.
-    dca_data <- list("model_data"=rbind_list_list(dca_data, "model_data"),
-                     "intervention_all"=rbind_list_list(dca_data, "intervention_all"),
-                     "bootstrap_data"=rbind_list_list(dca_data, "bootstrap_data"),
-                     "confidence_level"=confidence_level)
-    
+                       ...)
+   
   } else if(object@outcome_type %in% c("survival")){
     # Iterate over evaluation times.
-    dca_data <- lapply(eval_times,
+    dca_data <- lapply(data_elements,
                        .compute_dca_data_survival,
                        data=data,
                        object=object,
                        ensemble_method=ensemble_method,
                        is_pre_processed=is_pre_processed,
-                       confidence_level=confidence_level,
-                       determine_ci=determine_ci,
                        cl=cl,
-                       message_indent=message_indent,
-                       verbose=verbose)
-    
-    # Concatenate lists.
-    dca_data <- list("model_data"=rbind_list_list(dca_data, "model_data"),
-                     "intervention_all"=rbind_list_list(dca_data, "intervention_all"),
-                     "bootstrap_data"=rbind_list_list(dca_data, "bootstrap_data"),
-                     "confidence_level"=confidence_level)
+                       ...)
     
   } else {
     ..error_outcome_type_not_implemented(object@outcome_type)
-  }
-  
-  if(determine_ci & aggregate_ci){
-    
-    # Aggregate the data by computing the bootstrap confidence intervals.
-    dca_data$model_data <- .compute_bootstrap_ci(x0=dca_data$model_data,
-                                                 xb=dca_data$bootstrap_data,
-                                                 target_column="net_benefit",
-                                                 bootstrap_ci_method=bootstrap_ci_method,
-                                                 additional_splitting_variable="threshold_probability",
-                                                 confidence_level=confidence_level,
-                                                 cl=cl,
-                                                 verbose=verbose,
-                                                 message_indent=message_indent)
-    
-    # Set the bootstrap_data to NULL.
-    dca_data$bootstrap_data <- NULL
-    
-  } else if(determine_ci){
-    # Add the bootstrap confidence interval method
-    dca_data$bootstrap_ci_method <- bootstrap_ci_method
   }
   
   return(dca_data)
 }
 
 
-.compute_dca_data_categorical <- function(positive_class, data, object, confidence_level,
-                                          determine_ci=FALSE, cl=NULL, verbose=FALSE,
-                                          message_indent=0L){
+.compute_dca_data_categorical <- function(data_element,
+                                          data,
+                                          object,
+                                          aggregate_results,
+                                          cl=NULL,
+                                          progress_bar=FALSE,
+                                          verbose=FALSE,
+                                          message_indent=0L,
+                                          ...){
   
   # Check if the data has more than 1 row.
-  if(nrow(data) <= 1) return(list("confidence_level"=confidence_level))
+  if(nrow(data) <= 1) return(NULL)
+  
+  if(length(data_element@identifiers$positive_class) > 1 & progress_bar){
+    logger.message(paste0("Computing decision curves for the \"", data_element@identifiers$positive_class, "\" class."),
+                   indent=message_indent)
+  }
   
   # Set test probabilities
-  test_probabilities <- seq(from=0.00, to=1.00, by=0.005)
+  threshold_probabilities <- seq(from=0.000, to=1.000, by=0.005)
   
-  # Compute data from the model.
-  model_data <- .compute_dca_data_categorical_model(data=data,
-                                                    x=test_probabilities,
-                                                    positive_class=positive_class)
-
-  # Compute intervention for all data.
-  intervention_data <- .compute_dca_data_categorical_model(data=data,
-                                                           x=test_probabilities,
-                                                           positive_class=positive_class,
-                                                           return_intervention=TRUE)
+  # Add bootstrap data.
+  bootstrap_data <- add_data_element_bootstrap(x=data_element,
+                                               ...)
   
-  if(determine_ci){
-    if(verbose) logger.message(paste0("Computing bootstrap confidence interval data for the \"", positive_class, "\" class."),
-                               indent=message_indent)
-    
-    # Bootstrap the data.
-    bootstrap_data <- bootstrapper(data=data,
-                                   alpha= 1.0 - confidence_level,
-                                   FUN=.compute_dca_data_categorical_model,
-                                   positive_class=positive_class,
-                                   x=test_probabilities,
-                                   cl=cl,
-                                   verbose=verbose)
-    
-  } else {
-    bootstrap_data <- NULL
-  }
-
-  # Add to list and return
-  return(list("model_data"=model_data,
-              "intervention_all"=intervention_data,
-              "bootstrap_data"=bootstrap_data,
-              "confidence_level"=confidence_level))
+  # Iterate over elements.
+  data_elements <- fam_mapply(cl=cl,
+                              assign=NULL,
+                              FUN=.compute_dca_data_categorical_model,
+                              data_element=bootstrap_data$data_element,
+                              bootstrap=bootstrap_data$bootstrap,
+                              bootstrap_seed = bootstrap_data$seed,
+                              MoreArgs=list("data"=data,
+                                            "threshold_probabilities"=threshold_probabilities),
+                              progress_bar=progress_bar)
+  
+  # Merge data elements
+  data_elements <- merge_data_elements(data_elements)
+  
+  if(aggregate_results) data_elements <- .compute_data_element_estimates(x=data_elements)
+  
+  return(data_elements)
 }
 
 
 
-.compute_dca_data_categorical_model <- function(data, x, positive_class, return_intervention=FALSE){
+.compute_dca_data_categorical_model <- function(data_element,
+                                                data,
+                                                threshold_probabilities,
+                                                bootstrap,
+                                                bootstrap_seed){
   
   # Suppress NOTES due to non-standard evaluation in data.table
   outcome <- probability <- is_positive <- NULL
   
+  # Get the positive class.
+  positive_class <- data_element@identifiers$positive_class
+  
+  # Bootstrap the data.
+  if(bootstrap) data <- get_bootstrap_sample(data=data,
+                                             seed=bootstrap_seed)
+  
   # Make a local copy
   data <- data.table::copy(data)
-  data.table::setnames(data, old=get_class_probability_name(positive_class), new="probability")
+  data.table::setnames(data,
+                       old=get_class_probability_name(positive_class),
+                       new="probability")
   
   # Determine positive output.
   data[, "is_positive":=outcome == positive_class]
@@ -280,91 +295,186 @@ setMethod("extract_decision_curve_data", signature(object="familiarEnsemble"),
   # Determine the number of samples.
   n <- nrow(data)
   
-  if(return_intervention){
-    # Determine maximum number of true and false positives.
-    n_max_true_positive <- sum(data$is_positive)
-    n_max_false_positive <- sum(!data$is_positive)
-    
-    # Compute benefit for the situation an intervention always happens.
-    net_benefit <- n_max_true_positive / n - n_max_false_positive / n * (x / (1.0 - x))
-    
-  } else {
-    # Determine the number of true and false positives.
-    data[, ":="("n_true_positive"=cumsum(is_positive),
-                "n_false_positive"=cumsum(!is_positive))]
-    
-    # Compute benefit for the model.
-    net_benefit <- ..compute_dca_data_net_benefit(data, x)
-  }
+  # Compute intervention data.
+  # Determine maximum number of true and false positives.
+  n_max_true_positive <- sum(data$is_positive)
+  n_max_false_positive <- sum(!data$is_positive)
   
-  # Store data.
-  model_data <- data.table::data.table("pos_class"=positive_class,
-                                       "threshold_probability"=x,
-                                       "net_benefit"=net_benefit)
+  # Compute benefit for the situation an intervention always happens.
+  intervention_net_benefit <- n_max_true_positive / n - n_max_false_positive / n * (threshold_probabilities / (1.0 - threshold_probabilities))
   
-  return(model_data)
+  # Copy data element for intervention.
+  intervention_data_element <- data_element
+  
+  # Set the data attribute.
+  intervention_data_element@data <- data.table::data.table("threshold_probability"=threshold_probabilities,
+                                                           "net_benefit"=intervention_net_benefit)
+  
+  # Set the curve type identifier.
+  intervention_data_element <- add_data_element_identifier(x=intervention_data_element,
+                                                           curve_type="intervention_all")
+  
+  # Determine the number of true and false positives to determine the net
+  # benefit of the model.
+  data[, ":="("n_true_positive"=cumsum(is_positive),
+              "n_false_positive"=cumsum(!is_positive))]
+  
+  # Compute benefit for the model.
+  model_net_benefit <- ..compute_dca_data_net_benefit(data, threshold_probabilities)
+  
+  # Set the data attribute
+  data_element@data <- data.table::data.table("threshold_probability"=threshold_probabilities,
+                                              "net_benefit"=model_net_benefit)
+  
+  # Set the curve type identifier.
+  data_element <- add_data_element_identifier(x=data_element,
+                                              curve_type="model")
+  
+  return(c(data_element,
+           intervention_data_element))
 }
 
 
 
-.compute_dca_data_survival <- function(evaluation_time, data, object, confidence_level,
-                                       ensemble_method, is_pre_processed, determine_ci=TRUE, cl=NULL,
-                                       verbose=FALSE, message_indent=0L){
+.compute_dca_data_survival <- function(data_element,
+                                       data,
+                                       object,
+                                       ensemble_method,
+                                       aggregate_results,
+                                       is_pre_processed,
+                                       cl=NULL,
+                                       progress_bar=FALSE,
+                                       verbose=FALSE,
+                                       message_indent=0L,
+                                       ...){
   
   # Predict survival probabilities.
   data <- .predict(object=object,
                    data=data,
-                   time=evaluation_time,
+                   time=data_element@identifiers$evaluation_time,
                    ensemble_method=ensemble_method,
                    is_pre_processed=is_pre_processed,
                    type="survival_probability")
-
+  
   # Check if any predictions are valid.
-  if(!any_predictions_valid(data, outcome_type=object@outcome_type)) return(list("confidence_level"=confidence_level))
+  if(!any_predictions_valid(data, outcome_type=object@outcome_type)) return(NULL)
   
   # Check if the data has more than 1 row.
-  if(nrow(data) <= 1) return(list("confidence_level"=confidence_level))
+  if(nrow(data) <= 1) return(NULL)
   
-  # Set test probabilities
-  test_probabilities <- seq(from=0.00, to=1.00, by=0.005)
-  
-  # Compute data from the model.
-  model_data <- .compute_dca_data_survival_model(data=data,
-                                                 x=test_probabilities,
-                                                 evaluation_time=evaluation_time)
-  
-  # Compute intervention for all data.
-  intervention_data <- .compute_dca_data_survival_model(data=data,
-                                                        x=test_probabilities,
-                                                        evaluation_time=evaluation_time,
-                                                        return_intervention=TRUE)
-  
-  if(determine_ci){
-    if(verbose) logger.message(paste0("Computing bootstrap confidence interval data at a time of ", evaluation_time, "."),
-                               indent=message_indent)
-    
-    # Bootstrap the data.
-    bootstrap_data <- bootstrapper(data=data,
-                                   alpha= 1.0 - confidence_level,
-                                   FUN=.compute_dca_data_survival_model,
-                                   evaluation_time=evaluation_time,
-                                   x=test_probabilities,
-                                   cl=cl,
-                                   verbose=verbose)
-    
-  } else {
-    bootstrap_data <- NULL
+  # Message the user concerning the time at which the decision curves are
+  # computed. This is only relevant for survival analysis, where survival
+  # probability is time depend.
+  if(length(data_element@identifiers$evaluation_time) > 0 & progress_bar){
+    logger.message(paste0("Computing decision curves at time ", data_element@identifiers$evaluation_time, "."),
+                   indent=message_indent)
   }
   
-  # Add to list and return
-  return(list("model_data"=model_data,
-              "intervention_all"=intervention_data,
-              "bootstrap_data"=bootstrap_data,
-              "confidence_level"=confidence_level))
+  # Set test probabilities
+  threshold_probabilities <- seq(from=0.000, to=1.000, by=0.005)
+  
+  # Add bootstrap data.
+  bootstrap_data <- add_data_element_bootstrap(x=data_element,
+                                               ...)
+  
+  # Iterate over elements.
+  data_elements <- fam_mapply(cl=cl,
+                              assign=NULL,
+                              FUN=.compute_dca_data_survival_model,
+                              data_element=bootstrap_data$data_element,
+                              bootstrap=bootstrap_data$bootstrap,
+                              bootstrap_seed = bootstrap_data$seed,
+                              MoreArgs=list("data"=data,
+                                            "threshold_probabilities"=threshold_probabilities),
+                              progress_bar=progress_bar)
+  
+  # Merge data elements
+  data_elements <- merge_data_elements(data_elements)
+  
+  if(aggregate_results) data_elements <- .compute_data_element_estimates(x=data_elements)
+  
+  return(data_elements)
 }
 
 
-.compute_dca_data_survival_model <- function(data, x, evaluation_time, return_intervention=FALSE){
+.compute_dca_data_survival_model <- function(data_element,
+                                             data,
+                                             threshold_probabilities,
+                                             bootstrap,
+                                             bootstrap_seed){
+  
+  # Bootstrap the data.
+  if(bootstrap) data <- get_bootstrap_sample(data=data,
+                                             seed=bootstrap_seed)
+  
+  # Compute benefit for the situation an intervention always happens.
+  intervention_net_benefit <- ..compute_dca_data_net_benefit_survival(data=data,
+                                                                      x=threshold_probabilities,
+                                                                      evaluation_time=data_element@identifiers$evaluation_time,
+                                                                      intervention=TRUE)
+  
+  # Copy data element for intervention.
+  intervention_data_element <- data_element
+  
+  # Set the data attribute.
+  intervention_data_element@data <- data.table::data.table("threshold_probability"=threshold_probabilities,
+                                                           "net_benefit"=intervention_net_benefit)
+  
+  # Set the curve type identifier.
+  intervention_data_element <- add_data_element_identifier(x=intervention_data_element,
+                                                           curve_type="intervention_all")
+  
+  # Compute benefit for the model.
+  model_net_benefit <- ..compute_dca_data_net_benefit_survival(data=data,
+                                                               x=threshold_probabilities,
+                                                               evaluation_time=data_element@identifiers$evaluation_time,
+                                                               intervention=FALSE)
+  
+  # Set the data attribute
+  data_element@data <- data.table::data.table("threshold_probability"=threshold_probabilities,
+                                              "net_benefit"=model_net_benefit)
+  
+  # Set the curve type identifier.
+  data_element <- add_data_element_identifier(x=data_element,
+                                              curve_type="model")
+  
+  return(c(data_element,
+           intervention_data_element))
+}
+
+
+
+..compute_dca_data_net_benefit <- function(data, x){
+  # Compute net benefit for models.
+  
+  # Suppress NOTES due to non-standard evaluation in data.table
+  n_true_positive <- n_false_positive <- probability <- NULL
+  
+  # Determine maximum number of true and false positives.
+  n_max_true_positive <- max(data$n_true_positive)
+
+    # Determine the number of samples.
+  n <- nrow(data)
+  
+  # Determine net benefit
+  data[, ":="("net_benefit"=n_true_positive / n - n_false_positive / n * (probability / (1.0 - probability)))]
+  
+  # Compute net benefit at the test probabilities.
+  net_benefit <- suppressWarnings(stats::approx(x=data$probability,
+                                                y=data$net_benefit,
+                                                xout=x,
+                                                yleft=n_max_true_positive / n,
+                                                yright=0.0,
+                                                method="constant")$y)
+  
+  return(net_benefit)
+}
+
+
+..compute_dca_data_net_benefit_survival <- function(data,
+                                                    x,
+                                                    evaluation_time,
+                                                    intervention=FALSE){
   
   # Suppress NOTES due to non-standard evaluation in data.table
   predicted_outcome <- outcome_event <- outcome_time <- death <- censored <- n <- NULL
@@ -377,7 +487,7 @@ setMethod("extract_decision_curve_data", signature(object="familiarEnsemble"),
   
   # Define probability thresholds that will be evaluated. When the intervention
   # curve is required, only one threshold (0.0) is used.
-  if(return_intervention){
+  if(intervention){
     p_threshold <- 0.0
   } else {
     p_threshold <- x
@@ -413,13 +523,14 @@ setMethod("extract_decision_curve_data", signature(object="familiarEnsemble"),
       # ourselves to those samples that were censored or had an event prior to
       # the evaluation time. The remaining patients do not affect the survival
       # probability.
-      surv_group <- surv_group[outcome_time <= evaluation_time, list("death"=sum(outcome_event == 1),
-                                                                     "censored"=sum(outcome_event == 0)),
+      surv_group <- surv_group[outcome_time <= evaluation_time,
+                               list("death"=sum(outcome_event == 1),
+                                    "censored"=sum(outcome_event == 0)),
                                by="outcome_time"][order(outcome_time)]
       
       if(nrow(surv_group) > 0){
         # Add group sizes at the start of each interval.
-        surv_group[, "n":=n_surv_group - shift(cumsum(death + censored), n=1, fill=0, type="lag")]
+        surv_group[, "n":=n_surv_group - data.table::shift(cumsum(death + censored), n=1, fill=0, type="lag")]
         
         # Compute the probability of survival in the interval
         surv_group[, "survival_in_interval":=(n - death) / n]
@@ -442,8 +553,9 @@ setMethod("extract_decision_curve_data", signature(object="familiarEnsemble"),
     previous_group_size <- n_surv_group
     
     # Compute net benefit.
-    if(return_intervention){
+    if(intervention){
       net_benefit <- n_true_positive / n_group_size - n_false_positive / n_group_size * (x / (1.0 - x))
+      
     } else {
       net_benefit[ii] <- n_true_positive / n_group_size - n_false_positive / n_group_size * (p_threshold[ii] / (1.0 - p_threshold[ii]))
       
@@ -451,38 +563,71 @@ setMethod("extract_decision_curve_data", signature(object="familiarEnsemble"),
     }
   }
   
-  # Store data.
-  model_data <- data.table::data.table("evaluation_time"=evaluation_time,
-                                       "threshold_probability"=x,
-                                       "net_benefit"=net_benefit)
-  
-  return(model_data)
-}
-
-
-
-..compute_dca_data_net_benefit <- function(data, x){
-  # Compute net benefit for models.
-  
-  # Suppress NOTES due to non-standard evaluation in data.table
-  n_true_positive <- n_false_positive <- probability <- NULL
-  
-  # Determine maximum number of true and false positives.
-  n_max_true_positive <- max(data$n_true_positive)
-
-    # Determine the number of samples.
-  n <- nrow(data)
-  
-  # Determine net benefit
-  data[, ":="("net_benefit"=n_true_positive / n - n_false_positive / n * (probability / (1.0 - probability)))]
-  
-  # Compute net benefit at the test probabilities.
-  net_benefit <- suppressWarnings(stats::approx(x=data$probability,
-                                                y=data$net_benefit,
-                                                xout=x,
-                                                yleft=n_max_true_positive / n,
-                                                yright=0.0,
-                                                method="constant")$y)
-  
   return(net_benefit)
 }
+
+
+#####export_decision_curve_analysis_data#####
+
+#'@title Extract and export decision curve analysis data.
+#'
+#'@description Extract and export decision curve analysis data in a
+#'  familiarCollection.
+#'
+#'@inheritParams export_all
+#'
+#'@inheritDotParams as_familiar_collection
+#'
+#'@details Data is usually collected from a `familiarCollection` object.
+#'  However, you can also provide one or more `familiarData` objects, that will
+#'  be internally converted to a `familiarCollection` object. It is also
+#'  possible to provide a `familiarEnsemble` or one or more `familiarModel`
+#'  objects together with the data from which data is computed prior to export.
+#'  Paths to the previous files can also be provided.
+#'
+#'  All parameters aside from `object` and `dir_path` are only used if `object`
+#'  is not a `familiarCollection` object, or a path to one.
+#'  
+#'  Decision curve analysis data is computed for categorical outcomes, i.e.
+#'  binomial and multinomial, as well as survival outcomes.
+#'
+#'@return A list of data.table (if `dir_path` is not provided), or nothing, as
+#'  all data is exported to `csv` files.
+#'@exportMethod export_decision_curve_analysis_data
+#'@md
+#'@rdname export_decision_curve_analysis_data-methods
+setGeneric("export_decision_curve_analysis_data", function(object, dir_path=NULL, aggregate_results=TRUE, ...) standardGeneric("export_decision_curve_analysis_data"))
+
+#####export_decision_curve_analysis_data (collection)#####
+
+#'@rdname export_decision_curve_analysis_data-methods
+setMethod("export_decision_curve_analysis_data", signature(object="familiarCollection"),
+          function(object, dir_path=NULL, aggregate_results=TRUE, ...){
+            
+            return(.export(x=object,
+                           data_slot="decision_curve_data",
+                           dir_path=dir_path,
+                           aggregate_results=aggregate_results,
+                           main_type="decision_curve_analysis",
+                           subtype="data"))
+          })
+
+#####export_decision_curve_analysis_data (generic)#####
+
+#'@rdname export_decision_curve_analysis_data-methods
+setMethod("export_decision_curve_analysis_data", signature(object="ANY"),
+          function(object, dir_path=NULL, aggregate_results=TRUE, ...){
+            
+            # Attempt conversion to familiarCollection object.
+            object <- do.call(as_familiar_collection,
+                              args=c(list("object"=object,
+                                          "data_element"="decision_curve_analyis",
+                                          "aggregate_results"=aggregate_results),
+                                     list(...)))
+            
+            return(do.call(export_decision_curve_analysis_data,
+                           args=c(list("object"=object,
+                                       "dir_path"=dir_path,
+                                       "aggregate_results"=aggregate_results),
+                                  list(...))))
+          })

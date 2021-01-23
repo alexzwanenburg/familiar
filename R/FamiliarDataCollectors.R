@@ -269,13 +269,13 @@ collect_prediction_data <- function(fam_data_list){
 #'
 #' @return A list with aggregated data.
 #' @noRd
-collect_decision_curve_analysis_data <- function(fam_data_list){
-  
-  return(universal_collector(fam_data_list=fam_data_list,
-                             data_slot="decision_curve_data",
-                             extra_data="intervention_all",
-                             more_identifiers=c("fs_method", "learner")))
-}
+# collect_decision_curve_analysis_data <- function(fam_data_list){
+#   
+#   return(universal_collector(fam_data_list=fam_data_list,
+#                              data_slot="decision_curve_data",
+#                              extra_data="intervention_all",
+#                              more_identifiers=c("fs_method", "learner")))
+# }
 
 
 

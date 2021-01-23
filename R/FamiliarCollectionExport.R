@@ -51,7 +51,7 @@ setMethod("export_all", signature(object="familiarCollection"),
             model_vimp <- export_model_vimp(object=object, dir_path=dir_path)
             
             # Export permutation variable importance.
-            permutation_vimp <- export_permutation_vimp(object=object, dir_path=dir_path, export_raw=export_raw)
+            permutation_vimp <- export_permutation_vimp(object=object, dir_path=dir_path, aggregate_results=aggregate_results)
             
             # Export model hyperparameters
             hyperparameters <- export_hyperparameters(object=object, dir_path=dir_path)
@@ -60,7 +60,7 @@ setMethod("export_all", signature(object="familiarCollection"),
             prediction_data <- export_prediction_data(object=object, dir_path=dir_path, export_raw=export_raw)
             
             # Export decision curve analysis data
-            dca_data <- export_decision_curve_analysis_data(object=object, dir_path=dir_path, export_raw=export_raw)
+            dca_data <- export_decision_curve_analysis_data(object=object, dir_path=dir_path, aggregate_results=aggregate_results)
             
             # Export calibration information
             calibration_info <- export_calibration_info(object=object, dir_path=dir_path)
@@ -81,7 +81,7 @@ setMethod("export_all", signature(object="familiarCollection"),
             
             
             # Export confusion matrix
-            confusion_matrix <- export_confusion_matrix_data(object=object, dir_path=dir_path, export_raw=export_raw)
+            confusion_matrix <- export_confusion_matrix_data(object=object, dir_path=dir_path)
             
             # Export kaplan-meier info
             km_info <- export_stratification_cutoff(object=object, dir_path=dir_path)
@@ -508,69 +508,6 @@ setMethod("export_prediction_data", signature(object="ANY"),
                            args=append(list("object"=object, "dir_path"=dir_path, "export_raw"=export_raw), list(...))))
           })
 
-
-
-#####export_decision_curve_analysis_data#####
-
-#'@title Extract and export decision curve analysis data.
-#'
-#'@description Extract and export decision curve analysis data in a
-#'  familiarCollection.
-#'
-#'@inheritParams export_all
-#'
-#'@inheritDotParams as_familiar_collection
-#'
-#'@details Data is usually collected from a `familiarCollection` object.
-#'  However, you can also provide one or more `familiarData` objects, that will
-#'  be internally converted to a `familiarCollection` object. It is also
-#'  possible to provide a `familiarEnsemble` or one or more `familiarModel`
-#'  objects together with the data from which data is computed prior to export.
-#'  Paths to the previous files can also be provided.
-#'
-#'  All parameters aside from `object` and `dir_path` are only used if `object`
-#'  is not a `familiarCollection` object, or a path to one.
-#'  
-#'  Decision curve analysis data is computed for categorical outcomes, i.e.
-#'  binomial and multinomial, as well as survival outcomes.
-#'
-#'@return A list of data.table (if `dir_path` is not provided), or nothing, as
-#'  all data is exported to `csv` files.
-#'@exportMethod export_decision_curve_analysis_data
-#'@md
-#'@rdname export_decision_curve_analysis_data-methods
-setGeneric("export_decision_curve_analysis_data", function(object, dir_path=NULL, ...) standardGeneric("export_decision_curve_analysis_data"))
-
-#####export_decision_curve_analysis_data (collection)#####
-
-#'@rdname export_decision_curve_analysis_data-methods
-setMethod("export_decision_curve_analysis_data", signature(object="familiarCollection"),
-          function(object, dir_path=NULL, export_raw=FALSE, ...){
-            
-            return(universal_exporter(object=object,
-                                      dir_path=dir_path,
-                                      export_raw=export_raw,
-                                      data_slot="decision_curve_data",
-                                      extra_data="intervention_all",
-                                      target_column="net_benefit",
-                                      splitting_variable="threshold_probability",
-                                      main_type="decision_curve_analysis",
-                                      sub_type="data"))
-          })
-
-#####export_decision_curve_analysis_data (generic)#####
-
-#'@rdname export_decision_curve_analysis_data-methods
-setMethod("export_decision_curve_analysis_data", signature(object="ANY"),
-          function(object, dir_path=NULL, export_raw=FALSE, ...){
-            
-            # Attempt conversion to familiarCollection object.
-            object <- do.call(as_familiar_collection,
-                              args=append(list("object"=object, "data_element"="decision_curve_analyis"), list(...)))
-            
-            return(do.call(export_decision_curve_analysis_data,
-                           args=append(list("object"=object, "dir_path"=dir_path, "export_raw"=export_raw), list(...))))
-          })
 
 
 #####export_calibration_info#####
@@ -1621,6 +1558,9 @@ setMethod(".apply_labels", signature(data="familiarDataElement", object="familia
             
             # Order columns.
             data.table::setcolorder(x=x, neworder=c(grouping_columns, remaining_columns, value_columns))
+            
+            # Drop unused levels.
+            x <- droplevels(x)
             
             # Replace data attribute.
             data@data <- x

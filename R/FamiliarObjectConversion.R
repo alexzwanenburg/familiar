@@ -367,7 +367,7 @@ setMethod("as_familiar_collection", signature(object="list"),
                                         fs_method =  unique(sapply(object, function(fam_data_obj) (fam_data_obj@fs_method))),
                                         prediction_data = collect_prediction_data(fam_data_list=object),
                                         confusion_matrix = collect(x=object, data_slot="confusion_matrix"),
-                                        decision_curve_data = collect_decision_curve_analysis_data(fam_data_list=object),
+                                        decision_curve_data = collect(x=object, data_slot="decision_curve_data"),
                                         calibration_info = collect_calibration_info(fam_data_list=object),
                                         calibration_data = collect_calibration_data(fam_data_list=object),
                                         model_performance = collect(x=object, data_slot="model_performance"),
@@ -382,7 +382,9 @@ setMethod("as_familiar_collection", signature(object="list"),
                                         project_id = object[[1]]@project_id)
             
             # Create labels for the data names for correct ordering of plots etc.
-            fam_collect <- set_data_set_names(x=fam_collect, new=as.character(familiar_data_names), order=levels(familiar_data_names))
+            fam_collect <- set_data_set_names(x=fam_collect,
+                                              new=as.character(familiar_data_names),
+                                              order=levels(familiar_data_names))
             
             # Add a package version to the familiarCollection object
             fam_collect <- add_package_version(object=fam_collect)
