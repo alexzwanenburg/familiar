@@ -19,7 +19,8 @@ not cause any issues with post-hoc analyses, but is not **not backward
 compatible** when updating familiar prior to completing the modelling and
 evaluation process.
 
-* Improved flexibility of the evaluation process that is conducted to explain and assess models:
+* Improved flexibility of the evaluation process that is conducted to explain
+and assess models:
     * Added `dynamic_model_loading` parameter that supports dynamic loading of
     models to an ensemble. This reduces the memory footprint at the cost of IO
     overhead as the models are read from the disk or network when required. By
@@ -35,6 +36,33 @@ evaluation process.
     parallelisation takes place over different subsamples, learners, etc. This
     may provide an increase in processing speed, at the cost of less feedback
     and a higher memory footprint.
+    
+    * All evaluation steps now produce `familiarDataElement` elements. This is
+    not **not backward compatible**. `familiarData` and `familiarCollection`
+    objects created using previous versions need to be created anew. enables
+    flexibility in terms of how data and models are handled for computation.
+    Specifically, many evaluation steps that focus on models can be evaluated at
+    the ensemble (`ensemble`), model (`model`) or an intermediate level
+    (`hybrid`) by setting the `detail_level` parameter. The `hybrid` level
+    differs from `ensemble` in that the individual model predictions are used
+    instead of the prediction of the ensemble itself. Likewise, the type of
+    estimation can now be flexibly chosen for several evaluation steps by
+    setting the `estimation_type` parameter.
+    
+    * Several parameters are now deprecated:
+    
+        * `compute_model_data` has been completely deprecated. This can now be
+        specified using the new `detail_level` parameter.
+        
+        * `compute_model_ci` has been completely deprecated. This can now be
+        specified using the new `estimation_type` parameter.
+        
+        * `compute_ensemble_ci` has been completely deprecated. This can now be
+        specified using the new `estimation_type` parameter.
+        
+        * `aggregate_ci` has been replaced by `aggregate_results`. Aside from
+        bootstrap confidence intervals, underlying results for bias-corrected
+        estimates can now be aggregated.
 
 
 ## Minor changes:
@@ -108,7 +136,8 @@ information cannot be added retroactively.
 * Fixed an issue that would cause `export_permutation_vimp` to export the wrong
 data when called by the user.
 
-
+* Fixed an issue that would cause an error when a decision curve was plotted
+without requiring multiple line colours.
 
 
 # Version 0.0.0.53 (Pre-release)
