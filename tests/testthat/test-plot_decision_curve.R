@@ -54,7 +54,7 @@ familiar:::test_plot_ordering(plot_function=familiar:::plot_decision_curve,
                               data_element="decision_curve_analyis",
                               outcome_type_available=c("multinomial"),
                               plot_args=list("facet_by"=c("learner", "fs_method"),
-                                             "color_by"=c("data_set", "pos_class")),
+                                             "color_by"=c("data_set", "positive_class")),
                               debug=debug_flag)
 
 # Test alignment of different plots, with missing data.

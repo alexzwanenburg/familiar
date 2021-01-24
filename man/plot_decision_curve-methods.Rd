@@ -217,9 +217,9 @@ familiarCollection object.
 This function generates plots for decision curves.
 
 Available splitting variables are: \code{fs_method}, \code{learner}, \code{data_set} and
-\code{pos_class} (categorical outcomes) or \code{evaluation_time} (survival outcomes).
+\code{positive_class} (categorical outcomes) or \code{evaluation_time} (survival outcomes).
 By default, the data is split by \code{fs_method} and \code{learner}, with faceting by
-\code{data_set} and colouring by \code{pos_class} or \code{evaluation_time}.
+\code{data_set} and colouring by \code{positive_class} or \code{evaluation_time}.
 
 Available palettes for \code{discrete_palette} are those listed by
 \code{grDevices::palette.pals()} (requires R >= 4.0.0), \code{grDevices::hcl.pals()}
