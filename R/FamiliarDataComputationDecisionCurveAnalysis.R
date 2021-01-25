@@ -192,7 +192,6 @@ setMethod("extract_decision_curve_data", signature(object="familiarEnsemble"),
     dca_data <- lapply(data_elements,
                        .compute_dca_data_categorical,
                        data=prediction_data,
-                       object=object,
                        cl=cl,
                        ...)
    
@@ -217,7 +216,6 @@ setMethod("extract_decision_curve_data", signature(object="familiarEnsemble"),
 
 .compute_dca_data_categorical <- function(data_element,
                                           data,
-                                          object,
                                           aggregate_results,
                                           cl=NULL,
                                           progress_bar=FALSE,

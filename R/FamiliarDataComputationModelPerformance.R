@@ -128,8 +128,7 @@ setMethod("extract_performance", signature(object="familiarEnsemble"),
                                       detail_level = detail_level,
                                       estimation_type = estimation_type,
                                       confidence_level = confidence_level,
-                                      bootstrap_ci_method = bootstrap_ci_method,
-                                      value_column = "value")
+                                      bootstrap_ci_method = bootstrap_ci_method)
             
             # Generate elements to send to dispatch.
             performance_data <- extract_dispatcher(FUN=.extract_model_performance_data,

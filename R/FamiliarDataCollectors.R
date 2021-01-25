@@ -417,15 +417,15 @@ collect_stratification_data <- function(fam_data_list){
 #'
 #' @return A list with aggregated AUC curve information.
 #' @noRd
-collect_auc_data <- function(fam_data_list){
-  # AUC data is not shared between different familiarData objects. We don't need
-  # to identify unique entries.
-  
-  return(universal_collector(fam_data_list=fam_data_list,
-                             data_slot="auc_data",
-                             extra_data=NULL,
-                             more_identifiers=c("fs_method", "learner")))
-}
+# collect_auc_data <- function(fam_data_list){
+#   # AUC data is not shared between different familiarData objects. We don't need
+#   # to identify unique entries.
+#   
+#   return(universal_collector(fam_data_list=fam_data_list,
+#                              data_slot="auc_data",
+#                              extra_data=NULL,
+#                              more_identifiers=c("fs_method", "learner")))
+# }
 
 
 #' @title Collector for confusion matrices

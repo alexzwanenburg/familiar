@@ -94,6 +94,8 @@ formatted, and will provide meaningful errors if not.
 `familiarModel`, `familiarEnsemble`, `familiarData` and `familiarCollection`
 objects.
 
+* Added `plot_auc_precision_recall_curve` method to plot precision-recall
+curves.
 
 
 ## Bug fixes:
@@ -137,8 +139,11 @@ information cannot be added retroactively.
 data when called by the user.
 
 * Fixed an issue that would cause an error when a decision curve was plotted
-without requiring multiple line colours.
+with a confidence interval but without requiring multiple line colours.
 
+* Fixed an issue that would cause an error when a receiver operating
+characteristic curve was plotted with a confidence interval but without
+requiring multiple line colours.
 
 # Version 0.0.0.53 (Pre-release)
 
