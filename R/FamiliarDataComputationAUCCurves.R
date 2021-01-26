@@ -229,8 +229,8 @@ setMethod("extract_auc_data", signature(object="familiarEnsemble"),
                                            bootstrap_seed){
   
   # Suppress NOTES due to non-standard evaluation in data.table
-  outcome <- probability <- predicted_class <- n_true_positive <- n_false_positive <- tpr <- NULL
-  is_true_positive <- is_false_positive <- is_true_negative <- is_false_negative <- ppv <- NULL
+  outcome <- probability <- ppv <- tpr <- is_positive <- NULL
+  n_true_positive <- n_false_positive <- NULL
   
   # Get the positive class.
   positive_class <- data_element@identifiers$positive_class
@@ -249,27 +249,20 @@ setMethod("extract_auc_data", signature(object="familiarEnsemble"),
   n_positive <- sum(data$outcome == positive_class)
   n_negative <- sum(data$outcome != positive_class)
   
-  # Determine TP, FP, TN and FN
-  data[, "is_true_positive":=outcome == positive_class & predicted_class == positive_class]
-  data[, "is_false_positive":=outcome != positive_class & predicted_class == positive_class]
-  data[, "is_true_negative":=outcome != positive_class & predicted_class != positive_class]
-  data[, "is_false_negative":=outcome == positive_class & predicted_class != positive_class]
+  # Determine whether the observed outcome was positive.
+  data[, "is_positive":=outcome == positive_class]
   
   # Keep only probability and is_positive
-  data <- data[, c("probability",
-                   "is_true_positive",
-                   "is_false_positive",
-                   "is_true_negative",
-                   "is_false_negative")]
-  
+  data <- data[, c("probability", "is_positive")]
+    
   # Order by inverse probability.
   data <- data[order(-probability)]
   
   # Determine the number of true and false positives.
-  data[, ":="("n_true_positive"=cumsum(is_true_positive),
-              "n_false_positive"=cumsum(is_false_positive),
-              "n_true_negative"=cumsum(is_true_negative),
-              "n_false_negative"=cumsum(is_false_negative))]
+  data[, ":="("n_true_positive"=cumsum(is_positive),
+              "n_false_positive"=cumsum(!is_positive),
+              "n_true_negative"=n_negative - cumsum(!is_positive),
+              "n_false_negative"=n_positive - cumsum(is_positive))]
   
   # Compute TPR / recall (sensitivity)
   if(n_positive > 0){
