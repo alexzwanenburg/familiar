@@ -37,8 +37,8 @@ familiar:::test_plots(plot_function=familiar::plot_auc_roc_curve,
 # Test alignment of different plots, with missing data.
 familiar:::test_plot_ordering(plot_function=familiar::plot_auc_roc_curve,
                               data_element="auc_data",
-                              outcome_type_available=c("binomial", "multinomial",
-                                                       debug=debug_flag))
+                              outcome_type_available=c("binomial", "multinomial"),
+                              debug=debug_flag)
 
 # Test alignment of different plots, with missing data.
 familiar:::test_plot_ordering(plot_function=familiar::plot_auc_roc_curve,
@@ -82,8 +82,8 @@ familiar:::test_plots(plot_function=familiar::plot_auc_precision_recall_curve,
 # Test alignment of different plots, with missing data.
 familiar:::test_plot_ordering(plot_function=familiar::plot_auc_precision_recall_curve,
                               data_element="auc_data",
-                              outcome_type_available=c("binomial", "multinomial",
-                                                       debug=debug_flag))
+                              outcome_type_available=c("binomial", "multinomial"),
+                              debug=debug_flag)
 
 # Test alignment of different plots, with missing data.
 familiar:::test_plot_ordering(plot_function=familiar::plot_auc_roc_curve,
