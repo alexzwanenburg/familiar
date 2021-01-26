@@ -65,7 +65,7 @@ setMethod("is_empty", signature(x="familiarDataElement"), function(x) return(is_
 #####get_outcome_class_levels---------------------------------------------------
 setMethod("get_outcome_class_levels", signature(x="outcomeInfo"), function(x){
   if(x@outcome_type %in% c("binomial", "multinomial")){
-    return(x@levels)
+    return(as.character(x@levels))
     
   } else {
     return(character(0))
@@ -101,7 +101,7 @@ setMethod("get_outcome_class_levels", signature(x="dataObject"), function(x){
     return(character(0))
     
   } else if(outcome_type %in% c("binomial", "multinomial")){
-    return(levels(data[[get_outcome_columns(x=outcome_type)]]))
+    return(as.character(levels(data[[get_outcome_columns(x=outcome_type)]])))
     
   } else {
     ..error_no_known_outcome_type(outcome_type)

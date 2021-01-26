@@ -145,6 +145,11 @@ with a confidence interval but without requiring multiple line colours.
 characteristic curve was plotted with a confidence interval but without
 requiring multiple line colours.
 
+* Fixed an error that occurred when categorical outcome levels are numeric, e.g.
+0 and 1. For some learners, such as `svm`, this caused an indexing error as the
+outcome levels were interpreted as indices instead of column names.
+
+
 # Version 0.0.0.53 (Pre-release)
 
 ## Major changes:
