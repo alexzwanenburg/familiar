@@ -324,8 +324,8 @@ setMethod("..predict", signature(object="familiarGLM", data="dataObject"),
                                                            encoding_method="dummy",
                                                            drop_levels=FALSE)
               
-              if(object@outcome_type == "binomial"){
-                #####Binomial outcomes##########################################
+              if(object@outcome_type  %in% c("continuous", "count", "binomial")){
+                #####Binomial, count and continuous outcomes####################
                 
                 # Use the model for prediction.
                 return(predict(object=object@model,
@@ -341,15 +341,6 @@ setMethod("..predict", signature(object="familiarGLM", data="dataObject"),
                                                           newdata=encoded_data$encoded_data@data,
                                                           type=type,
                                                           ...)))
-                
-              } else if(object@outcome_type %in% c("continuous", "count")){
-                #####Count and continuous outcomes##############################
-                
-                # Use the model for prediction.
-                return(predict(object=object@model,
-                               newdata=encoded_data$encoded_data@data,
-                               type=type,
-                               ...))
                 
               } else {
                 ..error_outcome_type_not_implemented(object@outcome_type)
