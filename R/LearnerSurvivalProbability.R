@@ -58,7 +58,8 @@ learner.survival_probability_relative_risk <- function(object, data, time){
   
   # Prepare an empty table in case things go wrong.
   empty_table <- get_placeholder_prediction_table(object=object,
-                                                  data=data)
+                                                  data=data,
+                                                  type="survival_probability")
   
   # Check for several issues that prevent survival probabilities from being
   # predicted.
@@ -81,10 +82,10 @@ learner.survival_probability_relative_risk <- function(object, data, time){
                                  rule=2)$y
   
   # Create a n_sample x n_times matrix
-  survival_probability <- sapply(predicted_risks, function(rr, s0) (s0^rr), s0=baseline_surv)
+  survival_probs <- sapply(predicted_risks, function(rr, s0) (s0^rr), s0=baseline_surv)
   
   # Updated the prediction table
-  prediction_table[, "predicted_outcome":=survival_probability]
+  prediction_table[, "survival_probability":=survival_probs]
   
   return(prediction_table)
 }
