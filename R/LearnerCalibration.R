@@ -28,7 +28,7 @@ learner.calibration.survival <- function(object, data, time){
   
   # Rename the survival column to standard name.
   data.table::setnames(probability_table,
-                       old=c("outcome_time", "outcome_event", "predicted_outcome"),
+                       old=c("outcome_time", "outcome_event", "survival_probability"),
                        new=c("time", "event", "exp_prob"))
   
   # Sort by survival probability.
