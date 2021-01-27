@@ -230,10 +230,10 @@ setMethod("..predict", signature(object="familiarGLM", data="dataObject"),
             
             if(type == "default"){
               ##### Default method #############################################
-            
-            # Check if the model was trained.
-            if(!model_is_trained(object)) return(callNextMethod())
-            
+              
+              # Check if the model was trained.
+              if(!model_is_trained(object)) return(callNextMethod())
+              
               # Check if the data is empty.
               if(is_empty(data)) return(callNextMethod())
               
@@ -306,7 +306,7 @@ setMethod("..predict", signature(object="familiarGLM", data="dataObject"),
               } else {
                 ..error_outcome_type_not_implemented(object@outcome_type)
               }
-            
+              
               return(prediction_table)
               
             } else {
