@@ -527,39 +527,24 @@ applyContrastReference <- function(dt, dt_ref, method){
 }
 
 
-# createNonValidPredictionTable <- function(dt, outcome_type){
-#   # Create skeleton
-#   dt_pred <- dt[, get_non_feature_columns(x=outcome_type), with=FALSE]
-# 
-#   # Add prediction columns
-#   if(outcome_type %in% c("survival", "continuous", "count")){
-#     # For survival and continuous outcomes, a single column is required
-#     dt_pred$outcome_pred         <- as.double(NA)
-#   } else if (outcome_type %in% c("binomial", "multinomial")){
-#     # For binomial and multinomial outcomes, we add both predicted class and predicted class probabilities
-#     dt_pred$outcome_pred_class   <- as.character(NA)
-# 
-#     # Add class probabilities
-#     outcome_pred_class_prob_cols <- check_column_name(column_name=paste0("outcome_pred_prob_", levels(dt$outcome)))
-#     for(ii in 1:length(outcome_pred_class_prob_cols)){
-#       dt_pred[, (outcome_pred_class_prob_cols[ii]):=as.double(NA)]
-#     }
-#   } else if(outcome_type == "competing_risk"){
-#     ..error_outcome_type_not_implemented(outcome_type)
-#   }
-# 
-#   # Return without valid data prediction table
-#   return(dt_pred)
-# }
-
 any_predictions_valid <- function(prediction_table, outcome_type){
   
   if(is_empty(prediction_table)){
     return(FALSE)
   }
   
-  if(outcome_type %in% c("survival", "continuous", "count", "competing_risk")){
+  if(outcome_type %in% c("continuous", "count")){
     return(any(is.finite(prediction_table$predicted_outcome)))
+    
+  } else if(outcome_type %in% c("survival", "competing_risk")){
+    if("predicted_outcome" %in% colnames(prediction_table)){
+      return(any(is.finite(prediction_table$predicted_outcome)))
+      
+    } else if("survival_probability" %in% colnames(prediction_table)){
+      return(any(is.finite(prediction_table$survival_probability)))
+    } else {
+      return(FALSE)
+    }
     
   } else if(outcome_type %in% c("binomial", "multinomial")){
     return(!all(is.na(prediction_table$predicted_class)))
@@ -567,7 +552,6 @@ any_predictions_valid <- function(prediction_table, outcome_type){
   } else {
     ..error_no_known_outcome_type(outcome_type)
   }
-  
 }
 
 remove_nonvalid_predictions <- function(prediction_table, outcome_type){
