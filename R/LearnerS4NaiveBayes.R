@@ -81,38 +81,59 @@ setMethod("..train", signature(object="familiarNaiveBayes", data="dataObject"),
 
 #####..predict#####
 setMethod("..predict", signature(object="familiarNaiveBayes", data="dataObject"),
-          function(object, data, ...){
+          function(object, data, type="default", ...){
             
-            # Check if the model was trained.
-            if(!model_is_trained(object)) return(callNextMethod())
-            
-            # Check if the data is empty.
-            if(is_empty(data)) return(callNextMethod())
-            
-            # Get an empty prediction table.
-            prediction_table <- get_placeholder_prediction_table(object=object,
-                                                                 data=data)
-            
-            # Use the model for prediction.
-            model_predictions <- predict(object=object@model,
-                                         newdata=data@data)
-            
-            # Obtain class levels.
-            class_levels <- get_outcome_class_levels(x=object)
-            
-            # Add class probabilities.
-            class_probability_columns <- get_class_probability_name(x=object)
-            for(ii in seq_along(class_probability_columns)){
-              prediction_table[, (class_probability_columns[ii]):=model_predictions$posterior[, class_levels[ii]]]
+            if(type == "default"){
+              ##### Default method #############################################
+              
+              # Check if the model was trained.
+              if(!model_is_trained(object)) return(callNextMethod())
+              
+              # Check if the data is empty.
+              if(is_empty(data)) return(callNextMethod())
+              
+              # Get an empty prediction table.
+              prediction_table <- get_placeholder_prediction_table(object=object,
+                                                                   data=data,
+                                                                   type=type)
+              
+              # Use the model for prediction.
+              model_predictions <- predict(object=object@model,
+                                           newdata=data@data)
+              
+              # Obtain class levels.
+              class_levels <- get_outcome_class_levels(x=object)
+              
+              # Add class probabilities.
+              class_probability_columns <- get_class_probability_name(x=object)
+              for(ii in seq_along(class_probability_columns)){
+                prediction_table[, (class_probability_columns[ii]):=model_predictions$posterior[, class_levels[ii]]]
+              }
+              
+              # Add the predicted class.
+              prediction_table[, "predicted_class":=model_predictions$class]
+              
+              return(prediction_table)
+              
+            } else {
+              ##### User-specified method ######################################
+              
+              # Check if the model was trained.
+              if(!model_is_trained(object)) return(NULL)
+              
+              # Check if the data is empty.
+              if(is_empty(data)) return(NULL)
+              
+              # Use the model for prediction. Note that klaR::NaiveBayes does
+              # not actually take a type argument currently.
+              return(predict(object=object@model,
+                             newdata=data@data,
+                             type=type,
+                             ...))
             }
-            
-            # Add the predicted class.
-            prediction_table[, "predicted_class":=model_predictions$class]
-            
-            return(prediction_table)
           })
 
 
 
 #####..vimp#####
-# Naive Bayes does not have a variable importance method.
+# Naive Bayes does not have an associated variable importance method.
