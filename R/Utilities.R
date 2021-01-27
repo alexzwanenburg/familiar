@@ -1035,10 +1035,21 @@ process_random_forest_survival_predictions <- function(event_matrix, event_times
     event_table <- data.table::rbindlist(event_table)
   }
   
-  # Remove predicted_outcome from the prediction table.
-  prediction_table[, "predicted_outcome":=NULL]
+  if(type == "cumulative_hazard"){
+    # Remove predicted_outcome from the prediction table.
+    prediction_table[, "predicted_outcome":=NULL]
+    
+  } else {
+    # Remove survival_probability from the prediction table.
+    prediction_table[, "survival_probability":=NULL]
+    
+    # Update response column.
+    data.table::setnames(event_table,
+                         old="predicted_outcome",
+                         new="survival_probability")
+  }
   
-  # Then merge the event table into the prediction table.
+  # Merge the event table into the prediction table.
   prediction_table <- merge(x=prediction_table, y=event_table, by=id_columns)
   
   return(prediction_table)
