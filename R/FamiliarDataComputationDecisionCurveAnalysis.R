@@ -475,7 +475,7 @@ setMethod("extract_decision_curve_data", signature(object="familiarEnsemble"),
                                                     intervention=FALSE){
   
   # Suppress NOTES due to non-standard evaluation in data.table
-  predicted_outcome <- outcome_event <- outcome_time <- death <- censored <- n <- NULL
+  survival_probability <- outcome_event <- outcome_time <- death <- censored <- n <- NULL
   
   # Prepare net benefit.
   net_benefit <- numeric(length(x))
@@ -497,7 +497,7 @@ setMethod("extract_decision_curve_data", signature(object="familiarEnsemble"),
   previous_group_size <- n_group_size + 1
   for(ii in seq_along(p_threshold)){
     # Select the group of patients
-    surv_group <- data.table::copy(data[predicted_outcome >= x[ii]])
+    surv_group <- data.table::copy(data[survival_probability >= x[ii]])
     
     # Get the total group size of the group where predicted survival probability
     # exceeds the threshold probability.
