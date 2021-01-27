@@ -569,24 +569,26 @@ setMethod("decode_categorical_variables_vimp", signature(object="data.table"),
 
 #####get_placeholder_prediction_table------------------------------------------
 setMethod("get_placeholder_prediction_table", signature(object="familiarModel", data="dataObject"),
-          function(object, data) return(get_placeholder_prediction_table(object=object@outcome_info, data=data@data)))
+          function(object, data, type="default") return(get_placeholder_prediction_table(object=object@outcome_info, data=data@data, type=type)))
 
 setMethod("get_placeholder_prediction_table", signature(object="familiarModel", data="data.table"),
-          function(object, data) return(get_placeholder_prediction_table(object=object@outcome_info, data=data)))
-
+          function(object, data, type="default") return(get_placeholder_prediction_table(object=object@outcome_info, data=data, type=type)))
 
 setMethod("get_placeholder_prediction_table", signature(object="familiarEnsemble", data="dataObject"),
-          function(object, data) return(get_placeholder_prediction_table(object=object@outcome_info, data=data@data)))
+          function(object, data, type="default") return(get_placeholder_prediction_table(object=object@outcome_info, data=data@data, type=type)))
 
 setMethod("get_placeholder_prediction_table", signature(object="familiarEnsemble", data="data.table"),
-          function(object, data) return(get_placeholder_prediction_table(object=object@outcome_info, data=data)))
-
+          function(object, data, type="default") return(get_placeholder_prediction_table(object=object@outcome_info, data=data, type=type)))
 
 setMethod("get_placeholder_prediction_table", signature(object="outcomeInfo", data="dataObject"),
-          function(object, data) return(get_placeholder_prediction_table(object=object, data=data@data)))
+          function(object, data, type="default") return(get_placeholder_prediction_table(object=object, data=data@data, type=type)))
 
 setMethod("get_placeholder_prediction_table", signature(object="outcomeInfo", data="data.table"),
-          function(object, data){
+          function(object, data, type="default"){
+            
+            # Check that the type parameter is valid,
+            .check_parameter_value_is_valid(x=type, var_name="type", values=.get_available_prediction_type_arguments())
+            .check_argument_length(type, var_name="type", min=1, max=1)
             
             # Find non-feature columns.
             non_feature_columns <- get_non_feature_columns(object)
@@ -594,28 +596,56 @@ setMethod("get_placeholder_prediction_table", signature(object="outcomeInfo", da
             # Create the prediction table.
             prediction_table <- data.table::copy(data[, mget(non_feature_columns)])
             
-            # Add prediction columns
-            if(object@outcome_type %in% c("survival", "continuous", "count", "competing_risk")){
-              # For survival and continuous outcomes, a single predicted outcome
-              # column is added.
-              prediction_table[, "predicted_outcome":=as.double(NA)]
+            if(type == "default"){
+              # Add default prediction columns.
               
-            } else if(object@outcome_type %in% c("binomial", "multinomial")){
-              # For categorical outcomes, both predicted class and predicted
-              # class probabilities are added.
-              prediction_table[, "predicted_class":=as.character(NA)]
+              if(object@outcome_type %in% c("survival", "continuous", "count", "competing_risk")){
+                # For survival and continuous outcomes, a single predicted outcome
+                # column is added.
+                prediction_table[, "predicted_outcome":=as.double(NA)]
+                
+              } else if(object@outcome_type %in% c("binomial", "multinomial")){
+                # For categorical outcomes, both predicted class and predicted
+                # class probabilities are added.
+                prediction_table[, "predicted_class":=as.character(NA)]
+                
+                # Assign factor.
+                prediction_table$predicted_class <- factor(prediction_table$predicted_class,
+                                                           levels=get_outcome_class_levels(x=object))
+                
+                # Define probabilities columns
+                outcome_probability_columns <- get_class_probability_name(object)
+                
+                for(ii in seq_along(outcome_probability_columns)) prediction_table[, (outcome_probability_columns[ii]):=as.double(NA)]
+                
+              } else {
+                ..error_no_known_outcome_type(object@outcome_type)
+              }
               
-              # Assign factor.
-              prediction_table$predicted_class <- factor(prediction_table$predicted_class,
-                                                         levels=get_outcome_class_levels(x=object))
+            } else if(type == "novelty"){
+              # Add novelty column.
+              prediction_table[, "novelty":=as.double(NA)]
               
-              # Define probabilities columns
-              outcome_probability_columns <- get_class_probability_name(object)
+            } else if(type == "survival_probability"){
               
-              for(ii in seq_along(outcome_probability_columns)) prediction_table[, (outcome_probability_columns[ii]):=as.double(NA)]
+              if(object@outcome_type %in% c("survival", "competing_risk")){
+                # For survival outcomes, a single predicted outcome column is
+                # added.
+                prediction_table[, "survival_probability":=as.double(NA)]
+                
+              } else {
+                ..error_no_known_outcome_type(object@outcome_type)
+              }
+                
+            } else if(type == "risk_stratification"){
               
-            } else {
-              ..error_no_known_outcome_type(object@outcome_type)
+              if(object@outcome_type %in% c("survival", "competing_risk")){
+                # For survival outcomes, a risk_group column is added.
+                prediction_table[, "risk_group":=as.character(NA)]
+                
+              } else {
+                ..error_no_known_outcome_type(object@outcome_type)
+              }
             }
             
             return(prediction_table)
