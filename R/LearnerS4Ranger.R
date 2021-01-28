@@ -269,7 +269,6 @@ setMethod("..train", signature(object="familiarRanger", data="dataObject"),
 setMethod("..predict", signature(object="familiarRanger", data="dataObject"),
           function(object, data, type="default", time=NULL, ...){
             
-            
             if(type %in% c("default", "survival_probability")){
               ##### Default method #############################################
               

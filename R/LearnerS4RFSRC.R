@@ -169,10 +169,10 @@ setMethod("get_default_hyperparameters", signature(object="familiarRFSRC"),
 
 #####get_prediction_type#####
 setMethod("get_prediction_type", signature(object="familiarRFSRC"),
-          function(object, type=NULL){
+          function(object, type="default"){
             
             if(object@outcome_type == "survival"){
-              if(is.null(type)){
+              if(type == "default"){
                 # Standard predictions.
                 return("cumulative_hazard")
                 
@@ -251,89 +251,95 @@ setMethod("..train", signature(object="familiarRFSRC", data="dataObject"),
 
 #####..predict#####
 setMethod("..predict", signature(object="familiarRFSRC", data="dataObject"),
-          function(object, data, type=NULL, time=NULL, ...){
+          function(object, data, type="default", time=NULL, ...){
             
-            # Check if the model was trained.
-            if(!model_is_trained(object)) return(callNextMethod())
-            
-            # Check if the data is empty.
-            if(is_empty(data)) return(callNextMethod())
-            
-            # Set the prediction type
-            if(is.null(type)){
-              if(object@outcome_type %in% c("survival")){
-                type <- "cumulative_hazard"
+            if(type %in% c("default", "survival_probability")){
+              ##### Default method #############################################
+              
+              # Check if the model was trained.
+              if(!model_is_trained(object)) return(callNextMethod())
+              
+              # Check if the data is empty.
+              if(is_empty(data)) return(callNextMethod())
+              
+              # Get an empty prediction table.
+              prediction_table <- get_placeholder_prediction_table(object=object,
+                                                                   data=data,
+                                                                   type=type)
+              
+              # Make predictions using the model.
+              model_predictions <- predict(object=object@model,
+                                           newdata=data@data)
+              
+              
+              if(object@outcome_type %in% c("binomial", "multinomial")){
+                #####Categorical outcomes######
                 
-              } else if(object@outcome_type %in% c("binomial", "multinomial", "count", "continuous")){
-                type <- "response"
+                # Set predicted class.
+                prediction_table[, "predicted_class":=model_predictions$class]
                 
-              } else {
-                ..error_outcome_type_not_implemented(object@outcome_type)
-              }
+                # Add class probabilities.
+                class_probability_columns <- get_class_probability_name(x=object)
+                for(ii in seq_along(class_probability_columns)){
+                  prediction_table[, (class_probability_columns[ii]):=model_predictions$predicted[, ii]]
+                }
+                
+              } else if(object@outcome_type %in% c("continuous", "count")){
+                #####Numerical outcomes######
+                
+                # Extract predicted regression values.
+                prediction_table[, "predicted_outcome":=model_predictions$predicted]
+                
+              } else if(object@outcome_type %in% c("survival")){
+                #####Survival outcomes######
+                
+                # Get the unique event times
+                event_times <- model_predictions$time.interest
+                
+                # Set default time, if not provided.
+                time <- ifelse(is.null(time), max(event_times), time)
+                
+                if(type == "default"){
+                  # Cumulative hazard.
+                  
+                  # Get the cumulative hazards at the given time point.
+                  prediction_table <- process_random_forest_survival_predictions(event_matrix=model_predictions$chf,
+                                                                                 event_times=event_times,
+                                                                                 prediction_table=prediction_table,
+                                                                                 time=time,
+                                                                                 type="cumulative_hazard")
+                  
+                } else if(type == "survival_probability"){
+                  # Survival probability.
+                  
+                  # Get the survival probability at the given time point.
+                  prediction_table <- process_random_forest_survival_predictions(event_matrix=model_predictions$survival,
+                                                                                 event_times=event_times,
+                                                                                 prediction_table=prediction_table,
+                                                                                 time=time,
+                                                                                 type="survival")
+                  
+                } else {
+                  ..error_outcome_type_not_implemented(object@outcome_type)
+                }
+              }  
+              
+              return(prediction_table)
+              
+            } else {
+              ##### User-specified method ######################################
+              
+              # Check if the model was trained.
+              if(!model_is_trained(object)) return(NULL)
+              
+              # Check if the data is empty.
+              if(is_empty(data)) return(NULL)
+              
+              # Make predictions using the model.
+              return(predict(object=object@model,
+                             newdata=data@data,
+                             ...))
             }
-            
-            # Get an empty prediction table.
-            prediction_table <- get_placeholder_prediction_table(object=object,
-                                                                 data=data)
-            
-            # Make predictions using the model.
-            model_predictions <- predict(object=object@model,
-                                         newdata=data@data)
-            
-            
-            if(object@outcome_type %in% c("binomial", "multinomial")){
-              #####Categorical outcomes######
-              
-              # Set predicted class.
-              prediction_table[, "predicted_class":=model_predictions$class]
-              
-              # Add class probabilities.
-              class_probability_columns <- get_class_probability_name(x=object)
-              for(ii in seq_along(class_probability_columns)){
-                prediction_table[, (class_probability_columns[ii]):=model_predictions$predicted[, ii]]
-              }
-              
-            } else if(object@outcome_type %in% c("continuous", "count")){
-              #####Numerical outcomes######
-              
-              # Extract predicted regression values.
-              prediction_table[, "predicted_outcome":=model_predictions$predicted]
-              
-            } else if(object@outcome_type %in% c("survival")){
-              #####Survival outcomes######
-              
-              # Get the unique event times
-              event_times <- model_predictions$time.interest
-              
-              # Set default time, if not provided.
-              time <- ifelse(is.null(time), max(event_times), time)
-              
-              if(type %in% c("response", "cumulative_hazard")){
-                # Cumulative hazard.
-                
-                # Get the cumulative hazards at the given time point.
-                prediction_table <- process_random_forest_survival_predictions(event_matrix=model_predictions$chf,
-                                                                               event_times=event_times,
-                                                                               prediction_table=prediction_table,
-                                                                               time=time,
-                                                                               type="cumulative_hazard")
-                
-              } else if(type %in% c("survival", "survival_probability")){
-                # Survival probability.
-                
-                # Get the survival probability at the given time point.
-                prediction_table <- process_random_forest_survival_predictions(event_matrix=model_predictions$survival,
-                                                                               event_times=event_times,
-                                                                               prediction_table=prediction_table,
-                                                                               time=time,
-                                                                               type="survival")
-                
-              } else {
-                ..error_outcome_type_not_implemented(object@outcome_type)
-              }
-            }  
-            
-            return(prediction_table)
           })
 
 
