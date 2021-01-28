@@ -174,8 +174,8 @@ setMethod("get_default_hyperparameters", signature(object="familiarSVM"),
                                            valid_range=c(-Inf, Inf), randomise=TRUE)
             
             
+            ##### Error tolerance epsilon ####################################
             if(is(object, "familiarSVMNu") | is(object, "familiarSVMEps") | is(object, "familiarSVMEpsBound")){
-              ##### Error tolerance epsilon ####################################
               
               # This parameter defines the error tolerance for regression SVM.
               # It is expressed on a log10 scale.
@@ -184,8 +184,8 @@ setMethod("get_default_hyperparameters", signature(object="familiarSVM"),
             }
             
             
+            ##### Error bounds parameter nu ##################################
             if(is(object, "familiarSVMNu")){
-              ##### Error bounds parameter nu ##################################
               
               # nu is expressed on a log10 scale.
               param$nu <- .set_hyperparameter(default=c(-5, -3, -1, 0, 1), type="numeric", range=c(-5, 1),
@@ -194,16 +194,17 @@ setMethod("get_default_hyperparameters", signature(object="familiarSVM"),
             }
             
             
+            ##### Inverse kernel width sigma #################################
             if(svm_kernel %in% c("rbfdot", "besseldot", "laplacedot", "anovadot")){
-              ##### Inverse kernel width sigma #################################
               
               # sigma is expressed on a log10 scale
               param$sigma <- .set_hyperparameter(default=c(-5, -3, -1, 1, 3, 5), type="numeric", range=c(-5, 5),
                                                  valid_range=c(-Inf, Inf), randomise=TRUE)
             }
             
+            
+            ##### Polynomial degree ##########################################
             if(svm_kernel %in% c("polydot", "besseldot", "anovadot")){
-              ##### Polynomial degree ##########################################
               
               # polydot, besseldot and anovadot expect positive integer degrees.
               param$degree <- .set_hyperparameter(default=c(1, 2, 3, 4, 5), type="integer", range=c(1, 5),
@@ -211,17 +212,20 @@ setMethod("get_default_hyperparameters", signature(object="familiarSVM"),
             }
             
             
+            ##### Distance scale parameter ###################################
             if(svm_kernel %in% c("polydot", "tanhdot")){
-              ##### Distance scale parameter ###################################
+              
               
               # scale is expressed on a log10 scale. Note that as the feature
               # data is rescaled internally, we should not expect a scale much
               # larger then 1.
               param$scale <- .set_hyperparameter(default=c(-3, -1, 0), type="numeric", range=c(-5, log10(2)),
                                                  valid_range=c(-Inf, Inf), randomise=TRUE)
-              
-              
-              ##### Kernel offset parameter ####################################
+            }
+            
+            
+            ##### Kernel offset parameter ####################################
+            if(svm_kernel %in% c("polydot", "tanhdot")){
               
               # As feature data is rescaled internally by kernlab, we should not
               # expect offsets outside the [0, 1] range. Also, negative values
@@ -230,8 +234,9 @@ setMethod("get_default_hyperparameters", signature(object="familiarSVM"),
                                                   valid_range=c(0, Inf), randomise=TRUE)
             }
             
+            
+            ##### Bessel function order ######################################
             if(svm_kernel %in% c("besseldot")){
-              ##### Bessel function order ######################################
               
               # The order of the Bessel function should be a non-negative
               # integer. Note that kernlab does not complain about non-integer
@@ -336,75 +341,94 @@ setMethod("..train", signature(object="familiarSVM", data="dataObject"),
 
 #####..predict#####
 setMethod("..predict", signature(object="familiarSVM", data="dataObject"),
-          function(object, data, type=NULL, ...){
+          function(object, data, type="default", ...){
             
-            # Check if the model was trained.
-            if(!model_is_trained(object)) return(callNextMethod())
+            if(type == "default"){
+              ##### Default method #############################################
             
-            # Check if the data is empty.
-            if(is_empty(data)) return(callNextMethod())
-            
-            # Set the prediction type
-            if(is.null(type)){
+              # Check if the model was trained.
+              if(!model_is_trained(object)) return(callNextMethod())
+              
+              # Check if the data is empty.
+              if(is_empty(data)) return(callNextMethod())
+              
+              # Set the prediction type
               if(object@outcome_type %in% c("binomial", "multinomial")){
-                type <- "probabilities"
+                prediction_type <- "probabilities"
                 
               } else if(object@outcome_type %in% c("count", "continuous")){
-                type <- "response"
+                prediction_type <- "response"
                 
               } else {
                 ..error_outcome_type_not_implemented(object@outcome_type)
               }
-            }
-            
-            # Get an empty prediction table.
-            prediction_table <- get_placeholder_prediction_table(object=object,
-                                                                 data=data)
-            
-            # Make predictions using the model.
-            model_predictions <- tryCatch(kernlab::predict(object=object@model,
-                                                           newdata=data@data,
-                                                           type=type),
-                                          error=identity)
-            
-            # Check if the model trained at all.
-            if(inherits(model_predictions, "error")) return(callNextMethod())
-            
-            
-            if(object@outcome_type %in% c("binomial", "multinomial")){
-              #####Categorical outcomes######
               
-              # Obtain class levels from the object.
-              class_levels <- get_outcome_class_levels(x=object)
+              # Get an empty prediction table.
+              prediction_table <- get_placeholder_prediction_table(object=object,
+                                                                   data=data,
+                                                                   type=type)
               
-              # Add class probabilities to the prediction table.
-              class_probability_columns <- get_class_probability_name(x=object)
-              for(ii in seq_along(class_probability_columns)){
+              # Make predictions using the model.
+              model_predictions <- tryCatch(kernlab::predict(object=object@model,
+                                                             newdata=data@data,
+                                                             type=prediction_type),
+                                            error=identity)
+              
+              # Check if the model trained at all.
+              if(inherits(model_predictions, "error")) return(callNextMethod())
+              
+              
+              if(object@outcome_type %in% c("binomial", "multinomial")){
+                #####Categorical outcomes#######################################
                 
-                if(is.matrix(model_predictions)){
-                  # Check if model_predictions is a matrix.
-                  prediction_table[, (class_probability_columns[ii]):=model_predictions[, class_levels[ii]]]
+                # Obtain class levels from the object.
+                class_levels <- get_outcome_class_levels(x=object)
+                
+                # Add class probabilities to the prediction table.
+                class_probability_columns <- get_class_probability_name(x=object)
+                for(ii in seq_along(class_probability_columns)){
                   
-                } else {
-                  # Or not.
-                  prediction_table[, (class_probability_columns[ii]):=model_predictions[class_levels[ii]]]
+                  if(is.matrix(model_predictions)){
+                    # Check if model_predictions is a matrix.
+                    prediction_table[, (class_probability_columns[ii]):=model_predictions[, class_levels[ii]]]
+                    
+                  } else {
+                    # Or not.
+                    prediction_table[, (class_probability_columns[ii]):=model_predictions[class_levels[ii]]]
+                  }
                 }
+                
+                # Update predicted class based on provided probabilities.
+                class_predictions <- class_levels[apply(prediction_table[, mget(class_probability_columns)], 1, which.max)]
+                class_predictions <- factor(class_predictions, levels=class_levels)
+                prediction_table[, "predicted_class":=class_predictions]
+                
+              } else if(object@outcome_type %in% c("continuous", "count")){
+                #####Numerical outcomes#########################################
+                
+                # Extract predicted regression values.
+                prediction_table[, "predicted_outcome":=model_predictions]
+                
+              } else {
+                ..error_outcome_type_not_implemented(object@outcome_type)
               }
               
-              # Update predicted class based on provided probabilities.
-              class_predictions <- class_levels[apply(prediction_table[, mget(class_probability_columns)], 1, which.max)]
-              class_predictions <- factor(class_predictions, levels=class_levels)
-              prediction_table[, "predicted_class":=class_predictions]
-              
-            } else if(object@outcome_type %in% c("continuous", "count")){
-              #####Numerical outcomes######
-              
-              # Extract predicted regression values.
-              prediction_table[, "predicted_outcome":=model_predictions]
+              return(prediction_table)
               
             } else {
-              ..error_outcome_type_not_implemented(object@outcome_type)
+              ##### User-specified method ######################################
+              
+              # Check if the model was trained.
+              if(!model_is_trained(object)) return(NULL)
+              
+              # Check if the data is empty.
+              if(is_empty(data)) return(NULL)
+              
+              # Make predictions using the model.
+              return(kernlab::predict(object=object@model,
+                                      newdata=data@data,
+                                      type=type,
+                                      ...))
+              
             }
-            
-            return(prediction_table)
           })
