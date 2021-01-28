@@ -301,13 +301,13 @@ setMethod("get_default_hyperparameters", signature(object="familiarXGBoost"),
 
 #####get_prediction_type#####
 setMethod("get_prediction_type", signature(object="familiarXGBoost"),
-          function(object, type=NULL){
+          function(object, type="default"){
             
             
             if(object@outcome_type != "survival") return(callNextMethod())
             
             # The prediction type is a bit more complicated for xgboost methods.
-            if(is.null(type)){
+            if(type == "default"){
               if(object@hyperparameters$learn_objective %in% c("cox")){
                 return("hazard_ratio")
               }
@@ -499,101 +499,127 @@ setMethod("..train", signature(object="familiarXGBoost", data="dataObject"),
 
 #####..predict#####
 setMethod("..predict", signature(object="familiarXGBoost", data="dataObject"),
-          function(object, data, type=NULL, ...){
+          function(object, data, type="default", ...){
             
-            # Check if the model was trained.
-            if(!model_is_trained(object)) return(callNextMethod())
-            
-            # Check if the data is empty.
-            if(is_empty(data)) return(callNextMethod())
-            
-            # Encode data so that the features are the same as in the training.
-            encoded_data <- encode_categorical_variables(data=data,
-                                                         object=object,
-                                                         encoding_method="dummy",
-                                                         drop_levels=FALSE)
-            
-            # Get an empty prediction table.
-            prediction_table <- get_placeholder_prediction_table(object=object,
-                                                                 data=encoded_data$encoded_data)
-            
-            # Make predictions. If the booster object is DART type, predict()
-            # will perform dropouts, i.e. only some of the trees will be
-            # evaluated. This will produce incorrect results if data is not the
-            # training data. To obtain correct results on test sets, set
-            # ntree_limit to a nonzero value, e.g. preds = bst.predict(dtest,
-            # ntree_limit=num_round) [from the documentation].
-            #
-            # Also note that for cox regression, the predictions are
-            # recalibrated based on the linear predictor / marginal prediction.
-            model_predictions <- predict(object=object@model,
-                                         newdata=as.matrix(encoded_data$encoded_data@data[, mget(object@feature_order)]),
-                                         outputmargin=object@outcome_type == "survival",
-                                         ntreelimit=round(10^object@hyperparameters$n_boost),
-                                         reshape=TRUE)
-            
-            if(object@outcome_type == "binomial"){
-              #####Binomial outcomes######
+            if(type == "default"){
+              ##### Default method #############################################
               
-              # Obtain class levels.
-              class_levels <- get_outcome_class_levels(x=object)
+              # Check if the model was trained.
+              if(!model_is_trained(object)) return(callNextMethod())
               
-              # Add class probabilities (glm always gives probability for the
-              # second class).
-              class_probability_columns <- get_class_probability_name(x=object)
-              prediction_table[, (class_probability_columns[1]):= 1.0 - model_predictions]
-              prediction_table[, (class_probability_columns[2]):= model_predictions]
+              # Check if the data is empty.
+              if(is_empty(data)) return(callNextMethod())
               
-              # Update predicted class based on provided probabilities.
-              class_predictions <- class_levels[apply(prediction_table[, mget(class_probability_columns)], 1, which.max)]
-              class_predictions <- factor(class_predictions, levels=class_levels)
-              prediction_table[, "predicted_class":=class_predictions]
-            
-            } else if(object@outcome_type == "multinomial"){
-              #####Multinomial outcomes######
+              # Encode data so that the features are the same as in the training.
+              encoded_data <- encode_categorical_variables(data=data,
+                                                           object=object,
+                                                           encoding_method="dummy",
+                                                           drop_levels=FALSE)
               
-              # Obtain class levels.
-              class_levels <- get_outcome_class_levels(x=object)
+              # Get an empty prediction table.
+              prediction_table <- get_placeholder_prediction_table(object=object,
+                                                                   data=encoded_data$encoded_dat,
+                                                                   type=type)
               
-              # Add class probabilities.
-              class_probability_columns <- get_class_probability_name(x=object)
-              for(ii in seq_along(class_probability_columns)){
+              # Make predictions. If the booster object is DART type, predict()
+              # will perform dropouts, i.e. only some of the trees will be
+              # evaluated. This will produce incorrect results if data is not the
+              # training data. To obtain correct results on test sets, set
+              # ntree_limit to a nonzero value, e.g. preds = bst.predict(dtest,
+              # ntree_limit=num_round) [from the documentation].
+              #
+              # Also note that for cox regression, the predictions are
+              # recalibrated based on the linear predictor / marginal prediction.
+              model_predictions <- predict(object=object@model,
+                                           newdata=as.matrix(encoded_data$encoded_data@data[, mget(object@feature_order)]),
+                                           outputmargin=object@outcome_type == "survival",
+                                           ntreelimit=round(10^object@hyperparameters$n_boost),
+                                           reshape=TRUE)
+              
+              if(object@outcome_type == "binomial"){
+                #####Binomial outcomes######
                 
-                if(is.matrix(model_predictions)){
-                  # Check if model_predictions is a matrix.
-                  prediction_table[, (class_probability_columns[ii]):=model_predictions[, ii]]
+                # Obtain class levels.
+                class_levels <- get_outcome_class_levels(x=object)
+                
+                # Add class probabilities (glm always gives probability for the
+                # second class).
+                class_probability_columns <- get_class_probability_name(x=object)
+                prediction_table[, (class_probability_columns[1]):= 1.0 - model_predictions]
+                prediction_table[, (class_probability_columns[2]):= model_predictions]
+                
+                # Update predicted class based on provided probabilities.
+                class_predictions <- class_levels[apply(prediction_table[, mget(class_probability_columns)], 1, which.max)]
+                class_predictions <- factor(class_predictions, levels=class_levels)
+                prediction_table[, "predicted_class":=class_predictions]
+                
+              } else if(object@outcome_type == "multinomial"){
+                #####Multinomial outcomes######
+                
+                # Obtain class levels.
+                class_levels <- get_outcome_class_levels(x=object)
+                
+                # Add class probabilities.
+                class_probability_columns <- get_class_probability_name(x=object)
+                for(ii in seq_along(class_probability_columns)){
                   
-                } else {
-                  # Or not.
-                  prediction_table[, (class_probability_columns[ii]):=model_predictions[ii]]
+                  if(is.matrix(model_predictions)){
+                    # Check if model_predictions is a matrix.
+                    prediction_table[, (class_probability_columns[ii]):=model_predictions[, ii]]
+                    
+                  } else {
+                    # Or not.
+                    prediction_table[, (class_probability_columns[ii]):=model_predictions[ii]]
+                  }
                 }
+                
+                # Update predicted class based on provided probabilities.
+                class_predictions <- class_levels[apply(prediction_table[, mget(class_probability_columns)], 1, which.max)]
+                class_predictions <- factor(class_predictions, levels=class_levels)
+                prediction_table[, "predicted_class":=class_predictions]
+                
+              } else if(object@outcome_type %in% c("continuous", "count")){
+                #####Numerical outcomes######
+                
+                # Map predictions back to original scale.
+                model_predictions <- model_predictions * object@outcome_scale + object@outcome_shift
+                
+                # Extract predicted regression values.
+                prediction_table[, "predicted_outcome":=model_predictions]
+                
+              } else if(object@outcome_type %in% c("survival")){
+                #####Survival outcomes######
+                
+                # Add predictions to the prediction table.
+                prediction_table[, "predicted_outcome":=model_predictions]
+                
+              } else {
+                ..error_outcome_type_not_implemented(object@outcome_type)
               }
               
-              # Update predicted class based on provided probabilities.
-              class_predictions <- class_levels[apply(prediction_table[, mget(class_probability_columns)], 1, which.max)]
-              class_predictions <- factor(class_predictions, levels=class_levels)
-              prediction_table[, "predicted_class":=class_predictions]
-              
-            } else if(object@outcome_type %in% c("continuous", "count")){
-              #####Numerical outcomes######
-              
-              # Map predictions back to original scale.
-              model_predictions <- model_predictions * object@outcome_scale + object@outcome_shift
-              
-              # Extract predicted regression values.
-              prediction_table[, "predicted_outcome":=model_predictions]
-              
-            } else if(object@outcome_type %in% c("survival")){
-              #####Survival outcomes######
-              
-              # Add predictions to the prediction table.
-              prediction_table[, "predicted_outcome":=model_predictions]
+              return(prediction_table)
               
             } else {
-              ..error_outcome_type_not_implemented(object@outcome_type)
+              ##### User-specified method ######################################
+              
+              # Check if the model was trained.
+              if(!model_is_trained(object)) return(NULL)
+              
+              # Check if the data is empty.
+              if(is_empty(data)) return(NULL)
+              
+              # Encode data so that the features are the same as in the training.
+              encoded_data <- encode_categorical_variables(data=data,
+                                                           object=object,
+                                                           encoding_method="dummy",
+                                                           drop_levels=FALSE)
+              
+              # Note that xgboost:::predict.xgb.Booster does not have a type
+              # argument.
+              return(predict(object=object@model,
+                             newdata=as.matrix(encoded_data$encoded_data@data[, mget(object@feature_order)]),
+                             ...))
             }
-            
-            return(prediction_table)
           })
 
 
