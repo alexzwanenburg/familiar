@@ -74,12 +74,11 @@ setMethod("get_default_hyperparameters", signature(object="familiarSurvRegr"),
 
 #####get_prediction_type#####
 setMethod("get_prediction_type", signature(object="familiarSurvRegr"),
-          function(object, type=NULL){
+          function(object, type="default"){
             
-            # Survival regression models predict relative risks
-            if(is.null(type)) return("expected_survival_time")
-            
-            if(type == "response"){
+            # Survival regression models predict an expected survival time by
+            # default.
+            if(type == "default"){
               return("expected_survival_time")
               
             } else if(type == "survival_probability"){
@@ -150,118 +149,139 @@ setMethod("..train", signature(object="familiarSurvRegr", data="dataObject"),
 
 #####..predict#####
 setMethod("..predict", signature(object="familiarSurvRegr", data="dataObject"),
-          function(object, data, type="response", time=NULL, ...){
+          function(object, data, type="default", time=NULL, ...){
             
-            # Check if the model was trained.
-            if(!model_is_trained(object)) return(callNextMethod())
-            
-            # Check if the data is empty.
-            if(is_empty(data)) return(callNextMethod())
-            
-            # Encode data so that the features are the same as in the training.
-            encoded_data <- encode_categorical_variables(data=data,
-                                                         object=object,
-                                                         encoding_method="dummy",
-                                                         drop_levels=FALSE)
-            
-            # Get an empty prediction table.
-            prediction_table <- get_placeholder_prediction_table(object=object,
-                                                                 data=encoded_data$encoded_data)
-            
-            if(object@outcome_type == "survival"){
+            if(type %in% c("default", "survival_probability")){
+              ##### Default method #############################################
               
-              if(type %in% c("response")){
-                # Use the model to predict expected survival time.
-                model_predictions <- predict(object=object@model,
-                                             newdata=encoded_data$encoded_data@data,
-                                             type=type)
+              # Check if the model was trained.
+              if(!model_is_trained(object)) return(callNextMethod())
+              
+              # Check if the data is empty.
+              if(is_empty(data)) return(callNextMethod())
+              
+              # Encode data so that the features are the same as in the
+              # training.
+              encoded_data <- encode_categorical_variables(data=data,
+                                                           object=object,
+                                                           encoding_method="dummy",
+                                                           drop_levels=FALSE)
+              
+              # Get an empty prediction table.
+              prediction_table <- get_placeholder_prediction_table(object=object,
+                                                                   data=encoded_data$encoded_data,
+                                                                   type=type)
+              
+              if(object@outcome_type == "survival"){
                 
-                
-                # Update the prediction table.
-                prediction_table[, "predicted_outcome":=model_predictions]
-                
-              } else if(type %in% c("survival_probability")){
-                # To predict survival probability we first compute survival
-                # quantiles, which are survival probabilities. 
-                
-                # Survival quantiles from 1.00 to 0.01
-                survival_quantiles  <- seq(from=1.00, to=0.01, by=-0.01)
-                
-                # Get estimated failure times
-                failure_matrix <- predict(object=object@model,
-                                          newdata=encoded_data$encoded_data@data,
-                                          type="quantile",
-                                          p=1.00 - survival_quantiles)
-                
-                # Set id columns
-                id_columns <- get_id_columns()
-                
-                # Make a local copy of the prediction_table
-                # prediction_table <- data.table::copy(prediction_table)
-                
-                # Convert event_matrix to a matrix.
-                if(!is.matrix(failure_matrix)){
-                  failure_matrix <- matrix(data=failure_matrix, ncol=length(failure_matrix))
+                if(type == "default"){
+                  # Use the model to predict expected survival time.
+                  model_predictions <- predict(object=object@model,
+                                               newdata=encoded_data$encoded_data@data,
+                                               type="response")
+                  
+                  # Update the prediction table.
+                  prediction_table[, "predicted_outcome":=model_predictions]
+                  
+                } else if(type == "survival_probability"){
+                  # To predict survival probability we first compute survival
+                  # quantiles, which are survival probabilities. 
+                  
+                  # Survival quantiles from 1.00 to 0.01
+                  survival_quantiles  <- seq(from=1.00, to=0.01, by=-0.01)
+                  
+                  # Get estimated failure times
+                  failure_matrix <- predict(object=object@model,
+                                            newdata=encoded_data$encoded_data@data,
+                                            type="quantile",
+                                            p=1.00 - survival_quantiles)
+                  
+                  # Set id columns
+                  id_columns <- get_id_columns()
+                  
+                  # Convert event_matrix to a matrix.
+                  if(!is.matrix(failure_matrix)){
+                    failure_matrix <- matrix(data=failure_matrix, ncol=length(failure_matrix))
+                  }
+                  
+                  # Combine with identifiers and cast to table.
+                  failure_table <- cbind(prediction_table[, mget(id_columns)],
+                                         data.table::as.data.table(failure_matrix))
+                  
+                  # Remove duplicate entries
+                  failure_table <- unique(failure_table, by=id_columns)
+                  
+                  # Melt to a long format.
+                  failure_table <- data.table::melt(failure_table,
+                                                    id.vars=id_columns,
+                                                    variable.name="quantile_variable",
+                                                    value.name="survival_time")
+                  
+                  # Create conversion table to convert temporary variables into
+                  # the event times.
+                  conversion_table <- data.table::data.table("quantile_variable"=paste0("V", seq_along(survival_quantiles)),
+                                                             "survival_quantile"=survival_quantiles)
+                  
+                  # Add in 
+                  failure_table <- merge(x=failure_table, y=conversion_table, on="quantile_variable")
+                  
+                  # Drop the time_variable column
+                  failure_table[, "quantile_variable":=NULL]
+                  
+                  # Now, interpolate at the given time point.
+                  failure_table <- lapply(split(failure_table, by=id_columns), function(sample_table, time, id_columns){
+                    
+                    # Interpolate values at the given time.
+                    value <- stats::approx(x=sample_table$survival_time,
+                                           y=sample_table$survival_quantile,
+                                           xout=time,
+                                           rule=2)$y
+                    
+                    # Create an output table
+                    output_table <- data.table::copy(sample_table[1, mget(id_columns)])
+                    output_table[, "survival_probability":=value]
+                    
+                    return(output_table)
+                  }, time=time, id_columns=id_columns)
+                  
+                  # Concatenate to single table.
+                  failure_table <- data.table::rbindlist(failure_table)
+                  
+                  # Remove survival_probability from the prediction table.
+                  prediction_table[, "survival_probability":=NULL]
+                  
+                  # Then merge the event table into the prediction table.
+                  prediction_table <- merge(x=prediction_table, y=failure_table, by=id_columns)
                 }
                 
-                # Combine with identifiers and cast to table.
-                failure_table <- cbind(prediction_table[, mget(id_columns)],
-                                       data.table::as.data.table(failure_matrix))
-                
-                # Remove duplicate entries
-                failure_table <- unique(failure_table, by=id_columns)
-                
-                # Melt to a long format.
-                failure_table <- data.table::melt(failure_table,
-                                                  id.vars=id_columns,
-                                                  variable.name="quantile_variable",
-                                                  value.name="survival_time")
-                
-                # Create conversion table to convert temporary variables into
-                # the event times.
-                conversion_table <- data.table::data.table("quantile_variable"=paste0("V", seq_along(survival_quantiles)),
-                                                           "survival_quantile"=survival_quantiles)
-                
-                # Add in 
-                failure_table <- merge(x=failure_table, y=conversion_table, on="quantile_variable")
-                
-                # Drop the time_variable column
-                failure_table[, "quantile_variable":=NULL]
-                  
-                # Now, interpolate at the given time point.
-                failure_table <- lapply(split(failure_table, by=id_columns), function(sample_table, time, id_columns){
-                  
-                  # Interpolate values at the given time.
-                  value <- stats::approx(x=sample_table$survival_time,
-                                         y=sample_table$survival_quantile,
-                                         xout=time,
-                                         rule=2)$y
-                  
-                  # Create an output table
-                  output_table <- data.table::copy(sample_table[1, mget(id_columns)])
-                  output_table[, "predicted_outcome":=value]
-                  
-                  return(output_table)
-                }, time=time, id_columns=id_columns)
-                
-                # Concatenate to single table.
-                failure_table <- data.table::rbindlist(failure_table)
-
-                # Remove predicted_outcome from the prediction table.
-                prediction_table[, "predicted_outcome":=NULL]
-                
-                # Then merge the event table into the prediction table.
-                prediction_table <- merge(x=prediction_table, y=failure_table, by=id_columns)
-                
               } else {
-                stop(paste0("Encountered unknown prediction type: "), type)
+                ..error_outcome_type_not_implemented(object@outcome_type)
               }
               
+              return(prediction_table)
+              
             } else {
-              ..error_outcome_type_not_implemented(object@outcome_type)
+              ##### User-specified method ######################################
+              
+              # Check if the model was trained.
+              if(!model_is_trained(object)) return(NULL)
+              
+              # Check if the data is empty.
+              if(is_empty(data)) return(NULL)
+              
+              # Encode data so that the features are the same as in the
+              # training.
+              encoded_data <- encode_categorical_variables(data=data,
+                                                           object=object,
+                                                           encoding_method="dummy",
+                                                           drop_levels=FALSE)
+              
+              # Use the model to predict expected survival time.
+              return(predict(object=object@model,
+                             newdata=encoded_data$encoded_data@data,
+                             type=type,
+                             ...))
             }
-            
-            return(prediction_table)
           })
 
 
