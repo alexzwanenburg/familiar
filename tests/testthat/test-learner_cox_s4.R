@@ -36,6 +36,19 @@ testthat::test_that("Cox model trained correctly", {
   
   # Test that the model predicts hazard ratios
   testthat::expect_equal(familiar:::get_prediction_type(good_model, type="survival_probability"), "survival_probability")
+  
+  # Valid predictions.
+  testthat::expect_equal(familiar:::any_predictions_valid(familiar:::.predict(good_model, good_data), outcome_type=wide_data@outcome_type), TRUE)
+  
+  # Valid survival probability predictions.
+  testthat::expect_equal(familiar:::any_predictions_valid(familiar:::.predict(good_model, good_data, type="survival_probability", time=1000),
+                                                          outcome_type=good_data@outcome_type),
+                         TRUE)
+  
+  # Valid risk group assignment
+  testthat::expect_equal(familiar:::any_predictions_valid(familiar:::.predict(good_model, good_data, type="risk_stratification", time=1000),
+                                                          outcome_type=good_data@outcome_type),
+                         TRUE)
 })
 
 
