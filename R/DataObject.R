@@ -753,7 +753,7 @@ setMethod("process_input_data", signature(object="familiarEnsemble", data="ANY")
 #####select_data_from_samples#####
 setMethod("select_data_from_samples", signature(data="dataObject", samples="ANY"),
           function(data, samples=NULL){
-
+            
             # Check if data is loaded
             if(data@delay_loading){
 
@@ -781,11 +781,20 @@ setMethod("select_data_from_samples", signature(data="dataObject", samples="ANY"
                 # Use samples from the samples function argument.
                 # allow.cartesian is set to true to allow use with repeated
                 # measurements.
-                data@data <- merge(x=samples,
-                                   y=data@data,
-                                   by=id_columns,
-                                   all=FALSE,
-                                   allow.cartesian=TRUE)
+                if(all(id_columns %in% colnames(sample))){
+                  data@data <- merge(x=samples,
+                                     y=data@data,
+                                     by=id_columns,
+                                     all=FALSE,
+                                     allow.cartesian=TRUE)
+                  
+                } else {
+                  data@data <- merge(x=samples,
+                                     y=data@data,
+                                     by=get_id_columns(id_depth="sample"),
+                                     all=FALSE,
+                                     allow.cartesian=TRUE)
+                }
                 
               } else {
                 # Use samples that appear both as function argument and within
@@ -799,11 +808,23 @@ setMethod("select_data_from_samples", signature(data="dataObject", samples="ANY"
                   data@data <- head(data@data, n=0)
                   
                 } else {
-                  data@data <- merge(x=samples,
-                                     y=data@data,
-                                     by=id_columns,
-                                     all=FALSE,
-                                     allow.cartesian=TRUE)
+                  # Check if series identifiers are present. They may be absent
+                  # if samples were generated using fam_sample
+                  
+                  if(all(id_columns %in% colnames(sample))){
+                    data@data <- merge(x=samples,
+                                       y=data@data,
+                                       by=id_columns,
+                                       all=FALSE,
+                                       allow.cartesian=TRUE)
+                    
+                  } else {
+                    data@data <- merge(x=samples,
+                                       y=data@data,
+                                       by=get_id_columns(id_depth="sample"),
+                                       all=FALSE,
+                                       allow.cartesian=TRUE)
+                  }
                 }
               }
             }
