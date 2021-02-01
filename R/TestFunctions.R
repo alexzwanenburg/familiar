@@ -1482,6 +1482,369 @@ test_plot_ordering <- function(plot_function,
 }
 
 
+test_export <- function(export_function,
+                        data_element,
+                        outcome_type_available=c("count", "continuous", "binomial", "multinomial", "survival"),
+                        always_available=FALSE,
+                        except_one_feature=FALSE,
+                        ...,
+                        export_args=list(),
+                        test_specific_config=FALSE,
+                        create_novelty_detector=FALSE,
+                        debug=FALSE){
+  
+  if(debug){
+    test_fun <- debug_test_that
+
+  } else {
+    test_fun <- testthat::test_that
+  }
+  
+  
+  # Iterate over the outcome type.
+  for(outcome_type in c("count", "continuous", "binomial", "multinomial", "survival")){
+    
+    # Obtain data.
+    full_data <- test.create_good_data_set(outcome_type)
+    identical_sample_data <- test.create_all_identical_data_set(outcome_type)
+    full_one_sample_data <- test.create_one_sample_data_set(outcome_type)
+    one_feature_data <- test.create_one_feature_data_set(outcome_type)
+    one_feature_one_sample_data <- test.create_one_feature_one_sample_data_set(outcome_type)
+    one_feature_invariant_data <- test.create_one_feature_invariant_data_set(outcome_type)
+    empty_data <- test.create_empty_data_set(outcome_type)
+    multi_data <- test_create_multiple_synthetic_series(outcome_type=outcome_type)
+    
+    # Set exceptions per outcome type.
+    .always_available <- always_available
+    if(is.character(.always_available)) .always_available <- any(.always_available == outcome_type)
+    
+    .except_one_feature <- except_one_feature
+    if(is.character(.except_one_feature)) .except_one_feature <- any(.except_one_feature == outcome_type)
+    
+    # Parse hyperparameter list
+    hyperparameters <- list("sign_size"=get_n_features(full_data),
+                            "family"=switch(outcome_type,
+                                            "continuous"="gaussian",
+                                            "count"="poisson",
+                                            "binomial"="binomial",
+                                            "multinomial"="multinomial",
+                                            "survival"="cox"))
+    
+    #####Full data set########################################################
+    
+    # Train the model.
+    model_full_1 <- suppressWarnings(train(data=full_data,
+                                           cluster_method="none",
+                                           imputation_method="simple",
+                                           fs_method="mim",
+                                           hyperparameter_list=hyperparameters,
+                                           learner="lasso",
+                                           time_max=1832,
+                                           create_novelty_detector=create_novelty_detector))
+    
+    model_full_2 <- model_full_1
+    model_full_2@fs_method <- "mifs"
+    
+    # Create familiar data objects.
+    data_good_full_1 <- as_familiar_data(object=model_full_1,
+                                         data=full_data,
+                                         data_element=data_element,
+                                         ...)
+    data_good_full_2 <- as_familiar_data(object=model_full_2,
+                                         data=full_data,
+                                         data_element=data_element,
+                                         ...)
+    
+    # Create a completely intact dataset.
+    test_fun(paste0("1. Export data for ", outcome_type, " outcomes ",
+                    ifelse(outcome_type %in% outcome_type_available, "can", "cannot"),
+                    " be created for a complete data set."), {
+                      
+                      object <- list(data_good_full_1, data_good_full_2, data_good_full_1, data_good_full_2)
+                      object <- mapply(set_data_set_names, object, c("development_1", "development_2", "validation_1", "validation_2"))
+                      
+                      collection <- suppressWarnings(as_familiar_collection(object, familiar_data_names=c("development", "development", "validation", "validation")))
+                      
+                      data_elements <- do.call(export_function, args=c(list("object"=collection), export_args))
+                      which_present <- .test_which_data_element_present(data_elements, outcome_type=outcome_type)
+
+                      if(outcome_type %in% outcome_type_available){
+                        testthat::expect_equal(all(which_present), TRUE) 
+                        
+                        if(debug) show(data_elements)
+                        
+                      } else {
+                        testthat::expect_equal(all(!which_present), TRUE)
+                      }
+                    })
+    
+    # Go to next outcome type if only a specific configuration needs to be
+    # tested.
+    if(test_specific_config) next()
+    
+    # Ensemble from multiple datasets.
+    multi_model_set <- suppressWarnings(lapply(multi_data,
+                                               train,
+                                               cluster_method="hclust",
+                                               imputation_method="simple",
+                                               fs_method="mim",
+                                               hyperparameter_list=hyperparameters,
+                                               learner="lasso",
+                                               cluster_similarity_threshold=0.7,
+                                               time_max=1832,
+                                               create_novelty_detector=create_novelty_detector))
+    
+    # Create data from ensemble of multiple models
+    multi_model_full <- as_familiar_data(object=multi_model_set,
+                                         data=multi_data[[1]],
+                                         data_element=data_element,
+                                         ...)
+    
+    # Create additional familiar data objects.
+    data_empty_full_1 <- as_familiar_data(object=model_full_1,
+                                          data=empty_data,
+                                          data_element=data_element,
+                                          ...)
+    data_empty_full_2 <- as_familiar_data(object=model_full_2,
+                                          data=empty_data,
+                                          data_element=data_element,
+                                          ...)
+    data_one_sample_full_1 <- as_familiar_data(object=model_full_1,
+                                               data=full_one_sample_data,
+                                               data_element=data_element,
+                                               ...)
+    data_one_sample_full_2 <- as_familiar_data(object=model_full_2,
+                                               data=full_one_sample_data,
+                                               data_element=data_element,
+                                               ...)
+    data_identical_full_1 <- as_familiar_data(object=model_full_1,
+                                              data=identical_sample_data,
+                                              data_element=data_element,
+                                              ...)
+    data_identical_full_2 <- as_familiar_data(object=model_full_2,
+                                              data=identical_sample_data,
+                                              data_element=data_element,
+                                              ...)
+    
+    # Create a dataset with a missing quadrant.
+    test_fun(paste0("2. Export data for ", outcome_type, " outcomes ",
+                    ifelse(outcome_type %in% outcome_type_available, "can", "cannot"),
+                    " be created for a dataset with some missing data."), {
+                      
+                      object <- list(data_good_full_1, data_good_full_2, data_empty_full_1, data_good_full_2)
+                      object <- mapply(set_data_set_names, object, c("development_1", "development_2", "validation_1", "validation_2"))
+                      
+                      collection <- suppressWarnings(as_familiar_collection(object, familiar_data_names=c("development", "development", "validation", "validation")))
+                      
+                      data_elements <- do.call(export_function, args=c(list("object"=collection), export_args))
+                      which_present <- .test_which_data_element_present(data_elements, outcome_type=outcome_type)
+                      
+                      if(outcome_type %in% outcome_type_available){
+                        testthat::expect_equal(any(which_present), TRUE) 
+                        
+                        if(debug) show(data_elements)
+                        
+                      } else {
+                        testthat::expect_equal(all(!which_present), TRUE)
+                      }
+                    })
+    
+    # Create a dataset with all missing quadrants
+    test_fun(paste0("3. Export data for ", outcome_type, " outcomes ",
+                    ifelse(.always_available, "can", "cannot"),
+                    " be created for a dataset with completely missing data."), {
+                      
+                      object <- list(data_empty_full_1, data_empty_full_2, data_empty_full_1, data_empty_full_2)
+                      object <- mapply(set_data_set_names, object, c("development_1", "development_2", "validation_1", "validation_2"))
+                      
+                      collection <- suppressWarnings(as_familiar_collection(object, familiar_data_names=c("development", "development", "validation", "validation")))
+                      
+                      data_elements <- do.call(export_function, args=c(list("object"=collection), export_args))
+                      which_present <- .test_which_data_element_present(data_elements, outcome_type=outcome_type)
+                      
+                      if(outcome_type %in% outcome_type_available & .always_available){
+                        testthat::expect_equal(all(which_present), TRUE) 
+                        
+                        if(debug) show(data_elements)
+                        
+                      } else {
+                        testthat::expect_equal(all(!which_present), TRUE)
+                      }
+                    })
+    
+    # Create dataset with one-sample quadrants for validation
+    test_fun(paste0("4. Export data for ", outcome_type, " outcomes ",
+                    ifelse(outcome_type %in% outcome_type_available, "can", "cannot"),
+                    " be created for a dataset where some data only have one sample."), {
+                      
+                      object <- list(data_good_full_1, data_good_full_2, data_one_sample_full_1, data_one_sample_full_2)
+                      object <- mapply(set_data_set_names, object, c("development_1", "development_2", "validation_1", "validation_2"))
+                      
+                      collection <- suppressWarnings(as_familiar_collection(object, familiar_data_names=c("development", "development", "validation", "validation")))
+                      
+                      data_elements <- do.call(export_function, args=c(list("object"=collection), export_args))
+                      which_present <- .test_which_data_element_present(data_elements, outcome_type=outcome_type)
+                      
+                      if(outcome_type %in% outcome_type_available){
+                        testthat::expect_equal(any(which_present), TRUE) 
+                        
+                        if(debug) show(data_elements)
+                        
+                      } else {
+                        testthat::expect_equal(all(!which_present), TRUE)
+                      }
+                    })
+    
+    # Create dataset with some quadrants with identical data
+    test_fun(paste0("5. Export data for ", outcome_type, " outcomes ",
+                    ifelse(outcome_type %in% outcome_type_available, "can", "cannot"),
+                    " be created for a dataset where some data only have identical samples."), {
+                      
+                      object <- list(data_good_full_1, data_good_full_2, data_identical_full_1, data_identical_full_2)
+                      object <- mapply(set_data_set_names, object, c("development_1", "development_2", "validation_1", "validation_2"))
+                      
+                      collection <- suppressWarnings(as_familiar_collection(object, familiar_data_names=c("development", "development", "validation", "validation")))
+                      
+                      data_elements <- do.call(export_function, args=c(list("object"=collection), export_args))
+                      which_present <- .test_which_data_element_present(data_elements, outcome_type=outcome_type)
+                      
+                      if(outcome_type %in% outcome_type_available){
+                        testthat::expect_equal(all(which_present), TRUE) 
+                        
+                        if(debug) show(data_elements)
+                        
+                      } else {
+                        testthat::expect_equal(all(!which_present), TRUE)
+                      }
+                    })
+    
+    test_fun(paste0("6. Export data for ", outcome_type, " outcomes ",
+                    ifelse(outcome_type %in% outcome_type_available, "can", "cannot"),
+                    " be created for a dataset created from an ensemble of multiple models."), {
+                      
+                      object <- list(multi_model_full)
+                      object <- mapply(set_data_set_names, object, c("development_1"))
+                      
+                      collection <- suppressWarnings(as_familiar_collection(object, familiar_data_names=c("development")))
+                      
+                      data_elements <- do.call(export_function, args=c(list("object"=collection), export_args))
+                      which_present <- .test_which_data_element_present(data_elements, outcome_type=outcome_type)
+                      
+                      if(outcome_type %in% outcome_type_available){
+                        testthat::expect_equal(all(which_present), TRUE) 
+                        
+                        if(debug) show(data_elements)
+                        
+                      } else {
+                        testthat::expect_equal(all(!which_present), TRUE)
+                      }
+                    })
+    
+    #####One-feature data set###################################################
+    
+    # Train the model.
+    model_one_1 <- suppressWarnings(train(data=one_feature_data,
+                                          cluster_method="none",
+                                          imputation_method="simple",
+                                          fs_method="mim",
+                                          hyperparameter_list=hyperparameters,
+                                          learner="lasso",
+                                          time_max=1832,
+                                          create_novelty_detector=create_novelty_detector))
+    
+    model_one_2 <- model_one_1
+    model_one_2@fs_method <- "mifs"
+    
+    # Create familiar data objects.
+    data_good_one_1 <- as_familiar_data(object=model_one_1, data=one_feature_data, data_element=data_element, ...)
+    data_good_one_2 <- as_familiar_data(object=model_one_2, data=one_feature_data, data_element=data_element, ...)
+    data_one_sample_one_1 <- as_familiar_data(object=model_one_1, data=one_feature_one_sample_data, data_element=data_element, ...)
+    data_one_sample_one_2 <- as_familiar_data(object=model_one_2, data=one_feature_one_sample_data, data_element=data_element, ...)
+    data_identical_one_1 <- as_familiar_data(object=model_one_1, data=one_feature_invariant_data, data_element=data_element, ...)
+    data_identical_one_2 <- as_familiar_data(object=model_one_2, data=one_feature_invariant_data, data_element=data_element, ...)
+    
+    
+    # Create a completely intact, one sample dataset.
+    test_fun(paste0("7. Export data for ", outcome_type, " outcomes ",
+                    ifelse(outcome_type %in% outcome_type_available && !.except_one_feature, "can", "cannot"),
+                    " be created for a complete one-feature data set."), {
+                      
+                      object <- list(data_good_one_1, data_good_one_2, data_good_one_1, data_good_one_2)
+                      object <- mapply(set_data_set_names, object, c("development_1", "development_2", "validation_1", "validation_2"))
+                      
+                      collection <- suppressWarnings(as_familiar_collection(object, familiar_data_names=c("development", "development", "validation", "validation")))
+                      
+                      data_elements <- do.call(export_function, args=c(list("object"=collection), export_args))
+                      which_present <- .test_which_data_element_present(data_elements, outcome_type=outcome_type)
+                      
+                      if(outcome_type %in% outcome_type_available & !.except_one_feature){
+                        testthat::expect_equal(all(which_present), TRUE) 
+                        
+                        if(debug) show(data_elements)
+                        
+                      } else if(!outcome_type %in% outcome_type_available){
+                        testthat::expect_equal(all(!which_present), TRUE)
+
+                      } else {
+                        testthat::expect_equal(any(!which_present), TRUE)
+                      }
+                    })
+    
+    # Create a dataset with a one-sample quadrant.
+    test_fun(paste0("8. Export data for ", outcome_type, " outcomes ",
+                    ifelse(outcome_type %in% outcome_type_available && !.except_one_feature, "can", "cannot"),
+                    " be created for a dataset with some one-sample data."), {
+                      
+                      object <- list(data_good_one_1, data_good_one_2, data_one_sample_one_1, data_one_sample_one_2)
+                      object <- mapply(set_data_set_names, object, c("development_1", "development_2", "validation_1", "validation_2"))
+                      
+                      collection <- suppressWarnings(as_familiar_collection(object, familiar_data_names=c("development", "development", "validation", "validation")))
+                      
+                      data_elements <- do.call(export_function, args=c(list("object"=collection), export_args))
+                      which_present <- .test_which_data_element_present(data_elements, outcome_type=outcome_type)
+                      
+                      if(outcome_type %in% outcome_type_available & !.except_one_feature){
+                        testthat::expect_equal(any(which_present), TRUE) 
+                        
+                        if(debug) show(data_elements)
+                        
+                      } else if(!outcome_type %in% outcome_type_available){
+                        testthat::expect_equal(all(!which_present), TRUE)
+                        
+                      } else {
+                        testthat::expect_equal(any(!which_present), TRUE)
+                      }
+                    })
+    
+    # Create a dataset with some identical data.
+    test_fun(paste0("9. Export data for ", outcome_type, " outcomes ",
+                    ifelse(outcome_type %in% outcome_type_available && !.except_one_feature, "can", "cannot"),
+                    " be created for a dataset with some invariant data."), {
+                      
+                      object <- list(data_good_one_1, data_good_one_2, data_identical_one_1, data_identical_one_2)
+                      object <- mapply(set_data_set_names, object, c("development_1", "development_2", "validation_1", "validation_2"))
+                      
+                      collection <- suppressWarnings(as_familiar_collection(object, familiar_data_names=c("development", "development", "validation", "validation")))
+                      
+                      data_elements <- do.call(export_function, args=c(list("object"=collection), export_args))
+                      which_present <- .test_which_data_element_present(data_elements, outcome_type=outcome_type)
+                      
+                      if(outcome_type %in% outcome_type_available & !.except_one_feature){
+                        testthat::expect_equal(any(which_present), TRUE) 
+                        
+                        if(debug) show(data_elements)
+                        
+                      } else if(!outcome_type %in% outcome_type_available){
+                        testthat::expect_equal(all(!which_present), TRUE)
+                        
+                      } else {
+                        testthat::expect_equal(any(!which_present), TRUE)
+                      }
+                    })
+  }
+}
+
+
 
 integrated_test <- function(..., debug=FALSE){
   
@@ -1594,4 +1957,22 @@ test_suppress <- function(expr){
   if(length(p) == 0) return(FALSE)
   
   return(sapply(p, gtable::is.gtable) | sapply(p, ggplot2::is.ggplot))
+}
+
+
+.test_which_data_element_present <- function(x, outcome_type){
+  
+  # Check if the top element is null or empty.
+  if(is_empty(x)) return(FALSE)
+  
+  data_element_present <- !sapply(x, is_empty)
+  if(!any(data_element_present)) return(FALSE)
+  
+  # Class-specific tests.
+  if(all(sapply(x, is, class2="familiarDataElementPredictionTable"))){
+    return(sapply(x, function(x, outcome_type) (any_predictions_valid(x@data, outcome_type)), outcome_type=outcome_type))
+    
+  }
+  
+  return(data_element_present)
 }
