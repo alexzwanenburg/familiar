@@ -307,3 +307,160 @@ setMethod(".predict_risk_stratification", signature(object="character"),
             return(do.call(.predict_risk_stratification, args=c(list("object"=object),
                                                                 list(...))))
           })
+
+
+ensemble_prediction <- function(object,
+                                prediction_data,
+                                ensemble_method="median",
+                                type="default"){
+  
+  # Check that type has correct values.
+  sapply(type, .check_parameter_value_is_valid, var_name="type", values=.get_available_prediction_type_arguments())
+  
+  # Check that prediction data are not empty.
+  if(is_empty(prediction_data)) return(prediction_data)
+  
+  ensemble_prediction_data <- NULL
+  
+  # Default predictions.
+  if(any(type %in% c("default", "novelty", "survival_probability"))){
+    ensemble_prediction_data <- .ensemble_prediction(object=object,
+                                                     prediction_data=prediction_data,
+                                                     ensemble_method=ensemble_method,
+                                                     type=type)
+  }
+  
+  # Risk group prediction.
+  if(any(type %in% c("risk_stratification"))){
+    temp_ensemble_prediction_data <- .ensemble_risk_prediction(object=object,
+                                                               prediction_data=prediction_data,
+                                                               ensemble_method=ensemble_method)
+    
+    if(is.null(ensemble_prediction_data)){
+      ensemble_prediction_data <- temp_ensemble_prediction_data
+      
+    } else {
+      ensemble_prediction_data[temp_ensemble_prediction_data, on=.NATURAL]
+    }
+  }
+  
+  return(ensemble_prediction_data)
+}
+
+
+
+.ensemble_prediction <- function(object,
+                                 prediction_data,
+                                 ensemble_method,
+                                 type){
+  
+  # Specify prediction columns
+  prediction_columns <- character(0L)
+  
+  # Determine column names for default predictions.
+  if("default" %in% type){
+    
+    if(object@outcome_type %in% c("binomial", "multinomial")){
+      
+      # Find the class levels.
+      class_levels <- get_outcome_class_levels(x=object)
+      
+      # Probability columns
+      prediction_columns <- c(prediction_columns,
+                              get_class_probability_name(x=class_levels))
+      
+    } else if(object@outcome_type %in% c("continuous", "count", "survival")){
+      # Outcome columns
+      prediction_columns <- c(prediction_columns,
+                              "predicted_outcome")
+      
+    } else if(object@outcome_type == "competing_risk"){
+      ..error_outcome_type_not_implemented(outcome_type=object@outcome_type)
+      
+    } else {
+      ..error_no_known_outcome_type(outcome_type=object@outcome_type)
+    }
+  }
+  
+  # Determine if novelty is part of the columns.
+  if("novelty" %in% type){
+    prediction_columns <- c(prediction_columns,
+                            "novelty")
+  }
+  
+  # Determine if survival probabilities were computed.
+  if("survival_probability" %in% type){
+    prediction_columns <- c(prediction_columns,
+                            "survival_probability")
+  }
+  
+  # Check whether prediction_data is empty.
+  if(is_empty(prediction_data)) return(prediction_data)
+  
+  # Set the ensemble aggregation function.
+  if(ensemble_method == "mean"){
+    FUN <- mean
+    
+  } else if(ensemble_method == "median"){
+    FUN <- stats::median
+    
+  } else {
+    stop("Ensemble method ", ensemble_method, " has not been implemented.")
+  }
+  
+  # Compute the ensemble predictions:
+  prediction_data <- prediction_data[,
+                                     .do_ensemble_prediction(data=.SD, prediction_columns=prediction_columns, FUN=FUN),
+                                     by=eval(get_non_feature_columns(x=object))]
+  
+  # Add the predicted class, if required
+  if(object@outcome_type %in% c("binomial", "multinomial") & "default" %in% type){
+    
+    # Identify the name of the most probable class
+    new_predicted_class <- class_levels[max.col(prediction_data[, c(prediction_columns), with=FALSE])]
+    
+    # Add the names as the predicted outcome
+    prediction_data[, "predicted_class":=new_predicted_class]
+    
+    # Convert to a factor
+    prediction_data$predicted_class <- factor(prediction_data$predicted_class,
+                                              levels=class_levels)
+  }
+  
+  return(prediction_data)
+}
+
+
+
+.do_ensemble_prediction <- function(data, prediction_columns, FUN){
+  
+  # Calculate ensemble value for the prediction columns
+  ensemble_pred <- lapply(prediction_columns, function(ii_col, data) (FUN(data[[ii_col]], na.rm=TRUE)), data=data)
+  names(ensemble_pred) <- prediction_columns
+  
+  return(ensemble_pred)
+}
+
+
+.ensemble_risk_prediction <- function(object, prediction_data, ensemble_method){
+  
+  # Suppress NOTES due to non-standard evaluation in data.table
+  risk_group <- NULL
+  
+  # Create risk groups according to the corresponding method.
+  if(ensemble_method == "mean"){
+    prediction_data <- prediction_data[, list("risk_group"=learner.get_mean_risk_group(risk_group)),
+                                       by=c(get_id_columns(), "outcome_time", "outcome_event")]
+    
+  } else if(ensemble_method == "median"){
+    prediction_data <- prediction_data[, list("risk_group"=get_mode(risk_group)),
+                                       by=c(get_id_columns(), "outcome_time", "outcome_event")]
+  }
+  
+  return(prediction_data)
+}
+
+
+.get_available_ensemble_prediction_methods <- function(){
+  return(c("median", "mean"))
+}
