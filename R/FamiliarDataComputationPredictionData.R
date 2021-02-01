@@ -1,3 +1,11 @@
+#' @include FamiliarS4Generics.R
+#' @include FamiliarS4Classes.R
+NULL
+
+setClass("familiarDataElementPredictionTable",
+         contains="familiarDataElement")
+
+
 #'@title Internal function to extract predicted values from models.
 #'
 #'@description Collects predicted values from models in a `familiarEnsemble`.
@@ -13,8 +21,8 @@ setGeneric("extract_predictions",
                     cl=NULL,
                     is_pre_processed=FALSE,
                     ensemble_method=waiver(),
-                    compute_model_data=waiver(),
                     eval_times=waiver(),
+                    detail_level=waiver(),
                     message_indent=0L,
                     verbose=FALSE,
                     ...) standardGeneric("extract_predictions"))
@@ -26,8 +34,8 @@ setMethod("extract_predictions", signature(object="familiarEnsemble"),
                    cl=NULL,
                    is_pre_processed=FALSE,
                    ensemble_method=waiver(),
-                   compute_model_data=waiver(),
                    eval_times=waiver(),
+                   detail_level=waiver(),
                    message_indent=0L,
                    verbose=FALSE,
                    ...){
@@ -61,76 +69,164 @@ setMethod("extract_predictions", signature(object="familiarEnsemble"),
             # Test if models are properly loaded
             if(!is_model_loaded(object=object)) ..error_ensemble_models_not_loaded()
             
-            # By default, do not compute predictions using individual models.
-            if(is.waive(compute_model_data)) compute_model_data <- "none"
+            # Check the level detail
+            if(is.waive(detail_level)) detail_level <- object@settings$detail_level
+            
+            .check_parameter_value_is_valid(x=detail_level, var_name="detail_level",
+                                            values=c("ensemble", "hybrid", "model"))
             
             # Aggregate data. It does not make sense to keep duplicate rows here.
             data <- aggregate_data(data=data)
             
-            # Extract data for the individual models and the ensemble.
-            performance_data <- universal_extractor(object=object,
-                                                    cl=cl,
-                                                    FUN=.extract_predictions,
-                                                    compute_model_data=any(c("all", "prediction_data", "TRUE") %in% compute_model_data),
-                                                    compute_model_ci=FALSE,
-                                                    compute_ensemble_ci=FALSE,
-                                                    data=data,
-                                                    is_pre_processed=is_pre_processed,
-                                                    ensemble_method=ensemble_method,
-                                                    eval_times=eval_times,
-                                                    message_indent=message_indent + 1L,
-                                                    verbose=verbose)
+            # Generate a prototype data element.
+            proto_data_element <- new("familiarDataElementPredictionTable",
+                                      detail_level = detail_level,
+                                      estimation_type = "point")
+            
+            # Generate elements to send to dispatch.
+            performance_data <- extract_dispatcher(FUN=.extract_predictions,
+                                                   has_internal_bootstrap=FALSE,
+                                                   aggregate_results=FALSE,
+                                                   cl=cl,
+                                                   object=object,
+                                                   data=data,
+                                                   proto_data_element=proto_data_element,
+                                                   is_pre_processed=is_pre_processed,
+                                                   ensemble_method=ensemble_method,
+                                                   eval_times=eval_times,
+                                                   message_indent=message_indent + 1L,
+                                                   verbose=verbose)
             
             return(performance_data)
           })
 
 
 
-.extract_predictions <- function(object, data, eval_times, ensemble_method, is_pre_processed, ...){
+.extract_predictions <- function(object,
+                                 proto_data_element,
+                                 eval_times=NULL,
+                                 cl,
+                                 ...){
   
-  if(object@outcome_type %in% c("survival")){
-    # Compute predictions at each of the evaluation time points.
-    prediction_data <- lapply(eval_times, function(time, object, data, ensemble_method, is_pre_processed){
-      
-      # Obtain prediction data
-      prediction_data <- .predict(object=object,
-                                  data=data,
-                                  time=time,
-                                  ensemble_method=ensemble_method,
-                                  novelty=TRUE,
-                                  is_pre_processed=is_pre_processed)
-      
-      # Check that the prediction data is not empty.
-      if(is_empty(prediction_data)) return(NULL)
-                                           
-      # Add an eval_time column.
-      prediction_data[, "evaluation_time":=time]
-      
-      # Reorder columns
-      data.table::setcolorder(x=prediction_data,
-                              neworder=c(setdiff(colnames(prediction_data), c("predicted_outcome", "evaluation_time")),
-                                                 "evaluation_time", "predicted_outcome"))
-      
-      return(prediction_data)
-    },
-    object=object,
-    data=data,
-    ensemble_method=ensemble_method,
-    is_pre_processed=is_pre_processed)
-    
-    # Combine to single data.table
-    prediction_data <- data.table::rbindlist(prediction_data)
+  # Add model name.
+  proto_data_element <- add_model_name(proto_data_element, object=object)
+  
+  # Add evaluation time as a identifier to the data element.
+  if(length(eval_times) > 0 & object@outcome_type == "survival"){
+    data_elements <- add_data_element_identifier(x=proto_data_element,
+                                                 evaluation_time=eval_times)
     
   } else {
-    # Compute performance data.
-    prediction_data <- .predict(object=object,
-                                data=data,
-                                ensemble_method=ensemble_method,
-                                novelty=TRUE,
-                                is_pre_processed=is_pre_processed)
+    data_elements <- list(proto_data_element)
   }
   
-  if(is_empty(prediction_data)) return(NULL)
+  # Iterate over data elements.
+  prediction_data <- lapply(data_elements,
+                            ..extract_predictions,
+                            object=object,
+                            cl=cl,
+                            ...)
   
-  return(list("model_data"=prediction_data))
+  return(prediction_data)
 }
+
+
+..extract_predictions <- function(data_element,
+                                  object,
+                                  data,
+                                  cl=NULL,
+                                  is_pre_processed,
+                                  ensemble_method,
+                                  ...){
+  if(object@outcome_type %in% c("survival", "competing_risk")){
+    type <- .get_available_prediction_type_arguments()
+    
+  } else {
+    type <- c("default", "novelty")
+  }
+  
+  # Compute performance data.
+  prediction_data <- .predict(object=object,
+                              data=data,
+                              ensemble_method=ensemble_method,
+                              time=data_element@identifiers$evaluation_time,
+                              type=type,
+                              is_pre_processed=is_pre_processed)
+  
+  # Store the prediction data in the data table.
+  data_element@data <- prediction_data
+  
+  # Set grouping columns
+  data_element@grouping_column <- get_non_feature_columns(object)
+  
+  # Set value columns
+  data_element@value_column <- setdiff(colnames(prediction_data),
+                                       data_element@grouping_column)
+  
+  return(data_element)
+}
+
+
+#####export_prediction_data#####
+
+#'@title Extract and export predicted values.
+#'
+#'@description Extract and export the values predicted by single and ensemble
+#'  models in a familiarCollection.
+#'
+#'@inheritParams export_all
+#'
+#'@inheritDotParams extract_predictions
+#'@inheritDotParams as_familiar_collection
+#'
+#'@details Data, such as model performance and calibration information, is
+#'  usually collected from a `familiarCollection` object. However, you can also
+#'  provide one or more `familiarData` objects, that will be internally
+#'  converted to a `familiarCollection` object. It is also possible to provide a
+#'  `familiarEnsemble` or one or more `familiarModel` objects together with the
+#'  data from which data is computed prior to export. Paths to the previous
+#'  files can also be provided.
+#'
+#'  All parameters aside from `object` and `dir_path` are only used if `object`
+#'  is not a `familiarCollection` object, or a path to one.
+#'
+#'  Both single and ensemble predictions are exported.
+#'
+#'@return A list of data.tables (if `dir_path` is not provided), or nothing, as
+#'  all data is exported to `csv` files.
+#'@exportMethod export_prediction_data
+#'@md
+#'@rdname export_prediction_data-methods
+setGeneric("export_prediction_data",
+           function(object, dir_path=NULL, ...) standardGeneric("export_prediction_data"))
+
+#####export_prediction_data (collection)#####
+
+#'@rdname export_prediction_data-methods
+setMethod("export_prediction_data", signature(object="familiarCollection"),
+          function(object, dir_path=NULL, ...){
+            
+            return(.export(x=object,
+                           data_slot="prediction_data",
+                           dir_path=dir_path,
+                           main_type="prediction",
+                           subtype=NULL))
+          })
+
+#####export_prediction_data (generic)#####
+
+#'@rdname export_prediction_data-methods
+setMethod("export_prediction_data", signature(object="ANY"),
+          function(object, dir_path=NULL, ...){
+            
+            # Attempt conversion to familiarCollection object.
+            object <- do.call(as_familiar_collection,
+                              args=c(list("object"=object,
+                                          "data_element"="prediction_data"),
+                                     list(...)))
+            
+            return(do.call(export_prediction_data,
+                           args=c(list("object"=object,
+                                       "dir_path"=dir_path),
+                                  list(...))))
+          })

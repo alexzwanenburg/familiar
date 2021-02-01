@@ -233,14 +233,14 @@ collect_calibration_data <- function(fam_data_list){
 #'
 #' @return A list with aggreagted prediction data.
 #' @noRd
-collect_prediction_data <- function(fam_data_list){
-  # Model predictions are not shared between different data objects. We don't need to identify unique entries.
-  
-  return(universal_collector(fam_data_list=fam_data_list,
-                             data_slot="prediction_data",
-                             extra_data=NULL,
-                             more_identifiers=c("fs_method", "learner")))
-}
+# collect_prediction_data <- function(fam_data_list){
+#   # Model predictions are not shared between different data objects. We don't need to identify unique entries.
+#   
+#   return(universal_collector(fam_data_list=fam_data_list,
+#                              data_slot="prediction_data",
+#                              extra_data=NULL,
+#                              more_identifiers=c("fs_method", "learner")))
+# }
 
 
 #' @title Collector for performance data
