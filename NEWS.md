@@ -149,6 +149,8 @@ requiring multiple line colours.
 0 and 1. For some learners, such as `svm`, this caused an indexing error as the
 outcome levels were interpreted as indices instead of column names.
 
+* Fixed an error during batch normalisation when there is a mismatch between
+features with feature information and actual features present in the dataset.
 
 # Version 0.0.0.53 (Pre-release)
 

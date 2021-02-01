@@ -52,7 +52,8 @@ add_batch_normalisation_parameters <- function(cl=NULL, feature_info_list, data_
   feature_columns <- get_feature_columns(x=data_obj)
   
   # Split features into numeric and categorical features.
-  numeric_features <- feature_columns[sapply(feature_info_list, function(list_entry) (list_entry@feature_type == "numeric"))]
+  numeric_features <- intersect(names(feature_info_list)[sapply(feature_info_list, function(list_entry) (list_entry@feature_type == "numeric"))],
+                                feature_columns)
   categorical_features <- setdiff(feature_columns, numeric_features)
   
   # Obtain normalisation parameters for numeric features
