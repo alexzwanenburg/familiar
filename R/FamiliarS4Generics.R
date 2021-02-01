@@ -6,6 +6,8 @@ setGeneric(".predict", function(object, data, ...) standardGeneric(".predict"))
 
 setGeneric(".predict_novelty", function(object, data, ...) standardGeneric(".predict_novelty"))
 
+setGeneric(".predict_risk_stratification", function(object, data, ...) standardGeneric(".predict_risk_stratification"))
+
 setGeneric("train", function(data, ...) standardGeneric("train"))
 
 setGeneric(".train", function(object, data, ...) standardGeneric(".train"))

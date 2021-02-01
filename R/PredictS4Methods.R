@@ -240,3 +240,70 @@ setMethod(".predict_novelty", signature(object="character"),
             return(do.call(.predict_novelty, args=c(list("object"=object),
                                                     list(...))))
           })
+
+
+#####.predict_risk_stratification (familiarModel)#####
+setMethod(".predict_risk_stratification", signature(object="familiarModel"),
+          function(object, data, time, stratification_threshold=NULL, stratification_method=NULL, ...){
+            # Only assess stratification for survival outcomes.
+            if(!object@outcome_type %in% c("survival")) return(NULL)
+            
+            # Allow for settings the stratification threshold explicitly.
+            if(is.null(stratification_threshold)){
+              
+              if(!is.null(stratification_method)){
+                # Select threshold values for the given method.
+                
+                # First check if the method exists.
+                if(!stratification_method %in% object@km_info$stratification_method){
+                  stop(paste0("Data for stratification method ", stratification_method, " was not found with the object."))
+                }
+                
+                # Select stratification threshold for the given method.
+                stratification_threshold <- object@km_info$parameters[[stratification_method]]$cutoff
+                
+              } else {
+                # Select stratification threshold for the first method.
+                stratification_threshold <- object@km_info$parameters[[1]]$cutoff
+              }
+            }
+            
+            # Generate an empty prediction table.
+            prediction_table <- get_placeholder_prediction_table(object=object,
+                                                                 data=data,
+                                                                 type="risk_stratification")
+            
+            # Check again if a stratification threshold is now set.
+            if(is.null(stratification_threshold)) return(prediction_table)
+            
+            # Predict for the instances in data.
+            predictions <- .predict(object=object,
+                                    data=data,
+                                    time=time)
+            
+            # Check for valid predictions,
+            if(is_empty(predictions)) return(prediction_table)
+            if(!any_predictions_valid(prediction_table=predictions, outcome_type=object@outcome_type)) return(prediction_table)
+            
+            # Find risk groups for each instance.
+            assigned_risk_group <- learner.apply_risk_threshold(object=object,
+                                                                predicted_values=predictions$predicted_outcome,
+                                                                cutoff=stratification_threshold)
+            
+            # Set to prediction table.
+            prediction_table[, "risk_group":=assigned_risk_group]
+            
+            return(prediction_table)
+          })
+
+
+#####.predict_risk_stratification (character)#####
+setMethod(".predict_risk_stratification", signature(object="character"),
+          function(object, ...){
+            
+            # Load object.
+            object <- load_familiar_object(object)
+            
+            return(do.call(.predict_risk_stratification, args=c(list("object"=object),
+                                                                list(...))))
+          })
