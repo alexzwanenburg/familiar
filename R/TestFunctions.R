@@ -156,11 +156,24 @@ test_all_learners_train_predict_vimp <- function(learners, hyperparameter_list=N
           # Test that the predictions were successfully made.
           testthat::expect_equal(any_predictions_valid(prediction_table, outcome_type),
                                  ifelse(learner %in% c(except_train, except_predict, except_predict_survival), FALSE, TRUE))
+          
+          prediction_table <- suppressWarnings(.predict(model, full_data, type="risk_stratification", time=1000))
+          
+          # Test that the predictions were successfully made.
+          testthat::expect_equal(any_predictions_valid(prediction_table, outcome_type),
+                                 ifelse(learner %in% c(except_train, except_predict, except_predict_survival), FALSE, TRUE))
         })
         
         testthat::test_that(paste0("Sample survival predictions for ", outcome_type, " can be made using ", learner, " for a one-sample data set."), {
           # Expect predictions to be made.
           prediction_table <- suppressWarnings(.predict(model, data=full_one_sample_data, type="survival_probability", time=1000))
+          
+          # Test that the predictions were successfully made.
+          testthat::expect_equal(any_predictions_valid(prediction_table, outcome_type),
+                                 ifelse(learner %in% c(except_train, except_predict, except_predict_survival), FALSE, TRUE))
+          
+          # Expect predictions to be made.
+          prediction_table <- suppressWarnings(.predict(model, data=full_one_sample_data, type="risk_stratification", time=1000))
           
           # Test that the predictions were successfully made.
           testthat::expect_equal(any_predictions_valid(prediction_table, outcome_type),
@@ -285,11 +298,25 @@ test_all_learners_train_predict_vimp <- function(learners, hyperparameter_list=N
           # Test that the predictions were successfully made.
           testthat::expect_equal(any_predictions_valid(prediction_table, outcome_type),
                                  ifelse(learner %in% c(except_train, except_predict, except_predict_survival), FALSE, TRUE))
+          
+          # Expect predictions to be made.
+          prediction_table <- suppressWarnings(.predict(model, one_feature_data, type="risk_stratification", time=1000))
+          
+          # Test that the predictions were successfully made.
+          testthat::expect_equal(any_predictions_valid(prediction_table, outcome_type),
+                                 ifelse(learner %in% c(except_train, except_predict, except_predict_survival), FALSE, TRUE))
         })
         
         testthat::test_that(paste0("Sample survival predictions for ", outcome_type, " can be made using ", learner, " for a one-feature, one-sample data set."), {
           # Expect predictions to be made.
           prediction_table <- suppressWarnings(.predict(model, data=one_feature_one_sample_data, type="survival_probability", time=1000))
+          
+          # Test that the predictions were successfully made.
+          testthat::expect_equal(any_predictions_valid(prediction_table, outcome_type),
+                                 ifelse(learner %in% c(except_train, except_predict, except_predict_survival), FALSE, TRUE))
+          
+          # Expect predictions to be made.
+          prediction_table <- suppressWarnings(.predict(model, data=one_feature_one_sample_data, type="risk_stratification", time=1000))
           
           # Test that the predictions were successfully made.
           testthat::expect_equal(any_predictions_valid(prediction_table, outcome_type),
