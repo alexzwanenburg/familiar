@@ -85,7 +85,8 @@ learner.survival_probability_relative_risk <- function(object, data, time){
   survival_probs <- sapply(predicted_risks, function(rr, s0) (s0^rr), s0=baseline_surv)
   
   # Updated the prediction table
-  prediction_table[, "survival_probability":=survival_probs]
+  prediction_table[, ":="("predicted_outcome"=NULL,
+                          "survival_probability"=survival_probs)]
   
   return(prediction_table)
 }

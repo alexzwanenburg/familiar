@@ -494,7 +494,7 @@ setMethod("..predict", signature(object="character", data="dataObject"),
 
 #####..predict_survival_probability (familiarModel, dataObject)####
 setMethod("..predict_survival_probability", signature(object="familiarModel", data="dataObject"),
-          function(object, data, time) return(get_placeholder_prediction_table(object=object, data=data)))
+          function(object, data, time) return(get_placeholder_prediction_table(object=object, data=data, type="survival_probability")))
 
 
 #####..predict (character, dataObject)#####

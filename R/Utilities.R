@@ -542,6 +542,10 @@ any_predictions_valid <- function(prediction_table, outcome_type){
       
     } else if("survival_probability" %in% colnames(prediction_table)){
       return(any(is.finite(prediction_table$survival_probability)))
+    
+    } else if("risk_group" %in% colnames(prediction_table)){
+      return(any(!is.na(prediction_table$risk_group)))
+      
     } else {
       return(FALSE)
     }

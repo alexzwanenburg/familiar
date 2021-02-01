@@ -9,7 +9,16 @@ NULL
 
 #####.predict (familiarEnsemble)#####
 setMethod(".predict", signature(object="familiarEnsemble"),
-          function(object, data, allow_recalibration=TRUE, is_pre_processed=FALSE, time=NULL, type="default", dir_path=NULL, ensemble_method="median", ...) {
+          function(object,
+                   data,
+                   allow_recalibration=TRUE,
+                   is_pre_processed=FALSE,
+                   time=NULL, type="default",
+                   dir_path=NULL,
+                   ensemble_method="median",
+                   stratification_threshold=NULL,
+                   stratification_method=NULL,
+                   ...) {
             # Predict function for a model ensemble. This will always return
             # ensemble information, and not details corresponding to the
             # individual models.
@@ -27,6 +36,8 @@ setMethod(".predict", signature(object="familiarEnsemble"),
                                      is_pre_processed=is_pre_processed,
                                      time=time,
                                      type=type,
+                                     stratification_threshold=stratification_threshold,
+                                     stratification_method=stratification_method,
                                      ...)
               
             } else {
@@ -38,26 +49,36 @@ setMethod(".predict", signature(object="familiarEnsemble"),
                                          keep_novelty="novelty" %in% type)
               
               # Generate a placeholder table.
-              predict_list <- list(get_placeholder_prediction_table(object=object, data=data))
+              predict_list <- list(get_placeholder_prediction_table(object=object, data=data, type=type))
             }
-            
             
             ##### Ensemble predictions #####
             # Generate ensemble predictions
             if(all(type %in% .get_available_prediction_type_arguments())){
-              prediction_data <- ensemble_prediction(object=object,
-                                                     prediction_data=data.table::rbindlist(predict_list),
-                                                     ensemble_method=ensemble_method)
+              ensemble_prediction_data <- ensemble_prediction(object=object,
+                                                              prediction_data=data.table::rbindlist(predict_list),
+                                                              ensemble_method=ensemble_method,
+                                                              type=type)
+            } else {
+              ensemble_prediction_data <- predict_list
             }
 
             # Return data
-            return(prediction_data)
+            return(ensemble_prediction_data)
           })
 
 
 #####.predict (familiarModel)#####
 setMethod(".predict", signature(object="familiarModel"),
-          function(object, data, allow_recalibration=TRUE, is_pre_processed=FALSE, time=NULL, type="default", ...) {
+          function(object,
+                   data,
+                   allow_recalibration=TRUE,
+                   is_pre_processed=FALSE,
+                   time=NULL,
+                   type="default",
+                   stratification_threshold=NULL,
+                   stratification_method=NULL,
+                   ...) {
             
             # Prepare input data
             data <- process_input_data(object=object,
@@ -130,6 +151,7 @@ setMethod(".predict", signature(object="familiarModel"),
             
             ##### Survival probability #########################################
             if("survival_probability" %in% type) {
+              
               # Prediction survival probabilities,
               temp_prediction_table <- ..predict_survival_probability(object=object,
                                                                       data=data,
@@ -149,10 +171,13 @@ setMethod(".predict", signature(object="familiarModel"),
             
             ##### Risk stratification ##########################################
             if("risk_stratification" %in% type){
+              
               # Prediction survival probabilities,
-              temp_prediction_table <- ..predict_risk_stratification(object=object,
-                                                                     data=data,
-                                                                     time=time)
+              temp_prediction_table <- .predict_risk_stratification(object=object,
+                                                                    data=data,
+                                                                    time=time,
+                                                                    stratification_threshold=stratification_threshold,
+                                                                    stratification_method=stratification_method,)
               
               # Add new columns to existing prediction table, if necessary.
               if(is.null(prediction_table)){
@@ -168,9 +193,9 @@ setMethod(".predict", signature(object="familiarModel"),
             if(!is_empty(prediction_table)){
               # Order output columns.
               data.table::setcolorder(prediction_table,
-                                      neworder=colnames(get_placeholder_prediction_table(object=object, data=data)))
+                                      neworder=colnames(get_placeholder_prediction_table(object=object, data=data, type=type)))
             }  
-
+            
             return(prediction_table)  
           })
 

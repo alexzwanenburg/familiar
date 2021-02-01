@@ -588,7 +588,6 @@ setMethod("get_placeholder_prediction_table", signature(object="outcomeInfo", da
             
             # Check that the type parameter is valid,
             .check_parameter_value_is_valid(x=type, var_name="type", values=.get_available_prediction_type_arguments())
-            .check_argument_length(type, var_name="type", min=1, max=1)
             
             # Find non-feature columns.
             non_feature_columns <- get_non_feature_columns(object)
@@ -596,7 +595,7 @@ setMethod("get_placeholder_prediction_table", signature(object="outcomeInfo", da
             # Create the prediction table.
             prediction_table <- data.table::copy(data[, mget(non_feature_columns)])
             
-            if(type == "default"){
+            if("default" %in% type){
               # Add default prediction columns.
               
               if(object@outcome_type %in% c("survival", "continuous", "count", "competing_risk")){
@@ -621,12 +620,9 @@ setMethod("get_placeholder_prediction_table", signature(object="outcomeInfo", da
               } else {
                 ..error_no_known_outcome_type(object@outcome_type)
               }
-              
-            } else if(type == "novelty"){
-              # Add novelty column.
-              prediction_table[, "novelty":=as.double(NA)]
-              
-            } else if(type == "survival_probability"){
+            }
+
+            if("survival_probability" %in% type){
               
               if(object@outcome_type %in% c("survival", "competing_risk")){
                 # For survival outcomes, a single predicted outcome column is
@@ -637,8 +633,10 @@ setMethod("get_placeholder_prediction_table", signature(object="outcomeInfo", da
                 ..error_no_known_outcome_type(object@outcome_type)
               }
                 
-            } else if(type == "risk_stratification"){
-              
+            } 
+            
+            if("risk_stratification" %in% type){
+
               if(object@outcome_type %in% c("survival", "competing_risk")){
                 # For survival outcomes, a risk_group column is added.
                 prediction_table[, "risk_group":=as.character(NA)]
@@ -646,6 +644,12 @@ setMethod("get_placeholder_prediction_table", signature(object="outcomeInfo", da
               } else {
                 ..error_no_known_outcome_type(object@outcome_type)
               }
+            }
+            
+            if("novelty" %in% type){
+              # Add novelty column.
+              prediction_table[, "novelty":=as.double(NA)]
+              
             }
             
             return(prediction_table)
