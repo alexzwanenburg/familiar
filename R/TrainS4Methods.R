@@ -18,7 +18,7 @@ setMethod("train", signature(data="data.table"),
 
 
 setMethod("train", signature(data="dataObject"),
-          function(data, learner, hyperparameter_list=list(), create_bootstrap=FALSE, ...){
+          function(data, learner, hyperparameter_list=list(), create_bootstrap=FALSE, create_novelty_detector=FALSE, ...){
             
             #####Prepare settings###############################################
             
@@ -147,15 +147,20 @@ setMethod("train", signature(data="dataObject"),
             
             # Create bootstraps.
             if(create_bootstrap){
-              browser()
-              data <- select_data_from_samples(data=data, samples=fam_sample(x=data@data,
-                                                                             size=nrow(data@data),
-                                                                             replace=TRUE))
+              data <- select_data_from_samples(data=data,
+                                               samples=fam_sample(x=data@data,
+                                                                  replace=TRUE))
             }
             
             # Train model.
             object <- .train(object=object, data=data, get_additional_info=TRUE)
             
+            # Add novelty detector
+            if(create_novelty_detector){
+              object <- .train_novelty_detector(object=object,
+                                                data=data)
+            }
+
             return(object)
           })
 
