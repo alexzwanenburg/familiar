@@ -53,12 +53,10 @@ setMethod("extract_confusion_matrix", signature(object="familiarEnsemble"),
             # Obtain ensemble method from stored settings, if required.
             if(is.waive(ensemble_method)) ensemble_method <- object@settings$ensemble_method
             
-            # Check the level detail
-            if(is.waive(detail_level)) detail_level <- object@settings$detail_level
-            
-            .check_parameter_value_is_valid(x=detail_level, var_name="detail_level",
-                                            values=c("ensemble", "hybrid", "model"))
-            
+            # Check the level detail.
+            detail_level <- .parse_detail_level(x = detail_level,
+                                                default = "ensemble",
+                                                data_element = "confusion_matrix")
             
             # Generate a prototype data element.
             proto_data_element <- new("familiarDataElementConfusionMatrix",

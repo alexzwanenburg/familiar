@@ -83,27 +83,22 @@ setMethod("extract_auc_data", signature(object="familiarEnsemble"),
             .check_parameter_value_is_valid(x=bootstrap_ci_method, var_name="bootstrap_ci_methpd",
                                             values=.get_available_bootstrap_confidence_interval_methods())
             
-            # Check the level detail
-            if(is.waive(detail_level)) detail_level <- object@settings$detail_level
+            # Check the level detail.
+            detail_level <- .parse_detail_level(x = detail_level,
+                                                default = "hybrid",
+                                                data_element = "auc_data")
             
-            .check_parameter_value_is_valid(x=detail_level, var_name="detail_level",
-                                            values=c("ensemble", "hybrid", "model"))
-            
-            # Check the estimation type
-            if(is.waive(estimation_type)) estimation_type <- object@settings$estimation_type
-            
-            .check_parameter_value_is_valid(x=estimation_type, var_name="estimation_type",
-                                            values=c("point", "bias_correction", "bc", "bootstrap_confidence_interval", "bci"))
+            # Check the estimation type.
+            estimation_type <- .parse_estimation_type(x = estimation_type,
+                                                      default = "bootstrap_confidence_interval",
+                                                      data_element = "auc_data",
+                                                      detail_level = detail_level,
+                                                      has_internal_bootstrap = TRUE)
             
             # Check whether results should be aggregated.
-            if(is.waive(aggregate_results)) aggregate_results <- object@settings$aggregate_results
-            
-            aggregate_results <- tolower(aggregate_results)
-            .check_parameter_value_is_valid(x=aggregate_results, var_name="aggregate_results",
-                                            values=c(.get_available_data_elements(confidence_interval_only=TRUE),
-                                                     "true", "false", "none", "all", "default"))
-            # Set as TRUE/FALSE
-            aggregate_results <- any(aggregate_results %in% c("true", "all", "auc_data"))
+            aggregate_results <- .parse_aggregate_results(x = aggregate_results,
+                                                          default = TRUE,
+                                                          data_element = "auc_data")
             
             # Generate a prototype data element.
             proto_data_element <- new("familiarDataElementAUCCurve",

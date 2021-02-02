@@ -66,14 +66,13 @@ setMethod("extract_predictions", signature(object="familiarEnsemble"),
             .check_parameter_value_is_valid(x=ensemble_method, var_name="ensemble_method",
                                             values=.get_available_ensemble_prediction_methods())
             
+            # Check the level detail.
+            detail_level <- .parse_detail_level(x = detail_level,
+                                                default = "ensemble",
+                                                data_element = "prediction_data")
+            
             # Test if models are properly loaded
             if(!is_model_loaded(object=object)) ..error_ensemble_models_not_loaded()
-            
-            # Check the level detail
-            if(is.waive(detail_level)) detail_level <- object@settings$detail_level
-            
-            .check_parameter_value_is_valid(x=detail_level, var_name="detail_level",
-                                            values=c("ensemble", "hybrid", "model"))
             
             # Aggregate data. It does not make sense to keep duplicate rows here.
             data <- aggregate_data(data=data)
