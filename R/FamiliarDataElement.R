@@ -682,6 +682,9 @@ setMethod("extract_dispatcher", signature(object="familiarEnsemble", proto_data_
            progress_bar = verbose,
            ...)
   
+  # Pack to list.
+  if(!is.list(x)) x <- list(x)
+  
   # Merge data elements together.
   x <- merge_data_elements(x)
   
