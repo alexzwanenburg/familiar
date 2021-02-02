@@ -1,7 +1,7 @@
 # Don't perform any further tests on CRAN due to time of running the complete test.
 testthat::skip_on_cran()
 
-debug_flag <- TRUE
+debug_flag <- FALSE
 
 familiar:::test_export(export_function=familiar:::export_prediction_data,
                        data_element="prediction_data",
