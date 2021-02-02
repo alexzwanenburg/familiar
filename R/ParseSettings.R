@@ -2240,6 +2240,13 @@
 #'
 #'  `hybrid` is generally computationally less expensive then `ensemble`, which
 #'  in turn is somewhat less expensive than `model`.
+#'  
+#'  A non-default `detail_level` parameter can be
+#'  specified for separate evaluation steps by providing a parameter value in a
+#'  named list with data elements, e.g. `list("auc_data"="ensemble",
+#'  "model_performance"="hybrid")`. This parameter can be set for the following
+#'  data elements: `auc_data`, `decision_curve_data`, `model_performance`,
+#'  `permutation_vimp`, `prediction_data` and `confusion_matrix`.
 #'
 #'@param estimation_type (*optional*) Sets the type of estimation that should be
 #'  possible. This has the following options:
@@ -2253,7 +2260,15 @@
 #'  * `bootstrap_confidence_interval` or `bci` (default): Bias-corrected
 #'  estimates with bootstrap confidence intervals (Efron and Hastie, 2016). The
 #'  number of point estimates required depends on the `confidence_level`
-#'  parameter, and `familiar` may bootstrap the data to create them.
+#'  parameter, and `familiar` may bootstrap the data to create them. In some
+#'  cases no bootstrap data
+#'
+#'  As with `detail_level`, a non-default `estimation_type` parameter can be
+#'  specified for separate evaluation steps by providing a parameter value in a
+#'  named list with data elements, e.g. `list("auc_data"="bci",
+#'  "model_performance"="point")`. This parameter can be set for the following
+#'  data elements: `auc_data`, `decision_curve_data`, `model_performance`,
+#'  `permutation_vimp`, and `prediction_data`.
 #'
 #'@param aggregate_results (*optional*) Flag that signifies whether results
 #'  should be aggregated during evaluation. If `estimation_type` is
@@ -2263,9 +2278,14 @@
 #'  boundaries of the confidence interval. This has no effect if
 #'  `estimation_type` is `point`.
 #'
-#'  The default value is `default`, which is equal to `TRUE` except when
-#'  assessing metrics to assess model performance, as the default violin plot
-#'  requires underlying data.
+#'  The default value is equal to `TRUE` except when assessing metrics to assess
+#'  model performance, as the default violin plot requires underlying data.
+#'
+#'  As with `detail_level` and `estimation_type`, a non-default
+#'  `aggregate_results` parameter can be specified for separate evaluation steps
+#'  by providing a parameter value in a named list with data elements, e.g.
+#'  `list("auc_data"=TRUE, , "model_performance"=FALSE)`. This parameter exists
+#'  for the same elements as `estimation_type`.
 #'
 #'@param confidence_level (*optional*) Numeric value for the level at which
 #'  confidence intervals are determined. In the case bootstraps are used to
@@ -2624,43 +2644,117 @@
   
   sapply(settings$metric, metric.check_outcome_type, outcome_type=outcome_type)
   
-  
   # Level at which evaluations are computed.
   settings$detail_level <- .parse_arg(x_config=config$detail_level, x_var=detail_level,
-                                      var_name="detail_level", type="character", optional=TRUE, default="hybrid")
+                                      var_name="detail_level", type="list", optional=TRUE, default=list())
   
-  .check_parameter_value_is_valid(x=settings$detail_level, var_name="detail_level",
-                                  values=c("ensemble", "hybrid", "model"))
+  if(length(settings$detail_level) == 0){
+    # Default - use method-specific settings.
+    settings$detail_level <- NULL
+    
+  } else if(length(settings$detail_level) == 1 & is.null(names(settings$detail_level))){
+    
+    # Check that the contents are a correctly specified, single string.
+    .check_parameter_value_is_valid(x=settings$detail_level[[1]], var_name="detail_level",
+                                    values=c("ensemble", "hybrid", "model"))
+    
+    # Add provided detail level to each possible element.
+    settings$detail_level <- lapply(.get_available_data_elements(check_has_detail_level=TRUE),
+                                    function(x, detail_level) (detail_level),
+                                    detail_level = settings$detail_level[[1]])
+    
+    # Add name of respective data elements.
+    names(settings$detail_level) <- .get_available_data_elements(check_has_detail_level=TRUE)
+                                                                 
+  } else {
+    
+    # Check that the list elements are correctly specified.
+    sapply(names(settings$detail_level), .check_parameter_value_is_valid,
+           var_name="detail_level (data element name)",
+           values=.get_available_data_elements(check_has_detail_level=TRUE))
+    
+    # Check that the list contents are correctly specified.
+    sapply(names(settings$detail_level), function(element_name, x){
+      .check_parameter_value_is_valid(x[[element_name]],
+                                      var_name=paste0("detail_level (", element_name, ")"),
+                                      values=c("ensemble", "hybrid", "model"))
+    }, x = settings$detail_level)
+  }
   
   
   # Type of estimation performed.
   settings$estimation_type <- .parse_arg(x_config=config$estimation_type, x_var=estimation_type,
-                                         var_name="estimation_type", type="character", optional=TRUE, default="bootstrap_confidence_interval")
+                                         var_name="estimation_type", type="list", optional=TRUE, default=list())
   
-  .check_parameter_value_is_valid(x=settings$estimation_type, var_name="estimation_type",
-                                  values=c("point", "bias_correction", "bc", "bootstrap_confidence_interval", "bci"))
+  if(length(settings$estimation_type) == 0){
+    # Default - use method-specific settings.
+    settings$estimation_type <- NULL
+    
+  } else if(length(settings$estimation_type) == 1 & is.null(names(settings$estimation_type))){
+    
+    # Check that the contents are a correctly specified, single string.
+    .check_parameter_value_is_valid(x=settings$estimation_type[[1]], var_name="estimation_type",
+                                    values=c("point", "bias_correction", "bc", "bootstrap_confidence_interval", "bci"))
+    
+    # Add provided estimation type to each possible element.
+    settings$estimation_type <- lapply(.get_available_data_elements(check_has_estimation_type=TRUE),
+                                       function(x, estimation_type) (estimation_type),
+                                       estimation_type = settings$estimation_type[[1]])
+    
+    # Add name of respective data elements.
+    names(settings$estimation_type) <- .get_available_data_elements(check_has_estimation_type=TRUE)
+    
+  } else {
+    
+    # Check that the list elements are correctly specified.
+    sapply(names(settings$estimation_type), .check_parameter_value_is_valid,
+           var_name="estimation_type (data element name)",
+           values=.get_available_data_elements(check_has_estimation_type=TRUE))
+    
+    # Check that the list contents are correctly specified.
+    sapply(names(settings$estimation_type), function(element_name, x){
+      .check_parameter_value_is_valid(x[[element_name]],
+                                      var_name=paste0("estimation_type (", element_name, ")"),
+                                      values=c("point", "bias_correction", "bc", "bootstrap_confidence_interval", "bci"))
+    }, x = settings$estimation_type)
+  }
   
   
   # Aggregate results.
   settings$aggregate_results <- .parse_arg(x_config=config$aggregate_results, x_var=aggregate_results,
-                                           var_name="aggregate_results", type="character_list", optional=TRUE, default="default")
+                                           var_name="aggregate_results", type="list", optional=TRUE, default=list())
   
-  settings$aggregate_results <- tolower(settings$aggregate_results)
-  .check_parameter_value_is_valid(x=settings$aggregate_results, var_name="aggregate_results",
-                                  values=c(.get_available_data_elements(confidence_interval_only=TRUE),
-                                           "true", "false", "none", "all", "default"))
-  
-  # Handle none, false, true, all and default values.
-  if(any(settings$aggregate_results %in% c("none", "false"))){
-    settings$aggregate_results <- "none"
+  if(length(settings$aggregate_results) == 0){
+    # Default - use method-specific settings.
+    settings$aggregate_results <- NULL
     
-  } else if(any(settings$aggregate_results %in% c("true", "all"))){
-    settings$aggregate_results <- "all"
+  } else if(length(settings$aggregate_results) == 1 & is.null(names(settings$aggregate_results))){
     
-  } else if(any(settings$aggregate_results %in% c("default"))){
-    # Do not aggregate results for evaluation steps where model performance is
-    # evaluated.
-    settings$aggregate_results <- setdiff(.get_available_data_elements(confidence_interval_only=TRUE), "model_performance")
+    # Check that the contents are a correctly specified, single string.
+    .check_parameter_value_is_valid(x=tolower(settings$aggregate_results[[1]]), var_name="aggregate_results",
+                                    values=c("true", "false", "none", "all", "default"))
+    
+    # Add provided aggregate_results value to each possible element.
+    settings$aggregate_results <- lapply(.get_available_data_elements(check_has_estimation_type=TRUE),
+                                         function(x, aggregate_results) (aggregate_results),
+                                         aggregate_results = tolower(settings$aggregate_results[[1]]))
+    
+    # Add name of respective data elements.
+    names(settings$aggregate_results) <- .get_available_data_elements(check_has_estimation_type=TRUE)
+    
+  } else {
+    
+    # Check that the list elements are correctly specified.
+    sapply(names(settings$aggregate_results), .check_parameter_value_is_valid,
+           var_name="aggregate_results (data element name)",
+           values=.get_available_data_elements(check_has_estimation_type=TRUE))
+    
+    # Check that the list contents are correctly specified.
+    sapply(names(settings$aggregate_results), function(element_name, x){
+      .check_parameter_value_is_valid(tolower(x[[element_name]]),
+                                      var_name=paste0("aggregate_results (", element_name, ")"),
+                                      values=c("true", "false", "none", "all", "default"))
+    }, x = settings$aggregate_results)
   }
   
   # Bootstrap confidence interval.

@@ -3,17 +3,97 @@
 NULL
 
 
-.get_available_data_elements <- function(confidence_interval_only = FALSE){
-  if(confidence_interval_only){
-    return(c("auc_data", "decision_curve_analyis", "model_performance", "permutation_vimp"))
+.get_available_data_elements <- function(check_has_estimation_type=FALSE, check_has_detail_level=FALSE){
+  
+  # All data elements.
+  all_data_elements <- c("auc_data", "calibration_data", "confusion_matrix", "decision_curve_data", "feature_expressions",
+                         "fs_vimp", "hyperparameters", "kaplan_meier_data", "model_performance",
+                         "model_vimp", "mutual_correlation", "permutation_vimp", "prediction_data",
+                         "stratification_data", "univariate_analysis")
+  
+  # Data elements that allow setting an estimation type.
+  can_set_estimation_type <- c("auc_data", "decision_curve_data", "model_performance", "permutation_vimp",  "prediction_data")
+  
+  # Data elements that allow setting a detail level.
+  can_set_detail_level <- c(can_set_estimation_type, "confusion_matrix")
+  
+  if(check_has_estimation_type){
+    all_data_elements <- intersect(all_data_elements, can_set_estimation_type)
     
-  } else {
-    return(c("auc_data", "calibration_data", "confusion_matrix", "decision_curve_analyis", "feature_expressions",
-             "fs_vimp", "hyperparameters", "kaplan_meier_data", "model_performance",
-             "model_vimp", "mutual_correlation", "permutation_vimp", "prediction_data",
-             "stratification_data", "univariate_analysis"))
+  } 
+  
+  if(check_has_detail_level){
+    all_data_elements <- intersect(all_data_elements, can_set_detail_level)
   }
+  
+  return(all_data_elements)
 }
+
+
+
+.parse_detail_level <- function(x, default, data_element){
+  
+  if(is.null(x) | is.waive(x)) return(default)
+  
+  # detail level is stored in a list, by data_element.
+  if(is.list(x)) x <- x[[data_element]]
+  
+  if(is.null(x)) return(default)
+  
+  .check_parameter_value_is_valid(x=x, var_name="detail_level",
+                                  values=c("ensemble", "hybrid", "model"))
+  
+  return(x)
+}
+
+
+
+.parse_estimation_type <- function(x, default, data_element, detail_level, has_internal_bootstrap){
+  
+  # Change to default to point if the detail_level is model.
+  if(detail_level == "model") default <- "point"
+  
+  # In case there is no internal bootstrap, we can only determine point
+  # estimates for ensemble and model detail levels (but potentially more for
+  # hybrid).
+  if(!has_internal_bootstrap & detail_level %in% c("ensemble", "model") & default != "point") default <- "point"
+  
+  if(is.null(x) | is.waive(x)) return(default)
+  
+  # detail level is stored in a list, by data_element.
+  if(is.list(x)) x <- x[[data_element]]
+  
+  if(is.null(x)) return(default)
+  
+  .check_parameter_value_is_valid(x=x, var_name="estimation_type",
+                                  values=c("point", "bias_correction", "bc", "bootstrap_confidence_interval", "bci"))
+  
+  return(x)
+}
+
+
+
+.parse_aggregate_results <- function(x, default, data_element){
+  
+  if(is.null(x) | is.waive(x)) return(default)
+  
+  # detail level is stored in a list, by data_element.
+  if(is.list(x)) x <- x[[data_element]]
+  
+  if(is.null(x)) return(default)
+  
+  x <- tolower(x)
+  .check_parameter_value_is_valid(x=x, var_name="aggregate_results",
+                                  values=c("true", "false", "none", "all", "default"))
+  
+  if(x == "default") return(default)
+  if(x %in% c("true", "all")) return(TRUE)
+  
+  return(FALSE)
+}
+
+
+
 
 #'@title Internal function to create a familiarData object.
 #'
