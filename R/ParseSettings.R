@@ -2245,7 +2245,7 @@
 #'  specified for separate evaluation steps by providing a parameter value in a
 #'  named list with data elements, e.g. `list("auc_data"="ensemble",
 #'  "model_performance"="hybrid")`. This parameter can be set for the following
-#'  data elements: `auc_data`, `decision_curve_data`, `model_performance`,
+#'  data elements: `auc_data`, `decision_curve_analyis`, `model_performance`,
 #'  `permutation_vimp`, `prediction_data` and `confusion_matrix`.
 #'
 #'@param estimation_type (*optional*) Sets the type of estimation that should be
@@ -2267,7 +2267,7 @@
 #'  specified for separate evaluation steps by providing a parameter value in a
 #'  named list with data elements, e.g. `list("auc_data"="bci",
 #'  "model_performance"="point")`. This parameter can be set for the following
-#'  data elements: `auc_data`, `decision_curve_data`, `model_performance`,
+#'  data elements: `auc_data`, `decision_curve_analyis`, `model_performance`,
 #'  `permutation_vimp`, and `prediction_data`.
 #'
 #'@param aggregate_results (*optional*) Flag that signifies whether results

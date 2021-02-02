@@ -97,19 +97,19 @@ setMethod("extract_decision_curve_data", signature(object="familiarEnsemble"),
             # Check the level detail.
             detail_level <- .parse_detail_level(x = detail_level,
                                                 default = "hybrid",
-                                                data_element = "decision_curve_data")
+                                                data_element = "decision_curve_analyis")
             
             # Check the estimation type.
             estimation_type <- .parse_estimation_type(x = estimation_type,
                                                       default = "bootstrap_confidence_interval",
-                                                      data_element = "decision_curve_data",
+                                                      data_element = "decision_curve_analyis",
                                                       detail_level = detail_level,
                                                       has_internal_bootstrap = TRUE)
             
             # Check whether results should be aggregated.
             aggregate_results <- .parse_aggregate_results(x = aggregate_results,
                                                           default = TRUE,
-                                                          data_element = "decision_curve_data")
+                                                          data_element = "decision_curve_analyis")
 
             # Test if models are properly loaded
             if(!is_model_loaded(object=object)) ..error_ensemble_models_not_loaded()

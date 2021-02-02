@@ -85,7 +85,7 @@ in turn is somewhat less expensive than \code{model}.
 A non-default \code{detail_level} parameter can be
 specified for separate evaluation steps by providing a parameter value in a
 named list with data elements, e.g. \code{list("auc_data"="ensemble", "model_performance"="hybrid")}. This parameter can be set for the following
-data elements: \code{auc_data}, \code{decision_curve_data}, \code{model_performance},
+data elements: \code{auc_data}, \code{decision_curve_analyis}, \code{model_performance},
 \code{permutation_vimp}, \code{prediction_data} and \code{confusion_matrix}.}
 
 \item{message_indent}{Number of indentation steps for messages shown during

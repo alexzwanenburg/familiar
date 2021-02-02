@@ -6,13 +6,13 @@ NULL
 .get_available_data_elements <- function(check_has_estimation_type=FALSE, check_has_detail_level=FALSE){
   
   # All data elements.
-  all_data_elements <- c("auc_data", "calibration_data", "confusion_matrix", "decision_curve_data", "feature_expressions",
+  all_data_elements <- c("auc_data", "calibration_data", "confusion_matrix", "decision_curve_analyis", "feature_expressions",
                          "fs_vimp", "hyperparameters", "kaplan_meier_data", "model_performance",
                          "model_vimp", "mutual_correlation", "permutation_vimp", "prediction_data",
                          "stratification_data", "univariate_analysis")
   
   # Data elements that allow setting an estimation type.
-  can_set_estimation_type <- c("auc_data", "decision_curve_data", "model_performance", "permutation_vimp",  "prediction_data")
+  can_set_estimation_type <- c("auc_data", "decision_curve_analyis", "model_performance", "permutation_vimp",  "prediction_data")
   
   # Data elements that allow setting a detail level.
   can_set_detail_level <- c(can_set_estimation_type, "confusion_matrix")
