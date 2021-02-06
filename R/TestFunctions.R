@@ -1517,6 +1517,7 @@ test_export <- function(export_function,
                         ...,
                         export_args=list(),
                         test_specific_config=FALSE,
+                        n_models=1L,
                         create_novelty_detector=FALSE,
                         debug=FALSE){
   
@@ -1559,24 +1560,51 @@ test_export <- function(export_function,
     
     #####Full data set########################################################
     
-    # Train the model.
-    model_full_1 <- suppressWarnings(train(data=full_data,
-                                           cluster_method="none",
-                                           imputation_method="simple",
-                                           fs_method="mim",
-                                           hyperparameter_list=hyperparameters,
-                                           learner="lasso",
-                                           time_max=1832,
-                                           create_novelty_detector=create_novelty_detector))
+    if(n_models == 1){
+      # Train the model.
+      model_full_1 <- suppressWarnings(train(data=full_data,
+                                             cluster_method="none",
+                                             imputation_method="simple",
+                                             fs_method="mim",
+                                             hyperparameter_list=hyperparameters,
+                                             learner="lasso",
+                                             time_max=1832,
+                                             create_novelty_detector=create_novelty_detector))
+      
+      model_full_2 <- model_full_1
+      model_full_2@fs_method <- "mifs"
+      
+    } else {
+      # Train a set of models.
+      model_full_1 <- list()
+      model_full_2 <- list()
+      
+      for(ii in seq_len(n_models)){
+        temp_model_1 <- suppressWarnings(train(data=full_data,
+                                             cluster_method="none",
+                                             imputation_method="simple",
+                                             fs_method="mim",
+                                             hyperparameter_list=hyperparameters,
+                                             learner="lasso",
+                                             time_max=1832,
+                                             create_bootstrap=TRUE,
+                                             create_novelty_detector=create_novelty_detector))
+        
+        temp_model_2 <- temp_model_1
+        temp_model_2@fs_method <- "mifs"
+        
+        model_full_1[[ii]] <- temp_model_1
+        model_full_2[[ii]] <- temp_model_2
+      }
+    }
     
-    model_full_2 <- model_full_1
-    model_full_2@fs_method <- "mifs"
     
     # Create familiar data objects.
     data_good_full_1 <- as_familiar_data(object=model_full_1,
                                          data=full_data,
                                          data_element=data_element,
                                          ...)
+    
     data_good_full_2 <- as_familiar_data(object=model_full_2,
                                          data=full_data,
                                          data_element=data_element,
