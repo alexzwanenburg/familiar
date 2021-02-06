@@ -255,4 +255,6 @@ setGeneric("add_data_element_bootstrap", function(x, ...) standardGeneric("add_d
 
 setGeneric(".identifier_as_data_attribute", function(x, ...) standardGeneric(".identifier_as_data_attribute"))
 
+setGeneric(".compute_data_element_estimates", function(x, ...) standardGeneric(".compute_data_element_estimates"))
+
 setGeneric("collect", function(x, ...) standardGeneric("collect"))
