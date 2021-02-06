@@ -656,6 +656,34 @@ get_mode <- function(x) {
 }
 
 
+get_estimate <- function(x, na.rm=TRUE){
+  
+  # Remove NA values.
+  if(na.rm) x <- x[!is.na(x)]
+  
+  if(is.numeric(x)){
+    
+    # Determine the estimate.
+    if(length(x) > 0){
+      y <- mean(x)
+      
+    } else {
+      y <- NA
+    }
+    
+  } else {
+    # Determine the estimate.
+    if(length(x) > 0){
+      y <- get_mode(x)
+      
+    } else {
+      y <- NA
+    }
+  }
+  
+  return(y)
+}
+
 
 .sanitise_dots <- function(class, ...){
   
