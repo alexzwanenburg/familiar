@@ -222,9 +222,14 @@ setMethod("merge_data_elements", signature(x="list"),
             # empty.
             if(all(sapply(x, is_empty))) return(NULL)
             
+            # Create a proto data element to avoid having to pass larger objects
+            # than required.
+            proto_data_element <- x[[1]]
+            proto_data_element@data <- NULL
+            
             # Run familiarDataElement-specific analysis. This means that we pass
             # the first element as x with the list of elements.
-            return(merge_data_elements(x=x[[1]], x_list=x, ...))
+            return(merge_data_elements(x=proto_data_element, x_list=x, ...))
           })
 
 
