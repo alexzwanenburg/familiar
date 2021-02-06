@@ -492,7 +492,7 @@ setMethod("extract_dispatcher", signature(object="familiarEnsemble", proto_data_
               n_instances <- 20L
               
             } else if(proto_data_element@estimation_type %in% c("bootstrap_confidence_interval", "bci")){
-              n_instances <- ceiling(20 / (1.00 - proto_data_element@confidence_level))
+              n_instances <- ceiling(signif(20 / (1.00 - proto_data_element@confidence_level)))
             }
             
             # Determine the number of models we need to evaluate.
