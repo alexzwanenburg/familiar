@@ -155,15 +155,15 @@ learner.assign_risk_group_names <- function(risk_group, cutoff){
   
   if(n_groups==2){
     # Stratification into low and high-risk groups
-    y <- factor(risk_group, levels=seq_len(n_groups), labels=c("low", "high")) 
+    y <- factor(risk_group, levels=seq_len(n_groups), labels=c("low", "high"), ordered=TRUE) 
    
   } else if(n_groups==3){
     # Stratification into low, moderate and high-risk groups
-    y <- factor(risk_group, levels=seq_len(n_groups), labels=c("low", "moderate", "high"))
+    y <- factor(risk_group, levels=seq_len(n_groups), labels=c("low", "moderate", "high"), ordered=TRUE)
     
   } else {
     # Assign numbers
-    y <- factor(risk_group, levels=seq_len(n_groups))
+    y <- factor(risk_group, levels=seq_len(n_groups), ordered=TRUE)
     
   }
   
@@ -184,7 +184,7 @@ learner.get_mean_risk_group <- function(risk_group){
   # Check if the risk_group_num still falls within the range
   risk_group_num <- ifelse(risk_group_num > n, n, risk_group_num)
   
-  return(factor(group_names[risk_group_num], levels=group_names))
+  return(factor(group_names[risk_group_num], levels=group_names, ordered=TRUE))
 }
 
 
