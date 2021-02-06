@@ -1421,7 +1421,6 @@ setMethod(".apply_labels", signature(data="familiarDataElement", object="familia
             
             # Then identify the value columns.
             value_columns <- data@value_column
-            if(data@is_aggregated & data@estimation_type %in% c("bci", "bootstrap_confidence_interval")) value_columns <- c(value_columns, "ci_low", "ci_up")
             
             # Find any remaining columns.
             remaining_columns <- setdiff(columns, c(grouping_columns, value_columns))

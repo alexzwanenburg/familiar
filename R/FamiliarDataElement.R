@@ -885,16 +885,15 @@ setMethod("extract_dispatcher", signature(object="familiarEnsemble", proto_data_
     
     if(length(prototype_data_element@grouping_column) > 0){
       # Compute the mean value as point estimate.
-      data <- data[, list("value"=mean(get(prototype_data_element@value_column), na.rm=TRUE)),
-                   by=c(prototype_data_element@grouping_column)]
+      data <- data[, lapply(.SD, get_estimate, na.rm=TRUE),
+                   by=c(prototype_data_element@grouping_column),
+                   .SDcols=c(prototype_data_element@value_column)]
       
     } else {
-      data <- data[, list("value"=mean(get(prototype_data_element@value_column), na.rm=TRUE))]
+      data <- data[, lapply(.SD, get_estimate, na.rm=TRUE),
+                   .SDcols=c(prototype_data_element@value_column)]
     }
-    
-    # Rename the "value" column to the actual name.
-    data.table::setnames(data, old="value", new=prototype_data_element@value_column)
-    
+
     # Convert to list again, if necessary.
     if(data_as_list) data <- as.list(data)
     
