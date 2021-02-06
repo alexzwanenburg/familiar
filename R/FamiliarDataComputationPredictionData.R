@@ -3,7 +3,8 @@
 NULL
 
 setClass("familiarDataElementPredictionTable",
-         contains="familiarDataElement")
+         contains="familiarDataElement",
+         prototype = methods::prototype(bootstrap_ci_method = "percentile"))
 
 
 #'@title Internal function to extract predicted values from models.
@@ -23,6 +24,9 @@ setGeneric("extract_predictions",
                     ensemble_method=waiver(),
                     eval_times=waiver(),
                     detail_level=waiver(),
+                    estimation_type=waiver(),
+                    aggregate_results=waiver(),
+                    confidence_level=waiver(),
                     message_indent=0L,
                     verbose=FALSE,
                     ...) standardGeneric("extract_predictions"))
@@ -36,6 +40,9 @@ setMethod("extract_predictions", signature(object="familiarEnsemble"),
                    ensemble_method=waiver(),
                    eval_times=waiver(),
                    detail_level=waiver(),
+                   estimation_type=waiver(),
+                   aggregate_results=waiver(),
+                   confidence_level=waiver(),
                    message_indent=0L,
                    verbose=FALSE,
                    ...){
@@ -59,6 +66,14 @@ setMethod("extract_predictions", signature(object="familiarEnsemble"),
               sapply(eval_times, .check_number_in_valid_range, var_name="eval_times", range=c(0.0, Inf), closed=c(FALSE, TRUE))
             }
             
+            # Load confidence alpha from object settings attribute if not
+            # provided externally.
+            if(is.waive(confidence_level)) confidence_level <- object@settings$confidence_level
+            
+            # Check confidence_level input argument
+            .check_number_in_valid_range(x=confidence_level, var_name="confidence_level",
+                                         range=c(0.0, 1.0), closed=c(FALSE, FALSE))
+            
             # Obtain ensemble method from stored settings, if required.
             if(is.waive(ensemble_method)) ensemble_method <- object@settings$ensemble_method
             
@@ -71,6 +86,18 @@ setMethod("extract_predictions", signature(object="familiarEnsemble"),
                                                 default = "ensemble",
                                                 data_element = "prediction_data")
             
+            # Check the estimation type.
+            estimation_type <- .parse_estimation_type(x = estimation_type,
+                                                      default = "point",
+                                                      data_element = "prediction_data",
+                                                      detail_level = detail_level,
+                                                      has_internal_bootstrap = FALSE)
+            
+            # Check whether results should be aggregated.
+            aggregate_results <- .parse_aggregate_results(x = aggregate_results,
+                                                          default = TRUE,
+                                                          data_element = "prediction_data")
+            
             # Test if models are properly loaded
             if(!is_model_loaded(object=object)) ..error_ensemble_models_not_loaded()
             
@@ -80,12 +107,13 @@ setMethod("extract_predictions", signature(object="familiarEnsemble"),
             # Generate a prototype data element.
             proto_data_element <- new("familiarDataElementPredictionTable",
                                       detail_level = detail_level,
-                                      estimation_type = "point")
+                                      confidence_level = confidence_level,
+                                      estimation_type = estimation_type)
             
             # Generate elements to send to dispatch.
             performance_data <- extract_dispatcher(FUN=.extract_predictions,
                                                    has_internal_bootstrap=FALSE,
-                                                   aggregate_results=FALSE,
+                                                   aggregate_results=aggregate_results,
                                                    cl=cl,
                                                    object=object,
                                                    data=data,
