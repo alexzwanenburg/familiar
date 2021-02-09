@@ -4,7 +4,17 @@ NULL
 
 setClass("familiarDataElementPredictionTable",
          contains="familiarDataElement",
-         prototype = methods::prototype(bootstrap_ci_method = "percentile"))
+         slots=list("ensemble_method"="character",
+                    "percentiles"="ANY",
+                    "type"="ANY",
+                    "outcome_type"="ANY",
+                    "class_levels"="ANY"),
+         prototype = methods::prototype(bootstrap_ci_method = "percentile",
+                                        ensemble_method = "median",
+                                        percentiles=NULL,
+                                        outcome_type=NULL,
+                                        class_levels=NULL,
+                                        type="default"))
 
 
 #'@title Internal function to extract predicted values from models.
@@ -178,7 +188,23 @@ setMethod("extract_predictions", signature(object="familiarEnsemble"),
                               ensemble_method=ensemble_method,
                               time=data_element@identifiers$evaluation_time,
                               type=type,
-                              is_pre_processed=is_pre_processed)
+                              is_pre_processed=is_pre_processed,
+                              aggregate_results=FALSE)
+  
+  # Store the type and ensemble method.
+  data_element@type <- type
+  data_element@ensemble_method <- ensemble_method
+  
+  if(object@outcome_type %in% c("binomial", "multinomial")){
+    class_levels <- get_outcome_class_levels(x=object)
+    
+  } else {
+    class_levels <- NULL
+  }
+  
+  # Set outcome type and class levels.
+  data_element@outcome_type <- object@outcome_type
+  data_element@class_levels <- class_levels
   
   # Store the prediction data in the data table.
   data_element@data <- prediction_data
@@ -192,6 +218,331 @@ setMethod("extract_predictions", signature(object="familiarEnsemble"),
   
   return(data_element)
 }
+
+
+
+##### ..compute_data_element_estimates (familiarDataElementPredictionTable) #####
+setMethod("..compute_data_element_estimates", signature(x="familiarDataElementPredictionTable"),
+          function(x, x_list=NULL, object, ...){
+            
+            # It might be that x was only used to direct to this method.
+            if(!is.null(x_list)) x <- x_list
+            if(!is.list(x)) x <- list(x)
+            
+            # Identify the estimation types of the current data elements.
+            estimation_type <- sapply(x, function(x) (x@estimation_type))
+            
+            # Get prediction types
+            type <- unique(unlist(sapply(x, function(x) x@type)))
+            
+            # Check percentiles and confidence level.
+            if(any(estimation_type %in% c("bci", "bootstrap_confidence_interval")) &
+               is.null(x[[1]]@percentiles) &
+               is.null(x[[1]]@confidence_level)){
+              ..error_reached_unreachable_code("..compute_data_element_estimates: percentiles and confidence_level cannot both be NULL.")
+            }
+            
+            # Determine the bootstrap_ci_method and the aggregation function
+            if(any(estimation_type %in% c("bci", "bootstrap_confidence_interval"))){
+              bootstrap_ci_method <- ifelse(x[[1]]@ensemble_method == "median", "percentile", "bc")
+              FUN <- ..bootstrap_ci
+              
+            } else if(x[[1]]@ensemble_method == "median") {
+              bootstrap_ci_method <- NULL
+              FUN <- stats::median
+              
+            } else {
+              bootstrap_ci_method <- NULL
+              FUN <- mean
+            }
+            
+            # Collate the data.
+            if(any(estimation_type %in% c("bci", "bootstrap_confidence_interval"))){
+              
+              # Check that a point estimation is present.
+              if(!any(estimation_type %in% c("point"))){
+                browser()
+                # Add point estimate, if not already present.
+                x <- c(x, list(.add_point_estimate_from_elements(x)))
+                
+                # Update estimation type.
+                estimation_type <- sapply(x, function(x) (x@estimation_type))
+              }
+              
+              # Select point estimate.
+              point_values <- data.table::as.data.table(x[estimation_type == "point"][[1]]@data)
+              point_values[, "estimation_type":="point"]
+              
+              # Select bootstrap values.
+              bootstrap_values <- data.table::as.data.table(x[estimation_type %in% c("bci", "bootstrap_confidence_interval")][[1]]@data)
+              bootstrap_values[, "estimation_type":="bootstrap_confidence_interval"]
+              
+              # Combine to single table.
+              data <- data.table::rbindlist(list(point_values, bootstrap_values),
+                                            use.names=TRUE,
+                                            fill=TRUE)
+              
+              # Copy the familiarDataElement.
+              y <- x[estimation_type %in% c("bci", "bootstrap_confidence_interval")][[1]]
+              y@data <- NULL
+              
+            } else {
+              # Select values.
+              data <- data.table::as.data.table(x[[1]]@data)
+              data[, "estimation_type":=x[[1]]@estimation_type]
+              
+              # Copy the familiarDataElement.
+              y <- x[[1]]
+              y@data <- NULL
+            }
+            
+            if("default" %in% type){
+              y@data <- ..compute_ensemble_default_estimates(data=data,
+                                                             FUN = FUN,
+                                                             bootstrap_ci_method = bootstrap_ci_method,
+                                                             outcome_type = x[[1]]@outcome_type,
+                                                             class_levels = x[[1]]@class_levels,
+                                                             percentiles = x[[1]]@percentiles,
+                                                             confidence_level = x[[1]]@confidence_level,
+                                                             grouping_column = x[[1]]@grouping_column)
+            }
+            
+            # Determine if novelty is part of the columns.
+            if("novelty" %in% type){
+              temp_data <- ..compute_ensemble_novelty_estimates(data=data,
+                                                                FUN = FUN,
+                                                                bootstrap_ci_method = bootstrap_ci_method,
+                                                                percentiles = x[[1]]@percentiles,
+                                                                confidence_level = x[[1]]@confidence_level,
+                                                                grouping_column = x[[1]]@grouping_column)
+              
+              if(is.null(y@data)){
+                y@data <- temp_data
+                
+              } else {
+                y@data <- merge(x=y@data,
+                                y=temp_data,
+                                by=x[[1]]@grouping_column)
+              }
+            }
+            
+            # Determine if survival probabilities were computed.
+            if("survival_probability" %in% type){
+              temp_data <- ..compute_ensemble_survival_probability_estimates(data=data,
+                                                                             FUN = FUN,
+                                                                             bootstrap_ci_method = bootstrap_ci_method,
+                                                                             percentiles = x[[1]]@percentiles,
+                                                                             confidence_level = x[[1]]@confidence_level,
+                                                                             grouping_column = x[[1]]@grouping_column)
+              
+              if(is.null(y@data)){
+                y@data <- temp_data
+                
+              } else {
+                y@data <- merge(x=y@data,
+                                y=temp_data,
+                                by=x[[1]]@grouping_column)
+              }
+            }
+            
+            # Determine if data were assigned to risk groups.
+            if("risk_stratification" %in% type){
+              temp_data <- ..compute_ensemble_risk_stratification(data=data,
+                                                                  bootstrap_ci_method = bootstrap_ci_method,
+                                                                  ensemble_method = x[[1]]@ensemble_method,
+                                                                  grouping_column = x[[1]]@grouping_column)
+              
+              if(is.null(y@data)){
+                y@data <- temp_data
+                
+              } else {
+                y@data <- merge(x=y@data,
+                                y=temp_data,
+                                by=x[[1]]@grouping_column)
+              }
+            }
+            
+            return(y)
+          })
+
+
+
+..compute_ensemble_default_estimates <- function(data,
+                                                 outcome_type,
+                                                 class_levels=NULL,
+                                                 grouping_column,
+                                                 ...){
+  
+  if(outcome_type %in% c("binomial", "multinomial")){
+    
+    if(is.null(class_levels)) ..error_reached_unreachable_code("..compute_ensemble_default_estimates: class_levels cannot be NULL.")
+    
+    # Probability columns
+    prediction_columns <- get_class_probability_name(x=class_levels)
+    
+  } else if(outcome_type %in% c("continuous", "count", "survival")){
+    # Outcome columns
+    prediction_columns <- "predicted_outcome"
+    
+  } else if(outcome_type == "competing_risk"){
+    ..error_outcome_type_not_implemented(outcome_type=outcome_type)
+    
+  } else {
+    ..error_no_known_outcome_type(outcome_type=outcome_type)
+  }
+  
+  # Compute ensemble estimates for the default predictions.
+  prediction_data <- data[,
+                          ...compute_ensemble_estimates(x=.SD,
+                                                        prediction_columns=prediction_columns,
+                                                        ...),
+                          by=c(grouping_column),
+                          .SDcols=c("estimation_type", prediction_columns)]
+  
+  # Add the predicted class, if required
+  if(outcome_type %in% c("binomial", "multinomial")){
+    
+    # Identify the name of the most probable class
+    new_predicted_class <- class_levels[max.col(prediction_data[, c(prediction_columns), with=FALSE])]
+    
+    # Add the names as the predicted outcome
+    prediction_data[, "predicted_class":=new_predicted_class]
+    
+    # Convert to a factor
+    prediction_data$predicted_class <- factor(prediction_data$predicted_class,
+                                              levels=class_levels)
+  }
+  
+  return(prediction_data)
+}
+
+
+
+..compute_ensemble_novelty_estimates <- function(data,
+                                                 grouping_column,
+                                                 ...){
+  
+  # Compute ensemble estimates for the 
+  prediction_data <- data[,
+                          ...compute_ensemble_estimates(x=.SD,
+                                                        prediction_columns="novelty",
+                                                        ...),
+                          by=c(grouping_column),
+                          .SDcols=c("estimation_type", "novelty")]
+  
+  return(prediction_data)
+}
+
+
+
+..compute_ensemble_survival_probability_estimates <- function(data,
+                                                              grouping_column,
+                                                              ...){
+  
+  # Compute ensemble estimates for the 
+  prediction_data <- data[,
+                          ...compute_ensemble_estimates(x=.SD,
+                                                        prediction_columns="survival_probability",
+                                                        ...),
+                          by=c(grouping_column),
+                          .SDcols=c("estimation_type", "survival_probability")]
+  
+  return(prediction_data)
+}
+
+
+
+..compute_ensemble_risk_stratification <- function(data,
+                                                   ensemble_method,
+                                                   grouping_column,
+                                                   bootstrap_ci_method = NULL,
+                                                   ...){
+  
+  # Suppress NOTES due to non-standard evaluation in data.table
+  risk_group <- estimation_type <- NULL
+  
+  if(!is.null(bootstrap_ci_method)) data <- data[estimation_type != "point"]
+  
+  # Create risk groups according to the corresponding method.
+  if(ensemble_method == "mean"){
+    prediction_data <- data[, list("risk_group"=learner.get_mean_risk_group(risk_group)),
+                            by=c(grouping_column)]
+    
+  } else if(ensemble_method == "median"){
+    prediction_data <- data[, list("risk_group"=get_mode(risk_group)),
+                            by=c(grouping_column)]
+  }
+  
+  return(prediction_data)
+  
+}
+
+
+
+...compute_ensemble_estimates <- function(x,
+                                          prediction_columns,
+                                          FUN,
+                                          bootstrap_ci_method=NULL,
+                                          confidence_level=NULL,
+                                          percentiles=NULL){
+  
+  # Suppress NOTES due to non-standard evaluation in data.table
+  estimation_type <- NULL
+  
+  # Calculate ensemble value for the prediction columns.
+  if(is.null(bootstrap_ci_method)){
+    ensemble_values <- lapply(prediction_columns, function(ii_col) (FUN(x[[ii_col]], na.rm=TRUE)))
+    
+  } else {
+    ensemble_values <- lapply(prediction_columns, function(ii_col) (FUN(x = x[estimation_type != "point"][[ii_col]],
+                                                                        x0 = x[estimation_type == "point"][[ii_col]],
+                                                                        bootstrap_ci_method = bootstrap_ci_method,
+                                                                        confidence_level = confidence_level,
+                                                                        percentiles = percentiles)))
+  }
+  
+  # Determine column names
+  column_names <- lapply(seq_along(prediction_columns), function(ii, prediction_columns, ensemble_values, parse_percentile){
+    # If the content of element ii is not a list itself, it contains only a
+    # single value that should be named.
+    if(!is.list(ensemble_values[[ii]])) return(prediction_columns[ii])
+    
+    if(!parse_percentile){
+      # If the content of element ii is a list, assign the prediction column name
+      # to the first column, and add the name to the remainder.
+      
+      column_names <- prediction_columns[ii]
+      
+      if(length(ensemble_values[[ii]]) > 1){
+        column_names <- c(column_names,
+                          paste0(prediction_columns[ii], "_", names(ensemble_values[[ii]])[2:length(ensemble_values[[ii]])]))
+      }
+      
+      return(column_names)
+      
+    } else {
+      # Assign the prediction column name to every column in case percentiles
+      # are returned.
+      return(paste0(prediction_columns[ii], "_", names(ensemble_values[[ii]])))
+    }
+  },
+  prediction_columns=prediction_columns,
+  ensemble_values=ensemble_values,
+  parse_percentile = !is.null(bootstrap_ci_method) & is.null(confidence_level) & !is.null(percentiles))
+  
+  # Flatten list of column names
+  column_names <- unlist(column_names)
+  
+  # Flatten list of ensemble values.
+  ensemble_values <- unlist(ensemble_values, recursive=FALSE)
+  if(!is.list(ensemble_values)) ensemble_values <- as.list(ensemble_values)
+  
+  # Set column names.
+  names(ensemble_values) <- column_names
+  
+  return(ensemble_values)
+}
+
 
 
 #####export_prediction_data#####
@@ -257,3 +608,4 @@ setMethod("export_prediction_data", signature(object="ANY"),
                                        "dir_path"=dir_path),
                                   list(...))))
           })
+
