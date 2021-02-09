@@ -650,7 +650,7 @@ setClass("familiarDataElement",
            estimation_type = "character",
            # The confidence level for which data was computed. Only set if the
            # correct estimation type is set.
-           confidence_level = "numeric",
+           confidence_level = "ANY",
            # The method used to compute the bootstrap confidence intervals from
            # the data.
            bootstrap_ci_method = "character",
@@ -668,7 +668,7 @@ setClass("familiarDataElement",
            identifiers = NULL,
            detail_level = NA_character_,
            estimation_type = NA_character_,
-           confidence_level = NA_real_,
+           confidence_level = NULL,
            bootstrap_ci_method = NA_character_,
            value_column = NA_character_,
            grouping_column = NULL,
