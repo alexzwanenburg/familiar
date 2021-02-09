@@ -257,4 +257,6 @@ setGeneric(".identifier_as_data_attribute", function(x, ...) standardGeneric(".i
 
 setGeneric(".compute_data_element_estimates", function(x, ...) standardGeneric(".compute_data_element_estimates"))
 
+setGeneric("..compute_data_element_estimates", function(x, ...) standardGeneric("..compute_data_element_estimates"))
+
 setGeneric("collect", function(x, ...) standardGeneric("collect"))
