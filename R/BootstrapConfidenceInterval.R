@@ -97,7 +97,7 @@
 
 
 
-..bootstrap_ci <- function(x, x_0=NULL, confidence_level=NULL, percentiles=NULL, bootstrap_ci_method="percentile"){
+..bootstrap_ci <- function(x, x_0=NULL, confidence_level=NULL, percentiles=NULL, bootstrap_ci_method="percentile", ...){
   
   # Test confidence level
   if(!is.null(confidence_level)){
