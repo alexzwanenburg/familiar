@@ -135,6 +135,9 @@ setMethod(".identifier_as_data_attribute", signature(x="familiarDataElement"),
             if(data.table::is.data.table(x@data)){
               # The data element is a data.table.
               
+              # Make a local copy to avoid updating by reference.
+              x@data <- data.table::copy(x@data)
+              
               # Iterate over identifier names.
               for(id_name in names(identifier_values)){
                 # Add identifier to the dataset.
