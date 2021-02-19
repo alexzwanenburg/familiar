@@ -1075,6 +1075,9 @@ setMethod(".compute_data_element_estimates", signature(x="familiarDataElement"),
               # Compute estimates.
               aggregated_data_element <- ..compute_data_element_estimates(x=current_data_elements,
                                                                           ...)
+              
+              if(is.null(aggregated_data_element)) next()
+              
               # Update the is_aggregated attribute.
               aggregated_data_element@is_aggregated <- TRUE
               
@@ -1085,6 +1088,8 @@ setMethod(".compute_data_element_estimates", signature(x="familiarDataElement"),
               # Add aggregated element.
               data_elements <- c(data_elements, list(aggregated_data_element))
             }
+            
+            if(is_empty(data_elements)) return(NULL)
             
             return(data_elements)
           })
