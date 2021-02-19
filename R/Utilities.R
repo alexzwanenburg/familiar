@@ -645,6 +645,23 @@ strip_calibration_table <- function(calibration_data, outcome_type){
 }
 
 
+harmonic_p_value <- function(x){
+  
+  if(data.table::is.data.table(x)){
+   
+    # Compute harmonic mean p-value.
+    y <- 1.0 / sum(1.0 / nrow(x) * 1.0 / x$p_value)
+    
+    return(list("p_value"=y)) 
+    
+  } else {
+    # Compute harmonic mean p-value.
+    y <- 1.0 / sum(1.0 / length(x) * 1.0 / x)
+    
+    return(y)
+  }
+}
+
 
 get_mode <- function(x) {
   # Ken Williams:
