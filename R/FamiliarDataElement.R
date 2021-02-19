@@ -194,7 +194,8 @@ setMethod("identify_element_sets", signature(x="familiarDataElement"),
             
             # Get the identifiers and the detail level and combine to a list.
             id_list <- c(x@identifiers,
-                         list("detail_level"=x@detail_level))
+                         list("detail_level"=x@detail_level,
+                              "object_class"=class(x)[1]))
             
             # Add the estimation type if it is not to be ignored.
             if(!ignore_estimation_type) id_list <- c(id_list, list("estimation_type"=x@estimation_type))
@@ -225,14 +226,34 @@ setMethod("merge_data_elements", signature(x="list"),
             # empty.
             if(all(sapply(x, is_empty))) return(NULL)
             
-            # Create a proto data element to avoid having to pass larger objects
-            # than required.
-            proto_data_element <- x[[1]]
-            proto_data_element@data <- NULL
+            # Create return list for data elements.
+            data_element <- list()
             
-            # Run familiarDataElement-specific analysis. This means that we pass
-            # the first element as x with the list of elements.
-            return(merge_data_elements(x=proto_data_element, x_list=x, ...))
+            # Determine class of all elements
+            element_classes <- sapply(x, class)
+            
+            # Iterate over unique classes.
+            for(element_class in unique(element_classes)){
+              
+              if(all(sapply(x[which(element_classes == element_class)], is_empty))) next()
+              
+              # Create a proto data element to avoid having to pass larger objects
+              # than required.
+              proto_data_element <- x[which(element_classes == element_class)][[1]]
+              proto_data_element@data <- NULL
+              
+              # Run familiarDataElement-specific analysis. This means that we pass
+              # the prototype data element as x with the list of elements.
+              data_element <- c(data_element,
+                                merge_data_elements(x=proto_data_element,
+                                                    x_list=x[which(element_classes == element_class)],
+                                                    ...))
+            }
+            
+            # Assign a NULL to empty data
+            if(is_empty(data_element)) data_element <- NULL
+            
+            return(data_element)
           })
 
 
@@ -381,23 +402,43 @@ setMethod("collect", signature(x="familiarData"),
 
 #####.export (familiarCollection)------------------------------------------------
 setMethod(".export", signature(x="familiarCollection"),
-          function(x, data_slot, dir_path=NULL, type, subtype,...){
+          function(x, data_slot, dir_path=NULL, type, subtype, object_class=NULL, ...){
             
             # Get the back element.
             data_elements <- slot(x, name=data_slot)
             
+            # Check that the list is not empty.
             if(is_empty(data_elements)) return(NULL)
             
-            if(is(data_elements, "familiarDataElement")){
-              data <- .export(x=data_elements,
-                              x_list=list(data_elements),
-                              ...)
+            # Flatten (nested) lists.
+            data_elements <- unlist(data_elements)
+            if(!is.list(data_elements)) data_elements <- list(data_elements)
+            
+            # Check that at least one of the data elements in the list is not
+            # empty.
+            empty_elements <- sapply(data_elements, is_empty)
+            if(all(empty_elements)) return(NULL)
+            
+            # Remove empty elements.
+            data_elements <- data_elements[!empty_elements]
+            
+            # Determine class of all non-empty elements.
+            element_classes <- sapply(data_elements, class)
+            
+            if(!is.null(object_class)){
+              # Keep data elements that correspond 
+              data_elements <- data_elements[element_classes == object_class]
               
-            } else {
-              data <- .export(x=data_elements[[1]],
-                              x_list=data_elements,
-                              ...)
+              if(is_empty(data_elements)) return(NULL)
+              
+            } else if(data.table::uniqueN(element_classes) > 2){
+              ..error_reached_unreachable_code(".export,familiarCollection: multiple data elements with different classes found, whereas only one is expected.")
             }
+
+            # Merge and aggregate data.
+            data <- .export(x=data_elements[[1]],
+                            x_list=data_elements,
+                            ...)
             
             # Apply labels.
             data <- .apply_labels(data=data,
@@ -971,14 +1012,31 @@ setMethod(".add_point_estimate_from_elements", signature(x="NULL"),
 setMethod(".compute_data_element_estimates", signature(x="list"),
           function(x, ...){
             
-            # Create a proto data element to avoid having to pass larger objects
-            # than required.
-            proto_data_element <- x[[1]]
-            proto_data_element@data <- NULL
+            # Create return list for data elements.
+            data_element <- list()
             
-            return(.compute_data_element_estimates(x=proto_data_element,
-                                                   x_list=x,
-                                                   ...))
+            # Determine class of all elements
+            element_classes <- sapply(x, class)
+            
+            # Iterate over unique classes.
+            for(element_class in unique(element_classes)){
+              
+              # Create a proto data element to avoid having to pass larger objects
+              # than required.
+              proto_data_element <- x[which(element_classes == element_class)][[1]]
+              proto_data_element@data <- NULL
+              
+              # Run familiarDataElement-specific analysis. This means that we pass
+              # the prototype data element as x with the list of elements.
+              data_element <- c(data_element,
+                                .compute_data_element_estimates(x=proto_data_element,
+                                                                x_list=x[which(element_classes == element_class)],
+                                                                ...))
+            }
+            
+            if(is_empty(data_element)) return(NULL)
+            
+            return(data_element)
           })
 
 
