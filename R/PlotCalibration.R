@@ -40,7 +40,7 @@ NULL
 #'  during model creation.
 #'
 #'  Available splitting variables are: `fs_method`, `learner`, `data_set` and
-#'  `evaluation_time` (survival analysis only) and `pos_class` (multinomial
+#'  `evaluation_time` (survival analysis only) and `positive_class` (multinomial
 #'  endpoints only). By default, separate figures are created for each
 #'  combination of `fs_method` and `learner`, with facetting by `data_set`.
 #'
@@ -55,7 +55,7 @@ NULL
 #'
 #'  Calibration for multinomial endpoints is performed in a one-against-all
 #'  manner. This yields calibration information for each individual class of the
-#'  endpoint. For such endpoints, `pos_class` is an additional facet variable
+#'  endpoint. For such endpoints, `positive_class` is an additional facet variable
 #'  (by default).
 #'
 #'  Calibration plots have a density plot in the margin, which shows the density
@@ -127,10 +127,12 @@ setGeneric("plot_calibration_data",
                     y_range=NULL,
                     y_n_breaks=5,
                     y_breaks=NULL,
+                    conf_int_style=c("ribbon", "step", "none"),
+                    conf_int_alpha=0.4,
                     show_density=TRUE,
                     show_calibration_fit=TRUE,
                     show_goodness_of_fit=TRUE,
-                    density_plot_height=grid::unit(1.5, "cm"),
+                    density_plot_height=grid::unit(1.0, "cm"),
                     width=waiver(),
                     height=waiver(),
                     units=waiver(),
@@ -164,10 +166,12 @@ setMethod("plot_calibration_data", signature(object="ANY"),
                    y_range=NULL,
                    y_n_breaks=5,
                    y_breaks=NULL,
+                   conf_int_style=c("ribbon", "step", "none"),
+                   conf_int_alpha=0.4,
                    show_density=TRUE,
                    show_calibration_fit=TRUE,
                    show_goodness_of_fit=TRUE,
-                   density_plot_height=grid::unit(1.5, "cm"),
+                   density_plot_height=grid::unit(1.0, "cm"),
                    width=waiver(),
                    height=waiver(),
                    units=waiver(),
@@ -201,6 +205,8 @@ setMethod("plot_calibration_data", signature(object="ANY"),
                                      "y_range"=y_range,
                                      "y_n_breaks"=y_n_breaks,
                                      "y_breaks"=y_breaks,
+                                     "conf_int_style"=conf_int_style,
+                                     "conf_int_alpha"=conf_int_alpha,
                                      "show_density"=show_density,
                                      "show_calibration_fit"=show_calibration_fit,
                                      "show_goodness_of_fit"=show_goodness_of_fit,
@@ -237,28 +243,43 @@ setMethod("plot_calibration_data", signature(object="familiarCollection"),
                    y_range=NULL,
                    y_n_breaks=5,
                    y_breaks=NULL,
+                   conf_int_style=c("ribbon", "step", "none"),
+                   conf_int_alpha=0.4,
                    show_density=TRUE,
                    show_calibration_fit=TRUE,
                    show_goodness_of_fit=TRUE,
-                   density_plot_height=grid::unit(1.5, "cm"),
+                   density_plot_height=grid::unit(1.0, "cm"),
                    width=waiver(),
                    height=waiver(),
                    units=waiver(),
                    ...){
             
             # Get input data
-            x <- export_calibration_data(object=object)
+            x <- export_calibration_data(object=object,
+                                         aggregate_results=TRUE)
             
-            # Check empty input
-            if(is.null(x)){ return(NULL) }
-            if(is_empty(x$data)) { return(NULL) }
+            # Check that the data are not empty.
+            if(is_empty(x$data)) return(NULL)
+            
+            # Check that the data are not evaluated at the model level.
+            if(all(sapply(x$data, function(x) (x@detail_level == "model")))){
+              ..warning_no_comparison_between_models()
+              return(NULL)
+            }
+            
+            # Get data
+            calibration_data <- x$data[[1]]@data
+            density_data <- x$density[[1]]@data
+            linear_test_data <- x$linear_test[[1]]@data
+            gof_test_data <- x$gof_test[[1]]@data
+              
+            # Check that the calibration data are not empty.
+            if(is_empty(calibration_data)) return(NULL)
             
             ##### Check input arguments ########################################
             
             # ggtheme
-            if(!is(ggtheme, "theme")) {
-              ggtheme <- plotting.get_theme(use_theme=ggtheme)
-            }
+            if(!is(ggtheme, "theme")) ggtheme <- plotting.get_theme(use_theme=ggtheme)
             
             # x_label_shared
             if(!is.waive(x_label_shared)){
@@ -275,12 +296,12 @@ setMethod("plot_calibration_data", signature(object="familiarCollection"),
             }
             
             # x_range
-            if(is.null(x_range)){
-              x_range <- c(0, 1) 
-            }
+            if(is.null(x_range)) x_range <- c(0, 1)
             
             # x_breaks
             if(is.null(x_breaks)){
+              
+              # Check input arguments.
               plotting.check_input_args(x_range=x_range,
                                         x_n_breaks=x_n_breaks)
               
@@ -294,10 +315,11 @@ setMethod("plot_calibration_data", signature(object="familiarCollection"),
             }
             
             # y_range
-            if(is.null(y_range)){ y_range <- x_range }
+            if(is.null(y_range)) y_range <- c(0, 1)
             
             # y_breaks
             if(is.null(y_breaks)){
+              # Check input arguments.
               plotting.check_input_args(y_range=y_range,
                                         y_n_breaks=y_n_breaks)
               
@@ -336,6 +358,12 @@ setMethod("plot_calibration_data", signature(object="familiarCollection"),
               }
             }
 
+            # conf_int_style
+            if(length(conf_int_style) > 1) conf_int_style <- head(conf_int_style, n=1)
+            
+            # Set the style of the confidence interval to none, in case no
+            # confidence interval data is present.
+            if(!x$data[[1]]@estimation_type %in% c("bci", "bootstrap_confidence_interval")) conf_int_style <- "none"
             
             # Add default splitting variables.
             if(is.null(split_by) & is.null(color_by) & is.null(facet_by)){
@@ -347,11 +375,11 @@ setMethod("plot_calibration_data", signature(object="familiarCollection"),
               # Add "evaluation_time" as a facetting variable in case of
               # survival analysis.
               if(object@outcome_type %in% c("survival")){
-                facet_by <- append(facet_by, "evaluation_time")
+                facet_by <- c(facet_by, "evaluation_time")
                 
               } else if(
                 object@outcome_type %in% c("multinomial")){
-                facet_by <- append(facet_by, "pos_class")
+                facet_by <- c(facet_by, "positive_class")
               }
             }
             
@@ -361,14 +389,14 @@ setMethod("plot_calibration_data", signature(object="familiarCollection"),
             # class indicator is an additional splitting variable.
             available_splitting_vars <- c("fs_method", "learner", "data_set")
             if(object@outcome_type %in% c("survival")){
-              available_splitting_vars <- append(available_splitting_vars, "evaluation_time")
+              available_splitting_vars <- c(available_splitting_vars, "evaluation_time")
               
             } else if(object@outcome_type %in% c("multinomial")){
-              available_splitting_vars <- append(available_splitting_vars, "pos_class")
+              available_splitting_vars <- c(available_splitting_vars, "positive_class")
             }
             
             # Check splitting variables and generate sanitised output
-            split_var_list <- plotting.check_data_handling(x=x$data,
+            split_var_list <- plotting.check_data_handling(x=calibration_data,
                                                            split_by=split_by,
                                                            color_by=color_by,
                                                            facet_by=facet_by,
@@ -416,30 +444,51 @@ setMethod("plot_calibration_data", signature(object="familiarCollection"),
             
             # Split data and supporting data.
             if(!is.null(split_by)){
-              x_split <- split(x$data, by=split_by, drop=FALSE)
-              linear_test_split <- split(x$linear_test, by=split_by, drop=FALSE)
-              gof_test_split <- split(x$gof_test, by=split_by, drop=FALSE)
+              data_split <- split(unique(calibration_data[, mget(split_by)]), by=split_by, drop=TRUE)
               
             } else {
-              x_split <- list("null.name"=x$data)
-              linear_test_split <- list("null.name"=x$linear_test)
-              gof_test_split <- list("null.name"=x$gof_test)
+              data_split <- list(NULL)
             }
             
             # Store plots to list in case no dir_path is provided
-            if(is.null(dir_path)){
-              plot_list <- list()
-            }
+            if(is.null(dir_path)) plot_list <- list()
+            
+            # Find grouping columns
+            grouping_column <- x$data[[1]]@grouping_column
+            grouping_column <- setdiff(grouping_column, "expected")
             
             # Iterate over splits
-            for(ii in names(x_split)){
+            for(current_split in data_split){
               
-              if(is_empty(x_split[[ii]])){
-                next()
+              # Default values
+              calibration_data_split <- NULL
+              density_data_split <- NULL
+              linear_test_data_split <- NULL
+              gof_test_data_split <- NULL
+              
+              if(!is.null(current_split)){
+                calibration_data_split <- calibration_data[current_split, on=.NATURAL]
+                
+                # Get split data. This prevents issues in case a dataset with
+                # only identical samples is present.
+                split_data <- unique(calibration_data_split[, mget(grouping_column)])
+                
+                if(show_density & !is_empty(density_data)) density_data_split <- density_data[split_data, on=.NATURAL]
+                if(show_calibration_fit & !is_empty(linear_test_data)) linear_test_data_split <- linear_test_data[split_data, on=.NATURAL]
+                if(show_goodness_of_fit & !is_empty(gof_test_data)) gof_test_data_split <- gof_test_data[split_data, on=.NATURAL]
+                
+              } else {
+                calibration_data_split <- calibration_data
+                
+                if(show_density & !is_empty(density_data)) density_data_split <- density_data
+                if(show_calibration_fit & !is_empty(linear_test_data)) linear_test_data_split <- linear_test_data
+                if(show_goodness_of_fit & !is_empty(gof_test_data)) gof_test_data_split <- gof_test_data
               }
               
+              if(is_empty(calibration_data_split)) next()
+              
               # Generate plot
-              p <- .plot_calibration_plot(x=x_split[[ii]],
+              p <- .plot_calibration_plot(x=calibration_data_split,
                                           color_by=color_by,
                                           facet_by=facet_by,
                                           facet_wrap_cols=facet_wrap_cols,
@@ -457,32 +506,37 @@ setMethod("plot_calibration_data", signature(object="familiarCollection"),
                                           x_breaks=x_breaks,
                                           y_range=y_range,
                                           y_breaks=y_breaks,
+                                          conf_int_alpha=conf_int_alpha,
+                                          conf_int_style=conf_int_style,
                                           show_density=show_density,
                                           show_calibration_fit=show_calibration_fit,
                                           show_goodness_of_fit=show_goodness_of_fit,
                                           density_plot_height=density_plot_height,
-                                          linear_test=linear_test_split[[ii]],
-                                          gof_test=gof_test_split[[ii]],
-                                          outcome_type=object@outcome_type)
+                                          linear_test=linear_test_data_split,
+                                          gof_test=gof_test_data_split,
+                                          density=density_data_split,
+                                          outcome_type=object@outcome_type,
+                                          grouping_column=x$linear_test[[1]]@grouping_column,
+                                          is_point=x$data[[1]]@estimation_type %in% c("point"))
               
               # Check empty output
-              if(is.null(p)){ next() }
+              if(is.null(p)) next()
               
               # Draw plot
-              if(draw){ plotting.draw(plot_or_grob=p) }
+              if(draw) plotting.draw(plot_or_grob=p)
               
               # Save and export
               if(!is.null(dir_path)){
                 
                 # Determine the subtype
                 if(!is.null(split_by)){
-                  subtype <- paste0(sapply(split_by, function(jj, x) (x[[jj]][1]), x=x_split[[ii]]), collapse="_")
+                  subtype <- paste0(sapply(split_by, function(jj, x) (x[[jj]][1]), x=current_split), collapse="_")
                 } else {
                   subtype <- NULL
                 }
                 
                 # Obtain decent default values for the plot.
-                def_plot_dims <- .determine_calibration_plot_dimensions(x=x_split[[ii]],
+                def_plot_dims <- .determine_calibration_plot_dimensions(x=calibration_data_split,
                                                                         facet_by=facet_by,
                                                                         facet_wrap_cols=facet_wrap_cols,
                                                                         show_density=show_density)
@@ -501,7 +555,7 @@ setMethod("plot_calibration_data", signature(object="familiarCollection"),
                 
               } else {
                 # Store as list and export
-                plot_list <- append(plot_list, list(p))
+                plot_list <- c(plot_list, list(p))
               }
             }
             
@@ -533,13 +587,18 @@ setMethod("plot_calibration_data", signature(object="familiarCollection"),
                                    x_breaks,
                                    y_range,
                                    y_breaks,
+                                   conf_int_alpha,
+                                   conf_int_style,
                                    show_density,
                                    show_calibration_fit,
                                    show_goodness_of_fit,
                                    density_plot_height,
                                    linear_test,
                                    gof_test,
-                                   outcome_type){
+                                   density,
+                                   outcome_type,
+                                   grouping_column,
+                                   is_point){
   
   # Split by facet. This generates a list of data splits with faceting
   # information that allows for positioning.
@@ -554,6 +613,8 @@ setMethod("plot_calibration_data", signature(object="familiarCollection"),
                                                          plot_layout_table=plot_layout_table)
   gof_test_facet_list <- plotting.split_data_by_facet(x=gof_test,
                                                       plot_layout_table=plot_layout_table)
+  density_facet_list <- plotting.split_data_by_facet(x=density,
+                                                     plot_layout_table=plot_layout_table)
   
   # Placeholders for plots.
   figure_list <- list()
@@ -579,11 +640,15 @@ setMethod("plot_calibration_data", signature(object="familiarCollection"),
                                               x_breaks=x_breaks,
                                               y_range=y_range,
                                               y_breaks=y_breaks,
+                                              conf_int_alpha=conf_int_alpha,
+                                              conf_int_style=conf_int_style,
                                               show_calibration_fit=show_calibration_fit,
                                               show_goodness_of_fit=show_goodness_of_fit,
                                               linear_test=linear_test_facet_list[[ii]],
                                               gof_test=gof_test_facet_list[[ii]],
-                                              outcome_type=outcome_type)
+                                              outcome_type=outcome_type,
+                                              grouping_column=grouping_column,
+                                              is_point=is_point)
     
     # Extract plot elements from the main calibration plot.
     extracted_elements <- plotting.extract_plot_elements(p=p_calibration)
@@ -595,74 +660,27 @@ setMethod("plot_calibration_data", signature(object="familiarCollection"),
     g_calibration <- plotting.rename_plot_elements(g=plotting.to_grob(p_calibration),
                                                    extension="main")
     
-    if(show_density & gtable::is.gtable(g_calibration)){
+    if(show_density & gtable::is.gtable(g_calibration) & !is_empty(density_facet_list[[ii]])){
       
-      if(outcome_type %in% c("binomial", "multinomial")){
-        # Procedure for binomial/multinomial outcomes. Separate density plots
-        # are created for the positive and negative classes.
-        
-        # Density of the positive class.
-        p_margin_positive <- .create_calibration_density_subplot(x=data_facet_list[[ii]],
-                                                                 ggtheme=ggtheme,
-                                                                 x_range=x_range,
-                                                                 x_breaks=x_breaks,
-                                                                 flip=FALSE,
-                                                                 plot_height=0.5 * density_plot_height,
-                                                                 outcome_type=outcome_type)
-        
-        # Density of the negative class.
-        p_margin_negative <- .create_calibration_density_subplot(x=data_facet_list[[ii]],
-                                                                 ggtheme=ggtheme,
-                                                                 x_range=x_range,
-                                                                 x_breaks=x_breaks,
-                                                                 flip=TRUE,
-                                                                 plot_height=0.5 * density_plot_height,
-                                                                 outcome_type=outcome_type)
-        
-        # Extract panel elements.
-        g_margin_positive <- .gtable_extract(g=plotting.to_grob(p_margin_positive),
-                                             element="panel",
-                                             partial_match=TRUE)
-        
-        g_margin_negative <- .gtable_extract(g=plotting.to_grob(p_margin_negative),
-                                             element="panel",
-                                             partial_match=TRUE)
-        
-        # Insert the panel element
-        g_calibration <- .gtable_insert(g=g_calibration,
-                                        g_new=g_margin_positive,
-                                        where="top",
-                                        ref_element="panel-main",
-                                        partial_match=TRUE)
-        
-        g_calibration <- .gtable_insert(g=g_calibration,
-                                        g_new=g_margin_negative,
-                                        where="top",
-                                        ref_element="panel-main",
-                                        partial_match=TRUE)
-        
-      } else {
-        # Procedure for normal density plots.
-        p_margin <- .create_calibration_density_subplot(x=data_facet_list[[ii]],
-                                                        ggtheme=ggtheme,
-                                                        x_range=x_range,
-                                                        x_breaks=x_breaks,
-                                                        flip=FALSE,
-                                                        plot_height=density_plot_height,
-                                                        outcome_type=outcome_type)
-        
-        # Extract the panel element from the density plot.
-        g_margin <- .gtable_extract(g=plotting.to_grob(p_margin),
-                                    element=c("panel"),
-                                    partial_match=TRUE)
-        
-        # Insert in the calibration plot at the top margin.
-        g_calibration <- .gtable_insert(g=g_calibration,
-                                        g_new=g_margin,
-                                        where="top",
-                                        ref_element="panel-main",
-                                        partial_match=TRUE)
-      }
+      # Procedure for normal density plots.
+      p_margin <- .create_calibration_density_subplot(x=density_facet_list[[ii]],
+                                                      ggtheme=ggtheme,
+                                                      x_range=x_range,
+                                                      x_breaks=x_breaks,
+                                                      flip=FALSE,
+                                                      plot_height=density_plot_height)
+      
+      # Extract the panel element from the density plot.
+      g_margin <- .gtable_extract(g=plotting.to_grob(p_margin),
+                                  element=c("panel"),
+                                  partial_match=TRUE)
+      
+      # Insert in the calibration plot at the top margin.
+      g_calibration <- .gtable_insert(g=g_calibration,
+                                      g_new=g_margin,
+                                      where="top",
+                                      ref_element="panel-main",
+                                      partial_match=TRUE)
     }
     
     # Add combined grob to list
@@ -708,36 +726,42 @@ setMethod("plot_calibration_data", signature(object="familiarCollection"),
                                      x_breaks,
                                      y_range,
                                      y_breaks,
+                                     conf_int_alpha,
+                                     conf_int_style,
                                      show_calibration_fit,
                                      show_goodness_of_fit,
+                                     grouping_column,
                                      linear_test,
                                      gof_test,
-                                     outcome_type){
+                                     outcome_type,
+                                     is_point){
   
   # Suppress NOTES due to non-standard evaluation in data.table
-  type <- NULL
+  type <- ci_low <- ci_up <- NULL
   
   # Define formula for casting the linear test data wide. This data will be used
   # to plot linear fits in the plot. The "evaluation_time" column will only
-  # appear for survival endpoints, and the "pos_class" column only in
+  # appear for survival endpoints, and the "positive_class" column only in
   # binomial/multinomial outcomes, but will only matter for multinomial
   # outcomes.
-  if(outcome_type %in% c("survival")){
-    cast_formula <- stats::as.formula(paste0(paste("data_set", "fs_method", "learner", "evaluation_time", sep="+"), "~type"))
-    
-  } else if(outcome_type %in% c("multinomial")){
-    cast_formula <- stats::as.formula(paste0(paste("data_set", "fs_method", "learner", "pos_class", sep="+"), "~type"))
+  cast_formula <- stats::as.formula(paste0(paste(setdiff(grouping_column, "type"), collapse="+"), "~type"))
+  
+  if(!is_empty(linear_test)){
+    # Cast wide on the value of the intercept or slope coefficient.
+    linear_fit <- data.table::dcast(data=linear_test, cast_formula, value.var="value")
     
   } else {
-    cast_formula <- stats::as.formula(paste0(paste("data_set", "fs_method", "learner", sep="+"), "~type"))
+    linear_fit <- NULL
   }
   
-  # Cast wide on the value of the intercept or slope coefficient.
-  linear_fit <- data.table::dcast(data=linear_test, cast_formula, value.var="coef_value")
-  
+
   # Generate a guide table
-  x_guide_list <- plotting.create_guide_table(x=x, color_by=color_by, discrete_palette=discrete_palette)
-  fit_guide_list <- plotting.create_guide_table(x=linear_fit, color_by=color_by, discrete_palette=discrete_palette)
+  x_guide_list <- plotting.create_guide_table(x=x,
+                                              color_by=color_by,
+                                              discrete_palette=discrete_palette)
+  fit_guide_list <- plotting.create_guide_table(x=linear_fit,
+                                                color_by=color_by,
+                                                discrete_palette=discrete_palette)
   
   # Extract data
   x <- x_guide_list$data
@@ -751,9 +775,16 @@ setMethod("plot_calibration_data", signature(object="familiarCollection"),
   
   # Add fill colors
   if(!is.null(color_by)){
+    if(is_point){
+      # Add scatter for individual data points.
+      p <- p + ggplot2::geom_point(mapping=ggplot2::aes(colour=!!sym("color_breaks")))
+      
+    } else {
+      # Add line for individual data points.
+      p <- p + ggplot2::geom_line(mapping=ggplot2::aes(colour=!!sym("color_breaks")),
+                                  size=ggtheme$line$size * 3)
+    }
     
-    # Add scatter for individual data points.
-    p <- p + ggplot2::geom_point(mapping=ggplot2::aes(colour=!!sym("color_breaks")))
     
     # Add fit
     if(!is_empty(fit_guide_list$data)){
@@ -768,17 +799,70 @@ setMethod("plot_calibration_data", signature(object="familiarCollection"),
                                           values=x_guide_list$guide_color$color_values,
                                           breaks=x_guide_list$guide_color$color_breaks,
                                           drop=FALSE)
+
+    p <- p + ggplot2::scale_fill_manual(name=legend_label$guide_color,
+                                        values=x_guide_list$guide_color$color_values,
+                                        breaks=x_guide_list$guide_color$color_breaks,
+                                        drop=FALSE)
     
   } else {
-    
-    # Add scatter for individual data points.
-    p <- p + ggplot2::geom_point()
+    if(is_point){
+      p <- p + ggplot2::geom_point()
+      
+    } else {
+      # Add scatter for individual data points.
+      p <- p + ggplot2::geom_line(size=ggtheme$line$size * 3)
+    }
     
     # Add fit
     if(!is_empty(fit_guide_list$data)){
       p <- p + ggplot2::geom_abline(data=fit_guide_list$data,
                                     mapping=ggplot2::aes(intercept=!!sym("offset"),
                                                          slope=!!sym("slope")))
+    }
+  }
+  
+  # Plot confidence intervals
+  if(conf_int_style[1]!="none"){
+    
+    # Limit ci_low and ci_up to y_range.
+    x[ci_low < y_range[1] & ci_up > y_range[1], "ci_low":=y_range[1]]
+    x[ci_up > y_range[2] & ci_low < y_range[2], "ci_up":=y_range[2]]
+    
+    if(conf_int_style[1] == "step"){
+      if(is.null(color_by)){
+        p <- p + ggplot2::geom_step(mapping=ggplot2::aes(y=!!sym("ci_low")),
+                                    linetype="dashed")
+        
+        p <- p + ggplot2::geom_step(mapping=ggplot2::aes(y=!!sym("ci_up")),
+                                    linetype="dashed")
+        
+      } else {
+        p <- p + ggplot2::geom_step(mapping=ggplot2::aes(y=!!sym("ci_low"),
+                                                         colour=!!sym("color_breaks")),
+                                    linetype="dashed")
+        
+        p <- p + ggplot2::geom_step(mapping=ggplot2::aes(y=!!sym("ci_up"),
+                                                         colour=!!sym("color_breaks")),
+                                    linetype="dashed")
+      }
+      
+      
+      # Remove linetype from the legend.
+      p <- p + ggplot2::scale_linetype(guide=FALSE)
+      
+    } else if(conf_int_style[1] == "ribbon"){
+      if(is.null(color_by)){
+        p <- p + ggplot2::geom_ribbon(mapping=ggplot2::aes(ymin=!!sym("ci_low"),
+                                                           ymax=!!sym("ci_up")),
+                                      alpha=conf_int_alpha)
+        
+      } else {
+        p <- p + ggplot2::geom_ribbon(mapping=ggplot2::aes(ymin=!!sym("ci_low"),
+                                                           ymax=!!sym("ci_up"),
+                                                           fill=!!sym("color_breaks")),
+                                      alpha=conf_int_alpha)
+      }
     }
   }
   
@@ -807,22 +891,32 @@ setMethod("plot_calibration_data", signature(object="familiarCollection"),
     if(show_calibration_fit & !is_empty(linear_test)){
       
       # Add calibration-in-the-large.
-      label <- append(label, paste0("intercept: ",
-                                    round(linear_test[type=="offset"]$coef_value, 2),
-                                    " (",
-                                    round(linear_test[type=="offset"]$coef_lower, 2),
-                                    "\u2013",
-                                    round(linear_test[type=="offset"]$coef_upper, 2),
-                                    ")"))
-      
-      # Add calibration slope.
-      label <- append(label, paste0("slope: ",
-                                    round(linear_test[type=="slope"]$coef_value, 2),
-                                    " (",
-                                    round(linear_test[type=="slope"]$coef_lower, 2),
-                                    "\u2013",
-                                    round(linear_test[type=="slope"]$coef_upper, 2),
-                                    ")"))
+      if(all(c("ci_low", "ci_up") %in% colnames(linear_test))){
+        label <- append(label, paste0("intercept: ",
+                                      round(linear_test[type=="offset"]$value, 2),
+                                      " (",
+                                      round(linear_test[type=="offset"]$ci_low, 2),
+                                      "\u2013",
+                                      round(linear_test[type=="offset"]$ci_up, 2),
+                                      ")"))
+        
+        # Add calibration slope.
+        label <- append(label, paste0("slope: ",
+                                      round(linear_test[type=="slope"]$value, 2),
+                                      " (",
+                                      round(linear_test[type=="slope"]$ci_low, 2),
+                                      "\u2013",
+                                      round(linear_test[type=="slope"]$ci_up, 2),
+                                      ")"))
+        
+      } else {
+        label <- append(label, paste0("intercept: ",
+                                      round(linear_test[type=="offset"]$value, 2)))
+        
+        # Add calibration slope.
+        label <- append(label, paste0("slope: ",
+                                      round(linear_test[type=="slope"]$value, 2)))
+      }
     }
     
     if(show_goodness_of_fit & !is_empty(gof_test)){
@@ -871,27 +965,11 @@ setMethod("plot_calibration_data", signature(object="familiarCollection"),
 }
 
 
-.create_calibration_density_subplot <- function(x, ggtheme, x_range, x_breaks, flip=FALSE, plot_height, outcome_type){
-  
-  # Determine the dataset for binomial and multinomial endpoints. Density is
-  # plotted separately for samples of positive and negative classes.
-  if(outcome_type %in% c("binomial", "multinomial")){
-    
-    # Density plots based on number of positive (flip=FALSE) or negative
-    # (flip=TRUE) samples.
-    if(!flip){
-      p <- ggplot2::ggplot(data=x, mapping=ggplot2::aes(x=!!sym("expected"), weight=!!sym("n_pos")))
-      
-    } else {
-      p <- ggplot2::ggplot(data=x, mapping=ggplot2::aes(x=!!sym("expected"), weight=!!sym("n_neg")))
-    }
-    
-  } else {
-    p <- ggplot2::ggplot(data=x, mapping=ggplot2::aes(x=!!sym("expected"), weight=!!sym("n_g")))
-  }
-  
-  # Create plot
-  p <- p + ggplot2::geom_density(colour="grey30", fill="grey30")
+.create_calibration_density_subplot <- function(x, ggtheme, x_range, x_breaks, flip=FALSE, plot_height){
+
+    # Create plot
+  p <- ggplot2::ggplot(data=x, mapping=ggplot2::aes(x=!!sym("expected"), weight=!!sym("frequency")))
+  p <- p + ggplot2::geom_density(bw=0.075)
   p <- p + ggplot2::scale_x_continuous(breaks=x_breaks, limits=x_range)
   
   # Set main theme
@@ -904,30 +982,13 @@ setMethod("plot_calibration_data", signature(object="familiarCollection"),
                           axis.line = ggplot2::element_blank(),
                           axis.ticks.y=ggplot2::element_blank(),
                           axis.text.x=ggplot2::element_blank(),
+                          axis.text.y=ggplot2::element_blank(),
                           axis.ticks.x=ggplot2::element_blank(),
                           axis.title.x=ggplot2::element_blank(),
                           axis.title.y=ggplot2::element_blank())
   
   if(flip){
     p <- p + ggplot2::scale_y_reverse()
-  }
-  
-  if(outcome_type %in% c("binomial", "multinomial")){
-    
-    # Obtain default settings.
-    text_settings <- plotting.get_geom_text_settings(ggtheme=ggtheme)
-    
-    # Show class indicator in plot.
-    p <- p + ggplot2::annotate("text",
-                               x=0.0,
-                               y=Inf,
-                               label=ifelse(flip, "-", "+"),
-                               colour=text_settings$colour,
-                               family=text_settings$family,
-                               fontface=text_settings$face,
-                               size=text_settings$geom_text_size,
-                               vjust="inward",
-                               hjust="inward")
   }
   
   # Ensure that panel heights are set to the plot object.

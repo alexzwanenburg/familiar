@@ -169,26 +169,6 @@ setMethod("show", signature(object="familiarModel"),
           })
 
 
-
-#####assess_calibration (model)#####
-setMethod("assess_calibration", signature(object="familiarModel"),
-          function(object, data, eval_times=NULL, is_pre_processed=FALSE){
-            
-            # Load eval_times from the object settings attribute, if it is not provided.
-            if(is.waive(eval_times)){
-              eval_times <- object@settings$eval_times
-            }
-            
-            # Check eval_times argument
-            if(object@outcome_type %in% c("survival")){
-              .check_number_in_valid_range(eval_times, var_name="eval_times", range=c(0.0, Inf), closed=c(FALSE, TRUE))
-            }
-            
-            # This function is the same for familiarModel and familiarEnsemble objects
-            return(.assess_calibration(object=object, data=data, eval_times=eval_times, is_pre_processed=is_pre_processed))
-            
-          })
-
 #####assign_risk_groups (familiarModel, dataObject)#####
 setMethod("assign_risk_groups", signature(object="familiarModel", data="dataObject"),
           function(object,
@@ -266,14 +246,6 @@ setMethod("assess_stratification", signature(object="familiarModel"),
                                                               list(...))))
           })
 
-
-#####compute_calibration_data (model, dataObject)#####
-setMethod("compute_calibration_data", signature(object="familiarModel", data="dataObject"),
-          function(object, data, time=NULL){
-            
-            # This function is the same for familiarModel and familiarEnsemble objects
-            return(.compute_calibration_data(object=object, data=data, time=time))
-          })
 
 
 #####save (model)#####

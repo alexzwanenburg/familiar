@@ -62,7 +62,15 @@ and assess models:
         
         * `aggregate_ci` has been replaced by `aggregate_results`. Aside from
         bootstrap confidence intervals, underlying results for bias-corrected
-        estimates can now be aggregated.
+        estimates can now be aggregated
+        
+* Calibration plots have been completely revamped to now include confidence
+intervals. Moreover, calibration plots based on `bootstrap_confidence_interval`
+and `bias_corrected` estimation types no longer show points, but are based on
+interpolation to a regular grid after computing a loess model. `point` estimates
+are unaltered. Density plots have also been revised to use a fixed standard
+deviation of 0.075, which prevents some of the erratic behaviour seen previously
+when most expected probability values were clustered closely.
 
 
 ## Minor changes:

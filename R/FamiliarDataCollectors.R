@@ -174,55 +174,55 @@ collect_calibration_info <- function(fam_data_list){
 #'
 #' @return A list with aggregated calibration information. May be NULL for outcome types other than survival.
 #' @noRd
-collect_calibration_data <- function(fam_data_list){
-  # Calibration data is not shared between different data objects. We don't need to identify unique entries.
-  
-  # Retrieve data for linear tests
-  lin_test_table <- data.table::rbindlist(lapply(fam_data_list, function(fam_obj){
-    
-    # Get the linear test data
-    lin_test_table <- fam_obj@calibration_data$linear_test
-    
-    # Add identifiers
-    lin_test_table <- add_identifiers(data=data.table::copy(lin_test_table),
-                                      object=fam_obj,
-                                      more_identifiers=c("fs_method", "learner"))
-    
-  } ))
-  
-  # Retrieve data for goodness-of-fit test
-  gof_test_table <- data.table::rbindlist(lapply(fam_data_list, function(fam_obj){
-    
-    # Get the goodness-of-fit data
-    gof_test_table <- fam_obj@calibration_data$gof_test
-    
-    # Add identifiers
-    gof_test_table <- add_identifiers(data=data.table::copy(gof_test_table),
-                                      object=fam_obj,
-                                      more_identifiers=c("fs_method", "learner"))
-    
-  }))
-  
-  # Retrieve raw calibration fit data
-  raw_calibr_data <- data.table::rbindlist(lapply(fam_data_list, function(fam_obj){
-    
-    # Get the raw data
-    raw_calibr_data <- fam_obj@calibration_data$data
-    
-    # Add identifiers
-    raw_calibr_data <- add_identifiers(data=data.table::copy(raw_calibr_data),
-                                       object=fam_obj,
-                                       more_identifiers=c("fs_method", "learner"))
-    
-  }))
-  
-  # Add to list
-  calibration_data_list <- list("linear_test"=lin_test_table,
-                                "gof_test"=gof_test_table,
-                                "data"=raw_calibr_data)
-  
-  return(calibration_data_list)
-}
+# collect_calibration_data <- function(fam_data_list){
+#   # Calibration data is not shared between different data objects. We don't need to identify unique entries.
+#   
+#   # Retrieve data for linear tests
+#   lin_test_table <- data.table::rbindlist(lapply(fam_data_list, function(fam_obj){
+#     
+#     # Get the linear test data
+#     lin_test_table <- fam_obj@calibration_data$linear_test
+#     
+#     # Add identifiers
+#     lin_test_table <- add_identifiers(data=data.table::copy(lin_test_table),
+#                                       object=fam_obj,
+#                                       more_identifiers=c("fs_method", "learner"))
+#     
+#   } ))
+#   
+#   # Retrieve data for goodness-of-fit test
+#   gof_test_table <- data.table::rbindlist(lapply(fam_data_list, function(fam_obj){
+#     
+#     # Get the goodness-of-fit data
+#     gof_test_table <- fam_obj@calibration_data$gof_test
+#     
+#     # Add identifiers
+#     gof_test_table <- add_identifiers(data=data.table::copy(gof_test_table),
+#                                       object=fam_obj,
+#                                       more_identifiers=c("fs_method", "learner"))
+#     
+#   }))
+#   
+#   # Retrieve raw calibration fit data
+#   raw_calibr_data <- data.table::rbindlist(lapply(fam_data_list, function(fam_obj){
+#     
+#     # Get the raw data
+#     raw_calibr_data <- fam_obj@calibration_data$data
+#     
+#     # Add identifiers
+#     raw_calibr_data <- add_identifiers(data=data.table::copy(raw_calibr_data),
+#                                        object=fam_obj,
+#                                        more_identifiers=c("fs_method", "learner"))
+#     
+#   }))
+#   
+#   # Add to list
+#   calibration_data_list <- list("linear_test"=lin_test_table,
+#                                 "gof_test"=gof_test_table,
+#                                 "data"=raw_calibr_data)
+#   
+#   return(calibration_data_list)
+# }
 
 
 #' @title Collector for prediction tables

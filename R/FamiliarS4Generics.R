@@ -18,10 +18,6 @@ setGeneric("model_is_trained", function(object, ...) standardGeneric("model_is_t
 
 setGeneric("assess_stratification", function(object, ...) standardGeneric("assess_stratification"))
 
-setGeneric("assess_calibration", function(object, ...) standardGeneric("assess_calibration"))
-
-setGeneric("compute_calibration_data", function(object, data, ...) standardGeneric("compute_calibration_data"))
-
 setGeneric("assign_risk_groups", function(object, data, ...) standardGeneric("assign_risk_groups"))
 
 setGeneric("complete_familiar_ensemble", function(object, ...) standardGeneric("complete_familiar_ensemble"))

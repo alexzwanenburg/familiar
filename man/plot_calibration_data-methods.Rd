@@ -30,6 +30,8 @@ plot_calibration_data(
   y_range = NULL,
   y_n_breaks = 5,
   y_breaks = NULL,
+  conf_int_style = c("ribbon", "step", "none"),
+  conf_int_alpha = 0.4,
   show_density = TRUE,
   show_calibration_fit = TRUE,
   show_goodness_of_fit = TRUE,
@@ -64,6 +66,8 @@ plot_calibration_data(
   y_range = NULL,
   y_n_breaks = 5,
   y_breaks = NULL,
+  conf_int_style = c("ribbon", "step", "none"),
+  conf_int_alpha = 0.4,
   show_density = TRUE,
   show_calibration_fit = TRUE,
   show_goodness_of_fit = TRUE,
@@ -98,6 +102,8 @@ plot_calibration_data(
   y_range = NULL,
   y_n_breaks = 5,
   y_breaks = NULL,
+  conf_int_style = c("ribbon", "step", "none"),
+  conf_int_alpha = 0.4,
   show_density = TRUE,
   show_calibration_fit = TRUE,
   show_goodness_of_fit = TRUE,
@@ -202,6 +208,14 @@ is unset.}
 
 \item{y_breaks}{(\emph{optional}) Break points on the y-axis of the plot.}
 
+\item{conf_int_style}{(\emph{optional}) Confidence interval style. See details for
+allowed styles.}
+
+\item{conf_int_alpha}{(\emph{optional}) Alpha value to determine transparency of
+confidence intervals or, alternatively, other plot elements with which the
+confidence interval overlaps. Only values between 0.0 (fully transparent)
+and 1.0 (fully opaque) are allowed.}
+
 \item{show_density}{(\emph{optional}) Show point density in top margin of the
 figure. If \code{color_by} is set, this information will not be shown.}
 
@@ -263,7 +277,7 @@ dataset. Any data used for calibration (e.g. baseline survival) is obtained
 during model creation.
 
 Available splitting variables are: \code{fs_method}, \code{learner}, \code{data_set} and
-\code{evaluation_time} (survival analysis only) and \code{pos_class} (multinomial
+\code{evaluation_time} (survival analysis only) and \code{positive_class} (multinomial
 endpoints only). By default, separate figures are created for each
 combination of \code{fs_method} and \code{learner}, with facetting by \code{data_set}.
 
@@ -278,7 +292,7 @@ analysis, \code{evaluation_time} is an additional facet variable (by default).
 
 Calibration for multinomial endpoints is performed in a one-against-all
 manner. This yields calibration information for each individual class of the
-endpoint. For such endpoints, \code{pos_class} is an additional facet variable
+endpoint. For such endpoints, \code{positive_class} is an additional facet variable
 (by default).
 
 Calibration plots have a density plot in the margin, which shows the density

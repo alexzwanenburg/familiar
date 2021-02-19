@@ -12,7 +12,8 @@ NULL
                          "stratification_data", "univariate_analysis")
   
   # Data elements that allow setting an estimation type.
-  can_set_estimation_type <- c("auc_data", "decision_curve_analyis", "model_performance", "permutation_vimp",  "prediction_data")
+  can_set_estimation_type <- c("auc_data", "calibration_data", "decision_curve_analyis",
+                               "model_performance", "permutation_vimp",  "prediction_data")
   
   # Data elements that allow setting a detail level.
   can_set_detail_level <- c(can_set_estimation_type, "confusion_matrix")
@@ -603,7 +604,14 @@ setMethod("extract_data", signature(object="familiarEnsemble"),
             if(any(c("calibration_data") %in% data_element)){
               calibration_data <- extract_calibration_data(object=object,
                                                            data=data,
+                                                           cl=cl,
+                                                           ensemble_method=ensemble_method,
                                                            eval_times=eval_times,
+                                                           detail_level=detail_level,
+                                                           estimation_type=estimation_type,
+                                                           aggregate_results=aggregate_results,
+                                                           confidence_level=confidence_level,
+                                                           bootstrap_ci_method=bootstrap_ci_method,
                                                            message_indent=message_indent,
                                                            verbose=verbose)
             } else {
@@ -1097,66 +1105,6 @@ setMethod("extract_km_cutoffs", signature(object="character"),
           })
 
 
-#'@title Internal function to extract calibration data.
-#'
-#'@description Computes calibration data from a `familiarEnsemble` object.
-#'  Calibration tests are performed based on expected (predicted) and observed
-#'  outcomes. For all outcomes, calibration-at-the-large and calibration slopes
-#'  are determined. Furthermore, for all but survival outcomes, a repeated,
-#'  randomised grouping Hosmer-Lemeshow test is performed. For survival
-#'  outcomes, the Nam-D'Agostino and Greenwood-Nam-D'Agostino tests are
-#'  performed.
-#'
-#'@inheritParams extract_data
-#'
-#'@return A list with data.tables containing calibration test information for
-#'  the ensemble model.
-#'@md
-#'@keywords internal
-setGeneric("extract_calibration_data",
-           function(object,
-                    data,
-                    eval_times=waiver(),
-                    is_pre_processed=FALSE,
-                    message_indent=0L,
-                    verbose=FALSE,
-                    ...) standardGeneric("extract_calibration_data"))
-
-#####extract_calibration_data#####
-setMethod("extract_calibration_data", signature(object="familiarEnsemble"),
-          function(object,
-                   data,
-                   eval_times=waiver(),
-                   is_pre_processed=FALSE,
-                   message_indent=0L,
-                   verbose=FALSE,
-                   ...){
-            
-            # Message extraction start
-            if(verbose){
-              logger.message(paste0("Assessing model calibration."),
-                             indent=message_indent)
-            }
-            
-            # Load eval_times from the object settings attribute, if it is not provided.
-            if(is.waive(eval_times)){
-              eval_times <- object@settings$eval_times
-            }
-            
-            # Check eval_times argument
-            if(object@outcome_type %in% c("survival")){
-              sapply(eval_times, .check_number_in_valid_range, var_name="eval_times", range=c(0.0, Inf), closed=c(FALSE, TRUE))
-            }
-            
-            # Test if models are properly loaded
-            if(!is_model_loaded(object=object)) ..error_ensemble_models_not_loaded()
-
-            # Test if any model in the ensemble was successfully trained.
-            if(!model_is_trained(object=object)) return(NULL)
-            
-            # This function is the same for familiarModel and familiarEnsemble objects
-            return(assess_calibration(object=object, data=data, eval_times=eval_times, is_pre_processed=is_pre_processed))
-          })
 
 
 #'@title Internal function to extract stratification data.
