@@ -685,7 +685,7 @@ get_estimate <- function(x, na.rm=TRUE){
       y <- mean(x)
       
     } else {
-      y <- NA
+      y <- NA_real_
     }
     
   } else {
