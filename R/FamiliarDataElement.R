@@ -835,85 +835,136 @@ setMethod("extract_dispatcher", signature(object="familiarEnsemble", proto_data_
 
 
 
-.add_point_estimate_from_elements <- function(x){
-  
-  if(is_empty(x)) return(NULL)
-  
-  # Find any unique elements that have not been aggregated and are not empty.
-  id_table <- identify_element_sets(x, ignore_estimation_type=TRUE)
-  
-  # Identify the element identifiers that should be grouped.
-  grouped_data_element_ids <- lapply(split(id_table[, c("element_id", "group_id")], by="group_id"), function(id_table) (id_table$element_id))
-  
-  # List of data elements.
-  data_elements <- list()
-  
-  for(current_group_data_element_ids in grouped_data_element_ids){
-    
-    # Check that there is no point estimate present in the current table.
-    if(any(sapply(x[current_group_data_element_ids], function(x) (x@estimation_type == "point")))) next()
-    
-    # Set conversion back to list, in case this is required.
-    data_as_list <- FALSE
-    
-    # Copy the first data element in the group and use it as a
-    # prototype.
-    prototype_data_element <- x[[current_group_data_element_ids[1]]]
-    
-    # Set point estimate.
-    prototype_data_element@estimation_type <- "point"
-    
-    # Check if all data are empty.
-    if(all(sapply(x[current_group_data_element_ids], function(x) (is_empty(x@data))))){
-      
-      # Add empty element to data_elements and skip to the next
-      data_elements <- c(data_elements,
-                         list(prototype_data_element))
-      
-      next()
-    }
-    
-    # Extract the data.
-    if(any(sapply(x[current_group_data_element_ids], function(x) (data.table::is.data.table(x@data))))){
-      # Data attribute contains data.table.
-      data <- lapply(x[current_group_data_element_ids], function(x) (x@data))
-      
-    } else if(any(sapply(x[current_group_data_element_ids], function(x) (is.list(x@data))))) {
-      # Convert all lists to data tables.
-      data <- lapply(x[current_group_data_element_ids], function(x) (data.table::as.data.table(x@data)))
-      
-      # Convert back to list in the end.
-      data_as_list <- TRUE
-    }
-    
-    # Combine data attributes.
-    data <- data.table::rbindlist(data,
-                                  use.names=TRUE,
-                                  fill=TRUE)
-    
-    if(length(prototype_data_element@grouping_column) > 0){
-      # Compute the mean value as point estimate.
-      data <- data[, lapply(.SD, get_estimate, na.rm=TRUE),
-                   by=c(prototype_data_element@grouping_column),
-                   .SDcols=c(prototype_data_element@value_column)]
-      
-    } else {
-      data <- data[, lapply(.SD, get_estimate, na.rm=TRUE),
-                   .SDcols=c(prototype_data_element@value_column)]
-    }
+##### .add_point_estimate_from_elements (list) #################################
+setMethod(".add_point_estimate_from_elements", signature(x="list"),
+          function(x, ...){
+            # Create return list for data elements.
+            data_element <- list()
+            
+            # Determine class of all elements
+            element_classes <- sapply(x, class)
+            
+            # Iterate over unique classes.
+            for(element_class in unique(element_classes)){
+              
+              # Create a proto data element to avoid having to pass larger objects
+              # than required.
+              proto_data_element <- x[which(element_classes == element_class)][[1]]
+              proto_data_element@data <- NULL
+              
+              # Run familiarDataElement-specific analysis. This means that we pass
+              # the prototype data element as x with the list of elements.
+              data_element <- c(data_element,
+                                .add_point_estimate_from_elements(x=proto_data_element,
+                                                                  x_list=x[which(element_classes == element_class)],
+                                                                  ...))
+            }
+            
+            # Check that any data elements were added.
+            if(is_empty(data_element)) return(NULL)
+            
+            return(data_element)
+          })
 
-    # Convert to list again, if necessary.
-    if(data_as_list) data <- as.list(data)
-    
-    # Update data attribute with point estimate.
-    prototype_data_element@data <- data
-    
-    # Add merged data element to the list.
-    data_elements <- c(data_elements, list(prototype_data_element))
-  }
-  
-  return(c(x, data_elements))
-}
+
+##### .add_point_estimate_from_elements (familiarDataElement) ##################
+setMethod(".add_point_estimate_from_elements", signature(x="familiarDataElement"),
+          function(x, x_list=NULL, ...){
+            
+            # It might be that x was only used to direct to this method.
+            if(!is.null(x_list)) x <- x_list
+            if(!is.list(x)) x <- list(x)
+            
+            # Find any unique elements that have not been aggregated and are not
+            # empty.
+            id_table <- identify_element_sets(x, ignore_estimation_type=TRUE)
+            
+            # If no identifier table is generated, this means that the dataset
+            # is empty, and a NULL should be returned.
+            if(is_empty(id_table)) return(NULL)
+            
+            # Identify the element identifiers that should be grouped.
+            grouped_data_element_ids <- lapply(split(id_table[, c("element_id", "group_id")], by="group_id"), function(id_table) (id_table$element_id))
+            
+            # List of data elements.
+            data_elements <- list()
+            
+            for(current_group_data_element_ids in grouped_data_element_ids){
+              
+              # Check that there is no point estimate present in the current table.
+              if(any(sapply(x[current_group_data_element_ids], function(x) (x@estimation_type == "point")))) next()
+              
+              # Set conversion back to list, in case this is required.
+              data_as_list <- FALSE
+              
+              # Copy the first data element in the group and use it as a
+              # prototype.
+              prototype_data_element <- x[[current_group_data_element_ids[1]]]
+              
+              # Set point estimate.
+              prototype_data_element@estimation_type <- "point"
+              
+              # Check if all data are empty.
+              if(all(sapply(x[current_group_data_element_ids], function(x) (is_empty(x@data))))){
+                
+                # Add empty element to data_elements and skip to the next
+                data_elements <- c(data_elements,
+                                   list(prototype_data_element))
+                
+                next()
+              }
+              
+              # Extract the data.
+              if(any(sapply(x[current_group_data_element_ids], function(x) (data.table::is.data.table(x@data))))){
+                # Data attribute contains data.table.
+                data <- lapply(x[current_group_data_element_ids], function(x) (x@data))
+                
+              } else if(any(sapply(x[current_group_data_element_ids], function(x) (is.list(x@data))))) {
+                # Convert all lists to data tables.
+                data <- lapply(x[current_group_data_element_ids], function(x) (data.table::as.data.table(x@data)))
+                
+                # Convert back to list in the end.
+                data_as_list <- TRUE
+              }
+              
+              # Combine data attributes.
+              data <- data.table::rbindlist(data,
+                                            use.names=TRUE,
+                                            fill=TRUE)
+              
+              if(length(prototype_data_element@grouping_column) > 0){
+                # Compute the mean value as point estimate.
+                data <- data[, lapply(.SD, get_estimate, na.rm=TRUE),
+                             by=c(prototype_data_element@grouping_column),
+                             .SDcols=c(prototype_data_element@value_column)]
+                
+              } else {
+                data <- data[, lapply(.SD, get_estimate, na.rm=TRUE),
+                             .SDcols=c(prototype_data_element@value_column)]
+              }
+              
+              # Convert to list again, if necessary.
+              if(data_as_list) data <- as.list(data)
+              
+              # Update data attribute with point estimate.
+              prototype_data_element@data <- data
+              
+              # Add merged data element to the list.
+              data_elements <- c(data_elements, list(prototype_data_element))
+            }
+            
+            return(c(x, data_elements))
+            
+          })
+
+##### .add_point_estimate_from_elements (NULL) ##################
+setMethod(".add_point_estimate_from_elements", signature(x="NULL"),
+          function(x, ...){
+            return(NULL)
+          })
+
+
+
 
 
 ##### .compute_data_element_estimates (list) ###################################
