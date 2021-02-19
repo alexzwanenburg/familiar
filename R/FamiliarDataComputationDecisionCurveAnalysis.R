@@ -76,6 +76,10 @@ setMethod("extract_decision_curve_data", signature(object="familiarEnsemble"),
             # Obtain ensemble method from stored settings, if required.
             if(is.waive(ensemble_method)) ensemble_method <- object@settings$ensemble_method
 
+            # Check ensemble_method argument
+            .check_parameter_value_is_valid(x=ensemble_method, var_name="ensemble_method",
+                                            values=.get_available_ensemble_prediction_methods())
+            
             # Load confidence alpha from object settings attribute if not
             # provided externally.
             if(is.waive(confidence_level)) confidence_level <- object@settings$confidence_level
@@ -83,10 +87,6 @@ setMethod("extract_decision_curve_data", signature(object="familiarEnsemble"),
             # Check confidence_level input argument
             .check_number_in_valid_range(x=confidence_level, var_name="confidence_level",
                                          range=c(0.0, 1.0), closed=c(FALSE, FALSE))
-            
-            # Check ensemble_method argument
-            .check_parameter_value_is_valid(x=ensemble_method, var_name="ensemble_method",
-                                            values=.get_available_ensemble_prediction_methods())
             
             # Load the bootstrap method
             if(is.waive(bootstrap_ci_method)) bootstrap_ci_method <- object@settings$bootstrap_ci_method
