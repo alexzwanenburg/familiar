@@ -1793,6 +1793,8 @@ plotting.create_guide_table <- function(x, color_by=NULL, linetype_by=NULL, disc
   
   #####Main--------------------------------------------------------------------------------------------------
   
+  if(is_empty(x)) return(list("data"=x))
+  
   # Extract guide tables
   if(combine_legend){
     guide_list <- list("guide_color"    = .get_guide_tables(x=x, color_by=color_by, linetype_by=linetype_by, discrete_palette=discrete_palette),
@@ -1805,9 +1807,7 @@ plotting.create_guide_table <- function(x, color_by=NULL, linetype_by=NULL, disc
   # Filter out lists corresponding to missing split variables
   guide_list <- guide_list[!sapply(list(color_by, linetype_by), is.null)]
   
-  if(length(guide_list) == 0){
-    return(list("data"=x))
-  }
+  if(length(guide_list) == 0) return(list("data"=x))
   
   # Initialise return list
   return_list <- list()
