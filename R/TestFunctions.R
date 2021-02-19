@@ -1123,10 +1123,10 @@ test_plots <- function(plot_function,
                                            hyperparameter_list=hyperparameters,
                                            learner="lasso",
                                            time_max=1832))
-    
+
     model_full_2 <- model_full_1
     model_full_2@fs_method <- "mifs"
-    
+
     # Create familiar data objects.
     data_good_full_1 <- as_familiar_data(object=model_full_1,
                                          data=full_data,
@@ -1136,23 +1136,23 @@ test_plots <- function(plot_function,
                                          data=full_data,
                                          data_element=data_element,
                                          ...)
-    
+
     # Create a completely intact dataset.
     test_fun(paste0("1. Plots for ", outcome_type, " outcomes ",
                     ifelse(outcome_type %in% outcome_type_available, "can", "cannot"),
                     " be created for a complete data set."), {
-                      
+
                       object <- list(data_good_full_1, data_good_full_2, data_good_full_1, data_good_full_2)
                       object <- mapply(set_data_set_names, object, c("development_1", "development_2", "validation_1", "validation_2"))
 
                       collection <- suppressWarnings(as_familiar_collection(object, familiar_data_names=c("development", "development", "validation", "validation")))
-                      
+
                       plot_list <- do.call(plot_function, args=c(list("object"=collection), plot_args))
                       which_present <- .test_which_plot_present(plot_list)
-                      
+
                       if(outcome_type %in% outcome_type_available){
-                        testthat::expect_equal(all(which_present), TRUE) 
-                        
+                        testthat::expect_equal(all(which_present), TRUE)
+
                       } else {
                         testthat::expect_equal(all(!which_present), TRUE)
                       }
@@ -1171,8 +1171,8 @@ test_plots <- function(plot_function,
                                                hyperparameter_list=hyperparameters,
                                                learner="lasso",
                                                cluster_similarity_threshold=0.7,
-                                               time_max=1832))
-
+                                               time_max=60))
+    
     # Create data from ensemble of multiple models
     multi_model_full <- as_familiar_data(object=multi_model_set,
                                          data=multi_data[[1]],
