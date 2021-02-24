@@ -32,7 +32,7 @@ plot_kaplan_meier(
   y_range = c(0, 1),
   y_n_breaks = 5,
   y_breaks = NULL,
-  conf_int = 0.95,
+  confidence_level = NULL,
   conf_int_style = c("ribbon", "step", "none"),
   conf_int_alpha = 0.4,
   censoring = TRUE,
@@ -71,7 +71,7 @@ plot_kaplan_meier(
   y_range = c(0, 1),
   y_n_breaks = 5,
   y_breaks = NULL,
-  conf_int = 0.95,
+  confidence_level = NULL,
   conf_int_style = c("ribbon", "step", "none"),
   conf_int_alpha = 0.4,
   censoring = TRUE,
@@ -110,7 +110,7 @@ plot_kaplan_meier(
   y_range = c(0, 1),
   y_n_breaks = 5,
   y_breaks = NULL,
-  conf_int = 0.95,
+  confidence_level = NULL,
   conf_int_style = c("ribbon", "step", "none"),
   conf_int_alpha = 0.4,
   censoring = TRUE,
@@ -226,8 +226,6 @@ is unset.}
 
 \item{y_breaks}{(\emph{optional}) Break points on the y-axis of the plot.}
 
-\item{conf_int}{(\emph{optional})}
-
 \item{conf_int_style}{(\emph{optional}) Confidence interval style. See details for
 allowed styles.}
 
@@ -297,10 +295,10 @@ group stratification by the learners.
 survival the y-axis represents. It is therefore recommended to provide
 \code{x_label} and \code{y_label} arguments.
 
-Available splitting variables are: \code{fs_method}, \code{learner}, \code{data_set} and
-\code{risk_group}. By default, separate figures are created for each combination
-of \code{fs_method} and \code{learner}, with faceting by \code{data_set}, colouring of the
-strata in each individual plot by \code{risk_group}.
+Available splitting variables are: \code{fs_method}, \code{learner}, \code{data_set},
+\code{risk_group} and \code{stratification_method}. By default, separate figures are
+created for each combination of \code{fs_method} and \code{learner}, with faceting by
+\code{data_set}, colouring of the strata in each individual plot by \code{risk_group}.
 
 Available palettes for \code{discrete_palette} are those listed by
 \code{grDevices::palette.pals()} (requires R >= 4.0.0), \code{grDevices::hcl.pals()}

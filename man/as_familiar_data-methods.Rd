@@ -189,6 +189,26 @@ computation and extraction of various data elements.}
 Default is \code{all}, but specific elements can be specified to speed up
 computations if not all elements are to be computed. This is an internal
 parameter that is set by, e.g. the \code{export_model_vimp} method.}
+    \item{\code{stratification_method}}{(\emph{optional}) Method for determining the
+stratification threshold for creating survival groups. The actual,
+model-dependent, threshold value is obtained from the development data, and
+can afterwards be used to perform stratification on validation data.
+
+The following stratification methods are available:
+\itemize{
+\item \code{median} (default): The median predicted value in the development cohort
+is used to stratify the samples into two risk groups.
+\item \code{fixed}: Samples are stratified based on the sample quantiles of the
+predicted values. These quantiles are defined using the
+\code{stratification_threshold} parameter.
+\item \code{optimised}: Use maximally selected rank statistics to determine the
+optimal threshold (Lausen and Schumacher, 1992; Hothorn et al., 2003) to
+stratify samples into two optimally separated risk groups.
+}
+
+One or more stratification methods can be selected simultaneously.
+
+This parameter is only relevant for \code{survival} outcomes.}
     \item{\code{detail_level}}{(\emph{optional}) Sets the level at which results are computed
 and aggregated.
 \itemize{

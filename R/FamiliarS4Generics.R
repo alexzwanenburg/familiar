@@ -16,10 +16,6 @@ setGeneric(".train_novelty_detector", function(object, data, ...) standardGeneri
 
 setGeneric("model_is_trained", function(object, ...) standardGeneric("model_is_trained"))
 
-setGeneric("assess_stratification", function(object, ...) standardGeneric("assess_stratification"))
-
-setGeneric("assign_risk_groups", function(object, data, ...) standardGeneric("assign_risk_groups"))
-
 setGeneric("complete_familiar_ensemble", function(object, ...) standardGeneric("complete_familiar_ensemble"))
 
 setGeneric("..get_model_file_path", function(ii, object, ...) standardGeneric("..get_model_file_path"))

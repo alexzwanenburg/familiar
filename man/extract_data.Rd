@@ -14,7 +14,7 @@ extract_data(
   aggregation_method = waiver(),
   rank_threshold = waiver(),
   ensemble_method = waiver(),
-  stratification_ensemble_method = waiver(),
+  stratification_method = waiver(),
   eval_times = waiver(),
   metric = waiver(),
   feature_cluster_method = waiver(),
@@ -94,30 +94,26 @@ same sample. Available methods are:
 sample.
 }}
 
-\item{stratification_ensemble_method}{Method for ensembling the risk group
-assignments from different models for the same sample.
+\item{stratification_method}{(\emph{optional}) Method for determining the
+stratification threshold for creating survival groups. The actual,
+model-dependent, threshold value is obtained from the development data, and
+can afterwards be used to perform stratification on validation data.
 
-The following methods are available:
+The following stratification methods are available:
 \itemize{
-\item \code{ensemble_mean}: Risk groups are determined for each sample using the
-threshold values of the different models in the ensemble. The risk groups
-are treated as ordinal and encoded using integer values. The mean of the
-encoded values is computed. The risk group bin containing the mean value is
-then used as the ensemble-based risk group.
-\item \code{ensemble_mode} (default): Risk groups are determined for each sample
-using the threshold values of the different models in the ensemble. The most
-commonly assigned risk group is then used as the ensemble-based risk group.
-\item \code{median_threshold}: The median threshold value for each risk group is
-determined from the threshold values of the different models in the
-ensemble. The resulting threshold(s) are then applied to the ensemble
-prediction of a sample to identify the ensemble-based risk group.
-\item \code{mean_threshold}: Similar to \code{median_threshold}, but uses the mean
-threshold value for each risk group.
+\item \code{median} (default): The median predicted value in the development cohort
+is used to stratify the samples into two risk groups.
+\item \code{fixed}: Samples are stratified based on the sample quantiles of the
+predicted values. These quantiles are defined using the
+\code{stratification_threshold} parameter.
+\item \code{optimised}: Use maximally selected rank statistics to determine the
+optimal threshold (Lausen and Schumacher, 1992; Hothorn et al., 2003) to
+stratify samples into two optimally separated risk groups.
 }
 
-If not provided explicitly, this parameter is read from settings used at
-creation of the underlying \code{familiarModel} objects. This parameter is only
-relevant for \code{survival} outcomes.}
+One or more stratification methods can be selected simultaneously.
+
+This parameter is only relevant for \code{survival} outcomes.}
 
 \item{eval_times}{One or more time points that are used for assessing
 calibration in survival problems. This is done as expected and observed

@@ -16,7 +16,7 @@ NULL
                                "model_performance", "permutation_vimp",  "prediction_data")
   
   # Data elements that allow setting a detail level.
-  can_set_detail_level <- c(can_set_estimation_type, "confusion_matrix")
+  can_set_detail_level <- c(can_set_estimation_type, "confusion_matrix", "kaplan_meier_data")
   
   if(check_has_estimation_type){
     all_data_elements <- intersect(all_data_elements, can_set_estimation_type)
@@ -289,6 +289,7 @@ setGeneric("extract_data", function(object,
                                     rank_threshold=waiver(),
                                     ensemble_method=waiver(),
                                     stratification_ensemble_method=waiver(),
+                                    stratification_method=waiver(),
                                     eval_times=waiver(),
                                     metric=waiver(),
                                     feature_cluster_method=waiver(),
@@ -325,6 +326,7 @@ setMethod("extract_data", signature(object="familiarEnsemble"),
                    rank_threshold=waiver(),
                    ensemble_method=waiver(),
                    stratification_ensemble_method=waiver(),
+                   stratification_method=waiver(),
                    eval_times=waiver(),
                    metric=waiver(),
                    feature_cluster_method=waiver(),
@@ -588,11 +590,13 @@ setMethod("extract_data", signature(object="familiarEnsemble"),
             
             # Compute stratification tests
             if(any(c("kaplan_meier_data") %in% data_element)){
-              stratification_data <- extract_stratification_data(object=object,
+              stratification_data <- extract_risk_stratification(object=object,
                                                                  data=data,
+                                                                 cl=cl,
                                                                  ensemble_method=ensemble_method,
-                                                                 stratification_ensemble_method=stratification_ensemble_method,
-                                                                 time_max=time_max,
+                                                                 stratification_method=stratification_method,
+                                                                 detail_level=detail_level,
+                                                                 confidence_level=confidence_level,
                                                                  message_indent=message_indent,
                                                                  verbose=verbose)
               
@@ -1107,57 +1111,7 @@ setMethod("extract_km_cutoffs", signature(object="character"),
 
 
 
-#'@title Internal function to extract stratification data.
-#'
-#'@description Computes and extracts stratification data from a
-#'  `familiarEnsemble` object. This includes the data required to draw
-#'  Kaplan-Meier plots, as well as logrank and hazard-ratio tests between the
-#'  respective risk groups.
-#'
-#'@inheritParams extract_data
-#'
-#'@return A list with data.tables containing information concerning risk group
-#'  stratification.
-#'@md
-#'@keywords internal
-setGeneric("extract_stratification_data", function(object,
-                                                   data=NULL,
-                                                   ensemble_method=waiver(),
-                                                   time_max=waiver(),
-                                                   risk_group_list=NULL,
-                                                   stratification_ensemble_method=waiver(),
-                                                   message_indent=0L,
-                                                   verbose=FALSE,
-                                                   ...) standardGeneric("extract_stratification_data"))
-#####extract_stratification_data#####
-setMethod("extract_stratification_data", signature(object="familiarEnsemble"),
-          function(object,
-                   data=NULL,
-                   ensemble_method=waiver(),
-                   time_max=waiver(),
-                   risk_group_list=NULL,
-                   stratification_ensemble_method=waiver(),
-                   message_indent=0L,
-                   verbose=FALSE,
-                   ...){
-            
-            # Only assess stratification for survival outcomes.
-            if(!object@outcome_type %in% c("survival")) return(NULL)
-            
-            # Message extraction start
-            if(verbose){
-              logger.message(paste0("Assessing stratification into risk groups."),
-                             indent=message_indent)
-            }
-            
-            # Assess stratification
-            return(assess_stratification(object=object,
-                                         data=data,
-                                         ensemble_method=ensemble_method,
-                                         time_max=time_max,
-                                         risk_group_list=risk_group_list,
-                                         stratification_ensemble_method=stratification_ensemble_method))
-          })
+
 
 
 #'@title Internal function to extract data from a univariate analysis.

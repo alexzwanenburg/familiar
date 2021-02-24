@@ -87,7 +87,7 @@ setMethod("export_all", signature(object="familiarCollection"),
             km_info <- export_stratification_cutoff(object=object, dir_path=dir_path)
             
             # Export stratification data
-            km_data <- export_stratification_data(object=object, dir_path=dir_path)
+            km_data <- export_risk_stratification(object=object, dir_path=dir_path)
             
             # Export AUC data
             auc_data <- export_auc_data(object=object, dir_path=dir_path, export_raw=export_raw)
@@ -623,134 +623,6 @@ setMethod("export_stratification_cutoff", signature(object="ANY"),
             return(do.call(export_stratification_cutoff,
                            args=append(list("object"=object, "dir_path"=dir_path), list(...))))
           })
-
-#####export_stratification_data#####
-
-#'@title Extract and export sample risk group stratification and associated
-#'  tests.
-#'
-#'@description Extract and export sample risk group stratification and
-#'  associated tests for data in a familiarCollection.
-#'
-#'@inheritParams export_all
-#'
-#'@inheritDotParams extract_stratification_data
-#'@inheritDotParams as_familiar_collection
-#'
-#'@details Data is usually collected from a `familiarCollection` object.
-#'  However, you can also provide one or more `familiarData` objects, that will
-#'  be internally converted to a `familiarCollection` object. It is also
-#'  possible to provide a `familiarEnsemble` or one or more `familiarModel`
-#'  objects together with the data from which data is computed prior to export.
-#'  Paths to the previous files can also be provided.
-#'
-#'  All parameters aside from `object` and `dir_path` are only used if `object`
-#'  is not a `familiarCollection` object, or a path to one.
-#'
-#'  Three tables are exported in a list:
-#'
-#'  * `data`: Contains the assigned risk group for a given sample, along with
-#'  its reported survival time and censoring status.
-#'
-#'  * `hr_ratio`: Contains the hazard ratio between different risk groups.
-#'
-#'  * `logrank`: Contains the results from the logrank test between different
-#'  risk groups.
-#'
-#'@return A list of data.tables (if `dir_path` is not provided), or nothing, as
-#'  all data is exported to `csv` files.
-#'@exportMethod export_stratification_data
-#'@md
-#'@rdname export_stratification_data-methods
-setGeneric("export_stratification_data",
-           function(object, dir_path=NULL, ...) standardGeneric("export_stratification_data"))
-
-#####export_stratification_data (collection)#####
-
-#'@rdname export_stratification_data-methods
-setMethod("export_stratification_data", signature(object="familiarCollection"),
-          function(object, dir_path=NULL, ...){
-            
-            # Check if the attribute has any contents
-            if(is.null(object@km_data)){
-              return(NULL)
-            }
-            
-            # Extract data
-            main_list <- object@km_data
-            
-            # Collect data
-            km_data_data <- lapply(main_list, function(list_entry, object){
-              return(.apply_labels(data=list_entry$data, object=object))
-            }, object=object)
-            
-            # Collect logrank data
-            km_data_logrank <- lapply(main_list, function(list_entry, object){
-              # Apply labels
-              data <- .apply_labels(data=list_entry$logrank, object=object)
-              
-              # Restore "all" as level in risk groups 1 and 2
-              data$risk_group_1 <- factor(data$risk_group_1, levels=c(NA, levels(data$risk_group_1)),
-                                          labels=c("all", levels(data$risk_group_1)), exclude=NULL)
-              
-              data$risk_group_2 <- factor(data$risk_group_2, levels=c(NA, levels(data$risk_group_2)),
-                                          labels=c("all", levels(data$risk_group_2)), exclude=NULL)
-              
-              return(data)
-            }, object=object)
-            
-            # Collect HR-ratio test data
-            km_data_hr_ratio <- lapply(main_list, function(list_entry, object){
-              return(.apply_labels(data=list_entry$hr_ratio, object=object))
-            }, object=object)
-            
-            # Collect time-max
-            time_max <- unname(unlist(sapply(main_list, function(list_entry) (list_entry$time_max))))[1]
-            
-            if(is.null(dir_path)){
-              return(list("data"=km_data_data,
-                          "logrank"=km_data_logrank,
-                          "hr_ratio"=km_data_hr_ratio,
-                          "time_max"=time_max))
-              
-            } else {
-              
-              # Export stratification data
-              sapply(names(km_data_data), function(strat_method, data, object, dir_path){
-                .export_to_file(data=data[[strat_method]], object=object, dir_path=dir_path,
-                                type="stratification", subtype=paste0(strat_method, "_stratification_data"))
-              }, data=km_data_data, object=object, dir_path=dir_path)
-              
-              # Export logrank test data
-              sapply(names(km_data_logrank), function(strat_method, data, object, dir_path){
-                .export_to_file(data=data[[strat_method]], object=object, dir_path=dir_path,
-                                type="stratification", subtype=paste0(strat_method, "_logrank_test"))
-              }, data=km_data_logrank, object=object, dir_path=dir_path)
-              
-              # Export HR-ratio test data
-              sapply(names(km_data_hr_ratio), function(strat_method, data, object, dir_path){
-                .export_to_file(data=data[[strat_method]], object=object, dir_path=dir_path,
-                                type="stratification", subtype=paste0(strat_method, "_hazard_ratio_test"))
-              }, data=km_data_hr_ratio, object=object, dir_path=dir_path)
-              
-              return(NULL)
-            }
-          })
-
-#####export_stratification_data (generic)#####
-
-#'@rdname export_stratification_data-methods
-setMethod("export_stratification_data", signature(object="ANY"),
-          function(object, dir_path=NULL, ...){
-            
-            # Attempt conversion to familiarCollection object.
-            object <- do.call(as_familiar_collection,
-                              args=append(list("object"=object, "data_element"="kaplan_meier_data"), list(...)))
-            
-            return(do.call(export_stratification_data,
-                           args=append(list("object"=object, "dir_path"=dir_path), list(...))))
-          })
-
 
 
 

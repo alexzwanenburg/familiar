@@ -168,6 +168,7 @@ setMethod("extract_predictions", signature(object="familiarEnsemble"),
 }
 
 
+
 ..extract_predictions <- function(data_element,
                                   object,
                                   data,
