@@ -43,13 +43,7 @@ setMethod(".predict", signature(object="familiarEnsemble"),
                                      ...)
               
             } else {
-              # Process data
-              data <- process_input_data(object=object,
-                                         data=data,
-                                         is_pre_processed=is_pre_processed,
-                                         stop_at="clustering",
-                                         keep_novelty="novelty" %in% type)
-              
+
               # Generate a placeholder table.
               predict_list <- list(get_placeholder_prediction_table(object=object, data=data, type=type))
             }
