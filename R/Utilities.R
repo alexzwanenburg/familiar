@@ -1500,3 +1500,33 @@ paste_s <- function(...){
   
   return(flattened_list)
 }
+
+
+dmapply <- function(FUN, ..., MoreArgs=NULL){
+  # mapply for use within data.table. This parses the result of FUN to a flat
+  # list. data.table then adds the contents of the list as columns.
+  
+  # Apply function.
+  x <- mapply(FUN, ..., MoreArgs=MoreArgs, SIMPLIFY=FALSE)
+  
+  # Combine to data.table.
+  x <- data.table::rbindlist(x, use.names=TRUE)
+  
+  # Return as list.
+  return(as.list(x))
+}
+
+
+dlapply <- function(X, FUN, ...){
+  # lapply for use within data.table. This parses the result of FUN to a flat
+  # list. data.table then adds the contents of the list as columns.
+  
+  # Apply function.
+  x <- lapply(X, FUN, ...)
+  
+  # Combine to data.table.
+  x <- data.table::rbindlist(x, use.names=TRUE)
+  
+  # Return as list.
+  return(as.list(x))
+}
