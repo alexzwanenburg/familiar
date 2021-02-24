@@ -402,10 +402,11 @@ setMethod("collect", signature(x="familiarData"),
 
 #####.export (familiarCollection)------------------------------------------------
 setMethod(".export", signature(x="familiarCollection"),
-          function(x, data_slot, dir_path=NULL, type, subtype, object_class=NULL, ...){
+          function(x, data_elements=NULL, data_slot=NULL, dir_path=NULL, type, subtype, object_class=NULL, ...){
             
-            # Get the back element.
-            data_elements <- slot(x, name=data_slot)
+            # Obtain the data elements from the attribute slot indicated by
+            # data_slot.
+            if(!is.null(data_slot)) data_elements <- slot(x, name=data_slot)
             
             # Check that the list is not empty.
             if(is_empty(data_elements)) return(NULL)
@@ -436,20 +437,20 @@ setMethod(".export", signature(x="familiarCollection"),
             }
 
             # Merge and aggregate data.
-            data <- .export(x=data_elements[[1]],
-                            x_list=data_elements,
-                            ...)
+            data_element <- .export(x=data_elements[[1]],
+                                    x_list=data_elements,
+                                    ...)
             
             # Apply labels.
-            data <- .apply_labels(data=data,
-                                  object=x)
+            data_element <- .apply_labels(data=data_element,
+                                          object=x)
             
             # Check that the data variable is not empty
-            if(is_empty(data)) return(NULL)
+            if(is_empty(data_element)) return(NULL)
             
             if(is.null(dir_path)){
               # Export data.
-              return(data)
+              return(data_element)
               
             } else {
               
