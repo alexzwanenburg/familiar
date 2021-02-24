@@ -455,10 +455,10 @@ setMethod(".export", signature(x="familiarCollection"),
             } else {
               
               # Check that the data variable is a data.table.
-              if(!data.table::is.data.table(data)) ..error_reached_unreachable_code(".export,familiarCollection: data is not a single data.table.")
+              if(!data.table::is.data.table(data_element@data)) ..error_reached_unreachable_code(".export,familiarCollection: data is not a single data.table.")
               
               # Export to file
-              .export_to_file(data=data,
+              .export_to_file(data=data_element@data,
                               object=x,
                               dir_path=dir_path,
                               type=type,
