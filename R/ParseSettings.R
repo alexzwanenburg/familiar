@@ -2597,7 +2597,6 @@
                                        eval_icc_type=waiver(),
                                        stratification_method=waiver(),
                                        stratification_threshold=waiver(),
-                                       stratification_ensemble_method=waiver(),
                                        time_max=waiver(),
                                        evaluation_times=waiver(),
                                        dynamic_model_loading=waiver(),
@@ -2921,15 +2920,6 @@
   
   sapply(settings$strat_quant_threshold, .check_number_in_valid_range, var_name="stratification_threshold", range=c(0.0, 1.0), closed=c(FALSE, FALSE))
   
-  
-  # Method used to ensemble predicted stratifications by multiple models.
-  settings$strat_ensemble_method <- .parse_arg(x_config=config$stratification_ensemble_method, x_var=stratification_ensemble_method,
-                                               var_name="stratification_ensemble_method", type="character", optional=TRUE, default="ensemble_mode")
-  
-  .check_parameter_value_is_valid(x=settings$strat_ensemble_method, var_name="stratification_ensemble_method",
-                                  values=.get_available_stratification_ensemble_methods())
-
-    
   # Study end time (this is used for plotting, and Uno's concordance index)
   settings$time_max <- .parse_arg(x_config=config$time_max, x_var=time_max,
                                   var_name="time_max", type="numeric", optional=TRUE, default=NULL)

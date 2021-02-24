@@ -124,30 +124,6 @@ same sample. Available methods are:
 \item \code{mean}: Use the mean of the predicted values as the ensemble value for a
 sample.
 }}
-    \item{\code{stratification_ensemble_method}}{Method for ensembling the risk group
-assignments from different models for the same sample.
-
-The following methods are available:
-\itemize{
-\item \code{ensemble_mean}: Risk groups are determined for each sample using the
-threshold values of the different models in the ensemble. The risk groups
-are treated as ordinal and encoded using integer values. The mean of the
-encoded values is computed. The risk group bin containing the mean value is
-then used as the ensemble-based risk group.
-\item \code{ensemble_mode} (default): Risk groups are determined for each sample
-using the threshold values of the different models in the ensemble. The most
-commonly assigned risk group is then used as the ensemble-based risk group.
-\item \code{median_threshold}: The median threshold value for each risk group is
-determined from the threshold values of the different models in the
-ensemble. The resulting threshold(s) are then applied to the ensemble
-prediction of a sample to identify the ensemble-based risk group.
-\item \code{mean_threshold}: Similar to \code{median_threshold}, but uses the mean
-threshold value for each risk group.
-}
-
-If not provided explicitly, this parameter is read from settings used at
-creation of the underlying \code{familiarModel} objects. This parameter is only
-relevant for \code{survival} outcomes.}
     \item{\code{metric}}{One or more metrics for assessing model performance. See the
 vignette on performance metrics for the available metrics. If not provided
 explicitly, this parameter is read from settings used at creation of the

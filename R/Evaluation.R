@@ -434,7 +434,7 @@ run_evaluation <- function(cl, proj_list, settings, file_paths){
                            aggregation_method = settings$eval$aggregation,
                            rank_threshold = settings$eval$aggr_rank_threshold,
                            ensemble_method = settings$eval$ensemble_method,
-                           stratification_ensemble_method = settings$eval$strat_ensemble_method,
+                           stratification_method = settings$eval$strat_method,
                            metric = settings$eval$metric,
                            feature_cluster_method = settings$eval$feature_cluster_method,
                            feature_cluster_cut_method=settings$eval$feature_cluster_cut_method,
