@@ -897,35 +897,94 @@ setMethod(".summarise_model_performance", signature(object="familiarCollection")
           })
 
 
-#####.export_to_file#####
-setMethod(".export_to_file", signature(data="ANY", object="familiarCollection", dir_path="character"),
+#####.export_to_file (familiarDataElement)######################################
+setMethod(".export_to_file", signature(data="familiarDataElement", object="familiarCollection", dir_path="character"),
+          function(data, object, dir_path, type, subtype=NULL){
+            
+            if(is_empty(data)) return(NULL)
+            
+            # Check if any identifiers remain, and add to the subtype.
+            if(length(data@identifiers) > 0) subtype <- c(subtype, unlist(data@identifiers))
+            
+            return(.export_to_file(data@data,
+                                   object=object,
+                                   dir_path=dir_path,
+                                   type=type,
+                                   subtype=subtype))
+          })
+
+
+#####.export_to_file (list)#####################################################
+setMethod(".export_to_file", signature(data="list", object="familiarCollection", dir_path="character"),
           function(data, object, dir_path, type, subtype=NULL){
             
             # Check if data exists
-            if(is_empty(data)) { return(NULL) }
+            if(is_empty(data)) return(NULL)
+            
+            return(lapply(data,
+                          .export_to_file,
+                          object=object,
+                          dir_path=dir_path,
+                          type=type,
+                          subtype=subtype))
+          })
+
+
+
+#####.export_to_file (data.table)#####################################################
+setMethod(".export_to_file", signature(data="data.table", object="familiarCollection", dir_path="character"),
+          function(data, object, dir_path, type, subtype=NULL){
+            
+            # Check if data exists.
+            if(is_empty(data)) return(NULL)
+            
+            # Check if directory exists.
+            file_dir <- normalizePath(file.path(dir_path, object@collection_name, type), mustWork=FALSE)
+            if(!dir.exists(file_dir)) dir.create(file_dir, recursive=TRUE)
+            
+            # Generate file name.
+            base_file_name <- paste0(type, subtype, collapse="_")
+            file_name <- file.path(file_dir, paste0(base_file_name, ".csv"))
+            
+            # Write data to file.
+            data.table::fwrite(x=data,
+                               file=file_name,
+                               sep=";",
+                               dec=".")
+            
+            return(NULL)
+          })
+
+
+#####.export_to_file (character)################################################
+setMethod(".export_to_file", signature(data="character", object="familiarCollection", dir_path="character"),
+          function(data, object, dir_path, type, subtype=NULL){
+            
+            # Check if data exists
+            if(is_empty(data)) return(NULL)
             
             # Check if directory exists
             file_dir <- normalizePath(file.path(dir_path, object@collection_name, type), mustWork=FALSE)
-            if(!dir.exists(file_dir)) { dir.create(file_dir, recursive=TRUE) }
+            if(!dir.exists(file_dir)) dir.create(file_dir, recursive=TRUE)
             
-            base_file_name <- paste0(type, ifelse(is.null(subtype), "", paste0("_", subtype)))
+            # Generate file name
+            base_file_name <- paste0(type, subtype, collapse="_")
+            file_name <- file.path(file_dir, paste0(base_file_name, ".txt"))
             
-            if(inherits(data, "data.table")){
-              # Generate file name
-              file_name <- file.path(file_dir, paste0(base_file_name, ".csv"))
-              
-              # Write data to file
-              data.table::fwrite(x=data, file=file_name, sep=";", dec=".")
-              
-            } else if(inherits(data, "character")){
-              # Generate file name
-              file_name <- file.path(file_dir, paste0(base_file_name, ".txt"))
-              
-              # Write to text file with each element of x on a new line.
-              write(x=data, file=file_name, append=FALSE, sep=ifelse(.Platform$OS.type=="windows", "\r\n","\n"))
-              
-            }
+            # Write data to file
+            data.table::fwrite(x=data, file=file_name, sep=";", dec=".")
+            
+            # Write to text file with each element of x on a new line.
+            write(x=data,
+                  file=file_name,
+                  append=FALSE,
+                  sep=ifelse(.Platform$OS.type=="windows", "\r\n","\n"))
+            
+            return(NULL)
           })
+
+
+
 
 #####.apply_labels (data.table, familiarCollection)#####
 setMethod(".apply_labels", signature(data="data.table", object="familiarCollection"),
