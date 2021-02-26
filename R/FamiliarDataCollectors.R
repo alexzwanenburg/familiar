@@ -69,50 +69,6 @@ collect_model_vimp <- function(fam_data_list){
 
 
 
-#' @title Collector for model hyperparameters
-#'
-#' @inheritParams collect_fs_vimp
-#'
-#' @return A list with aggregated hyperparameter information. Contains a data.table for each list element.
-#' @noRd
-collect_hyperparameters <- function(fam_data_list){
-  # Hyperparameters are shared between objects with the same feature selection method, learner and data ids
-  # unique_entries <- .which_unique_data(fam_data_list=fam_data_list, incl_learner=TRUE, incl_validation_status=FALSE)
-  unique_entries <- .which_unique_data(fam_data_list=fam_data_list, by=c("fs_method", "learner"))
-
-  # Select only unique entries
-  hyperparameter_list <- lapply(unique_entries, function(ii, fam_data_list){
-    
-    # Get the model-based vimp table  
-    hyperparameter_table <- fam_data_list[[ii]]@hyperparameters
-    
-    # Add identifiers
-    hyperparameter_table <- add_identifiers(data=data.table::copy(hyperparameter_table),
-                                            object=fam_data_list[[ii]],
-                                            more_identifiers=c("fs_method", "learner"))
-    
-  }, fam_data_list=fam_data_list)
-
-  # Hyperparameters are expected to differ between different learners, therefore we identify unique learners.
-  # Entries for different learners are then stored within different elements of the list.
-  data_learners <- sapply(fam_data_list, function(fam_data_obj) (fam_data_obj@learner))[unique_entries]
-  learners <- unique(data_learners)
-  
-  # Empty hyperparameter table
-  output_list <- list()
-  
-  # Iterate over learners
-  for(curr_learner in learners){
-    # Find the entries in data_learners that match the currently selected learner, combine
-    # corresponding hyperparameter tables and add to a named list entry.
-    output_list[[curr_learner]] <- data.table::rbindlist(hyperparameter_list[which(data_learners==curr_learner)])
-  }
-  
-  # Return the output list
-  return(output_list)
-}
-
-
 
 #' @title Collector for calibration information
 #'
