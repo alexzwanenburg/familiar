@@ -675,7 +675,7 @@ setMethod("export_permutation_vimp", signature(object="familiarCollection"),
                            data_slot="permutation_vimp",
                            dir_path=dir_path,
                            aggregate_results=aggregate_results,
-                           main_type="variable_importance",
+                           type="variable_importance",
                            subtype="permutation"))
           })
 

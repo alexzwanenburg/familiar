@@ -191,7 +191,7 @@ setMethod("export_confusion_matrix_data", signature(object="familiarCollection")
                            data_slot="confusion_matrix",
                            dir_path=dir_path,
                            aggregate_results=TRUE,
-                           main_type="performance",
+                           type="performance",
                            subtype="confusion_matrix"))
           })
 

@@ -301,7 +301,7 @@ setMethod("export_model_performance", signature(object="familiarCollection"),
                            data_slot="model_performance",
                            dir_path=dir_path,
                            aggregate_results=aggregate_results,
-                           main_type="performance",
+                           type="performance",
                            subtype="metric"))
           })
 

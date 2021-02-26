@@ -381,7 +381,7 @@ setMethod("export_auc_data", signature(object="familiarCollection"),
                            data_slot="auc_data",
                            dir_path=dir_path,
                            aggregate_results=aggregate_results,
-                           main_type="performance",
+                           type="performance",
                            subtype="auc_curves"))
           })
 

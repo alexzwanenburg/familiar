@@ -595,7 +595,7 @@ setMethod("export_prediction_data", signature(object="familiarCollection"),
             return(.export(x=object,
                            data_slot="prediction_data",
                            dir_path=dir_path,
-                           main_type="prediction",
+                           type="prediction",
                            subtype=NULL))
           })
 

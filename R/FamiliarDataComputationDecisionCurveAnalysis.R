@@ -604,7 +604,7 @@ setMethod("export_decision_curve_analysis_data", signature(object="familiarColle
                            data_slot="decision_curve_data",
                            dir_path=dir_path,
                            aggregate_results=aggregate_results,
-                           main_type="decision_curve_analysis",
+                           type="decision_curve_analysis",
                            subtype="data"))
           })
 
