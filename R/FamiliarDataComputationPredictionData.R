@@ -366,6 +366,10 @@ setMethod("..compute_data_element_estimates", signature(x="familiarDataElementPr
               }
             }
             
+            # Update value column
+            y@value_column <- setdiff(names(y@data),
+                                      y@grouping_column)
+            
             return(y)
           })
 

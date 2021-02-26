@@ -453,12 +453,8 @@ setMethod(".export", signature(x="familiarCollection"),
               return(data_element)
               
             } else {
-              
-              # Check that the data variable is a data.table.
-              if(!data.table::is.data.table(data_element@data)) ..error_reached_unreachable_code(".export,familiarCollection: data is not a single data.table.")
-              
               # Export to file
-              .export_to_file(data=data_element@data,
+              .export_to_file(data=data_element,
                               object=x,
                               dir_path=dir_path,
                               type=type,
@@ -1082,10 +1078,6 @@ setMethod(".compute_data_element_estimates", signature(x="familiarDataElement"),
               # Update the is_aggregated attribute.
               aggregated_data_element@is_aggregated <- TRUE
               
-              # Update value column
-              aggregated_data_element@value_column <- setdiff(names(aggregated_data_element@data),
-                                                              aggregated_data_element@grouping_column)
-              
               # Add aggregated element.
               data_elements <- c(data_elements, list(aggregated_data_element))
             }
@@ -1178,6 +1170,10 @@ setMethod("..compute_data_element_estimates", signature(x="familiarDataElement")
               y <- x[estimation_type %in% c("bci", "bootstrap_confidence_interval")][[1]]
               y@data <- data
               
+              # Update value column
+              y@value_column <- setdiff(names(y@data),
+                                        y@grouping_column)
+              
             } else if(any(estimation_type %in% c("bc", "bias_correction"))){
               
               # Check the number of elements.
@@ -1206,11 +1202,18 @@ setMethod("..compute_data_element_estimates", signature(x="familiarDataElement")
               y <- x[[1]]
               y@data <- data
               
+              # Update value column
+              y@value_column <- setdiff(names(y@data),
+                                        y@grouping_column)
+              
             } else if(any(estimation_type %in% c("point"))){
               # This follows the same procedure as for bias-corrected estimates. For
               # ensemble and hybrid detail levels a single value needs to be generated.
               # However, in the case of hybrid detail level, a point estimate is created
               # for each model, and requires aggregation.
+              
+              # Check the number of elements.
+              if(length(estimation_type) != 1L) ..error_reached_unreachable_code(".compute_data_element_estimates: exactly one data element is required for point estimates.")
               
               # Select values.
               bootstrap_values <- data.table::as.data.table(x[estimation_type %in% c("point")][[1]]@data)
@@ -1235,12 +1238,9 @@ setMethod("..compute_data_element_estimates", signature(x="familiarDataElement")
               y <- x[[1]]
               y@data <- data
               
-              # Check the number of elements.
-              if(length(estimation_type) != 1L) ..error_reached_unreachable_code(".compute_data_element_estimates: exactly one data element is required for point estimates.")
-              
-              # The aggregated point element is itself.
-              y <- x[[1]]
-              y@data <- data
+              # Update value column
+              y@value_column <- setdiff(names(y@data),
+                                        y@grouping_column)
               
             } else {
               ..error_reached_unreachable_code(paste0(".compute_data_element_estimates: unknown estimation type: ", paste_s(estimation_type)))

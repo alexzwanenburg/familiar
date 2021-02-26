@@ -1072,6 +1072,10 @@ setMethod("..compute_data_element_estimates", signature(x="familiarDataElementCa
                             y=p_value,
                             by=grouping_column)
             
+            # Update value column
+            y@value_column <- setdiff(names(y@data),
+                                      y@grouping_column)
+            
             return(y)
           })
 
@@ -1106,6 +1110,10 @@ setMethod("..compute_data_element_estimates", signature(x="familiarDataElementCa
             # Compute p-value by grouping column.
             x@data <- x@data[, list("p_value"=stats::median(p_value)),
                              by=c(grouping_column)]
+            
+            # Update value column
+            x@value_column <- setdiff(names(x@data),
+                                      x@grouping_column)
             
             return(x)
           })
@@ -1150,6 +1158,10 @@ setMethod("..compute_data_element_estimates", signature(x="familiarDataElementCa
             } else {
               x@data <- x@data[, "frequency":=frequency / sum(frequency)][order(expected)]
             }
+            
+            # Update value column
+            x@value_column <- setdiff(names(x@data),
+                                      x@grouping_column)
             
             return(x)
           })
