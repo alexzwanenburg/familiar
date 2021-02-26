@@ -197,6 +197,8 @@ setMethod("extract_permutation_vimp", signature(object="familiarEnsemble"),
                                       aggregate_results,
                                       cl,
                                       ...){
+  # Ensure that the object is loaded
+  object <- load_familiar_object(object)
   
   # Add model name.
   proto_data_element <- add_model_name(proto_data_element, object=object)

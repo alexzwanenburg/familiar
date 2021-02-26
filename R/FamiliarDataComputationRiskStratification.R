@@ -168,6 +168,9 @@ setMethod("extract_risk_stratification", signature(object="familiarEnsemble"),
                                           ensemble_method,
                                           time,
                                           ...){
+  # Ensure that the object is loaded
+  object <- load_familiar_object(object)
+  
   # Compute performance data.
   prediction_data <- .predict(object=object,
                               data=data,

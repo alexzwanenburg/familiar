@@ -192,6 +192,9 @@ setMethod("extract_calibration_data", signature(object="familiarEnsemble"),
                                        message_indent,
                                        ...){
   
+  # Ensure that the object is loaded
+  object <- load_familiar_object(object)
+  
   # Message the user concerning the time at which metrics are computed. This is
   # only relevant for survival analysis.
   if(length(data_element@identifiers$evaluation_time) > 0 & progress_bar){

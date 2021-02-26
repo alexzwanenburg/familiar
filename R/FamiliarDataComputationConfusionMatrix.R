@@ -93,6 +93,9 @@ setMethod("extract_confusion_matrix", signature(object="familiarEnsemble"),
   # Suppress NOTES due to non-standard evaluation in data.table
   outcome <- count <- NULL
   
+  # Ensure that the object is loaded
+  object <- load_familiar_object(object)
+  
   if(object@outcome_type %in% c("binomial", "multinomial")){
     # Iterate over outcome classes.
     
