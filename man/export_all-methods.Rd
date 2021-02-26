@@ -6,29 +6,11 @@
 \alias{export_all,ANY-method}
 \title{Extract and export all data.}
 \usage{
-export_all(
-  object,
-  dir_path = NULL,
-  export_raw = FALSE,
-  aggregate_results = waiver(),
-  ...
-)
+export_all(object, dir_path = NULL, aggregate_results = waiver(), ...)
 
-\S4method{export_all}{familiarCollection}(
-  object,
-  dir_path = NULL,
-  export_raw = FALSE,
-  aggregate_results = waiver(),
-  ...
-)
+\S4method{export_all}{familiarCollection}(object, dir_path = NULL, aggregate_results = waiver(), ...)
 
-\S4method{export_all}{ANY}(
-  object,
-  dir_path = NULL,
-  export_raw = FALSE,
-  aggregate_results = waiver(),
-  ...
-)
+\S4method{export_all}{ANY}(object, dir_path = NULL, aggregate_results = waiver(), ...)
 }
 \arguments{
 \item{object}{A \code{familiarCollection} object, or other other objects from which
@@ -36,9 +18,6 @@ a \code{familiarCollection} can be extracted. See details for more information.}
 
 \item{dir_path}{Path to folder where extracted data should be saved. \code{NULL}
 will allow export as a structured list of data.tables.}
-
-\item{export_raw}{Allows export of raw data. Only used when exporting model
-performance information.}
 
 \item{...}{
   Arguments passed on to \code{\link[=extract_data]{extract_data}}, \code{\link[=as_familiar_collection]{as_familiar_collection}}
@@ -342,6 +321,9 @@ evaluation.}
 is one or more \code{familiarData} objects.}
     \item{\code{collection_name}}{Name of the collection.}
   }}
+
+\item{export_raw}{Allows export of raw data. Only used when exporting model
+performance information.}
 }
 \value{
 A list of data.tables (if \code{dir_path} is not provided), or nothing, as

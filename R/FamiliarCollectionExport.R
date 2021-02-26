@@ -35,14 +35,14 @@ NULL
 #'@md
 #'@rdname export_all-methods
 setGeneric("export_all",
-           function(object, dir_path=NULL, export_raw=FALSE, aggregate_results=waiver(), ...) standardGeneric("export_all"))
+           function(object, dir_path=NULL, aggregate_results=waiver(), ...) standardGeneric("export_all"))
 
 
 #####export_all (collection)#####
 
 #'@rdname export_all-methods
 setMethod("export_all", signature(object="familiarCollection"),
-          function(object, dir_path=NULL, export_raw=FALSE, aggregate_results=waiver(), ...){
+          function(object, dir_path=NULL, aggregate_results=waiver(), ...){
             
             # Export feature selection variable importance
             fs_vimp <- export_fs_vimp(object=object, dir_path=dir_path)
@@ -51,46 +51,52 @@ setMethod("export_all", signature(object="familiarCollection"),
             model_vimp <- export_model_vimp(object=object, dir_path=dir_path)
             
             # Export permutation variable importance.
-            permutation_vimp <- export_permutation_vimp(object=object, dir_path=dir_path, aggregate_results=aggregate_results)
+            permutation_vimp <- export_permutation_vimp(object=object,
+                                                        dir_path=dir_path,
+                                                        aggregate_results=ifelse(is.waive(aggregate_results), TRUE, aggregate_results))
             
             # Export model hyperparameters
-            hyperparameters <- export_hyperparameters(object=object, dir_path=dir_path)
+            hyperparameters <- export_hyperparameters(object=object,
+                                                      dir_path=dir_path,
+                                                      aggregate_results=ifelse(is.waive(aggregate_results), TRUE, aggregate_results))
             
             # Export prediction tables
-            prediction_data <- export_prediction_data(object=object, dir_path=dir_path, export_raw=export_raw)
+            prediction_data <- export_prediction_data(object=object,
+                                                      dir_path=dir_path)
             
             # Export decision curve analysis data
-            dca_data <- export_decision_curve_analysis_data(object=object, dir_path=dir_path, aggregate_results=aggregate_results)
+            dca_data <- export_decision_curve_analysis_data(object=object,
+                                                            dir_path=dir_path,
+                                                            aggregate_results=ifelse(is.waive(aggregate_results), TRUE, aggregate_results))
             
             # Export calibration information
             calibration_info <- export_calibration_info(object=object, dir_path=dir_path)
             
             # Export calibration data
-            calibration_data <- export_calibration_data(object=object, dir_path=dir_path)
+            calibration_data <- export_calibration_data(object=object,
+                                                        dir_path=dir_path,
+                                                        aggregate_results=ifelse(is.waive(aggregate_results), TRUE, aggregate_results))
             
             # Export model performance
-            if(is.waive(aggregate_results)){
-              model_performance <- export_model_performance(object=object,
-                                                            dir_path=dir_path,
-                                                            aggregate_results=TRUE)
-            } else {
-              model_performance <- export_model_performance(object=object,
-                                                            dir_path=dir_path,
-                                                            aggregate_results=aggregate_results)
-            }
-            
+            model_performance <- export_model_performance(object=object,
+                                                          dir_path=dir_path,
+                                                          aggregate_results=ifelse(is.waive(aggregate_results), TRUE, aggregate_results))
             
             # Export confusion matrix
-            confusion_matrix <- export_confusion_matrix_data(object=object, dir_path=dir_path)
+            confusion_matrix <- export_confusion_matrix_data(object=object,
+                                                             dir_path=dir_path)
             
             # Export kaplan-meier info
             km_info <- export_stratification_cutoff(object=object, dir_path=dir_path)
             
             # Export stratification data
-            km_data <- export_risk_stratification(object=object, dir_path=dir_path)
+            km_data <- export_risk_stratification(object=object,
+                                                  dir_path=dir_path)
             
             # Export AUC data
-            auc_data <- export_auc_data(object=object, dir_path=dir_path, export_raw=export_raw)
+            auc_data <- export_auc_data(object=object,
+                                        dir_path=dir_path,
+                                        aggregate_results=ifelse(is.waive(aggregate_results), TRUE, aggregate_results))
             
             # Export data from the univariate analysis
             univariate_analysis <- export_univariate_analysis_data(object=object, dir_path=dir_path)
@@ -128,9 +134,10 @@ setMethod("export_all", signature(object="ANY"),
           function(object, dir_path=NULL, aggregate_results=waiver(), ...){
             
             # Attempt conversion to familiarCollection object.
-            object <- do.call(as_familiar_collection, args=c(list("object"=object,
-                                                                  "aggregate_results"=aggregate_results),
-                                                             list(...)))
+            object <- do.call(as_familiar_collection,
+                              args=c(list("object"=object,
+                                          "aggregate_results"=aggregate_results),
+                                     list(...)))
             
             return(do.call(export_all,
                            args=c(list("object"=object,
