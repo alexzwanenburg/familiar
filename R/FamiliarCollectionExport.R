@@ -1124,6 +1124,9 @@ setMethod(".apply_labels", signature(data="familiarDataElement", object="familia
             # Return NULL for empty input
             if(is_empty(data)) return(NULL)
             
+            # Don't update data if it is not a data.table.
+            if(!data.table::is.data.table(data@data)) return(data)
+            
             # Make sure that a local copy is updated
             x <- data.table::copy(data@data)
             
