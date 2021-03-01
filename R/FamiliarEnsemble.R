@@ -49,8 +49,14 @@ setMethod("complete_familiar_ensemble", signature(object="familiarEnsemble"),
             }
             
             # Aggregate calibration info
-            calibration_info <- .collect_and_aggregate_calibration_info(model_list=model_list,
-                                                                        outcome_type=object@outcome_type)
+            calibration_info <- extract_calibration_info(object=object, detail_level="hybrid")
+            calibration_info <- .compute_data_element_estimates(calibration_info)
+            if(is_empty(calibration_info)){
+              calibration_info <- NULL
+              
+            } else {
+              calibration_info <- calibration_info[[1]]@data
+            }
             
             # Generate a new version of the ensemble to avoid unnecessary
             # copying.
