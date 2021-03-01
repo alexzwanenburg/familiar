@@ -86,6 +86,8 @@ setGeneric(".construct_label_table", function(x, ...) standardGeneric(".construc
 
 setGeneric(".apply_labels", function(data, object, ...) standardGeneric(".apply_labels"))
 
+setGeneric("set_object_name", function(x, ...) standardGeneric("set_object_name"))
+
 setGeneric("set_data_set_names", function(x, ...) standardGeneric("set_data_set_names"))
 
 setGeneric("set_learner_names", function(x, ...) standardGeneric("set_learner_names"))

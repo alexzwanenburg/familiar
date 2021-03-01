@@ -131,7 +131,7 @@ setMethod("as_familiar_data", signature(object="familiarEnsemble"),
               
             # Set a placeholder name or a user-provided name for the
             # familiarData object.
-            fam_data <- set_data_set_names(x=fam_data, new=name)
+            fam_data <- set_object_name(x=fam_data, new=name)
             
             return(fam_data)
           })

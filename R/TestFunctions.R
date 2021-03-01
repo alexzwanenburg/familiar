@@ -1143,7 +1143,7 @@ test_plots <- function(plot_function,
                     " be created for a complete data set."), {
 
                       object <- list(data_good_full_1, data_good_full_2, data_good_full_1, data_good_full_2)
-                      object <- mapply(set_data_set_names, object, c("development_1", "development_2", "validation_1", "validation_2"))
+                      object <- mapply(set_object_name, object, c("development_1", "development_2", "validation_1", "validation_2"))
 
                       collection <- suppressWarnings(as_familiar_collection(object, familiar_data_names=c("development", "development", "validation", "validation")))
 
@@ -1211,7 +1211,7 @@ test_plots <- function(plot_function,
                     " be created for a dataset with some missing data."), {
                       
                       object <- list(data_good_full_1, data_good_full_2, data_empty_full_1, data_good_full_2)
-                      object <- mapply(set_data_set_names, object, c("development_1", "development_2", "validation_1", "validation_2"))
+                      object <- mapply(set_object_name, object, c("development_1", "development_2", "validation_1", "validation_2"))
                       
                       collection <- suppressWarnings(as_familiar_collection(object, familiar_data_names=c("development", "development", "validation", "validation")))
                       
@@ -1232,7 +1232,7 @@ test_plots <- function(plot_function,
                     " be created for a dataset with completely missing data."), {
                       
                       object <- list(data_empty_full_1, data_empty_full_2, data_empty_full_1, data_empty_full_2)
-                      object <- mapply(set_data_set_names, object, c("development_1", "development_2", "validation_1", "validation_2"))
+                      object <- mapply(set_object_name, object, c("development_1", "development_2", "validation_1", "validation_2"))
                       
                       collection <- suppressWarnings(as_familiar_collection(object, familiar_data_names=c("development", "development", "validation", "validation")))
                       
@@ -1253,7 +1253,7 @@ test_plots <- function(plot_function,
                     " be created for a dataset where some data only have one sample."), {
                       
                       object <- list(data_good_full_1, data_good_full_2, data_one_sample_full_1, data_one_sample_full_2)
-                      object <- mapply(set_data_set_names, object, c("development_1", "development_2", "validation_1", "validation_2"))
+                      object <- mapply(set_object_name, object, c("development_1", "development_2", "validation_1", "validation_2"))
                       
                       collection <- suppressWarnings(as_familiar_collection(object, familiar_data_names=c("development", "development", "validation", "validation")))
                       
@@ -1274,7 +1274,7 @@ test_plots <- function(plot_function,
                     " be created for a dataset where some data only have identical samples."), {
                       
                       object <- list(data_good_full_1, data_good_full_2, data_identical_full_1, data_identical_full_2)
-                      object <- mapply(set_data_set_names, object, c("development_1", "development_2", "validation_1", "validation_2"))
+                      object <- mapply(set_object_name, object, c("development_1", "development_2", "validation_1", "validation_2"))
                       
                       collection <- suppressWarnings(as_familiar_collection(object, familiar_data_names=c("development", "development", "validation", "validation")))
                       
@@ -1294,7 +1294,7 @@ test_plots <- function(plot_function,
                     " be created for a dataset created from an ensemble of multiple models."), {
                       
                       object <- list(multi_model_full)
-                      object <- mapply(set_data_set_names, object, c("development_1"))
+                      object <- mapply(set_object_name, object, c("development_1"))
                       
                       collection <- suppressWarnings(as_familiar_collection(object, familiar_data_names=c("development")))
                       
@@ -1338,7 +1338,7 @@ test_plots <- function(plot_function,
                     " be created for a complete one-feature data set."), {
                       
                       object <- list(data_good_one_1, data_good_one_2, data_good_one_1, data_good_one_2)
-                      object <- mapply(set_data_set_names, object, c("development_1", "development_2", "validation_1", "validation_2"))
+                      object <- mapply(set_object_name, object, c("development_1", "development_2", "validation_1", "validation_2"))
                       
                       collection <- suppressWarnings(as_familiar_collection(object, familiar_data_names=c("development", "development", "validation", "validation")))
                       
@@ -1362,7 +1362,7 @@ test_plots <- function(plot_function,
                     " be created for a dataset with some one-sample data."), {
                       
                       object <- list(data_good_one_1, data_good_one_2, data_one_sample_one_1, data_one_sample_one_2)
-                      object <- mapply(set_data_set_names, object, c("development_1", "development_2", "validation_1", "validation_2"))
+                      object <- mapply(set_object_name, object, c("development_1", "development_2", "validation_1", "validation_2"))
                       
                       collection <- suppressWarnings(as_familiar_collection(object, familiar_data_names=c("development", "development", "validation", "validation")))
                       
@@ -1386,7 +1386,7 @@ test_plots <- function(plot_function,
                     " be created for a dataset with some invariant data."), {
                       
                       object <- list(data_good_one_1, data_good_one_2, data_identical_one_1, data_identical_one_2)
-                      object <- mapply(set_data_set_names, object, c("development_1", "development_2", "validation_1", "validation_2"))
+                      object <- mapply(set_object_name, object, c("development_1", "development_2", "validation_1", "validation_2"))
                       
                       collection <- suppressWarnings(as_familiar_collection(object, familiar_data_names=c("development", "development", "validation", "validation")))
                       
@@ -1489,7 +1489,7 @@ test_plot_ordering <- function(plot_function,
                       
                       object <- list(data_good_full_lasso_1, data_empty_lasso_2, data_good_full_lasso_1, data_good_full_lasso_2,
                                      data_good_full_glm_1, data_good_full_glm_2, data_empty_glm_1, data_good_full_glm_2)
-                      object <- mapply(set_data_set_names, object, c("development_lasso_1", "development_lasso_2", "validation_lasso_1", "validation_lasso_2",
+                      object <- mapply(set_object_name, object, c("development_lasso_1", "development_lasso_2", "validation_lasso_1", "validation_lasso_2",
                                                                      "development_glm_1", "development_glm_2", "validation_glm_1", "validation_glm_2"))
                       
                       collection <- suppressWarnings(as_familiar_collection(object, familiar_data_names=c("development", "development", "validation", "validation",
@@ -1531,7 +1531,7 @@ test_export <- function(export_function,
   
   # Iterate over the outcome type.
   for(outcome_type in c("count", "continuous", "binomial", "multinomial", "survival")){
-    
+  
     # Obtain data.
     full_data <- test.create_good_data_set(outcome_type)
     identical_sample_data <- test.create_all_identical_data_set(outcome_type)
@@ -1616,7 +1616,7 @@ test_export <- function(export_function,
                     " be created for a complete data set."), {
                       
                       object <- list(data_good_full_1, data_good_full_2, data_good_full_1, data_good_full_2)
-                      object <- mapply(set_data_set_names, object, c("development_1", "development_2", "validation_1", "validation_2"))
+                      object <- mapply(set_object_name, object, c("development_1", "development_2", "validation_1", "validation_2"))
                       
                       collection <- suppressWarnings(as_familiar_collection(object, familiar_data_names=c("development", "development", "validation", "validation")))
                       
@@ -1687,7 +1687,7 @@ test_export <- function(export_function,
                     " be created for a dataset with some missing data."), {
                       
                       object <- list(data_good_full_1, data_good_full_2, data_empty_full_1, data_good_full_2)
-                      object <- mapply(set_data_set_names, object, c("development_1", "development_2", "validation_1", "validation_2"))
+                      object <- mapply(set_object_name, object, c("development_1", "development_2", "validation_1", "validation_2"))
                       
                       collection <- suppressWarnings(as_familiar_collection(object, familiar_data_names=c("development", "development", "validation", "validation")))
                       
@@ -1710,7 +1710,7 @@ test_export <- function(export_function,
                     " be created for a dataset with completely missing data."), {
                       
                       object <- list(data_empty_full_1, data_empty_full_2, data_empty_full_1, data_empty_full_2)
-                      object <- mapply(set_data_set_names, object, c("development_1", "development_2", "validation_1", "validation_2"))
+                      object <- mapply(set_object_name, object, c("development_1", "development_2", "validation_1", "validation_2"))
                       
                       collection <- suppressWarnings(as_familiar_collection(object, familiar_data_names=c("development", "development", "validation", "validation")))
                       
@@ -1733,7 +1733,7 @@ test_export <- function(export_function,
                     " be created for a dataset where some data only have one sample."), {
                       
                       object <- list(data_good_full_1, data_good_full_2, data_one_sample_full_1, data_one_sample_full_2)
-                      object <- mapply(set_data_set_names, object, c("development_1", "development_2", "validation_1", "validation_2"))
+                      object <- mapply(set_object_name, object, c("development_1", "development_2", "validation_1", "validation_2"))
                       
                       collection <- suppressWarnings(as_familiar_collection(object, familiar_data_names=c("development", "development", "validation", "validation")))
                       
@@ -1756,7 +1756,7 @@ test_export <- function(export_function,
                     " be created for a dataset where some data only have identical samples."), {
                       
                       object <- list(data_good_full_1, data_good_full_2, data_identical_full_1, data_identical_full_2)
-                      object <- mapply(set_data_set_names, object, c("development_1", "development_2", "validation_1", "validation_2"))
+                      object <- mapply(set_object_name, object, c("development_1", "development_2", "validation_1", "validation_2"))
                       
                       collection <- suppressWarnings(as_familiar_collection(object, familiar_data_names=c("development", "development", "validation", "validation")))
                       
@@ -1778,7 +1778,7 @@ test_export <- function(export_function,
                     " be created for a dataset created from an ensemble of multiple models."), {
                       
                       object <- list(multi_model_full)
-                      object <- mapply(set_data_set_names, object, c("development_1"))
+                      object <- mapply(set_object_name, object, c("development_1"))
                       
                       collection <- suppressWarnings(as_familiar_collection(object, familiar_data_names=c("development")))
                       
@@ -1825,7 +1825,7 @@ test_export <- function(export_function,
                     " be created for a complete one-feature data set."), {
                       
                       object <- list(data_good_one_1, data_good_one_2, data_good_one_1, data_good_one_2)
-                      object <- mapply(set_data_set_names, object, c("development_1", "development_2", "validation_1", "validation_2"))
+                      object <- mapply(set_object_name, object, c("development_1", "development_2", "validation_1", "validation_2"))
                       
                       collection <- suppressWarnings(as_familiar_collection(object, familiar_data_names=c("development", "development", "validation", "validation")))
                       
@@ -1851,7 +1851,7 @@ test_export <- function(export_function,
                     " be created for a dataset with some one-sample data."), {
                       
                       object <- list(data_good_one_1, data_good_one_2, data_one_sample_one_1, data_one_sample_one_2)
-                      object <- mapply(set_data_set_names, object, c("development_1", "development_2", "validation_1", "validation_2"))
+                      object <- mapply(set_object_name, object, c("development_1", "development_2", "validation_1", "validation_2"))
                       
                       collection <- suppressWarnings(as_familiar_collection(object, familiar_data_names=c("development", "development", "validation", "validation")))
                       
@@ -1877,7 +1877,7 @@ test_export <- function(export_function,
                     " be created for a dataset with some invariant data."), {
                       
                       object <- list(data_good_one_1, data_good_one_2, data_identical_one_1, data_identical_one_2)
-                      object <- mapply(set_data_set_names, object, c("development_1", "development_2", "validation_1", "validation_2"))
+                      object <- mapply(set_object_name, object, c("development_1", "development_2", "validation_1", "validation_2"))
                       
                       collection <- suppressWarnings(as_familiar_collection(object, familiar_data_names=c("development", "development", "validation", "validation")))
                       

@@ -157,6 +157,9 @@ build_model <- function(run, hpo_list){
   fam_model <- .train_novelty_detector(object=fam_model,
                                        data=data)
   
+  # Add model name
+  fam_model <- set_object_name(fam_model)
+  
   # Save model
   save(list=fam_model, file=file_paths$mb_dir)
 }

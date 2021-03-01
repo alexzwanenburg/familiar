@@ -179,6 +179,7 @@ setMethod("save", signature(list="familiarModel", file="character"),
 
 
 #####add_model_name (model)#####
+# setMethod("add_model_name", signature(data="ANY", object="familiarModel"),
 setMethod("add_model_name", signature(data="ANY", object="familiarModel"),
           function(data, object){
               
@@ -211,6 +212,41 @@ setMethod("add_model_name", signature(data="familiarDataElement", object="charac
             
             return(do.call(add_model_name, args=c(list("data"=data,
                                                        "object"=object))))
+          })
+
+
+
+#####set_object_name (familiarModel)#####
+
+#' @title Set the name of a `familiarModel` object.
+#'  
+#' @description Set the `name` slot using the object name.
+#'
+#' @param x A `familiarModel` object.
+#' 
+#' @return A `familiarModel` object with a generated or a provided name.
+#' @md
+#' @keywords internal
+setMethod("set_object_name", signature(x="familiarModel"),
+          function(x, new=NULL){
+            
+            if(x@project_id == 0 & is.null(new)){
+              # Generate a random object name. A project_id of 0 means that the
+              # objects was auto-generated (i.e. through object conversion). We
+              # randomly generate characters and add a time stamp, so that
+              # collision is practically impossible.
+              slot(object=x, name="name") <- paste0(as.character(as.numeric(format(Sys.time(),"%H%M%S"))),
+                                                    "_", stringi::stri_rand_strings(1, 20, '[A-Z]'))
+              
+            } else if(is.null(new)) {
+              # Generate a sensible object name.
+              slot(object=x, name="name") <- get_object_name(object=x)
+              
+            } else {
+              slot(object=x, name="name") <- new
+            }
+            
+            return(x)
           })
 
 

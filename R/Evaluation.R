@@ -461,7 +461,7 @@ run_evaluation <- function(cl, proj_list, settings, file_paths){
                                                           "pool_perturb_level"=pool_data_table$pool_perturb_level)]
   
   # Set a placeholder name for the familiarData object
-  fam_data <- set_data_set_names(x=fam_data)
+  fam_data <- set_object_name(x=fam_data)
   
   # Save the familiarData object
   save(list=fam_data, file=dir_path)

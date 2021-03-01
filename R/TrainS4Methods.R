@@ -160,7 +160,10 @@ setMethod("train", signature(data="dataObject"),
               object <- .train_novelty_detector(object=object,
                                                 data=data)
             }
-
+            
+            # Generate a placeholder name for the familiarModel object
+            object <- set_object_name(x=object)
+            
             return(object)
           })
 
