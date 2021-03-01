@@ -6,7 +6,7 @@ get_baseline_survival <- function(data){
   # risks. Based on Cox and Oakes (1984)
   
   # Suppress NOTES due to non-standard evaluation in data.table
-  time <- NULL
+  time <- km_survival_var <- NULL
   
   if(!is(data, "dataObject")) ..error_reached_unreachable_code("get_baseline_survival: data is not a dataObject object.")
   
@@ -31,10 +31,16 @@ get_baseline_survival <- function(data){
                                                "cens_distr"=cens_fit$surv)
   
   # Add time 0.
-  if(min(kaplan_meier_table$time)>0){
+  if(min(kaplan_meier_table$time) > 0){
     kaplan_meier_table <- rbind(kaplan_meier_table,
-                                data.table::data.table("time"=0.0, "km_survival"=1.0, "km_survival_var"=0.0, "cens_distr"=1.0))
+                                data.table::data.table("time"=0.0,
+                                                       "km_survival"=1.0,
+                                                       "km_survival_var"=0.0,
+                                                       "cens_distr"=1.0))
   }
+  
+  # Replace inf variance by 1.0
+  kaplan_meier_table[is.infinite(km_survival_var), "km_survival_var":=1.0]
   
   # Sort by time.
   kaplan_meier_table <- kaplan_meier_table[order(time)]
