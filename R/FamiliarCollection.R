@@ -522,7 +522,7 @@ setMethod("get_object_name", signature(object="familiarCollection"),
           function(object, abbreviated=FALSE){
       
             # Get the full name of the object
-            object_name <- object@collection_name
+            object_name <- object@name
             
             return(object_name)
           })
@@ -533,7 +533,7 @@ setMethod("show", signature(object="familiarCollection"),
           function(object){
             
             # Create an initial descriptor.
-            cat(paste0("A collection of datasets (", object@collection_name, "; v", object@familiar_version, "):\n"))
+            cat(paste0("A collection of datasets (", object@name, "; v", object@familiar_version, "):\n"))
             lapply(object@data_sets, function(x) cat(paste0("  ", x, "\n")))
             
             # Outcome details

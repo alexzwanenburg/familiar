@@ -1874,7 +1874,7 @@ plotting.save_plot_to_file <- function(plot_obj, object, dir_path, type, subtype
 
   # Check if directory exists
   if(is.encapsulated_path(dir_path)){
-    file_dir <- normalizePath(file.path(dir_path, object@collection_name, type), mustWork=FALSE)
+    file_dir <- normalizePath(file.path(dir_path, object@name, type), mustWork=FALSE)
     
   } else {
     file_dir <- normalizePath(dir_path, mustWork=FALSE)

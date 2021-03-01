@@ -136,6 +136,10 @@ setMethod("update_object", signature(object="familiarCollection"),
               # Rename important_features to model_features
               attr(object, "model_features") <- attr(object, "important_features")
               attr(object, "important_features") <- NULL
+              
+              # Rename collection_name to name
+              attr(object, "name") <- attr(object, "collection_name")
+              attr(object, "collection_name") <- NULL
             }
             
             if(!methods::validObject(object)) stop("Could not update the familiarCollection object to the most recent definition.")

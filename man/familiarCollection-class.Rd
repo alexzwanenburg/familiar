@@ -10,7 +10,7 @@ A familiarCollection object aggregates data from one or more familiarData object
 \section{Slots}{
 
 \describe{
-\item{\code{collection_name}}{character.}
+\item{\code{name}}{character}
 
 \item{\code{data_sets}}{character.}
 

@@ -127,18 +127,20 @@ setMethod("add_identifiers", signature(data="ANY", object="familiarData"),
             
           })
 
-#####set_data_set_names#####
 
-#' @title Name dataset
+
+#####set_object_name (familiarData)#####
+
+#' @title Set the name of a `familiarData` object.
 #'  
 #' @description Set the `name` slot using the object name.
 #'
 #' @param x A `familiarData` object.
 #' 
-#' @return A `familiarData` object with a generated name.
+#' @return A `familiarData` object with a generated or a provided name.
 #' @md
 #' @keywords internal
-setMethod("set_data_set_names", signature(x="familiarData"),
+setMethod("set_object_name", signature(x="familiarData"),
           function(x, new=NULL){
 
             if(x@project_id == 0 & is.null(new)){

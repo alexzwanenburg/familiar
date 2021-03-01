@@ -823,7 +823,7 @@ setMethod(".export_to_file", signature(data="data.table", object="familiarCollec
             if(is_empty(data)) return(NULL)
             
             # Check if directory exists.
-            file_dir <- normalizePath(file.path(dir_path, object@collection_name, type), mustWork=FALSE)
+            file_dir <- normalizePath(file.path(dir_path, object@name, type), mustWork=FALSE)
             if(!dir.exists(file_dir)) dir.create(file_dir, recursive=TRUE)
             
             # Generate file name.
@@ -848,7 +848,7 @@ setMethod(".export_to_file", signature(data="character", object="familiarCollect
             if(is_empty(data)) return(NULL)
             
             # Check if directory exists
-            file_dir <- normalizePath(file.path(dir_path, object@collection_name, type), mustWork=FALSE)
+            file_dir <- normalizePath(file.path(dir_path, object@name, type), mustWork=FALSE)
             if(!dir.exists(file_dir)) dir.create(file_dir, recursive=TRUE)
             
             # Generate file name

@@ -255,7 +255,7 @@ setClass("familiarData",
 #' Collection of familiar data.
 #'
 #' A familiarCollection object aggregates data from one or more familiarData objects.
-#' @slot collection_name character. 
+#' @slot name character 
 #' @slot data_sets character. 
 #' @slot outcome_type character. 
 #' @slot outcome_info ANY. 
@@ -296,7 +296,7 @@ setClass("familiarData",
 setClass("familiarCollection",
          slots = list(
            # Name of the collection
-           collection_name = "character",
+           name = "character",
            # Name of the underlying data sets
            data_sets = "character",
            # Model outcome type
@@ -368,7 +368,7 @@ setClass("familiarCollection",
            familiar_version = "ANY"
          ),
          prototype = list(
-           collection_name = NA_character_,
+           name = character(0),
            data_sets = character(0),
            outcome_type = NA_character_,
            outcome_info = NULL,
