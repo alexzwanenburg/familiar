@@ -525,12 +525,12 @@ setMethod("detach_models", signature(object="familiarEnsemble"),
 
 
 
-#####add_model_name (ensemble)#####
+#####add_model_name (ANY, familiarEnsemble)---------------------
 setMethod("add_model_name", signature(data="ANY", object="familiarEnsemble"),
           function(data, object){
+            if(is_empty(data)) return(NULL)
             
-            # This is the same for objects of the familiarModel and familiarEnsemble classes
-            return(.add_model_name(data=data, object=object))
+            ..error_reached_unreachable_code("add_model_name,any,familiarEnsemble: no method for non-empty data.")
           })
 
 

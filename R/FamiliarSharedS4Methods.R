@@ -1,32 +1,3 @@
-
-.add_model_name <- function(data, object){
-  # Adds a model identifier column
-  
-  if(is.null(data)) return(NULL)
-  
-  if(!data.table::is.data.table(data)) return(data)
-  
-  if(nrow(data)>=1){
-    
-    # Get the model name
-    model_name <- get_object_name(object=object, abbreviated=TRUE)
-    
-    # Insert "model_name" column
-    data[, "model_name":=model_name]
-    
-    # Reorder columns and move model_name to the front
-    data.table::setcolorder(data, neworder="model_name")
-    
-    return(data)
-    
-  } else {
-    # In case the table is empty, return an empty table with the model name attached.
-    return(cbind(data.table::data.table("model_name"=character(0)), data))
-  }
-}
-
-
-
 .add_package_version <- function(object){
   # Adds the version of the familiar package used to generate the object. This allows for backward compatibility.
   

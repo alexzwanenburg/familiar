@@ -178,13 +178,12 @@ setMethod("save", signature(list="familiarModel", file="character"),
 
 
 
-#####add_model_name (model)#####
-# setMethod("add_model_name", signature(data="ANY", object="familiarModel"),
+#####add_model_name (ANY, familiarModel)---------------------
 setMethod("add_model_name", signature(data="ANY", object="familiarModel"),
           function(data, object){
-              
-            # This is the same for objects of the familiarModel and familiarEnsemble classes
-            return(.add_model_name(data=data, object=object))
+            if(is_empty(data)) return(NULL)
+            
+            ..error_reached_unreachable_code("add_model_name,any,familiarModel: no method for non-empty data.")
           })
 
 #####add_model_name (familiarDataElement, familiarModel)------------------------
