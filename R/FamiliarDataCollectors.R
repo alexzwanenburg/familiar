@@ -69,43 +69,6 @@ collect_model_vimp <- function(fam_data_list){
 
 
 
-
-#' @title Collector for calibration information
-#'
-#' @inheritParams collect_fs_vimp
-#'
-#' @return A list with aggregated calibration information. May be NULL for outcome types other than survival.
-#' @noRd
-collect_calibration_info <- function(fam_data_list){
-  # Calibration info (e.g. baseline survival) is shared between objects with the same feature selection method and data ids.
-  # It may also not exist.
-  # unique_entries <- .which_unique_data(fam_data_list=fam_data_list, incl_learner=TRUE, incl_validation_status=FALSE)
-  unique_entries <- .which_unique_data(fam_data_list=fam_data_list, by=c("fs_method", "learner"))
-  
-  # Select only unique entries
-  calibr_info_table <- data.table::rbindlist(lapply(unique_entries, function(ii, fam_data_list){
-    
-    # Get the model-based vimp table  
-    calibr_info_table <- fam_data_list[[ii]]@calibration_info
-    
-    # Add identifiers
-    calibr_info_table <- add_identifiers(data=data.table::copy(calibr_info_table),
-                                         object=fam_data_list[[ii]],
-                                         more_identifiers=c("fs_method", "learner"))
-    
-  }, fam_data_list=fam_data_list))
-  
-  # Check of the calibration info table is empty
-  if(ncol(calibr_info_table) == 0){
-    calibr_info_table <- NULL
-  }
-  
-  return(calibr_info_table)
-}
-
-
-
-
 #' @title Collector for stratification information
 #'
 #' @inheritParams collect_fs_vimp

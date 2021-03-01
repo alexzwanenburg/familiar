@@ -82,6 +82,7 @@ Collate:
     'FamiliarDataComputation.R'
     'FamiliarDataComputationAUCCurves.R'
     'FamiliarDataComputationCalibrationData.R'
+    'FamiliarDataComputationCalibrationInfo.R'
     'FamiliarDataComputationConfusionMatrix.R'
     'FamiliarDataComputationDecisionCurveAnalysis.R'
     'FamiliarDataComputationHyperparameters.R'

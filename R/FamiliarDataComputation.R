@@ -6,7 +6,8 @@ NULL
 .get_available_data_elements <- function(check_has_estimation_type=FALSE, check_has_detail_level=FALSE){
   
   # All data elements.
-  all_data_elements <- c("auc_data", "calibration_data", "confusion_matrix", "decision_curve_analyis", "feature_expressions",
+  all_data_elements <- c("auc_data", "calibration_data", "calibration_info", "confusion_matrix",
+                         "decision_curve_analyis", "feature_expressions",
                          "fs_vimp", "hyperparameters", "kaplan_meier_data", "model_performance",
                          "model_vimp", "mutual_correlation", "permutation_vimp", "prediction_data",
                          "stratification_data", "univariate_analysis")
@@ -16,7 +17,7 @@ NULL
                                "model_performance", "permutation_vimp",  "prediction_data")
   
   # Data elements that allow setting a detail level.
-  can_set_detail_level <- c(can_set_estimation_type, "confusion_matrix", "kaplan_meier_data")
+  can_set_detail_level <- c(can_set_estimation_type, "calibration_info", "confusion_matrix", "kaplan_meier_data")
   
   if(check_has_estimation_type){
     all_data_elements <- intersect(all_data_elements, can_set_estimation_type)
@@ -575,6 +576,13 @@ setMethod("extract_data", signature(object="familiarEnsemble"),
               stratification_data <- NULL
             }
             
+            if(any(c("calibration_info") %in% data_element)){
+              calibration_info <- extract_calibration_info(object=object,
+                                                           detail_level=detail_level,
+                                                           message_indent=message_indent,
+                                                           verbose=verbose)
+            }
+            
             # Extract calibration data
             if(any(c("calibration_data") %in% data_element)){
               calibration_data <- extract_calibration_data(object=object,
@@ -648,7 +656,7 @@ setMethod("extract_data", signature(object="familiarEnsemble"),
                                      prediction_data = prediction_data,
                                      confusion_matrix = confusion_matrix_info,
                                      decision_curve_data = decision_curve_data,
-                                     calibration_info = add_model_name(object@calibration_info, object=object),
+                                     calibration_info = calibration_info,
                                      calibration_data = calibration_data,
                                      model_performance = model_performance_data,
                                      km_info = km_info,
@@ -941,68 +949,6 @@ setMethod("extract_model_vimp", signature(object="character"),
                                                       list(...))))
           })
 
-
-
-#'@title Internal function to extract hyperparameters from models.
-#'
-#'@description Collects hyperparameters from models in a `familiarEnsemble`.
-#'
-#'@inheritParams extract_data
-#'
-#'@return A `data.table` with hyperparameters.
-#'@md
-#'@keywords internal
-setGeneric("extract_hyperparameters", function(object,
-                                               message_indent=0L,
-                                               verbose=FALSE,
-                                               ...) standardGeneric("extract_hyperparameters"))
-
-#####extract_hyperparameters (familiarEnsemble)#####
-setMethod("extract_hyperparameters", signature(object="familiarEnsemble"),
-          function(object,
-                   message_indent=0L,
-                   verbose=FALSE){
-            # Extracts hyper-parameters from each model and collects them.
-            
-            # Message extraction start
-            if(verbose){
-              logger.message(paste0("Extracting hyperparameters from the models in the ensemble."),
-                             indent=message_indent)
-            }
-            
-            # Test if models are properly loaded
-            if(!is_model_loaded(object=object)) ..error_ensemble_models_not_loaded()
-            
-            # Test if the any of the models in the ensemble were trained.
-            if(!model_is_trained(object)) return(NULL)
-            
-            # Collect hyperparameters
-            hyperparameter_info <- data.table::rbindlist(lapply(object@model_list, extract_hyperparameters))
-            
-            return(hyperparameter_info)
-          })
-
-#####extract_hyperparameters (familiarModel)#####
-setMethod("extract_hyperparameters", signature(object="familiarModel"),
-          function(object, ...){
-            # Parse hyperparameters as data.table
-            data <- data.table::as.data.table(object@hyperparameters)
-            
-            # Add model name column
-            data <- add_model_name(data=data,
-                                   object=object)
-            
-            return(data)
-          })
-
-#####extract_hyperparameters (character)#####
-setMethod("extract_hyperparameters", signature(object="character"),
-          function(object, ...){
-            # Load object.
-            object <- load_familiar_object(object)
-            
-            return(do.call(extract_hyperparameters, args=list("object"=object)))
-          })
 
 
 #'@title Internal function to extract Kaplan-Meier risk group stratification cutoffs from models.
