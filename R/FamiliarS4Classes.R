@@ -1,6 +1,8 @@
 ####familiarModel####
 setClass("familiarModel",
          slots = list(
+           # Model name.
+           name = "character",
            # Model container
            model = "ANY",
            # Outcome type
@@ -46,6 +48,7 @@ setClass("familiarModel",
            familiar_version = "ANY"
          ),
          prototype = list(
+           name = character(0),
            model = NULL,
            outcome_type = NA_character_,
            outcome_info = NULL,
@@ -73,6 +76,8 @@ setClass("familiarModel",
 #####familiarEnsemble#####
 setClass("familiarEnsemble",
          slots = list(
+           # Ensemble name
+           name = "character",
            # Model container.
            model_list = "ANY",
            # Model outcome type.
@@ -120,6 +125,7 @@ setClass("familiarEnsemble",
            familiar_version = "ANY"
          ),
          prototype = list(
+           name = character(0),
            model_list = NULL,
            outcome_type = NA_character_,
            outcome_info = NULL,
