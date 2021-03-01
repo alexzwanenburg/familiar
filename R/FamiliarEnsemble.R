@@ -539,7 +539,13 @@ setMethod("add_model_name", signature(data="familiarDataElement", object="famili
           function(data, object){
             
             # Determine the model name
-            model_name <- get_object_name(object=object, abbreviated=TRUE)
+            if(length(object@name) == 0){
+              model_name <- get_object_name(object=object, abbreviated=TRUE)
+              
+            } else {
+              model_name <- object@name
+            }
+            
             
             if(is.null(data@identifiers)){
               data@identifiers <- list("ensemble_model_name" = model_name)
@@ -599,8 +605,14 @@ setMethod("get_object_name", signature(object="familiarEnsemble"),
               model_name <- paste0("ensemble", ".", ensemble_data_id, ".", ensemble_run_id)
             } else {
               # Create the full name of the model
-              model_name <- get_object_file_name(learner=object@learner, fs_method=object@fs_method, project_id=object@project_id, data_id=ensemble_data_id,
-                                                 run_id=ensemble_run_id, object_type="familiarEnsemble", is_ensemble=TRUE, with_extension=FALSE)
+              model_name <- get_object_file_name(learner=object@learner,
+                                                 fs_method=object@fs_method,
+                                                 project_id=object@project_id,
+                                                 data_id=ensemble_data_id,
+                                                 run_id=ensemble_run_id,
+                                                 object_type="familiarEnsemble",
+                                                 is_ensemble=TRUE,
+                                                 with_extension=FALSE)
             }
             
             return(model_name)

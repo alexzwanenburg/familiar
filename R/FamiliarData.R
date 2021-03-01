@@ -57,10 +57,17 @@ setMethod("get_object_name", signature(object="familiarData"),
               object_name <- paste(data_pooling, ensemble_data_id, ensemble_run_id, ifelse(object@is_validation, "validation", "development"), "data", sep=".")
             } else {
               # Create the full name of the object
-              object_name <- get_object_file_name(learner=object@learner, fs_method=object@fs_method, project_id=object@project_id, data_id=ensemble_data_id,
-                                                  run_id=ensemble_run_id, pool_data_id=pool_data_id, pool_run_id=pool_run_id,
-                                                  object_type="familiarData", is_ensemble=data_pooling=="ensemble",
-                                                  is_validation=object@is_validation, with_extension=FALSE)
+              object_name <- get_object_file_name(learner=object@learner,
+                                                  fs_method=object@fs_method,
+                                                  project_id=object@project_id,
+                                                  data_id=ensemble_data_id,
+                                                  run_id=ensemble_run_id,
+                                                  pool_data_id=pool_data_id,
+                                                  pool_run_id=pool_run_id,
+                                                  object_type="familiarData",
+                                                  is_ensemble=data_pooling=="ensemble",
+                                                  is_validation=object@is_validation,
+                                                  with_extension=FALSE)
             }
             
             return(object_name)

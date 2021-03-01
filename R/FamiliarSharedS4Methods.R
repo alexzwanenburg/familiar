@@ -29,15 +29,25 @@
     ..error_reached_unreachable_code(".save: unknown type of object encountered.")
   }
   
+  # Add file name.
+  if(object@project_id == 0 & length(object@name) > 0){
+    file_name <- object@name
+    
+  } else {
+    # Generate file name
+    file_name <- get_object_name(object=object)
+  }
+  
+  # Add file extension
+  file_name <- paste0(file_name, ".RDS")
+  
   # Obtain the directory path
   dir_path  <- get_object_dir_path(dir_path=dir_path,
                                    object_type=object_type,
                                    learner=object@learner,
                                    fs_method=object@fs_method)
   
-  # Generate file name
-  file_name <- get_object_name(object=object)
-  file_name <- paste0(file_name, ".RDS")
+  
   
   # Check if the directory exists, and create anew if not
   if(!dir.exists(dir_path)){ dir.create(dir_path, recursive=TRUE) }
