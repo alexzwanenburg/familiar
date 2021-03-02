@@ -160,7 +160,9 @@ setMethod("plot_kaplan_meier", signature(object="ANY"),
             
             # Attempt conversion to familiarCollection object.
             object <- do.call(as_familiar_collection,
-                              args=append(list("object"=object, "data_element"="kaplan_meier_data"), list(...)))
+                              args=c(list("object"=object,
+                                          "data_element"="risk_stratification_data"),
+                                     list(...)))
             
             return(do.call(plot_kaplan_meier,
                            args=list("object"=object,

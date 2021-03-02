@@ -8,7 +8,7 @@ NULL
   # All data elements.
   all_data_elements <- c("auc_data", "calibration_data", "calibration_info", "confusion_matrix",
                          "decision_curve_analyis", "feature_expressions",
-                         "fs_vimp", "hyperparameters", "kaplan_meier_data", "model_performance",
+                         "fs_vimp", "hyperparameters", "risk_stratification_data", "model_performance",
                          "model_vimp", "mutual_correlation", "permutation_vimp", "prediction_data",
                          "stratification_data", "univariate_analysis")
   
@@ -17,7 +17,7 @@ NULL
                                "model_performance", "permutation_vimp",  "prediction_data")
   
   # Data elements that allow setting a detail level.
-  can_set_detail_level <- c(can_set_estimation_type, "calibration_info", "confusion_matrix", "kaplan_meier_data")
+  can_set_detail_level <- c(can_set_estimation_type, "calibration_info", "confusion_matrix", "risk_stratification_data")
   
   if(check_has_estimation_type){
     all_data_elements <- intersect(all_data_elements, can_set_estimation_type)
@@ -561,7 +561,7 @@ setMethod("extract_data", signature(object="familiarEnsemble"),
             }
             
             # Compute stratification tests
-            if(any(c("kaplan_meier_data") %in% data_element)){
+            if(any(c("risk_stratification_data") %in% data_element)){
               stratification_data <- extract_risk_stratification(object=object,
                                                                  data=data,
                                                                  cl=cl,

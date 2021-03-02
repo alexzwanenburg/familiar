@@ -91,7 +91,7 @@ setMethod("extract_risk_stratification", signature(object="familiarEnsemble"),
             # Check the level detail.
             detail_level <- .parse_detail_level(x = detail_level,
                                                 default = "ensemble",
-                                                data_element = "kaplan_meier_data")
+                                                data_element = "risk_stratification_data")
             
             # Test if models are properly loaded
             if(!is_model_loaded(object=object)) ..error_ensemble_models_not_loaded()
@@ -665,7 +665,7 @@ setMethod("export_risk_stratification", signature(object="ANY"),
             # Attempt conversion to familiarCollection object.
             object <- do.call(as_familiar_collection,
                               args=c(list("object"=object,
-                                          "data_element"="kaplan_meier_data"),
+                                          "data_element"="risk_stratification_data"),
                                      list(...)))
             
             return(do.call(export_risk_stratification,
