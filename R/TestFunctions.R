@@ -1531,7 +1531,7 @@ test_export <- function(export_function,
   
   # Iterate over the outcome type.
   for(outcome_type in c("count", "continuous", "binomial", "multinomial", "survival")){
-  
+    
     # Obtain data.
     full_data <- test.create_good_data_set(outcome_type)
     identical_sample_data <- test.create_all_identical_data_set(outcome_type)

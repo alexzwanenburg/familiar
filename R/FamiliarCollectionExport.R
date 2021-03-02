@@ -87,11 +87,11 @@ setMethod("export_all", signature(object="familiarCollection"),
                                                              dir_path=dir_path)
             
             # Export kaplan-meier info
-            km_info <- export_stratification_cutoff(object=object, dir_path=dir_path)
+            km_info <- export_risk_stratification_info(object=object, dir_path=dir_path)
             
             # Export stratification data
-            km_data <- export_risk_stratification(object=object,
-                                                  dir_path=dir_path)
+            km_data <- export_risk_stratification_data(object=object,
+                                                       dir_path=dir_path)
             
             # Export AUC data
             auc_data <- export_auc_data(object=object,
@@ -322,99 +322,6 @@ setMethod("export_model_vimp", signature(object="ANY"),
                               args=append(list("object"=object, "data_element"="model_vimp"), list(...)))
             
             return(do.call(export_model_vimp,
-                           args=append(list("object"=object, "dir_path"=dir_path), list(...))))
-          })
-
-
-
-#####export_stratification_cutoff#####
-
-#'@title Extract and export cut-off values for risk group stratification.
-#'
-#'@description Extract and export cut-off values for risk group stratification
-#'  by models in a familiarCollection.
-#'
-#'@inheritParams export_all
-#'
-#'@inheritDotParams as_familiar_collection
-#'
-#'@details Data is usually collected from a `familiarCollection` object.
-#'  However, you can also provide one or more `familiarData` objects, that will
-#'  be internally converted to a `familiarCollection` object. It is also
-#'  possible to provide a `familiarEnsemble` or one or more `familiarModel`
-#'  objects together with the data from which data is computed prior to export.
-#'  Paths to the previous files can also be provided.
-#'
-#'  All parameters aside from `object` and `dir_path` are only used if `object`
-#'  is not a `familiarCollection` object, or a path to one.
-#'
-#'  Stratification cut-off values are determined when creating a model, using
-#'  one of several methods set by the `stratification_method` parameter. These
-#'  values are then used to stratify samples in any new dataset. The available
-#'  methods are:
-#'
-#'  * `median` (default): The median predicted value in the development cohort
-#'  is used to stratify the samples into two risk groups.
-#'
-#'  * `fixed`: Samples are stratified based on the sample quantiles of the
-#'  predicted values. These quantiles are defined using the
-#'  `stratification_threshold` parameter.
-#'
-#'  * `optimised`: Use maximally selected rank statistics to determine the
-#'  optimal threshold (Lausen and Schumacher, 1992; Hothorn et al., 2003) to
-#'  stratify samples into two optimally separated risk groups.
-#'
-#'@return A data.table (if `dir_path` is not provided), or nothing, as all data
-#'  is exported to `csv` files.
-#'@references 1. Lausen, B. & Schumacher, M. Maximally Selected Rank Statistics.
-#'  Biometrics 48, 73 (1992).
-#'
-#'  1. Hothorn, T. & Lausen, B. On the exact distribution of maximally selected
-#'  rank statistics. Comput. Stat. Data Anal. 43, 121–137 (2003).
-#'@exportMethod export_stratification_cutoff
-#'@md
-#'@rdname export_stratification_cutoff-methods
-setGeneric("export_stratification_cutoff",
-           function(object, dir_path=NULL, ...) standardGeneric("export_stratification_cutoff"))
-
-#####export_stratification_cutoff (collection)#####
-
-#'@rdname export_stratification_cutoff-methods
-setMethod("export_stratification_cutoff", signature(object="familiarCollection"),
-          function(object, dir_path=NULL, ...){
-
-            # Check if the attribute has any contents
-            if(is.null(object@km_info)){
-              return(NULL)
-            }
-            
-            # Update threshold table by applying labels
-            km_info <- .apply_labels(data=object@km_info, object=object)
-            
-            if(is.null(dir_path)){
-              return(km_info)
-              
-            } else {
-              # Export to file
-              .export_to_file(data=km_info, object=object, dir_path=dir_path,
-                              type="stratification", subtype="cutoff_values")
-              
-              return(NULL)
-            }
-            
-          })
-
-#####export_stratification_cutoff (generic)#####
-
-#'@rdname export_stratification_cutoff-methods
-setMethod("export_stratification_cutoff", signature(object="ANY"),
-          function(object, dir_path=NULL, ...){
-            
-            # Attempt conversion to familiarCollection object.
-            object <- do.call(as_familiar_collection,
-                              args=append(list("object"=object, "data_element"="stratification_data"), list(...)))
-            
-            return(do.call(export_stratification_cutoff,
                            args=append(list("object"=object, "dir_path"=dir_path), list(...))))
           })
 

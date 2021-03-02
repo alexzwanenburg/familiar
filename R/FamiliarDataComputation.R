@@ -8,16 +8,17 @@ NULL
   # All data elements.
   all_data_elements <- c("auc_data", "calibration_data", "calibration_info", "confusion_matrix",
                          "decision_curve_analyis", "feature_expressions",
-                         "fs_vimp", "hyperparameters", "risk_stratification_data", "model_performance",
+                         "fs_vimp", "hyperparameters", "model_performance",
                          "model_vimp", "mutual_correlation", "permutation_vimp", "prediction_data",
-                         "stratification_data", "univariate_analysis")
+                         "risk_stratification_data", "risk_stratification_info",
+                         "univariate_analysis")
   
   # Data elements that allow setting an estimation type.
   can_set_estimation_type <- c("auc_data", "calibration_data", "decision_curve_analyis",
                                "model_performance", "permutation_vimp",  "prediction_data")
   
   # Data elements that allow setting a detail level.
-  can_set_detail_level <- c(can_set_estimation_type, "calibration_info", "confusion_matrix", "risk_stratification_data")
+  can_set_detail_level <- c(can_set_estimation_type, "calibration_info", "confusion_matrix", "risk_stratification_data", "risk_stratification_info")
   
   if(check_has_estimation_type){
     all_data_elements <- intersect(all_data_elements, can_set_estimation_type)
@@ -552,25 +553,26 @@ setMethod("extract_data", signature(object="familiarEnsemble"),
             
             
             # Extract information regarding stratification
-            if(any(c("stratification_data") %in% data_element)){
-              km_info <- extract_km_cutoffs(object=object,
-                                            message_indent=message_indent,
-                                            verbose=verbose)
+            if(any(c("risk_stratification_info") %in% data_element)){
+              stratification_info <- extract_risk_stratification_info(object=object,
+                                                                      detail_level=detail_level,
+                                                                      message_indent=message_indent,
+                                                                      verbose=verbose)
             } else {
-              km_info <- NULL
+              stratification_info <- NULL
             }
             
             # Compute stratification tests
             if(any(c("risk_stratification_data") %in% data_element)){
-              stratification_data <- extract_risk_stratification(object=object,
-                                                                 data=data,
-                                                                 cl=cl,
-                                                                 ensemble_method=ensemble_method,
-                                                                 stratification_method=stratification_method,
-                                                                 detail_level=detail_level,
-                                                                 confidence_level=confidence_level,
-                                                                 message_indent=message_indent,
-                                                                 verbose=verbose)
+              stratification_data <- extract_risk_stratification_data(object=object,
+                                                                      data=data,
+                                                                      cl=cl,
+                                                                      ensemble_method=ensemble_method,
+                                                                      stratification_method=stratification_method,
+                                                                      detail_level=detail_level,
+                                                                      confidence_level=confidence_level,
+                                                                      message_indent=message_indent,
+                                                                      verbose=verbose)
               
             } else {
               stratification_data <- NULL
@@ -581,6 +583,9 @@ setMethod("extract_data", signature(object="familiarEnsemble"),
                                                            detail_level=detail_level,
                                                            message_indent=message_indent,
                                                            verbose=verbose)
+              
+            } else {
+              calibration_info <- NULL
             }
             
             # Extract calibration data
@@ -659,7 +664,7 @@ setMethod("extract_data", signature(object="familiarEnsemble"),
                                      calibration_info = calibration_info,
                                      calibration_data = calibration_data,
                                      model_performance = model_performance_data,
-                                     km_info = km_info,
+                                     km_info = stratification_info,
                                      km_data = stratification_data,
                                      auc_data = auc_data,
                                      univariate_analysis = univar_info,
@@ -948,86 +953,6 @@ setMethod("extract_model_vimp", signature(object="character"),
             return(do.call(extract_model_vimp, args=c(list("object"=object),
                                                       list(...))))
           })
-
-
-
-#'@title Internal function to extract Kaplan-Meier risk group stratification cutoffs from models.
-#'
-#'@description Collects Kaplan-Meier risk group stratification cutoffs from
-#'  models in a `familiarEnsemble`.
-#'
-#'@inheritParams extract_data
-#'
-#'@return A data.table with risk group cutoffs.
-#'@md
-#'@keywords internal
-setGeneric("extract_km_cutoffs", function(object,
-                                          message_indent=0L,
-                                          verbose=FALSE,
-                                          ...) standardGeneric("extract_km_cutoffs"))
-
-#####extract_km_cutoffs (familiarEnsemble)#####
-setMethod("extract_km_cutoffs", signature(object="familiarEnsemble"),
-          function(object,
-                   message_indent=0L,
-                   verbose=FALSE){
-            
-            # Test if the outcome type is survival
-            if(!object@outcome_type %in% c("survival")) return(NULL)
-            
-            # Message extraction start
-            if(verbose){
-              logger.message(paste0("Extracting Kaplan-Meier cutoffs from the models."),
-                             indent=message_indent)
-            }
-            
-            # Test if models are properly loaded
-            if(!is_model_loaded(object=object)) ..error_ensemble_models_not_loaded()
-            
-            # Test if any model in the ensemble was successfully trained.
-            if(!model_is_trained(object=object)) return(NULL)
-            
-            # Collect Kaplan-Meier stratification parameters
-            km_cut_off_info <- data.table::rbindlist(lapply(object@model_list, extract_km_cutoffs))
-            
-            return(km_cut_off_info)
-          })
-
-#####extract_km_cutoffs (familiarModel)#####
-setMethod("extract_km_cutoffs", signature(object="familiarModel"),
-          function(object, ...){
-            
-            if(is_empty(object@km_info$parameters)) return(NULL)
-            
-            # Iterate over stratification parameters
-            data <- data.table::rbindlist(lapply(object@km_info$parameters, function(method_list){
-              
-              # Extract information
-              data <- data.table::data.table("stratification_method"=method_list$method,
-                                             "cutoff"=method_list$cutoff,
-                                             "index"=seq_len(length(method_list$cutoff)))
-              
-              return(data)
-            }))
-            
-            # Add model name column
-            data <- add_model_name(data=data, object=object)
-            
-            return(data)
-          })
-
-#####extract_km_cutoffs (character)#####
-setMethod("extract_km_cutoffs", signature(object="character"),
-          function(object, ...){
-            # Load object.
-            object <- load_familiar_object(object)
-            
-            return(do.call(extract_km_cutoffs, args=list("object"=object)))
-          })
-
-
-
-
 
 
 

@@ -247,8 +247,8 @@ setMethod("plot_kaplan_meier", signature(object="familiarCollection"),
             risk_group <- NULL
             
             # Get input data
-            x <- export_risk_stratification(object=object,
-                                            export_strata=FALSE)
+            x <- export_risk_stratification_data(object=object,
+                                                 export_strata=FALSE)
             
             # Check that the data are not empty.
             if(is_empty(x)) return(NULL)

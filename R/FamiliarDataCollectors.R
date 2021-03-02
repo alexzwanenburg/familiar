@@ -69,43 +69,6 @@ collect_model_vimp <- function(fam_data_list){
 
 
 
-#' @title Collector for stratification information
-#'
-#' @inheritParams collect_fs_vimp
-#'
-#' @return A list with aggregated cutoffs.
-#' @noRd
-collect_stratification_info <- function(fam_data_list){
-  # Stratification info (e.g. cutoffs) is shared between objects with the same
-  # feature selection method and data ids, as they are generated at model
-  # creation.
-  unique_entries <- .which_unique_data(fam_data_list=fam_data_list, by=c("fs_method", "learner"))
-
-  # Select only unique entries
-  stratification_info_table <- data.table::rbindlist(lapply(unique_entries, function(ii, fam_data_list){
-    
-    # Get the model-based vimp table  
-    strat_info_table <- fam_data_list[[ii]]@km_info
-    
-    # Check if the table is empty
-    if(is_empty(strat_info_table)) return(NULL)
-    
-    # Add identifiers
-    strat_info_table <- add_identifiers(data=data.table::copy(strat_info_table),
-                                        object=fam_data_list[[ii]],
-                                        more_identifiers=c("fs_method", "learner"))
-    
-  }, fam_data_list=fam_data_list))
-  
-  # Check of the calibration info table is empty
-  if(is_empty(stratification_info_table)) return(NULL)
-
-  return(stratification_info_table)
-}
-
-
-
-
 #' @title Collector for univariate feature analysis data
 #'
 #' @inheritParams collect_fs_vimp
