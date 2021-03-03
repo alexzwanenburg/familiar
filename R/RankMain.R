@@ -394,8 +394,13 @@ rank.consensus_clustering <- function(vimp_table){
     return(cluster_table)
   }
   
+  # Get grouping columns
+  grouping_columns <- c("data_id", "run_id", "model_name")
+  grouping_columns <- intersect(colnames(vimp_table),
+                                grouping_columns)
+  
   # Construct list of tables with co-clustered pairs.
-  co_cluster_list <- lapply(split(vimp_table, by=c("data_id", "run_id")), function(vimp_table){
+  co_cluster_list <- lapply(split(vimp_table, by=c(grouping_columns)), function(vimp_table){
 
     # Find features in the current table
     features <- vimp_table$name
