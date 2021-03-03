@@ -2,12 +2,16 @@
 #' @include FamiliarS4Classes.R
 NULL
 
-#'@title Plot occurrence of highly-ranked features during feature selection.
+#'@title Plot variable importance scores of features during feature selection or
+#'  after training a model.
 #'
-#'@description This function plots feature occurrence based on variable
-#'  importance data obtained during feature selection, which are stored in a
-#'  familiarCollection object.
+#'@description This function plots variable importance based data obtained
+#'  during feature selection or after training a model, which are stored in a
+#'  `familiarCollection` object.
 #'
+#'@param type Determine what variable importance should be shown. Can be
+#'  `feature_selection` or `model` for the variable importance after the
+#'  feature selection step and after the model training step, respectively.
 #'@param dir_path (*optional*) Path to the directory where created figures are
 #'  saved to. Output is saved in the `variable_importance` subdirectory. If
 #'  `NULL` no figures are saved, but are returned instead.
@@ -23,209 +27,6 @@ NULL
 #'  `rotate_x_tick_labels` is `TRUE`).
 #'@param width (*optional*) Width of the plot. A default value is derived from
 #'  the number of facets and the number of features.
-#'
-#'@inheritParams as_familiar_collection
-#'@inheritParams plot_univariate_importance
-#'@inheritParams plotting.check_input_args
-#'@inheritParams plotting.check_data_handling
-#'@inheritDotParams as_familiar_collection -object
-#'@inheritDotParams ggplot2::ggsave -height -width -units
-#'
-#'@details This function generates a barplot based on occurrence of the most
-#'  important features during feature selection.
-#'
-#'  The only allowed value for `split_by`, `color_by` or `facet_by` is
-#'  `fs_method`.
-#'
-#'  Available palettes for `discrete_palette` and `gradient_palette` are those
-#'  listed by `grDevices::palette.pals()` (requires R >= 4.0.0),
-#'  `grDevices::hcl.pals()` (requires R >= 3.6.0) and `rainbow`, `heat.colors`,
-#'  `terrain.colors`, `topo.colors` and `cm.colors`, which correspond to the
-#'  palettes of the same name in `grDevices`. If not specified, a default
-#'  palette based on palettes in Tableau are used. You may also specify your own
-#'  palette by using colour names listed by `grDevices::colors()` or through
-#'  hexadecimal RGB strings.
-#'
-#'  Labeling methods such as `set_feature_names` or `set_fs_method_names` can be
-#'  applied to the `familiarCollection` object to update labels, and order the
-#'  output in the figure.
-#'
-#'@return `NULL` or list of plot objects, if `dir_path` is `NULL`.
-#'
-#'@exportMethod plot_feature_occurrence
-#'@md
-#'@rdname plot_feature_occurrence-methods
-setGeneric("plot_feature_occurrence",
-           function(object,
-                    draw=FALSE,
-                    dir_path=NULL,
-                    split_by=NULL,
-                    color_by=NULL,
-                    facet_by=NULL,
-                    facet_wrap_cols=NULL,
-                    show_cluster=TRUE,
-                    ggtheme=NULL,
-                    discrete_palette=NULL,
-                    gradient_palette=waiver(),
-                    x_label="feature",
-                    rotate_x_tick_labels=waiver(),
-                    y_label=waiver(),
-                    legend_label=waiver(),
-                    plot_title=NULL,
-                    plot_sub_title=NULL,
-                    caption=NULL,
-                    y_range=NULL,
-                    y_n_breaks=5,
-                    y_breaks=NULL,
-                    width=waiver(),
-                    height=waiver(),
-                    units=waiver(),
-                    ...) standardGeneric("plot_feature_occurrence"))
-
-#####plot_feature_occurrence (generic)#####
-
-#'@rdname plot_feature_occurrence-methods
-setMethod("plot_feature_occurrence", signature(object="ANY"),
-          function(object,
-                   draw=FALSE,
-                   dir_path=NULL,
-                   split_by=NULL,
-                   color_by=NULL,
-                   facet_by=NULL,
-                   facet_wrap_cols=NULL,
-                   show_cluster=TRUE,
-                   ggtheme=NULL,
-                   discrete_palette=NULL,
-                   gradient_palette=waiver(),
-                   x_label="feature",
-                   rotate_x_tick_labels=waiver(),
-                   y_label=waiver(),
-                   legend_label=waiver(),
-                   plot_title=NULL,
-                   plot_sub_title=NULL,
-                   caption=NULL,
-                   y_range=NULL,
-                   y_n_breaks=5,
-                   y_breaks=NULL,
-                   width=waiver(),
-                   height=waiver(),
-                   units=waiver(),
-                   ...){
-            
-            # Attempt conversion to familiarCollection object. Note that this
-            # will currently fail unless object is a familiarData object, a list
-            # of familiarData objects or a familiarCollection object.
-            object <- do.call(as_familiar_collection,
-                              args=append(list("object"=object, "data_element"="fs_vimp"), list(...)))
-            
-            return(do.call(plot_feature_occurrence,
-                           args=append(list("object"=object,
-                                            "draw"=draw,
-                                            "dir_path"=dir_path,
-                                            "split_by"=split_by,
-                                            "color_by"=color_by,
-                                            "facet_by"=facet_by,
-                                            "facet_wrap_cols"=facet_wrap_cols,
-                                            "show_cluster"=show_cluster,
-                                            "ggtheme"=ggtheme,
-                                            "discrete_palette"=discrete_palette,
-                                            "gradient_palette"=gradient_palette,
-                                            "x_label"=x_label,
-                                            "rotate_x_tick_labels"=rotate_x_tick_labels,
-                                            "y_label"=y_label,
-                                            "legend_label"=legend_label,
-                                            "plot_title"=plot_title,
-                                            "plot_sub_title"=plot_sub_title,
-                                            "caption"=caption,
-                                            "y_range"=y_range,
-                                            "y_n_breaks"=y_n_breaks,
-                                            "y_breaks"=y_breaks,
-                                            "width"=width,
-                                            "height"=height,
-                                            "units"=units),
-                                       list(...))))
-          })
-
-
-#####plot_feature_occurrence (collection)#####
-
-#'@rdname plot_feature_occurrence-methods
-setMethod("plot_feature_occurrence", signature(object="familiarCollection"),
-          function(object,
-                   draw=FALSE,
-                   dir_path=NULL,
-                   split_by=NULL,
-                   color_by=NULL,
-                   facet_by=NULL,
-                   facet_wrap_cols=NULL,
-                   show_cluster=TRUE,
-                   ggtheme=NULL,
-                   discrete_palette=NULL,
-                   gradient_palette=waiver(),
-                   x_label="feature",
-                   rotate_x_tick_labels=waiver(),
-                   y_label=waiver(),
-                   legend_label=waiver(),
-                   plot_title=NULL,
-                   plot_sub_title=NULL,
-                   caption=NULL,
-                   y_range=NULL,
-                   y_n_breaks=5,
-                   y_breaks=NULL,
-                   width=waiver(),
-                   height=waiver(),
-                   units=waiver(),
-                   ...){
-            
-            # Obtain data
-            x <- export_fs_vimp(object=object)
-
-            return(do.call(.plot_feature_ranks,
-                           args=append(list("object"=object,
-                                            "x"=x,
-                                            "plot_data"="occurrence",
-                                            "draw"=draw,
-                                            "dir_path"=dir_path,
-                                            "split_by"=split_by,
-                                            "color_by"=color_by,
-                                            "facet_by"=facet_by,
-                                            "facet_wrap_cols"=facet_wrap_cols,
-                                            "show_cluster"=show_cluster,
-                                            "available_splitting"="fs_method",
-                                            "ggtheme"=ggtheme,
-                                            "discrete_palette"=discrete_palette,
-                                            "gradient_palette"=gradient_palette,
-                                            "x_label"=x_label,
-                                            "rotate_x_tick_labels"=rotate_x_tick_labels,
-                                            "y_label"=y_label,
-                                            "legend_label"=legend_label,
-                                            "plot_title"=plot_title,
-                                            "plot_sub_title"=plot_sub_title,
-                                            "caption"=caption,
-                                            "y_range"=y_range,
-                                            "y_n_breaks"=y_n_breaks,
-                                            "y_breaks"=y_breaks,
-                                            "width"=width,
-                                            "height"=height,
-                                            "units"=units),
-                                       list(...))))
-          })
-
-
-
-
-#'@title Plot variable importance scores of features during feature selection.
-#'
-#'@description This function plots variable importance based data obtained
-#'  during feature selection, which are stored in a familiarCollection object.
-#'
-#'@param gradient_palette (*optional*) Palette to use for filling the bars in
-#'  case the `color_by` argument is not set. The bars are then coloured
-#'  according to the aggregated importance of features. By default, no gradient
-#'  is used, and the bars are not coloured according to importance. Use `NULL`
-#'  to fill the bars using the default palette in `familiar`.
-#'
-#'@inheritParams plot_feature_occurrence
 #'@inheritParams as_familiar_collection
 #'@inheritParams plot_univariate_importance
 #'@inheritParams plotting.check_input_args
@@ -234,213 +35,12 @@ setMethod("plot_feature_occurrence", signature(object="familiarCollection"),
 #'@inheritDotParams ggplot2::ggsave -height -width -units
 #'
 #'@details This function generates a barplot based on variable importance of
-#'  features obtained during feature selection.
-#'
-#'  The only allowed value for `split_by`, `color_by` or `facet_by` is
-#'  `fs_method`.
-#'
-#'  Available palettes for `discrete_palette` and `gradient_palette` are those
-#'  listed by `grDevices::palette.pals()` (requires R >= 4.0.0),
-#'  `grDevices::hcl.pals()` (requires R >= 3.6.0) and `rainbow`, `heat.colors`,
-#'  `terrain.colors`, `topo.colors` and `cm.colors`, which correspond to the
-#'  palettes of the same name in `grDevices`. If not specified, a default
-#'  palette based on palettes in Tableau are used. You may also specify your own
-#'  palette by using colour names listed by `grDevices::colors()` or through
-#'  hexadecimal RGB strings.
-#'
-#'  Labeling methods such as `set_feature_names` or `set_fs_method_names` can be
-#'  applied to the `familiarCollection` object to update labels, and order the
-#'  output in the figure.
-#'
-#'@return `NULL` or list of plot objects, if `dir_path` is `NULL`.
-#'
-#'@exportMethod plot_feature_ranks
-#'@md
-#'@rdname plot_feature_ranks-methods
-setGeneric("plot_feature_ranks",
-           function(object,
-                    draw=FALSE,
-                    dir_path=NULL,
-                    split_by=NULL,
-                    color_by=NULL,
-                    facet_by=NULL,
-                    facet_wrap_cols=NULL,
-                    show_cluster=TRUE,
-                    ggtheme=NULL,
-                    discrete_palette=NULL,
-                    gradient_palette=waiver(),
-                    x_label="feature",
-                    rotate_x_tick_labels=waiver(),
-                    y_label=waiver(),
-                    legend_label=waiver(),
-                    plot_title=NULL,
-                    plot_sub_title=NULL,
-                    caption=NULL,
-                    y_range=NULL,
-                    y_n_breaks=5,
-                    y_breaks=NULL,
-                    width=waiver(),
-                    height=waiver(),
-                    units=waiver(),
-                    ...) standardGeneric("plot_feature_ranks"))
-
-#####plot_feature_ranks (generic)#####
-
-#'@rdname plot_feature_ranks-methods
-setMethod("plot_feature_ranks", signature(object="ANY"),
-          function(object,
-                   draw=FALSE,
-                   dir_path=NULL,
-                   split_by=NULL,
-                   color_by=NULL,
-                   facet_by=NULL,
-                   facet_wrap_cols=NULL,
-                   show_cluster=TRUE,
-                   ggtheme=NULL,
-                   discrete_palette=NULL,
-                   gradient_palette=waiver(),
-                   x_label="feature",
-                   rotate_x_tick_labels=waiver(),
-                   y_label=waiver(),
-                   legend_label=waiver(),
-                   plot_title=NULL,
-                   plot_sub_title=NULL,
-                   caption=NULL,
-                   y_range=NULL,
-                   y_n_breaks=5,
-                   y_breaks=NULL,
-                   width=waiver(),
-                   height=waiver(),
-                   units=waiver(),
-                   ...){
-            
-            # Attempt conversion to familiarCollection object. Note that this
-            # will currently fail unless object is a familiarData object, a list
-            # of familiarData objects or a familiarCollection object.
-            object <- do.call(as_familiar_collection,
-                              args=append(list("object"=object, "data_element"="fs_vimp"), list(...)))
-            
-            return(do.call(plot_feature_ranks,
-                           args=append(list("object"=object,
-                                            "draw"=draw,
-                                            "dir_path"=dir_path,
-                                            "split_by"=split_by,
-                                            "color_by"=color_by,
-                                            "facet_by"=facet_by,
-                                            "facet_wrap_cols"=facet_wrap_cols,
-                                            "show_cluster"=show_cluster,
-                                            "ggtheme"=ggtheme,
-                                            "discrete_palette"=discrete_palette,
-                                            "gradient_palette"=gradient_palette,
-                                            "x_label"=x_label,
-                                            "rotate_x_tick_labels"=rotate_x_tick_labels,
-                                            "y_label"=y_label,
-                                            "legend_label"=legend_label,
-                                            "plot_title"=plot_title,
-                                            "plot_sub_title"=plot_sub_title,
-                                            "caption"=caption,
-                                            "y_range"=y_range,
-                                            "y_n_breaks"=y_n_breaks,
-                                            "y_breaks"=y_breaks,
-                                            "width"=width,
-                                            "height"=height,
-                                            "units"=units),
-                                       list(...))))
-          })
-
-#####plot_feature_ranks (collection)#####
-
-#'@rdname plot_feature_ranks-methods
-setMethod("plot_feature_ranks", signature(object="familiarCollection"),
-          function(object,
-                   draw=FALSE,
-                   dir_path=NULL,
-                   split_by=NULL,
-                   color_by=NULL,
-                   facet_by=NULL,
-                   facet_wrap_cols=NULL,
-                   show_cluster=TRUE,
-                   ggtheme=NULL,
-                   discrete_palette=NULL,
-                   gradient_palette=waiver(),
-                   x_label="feature",
-                   rotate_x_tick_labels=waiver(),
-                   y_label=waiver(),
-                   legend_label=waiver(),
-                   plot_title=NULL,
-                   plot_sub_title=NULL,
-                   caption=NULL,
-                   y_range=NULL,
-                   y_n_breaks=5,
-                   y_breaks=NULL,
-                   width=waiver(),
-                   height=waiver(),
-                   units=waiver(),
-                   ...){
-            
-            # Obtain data
-            x <- export_fs_vimp(object=object)
-            
-            return(do.call(.plot_feature_ranks,
-                           args=append(list("object"=object,
-                                            "x"=x,
-                                            "plot_data"="ranking",
-                                            "draw"=draw,
-                                            "dir_path"=dir_path,
-                                            "split_by"=split_by,
-                                            "color_by"=color_by,
-                                            "facet_by"=facet_by,
-                                            "facet_wrap_cols"=facet_wrap_cols,
-                                            "show_cluster"=show_cluster,
-                                            "available_splitting"="fs_method",
-                                            "ggtheme"=ggtheme,
-                                            "discrete_palette"=discrete_palette,
-                                            "gradient_palette"=gradient_palette,
-                                            "x_label"=x_label,
-                                            "rotate_x_tick_labels"=rotate_x_tick_labels,
-                                            "y_label"=y_label,
-                                            "legend_label"=legend_label,
-                                            "plot_title"=plot_title,
-                                            "plot_sub_title"=plot_sub_title,
-                                            "caption"=caption,
-                                            "y_range"=y_range,
-                                            "y_n_breaks"=y_n_breaks,
-                                            "y_breaks"=y_breaks,
-                                            "width"=width,
-                                            "height"=height,
-                                            "units"=units),
-                                       list(...))))
-          })
-
-
-
-#'@title Plot variable importance scores of signature features obtained after
-#'  modelling.
-#'
-#'@description This function plots variable importance based data obtained after
-#'  training models. These data are stored in a familiarCollection object.
-#'
-#'@param gradient_palette (*optional*) Palette to use for filling the bars in
-#'  case the `color_by` argument is not set. The bars are then coloured
-#'  according to the aggregated importance of features. By default, no gradient
-#'  is used, and the bars are not coloured according to importance. Use `NULL`
-#'  to fill the bars using the default palette in `familiar`.
-#'
-#'@inheritParams plot_feature_occurrence
-#'@inheritParams as_familiar_collection
-#'@inheritParams plot_univariate_importance
-#'@inheritParams plotting.check_input_args
-#'@inheritParams plotting.check_data_handling
-#'@inheritDotParams as_familiar_collection -object
-#'@inheritDotParams ggplot2::ggsave -height -width -units
-#'
-#'@details This function generates a barplot based on variable importance of
-#'  features in model signatures. The variable importances are determined by the
-#'  model algorithm, if it has any variable importance methods.
+#'  features.
 #'
 #'  The only allowed values for `split_by`, `color_by` or `facet_by` are
-#'  `fs_method` and `learner`.
-#'  
+#'  `fs_method` and `learner`, but note that `learner` has no effect when
+#'  plotting variable importance of features acquired during feature selection.
+#'
 #'  Available palettes for `discrete_palette` and `gradient_palette` are those
 #'  listed by `grDevices::palette.pals()` (requires R >= 4.0.0),
 #'  `grDevices::hcl.pals()` (requires R >= 3.6.0) and `rainbow`, `heat.colors`,
@@ -449,18 +49,25 @@ setMethod("plot_feature_ranks", signature(object="familiarCollection"),
 #'  palette based on palettes in Tableau are used. You may also specify your own
 #'  palette by using colour names listed by `grDevices::colors()` or through
 #'  hexadecimal RGB strings.
-#'  
+#'
 #'  Labeling methods such as `set_feature_names` or `set_fs_method_names` can be
 #'  applied to the `familiarCollection` object to update labels, and order the
 #'  output in the figure.
 #'
 #'@return `NULL` or list of plot objects, if `dir_path` is `NULL`.
 #'
-#'@exportMethod plot_model_signature_ranks
+#'@exportMethod plot_variable_importance
+#'@export plot_feature_selection_occurrence
+#'@export plot_feature_selection_variable_importance
+#'@export plot_model_signature_occurrence
+#'@export plot_model_signature_variable_importance
 #'@md
-#'@rdname plot_model_signature_ranks-methods
-setGeneric("plot_model_signature_ranks",
+#'@rdname plot_variable_importance-methods
+setGeneric("plot_variable_importance",
            function(object,
+                    type,
+                    aggregation_method=waiver(),
+                    rank_threshold=waiver(),
                     draw=FALSE,
                     dir_path=NULL,
                     split_by=NULL,
@@ -484,14 +91,93 @@ setGeneric("plot_model_signature_ranks",
                     width=waiver(),
                     height=waiver(),
                     units=waiver(),
-                    ...) standardGeneric("plot_model_signature_ranks"))
+                    ...) standardGeneric("plot_variable_importance"))
 
+##### plot_variable_importance (generic) ---------------------------------------
 
-#####plot_model_signature_ranks (generic)#####
+#'@rdname plot_variable_importance-methods
+setMethod("plot_variable_importance", signature(object="ANY"),
+           function(object,
+                    type,
+                    aggregation_method=waiver(),
+                    rank_threshold=waiver(),
+                    draw=FALSE,
+                    dir_path=NULL,
+                    split_by=NULL,
+                    color_by=NULL,
+                    facet_by=NULL,
+                    facet_wrap_cols=NULL,
+                    show_cluster=TRUE,
+                    ggtheme=NULL,
+                    discrete_palette=NULL,
+                    gradient_palette=waiver(),
+                    x_label="feature",
+                    rotate_x_tick_labels=waiver(),
+                    y_label=waiver(),
+                    legend_label=waiver(),
+                    plot_title=NULL,
+                    plot_sub_title=NULL,
+                    caption=NULL,
+                    y_range=NULL,
+                    y_n_breaks=5,
+                    y_breaks=NULL,
+                    width=waiver(),
+                    height=waiver(),
+                    units=waiver(),
+                    ...){
+             
+             # Set the data element.
+             data_element <- switch(type,
+                                    "feature_selection"="fs_vimp",
+                                    "model"="model_vimp")
+             
+             # Attempt conversion to familiarCollection object.
+             object <- do.call(as_familiar_collection,
+                               args=c(list("object"=object,
+                                           "data_element"=data_element,
+                                           "aggregation_method"=aggregation_method,
+                                           "rank_threshold"=rank_threshold),
+                                      list(...)))
+             
+             return(do.call(plot_variable_importance,
+                            args=list("object"=object,
+                                      "type"=type,
+                                      "aggregation_method"=aggregation_method,
+                                      "rank_threshold"=rank_threshold,
+                                      "draw"=draw,
+                                      "dir_path"=dir_path,
+                                      "split_by"=split_by,
+                                      "color_by"=color_by,
+                                      "facet_by"=facet_by,
+                                      "facet_wrap_cols"=facet_wrap_cols,
+                                      "show_cluster"=show_cluster,
+                                      "ggtheme"=ggtheme,
+                                      "discrete_palette"=discrete_palette,
+                                      "gradient_palette"=gradient_palette,
+                                      "x_label"=x_label,
+                                      "rotate_x_tick_labels"=rotate_x_tick_labels,
+                                      "y_label"=y_label,
+                                      "legend_label"=legend_label,
+                                      "plot_title"=plot_title,
+                                      "plot_sub_title"=plot_sub_title,
+                                      "caption"=caption,
+                                      "y_range"=y_range,
+                                      "y_n_breaks"=y_n_breaks,
+                                      "y_breaks"=y_breaks,
+                                      "width"=width,
+                                      "height"=height,
+                                      "units"=units)))
+             
+           })
 
-#'@rdname plot_model_signature_ranks-methods
-setMethod("plot_model_signature_ranks", signature(object="ANY"),
+##### plot_variable_importance (familiarCollection) ----------------------------
+
+#'@rdname plot_variable_importance-methods
+setMethod("plot_variable_importance", signature(object="familiarCollection"),
           function(object,
+                   type,
+                   aggregation_method=waiver(),
+                   rank_threshold=waiver(),
                    draw=FALSE,
                    dir_path=NULL,
                    split_by=NULL,
@@ -517,142 +203,141 @@ setMethod("plot_model_signature_ranks", signature(object="ANY"),
                    units=waiver(),
                    ...){
             
-            # Attempt conversion to familiarCollection object.
-            object <- do.call(as_familiar_collection,
-                              args=append(list("object"=object, "data_element"="model_vimp"), list(...)))
+            return(.plot_variable_importance(object=object,
+                                             type=type,
+                                             aggregation_method=aggregation_method,
+                                             rank_threshold=rank_threshold,
+                                             draw=draw,
+                                             dir_path=dir_path,
+                                             split_by=split_by,
+                                             color_by=color_by,
+                                             facet_by=facet_by,
+                                             facet_wrap_cols=facet_wrap_cols,
+                                             show_cluster=show_cluster,
+                                             ggtheme=ggtheme,
+                                             discrete_palette=discrete_palette,
+                                             gradient_palette=gradient_palette,
+                                             x_label=x_label,
+                                             rotate_x_tick_labels=rotate_x_tick_labels,
+                                             y_label=y_label,
+                                             legend_label=legend_label,
+                                             plot_title=plot_title,
+                                             plot_sub_title=plot_sub_title,
+                                             caption=caption,
+                                             y_range=y_range,
+                                             y_n_breaks=y_n_breaks,
+                                             y_breaks=y_breaks,
+                                             width=width,
+                                             height=height,
+                                             units=units))
             
-            return(do.call(plot_model_signature_ranks,
-                           args=append(list("object"=object,
-                                            "draw"=draw,
-                                            "dir_path"=dir_path,
-                                            "split_by"=split_by,
-                                            "color_by"=color_by,
-                                            "facet_by"=facet_by,
-                                            "facet_wrap_cols"=facet_wrap_cols,
-                                            "show_cluster"=show_cluster,
-                                            "ggtheme"=ggtheme,
-                                            "discrete_palette"=discrete_palette,
-                                            "gradient_palette"=gradient_palette,
-                                            "x_label"=x_label,
-                                            "rotate_x_tick_labels"=rotate_x_tick_labels,
-                                            "y_label"=y_label,
-                                            "legend_label"=legend_label,
-                                            "plot_title"=plot_title,
-                                            "plot_sub_title"=plot_sub_title,
-                                            "caption"=caption,
-                                            "y_range"=y_range,
-                                            "y_n_breaks"=y_n_breaks,
-                                            "y_breaks"=y_breaks,
-                                            "width"=width,
-                                            "height"=height,
-                                            "units"=units),
-                                       list(...))))
-          })
-
-#####plot_model_signature_ranks (collection)#####
-
-#'@rdname plot_model_signature_ranks-methods
-setMethod("plot_model_signature_ranks", signature(object="familiarCollection"),
-          function(object,
-                   draw=FALSE,
-                   dir_path=NULL,
-                   split_by=NULL,
-                   color_by=NULL,
-                   facet_by=NULL,
-                   facet_wrap_cols=NULL,
-                   show_cluster=TRUE,
-                   ggtheme=NULL,
-                   discrete_palette=NULL,
-                   gradient_palette=waiver(),
-                   x_label="feature",
-                   rotate_x_tick_labels=waiver(),
-                   y_label=waiver(),
-                   legend_label=waiver(),
-                   plot_title=NULL,
-                   plot_sub_title=NULL,
-                   caption=NULL,
-                   y_range=NULL,
-                   y_n_breaks=5,
-                   y_breaks=NULL,
-                   width=waiver(),
-                   height=waiver(),
-                   units=waiver(),
-                   ...){
-            
-            # Obtain data
-            x <- export_model_vimp(object=object)
-            
-            return(do.call(.plot_feature_ranks,
-                           args=append(list("object"=object,
-                                            "x"=x,
-                                            "plot_data"="signature_ranking",
-                                            "draw"=draw,
-                                            "dir_path"=dir_path,
-                                            "split_by"=split_by,
-                                            "color_by"=color_by,
-                                            "facet_by"=facet_by,
-                                            "facet_wrap_cols"=facet_wrap_cols,
-                                            "show_cluster"=show_cluster,
-                                            "available_splitting"=c("fs_method", "learner"),
-                                            "ggtheme"=ggtheme,
-                                            "discrete_palette"=discrete_palette,
-                                            "gradient_palette"=gradient_palette,
-                                            "x_label"=x_label,
-                                            "rotate_x_tick_labels"=rotate_x_tick_labels,
-                                            "y_label"=y_label,
-                                            "legend_label"=legend_label,
-                                            "plot_title"=plot_title,
-                                            "plot_sub_title"=plot_sub_title,
-                                            "caption"=caption,
-                                            "y_range"=y_range,
-                                            "y_n_breaks"=y_n_breaks,
-                                            "y_breaks"=y_breaks,
-                                            "width"=width,
-                                            "height"=height,
-                                            "units"=units),
-                                       list(...))))
           })
 
 
-.plot_feature_ranks <- function(object,
-                                x,
-                                plot_data,
-                                draw,
-                                dir_path,
-                                split_by,
-                                color_by,
-                                facet_by,
-                                facet_wrap_cols,
-                                show_cluster,
-                                available_splitting,
-                                ggtheme,
-                                discrete_palette,
-                                gradient_palette,
-                                x_label,
-                                rotate_x_tick_labels,
-                                y_label,
-                                legend_label,
-                                plot_title,
-                                plot_sub_title,
-                                caption,
-                                y_range,
-                                y_n_breaks,
-                                y_breaks,
-                                width,
-                                height,
-                                units,
-                                ...){  
+#'@rdname plot_variable_importance-methods
+plot_feature_selection_occurrence <- function(...){
+  
+  return(do.call(plot_variable_importance,
+                 args=c(list("type"="feature_selection",
+                             "aggregation_method"="stability"),
+                        list(...))))
+}
 
-  # Check input for plot_data argument.
-  if(!plot_data %in% c("occurrence", "ranking", "signature_ranking")){
-    ..error_reached_unreachable_code(".plot_feature_ranks_incorrect_plot_data_argument")
+
+#'@rdname plot_variable_importance-methods
+plot_feature_selection_variable_importance <- function(...){
+  
+  return(do.call(plot_variable_importance,
+                 args=c(list("type"="feature_selection"),
+                        list(...))))
+}
+
+
+#'@rdname plot_variable_importance-methods
+plot_model_signature_occurrence <- function(...){
+  
+  return(do.call(plot_variable_importance,
+                 args=c(list("type"="model",
+                             "aggregation_method"="stability"),
+                        list(...))))
+}
+
+
+#'@rdname plot_variable_importance-methods
+plot_model_signature_variable_importance <- function(...){
+  
+  return(do.call(plot_variable_importance,
+                 args=c(list("type"="model"),
+                        list(...))))
+}
+
+
+
+.plot_variable_importance <- function(object,
+                                      type,
+                                      aggregation_method,
+                                      rank_threshold,
+                                      draw,
+                                      dir_path,
+                                      split_by,
+                                      color_by,
+                                      facet_by,
+                                      facet_wrap_cols,
+                                      show_cluster,
+                                      ggtheme,
+                                      discrete_palette,
+                                      gradient_palette,
+                                      x_label,
+                                      rotate_x_tick_labels,
+                                      y_label,
+                                      legend_label,
+                                      plot_title,
+                                      plot_sub_title,
+                                      caption,
+                                      y_range,
+                                      y_n_breaks,
+                                      y_breaks,
+                                      width,
+                                      height,
+                                      units){ 
+  
+  # Get input data.
+  if(type == "feature_selection"){
+    x <- export_fs_vimp(object=object,
+                        aggregation_method=aggregation_method,
+                        rank_threshold=rank_threshold,
+                        aggregate_results=TRUE)
+    
+    available_splitting <- "fs_method"
+
+  } else if(type == "model"){
+    x <- export_model_vimp(object=object,
+                           aggregation_method=aggregation_method,
+                           rank_threshold=rank_threshold,
+                           aggregate_results=TRUE)
+    
+    available_splitting <- c("fs_method", "learner")
+    
+  } else {
+    ..error_reached_unreachable_code(paste0(".plot_variable_importance: unknown value for type (", type, ")"))
   }
   
-  # Do not create plots if there are no data.
-  if(is_empty(x)){
-    warning(paste("Feature", plot_data, "could not be plotted as the required dataset is empty."))
-    return(NULL)
+  # Check that the data are not empty.
+  if(is_empty(x)) return(NULL)
+  
+  # Obtain data element from list.
+  if(is.list(x)){
+    if(is_empty(x)) return(NULL)
+    
+    if(length(x) > 1) ..error_reached_unreachable_code(".plot_variable_importance: list of data elements contains unmerged elements.")
+    
+    # Get x directly.
+    x <- x[[1]]
   }
+  
+  # Check that the data are not empty.
+  if(is_empty(x)) return(NULL)
+  
   
   ##### Check input arguments ##################################################
   
@@ -665,18 +350,16 @@ setMethod("plot_model_signature_ranks", signature(object="familiarCollection"),
   }
   
   # y_label
-  if(is.waive(y_label)){
-    y_label <- ifelse(plot_data=="occurrence", "occurrence", "score")
-  }
+  if(is.waive(y_label)) y_label <- ifelse(x@rank_aggregation_method=="stability", "occurrence", "score")
   
   # y_range
-  if(is.null(y_range) & plot_data == "occurrence"){
+  if(is.null(y_range) & x@rank_aggregation_method == "stability"){
     # for occurrence plots
     y_range <- c(0.0, 1.0)
     
   } else if(is.null(y_range)){
     # for variable importance score-based plots
-    y_range <- c(0.0, max(x$score, na.rm=TRUE))
+    y_range <- c(0.0, max(x@data$score, na.rm=TRUE))
   }
   
   # Set y_breaks
@@ -700,8 +383,11 @@ setMethod("plot_model_signature_ranks", signature(object="familiarCollection"),
   }
   
   # Check splitting variables and generate sanitised output.
-  split_var_list <- plotting.check_data_handling(x=x, split_by=split_by, color_by=color_by,
-                                                 facet_by=facet_by, available=available_splitting)
+  split_var_list <- plotting.check_data_handling(x=x@data,
+                                                 split_by=split_by,
+                                                 color_by=color_by,
+                                                 facet_by=facet_by,
+                                                 available=available_splitting)
   
   # Update splitting variables
   split_by <- split_var_list$split_by
@@ -709,7 +395,8 @@ setMethod("plot_model_signature_ranks", signature(object="familiarCollection"),
   facet_by <- split_var_list$facet_by
   
   # legend_label
-  legend_label <- plotting.create_legend_label(user_label=legend_label, color_by=color_by)
+  legend_label <- plotting.create_legend_label(user_label=legend_label,
+                                               color_by=color_by)
   
   # Perform last checks prior to plotting
   plotting.check_input_args(x_label=x_label,
@@ -725,9 +412,9 @@ setMethod("plot_model_signature_ranks", signature(object="familiarCollection"),
   
   # Split data
   if(!is.null(split_by)){
-    x_split <- split(x, by=split_by)
+    x_split <- split(x@data, by=split_by)
   } else {
-    x_split <- list(x)
+    x_split <- list(x@data)
   }
   
   # Store plots to list in case no dir_path is provided
@@ -740,7 +427,8 @@ setMethod("plot_model_signature_ranks", signature(object="familiarCollection"),
     
     # Generate plot
     p <- .create_feature_rank_plot(x=x_sub,
-                                   plot_data=plot_data,
+                                   type=type,
+                                   aggregation_method=x@rank_aggregation_method,
                                    color_by=color_by,
                                    facet_by=facet_by,
                                    facet_wrap_cols=facet_wrap_cols,
@@ -766,13 +454,18 @@ setMethod("plot_model_signature_ranks", signature(object="familiarCollection"),
     
     # Save and export
     if(!is.null(dir_path)){
-      subtype_basis <- ifelse(plot_data == "signature_ranking", "learner_", "feature_selection_")
+      subtype_basis <- ifelse(type == "feature_selection",
+                              "feature_selection",
+                              "learner")
       
       # Save to file
       if(!is.null(split_by)){
-        subtype <- paste0(subtype_basis, plot_data, "_", paste0(sapply(split_by, function(ii, x) (x[[ii]][1]), x=x_sub), collapse="_"))
+        subtype <- paste0(subtype_basis,
+                          paste0(sapply(split_by, function(ii, x) (x[[ii]][1]), x=x_sub), collapse="_"),
+                          collapse="_")
+        
       } else {
-        subtype <- paste0(subtype_basis, plot_data)
+        subtype <- subtype_basis
       }
       
       # Obtain decent default values for the plot.
@@ -783,19 +476,19 @@ setMethod("plot_model_signature_ranks", signature(object="familiarCollection"),
       
       # Save to file.
       do.call(plotting.save_plot_to_file,
-              args=append(list("plot_obj"=p,
-                               "object"=object,
-                               "dir_path"=dir_path,
-                               "type"="variable_importance",
-                               "subtype"=subtype,
-                               "height"=ifelse(is.waive(height), def_plot_dims[1], height),
-                               "width"=ifelse(is.waive(width), def_plot_dims[2], width),
-                               "units"=ifelse(is.waive(units), "cm", units)),
-                          list(...)))
+              args=c(list("plot_obj"=p,
+                          "object"=object,
+                          "dir_path"=dir_path,
+                          "type"="variable_importance",
+                          "subtype"=subtype,
+                          "height"=ifelse(is.waive(height), def_plot_dims[1], height),
+                          "width"=ifelse(is.waive(width), def_plot_dims[2], width),
+                          "units"=ifelse(is.waive(units), "cm", units)),
+                     list(...)))
       
     } else {
       # Store as list and export
-      plot_list <- append(plot_list, list(p))
+      plot_list <- c(plot_list, list(p))
     }
   }
   
@@ -808,7 +501,9 @@ setMethod("plot_model_signature_ranks", signature(object="familiarCollection"),
 }
 
 
-.create_feature_rank_plot <- function(x, plot_data,
+.create_feature_rank_plot <- function(x,
+                                      type,
+                                      aggregation_method,
                                       color_by,
                                       facet_by,
                                       facet_wrap_cols,
@@ -827,20 +522,14 @@ setMethod("plot_model_signature_ranks", signature(object="familiarCollection"),
                                       y_breaks){
   
   # Suppress NOTES due to non-standard evaluation in data.table
-  value <- NULL
+  rank <- NULL
   
   # Create a local copy of x prior to making changes based on plot_data
   x <- data.table::copy(x)
   x$name <- droplevels(x$name)
   
-  if(plot_data == "occurrence"){
-    data.table::setnames(x, old="occurrence", new="value")
-    x <- x[order(-value)]
-    
-  } else {
-    data.table::setnames(x, old="score", new="value")
-    x <- x[order(rank)]
-  }
+  # Order by ascending rank.
+  x <- x[order(rank)]
   
   # Update the ordering of features so that the features are ordered by
   # increasing score or occurrence
@@ -862,17 +551,24 @@ setMethod("plot_model_signature_ranks", signature(object="familiarCollection"),
                             y_breaks=y_breaks)
 
   # Create basic plot
-  p <- ggplot2::ggplot(data=x, mapping=ggplot2::aes(x=!!sym("name"), y=!!sym("value")))
+  p <- ggplot2::ggplot(data=x, mapping=ggplot2::aes(x=!!sym("name"),
+                                                    y=!!sym("score")))
   p <- p + ggtheme
   
-  # Add fill colors
+  # Add fill colours.
   if(!is.null(color_by)){
     
     # Extract guide_table for color
     g_color <- guide_list$guide_color
     
-    p <- p + ggplot2::geom_bar(stat="identity", mapping=ggplot2::aes(fill=!!sym("color_breaks")), position="dodge")
-    p <- p + ggplot2::scale_fill_manual(name=legend_label$guide_color, values=g_color$color_values, breaks=g_color$color_breaks, drop=FALSE)
+    p <- p + ggplot2::geom_bar(stat="identity",
+                               mapping=ggplot2::aes(fill=!!sym("color_breaks")),
+                               position="dodge")
+    
+    p <- p + ggplot2::scale_fill_manual(name=legend_label$guide_color,
+                                        values=g_color$color_values,
+                                        breaks=g_color$color_breaks,
+                                        drop=FALSE)
     
   } else if(!is.waive(gradient_palette)){
     # A gradient palette is used to colour the bars by value.
@@ -885,20 +581,18 @@ setMethod("plot_model_signature_ranks", signature(object="familiarCollection"),
     # orientation of the score. The correct gradient order will be set using the
     # trans argument, which defines the transformations.
     gradient_order <- "identity"
-      
-    if(plot_data %in% c("ranking", "signature_ranking")) {
-      # Determine best and worst scores.
-      best_score <- x[rank == 1]$value[1]
-      worst_score <- x[rank == max(x$rank)]$value[1]
-      
-      # Invert gradient if the worst score is higher than the best score.
-      if(best_score < worst_score){
-        gradient_order <- "reverse"
-      }
-    }
+    
+    # Determine best and worst scores.
+    best_score <- x[rank == 1]$score[1]
+    worst_score <- x[rank == max(x$rank)]$score[1]
+    
+    # Invert gradient if the worst score is higher than the best score.
+    if(best_score < worst_score) gradient_order <- "reverse"
+    
     
     # Get gradient colours
-    gradient_colours <- plotting.get_palette(x=gradient_palette, palette_type="sequential")
+    gradient_colours <- plotting.get_palette(x=gradient_palette,
+                                             palette_type="sequential")
     
     p <- p + ggplot2::scale_fill_gradientn(colors=gradient_colours,
                                            limits=y_range,
@@ -910,17 +604,23 @@ setMethod("plot_model_signature_ranks", signature(object="familiarCollection"),
   }
 
   # Set breaks and  limits on the y-axis
-  p <- p + ggplot2::scale_y_continuous(breaks=y_breaks, limits=y_range)
+  p <- p + ggplot2::scale_y_continuous(breaks=y_breaks,
+                                       limits=y_range)
   
   # Determine how things are facetted
-  facet_by_list <- plotting.parse_facet_by(x=x, facet_by=facet_by, facet_wrap_cols=facet_wrap_cols)
+  facet_by_list <- plotting.parse_facet_by(x=x,
+                                           facet_by=facet_by,
+                                           facet_wrap_cols=facet_wrap_cols)
   
   if(!is.null(facet_by)){
     if(is.null(facet_wrap_cols)){
       # Use a grid
-      p <- p + ggplot2::facet_grid(rows=facet_by_list$facet_rows, cols=facet_by_list$facet_cols, labeller="label_context")
+      p <- p + ggplot2::facet_grid(rows=facet_by_list$facet_rows,
+                                   cols=facet_by_list$facet_cols,
+                                   labeller="label_context")
     } else {
-      p <- p + ggplot2::facet_wrap(facets=facet_by_list$facet_by, labeller="label_context")
+      p <- p + ggplot2::facet_wrap(facets=facet_by_list$facet_by,
+                                   labeller="label_context")
     }
   }
   
@@ -950,7 +650,11 @@ setMethod("plot_model_signature_ranks", signature(object="familiarCollection"),
   } 
   
   # Update labels.
-  p <- p + ggplot2::labs(x=x_label, y=y_label, title=plot_title, subtitle=plot_sub_title, caption=caption)
+  p <- p + ggplot2::labs(x=x_label,
+                         y=y_label,
+                         title=plot_title,
+                         subtitle=plot_sub_title,
+                         caption=caption)
 
   # Rotate x-axis ticks
   if(rotate_x_tick_labels){
@@ -962,10 +666,15 @@ setMethod("plot_model_signature_ranks", signature(object="familiarCollection"),
 
 
 
-.determine_feature_ranking_plot_dimensions <- function(x, facet_by, facet_wrap_cols, rotate_x_tick_labels){
+.determine_feature_ranking_plot_dimensions <- function(x,
+                                                       facet_by,
+                                                       facet_wrap_cols,
+                                                       rotate_x_tick_labels){
   
   # Get plot layout dimensions
-  plot_dims <- plotting.get_plot_layout_dims(x=x, facet_by=facet_by, facet_wrap_cols=facet_wrap_cols)
+  plot_dims <- plotting.get_plot_layout_dims(x=x, 
+                                             facet_by=facet_by,
+                                             facet_wrap_cols=facet_wrap_cols)
   
   # Determine the number of features within each facet.
   n_features <- data.table::uniqueN(x=x$name)

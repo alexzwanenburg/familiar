@@ -91,6 +91,7 @@ Collate:
     'FamiliarDataComputationPredictionData.R'
     'FamiliarDataComputationRiskStratificationData.R'
     'FamiliarDataComputationRiskStratificationInfo.R'
+    'FamiliarDataComputationVimp.R'
     'FamiliarDataElement.R'
     'FamiliarEnsemble.R'
     'FamiliarModel.R'
