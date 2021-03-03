@@ -127,8 +127,6 @@ setGeneric("get_class_name_levels", function(x, ...) standardGeneric("get_class_
 
 ##### Export methods #####
 # Additional methods are found in FamiliarCollectionExport.R
-setGeneric(".summarise_model_performance", function(object, ...) standardGeneric(".summarise_model_performance"))
-
 setGeneric(".export_to_file", function(data, object, dir_path, ...) standardGeneric(".export_to_file"))
 
 setGeneric(".export", function(x, ...) standardGeneric(".export"))

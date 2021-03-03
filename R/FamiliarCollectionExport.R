@@ -562,42 +562,6 @@ setMethod("export_feature_similarity", signature(object="ANY"),
           })
 
 
-#####.summarise_model_performance#####
-setMethod(".summarise_model_performance", signature(object="familiarCollection"),
-          function(object, data=NULL, metrics=NULL, confidence_level=NULL){
-            # Ensemble model performance contains bootstrapped performance metrics.
-            # This method summarises this data and extracts confidence intervals.
-            
-            if(is.null(data)){
-              data <- .apply_labels(data=object@model_performance$ensemble, object=object)
-            }
-            
-            if(is.null(metrics)){
-              metrics <- object@model_performance$metric
-            }
-            
-            if(is.null(confidence_level)){
-              confidence_level <- object@model_performance$confidence_level
-            }
-            
-            # Identify the columns containing metric values
-            metric_columns <- paste0("performance_", metrics)
-
-            # Compute descriptive statistics for each column
-            ensemble_performance <- data[, sapply(.SD, ..bootstrap_ci, confidence_level=confidence_level),
-                                         by=c("data_set", "fs_method", "learner", "model_name"),
-                                         .SDcols=metric_columns]
-            
-            # Define new column names
-            new_col_names <- as.vector(sapply(metrics, function(curr_metric) (paste0(curr_metric, c("_median", "_ci_low", "_ci_up")))))
-            
-            # Update column names in the ensemble_performance table
-            data.table::setnames(x=ensemble_performance, old=paste0("V", seq_len(length(new_col_names))), new=new_col_names)
-            
-            return(ensemble_performance)
-          })
-
-
 #####.export_to_file (familiarDataElement)######################################
 setMethod(".export_to_file", signature(data="familiarDataElement", object="familiarCollection", dir_path="character"),
           function(data, object, dir_path, type, subtype=NULL){
