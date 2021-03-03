@@ -1652,9 +1652,7 @@
   
   settings$param <- .parse_hyperparameters(data=data, parameter_list=settings$param,
                                            outcome_type=outcome_type, fs_method=settings$fs_methods)
-  # sapply(settings$fs_methods, vimp.check_fs_parameters, user_param=settings$param, outcome_type=outcome_type)
-  
-  
+
   # Variable importance aggregation methods
   settings$aggregation <- .parse_arg(x_config=config$vimp_aggregation_method, x_var=vimp_aggregation_method,
                                      var_name="vimp_aggregation_method", type="character", optional=TRUE, default="mean")
@@ -1663,7 +1661,7 @@
   
   # Variable importance rank threshold (used by some aggregation methods)
   settings$aggr_rank_threshold <- .parse_arg(x_config=config$vimp_aggregation_rank_threshold, x_var=vimp_aggregation_rank_threshold,
-                                             var_name="vimp_aggregation_rank_threshold", type="integer", optional=TRUE, default=NULL)
+                                             var_name="vimp_aggregation_rank_threshold", type="integer", optional=TRUE, default=5L)
   
   if(!is.null(settings$aggr_rank_threshold)){
     .check_number_in_valid_range(x=settings$aggr_rank_threshold, var_name="vimp_aggregation_rank_threshold", range=c(1, Inf))
@@ -2889,8 +2887,12 @@
   rank.check_aggregation_method(method=settings$aggregation)
   
   # Variable importance rank threshold (used by some aggregation methods)
-  settings$aggr_rank_threshold <- .parse_arg(x_config=config$eval_aggregation_rank_threshold, x_var=eval_aggregation_rank_threshold,
-                                             var_name="eval_aggregation_rank_threshold", type="integer", optional=TRUE, default=vimp_aggregation_rank_threshold)
+  settings$aggr_rank_threshold <- .parse_arg(x_config=config$eval_aggregation_rank_threshold,
+                                             x_var=eval_aggregation_rank_threshold,
+                                             var_name="eval_aggregation_rank_threshold",
+                                             type="integer",
+                                             optional=TRUE,
+                                             default=vimp_aggregation_rank_threshold)
   
   if(!is.null(settings$aggr_rank_threshold)){
     .check_number_in_valid_range(x=settings$aggr_rank_threshold, var_name="eval_aggregation_rank_threshold", range=c(1, Inf))
