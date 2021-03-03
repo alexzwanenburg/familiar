@@ -52,16 +52,16 @@ setMethod("extract_calibration_info", signature(object="familiarEnsemble"),
                                                detail_level=detail_level)
             
             # Generate elements to send to dispatch.
-            hyperparameter_data <- extract_dispatcher(FUN=.extract_calibration_info,
-                                                      cl=NULL,
-                                                      has_internal_bootstrap=FALSE,
-                                                      object=object,
-                                                      proto_data_element=proto_data_element,
-                                                      aggregate_results=FALSE,
-                                                      message_indent=message_indent + 1L,
-                                                      verbose=verbose)
+            calibration_info <- extract_dispatcher(FUN=.extract_calibration_info,
+                                                   cl=NULL,
+                                                   has_internal_bootstrap=FALSE,
+                                                   object=object,
+                                                   proto_data_element=proto_data_element,
+                                                   aggregate_results=FALSE,
+                                                   message_indent=message_indent + 1L,
+                                                   verbose=verbose)
             
-            return(hyperparameter_data)
+            return(calibration_info)
           })
 
 
