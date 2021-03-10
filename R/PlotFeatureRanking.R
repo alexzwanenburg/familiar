@@ -140,33 +140,34 @@ setMethod("plot_variable_importance", signature(object="ANY"),
                                       list(...)))
              
              return(do.call(plot_variable_importance,
-                            args=list("object"=object,
-                                      "type"=type,
-                                      "aggregation_method"=aggregation_method,
-                                      "rank_threshold"=rank_threshold,
-                                      "draw"=draw,
-                                      "dir_path"=dir_path,
-                                      "split_by"=split_by,
-                                      "color_by"=color_by,
-                                      "facet_by"=facet_by,
-                                      "facet_wrap_cols"=facet_wrap_cols,
-                                      "show_cluster"=show_cluster,
-                                      "ggtheme"=ggtheme,
-                                      "discrete_palette"=discrete_palette,
-                                      "gradient_palette"=gradient_palette,
-                                      "x_label"=x_label,
-                                      "rotate_x_tick_labels"=rotate_x_tick_labels,
-                                      "y_label"=y_label,
-                                      "legend_label"=legend_label,
-                                      "plot_title"=plot_title,
-                                      "plot_sub_title"=plot_sub_title,
-                                      "caption"=caption,
-                                      "y_range"=y_range,
-                                      "y_n_breaks"=y_n_breaks,
-                                      "y_breaks"=y_breaks,
-                                      "width"=width,
-                                      "height"=height,
-                                      "units"=units)))
+                            args=c(list("object"=object,
+                                        "type"=type,
+                                        "aggregation_method"=aggregation_method,
+                                        "rank_threshold"=rank_threshold,
+                                        "draw"=draw,
+                                        "dir_path"=dir_path,
+                                        "split_by"=split_by,
+                                        "color_by"=color_by,
+                                        "facet_by"=facet_by,
+                                        "facet_wrap_cols"=facet_wrap_cols,
+                                        "show_cluster"=show_cluster,
+                                        "ggtheme"=ggtheme,
+                                        "discrete_palette"=discrete_palette,
+                                        "gradient_palette"=gradient_palette,
+                                        "x_label"=x_label,
+                                        "rotate_x_tick_labels"=rotate_x_tick_labels,
+                                        "y_label"=y_label,
+                                        "legend_label"=legend_label,
+                                        "plot_title"=plot_title,
+                                        "plot_sub_title"=plot_sub_title,
+                                        "caption"=caption,
+                                        "y_range"=y_range,
+                                        "y_n_breaks"=y_n_breaks,
+                                        "y_breaks"=y_breaks,
+                                        "width"=width,
+                                        "height"=height,
+                                        "units"=units),
+                                   list(...))))
              
            })
 
@@ -229,7 +230,8 @@ setMethod("plot_variable_importance", signature(object="familiarCollection"),
                                              y_breaks=y_breaks,
                                              width=width,
                                              height=height,
-                                             units=units))
+                                             units=units,
+                                             ...))
             
           })
 
@@ -299,7 +301,8 @@ plot_model_signature_variable_importance <- function(...){
                                       y_breaks,
                                       width,
                                       height,
-                                      units){ 
+                                      units,
+                                      ...){ 
   
   # Get input data.
   if(type == "feature_selection"){
