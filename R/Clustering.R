@@ -273,35 +273,39 @@ cluster.get_distance_matrix <- function(cl=NULL, data_obj=NULL, similarity_table
   # Compute the similarity_table first. This is the distance matrix in tabular
   # format. This table is then processed further to derive the distance matrix.
   if(is.null(similarity_table)){
-    similarity_table <- cluster.get_featurewise_similarity_table(cl=cl,
-                                                                 data_obj=data_obj,
-                                                                 feature_columns=feature_columns,
-                                                                 settings=settings,
-                                                                 similarity_metric=similarity_metric,
-                                                                 verbose=verbose,
-                                                                 message_indent=1L)
+    lower_triangle <- cluster.get_featurewise_similarity_table(cl=cl,
+                                                               data_obj=data_obj,
+                                                               feature_columns=feature_columns,
+                                                               settings=settings,
+                                                               similarity_metric=similarity_metric,
+                                                               verbose=verbose,
+                                                               message_indent=1L)
     
   } else {
-    similarity_table <- data.table::copy(similarity_table)
+    lower_triangle <- data.table::copy(similarity_table)
   }
   
   # Determine whether the similarity table is for features (columns) or samples
   # (rows).
-  table_type <- ifelse("feature_1" %in% colnames(similarity_table), "feature", "sample")
+  table_type <- ifelse("feature_1" %in% colnames(lower_triangle), "feature", "sample")
   
   element_1 <- ifelse(table_type == "feature", "feature_1", "sample_1")
   element_2 <- ifelse(table_type == "feature", "feature_2", "sample_2")
   
   # Find elements from the distance table.
-  elements <- union(similarity_table[[element_1]], similarity_table[[element_2]])
+  elements <- union(lower_triangle[[element_1]], lower_triangle[[element_2]])
   
   # Convert similarity to distance.
-  similarity_table[, "value":=similarity.to_distance(x=value, similarity_metric=similarity_metric)]
+  lower_triangle[, "value":=similarity.to_distance(x=value, similarity_metric=similarity_metric)]
+  
+  # Add in other triangle of the table by switching around the columns.
+  upper_triangle <- data.table::copy(lower_triangle)
+  data.table::setnames(upper_triangle, old=c(element_1, element_2), new=c(element_2, element_1))
   
   # Combine with data.table that includes diagonals
   diagonal_table <- data.table::data.table("element_1"=elements, "element_2"=elements, "value"=as.double(0))
   data.table::setnames(diagonal_table, old=c("element_1", "element_2"), new=c(element_1, element_2))
-  distance_table  <- rbind(similarity_table, diagonal_table)
+  distance_table  <- rbind(lower_triangle, diagonal_table, upper_triangle)
   
   # Create n x n table
   distance_table  <- data.table::dcast(distance_table,
@@ -310,13 +314,6 @@ cluster.get_distance_matrix <- function(cl=NULL, data_obj=NULL, similarity_table
   
   rownames(distance_table) <- distance_table[[element_1]]
   distance_table[, (element_1):=NULL]
-  
-  # Fill out symmetrically
-  # First we will get all non-na from the upper triangle and copy it to the lower triange
-  distance_table[lower.tri(distance_table) & is.na(distance_table)] <- t(distance_table)[lower.tri(distance_table) & !is.na(t(distance_table))]
-  
-  # Subsequently copy the entire lower triangle to the upper triangle
-  distance_table[upper.tri(distance_table)] <- t(distance_table)[upper.tri(distance_table)]
   
   # Create dissimilarity matrix
   distance_matrix <- stats::as.dist(distance_table)
