@@ -445,6 +445,43 @@ setMethod("export_feature_similarity", signature(object="familiarCollection"),
           })
 
 
+#####export_feature_similarity (generic)#####
+
+#'@rdname export_feature_similarity-methods
+setMethod("export_feature_similarity", signature(object="ANY"),
+          function(object,
+                   dir_path=NULL,
+                   aggregate_results=TRUE,
+                   feature_cluster_method=waiver(),
+                   feature_linkage_method=waiver(),
+                   feature_cluster_cut_method=waiver(),
+                   feature_similarity_threshold=waiver(),
+                   ...){
+            
+            # Attempt conversion to familiarCollection object.
+            object <- do.call(as_familiar_collection,
+                              args=c(list("object"=object,
+                                          "data_element"="feature_similarity",
+                                          "aggregate_results"=aggregate_results,
+                                          "feature_cluster_method"=feature_cluster_method,
+                                          "feature_linkage_method"=feature_linkage_method,
+                                          "feature_cluster_cut_method"=feature_cluster_cut_method,
+                                          "feature_similarity_threshold"=feature_similarity_threshold),
+                                     list(...)))
+            
+            return(do.call(export_feature_similarity,
+                           args=c(list("object"=object,
+                                       "dir_path"=dir_path,
+                                       "aggregate_results"=aggregate_results,
+                                       "feature_cluster_method"=feature_cluster_method,
+                                       "feature_linkage_method"=feature_linkage_method,
+                                       "feature_cluster_cut_method"=feature_cluster_cut_method,
+                                       "feature_similarity_threshold"=feature_similarity_threshold),
+                                  list(...))))
+          })
+
+
+
 #####.export (familiarDataElementFeatureSimilarity)-----------------------------
 setMethod(".export", signature(x="familiarDataElementFeatureSimilarity"),
           function(x, x_list, aggregate_results=FALSE, ...){
