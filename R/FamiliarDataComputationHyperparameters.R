@@ -174,7 +174,7 @@ setMethod("..compute_data_element_estimates", signature(x="familiarDataElementHy
 
 
 
-#####.export (familiarDataElement)-----------------------------------------------
+#####.export (familiarDataElementHyperparameters)-------------------------------
 setMethod(".export", signature(x="familiarDataElementHyperparameters"),
           function(x, x_list, aggregate_results=FALSE, ...){
             # This is like .export,familiarDataElement, but the elements are

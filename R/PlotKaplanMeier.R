@@ -529,7 +529,7 @@ setMethod("plot_kaplan_meier", signature(object="familiarCollection"),
                                                       facet_by=facet_by,
                                                       facet_wrap_cols=facet_wrap_cols)
   
-  # Define the split in data required for facetting.
+  # Define the split in data required for faceting.
   data_split <- split(plot_layout_table,
                       by=c("col_id", "row_id"),
                       sorted=TRUE)
