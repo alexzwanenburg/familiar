@@ -117,37 +117,6 @@ setMethod("extract_risk_stratification_info", signature(object="familiarEnsemble
 
 
 
-##### ..compute_data_elements_estimates (familiarDataElementRiskStratificationInfo)------
-# setMethod("..compute_data_element_estimates", signature(x="familiarDataElementRiskStratificationInfo"),
-#           function(x, x_list=NULL, ...){
-#             
-#             # Suppress NOTES due to non-standard evaluation in data.table
-#             cutoff <- NULL
-#             
-#             # It might be that x was only used to direct to this method.
-#             if(!is.null(x_list)) x <- x_list
-#             if(!is.list(x)) x <- list(x)
-#             
-#             # Remove empty entries.
-#             x <- x[!sapply(x, is_empty)]
-#             if(is_empty(x)) return(NULL)
-#             browser()
-#             # Collect all data.
-#             data <- data.table::rbindlist(lapply(x, function(x) (x@data)),
-#                                           use.names=TRUE,
-#                                           fill=TRUE)
-#             
-#             # Summarise.
-#             data[, list("cutoff"=stats::median(cutoff)), by=c(x[[1]]@grouping_column)]
-#             
-#             # Copy data element.
-#             y <- x[[1]]
-#             y@data <- data
-#             
-#             return(y)
-#           })
-
-
 
 #####export_risk_stratification_info#####
 
