@@ -22,7 +22,7 @@ will allow export as a structured list of data.tables.}
 \item{...}{
   Arguments passed on to \code{\link[=extract_feature_expression]{extract_feature_expression}}, \code{\link[=as_familiar_collection]{as_familiar_collection}}
   \describe{
-    \item{\code{feature_similarity_table}}{Table containing pairwise distance between
+    \item{\code{feature_similarity}}{Table containing pairwise distance between
 sample. This is used to determine cluster information, and indicate which
 samples are similar. The table is created by the
 \code{extract_sample_similarity_table} method.}

@@ -118,6 +118,8 @@ not collected.
 are not computed.
 \item \code{feature_expressions}: data for assessing and plotting sample clustering
 are not computed.
+\item \code{feature_similarity}: data for assessing and plotting feature clusters are
+not computed.
 \item \code{fs_vimp}: data for assessing and plotting feature selection-based
 variable importance are not collected.
 \item \code{hyperparameters}: data for assessing model hyperparameters are not
@@ -128,8 +130,6 @@ curves are not collected.
 are not created.
 \item \code{model_vimp}: data for assessing and plotting model-based variable
 importance are not collected.
-\item \code{mutual_correlation}: data for assessing and plotting feature clusters are
-not computed.
 \item \code{permutation_vimp}: data for assessing and plotting model-agnostic
 permutation variable importance are not computed.
 \item \code{prediction_data}: predictions for each sample are not made and exported.

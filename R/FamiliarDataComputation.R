@@ -9,9 +9,9 @@ NULL
   all_data_elements <- c("auc_data", "calibration_data", "calibration_info", "confusion_matrix",
                          "decision_curve_analyis", "feature_expressions",
                          "fs_vimp", "hyperparameters", "model_performance",
-                         "model_vimp", "mutual_correlation", "permutation_vimp", "prediction_data",
+                         "model_vimp", "permutation_vimp", "prediction_data",
                          "risk_stratification_data", "risk_stratification_info",
-                         "univariate_analysis")
+                         "univariate_analysis", "feature_similarity", "sample_similarity")
   
   # Data elements that allow setting an estimation type.
   can_set_estimation_type <- c("auc_data", "calibration_data", "decision_curve_analyis",
@@ -19,6 +19,9 @@ NULL
   
   # Data elements that allow setting a detail level.
   can_set_detail_level <- c(can_set_estimation_type, "calibration_info", "confusion_matrix", "risk_stratification_data", "risk_stratification_info")
+  
+  # Data elements that allow for setting an estimation type but not detail level.
+  can_set_estimation_type <- c(can_set_estimation_type, "feature_similarity")
   
   if(check_has_estimation_type){
     all_data_elements <- intersect(all_data_elements, can_set_estimation_type)
@@ -357,28 +360,40 @@ setMethod("extract_data", signature(object="familiarEnsemble"),
             
             
             # Extract feature distance tables,
-            if(any(c("mutual_correlation", "univariate_analysis", "feature_expressions", "permutation_vimp") %in% data_element)){
+            if(any(c("feature_similarity", "univariate_analysis", "feature_expressions", "permutation_vimp") %in% data_element)){
               # Not for the fs_vimp and model_vimp data elements. This is
               # because these derive cluster information from consensus
               # clustering.
 
               # Compute a table containg the pairwise distance between features.
-              feature_similarity_table <- extract_feature_similarity_table(object=object,
-                                                                           data=data,
-                                                                           cl=cl,
-                                                                           feature_similarity_metric=feature_similarity_metric,
-                                                                           message_indent=message_indent,
-                                                                           verbose=verbose)
+              feature_similarity <- extract_feature_similarity(object=object,
+                                                               data=data,
+                                                               cl=cl,
+                                                               estimation_type=estimation_type,
+                                                               aggregate_results=aggregate_results,
+                                                               confidence_level=confidence_level,
+                                                               bootstrap_ci_method=bootstrap_ci_method,
+                                                               is_pre_processed=is_pre_processed,
+                                                               feature_cluster_method=feature_cluster_method,
+                                                               feature_linkage_method=feature_linkage_method,
+                                                               feature_cluster_cut_method=feature_cluster_cut_method,
+                                                               feature_similarity_threshold=feature_similarity_threshold,
+                                                               feature_similarity_metric=feature_similarity_metric,
+                                                               verbose=verbose,
+                                                               message_indent=message_indent)
+            } else {
+              feature_similarity <- NULL
             }
-
-            if(any(c("feature_expressions") %in% data_element)){
+            
+            if(any(c("sample_similarity", "feature_expressions") %in% data_element)){
               # Compute a table containing the pairwise distance between samples.
               sample_similarity_table <- extract_sample_similarity_table(object=object,
                                                                          data=data,
                                                                          cl=cl,
+                                                                         is_pre_processed=is_pre_processed,
                                                                          sample_similarity_metric=sample_similarity_metric,
-                                                                         message_indent=message_indent,
-                                                                         verbose=verbose)
+                                                                         verbose=verbose,
+                                                                         message_indent=message_indent)
             }
 
             # Extract feature variable importance
@@ -410,12 +425,7 @@ setMethod("extract_data", signature(object="familiarEnsemble"),
               permutation_vimp <- extract_permutation_vimp(object=object,
                                                            data=data,
                                                            cl=cl,
-                                                           feature_similarity_table=feature_similarity_table,
-                                                           feature_cluster_method=feature_cluster_method,
-                                                           feature_linkage_method=feature_linkage_method,
-                                                           feature_cluster_cut_method=feature_cluster_cut_method,
-                                                           feature_similarity_metric=feature_similarity_metric,
-                                                           feature_similarity_threshold=feature_similarity_threshold,
+                                                           feature_similarity=feature_similarity,
                                                            metric=metric,
                                                            ensemble_method=ensemble_method,
                                                            eval_times=eval_times,
@@ -431,25 +441,12 @@ setMethod("extract_data", signature(object="familiarEnsemble"),
             }
             
             
-            # Create mutual correlation information
-            if(any(c("mutual_correlation") %in% data_element)){
-              mutual_corr_info <- extract_mutual_correlation(object=object,
-                                                             data=data,
-                                                             feature_similarity_table=feature_similarity_table,
-                                                             feature_cluster_method=feature_cluster_method,
-                                                             feature_linkage_method=feature_linkage_method,
-                                                             feature_similarity_metric=feature_similarity_metric,
-                                                             message_indent=message_indent,
-                                                             verbose=verbose)
-            } else {
-              mutual_corr_info <- NULL
-            }
 
             # Expression heatmap data
             if(any(c("feature_expressions") %in% data_element)){
               expression_info <- extract_feature_expression(object=object,
                                                             data=data,
-                                                            feature_similarity_table,
+                                                            feature_similarity,
                                                             sample_similarity_table,
                                                             feature_cluster_method=feature_cluster_method,
                                                             feature_linkage_method=feature_linkage_method,
@@ -471,7 +468,7 @@ setMethod("extract_data", signature(object="familiarEnsemble"),
                                                          data=data,
                                                          cl=cl,
                                                          icc_type=icc_type,
-                                                         feature_similarity_table=feature_similarity_table,
+                                                         feature_similarity=feature_similarity,
                                                          feature_cluster_method=feature_cluster_method,
                                                          feature_cluster_cut_method=feature_cluster_cut_method,
                                                          feature_linkage_method=feature_linkage_method,
@@ -669,7 +666,7 @@ setMethod("extract_data", signature(object="familiarEnsemble"),
                                      auc_data = auc_data,
                                      univariate_analysis = univar_info,
                                      feature_expressions = expression_info,
-                                     mutual_correlation = mutual_corr_info,
+                                     feature_similarity = feature_similarity,
                                      ice_data = NULL,
                                      is_anonymised = FALSE,
                                      is_validation = data@load_validation,
@@ -703,7 +700,7 @@ setGeneric("extract_univariate_analysis", function(object,
                                                    data,
                                                    cl=NULL,
                                                    icc_type=waiver(),
-                                                   feature_similarity_table=NULL,
+                                                   feature_similarity=NULL,
                                                    feature_cluster_method=waiver(),
                                                    feature_cluster_cut_method=waiver(),
                                                    feature_linkage_method=waiver(),
@@ -719,7 +716,7 @@ setMethod("extract_univariate_analysis", signature(object="familiarEnsemble", da
                    data,
                    cl=NULL,
                    icc_type=waiver(),
-                   feature_similarity_table=NULL,
+                   feature_similarity=NULL,
                    feature_cluster_method=waiver(),
                    feature_cluster_cut_method=waiver(),
                    feature_linkage_method=waiver(),
@@ -877,10 +874,10 @@ setMethod("extract_univariate_analysis", signature(object="familiarEnsemble", da
             }
             
             # Find cluster info
-            if(!is_empty(feature_similarity_table)){
+            if(!is_empty(feature_similarity)){
               
               # Compute the distance matrix
-              distance_matrix <- cluster.get_distance_matrix(similarity_table=feature_similarity_table,
+              distance_matrix <- cluster.get_distance_matrix(similarity_table=feature_similarity,
                                                              similarity_metric=feature_similarity_metric)
               
               # TODO: update so that this works for multiple similarity thresholds.
@@ -922,121 +919,13 @@ setMethod("extract_univariate_analysis", signature(object="familiarEnsemble", da
           })
 
 
-#'@title Internal function to extract mutual correlation data.
-#'
-#'@description Computes and extracts pairwise correlation between the features
-#'  used in a `familiarEnsemble` object.
-#'
-#'@inheritParams extract_data
-#'
-#'@return A list with a data.table containing mutual correlation between
-#'  features.
-#'@md
-#'@keywords internal
-setGeneric("extract_mutual_correlation", function(object,
-                                                  data,
-                                                  feature_cluster_method=waiver(),
-                                                  feature_linkage_method=waiver(),
-                                                  feature_similarity_metric=waiver(),
-                                                  message_indent=0L,
-                                                  verbose=FALSE,
-                                                  ...) standardGeneric("extract_mutual_correlation"))
-
-
-#####extract_mutual_correlation#####
-setMethod("extract_mutual_correlation", signature(object="familiarEnsemble", data="ANY"),
-          function(object,
-                   data,
-                   feature_similarity_table,
-                   feature_cluster_method=waiver(),
-                   feature_linkage_method=waiver(),
-                   feature_similarity_metric=waiver(),
-                   message_indent=0L,
-                   verbose=FALSE){
-            # Assess mutual correlation
-            
-            # Message extraction start
-            if(verbose){
-              logger.message(paste0("Computing similarity between important features."),
-                             indent=message_indent)
-            }
-
-            # Obtain cluster method from stored settings, if required.
-            if(is.waive(feature_cluster_method)){
-              feature_cluster_method <- object@settings$feature_cluster_method
-            }
-            
-            # Obtain linkage function from stored settings, if required.
-            if(is.waive(feature_linkage_method)){
-              feature_linkage_method <- object@settings$feature_linkage_method
-            }
-  
-            # Obtain feature similarity metric from stored settings, if required.
-            if(is.waive(feature_similarity_metric)){
-              feature_similarity_metric <- object@settings$feature_similarity_metric
-            }
-            
-            # Replace feature cluster method == "none" with "hclust"
-            if(feature_cluster_method == "none"){
-              feature_cluster_method <- "hclust"
-            }
-            
-            .check_cluster_parameters(cluster_method=feature_cluster_method,
-                                      cluster_linkage=feature_linkage_method,
-                                      cluster_similarity_metric=feature_similarity_metric,
-                                      var_type="feature")
-            
-            # Check if any mutual correlation data are available.
-            if(is_empty(feature_similarity_table)){
-              return(list("data"=NULL,
-                          "feature_similarity_metric"=feature_similarity_metric))
-            }
-            
-            # Get the distance matrix from the feature_similarity_table
-            distance_matrix <- cluster.get_distance_matrix(similarity_table=feature_similarity_table,
-                                                           similarity_metric=feature_similarity_metric)
-            
-            # Obtain cluster object.
-            h <- cluster.get_cluster_object(distance_matrix=distance_matrix,
-                                            cluster_method=feature_cluster_method,
-                                            cluster_linkage=feature_linkage_method)
-            
-            # Get data.table with feature ordering
-            feature_order_table <- cluster.extract_label_order(cluster_object=h,
-                                                               cluster_method=feature_cluster_method)
-            
-            # Merge ordering into feature_similarity_table. The table is first
-            # merged on feature_1 and then on feature_2.
-            mutual_correlation_table <- data.table::copy(feature_similarity_table)
-            mutual_correlation_table <- merge(x=mutual_correlation_table, y=feature_order_table,
-                                              by.x="feature_1", by.y="name", all.x=TRUE, all.y=FALSE)
-            mutual_correlation_table <- merge(x=mutual_correlation_table, y=feature_order_table,
-                                              by.x="feature_2", by.y="name", all.x=TRUE, all.y=FALSE)
-            
-            # Rename columns
-            data.table::setnames(mutual_correlation_table,
-                                 old=c("label_order.x", "label_order.y"),
-                                 new=c("label_order_1", "label_order_2"))
-            
-            # Reorder columns
-            data.table::setcolorder(mutual_correlation_table,
-                                    c("feature_1", "feature_2", "value", "label_order_1", "label_order_2"))
-            
-            # Add the name of the ensemble model
-            mutual_correlation_table <- add_model_name(data=mutual_correlation_table, object=object)
-
-            return(list("data"=mutual_correlation_table,
-                        "feature_similarity_metric"=feature_similarity_metric,
-                        "feature_cluster_object"=h))
-          })
-
 
 #'@title Internal function to extract feature expressions.
 #'
 #'@description Computes and extracts feature expressions for features
 #'  used in a `familiarEnsemble` object.
 #'
-#'@param feature_similarity_table Table containing pairwise distance between
+#'@param feature_similarity Table containing pairwise distance between
 #'  sample. This is used to determine cluster information, and indicate which
 #'  samples are similar. The table is created by the
 #'  `extract_sample_similarity_table` method.
@@ -1047,7 +936,7 @@ setMethod("extract_mutual_correlation", signature(object="familiarEnsemble", dat
 #'@keywords internal
 setGeneric("extract_feature_expression", function(object,
                                                   data,
-                                                  feature_similarity_table,
+                                                  feature_similarity,
                                                   sample_similarity_table,
                                                   feature_cluster_method=waiver(),
                                                   feature_linkage_method=waiver(),
@@ -1064,7 +953,7 @@ setGeneric("extract_feature_expression", function(object,
 setMethod("extract_feature_expression", signature(object="familiarEnsemble", data="ANY"),
           function(object,
                    data,
-                   feature_similarity_table,
+                   feature_similarity,
                    sample_similarity_table,
                    feature_cluster_method=waiver(),
                    feature_linkage_method=waiver(),
@@ -1180,10 +1069,10 @@ setMethod("extract_feature_expression", signature(object="familiarEnsemble", dat
             feature_info_list <- object@feature_info[model_features]
             
             # Check if any data are available for ordering features.
-            if(!is_empty(feature_similarity_table)){
+            if(!is_empty(feature_similarity)){
             
-              # Get the distance matrix from the feature_similarity_table
-              feature_distance_matrix <- cluster.get_distance_matrix(similarity_table=feature_similarity_table,
+              # Get the distance matrix from the feature_similarity
+              feature_distance_matrix <- cluster.get_distance_matrix(similarity_table=feature_similarity,
                                                                      similarity_metric=feature_similarity_metric)
               
               # Obtain cluster object that identifies similar features.
@@ -1247,180 +1136,4 @@ setMethod("extract_feature_expression", signature(object="familiarEnsemble", dat
                                     "evaluation_times"=eval_times)
             
             return(expression_info)
-          })
-
-
-
-
-
-
-
-#'@title Internal function to extract the feature distance table.
-#'
-#'@description Computes and extracts the feature distance table for features
-#'  used in a `familiarEnsemble` object. This table can be used to cluster
-#'  features, and is exported directly by `extract_mutual_correlation`.
-#'
-#'@inheritParams extract_data
-#'
-#'@return A data.table containing pairwise distance between features. This data
-#'  is only the upper triangular of the complete matrix (i.e. the sparse
-#'  unitriangular representation). Diagonals will always be 0.0 and the lower
-#'  triangular is mirrored.
-#'@md
-#'@keywords internal
-setGeneric("extract_feature_similarity_table", function(object,
-                                                        data,
-                                                        cl=NULL,
-                                                        feature_similarity_metric=waiver(),
-                                                        verbose=FALSE,
-                                                        message_indent=0L,
-                                                        ...) standardGeneric("extract_feature_similarity_table"))
-
-#####extract_feature_similarity_table#####
-setMethod("extract_feature_similarity_table", signature(object="familiarEnsemble", data="ANY"),
-          function(object,
-                   data,
-                   cl=NULL,
-                   feature_similarity_metric=waiver(),
-                   verbose=FALSE,
-                   message_indent=0L){
-            
-            # Message extraction start
-            if(verbose){
-              logger.message(paste0("Computing pairwise similarity for important features."), indent=message_indent)
-            }
-            
-            # Obtain similarity metric from stored settings, if required.
-            if(is.waive(feature_similarity_metric)){
-              feature_similarity_metric <- object@settings$feature_similarity_metric
-            }
-            
-            # Check correlation method
-            .check_parameter_value_is_valid(x=feature_similarity_metric, var_name="feature_similarity_metric",
-                                            values=.get_available_similarity_metrics(data_type="feature"))
-            
-            # Define an empty table prototype
-            empty_similarity_table <- data.table::data.table("feature_1"=character(0),
-                                                           "feature_2"=character(0),
-                                                           "value"=numeric(0))
-            
-            # Retrieve input data.
-            data <- process_input_data(object=object, data=data, stop_at="imputation")
-            
-            # Check if the input data is not empty
-            if(is_empty(data)) return(empty_similarity_table)
-            
-            # Check if the number of samples is sufficient (>5), and return an
-            # empty table if not.
-            if(data.table::uniqueN(data@data, by=get_id_columns(id_depth="series")) <= 5) return(empty_similarity_table)
-            
-            # Maintain only important features. The current set is based on the
-            # required features.
-            data <- filter_features(data=data, available_features=object@model_features)
-            
-            # Identify eligible columns.
-            feature_columns <- get_feature_columns(x=data)
-            
-            # Break if there are not at least 2 features present between which
-            # correlation can be compared.
-            if(length(feature_columns) < 2) {
-              return(empty_similarity_table)
-            }
-            
-            # Compute the similarity table
-            feature_similarity_table <- cluster.get_featurewise_similarity_table(cl=cl,
-                                                                                 data_obj=data,
-                                                                                 feature_columns=feature_columns,
-                                                                                 similarity_metric=feature_similarity_metric,
-                                                                                 verbose=verbose,
-                                                                                 message_indent=message_indent + 1L)
-            
-            return(feature_similarity_table)
-          })
-
-
-
-#'@title Internal function to extract the sample distance table.
-#'
-#'@description Computes and extracts the sample distance table for samples
-#'  analysed using a `familiarEnsemble` object to form a `familiarData` object. This table can be used to cluster
-#'  samples, and is exported directly by `extract_feature_expression`.
-#'
-#'@inheritParams extract_data
-#'
-#'@return A data.table containing pairwise distance between samples. This data
-#'  is only the upper triangular of the complete matrix (i.e. the sparse
-#'  unitriangular representation). Diagonals will always be 0.0 and the lower
-#'  triangular is mirrored.
-#'@md
-#'@keywords internal
-setGeneric("extract_sample_similarity_table", function(object,
-                                                       data,
-                                                       cl=NULL,
-                                                       sample_similarity_metric=waiver(),
-                                                       message_indent=0L,
-                                                       verbose=FALSE,
-                                                       ...) standardGeneric("extract_sample_similarity_table"))
-
-#####extract_sample_similarity_table#####
-setMethod("extract_sample_similarity_table", signature(object="familiarEnsemble", data="ANY"),
-          function(object,
-                   data,
-                   cl=NULL,
-                   sample_similarity_metric=waiver(),
-                   message_indent=0L,
-                   verbose=FALSE){
-            
-            # Message extraction start
-            if(verbose){
-              logger.message(paste0("Computing pairwise similarity between samples."), indent=message_indent)
-            }
-            
-            # Obtain similarity metric from stored settings, if required.
-            if(is.waive(sample_similarity_metric)){
-              sample_similarity_metric <- object@settings$sample_similarity_metric
-            }
-            
-            # Check correlation method
-            .check_parameter_value_is_valid(x=sample_similarity_metric, var_name="sample_similarity_metric",
-                                            values=.get_available_similarity_metrics(data_type="sample"))
-            
-            # Define an empty table prototype
-            empty_similarity_table <- data.table::data.table("sample_1"=character(0),
-                                                             "sample_2"=character(0),
-                                                             "value"=numeric(0))
-            
-            # Retrieve input data.
-            data <- process_input_data(object=object, data=data, stop_at="imputation")
-            
-            # Check if the input data is not empty
-            if(is_empty(data)) return(empty_similarity_table)
-            
-            # Check if the number of samples is sufficient to form pairs (>= 2),
-            # and return an empty table if not.
-            if(data.table::uniqueN(data@data, by=get_id_columns(id_depth="series")) < 2) return(empty_similarity_table)
-            
-            # Maintain only important features. The current set is based on the
-            # required features.
-            data <- filter_features(data=data, available_features=object@model_features)
-            
-            # Aggregate features.
-            data <- aggregate_data(data=data)
-            
-            # Identify eligible columns
-            feature_columns <- get_feature_columns(x=data)
-            
-            # Break if there are is not at least 1 feature present between which
-            # similarity can be compared between samples.
-            if(length(feature_columns) < 2) return(empty_similarity_table)
-            
-            # Compute the similarity table
-            sample_similarity_table <- cluster.get_samplewise_similarity_table(cl=cl,
-                                                                               data=data,
-                                                                               similarity_metric=sample_similarity_metric,
-                                                                               verbose=verbose,
-                                                                               message_indent=message_indent + 1L)
-            
-            return(sample_similarity_table)
           })

@@ -9,7 +9,7 @@ extract_univariate_analysis(
   data,
   cl = NULL,
   icc_type = waiver(),
-  feature_similarity_table = NULL,
+  feature_similarity = NULL,
   feature_cluster_method = waiver(),
   feature_cluster_cut_method = waiver(),
   feature_linkage_method = waiver(),

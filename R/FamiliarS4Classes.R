@@ -201,7 +201,9 @@ setClass("familiarData",
            # Information concerning feature expression for individual samples
            feature_expressions = "ANY",
            # Information concerning mutual correlations between features
-           mutual_correlation = "ANY",
+           feature_similarity = "ANY",
+           # Information concerning similarity between samples.
+           sample_similarity = "ANY",
            # Information on individual conditional expectation
            ice_data = "ANY",
            # Flag to signal whether the data concerns validation data (TRUE) or
@@ -241,7 +243,8 @@ setClass("familiarData",
            auc_data = NULL,
            univariate_analysis = NULL,
            feature_expressions = NULL,
-           mutual_correlation = NULL,
+           feature_similarity = NULL,
+           sample_similarity = NULL,
            ice_data = NULL,
            is_validation = FALSE,
            is_anonymised = FALSE,
@@ -279,7 +282,8 @@ setClass("familiarData",
 #' @slot auc_data ANY. 
 #' @slot univariate_analysis ANY. 
 #' @slot feature_expressions ANY. 
-#' @slot mutual_correlation ANY. 
+#' @slot feature_similarity ANY.
+#' @slot sample_similarity ANY.
 #' @slot data_set_labels ANY.
 #' @slot ice_data ANY,
 #' @slot learner_labels ANY. 
@@ -345,7 +349,9 @@ setClass("familiarCollection",
            # Information concerning feature expression for individual samples
            feature_expressions = "ANY",
            # Information concerning mutual correlations between features
-           mutual_correlation = "ANY",
+           feature_similarity = "ANY",
+           # Information concerning similarity between samples.
+           sample_similarity = "ANY",
            # Information on individual conditional expectation
            ice_data = "ANY",
            # Label and order of data names
@@ -392,7 +398,8 @@ setClass("familiarCollection",
            auc_data = NULL,
            univariate_analysis = NULL,
            feature_expressions = NULL,
-           mutual_correlation = NULL,
+           feature_similarity = NULL,
+           sample_similarity = NULL,
            ice_data = NULL,
            data_set_labels = NULL,
            learner_labels = NULL,

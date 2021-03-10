@@ -28,7 +28,7 @@ setGeneric("extract_permutation_vimp",
                     data,
                     cl=NULL,
                     ensemble_method=waiver(),
-                    feature_similarity_table,
+                    feature_similarity,
                     feature_cluster_method=waiver(),
                     feature_linkage_method=waiver(),
                     feature_cluster_cut_method=waiver(),
@@ -52,7 +52,7 @@ setMethod("extract_permutation_vimp", signature(object="familiarEnsemble"),
                    data,
                    cl=NULL,
                    ensemble_method=waiver(),
-                   feature_similarity_table,
+                   feature_similarity,
                    feature_cluster_method=waiver(),
                    feature_linkage_method=waiver(),
                    feature_cluster_cut_method=waiver(),
@@ -129,20 +129,56 @@ setMethod("extract_permutation_vimp", signature(object="familiarEnsemble"),
             # Check metric input argument
             sapply(metric, metric.check_outcome_type, object=object)
             
+            # Aggregate feature similarity data elements.
+            feature_similarity <- .compute_data_element_estimates(feature_similarity)
+            feature_similarity <- feature_similarity[[1]]
+            
             # Obtain cluster method from stored settings, if required.
-            if(is.waive(feature_cluster_method)) feature_cluster_method <- object@settings$feature_cluster_method
+            if(is.waive(feature_cluster_method)){
+              if(is.null(feature_similarity)){
+                feature_cluster_method <- object@settings$feature_cluster_method
+              } else {
+                feature_cluster_method <- feature_similarity@cluster_method
+              }
+            } 
             
             # Obtain linkage function from stored settings, if required.
-            if(is.waive(feature_linkage_method)) feature_linkage_method <- object@settings$feature_linkage_method
+            if(is.waive(feature_linkage_method)){
+              if(is.null(feature_similarity)){
+                feature_linkage_method <- object@settings$feature_linkage_method
+              } else {
+                feature_linkage_method <- feature_similarity@linkage_method
+              }
+            } 
 
-            # Obtain feature cluster cut method from stored settings, if required.
-            if(is.waive(feature_cluster_cut_method)) feature_cluster_cut_method <- object@settings$feature_cluster_cut_method
+            # Obtain feature cluster cut method from stored settings, if
+            # required.
+            if(is.waive(feature_cluster_cut_method)){
+              if(is.null(feature_similarity)){
+                feature_cluster_cut_method <- object@settings$feature_cluster_cut_method
+              } else {
+                feature_cluster_cut_method <- feature_similarity@cluster_cut_method
+              }
+            } 
             
-            # Obtain cluster similarity threshold from stored settings, if required.
-            if(is.waive(feature_similarity_threshold)) feature_similarity_threshold <- object@settings$feature_similarity_threshold
+            # Obtain cluster similarity threshold from stored settings, if
+            # required.
+            if(is.waive(feature_similarity_threshold)){
+              if(is.null(feature_similarity)){
+                feature_similarity_threshold <- object@settings$feature_similarity_threshold
+              } else {
+                feature_similarity_threshold <- feature_similarity@similarity_threshold
+              }
+            } 
 
             # Obtain similarity metric from stored settings, if required.
-            if(is.waive(feature_similarity_metric)) feature_similarity_metric <- object@settings$feature_similarity_metric
+            if(is.waive(feature_similarity_metric)){
+              if(is.null(feature_similarity)){
+                feature_similarity_metric <- object@settings$feature_similarity_metric
+              } else {
+                feature_similarity_metric <- feature_similarity@similarity_metric
+              }
+            } 
 
             # Replace feature cluster method == "none" with "hclust"
             if(feature_cluster_method == "none") feature_cluster_method <- "hclust"
@@ -177,7 +213,7 @@ setMethod("extract_permutation_vimp", signature(object="familiarEnsemble"),
                                             metric=metric,
                                             eval_times=eval_times,
                                             aggregate_results=aggregate_results,
-                                            similarity_table=feature_similarity_table,
+                                            similarity_table=feature_similarity,
                                             cluster_method=feature_cluster_method,
                                             cluster_linkage=feature_linkage_method,
                                             cluster_cut_method=feature_cluster_cut_method,
@@ -483,7 +519,7 @@ setMethod("extract_permutation_vimp", signature(object="familiarEnsemble"),
     # Solution for methods where multiple cuts are possible.
     
     # Compute the distance matrix
-    distance_matrix <- cluster.get_distance_matrix(similarity_table=similarity_table,
+    distance_matrix <- cluster.get_distance_matrix(similarity_table=similarity_table@data,
                                                    similarity_metric=cluster_similarity_metric)
     
     # Insert 1.0 if necessary.
@@ -526,7 +562,7 @@ setMethod("extract_permutation_vimp", signature(object="familiarEnsemble"),
     
     # Identify clusters
     cluster_table <- cluster.get_cluster_table(require_representation=FALSE,
-                                               distance_matrix=cluster.get_distance_matrix(similarity_table=similarity_table,
+                                               distance_matrix=cluster.get_distance_matrix(similarity_table=similarity_table@data,
                                                                                            similarity_metric=cluster_similarity_metric),
                                                cluster_method=cluster_method,
                                                cluster_linkage=cluster_linkage,

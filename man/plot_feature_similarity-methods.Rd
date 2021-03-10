@@ -8,6 +8,10 @@
 \usage{
 plot_feature_similarity(
   object,
+  feature_cluster_method = waiver(),
+  feature_linkage_method = waiver(),
+  feature_cluster_cut_method = waiver(),
+  feature_similarity_threshold = waiver(),
   draw = FALSE,
   dir_path = NULL,
   split_by = NULL,
@@ -38,6 +42,10 @@ plot_feature_similarity(
 
 \S4method{plot_feature_similarity}{ANY}(
   object,
+  feature_cluster_method = waiver(),
+  feature_linkage_method = waiver(),
+  feature_cluster_cut_method = waiver(),
+  feature_similarity_threshold = waiver(),
   draw = FALSE,
   dir_path = NULL,
   split_by = NULL,
@@ -68,6 +76,10 @@ plot_feature_similarity(
 
 \S4method{plot_feature_similarity}{familiarCollection}(
   object,
+  feature_cluster_method = waiver(),
+  feature_linkage_method = waiver(),
+  feature_cluster_cut_method = waiver(),
+  feature_similarity_threshold = waiver(),
   draw = FALSE,
   dir_path = NULL,
   split_by = NULL,

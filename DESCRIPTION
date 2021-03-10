@@ -85,6 +85,7 @@ Collate:
     'FamiliarDataComputationCalibrationInfo.R'
     'FamiliarDataComputationConfusionMatrix.R'
     'FamiliarDataComputationDecisionCurveAnalysis.R'
+    'FamiliarDataComputationFeatureSimilarity.R'
     'FamiliarDataComputationHyperparameters.R'
     'FamiliarDataComputationModelPerformance.R'
     'FamiliarDataComputationPermutationVimp.R'

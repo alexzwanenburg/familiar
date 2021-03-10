@@ -58,7 +58,9 @@ A familiarCollection object aggregates data from one or more familiarData object
 
 \item{\code{feature_expressions}}{ANY.}
 
-\item{\code{mutual_correlation}}{ANY.}
+\item{\code{feature_similarity}}{ANY.}
+
+\item{\code{sample_similarity}}{ANY.}
 
 \item{\code{data_set_labels}}{ANY.}
 

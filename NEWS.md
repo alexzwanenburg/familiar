@@ -72,6 +72,10 @@ are unaltered. Density plots have also been revised to use a fixed standard
 deviation of 0.075, which prevents some of the erratic behaviour seen previously
 when most expected probability values were clustered closely.
 
+* Clustering based on feature similarity during the evaluation process can now
+be specified after similarity has been computed, i.e. through
+`export_feature_similarity` and `plot_feature_similarity`. This allows for
+changing clustering parameters after the analysis.
 
 ## Minor changes:
 

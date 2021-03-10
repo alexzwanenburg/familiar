@@ -68,6 +68,10 @@ NULL
 #'@rdname plot_feature_similarity-methods
 setGeneric("plot_feature_similarity",
            function(object,
+                    feature_cluster_method=waiver(),
+                    feature_linkage_method=waiver(),
+                    feature_cluster_cut_method=waiver(),
+                    feature_similarity_threshold=waiver(),
                     draw=FALSE,
                     dir_path=NULL,
                     split_by=NULL,
@@ -100,6 +104,10 @@ setGeneric("plot_feature_similarity",
 #'@rdname plot_feature_similarity-methods
 setMethod("plot_feature_similarity", signature(object="ANY"),
           function(object,
+                   feature_cluster_method=waiver(),
+                   feature_linkage_method=waiver(),
+                   feature_cluster_cut_method=waiver(),
+                   feature_similarity_threshold=waiver(),
                    draw=FALSE,
                    dir_path=NULL,
                    split_by=NULL,
@@ -129,7 +137,13 @@ setMethod("plot_feature_similarity", signature(object="ANY"),
             
             # Attempt conversion to familiarCollection object.
             object <- do.call(as_familiar_collection,
-                              args=append(list("object"=object, "data_element"="mutual_correlation"), list(...)))
+                              args=c(list("object"=object,
+                                          "data_element"="feature_similarity",
+                                          "feature_cluster_method"=feature_cluster_method,
+                                          "feature_linkage_method"=feature_linkage_method,
+                                          "feature_cluster_cut_method"=feature_cluster_cut_method,
+                                          "feature_similarity_threshold"=feature_similarity_threshold),
+                                     list(...)))
             
             return(do.call(plot_feature_similarity,
                            args=list("object"=object,
@@ -166,6 +180,10 @@ setMethod("plot_feature_similarity", signature(object="ANY"),
 #'@rdname plot_feature_similarity-methods
 setMethod("plot_feature_similarity", signature(object="familiarCollection"),
           function(object,
+                   feature_cluster_method=waiver(),
+                   feature_linkage_method=waiver(),
+                   feature_cluster_cut_method=waiver(),
+                   feature_similarity_threshold=waiver(),
                    draw=FALSE,
                    dir_path=NULL,
                    split_by=NULL,
@@ -194,37 +212,29 @@ setMethod("plot_feature_similarity", signature(object="familiarCollection"),
                    ...){
             
             # Get input data
-            x <- export_feature_similarity(object=object)
+            x <- export_feature_similarity(object=object,
+                                           feature_cluster_method=feature_cluster_method,
+                                           feature_linkage_method=feature_linkage_method,
+                                           feature_cluster_cut_method=feature_cluster_cut_method,
+                                           feature_similarity_threshold=feature_similarity_threshold,
+                                           export_dendrogram=FALSE)
             
-            # Skip empty data.
+            # Check that the data are not empty.
             if(is_empty(x)) return(NULL)
             
-            # Collect data sets, learners and feature selection methods, so that
-            # splitting can be organised.
-            y <- lapply(seq_along(x), function(ii, x){
+            # Obtain data element from list.
+            if(is.list(x)){
+              if(is_empty(x)) return(NULL)
               
-              # Check for empty entries
-              if(is_empty(x[[ii]]$data)) return(NULL)
+              if(length(x) > 1) ..error_reached_unreachable_code(".plot_variable_importance: list of data elements contains unmerged elements.")
               
-              # Extract data_set, fs_method and learner columns.
-              y <- head(x[[ii]]$data[, c("data_set", "fs_method", "learner")], n=1)
-              
-              # Insert list_id ii
-              y[, "list_id":=ii]
-              
-              return(y)
-            }, x=x)
+              # Get x directly.
+              x <- x[[1]]
+            }
             
-            # Concatenate to a single data table.
-            y <- data.table::rbindlist(y)
+            # Check that the data are not empty.
+            if(is_empty(x)) return(NULL)
             
-            # Check empty data
-            if(is_empty(y)) return(NULL)
-            
-            # Update labelling
-            y$data_set <- factor(y$data_set, levels=unique(get_data_set_names(object)))
-            y$fs_method <- factor(y$fs_method, levels=unique(get_fs_method_names(object)))
-            y$learner <- factor(y$learner, levels=unique(get_learner_names(object)))
             
             ##### Check input arguments ----------------------------------------
             
@@ -283,26 +293,13 @@ setMethod("plot_feature_similarity", signature(object="familiarCollection"),
               }
             }
             
-            # Check if cluster objects are present and have the correct hclust
-            # class.
-            if(!is.null(show_dendrogram)){
-              can_draw_dendrogram <- sapply(x, function(list_entry) (inherits(list_entry$feature_cluster_object, "hclust")))
-              
-              if(all(!can_draw_dendrogram)){
-                warning(paste0("Cannot draw dendrogram as the cluster objects are not of the \"hclust\" class. ",
-                               "This may occur if partitioning around medioids is used for clustering or only one feature is present."))
-                
-                show_dendrogram <- NULL
-              }
-            }
-            
+            if(!x@cluster_method %in% c("hclust", "agnes", "diana")) show_dendrogram <- NULL
             
             # Check if the dendrogram_height argument is correct.
             if(!is.null(show_dendrogram)){
               plotting.check_grid_unit(x=dendrogram_height, var_name="dendrogram_height")
             }
-            
-            
+
             # Add default splitting variables
             if(is.null(split_by) & is.null(facet_by)){
             
@@ -314,7 +311,7 @@ setMethod("plot_feature_similarity", signature(object="familiarCollection"),
             }
             
             # Check splitting variables and generate sanitised output
-            split_var_list <- plotting.check_data_handling(x=y,
+            split_var_list <- plotting.check_data_handling(x=x@data,
                                                            split_by=split_by,
                                                            facet_by=facet_by,
                                                            available=c("data_set", "fs_method", "learner"))
@@ -337,27 +334,22 @@ setMethod("plot_feature_similarity", signature(object="familiarCollection"),
             
             # Split data.
             if(!is.null(split_by)){
-              y_split <- split(y, by=split_by, drop=FALSE)
+              x_split <- split(x@data, by=split_by, drop=FALSE)
               
             } else {
-              y_split <- list("null.name"=y)
+              x_split <- list("null.name"=x@data)
             }
             
-            # Store plots to list in case dir_path is absent.
+            # Store plots to list in case no dir_path is provided
             if(is.null(dir_path)) plot_list <- list()
             
-            # Iterate over data splits.
-            for(ii in names(y_split)){
+            # Iterate over splits
+            for(x_sub in x_split){
               
-              # Skip empty datasets.
-              if(is_empty(y_split[[ii]])) next()
-              
-              # Skip sets with empty similarity data.
-              data_are_empty <- sapply(x[y_split[[ii]]$list_id], function(list_entry) (is_empty(list_entry$data)))
-              if(all(data_are_empty)) next()
+              if(is_empty(x_sub)) next()
               
               # Generate plot
-              p <- .plot_feature_similarity_plot(x=y_split[[ii]],
+              p <- .plot_feature_similarity_plot(x=x_sub,
                                                  data=x,
                                                  facet_by=facet_by,
                                                  facet_wrap_cols=facet_wrap_cols,
@@ -393,23 +385,16 @@ setMethod("plot_feature_similarity", signature(object="familiarCollection"),
                 
                 # Determine the subtype
                 if(!is.null(split_by)){
-                  subtype <- c(subtype, as.character(sapply(split_by, function(jj, y) (y[[jj]][1]), y=y_split[[ii]])))
-                  subtype <- paste0(subtype, collapse="_")
+                  subtype <- paste0(subtype,
+                                    paste0(sapply(split_by, function(ii, x) (x[[ii]][1]), x=x_sub), collapse="_"),
+                                    collapse="_")
                 }
                 
-                # Find features
-                features <- lapply(x[y_split[[ii]]$list_id], function(list_entry){
-                  if(is_empty(list_entry$data)) return(NULL)
-                  
-                  return(unique(c(levels(list_entry$data$feature_1),
-                                  levels(list_entry$data$feature_2))))
-                })
-                
                 # Identify unique features:
-                features <- unique(unlist(features))
+                features <- unique(x_sub$feature_1)
                 
                 # Obtain decent default values for the plot.
-                def_plot_dims <- .determine_feature_similarity_plot_dimensions(x=y_split[[ii]],
+                def_plot_dims <- .determine_feature_similarity_plot_dimensions(x=x_sub,
                                                                               facet_by=facet_by,
                                                                               facet_wrap_cols=facet_wrap_cols,
                                                                               features=features,
@@ -418,19 +403,19 @@ setMethod("plot_feature_similarity", signature(object="familiarCollection"),
                 
                 # Save to file.
                 do.call(plotting.save_plot_to_file,
-                        args=append(list("plot_obj"=p,
-                                         "object"=object,
-                                         "dir_path"=dir_path,
-                                         "type"="feature_similarity",
-                                         "subtype"=subtype,
-                                         "height"=ifelse(is.waive(height), def_plot_dims[1], height),
-                                         "width"=ifelse(is.waive(width), def_plot_dims[2], width),
-                                         "units"=ifelse(is.waive(units), "cm", units)),
-                                    list(...)))
+                        args=c(list("plot_obj"=p,
+                                    "object"=object,
+                                    "dir_path"=dir_path,
+                                    "type"="feature_similarity",
+                                    "subtype"=subtype,
+                                    "height"=ifelse(is.waive(height), def_plot_dims[1], height),
+                                    "width"=ifelse(is.waive(width), def_plot_dims[2], width),
+                                    "units"=ifelse(is.waive(units), "cm", units)),
+                               list(...)))
                 
               } else {
                 # Store as list for export.
-                plot_list <- append(plot_list, list(p))
+                plot_list <- c(plot_list, list(p))
               }
             }
             
@@ -473,30 +458,37 @@ setMethod("plot_feature_similarity", signature(object="familiarCollection"),
                                                       facet_by=facet_by,
                                                       facet_wrap_cols=facet_wrap_cols)
   
-  # Split data into facets. This is done by row.
-  x_split_list <- plotting.split_data_by_facet(x=x,
-                                               plot_layout_table=plot_layout_table)
+  # Define the split in data required for faceting.
+  data_split <- split(plot_layout_table,
+                      by=c("col_id", "row_id"),
+                      sorted=TRUE)
   
   # Create plots to join
   figure_list <- list()
   extracted_element_list <- list()
-  
-  for(ii in seq_along(x_split_list)){
+  for(current_split in data_split){
     
-    x_split <- x_split_list[[ii]]
+    # Generate the split in case there is a faceting variable.
+    if(!is.null(facet_by)){
+      x_split <- methods::new("familiarDataElementFeatureSimilarity",
+                              data,
+                              data=x[current_split, on=.NATURAL, nomatch=NULL])
+      
+    } else {
+      x_split <- methods::new("familiarDataElementFeatureSimilarity",
+                              data,
+                              data=x)
+    }
     
-    # Find the accompanying similarity data.
-    similarity_data <- data[[x_split$list_id]]$data
-    
+    # Add in clustering information and a dendrogram.
+    x_split <- ..compute_feature_similarity_clustering(x_split)
+
     # Find the cluster object
-    cluster_object <- data[[x_split$list_id]]$feature_cluster_object
-    
-    # Find the similarity metric
-    similarity_metric <- data[[x_split$list_id]]$feature_similarity_metric
+    dendrogram <- x_split@dendrogram
     
     # Complete the similarity data
-    similarity_data <- .complete_feature_similarity_table(x=similarity_data,
-                                                          similarity_metric=similarity_metric)
+    similarity_data <- .complete_feature_similarity_table(x=x_split@data,
+                                                          similarity_metric=x_split@similarity_metric)
     
     # Create similarity heatmap
     p_heatmap <- .create_feature_similarity_heatmap(x=similarity_data,
@@ -513,7 +505,7 @@ setMethod("plot_feature_similarity", signature(object="familiarCollection"),
                                                     caption=caption,
                                                     rotate_x_tick_labels=rotate_x_tick_labels,
                                                     show_dendrogram=show_dendrogram,
-                                                    similarity_metric=similarity_metric)
+                                                    similarity_metric=x_split@similarity_metric)
     
     # Extract plot elements from the heatmap.
     extracted_elements <- plotting.extract_plot_elements(p=p_heatmap)
@@ -526,10 +518,10 @@ setMethod("plot_feature_similarity", signature(object="familiarCollection"),
                                                extension="main")
     
     # Add dendrogram
-    if(!is.null(show_dendrogram) & inherits(cluster_object, "hclust")){
+    if(!is.null(show_dendrogram) & inherits(dendrogram, "hclust")){
       # Obtain dendrogram plotting data as line segments.
-      dendro_data <- plotting.dendrogram_as_table(h=cluster_object,
-                                                  similarity_metric=similarity_metric)
+      dendro_data <- plotting.dendrogram_as_table(h=dendrogram,
+                                                  similarity_metric=x_split@similarity_metric)
       
       for(position in show_dendrogram){
         # Plot dendrogram

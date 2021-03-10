@@ -7,7 +7,7 @@
 extract_feature_expression(
   object,
   data,
-  feature_similarity_table,
+  feature_similarity,
   sample_similarity_table,
   feature_cluster_method = waiver(),
   feature_linkage_method = waiver(),
@@ -28,7 +28,7 @@ extract_feature_expression(
 \item{data}{A \code{dataObject} object, \code{data.table} or \code{data.frame} that
 constitutes the data that are used to compute}
 
-\item{feature_similarity_table}{Table containing pairwise distance between
+\item{feature_similarity}{Table containing pairwise distance between
 sample. This is used to determine cluster information, and indicate which
 samples are similar. The table is created by the
 \code{extract_sample_similarity_table} method.}

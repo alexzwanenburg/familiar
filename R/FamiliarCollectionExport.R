@@ -105,7 +105,7 @@ setMethod("export_all", signature(object="familiarCollection"),
             feature_expressions <- export_feature_expressions(object=object, dir_path=dir_path)
             
             # Export mutual-correlation data
-            mutual_correlation <- export_feature_similarity(object=object, dir_path=dir_path)
+            feature_similarity <- export_feature_similarity(object=object, dir_path=dir_path)
             
             if(is.null(dir_path)){
               return(list("fs_vimp" = fs_vimp,
@@ -123,7 +123,7 @@ setMethod("export_all", signature(object="familiarCollection"),
                           "auc_data" = auc_data,
                           "univariate_analysis" = univariate_analysis,
                           "feature_expressions" = feature_expressions,
-                          "mutual_correlation" = mutual_correlation))
+                          "feature_similarity" = feature_similarity))
             }
           })
 
@@ -302,85 +302,6 @@ setMethod("export_feature_expressions", signature(object="ANY"),
                            args=append(list("object"=object, "dir_path"=dir_path), list(...))))
           })
 
-
-#####export_feature_similarity#####
-
-#'@title Extract and export mutual correlation between features.
-#'
-#'@description Extract and export mutual correlation between features in a
-#'  familiarCollection.
-#'
-#'@inheritParams export_all
-#'
-#'@inheritDotParams extract_mutual_correlation
-#'@inheritDotParams as_familiar_collection
-#'
-#'@details Data is usually collected from a `familiarCollection` object.
-#'  However, you can also provide one or more `familiarData` objects, that will
-#'  be internally converted to a `familiarCollection` object. It is also
-#'  possible to provide a `familiarEnsemble` or one or more `familiarModel`
-#'  objects together with the data from which data is computed prior to export.
-#'  Paths to the previous files can also be provided.
-#'
-#'  All parameters aside from `object` and `dir_path` are only used if `object`
-#'  is not a `familiarCollection` object, or a path to one.
-#'
-#'@return A list containing a data.table (if `dir_path` is not provided), or
-#'  nothing, as all data is exported to `csv` files.
-#'@exportMethod export_feature_similarity
-#'@md
-#'@rdname export_feature_similarity-methods
-setGeneric("export_feature_similarity",
-           function(object, dir_path=NULL, ...) standardGeneric("export_feature_similarity"))
-
-#####export_feature_similarity (collection)#####
-
-#'@rdname export_feature_similarity-methods
-setMethod("export_feature_similarity", signature(object="familiarCollection"),
-          function(object, dir_path=NULL, ...){
-          
-            if(is.null(object@mutual_correlation)){
-              return(NULL)
-            }
-            
-            if(is.null(dir_path)){
-              # Return list of mutual correlation data with updated labels.
-              mutual_correlation_list <- lapply(object@mutual_correlation, function(list_entry, object){
-                
-                # Add labels.
-                list_entry$data <- .apply_labels(data=list_entry$data, object=object)
-                
-                return(list_entry)
-              }, object=object)
-              
-              return(mutual_correlation_list)
-              
-            } else {
-              # Update labels on mutual correlation data table.
-              mutual_correlation_data <- data.table::rbindlist(lapply(object@mutual_correlation, function(list_entry, object){
-                return(.apply_labels(data=list_entry$data, object=object))
-              }, object=object), use.names=TRUE)
-              
-              .export_to_file(data=mutual_correlation_data, object=object, dir_path=dir_path, type="feature_similarity")
-              
-              return(NULL)
-            }
-          })
-
-
-#####export_feature_similarity (generic)#####
-
-#'@rdname export_feature_similarity-methods
-setMethod("export_feature_similarity", signature(object="ANY"),
-          function(object, dir_path=NULL, ...){
-            
-            # Attempt conversion to familiarCollection object.
-            object <- do.call(as_familiar_collection,
-                              args=append(list("object"=object, "data_element"="mutual_correlation"), list(...)))
-            
-            return(do.call(export_feature_similarity,
-                           args=append(list("object"=object, "dir_path"=dir_path), list(...))))
-          })
 
 
 #####.export_to_file (familiarDataElement)######################################

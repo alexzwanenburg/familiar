@@ -111,6 +111,13 @@ setMethod("update_object", signature(object="familiarData"),
               # Rename important_features to model_features
               attr(object, "model_features") <- attr(object, "important_features")
               attr(object, "important_features") <- NULL
+              
+              # Rename mutual_correlation to feature_similarity
+              attr(object, "feature_similarity") <- attr(object, "mutual_correlation")
+              attr(object, "mutual_correlation") <- NULL
+              
+              # Add sample_similarity.
+              attr(object, "sample_similarity") <- attr(list(), "non_existing_element")
             }
             
             if(!methods::validObject(object)) stop("Could not update the familiarData object to the most recent definition.")
@@ -140,6 +147,13 @@ setMethod("update_object", signature(object="familiarCollection"),
               # Rename collection_name to name
               attr(object, "name") <- attr(object, "collection_name")
               attr(object, "collection_name") <- NULL
+              
+              # Rename mutual_correlation to feature_similarity
+              attr(object, "feature_similarity") <- attr(object, "mutual_correlation")
+              attr(object, "mutual_correlation") <- NULL
+              
+              # Add sample_similarity.
+              attr(object, "sample_similarity") <- attr(list(), "non_existing_element")
             }
             
             if(!methods::validObject(object)) stop("Could not update the familiarCollection object to the most recent definition.")

@@ -9,7 +9,7 @@ extract_permutation_vimp(
   data,
   cl = NULL,
   ensemble_method = waiver(),
-  feature_similarity_table,
+  feature_similarity,
   feature_cluster_method = waiver(),
   feature_linkage_method = waiver(),
   feature_cluster_cut_method = waiver(),

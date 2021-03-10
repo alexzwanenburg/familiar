@@ -2150,6 +2150,9 @@
 #'
 #'  * `feature_expressions`: data for assessing and plotting sample clustering
 #'  are not computed.
+#'  
+#'  * `feature_similarity`: data for assessing and plotting feature clusters are
+#'  not computed.
 #'
 #'  * `fs_vimp`: data for assessing and plotting feature selection-based
 #'  variable importance are not collected.
@@ -2165,9 +2168,6 @@
 #'
 #'  * `model_vimp`: data for assessing and plotting model-based variable
 #'  importance are not collected.
-#'
-#'  * `mutual_correlation`: data for assessing and plotting feature clusters are
-#'  not computed.
 #'
 #'  * `permutation_vimp`: data for assessing and plotting model-agnostic
 #'  permutation variable importance are not computed.

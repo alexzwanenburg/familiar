@@ -85,43 +85,6 @@ collect_feature_expressions <- function(fam_data_list){
 
 
 
-#' @title Collector for mutual correlation data
-#' 
-#' @inheritParams collect_fs_vimp
-#'
-#' @return A list with aggregated mutual correlation data.
-#' @noRd
-collect_mutual_correlation <- function(fam_data_list){
-  # Mutual correlation is partially shared between different familiarData
-  # objects which share the same data set, but pre-processing parameters may
-  # potentially differ. Moreover, some familiarData objects may lack data.
-  
-  # Parse univariate data
-  mutual_correlation_list <- lapply(fam_data_list, function(fam_obj){
-    
-    # Extract mutual correlation info
-    mutual_correlation_data <- fam_obj@mutual_correlation$data
-    
-    if(is_empty(mutual_correlation_data)){
-      return(NULL)
-      
-    } else {
-      # Add identifiers
-      mutual_correlation_data <- add_identifiers(data=data.table::copy(mutual_correlation_data),
-                                                 object=fam_obj,
-                                                 more_identifiers=c("fs_method", "learner"))
-    }
-    
-    return(list("data"=mutual_correlation_data,
-                "feature_cluster_object"=fam_obj@mutual_correlation$feature_cluster_object,
-                "feature_similarity_metric"=fam_obj@mutual_correlation$feature_similarity_metric))
-    
-  })
-  
-  return(mutual_correlation_list)
-}
-
-
 .which_unique_data <- function(fam_data_list, by){
   # Perform comparisons to find out which datasets provide unique data
   if(!all(sapply(fam_data_list, class) == "familiarData")){
