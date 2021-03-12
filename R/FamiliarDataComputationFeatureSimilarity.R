@@ -18,7 +18,7 @@ setClass("familiarDataElementFeatureSimilarity",
                                         similarity_threshold=NULL,
                                         dendrogram=NULL,
                                         value_column="value",
-                                        grouping_column=c("feature_1", "feature_2")))
+                                        grouping_column=c("feature_name_1", "feature_name_2")))
 
 #'@title Internal function to extract the feature distance table.
 #'
@@ -279,7 +279,7 @@ setMethod("extract_feature_similarity", signature(object="familiarEnsemble", dat
   if(is_empty(x)) return(x)
   
   # Generate a distance matrix from the similarity table
-  distance_matrix <- cluster.get_distance_matrix(similarity_table=x@data[, mget(c("feature_1", "feature_2", "value"))],
+  distance_matrix <- cluster.get_distance_matrix(similarity_table=x@data[, mget(c("feature_name_1", "feature_name_2", "value"))],
                                                  similarity_metric=x@similarity_metric)
   
   # Obtain cluster object.
@@ -292,17 +292,17 @@ setMethod("extract_feature_similarity", signature(object="familiarEnsemble", dat
                                                      cluster_method=x@cluster_method)
   
   # Merge ordering into feature_similarity_table. The table is first
-  # merged on feature_1 and then on feature_2.
+  # merged on feature_name_1 and then on feature_name_2.
   mutual_correlation_table <- data.table::copy(x@data)
   mutual_correlation_table <- merge(x=mutual_correlation_table,
                                     y=feature_order_table,
-                                    by.x="feature_1",
+                                    by.x="feature_name_1",
                                     by.y="name",
                                     all.x=TRUE,
                                     all.y=FALSE)
   mutual_correlation_table <- merge(x=mutual_correlation_table,
                                     y=feature_order_table,
-                                    by.x="feature_2",
+                                    by.x="feature_name_2",
                                     by.y="name",
                                     all.x=TRUE,
                                     all.y=FALSE)

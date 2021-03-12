@@ -435,7 +435,7 @@ setMethod(".export", signature(x="familiarCollection"),
             } else if(data.table::uniqueN(element_classes) > 2){
               ..error_reached_unreachable_code(".export,familiarCollection: multiple data elements with different classes found, whereas only one is expected.")
             }
-
+            
             # Merge and aggregate data.
             data_element <- .export(x=data_elements[[1]],
                                     x_list=data_elements,

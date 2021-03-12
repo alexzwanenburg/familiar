@@ -431,7 +431,7 @@ setMethod(".apply_labels", signature(data="data.table", object="familiarCollecti
             has_data_set           <- ifelse("data_set" %in% columns, TRUE, FALSE)
             has_learner            <- ifelse("learner" %in% columns, TRUE, FALSE)
             has_fs_method          <- ifelse("fs_method" %in% columns, TRUE, FALSE)
-            has_feature            <- ifelse(any(c("name", "feature_1", "feature_2", "feature") %in% columns), TRUE, FALSE)
+            has_feature            <- ifelse(any(c("name", "feature_name_1", "feature_name_2", "feature") %in% columns), TRUE, FALSE)
             has_risk_group         <- ifelse(any(c("risk_group", "risk_group_1", "risk_group_2", "reference_group") %in% columns), TRUE, FALSE)
             has_multiclass_outcome <- ifelse(any(c("pos_class", "outcome") %in% columns) & object@outcome_type=="multinomial", TRUE, FALSE)
             has_categorical_outcome <- ifelse(any(c("observed_outcome", "expected_outcome") %in% columns) & object@outcome_type %in% c("binomial", "multinomial"),
@@ -459,7 +459,7 @@ setMethod(".apply_labels", signature(data="data.table", object="familiarCollecti
             }
             
             if(has_feature){
-              for(curr_col_name in c("name", "feature_1", "feature_2", "feature")){
+              for(curr_col_name in c("name", "feature_name_1", "feature_name_2", "feature")){
                 if(!is.null(data[[curr_col_name]])){
                   data[[curr_col_name]] <- factor(x=data[[curr_col_name]],
                                                   levels=get_feature_name_levels(x=object),
@@ -544,7 +544,7 @@ setMethod(".apply_labels", signature(data="familiarDataElement", object="familia
             has_data_set <- "data_set" %in% columns
             has_learner <- "learner" %in% columns
             has_fs_method <- "fs_method" %in% columns
-            has_feature <- any(c("name", "feature_1", "feature_2", "feature") %in% columns)
+            has_feature <- any(c("name", "feature_name_1", "feature_name_2", "feature") %in% columns)
             has_risk_group <- any(c("risk_group", "risk_group_1", "risk_group_2", "reference_group") %in% columns)
             has_multiclass_outcome <- any(c("pos_class", "positive_class", "outcome") %in% columns) & object@outcome_type == "multinomial"
             has_categorical_outcome <- any(c("observed_outcome", "expected_outcome") %in% columns) & object@outcome_type %in% c("binomial", "multinomial")
@@ -578,7 +578,7 @@ setMethod(".apply_labels", signature(data="familiarDataElement", object="familia
             }
             
             if(has_feature){
-              for(current_column_name in c("name", "feature_1", "feature_2", "feature")){
+              for(current_column_name in c("name", "feature_name_1", "feature_name_2", "feature")){
                 if(!is.null(x[[current_column_name]])){
                   data.table::set(x,
                                   j=current_column_name,
@@ -665,7 +665,7 @@ setMethod(".apply_labels", signature(data="familiarDataElement", object="familia
             grouping_columns <- c("data_set", "fs_method", "learner",
                                   "ensemble_model_name", "model_name",
                                   "evaluation_time", "eval_time",
-                                  "name", "feature_1", "feature_2", "feature",
+                                  "name", "feature_name_1", "feature_name_2", "feature",
                                   "pos_class", "positive_class",
                                   "metric")
             

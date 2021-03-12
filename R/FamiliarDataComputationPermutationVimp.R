@@ -519,7 +519,7 @@ setMethod("extract_permutation_vimp", signature(object="familiarEnsemble"),
     # Solution for methods where multiple cuts are possible.
     
     # Compute the distance matrix
-    distance_matrix <- cluster.get_distance_matrix(similarity_table=similarity_table@data,
+    distance_matrix <- cluster.get_distance_matrix(similarity_table=similarity_table@data[, mget(c("feature_name_1", "feature_name_2", "value"))],
                                                    similarity_metric=cluster_similarity_metric)
     
     # Insert 1.0 if necessary.
@@ -562,7 +562,7 @@ setMethod("extract_permutation_vimp", signature(object="familiarEnsemble"),
     
     # Identify clusters
     cluster_table <- cluster.get_cluster_table(require_representation=FALSE,
-                                               distance_matrix=cluster.get_distance_matrix(similarity_table=similarity_table@data,
+                                               distance_matrix=cluster.get_distance_matrix(similarity_table=similarity_table@data[, mget(c("feature_name_1", "feature_name_2", "value"))],
                                                                                            similarity_metric=cluster_similarity_metric),
                                                cluster_method=cluster_method,
                                                cluster_linkage=cluster_linkage,

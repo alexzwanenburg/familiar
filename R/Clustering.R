@@ -151,8 +151,8 @@ cluster.get_featurewise_similarity_table <- function(cl=NULL, data_obj,
                            categorical_mask=categorical_mask)
   
   # Transform similarity scores into a data.table.
-  similarity_table  <- data.table::data.table("feature_1"=combinations[1,],
-                                              "feature_2"=combinations[2,],
+  similarity_table  <- data.table::data.table("feature_name_1"=combinations[1,],
+                                              "feature_name_2"=combinations[2,],
                                               "value"=similarity)
 
   return(similarity_table)
@@ -287,10 +287,10 @@ cluster.get_distance_matrix <- function(cl=NULL, data_obj=NULL, similarity_table
   
   # Determine whether the similarity table is for features (columns) or samples
   # (rows).
-  table_type <- ifelse("feature_1" %in% colnames(lower_triangle), "feature", "sample")
+  table_type <- ifelse("feature_name_1" %in% colnames(lower_triangle), "feature", "sample")
   
-  element_1 <- ifelse(table_type == "feature", "feature_1", "sample_1")
-  element_2 <- ifelse(table_type == "feature", "feature_2", "sample_2")
+  element_1 <- ifelse(table_type == "feature", "feature_name_1", "sample_1")
+  element_2 <- ifelse(table_type == "feature", "feature_name_2", "sample_2")
   
   # Find elements from the distance table.
   elements <- union(lower_triangle[[element_1]], lower_triangle[[element_2]])

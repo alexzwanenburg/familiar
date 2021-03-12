@@ -391,7 +391,7 @@ setMethod("plot_feature_similarity", signature(object="familiarCollection"),
                 }
                 
                 # Identify unique features:
-                features <- unique(x_sub$feature_1)
+                features <- unique(c(x_sub$feature_name_1, x_sub$feature_name_2))
                 
                 # Obtain decent default values for the plot.
                 def_plot_dims <- .determine_feature_similarity_plot_dimensions(x=x_sub,
@@ -613,8 +613,8 @@ setMethod("plot_feature_similarity", signature(object="familiarCollection"),
   }
   
   # Create basic plot
-  p <- ggplot2::ggplot(data=x, mapping=ggplot2::aes(x=!!sym("feature_1"),
-                                                    y=!!sym("feature_2"),
+  p <- ggplot2::ggplot(data=x, mapping=ggplot2::aes(x=!!sym("feature_name_1"),
+                                                    y=!!sym("feature_name_2"),
                                                     fill=!!sym("value")))
   p <- p + ggtheme
   
@@ -843,32 +843,37 @@ setMethod("plot_feature_similarity", signature(object="familiarCollection"),
   # Check for empty file.
   if(is_empty(x)) return(NULL)
   
-  # Copy x and revert feature_1 and feature_2 so that all pairs are present.
+  # Copy x and revert feature_name_1 and feature_name_2 so that all pairs are
+  # present.
   y <- data.table::copy(x)
   data.table::setnames(y,
-                       old=c("feature_1", "feature_2", "label_order_1", "label_order_2"),
-                       new=c("feature_2", "feature_1", "label_order_2", "label_order_1"))
+                       old=c("feature_name_1", "feature_name_2", "label_order_1", "label_order_2"),
+                       new=c("feature_name_2", "feature_name_1", "label_order_2", "label_order_1"))
   
   # Combine.
   x <- rbind(x, y, use.names=TRUE)
   
   # Determine order of features.
-  feature_1_order <- unique(x[, c("feature_1", "label_order_1")])
-  feature_2_order <- unique(x[, c("feature_2", "label_order_2")])
+  feature_1_order <- unique(x[, c("feature_name_1", "label_order_1")])
+  feature_2_order <- unique(x[, c("feature_name_2", "label_order_2")])
   
   # Add self-paired features.
-  features <- unique(x$feature_1)
+  features <- unique(x$feature_name_1)
   y <- x[rep(1, length(features))]
-  y[, ":="("feature_1"=features, "feature_2"=features, "value"=1.0, "label_order_1"=NULL, "label_order_2"=NULL)]
-  y <- merge(x=y, y=feature_1_order, by="feature_1", all=FALSE)
-  y <- merge(x=y, y=feature_2_order, by="feature_2", all=FALSE)
+  y[, ":="("feature_name_1"=features,
+           "feature_name_2"=features,
+           "value"=1.0,
+           "label_order_1"=NULL,
+           "label_order_2"=NULL)]
+  y <- merge(x=y, y=feature_1_order, by="feature_name_1", all=FALSE)
+  y <- merge(x=y, y=feature_2_order, by="feature_name_2", all=FALSE)
   
   # Combine.
   x <- rbind(x, y, use.names=TRUE)
   
   # Reorder features
-  x$feature_1 <- factor(x$feature_1, levels=feature_1_order$feature_1[order(feature_1_order$label_order_1)])
-  x$feature_2 <- factor(x$feature_2, levels=feature_2_order$feature_2[order(feature_2_order$label_order_2)])
+  x$feature_name_1 <- factor(x$feature_name_1, levels=feature_1_order$feature_name_1[order(feature_1_order$label_order_1)])
+  x$feature_name_2 <- factor(x$feature_name_2, levels=feature_2_order$feature_name_2[order(feature_2_order$label_order_2)])
   
   return(x)
 }
