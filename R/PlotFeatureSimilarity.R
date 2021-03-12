@@ -217,15 +217,15 @@ setMethod("plot_feature_similarity", signature(object="familiarCollection"),
                                            feature_linkage_method=feature_linkage_method,
                                            feature_cluster_cut_method=feature_cluster_cut_method,
                                            feature_similarity_threshold=feature_similarity_threshold,
-                                           export_dendrogram=FALSE)
+                                           export_dendrogram=FALSE,
+                                           export_ordered_data=FALSE)
             
             # Check that the data are not empty.
             if(is_empty(x)) return(NULL)
             
             # Obtain data element from list.
             if(is.list(x)){
-              if(is_empty(x)) return(NULL)
-              
+
               if(length(x) > 1) ..error_reached_unreachable_code(".plot_variable_importance: list of data elements contains unmerged elements.")
               
               # Get x directly.
@@ -481,6 +481,7 @@ setMethod("plot_feature_similarity", signature(object="familiarCollection"),
     }
     
     # Add in clustering information and a dendrogram.
+    x_split <- ..compute_feature_similarity_dendrogram(x_split)
     x_split <- ..compute_feature_similarity_clustering(x_split)
 
     # Find the cluster object
@@ -577,6 +578,7 @@ setMethod("plot_feature_similarity", signature(object="familiarCollection"),
   
   return(g)
 }
+
 
 
 .create_feature_similarity_heatmap <- function(x,
@@ -686,6 +688,7 @@ setMethod("plot_feature_similarity", signature(object="familiarCollection"),
   
   return(p)
 }
+
 
 
 .create_feature_similarity_dendrogram_plot <- function(x,
