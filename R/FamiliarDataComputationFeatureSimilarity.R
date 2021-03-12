@@ -89,9 +89,7 @@ setMethod("extract_feature_similarity", signature(object="familiarEnsemble", dat
             if(is.waive(feature_similarity_threshold)) feature_similarity_threshold <- object@settings$feature_similarity_threshold
             
             # Obtain similarity metric from stored settings, if required.
-            if(is.waive(feature_similarity_metric)){
-              feature_similarity_metric <- object@settings$feature_similarity_metric
-            }
+            if(is.waive(feature_similarity_metric)) feature_similarity_metric <- object@settings$feature_similarity_metric
             
             # Replace feature cluster method == "none" with "hclust"
             if(feature_cluster_method == "none") feature_cluster_method <- "hclust"
@@ -274,7 +272,7 @@ setMethod("extract_feature_similarity", signature(object="familiarEnsemble", dat
 
 
 
-..compute_feature_similarity_clustering <- function(x){
+..compute_feature_similarity_dendrogram <- function(x){
   
   if(is_empty(x)) return(x)
   
@@ -287,8 +285,20 @@ setMethod("extract_feature_similarity", signature(object="familiarEnsemble", dat
                                   cluster_method=x@cluster_method,
                                   cluster_linkage=x@linkage_method)
   
+  # Attach to data element.
+  x@dendrogram <- h
+  
+  return(x)
+}
+
+
+
+..compute_feature_similarity_clustering <- function(x){
+  
+  if(is_empty(x)) return(x)
+  
   # Get data.table with feature ordering
-  feature_order_table <- cluster.extract_label_order(cluster_object=h,
+  feature_order_table <- cluster.extract_label_order(cluster_object=x@dendrogram,
                                                      cluster_method=x@cluster_method)
   
   # Merge ordering into feature_similarity_table. The table is first
@@ -314,7 +324,6 @@ setMethod("extract_feature_similarity", signature(object="familiarEnsemble", dat
   
   # Add to data element.
   x@data <- mutual_correlation_table
-  x@dendrogram <- h
   
   # Add grouping column.
   x@grouping_column <- c(x@grouping_column, "label_order_1", "label_order_2")
