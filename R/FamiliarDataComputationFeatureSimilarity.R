@@ -340,6 +340,9 @@ setMethod("extract_feature_similarity", signature(object="familiarEnsemble", dat
 #'@description Extract and export mutual correlation between features in a
 #'  familiarCollection.
 #'
+#'@param export_dendrogram Add dendrogram in the data element objects.
+#'@param export_ordered_data Add feature label ordering to data in the data
+#'  element objects.
 #'@inheritParams export_all
 #'
 #'@inheritDotParams as_familiar_collection
@@ -368,6 +371,7 @@ setGeneric("export_feature_similarity",
                     feature_cluster_cut_method=waiver(),
                     feature_similarity_threshold=waiver(),
                     export_dendrogram=FALSE,
+                    export_ordered_data=FALSE,
                     ...) standardGeneric("export_feature_similarity"))
 
 #####export_feature_similarity (collection)#####
@@ -382,6 +386,7 @@ setMethod("export_feature_similarity", signature(object="familiarCollection"),
                    feature_cluster_cut_method=waiver(),
                    feature_similarity_threshold=waiver(),
                    export_dendrogram=FALSE,
+                   export_ordered_data=FALSE,
                    ...){
             
             # Extract data.
@@ -438,11 +443,19 @@ setMethod("export_feature_similarity", signature(object="familiarCollection"),
                                       cluster_similarity_metric=x[[1]]@similarity_metric,
                                       var_type="feature")
             
-            if(aggregate_results & export_dendrogram){
+            if(aggregate_results | export_dendrogram | export_ordered_data){
               x <- .compute_data_element_estimates(x)
               
-              # Add clustering information.
-              x <- lapply(x, ..compute_feature_similarity_clustering)
+              if(export_dendrogram | export_ordered_data){
+                # Add 
+                x <- lapply(x, ..compute_feature_similarity_dendrogram)
+              }
+              
+              if(export_ordered_data){
+                # Add clustering information.
+                x <- lapply(x, ..compute_feature_similarity_clustering)
+              }
+              
             }
             
             return(.export(x=object,
@@ -450,7 +463,9 @@ setMethod("export_feature_similarity", signature(object="familiarCollection"),
                            dir_path=dir_path,
                            aggregate_results=aggregate_results,
                            type="feature_similarity",
-                           subtype=x[[1]]@similarity_metric))
+                           subtype=x[[1]]@similarity_metric,
+                           export_dendrogram=export_dendrogram,
+                           export_ordered_data=export_ordered_data))
           })
 
 
@@ -493,12 +508,12 @@ setMethod("export_feature_similarity", signature(object="ANY"),
 
 #####.export (familiarDataElementFeatureSimilarity)-----------------------------
 setMethod(".export", signature(x="familiarDataElementFeatureSimilarity"),
-          function(x, x_list, aggregate_results=FALSE, ...){
+          function(x, x_list, aggregate_results=FALSE, export_dendrogram, export_ordered_data, ...){
             # This is like .export,familiarDataElement, but the elements are
             # merged prior to computing estimates.
             
             # Only merge if dendrograms are missing for all entries.
-            if(all(sapply(x_list, function(x) (is.null(x@dendrogram))))){
+            if(!export_dendrogram & !export_ordered_data){
               # Merge data elements.
               x <- merge_data_elements(x=x_list,
                                        as_data="all",
