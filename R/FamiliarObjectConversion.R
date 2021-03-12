@@ -377,6 +377,7 @@ setMethod("as_familiar_collection", signature(object="list"),
                                         univariate_analysis = collect_univariate_analysis(fam_data_list=object),
                                         feature_expressions = collect(x=object, data_slot="feature_expressions"),
                                         feature_similarity = collect(x=object, data_slot="feature_similarity"),
+                                        sample_similarity = collect(x=object, data_slot="sample_similarity"),
                                         ice_data = NULL,
                                         is_anonymised = FALSE,
                                         project_id = object[[1]]@project_id)

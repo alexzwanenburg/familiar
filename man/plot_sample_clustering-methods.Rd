@@ -8,6 +8,10 @@
 \usage{
 plot_sample_clustering(
   object,
+  feature_cluster_method = waiver(),
+  feature_linkage_method = waiver(),
+  sample_cluster_method = waiver(),
+  sample_linkage_method = waiver(),
   draw = FALSE,
   dir_path = NULL,
   split_by = NULL,
@@ -52,6 +56,10 @@ plot_sample_clustering(
 
 \S4method{plot_sample_clustering}{ANY}(
   object,
+  feature_cluster_method = waiver(),
+  feature_linkage_method = waiver(),
+  sample_cluster_method = waiver(),
+  sample_linkage_method = waiver(),
   draw = FALSE,
   dir_path = NULL,
   split_by = NULL,
@@ -96,6 +104,10 @@ plot_sample_clustering(
 
 \S4method{plot_sample_clustering}{familiarCollection}(
   object,
+  feature_cluster_method = waiver(),
+  feature_linkage_method = waiver(),
+  sample_cluster_method = waiver(),
+  sample_linkage_method = waiver(),
   draw = FALSE,
   dir_path = NULL,
   split_by = NULL,

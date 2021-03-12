@@ -387,13 +387,17 @@ setMethod("extract_data", signature(object="familiarEnsemble"),
             
             if(any(c("sample_similarity", "feature_expressions") %in% data_element)){
               # Compute a table containing the pairwise distance between samples.
-              sample_similarity_table <- extract_sample_similarity_table(object=object,
-                                                                         data=data,
-                                                                         cl=cl,
-                                                                         is_pre_processed=is_pre_processed,
-                                                                         sample_similarity_metric=sample_similarity_metric,
-                                                                         verbose=verbose,
-                                                                         message_indent=message_indent)
+              sample_similarity <- extract_sample_similarity(object=object,
+                                                             data=data,
+                                                             cl=cl,
+                                                             is_pre_processed=is_pre_processed,
+                                                             sample_similarity_metric=sample_similarity_metric,
+                                                             sample_cluster_method=sample_cluster_method,
+                                                             sample_linkage_method=sample_linkage_method,
+                                                             verbose=verbose,
+                                                             message_indent=message_indent)
+            } else {
+              sample_similarity <- NULL
             }
 
             # Extract feature variable importance
@@ -447,7 +451,7 @@ setMethod("extract_data", signature(object="familiarEnsemble"),
               expression_info <- extract_feature_expression(object=object,
                                                             data=data,
                                                             feature_similarity,
-                                                            sample_similarity_table,
+                                                            sample_similarity,
                                                             feature_cluster_method=feature_cluster_method,
                                                             feature_linkage_method=feature_linkage_method,
                                                             feature_similarity_metric=feature_similarity_metric,
@@ -667,6 +671,7 @@ setMethod("extract_data", signature(object="familiarEnsemble"),
                                      univariate_analysis = univar_info,
                                      feature_expressions = expression_info,
                                      feature_similarity = feature_similarity,
+                                     sample_similarity = sample_similarity,
                                      ice_data = NULL,
                                      is_anonymised = FALSE,
                                      is_validation = data@load_validation,
@@ -920,220 +925,3 @@ setMethod("extract_univariate_analysis", signature(object="familiarEnsemble", da
 
 
 
-#'@title Internal function to extract feature expressions.
-#'
-#'@description Computes and extracts feature expressions for features
-#'  used in a `familiarEnsemble` object.
-#'
-#'@param feature_similarity Table containing pairwise distance between
-#'  sample. This is used to determine cluster information, and indicate which
-#'  samples are similar. The table is created by the
-#'  `extract_sample_similarity_table` method.
-#'@inheritParams extract_data
-#'
-#'@return A list with a data.table containing feature expressions.
-#'@md
-#'@keywords internal
-setGeneric("extract_feature_expression", function(object,
-                                                  data,
-                                                  feature_similarity,
-                                                  sample_similarity_table,
-                                                  feature_cluster_method=waiver(),
-                                                  feature_linkage_method=waiver(),
-                                                  feature_similarity_metric=waiver(),
-                                                  sample_cluster_method=waiver(),
-                                                  sample_linkage_method=waiver(),
-                                                  sample_similarity_metric=waiver(),
-                                                  eval_times=waiver(),
-                                                  message_indent=0L,
-                                                  verbose=FALSE,
-                                                  ...) standardGeneric("extract_feature_expression"))
-
-#####extract_feature_expression#####
-setMethod("extract_feature_expression", signature(object="familiarEnsemble", data="ANY"),
-          function(object,
-                   data,
-                   feature_similarity,
-                   sample_similarity_table,
-                   feature_cluster_method=waiver(),
-                   feature_linkage_method=waiver(),
-                   feature_similarity_metric=waiver(),
-                   sample_cluster_method=waiver(),
-                   sample_linkage_method=waiver(),
-                   sample_similarity_metric=waiver(),
-                   eval_times=waiver(),
-                   message_indent=0L,
-                   verbose=FALSE){
-            
-            # Message extraction start
-            if(verbose){
-              logger.message(paste0("Computing sample clustering using important features."),
-                             indent=message_indent)
-            }
-            
-            # Obtain feature cluster method from stored settings, if required.
-            if(is.waive(feature_cluster_method)){
-              feature_cluster_method <- object@settings$feature_cluster_method
-            }
-            
-            # Obtain feature linkage function from stored settings, if required.
-            if(is.waive(feature_linkage_method)){
-              feature_linkage_method <- object@settings$feature_linkage_method
-            }
-            
-            # Obtain feature similarity metric from stored settings, if required.
-            if(is.waive(feature_similarity_metric)){
-              feature_similarity_metric <- object@settings$feature_similarity_metric
-            }
-            
-            # Replace feature cluster method == "none" with "hclust"
-            if(feature_cluster_method == "none"){
-              feature_cluster_method <- "hclust"
-            }
-            
-            .check_cluster_parameters(cluster_method=feature_cluster_method,
-                                      cluster_linkage=feature_linkage_method,
-                                      cluster_similarity_metric=feature_similarity_metric,
-                                      var_type="feature")
-            
-            # Obtain sample cluster method from stored settings, if required.
-            if(is.waive(sample_cluster_method)){
-              sample_cluster_method <- object@settings$sample_cluster_method
-            }
-            
-            # Obtain sample linkage function from stored settings, if required.
-            if(is.waive(sample_linkage_method)){
-              sample_linkage_method <- object@settings$sample_linkage_method
-            }
-            
-            # Obtain sample similarity metric from stored settings, if required.
-            if(is.waive(sample_similarity_metric)){
-              sample_similarity_metric <- object@settings$sample_similarity_metric
-            }
-            
-            # Replace sample cluster method == "none" with "hclust"
-            if(sample_cluster_method == "none"){
-              sample_cluster_method <- "hclust"
-            }
-            
-            .check_cluster_parameters(cluster_method=sample_cluster_method,
-                                      cluster_linkage=sample_linkage_method,
-                                      cluster_similarity_metric=sample_similarity_metric,
-                                      var_type="sample")
-
-            # Obtain evaluation times from the data.
-            if(is.waive(eval_times) & object@outcome_type %in% c("survival", "competing_risk")){
-              eval_times <- object@settings$eval_times
-              
-            } else if(is.waive(eval_times)){
-              eval_times <- NULL
-            }
-            
-            # Check if eval_times is correct.
-            if(object@outcome_type %in% c("survival", "competing_risk")){
-              sapply(eval_times, .check_number_in_valid_range, var_name="eval_times", range=c(0.0, Inf), closed=c(FALSE, TRUE))
-            }
-            
-            # Aggregate data
-            data <- aggregate_data(data=data)
-            
-            # Retrieve input data. Note that we batch_normalisation is taken
-            # into account even though the data are converted back to their
-            # original scale to derive expressions.
-            data <- process_input_data(object=object, data=data, stop_at="batch_normalisation")
-            
-            if(is_empty(data)) return(NULL)
-            
-            # Determine signature features
-            model_features <- object@model_features
-            
-            # Maintain only important features. The current set is based on the
-            # important features of the model, i.e. those that end up in the
-            # model (potentially as a cluster).
-            expression_data <- filter_features(data=data, available_features=model_features)
-            
-            # Perform inverse normalisation
-            expression_data <- normalise_features(data=expression_data,
-                                                  feature_info_list=object@feature_info,
-                                                  invert=TRUE)
-            
-            # Perform inverse transformation
-            expression_data <- transform_features(data=expression_data,
-                                                  feature_info_list=object@feature_info,
-                                                  invert=TRUE)
-            
-            # Extract expression data.
-            expression_data <- expression_data@data
-            
-            # Extract feature info list.
-            feature_info_list <- object@feature_info[model_features]
-            
-            # Check if any data are available for ordering features.
-            if(!is_empty(feature_similarity)){
-            
-              # Get the distance matrix from the feature_similarity
-              feature_distance_matrix <- cluster.get_distance_matrix(similarity_table=feature_similarity,
-                                                                     similarity_metric=feature_similarity_metric)
-              
-              # Obtain cluster object that identifies similar features.
-              h_feature <- cluster.get_cluster_object(distance_matrix=feature_distance_matrix,
-                                                      cluster_method=feature_cluster_method,
-                                                      cluster_linkage=feature_linkage_method)
-              
-              # Get data.table with feature ordered according to similarity.
-              feature_order_table <- cluster.extract_label_order(cluster_object=h_feature,
-                                                                 cluster_method=feature_cluster_method)
-            } else {
-              # Replacement for empty feature similarity tables
-              feature_order_table <- data.table::data.table("name"=object@model_features)
-              feature_order_table[, "label_order":=.I]
-              
-              # Placeholder cluster object
-              h_feature <- NULL
-            }
-            
-            # Check if any data are available for ordering samples.
-            if(!is_empty(sample_similarity_table)){
-            
-              # Get the distance matrix from the sample_similarity_table.
-              sample_distance_matrix <- cluster.get_distance_matrix(similarity_table=sample_similarity_table,
-                                                                    similarity_metric=sample_similarity_metric)
-              
-              # Obtain cluster object that identifies similar samples.
-              h_sample <- cluster.get_cluster_object(distance_matrix=sample_distance_matrix,
-                                                     cluster_method=sample_cluster_method,
-                                                     cluster_linkage=sample_linkage_method)
-              
-              # Get data.table with samples ordered according to similarity.
-              sample_order_table <- cluster.extract_label_order(cluster_object=h_sample,
-                                                                cluster_method=sample_cluster_method)
-            } else {
-              # Replacement for empty sample similarity tables
-              sample_order_table <- data.table::data.table("sample_name"=get_unique_row_names(expression_data))
-              sample_order_table[, "label_order":=.I]
-              
-              # Placeholder cluster object
-              h_sample <- NULL
-            }
-            
-            # Add sample_name to expression_data
-            row_names <- get_unique_row_names(expression_data)
-            expression_data[, ":="("sample_name"=row_names, "batch_id"=NULL, "sample_id"=NULL, "series_id"=NULL, "repetition_id"=NULL)]
-            
-            # Add model name.
-            expression_data <- add_model_name(data=expression_data, object=object)
-            
-            # Store to list. Note that the normalisation parameters are the
-            # general normalisation parameter, not batch-normalisation parameters.
-            expression_info <- list("expression_data"=expression_data,
-                                    "feature_info"=feature_info_list,
-                                    "feature_similarity_metric"=feature_similarity_metric,
-                                    "feature_cluster_object"=h_feature,
-                                    "feature_order"=feature_order_table,
-                                    "sample_similarity_metric"=sample_similarity_metric,
-                                    "sample_cluster_object"=h_sample,
-                                    "sample_order"=sample_order_table,
-                                    "evaluation_times"=eval_times)
-            
-            return(expression_info)
-          })

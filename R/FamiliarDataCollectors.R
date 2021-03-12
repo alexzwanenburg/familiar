@@ -40,50 +40,6 @@ collect_univariate_analysis <- function(fam_data_list){
 
 
 
-#' @title Collector for feature expression data
-#'
-#' @details Underlying tables with feature expression data may not contain the
-#'   same features and may therefore not be joinable. The implementation here
-#'   joins all expression tables that can be joined.
-#'
-#' @inheritParams collect_fs_vimp
-#'
-#' @return A list with aggregated univariate analysis information.
-#' @noRd
-collect_feature_expressions <- function(fam_data_list){
-  # Feature expressions may be shared between different familiarData objects,
-  # but we should check whether they can be combined directly.
-
-  expression_list <- lapply(fam_data_list, function(fam_obj){
-    
-    # Extract expressions
-    expression_table <- fam_obj@feature_expressions$expression_data
-    
-    if(is_empty(expression_table)){
-      return(NULL)
-      
-    } else {
-      # Add identifiers
-      expression_table <- add_identifiers(data=data.table::copy(expression_table),
-                                          object=fam_obj,
-                                          more_identifiers=c("fs_method", "learner"))
-    }
-    
-    return(list("data"=expression_table,
-                "feature_info"=fam_obj@feature_expressions$feature_info,
-                "feature_cluster_object"=fam_obj@feature_expressions$feature_cluster_object,
-                "feature_order"=fam_obj@feature_expressions$feature_order,
-                "feature_similarity_metric"=fam_obj@feature_expressions$feature_similarity_metric,
-                "sample_cluster_object"=fam_obj@feature_expressions$sample_cluster_object,
-                "sample_order"=fam_obj@feature_expressions$sample_order,
-                "sample_similarity_metric"=fam_obj@feature_expressions$sample_similarity_metric,
-                "evaluation_times"=fam_obj@feature_expressions$evaluation_times))
-  })
-
-  return(expression_list)
-}
-
-
 
 .which_unique_data <- function(fam_data_list, by){
   # Perform comparisons to find out which datasets provide unique data
