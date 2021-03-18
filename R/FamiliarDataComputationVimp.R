@@ -235,7 +235,9 @@ setMethod("..compute_data_element_estimates", signature(x="familiarDataElementVi
                                               translation_table=translation_table)
             
             # Update column names.
-            data.table::setnames(data, c("aggr_rank", "aggr_score"), c("rank", "score"))
+            data.table::setnames(data,
+                                 old=c("name", "aggr_rank", "aggr_score"),
+                                 new=c("feature", "rank", "score"))
             data <- data[order(rank)]
             
             # Add cluster size.

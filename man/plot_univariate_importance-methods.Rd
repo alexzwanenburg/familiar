@@ -8,9 +8,13 @@
 \usage{
 plot_univariate_importance(
   object,
+  feature_cluster_method = waiver(),
+  feature_linkage_method = waiver(),
+  feature_cluster_cut_method = waiver(),
+  feature_similarity_threshold = waiver(),
   draw = FALSE,
   dir_path = NULL,
-  importance_metric = c("fdr", "p_value", "q_value"),
+  p_adjustment_method = waiver(),
   split_by = NULL,
   color_by = NULL,
   facet_by = NULL,
@@ -38,9 +42,13 @@ plot_univariate_importance(
 
 \S4method{plot_univariate_importance}{ANY}(
   object,
+  feature_cluster_method = waiver(),
+  feature_linkage_method = waiver(),
+  feature_cluster_cut_method = waiver(),
+  feature_similarity_threshold = waiver(),
   draw = FALSE,
   dir_path = NULL,
-  importance_metric = c("fdr", "p_value", "q_value"),
+  p_adjustment_method = waiver(),
   split_by = NULL,
   color_by = NULL,
   facet_by = NULL,
@@ -68,9 +76,13 @@ plot_univariate_importance(
 
 \S4method{plot_univariate_importance}{familiarCollection}(
   object,
+  feature_cluster_method = waiver(),
+  feature_linkage_method = waiver(),
+  feature_cluster_cut_method = waiver(),
+  feature_similarity_threshold = waiver(),
   draw = FALSE,
   dir_path = NULL,
-  importance_metric = c("fdr", "p_value", "q_value"),
+  p_adjustment_method = waiver(),
   split_by = NULL,
   color_by = NULL,
   facet_by = NULL,
@@ -109,9 +121,10 @@ prior to export. Paths to such files can also be provided.}
 saved to. Output is saved in the \code{variable_importance} subdirectory. If NULL
 no figures are saved, but are returned instead.}
 
-\item{importance_metric}{(\emph{optional}) Indicates type of p-value that is shown.
-One of \code{fdr}, \code{p_value} or \code{q_value} for FDR-corrected p-values, uncorrected
-p-values and q-values respectively. q-values may not be available.}
+\item{p_adjustment_method}{(\emph{optional}) Indicates type of p-value that is shown.
+One of \code{holm}, \code{hochberg}, \code{hommel}, \code{bonferroni}, \code{BH}, \code{BY},
+\code{fdr}, \code{none}, \code{p_value} or \code{q_value} for adjusted p-values, uncorrected
+p-values and q-values. q-values may not be available.}
 
 \item{split_by}{(\emph{optional}) Splitting variables. This refers to column names
 on which datasets are split. A separate figure is created for each split.
@@ -242,7 +255,7 @@ palette based on palettes in Tableau are used. You may also specify your own
 palette by using colour names listed by \code{grDevices::colors()} or through
 hexadecimal RGB strings.
 
-Labeling methods such as \code{set_fs_method_names} or \code{set_feature_names} can be
-applied to the \code{familiarCollection} object to update labels, and order the
-output in the figure.
+Labelling methods such as \code{set_fs_method_names} or \code{set_feature_names} can
+be applied to the \code{familiarCollection} object to update labels, and order
+the output in the figure.
 }

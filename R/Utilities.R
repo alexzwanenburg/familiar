@@ -472,7 +472,7 @@ compute_icc <- function(x, feature, id_data, type="1"){
     if(!is.finite(icc_ci_up)) icc_panel_ci_up <- 1.0
   }
   
-  return(data.table::data.table("name"=feature,
+  return(data.table::data.table("feature"=feature,
                                 "icc"=icc,
                                 "icc_low"=icc_ci_low,
                                 "icc_up"=icc_ci_up,

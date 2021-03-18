@@ -268,7 +268,7 @@ plotting.parse_facet_by <- function(x, facet_by, facet_wrap_cols){
 plotting.add_cluster_name <- function(x, color_by=NULL, facet_by=NULL, singular_cluster_character="\u2014"){
   
   # Suppress NOTES due to non-standard evaluation in data.table
-  cluster_size <- cluster_id <- name <- new_cluster_id <- cluster_name <- NULL
+  cluster_size <- cluster_id <- feature <- new_cluster_id <- cluster_name <- NULL
   
   ..integer_to_char <- function(x){
     # Initialise placeholders
@@ -322,7 +322,7 @@ plotting.add_cluster_name <- function(x, color_by=NULL, facet_by=NULL, singular_
     # Only determine cluster_name for those clusters that have cluster_size > 1.
     # Also, the most important features should receive a higher replacement
     # cluster_id.
-    y_short <- y[cluster_size > 1, c("name", "cluster_id"), with=FALSE]
+    y_short <- y[cluster_size > 1, c("feature", "cluster_id"), with=FALSE]
     
     if(!is_empty(y_short)){
       # Remove unused levels for the name column. The levels of name are
@@ -333,11 +333,11 @@ plotting.add_cluster_name <- function(x, color_by=NULL, facet_by=NULL, singular_
       y_short[, "new_cluster_id":=NA_integer_]
       
       new_id <- 1L
-      for(feature in levels(y_short$name)){
+      for(current_feature in levels(y_short$feature)){
         # Provide new cluster id in case none exists.
-        if(is.na(y_short[name == feature, ]$new_cluster_id[1])){
+        if(is.na(y_short[feature == current_feature, ]$new_cluster_id[1])){
           # Find the old cluster id.
-          old_cluster_id <- y_short[name == feature, ]$cluster_id[1]
+          old_cluster_id <- y_short[feature == current_feature, ]$cluster_id[1]
           
           # Update all entries with the same old cluster id.
           y_short[cluster_id == old_cluster_id, "new_cluster_id":=new_id]
@@ -348,13 +348,13 @@ plotting.add_cluster_name <- function(x, color_by=NULL, facet_by=NULL, singular_
       }
       
       # Determine cluster name based on id.
-      y_short[, "cluster_name":=..integer_to_char(new_cluster_id), by="name"]
+      y_short[, "cluster_name":=..integer_to_char(new_cluster_id), by="feature"]
       
       # Drop redundant columns
       y_short[, ":="("cluster_id"=NULL, "new_cluster_id"=NULL)]
       
       # Merge with y.
-      y <- merge(x=y, y=y_short, by="name", all=TRUE)
+      y <- merge(x=y, y=y_short, by="feature", all=TRUE)
       
       # Mark singular clusters
       y[is.na(cluster_name), "cluster_name":=singular_cluster_character]

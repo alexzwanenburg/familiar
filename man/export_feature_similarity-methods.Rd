@@ -16,6 +16,7 @@ export_feature_similarity(
   feature_similarity_threshold = waiver(),
   export_dendrogram = FALSE,
   export_ordered_data = FALSE,
+  export_clustering = FALSE,
   ...
 )
 
@@ -29,6 +30,7 @@ export_feature_similarity(
   feature_similarity_threshold = waiver(),
   export_dendrogram = FALSE,
   export_ordered_data = FALSE,
+  export_clustering = FALSE,
   ...
 )
 
@@ -42,6 +44,7 @@ export_feature_similarity(
   feature_similarity_threshold = waiver(),
   export_dendrogram = FALSE,
   export_ordered_data = FALSE,
+  export_clustering = FALSE,
   ...
 )
 }

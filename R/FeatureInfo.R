@@ -500,7 +500,7 @@ find_non_robust_features <- function(cl=NULL, feature_info_list, data_obj, setti
   icc_table <- data.table::rbindlist(icc_list)
   
   # Identify the features with low robustness
-  low_robustness_features <- icc_table[get(icc_filter_column) < icc_threshold]$name
+  low_robustness_features <- icc_table[get(icc_filter_column) < icc_threshold]$feature
   
   # Set removal flags for features with low robustness
   if(length(low_robustness_features) > 0){

@@ -341,7 +341,6 @@ plot_model_signature_variable_importance <- function(...){
   # Check that the data are not empty.
   if(is_empty(x)) return(NULL)
   
-  
   ##### Check input arguments ##################################################
   
   # ggtheme
@@ -529,14 +528,14 @@ plot_model_signature_variable_importance <- function(...){
   
   # Create a local copy of x prior to making changes based on plot_data
   x <- data.table::copy(x)
-  x$name <- droplevels(x$name)
+  x$feature <- droplevels(x$feature)
   
   # Order by ascending rank.
   x <- x[order(rank)]
   
   # Update the ordering of features so that the features are ordered by
   # increasing score or occurrence
-  x$name <- factor(x$name, levels=unique(x$name))
+  x$feature <- factor(x$feature, levels=unique(x$feature))
   
   # Generate a guide table
   guide_list <- plotting.create_guide_table(x=x, color_by=color_by, discrete_palette=discrete_palette)
@@ -554,7 +553,7 @@ plot_model_signature_variable_importance <- function(...){
                             y_breaks=y_breaks)
 
   # Create basic plot
-  p <- ggplot2::ggplot(data=x, mapping=ggplot2::aes(x=!!sym("name"),
+  p <- ggplot2::ggplot(data=x, mapping=ggplot2::aes(x=!!sym("feature"),
                                                     y=!!sym("score")))
   p <- p + ggtheme
   
@@ -680,8 +679,8 @@ plot_model_signature_variable_importance <- function(...){
                                              facet_wrap_cols=facet_wrap_cols)
   
   # Determine the number of features within each facet.
-  n_features <- data.table::uniqueN(x=x$name)
-  longest_name <- max(sapply(levels(x$name), nchar))
+  n_features <- data.table::uniqueN(x=x$feature)
+  longest_name <- max(sapply(levels(x$feature), nchar))
   
   # Assume each feature takes up about 14 points (~5mm) with 2 point (0.07mm)
   # spacing. Then add some room for other plot elements.
