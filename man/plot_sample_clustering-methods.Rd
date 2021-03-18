@@ -151,11 +151,8 @@ plot_sample_clustering(
 )
 }
 \arguments{
-\item{object}{\code{familiarCollection} object, or one or more \code{familiarData}
-objects, that will be internally converted to a \code{familiarCollection} object.
-It is also possible to provide a \code{familiarEnsemble} or one or more
-\code{familiarModel} objects together with the data from which data is computed
-prior to export. Paths to such files can also be provided.}
+\item{object}{A \code{familiarCollection} object, or other other objects from which
+a \code{familiarCollection} can be extracted. See details for more information.}
 
 \item{draw}{(\emph{optional}) Draws the plot if TRUE.}
 

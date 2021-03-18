@@ -18,7 +18,7 @@
 }
 \arguments{
 \item{cl}{Cluster created using the \code{parallel} package. This cluster is then
-used to speed up computation through parallelisation.}
+used to speed up computation through parallellisation.}
 
 \item{FUN}{Extraction function or method to which data and parameters are
 dispatched.}

@@ -28,7 +28,7 @@ extract_univariate_analysis(
 constitutes the data that are used to compute}
 
 \item{cl}{Cluster created using the \code{parallel} package. This cluster is then
-used to speed up computation through parallelisation.}
+used to speed up computation through parallellisation.}
 
 \item{icc_type}{String indicating the type of intraclass correlation
 coefficient (\code{1}, \code{2} or \code{3}) that should be used to compute robustness for

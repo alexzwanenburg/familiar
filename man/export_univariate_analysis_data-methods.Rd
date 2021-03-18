@@ -45,7 +45,7 @@ p-values and q-values. q-values may not be available.}
     \item{\code{data}}{A \code{dataObject} object, \code{data.table} or \code{data.frame} that
 constitutes the data that are used to compute}
     \item{\code{cl}}{Cluster created using the \code{parallel} package. This cluster is then
-used to speed up computation through parallelisation.}
+used to speed up computation through parallellisation.}
     \item{\code{icc_type}}{String indicating the type of intraclass correlation
 coefficient (\code{1}, \code{2} or \code{3}) that should be used to compute robustness for
 features in repeated measurements during the evaluation of univariate

@@ -31,7 +31,7 @@ extract_feature_similarity(
 constitutes the data that are used to compute}
 
 \item{cl}{Cluster created using the \code{parallel} package. This cluster is then
-used to speed up computation through parallelisation.}
+used to speed up computation through parallellisation.}
 
 \item{estimation_type}{(\emph{optional}) Sets the type of estimation that should be
 possible. This has the following options:

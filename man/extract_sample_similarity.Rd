@@ -25,7 +25,7 @@ extract_sample_similarity(
 constitutes the data that are used to compute}
 
 \item{cl}{Cluster created using the \code{parallel} package. This cluster is then
-used to speed up computation through parallelisation.}
+used to speed up computation through parallellisation.}
 
 \item{is_pre_processed}{Flag that indicates whether the data was already
 pre-processed externally, e.g. normalised and clustered. Only used if the

@@ -25,18 +25,18 @@ will allow export as a structured list of data.tables.}
     \item{\code{data}}{A \code{dataObject} object, \code{data.table} or \code{data.frame} that
 constitutes the data that are used to compute}
     \item{\code{cl}}{Cluster created using the \code{parallel} package. This cluster is then
-used to speed up computation through parallelisation.}
+used to speed up computation through parallellisation.}
     \item{\code{ensemble_method}}{Method for ensembling predictions from models for the
 same sample. Available methods are:
 \itemize{
 \item \code{mean}: Use the mean of the predicted values as the ensemble value for a
 sample.
 }}
-    \item{\code{eval_times}}{One or more time points that are used for assessing
-calibration in survival problems. This is done as expected and observed
-survival probabilities depend on time. If not provided explicitly, this
-parameter is read from settings used at creation of the underlying
-\code{familiarModel} objects. Only used for \code{survival} outcomes.}
+    \item{\code{eval_times}}{One or more time points that are used for in analysis of
+survival problems when data has to be assessed at a set time, e.g.
+calibration. If not provided explicitly, this parameter is read from
+settings used at creation of the underlying \code{familiarModel} objects. Only
+used for \code{survival} outcomes.}
     \item{\code{detail_level}}{(\emph{optional}) Sets the level at which results are computed
 and aggregated.
 \itemize{

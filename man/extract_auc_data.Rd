@@ -28,7 +28,7 @@ extract_auc_data(
 constitutes the data that are used to compute}
 
 \item{cl}{Cluster created using the \code{parallel} package. This cluster is then
-used to speed up computation through parallelisation.}
+used to speed up computation through parallellisation.}
 
 \item{ensemble_method}{Method for ensembling predictions from models for the
 same sample. Available methods are:

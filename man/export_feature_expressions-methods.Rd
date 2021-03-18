@@ -6,11 +6,26 @@
 \alias{export_feature_expressions,ANY-method}
 \title{Extract and export feature expressions.}
 \usage{
-export_feature_expressions(object, dir_path = NULL, ...)
+export_feature_expressions(
+  object,
+  dir_path = NULL,
+  evaluation_time = waiver(),
+  ...
+)
 
-\S4method{export_feature_expressions}{familiarCollection}(object, dir_path = NULL, ...)
+\S4method{export_feature_expressions}{familiarCollection}(
+  object,
+  dir_path = NULL,
+  evaluation_time = waiver(),
+  ...
+)
 
-\S4method{export_feature_expressions}{ANY}(object, dir_path = NULL, ...)
+\S4method{export_feature_expressions}{ANY}(
+  object,
+  dir_path = NULL,
+  evaluation_time = waiver(),
+  ...
+)
 }
 \arguments{
 \item{object}{A \code{familiarCollection} object, or other other objects from which
@@ -18,6 +33,11 @@ a \code{familiarCollection} can be extracted. See details for more information.}
 
 \item{dir_path}{Path to folder where extracted data should be saved. \code{NULL}
 will allow export as a structured list of data.tables.}
+
+\item{evaluation_time}{One or more time points that are used to create the
+outcome columns in expression plots. If not provided explicitly, this
+parameter is read from settings used at creation of the underlying
+\code{familiarData} objects. Only used for \code{survival} outcomes.}
 
 \item{...}{
   Arguments passed on to \code{\link[=extract_feature_expression]{extract_feature_expression}}, \code{\link[=as_familiar_collection]{as_familiar_collection}}
@@ -83,11 +103,11 @@ the metric name. This reduces the effect of outliers somewhat.
 
 If not provided explicitly, this parameter is read from settings used at
 creation of the underlying \code{familiarModel} objects.}
-    \item{\code{eval_times}}{One or more time points that are used for assessing
-calibration in survival problems. This is done as expected and observed
-survival probabilities depend on time. If not provided explicitly, this
-parameter is read from settings used at creation of the underlying
-\code{familiarModel} objects. Only used for \code{survival} outcomes.}
+    \item{\code{eval_times}}{One or more time points that are used for in analysis of
+survival problems when data has to be assessed at a set time, e.g.
+calibration. If not provided explicitly, this parameter is read from
+settings used at creation of the underlying \code{familiarModel} objects. Only
+used for \code{survival} outcomes.}
     \item{\code{message_indent}}{Number of indentation steps for messages shown during
 computation and extraction of various data elements.}
     \item{\code{verbose}}{Flag to indicate whether feedback should be provided on the

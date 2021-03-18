@@ -25,7 +25,7 @@ will allow export as a structured list of data.tables.}
     \item{\code{data}}{A \code{dataObject} object, \code{data.table} or \code{data.frame} that
 constitutes the data that are used to compute}
     \item{\code{cl}}{Cluster created using the \code{parallel} package. This cluster is then
-used to speed up computation through parallelisation.}
+used to speed up computation through parallellisation.}
     \item{\code{ensemble_method}}{Method for ensembling predictions from models for the
 same sample. Available methods are:
 \itemize{
