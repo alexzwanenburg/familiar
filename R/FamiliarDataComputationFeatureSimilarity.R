@@ -293,6 +293,43 @@ setMethod("extract_feature_similarity", signature(object="familiarEnsemble", dat
 
 
 
+..compute_feature_similarity_clusters <- function(x){
+  if(is_empty(x)) return(x)
+  
+  # Compute the distance matrix
+  distance_matrix <- cluster.get_distance_matrix(similarity_table=x@data,
+                                                 similarity_metric=x@similarity_metric)
+  
+  # Find cluster information
+  cluster_info <- cluster.get_cluster_table(distance_matrix=distance_matrix,
+                                            require_representation=FALSE,
+                                            cluster_method=x@cluster_method,
+                                            cluster_linkage=x@linkage_method,
+                                            cluster_cut_method=x@cluster_cut_method,
+                                            cluster_similarity_threshold=x@similarity_threshold,
+                                            cluster_similarity_metric=x@similarity_metric)
+  
+  # Keep only name and cluster_id columns
+  cluster_info <- cluster_info[, c("name", "cluster_id"), with=FALSE]
+  
+  # Compute cluster size
+  cluster_info[, "cluster_size":=.N, by="cluster_id"]
+  
+  # Rename name column to 
+  data.table::setnames(cluster_info, old="name", new="feature")
+  
+  # Set cluster info as data.
+  x@data <- cluster_info
+  
+  # Reset value and grouping columns.
+  x@value_column <- c("cluster_id", "cluster_size")
+  x@grouping_column <- "feature"
+  
+  return(x)
+}
+
+
+
 ..compute_feature_similarity_clustering <- function(x){
   
   if(is_empty(x)) return(x)
@@ -372,6 +409,7 @@ setGeneric("export_feature_similarity",
                     feature_similarity_threshold=waiver(),
                     export_dendrogram=FALSE,
                     export_ordered_data=FALSE,
+                    export_clustering=FALSE,
                     ...) standardGeneric("export_feature_similarity"))
 
 #####export_feature_similarity (collection)#####
@@ -387,10 +425,13 @@ setMethod("export_feature_similarity", signature(object="familiarCollection"),
                    feature_similarity_threshold=waiver(),
                    export_dendrogram=FALSE,
                    export_ordered_data=FALSE,
+                   export_clustering=FALSE,
                    ...){
             
             # Extract data.
             x <- object@feature_similarity
+            
+            if(export_ordered_data & export_clustering) stop("Cannot simultaneously export cluster information and ordering of features.")
             
             # Check that the data are not empty.
             if(is_empty(x)) return(NULL)
@@ -443,12 +484,16 @@ setMethod("export_feature_similarity", signature(object="familiarCollection"),
                                       cluster_similarity_metric=x[[1]]@similarity_metric,
                                       var_type="feature")
             
-            if(aggregate_results | export_dendrogram | export_ordered_data){
+            if(aggregate_results | export_dendrogram | export_ordered_data | export_clustering){
               x <- .compute_data_element_estimates(x)
               
-              if(export_dendrogram | export_ordered_data){
-                # Add 
+              if(export_dendrogram | export_ordered_data | export_clustering){
+                # Add dendrogram and other cluster objects.
                 x <- lapply(x, ..compute_feature_similarity_dendrogram)
+              }
+              
+              if(export_clustering){
+                x <- lapply(x, ..compute_feature_similarity_clusters)
               }
               
               if(export_ordered_data){
