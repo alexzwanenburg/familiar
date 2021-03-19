@@ -86,3 +86,11 @@ familiar:::test_plot_ordering(plot_function=familiar:::plot_sample_clustering,
                                              "verbose"=FALSE),
                               debug=debug_flag)
 
+
+# Test multiple evaluation times
+familiar:::test_plot_ordering(plot_function=familiar:::plot_sample_clustering,
+                              data_element="feature_expressions",
+                              outcome_type_available=c("survival"),
+                              plot_args=list("evaluation_times"=c(500, 1000, 1500, 2000),
+                                             "verbose"=FALSE),
+                              debug=debug_flag)

@@ -136,6 +136,11 @@ setMethod("extract_feature_expression", signature(object="familiarEnsemble", dat
 #'@description Extract and export feature expressions for the features in a
 #'  familiarCollection.
 #'
+#'@param evaluation_time One or more time points that are used to create the
+#'  outcome columns in expression plots. If not provided explicitly, this
+#'  parameter is read from settings used at creation of the underlying
+#'  `familiarData` objects. Only used for `survival` outcomes.
+#'
 #'@inheritParams export_all
 #'
 #'@inheritDotParams extract_feature_expression
@@ -160,16 +165,43 @@ setMethod("extract_feature_expression", signature(object="familiarEnsemble", dat
 #'@md
 #'@rdname export_feature_expressions-methods
 setGeneric("export_feature_expressions",
-           function(object, dir_path=NULL, ...) standardGeneric("export_feature_expressions"))
+           function(object,
+                    dir_path=NULL,
+                    evaluation_time=waiver(),
+                    ...) standardGeneric("export_feature_expressions"))
 
 #####export_feature_expressions (collection)#####
 
 #'@rdname export_feature_expressions-methods
 setMethod("export_feature_expressions", signature(object="familiarCollection"),
-          function(object, dir_path=NULL, ...){
+          function(object,
+                   dir_path=NULL,
+                   evaluation_time=waiver(), ...){
+            
+            # Extract data.
+            x <- object@feature_expressions
+            
+            # Check that the data are not empty.
+            if(is_empty(x)) return(NULL)
+            
+            if(!is.waive(evaluation_time)){
+              
+              # Check values.
+              sapply(evaluation_time,
+                     .check_number_in_valid_range,
+                     var_name="evaluation_time",
+                     range=c(0, Inf))
+              
+              # Set clustering method.
+              x <- lapply(x, function(x, evaluation_time){
+                x@evaluation_time <- evaluation_time
+                return(x)
+              },
+              evaluation_time=evaluation_time)
+            }
             
             return(.export(x=object,
-                           data_slot="feature_expressions",
+                           data_elements=x,
                            dir_path=dir_path,
                            aggregate_results=FALSE,
                            type="feature_expression",
@@ -181,17 +213,22 @@ setMethod("export_feature_expressions", signature(object="familiarCollection"),
 
 #'@rdname export_feature_expressions-methods
 setMethod("export_feature_expressions", signature(object="ANY"),
-          function(object, dir_path=NULL, ...){
+          function(object,
+                   dir_path=NULL,
+                   evaluation_time=waiver(),
+                   ...){
             
             # Attempt conversion to familiarCollection object.
             object <- do.call(as_familiar_collection,
                               args=c(list("object"=object,
-                                          "data_element"="feature_expressions"),
+                                          "data_element"="feature_expressions",
+                                          "eval_times"=evaluation_time),
                                      list(...)))
             
             return(do.call(export_feature_expressions,
                            args=c(list("object"=object,
-                                       "dir_path"=dir_path),
+                                       "dir_path"=dir_path,
+                                       "evaluation_time"=evaluation_time),
                                   list(...))))
           })
 

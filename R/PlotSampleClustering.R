@@ -91,6 +91,8 @@ NULL
 #'  time-to-event survival outcomes are determined. Only used for `survival`
 #'  outcome. If not specified, the values used when creating the underlying
 #'  `familiarData` objects are used.
+#'@inheritParams export_feature_similarity
+#'@inheritParams export_sample_similarity
 #'@inheritParams as_familiar_collection
 #'@inheritParams plot_univariate_importance
 #'@inheritParams plotting.check_input_args
@@ -337,7 +339,8 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
                    ...){
             
             # Get feature expression data
-            feature_expression <- export_feature_expressions(object=object)
+            feature_expression <- export_feature_expressions(object=object,
+                                                             evaluation_time=evaluation_times)
             
             # Get feature similarity data.
             feature_similarity <- export_feature_similarity(object=object,
