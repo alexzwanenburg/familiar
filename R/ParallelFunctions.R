@@ -415,7 +415,7 @@ fam_sapply_lb <- function(cl=NULL, assign=NULL, X, FUN, progress_bar=FALSE, ...,
 
 
 
-fam_mapply <- function(cl=NULL, assign=NULL, FUN, ...,  progress_bar=FALSE, MoreArgs=NULL, SIMPLIFY=FALSE, USE.NAMES=TRUE, .scheduling="static"){
+fam_mapply <- function(cl=NULL, assign=NULL, FUN, ...,  progress_bar=FALSE, MoreArgs=NULL, SIMPLIFY=FALSE, USE.NAMES=TRUE, .scheduling="static", .chopchop=FALSE){
   # mapply. Reverts to sequential mapply if cl is NULL.
   
   # Restart cluster if specified. This also means that we should terminate the
@@ -464,14 +464,40 @@ fam_mapply <- function(cl=NULL, assign=NULL, FUN, ...,  progress_bar=FALSE, More
     close(pb_conn)
     
   } else if(inherits(cl, "cluster")){
-    # Parallel lapply without load balancing.
-    y <- do.call(parallel::clusterMap, args=c(list("cl"=cl,
-                                                   "fun"=FUN),
-                                              list(...),
-                                              list("MoreArgs"=MoreArgs,
+    
+    if(.chopchop){
+      # Send to a chunking function for chopping into a list with up to n_cl
+      # elements.
+      dots <- .chop_args(args=list(...),
+                         n_cl=length(cl))
+      
+      # Limit the number of clusters.
+      if(length(dots) < length(cl)) cl[1:length(dots)]
+      
+      # Iterate over cluster nodes for assignment using .chopped_mapply.
+      y <- do.call(parallel::clusterMap, args=list("fun"=.chopped_mapply,
+                                                   "cl"=cl,
+                                                   "dots"=dots,
+                                                   "MoreArgs"=list("FUN2"=FUN,
+                                                                   "MoreArgs"=MoreArgs,
+                                                                   "SIMPLIFY2"=SIMPLIFY,
+                                                                   "USE.NAMES2"=USE.NAMES),
                                                    "SIMPLIFY"=SIMPLIFY,
-                                                   "USE.NAMES"=USE.NAMES,
-                                                   ".scheduling"=.scheduling)))
+                                                   "USE.NAMES"=USE.NAMES))
+      
+      # Flatten the list.
+      y <- unlist(y, recursive=FALSE)
+      
+    } else {
+      # Parallel mapply using clustermap
+      y <- do.call(parallel::clusterMap, args=c(list("cl"=cl,
+                                                     "fun"=FUN),
+                                                list(...),
+                                                list("MoreArgs"=MoreArgs,
+                                                     "SIMPLIFY"=SIMPLIFY,
+                                                     "USE.NAMES"=USE.NAMES,
+                                                     ".scheduling"=.scheduling)))
+    }
     
   } else {
     ..error_reached_unreachable_code("fam_lapply: the cluster object is neither NULL nor a cluster.")
@@ -513,4 +539,45 @@ fam_mapply_lb <- function(cl=NULL, assign=NULL, FUN, ...,  progress_bar=FALSE, M
   utils::setTxtProgressBar(pb=pb_conn, value=II)
   
   return(y)
+}
+
+
+
+.chopped_mapply <- function(FUN2, dots, MoreArgs=NULL, SIMPLIFY2, USE.NAMES2){
+  
+  # Execute function on cluster
+  y <- do.call(mapply, args=c(list("FUN"=FUN2,
+                                   "SIMPLIFY"=SIMPLIFY2,
+                                   "USE.NAMES"=USE.NAMES2,
+                                   "MoreArgs"=MoreArgs),
+                              dots))
+  return(y)
+}
+
+
+
+.chop_args <- function(args, n_cl){
+  
+  n_x <- unique(sapply(args, length))
+  if(length(n_x)!=1) ..error_reached_unreachable_code(".chop_args: arguments do not have the same length.")
+  
+  if(n_cl == 0){
+    index <- list()
+    
+  } else if(n_x == 1 | n_cl == 1){
+    index <- list(seq_len(n_x))
+    
+  } else {
+    index <- structure(split(seq_len(n_x),
+                             cut(seq_len(n_x), n_cl)),
+                       names=NULL)
+  }
+  
+  # Split arguments internally.
+  chopped_args <- lapply(index, function(ii, x){
+    return(lapply(x, function(x, ii) (x[ii]), ii=ii))
+  },
+  x=args)
+
+  return(chopped_args)
 }
