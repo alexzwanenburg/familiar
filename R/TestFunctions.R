@@ -1413,14 +1413,38 @@ test_plot_ordering <- function(plot_function,
                                outcome_type_available=c("count", "continuous", "binomial", "multinomial", "survival"),
                                ...,
                                plot_args=list(),
-                               debug=FALSE){
+                               debug=FALSE,
+                               parallel=waiver()){
   
+  # Set debug options.
   if(debug){
     test_fun <- debug_test_that
     plot_args$draw <- TRUE
     
   } else {
     test_fun <- testthat::test_that
+  }
+  
+  # Set parallellisation.
+  if(is.waive(parallel)) parallel <- !debug
+  
+  if(parallel){
+    # Set options.
+    # Disable randomForestSRC OpenMP core use.
+    options(rf.cores=as.integer(1))
+    on.exit(options(rf.cores=-1L), add=TRUE)
+    
+    # Disable multithreading on data.table to prevent reduced performance due to
+    # resource collisions with familiar parallelisation.
+    data.table::setDTthreads(1L)
+    on.exit(data.table::setDTthreads(0L), add=TRUE)
+    
+    # Start local cluster in the overall process.
+    cl <- .test_start_cluster()
+    on.exit(.terminate_cluster(cl), add=TRUE)
+    
+  } else {
+    cl <- NULL
   }
   
   # Iterate over the outcome type.
@@ -1477,12 +1501,12 @@ test_plot_ordering <- function(plot_function,
     ##### Create the plot ######################################################
     
     # Create familiar data objects.
-    data_good_full_lasso_1 <- as_familiar_data(object=model_full_lasso_1, data=full_data, data_element=data_element, ...)
-    data_good_full_lasso_2 <- as_familiar_data(object=model_full_lasso_2, data=full_data, data_element=data_element, ...)
-    data_good_full_glm_1 <- as_familiar_data(object=model_full_glm_1, data=full_data, data_element=data_element, ...)
-    data_good_full_glm_2 <- as_familiar_data(object=model_full_glm_2, data=full_data, data_element=data_element, ...)
-    data_empty_glm_1 <- as_familiar_data(object=model_full_glm_1, data=empty_data, data_element=data_element, ...)
-    data_empty_lasso_2 <- as_familiar_data(object=model_full_lasso_2, data=empty_data, data_element=data_element, ...)
+    data_good_full_lasso_1 <- as_familiar_data(object=model_full_lasso_1, data=full_data, data_element=data_element, cl=cl, ...)
+    data_good_full_lasso_2 <- as_familiar_data(object=model_full_lasso_2, data=full_data, data_element=data_element, cl=cl, ...)
+    data_good_full_glm_1 <- as_familiar_data(object=model_full_glm_1, data=full_data, data_element=data_element, cl=cl, ...)
+    data_good_full_glm_2 <- as_familiar_data(object=model_full_glm_2, data=full_data, data_element=data_element, cl=cl, ...)
+    data_empty_glm_1 <- as_familiar_data(object=model_full_glm_1, data=empty_data, data_element=data_element, cl=cl, ...)
+    data_empty_lasso_2 <- as_familiar_data(object=model_full_lasso_2, data=empty_data, data_element=data_element, cl=cl, ...)
     
     # Create a test dataset with multiple components
     test_fun(paste0("Plots for ", outcome_type, " outcomes can be created."), {
@@ -2030,4 +2054,31 @@ test_suppress <- function(expr){
   }
   
   return(data_element_present)
+}
+
+
+
+.test_start_cluster <- function(){
+  
+  # Determine the number of available cores.
+  n_cores <- parallel::detectCores() - 1L
+  
+  if(n_cores < 2) return(NULL)
+  
+  # Start a new cluster
+  cl <- .start_cluster(n_cores=n_cores,
+                       cluster_type="psock")
+  
+  # If the cluster doesn't start, return a NULL
+  if(is.null(cl)) return(NULL)
+  
+  # Set library paths to avoid issues with non-standard library locations.
+  libs <- .libPaths()
+  parallel::clusterExport(cl=cl, varlist="libs", envir=environment())
+  parallel::clusterEvalQ(cl=cl, .libPaths(libs))
+  
+  # Load familiar and data.table libraries to each cluster node.
+  parallel::clusterEvalQ(cl=cl, library(familiar))
+  
+  return(cl)
 }
