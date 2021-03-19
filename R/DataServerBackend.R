@@ -48,7 +48,16 @@
     ..error_reached_unreachable_code(".get_selected_backend_type: backend_type was not found in familiar_global_env or .GlobalEnv")
   }
   
-  return(get("backend_type", envir=data_env))
+  backend_type <- tryCatch(get("backend_type", envir=data_env),
+                           error=identity)
+  
+  if(inherits(backend_type, "error")){
+    .assign_backend_options_to_global(backend_type="none",
+                                      server_port=NULL)
+    backend_type <- "none"
+  }
+  
+  return(backend_type)
 }
 
 
