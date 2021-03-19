@@ -144,7 +144,7 @@ setMethod("extract_sample_similarity", signature(object="familiarEnsemble", data
   
   # Compute the similarity table
   data_element@data <- cluster.get_samplewise_similarity_table(cl=cl,
-                                                               data=data,
+                                                               data_obj=data,
                                                                similarity_metric=data_element@similarity_metric,
                                                                verbose=verbose,
                                                                message_indent=message_indent + 1L)
