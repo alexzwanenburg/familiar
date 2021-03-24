@@ -130,7 +130,9 @@ batch_normalise.set_basic_normalisation_parameters <- function(cl=NULL,
                                           feature_info_list=feature_info_list,
                                           data=data,
                                           batch_normalisation_method=batch_normalisation_method,
-                                          batches=batches)
+                                          batches=batches,
+                                          .chopchop=TRUE,
+                                          .min_node_batch_size=10)
   
   # Set names of the updated list
   names(updated_feature_info_list) <- features
@@ -165,8 +167,8 @@ batch_normalise.get_normalisation_per_feature <- function(feature, feature_info_
   names(batch_parameter_list) <- batches
   
   # Add to list of existing batch normalisation parameters (if any)
-  object@batch_normalisation_parameters <- append(object@batch_normalisation_parameters,
-                                                  batch_parameter_list)
+  object@batch_normalisation_parameters <- c(object@batch_normalisation_parameters,
+                                             batch_parameter_list)
   
   return(object)
 }

@@ -209,7 +209,8 @@ setMethod("extract_auc_data", signature(object="familiarEnsemble"),
                               bootstrap_seed = bootstrap_data$seed,
                               MoreArgs=list("data"=data,
                                             "x"=threshold_probabilities),
-                              progress_bar=progress_bar)
+                              progress_bar=progress_bar,
+                              .chopchop=TRUE)
   
   # Merge data elements
   data_elements <- merge_data_elements(data_elements)

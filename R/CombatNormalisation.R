@@ -230,7 +230,8 @@ combat.non_parametric_bayes_solver <- function(z, n_sample_features=50, cl=NULL,
                                  FUN=.combat.non_parametric_bayes_solver,
                                  progress_bar=progress_bar,
                                  z_short=z_short,
-                                 n_sample_features=n_sample_features)
+                                 n_sample_features=n_sample_features,
+                                 .chopchop=TRUE)
   
   # Concatenate to single table.
   batch_parameters <- data.table::rbindlist(batch_parameters)
@@ -314,7 +315,8 @@ combat.non_combat_solver <- function(z, cl=NULL, progress_bar=TRUE){
                                  assign=NULL,
                                  X=split(z, by=c(get_id_columns(single_column="batch"), "feature"), drop=TRUE),
                                  FUN=.combat.non_combat_solver,
-                                 progress_bar=progress_bar)
+                                 progress_bar=progress_bar,
+                                 .chopchop=TRUE)
   
   # Combine into single table
   batch_parameters <- data.table::rbindlist(batch_parameters)

@@ -226,7 +226,8 @@ setMethod("extract_performance", signature(object="familiarEnsemble"),
                               bootstrap_seed = bootstrap_data$seed,
                               MoreArgs=list("object"=object,
                                             "data"=prediction_data),
-                              progress_bar=progress_bar)
+                              progress_bar=progress_bar,
+                              .chopchop=TRUE)
   
   # Merge data elements
   data_elements <- merge_data_elements(data_elements)

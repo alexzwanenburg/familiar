@@ -138,7 +138,7 @@ cluster.get_featurewise_similarity_table <- function(cl=NULL, data_obj,
   
   # Add names to the mask to allow indexing by feature name.
   names(categorical_mask) <- feature_columns
-  
+
   # Determine similarity measures for each feature pair.
   similarity <- fam_sapply(cl=cl,
                            assign=NULL,
@@ -148,7 +148,9 @@ cluster.get_featurewise_similarity_table <- function(cl=NULL, data_obj,
                            combinations=combinations,
                            data=droplevels(data_obj@data),
                            similarity_metric=similarity_metric,
-                           categorical_mask=categorical_mask)
+                           categorical_mask=categorical_mask,
+                           .chopchop=TRUE,
+                           .min_node_batch_size=2500)
   
   # Transform similarity scores into a data.table.
   similarity_table  <- data.table::data.table("feature_name_1"=combinations[1,],
@@ -243,7 +245,9 @@ cluster.get_samplewise_similarity_table <- function(cl=NULL,
                            combinations=combinations,
                            data=data_obj@data[, mget(feature_columns)],
                            similarity_metric=similarity_metric,
-                           categorical_mask=categorical_mask)
+                           categorical_mask=categorical_mask,
+                           .chopchop=TRUE,
+                           .min_node_batch_size=2500)
   
   # Create unique row names.
   row_names <- get_unique_row_names(x=data_obj)
