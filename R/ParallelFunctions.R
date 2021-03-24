@@ -53,7 +53,7 @@
   if(.is_external_cluster()) return(cl)
 
   if(inherits(cl, "cluster")) parallel::stopCluster(cl)
-  
+
   return(NULL)
 }
 
@@ -242,8 +242,21 @@
 
 
 
-fam_lapply <- function(cl=NULL, assign=NULL, X, FUN, progress_bar=FALSE, ..., .scheduling="static"){
+fam_lapply <- function(cl=NULL,
+                       assign=NULL, 
+                       X,
+                       FUN,
+                       progress_bar=FALSE,
+                       ...,
+                       .scheduling="static",
+                       .chopchop=FALSE,
+                       .min_node_batch_size=NULL){
   # lapply. Reverts to sequential lapply if cl is NULL.
+  
+  # Check if the cluster should be maintained.
+  cl <- .check_min_node_batch_size(cl=cl,
+                                   min_node_batch_size=.min_node_batch_size,
+                                   X)
   
   # Restart cluster if specified. This also means that we should terminate the
   # cluster after use. If clusters already exist, update the cluster with the
@@ -292,11 +305,34 @@ fam_lapply <- function(cl=NULL, assign=NULL, X, FUN, progress_bar=FALSE, ..., .s
     if(.scheduling == "static") FUN_par <- parallel::parLapply
     else FUN_par <- parallel::parLapplyLB
     
-    # Parallel lapply without load balancing.
-    y <- do.call(FUN_par, args=c(list("cl" = cl,
-                                      "X" = X,
-                                      "fun" = FUN),                                                                                                                                                  
-                                 list(...)))
+    if(.chopchop){
+      
+      # Send to a chunking function for chopping into a list with up to n_cl
+      # elements.
+      X <- .chop_args(args=list(X),
+                      n_cl=length(cl))
+      
+      # Limit the number of clusters.
+      if(length(X) < length(cl)) cl[1:length(X)]
+      
+      # Iterate over cluster nodes for assignment using .chopped_lapply.
+      y <- do.call(parallel::parLapply, args=c(list("FUN"=.chopped_lapply,
+                                                    "cl"=cl,
+                                                    "X"=X,
+                                                    "FUN2"=FUN),
+                                               list(...)))
+      
+      # Flatten the list.
+      y <- unlist(y, recursive=FALSE)
+      
+    } else {
+      
+      # Parallel lapply without load balancing.
+      y <- do.call(FUN_par, args=c(list("cl" = cl,
+                                        "X" = X,
+                                        "fun" = FUN),                                                                                                                                                  
+                                   list(...)))
+    }
     
   } else {
     ..error_reached_unreachable_code("fam_lapply: the cluster object is neither NULL nor a cluster.")
@@ -311,14 +347,21 @@ fam_lapply <- function(cl=NULL, assign=NULL, X, FUN, progress_bar=FALSE, ..., .s
 
 
 
-fam_lapply_lb <- function(cl=NULL, assign=NULL, X, FUN, progress_bar=FALSE, ...){
+fam_lapply_lb <- function(cl=NULL,
+                          assign=NULL,
+                          X,
+                          FUN,
+                          progress_bar=FALSE,
+                          ...,
+                          .min_node_batch_size=NULL){
   # Call fam_lapply, with dynamic scheduling.
   y <- do.call(fam_lapply, args=c(list("cl"=cl,
                                        "assign"=assign,
                                        "X"=X,
                                        "FUN"=FUN,
                                        "progress_bar"=progress_bar,
-                                       ".scheduling"="dynamic"),
+                                       ".scheduling"="dynamic",
+                                       ".min_node_batch_size"=.min_node_batch_size),
                                   list(...)))
   
   return(y)
@@ -326,8 +369,23 @@ fam_lapply_lb <- function(cl=NULL, assign=NULL, X, FUN, progress_bar=FALSE, ...)
 
 
 
-fam_sapply <- function(cl=NULL, assign=NULL, X, FUN, progress_bar=FALSE, ..., SIMPLIFY=TRUE, USE.NAMES=TRUE, .scheduling="static"){
+fam_sapply <- function(cl=NULL,
+                       assign=NULL,
+                       X,
+                       FUN,
+                       progress_bar=FALSE,
+                       ...,
+                       SIMPLIFY=TRUE,
+                       USE.NAMES=TRUE,
+                       .scheduling="static",
+                       .chopchop=FALSE,
+                       .min_node_batch_size=NULL){
   # sapply. Reverts to sequential sapply if cl is NULL.
+  
+  # Check if the cluster should be maintained.
+  cl <- .check_min_node_batch_size(cl=cl,
+                                   min_node_batch_size=.min_node_batch_size,
+                                   X)
   
   # Restart cluster if specified. This also means that we should terminate the
   # cluster after use. If clusters already exist, update the cluster with the
@@ -378,13 +436,37 @@ fam_sapply <- function(cl=NULL, assign=NULL, X, FUN, progress_bar=FALSE, ..., SI
     if(.scheduling == "static") FUN_par <- parallel::parSapply
     else FUN_par <- parallel::parSapplyLB
     
-    # Parallel sapply without load balancing.
-    y <- do.call(FUN_par, args=append(list("cl" = cl,
-                                           "X" = X,
-                                           "FUN" = FUN,
-                                           "simplify" = SIMPLIFY,
-                                           "USE.NAMES" = USE.NAMES),
-                                      list(...)))
+    if(.chopchop){
+      
+      # Send to a chunking function for chopping into a list with up to n_cl
+      # elements.
+      X <- .chop_args(args=list(X),
+                      n_cl=length(cl))
+      
+      # Limit the number of clusters.
+      if(length(X) < length(cl)) cl[1:length(X)]
+    
+      # Iterate over cluster nodes for assignment using .chopped_sapply.
+      y <- do.call(parallel::parSapply, args=c(list("FUN"=.chopped_sapply,
+                                                    "cl"=cl,
+                                                    "X"=X,
+                                                    "simplify"=FALSE,
+                                                    "FUN2"=FUN),
+                                               list(...)))
+      
+      # Flatten the list and simplify to array
+      y <- unlist(y, recursive=FALSE)
+      if(SIMPLIFY) y <- simplify2array(unlist(y, recursive=TRUE))
+      
+    } else {
+      # Parallel sapply without load balancing.
+      y <- do.call(FUN_par, args=c(list("cl" = cl,
+                                        "X" = X,
+                                        "FUN" = FUN,
+                                        "simplify" = SIMPLIFY,
+                                        "USE.NAMES" = USE.NAMES),
+                                   list(...)))
+    }
     
   } else {
     ..error_reached_unreachable_code("fam_sapply: the cluster object is neither NULL nor a cluster.")
@@ -398,7 +480,15 @@ fam_sapply <- function(cl=NULL, assign=NULL, X, FUN, progress_bar=FALSE, ..., SI
 }
 
 
-fam_sapply_lb <- function(cl=NULL, assign=NULL, X, FUN, progress_bar=FALSE, ..., SIMPLIFY=TRUE, USE.NAMES=TRUE){
+fam_sapply_lb <- function(cl=NULL,
+                          assign=NULL,
+                          X,
+                          FUN,
+                          progress_bar=FALSE,
+                          ...,
+                          SIMPLIFY=TRUE,
+                          USE.NAMES=TRUE,
+                          .min_node_batch_size=NULL){
   # Call fam_sapply, with dynamic scheduling.
   y <- do.call(fam_sapply, args=c(list("cl"=cl,
                                        "assign"=assign,
@@ -407,7 +497,8 @@ fam_sapply_lb <- function(cl=NULL, assign=NULL, X, FUN, progress_bar=FALSE, ...,
                                        "progress_bar"=progress_bar,
                                        "SIMPLIFY"=SIMPLIFY,
                                        "USE.NAMES"=USE.NAMES,
-                                       ".scheduling"="dynamic"),
+                                       ".scheduling"="dynamic",
+                                       ".min_node_batch_size"=.min_node_batch_size),
                                   list(...)))
   
   return(y)
@@ -415,9 +506,23 @@ fam_sapply_lb <- function(cl=NULL, assign=NULL, X, FUN, progress_bar=FALSE, ...,
 
 
 
-fam_mapply <- function(cl=NULL, assign=NULL, FUN, ...,  progress_bar=FALSE, MoreArgs=NULL, SIMPLIFY=FALSE, USE.NAMES=TRUE, .scheduling="static", .chopchop=FALSE){
+fam_mapply <- function(cl=NULL,
+                       assign=NULL,
+                       FUN, ...,
+                       progress_bar=FALSE,
+                       MoreArgs=NULL,
+                       SIMPLIFY=FALSE,
+                       USE.NAMES=TRUE,
+                       .scheduling="static",
+                       .chopchop=FALSE,
+                       .min_node_batch_size=NULL){
   # mapply. Reverts to sequential mapply if cl is NULL.
   
+  # Check if the cluster should be maintained.
+  cl <- .check_min_node_batch_size(cl=cl,
+                                   min_node_batch_size=.min_node_batch_size,
+                                   ...)
+    
   # Restart cluster if specified. This also means that we should terminate the
   # cluster after use. If clusters already exist, update the cluster with the
   # latest versions of variables in the global familiar environment.
@@ -479,14 +584,11 @@ fam_mapply <- function(cl=NULL, assign=NULL, FUN, ...,  progress_bar=FALSE, More
                                                    "cl"=cl,
                                                    "dots"=dots,
                                                    "MoreArgs"=list("FUN2"=FUN,
-                                                                   "MoreArgs"=MoreArgs,
-                                                                   "SIMPLIFY2"=SIMPLIFY,
-                                                                   "USE.NAMES2"=USE.NAMES),
-                                                   "SIMPLIFY"=SIMPLIFY,
-                                                   "USE.NAMES"=USE.NAMES))
+                                                                   "MoreArgs"=MoreArgs)))
       
       # Flatten the list.
       y <- unlist(y, recursive=FALSE)
+      if(SIMPLIFY) y <- simplify2array(y)
       
     } else {
       # Parallel mapply using clustermap
@@ -512,8 +614,17 @@ fam_mapply <- function(cl=NULL, assign=NULL, FUN, ...,  progress_bar=FALSE, More
 
 
 
-fam_mapply_lb <- function(cl=NULL, assign=NULL, FUN, ...,  progress_bar=FALSE, MoreArgs=NULL, SIMPLIFY=FALSE, USE.NAMES=TRUE){
-  # Call fam_sapply, with dynamic scheduling.
+fam_mapply_lb <- function(cl=NULL,
+                          assign=NULL,
+                          FUN,
+                          ...,
+                          progress_bar=FALSE,
+                          MoreArgs=NULL,
+                          SIMPLIFY=FALSE,
+                          USE.NAMES=TRUE,
+                          .min_node_batch_size=NULL){
+  
+  # Call fam_mapply, with dynamic scheduling.
   y <- do.call(fam_mapply, args=c(list("cl"=cl,
                                        "assign"=assign,
                                        "FUN"=FUN,
@@ -521,7 +632,8 @@ fam_mapply_lb <- function(cl=NULL, assign=NULL, FUN, ...,  progress_bar=FALSE, M
                                        "MoreArgs"=MoreArgs,
                                        "SIMPLIFY"=SIMPLIFY,
                                        "USE.NAMES"=USE.NAMES,
-                                       ".scheduling"="dynamic"),
+                                       ".scheduling"="dynamic",
+                                       ".min_node_batch_size"=.min_node_batch_size),
                                   list(...)))
   
   return(y)
@@ -543,14 +655,34 @@ fam_mapply_lb <- function(cl=NULL, assign=NULL, FUN, ...,  progress_bar=FALSE, M
 
 
 
-.chopped_mapply <- function(FUN2, dots, MoreArgs=NULL, SIMPLIFY2, USE.NAMES2){
+.chopped_mapply <- function(FUN2, dots, MoreArgs=NULL){
   
-  # Execute function on cluster
+  # Execute function on minibatch on cluster node.
   y <- do.call(mapply, args=c(list("FUN"=FUN2,
-                                   "SIMPLIFY"=SIMPLIFY2,
-                                   "USE.NAMES"=USE.NAMES2,
+                                   "SIMPLIFY"=FALSE,
+                                   "USE.NAMES"=FALSE,
                                    "MoreArgs"=MoreArgs),
                               dots))
+  return(y)
+}
+
+
+
+.chopped_sapply <- function(X, FUN2, ...){
+  
+  # Execute function on cluster node.
+  y <- sapply(X[[1]], FUN2, ..., simplify=FALSE)
+  
+  return(y)
+}
+
+
+
+.chopped_lapply <- function(X, FUN2, ...){
+  
+  # Execute function on cluster node.
+  y <- lapply(X[[1]], FUN2, ...)
+  
   return(y)
 }
 
@@ -575,9 +707,35 @@ fam_mapply_lb <- function(cl=NULL, assign=NULL, FUN, ...,  progress_bar=FALSE, M
   
   # Split arguments internally.
   chopped_args <- lapply(index, function(ii, x){
-    return(lapply(x, function(x, ii) (x[ii]), ii=ii))
+    return(lapply(x, function(x, ii){
+      if(data.table::is.data.table(x)){
+        column_names <- colnames(x)[ii]
+        return(x[, mget(column_names)])
+        
+      } else {
+        return(x[ii])
+      }
+    }, ii=ii))
   },
   x=args)
-
+  
   return(chopped_args)
+}
+
+
+
+.check_min_node_batch_size <- function(cl, min_node_batch_size=NULL, ...){
+  
+  if(!is.null(min_node_batch_size) & inherits(cl, "cluster")){
+    n_nodes_allowed <- floor(max(sapply(list(...), length)) / min_node_batch_size)
+    
+    if(n_nodes_allowed < 2){
+      cl <- NULL
+      
+    } else if(n_nodes_allowed < length(cl)){
+      cl <- cl[1:n_nodes_allowed]
+    }
+  }
+  
+  return(cl)
 }
