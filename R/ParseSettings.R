@@ -2142,6 +2142,8 @@
 #'  * `calibration_data`: data for assessing and plotting model calibration are
 #'  not computed.
 #'
+#'  * `calibration_info`
+#'
 #'  * `confusion_matrix`: data for assessing and plotting a confusion matrix are
 #'  not collected.
 #'
@@ -2160,9 +2162,6 @@
 #'  * `hyperparameters`: data for assessing model hyperparameters are not
 #'  collected.
 #'
-#'  * `kaplan_meier_data`: data for assessing and plotting Kaplan-Meier survival
-#'  curves are not collected.
-#'
 #'  * `model_performance`: data for assessing and visualising model performance
 #'  are not created.
 #'
@@ -2173,8 +2172,11 @@
 #'  permutation variable importance are not computed.
 #'
 #'  * `prediction_data`: predictions for each sample are not made and exported.
-#'
-#'  * `stratification_data`: data for assessing stratification into risk groups
+#'  
+#'  * `risk_stratification_data`: data for assessing and plotting Kaplan-Meier survival
+#'  curves are not collected.
+#'  
+#'  * `risk_stratification_info`: data for assessing stratification into risk groups
 #'  are not computed.
 #'
 #'  * `univariate_analysis`: data for assessing and plotting univariate feature

@@ -939,6 +939,7 @@ have one or more of the following values:
 operating characteristic curve are not computed.
 \item \code{calibration_data}: data for assessing and plotting model calibration are
 not computed.
+\item \code{calibration_info}
 \item \code{confusion_matrix}: data for assessing and plotting a confusion matrix are
 not collected.
 \item \code{decision_curve_analyis}: data for performing a decision curve analysis
@@ -951,8 +952,6 @@ not computed.
 variable importance are not collected.
 \item \code{hyperparameters}: data for assessing model hyperparameters are not
 collected.
-\item \code{kaplan_meier_data}: data for assessing and plotting Kaplan-Meier survival
-curves are not collected.
 \item \code{model_performance}: data for assessing and visualising model performance
 are not created.
 \item \code{model_vimp}: data for assessing and plotting model-based variable
@@ -960,7 +959,9 @@ importance are not collected.
 \item \code{permutation_vimp}: data for assessing and plotting model-agnostic
 permutation variable importance are not computed.
 \item \code{prediction_data}: predictions for each sample are not made and exported.
-\item \code{stratification_data}: data for assessing stratification into risk groups
+\item \code{risk_stratification_data}: data for assessing and plotting Kaplan-Meier survival
+curves are not collected.
+\item \code{risk_stratification_info}: data for assessing stratification into risk groups
 are not computed.
 \item \code{univariate_analysis}: data for assessing and plotting univariate feature
 importance are not computed.
