@@ -1073,7 +1073,8 @@ test_plots <- function(plot_function,
                        ...,
                        plot_args=list(),
                        test_specific_config=FALSE,
-                       debug=FALSE){
+                       debug=FALSE,
+                       parallel=waiver()){
   
   if(debug){
     test_fun <- debug_test_that
@@ -1083,6 +1084,27 @@ test_plots <- function(plot_function,
     test_fun <- testthat::test_that
   }
   
+  # Set parallelisation.
+  if(is.waive(parallel)) parallel <- !debug
+  
+  if(parallel){
+    # Set options.
+    # Disable randomForestSRC OpenMP core use.
+    options(rf.cores=as.integer(1))
+    on.exit(options(rf.cores=-1L), add=TRUE)
+    
+    # Disable multithreading on data.table to prevent reduced performance due to
+    # resource collisions with familiar parallelisation.
+    data.table::setDTthreads(1L)
+    on.exit(data.table::setDTthreads(0L), add=TRUE)
+    
+    # Start local cluster in the overall process.
+    cl <- .test_start_cluster()
+    on.exit(.terminate_cluster(cl), add=TRUE)
+    
+  } else {
+    cl <- NULL
+  }
   
   # Iterate over the outcome type.
   for(outcome_type in c("count", "continuous", "binomial", "multinomial", "survival")){
@@ -1131,10 +1153,12 @@ test_plots <- function(plot_function,
     data_good_full_1 <- as_familiar_data(object=model_full_1,
                                          data=full_data,
                                          data_element=data_element,
+                                         cl=cl,
                                          ...)
     data_good_full_2 <- as_familiar_data(object=model_full_2,
                                          data=full_data,
                                          data_element=data_element,
+                                         cl=cl,
                                          ...)
 
     # Create a completely intact dataset.
@@ -1177,32 +1201,39 @@ test_plots <- function(plot_function,
     multi_model_full <- as_familiar_data(object=multi_model_set,
                                          data=multi_data[[1]],
                                          data_element=data_element,
+                                         cl=cl,
                                          ...)
     
     # Create additional familiar data objects.
     data_empty_full_1 <- as_familiar_data(object=model_full_1,
                                           data=empty_data,
                                           data_element=data_element,
+                                          cl=cl,
                                           ...)
     data_empty_full_2 <- as_familiar_data(object=model_full_2,
                                           data=empty_data,
                                           data_element=data_element,
+                                          cl=cl,
                                           ...)
     data_one_sample_full_1 <- as_familiar_data(object=model_full_1,
                                                data=full_one_sample_data,
                                                data_element=data_element,
+                                               cl=cl,
                                                ...)
     data_one_sample_full_2 <- as_familiar_data(object=model_full_2,
                                                data=full_one_sample_data,
                                                data_element=data_element,
+                                               cl=cl,
                                                ...)
     data_identical_full_1 <- as_familiar_data(object=model_full_1,
                                               data=identical_sample_data,
                                               data_element=data_element,
+                                              cl=cl,
                                               ...)
     data_identical_full_2 <- as_familiar_data(object=model_full_2,
                                               data=identical_sample_data,
                                               data_element=data_element,
+                                              cl=cl,
                                               ...)
     
     # Create a dataset with a missing quadrant.
@@ -1324,12 +1355,12 @@ test_plots <- function(plot_function,
     model_one_2@fs_method <- "mifs"
     
     # Create familiar data objects.
-    data_good_one_1 <- as_familiar_data(object=model_one_1, data=one_feature_data, data_element=data_element, ...)
-    data_good_one_2 <- as_familiar_data(object=model_one_2, data=one_feature_data, data_element=data_element, ...)
-    data_one_sample_one_1 <- as_familiar_data(object=model_one_1, data=one_feature_one_sample_data, data_element=data_element, ...)
-    data_one_sample_one_2 <- as_familiar_data(object=model_one_2, data=one_feature_one_sample_data, data_element=data_element, ...)
-    data_identical_one_1 <- as_familiar_data(object=model_one_1, data=one_feature_invariant_data, data_element=data_element, ...)
-    data_identical_one_2 <- as_familiar_data(object=model_one_2, data=one_feature_invariant_data, data_element=data_element, ...)
+    data_good_one_1 <- as_familiar_data(object=model_one_1, data=one_feature_data, data_element=data_element, cl=cl, ...)
+    data_good_one_2 <- as_familiar_data(object=model_one_2, data=one_feature_data, data_element=data_element, cl=cl, ...)
+    data_one_sample_one_1 <- as_familiar_data(object=model_one_1, data=one_feature_one_sample_data, data_element=data_element, cl=cl, ...)
+    data_one_sample_one_2 <- as_familiar_data(object=model_one_2, data=one_feature_one_sample_data, data_element=data_element, cl=cl, ...)
+    data_identical_one_1 <- as_familiar_data(object=model_one_1, data=one_feature_invariant_data, data_element=data_element, cl=cl, ...)
+    data_identical_one_2 <- as_familiar_data(object=model_one_2, data=one_feature_invariant_data, data_element=data_element, cl=cl, ...)
     
     
     # Create a completely intact, one sample dataset.
@@ -1425,7 +1456,7 @@ test_plot_ordering <- function(plot_function,
     test_fun <- testthat::test_that
   }
   
-  # Set parallellisation.
+  # Set parallelisation.
   if(is.waive(parallel)) parallel <- !debug
   
   if(parallel){
@@ -2064,6 +2095,8 @@ test_suppress <- function(expr){
   n_cores <- parallel::detectCores() - 1L
   
   if(n_cores < 2) return(NULL)
+  
+  assign("is_external_cluster", FALSE, envir=familiar_global_env)
   
   # Start a new cluster
   cl <- .start_cluster(n_cores=n_cores,
