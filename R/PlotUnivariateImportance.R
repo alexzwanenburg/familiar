@@ -503,7 +503,7 @@ setMethod("plot_univariate_importance", signature(object="familiarCollection"),
   
   # Create local copy
   x <- data.table::copy(x)
-
+  
   # Drop levels and reorder table so that features are sorted by the log-values
   x$feature <- droplevels(x$feature)
   x <- x[order(log_value)]
