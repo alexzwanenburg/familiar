@@ -77,6 +77,10 @@ be specified after similarity has been computed, i.e. through
 `export_feature_similarity` and `plot_feature_similarity`. This allows for
 changing clustering parameters after the analysis.
 
+* Parallel processing now supports mini-batching. Many processes are actually
+fast to compute and repeated IO to cluster nodes slows down the process.
+Mini-batches transfers data to nodes in one go for local sequential processing.
+
 ## Minor changes:
 
 * The default method for bootstrap confidence intervals (`bootstrap_ci_method`)
