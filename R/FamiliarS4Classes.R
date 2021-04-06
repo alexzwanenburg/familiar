@@ -73,7 +73,7 @@ setClass("familiarModel",
          )
 )
 
-#####familiarEnsemble#####
+####familiarEnsemble#####
 setClass("familiarEnsemble",
          slots = list(
            # Ensemble name
@@ -147,7 +147,7 @@ setClass("familiarEnsemble",
          )
 )
 
-#####familiarData#####
+####familiarData#####
 setClass("familiarData",
          slots = list(
            # Name of the familiar data set
@@ -254,7 +254,7 @@ setClass("familiarData",
          )
 )
 
-#####familiarCollection#####
+####familiarCollection#####
 #' Collection of familiar data.
 #'
 #' A familiarCollection object aggregates data from one or more familiarData objects.
@@ -414,7 +414,7 @@ setClass("familiarCollection",
 )
 
 
-#####dataObject#####
+####dataObject#####
 
 #' Data object
 #'
@@ -474,7 +474,7 @@ setClass("dataObject",
          )
 )
 
-#####featureInfo#####
+####featureInfo#####
 setClass("featureInfo",
          slots = list(
            name = "character",
@@ -536,7 +536,7 @@ setClass("featureInfo",
          )
 )
 
-#####outcomeInfo#####
+####outcomeInfo#####
 setClass("outcomeInfo",
          slots = list(
            # Name of the outcome
@@ -606,7 +606,9 @@ setClass("familiarVimpMethod",
            # Required features for complete reconstruction, including imputation
            required_features = "ANY",
            # Run table for the current vimp method
-           run_table = "ANY"
+           run_table = "ANY",
+           # Project identifier for consistency tracking
+           project_id = "ANY"
          ),
          prototype = list(
            outcome_type = NA_character_,
@@ -615,7 +617,8 @@ setClass("familiarVimpMethod",
            outcome_info = NULL,
            feature_info = NULL,
            required_features = NULL,
-           run_table = NULL
+           run_table = NULL,
+           project_id = NULL
          )
 )
 
