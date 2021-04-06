@@ -728,7 +728,7 @@ setMethod("process_input_data", signature(object="familiarEnsemble", data="ANY")
                            object=object)
     
     # Set pre-processing level.
-    data@preprocessing_level=ifelse(is_pre_processed, "clustering", "none")
+    data@preprocessing_level <- ifelse(is_pre_processed, "clustering", "none")
   }
   
   # Load data from internal memory, if not provided otherwise
