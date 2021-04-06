@@ -56,10 +56,21 @@ rank.get_vimp_table <- function(run, fs_method, proj_list, file_paths, decluster
 }
 
 
-rank.get_feature_ranks <- function(run=NULL, fs_method=NULL, settings=NULL, proj_list=NULL, file_paths=NULL,
-                                   decluster=FALSE, rank_threshold=NULL, aggregation_method=NULL,
-                                   translation_table=NULL, vimp_table=NULL){
+rank.get_feature_ranks <- function(run=NULL,
+                                   fs_method=NULL,
+                                   settings=NULL,
+                                   proj_list=NULL,
+                                   file_paths=NULL,
+                                   decluster=FALSE,
+                                   rank_threshold=NULL,
+                                   aggregation_method=NULL,
+                                   translation_table=NULL,
+                                   vimp_table=NULL){
 
+  if(is.null(settings)) settings <- get_settings()
+  if(is.null(proj_list)) proj_list <- get_project_list()
+  if(is.null(file_paths)) file_paths <- get_file_paths()
+  
   # Obtain the variable importance table for the current run from the file
   # system.
   if(is.null(vimp_table)){
