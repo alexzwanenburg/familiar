@@ -1780,17 +1780,20 @@
 #'
 #'   This parameter only affects hyperparameter optimisation of learners. The
 #'   default is `TRUE`.
-#' @param smbo_random_initialisation (*optional*) Logical indicating random
-#'   (`TRUE`) or grid-based (`FALSE`) initialisation of combinations of
-#'   hyperparameters. If random initialisation is selected, up to 200 unique
-#'   combinations will be randomly generated and assessed during the initial
-#'   step of the sequential model-based boosting (SMBO) algorithm (Hutter et
-#'   al., 2011). If a grid-based initialisation is selected, up to 100
-#'   permutations will be randomly selected from the complete parameter grid and
-#'   assessed during the initial SMBO step.
+#' @param smbo_random_initialisation (*optional*) String indicating the
+#'   initialisation method for the hyperparameter space. Can be one of
+#'   `fixed_subsample` (default), `fixed`, or `random`. `fixed` and
+#'   `fixed_subsample` first create hyperparameter sets from a range of default
+#'   values set by familiar. `fixed_subsample` then randomly draws up to
+#'   `smbo_n_random_sets` from the grid. `random` does not rely upon a fixed
+#'   grid, and randomly draws up to `smbo_n_random_sets` hyperparameter sets
+#'   from the hyperparameter space.
+#' @param smbo_n_random_sets (*optional*) Number of random or subsampled
+#'   hyperparameters drawn during the initialisation process. Default: `100`.
+#'   Cannot be smaller than `10`. The parameter is not used when
+#'   `smbo_random_initialisation` is `fixed`, as the entire pre-defined grid
+#'   will be explored.
 #'
-#'   The default is `TRUE` (random initialisation). Grid-based initialisation
-#'   uses pre-defined parameter ranges.
 #' @param max_smbo_iterations (*optional*) Maximum number of intensify
 #'   iterations of the SMBO algorithm. During an intensify iteration a run-off
 #'   occurs between the current *best* hyperparameter combination and either 10
@@ -1826,7 +1829,9 @@
 #'   SMBO step and the steps in each intensify iteration.
 #'
 #'   The default value is `5`. The value cannot be larger than
-#'   `optimisation_bootstraps`.
+#'   `optimisation_bootstraps`. Values of `1` or `2` may hinder exploration by
+#'   optimistically or pessimistically biasing parameter sets on a single or two
+#'   bootstraps.
 #' @param smbo_intensify_steps (*optional*) The number of steps in each SMBO
 #'   intensify iteration. Each step a new set of `smbo_step_bootstraps`
 #'   bootstraps is drawn and used in the run-off between the incumbent *best*
@@ -1963,6 +1968,7 @@
                                                         optimisation_bootstraps=waiver(),
                                                         optimisation_determine_vimp=waiver(),
                                                         smbo_random_initialisation=waiver(),
+                                                        smbo_n_random_sets = waiver(),
                                                         max_smbo_iterations=waiver(),
                                                         smbo_stop_convergent_iterations=waiver(),
                                                         smbo_stop_tolerance=waiver(),
@@ -1977,9 +1983,17 @@
   settings <- list()
   
   # Randomisation of initial parameter grid
-  settings$hpo_randomise_init_grid <- .parse_arg(x_config=config$smbo_random_initialisation, x_var=smbo_random_initialisation,
-                                                 var_name="smbo_random_initialisation", type="logical", optional=TRUE, default=TRUE)
+  settings$hpo_grid_initialisation_method <- .parse_arg(x_config=config$smbo_random_initialisation, x_var=smbo_random_initialisation,
+                                                        var_name="smbo_random_initialisation", type="character", optional=TRUE, default="fixed_subsample")
   
+  .check_parameter_value_is_valid(x=settings$hpo_grid_initialisation_method, var_name="smbo_random_initialisation",
+                                  values=c("fixed_subsample", "fixed", "random"))
+  
+  # Number of samples in the initial parameter grid.
+  settings$hpo_n_grid_initialisation_samples <- .parse_arg(x_config=config$smbo_n_random_sets, x_var=smbo_n_random_sets,
+                                                           var_name="smbo_n_random_sets", type="integer", optional=TRUE, default=100)
+  
+  .check_number_in_valid_range(x=settings$hpo_n_grid_initialisation_samples, var_name="smbo_n_random_sets", range=c(10, Inf))
   
   # Variable importance for the bootstraps
   settings$hpo_determine_vimp <- .parse_arg(x_config=config$optimisation_determine_vimp, x_var=optimisation_determine_vimp,
@@ -2042,7 +2056,7 @@
   .check_parameter_value_is_valid(x=settings$hpo_optimisation_function, var_name="optimisation_function",
                                   values=c("max_validation", "balanced", "stronger_balance"))
   
-  # Aqcuisition function
+  # Acquisition function
   settings$hpo_acquisition_function <- .parse_arg(x_config=config$acquisition_function, x_var=acquisition_function,
                                                   var_name="acquisition_function", type="character", optional=TRUE, default="expected_improvement")
   

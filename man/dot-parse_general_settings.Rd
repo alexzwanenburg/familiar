@@ -521,17 +521,19 @@ be used is randomly selected for each bootstrap.
 
 This parameter only affects hyperparameter optimisation of learners. The
 default is \code{TRUE}.}
-    \item{\code{smbo_random_initialisation}}{(\emph{optional}) Logical indicating random
-(\code{TRUE}) or grid-based (\code{FALSE}) initialisation of combinations of
-hyperparameters. If random initialisation is selected, up to 200 unique
-combinations will be randomly generated and assessed during the initial
-step of the sequential model-based boosting (SMBO) algorithm (Hutter et
-al., 2011). If a grid-based initialisation is selected, up to 100
-permutations will be randomly selected from the complete parameter grid and
-assessed during the initial SMBO step.
-
-The default is \code{TRUE} (random initialisation). Grid-based initialisation
-uses pre-defined parameter ranges.}
+    \item{\code{smbo_random_initialisation}}{(\emph{optional}) String indicating the
+initialisation method for the hyperparameter space. Can be one of
+\code{fixed_subsample} (default), \code{fixed}, or \code{random}. \code{fixed} and
+\code{fixed_subsample} first create hyperparameter sets from a range of default
+values set by familiar. \code{fixed_subsample} then randomly draws up to
+\code{smbo_n_random_sets} from the grid. \code{random} does not rely upon a fixed
+grid, and randomly draws up to \code{smbo_n_random_sets} hyperparameter sets
+from the hyperparameter space.}
+    \item{\code{smbo_n_random_sets}}{(\emph{optional}) Number of random or subsampled
+hyperparameters drawn during the initialisation process. Default: \code{100}.
+Cannot be smaller than \code{10}. The parameter is not used when
+\code{smbo_random_initialisation} is \code{fixed}, as the entire pre-defined grid
+will be explored.}
     \item{\code{max_smbo_iterations}}{(\emph{optional}) Maximum number of intensify
 iterations of the SMBO algorithm. During an intensify iteration a run-off
 occurs between the current \emph{best} hyperparameter combination and either 10
@@ -567,7 +569,9 @@ the set of \code{optimisation_bootstraps} bootstraps as data for the initial
 SMBO step and the steps in each intensify iteration.
 
 The default value is \code{5}. The value cannot be larger than
-\code{optimisation_bootstraps}.}
+\code{optimisation_bootstraps}. Values of \code{1} or \code{2} may hinder exploration by
+optimistically or pessimistically biasing parameter sets on a single or two
+bootstraps.}
     \item{\code{smbo_intensify_steps}}{(\emph{optional}) The number of steps in each SMBO
 intensify iteration. Each step a new set of \code{smbo_step_bootstraps}
 bootstraps is drawn and used in the run-off between the incumbent \emph{best}

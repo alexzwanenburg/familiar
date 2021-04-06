@@ -93,7 +93,8 @@ setMethod("train", signature(data="dataObject"),
             required_features <- find_required_features(features=selected_features,
                                                         feature_info_list=feature_info_list)
             
-            # Find important features, i.e. those that constitute the signature either individually or as part of a cluster
+            # Find important features, i.e. those that constitute the signature
+            # either individually or as part of a cluster.
             model_features <- find_model_features(features=selected_features,
                                                   feature_info_list=feature_info_list)
             

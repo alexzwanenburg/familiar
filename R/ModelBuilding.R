@@ -51,7 +51,7 @@ run_model_development <- function(cl, project_list, settings, file_paths, messag
                                                 data_id=mb_data_id,
                                                 settings=settings,
                                                 file_paths=file_paths,
-                                                fs_method=iter_methods$fs_method,
+                                                vimp_method=iter_methods$fs_method,
                                                 learner=iter_methods$learner,
                                                 message_indent=message_indent + 1L)
     
@@ -93,7 +93,9 @@ build_model <- function(run, hpo_list){
   ############### Initialisation ##################################################################
 
   # Get hyper-parameters
-  param_list        <- .find_hyperparameters_for_run(run=run, hpo_list=hpo_list)
+  param_list        <- .find_hyperparameters_for_run(run=run,
+                                                     hpo_list=hpo_list,
+                                                     as_list=TRUE)
 
   # Get feature ranks
   dt_ranks          <- rank.get_feature_ranks(run=run, fs_method=run$fs_method, settings=settings, proj_list=proj_list, file_paths=file_paths)

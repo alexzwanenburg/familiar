@@ -62,7 +62,7 @@ and assess models:
         
         * `aggregate_ci` has been replaced by `aggregate_results`. Aside from
         bootstrap confidence intervals, underlying results for bias-corrected
-        estimates can now be aggregated
+        estimates can now be aggregated.
         
 * Calibration plots have been completely revamped to now include confidence
 intervals. Moreover, calibration plots based on `bootstrap_confidence_interval`
@@ -80,6 +80,15 @@ changing clustering parameters after the analysis.
 * Parallel processing now supports mini-batching. Many processes are actually
 fast to compute and repeated IO to cluster nodes slows down the process.
 Mini-batches transfers data to nodes in one go for local sequential processing.
+
+* Hyperparameter optimisation now has several new or changed  configuration
+parameters:
+    
+    * `smbo_random_initialisation` is no longer a logical (`TRUE` or `FALSE`)
+    but takes `fixed_subsample`, `fixed` or `random` as values.
+    
+    * `smbo_n_random_sets` can now be used to set the number of hyperparameters
+    sets created for the `fixed_subsample` and `random` methods.
 
 ## Minor changes:
 

@@ -215,6 +215,7 @@ setGeneric("..get_distribution_family", function(object, ...) standardGeneric(".
 
 setGeneric("..update_outcome", function(object, data, ...) standardGeneric("..update_outcome"))
 
+setGeneric("optimise_hyperparameters", function(object, data, ...) standardGeneric("optimise_hyperparameters"))
 
 #####familiarVimpMethod variable importance methods #####
 setGeneric(".vimp", function(object, ...) standardGeneric(".vimp"))

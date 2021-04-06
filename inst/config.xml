@@ -142,8 +142,10 @@
       <optimisation_bootstraps></optimisation_bootstraps>
       <!-- Whether variable importance should be computed seperately for each bootstrap (true) when optimising learner hyperparameters or the feature selection results should be used (false). (optional, default: true) -->
       <optimisation_determine_vimp></optimisation_determine_vimp>
-      <!-- Randomisation of the initial hyperparameter grid. (optional, default: true; otherwise will initialise using pre-determined hyperparameters) -->
+      <!-- Randomisation of the initial hyperparameter grid. (optional, default: fixed_subsample) -->
       <smbo_random_initialisation></smbo_random_initialisation>
+      <!-- Number of random or subsampled hyperparameter sets to be drawn during initialisation (optional: default:100) -->
+      <smbo_n_random_sets></smbo_n_random_sets>
       <!-- Maximum number of iterations of sequential model based optimisation (optional, default: 20) -->
       <max_smbo_iterations></max_smbo_iterations>
       <!-- Number of bootstraps evaluated during each SMBO initial and intensify iteration (optional, default: 5) -->

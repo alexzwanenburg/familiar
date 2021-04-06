@@ -39,7 +39,7 @@ run_feature_selection <- function(cl, project_list, settings, file_paths, messag
                                                 data_id=fs_data_id,
                                                 settings=settings,
                                                 file_paths=file_paths,
-                                                fs_method=curr_fs_method,
+                                                vimp_method=curr_fs_method,
                                                 message_indent=message_indent + 1L)
     
     # Create variable importance information by iterating over the list of runs.
@@ -85,7 +85,9 @@ compute_variable_importance <- function(run, fs_method, hpo_list, proj_list, set
                        outcome_info = create_outcome_info(settings=settings))
   
   ############## Select parameters ################################################################
-  parameter_list <- .find_hyperparameters_for_run(run=run, hpo_list=hpo_list)
+  parameter_list <- .find_hyperparameters_for_run(run=run,
+                                                  hpo_list=hpo_list,
+                                                  as_list=TRUE)
 
   ############## Variable importance calculation ##################################################
   
