@@ -224,6 +224,29 @@ as_metric <- function(metric,
 }
 
 
+.get_default_metric <- function(outcome_type){
+  if(outcome_type %in% c("binomial", "multinomial")){
+    default_metric <- "auc_roc"
+    
+  } else if(outcome_type == "continuous"){
+    default_metric <- "mse"
+    
+  } else if(outcome_type == "count"){
+    default_metric <-  "msle"
+    
+  } else if(outcome_type == "survival"){
+    default_metric <- "concordance_index"
+    
+  } else if(outcome_type == "competing_risk"){
+    ..error_outcome_type_not_implemented(outcome_type)
+    
+  } else {
+    ..error_no_known_outcome_type(outcome_type)
+  }
+  
+  return(default_metric)
+}
+
 
 #####is_available#####
 setMethod("is_available", signature(object="familiarMetric"),

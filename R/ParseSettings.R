@@ -2055,24 +2055,11 @@
                                     var_name="optimisation_metric", type="character_list", optional=TRUE, default=NULL)
   
   # Set default metric
-  if(is.null(settings$hpo_metric)){
-    if(outcome_type %in% c("binomial", "multinomial")){
-      settings$hpo_metric <- "auc_roc"
-    } else if(outcome_type == "continuous"){
-      settings$hpo_metric <- "mse"
-    } else if(outcome_type == "count"){
-      settings$hpo_metric <- "msle"
-    } else if(outcome_type == "survival"){
-      settings$hpo_metric <- "concordance_index"
-    } else if(outcome_type == "competing_risk"){
-      ..error_outcome_type_not_implemented(outcome_type)
-    } else {
-      ..error_no_known_outcome_type(outcome_type)
-    }
-  }
+  if(is.null(settings$hpo_metric)) settings$hpo_metric <- .get_default_metric(outcome_type=outcome_type)
   
   # Check if the metric is ok. Packed into a for loop to enable multi-metric optimisation in the future
   sapply(settings$hpo_metric, metric.check_outcome_type, outcome_type=outcome_type)
+  
   
   # Parallelisation switch for parallel processing
   settings$do_parallel <- .parse_arg(x_config=config$parallel_hyperparameter_optimisation, x_var=parallel_hyperparameter_optimisation,
