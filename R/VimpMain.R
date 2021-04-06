@@ -56,6 +56,7 @@ setMethod("promote_vimp_method", signature(object="familiarVimpMethod"),
               
               # Create a familiarModel and promote to the right class.
               object <- methods::new("familiarModel",
+                                     fs_method = "none",
                                      learner = method,
                                      outcome_type = object@outcome_type,
                                      hyperparameters = object@hyperparameters,
@@ -72,6 +73,7 @@ setMethod("promote_vimp_method", signature(object="familiarVimpMethod"),
               
               # Create a familiarModel and promote to the right class.
               object <- methods::new("familiarModel",
+                                     fs_method = "none",
                                      learner = method,
                                      outcome_type = object@outcome_type,
                                      hyperparameters = object@hyperparameters,
@@ -88,6 +90,7 @@ setMethod("promote_vimp_method", signature(object="familiarVimpMethod"),
               
               # Create a familiarModel and promote to the right class.
               object <- methods::new("familiarModel",
+                                     fs_method = "none",
                                      learner = method,
                                      outcome_type = object@outcome_type,
                                      hyperparameters = object@hyperparameters,
@@ -104,6 +107,7 @@ setMethod("promote_vimp_method", signature(object="familiarVimpMethod"),
               
               # Create a familiarModel and promote to the right class.
               object <- methods::new("familiarModel",
+                                     fs_method = "none",
                                      learner = "random_forest_rfsrc",
                                      outcome_type = object@outcome_type,
                                      hyperparameters = object@hyperparameters,
@@ -123,6 +127,7 @@ setMethod("promote_vimp_method", signature(object="familiarVimpMethod"),
               
               # Create a familiarModel and promote to the right class.
               object <- methods::new("familiarModel",
+                                     fs_method = "none",
                                      learner = "random_forest_ranger",
                                      outcome_type = object@outcome_type,
                                      hyperparameters = object@hyperparameters,
