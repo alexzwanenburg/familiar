@@ -516,6 +516,7 @@ setMethod(".apply_labels", signature(data="familiarDataElement", object="familia
             
             # Then identify the value columns.
             value_columns <- data@value_column
+            if(all(is.na(value_columns))) value_columns <- NULL
             
             # Find any remaining columns.
             remaining_columns <- setdiff(columns, c(grouping_columns, value_columns))
