@@ -223,9 +223,6 @@ setMethod(".export_to_file", signature(data="character", object="familiarCollect
             base_file_name <- paste0(type, subtype, collapse="_")
             file_name <- file.path(file_dir, paste0(base_file_name, ".txt"))
             
-            # Write data to file
-            data.table::fwrite(x=data, file=file_name, sep=";", dec=".")
-            
             # Write to text file with each element of x on a new line.
             write(x=data,
                   file=file_name,
