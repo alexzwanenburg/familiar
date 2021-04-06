@@ -859,8 +859,18 @@ get_id_columns <- function(id_depth="repetition", single_column=NULL){
 }
 
 
-get_object_file_name <- function(learner, fs_method, project_id, data_id, run_id, pool_data_id=NULL, pool_run_id=NULL,
-                                 object_type, is_ensemble=NULL, is_validation=NULL, with_extension=TRUE, dir_path=NULL){
+get_object_file_name <- function(learner,
+                                 fs_method,
+                                 project_id,
+                                 data_id,
+                                 run_id,
+                                 pool_data_id=NULL,
+                                 pool_run_id=NULL,
+                                 object_type,
+                                 is_ensemble=NULL,
+                                 is_validation=NULL,
+                                 with_extension=TRUE,
+                                 dir_path=NULL){
   # Generate file name for an object
   
   if(!object_type %in% c("familiarModel", "familiarEnsemble", "familiarData")){
