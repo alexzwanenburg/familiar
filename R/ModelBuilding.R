@@ -104,31 +104,6 @@ build_model <- function(run, hpo_list){
   # Load feature_info_list
   feature_info_list <- get_feature_info_list(run=run)
   
-  # Select features
-  signature_features <- get_signature(feature_info_list=feature_info_list,
-                                      dt_ranks=dt_ranks,
-                                      fs_method=run$fs_method,
-                                      param=param_list,
-                                      settings=settings)
-  
-  # Find important features, i.e. those that constitute the signature either
-  # individually or as part of a cluster.
-  model_features <- find_model_features(features=signature_features,
-                                        feature_info_list=feature_info_list)
-  
-  # Find novelty features.
-  novelty_features <- find_novelty_features(model_features=model_features,
-                                            feature_info_list=feature_info_list)
-  
-  
-  # Set the required features
-  required_features <- union(model_features, novelty_features)
-  
-  # Find pre-processing data
-  feature_info_list <- feature_info_list[required_features]
-
-  ############### Model building ################################################################
-
   # Create familiar model
   fam_model <- methods::new("familiarModel",
                             outcome_type = settings$data$outcome_type,
@@ -137,13 +112,17 @@ build_model <- function(run, hpo_list){
                             run_table = run$run_table,
                             hyperparameters = param_list,
                             hyperparameter_data = NULL,
-                            required_features =  required_features,
-                            model_features = model_features,
-                            novelty_features = novelty_features,
                             feature_info = feature_info_list,
                             outcome_info = .get_outcome_info(),
                             project_id = proj_list$project_id,
                             settings = settings$eval)
+  
+  # Select features
+  fam_model <- set_signature(object=fam_model,
+                             rank_table=dt_ranks,
+                             minimise_footprint=TRUE)
+  
+  ############### Model building ################################################################
   
   # Add package version
   fam_model <- add_package_version(object=fam_model)

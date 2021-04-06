@@ -492,6 +492,143 @@ setMethod("has_calibration_info", signature(object="familiarModel"),
           function(object) return(!is.null(object@calibration_info)))
 
 
+#####set_signature (familiarModel)----------------------------------------------
+setMethod("set_signature", signature(object="familiarModel"),
+          function(object, rank_table=NULL, signature_features=NULL, minimise_footprint=FALSE, ...){
+            
+            if(is.null(rank_table) & is.null(signature_features)){
+              ..error_reached_unreachable_code("set_signature: rank_table and signature_features cannot both be NULL")
+            }
+            
+            if(is.null(signature_features)){
+              # Get signature features using the table with ranked features.
+              # Those features may be clustered.
+              signature_features <- get_signature(object=object,
+                                                  rank_table=rank_table)
+            }
+            
+            # Find important features, i.e. those that constitute the signature
+            # either individually or as part of a cluster.
+            model_features <- find_model_features(features=signature_features,
+                                                  feature_info_list=object@feature_info)
+            
+            # Find novelty features.
+            novelty_features <- find_novelty_features(model_features=model_features,
+                                                      feature_info_list=object@feature_info)
+            
+            if(minimise_footprint){
+              # Find only features that are required for running the model.
+              required_features <- union(model_features, novelty_features)
+              
+            } else {
+              # Find features that are required for processing the data.
+              required_features <- find_required_features(features=signature_features,
+                                                          feature_info_list=object@feature_info)
+            }
+            
+            # Select only necessary feature info objects.
+            available_feature_info <- names(object@feature_info) %in% unique(c(required_features, model_features, novelty_features))
+            object@feature_info <- object@feature_info[available_feature_info]
+            
+            # Set feature-related attribute slots
+            object@required_features <- required_features
+            object@model_features <- model_features
+            object@novelty_features <- novelty_features
+            
+            return(object)
+          })
+
+
+#####get_signature (familiarModel)----------------------------------------------
+setMethod("get_signature", signature(object="familiarModel"),
+          function(object, rank_table=NULL, ...){
+            
+            # Attempt to get signature directly from the object.
+            if(!is_empty(object@model_features)){
+              return(features_after_clustering(features=object@model_features,
+                                               feature_info_list=object@feature_info))
+            }
+            
+            return(do.call(get_signature, args=list("object"=object@feature_info,
+                                                    "vimp_method"=object@fs_method,
+                                                    "parameter_list"=object@hyperparameters,
+                                                    "rank_table"=rank_table)))
+          })
+
+
+#####get_signature (list)-------------------------------------------------------
+setMethod("get_signature", signature(object="list"),
+          function(object, vimp_method, parameter_list, rank_table, ...){
+            
+            # Suppress NOTES due to non-standard evaluation in data.table
+            name <- aggr_rank <- NULL
+            
+            # Get signature size
+            if(is_empty(parameter_list$sign_size)){
+              signature_size <- 0
+              
+            } else {
+              signature_size <- parameter_list$sign_size
+            }
+            
+            # Find features that are pre-assigned to the signature.
+            signature_features <- names(object)[sapply(object, is_in_signature)]
+            
+            if(vimp_method == "signature_only"){
+              # Only select signature
+              if(length(signature_features) == 0) stop("No signature was provided.")
+              
+              selected_features <- signature_features
+              
+            } else if(vimp_method == "none"){
+              # Select all features
+              selected_features <- features_after_clustering(features=get_available_features(feature_info_list=object),
+                                                             feature_info_list=object)
+              
+              # Order randomly so that there is no accidental dependency on
+              # order.
+              selected_features <- fam_sample(x=selected_features,
+                                              size=length(selected_features),
+                                              replace=FALSE)
+              
+            } else if(vimp_method == "random"){
+              # Select all features.
+              selected_features <- features_after_clustering(features=get_available_features(feature_info_list=object),
+                                                             feature_info_list=object)
+              
+              # Randomly pick the signature.
+              selected_features <- fam_sample(x=selected_features,
+                                              size=signature_size,
+                                              replace=FALSE)
+              
+            } else {
+              # Select signature and any additional features according to rank.
+              selected_features <- signature_features
+              
+              # Get number remaining available features
+              n_allowed_features <- signature_size - length(signature_features)
+              if(n_allowed_features > 0){
+                
+                # Get available features.
+                features <- features_after_clustering(features=get_available_features(feature_info_list=object),
+                                                      feature_info_list=object)
+                
+                # Remove signature features, if any, to prevent duplicates.
+                features <- setdiff(features, signature_features)
+                
+                # Keep only feature ranks of feature corresponding to available features,
+                # and order by rank.
+                rank_table <- rank_table[name %in% features,][order(aggr_rank)]
+                
+                # Add good features (low rank) to the selection
+                selected_features <- c(signature_features,
+                                       head(x=rank_table, n=n_allowed_features)$name)
+              }
+            }
+            
+            return(selected_features)
+          })
+
 
 .get_available_risklike_prediction_types <- function(){
   return(c("hazard_ratio", "cumulative_hazard", "survival_probability"))
