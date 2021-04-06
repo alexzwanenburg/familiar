@@ -14,6 +14,10 @@ setGeneric(".train", function(object, data, ...) standardGeneric(".train"))
 
 setGeneric(".train_novelty_detector", function(object, data, ...) standardGeneric(".train_novelty_detector"))
 
+setGeneric("get_signature", function(object, ...) standardGeneric("get_signature"))
+
+setGeneric("set_signature", function(object, ...) standardGeneric("set_signature"))
+
 setGeneric("model_is_trained", function(object, ...) standardGeneric("model_is_trained"))
 
 setGeneric("complete_familiar_ensemble", function(object, ...) standardGeneric("complete_familiar_ensemble"))
