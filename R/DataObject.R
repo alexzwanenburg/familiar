@@ -781,7 +781,7 @@ setMethod("select_data_from_samples", signature(data="dataObject", samples="ANY"
                 # Use samples from the samples function argument.
                 # allow.cartesian is set to true to allow use with repeated
                 # measurements.
-                if(all(id_columns %in% colnames(sample))){
+                if(all(id_columns %in% colnames(samples))){
                   data@data <- merge(x=samples,
                                      y=data@data,
                                      by=id_columns,
