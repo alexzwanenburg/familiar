@@ -722,6 +722,20 @@ setMethod("optimise_hyperparameters", signature(object="familiarModel", data="da
             optimal_set_table <- parameter_table[param_id==optimal_set_data$param_id, ]
             optimal_set_table[ ,"param_id":=NULL]
             
+            # Check that a suitable set of hyperparameters was found.
+            if(optimal_set_data$optimisation_score > -1){
+              object@hyperparameters <- as.list(optimal_set_table)
+              
+            } else {
+              if(verbose){
+                logger.message(paste0("Hyperparameter optimisation: No suitable set of hyperparameters was found."),
+                               indent=message_indent)
+              } 
+              
+              # Set NULL.
+              object@hyperparameters <- NULL
+            }
+            
             # Update attributes of object.
             object@hyperparameters <- as.list(optimal_set_table)
             object@hyperparameter_data <- score_table
