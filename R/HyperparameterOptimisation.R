@@ -412,10 +412,15 @@ setMethod("optimise_hyperparameters", signature(object="familiarModel", data="da
             if(is_empty(parameter_table)) return(object)
             
             # Generate bootstrap samples
-            bootstraps <- .create_bootstraps(n_iter=n_max_bootstraps,
-                                             outcome_type=object@outcome_type,
-                                             data=data@data)
+            bootstraps <- tryCatch(.create_bootstraps(n_iter=n_max_bootstraps,
+                                                      outcome_type=object@outcome_type,
+                                                      data=data@data),
+                                   error=identity)
             
+            # Check that bootstraps could be created. This may fail if the data
+            # set is too small.
+            if(inherits(bootstraps, "error")) return(object)
+                                   
             ##### Create or obtain variable importance -------------------------
             rank_table_list <- .compute_hyperparameter_variable_importance(cl=cl,
                                                                            determine_vimp=determine_vimp,
