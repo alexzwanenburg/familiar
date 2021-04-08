@@ -7,6 +7,11 @@ testthat::skip_on_cran()
 # Generic test
 familiar:::test_all_learners_train_predict_vimp(learners=familiar:::.get_available_cox_learners(show_general=TRUE))
 
+# Test hyperparameters
+familiar:::test_hyperparameter_optimisation(learners=familiar:::.get_available_cox_learners(show_general=TRUE),
+                                            debug=FALSE,
+                                            parallel=FALSE)
+
 
 # Create test data sets.
 good_data <- familiar:::test.create_good_data_set("survival")
@@ -45,7 +50,7 @@ testthat::test_that("Cox model has variable importance", {
   vimp_table <- familiar:::..vimp(good_model)
   
   # Expect that the vimp table has two rows.
-  testthat::expect_equal(nrow(vimp_table), 2)
+  testthat::expect_equal(nrow(vimp_table), 3)
   
   # Expect that the names are the same as that of the features.
   testthat::expect_equal(all(familiar:::get_feature_columns(good_data) %in% vimp_table$name), TRUE)
