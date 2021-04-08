@@ -219,11 +219,31 @@ NULL
         parameter_list[[parameter_name]]$randomise <- FALSE
         
       } else if(length(user_values) > 1){
-        # User provides multiple values for a parameter
-        parameter_list[[parameter_name]]$init_config <- user_values
-        parameter_list[[parameter_name]]$range <- user_values
-        parameter_list[[parameter_name]]$randomise <- TRUE
-        
+
+        if(parameter_list[[parameter_name]]$type %in% c("numeric", "integer")){
+          
+          if(length(user_values) == 2){
+            # Find initial values from the default and from the user-provided
+            # range. Only values within the latter range are used.
+            initial_values <- sort(unique(c(parameter_list[[parameter_name]]$init_config, user_values)))
+            initial_values <- initial_values[initial_values >= user_values[1] & initial_values <= user_values[2]]
+            
+          } else {
+            # For more than 2 values, copy the user values directly.
+            initial_values <- user_values
+          }
+          
+          parameter_list[[parameter_name]]$init_config <- initial_values
+          parameter_list[[parameter_name]]$range <- user_values
+          parameter_list[[parameter_name]]$randomise <- TRUE
+          
+        } else {
+          # User provides multiple values for a parameter
+          parameter_list[[parameter_name]]$init_config <- user_values
+          parameter_list[[parameter_name]]$range <- user_values
+          parameter_list[[parameter_name]]$randomise <- TRUE
+        }
+      
       } else {
         # This code should never be reached as such cases should be captures by
         # .parse_hyperparameters earlier in the workflow.
