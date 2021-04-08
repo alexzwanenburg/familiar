@@ -105,7 +105,6 @@ Collate:
     'FeatureInfo.R'
     'FeatureSelection.R'
     'HyperparameterOptimisation.R'
-    'HyperparameterOptimisationDeprecated.R'
     'HyperparameterOptimisationMetaLearners.R'
     'HyperparameterOptimisationUtilities.R'
     'Imputation.R'
