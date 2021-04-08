@@ -374,12 +374,13 @@ setMethod("optimise_hyperparameters", signature(object="familiarModel", data="da
             parameter_list <- .update_hyperparameters(parameter_list=parameter_list,
                                                       user_list=user_list)
             
-            # Update hyperparameters to set any fixed parameters.
-            object@hyperparameters <- lapply(parameter_list, function(list_entry) list_entry$init_config)
-            
             # Check that any parameters can be randomised.
-            if(!.any_randomised_hyperparameters(parameter_list=parameter_list)) return(object)
-            
+            if(!.any_randomised_hyperparameters(parameter_list=parameter_list)){
+              # Update hyperparameters to set any fixed parameters.
+              object@hyperparameters <- lapply(parameter_list, function(list_entry) list_entry$init_config)
+              
+              return(object)
+            }
             
             ##### Create metric objects ----------------------------------------
             
