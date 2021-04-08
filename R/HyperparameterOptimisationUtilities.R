@@ -421,7 +421,7 @@
   # Update the familiar model (for variable importance)
   object@hyperparameters <- parameter_list
   # Set signature.
-  if(!is.null(rank_table)){
+  if(!is_empty(rank_table)){
     object <- set_signature(object=object,
                             rank_table=rank_table,
                             minimise_footprint=TRUE)
