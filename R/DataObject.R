@@ -359,7 +359,7 @@ setMethod("as_data_object", signature(data="ANY"),
 
 #####extract_settings_from_data####
 setMethod("extract_settings_from_data", signature(data="dataObject"),
-          function(data, settings=NULL){
+          function(data, settings=NULL, signature=NULL){
             
             if(is.null(settings)){
               settings <- list("data"=list())
@@ -376,6 +376,7 @@ setMethod("extract_settings_from_data", signature(data="dataObject"),
             settings$data$event_indicator <- data@outcome_info@event
             settings$data$censoring_indicator <- data@outcome_info@censored
             settings$data$competing_risk_indicator <- data@outcome_info@competing_risk
+            settings$data$signature <- signature
             settings$data$include_features <- get_feature_columns(data)
             
             return(settings)
