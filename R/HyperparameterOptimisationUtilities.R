@@ -347,6 +347,10 @@
   # Suppress NOTES due to non-standard evaluation in data.table
   param_id <- NULL
   
+  # Check that the run table is not empty. This may occur if, for instance, the
+  # initial search turned up nothing.
+  if(is_empty(run_table)) return(NULL)
+  
   # Prepare training and validation samples for the separate runs.
   training_list <- lapply(run_table$run_id,
                           function(ii, training_list) (training_list[[ii]]),
