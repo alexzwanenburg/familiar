@@ -356,6 +356,18 @@ setMethod("optimise_hyperparameters", signature(object="familiarModel", data="da
               
             } else if(object@fs_method == "signature_only") {
               user_list$sign_size <- sum(sapply(object@feature_info, is_in_signature))
+              
+              # If no signature is set, use all features.
+              if(user_list$sign_size == 0) user_list$sign_size <- get_n_features(x=data)
+              
+            } else if(is.null(user_list$sign_size)){
+              # Set signature size as range.
+              user_list$sign_size <- c(sum(sapply(object@feature_info, is_in_signature)),
+                                       get_n_features(x=data))
+              
+              # Replace the initial range in case no features are assigned as a
+              # signature.
+              if(user_list$sign_size[1] == 0) user_list$sign_size[1] <- 1
             }
             
             # Update the parameter list With user-defined variables.
