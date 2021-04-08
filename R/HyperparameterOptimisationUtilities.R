@@ -515,6 +515,8 @@
 .compute_hyperparameter_optimisation_score <- function(score_table,
                                                        optimisation_function){
   
+  if(is_empty(score_table)) return(NULL)
+  
   # Compute optimisation score.
   optimisation_score_table <- metric.compute_optimisation_score(score_table=score_table,
                                                                 optimisation_function=optimisation_function)
