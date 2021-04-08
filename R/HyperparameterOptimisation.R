@@ -354,7 +354,7 @@ setMethod("optimise_hyperparameters", signature(object="familiarModel", data="da
             if(object@fs_method == "none"){
               user_list$sign_size <- get_n_features(x=data)
               
-            } else if(object@fs_method == "signature") {
+            } else if(object@fs_method == "signature_only") {
               user_list$sign_size <- sum(sapply(object@feature_info, is_in_signature))
             }
             
