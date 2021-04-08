@@ -300,7 +300,7 @@ setMethod("optimise_hyperparameters", signature(object="familiarModel", data="da
             # Suppress NOTES due to non-standard evaluation in data.table
             param_id <- NULL
             
-            if(!is.null(experiment_info)){
+            if(!is.null(experiment_info) & verbose){
               logger.message(paste0("\nStarting hyperparameter optimisation for data subsample ",
                                     experiment_info$experiment_id, " of ",
                                     experiment_info$n_experiment_total, "."),
@@ -467,7 +467,8 @@ setMethod("optimise_hyperparameters", signature(object="familiarModel", data="da
                                                                        rank_table_list=rank_table_list,
                                                                        parameter_table=parameter_table,
                                                                        metric_objects=metric_object_list,
-                                                                       measure_time=measure_time)
+                                                                       measure_time=measure_time,
+                                                                       verbose=verbose)
               
               # Compute the optimisation score. This creates a table with
               # optimisation scores per bootstrap and parameter identifier.
@@ -489,14 +490,15 @@ setMethod("optimise_hyperparameters", signature(object="familiarModel", data="da
               
               # Compute 
               second_score_table <- .compute_hyperparameter_model_performance(cl=cl,
-                                                                       object=object,
-                                                                       run_table=run_table,
-                                                                       bootstraps=bootstraps,
-                                                                       data=data,
-                                                                       rank_table_list=rank_table_list,
-                                                                       parameter_table=parameter_table,
-                                                                       metric_objects=metric_object_list,
-                                                                       measure_time=measure_time)
+                                                                              object=object,
+                                                                              run_table=run_table,
+                                                                              bootstraps=bootstraps,
+                                                                              data=data,
+                                                                              rank_table_list=rank_table_list,
+                                                                              parameter_table=parameter_table,
+                                                                              metric_objects=metric_object_list,
+                                                                              measure_time=measure_time,
+                                                                              verbose=verbose)
               
               # Compute the optimisation score. This creates a table with
               # optimisation scores per bootstrap and parameter identifier.
@@ -533,7 +535,8 @@ setMethod("optimise_hyperparameters", signature(object="familiarModel", data="da
                                                                        rank_table_list=rank_table_list,
                                                                        parameter_table=parameter_table,
                                                                        metric_objects=metric_object_list,
-                                                                       measure_time=measure_time)
+                                                                       measure_time=measure_time,
+                                                                       verbose=verbose)
               
               # Compute the optimisation score. This creates a table with
               # optimisation scores per bootstrap and parameter identifier.
@@ -550,12 +553,14 @@ setMethod("optimise_hyperparameters", signature(object="familiarModel", data="da
             
             
             # Message the user concerning the initial optimisation score.
-            logger.message(paste0("Hyperparameter optimisation: Initialisation complete: ",
-                                  incumbent_set_data$optimisation_score, "; ",
-                                  ..parse_hyperparameters_to_string(id=incumbent_set_data$param_id,
-                                                                    parameter_table=parameter_table,
-                                                                    parameter_list=parameter_list)),
-                           indent=message_indent)
+            if(verbose){
+              logger.message(paste0("Hyperparameter optimisation: Initialisation complete: ",
+                                    incumbent_set_data$optimisation_score, "; ",
+                                    ..parse_hyperparameters_to_string(id=incumbent_set_data$param_id,
+                                                                      parameter_table=parameter_table,
+                                                                      parameter_list=parameter_list)),
+                             indent=message_indent)
+            }
             
             # Initialise vector to track old config scores and parameter ids.
             stop_list <- ..initialise_hyperparameter_optimisation_stopping_criteria()
@@ -615,9 +620,11 @@ setMethod("optimise_hyperparameters", signature(object="familiarModel", data="da
                 if(nrow(run_table) == 0) break()
                 
                 # Message the user.
-                logger.message(paste("Intensify step", n_intensify_steps + 1L, "using", length(parameter_id_challenger),
-                                     "challenger hyperparameter sets."),
-                               indent=message_indent)
+                if(verbose){
+                  logger.message(paste("Intensify step", n_intensify_steps + 1L, "using", length(parameter_id_challenger),
+                                       "challenger hyperparameter sets."),
+                                 indent=message_indent)
+                }
                 
                 # Compute metric values for the bootstraps of the incumbent and
                 # challenger parameter sets.
@@ -629,7 +636,8 @@ setMethod("optimise_hyperparameters", signature(object="familiarModel", data="da
                                                                                    rank_table_list=rank_table_list,
                                                                                    parameter_table=parameter_table,
                                                                                    metric_objects=metric_object_list,
-                                                                                   measure_time=measure_time)
+                                                                                   measure_time=measure_time,
+                                                                                   verbose=verbose)
 
                 
                 # Compute the optimisation score. This creates a table with
@@ -691,18 +699,22 @@ setMethod("optimise_hyperparameters", signature(object="familiarModel", data="da
                                                                                   acquisition_function=acquisition_function)
               
               # Message progress.
-              logger.message(paste0("Hyperparameter optimisation: SMBO iteration ", optimisation_step + 1L, ": score ",
-                                    incumbent_set_data$optimisation_score, "; ",
-                                    ..parse_hyperparameters_to_string(id=incumbent_set_data$param_id,
-                                                                      parameter_table=parameter_table,
-                                                                      parameter_list=parameter_list)),
-                             indent=message_indent)
+              if(verbose){
+                logger.message(paste0("Hyperparameter optimisation: SMBO iteration ", optimisation_step + 1L, ": score ",
+                                      incumbent_set_data$optimisation_score, "; ",
+                                      ..parse_hyperparameters_to_string(id=incumbent_set_data$param_id,
+                                                                        parameter_table=parameter_table,
+                                                                        parameter_list=parameter_list)),
+                               indent=message_indent)
+              }
               
               # Break if the convergence counter reaches a certain number
               if(stop_list$convergence_counter >= convergence_stopping){
-                # Message convergence
-                logger.message(paste0("Hyperparameter optimisation: Optimisation stopped early as convergence was achieved."),
-                               indent=message_indent)
+                if(verbose){
+                  # Message convergence
+                  logger.message(paste0("Hyperparameter optimisation: Optimisation stopped early as convergence was achieved."),
+                                 indent=message_indent)
+                }
                 
                 # Stop SMBO
                 break()

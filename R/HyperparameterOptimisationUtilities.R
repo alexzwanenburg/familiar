@@ -259,13 +259,13 @@
     # summon_familiar.
     
     # Set up variable importance object.
-    vimp_object <- methods::new("familiarVimpMethod",
-                                outcome_type = object@outcome_type,
-                                vimp_method = object@fs_method,
-                                outcome_info = object@outcome_info,
-                                feature_info = object@feature_info,
-                                required_features = object@required_features,
-                                run_table = object@run_table)
+    vimp_object <- promote_vimp_method(methods::new("familiarVimpMethod",
+                                                    outcome_type = object@outcome_type,
+                                                    vimp_method = object@fs_method,
+                                                    outcome_info = object@outcome_info,
+                                                    feature_info = object@feature_info,
+                                                    required_features = object@required_features,
+                                                    run_table = object@run_table))
     
     if(is_main_process){
       # Load hyperparameters.
@@ -303,7 +303,7 @@
                             FUN=..compute_hyperparameter_variable_importance,
                             object=vimp_object,
                             data=data,
-                            progress_bar=TRUE,
+                            progress_bar=verbose,
                             .chopchop=TRUE)
   }
   
@@ -342,7 +342,8 @@
                                                       data,
                                                       rank_table_list,
                                                       metric_objects,
-                                                      measure_time=TRUE){
+                                                      measure_time=TRUE,
+                                                      verbose=FALSE){
   
   # Suppress NOTES due to non-standard evaluation in data.table
   param_id <- NULL
@@ -379,7 +380,7 @@
                                validation_samples = validation_list,
                                rank_table=rank_table_list,
                                parameter_table=parameter_list,
-                               progress_bar=is.null(cl),
+                               progress_bar=verbose,
                                MoreArgs=list("object"=object,
                                              "data"=data,
                                              "metric_objects"=metric_objects,
