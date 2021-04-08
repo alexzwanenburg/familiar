@@ -28,6 +28,12 @@ setMethod(".train", signature(object="familiarModel", data="dataObject"),
             # familiar model can not be trained
             if(!has_feature_data(x=data)) can_train <- FALSE
             
+            # Check if the hyperparameters are plausible.
+            required_hyperparameters <- names(get_default_hyperparameters(object))
+            if(length(required_hyperparameters) > 0){
+              if(setequal(object@hyperparameters, required_hyperparameters)) can_train <- FALSE
+            }
+            
             # Train a new model based on data.
             if(can_train) object <- ..train(object=object, data=data)
             
