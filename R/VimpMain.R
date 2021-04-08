@@ -188,7 +188,7 @@ vimp.get_fs_parameters <- function(data, method, outcome_type, names_only=FALSE)
 
 
 
-vimp.check_outcome_type <- function(method, outcome_type){
+vimp.check_outcome_type <- function(method, outcome_type, as_flag=FALSE){
 
   # Create familiarModel
   vimp_method_object <- methods::new("familiarVimpMethod",
@@ -200,6 +200,8 @@ vimp.check_outcome_type <- function(method, outcome_type){
   
   # Check validity.
   vimp_method_available <- is_available(vimp_method_object)
+  
+  if(as_flag) return(vimp_method_available)
   
   # Check if the vimp method or familiar model has been successfully promoted.
   if(!is_subclass(class(vimp_method_object)[1], "familiarVimpMethod") & !is_subclass(class(vimp_method_object)[1], "familiarModel")){
