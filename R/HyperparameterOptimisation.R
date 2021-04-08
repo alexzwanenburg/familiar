@@ -737,8 +737,7 @@ setMethod("optimise_hyperparameters", signature(object="familiarModel", data="da
             }
             
             # Update attributes of object.
-            object@hyperparameters <- as.list(optimal_set_table)
-            object@hyperparameter_data <- score_table
+            object@hyperparameter_data <- score_table[parameter_table, on=.NATURAL]
             
             return(object)
           })
