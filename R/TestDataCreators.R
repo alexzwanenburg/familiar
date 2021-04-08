@@ -9,14 +9,15 @@ test.create_good_data_set <- function(outcome_type){
     
     # Focus on recurrence.
     data <- data[etype == 1]
+    data$adhere <- factor(data$adhere, levels=c(0, 1), labels=c(FALSE, TRUE))
     
-    # Keep only first 100 samples for speed and only id, nodes, rx, extent and
-    # outcome.
+    # Keep only first 100 samples for speed and only id, nodes, rx, extent,
+    # adhere and outcome.
     data <- as_data_object(data=data[1:100, ],
                            sample_id_column="id",
                            outcome_column=c("time", "status"),
                            outcome_type=outcome_type,
-                           include_features=c("nodes", "rx"))
+                           include_features=c("nodes", "rx", "adhere"))
     
   } else if(outcome_type == "multinomial"){
     # Load iris data set.
