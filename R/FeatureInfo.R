@@ -2,6 +2,54 @@
 #' @include FamiliarS4Classes.R
 NULL
 
+create_feature_info <- function(data, signature=NULL, ...){
+  # This creates a list of featureInfo objects, with processing, based on data.
+  # This code is primarily used within unit tests.
+  
+   #####Prepare settings###############################################
+  
+  # Reconstitute settings from the data.
+  settings <- extract_settings_from_data(data=data)
+  
+  # Update some missing settings that can be fixed within this method.
+  settings$data$train_cohorts <- unique(data@data[[get_id_columns(single_column="batch")]])
+  
+  # Parse the remaining settings that are important. Remove
+  # outcome_type from ... This prevents an error caused by multiple
+  # matching arguments.
+  dots <- list(...)
+  
+  settings <- do.call(.parse_general_settings,
+                      args=c(list("settings"=settings,
+                                  "data"=data@data),
+                             dots))
+  
+  
+  #####Prepare featureInfo objects####################################
+  
+  # Create a list of featureInfo objects.
+  feature_info_list <- .get_feature_info_data(data=data@data,
+                                              file_paths=NULL,
+                                              project_id=character(),
+                                              outcome_type=data@outcome_type)
+  
+  # Extract the generic data.
+  feature_info_list <- feature_info_list[["generic"]]
+  
+  # Add signature feature info
+  feature_info_list <- add_signature_info(feature_info_list=feature_info_list, signature=signature)
+  
+  # Perform some pre-processing (i.e. remove singular features)
+  feature_info_list <- .determine_preprocessing_parameters(cl=NULL,
+                                                           data=data,
+                                                           feature_info_list=feature_info_list,
+                                                           settings=settings,
+                                                           verbose=FALSE)
+  
+  return(feature_info_list)
+}
+
+
 .get_feature_info_data <- function(data, file_paths, project_id, outcome_type){
   
   # Create path to the feature info file
