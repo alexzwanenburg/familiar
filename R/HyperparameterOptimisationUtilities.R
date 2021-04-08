@@ -545,7 +545,11 @@
   
   # Check that the maximum time is not trivially small (i.e. less than 10
   # seconds).
-  if(max_time < 10.0) max_time <- 10.0
+  if(is.na(max_time)){
+    max_time <- Inf
+  } else if(max_time < 10.0) {
+    max_time <- 10.0
+  }
   
   return(list("t"=t,
               "time"=time,
@@ -566,16 +570,6 @@
   
   # Compute time taken.
   time_table <- optimisation_score_table[, list("time_taken"=stats::median(time_taken, na.rm=TRUE)), by="param_id"]
-  
-  # Fill NA values with large, but finite values. Determine the maximum time.
-  max_time_taken <- max(optimisation_score_table$time_taken, na.rm=TRUE)
-  
-  # Set max time to an improbable 86400 seconds, in case all time values are NA.
-  # A single model trained in familiar should never take a day to finish.
-  if(is.na(max_time_taken)) max_time_taken <- 86400.0
-  
-  # Insert placeholder values for time_taken.
-  time_table[is.na(time_taken), "time_taken":=10*max_time_taken]
   
   # Compute the summary score per parameter id.
   summary_table <- metric.summarise_optimisation_score(score_table=optimisation_score_table,

@@ -345,11 +345,14 @@
   time_taken <- NULL
   
   # Fill NA values with large, but finite values. Determine the maximum time.
-  max_time_taken <- max(score_table$time_taken, na.rm=TRUE)
-  
-  # Set max time to an improbable 86400 seconds, in case all time values are NA.
-  # A single model trained in familiar should never take a day to finish.
-  if(is.na(max_time_taken)) max_time_taken <- 86400.0
+  if(!all(is.na(score_table$time_taken))){
+    max_time_taken <- max(score_table$time_taken, na.rm=TRUE)
+    
+  } else {
+    # Set max time to an improbable 86400 seconds, in case all time values are NA.
+    # A single model trained in familiar should never take a day to finish.
+    max_time_taken <- 86400.0
+  }
   
   # Merge score and parameter data tables on param id.
   joint_table <- merge(x=score_table,
