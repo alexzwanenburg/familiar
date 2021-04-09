@@ -250,6 +250,13 @@ NULL
         ..error_reached_unreachable_code("update_hyperparameters_zero_length_argument")
       }
     }
+    
+    # Identify parameters that only allow for a single value.
+    if(length(unique(parameter_list[[parameter_name]]$range)) == 1){
+      parameter_list[[parameter_name]]$init_config <- parameter_list[[parameter_name]]$range[1]
+      parameter_list[[parameter_name]]$range <- parameter_list[[parameter_name]]$range[1]
+      parameter_list[[parameter_name]]$randomise <- FALSE
+    }
   }
   
   return(parameter_list)
