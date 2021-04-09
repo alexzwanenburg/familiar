@@ -239,8 +239,12 @@ learner.check_model_prediction_type <- function(learner, outcome_type){
   n_features <- get_n_features(data_obj)
   
   # Determine the actual range of features dynamically.
-  if(restrict_samples){
+  if(restrict_samples &  n_samples > 1){
     sign_size_range <- c(1, min(n_samples - 1, n_features))
+    
+  } else if(restrict_samples & n_samples <= 1){
+    sign_size_range <- c(1, 1)
+    
   } else {
     sign_size_range <- c(1, n_features)
   }
