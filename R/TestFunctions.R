@@ -1292,7 +1292,7 @@ test_hyperparameter_optimisation <- function(vimp_methods=NULL,
                       ifelse(is_vimp, " variable importance method", " learner"), " and ",
                       outcome_type, " outcomes can be created for a data set with only one entry."), {
                         
-                        if(!always_available | no_hyperparameters){
+                        if(no_hyperparameters){
                           # Test that no hyperparameters are set. Single entry
                           # data cannot be used to generate hyperparameter sets
                           # unless they are always available.
@@ -1317,6 +1317,24 @@ test_hyperparameter_optimisation <- function(vimp_methods=NULL,
                             
                             if(vimp_method == "none"){
                               testthat::expect_equal(all(new_object@hyperparameter_data$sign_size == get_n_features(full_data)), TRUE)
+                            }
+                          }
+                          
+                        } else {
+                          # Not always available, but with hyperparameters. For
+                          # some methods all hyperparameters can still be set,
+                          # i.e. all typically randomised hyperparameters depend
+                          # only on the number of features. Therefore, this is a
+                          # softer check.
+                          
+                          if(!is.null(new_object@hyperparameters)){
+                            # Test that all hyperparameters are set.
+                            testthat::expect_setequal(names(new_object@hyperparameters), names(get_default_hyperparameters(object)))
+                            
+                            if(!is_vimp & !is.null(new_object@hyperparameter_data)){
+                              # Test that sign_size hyperparameters make
+                              # sense. 
+                              testthat::expect_equal(all(new_object@hyperparameter_data$sign_size == 2), TRUE)
                             }
                           }
                         }
@@ -1345,7 +1363,7 @@ test_hyperparameter_optimisation <- function(vimp_methods=NULL,
                       ifelse(always_available, "can", "cannot"),
                       " be created for an empty data set."), {
                         
-                        if(no_hyperparameters | !always_available){
+                        if(no_hyperparameters){
                           # Test that no hyperparameters are set. Empty datasets
                           # cannot be used to create hyperparameters.
                           testthat::expect_equal(is.null(new_object@hyperparameters), TRUE)
@@ -1356,6 +1374,24 @@ test_hyperparameter_optimisation <- function(vimp_methods=NULL,
                           
                           # Test that all hyperparameters are set.
                           testthat::expect_setequal(names(new_object@hyperparameters), get_default_hyperparameters(object))
+                          
+                        } else {
+                          # Not always available, but with hyperparameters. For
+                          # some methods all hyperparameters can still be set,
+                          # i.e. all typically randomised hyperparameters depend
+                          # only on the number of features. Therefore, this is a
+                          # softer check.
+                          
+                          if(!is.null(new_object@hyperparameters)){
+                            # Test that all hyperparameters are set.
+                            testthat::expect_setequal(names(new_object@hyperparameters), names(get_default_hyperparameters(object)))
+                            
+                            if(!is_vimp & !is.null(new_object@hyperparameter_data)){
+                              # Test that sign_size hyperparameters make
+                              # sense. 
+                              testthat::expect_equal(all(new_object@hyperparameter_data$sign_size == 2), TRUE)
+                            }
+                          }
                         }
                       })
       
@@ -1428,7 +1464,7 @@ test_hyperparameter_optimisation <- function(vimp_methods=NULL,
                       ifelse(is_vimp, " variable importance method", " learner"), " and ",
                       outcome_type, " outcomes can be created for a data set with only one feature and sample."), {
                         
-                        if(no_hyperparameters | !always_available){
+                        if(no_hyperparameters){
                           # Test that no hyperparameters are set.
                           # Hyperparameters cannot be set for datasets with only
                           # a single sample.
@@ -1445,6 +1481,24 @@ test_hyperparameter_optimisation <- function(vimp_methods=NULL,
                             # Test that sign_size hyperparameters make
                             # sense. 
                             testthat::expect_equal(all(new_object@hyperparameter_data$sign_size == 1), TRUE)
+                          }
+                          
+                        } else {
+                          # Not always available, but with hyperparameters. For
+                          # some methods all hyperparameters can still be set,
+                          # i.e. all typically randomised hyperparameters depend
+                          # only on the number of features. Therefore, this is a
+                          # softer check.
+                          
+                          if(!is.null(new_object@hyperparameters)){
+                            # Test that all hyperparameters are set.
+                            testthat::expect_setequal(names(new_object@hyperparameters), names(get_default_hyperparameters(object)))
+                            
+                            if(!is_vimp & !is.null(new_object@hyperparameter_data)){
+                              # Test that sign_size hyperparameters make
+                              # sense. 
+                              testthat::expect_equal(all(new_object@hyperparameter_data$sign_size == 1), TRUE)
+                            }
                           }
                         }
                       })
@@ -1469,7 +1523,7 @@ test_hyperparameter_optimisation <- function(vimp_methods=NULL,
                       ifelse(is_vimp, " variable importance method", " learner"), " and ",
                       outcome_type, " outcomes can be created for a data set with only one, invariant feature."), {
                         
-                        if(no_hyperparameters | !always_available){
+                        if(no_hyperparameters){
                           # Test that no hyperparameters are set.
                           # Hyperparameters cannot be set for datasets with
                           # invariant features.
@@ -1486,6 +1540,24 @@ test_hyperparameter_optimisation <- function(vimp_methods=NULL,
                             # Test that sign_size hyperparameters make
                             # sense. 
                             testthat::expect_equal(all(new_object@hyperparameter_data$sign_size == 1), TRUE)
+                          }
+                          
+                        } else {
+                          # Not always available, but with hyperparameters. For
+                          # some methods all hyperparameters can still be set,
+                          # i.e. all typically randomised hyperparameters depend
+                          # only on the number of features. Therefore, this is a
+                          # softer check.
+                          
+                          if(!is.null(new_object@hyperparameters)){
+                            # Test that all hyperparameters are set.
+                            testthat::expect_setequal(names(new_object@hyperparameters), names(get_default_hyperparameters(object)))
+                            
+                            if(!is_vimp & !is.null(new_object@hyperparameter_data)){
+                              # Test that sign_size hyperparameters make
+                              # sense. 
+                              testthat::expect_equal(all(new_object@hyperparameter_data$sign_size == 1), TRUE)
+                            }
                           }
                         }
                       })
