@@ -257,6 +257,20 @@ NULL
       parameter_list[[parameter_name]]$range <- parameter_list[[parameter_name]]$range[1]
       parameter_list[[parameter_name]]$randomise <- FALSE
     }
+    
+    # Check if the parameters fall within the valid range.
+    if(parameter_list[[parameter_name]]$type %in% c("numeric", "integer")){
+      sapply(parameter_list[[parameter_name]]$init_config,
+             .check_number_in_valid_range,
+             var_name=parameter_name,
+             range=parameter_list[[parameter_name]]$valid_range)
+      
+    } else {
+      sapply(parameter_list[[parameter_name]]$init_config,
+             .check_parameter_value_is_valid,
+             var_name=parameter_name,
+             values=parameter_list[[parameter_name]]$valid_range)
+    }
   }
   
   return(parameter_list)
