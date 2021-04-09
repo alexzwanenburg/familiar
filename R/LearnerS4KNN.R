@@ -60,10 +60,10 @@ setMethod("get_default_hyperparameters", signature(object="familiarKNN"),
             ##### Number of nearest neighbours k ###############################
             
             # Define the range for the number of nearest neighbour clusters.
-            k_range <- c(1, ceiling(2*n_samples^(1/3)))
+            k_range <- c(n_classes, max(c(n_classes, ceiling(2*n_samples^(1/3)))))
             
             # Define the default value.
-            k_default <- c(1, 2, 5, 10, 20)
+            k_default <- sort(unique(c(5, 10, 20, k_range)))
             k_default <- k_default[k_default >= k_range[1] & k_default <= k_range[2]]
             
             param$k <- .set_hyperparameter(default=k_default, type="integer", range=k_range,
