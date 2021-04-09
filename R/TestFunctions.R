@@ -1128,8 +1128,8 @@ test_hyperparameter_optimisation <- function(vimp_methods=NULL,
   }
   
   # Iterate over the outcome type.
-  for(outcome_type in c("count", "continuous", "binomial", "multinomial", "survival")){
-    
+  for(outcome_type in outcome_type_available){
+
     # Multi-feature data sets.
     full_data <- test.create_good_data_set(outcome_type)
     identical_sample_data <- test.create_all_identical_data_set(outcome_type)
