@@ -191,7 +191,7 @@ NULL
 
 
 
-.update_hyperparameters <- function(parameter_list, user_list=NULL){
+.update_hyperparameters <- function(parameter_list, user_list=NULL, n_features=NULL){
   
   # Check if any parameters are provided
   if(length(parameter_list) == 0){ return(parameter_list) }
@@ -210,7 +210,7 @@ NULL
       # uniqueness, as the number of values affects how this parameter is
       # interpreted.
       if(parameter_name == "sign_size"){
-        user_values[user_values > parameter_list[[parameter_name]]$range[2] ] <- parameter_list[[parameter_name]]$range[2]
+        user_values[user_values > n_features] <- n_features
       }
       
       if(length(user_values) == 1){
