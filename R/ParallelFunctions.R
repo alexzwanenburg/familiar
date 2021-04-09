@@ -275,9 +275,9 @@ fam_lapply <- function(cl=NULL,
   
   if(is.null(cl) & !progress_bar){
     # Simple sequential lapply.
-    y <- do.call(lapply, args=append(list("X" = X,
-                                          "FUN" = FUN),
-                                     list(...)))
+    y <- do.call(lapply, args=c(list("X" = X,
+                                     "FUN" = FUN),
+                                list(...)))
     
   } else if(is.null(cl) & progress_bar){
     # Start progress bar
@@ -316,7 +316,7 @@ fam_lapply <- function(cl=NULL,
       if(length(X) < length(cl)) cl[1:length(X)]
       
       # Iterate over cluster nodes for assignment using .chopped_lapply.
-      y <- do.call(parallel::parLapply, args=c(list("FUN"=.chopped_lapply,
+      y <- do.call(parallel::parLapply, args=c(list("fun"=.chopped_lapply,
                                                     "cl"=cl,
                                                     "X"=X,
                                                     "FUN2"=FUN),
