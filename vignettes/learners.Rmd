@@ -26,7 +26,6 @@ Learning algorithms create models that relate input data to the outcome. Develop
 | logistic | `glm_logistic`              		      | × |   |   |   |   |
 | cauchy | `glm_cauchy` 						              | × |   |   |   |   |
 | complementary log-log | `glm_loglog` 			      | × | 	| 	| 	| 	|
-| log-logistic | `glm_log`  					            | × |	  |	  |	  |	  |
 | normal | `glm_probit` 						              | × | 	| 	| 	| 	|
 | multinomial | `glm_multinomial` 				        | 	| × | 	| 	| 	|
 | log-normal | `glm_log`, `glm_log_gaussian` 	    | 	| 	| × | 	| 	|
@@ -185,11 +184,13 @@ Linear models for binomial outcomes derive from the `stats` package which is par
 | **parameter** | **tag** | **values** | **optimised** | **comments** |
 |:--------------|:--------|:----------:|:----------:|:-------------|
 | signature size |`sign_size` | $\mathbb{Z} \in \left[1,n\right]$ | yes | -- |
-| linking function |`family` | `logistic`, `probit`, `loglog`, `cauchy`, `log_binomial` | `glm` only | The linking function is not optimised when it is specified, e.g. `glm_logistic`.|
+| linking function |`family` | `logistic`, `probit`, `loglog`, `cauchy` | `glm` only | The linking function is not optimised when it is specified, e.g. `glm_logistic`.|
 
 ### Linear models for multinomial outcomes
 
-The linear model for multinomial outcomes is implemented using the `VGAM::vglm` function [@Yee1996-ql; @Yee2010-rg; @Yee2015-bw]. Hyperparameters for this model are shown in the table below.
+The linear model for multinomial outcomes is implemented using the `VGAM::vglm`
+function [@Yee1996-ql; @Yee2010-rg; @Yee2015-bw]. Hyperparameters for this model
+are shown in the table below.
 
 | **parameter** | **tag** | **values** | **optimised** | **comments** |
 |:--------------|:--------|:----------:|:----------:|:-------------|
@@ -198,7 +199,9 @@ The linear model for multinomial outcomes is implemented using the `VGAM::vglm` 
 
 ### Linear models for continuous and count-type outcomes
 
-Linear models for continuous and count-type outcomes derive from the `stats` package of the R core distribution [@rcore2018]. Hyperparameters for these models include linkage functions and are shown in the table below.
+Linear models for continuous and count-type outcomes derive from the `stats`
+package of the R core distribution [@rcore2018]. Hyperparameters for these
+models include linkage functions and are shown in the table below.
 
 | **parameter** | **tag** | **values** | **optimised** | **comments** |
 |:--------------|:--------|:----------:|:----------:|:-------------|
@@ -207,7 +210,10 @@ Linear models for continuous and count-type outcomes derive from the `stats` pac
 
 ### Linear models for survival outcomes
 
-Linear models for survival outcomes are divided into semi-parametric and parametric models. The semi-parametric Cox proportional hazards model [@Cox1972-fc] is based on the `survival::coxph` function [@Therneau2000-jv]. Tied survival times are resolved using the default method by @Efron1977-ww.
+Linear models for survival outcomes are divided into semi-parametric and
+parametric models. The semi-parametric Cox proportional hazards model
+[@Cox1972-fc] is based on the `survival::coxph` function [@Therneau2000-jv].
+Tied survival times are resolved using the default method by @Efron1977-ww.
 
 Various fully parametric models are also available, which differ in the assumed distribution of the outcome, i.e. the linking function. The parametric models are all based on `survival::survreg` [@Therneau2000-jv].
 

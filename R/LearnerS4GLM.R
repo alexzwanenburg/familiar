@@ -34,7 +34,7 @@ setMethod("is_available", signature(object="familiarGLM"),
             
             # Check outcome type and learner.
             if(outcome_type == "binomial" & learner %in% c("glm", "glm_logistic", "glm_probit",
-                                                         "glm_cauchy", "glm_log", "glm_loglog")){
+                                                           "glm_cauchy", "glm_loglog")){
               return(TRUE)
               
             } else if(outcome_type == "multinomial" & learner %in% c("glm", "glm_multinomial")) {
@@ -88,7 +88,7 @@ setMethod("get_default_hyperparameters", signature(object="familiarGLM"),
               # If no family is specified, the default behaviour is to identify the family
               # through optimisation.
               if(outcome_type=="binomial") {
-                family_default <- c("logistic", "probit", "loglog", "cauchy", "log_binomial")
+                family_default <- c("logistic", "probit", "loglog", "cauchy")
                 
               } else if(outcome_type=="continuous"){
                 family_default <- c("gaussian", "log_gaussian", "inv_gaussian", "poisson", "log_poisson")
@@ -109,10 +109,7 @@ setMethod("get_default_hyperparameters", signature(object="familiarGLM"),
             } else if(fam == "log") {
               # "log" is a collection of different families, that should be specified
               # according to the outcome type.
-              if(outcome_type=="binomial") {
-                family_default <- "log_binomial"
-                
-              } else if(outcome_type=="continuous") {
+              if(outcome_type=="continuous") {
                 family_default <- c("log_gaussian", "log_poisson")
                 
               } else if(outcome_type=="count") {
@@ -418,9 +415,6 @@ setMethod("..get_distribution_family", signature(object="familiarGLM"),
             } else if(family == "cauchy"){
               family_fun <- stats::binomial(link="cauchit")
               
-            } else if(family == "log_binomial"){
-              family_fun <- stats::binomial(link="log")
-              
             } else if(family == "loglog"){
               family_fun <- stats::binomial(link="cloglog")
               
@@ -484,10 +478,7 @@ setMethod("..set_vimp_parameters", signature(object="familiarGLM"),
             } else if(family_str == "log") {
               # "log" is a collection of different families, that should be specified
               # according to the outcome type.
-              if(object@outcome_type=="binomial") {
-                family_default <- "log_binomial"
-                
-              } else if(object@outcome_type=="continuous") {
+              if(object@outcome_type=="continuous") {
                 family_default <- c("log_gaussian")
                 
               } else if(object@outcome_type=="count") {
