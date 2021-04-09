@@ -1157,10 +1157,11 @@ test_hyperparameter_optimisation <- function(vimp_methods=NULL,
         vimp_method <- vimp_methods
       }
       
-      #####Full data set--------------------------------------------------------
       
       if(!learner.check_outcome_type(learner=learner, outcome_type=outcome_type, as_flag=TRUE)) next()
       if(!vimp.check_outcome_type(method=vimp_method, outcome_type=outcome_type, as_flag=TRUE)) next()
+      
+      #####Full data set--------------------------------------------------------
       
       # Create object
       object <- .test_create_hyperparameter_object(data=full_data,
@@ -1336,6 +1337,9 @@ test_hyperparameter_optimisation <- function(vimp_methods=NULL,
                               # sense. 
                               testthat::expect_equal(all(new_object@hyperparameter_data$sign_size == 2), TRUE)
                             }
+                          } else {
+                            # Bogus test to prevent skipping.
+                            testthat::expect_equal(is.null(new_object@hyperparameters), TRUE)
                           }
                         }
                       })
@@ -1391,6 +1395,10 @@ test_hyperparameter_optimisation <- function(vimp_methods=NULL,
                               # sense. 
                               testthat::expect_equal(all(new_object@hyperparameter_data$sign_size == 2), TRUE)
                             }
+                            
+                          } else {
+                            # Bogus test to prevent skipping.
+                            testthat::expect_equal(is.null(new_object@hyperparameters), TRUE)
                           }
                         }
                       })
@@ -1499,8 +1507,12 @@ test_hyperparameter_optimisation <- function(vimp_methods=NULL,
                               # sense. 
                               testthat::expect_equal(all(new_object@hyperparameter_data$sign_size == 1), TRUE)
                             }
+                            
+                          } else {
+                            # Bogus test to prevent skipping.
+                            testthat::expect_equal(is.null(new_object@hyperparameters), TRUE)
                           }
-                        }
+                        } 
                       })
       
       if(verbose) message(paste0("\nComputing hyperparameters for ", current_method,
@@ -1558,6 +1570,10 @@ test_hyperparameter_optimisation <- function(vimp_methods=NULL,
                               # sense. 
                               testthat::expect_equal(all(new_object@hyperparameter_data$sign_size == 1), TRUE)
                             }
+                            
+                          } else {
+                            # Bogus test to prevent skipping.
+                            testthat::expect_equal(is.null(new_object@hyperparameters), TRUE)
                           }
                         }
                       })
