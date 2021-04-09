@@ -361,9 +361,14 @@ setMethod("optimise_hyperparameters", signature(object="familiarModel", data="da
               if(user_list$sign_size == 0) user_list$sign_size <- get_n_features(x=data)
               
             } else if(is.null(user_list$sign_size)){
+              # Set the signature size based on the number of signature features
+              # and the maximum default range.
+              n_signature_features <- sum(sapply(object@feature_info, is_in_signature))
+              n_max_features <- max(parameter_list$sign_size$range)
+              
               # Set signature size as range.
-              user_list$sign_size <- c(sum(sapply(object@feature_info, is_in_signature)),
-                                       get_n_features(x=data))
+              user_list$sign_size <- c(n_signature_features,
+                                       ifelse(n_max_features < n_signature_features, n_signature_features, n_max_features))
               
               # Replace the initial range in case no features are assigned as a
               # signature.
@@ -372,7 +377,8 @@ setMethod("optimise_hyperparameters", signature(object="familiarModel", data="da
             
             # Update the parameter list With user-defined variables.
             parameter_list <- .update_hyperparameters(parameter_list=parameter_list,
-                                                      user_list=user_list)
+                                                      user_list=user_list,
+                                                      n_features=get_n_features(data))
             
             # Check that any parameters can be randomised.
             if(!.any_randomised_hyperparameters(parameter_list=parameter_list)){
