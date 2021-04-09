@@ -4,6 +4,11 @@ familiar:::test_all_learners_available(learners=familiar:::.get_available_glm_le
 # Don't perform any further tests on CRAN due to time of running the complete test.
 testthat::skip_on_cran()
 
+# Test hyperparameters
+familiar:::test_hyperparameter_optimisation(learners=familiar:::.get_available_glm_learners(show_general=TRUE),
+                                            debug=FALSE,
+                                            parallel=FALSE)
+
 familiar:::test_all_learners_train_predict_vimp(learners=familiar:::.get_available_glm_learners(show_general=FALSE))
 
 #####Count outcome tests-------------------------------------------------------------
@@ -266,7 +271,7 @@ testthat::test_that("Generalised linear model has variable importance", {
   vimp_table <- familiar:::..vimp(good_model)
   
   # Expect that the vimp table has two rows.
-  testthat::expect_equal(nrow(vimp_table), 2)
+  testthat::expect_equal(nrow(vimp_table), 3)
   
   # Expect that the names are the same as that of the features.
   testthat::expect_equal(all(familiar:::get_feature_columns(good_data) %in% vimp_table$name), TRUE)
