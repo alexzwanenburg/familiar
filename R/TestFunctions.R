@@ -2653,6 +2653,7 @@ test_suppress <- function(expr){
                                            fs_method=vimp_method,
                                            learner=learner,
                                            cluster_method="none",
+                                           imputation_method="simple",
                                            signature=signature_features,
                                            parallel=FALSE)
   
