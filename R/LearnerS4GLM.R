@@ -190,17 +190,17 @@ setMethod("..train", signature(object="familiarGLM", data="dataObject"),
             
             if(object@outcome_type %in% c("binomial", "continuous", "count")){
               # Generate model
-              model <- tryCatch(stats::glm(formula,
-                                           data=encoded_data$encoded_data@data,
-                                           family=family,
-                                           model=FALSE),
+              model <- tryCatch(suppressWarnings(stats::glm(formula,
+                                                            data=encoded_data$encoded_data@data,
+                                                            family=family,
+                                                            model=FALSE)),
                                 error=identity)
               
             } else if(object@outcome_type=="multinomial"){
               # Generate model
-              model <- tryCatch(VGAM::vglm(formula,
-                                           data=encoded_data$encoded_data@data,
-                                           family=family),
+              model <- tryCatch(suppressWarnings(VGAM::vglm(formula,
+                                                            data=encoded_data$encoded_data@data,
+                                                            family=family)),
                                 error=identity)
               
             } else {
@@ -252,9 +252,9 @@ setMethod("..predict", signature(object="familiarGLM", data="dataObject"),
                 #####Binomial outcomes######
                 
                 # Use the model for prediction.
-                model_predictions <- predict(object=object@model,
-                                             newdata=encoded_data$encoded_data@data,
-                                             type="response")
+                model_predictions <- suppressWarnings(predict(object=object@model,
+                                                              newdata=encoded_data$encoded_data@data,
+                                                              type="response"))
                 
                 # Obtain class levels.
                 class_levels <- get_outcome_class_levels(x=object)
@@ -296,9 +296,9 @@ setMethod("..predict", signature(object="familiarGLM", data="dataObject"),
                 #####Count and continuous outcomes#####
                 
                 # Use the model for prediction.
-                model_predictions <- predict(object=object@model,
-                                             newdata=encoded_data$encoded_data@data,
-                                             type="response")
+                model_predictions <- suppressWarnings(predict(object=object@model,
+                                                              newdata=encoded_data$encoded_data@data,
+                                                              type="response"))
                 
                 # Add regression.
                 prediction_table[, "predicted_outcome":=model_predictions]
