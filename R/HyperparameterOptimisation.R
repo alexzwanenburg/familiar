@@ -290,6 +290,7 @@ setMethod("optimise_hyperparameters", signature(object="familiarModel", data="da
                    n_intensify_step_bootstraps=5L,
                    n_max_optimisation_steps=20L,
                    n_max_intensify_steps=5L,
+                   n_challengers=20L,
                    intensify_stop_p_value=0.05,
                    convergence_tolerance=1E-2,
                    convergence_stopping=3,
@@ -587,7 +588,8 @@ setMethod("optimise_hyperparameters", signature(object="familiarModel", data="da
                                                                         optimisation_function=optimisation_function,
                                                                         acquisition_function=acquisition_function,
                                                                         n_max_bootstraps=n_max_bootstraps,
-                                                                        measure_time=measure_time)
+                                                                        measure_time=measure_time,
+                                                                        n_challengers=n_challengers)
               
               # Check that any challenger datasets were found. 
               if(nrow(challenger_data) == 0) break()
