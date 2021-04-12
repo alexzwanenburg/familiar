@@ -98,8 +98,8 @@ setMethod("..predict", signature(object="familiarNaiveBayes", data="dataObject")
                                                                    type=type)
               
               # Use the model for prediction.
-              model_predictions <- predict(object=object@model,
-                                           newdata=data@data)
+              model_predictions <- suppressWarnings(predict(object=object@model,
+                                                            newdata=data@data))
               
               # Obtain class levels.
               class_levels <- get_outcome_class_levels(x=object)
