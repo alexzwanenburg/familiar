@@ -191,6 +191,11 @@
   
   # Load familiar and data.table libraries to each cluster node.
   parallel::clusterEvalQ(cl=cl, library(familiar))
+  parallel::clusterEvalQ(cl=cl, library(data.table))
+  
+  # Set options on each cluster node.
+  parallel::clusterEvalQ(cl=cl, options(rf.cores=as.integer(1)))
+  parallel::clusterEvalQ(cl=cl, data.table::setDTthreads(1L))
   
   # Check if anything needs to be loaded
   if(any(c("all", "data") %in% assign)){
