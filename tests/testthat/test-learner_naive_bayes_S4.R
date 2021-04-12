@@ -4,6 +4,10 @@ familiar:::test_all_learners_available(learners=familiar:::.get_available_naive_
 # Don't perform any further tests on CRAN due to time of running the complete test.
 testthat::skip_on_cran()
 
+familiar:::test_hyperparameter_optimisation(learners=familiar:::.get_available_naive_bayes_learners(show_general=TRUE),
+                                            debug=FALSE,
+                                            parallel=FALSE)
+
 familiar:::test_all_learners_train_predict_vimp(learners=familiar:::.get_available_naive_bayes_learners(show_general=FALSE),
                                                 has_vimp=FALSE)
 
