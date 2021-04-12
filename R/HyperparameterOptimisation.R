@@ -381,10 +381,12 @@ setMethod("optimise_hyperparameters", signature(object="familiarModel", data="da
                                                       user_list=user_list,
                                                       n_features=get_n_features(data))
             
+            # Update hyperparameters to set any fixed parameters.
+            object@hyperparameters <- lapply(parameter_list, function(list_entry) list_entry$init_config)
+            
             # Check that any parameters can be randomised.
             if(!.any_randomised_hyperparameters(parameter_list=parameter_list)){
-              # Update hyperparameters to set any fixed parameters.
-              object@hyperparameters <- lapply(parameter_list, function(list_entry) list_entry$init_config)
+              if(verbose) logger.message("Hyperparameter optimisation: All hyperparameters are fixed. No optimisation is required.")
               
               return(object)
             }
@@ -416,7 +418,14 @@ setMethod("optimise_hyperparameters", signature(object="familiarModel", data="da
                                                                    n_random_sets=n_random_sets)
             
             # Check that the parameter table is not empty.
-            if(is_empty(parameter_table)) return(object)
+            if(is_empty(parameter_table)){
+              if(verbose) logger.message("Hyperparameter optimisation: No hyperparameters were found to initialise the optimisation process.")
+              
+              # Remove any fixed hyperparameters.
+              object@hyperparameters <- NULL
+              
+              return(object)
+            } 
             
             # Generate bootstrap samples
             bootstraps <- tryCatch(.create_bootstraps(n_iter=n_max_bootstraps,
@@ -426,7 +435,14 @@ setMethod("optimise_hyperparameters", signature(object="familiarModel", data="da
             
             # Check that bootstraps could be created. This may fail if the data
             # set is too small.
-            if(inherits(bootstraps, "error")) return(object)
+            if(inherits(bootstraps, "error")){
+              if(verbose) logger.message("Hyperparameter optimisation: Failed to create bootstraps. The dataset may be too small.")
+              
+              # Remove any fixed hyperparameters.
+              object@hyperparameters <- NULL
+              
+              return(object)
+            } 
                                    
             ##### Create or obtain variable importance -------------------------
             rank_table_list <- .compute_hyperparameter_variable_importance(cl=cl,
@@ -556,8 +572,6 @@ setMethod("optimise_hyperparameters", signature(object="familiarModel", data="da
             incumbent_set_data <- ..get_best_hyperparameter_set(optimisation_score_table=optimisation_score_table,
                                                                 acquisition_function=acquisition_function,
                                                                 n=1L)
-            
-            
             
             # Message the user concerning the initial optimisation score.
             if(verbose){
