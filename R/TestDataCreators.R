@@ -384,6 +384,7 @@ test.create_wide_data_set <- function(outcome_type){
     
     # Make the dataset small and wide (10 features)
     data <- data[1:5, ]
+    data$status <- 1
     
     # Add twenty random features
     random_data <- lapply(seq_len(20), function(ii, n) stats::rnorm(n=n), n=nrow(data))
