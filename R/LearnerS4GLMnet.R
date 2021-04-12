@@ -269,7 +269,7 @@ setMethod("..train", signature(object="familiarGLMnet", data="dataObject"),
             
             # Determine id columns
             id_columns <- get_id_columns("series")
-
+            
             # Generate folds using our own fold generating algorithm to handle repeated measurements
             fold_table <- .create_cv(n_folds = object@hyperparameters$n_folds,
                                      outcome_type = object@outcome_type,

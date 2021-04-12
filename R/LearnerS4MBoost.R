@@ -264,10 +264,10 @@ setMethod("get_prediction_type", signature(object="familiarMBoost"),
 
             if(object@outcome_type != "survival") return(callNextMethod())
 
-            if(type == "default" & object@hyperparameters$family %in% c("cox", "cindex", "gehan")){
+            if(type == "default" & all(object@hyperparameters$family %in% c("cox", "cindex", "gehan"))){
               return("hazard_ratio")
               
-            } else if(type == "default" & object@hyperparameters$family %in% c("weibull", "lognormal", "surv_loglog")) {
+            } else if(type == "default" & all(object@hyperparameters$family %in% c("weibull", "lognormal", "surv_loglog"))) {
               return("expected_survival_time")
               
             } else if(type == "survival_probability"){
