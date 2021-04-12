@@ -586,8 +586,16 @@ setMethod("optimise_hyperparameters", signature(object="familiarModel", data="da
             # Initialise vector to track old config scores and parameter ids.
             stop_list <- ..initialise_hyperparameter_optimisation_stopping_criteria()
             
+            # Check whether any combination yielded anything valid.
+            if(incumbent_set_data$optimisation_score == -1){
+              skip_optimisation <- TRUE
+              
+            } else {
+              skip_optimisation <- FALSE
+            }
+            
             optimisation_step <- 0L
-            while(optimisation_step < n_max_optimisation_steps){
+            while(optimisation_step < n_max_optimisation_steps & !skip_optimisation){
               
               ##### SMBO - Intensify -------------------------------------------
               
