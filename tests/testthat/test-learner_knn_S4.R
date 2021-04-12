@@ -10,7 +10,6 @@ familiar:::test_hyperparameter_optimisation(learners=familiar:::.get_available_l
                                             debug=FALSE,
                                             parallel=FALSE)
 
-
 familiar:::test_hyperparameter_optimisation(learners=familiar:::.get_available_radial_knn_learners(show_general=TRUE),
                                             debug=FALSE,
                                             parallel=FALSE)
