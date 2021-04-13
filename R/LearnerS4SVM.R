@@ -232,16 +232,18 @@ setMethod("..train", signature(object="familiarSVM", data="dataObject"),
               svm_parameter_list$coef0 <- object@hyperparameters$offset
             }
             
-            # Fit the SVM model using e10
-            model <- tryCatch(do.call(e1071::svm,
-                                      args=c(list(formula,
-                                                  "data"=data@data,
-                                                  "type"=svm_type,
-                                                  "probability"=fit_probability,
-                                                  "fitted"=FALSE,
-                                                  "cross"=0L),
-                                             svm_parameter_list)),
-                              error=identity)
+            # Fit the SVM model using e1071::svm. The quiet wrapper suppresses C
+            # output from the underlying libsvm library, notably iteration
+            # warnings.
+            quiet(model <- tryCatch(do.call(e1071::svm,
+                                            args=c(list(formula,
+                                                        "data"=data@data,
+                                                        "type"=svm_type,
+                                                        "probability"=fit_probability,
+                                                        "fitted"=FALSE,
+                                                        "cross"=0L),
+                                                   svm_parameter_list)),
+                                    error=identity))
             
             # Check if the model trained at all.
             if(inherits(model, "error")) return(callNextMethod())

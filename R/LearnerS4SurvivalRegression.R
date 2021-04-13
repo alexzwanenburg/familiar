@@ -120,7 +120,7 @@ setMethod("..train", signature(object="familiarSurvRegr", data="dataObject"),
             # Generate model -- NOTE: survreg was directly imported to allow
             # access to predict and summary functions that were not exported in
             # survival.
-            model <- quiet(tryCatch(survreg(formula,
+            quiet(model <- tryCatch(survreg(formula,
                                             data=encoded_data$encoded_data@data,
                                             control=model_control,
                                             y=FALSE,
