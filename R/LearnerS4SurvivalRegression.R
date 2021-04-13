@@ -324,6 +324,9 @@ setMethod("..vimp", signature(object="familiarSurvRegr"),
                                                             vimp_table=vimp_table,
                                                             method="max")
             
+            # Remove NA values
+            vimp_table <- vimp_table[is.finite(score)]
+            
             # Add ranks and set multi_var
             vimp_table[, "rank":=data.table::frank(-score, ties.method="min")]
             vimp_table[, "multi_var":=TRUE]
