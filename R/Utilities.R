@@ -1398,11 +1398,12 @@ is.encapsulated_path <- function(x){ return(inherits(x, "encapsulated_path")) }
 
 
 quiet <- function(x) { 
-  # Hadley Wickham (http://r.789695.n4.nabble.com/Suppressing-output-e-g-from-cat-td859876.html)
+  # Removes all output to console.
   
-  sink(tempfile()) 
+  sink(nullfile()) 
   on.exit(sink()) 
-  invisible(force(x)) 
+  
+  invisible(capture.output(x, file=nullfile(), type="message"))
 } 
 
 .append_new <- function(l, new){
