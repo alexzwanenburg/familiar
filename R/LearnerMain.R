@@ -34,10 +34,6 @@ setMethod("promote_learner", signature(object="familiarModel"),
               # C-classification support vector machines.
               object <- methods::new("familiarSVMC", object)
               
-            } else if(learner %in% .get_available_svm_c_bound_learners()){
-              # Bound constraint C-classification support vector machines.
-              object <- methods::new("familiarSVMCBound", object)
-              
             } else if(learner %in% .get_available_svm_nu_learners()){
               # Nu-classification and regression support vector machines.
               object <- methods::new("familiarSVMNu", object)
@@ -45,10 +41,6 @@ setMethod("promote_learner", signature(object="familiarModel"),
             } else if(learner %in% .get_available_svm_eps_learners()){
               # Epsilon regression support vector machines.
               object <- methods::new("familiarSVMEps", object)
-              
-            } else if(learner %in% .get_available_svm_eps_bound_learners()){
-              # Bound constraint epsilon regression support vector machines.
-              object <- methods::new("familiarSVMEpsBound", object)
               
             } else if(learner %in% .get_available_glm_learners()){
               # Generalised linear models

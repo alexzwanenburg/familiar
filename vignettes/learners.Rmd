@@ -131,17 +131,12 @@ Learning algorithms create models that relate input data to the outcome. Develop
 | k-nearest neighbours (radial kernel)| `k_nearest_neighbours_radial`   | × | × |   |   |   |
 |**support vector machines**|
 | $C$-classification^b^ | `svm_c_*`                                     | × | × |   |   |   |
-| bound constraint $C$-classification^b^ | `svm_c_bound_*`              | × | × |   |   |   |
 | $\nu$-classification/ regression^b^ | `svm_nu_*`                      | × | × | × | × |   |
 | $\epsilon$-regression^b^ | `svm_eps_*`                                |   |   | × | × |   |
-| bound constraint $\epsilon$-regression^b^ | `svm_eps_bound_*`         |   |   | × | × |   |
-| linear kernel^c^ | `svm_*_linear`, `svm_*_vanilla`                    | × | × | × | × |   |
-| polynomial kernel^c^ | `svm_*_poly`, `svm_*_polynomial`               | × | × | × | × |   |
-| radial kernel^c^ | `svm_*_rbf`, `svm_*_radial`                        | × | × | × | × |   |
-| sigmoid kernel^c^ | `svm_*_tanh`, `svm_*_sigmoid`                     | × | × | × | × |   |
-| Bessel kernel^c^ | `svm_*_bessel`                                     | × | × | × | × |   |
-| Laplace kernel^c^ | `svm_*_laplace`                                   | × | × | × | × |   |
-| ANOVA kernel^c^ | `svm_*_anova`                                       | × | × | × | × |   |
+| linear kernel^c^ | `svm_*_linear`               | × | × | × | × |   |
+| polynomial kernel^c^ | `svm_*_polynomial`       | × | × | × | × |   |
+| radial kernel^c^ | `svm_*_radial`               | × | × | × | × |   |
+| sigmoid kernel^c^ | `svm_*_sigmoid`             | × | × | × | × |   |
 
 Table: Overview of learners implemented in familiar.
 
@@ -149,7 +144,7 @@ Table: Overview of learners implemented in familiar.
 
 ^b^ SVM kernel is indicated by `*`. If omitted (e.g. `svm_c`), the radial basis function is used as kernel.
 
-^c^ SVM type is indicated by `*`, and must be one of `c`, `c_bound`, `nu`, `epsilon` or `epsilon_bound`.
+^c^ SVM type is indicated by `*`, and must be one of `c`, `nu`, or `epsilon`.
 
 ## Configuration options
 
@@ -339,41 +334,32 @@ Note that optimising the number of nearest neighbours can be computationally slo
 
 Support vector machines were originally defined to identify optimal margins between classes for classification problems. Support vector machines were popularized after the use of the kernel trick was described. Using the kernel trick the calculations are performed in an implicit high-dimensional feature space, which is considerably more efficient than explicit calculations [@Boser1992-nk].
 
-Familiar implements SVM using `kernlab::ksvm` [@Karatzoglou2004-bb]. By default, `kernlab` scales both features and outcome data. This was used to derive the default hyperparameter ranges specified in the table below.
+Familiar implements SVM using `e1071::svm`. We tried `kernlab::ksvm`, but this function would reproducibly freeze during unit testing. By default, both features and outcome data are scaled internally. This was used to derive the default hyperparameter ranges specified in the table below.
 
 | **parameter** | **tag** | **values** | **optimised** | **comments** |
 |:--------------|:--------|:----------:|:----------:|:-------------|
 | signature size | `sign_size` | $\mathbb{Z} \in \left[1,n\right]$ | yes | -- |
-| SVM kernel | `kernel` | `vanilla`, `linear`, `poly`, `polynomial`, `rbf`, `radial`, `tanh`, `sigmoid`, `bessel`, `laplace`, `anova` | no | Default is `radial`, unless specified as part of the learner name. |
+| SVM kernel | `kernel` | `linear`, `polynomial`, `radial`, `sigmoid` | no | Default is `radial`, unless specified as part of the learner name. |
 | $C$ | `c` | $\mathbb{R}$ | yes | The cost for violation of constraints is expressed on a $\log_{10}$ scale, i.e. the actual value is $10^\texttt{c}$. The default range is $\left[-5, 3\right]$. |
 | $\epsilon$ | `epsilon` | $\mathbb{R}$ | `continuous` and `count` outcomes | The error tolerance $\epsilon$ is only used for regression SVM. $\epsilon$ is expressed on a $\log_{10}$ scale. The default range is $\left[-5, 1\right]$. |
 | $\nu$ | `nu` | $\mathbb{R}$ | `nu` SVM type | `nu` provides upper bounds for the fraction of training errors and lower bounds for the fraction of support vectors [@Chang2011-ck]. It is expressed on a $\log_{10}$ scale. The default range is $\left[-5, 1\right]$. |
-| inverse kernel width | `sigma` | $\mathbb{R}$ | radial, Laplace, Bessel and ANOVA kernels | This parameter specifies the inverse of the kernel width. It is expressed on the $\log_{10}$ scale. The default range is $\left[-5, 5\right]$. |
-| polynomial degree | `degree` | $\mathbb{Z} \in \left[1, \infty\right)$ | polynomial and Bessel kernels | The default range is $\left[1, 5\right]$. |
-| kernel scale | `scale` | $\mathbb{R}$ | polynomial and sigmoid kernels | Scale is expressed on the $\log_{10}$ scale. The default range is $\left[-5, \log_{10}(2)\right]$. |
+| inverse kernel width | `gamma` | $\mathbb{R}$ | non-linear kernels | This parameter specifies the inverse of the kernel width. It is expressed on the $\log_{10}$ scale. The default range is $\left[-9, 3\right]$. |
+| polynomial degree | `degree` | $\mathbb{Z} \in \left[1, \infty\right)$ | polynomial kernel | The default range is $\left[1, 5\right]$. |
 | kernel offset | `offset` | $\mathbb{R} \in \left[0, \infty\right)$ | polynomial and sigmoid kernels |  Negative values are not allowed. The default range is $\left[0, 1 \right]$. |
-| Bessel function order | `order` | $\mathbb{Z} \in \left[0, \infty\right)$ | Bessel kernel | The default range is $\left[0, 10\right]$. |
 
 Different types of SVM algorithms exist for classification and regression. The following SVM types are implemented:
 
 * $C$-classification: `c`
-* Bound constraint $C$-classification: `c_bound`
 * $\nu$-classification: `nu`
 * $\nu$-regression: `nu`
 * $\epsilon$-regression: `eps`
-* Bound constraint $\epsilon$-regression: `eps_bound`
-
-Though `kernlab` supports native multinomial classification SVM types with SPOC [@Crammer2002-vp] and KBB [@Weston1998-vh], these algorithms are not used as the current implementation does not allow for obtaining class probabilities.
 
 The following kernels are implemented:
 
-* Linear kernel: `linear`, `vanilla`
-* Polynomial kernel: `poly`, `polynomial`
-* Radial basis function kernel: `rbf`, `radial`
-* Hyperbolic tangent (sigmoid) kernel: `tanh`, `sigmoid`
-* Laplace kernel: `laplace`
-* Bessel kernel: `bessel`
-* ANOVA with radial basis function kernel: `anova`
+* Linear kernel: `linear`
+* Polynomial kernel: `polynomial`
+* Radial basis function kernel: `radial`
+* Hyperbolic tangent (sigmoid) kernel: `sigmoid`
 
 
 # Hyperparameter optimization

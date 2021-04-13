@@ -7,18 +7,12 @@ setClass("familiarSVM",
 
 
 setClass("familiarSVMC", contains="familiarSVM")
-setClass("familiarSVMCBound", contains="familiarSVM")
 setClass("familiarSVMNu", contains="familiarSVM")
 setClass("familiarSVMEps", contains="familiarSVM")
-setClass("familiarSVMEpsBound", contains="familiarSVM")
 
 
 .get_available_svm_c_learners <- function(show_general=TRUE){
   return(c("svm_c", paste("svm_c", ..get_available_svm_kernels(), sep="_")))
-}
-
-.get_available_svm_c_bound_learners <- function(show_general=TRUE){
-  return(c("svm_c_bound", paste("svm_c_bound", ..get_available_svm_kernels(), sep="_")))
 }
 
 .get_available_svm_nu_learners <- function(show_general=TRUE){
@@ -29,13 +23,8 @@ setClass("familiarSVMEpsBound", contains="familiarSVM")
   return(c("svm_eps", paste("svm_eps", ..get_available_svm_kernels(), sep="_")))
 }
 
-.get_available_svm_eps_bound_learners <- function(show_general=TRUE){
-  return(c("svm_eps_bound", paste("svm_eps_bound", ..get_available_svm_kernels(), sep="_")))
-}
+..get_available_svm_kernels <- function() return(c("linear", "radial", "polynomial", "sigmoid"))
 
-..get_available_svm_kernels <- function() return(c("vanilla", "linear", "rbf", "radial", "poly",
-                                                   "polynomial", "tanh", "sigmoid", "bessel",
-                                                   "laplace", "anova"))
 
 ..find_kernel_type <- function(learner){
   
@@ -46,7 +35,7 @@ setClass("familiarSVMEpsBound", contains="familiarSVM")
   kernel_matches <- stringi::stri_endswith_fixed(learner, pattern=svm_kernels)
   
   # If all are missing (e.g. "svm_eps), use default RBF kernel.
-  if(all(!kernel_matches)) return("rbf")
+  if(all(!kernel_matches)) return("radial")
   
   # Else, return selected kernel.
   return(svm_kernels[kernel_matches])
@@ -61,13 +50,11 @@ setMethod("is_available", signature(object="familiarSVM"),
             outcome_type <- object@outcome_type
             
             if(outcome_type %in% c("continuous", "count") & (is(object, "familiarSVMNu") |
-                                                             is(object, "familiarSVMEps") |
-                                                             is(object, "familiarSVMEpsBound"))){
+                                                             is(object, "familiarSVMEps"))){
               return(TRUE)
               
             } else if(outcome_type %in% c("binomial", "multinomial") & (is(object, "familiarSVMNu") |
-                                                                        is(object, "familiarSVMC") |
-                                                                        is(object, "familiarSVMCBound"))){
+                                                                        is(object, "familiarSVMC"))){
               return(TRUE)
               
             } else {
@@ -93,9 +80,7 @@ setMethod("get_default_hyperparameters", signature(object="familiarSVM"),
             param$c <- list()
             
             # Type-specific parameters.
-            if(is(object, "familiarSVMNu") |
-               is(object, "familiarSVMEps") |
-               is(object, "familiarSVMEpsBound")){
+            if(is(object, "familiarSVMNu") | is(object, "familiarSVMEps")){
               param$epsilon <- list()
             }
 
@@ -104,23 +89,15 @@ setMethod("get_default_hyperparameters", signature(object="familiarSVM"),
             }
             
             # Kernel-specific parameters.
-            if(svm_kernel %in% c("rbf", "radial")){
-              param$sigma <- list()
+            if(svm_kernel %in% c("radial")){
+              param$gamma <- list()
               
-            } else if(svm_kernel %in% c("poly", "polynomial")){
-              param$degree <- param$scale <- param$offset <- list()
+            } else if(svm_kernel %in% c("polynomial")){
+              param$degree <- param$gamma <- param$offset <- list()
               
-            } else if(svm_kernel %in% c("tanh", "sigmoid")){
-              param$scale <- param$offset <- list()
+            } else if(svm_kernel %in% c("sigmoid")){
+              param$gamma <- param$offset <- list()
               
-            } else if(svm_kernel %in% c("bessel")){
-              param$sigma <- param$order <- param$degree <- list()
-              
-            } else if(svm_kernel %in% c("laplace")){
-              param$sigma <- list()
-              
-            } else if(svm_kernel %in% c("anova")){
-              param$sigma <- param$degree <- list()
             }
             
             # If the data object is explicitly NULL, return the list with
@@ -135,31 +112,7 @@ setMethod("get_default_hyperparameters", signature(object="familiarSVM"),
             ##### SVM kernel ###################################################
             
             # A default kernel has been set earlier. Convert the svm_kernel to
-            # the internal naming used by kernlab.
-            if(svm_kernel %in% c("vanilla", "linear")){
-              svm_kernel <- "vanilladot"
-              
-            } else if(svm_kernel %in% c("rbf", "radial")){
-              svm_kernel <- "rbfdot"
-              
-            } else if(svm_kernel %in% c("poly", "polynomial")){
-              svm_kernel <- "polydot"
-              
-            } else if(svm_kernel %in% c("tanh", "sigmoid")){
-              svm_kernel <- "tanhdot"
-              
-            } else if(svm_kernel %in% c("bessel")){
-              svm_kernel <- "besseldot"
-              
-            } else if(svm_kernel %in% c("laplace")){
-              svm_kernel <- "laplacedot"
-              
-            } else if(svm_kernel %in% c("anova")){
-              svm_kernel <- "anovadot"
-              
-            } else {
-              ..error_reached_unreachable_code(paste0("get_default_hyperparameters,familiarSVM: unknown svm kernel encountered: ", svm_kernel))
-            }
+            # the internal naming used by e1071::svm.
             
             # Set the svm kernel.
             param$kernel <- .set_hyperparameter(default=svm_kernel, type="factor", range=svm_kernel,
@@ -175,7 +128,7 @@ setMethod("get_default_hyperparameters", signature(object="familiarSVM"),
             
             
             ##### Error tolerance epsilon ####################################
-            if(is(object, "familiarSVMNu") | is(object, "familiarSVMEps") | is(object, "familiarSVMEpsBound")){
+            if(is(object, "familiarSVMNu") | is(object, "familiarSVMEps")){
               
               # This parameter defines the error tolerance for regression SVM.
               # It is expressed on a log10 scale.
@@ -194,17 +147,17 @@ setMethod("get_default_hyperparameters", signature(object="familiarSVM"),
             }
             
             
-            ##### Inverse kernel width sigma #################################
-            if(svm_kernel %in% c("rbfdot", "besseldot", "laplacedot", "anovadot")){
+            ##### Inverse kernel width gamma #################################
+            if(svm_kernel %in% c("radial", "polynomial", "sigmoid")){
               
               # sigma is expressed on a log10 scale
-              param$sigma <- .set_hyperparameter(default=c(-5, -3, -1, 1, 3, 5), type="numeric", range=c(-5, 5),
+              param$gamma <- .set_hyperparameter(default=c(-7, -5, -3, -1, 1), type="numeric", range=c(-9, 3),
                                                  valid_range=c(-Inf, Inf), randomise=TRUE)
             }
             
             
             ##### Polynomial degree ##########################################
-            if(svm_kernel %in% c("polydot", "besseldot", "anovadot")){
+            if(svm_kernel %in% c("polynomial")){
               
               # polydot, besseldot and anovadot expect positive integer degrees.
               param$degree <- .set_hyperparameter(default=c(1, 2, 3, 4, 5), type="integer", range=c(1, 5),
@@ -212,38 +165,14 @@ setMethod("get_default_hyperparameters", signature(object="familiarSVM"),
             }
             
             
-            ##### Distance scale parameter ###################################
-            if(svm_kernel %in% c("polydot", "tanhdot")){
-              
-              
-              # scale is expressed on a log10 scale. Note that as the feature
-              # data is rescaled internally, we should not expect a scale much
-              # larger then 1.
-              param$scale <- .set_hyperparameter(default=c(-3, -1, 0), type="numeric", range=c(-5, log10(2)),
-                                                 valid_range=c(-Inf, Inf), randomise=TRUE)
-            }
-            
-            
             ##### Kernel offset parameter ####################################
-            if(svm_kernel %in% c("polydot", "tanhdot")){
+            if(svm_kernel %in% c("polynomial", "sigmoid")){
               
-              # As feature data is rescaled internally by kernlab, we should not
+              # As feature data is rescaled internally by svm, we should not
               # expect offsets outside the [0, 1] range. Also, negative values
               # are not allowed for either kernel.
               param$offset <- .set_hyperparameter(default=c(0.0, 0.2, 0.5, 1.0), type="numeric", range=c(0, 1),
                                                   valid_range=c(0, Inf), randomise=TRUE)
-            }
-            
-            
-            ##### Bessel function order ######################################
-            if(svm_kernel %in% c("besseldot")){
-              
-              # The order of the Bessel function should be a non-negative
-              # integer. Note that kernlab does not complain about non-integer
-              # values, but this results in models that are the same as if they
-              # were generated using a floor operation on the order parameter.
-              param$order <- .set_hyperparameter(default=c(0, 1, 2, 3, 5), type="integer", range=c(0, 10),
-                                                 valid_range=c(0, Inf), randomise=TRUE)
             }
             
             return(param)
@@ -268,16 +197,16 @@ setMethod("..train", signature(object="familiarSVM", data="dataObject"),
             fit_probability <- ifelse(object@outcome_type %in% c("binomial", "multinomial"), TRUE, FALSE)
             
             # Derive svm type from object
-            if(is(object, "familiarSVMC")) svm_type <- "C-svc"
-            if(is(object, "familiarSVMCBound")) svm_type <- "C-bsvc"
-            if(is(object, "familiarSVMNu") & object@outcome_type %in% c("binomial", "multinomial")) svm_type <- "nu-svc"
-            if(is(object, "familiarSVMNu") & object@outcome_type %in% c("count", "continuous")) svm_type <- "nu-svr"
-            if(is(object, "familiarSVMEps")) svm_type <- "eps-svr"
-            if(is(object, "familiarSVMEpsBound")) svm_type <- "eps-bsvr"
-
+            if(is(object, "familiarSVMC")) svm_type <- "C-classification"
+            if(is(object, "familiarSVMNu") & object@outcome_type %in% c("binomial", "multinomial")) svm_type <- "nu-classification"
+            if(is(object, "familiarSVMNu") & object@outcome_type %in% c("count", "continuous")) svm_type <- "nu-regression"
+            if(is(object, "familiarSVMEps")) svm_type <- "eps-regression"
+            
             # Set svm-related parameters.
             svm_parameter_list <- list("kernel"=object@hyperparameters$kernel,
-                                       "C"=10^(object@hyperparameters$c))
+                                       "cost"=10^(object@hyperparameters$c))
+            
+            
             
             # Set nu-parameter (which not all svm types use).
             if(is(object, "familiarSVMNu")){
@@ -285,45 +214,33 @@ setMethod("..train", signature(object="familiarSVM", data="dataObject"),
             }
             
             # Set epsilon parameter (which not all svm types use).
-            if(is(object, "familiarSVMNu") |
-               is(object, "familiarSVMEps") |
-               is(object, "familiarSVMEpsBound")){
+            if(is(object, "familiarSVMNu") | is(object, "familiarSVMEps")){
               svm_parameter_list$epsilon <- 10^(object@hyperparameters$epsilon)
             }
             
             
             ##### Set kernel-specific parameters #########################################
-            kernel_parameter_list <- list()
-            if(!is.null(object@hyperparameters$sigma)){
-              kernel_parameter_list$sigma <- 10^object@hyperparameters$sigma
+            if(!is.null(object@hyperparameters$gamma)){
+              svm_parameter_list$gamma <- 10^object@hyperparameters$gamma
             }
             
             if(!is.null(object@hyperparameters$degree)){
-              kernel_parameter_list$degree <- object@hyperparameters$degree
+              svm_parameter_list$degree <- object@hyperparameters$degree
             }
-            
-            if(!is.null(object@hyperparameters$scale)){
-              kernel_parameter_list$scale <- object@hyperparameters$scale
-            }
-            
+           
             if(!is.null(object@hyperparameters$offset)){
-              kernel_parameter_list$offset <- object@hyperparameters$offset
+              svm_parameter_list$coef0 <- object@hyperparameters$offset
             }
             
-            if(!is.null(object@hyperparameters$order)){
-              kernel_parameter_list$order <- object@hyperparameters$order
-            }
-            
-            # Fit the SVM model using kernlab::ksvm
-            model <- tryCatch(quiet(do.call(kernlab::ksvm,
-                                            args=c(list("x"=formula,
-                                                        "data"=data@data,
-                                                        "type"=svm_type,
-                                                        "kpar"=kernel_parameter_list,
-                                                        "prob.model"=fit_probability,
-                                                        "fit"=FALSE,
-                                                        "cross"=0L),
-                                                   svm_parameter_list))),
+            # Fit the SVM model using e10
+            model <- tryCatch(do.call(e1071::svm,
+                                      args=c(list(formula,
+                                                  "data"=data@data,
+                                                  "type"=svm_type,
+                                                  "probability"=fit_probability,
+                                                  "fitted"=FALSE,
+                                                  "cross"=0L),
+                                             svm_parameter_list)),
                               error=identity)
             
             # Check if the model trained at all.
@@ -352,26 +269,15 @@ setMethod("..predict", signature(object="familiarSVM", data="dataObject"),
               # Check if the data is empty.
               if(is_empty(data)) return(callNextMethod())
               
-              # Set the prediction type
-              if(object@outcome_type %in% c("binomial", "multinomial")){
-                prediction_type <- "probabilities"
-                
-              } else if(object@outcome_type %in% c("count", "continuous")){
-                prediction_type <- "response"
-                
-              } else {
-                ..error_outcome_type_not_implemented(object@outcome_type)
-              }
-              
               # Get an empty prediction table.
               prediction_table <- get_placeholder_prediction_table(object=object,
                                                                    data=data,
                                                                    type=type)
               
               # Make predictions using the model.
-              model_predictions <- tryCatch(kernlab::predict(object=object@model,
-                                                             newdata=data@data,
-                                                             type=prediction_type),
+              model_predictions <- tryCatch(predict(object=object@model,
+                                                    newdata=data@data,
+                                                    probability=object@outcome_type %in% c("binomial", "multinomial")),
                                             error=identity)
               
               # Check if the model trained at all.
@@ -380,6 +286,9 @@ setMethod("..predict", signature(object="familiarSVM", data="dataObject"),
               
               if(object@outcome_type %in% c("binomial", "multinomial")){
                 #####Categorical outcomes#######################################
+                
+                # Isolate probabilities.
+                model_predictions <- attr(model_predictions, "probabilities")
                 
                 # Obtain class levels from the object.
                 class_levels <- get_outcome_class_levels(x=object)
@@ -414,21 +323,6 @@ setMethod("..predict", signature(object="familiarSVM", data="dataObject"),
               }
               
               return(prediction_table)
-              
-            } else {
-              ##### User-specified method ######################################
-              
-              # Check if the model was trained.
-              if(!model_is_trained(object)) return(NULL)
-              
-              # Check if the data is empty.
-              if(is_empty(data)) return(NULL)
-              
-              # Make predictions using the model.
-              return(kernlab::predict(object=object@model,
-                                      newdata=data@data,
-                                      type=type,
-                                      ...))
               
             }
           })
