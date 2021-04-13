@@ -524,35 +524,32 @@ setMethod("decode_categorical_variables_vimp", signature(object="data.table"),
               
               # Summarise score by single value according to "method"
               if(method == "max"){
-                data_categorical <- data_categorical[, list(score=max(score, na.rm=TRUE)), by=original_name]
+                data_categorical <- suppressWarnings(data_categorical[, list(score=max(score, na.rm=TRUE)), by=original_name])
                 
               } else if(method == "abs_max"){
-                data_categorical <- data_categorical[, list(score=max(abs(score), na.rm=TRUE)), by=original_name]
+                data_categorical <- suppressWarnings(data_categorical[, list(score=max(abs(score), na.rm=TRUE)), by=original_name])
                 
               } else if(method == "min"){
-                data_categorical <- data_categorical[, list(score=min(score, na.rm=TRUE)), by=original_name]
+                data_categorical <- suppressWarnings(data_categorical[, list(score=min(score, na.rm=TRUE)), by=original_name])
                 
               } else if(method == "abs_min"){
-                data_categorical <- data_categorical[, list(score=min(abs(score), na.rm=TRUE)), by=original_name]
+                data_categorical <- suppressWarnings(data_categorical[, list(score=min(abs(score), na.rm=TRUE)), by=original_name])
                 
               } else if(method == "mean"){
-                data_categorical <- data_categorical[, list(score=mean(score, na.rm=TRUE)), by=original_name]
+                data_categorical <- suppressWarnings(data_categorical[, list(score=mean(score, na.rm=TRUE)), by=original_name])
                 
               } else if(method == "abs_mean"){
-                data_categorical <- data_categorical[, list(score=mean(abs(score), na.rm=TRUE)), by=original_name]
+                data_categorical <- suppressWarnings(data_categorical[, list(score=mean(abs(score), na.rm=TRUE)), by=original_name])
                 
               } else if(method == "median"){
-                data_categorical <- data_categorical[, list(score=stats::median(score, na.rm=TRUE)), by=original_name]
+                data_categorical <- suppressWarnings(data_categorical[, list(score=stats::median(score, na.rm=TRUE)), by=original_name])
                 
               } else if(method == "abs_median"){
-                data_categorical <- data_categorical[, list(score=stats::median(abs(score), na.rm=TRUE)), by=original_name]
+                data_categorical <- suppressWarnings(data_categorical[, list(score=stats::median(abs(score), na.rm=TRUE)), by=original_name])
                 
               } else {
                 ..error_reached_unreachable_code("decode_categorical_variables_vimp: unknown aggregation method")
               }
-              
-              # Replace infinite/nan/etc values by NA
-              data_categorical[!is.finite(score), "score":=as.double(NA)]
               
               # Change name of original_name column to name
               data.table::setnames(data_categorical, "original_name", "name")
@@ -561,6 +558,9 @@ setMethod("decode_categorical_variables_vimp", signature(object="data.table"),
             # Combine to single data.table
             vimp_table <- rbind(data_non_categorical,
                                 data_categorical)
+            
+            # Replace infinite/nan/etc values by NA
+            vimp_table[!is.finite(score), "score":=NA_real_]
             
             return(vimp_table)
           })
