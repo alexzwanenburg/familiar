@@ -2495,7 +2495,7 @@ integrated_test <- function(..., debug=FALSE){
     
   } else {
     test_fun <- testthat::test_that
-    suppress_fun <- test_suppress
+    suppress_fun <- suppressMessages
   }
   
   for(outcome_type in c("count", "continuous", "binomial", "multinomial", "survival")){
@@ -2566,13 +2566,6 @@ debug_test_that <- function(desc, code){
   # Execute the code
   code <- substitute(code)
   eval(code, envir=parent.frame())
-}
-
-
-
-test_suppress <- function(expr){
-  
-  return(quiet(suppressMessages(suppressWarnings(expr))))
 }
 
 
