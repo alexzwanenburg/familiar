@@ -5,7 +5,7 @@ familiar:::test_all_learners_available(learners=familiar:::.get_available_rfsrc_
 testthat::skip_on_cran()
 
 familiar:::test_hyperparameter_optimisation(learners=familiar:::.get_available_rfsrc_learners(show_general=TRUE),
-                                            debug=TRUE,
+                                            debug=FALSE,
                                             parallel=FALSE)
 
 familiar:::test_all_learners_train_predict_vimp(learners=familiar:::.get_available_rfsrc_learners(show_general=FALSE),
