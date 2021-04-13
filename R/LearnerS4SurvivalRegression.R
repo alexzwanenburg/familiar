@@ -120,12 +120,12 @@ setMethod("..train", signature(object="familiarSurvRegr", data="dataObject"),
             # Generate model -- NOTE: survreg was directly imported to allow
             # access to predict and summary functions that were not exported in
             # survival.
-            model <- tryCatch(survreg(formula,
-                                      data=encoded_data$encoded_data@data,
-                                      control=model_control,
-                                      y=FALSE,
-                                      dist=object@hyperparameters$distribution),
-                              error=identity)
+            model <- quiet(tryCatch(survreg(formula,
+                                            data=encoded_data$encoded_data@data,
+                                            control=model_control,
+                                            y=FALSE,
+                                            dist=object@hyperparameters$distribution),
+                                    error=identity))
             
             # Check if the model trained at all.
             if(inherits(model, "error")) return(callNextMethod())
