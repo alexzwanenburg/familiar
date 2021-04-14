@@ -4,6 +4,10 @@ familiar:::test_all_learners_available(learners=familiar:::.get_available_xgboos
 # Don't perform any further tests on CRAN due to time of running the complete test.
 testthat::skip_on_cran()
 
+familiar:::test_hyperparameter_optimisation(learners=familiar:::.get_available_xgboost_dart_learners(show_general=TRUE),
+                                            debug=FALSE,
+                                            parallel=FALSE)
+
 familiar:::test_all_learners_train_predict_vimp(learners=familiar:::.get_available_xgboost_dart_learners(show_general=FALSE),
                                                 hyperparameter_list=list("count"=list("n_boost" = 2,
                                                                                       "learning_rate" = -1,
@@ -376,7 +380,7 @@ wide_data <- familiar:::test.create_wide_data_set("survival")
 good_model <- familiar:::train(data=good_data,
                                cluster_method="none",
                                imputation_method="simple",
-                               hyperparameter_list=list("sign_size"=familiar:::get_n_features(wide_data),
+                               hyperparameter_list=list("sign_size"=familiar:::get_n_features(good_data),
                                                         "n_boost" = 2,
                                                         "learning_rate" = -1,
                                                         "lambda" = 0.0,
@@ -426,11 +430,11 @@ testthat::test_that("Extreme gradient boosting dart tree model has variable impo
   # Extract the variable importance table.
   vimp_table <- familiar:::..vimp(good_model)
   
-  # Expect that the vimp table has two rows.
-  testthat::expect_equal(nrow(vimp_table), 2)
+  # Expect that the vimp table has three or two rows.
+  testthat::expect_equal(nrow(vimp_table) %in% c(2, 3), TRUE)
   
   # Expect that the names are the same as that of the features.
-  testthat::expect_equal(all(familiar:::get_feature_columns(good_data) %in% vimp_table$name), TRUE)
+  testthat::expect_equal(any(familiar:::get_feature_columns(good_data) %in% vimp_table$name), TRUE)
   
   # Expect that nodes has rank 1 and rx has rank 2.
   testthat::expect_equal(vimp_table[rank == 1, ]$name, "nodes")
