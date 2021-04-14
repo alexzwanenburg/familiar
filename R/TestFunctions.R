@@ -1207,18 +1207,20 @@ test_hyperparameter_optimisation <- function(vimp_methods=NULL,
                           # Test that all hyperparameters are set.
                           testthat::expect_setequal(names(new_object@hyperparameters), names(get_default_hyperparameters(object)))
                           
-                          if(!is_vimp & !is.null(new_object@hyperparameter_data)){
-                            # Test that sign_size hyperparameters make
-                            # sense. 
-                            testthat::expect_equal(all(new_object@hyperparameter_data$sign_size >= 2), TRUE)
-                            testthat::expect_equal(all(new_object@hyperparameter_data$sign_size <= get_n_features(full_data)), TRUE)
-                            
-                            if(vimp_method == "signature_only"){
-                              testthat::expect_equal(all(new_object@hyperparameter_data$sign_size == 2), TRUE)
-                            }
-                            
-                            if(vimp_method == "none"){
-                              testthat::expect_equal(all(new_object@hyperparameter_data$sign_size == get_n_features(full_data)), TRUE)
+                          if(!is_vimp){
+                            if(!is.null(new_object@hyperparameter_data)){
+                              # Test that sign_size hyperparameters make
+                              # sense. 
+                              testthat::expect_equal(all(new_object@hyperparameter_data$sign_size >= 2), TRUE)
+                              testthat::expect_equal(all(new_object@hyperparameter_data$sign_size <= get_n_features(full_data)), TRUE)
+                              
+                              if(vimp_method == "signature_only"){
+                                testthat::expect_equal(all(new_object@hyperparameter_data$sign_size == 2), TRUE)
+                              }
+                              
+                              if(vimp_method == "none"){
+                                testthat::expect_equal(all(new_object@hyperparameter_data$sign_size == get_n_features(full_data)), TRUE)
+                              }
                             }
                           }
                         }
@@ -1259,18 +1261,20 @@ test_hyperparameter_optimisation <- function(vimp_methods=NULL,
                           # Test that all hyperparameters are set.
                           testthat::expect_setequal(names(new_object@hyperparameters), names(get_default_hyperparameters(object)))
                           
-                          if(!is_vimp & !is.null(new_object@hyperparameter_data)){
-                            # Test that sign_size hyperparameters make
-                            # sense. 
-                            testthat::expect_equal(all(new_object@hyperparameter_data$sign_size >= 2), TRUE)
-                            testthat::expect_equal(all(new_object@hyperparameter_data$sign_size <= get_n_features(full_data)), TRUE)
-                            
-                            if(vimp_method == "signature_only"){
-                              testthat::expect_equal(all(new_object@hyperparameter_data$sign_size == 2), TRUE)
-                            }
-                            
-                            if(vimp_method == "none"){
-                              testthat::expect_equal(all(new_object@hyperparameter_data$sign_size == get_n_features(full_data)), TRUE)
+                          if(!is_vimp){
+                            if(!is.null(new_object@hyperparameter_data)){
+                              # Test that sign_size hyperparameters make
+                              # sense. 
+                              testthat::expect_equal(all(new_object@hyperparameter_data$sign_size >= 2), TRUE)
+                              testthat::expect_equal(all(new_object@hyperparameter_data$sign_size <= get_n_features(full_data)), TRUE)
+                              
+                              if(vimp_method == "signature_only"){
+                                testthat::expect_equal(all(new_object@hyperparameter_data$sign_size == 2), TRUE)
+                              }
+                              
+                              if(vimp_method == "none"){
+                                testthat::expect_equal(all(new_object@hyperparameter_data$sign_size == get_n_features(full_data)), TRUE)
+                              }
                             }
                           }
                         }
@@ -1312,18 +1316,20 @@ test_hyperparameter_optimisation <- function(vimp_methods=NULL,
                           # Test that all hyperparameters are set.
                           testthat::expect_setequal(names(new_object@hyperparameters), names(get_default_hyperparameters(object)))
                           
-                          if(!is_vimp & !is.null(new_object@hyperparameter_data)){
-                            # Test that sign_size hyperparameters make
-                            # sense. 
-                            testthat::expect_equal(all(new_object@hyperparameter_data$sign_size >= 2), TRUE)
-                            testthat::expect_equal(all(new_object@hyperparameter_data$sign_size <= get_n_features(full_data)), TRUE)
-                            
-                            if(vimp_method == "signature_only"){
-                              testthat::expect_equal(all(new_object@hyperparameter_data$sign_size == 2), TRUE)
-                            }
-                            
-                            if(vimp_method == "none"){
-                              testthat::expect_equal(all(new_object@hyperparameter_data$sign_size == get_n_features(full_data)), TRUE)
+                          if(!is_vimp) {
+                            if(!is.null(new_object@hyperparameter_data)){
+                              # Test that sign_size hyperparameters make
+                              # sense. 
+                              testthat::expect_equal(all(new_object@hyperparameter_data$sign_size >= 2), TRUE)
+                              testthat::expect_equal(all(new_object@hyperparameter_data$sign_size <= get_n_features(full_data)), TRUE)
+                              
+                              if(vimp_method == "signature_only"){
+                                testthat::expect_equal(all(new_object@hyperparameter_data$sign_size == 2), TRUE)
+                              }
+                              
+                              if(vimp_method == "none"){
+                                testthat::expect_equal(all(new_object@hyperparameter_data$sign_size == get_n_features(full_data)), TRUE)
+                              }
                             }
                           }
                           
@@ -1338,11 +1344,14 @@ test_hyperparameter_optimisation <- function(vimp_methods=NULL,
                             # Test that all hyperparameters are set.
                             testthat::expect_setequal(names(new_object@hyperparameters), names(get_default_hyperparameters(object)))
                             
-                            if(!is_vimp & !is.null(new_object@hyperparameter_data)){
-                              # Test that sign_size hyperparameters make
-                              # sense. 
-                              testthat::expect_equal(all(new_object@hyperparameter_data$sign_size == 2), TRUE)
+                            if(!is_vimp){
+                              if(!is.null(new_object@hyperparameter_data)){
+                                # Test that sign_size hyperparameters make
+                                # sense. 
+                                testthat::expect_equal(all(new_object@hyperparameter_data$sign_size == 2), TRUE)
+                              }
                             }
+                            
                           } else {
                             # Bogus test to prevent skipping.
                             testthat::expect_equal(is.null(new_object@hyperparameters), TRUE)
@@ -1454,10 +1463,12 @@ test_hyperparameter_optimisation <- function(vimp_methods=NULL,
                           # Test that all hyperparameters are set.
                           testthat::expect_setequal(names(new_object@hyperparameters), names(get_default_hyperparameters(object)))
                           
-                          if(!is_vimp & !is.null(new_object@hyperparameter_data)){
-                            # Test that sign_size hyperparameters make
-                            # sense. 
-                            testthat::expect_equal(all(new_object@hyperparameter_data$sign_size == 1), TRUE)
+                          if(!is_vimp){
+                            if(!is.null(new_object@hyperparameter_data)){
+                              # Test that sign_size hyperparameters make
+                              # sense. 
+                              testthat::expect_equal(all(new_object@hyperparameter_data$sign_size == 1), TRUE)
+                            }
                           }
                         }
                       })
@@ -1497,10 +1508,12 @@ test_hyperparameter_optimisation <- function(vimp_methods=NULL,
                           # Test that all hyperparameters are set.
                           testthat::expect_setequal(names(new_object@hyperparameters), names(get_default_hyperparameters(object)))
                           
-                          if(!is_vimp & !is.null(new_object@hyperparameter_data)){
-                            # Test that sign_size hyperparameters make
-                            # sense. 
-                            testthat::expect_equal(all(new_object@hyperparameter_data$sign_size == 1), TRUE)
+                          if(!is_vimp){
+                            if(!is.null(new_object@hyperparameter_data)){
+                              # Test that sign_size hyperparameters make
+                              # sense. 
+                              testthat::expect_equal(all(new_object@hyperparameter_data$sign_size == 1), TRUE)
+                            }
                           }
                           
                         } else {
@@ -1514,10 +1527,12 @@ test_hyperparameter_optimisation <- function(vimp_methods=NULL,
                             # Test that all hyperparameters are set.
                             testthat::expect_setequal(names(new_object@hyperparameters), names(get_default_hyperparameters(object)))
                             
-                            if(!is_vimp & !is.null(new_object@hyperparameter_data)){
-                              # Test that sign_size hyperparameters make
-                              # sense. 
-                              testthat::expect_equal(all(new_object@hyperparameter_data$sign_size == 1), TRUE)
+                            if(!is_vimp){
+                              if(!is.null(new_object@hyperparameter_data)){
+                                # Test that sign_size hyperparameters make
+                                # sense. 
+                                testthat::expect_equal(all(new_object@hyperparameter_data$sign_size == 1), TRUE)
+                              }
                             }
                             
                           } else {
@@ -1562,10 +1577,12 @@ test_hyperparameter_optimisation <- function(vimp_methods=NULL,
                           # Test that all hyperparameters are set.
                           testthat::expect_setequal(names(new_object@hyperparameters), names(get_default_hyperparameters(object)))
                           
-                          if(!is_vimp & !is.null(new_object@hyperparameter_data)){
-                            # Test that sign_size hyperparameters make
-                            # sense. 
-                            testthat::expect_equal(all(new_object@hyperparameter_data$sign_size == 1), TRUE)
+                          if(!is_vimp){
+                            if(!is.null(new_object@hyperparameter_data)){
+                              # Test that sign_size hyperparameters make
+                              # sense. 
+                              testthat::expect_equal(all(new_object@hyperparameter_data$sign_size == 1), TRUE)
+                            }
                           }
                           
                         } else {
@@ -1579,12 +1596,13 @@ test_hyperparameter_optimisation <- function(vimp_methods=NULL,
                             # Test that all hyperparameters are set.
                             testthat::expect_setequal(names(new_object@hyperparameters), names(get_default_hyperparameters(object)))
                             
-                            if(!is_vimp & !is.null(new_object@hyperparameter_data)){
-                              # Test that sign_size hyperparameters make
-                              # sense. 
-                              testthat::expect_equal(all(new_object@hyperparameter_data$sign_size == 1), TRUE)
-                            }
-                            
+                            if(!is_vimp){
+                              if(!is.null(new_object@hyperparameter_data)){
+                                # Test that sign_size hyperparameters make
+                                # sense. 
+                                testthat::expect_equal(all(new_object@hyperparameter_data$sign_size == 1), TRUE)
+                              }
+                            }                            
                           } else {
                             # Bogus test to prevent skipping.
                             testthat::expect_equal(is.null(new_object@hyperparameters), TRUE)
