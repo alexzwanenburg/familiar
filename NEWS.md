@@ -86,6 +86,9 @@ parameters:
     
     * `smbo_random_initialisation` is no longer a logical (`TRUE` or `FALSE`)
     but takes `fixed_subsample`, `fixed` or `random` as values.
+    `fixed_subsample` generates initial hyperparameters from the same default
+    hyperparameter grid as `fixed`, but unlike `fixed` does not exhaustively
+    search all options. `random` creates random sets of initial hyperparameters.
     
     * `smbo_n_random_sets` can now be used to set the number of hyperparameters
     sets created for the `fixed_subsample` and `random` methods.
