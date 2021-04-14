@@ -1385,7 +1385,7 @@ test_hyperparameter_optimisation <- function(vimp_methods=NULL,
                           testthat::expect_equal(is.null(new_object@hyperparameters), FALSE)
                           
                           # Test that all hyperparameters are set.
-                          testthat::expect_setequal(names(new_object@hyperparameters), get_default_hyperparameters(object))
+                          testthat::expect_setequal(names(new_object@hyperparameters), names(get_default_hyperparameters(object)))
                           
                         } else {
                           # Not always available, but with hyperparameters. For
