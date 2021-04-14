@@ -1,4 +1,10 @@
 familiar:::test_all_vimp_methods_available(familiar:::.get_available_regression_vimp_methods(show_general=TRUE))
+
+familiar:::test_hyperparameter_optimisation(vimp_methods=familiar:::.get_available_regression_vimp_methods(show_general=TRUE),
+                                            debug=TRUE,
+                                            parallel=FALSE,
+                                            always_available=TRUE)
+
 familiar:::test_all_vimp_methods(familiar:::.get_available_regression_vimp_methods(show_general=FALSE))
 
 
