@@ -1,4 +1,8 @@
 familiar:::test_all_vimp_methods_available(familiar:::.get_available_correlation_vimp_methods(show_general=TRUE))
+familiar:::test_hyperparameter_optimisation(vimp_methods=familiar:::.get_available_correlation_vimp_methods(show_general=TRUE),
+                                            debug=FALSE,
+                                            parallel=FALSE,
+                                            no_hyperparameters=TRUE)
 familiar:::test_all_vimp_methods(familiar:::.get_available_correlation_vimp_methods(show_general=FALSE))
 
 
