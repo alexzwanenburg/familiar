@@ -93,6 +93,11 @@ parameters:
     * `smbo_n_random_sets` can now be used to set the number of hyperparameters
     sets created for the `fixed_subsample` and `random` methods.
 
+* `kernlab` is no longer used as backend for computing support vector machine
+learners due to lack of stability. Unit testing showed consistent freezing. We
+now use the SVM of `e1071` which we found to be stable. SVM models created using
+previous versions of familiar are no longer compatible.
+
 ## Minor changes:
 
 * The default method for bootstrap confidence intervals (`bootstrap_ci_method`)
