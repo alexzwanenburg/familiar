@@ -284,11 +284,23 @@ setMethod("..predict", signature(object="familiarRanger", data="dataObject"),
                                                                    type=type)
               
               # Make predictions using the model.
-              model_predictions <- predict(object=object@model,
-                                           data=data@data,
-                                           type="response",
-                                           num.threads=1,
-                                           verbose=FALSE)
+              if(inherits(object@model, "ranger")){
+                model_predictions <- suppressWarnings(predict(object=object@model,
+                                                              data=data@data,
+                                                              type="response",
+                                                              num.threads=1,
+                                                              verbose=FALSE))
+                
+              } else if(inherits(object@model, "holdoutRF")){
+                model_predictions <- suppressWarnings(predict(object=object@model$rf1,
+                                                              data=data@data,
+                                                              type="response",
+                                                              num.threads=1,
+                                                              verbose=FALSE))
+                
+              } else {
+                ..error_reached_unreachable_code(paste0("..predict,familiarRanger,dataObject: unknown model class detected ", class(object@model), ". Expected: ranger, holdoutRF"))
+              }
               
               
               if(object@outcome_type %in% c("binomial", "multinomial")){
@@ -323,7 +335,12 @@ setMethod("..predict", signature(object="familiarRanger", data="dataObject"),
                 #####Survival outcomes######
                 
                 # Get the unique event times
-                event_times <- ranger::timepoints(object@model)
+                if(inherits(object@model, "ranger")){
+                  event_times <- ranger::timepoints(object@model)
+                  
+                } else {
+                  event_times <- ranger::timepoints(object@model$rf1)
+                }
                 
                 # Set default time, if not provided.
                 time <- ifelse(is.null(time), max(event_times), time)
