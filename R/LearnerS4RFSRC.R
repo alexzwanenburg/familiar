@@ -477,7 +477,6 @@ setMethod("..vimp", signature(object="familiarRFSRC"),
               # Perform holdout variable importance.
               vimp_score <-randomForestSRC::holdout.vimp(formula,
                                                          data = data@data,
-                                                         ntree = 2^object@hyperparameters$n_tree,
                                                          samptype = sample_type,
                                                          sampsize = sample_size,
                                                          mtry = max(c(1, ceiling(object@hyperparameters$m_try * get_n_features(data)))),
