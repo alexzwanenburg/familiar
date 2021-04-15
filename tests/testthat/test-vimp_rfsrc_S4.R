@@ -3,7 +3,12 @@ familiar:::test_all_vimp_methods_available(familiar:::.get_available_rfsrc_vimp_
 # Don't perform any further tests on CRAN due to time of running the complete test.
 testthat::skip_on_cran()
 
+familiar:::test_hyperparameter_optimisation(vimp_methods=familiar:::.get_available_rfsrc_vimp_methods(show_general=TRUE),
+                                            debug=TRUE,
+                                            parallel=FALSE)
+
 familiar:::test_all_vimp_methods(familiar:::.get_available_rfsrc_vimp_methods(show_general=FALSE),
+                                 debug=TRUE,
                                  hyperparameter_list=list("count"=list("n_tree"=4,
                                                                        "sample_size"=0.50,
                                                                        "m_try"=0.3,
