@@ -484,7 +484,16 @@ setMethod("..vimp", signature(object="familiarRFSRC"),
                                                          nodedepth = object@hyperparameters$tree_depth,
                                                          nsplit = object@hyperparameters$n_split,
                                                          splitrule = object@hyperparameters$split_rule,
-                                                         verbose=FALSE)
+                                                         verbose=FALSE)$importance
+              
+              # Select the "all" column, which is the first column
+              if(is.matrix(vimp_score)){
+                vimp_score_names <- rownames(vimp_score)
+                vimp_score <- vimp_score[, 1]
+                
+              } else {
+                vimp_score_names  <- names(vimp_score)
+              }
               
               # Create the variable importance data table
               vimp_table <- data.table::data.table("score"=vimp_score, "name"=names(vimp_score))
