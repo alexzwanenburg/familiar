@@ -146,18 +146,30 @@ setMethod("..compute_data_element_estimates", signature(x="familiarDataElementHy
                                           use.names=TRUE,
                                           fill=TRUE)
             
+            # Split by fs_method
+            data <- split(data, by="fs_method")
+            
             learner <- x[[1]]@identifiers$learner
             if(is.null(learner)) learner <- x[[1]]@data$learner[1]
             
-            vimp_method <- x[[1]]@identifiers$fs_method
-            if(is.null(vimp_method)) vimp_method <- x[[1]]@data$fs_method[1]
+            # Set learner.
+            parameter_string <- paste0("learner\t", learner)
             
-            parameter_string <- c(paste0("learner\t", learner),
-                                  paste0("fs_method\t", vimp_method),
-                                  "---------------------")
-            parameter_string <- c(parameter_string,
-                                  sapply(x[[1]]@value_column, function(hyperparameter, data) (paste0(hyperparameter, "\t", ..hyperparameter_to_string(data[[hyperparameter]]))), data=data))
-            parameter_string <- c(parameter_string, " ")
+            for(current_data in data){
+              # Determine the vimp_method
+              vimp_method <- current_data$fs_method[1]
+              
+              # Set vimp method.
+              parameter_string <- c(parameter_string,
+                                    paste0("fs_method\t", vimp_method),
+                                    "---------------------")
+              
+              # Parse data.
+              parameter_string <- c(parameter_string,
+                                    sapply(x[[1]]@value_column, function(hyperparameter, data) (paste0(hyperparameter, "\t", ..hyperparameter_to_string(data[[hyperparameter]]))), data=current_data))
+              parameter_string <- c(parameter_string, " ")
+              
+            }
             
             # Collapse to text.
             parameter_string <- paste0(parameter_string, collapse="\n")
