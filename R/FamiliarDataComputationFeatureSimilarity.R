@@ -301,6 +301,14 @@ setMethod("extract_feature_similarity", signature(object="familiarEnsemble", dat
   distance_matrix <- cluster.get_distance_matrix(similarity_table=x@data,
                                                  similarity_metric=x@similarity_metric)
   
+  if(length(x@similarity_threshold) > 1){
+    # Remove 1.0 because that does not yield clustering info.
+    available_thresholds <- setdiff(x@similarity_threshold, 1.0)
+    
+    # Select the maximum threshold.
+    x@similarity_threshold <- max(available_thresholds)
+  }
+  
   # Find cluster information
   cluster_info <- cluster.get_cluster_table(distance_matrix=distance_matrix,
                                             require_representation=FALSE,
