@@ -462,13 +462,15 @@ plot_model_signature_variable_importance <- function(...){
       
       # Save to file
       if(!is.null(split_by)){
-        subtype <- paste0(subtype_basis,
-                          paste0(sapply(split_by, function(ii, x) (x[[ii]][1]), x=x_sub), collapse="_"),
-                          collapse="_")
+        subtype <- c(subtype_basis,
+                     paste0(sapply(split_by, function(ii, x) (x[[ii]][1]), x=x_sub), collapse="_"))
         
       } else {
         subtype <- subtype_basis
       }
+      
+      # Add aggregation method to subtype.
+      subtype <- paste(c(subtype, x@rank_aggregation_method), collapse="_")
       
       # Obtain decent default values for the plot.
       def_plot_dims <- .determine_feature_ranking_plot_dimensions(x=x_sub,
