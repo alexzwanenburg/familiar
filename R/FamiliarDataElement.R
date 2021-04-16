@@ -458,7 +458,7 @@ setMethod(".export", signature(x="familiarCollection"),
                               object=x,
                               dir_path=dir_path,
                               type=type,
-                              subtype=paste(subtype, type, sep="_"))
+                              subtype=subtype)
               
               return(NULL)
             }
