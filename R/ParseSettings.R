@@ -2061,8 +2061,7 @@
                                                   var_name="acquisition_function", type="character", optional=TRUE, default="expected_improvement")
   
   .check_parameter_value_is_valid(x=settings$hpo_acquisition_function, var_name="acquisition_function",
-                                  values=c("improvement_probability", "improvement_empirical_probability", "expected_improvement",
-                                           "upper_confidence_bound", "bayes_upper_confidence_bound"))
+                                  values=.get_available_acquisition_functions())
   
   # Performance metric for hyperparameter optimisation
   settings$hpo_metric <- .parse_arg(x_config=config$optimisation_metric, x_var=optimisation_metric,

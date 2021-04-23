@@ -533,3 +533,12 @@
   
   return(predictions$predictions)
 }
+
+
+.get_available_acquisition_functions <- function(){
+  return(c("improvement_probability",
+           "improvement_empirical_probability",
+           "expected_improvement",
+           "upper_confidence_bound",
+           "bayes_upper_confidence_bound"))
+}
