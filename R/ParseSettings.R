@@ -2054,7 +2054,7 @@
                                        var_name="optimisation_function", type="character", optional=TRUE, default="balanced")
   
   .check_parameter_value_is_valid(x=settings$hpo_optimisation_function, var_name="optimisation_function",
-                                  values=c("max_validation", "balanced", "stronger_balance"))
+                                  values=.get_available_optimisation_functions())
   
   # Acquisition function
   settings$hpo_acquisition_function <- .parse_arg(x_config=config$acquisition_function, x_var=acquisition_function,

@@ -619,3 +619,8 @@ metric.optim_score.max_validation <- function(training=NULL, validation) return(
 metric.optim_score.balanced <- function(training, validation) return(validation - abs(validation - training))
 
 metric.optim_score.stronger_balance <- function(training, validation) return(validation - 2.0 * abs(validation - training))
+
+
+.get_available_optimisation_functions <- function(){
+  return(c("max_validation", "balanced", "stronger_balance"))
+}
