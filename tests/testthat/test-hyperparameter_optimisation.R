@@ -3,6 +3,43 @@ testthat::skip_on_cran()
 
 verbose <- FALSE
 
+##### Test acquisition functions for random_forest #############################
+for(acquisition_function in familiar:::.get_available_acquisition_functions()){
+  familiar:::test_hyperparameter_optimisation(learners="glm_logistic",
+                                              outcome_type_available="binomial",
+                                              acquisition_function=acquisition_function,
+                                              debug=FALSE,
+                                              parallel=FALSE)
+}
+
+
+##### Test optimisation functions for one metric ###############################
+for(optimisation_function in familiar:::.get_available_optimisation_functions()){
+  familiar:::test_hyperparameter_optimisation(learners="glm_logistic",
+                                              outcome_type_available="binomial",
+                                              optimisation_function=optimisation_function,
+                                              debug=FALSE,
+                                              parallel=FALSE)
+}
+
+##### Test optimisation functions for multiple metrics #########################
+for(optimisation_function in familiar:::.get_available_optimisation_functions()){
+  familiar:::test_hyperparameter_optimisation(learners="glm_logistic",
+                                              outcome_type_available="binomial",
+                                              optimisation_function=optimisation_function,
+                                              metric=c("auc", "brier", "balanced_accuracy"),
+                                              debug=TRUE,
+                                              parallel=FALSE)
+}
+
+##### Test without measuring time ##############################################
+familiar:::test_hyperparameter_optimisation(learners="glm_logistic",
+                                            outcome_type_available="binomial",
+                                            measure_time=FALSE,
+                                            debug=TRUE,
+                                            parallel=FALSE)
+
+
 # Create dataset.
 data <- familiar:::test.create_good_data_set(outcome_type="binomial")
 
