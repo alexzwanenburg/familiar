@@ -494,7 +494,7 @@
     beta <- 2/5 * log(5/3 * ncol(parameter_set) * (acquisition_data$t + 1)^2 * pi^2)
     
     # Compute alpha
-    alpha <- mean + beta * sigma
+    alpha <- mu + beta * sigma
     
   } else if(acquisition_function == "bayes_upper_confidence_bound"){
     # The definition of the Bayesian upper confidence bound is adapted from
