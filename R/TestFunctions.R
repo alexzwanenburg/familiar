@@ -1687,7 +1687,8 @@ test_plots <- function(plot_function,
     #####Full data set########################################################
 
     # Train the model.
-    model_full_1 <- suppressWarnings(train(data=full_data,
+    model_full_1 <- suppressWarnings(train(cl=cl,
+                                           data=full_data,
                                            cluster_method="none",
                                            imputation_method="simple",
                                            fs_method="mim",

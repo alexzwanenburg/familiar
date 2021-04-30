@@ -131,8 +131,7 @@ batch_normalise.set_basic_normalisation_parameters <- function(cl=NULL,
                                           data=data,
                                           batch_normalisation_method=batch_normalisation_method,
                                           batches=batches,
-                                          .chopchop=TRUE,
-                                          .min_node_batch_size=10)
+                                          chopchop=TRUE)
   
   # Set names of the updated list
   names(updated_feature_info_list) <- features

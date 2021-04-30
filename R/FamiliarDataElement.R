@@ -772,7 +772,7 @@ setMethod("extract_dispatcher", signature(object="familiarEnsemble", proto_data_
                                     "progress_bar"= verbose & length(object@model_list) == 1),
                                list(...)),
                     progress_bar = verbose & length(object@model_list) > 1,
-                    .chopchop=TRUE)
+                    chopchop=TRUE)
     
   } else {
     x <- fam_mapply(cl=NULL,
@@ -845,7 +845,7 @@ setMethod("extract_dispatcher", signature(object="familiarEnsemble", proto_data_
                                     "progress_bar"= verbose & length(object@model_list) == 1),
                                list(...)),
                     progress_bar = verbose & length(object@model_list) > 1,
-                    .chopchop=TRUE)
+                    chopchop=TRUE)
     
   } else {
     x <- fam_mapply(cl=NULL,

@@ -304,7 +304,7 @@
                             object=vimp_object,
                             data=data,
                             progress_bar=verbose,
-                            .chopchop=TRUE)
+                            chopchop=TRUE)
   }
   
   return(vimp_list) 

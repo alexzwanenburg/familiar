@@ -217,7 +217,7 @@ setMethod("extract_feature_similarity", signature(object="familiarEnsemble", dat
                                 bootstrap_seed = bootstrap_data$seed,
                                 MoreArgs=list("data"=data),
                                 progress_bar=progress_bar,
-                                .chopchop=TRUE)
+                                chopchop=TRUE)
     
   } else {
     data_elements <- fam_mapply(cl=NULL,

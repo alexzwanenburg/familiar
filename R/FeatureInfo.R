@@ -219,8 +219,7 @@ add_missing_value_fractions <- function(cl=NULL, feature_info_list, data, thresh
                             X=data@data[, mget(feature_columns)],
                             FUN=function(data) (return(sum(is_valid_data(data)))),
                             progress_bar=FALSE,
-                            .chopchop=TRUE,
-                            .min_node_batch_size=200)
+                            chopchop=TRUE)
   
   # Determine fraction of missing values
   missing_frac    <- 1.0 - n_valid_val / nrow(data@data)
@@ -341,7 +340,7 @@ compute_feature_distribution_data <- function(cl, feature_info_list, data_obj){
                                      object=feature_info_list[feature_columns],
                                      x=data_obj@data[, mget(feature_columns)],
                                      progress_bar=FALSE,
-                                     .chopchop=TRUE)
+                                     chopchop=TRUE)
 
   if(length(feature_columns) > 0){
     feature_info_list[feature_columns] <- updated_feature_info
@@ -400,8 +399,7 @@ find_invariant_features <- function(cl=NULL, feature_info_list, data_obj){
                                   X=data_obj@data[, mget(feature_columns)],
                                   FUN=is_singular_data,
                                   progress_bar=FALSE,
-                                  .chopchop=TRUE,
-                                  .min_node_batch_size=200)
+                                  chopchop=TRUE)
   
   singular_features <- feature_columns[singular_features]
   
@@ -454,8 +452,7 @@ find_low_variance_features <- function(cl=NULL, feature_info_list, data_obj, set
                                   FUN=stats::var,
                                   progress_bar=FALSE,
                                   na.rm=TRUE,
-                                  .chopchop=TRUE,
-                                  .min_node_batch_size=200)
+                                  chopchop=TRUE)
   
   # Define a data table containing the variances
   dt_var <- data.table::data.table("name"=numeric_columns, "variance"=feature_variances)
@@ -550,8 +547,7 @@ find_non_robust_features <- function(cl=NULL, feature_info_list, data_obj, setti
                          progress_bar=FALSE,
                          MoreArgs=list("id_data"=data_obj@data[, mget(get_id_columns())],
                                        "type"=icc_type),
-                         .chopchop=TRUE,
-                         .min_node_batch_size=20)
+                         chopchop=TRUE)
   
   # Combine ICC data from list
   icc_table <- data.table::rbindlist(icc_list)

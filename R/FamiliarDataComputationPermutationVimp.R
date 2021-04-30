@@ -347,7 +347,7 @@ setMethod("extract_permutation_vimp", signature(object="familiarEnsemble"),
                                               "ensemble_method" = ensemble_method),
                                          list(...)),
                               progress_bar = progress_bar,
-                              .chopchop=TRUE)
+                              chopchop=TRUE)
   
   # Merge data elements
   data_elements <- merge_data_elements(data_elements)

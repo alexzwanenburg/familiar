@@ -18,7 +18,7 @@ setMethod("train", signature(data="data.table"),
 
 
 setMethod("train", signature(data="dataObject"),
-          function(data, learner, hyperparameter_list=list(), create_bootstrap=FALSE, create_novelty_detector=FALSE, ...){
+          function(data, learner, hyperparameter_list=list(), create_bootstrap=FALSE, create_novelty_detector=FALSE, cl=NULL, ...){
             
             #####Prepare settings###############################################
             
@@ -76,7 +76,7 @@ setMethod("train", signature(data="dataObject"),
             feature_info_list <- feature_info_list[["generic"]]
             
             # Perform some pre-processing (i.e. remove singular features)
-            feature_info_list <- .determine_preprocessing_parameters(cl=NULL,
+            feature_info_list <- .determine_preprocessing_parameters(cl=cl,
                                                                      data=data,
                                                                      feature_info_list=feature_info_list,
                                                                      settings=settings,

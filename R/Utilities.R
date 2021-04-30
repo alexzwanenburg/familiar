@@ -57,8 +57,7 @@ compute_univariable_p_values <- function(cl=NULL, data_obj, feature_columns){
                                      FUN=univariate_fun,
                                      progress_bar=FALSE,
                                      outcome_data=data_obj@data[, mget(outcome_columns)],
-                                     .chopchop=TRUE,
-                                     .min_node_batch_size=3)
+                                     chopchop=TRUE)
   
   return(coefficient_p_values)
 }

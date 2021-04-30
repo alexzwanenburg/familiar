@@ -28,7 +28,7 @@ for(optimisation_function in familiar:::.get_available_optimisation_functions())
                                               outcome_type_available="binomial",
                                               optimisation_function=optimisation_function,
                                               metric=c("auc", "brier", "balanced_accuracy"),
-                                              debug=TRUE,
+                                              debug=FALSE,
                                               parallel=FALSE)
 }
 

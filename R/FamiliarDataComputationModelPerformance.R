@@ -227,7 +227,7 @@ setMethod("extract_performance", signature(object="familiarEnsemble"),
                               MoreArgs=list("object"=object,
                                             "data"=prediction_data),
                               progress_bar=progress_bar,
-                              .chopchop=TRUE)
+                              chopchop=TRUE)
   
   # Merge data elements
   data_elements <- merge_data_elements(data_elements)

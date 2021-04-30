@@ -246,7 +246,7 @@ setMethod("extract_decision_curve_data", signature(object="familiarEnsemble"),
                               MoreArgs=list("data"=data,
                                             "threshold_probabilities"=threshold_probabilities),
                               progress_bar=progress_bar,
-                              .chopchop=TRUE)
+                              chopchop=TRUE)
   
   # Merge data elements
   data_elements <- merge_data_elements(data_elements)
@@ -384,7 +384,7 @@ setMethod("extract_decision_curve_data", signature(object="familiarEnsemble"),
                               MoreArgs=list("data"=data,
                                             "threshold_probabilities"=threshold_probabilities),
                               progress_bar=progress_bar,
-                              .chopchop=TRUE)
+                              chopchop=TRUE)
   
   # Merge data elements
   data_elements <- merge_data_elements(data_elements)

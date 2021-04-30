@@ -257,7 +257,7 @@ setMethod("extract_calibration_data", signature(object="familiarEnsemble"),
                               MoreArgs=list("object"=object,
                                             "data"=prediction_data),
                               progress_bar=progress_bar,
-                              .chopchop=TRUE)
+                              chopchop=TRUE)
   
   # Flatten list of data elements.
   data_elements <- unlist(data_elements)

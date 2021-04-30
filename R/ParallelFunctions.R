@@ -173,13 +173,16 @@
 
 
 
-.restart_cluster <- function(cl, assign=NULL){
+.restart_cluster <- function(cl=NULL, assign=NULL, n_nodes=NULL){
+  
+  # Determine the number of nodes that we need to assign.
+  if(inherits(cl, "cluster") & is.null(n_nodes)) n_nodes <- length(cl)
   
   # Terminate old cluster (if necessary)
   cl <- .terminate_cluster(cl=cl)
   
   # Start a new cluster
-  cl <- .start_cluster()
+  cl <- .start_cluster(n_cores=n_nodes)
   
   # If the cluster doesn't start, return a NULL
   if(is.null(cl)) return(NULL)
@@ -243,133 +246,8 @@
       parallel::clusterExport(cl=cl, varlist="master_feature_info_list", envir=familiar_global_env)
     }
   }
-}
-
-
-
-fam_lapply <- function(cl=NULL,
-                       assign=NULL, 
-                       X,
-                       FUN,
-                       progress_bar=FALSE,
-                       ...,
-                       .scheduling="static",
-                       .chopchop=FALSE,
-                       .min_node_batch_size=NULL){
-  # lapply. Reverts to sequential lapply if cl is NULL.
   
-  # Check if the cluster should be maintained.
-  cl <- .check_min_node_batch_size(cl=cl,
-                                   min_node_batch_size=.min_node_batch_size,
-                                   X)
-  
-  # Restart cluster if specified. This also means that we should terminate the
-  # cluster after use. If clusters already exist, update the cluster with the
-  # latest versions of variables in the global familiar environment.
-  if(!is.null(cl) & .needs_cluster_restart() & !.is_external_cluster()){
-    cl <- .restart_cluster(cl=cl, assign=assign)
-    terminate_cluster_on_exit <- TRUE
-    
-  } else if(inherits(cl, "cluster")) {
-    .update_info_on_cluster(cl=cl, assign=assign)
-    terminate_cluster_on_exit <- FALSE
-    
-  } else {
-    terminate_cluster_on_exit <- FALSE
-  }
-  
-  if(is.null(cl) & !progress_bar){
-    # Simple sequential lapply.
-    y <- do.call(lapply, args=c(list("X" = X,
-                                     "FUN" = FUN),
-                                list(...)))
-    
-  } else if(is.null(cl) & progress_bar){
-    # Start progress bar
-    pb_conn <- utils::txtProgressBar(min=0, max=length(X), style=3)
-    
-    # Determine the length of the argument.
-    arg_length <- length(X)
-    
-    # Perform the sequential apply as mapply.
-    y <- do.call(mapply, args=c(list("FUN"=.fun_with_progress_map),
-                                list(X),
-                                list("II"=seq_len(arg_length),
-                                     "MoreArgs"=list("FUN2"=FUN,
-                                                     "pb_conn"=pb_conn,
-                                                     "MoreArgs"=list(...)),
-                                     "SIMPLIFY"=FALSE,
-                                     "USE.NAMES"=TRUE)))
-    
-    # Close the progress bar connection.
-    close(pb_conn)
-    
-  } else if(inherits(cl, "cluster")){
-    
-    # Determine the type of scheduling.
-    if(.scheduling == "static") FUN_par <- parallel::parLapply
-    else FUN_par <- parallel::parLapplyLB
-    
-    if(.chopchop){
-      
-      # Send to a chunking function for chopping into a list with up to n_cl
-      # elements.
-      X <- .chop_args(args=list(X),
-                      n_cl=length(cl))
-      
-      # Limit the number of clusters.
-      if(length(X) < length(cl)) cl[1:length(X)]
-      
-      # Iterate over cluster nodes for assignment using .chopped_lapply.
-      y <- do.call(parallel::parLapply, args=c(list("fun"=.chopped_lapply,
-                                                    "cl"=cl,
-                                                    "X"=X,
-                                                    "FUN2"=FUN),
-                                               list(...)))
-      
-      # Flatten the list.
-      y <- unlist(y, recursive=FALSE)
-      
-    } else {
-      
-      # Parallel lapply without load balancing.
-      y <- do.call(FUN_par, args=c(list("cl" = cl,
-                                        "X" = X,
-                                        "fun" = FUN),                                                                                                                                                  
-                                   list(...)))
-    }
-    
-  } else {
-    ..error_reached_unreachable_code("fam_lapply: the cluster object is neither NULL nor a cluster.")
-  }
-  
-  if(terminate_cluster_on_exit){
-    cl <- .terminate_cluster(cl=cl)
-  }
-  
-  return(y)
-}
-
-
-
-fam_lapply_lb <- function(cl=NULL,
-                          assign=NULL,
-                          X,
-                          FUN,
-                          progress_bar=FALSE,
-                          ...,
-                          .min_node_batch_size=NULL){
-  # Call fam_lapply, with dynamic scheduling.
-  y <- do.call(fam_lapply, args=c(list("cl"=cl,
-                                       "assign"=assign,
-                                       "X"=X,
-                                       "FUN"=FUN,
-                                       "progress_bar"=progress_bar,
-                                       ".scheduling"="dynamic",
-                                       ".min_node_batch_size"=.min_node_batch_size),
-                                  list(...)))
-  
-  return(y)
+  return(cl)
 }
 
 
@@ -378,242 +256,185 @@ fam_sapply <- function(cl=NULL,
                        assign=NULL,
                        X,
                        FUN,
-                       progress_bar=FALSE,
                        ...,
+                       progress_bar=FALSE,
+                       MoreArgs=NULL,
                        SIMPLIFY=TRUE,
-                       USE.NAMES=TRUE,
-                       .scheduling="static",
-                       .chopchop=FALSE,
-                       .min_node_batch_size=NULL){
-  # sapply. Reverts to sequential sapply if cl is NULL.
+                       chopchop=FALSE,
+                       overhead_time=NULL,
+                       process_time=NULL,
+                       measure_time=FALSE){
   
-  # Check if the cluster should be maintained.
-  cl <- .check_min_node_batch_size(cl=cl,
-                                   min_node_batch_size=.min_node_batch_size,
-                                   X)
+  # Determine the output format.
+  output_format <- ifelse(SIMPLIFY, "vector", "list")
   
-  # Restart cluster if specified. This also means that we should terminate the
-  # cluster after use. If clusters already exist, update the cluster with the
-  # latest versions of variables in the global familiar environment.
-  if(!is.null(cl) & .needs_cluster_restart() & !.is_external_cluster()){
-    cl <- .restart_cluster(cl=cl, assign=assign)
-    terminate_cluster_on_exit <- TRUE
-    
-  } else if(inherits(cl, "cluster")) {
-    .update_info_on_cluster(cl=cl, assign=assign)
-    terminate_cluster_on_exit <- FALSE
-    
-  } else {
-    terminate_cluster_on_exit <- FALSE
-  }
+  # Get the name of the initial argument.
+  initial_argument_name <- head(names(formals(FUN)), n=1)
   
-  if(is.null(cl) & !progress_bar){
-    # Simple sequential sapply.
-    y <- do.call(sapply, args=append(list("X" = X,
-                                          "FUN" = FUN,
-                                          "simplify" = SIMPLIFY,
-                                          "USE.NAMES" = USE.NAMES),
-                                     list(...)))
-    
-  } else if(is.null(cl) & progress_bar){
-    # Start progress bar
-    pb_conn <- utils::txtProgressBar(min=0, max=length(X), style=3)
-    
-    # Determine the length of the argument.
-    arg_length <- length(X)
-    
-    # Perform the sequential apply as mapply.
-    y <- do.call(mapply, args=c(list("FUN"=.fun_with_progress_map),
-                                list(X),
-                                list("II"=seq_len(arg_length),
-                                     "MoreArgs"=list("FUN2"=FUN,
-                                                     "pb_conn"=pb_conn,
-                                                     "MoreArgs"=list(...)),
-                                     "SIMPLIFY"=SIMPLIFY,
-                                     "USE.NAMES"=USE.NAMES)))
-    
-    # Close the progress bar connection.
-    close(pb_conn)
-    
-  } else if(inherits(cl, "cluster")){
-    
-    # Determine the type of scheduling.
-    if(.scheduling == "static") FUN_par <- parallel::parSapply
-    else FUN_par <- parallel::parSapplyLB
-    
-    if(.chopchop){
-      
-      # Send to a chunking function for chopping into a list with up to n_cl
-      # elements.
-      X <- .chop_args(args=list(X),
-                      n_cl=length(cl))
-      
-      # Limit the number of clusters.
-      if(length(X) < length(cl)) cl[1:length(X)]
-    
-      # Iterate over cluster nodes for assignment using .chopped_sapply.
-      y <- do.call(parallel::parSapply, args=c(list("FUN"=.chopped_sapply,
-                                                    "cl"=cl,
-                                                    "X"=X,
-                                                    "simplify"=FALSE,
-                                                    "FUN2"=FUN),
-                                               list(...)))
-      
-      # Flatten the list and simplify to array
-      y <- unlist(y, recursive=FALSE)
-      if(SIMPLIFY) y <- simplify2array(unlist(y, recursive=TRUE))
-      
-    } else {
-      # Parallel sapply without load balancing.
-      y <- do.call(FUN_par, args=c(list("cl" = cl,
-                                        "X" = X,
-                                        "FUN" = FUN,
-                                        "simplify" = SIMPLIFY,
-                                        "USE.NAMES" = USE.NAMES),
-                                   list(...)))
-    }
-    
-  } else {
-    ..error_reached_unreachable_code("fam_sapply: the cluster object is neither NULL nor a cluster.")
-  }
+  # Upgrade X to a named list.
+  X <- list(X)
+  names(X) <- initial_argument_name
   
-  if(terminate_cluster_on_exit){
-    cl <- .terminate_cluster(cl=cl)
-  }
+  # Make call to .fam_apply.
+  y <- do.call(.fam_apply,
+               args=c(list("cl"=cl,
+                           "assign"=assign,
+                           "FUN"=FUN,
+                           "additional_arguments"=list(...),
+                           "progress_bar"=progress_bar,
+                           "chopchop"=chopchop,
+                           "overhead_time"=overhead_time,
+                           "process_time"=process_time,
+                           "measure_time"=measure_time,
+                           "process_scheduling"="static",
+                           "output_format"=output_format),
+                      X))
   
   return(y)
 }
+
+
+
+fam_lapply <- function(cl=NULL,
+                       assign=NULL,
+                       X,
+                       FUN,
+                       ...,
+                       progress_bar=FALSE,
+                       MoreArgs=NULL,
+                       SIMPLIFY=FALSE,
+                       chopchop=FALSE,
+                       overhead_time=NULL,
+                       process_time=NULL,
+                       measure_time=FALSE){
+  
+  # Determine the output format.
+  output_format <- ifelse(SIMPLIFY, "vector", "list")
+  
+  # Get the name of the initial argument.
+  initial_argument_name <- head(names(formals(FUN)), n=1)
+  
+  # Upgrade X to a named list.
+  X <- list(X)
+  names(X) <- initial_argument_name
+  
+  # Make call to .fam_apply.
+  y <- do.call(.fam_apply,
+               args=c(list("cl"=cl,
+                           "assign"=assign,
+                           "FUN"=FUN,
+                           "additional_arguments"=list(...),
+                           "progress_bar"=progress_bar,
+                           "chopchop"=chopchop,
+                           "overhead_time"=overhead_time,
+                           "process_time"=process_time,
+                           "measure_time"=measure_time,
+                           "process_scheduling"="static",
+                           "output_format"=output_format),
+                      X))
+  
+  return(y)
+}
+
+
+
+
+fam_mapply <- function(cl=NULL,
+                       assign=NULL,
+                       FUN,
+                       ...,
+                       progress_bar=FALSE,
+                       MoreArgs=NULL,
+                       SIMPLIFY=FALSE,
+                       chopchop=FALSE,
+                       overhead_time=NULL,
+                       process_time=NULL,
+                       measure_time=FALSE){
+  
+  # Determine the output format.
+  output_format <- ifelse(SIMPLIFY, "vector", "list")
+  
+  # Make call to .fam_apply.
+  y <- do.call(.fam_apply,
+               args=c(list("cl"=cl,
+                           "assign"=assign,
+                           "FUN"=FUN,
+                           "additional_arguments"=MoreArgs,
+                           "progress_bar"=progress_bar,
+                           "chopchop"=chopchop,
+                           "overhead_time"=overhead_time,
+                           "process_time"=process_time,
+                           "measure_time"=measure_time,
+                           "process_scheduling"="static",
+                           "output_format"=output_format),
+                      list(...)))
+  
+  return(y)
+}
+
 
 
 fam_sapply_lb <- function(cl=NULL,
                           assign=NULL,
                           X,
                           FUN,
-                          progress_bar=FALSE,
                           ...,
-                          SIMPLIFY=TRUE,
-                          USE.NAMES=TRUE,
-                          .min_node_batch_size=NULL){
-  # Call fam_sapply, with dynamic scheduling.
-  y <- do.call(fam_sapply, args=c(list("cl"=cl,
-                                       "assign"=assign,
-                                       "X"=X,
-                                       "FUN"=FUN,
-                                       "progress_bar"=progress_bar,
-                                       "SIMPLIFY"=SIMPLIFY,
-                                       "USE.NAMES"=USE.NAMES,
-                                       ".scheduling"="dynamic",
-                                       ".min_node_batch_size"=.min_node_batch_size),
-                                  list(...)))
+                          progress_bar=FALSE,
+                          SIMPLIFY=TRUE){
   
-  return(y)
+  # Determine the output format.
+  output_format <- ifelse(SIMPLIFY, "vector", "list")
+  
+  # Get the name of the initial argument.
+  initial_argument_name <- head(names(formals(FUN)), n=1)
+  
+  # Upgrade X to a named list.
+  X <- list(X)
+  names(X) <- initial_argument_name
+  
+  # Make call to .fam_apply.
+  y <- do.call(.fam_apply,
+               args=c(list("cl"=cl,
+                           "assign"=assign,
+                           "FUN"=FUN,
+                           "additional_arguments"=list(...),
+                           "progress_bar"=progress_bar,
+                           "process_scheduling"="dynamic",
+                           "output_format"=output_format),
+                      X))
+  
 }
 
 
 
-fam_mapply <- function(cl=NULL,
-                       assign=NULL,
-                       FUN, ...,
-                       progress_bar=FALSE,
-                       MoreArgs=NULL,
-                       SIMPLIFY=FALSE,
-                       USE.NAMES=TRUE,
-                       .scheduling="static",
-                       .chopchop=FALSE,
-                       .min_node_batch_size=NULL){
-  # mapply. Reverts to sequential mapply if cl is NULL.
+fam_lapply_lb <- function(cl=NULL,
+                          assign=NULL,
+                          X,
+                          FUN,
+                          ...,
+                          progress_bar=FALSE,
+                          SIMPLIFY=FALSE){
   
-  # Check if the cluster should be maintained.
-  cl <- .check_min_node_batch_size(cl=cl,
-                                   min_node_batch_size=.min_node_batch_size,
-                                   ...)
-    
-  # Restart cluster if specified. This also means that we should terminate the
-  # cluster after use. If clusters already exist, update the cluster with the
-  # latest versions of variables in the global familiar environment.
-  if(!is.null(cl) & .needs_cluster_restart() & !.is_external_cluster()){
-    cl <- .restart_cluster(cl=cl, assign=assign)
-    terminate_cluster_on_exit <- TRUE
-    
-  } else if(inherits(cl, "cluster")) {
-    .update_info_on_cluster(cl=cl, assign=assign)
-    terminate_cluster_on_exit <- FALSE
-    
-  } else {
-    terminate_cluster_on_exit <- FALSE
-  }
+  # Determine the output format.
+  output_format <- ifelse(SIMPLIFY, "vector", "list")
   
-  if(is.null(cl) & !progress_bar){
-    # Simple sequential lapply.
-    y <- do.call(mapply, args=c(list("FUN" = FUN),
-                                list(...),
-                                list("MoreArgs"=MoreArgs,
-                                     "SIMPLIFY"=SIMPLIFY,
-                                     "USE.NAMES"=USE.NAMES)))
-    
-  } else if(is.null(cl) & progress_bar){
-    
-    # Define length of dots
-    dots <- list(...)
-    arg_length <- max(sapply(dots, length))
-    
-    # Start progress bar
-    pb_conn <- utils::txtProgressBar(min=0, max=arg_length, style=3)
-    
-    # Perform the sequential apply as mapply.
-    y <- do.call(mapply, args=c(list("FUN"=.fun_with_progress_map),
-                                list(...),
-                                list("II"=seq_len(arg_length),
-                                     "MoreArgs"=list("FUN2"=FUN,
-                                                     "pb_conn"=pb_conn,
-                                                     "MoreArgs"=MoreArgs),
-                                     "SIMPLIFY"=SIMPLIFY,
-                                     "USE.NAMES"=USE.NAMES)))
-    
-    # Close the progress bar connection.
-    close(pb_conn)
-    
-  } else if(inherits(cl, "cluster")){
-    
-    if(.chopchop){
-      # Send to a chunking function for chopping into a list with up to n_cl
-      # elements.
-      dots <- .chop_args(args=list(...),
-                         n_cl=length(cl))
-      
-      # Limit the number of clusters.
-      if(length(dots) < length(cl)) cl[1:length(dots)]
-      
-      # Iterate over cluster nodes for assignment using .chopped_mapply.
-      y <- do.call(parallel::clusterMap, args=list("fun"=.chopped_mapply,
-                                                   "cl"=cl,
-                                                   "dots"=dots,
-                                                   "MoreArgs"=list("FUN2"=FUN,
-                                                                   "MoreArgs"=MoreArgs)))
-      
-      # Flatten the list.
-      y <- unlist(y, recursive=FALSE)
-      if(SIMPLIFY) y <- simplify2array(y)
-      
-    } else {
-      # Parallel mapply using clustermap
-      y <- do.call(parallel::clusterMap, args=c(list("cl"=cl,
-                                                     "fun"=FUN),
-                                                list(...),
-                                                list("MoreArgs"=MoreArgs,
-                                                     "SIMPLIFY"=SIMPLIFY,
-                                                     "USE.NAMES"=USE.NAMES,
-                                                     ".scheduling"=.scheduling)))
-    }
-    
-  } else {
-    ..error_reached_unreachable_code("fam_lapply: the cluster object is neither NULL nor a cluster.")
-  }
+  # Get the name of the initial argument.
+  initial_argument_name <- head(names(formals(FUN)), n=1)
   
-  if(terminate_cluster_on_exit){
-    cl <- .terminate_cluster(cl=cl)
-  }
+  # Upgrade X to a named list.
+  X <- list(X)
+  names(X) <- initial_argument_name
   
+  # Make call to .fam_apply.
+  y <- do.call(.fam_apply,
+               args=c(list("cl"=cl,
+                           "assign"=assign,
+                           "FUN"=FUN,
+                           "additional_arguments"=list(...),
+                           "progress_bar"=progress_bar,
+                           "process_scheduling"="dynamic",
+                           "output_format"=output_format),
+                      X))
   return(y)
 }
 
@@ -625,21 +446,255 @@ fam_mapply_lb <- function(cl=NULL,
                           ...,
                           progress_bar=FALSE,
                           MoreArgs=NULL,
-                          SIMPLIFY=FALSE,
-                          USE.NAMES=TRUE,
-                          .min_node_batch_size=NULL){
+                          SIMPLIFY=FALSE){
   
-  # Call fam_mapply, with dynamic scheduling.
-  y <- do.call(fam_mapply, args=c(list("cl"=cl,
-                                       "assign"=assign,
-                                       "FUN"=FUN,
-                                       "progress_bar"=progress_bar,
-                                       "MoreArgs"=MoreArgs,
-                                       "SIMPLIFY"=SIMPLIFY,
-                                       "USE.NAMES"=USE.NAMES,
-                                       ".scheduling"="dynamic",
-                                       ".min_node_batch_size"=.min_node_batch_size),
-                                  list(...)))
+  # Determine the output format.
+  output_format <- ifelse(SIMPLIFY, "vector", "list")
+  
+  # Make call to .fam_apply.
+  y <- do.call(.fam_apply,
+               args=c(list("cl"=cl,
+                           "assign"=assign,
+                           "FUN"=FUN,
+                           "additional_arguments"=MoreArgs,
+                           "progress_bar"=progress_bar,
+                           "process_scheduling"="dynamic",
+                           "output_format"=output_format),
+                      list(...)))
+  
+  return(y)
+}
+
+
+
+.fam_apply <- function(cl=NULL,
+                       assign=NULL,
+                       FUN,
+                       ...,
+                       additional_arguments=NULL,
+                       progress_bar=FALSE,
+                       chopchop=FALSE,
+                       overhead_time=NULL,
+                       process_time=NULL,
+                       measure_time=FALSE,
+                       process_scheduling="static",
+                       output_format="list"){
+  
+  .check_parameter_value_is_valid(process_scheduling,
+                                  var_name="process_scheduling",
+                                  values=c("static", "dynamic"))
+  
+  .check_parameter_value_is_valid(output_format,
+                                  var_name="output_format",
+                                  values=c("list", "vector"))
+  
+  # Check whether optimisation of the apply distribution is required and useful.
+  require_optimisation <- chopchop & inherits(cl, "cluster") & (is.null(overhead_time) | is.null(process_time))
+  
+  # Check the length of the dots argument.
+  n_x <- .dots_arg_length(...)
+  if(n_x == 0) return(list())
+  
+  # Adapt cl to the iterable data in ...
+  if(inherits(cl, "cluster")){
+    if(n_x == 1) cl <- NULL
+  }
+  
+  # Check that there is more than one node.
+  if(inherits(cl, "cluster")){
+    if(length(cl) == 1) cl <- NULL
+  }
+  
+  # Adapt cl based on optimised overhead times.
+  if(chopchop & inherits(cl, "cluster")){
+    if(require_optimisation){
+      
+      # Setup initial cluster.
+      if(.needs_cluster_restart() & !.is_external_cluster()){
+        cl_test <- .restart_cluster(cl=cl[1],
+                                    assign=assign,
+                                    n_nodes=1L)
+        
+      } else {
+        cl_test <- .update_info_on_cluster(cl=cl[1],
+                                           assign=assign)
+      }
+
+      # Measure time passed.
+      # Send to a chunking function for chopping into a list with up to n_cl
+      # elements. The first element may be skipped, because we already analysed
+      # it.
+      dots <- .chop_args(args=list(...),
+                         n_cl=1L,
+                         n_x=1L)
+      
+      # Measure process start
+      overhead_start <- microbenchmark::get_nanotime()
+      
+      # Only for testing
+      # y <- do.call(mapply,
+      #              args=list("FUN"=.chopped_apply,
+      #                        "dots"=dots,
+      #                        "SIMPLIFY"=FALSE,
+      #                        "MoreArgs"=list("FUN2"=FUN,
+      #                                        "measure_time"=TRUE,
+      #                                        "MoreArgs"=additional_arguments)))
+      
+      y <- do.call(parallel::clusterMap,
+                   args=list("fun"=.chopped_apply,
+                             "cl"=cl_test,
+                             "dots"=dots,
+                             "MoreArgs"=list("FUN2"=FUN,
+                                             "measure_time"=TRUE,
+                                             "MoreArgs"=additional_arguments)))
+      
+      # Measure process end
+      overhead_end <- microbenchmark::get_nanotime()
+      
+      # Compute overhead and process times. Overhead time is computed from the
+      # time passed minus the time of the longest subprocess.
+      overhead_time <- overhead_end - overhead_start - y[[1]]$process_time_total
+      process_time <- y[[1]]$process_time_total / y[[1]]$n_processes
+  
+      # Obtain initial
+      y_initial <- y[[1]]$results
+      
+      # Skip analysis of the first iterable element.
+      skip_element <- 1L
+      n_x <- n_x - 1
+      
+      # Update the first node that was used to run the test.
+      cl[1] <- cl_test
+      
+    } else {
+      y_initial <- NULL
+      skip_element <- NULL
+    }
+    
+    # Compute the optimal number of nodes.
+    n_nodes_optimal <- round(sqrt(n_x * process_time / overhead_time))
+    
+    # Select the required nodes.
+    if(n_nodes_optimal <= 1){
+      cl <- NULL
+      
+    } else if(n_nodes_optimal < length(cl)){
+      cl <- cl[1:n_nodes_optimal]
+    }
+  }
+  
+  # Adapt cl based on the number of iterable elements.
+  if(inherits(cl, "cluster")) {
+    if(n_x < length(cl)) cl[1:n_x]
+    
+    # Update and restart clusters.
+    if(.needs_cluster_restart() & !.is_external_cluster()){
+      if(require_optimisation){
+        cl[-1] <- .restart_cluster(cl=cl[-1],
+                                   assign=assign)
+        
+      } else {
+        cl <- .restart_cluster(cl=cl,
+                               assign=assign)
+      }
+      
+      # Close cluster on exit.
+      on.exit(.terminate_cluster(cl))
+      
+    } else {
+      if(require_optimisation){
+        cl[-1] <- .update_info_on_cluster(cl=cl[-1],
+                                          assign=assign)
+        
+      } else {
+        cl <- .update_info_on_cluster(cl=cl[-1],
+                                          assign=assign)
+        
+      }
+    }
+  }
+  
+
+  
+  if(!inherits(cl, "cluster") & !progress_bar){
+    # Simple sequential lapply.
+    y <- do.call(mapply,
+                 args=c(list("FUN" = FUN),
+                        list(...),
+                        list("SIMPLIFY"=FALSE,
+                             "MoreArgs"=additional_arguments)))
+    
+  } else if(!inherits(cl, "cluster") & progress_bar){
+    # Start progress bar
+    pb_conn <- utils::txtProgressBar(min=0, max=n_x, style=3)
+    
+    # Perform the sequential apply as mapply.
+    y <- do.call(mapply, args=c(list("FUN"=.fun_with_progress_map),
+                                list(...),
+                                list("II"=seq_len(n_x),
+                                     "SIMPLIFY"=FALSE,
+                                     "MoreArgs"=list("FUN2"=FUN,
+                                                     "pb_conn"=pb_conn,
+                                                     "MoreArgs"=additional_arguments))))
+    
+    # Close the progress bar connection.
+    close(pb_conn)
+    
+  } else if(inherits(cl, "cluster") & !chopchop){
+    # Parallel mapply using clustermap
+    y <- do.call(parallel::clusterMap, args=c(list("cl"=cl,
+                                                   "fun"=FUN),
+                                              list(...),
+                                              list("MoreArgs"=additional_arguments,
+                                                   ".scheduling"=process_scheduling)))
+  
+  } else if(inherits(cl, "cluster") & chopchop){
+    
+    # Send to a chunking function for chopping into a list with up to n_cl
+    # elements. The first element may be skipped, because we already analysed
+    # it.
+    dots <- .chop_args(args=list(...),
+                       n_cl=length(cl),
+                       skip_elements=skip_element)
+    
+    if(measure_time) overhead_start <- microbenchmark::get_nanotime()
+    
+    # Iterate over dots and perform analysis.
+    y <- do.call(parallel::clusterMap,
+                 args=list("fun"=.chopped_apply,
+                           "cl"=cl,
+                           "dots"=dots,
+                           "MoreArgs"=list("FUN2"=FUN,
+                                           "measure_time"=measure_time,
+                                           "MoreArgs"=additional_arguments)))
+    
+    if(measure_time){
+      overhead_end <- microbenchmark::get_nanotime()
+      
+      # Extract all individual process times and processes.
+      process_time_total <- sapply(y, function(node_list) (node_list$process_time_total))
+      n_processes <- sapply(y, function(node_list) (node_list$n_processes))
+      
+      # Compute overhead and process times. Overhead time is computed from the
+      # time passed minus the time of the longest subprocess.
+      overhead_time <- (overhead_end - overhead_start - max(process_time_total)) / length(cl)
+      process_time <- sum(process_time_total) / sum(n_processes)
+    }
+    
+    y <- unlist(lapply(y, function(node_list) (node_list$results)), recursive=FALSE)
+    y <- c(y_initial, y)
+    
+  } else {
+    ..error_reached_unreachable_code(".fam_apply: no correct combination found.")
+  }
+  
+  if(output_format == "vector") y <- simplify2array(y)
+  
+  if(measure_time){
+    y <- list("results"=y,
+              "overhead_time"=overhead_time,
+              "process_time"=process_time)
+  }
   
   return(y)
 }
@@ -659,8 +714,19 @@ fam_mapply_lb <- function(cl=NULL,
 }
 
 
+.dots_arg_length <- function(...){
+  # Get the length of the dots argument.
+  n_x <-  unique(sapply(list(...), length))
+  
+  if(length(n_x)!=1) ..error_reached_unreachable_code(".dots_arg_length: iterable arguments do not have the same length.")
+  
+  return(n_x)
+}
 
-.chopped_mapply <- function(FUN2, dots, MoreArgs=NULL){
+
+.chopped_apply <- function(FUN2, dots, MoreArgs=NULL, measure_time=FALSE){
+  
+  if(measure_time) process_start <- microbenchmark::get_nanotime()
   
   # Execute function on minibatch on cluster node.
   y <- do.call(mapply, args=c(list("FUN"=FUN2,
@@ -668,45 +734,48 @@ fam_mapply_lb <- function(cl=NULL,
                                    "USE.NAMES"=FALSE,
                                    "MoreArgs"=MoreArgs),
                               dots))
-  return(y)
+  
+  if(measure_time){
+    process_end <- microbenchmark::get_nanotime()
+    
+    return(list("results"=y,
+                "process_time_total"=process_end - process_start,
+                "n_processes"=length(dots[[1]])))
+  } else {
+    return(list("results"=y))
+  }
 }
 
 
 
-.chopped_sapply <- function(X, FUN2, ...){
+.chop_args <- function(args, n_cl, n_x=NULL, skip_elements=NULL){
   
-  # Execute function on cluster node.
-  y <- sapply(X[[1]], FUN2, ..., simplify=FALSE)
+  # Determine n_x if not provided. n_x may be provided when we attempt to
+  # determine process and overhead time.
+  if(is.null(n_x)) n_x <- unique(sapply(args, length))
   
-  return(y)
-}
-
-
-
-.chopped_lapply <- function(X, FUN2, ...){
-  
-  # Execute function on cluster node.
-  y <- lapply(X[[1]], FUN2, ...)
-  
-  return(y)
-}
-
-
-
-.chop_args <- function(args, n_cl){
-  
-  n_x <- unique(sapply(args, length))
   if(length(n_x)!=1) ..error_reached_unreachable_code(".chop_args: arguments do not have the same length.")
   
-  if(n_cl == 0){
+  # Set up the sequence of values. 
+  n_x <- seq_len(n_x)
+  
+  # Skip if there elements that should be skipped. This is useful if, for
+  # example, the optimisation process needs to determine overhead time.
+  if(!is.null(skip_elements)) n_x <- setdiff(n_x, skip_elements)
+    
+  # Make sure not to generate empty entries. Therefore the number of nodes can
+  # only be up to the number of available elements.
+  if(n_cl > length(n_x)) n_cl <- length(n_x)
+  
+  if(length(n_x) == 0 | n_cl == 0){
     index <- list()
     
-  } else if(n_x == 1 | n_cl == 1){
-    index <- list(seq_len(n_x))
+  } else if(length(n_x) == 1 | n_cl == 1){
+    index <- list(n_x)
     
   } else {
-    index <- structure(split(seq_len(n_x),
-                             cut(seq_len(n_x), n_cl)),
+    index <- structure(split(n_x,
+                             cut(n_x, n_cl)),
                        names=NULL)
   }
   
