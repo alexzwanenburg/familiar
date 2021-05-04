@@ -80,6 +80,9 @@ changing clustering parameters after the analysis.
 * Parallel processing now supports mini-batching. Many processes are actually
 fast to compute and repeated IO to cluster nodes slows down the process.
 Mini-batches transfers data to nodes in one go for local sequential processing.
+In addition, processes that can mini-batch are now measured, and an optimal
+number of nodes is selected based on IO and process times. This should
+significantly speed up processes with low process time compared to IO time.
 
 * Hyperparameter optimisation now has several new or changed  configuration
 parameters:
@@ -184,6 +187,9 @@ outcome levels were interpreted as indices instead of column names.
 
 * Fixed an error during batch normalisation when there is a mismatch between
 features with feature information and actual features present in the dataset.
+
+* Fixed an issue that would cause an error when computing a pseudo-R2 similarity
+score between two arrays that each have one unique value.
 
 # Version 0.0.0.53 (Pre-release)
 

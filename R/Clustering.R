@@ -234,7 +234,7 @@ cluster.get_samplewise_similarity_table <- function(cl=NULL,
   
   # Generate all combinations of samples
   combinations <- utils::combn(seq_len(nrow(data_obj@data)), 2)
-  browser()
+  
   # Determine similarity measures for each sample pair.
   similarity <- fam_sapply(cl=cl,
                            assign=NULL,
