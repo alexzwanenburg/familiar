@@ -260,6 +260,7 @@ fam_sapply <- function(cl=NULL,
                        progress_bar=FALSE,
                        MoreArgs=NULL,
                        SIMPLIFY=TRUE,
+                       USE.NAMES=TRUE,
                        chopchop=FALSE,
                        overhead_time=NULL,
                        process_time=NULL,
@@ -287,7 +288,8 @@ fam_sapply <- function(cl=NULL,
                            "process_time"=process_time,
                            "measure_time"=measure_time,
                            "process_scheduling"="static",
-                           "output_format"=output_format),
+                           "output_format"=output_format,
+                           "use_names"=USE.NAMES),
                       X))
   
   return(y)
@@ -346,6 +348,7 @@ fam_mapply <- function(cl=NULL,
                        progress_bar=FALSE,
                        MoreArgs=NULL,
                        SIMPLIFY=FALSE,
+                       USE.NAMES=TRUE,
                        chopchop=FALSE,
                        overhead_time=NULL,
                        process_time=NULL,
@@ -366,7 +369,8 @@ fam_mapply <- function(cl=NULL,
                            "process_time"=process_time,
                            "measure_time"=measure_time,
                            "process_scheduling"="static",
-                           "output_format"=output_format),
+                           "output_format"=output_format,
+                           "use_names"=USE.NAMES),
                       list(...)))
   
   return(y)
@@ -380,7 +384,8 @@ fam_sapply_lb <- function(cl=NULL,
                           FUN,
                           ...,
                           progress_bar=FALSE,
-                          SIMPLIFY=TRUE){
+                          SIMPLIFY=TRUE,
+                          USE.NAMES=TRUE){
   
   # Determine the output format.
   output_format <- ifelse(SIMPLIFY, "vector", "list")
@@ -400,9 +405,11 @@ fam_sapply_lb <- function(cl=NULL,
                            "additional_arguments"=list(...),
                            "progress_bar"=progress_bar,
                            "process_scheduling"="dynamic",
-                           "output_format"=output_format),
+                           "output_format"=output_format,
+                           "use_names"=USE.NAMES),
                       X))
   
+  return(y)
 }
 
 
@@ -446,7 +453,8 @@ fam_mapply_lb <- function(cl=NULL,
                           ...,
                           progress_bar=FALSE,
                           MoreArgs=NULL,
-                          SIMPLIFY=FALSE){
+                          SIMPLIFY=FALSE,
+                          USE.NAMES=TRUE){
   
   # Determine the output format.
   output_format <- ifelse(SIMPLIFY, "vector", "list")
@@ -459,7 +467,8 @@ fam_mapply_lb <- function(cl=NULL,
                            "additional_arguments"=MoreArgs,
                            "progress_bar"=progress_bar,
                            "process_scheduling"="dynamic",
-                           "output_format"=output_format),
+                           "output_format"=output_format,
+                           "use_names"=USE.NAMES),
                       list(...)))
   
   return(y)
@@ -478,7 +487,8 @@ fam_mapply_lb <- function(cl=NULL,
                        process_time=NULL,
                        measure_time=FALSE,
                        process_scheduling="static",
-                       output_format="list"){
+                       output_format="list",
+                       use_names=TRUE){
   
   .check_parameter_value_is_valid(process_scheduling,
                                   var_name="process_scheduling",
@@ -689,6 +699,19 @@ fam_mapply_lb <- function(cl=NULL,
   }
   
   if(output_format == "vector") y <- simplify2array(y)
+  
+  if(use_names) {
+    dots <- list(...)
+    
+    # Try to get names.
+    element_names <- names(dots[[1L]])
+    if(is.null(element_names) & is.character(dots[[1L]])){
+      names(y) <- dots[[1L]]
+      
+    } else if(!is.null(element_names)){
+      names(y) <- element_names
+    }
+  }
   
   if(measure_time){
     y <- list("results"=y,
