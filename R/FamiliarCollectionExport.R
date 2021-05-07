@@ -47,8 +47,14 @@ setMethod("export_all", signature(object="familiarCollection"),
             # Export feature selection variable importance
             fs_vimp <- export_fs_vimp(object=object, dir_path=dir_path)
             
+            # Export feature selection variable importance using stability.
+            fs_vimp_occurrence <- export_fs_vimp(object=object, dir_path=dir_path, aggregation_method="stability")
+            
             # Export model variable importance
             model_vimp <- export_model_vimp(object=object, dir_path=dir_path)
+            
+            # Export model variable importance using stability.
+            model_vimp_occurrence <- export_model_vimp(object=object, dir_path=dir_path, aggregation_method="stability")
             
             # Export permutation variable importance.
             permutation_vimp <- export_permutation_vimp(object=object,
@@ -108,8 +114,8 @@ setMethod("export_all", signature(object="familiarCollection"),
             feature_similarity <- export_feature_similarity(object=object, dir_path=dir_path)
             
             if(is.null(dir_path)){
-              return(list("fs_vimp" = fs_vimp,
-                          "model_vimp" = model_vimp,
+              return(list("fs_vimp" = list("default"=fs_vimp, "occurrence"=fs_vimp_occurrence),
+                          "model_vimp" = list("default"=model_vimp, "occurrence"=model_vimp_occurrence),
                           "permutation_vimp" = permutation_vimp,
                           "hyperparameters" = hyperparameters,
                           "prediction_data" = prediction_data,

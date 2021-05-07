@@ -343,7 +343,7 @@ setMethod("export_model_vimp", signature(object="familiarCollection"),
               rank_threshold=rank_threshold)
             }
             
-            subtype <- paste("learner", x[[1]]@rank_aggregation_method, collapse="_")
+            subtype <- paste("learner", x[[1]]@rank_aggregation_method, sep="_")
             
             return(.export(x=object,
                            data_elements=x,
@@ -473,7 +473,7 @@ setMethod("export_fs_vimp", signature(object="familiarCollection"),
             }
             
             # Get subtype
-            subtype <- paste("feature_selection", x[[1]]@rank_aggregation_method, collapse="_")
+            subtype <- paste("feature_selection", x[[1]]@rank_aggregation_method, sep="_")
             
             return(.export(x=object,
                            data_elements=x,

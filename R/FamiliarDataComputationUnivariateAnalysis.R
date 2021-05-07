@@ -57,7 +57,7 @@ setMethod("extract_univariate_analysis", signature(object="familiarEnsemble", da
             
             # Suppress NOTES due to non-standard evaluation in data.table
             p_value <- NULL
-
+            
             # Message extraction start
             if(verbose){
               logger.message(paste0("Extracting univariate analysis information."),
