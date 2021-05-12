@@ -2,9 +2,14 @@
 
 ## Major changes:
 
-* Added novelty detection:
+* Added novelty detection. An isolation forest is created at the same time as
+the main model using the same data. It can then be used to (prospectively)
+identify samples that are dissimilar to the training samples, and for which the
+model may need to extrapolate.
+
     * Added a `novelty_features` parameter that can be used to specify features
-    that should be used for novelty detection.
+    that should be used for novelty detection, in addition to those already used
+    in the model.
 
 * Added `update_object` methods that allow for backward compatibility when
 updating slots of respective objects.
