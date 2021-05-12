@@ -63,7 +63,8 @@ setMethod("promote_vimp_method", signature(object="familiarVimpMethod"),
                                      outcome_info = object@outcome_info,
                                      feature_info = object@feature_info,
                                      required_features = object@required_features,
-                                     run_table = object@run_table)
+                                     run_table = object@run_table,
+                                     project_id = object@project_id)
               
               # Promote to the correct subclass.
               object <- promote_learner(object)
@@ -80,7 +81,8 @@ setMethod("promote_vimp_method", signature(object="familiarVimpMethod"),
                                      outcome_info = object@outcome_info,
                                      feature_info = object@feature_info,
                                      required_features = object@required_features,
-                                     run_table = object@run_table)
+                                     run_table = object@run_table,
+                                     project_id = object@project_id)
               
               # Promote to the correct subclass.
               object <- promote_learner(object)
@@ -97,7 +99,8 @@ setMethod("promote_vimp_method", signature(object="familiarVimpMethod"),
                                      outcome_info = object@outcome_info,
                                      feature_info = object@feature_info,
                                      required_features = object@required_features,
-                                     run_table = object@run_table)
+                                     run_table = object@run_table,
+                                     project_id = object@project_id)
               
               # Promote to the correct subclass.
               object <- promote_learner(object)
@@ -114,7 +117,8 @@ setMethod("promote_vimp_method", signature(object="familiarVimpMethod"),
                                      outcome_info = object@outcome_info,
                                      feature_info = object@feature_info,
                                      required_features = object@required_features,
-                                     run_table = object@run_table)
+                                     run_table = object@run_table,
+                                     project_id = object@project_id)
               
               # Promote to the correct subclass.
               object <- promote_learner(object)
@@ -134,7 +138,8 @@ setMethod("promote_vimp_method", signature(object="familiarVimpMethod"),
                                      outcome_info = object@outcome_info,
                                      feature_info = object@feature_info,
                                      required_features = object@required_features,
-                                     run_table = object@run_table)
+                                     run_table = object@run_table,
+                                     project_id = object@project_id)
               
               # Promote to the correct subclass.
               object <- promote_learner(object)
