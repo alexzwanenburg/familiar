@@ -264,7 +264,7 @@ fam_sapply <- function(cl=NULL,
                        chopchop=FALSE,
                        overhead_time=NULL,
                        process_time=NULL,
-                       measure_time=FALSE){
+                       MEASURE.TIME=FALSE){
   
   # Determine the output format.
   output_format <- ifelse(SIMPLIFY, "vector", "list")
@@ -286,7 +286,7 @@ fam_sapply <- function(cl=NULL,
                            "chopchop"=chopchop,
                            "overhead_time"=overhead_time,
                            "process_time"=process_time,
-                           "measure_time"=measure_time,
+                           "measure_time"=MEASURE.TIME,
                            "process_scheduling"="static",
                            "output_format"=output_format,
                            "use_names"=USE.NAMES),
@@ -308,7 +308,7 @@ fam_lapply <- function(cl=NULL,
                        chopchop=FALSE,
                        overhead_time=NULL,
                        process_time=NULL,
-                       measure_time=FALSE){
+                       MEASURE.TIME=FALSE){
   
   # Determine the output format.
   output_format <- ifelse(SIMPLIFY, "vector", "list")
@@ -330,7 +330,7 @@ fam_lapply <- function(cl=NULL,
                            "chopchop"=chopchop,
                            "overhead_time"=overhead_time,
                            "process_time"=process_time,
-                           "measure_time"=measure_time,
+                           "measure_time"=MEASURE.TIME,
                            "process_scheduling"="static",
                            "output_format"=output_format),
                       X))
@@ -352,7 +352,7 @@ fam_mapply <- function(cl=NULL,
                        chopchop=FALSE,
                        overhead_time=NULL,
                        process_time=NULL,
-                       measure_time=FALSE){
+                       MEASURE.TIME=FALSE){
   
   # Determine the output format.
   output_format <- ifelse(SIMPLIFY, "vector", "list")
@@ -367,7 +367,7 @@ fam_mapply <- function(cl=NULL,
                            "chopchop"=chopchop,
                            "overhead_time"=overhead_time,
                            "process_time"=process_time,
-                           "measure_time"=measure_time,
+                           "measure_time"=MEASURE.TIME,
                            "process_scheduling"="static",
                            "output_format"=output_format,
                            "use_names"=USE.NAMES),
@@ -385,7 +385,8 @@ fam_sapply_lb <- function(cl=NULL,
                           ...,
                           progress_bar=FALSE,
                           SIMPLIFY=TRUE,
-                          USE.NAMES=TRUE){
+                          USE.NAMES=TRUE,
+                          MEASURE.TIME=FALSE){
   
   # Determine the output format.
   output_format <- ifelse(SIMPLIFY, "vector", "list")
@@ -406,7 +407,8 @@ fam_sapply_lb <- function(cl=NULL,
                            "progress_bar"=progress_bar,
                            "process_scheduling"="dynamic",
                            "output_format"=output_format,
-                           "use_names"=USE.NAMES),
+                           "use_names"=USE.NAMES,
+                           "measure_time"=MEASURE.TIME),
                       X))
   
   return(y)
@@ -420,7 +422,8 @@ fam_lapply_lb <- function(cl=NULL,
                           FUN,
                           ...,
                           progress_bar=FALSE,
-                          SIMPLIFY=FALSE){
+                          SIMPLIFY=FALSE,
+                          MEASURE.TIME=FALSE){
   
   # Determine the output format.
   output_format <- ifelse(SIMPLIFY, "vector", "list")
@@ -440,7 +443,8 @@ fam_lapply_lb <- function(cl=NULL,
                            "additional_arguments"=list(...),
                            "progress_bar"=progress_bar,
                            "process_scheduling"="dynamic",
-                           "output_format"=output_format),
+                           "output_format"=output_format,
+                           "measure_time"=MEASURE.TIME),
                       X))
   return(y)
 }
@@ -454,7 +458,8 @@ fam_mapply_lb <- function(cl=NULL,
                           progress_bar=FALSE,
                           MoreArgs=NULL,
                           SIMPLIFY=FALSE,
-                          USE.NAMES=TRUE){
+                          USE.NAMES=TRUE,
+                          MEASURE.TIME=FALSE){
   
   # Determine the output format.
   output_format <- ifelse(SIMPLIFY, "vector", "list")
@@ -468,7 +473,8 @@ fam_mapply_lb <- function(cl=NULL,
                            "progress_bar"=progress_bar,
                            "process_scheduling"="dynamic",
                            "output_format"=output_format,
-                           "use_names"=USE.NAMES),
+                           "use_names"=USE.NAMES,
+                           "measure_time"=MEASURE.TIME),
                       list(...)))
   
   return(y)
@@ -498,9 +504,6 @@ fam_mapply_lb <- function(cl=NULL,
                                   var_name="output_format",
                                   values=c("list", "vector"))
   
-  # Check whether optimisation of the apply distribution is required and useful.
-  require_optimisation <- chopchop & inherits(cl, "cluster") & (is.null(overhead_time) | is.null(process_time))
-  
   # Check the length of the dots argument.
   n_x <- .dots_arg_length(...)
   if(n_x == 0) return(list())
@@ -515,9 +518,28 @@ fam_mapply_lb <- function(cl=NULL,
     if(length(cl) == 1) cl <- NULL
   }
   
+  # Check whether optimisation of the apply distribution is required and useful.
+  require_optimisation <- chopchop & inherits(cl, "cluster") & (is.null(overhead_time) | is.null(process_time))
+  require_process_stacking <- chopchop & inherits(cl, "cluster") & length(process_time) == n_x & !is.null(overhead_time)
+  
+  # Set initial values.
+  y_initial <- NULL
+  skip_element <- NULL
+  stacking_data <- NULL
+  
   # Adapt cl based on optimised overhead times.
   if(chopchop & inherits(cl, "cluster")){
     if(require_optimisation){
+      
+      # Send to a chunking function for chopping into a list with up to n_cl
+      # elements. The first element may be skipped, because we already analysed
+      # it.
+      dots <- .chop_args(args=list(...),
+                         n_cl=1L,
+                         n_x=1L)
+      
+      # Measure process start
+      overhead_start <- microbenchmark::get_nanotime()
       
       # Setup initial cluster.
       if(.needs_cluster_restart() & !.is_external_cluster()){
@@ -529,45 +551,40 @@ fam_mapply_lb <- function(cl=NULL,
         cl_test <- .update_info_on_cluster(cl=cl[1],
                                            assign=assign)
       }
-
-      # Measure time passed.
-      # Send to a chunking function for chopping into a list with up to n_cl
-      # elements. The first element may be skipped, because we already analysed
-      # it.
-      dots <- .chop_args(args=list(...),
-                         n_cl=1L,
-                         n_x=1L)
-      
-      # Measure process start
-      overhead_start <- microbenchmark::get_nanotime()
       
       # Only for testing
-      # y <- do.call(mapply,
-      #              args=list("FUN"=.chopped_apply,
-      #                        "dots"=dots,
-      #                        "SIMPLIFY"=FALSE,
-      #                        "MoreArgs"=list("FUN2"=FUN,
-      #                                        "measure_time"=TRUE,
-      #                                        "MoreArgs"=additional_arguments)))
+      # y_test <- do.call(mapply,
+      #                   args=list("FUN"=.chopped_apply,
+      #                             "dots"=dots,
+      #                             "SIMPLIFY"=FALSE,
+      #                             "MoreArgs"=list("wrapper_fun"=.wrapper_fun_time,
+      #                                             "FUN2"=FUN,
+      #                                             "measure_time"=TRUE,
+      #                                             "additional_arguments"=additional_arguments)))
       
+      # Iterate over dots and perform analysis.
       y <- do.call(parallel::clusterMap,
                    args=list("fun"=.chopped_apply,
                              "cl"=cl_test,
                              "dots"=dots,
-                             "MoreArgs"=list("FUN2"=FUN,
+                             "SIMPLIFY"=FALSE,
+                             "MoreArgs"=list("wrapper_fun"=.wrapper_fun_time,
+                                             "FUN2"=FUN,
                                              "measure_time"=TRUE,
-                                             "MoreArgs"=additional_arguments)))
-      
+                                             "additional_arguments"=additional_arguments)))
+
       # Measure process end
       overhead_end <- microbenchmark::get_nanotime()
       
+      # Collect data and concatenate to a flat list.
+      y <- .flatten_nested_fam_apply(y)
+      
       # Compute overhead and process times. Overhead time is computed from the
       # time passed minus the time of the longest subprocess.
-      overhead_time <- overhead_end - overhead_start - y[[1]]$process_time_total
-      process_time <- y[[1]]$process_time_total / y[[1]]$n_processes
-  
+      overhead_time <- (overhead_end - overhead_start) / 1E9 - y$process_time_total
+      
       # Obtain initial
-      y_initial <- y[[1]]$results
+      y_initial <- y
       
       # Skip analysis of the first iterable element.
       skip_element <- 1L
@@ -576,18 +593,34 @@ fam_mapply_lb <- function(cl=NULL,
       # Update the first node that was used to run the test.
       cl[1] <- cl_test
       
-    } else {
-      y_initial <- NULL
-      skip_element <- NULL
+    } else if(require_process_stacking){
+      # Determine how to optimally stack the processes.
+      stacking_data <- .auto_stacker(n_nodes=length(cl),
+                                     overhead_time=overhead_time,
+                                     process_time=process_time)
     }
     
-    # Compute the optimal number of nodes.
-    n_nodes_optimal <- round(sqrt(n_x * process_time / overhead_time))
+    # Set the optimal number of nodes.
+    if(require_process_stacking){
+      if(is.null(stacking_data)){
+        n_nodes_optimal <- 0L
+        
+      } else {
+        n_nodes_optimal <- max(stacking_data$node_id)
+      }
+      
+    } else {
+      # Compute the optimal number of nodes. This is based on computing the
+      # derivative of the process time curve, and determining the optima. Here t
+      # = f(n, m) = m * overhead_time + n / m * process_time, with n the number
+      # of processes and m the number of available nodes.
+      n_nodes_optimal <- floor(sqrt(n_x * stats::median(c(process_time, y$process_time)) / overhead_time))
+    }
     
     # Select the required nodes.
     if(n_nodes_optimal <= 1){
       cl <- NULL
-      
+
     } else if(n_nodes_optimal < length(cl)){
       cl <- cl[1:n_nodes_optimal]
     }
@@ -595,7 +628,9 @@ fam_mapply_lb <- function(cl=NULL,
   
   # Adapt cl based on the number of iterable elements.
   if(inherits(cl, "cluster")) {
-    if(n_x < length(cl)) cl[1:n_x]
+    if(n_x < length(cl)) cl <- cl[1:n_x]
+    
+    if(measure_time) startup_overhead_start <- microbenchmark::get_nanotime()
     
     # Update and restart clusters.
     if(.needs_cluster_restart() & !.is_external_cluster()){
@@ -617,115 +652,211 @@ fam_mapply_lb <- function(cl=NULL,
                                           assign=assign)
         
       } else {
-        cl <- .update_info_on_cluster(cl=cl[-1],
-                                          assign=assign)
+        cl <- .update_info_on_cluster(cl=cl,
+                                      assign=assign)
         
       }
     }
+    
+    if(measure_time){
+      startup_overhead_end <- microbenchmark::get_nanotime()
+      startup_overhead_time <- (startup_overhead_end - startup_overhead_start) / 1E9
+      
+    } else {
+      startup_overhead_time <- 0.0
+    }
   }
   
-
+  # Set up the wrapper.
+  wrapper_fun <- .wrapper_fun
+  if(measure_time) wrapper_fun <- .wrapper_fun_time
+  if(progress_bar & !measure_time & !inherits(cl, "cluster")) wrapper_fun <- .wrapper_fun_progress
+  if(progress_bar & measure_time & !inherits(cl, "cluster")) wrapper_fun <- .wrapper_fun_time_progress
   
-  if(!inherits(cl, "cluster") & !progress_bar){
-    # Simple sequential lapply.
-    y <- do.call(mapply,
-                 args=c(list("FUN" = FUN),
-                        list(...),
-                        list("SIMPLIFY"=FALSE,
-                             "MoreArgs"=additional_arguments)))
-    
-  } else if(!inherits(cl, "cluster") & progress_bar){
-    # Start progress bar
+  # Start progress bar.
+  if(progress_bar & !inherits(cl, "cluster")){
     pb_conn <- utils::txtProgressBar(min=0, max=n_x, style=3)
     
-    # Perform the sequential apply as mapply.
-    y <- do.call(mapply, args=c(list("FUN"=.fun_with_progress_map),
-                                list(...),
-                                list("II"=seq_len(n_x),
-                                     "SIMPLIFY"=FALSE,
-                                     "MoreArgs"=list("FUN2"=FUN,
-                                                     "pb_conn"=pb_conn,
-                                                     "MoreArgs"=additional_arguments))))
+  } else {
+    pb_conn <- NULL
+  }
+  
+  if(!inherits(cl, "cluster")) {
     
-    # Close the progress bar connection.
-    close(pb_conn)
+    # Check if sequential processing was selected despite cluster nodes being
+    # present initially. For simplicity, we recompute the first element, as the
+    # lack of cluster indicates that the time spent by the process is
+    # negligible.
+    if(require_optimisation) n_x <- n_x + 1
+    
+    # Perform the sequential apply as mapply.
+    y <- do.call(mapply,
+                 args=c(list("FUN"=wrapper_fun),
+                        list(...),
+                        list("II"=seq_len(n_x),
+                             "SIMPLIFY"=FALSE,
+                             "MoreArgs"=list("FUN2"=FUN,
+                                             "pb_conn"=pb_conn,
+                                             "MoreArgs"=additional_arguments))))
+    
+    # Collect data and concatenate to a flat list.
+    y <- .flatten_nested_fam_apply(y)
     
   } else if(inherits(cl, "cluster") & !chopchop){
-    # Parallel mapply using clustermap
-    y <- do.call(parallel::clusterMap, args=c(list("cl"=cl,
-                                                   "fun"=FUN),
-                                              list(...),
-                                              list("MoreArgs"=additional_arguments,
-                                                   ".scheduling"=process_scheduling)))
-  
-  } else if(inherits(cl, "cluster") & chopchop){
     
+    if(measure_time) overhead_start <- microbenchmark::get_nanotime()
+    
+    # Perform the sequential apply as clusterMap.
+    y <- do.call(parallel::clusterMap,
+                 args=c(list("cl"=cl,
+                             "fun"=wrapper_fun),
+                        list(...),
+                        list("SIMPLIFY"=FALSE,
+                             ".scheduling"=process_scheduling,
+                             "MoreArgs"=list("FUN2"=FUN,
+                                             "MoreArgs"=additional_arguments))))
+    
+    if(measure_time) overhead_end <- microbenchmark::get_nanotime()
+    
+    # Collect data and concatenate to a flat list.
+    y <- .flatten_nested_fam_apply(y)
+    
+    if(measure_time){
+      # Compute overhead and process times. Overhead time is computed from the
+      # time passed minus the time of the longest subprocess.
+      overhead_time <- (startup_overhead_time + (overhead_end - overhead_start) / 1E9 - sum(y$process_time) / length(cl)) / length(cl)
+    }
+    
+  } else if(inherits(cl, "cluster") & chopchop){
     # Send to a chunking function for chopping into a list with up to n_cl
     # elements. The first element may be skipped, because we already analysed
     # it.
     dots <- .chop_args(args=list(...),
                        n_cl=length(cl),
+                       stacking_data=stacking_data,
                        skip_elements=skip_element)
     
     if(measure_time) overhead_start <- microbenchmark::get_nanotime()
+    
+    # # Test purposes
+    # y_test <- do.call(mapply,
+    #                   args=list("FUN"=.chopped_apply,
+    #                             "dots"=dots,
+    #                             "SIMPLIFY"=FALSE,
+    #                             "MoreArgs"=list("wrapper_fun"=wrapper_fun,
+    #                                             "FUN2"=FUN,
+    #                                             "measure_time"=measure_time,
+    #                                             "additional_arguments"=additional_arguments)))
     
     # Iterate over dots and perform analysis.
     y <- do.call(parallel::clusterMap,
                  args=list("fun"=.chopped_apply,
                            "cl"=cl,
                            "dots"=dots,
-                           "MoreArgs"=list("FUN2"=FUN,
+                           "MoreArgs"=list("wrapper_fun"=wrapper_fun,
+                                           "FUN2"=FUN,
                                            "measure_time"=measure_time,
-                                           "MoreArgs"=additional_arguments)))
+                                           "additional_arguments"=additional_arguments)))
     
-    if(measure_time){
-      overhead_end <- microbenchmark::get_nanotime()
+    if(measure_time) overhead_end <- microbenchmark::get_nanotime()
+    
+    # Collect data and concatenate to a flat list.
+    y <- .flatten_nested_fam_apply(y)
+    
+    # Reorder results to original order. This is because the stacking algorithm
+    # will assign based on expected time passed.
+    if(!is.null(stacking_data)){
       
-      # Extract all individual process times and processes.
-      process_time_total <- sapply(y, function(node_list) (node_list$process_time_total))
-      n_processes <- sapply(y, function(node_list) (node_list$n_processes))
+      # Reorder results to input order.
+      y$results[stacking_data$original_index] <- y$results
       
-      # Compute overhead and process times. Overhead time is computed from the
-      # time passed minus the time of the longest subprocess.
-      overhead_time <- (overhead_end - overhead_start - max(process_time_total)) / length(cl)
-      process_time <- sum(process_time_total) / sum(n_processes)
+      # Reorder process time to input order.
+      if(!is.null(y$process_time)) y$process_time[stacking_data$original_index] <- y$process_time
     }
     
-    y <- unlist(lapply(y, function(node_list) (node_list$results)), recursive=FALSE)
-    y <- c(y_initial, y)
+    if(measure_time){
+      # Compute overhead and process times. Overhead time is computed from the
+      # time passed minus the time of the longest subprocess.
+      overhead_time <- (startup_overhead_time + (overhead_end - overhead_start) / 1E9 - max(y$process_time_total)) / length(cl)
+    }
     
+    # Add in initial list.
+    y <- .flatten_nested_fam_apply(c(list(y_initial), list(y)))
+
   } else {
     ..error_reached_unreachable_code(".fam_apply: no correct combination found.")
   }
   
-  if(output_format == "vector") y <- simplify2array(y)
+  # Simplify to output format.
+  if(output_format == "vector") y$results <- simplify2array(y$results)
   
+  # Set names.
   if(use_names) {
     dots <- list(...)
     
     # Try to get names.
     element_names <- names(dots[[1L]])
     if(is.null(element_names) & is.character(dots[[1L]])){
-      names(y) <- dots[[1L]]
+      names(y$results) <- dots[[1L]]
       
     } else if(!is.null(element_names)){
-      names(y) <- element_names
+      names(y$results) <- element_names
     }
   }
   
+  # Parse the return data.
   if(measure_time){
-    y <- list("results"=y,
+    
+    # Determine process time output.
+    if(require_process_stacking){
+      process_time <- y$process_time
+    } else {
+      process_time <- c(process_time, y$process_time)
+    } 
+    
+    y <- list("results"=y$results,
               "overhead_time"=overhead_time,
               "process_time"=process_time)
+    
+  } else {
+    y <- y$results
   }
+  
+  if(!is.null(pb_conn)) close(pb_conn)
   
   return(y)
 }
 
 
 
-.fun_with_progress_map <- function(FUN2, II, pb_conn, ..., MoreArgs=NULL){
+.wrapper_fun <- function(FUN2, II=NULL, pb_conn=NULL, ..., MoreArgs=NULL){
+  # Execute function
+  y <- do.call(FUN2, args=c(list(...),
+                            MoreArgs))
   
+  return(list("results"=y))
+}
+
+
+
+.wrapper_fun_time <- function(FUN2, II=NULL, pb_conn=NULL, ..., MoreArgs=NULL){
+  # Get process start time.
+  process_start <- microbenchmark::get_nanotime()
+  
+  # Execute function
+  y <- do.call(FUN2, args=c(list(...),
+                            MoreArgs))
+  
+  # Get process end time.
+  process_end <- microbenchmark::get_nanotime()
+  
+  return(list("results"=y,
+              "process_time"=(process_end - process_start) / 1E9))
+}
+
+
+
+.wrapper_fun_progress <- function(FUN2, II=NULL, pb_conn=NULL, ..., MoreArgs=NULL){
   # Execute function
   y <- do.call(FUN2, args=c(list(...),
                             MoreArgs))
@@ -733,7 +864,27 @@ fam_mapply_lb <- function(cl=NULL,
   # Update the progress bar
   utils::setTxtProgressBar(pb=pb_conn, value=II)
   
-  return(y)
+  return(list("results"=y))
+}
+
+
+
+.wrapper_fun_time_progress <- function(FUN2, II=NULL, pb_conn=NULL, ..., MoreArgs=NULL){
+  # Get process start time.
+  process_start <- microbenchmark::get_nanotime()
+  
+  # Execute function
+  y <- do.call(FUN2, args=c(list(...),
+                            MoreArgs))
+  
+  # Get process end time.
+  process_end <- microbenchmark::get_nanotime()
+  
+  # Update the progress bar
+  utils::setTxtProgressBar(pb=pb_conn, value=II)
+  
+  return(list("results"=y,
+              "process_time"=(process_end - process_start) / 1E9))
 }
 
 
@@ -747,31 +898,48 @@ fam_mapply_lb <- function(cl=NULL,
 }
 
 
-.chopped_apply <- function(FUN2, dots, MoreArgs=NULL, measure_time=FALSE){
+
+.chopped_apply <- function(wrapper_fun, FUN2, dots, additional_arguments=NULL, measure_time=FALSE){
   
-  if(measure_time) process_start <- microbenchmark::get_nanotime()
+  if(measure_time) process_total_start <- microbenchmark::get_nanotime()
   
-  # Execute function on minibatch on cluster node.
-  y <- do.call(mapply, args=c(list("FUN"=FUN2,
-                                   "SIMPLIFY"=FALSE,
-                                   "USE.NAMES"=FALSE,
-                                   "MoreArgs"=MoreArgs),
-                              dots))
+  # Perform the sequential apply as mapply.
+  y <- do.call(mapply,
+               args=c(list("FUN"=wrapper_fun),
+                      dots,
+                      list("SIMPLIFY"=FALSE,
+                           "USE.NAMES"=FALSE,
+                           "MoreArgs"=list("FUN2"=FUN2,
+                                           "MoreArgs"=additional_arguments))))
   
-  if(measure_time){
-    process_end <- microbenchmark::get_nanotime()
-    
-    return(list("results"=y,
-                "process_time_total"=process_end - process_start,
-                "n_processes"=length(dots[[1]])))
-  } else {
-    return(list("results"=y))
-  }
+  if(measure_time) process_total_end <- microbenchmark::get_nanotime()
+  
+  # Collect items.
+  y <- .flatten_nested_list(y)
+  
+  if(!is.null(y$process_time)) y$process_time <- simplify2array(y$process_time)
+  
+  # Set total process time (which may vary between nodes.)
+  if(measure_time) y$process_time_total <- (process_total_end - process_total_start) / 1E9
+  
+  return(y)
 }
 
 
 
-.chop_args <- function(args, n_cl, n_x=NULL, skip_elements=NULL){
+.flatten_nested_fam_apply <- function(x){
+  
+  x <- .flatten_nested_list(x)
+  
+  if(!is.null(x$process_time)) x$process_time <- unlist(x$process_time)
+  if(!is.null(x$process_time_total)) x$process_time_total <- unlist(x$process_time_total)
+  
+  return(x)
+}
+
+
+
+.chop_args <- function(args, n_cl, n_x=NULL, skip_elements=NULL, stacking_data=NULL){
   
   # Determine n_x if not provided. n_x may be provided when we attempt to
   # determine process and overhead time.
@@ -795,6 +963,9 @@ fam_mapply_lb <- function(cl=NULL,
     
   } else if(length(n_x) == 1 | n_cl == 1){
     index <- list(n_x)
+    
+  } else if(!is.null(stacking_data)){
+    index <- lapply(split(stacking_data, by="node_id", sorted=TRUE), function(list_element) (list_element$original_index))
     
   } else {
     index <- structure(split(n_x,
@@ -821,18 +992,85 @@ fam_mapply_lb <- function(cl=NULL,
 
 
 
-.check_min_node_batch_size <- function(cl, min_node_batch_size=NULL, ...){
+.auto_stacker <- function(n_nodes, overhead_time, process_time, min_decrease=0.05){
   
-  if(!is.null(min_node_batch_size) & inherits(cl, "cluster")){
-    n_nodes_allowed <- floor(max(sapply(list(...), length)) / min_node_batch_size)
+  # Check if there are fewer processes than nodes.
+  if(n_nodes > length(process_time)) n_nodes <- length(process_time)
+  
+  # Check if there is any reason to parallellise.
+  if(n_nodes < 2) return(NULL)
+  
+  # Determine the baseline time.
+  baseline_time <- sum(process_time)
+  
+  # Compute the minimal decrease.
+  min_decrease <- min_decrease * baseline_time
+  
+  # Initialise parameters for the while loop.
+  previous_time <- baseline_time
+  previous_stacking_data <- NULL
+  
+  # Initial nodes
+  current_nodes <- 2L
+  
+  while(current_nodes <= n_nodes){
     
-    if(n_nodes_allowed < 2){
-      cl <- NULL
-      
-    } else if(n_nodes_allowed < length(cl)){
-      cl <- cl[1:n_nodes_allowed]
-    }
+    # Check if the overhead time does not exceed the previous time.
+    if(current_nodes * overhead_time >= previous_time) break()
+    
+    # Get current stacking data
+    current_stacking_data <- ..auto_stack(n_nodes=current_nodes,
+                                          process_time=process_time,
+                                          overhead_time=overhead_time)
+    
+    # Check that an increase in nodes does not negatively affect the time spent
+    # processing. Also, ensure that the achieved decrease is at least
+    # min_decrease with regard to the previous time.
+    if(previous_time <= current_stacking_data$node_time | previous_time - current_stacking_data$node_time < min_decrease) break()
+    
+    # Replace stacking data for the next iteration.
+    previous_stacking_data <- current_stacking_data
+    
+    # Update other variables.
+    previous_time <- current_stacking_data$node_time
+    current_nodes <- current_nodes + 1L
   }
   
-  return(cl)
+  # Return process data belonging to the process prior to 
+  return(previous_stacking_data$process_data)
+}
+
+
+
+..auto_stack <- function(n_nodes, process_time, overhead_time){
+  
+  # Suppress NOTES due to non-standard evaluation in data.table
+  node_id <- NULL
+  
+  # Initiate a placeholder for the time allocated to each node.
+  node_time <- numeric(n_nodes)
+  
+  # Sort process times. Assign the longest processes first.
+  process_data <- data.table::data.table("process_time"=process_time)
+  process_data[, ":="("original_index"=.I, "node_id"=0L)]
+  process_data <- process_data[order(process_time, decreasing=TRUE)]
+  
+  for(ii in seq_along(process_time)){
+    # Select the node that has the least process time assigned to it.
+    selected_node <- which.min(node_time)
+    
+    # Assign node to process
+    process_data[ii, "node_id":=selected_node]
+    
+    # Update time on the node
+    node_time[selected_node] <- node_time[selected_node] + process_data[ii, ]$process_time
+  }
+  
+  # Set element order.
+  process_data <- process_data[order(node_id)]
+  process_data[, "process_index":=.I]
+  
+  # Return the maximum node time (which is of course)
+  return(list("node_time"=max(node_time) + overhead_time * n_nodes,
+              "process_data"=process_data))
 }
