@@ -807,16 +807,9 @@ fam_mapply_lb <- function(cl=NULL,
   # Parse the return data.
   if(measure_time){
     
-    # Determine process time output.
-    if(require_process_stacking){
-      process_time <- y$process_time
-    } else {
-      process_time <- c(process_time, y$process_time)
-    } 
-    
     y <- list("results"=y$results,
               "overhead_time"=overhead_time,
-              "process_time"=process_time)
+              "process_time"=y$process_time)
     
   } else {
     y <- y$results
