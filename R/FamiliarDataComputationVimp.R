@@ -30,6 +30,7 @@ setClass("familiarDataElementVimpData",
 #'@md
 #'@keywords internal
 setGeneric("extract_model_vimp", function(object,
+                                          data,
                                           aggregation_method=waiver(),
                                           rank_threshold=waiver(),
                                           message_indent=0L,
@@ -39,6 +40,7 @@ setGeneric("extract_model_vimp", function(object,
 #####extract_model_vimp (familiarEnsemble)#####
 setMethod("extract_model_vimp", signature(object="familiarEnsemble"),
           function(object,
+                   data,
                    aggregation_method=waiver(),
                    rank_threshold=waiver(),
                    message_indent=0L,
@@ -78,6 +80,7 @@ setMethod("extract_model_vimp", signature(object="familiarEnsemble"),
                                             cl=NULL,
                                             has_internal_bootstrap=FALSE,
                                             object=object,
+                                            data=data,
                                             proto_data_element=proto_data_element,
                                             aggregation_method=aggregation_method,
                                             aggregate_results=FALSE,
@@ -88,6 +91,7 @@ setMethod("extract_model_vimp", signature(object="familiarEnsemble"),
           })
 
 .extract_model_vimp <- function(object,
+                                data,
                                 proto_data_element,
                                 ...){
   
@@ -101,7 +105,7 @@ setMethod("extract_model_vimp", signature(object="familiarEnsemble"),
   if(!model_is_trained(object)) return(NULL)
   
   # Extract variable importance from the models
-  vimp_table <- ..vimp(object)
+  vimp_table <- ..vimp(object=object, data=data)
   
   # Check that the variable importance table is not empty.
   if(is_empty(vimp_table)) return(NULL)

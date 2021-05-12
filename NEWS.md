@@ -137,6 +137,10 @@ objects.
 * Added `plot_auc_precision_recall_curve` method to plot precision-recall
 curves.
 
+* Random forests created using the `rfsrc` package are now anonymous forests,
+i.e. training data are not stored with the model. In addition, we explicitly
+generate and store a random seed, so that the forest can be regrown for
+determining variable importance.
 
 ## Bug fixes:
 * Fixed an error that would cause hyperparameter optimisation to not select the

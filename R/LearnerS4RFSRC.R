@@ -3,7 +3,9 @@
 NULL
 
 setClass("familiarRFSRC",
-         contains="familiarModel")
+         contains="familiarModel",
+         slots=list("seed"="ANY"),
+         prototype=list("seed"=NULL))
 
 .get_available_rfsrc_learners <- function(show_general=TRUE) return(c("random_forest", "random_forest_rfsrc"))
 
@@ -196,7 +198,7 @@ setMethod("get_prediction_type", signature(object="familiarRFSRC"),
 
 #####..train####
 setMethod("..train", signature(object="familiarRFSRC", data="dataObject"),
-          function(object, data){
+          function(object, data, anonymous=TRUE){
             
             # Aggregate repeated measurement data - randomForestSRC does not
             # facilitate repeated measurements.
@@ -229,20 +231,36 @@ setMethod("..train", signature(object="familiarRFSRC", data="dataObject"),
             sample_size <- ceiling(param$sample_size * nrow(data@data))
             sample_type <- ifelse(sample_size == nrow(data@data), "swr", "swor")
             
+            # Set forest seed. If object comes with a defined seed use the seed.
+            forest_seed <- ifelse(is.null(object@seed), as.integer(runif(1, -100000, -1)), object@seed)
+            
+            # Use anonymised version for the forest, if available.
+            if(packageVersion("randomForestSRC") >= "2.11.0" & anonymous){
+              forest_function <- randomForestSRC::rfsrc.anonymous
+              
+            } else {
+              forest_function <- randomForestSRC::rfsrc
+            }
+            
             # Generate random forest.
-            model <- randomForestSRC::rfsrc(formula,
-                                            data = data@data,
-                                            ntree = 2^param$n_tree,
-                                            samptype = sample_type,
-                                            sampsize = sample_size,
-                                            mtry = max(c(1, ceiling(param$m_try * length(feature_columns)))),
-                                            nodesize = param$node_size,
-                                            nodedepth = param$tree_depth,
-                                            nsplit = param$n_split,
-                                            splitrule = param$split_rule)
+            model <- forest_function(formula,
+                                     data = data@data,
+                                     ntree = 2^param$n_tree,
+                                     samptype = sample_type,
+                                     sampsize = sample_size,
+                                     mtry = max(c(1, ceiling(param$m_try * length(feature_columns)))),
+                                     nodesize = param$node_size,
+                                     nodedepth = param$tree_depth,
+                                     nsplit = param$n_split,
+                                     splitrule = param$split_rule,
+                                     seed = forest_seed)
             
             # Add model to the object.
             object@model <- model
+            
+            # Store the seed used to create the object. This helps recreate the
+            # object in case the model is an anonymous forest.
+            object@seed <- forest_seed
             
             return(object)
           })
@@ -363,7 +381,9 @@ setMethod("..vimp", signature(object="familiarRFSRC"),
             score <- NULL
             
             # Attempt to train the model if it has not been trained yet.
-            if(!model_is_trained(object)) object <- ..train(object, data)
+            if(!model_is_trained(object)) object <- ..train(object=object,
+                                                            data=data,
+                                                            anonymous=FALSE)
             
             # Check if the model has been trained upon retry.
             if(!model_is_trained(object)) return(callNextMethod())
@@ -375,8 +395,18 @@ setMethod("..vimp", signature(object="familiarRFSRC"),
             # Extract the variable importance score
             if(vimp_method == "permutation"){
               
+              # Check if the model is anonymous, and rebuild if it is. VIMP does
+              # not work otherwise.
+              if(inherits(object@model, "anonymous")) object <- ..train(object=object,
+                                                                        data=data,
+                                                                        anonymous=FALSE)
+              
               # Determine permutation variable importance
-              vimp_score <- randomForestSRC::vimp(object=object@model, importance="permute")$importance
+              vimp_score <- randomForestSRC::vimp(object=object@model,
+                                                  importance="permute")$importance
+              
+              # Check that the variable importance score is not empty.
+              if(is_empty(vimp_score)) return(callNextMethod())
               
               # The variable importance score for binomial and multinomial outcomes is per class
               if(is.matrix(vimp_score)){
@@ -393,8 +423,20 @@ setMethod("..vimp", signature(object="familiarRFSRC"),
               vimp_table[, "multi_var":=TRUE]
 
             } else if(vimp_method == "minimum_depth"){
+              
+              # Check if the model is anonymous, and rebuild if it is. VIMP does
+              # not work otherwise.
+              if(inherits(object@model, "anonymous")) object <- ..train(object=object,
+                                                                        data=data,
+                                                                        anonymous=FALSE)
+              
               # Determine minimum depth variable importance
-              vimp_score <- randomForestSRC::var.select(object=object@model, method="md", verbose=FALSE)$md.obj$order
+              vimp_score <- randomForestSRC::var.select(object=object@model,
+                                                        method="md",
+                                                        verbose=FALSE)$md.obj$order
+              
+              # Check that the variable importance score is not empty.
+              if(is_empty(vimp_score)) return(callNextMethod())
               
               # Select the "min depth" column, which is the first column
               if(is.matrix(vimp_score)){
@@ -411,6 +453,13 @@ setMethod("..vimp", signature(object="familiarRFSRC"),
               vimp_table[, "multi_var":=TRUE]
               
             } else if(vimp_method == "variable_hunting"){
+              
+              # Check if the model is anonymous, and rebuild if it is. VIMP does
+              # not work otherwise.
+              if(inherits(object@model, "anonymous")) object <- ..train(object=object,
+                                                                        data=data,
+                                                                        anonymous=FALSE)
+              
               # Perform variable hunting
               vimp_score <- randomForestSRC::var.select(object=object@model,
                                                         method="vh",
@@ -419,6 +468,9 @@ setMethod("..vimp", signature(object="familiarRFSRC"),
                                                         nrep=object@hyperparameters$fs_vh_n_rep,
                                                         verbose=FALSE,
                                                         refit=FALSE)$varselect
+              
+              # Check that the variable importance score is not empty.
+              if(is_empty(vimp_score)) return(callNextMethod())
               
               # Select the "rel.freq" column, which is the second column
               if(is.matrix(vimp_score)){
@@ -485,6 +537,9 @@ setMethod("..vimp", signature(object="familiarRFSRC"),
                                                          nsplit = object@hyperparameters$n_split,
                                                          splitrule = object@hyperparameters$split_rule,
                                                          verbose=FALSE)$importance
+              
+              # Check that the variable importance score is not empty.
+              if(is_empty(vimp_score)) return(callNextMethod())
               
               # Select the "all" column, which is the first column
               if(is.matrix(vimp_score)){

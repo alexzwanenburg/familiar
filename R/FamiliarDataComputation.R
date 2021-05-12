@@ -407,6 +407,7 @@ setMethod("extract_data", signature(object="familiarEnsemble"),
             # Extract model-based variable importance
             if(any(c("model_vimp") %in% data_element)){
               model_vimp_info <- extract_model_vimp(object=object,
+                                                    data=data,
                                                     aggregation_method=aggregation_method,
                                                     rank_threshold=rank_threshold,
                                                     message_indent=message_indent,

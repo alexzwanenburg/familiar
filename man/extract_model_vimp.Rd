@@ -6,6 +6,7 @@
 \usage{
 extract_model_vimp(
   object,
+  data,
   aggregation_method = waiver(),
   rank_threshold = waiver(),
   message_indent = 0L,
@@ -16,6 +17,9 @@ extract_model_vimp(
 \arguments{
 \item{object}{A \code{familiarEnsemble} object, which is an ensemble of one or more
 \code{familiarModel} objects.}
+
+\item{data}{A \code{dataObject} object, \code{data.table} or \code{data.frame} that
+constitutes the data that are used to compute}
 
 \item{aggregation_method}{Method for aggregating variable importances for the
 purpose of evaluation. Variable importances are determined during feature
