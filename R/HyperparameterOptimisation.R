@@ -868,6 +868,8 @@ setMethod("optimise_hyperparameters", signature(object="familiarModel", data="da
                                                   settings = settings$eval,
                                                   project_id = project_id))
   }
+  
+  return(object)
 }
 
 
