@@ -1487,25 +1487,35 @@ paste_s <- function(...){
 }
 
 
-.flatten_nested_list <- function(x){
+.flatten_nested_list <- function(x, flatten=FALSE){
   
   # Identify names of elements.
   element_names <- unique(unlist(lapply(x, names)))
   
   # Create a flattened list.
-  flattened_list <- lapply(element_names, function(element_name, x){
+  flattened_list <- lapply(element_names, function(element_name, x, flatten){
     
     # Obtain content stored in each element.
     element_content <- NULL
     
     # Iterate over nested lists, and contents of the element.
     for(ii in seq_along(x)){
-      element_content <- c(element_content, x[[ii]][[element_name]])
+      if(!inherits(x[[ii]][[element_name]], "list") & !flatten){
+        # Treat data.table differently, because c() casts data.tables to a list.
+        element_content <- c(element_content, list(x[[ii]][[element_name]]))
+        
+      } else {
+        element_content <- c(element_content, x[[ii]][[element_name]])
+      }
     }
+    
+    # Set names of elements
+    if(!is.null(names(x))) names(element_content) <- names(x)
     
     return(element_content)
   },
-  x = x)
+  x = x,
+  flatten = flatten)
   
   # Set names of the list elements.
   names(flattened_list) <- element_names
