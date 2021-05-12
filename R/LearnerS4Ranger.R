@@ -200,6 +200,9 @@ setMethod("..train", signature(object="familiarRanger", data="dataObject"),
             # Check if the training data is ok.
             if(has_bad_training_data(object=object, data=data)) return(callNextMethod())
             
+            # Check if hyperparameters are set.
+            if(is.null(object@hyperparameters)) return(callNextMethod())
+            
             # Find feature columns in data table
             feature_columns <- get_feature_columns(x=data)
             

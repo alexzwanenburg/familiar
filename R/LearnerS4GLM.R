@@ -167,6 +167,9 @@ setMethod("..train", signature(object="familiarGLM", data="dataObject"),
             # Check if training data is ok.
             if(has_bad_training_data(object=object, data=data)) return(callNextMethod())
             
+            # Check if hyperparameters are set.
+            if(is.null(object@hyperparameters)) return(callNextMethod())
+            
             # Use effect coding to convert categorical data into encoded data -
             # this is required to deal with factors with missing/new levels
             # between training and test data sets.
