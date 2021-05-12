@@ -941,8 +941,13 @@ setMethod("optimise_hyperparameters", signature(object="familiarModel", data="da
   object_data_id <- tail(object@run_table, n=1)$data_id
   object_run_id  <- tail(object@run_table, n=1)$run_id
   
-  if(is(object, "familiarVimpMethod")){
+  # Get the variable importance method.
+  if(is_vimp & is(object, "familiarVimpMethod")){
     vimp_method <- object@vimp_method
+    
+  } else if(is_vimp){
+    vimp_method <- object@learner
+    
   } else {
     vimp_method <- object@fs_method
   }
