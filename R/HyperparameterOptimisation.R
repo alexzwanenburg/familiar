@@ -482,16 +482,18 @@ setMethod("optimise_hyperparameters", signature(object="familiarModel", data="da
               
               # Build and evaluate models. This creates a table with metric
               # values, objective scores for in-bag and out-of-bag data.
-              score_table <- .compute_hyperparameter_model_performance(cl=cl,
-                                                                       object=object,
-                                                                       run_table=run_table,
-                                                                       bootstraps=bootstraps,
-                                                                       data=data,
-                                                                       rank_table_list=rank_table_list,
-                                                                       parameter_table=parameter_table,
-                                                                       metric_objects=metric_object_list,
-                                                                       measure_time=measure_time,
-                                                                       verbose=verbose)
+              score_results <- .compute_hyperparameter_model_performance(cl=cl,
+                                                                         object=object,
+                                                                         run_table=run_table,
+                                                                         bootstraps=bootstraps,
+                                                                         data=data,
+                                                                         rank_table_list=rank_table_list,
+                                                                         parameter_table=parameter_table,
+                                                                         metric_objects=metric_object_list,
+                                                                         verbose=verbose)
+              
+              # Get score table.
+              score_table <- score_results$results
               
               # Compute the optimisation score. This creates a table with
               # optimisation scores per bootstrap and parameter identifier.
@@ -511,17 +513,27 @@ setMethod("optimise_hyperparameters", signature(object="familiarModel", data="da
                                indent=message_indent)
               }
               
-              # Compute 
-              second_score_table <- .compute_hyperparameter_model_performance(cl=cl,
-                                                                              object=object,
-                                                                              run_table=run_table,
-                                                                              bootstraps=bootstraps,
-                                                                              data=data,
-                                                                              rank_table_list=rank_table_list,
-                                                                              parameter_table=parameter_table,
-                                                                              metric_objects=metric_object_list,
-                                                                              measure_time=measure_time,
-                                                                              verbose=verbose)
+              # Create a model to predict the time a process takes to complete
+              # training.
+              time_optimisation_model <- .create_hyperparameter_time_optimisation_model(score_table=optimisation_score_table,
+                                                                                        parameter_table=parameter_table)
+              
+              
+              # Compute second batch of results.
+              score_results <- .compute_hyperparameter_model_performance(cl=cl,
+                                                                         object=object,
+                                                                         run_table=run_table,
+                                                                         bootstraps=bootstraps,
+                                                                         data=data,
+                                                                         rank_table_list=rank_table_list,
+                                                                         parameter_table=parameter_table,
+                                                                         metric_objects=metric_object_list,
+                                                                         time_optimisation_model=time_optimisation_model,
+                                                                         overhead_time=score_results$overhead_time,
+                                                                         verbose=verbose)
+              
+              # Get score table.
+              second_score_table <- score_results$results
               
               # Compute the optimisation score. This creates a table with
               # optimisation scores per bootstrap and parameter identifier.
@@ -550,16 +562,18 @@ setMethod("optimise_hyperparameters", signature(object="familiarModel", data="da
               
               # Build and evaluate models. This creates a table with metric
               # values, objective scores for in-bag and out-of-bag data.
-              score_table <- .compute_hyperparameter_model_performance(cl=cl,
-                                                                       object=object,
-                                                                       run_table=run_table,
-                                                                       bootstraps=bootstraps,
-                                                                       data=data,
-                                                                       rank_table_list=rank_table_list,
-                                                                       parameter_table=parameter_table,
-                                                                       metric_objects=metric_object_list,
-                                                                       measure_time=measure_time,
-                                                                       verbose=verbose)
+              score_results <- .compute_hyperparameter_model_performance(cl=cl,
+                                                                         object=object,
+                                                                         run_table=run_table,
+                                                                         bootstraps=bootstraps,
+                                                                         data=data,
+                                                                         rank_table_list=rank_table_list,
+                                                                         parameter_table=parameter_table,
+                                                                         metric_objects=metric_object_list,
+                                                                         verbose=verbose)
+              
+              # Get score table.
+              score_table <- score_results$results
               
               # Compute the optimisation score. This creates a table with
               # optimisation scores per bootstrap and parameter identifier.
@@ -599,12 +613,18 @@ setMethod("optimise_hyperparameters", signature(object="familiarModel", data="da
               
               ##### SMBO - Intensify -------------------------------------------
               
+              # Create a model to predict the time a process takes to complete
+              # training.
+              time_optimisation_model <- .create_hyperparameter_time_optimisation_model(score_table=optimisation_score_table,
+                                                                                        parameter_table=parameter_table)
+              
               # Local neighbourhood + random hyperparameter randomisation for
               # challenger configurations. This selects challengers
               # combinations.
               challenger_data <- .create_hyperparameter_challenger_sets(parameter_table=parameter_table,
                                                                         score_table=score_table,
                                                                         parameter_list=parameter_list,
+                                                                        time_optimisation_model=time_optimisation_model,
                                                                         smbo_iter=optimisation_step,
                                                                         hyperparameter_learner=hyperparameter_learner,
                                                                         optimisation_function=optimisation_function,
@@ -658,17 +678,20 @@ setMethod("optimise_hyperparameters", signature(object="familiarModel", data="da
                 
                 # Compute metric values for the bootstraps of the incumbent and
                 # challenger parameter sets.
-                intensify_score_table <- .compute_hyperparameter_model_performance(cl=cl,
-                                                                                   object=object,
-                                                                                   run_table=run_table,
-                                                                                   bootstraps=bootstraps,
-                                                                                   data=data,
-                                                                                   rank_table_list=rank_table_list,
-                                                                                   parameter_table=parameter_table,
-                                                                                   metric_objects=metric_object_list,
-                                                                                   measure_time=measure_time,
-                                                                                   verbose=verbose)
-
+                score_results <- .compute_hyperparameter_model_performance(cl=cl,
+                                                                           object=object,
+                                                                           run_table=run_table,
+                                                                           bootstraps=bootstraps,
+                                                                           data=data,
+                                                                           rank_table_list=rank_table_list,
+                                                                           parameter_table=parameter_table,
+                                                                           metric_objects=metric_object_list,
+                                                                           time_optimisation_model=time_optimisation_model,
+                                                                           overhead_time=score_results$overhead_time,
+                                                                           verbose=verbose)
+                
+                # Get score table.
+                intensify_score_table <- score_results$results
                 
                 # Compute the optimisation score. This creates a table with
                 # optimisation scores per bootstrap and parameter identifier.
@@ -711,6 +734,11 @@ setMethod("optimise_hyperparameters", signature(object="familiarModel", data="da
                 
                 # Update intensify iterator
                 n_intensify_steps <- n_intensify_steps + 1L
+                
+                # Update the model that predicts the time a process takes to
+                # complete training.
+                time_optimisation_model <- .create_hyperparameter_time_optimisation_model(score_table=optimisation_score_table,
+                                                                                          parameter_table=parameter_table)
               }
               
               ##### SMBO - Evaluate --------------------------------------------

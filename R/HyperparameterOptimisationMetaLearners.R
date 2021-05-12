@@ -1,6 +1,7 @@
 .create_hyperparameter_challenger_sets <- function(parameter_table,
                                                    score_table,
                                                    parameter_list,
+                                                   time_optimisation_model,
                                                    smbo_iter,
                                                    hyperparameter_learner,
                                                    optimisation_function,
@@ -26,11 +27,6 @@
   score_optimisation_model <- .create_hyperparameter_score_optimisation_model(hyperparameter_learner=hyperparameter_learner,
                                                                               score_table=optimisation_score_table,
                                                                               parameter_table=parameter_table)
-  
-  # Create a model to predict the time a process takes to complete trainings.
-  time_optimisation_model <- .create_hyperparameter_time_optimisation_model(score_table=optimisation_score_table,
-                                                                            parameter_table=parameter_table,
-                                                                            measure_time=measure_time)
   
   # Find information regarding the dataset that has the highest optimisation
   # score.
@@ -282,10 +278,7 @@
 
 .create_hyperparameter_time_optimisation_model <- function(hyperparameter_learner="random_forest",
                                                            score_table,
-                                                           parameter_table,
-                                                           measure_time){
-  # If time is not being evaluated, return a NULL.
-  if(!measure_time) return(NULL)
+                                                           parameter_table){
     
   if(hyperparameter_learner == "random_forest"){
     model <- ..hyperparameter_random_forest_time_learner(score_table=score_table,
@@ -524,6 +517,8 @@
   
   # If no time model is present, return NA.
   if(is.null(time_model)) return(NA_real_)
+  
+  if(!data.table::is.data.table(parameter_set)) parameter_set <- data.table::as.data.table(parameter_set)
   
   predictions <- predict(time_model,
                          data=parameter_set,

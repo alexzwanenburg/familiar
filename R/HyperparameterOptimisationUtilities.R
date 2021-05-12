@@ -342,7 +342,8 @@
                                                       data,
                                                       rank_table_list,
                                                       metric_objects,
-                                                      measure_time=TRUE,
+                                                      time_optimisation_model=NULL,
+                                                      overhead_time=NULL,
                                                       verbose=FALSE){
   
   # Suppress NOTES due to non-standard evaluation in data.table
@@ -371,23 +372,53 @@
                             function(ii, rank_table_list) (rank_table_list[[ii]]),
                             rank_table_list=rank_table_list)
   
-  # Create a scoring table.
-  score_table <- fam_mapply_lb(cl = cl,
-                               assign = NULL,
-                               FUN = ..compute_hyperparameter_model_performance,
-                               run_id = run_table$run_id,
-                               training_samples = training_list,
-                               validation_samples = validation_list,
-                               rank_table=rank_table_list,
-                               parameter_table=parameter_list,
-                               progress_bar=verbose,
-                               MoreArgs=list("object"=object,
-                                             "data"=data,
-                                             "metric_objects"=metric_objects,
-                                             "measure_time"=measure_time))
+  if(is.null(time_optimisation_model)){
+    # Create a scoring table.
+    score_table <- fam_mapply_lb(cl = cl,
+                                 assign = NULL,
+                                 FUN = ..compute_hyperparameter_model_performance,
+                                 run_id = run_table$run_id,
+                                 training_samples = training_list,
+                                 validation_samples = validation_list,
+                                 rank_table=rank_table_list,
+                                 parameter_table=parameter_list,
+                                 progress_bar=verbose,
+                                 MEASURE.TIME=TRUE,
+                                 MoreArgs=list("object"=object,
+                                               "data"=data,
+                                               "metric_objects"=metric_objects))
+    
+  } else {
+  
+    # Predict expected process time for each parameter set.
+    process_time <- sapply(parameter_list,
+                           .compute_expected_train_time,
+                           time_model=time_optimisation_model)
+    
+    # Create a scoring table.
+    score_table <- fam_mapply(cl = cl,
+                              assign = NULL,
+                              FUN = ..compute_hyperparameter_model_performance,
+                              run_id = run_table$run_id,
+                              training_samples = training_list,
+                              validation_samples = validation_list,
+                              rank_table=rank_table_list,
+                              parameter_table=parameter_list,
+                              progress_bar=verbose,
+                              process_time=process_time,
+                              overhead_time=overhead_time,
+                              chopchop=TRUE,
+                              MEASURE.TIME=TRUE,
+                              MoreArgs=list("object"=object,
+                                            "data"=data,
+                                            "metric_objects"=metric_objects))
+  }
   
   # Aggregate the table.
-  score_table <- data.table::rbindlist(score_table, use.names=TRUE)
+  score_table$results <- data.table::rbindlist(score_table$results, use.names=TRUE)
+  
+  # Add in process times to the results.
+  score_table$results[, "time_taken":=rep(score_table$process_time, each=2*length(metric_objects))]
   
   # Return scores.
   return(score_table)
@@ -402,8 +433,7 @@
                                                        parameter_table,
                                                        rank_table,
                                                        metric_objects,
-                                                       signature_features=NULL,
-                                                       measure_time=TRUE){
+                                                       signature_features=NULL){
   if(!is(object, "familiarModel")){
     ..error_reached_unreachable_code("..compute_hyperparameter_model_performance: object is not a familiarModel object.")
   }
@@ -433,26 +463,11 @@
                             minimise_footprint=TRUE)
     
   }
-  
-  # Get time prior to training.
-  if(measure_time) start_time <- Sys.time()
-  
+
   # Train model with the set of hyperparameters.
   object <- .train(object=object,
                    data=data_training,
                    get_additional_info=FALSE)
-  
-  # Get time after training. The difference is the time taken up by training.
-  if(measure_time){
-    stop_time <- Sys.time()
-    time_taken <- as.numeric(stop_time - start_time)
-    
-    # If the model could not be trained, set the time take to NA.
-    if(!model_is_trained(object)) time_taken <- NA_real_
-    
-  } else {
-    time_taken <- NA_real_
-  }
   
   # Generate scores.
   score_table <- mapply(function(data, data_set, object, metric_objects, settings){
@@ -501,8 +516,7 @@
   score_table <- data.table::rbindlist(score_table, use.names=TRUE)
   
   # Add parameter id and run id.
-  score_table[, ":="("time_taken"=time_taken,
-                     "param_id"=param_id,
+  score_table[, ":="("param_id"=param_id,
                      "run_id"=run_id)]
   
   # Set the column order.

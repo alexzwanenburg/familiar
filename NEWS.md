@@ -78,14 +78,18 @@ be specified after similarity has been computed, i.e. through
 changing clustering parameters after the analysis.
 
 * Parallel processing now supports mini-batching. Many processes are actually
-fast to compute and repeated IO to cluster nodes slows down the process.
+fast to compute and repeated IO to cluster nodes noticably slows down the process.
 Mini-batches transfers data to nodes in one go for local sequential processing.
 In addition, processes that can mini-batch are now measured, and an optimal
 number of nodes is selected based on IO and process times. This should
 significantly speed up processes with low process time compared to IO time.
 
-* Hyperparameter optimisation now has several new or changed  configuration
-parameters:
+* Hyperparameter optimisation now predicts the time taken for training using a
+specific set of hyperparameters. It uses the predicted time to optimise
+assignment to nodes for parallel processing. This eliminates an issue where
+hyperparameter optimisation with parallel nodes could take significantly longer
+than simple sequential optimisation. In addition, hyperparameter optimisation
+now has several new or changed configuration parameters:
     
     * `smbo_random_initialisation` is no longer a logical (`TRUE` or `FALSE`)
     but takes `fixed_subsample`, `fixed` or `random` as values.
