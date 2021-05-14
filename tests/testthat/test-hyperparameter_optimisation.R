@@ -36,7 +36,7 @@ for(optimisation_function in familiar:::.get_available_optimisation_functions())
 familiar:::test_hyperparameter_optimisation(learners="glm_logistic",
                                             outcome_type_available="binomial",
                                             measure_time=FALSE,
-                                            debug=TRUE,
+                                            debug=FALSE,
                                             parallel=FALSE)
 
 
