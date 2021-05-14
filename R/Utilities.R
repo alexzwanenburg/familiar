@@ -1510,7 +1510,11 @@ paste_s <- function(...){
     }
     
     # Set names of elements
-    if(!is.null(names(x))) names(element_content) <- names(x)
+    if(!is.null(names(x))){
+      if(length(names(x)) == length(element_content)){
+        names(element_content) <- names(x)
+      }
+    } 
     
     return(element_content)
   },
