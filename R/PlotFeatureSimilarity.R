@@ -32,6 +32,7 @@ NULL
 #'@param dendrogram_height (*optional*) Height of the dendrogram. The height is
 #'  1.5 cm by default. Height is expected to be grid unit (see `grid::unit`),
 #'  which also allows for specifying relative heights.
+#'@inheritParams export_feature_similarity
 #'@inheritParams as_familiar_collection
 #'@inheritParams plot_univariate_importance
 #'@inheritParams plotting.check_input_args

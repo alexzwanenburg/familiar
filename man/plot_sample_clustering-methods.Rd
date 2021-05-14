@@ -154,6 +154,42 @@ plot_sample_clustering(
 \item{object}{A \code{familiarCollection} object, or other other objects from which
 a \code{familiarCollection} can be extracted. See details for more information.}
 
+\item{feature_cluster_method}{The method used to perform clustering. These are
+the same methods as for the \code{cluster_method} configuration parameter:
+\code{none}, \code{hclust}, \code{agnes}, \code{diana} and \code{pam}.
+
+\code{none} cannot be used when extracting data regarding mutual correlation or
+feature expressions.
+
+If not provided explicitly, this parameter is read from settings used at
+creation of the underlying \code{familiarModel} objects.}
+
+\item{feature_linkage_method}{The method used for agglomerative clustering in
+\code{hclust} and \code{agnes}. These are the same methods as for the
+\code{cluster_linkage_method} configuration parameter: \code{average}, \code{single},
+\code{complete}, \code{weighted}, and \code{ward}.
+
+If not provided explicitly, this parameter is read from settings used at
+creation of the underlying \code{familiarModel} objects.}
+
+\item{sample_cluster_method}{The method used to perform clustering based on
+distance between samples. These are the same methods as for the
+\code{cluster_method} configuration parameter: \code{hclust}, \code{agnes}, \code{diana} and
+\code{pam}.
+
+\code{none} cannot be used when extracting data for feature expressions.
+
+If not provided explicitly, this parameter is read from settings used at
+creation of the underlying \code{familiarModel} objects.}
+
+\item{sample_linkage_method}{The method used for agglomerative clustering in
+\code{hclust} and \code{agnes}. These are the same methods as for the
+\code{cluster_linkage_method} configuration parameter: \code{average}, \code{single},
+\code{complete}, \code{weighted}, and \code{ward}.
+
+If not provided explicitly, this parameter is read from settings used at
+creation of the underlying \code{familiarModel} objects.}
+
 \item{draw}{(\emph{optional}) Draws the plot if TRUE.}
 
 \item{dir_path}{(\emph{optional}) Path to the directory where created performance

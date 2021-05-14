@@ -226,6 +226,9 @@ is unset.}
 
 \item{y_breaks}{(\emph{optional}) Break points on the y-axis of the plot.}
 
+\item{confidence_level}{(\emph{optional}) Confidence level for the strata in the
+plot.}
+
 \item{conf_int_style}{(\emph{optional}) Confidence interval style. See details for
 allowed styles.}
 

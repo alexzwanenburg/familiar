@@ -34,6 +34,8 @@ NULL
 #'@param units (*optional*) Plot size unit. Either `cm` (default), `mm` or `in`.
 #'@param verbose Flag to indicate whether feedback should be provided for the
 #'  plotting.
+#'@inheritParams export_univariate_analysis_data
+#'@inheritParams export_feature_similarity
 #'@inheritParams as_familiar_collection
 #'@inheritParams plotting.check_input_args
 #'@inheritParams plotting.check_data_handling

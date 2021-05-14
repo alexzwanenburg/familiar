@@ -19,6 +19,9 @@ a \code{familiarCollection} can be extracted. See details for more information.}
 \item{dir_path}{Path to folder where extracted data should be saved. \code{NULL}
 will allow export as a structured list of data.tables.}
 
+\item{aggregate_results}{Flag that signifies whether results should be
+aggregated for export.}
+
 \item{...}{
   Arguments passed on to \code{\link[=as_familiar_collection]{as_familiar_collection}}
   \describe{

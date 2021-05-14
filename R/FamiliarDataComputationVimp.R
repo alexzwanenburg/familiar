@@ -263,6 +263,51 @@ setMethod("..compute_data_element_estimates", signature(x="familiarDataElementVi
 #'@description Extract and export model-based variable importance from a
 #'  familiarCollection.
 #'
+#'@param aggregation_method (*optional*) The method used to aggregate variable
+#'  importances over different data subsets, e.g. bootstraps. The following
+#'  methods can be selected:
+#'
+#'  * `mean` (default): Use the mean rank of a feature over the subsets to
+#'  determine the aggregated feature rank.
+#'
+#'  * `median`: Use the median rank of a feature over the subsets to determine
+#'  the aggregated feature rank.
+#'
+#'  * `best`: Use the best rank the feature obtained in any subset to determine
+#'  the aggregated feature rank.
+#'
+#'  * `worst`: Use the worst rank the feature obtained in any subset to
+#'  determine the aggregated feature rank.
+#'
+#'  * `stability`: Use the frequency of the feature being in the subset of
+#'  highly ranked features as measure for the aggregated feature rank
+#'  (Meinshausen and Buehlmann, 2010).
+#'
+#'  * `exponential`: Use a rank-weighted frequence of occurrence in the subset
+#'  of highly ranked features as measure for the aggregated feature rank (Haury
+#'  et al., 2011).
+#'
+#'  * `borda`: Use the borda count as measure for the aggregated feature rank
+#'  (Wald et al., 2012).
+#'
+#'  * `enhanced_borda`: Use an occurrence frequency-weighted borda count as
+#'  measure for the aggregated feature rank (Wald et al., 2012).
+#'
+#'  * `truncated_borda`: Use borda count computed only on features within the
+#'  subset of highly ranked features.
+#'
+#'  * `enhanced_truncated_borda`: Apply both the enhanced borda method and the
+#'  truncated borda method and use the resulting borda count as the aggregated
+#'  feature rank.
+#'
+#'@param rank_threshold (*optional*) The threshold used to define the subset of
+#'  highly important features. If not set, this threshold is determined by
+#'  maximising the variance in the occurrence value over all features over the
+#'  subset size.
+#'
+#'  This parameter is only relevant for `stability`, `exponential`,
+#'  `enhanced_borda`, `truncated_borda` and `enhanced_truncated_borda` methods.
+#'
 #'@inheritParams export_all
 #'
 #'@inheritDotParams as_familiar_collection
@@ -393,9 +438,53 @@ setMethod("export_model_vimp", signature(object="ANY"),
 #'@description Extract and export feature selection variable importance from a
 #'  familiarCollection.
 #'
+#'@param aggregation_method (*optional*) The method used to aggregate variable
+#'  importances over different data subsets, e.g. bootstraps. The following
+#'  methods can be selected:
+#'
+#'  * `mean` (default): Use the mean rank of a feature over the subsets to
+#'  determine the aggregated feature rank.
+#'
+#'  * `median`: Use the median rank of a feature over the subsets to determine
+#'  the aggregated feature rank.
+#'
+#'  * `best`: Use the best rank the feature obtained in any subset to determine
+#'  the aggregated feature rank.
+#'
+#'  * `worst`: Use the worst rank the feature obtained in any subset to
+#'  determine the aggregated feature rank.
+#'
+#'  * `stability`: Use the frequency of the feature being in the subset of
+#'  highly ranked features as measure for the aggregated feature rank
+#'  (Meinshausen and Buehlmann, 2010).
+#'
+#'  * `exponential`: Use a rank-weighted frequence of occurrence in the subset
+#'  of highly ranked features as measure for the aggregated feature rank (Haury
+#'  et al., 2011).
+#'
+#'  * `borda`: Use the borda count as measure for the aggregated feature rank
+#'  (Wald et al., 2012).
+#'
+#'  * `enhanced_borda`: Use an occurrence frequency-weighted borda count as
+#'  measure for the aggregated feature rank (Wald et al., 2012).
+#'
+#'  * `truncated_borda`: Use borda count computed only on features within the
+#'  subset of highly ranked features.
+#'
+#'  * `enhanced_truncated_borda`: Apply both the enhanced borda method and the
+#'  truncated borda method and use the resulting borda count as the aggregated
+#'  feature rank.
+#'
+#'@param rank_threshold (*optional*) The threshold used to define the subset of
+#'  highly important features. If not set, this threshold is determined by
+#'  maximising the variance in the occurrence value over all features over the
+#'  subset size.
+#'
+#'  This parameter is only relevant for `stability`, `exponential`,
+#'  `enhanced_borda`, `truncated_borda` and `enhanced_truncated_borda` methods.
+#'
 #'@inheritParams export_all
 #'
-#'@inheritDotParams extract_fs_vimp
 #'@inheritDotParams as_familiar_collection
 #'
 #'@details Data, such as model performance and calibration information, is

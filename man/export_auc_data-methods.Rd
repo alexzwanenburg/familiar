@@ -19,6 +19,9 @@ a \code{familiarCollection} can be extracted. See details for more information.}
 \item{dir_path}{Path to folder where extracted data should be saved. \code{NULL}
 will allow export as a structured list of data.tables.}
 
+\item{aggregate_results}{Flag that signifies whether results should be
+aggregated for export.}
+
 \item{...}{
   Arguments passed on to \code{\link[=extract_auc_data]{extract_auc_data}}, \code{\link[=as_familiar_collection]{as_familiar_collection}}
   \describe{
@@ -94,22 +97,6 @@ specified for separate evaluation steps by providing a parameter value in a
 named list with data elements, e.g. \code{list("auc_data"="bci", "model_performance"="point")}. This parameter can be set for the following
 data elements: \code{auc_data}, \code{decision_curve_analyis}, \code{model_performance},
 \code{permutation_vimp}, and \code{prediction_data}.}
-    \item{\code{aggregate_results}}{(\emph{optional}) Flag that signifies whether results
-should be aggregated during evaluation. If \code{estimation_type} is
-\code{bias_correction} or \code{bc}, aggregation leads to a single bias-corrected
-estimate. If \code{estimation_type} is \code{bootstrap_confidence_interval} or \code{bci},
-aggregation leads to a single bias-corrected estimate with lower and upper
-boundaries of the confidence interval. This has no effect if
-\code{estimation_type} is \code{point}.
-
-The default value is equal to \code{TRUE} except when assessing metrics to assess
-model performance, as the default violin plot requires underlying data.
-
-As with \code{detail_level} and \code{estimation_type}, a non-default
-\code{aggregate_results} parameter can be specified for separate evaluation steps
-by providing a parameter value in a named list with data elements, e.g.
-\code{list("auc_data"=TRUE, , "model_performance"=FALSE)}. This parameter exists
-for the same elements as \code{estimation_type}.}
     \item{\code{confidence_level}}{(\emph{optional}) Numeric value for the level at which
 confidence intervals are determined. In the case bootstraps are used to
 determine the confidence intervals bootstrap estimation, \code{familiar} uses the

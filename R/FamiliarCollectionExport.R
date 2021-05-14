@@ -12,8 +12,8 @@ NULL
 #'  a `familiarCollection` can be extracted. See details for more information.
 #'@param dir_path Path to folder where extracted data should be saved. `NULL`
 #'  will allow export as a structured list of data.tables.
-#'@param export_raw Allows export of raw data. Only used when exporting model
-#'  performance information.
+#'@param aggregate_results Flag that signifies whether results should be
+#'  aggregated for export.
 #'
 #'@inheritDotParams extract_data
 #'@inheritDotParams as_familiar_collection

@@ -188,7 +188,10 @@ setMethod("extract_sample_similarity", signature(object="familiarEnsemble", data
 #'@description Extract and export mutual correlation between features in a
 #'  familiarCollection.
 #'
+#'@param export_dendrogram Add dendrogram in the data element objects.
+#'
 #'@inheritParams export_all
+#'@inheritParams extract_data
 #'
 #'@inheritDotParams as_familiar_collection
 #'

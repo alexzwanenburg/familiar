@@ -27,6 +27,7 @@ NULL
 #'  `rotate_x_tick_labels` is `TRUE`).
 #'@param width (*optional*) Width of the plot. A default value is derived from
 #'  the number of facets and the number of features.
+#'@inheritParams export_fs_vimp
 #'@inheritParams as_familiar_collection
 #'@inheritParams plot_univariate_importance
 #'@inheritParams plotting.check_input_args

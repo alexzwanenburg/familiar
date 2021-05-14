@@ -109,11 +109,46 @@ plot_univariate_importance(
 )
 }
 \arguments{
-\item{object}{\code{familiarCollection} object, or one or more \code{familiarData}
-objects, that will be internally converted to a \code{familiarCollection} object.
-It is also possible to provide a \code{familiarEnsemble} or one or more
-\code{familiarModel} objects together with the data from which data is computed
-prior to export. Paths to such files can also be provided.}
+\item{object}{A \code{familiarCollection} object, or other other objects from which
+a \code{familiarCollection} can be extracted. See details for more information.}
+
+\item{feature_cluster_method}{The method used to perform clustering. These are
+the same methods as for the \code{cluster_method} configuration parameter:
+\code{none}, \code{hclust}, \code{agnes}, \code{diana} and \code{pam}.
+
+\code{none} cannot be used when extracting data regarding mutual correlation or
+feature expressions.
+
+If not provided explicitly, this parameter is read from settings used at
+creation of the underlying \code{familiarModel} objects.}
+
+\item{feature_linkage_method}{The method used for agglomerative clustering in
+\code{hclust} and \code{agnes}. These are the same methods as for the
+\code{cluster_linkage_method} configuration parameter: \code{average}, \code{single},
+\code{complete}, \code{weighted}, and \code{ward}.
+
+If not provided explicitly, this parameter is read from settings used at
+creation of the underlying \code{familiarModel} objects.}
+
+\item{feature_cluster_cut_method}{The method used to divide features into
+separate clusters. The available methods are the same as for the
+\code{cluster_cut_method} configuration parameter: \code{silhouette}, \code{fixed_cut} and
+\code{dynamic_cut}.
+
+\code{silhouette} is available for all cluster methods, but \code{fixed_cut} only
+applies to methods that create hierarchical trees (\code{hclust}, \code{agnes} and
+\code{diana}). \code{dynamic_cut} requires the \code{dynamicTreeCut} package and can only
+be used with \code{agnes} and \code{hclust}.
+
+If not provided explicitly, this parameter is read from settings used at
+creation of the underlying \code{familiarModel} objects.}
+
+\item{feature_similarity_threshold}{The threshold level for pair-wise
+similarity that is required to form feature clusters with the \code{fixed_cut}
+method.
+
+If not provided explicitly, this parameter is read from settings used at
+creation of the underlying \code{familiarModel} objects.}
 
 \item{draw}{(\emph{optional}) Draws the plot if TRUE.}
 

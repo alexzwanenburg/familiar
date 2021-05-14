@@ -389,7 +389,10 @@ setMethod("extract_feature_similarity", signature(object="familiarEnsemble", dat
 #'@param export_dendrogram Add dendrogram in the data element objects.
 #'@param export_ordered_data Add feature label ordering to data in the data
 #'  element objects.
+#'@param export_clustering Add clustering information to data.
+#'
 #'@inheritParams export_all
+#'@inheritParams extract_data
 #'
 #'@inheritDotParams as_familiar_collection
 #'

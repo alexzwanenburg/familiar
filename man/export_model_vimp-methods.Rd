@@ -40,6 +40,46 @@ a \code{familiarCollection} can be extracted. See details for more information.}
 \item{dir_path}{Path to folder where extracted data should be saved. \code{NULL}
 will allow export as a structured list of data.tables.}
 
+\item{aggregate_results}{Flag that signifies whether results should be
+aggregated for export.}
+
+\item{aggregation_method}{(\emph{optional}) The method used to aggregate variable
+importances over different data subsets, e.g. bootstraps. The following
+methods can be selected:
+\itemize{
+\item \code{mean} (default): Use the mean rank of a feature over the subsets to
+determine the aggregated feature rank.
+\item \code{median}: Use the median rank of a feature over the subsets to determine
+the aggregated feature rank.
+\item \code{best}: Use the best rank the feature obtained in any subset to determine
+the aggregated feature rank.
+\item \code{worst}: Use the worst rank the feature obtained in any subset to
+determine the aggregated feature rank.
+\item \code{stability}: Use the frequency of the feature being in the subset of
+highly ranked features as measure for the aggregated feature rank
+(Meinshausen and Buehlmann, 2010).
+\item \code{exponential}: Use a rank-weighted frequence of occurrence in the subset
+of highly ranked features as measure for the aggregated feature rank (Haury
+et al., 2011).
+\item \code{borda}: Use the borda count as measure for the aggregated feature rank
+(Wald et al., 2012).
+\item \code{enhanced_borda}: Use an occurrence frequency-weighted borda count as
+measure for the aggregated feature rank (Wald et al., 2012).
+\item \code{truncated_borda}: Use borda count computed only on features within the
+subset of highly ranked features.
+\item \code{enhanced_truncated_borda}: Apply both the enhanced borda method and the
+truncated borda method and use the resulting borda count as the aggregated
+feature rank.
+}}
+
+\item{rank_threshold}{(\emph{optional}) The threshold used to define the subset of
+highly important features. If not set, this threshold is determined by
+maximising the variance in the occurrence value over all features over the
+subset size.
+
+This parameter is only relevant for \code{stability}, \code{exponential},
+\code{enhanced_borda}, \code{truncated_borda} and \code{enhanced_truncated_borda} methods.}
+
 \item{...}{
   Arguments passed on to \code{\link[=as_familiar_collection]{as_familiar_collection}}
   \describe{

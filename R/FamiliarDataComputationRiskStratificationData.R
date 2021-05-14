@@ -549,7 +549,10 @@ setMethod("extract_risk_stratification_data", signature(object="familiarEnsemble
 #'@description Extract and export sample risk group stratification and
 #'  associated tests for data in a familiarCollection.
 #'
-#'@param export_strata 
+#'@param export_strata Flag that determines whether the raw data or strata are
+#'  exported.
+#'@param time_range Time range for which strata should be created. If `NULL`,
+#'  the full time range is used.
 #'@inheritParams export_all
 #'
 #'@inheritDotParams extract_risk_stratification_data
@@ -581,7 +584,7 @@ setMethod("extract_risk_stratification_data", signature(object="familiarEnsemble
 #'@md
 #'@rdname export_risk_stratification_data-methods
 setGeneric("export_risk_stratification_data",
-           function(object, dir_path=NULL, export_strata=TRUE, ...) standardGeneric("export_risk_stratification_data"))
+           function(object, dir_path=NULL, export_strata=TRUE, time_range=NULL, ...) standardGeneric("export_risk_stratification_data"))
 
 #####export_risk_stratification_data (collection)#####
 
@@ -660,7 +663,7 @@ setMethod("export_risk_stratification_data", signature(object="familiarCollectio
 
 #'@rdname export_risk_stratification_data-methods
 setMethod("export_risk_stratification_data", signature(object="ANY"),
-          function(object, dir_path=NULL, export_strata=TRUE, ...){
+          function(object, dir_path=NULL, export_strata=TRUE, time_range=NULL, ...){
             
             # Attempt conversion to familiarCollection object.
             object <- do.call(as_familiar_collection,

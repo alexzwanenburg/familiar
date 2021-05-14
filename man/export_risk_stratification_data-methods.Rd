@@ -11,6 +11,7 @@ export_risk_stratification_data(
   object,
   dir_path = NULL,
   export_strata = TRUE,
+  time_range = NULL,
   ...
 )
 
@@ -26,6 +27,7 @@ export_risk_stratification_data(
   object,
   dir_path = NULL,
   export_strata = TRUE,
+  time_range = NULL,
   ...
 )
 }
@@ -36,7 +38,11 @@ a \code{familiarCollection} can be extracted. See details for more information.}
 \item{dir_path}{Path to folder where extracted data should be saved. \code{NULL}
 will allow export as a structured list of data.tables.}
 
-\item{export_strata}{}
+\item{export_strata}{Flag that determines whether the raw data or strata are
+exported.}
+
+\item{time_range}{Time range for which strata should be created. If \code{NULL},
+the full time range is used.}
 
 \item{...}{
   Arguments passed on to \code{\link[=extract_risk_stratification_data]{extract_risk_stratification_data}}, \code{\link[=as_familiar_collection]{as_familiar_collection}}

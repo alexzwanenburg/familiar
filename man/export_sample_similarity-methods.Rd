@@ -43,6 +43,29 @@ a \code{familiarCollection} can be extracted. See details for more information.}
 \item{dir_path}{Path to folder where extracted data should be saved. \code{NULL}
 will allow export as a structured list of data.tables.}
 
+\item{aggregate_results}{Flag that signifies whether results should be
+aggregated for export.}
+
+\item{sample_cluster_method}{The method used to perform clustering based on
+distance between samples. These are the same methods as for the
+\code{cluster_method} configuration parameter: \code{hclust}, \code{agnes}, \code{diana} and
+\code{pam}.
+
+\code{none} cannot be used when extracting data for feature expressions.
+
+If not provided explicitly, this parameter is read from settings used at
+creation of the underlying \code{familiarModel} objects.}
+
+\item{sample_linkage_method}{The method used for agglomerative clustering in
+\code{hclust} and \code{agnes}. These are the same methods as for the
+\code{cluster_linkage_method} configuration parameter: \code{average}, \code{single},
+\code{complete}, \code{weighted}, and \code{ward}.
+
+If not provided explicitly, this parameter is read from settings used at
+creation of the underlying \code{familiarModel} objects.}
+
+\item{export_dendrogram}{Add dendrogram in the data element objects.}
+
 \item{...}{
   Arguments passed on to \code{\link[=as_familiar_collection]{as_familiar_collection}}
   \describe{

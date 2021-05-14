@@ -28,6 +28,8 @@ NULL
 #'  assessed for each of the breaks in `x_breaks`.
 #'@param height (*optional*) Height of the plot. A default value is derived from
 #'  number of facets and the inclusion of survival tables.
+#'@param confidence_level (*optional*) Confidence level for the strata in the
+#'  plot.
 #'
 #'@inheritParams as_familiar_collection
 #'@inheritParams plot_univariate_importance
