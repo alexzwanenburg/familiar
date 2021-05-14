@@ -361,7 +361,7 @@ testthat::test_that("Random forest SRC model has variable importance", {
   
   # Expect that nodes has rank 1 and rx has rank 2.
   testthat::expect_equal(vimp_table[rank == 1, ]$name, "nodes")
-  testthat::expect_equal(vimp_table[rank == 2, ]$name, "rx")
+  testthat::expect_equal(vimp_table[rank == 2, ]$name %in% c("rx", "adhere"), TRUE)
 })
 
 

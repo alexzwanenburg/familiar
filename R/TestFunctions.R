@@ -182,9 +182,9 @@ test_all_learners_train_predict_vimp <- function(learners,
       }
       
       # Test that the model has variable importance.
-      testthat::test_that(paste0("Model has variable importance for ", outcome_type, " and ", learner, "for the complete data set."), {
+      testthat::test_that(paste0("Model has variable importance for ", outcome_type, " and ", learner, " for the complete data set."), {
         # Extract the variable importance table.
-        vimp_table <- suppressWarnings(..vimp(model))
+        vimp_table <- suppressWarnings(..vimp(model, full_data))
         
         if(has_vimp){
           # Get the number of features
