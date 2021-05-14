@@ -160,7 +160,7 @@ testthat::test_that("Generalised linear model has variable importance", {
   
   # Expect that bare_nuclei has rank 1 and clump_thickness has rank 2.
   testthat::expect_equal(vimp_table[rank == 1, ]$name, "bare_nuclei")
-  testthat::expect_equal(vimp_table[rank == 2, ]$name, "clump_thickness")
+  testthat::expect_equal(vimp_table[rank == 2, ]$name %in% c("clump_thickness", "cell_shape_uniformity"), TRUE)
 })
 
 
