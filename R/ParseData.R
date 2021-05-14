@@ -653,7 +653,7 @@ update_data_set <- function(data, object){
   if(!(is(object, "familiarModel") | is(object, "familiarEnsemble"))) stop("update_data_set: object is not a familiarModel or a familiarEnsemble.")
   
   # Find the outcome column
-  outcome_column <- get_outcome_columns(outcome_type)
+  outcome_column <- get_outcome_columns(object@outcome_type)
   
   # Start warning list.
   warning_list <- NULL
