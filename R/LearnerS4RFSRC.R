@@ -235,10 +235,10 @@ setMethod("..train", signature(object="familiarRFSRC", data="dataObject"),
             sample_type <- ifelse(sample_size == nrow(data@data), "swr", "swor")
             
             # Set forest seed. If object comes with a defined seed use the seed.
-            forest_seed <- ifelse(is.null(object@seed), as.integer(runif(1, -100000, -1)), object@seed)
+            forest_seed <- ifelse(is.null(object@seed), as.integer(stats::runif(1, -100000, -1)), object@seed)
             
             # Use anonymised version for the forest, if available.
-            if(packageVersion("randomForestSRC") >= "2.11.0" & anonymous){
+            if(utils::packageVersion("randomForestSRC") >= "2.11.0" & anonymous){
               forest_function <- randomForestSRC::rfsrc.anonymous
               
             } else {

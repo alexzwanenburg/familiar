@@ -1363,7 +1363,7 @@ trim_unused_features_from_list <- function(feature_info_list){
         # From the remaining, select the average shift and scale parameters.
         selected_batch_normalisation_shift <- mean(batch_parameters[is_valid == TRUE]$norm_shift)
         selected_batch_normalisation_scale <- mean(batch_parameters[is_valid == TRUE]$norm_scale)
-        selected_n <- as.integer(median(batch_parameters[is_valid == TRUE]$n))
+        selected_n <- as.integer(stats::median(batch_parameters[is_valid == TRUE]$n))
         
         # Set the normalisation parameter.
         batch_parameter_list <- list("norm_method" = selected_batch_normalisation_method,

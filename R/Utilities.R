@@ -1402,7 +1402,7 @@ quiet <- function(x) {
   sink(nullfile()) 
   on.exit(sink()) 
   
-  invisible(capture.output(x, file=nullfile(), type="message"))
+  invisible(utils::capture.output(x, file=nullfile(), type="message"))
 } 
 
 .append_new <- function(l, new){
