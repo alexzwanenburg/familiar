@@ -155,6 +155,9 @@ setMethod("extract_calibration_data", signature(object="familiarEnsemble"),
                                       cl,
                                       ...){
   
+  # Ensure that the object is loaded
+  object <- load_familiar_object(object)
+  
   # Add model name.
   proto_data_element <- add_model_name(proto_data_element, object=object)
   
@@ -191,9 +194,6 @@ setMethod("extract_calibration_data", signature(object="familiarEnsemble"),
                                        verbose=FALSE,
                                        message_indent,
                                        ...){
-  
-  # Ensure that the object is loaded
-  object <- load_familiar_object(object)
   
   # Message the user concerning the time at which metrics are computed. This is
   # only relevant for survival analysis.
