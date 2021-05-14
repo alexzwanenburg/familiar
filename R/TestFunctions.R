@@ -41,7 +41,15 @@ test_all_learners_train_predict_vimp <- function(learners,
                                                  except_train=NULL,
                                                  except_predict=NULL,
                                                  except_predict_survival=NULL,
-                                                 has_vimp=TRUE){
+                                                 has_vimp=TRUE,
+                                                 debug=FALSE){
+  
+  if(debug){
+    test_fun <- debug_test_that
+    
+  } else {
+    test_fun <- testthat::test_that
+  }
   
   # Iterate over the outcome type.
   for(outcome_type in c("count", "continuous", "binomial", "multinomial", "survival")){
@@ -92,7 +100,7 @@ test_all_learners_train_predict_vimp <- function(learners,
                                       time_max=1832))
       
       # Test that models can be created.
-      testthat::test_that(paste0("Model for ", outcome_type, " can be created using ", learner, " using a complete data set."), {
+      test_fun(paste0("Model for ", outcome_type, " can be created using ", learner, " using a complete data set."), {
         
         # Test that the model was successfully created.
         testthat::expect_equal(model_is_trained(model),
@@ -105,7 +113,7 @@ test_all_learners_train_predict_vimp <- function(learners,
       })
       
       # Test that models can be used to predict the outcome.
-      testthat::test_that(paste0("Sample predictions for ", outcome_type, " can be made using ", learner, " for a complete data set."), {
+      test_fun(paste0("Sample predictions for ", outcome_type, " can be made using ", learner, " for a complete data set."), {
         # Expect predictions to be made.
         prediction_table <- suppressWarnings(.predict(model, data=full_data))
         
@@ -123,7 +131,7 @@ test_all_learners_train_predict_vimp <- function(learners,
       })
       
       # Test that models can be used to predict the outcome.
-      testthat::test_that(paste0("Sample predictions for ", outcome_type, " can be made using ", learner, " for a one-sample data set."), {
+      test_fun(paste0("Sample predictions for ", outcome_type, " can be made using ", learner, " for a one-sample data set."), {
         # Expect predictions to be made.
         prediction_table <- suppressWarnings(.predict(model, data=full_one_sample_data))
         
@@ -141,7 +149,7 @@ test_all_learners_train_predict_vimp <- function(learners,
       })
       
       # Test that models cannot predict for empty datasets.
-      testthat::test_that(paste0("Sample predictions for ", outcome_type, " can not be made using ", learner, " for an empty data set."), {
+      test_fun(paste0("Sample predictions for ", outcome_type, " can not be made using ", learner, " for an empty data set."), {
         # Expect predictions to be made.
         prediction_table <- suppressWarnings(.predict(model, data=empty_data))
         
@@ -151,7 +159,7 @@ test_all_learners_train_predict_vimp <- function(learners,
       
       # Test that models can be used to predict survival probabilities.
       if(outcome_type %in% c("survival", "competing_risk")){
-        testthat::test_that(paste0("Sample survival predictions for ", outcome_type, " can be made using ", learner, " for a complete data set."), {
+        test_fun(paste0("Sample survival predictions for ", outcome_type, " can be made using ", learner, " for a complete data set."), {
           # Expect predictions to be made.
           prediction_table <- suppressWarnings(.predict(model, full_data, type="survival_probability", time=1000))
           
@@ -165,7 +173,7 @@ test_all_learners_train_predict_vimp <- function(learners,
           testthat::expect_equal(any_predictions_valid(prediction_table, outcome_type), !learner %in% c(except_train, except_predict))
         })
         
-        testthat::test_that(paste0("Sample survival predictions for ", outcome_type, " can be made using ", learner, " for a one-sample data set."), {
+        test_fun(paste0("Sample survival predictions for ", outcome_type, " can be made using ", learner, " for a one-sample data set."), {
           # Expect predictions to be made.
           prediction_table <- suppressWarnings(.predict(model, data=full_one_sample_data, type="survival_probability", time=1000))
           
@@ -182,7 +190,7 @@ test_all_learners_train_predict_vimp <- function(learners,
       }
       
       # Test that the model has variable importance.
-      testthat::test_that(paste0("Model has variable importance for ", outcome_type, " and ", learner, " for the complete data set."), {
+      test_fun(paste0("Model has variable importance for ", outcome_type, " and ", learner, " for the complete data set."), {
         # Extract the variable importance table.
         vimp_table <- suppressWarnings(..vimp(model, full_data))
         
@@ -217,7 +225,7 @@ test_all_learners_train_predict_vimp <- function(learners,
                                       create_bootstrap=TRUE))
       
       # Test that models can be created.
-      testthat::test_that(paste0("Model for ", outcome_type, " can be created using ", learner, " using a complete data set."), {
+      test_fun(paste0("Model for ", outcome_type, " can be created using ", learner, " using a complete data set."), {
         
         # Test that the model was successfully created.
         testthat::expect_equal(model_is_trained(model),
@@ -241,7 +249,7 @@ test_all_learners_train_predict_vimp <- function(learners,
                                       time_max=1832))
       
       # Test that models can be created.
-      testthat::test_that(paste0("Model for ", outcome_type, " can be created using ", learner, " using a one-feature data set."), {
+      test_fun(paste0("Model for ", outcome_type, " can be created using ", learner, " using a one-feature data set."), {
         
         # Test that the model was successfully created.
         testthat::expect_equal(model_is_trained(model),
@@ -254,7 +262,7 @@ test_all_learners_train_predict_vimp <- function(learners,
       })
       
       # Test that models can be used to predict the outcome.
-      testthat::test_that(paste0("Sample predictions for ", outcome_type, " can be made using ", learner, " for a one-feature data set."), {
+      test_fun(paste0("Sample predictions for ", outcome_type, " can be made using ", learner, " for a one-feature data set."), {
         # Expect predictions to be made.
         prediction_table <- suppressWarnings(.predict(model, data=one_feature_data))
         
@@ -272,7 +280,7 @@ test_all_learners_train_predict_vimp <- function(learners,
       })
       
       # Test that models can be used to predict the outcome.
-      testthat::test_that(paste0("Sample predictions for ", outcome_type, " can be made using ", learner, " for a one-feature, one-sample data set."), {
+      test_fun(paste0("Sample predictions for ", outcome_type, " can be made using ", learner, " for a one-feature, one-sample data set."), {
         # Expect predictions to be made.
         prediction_table <- suppressWarnings(.predict(model, data=one_feature_one_sample_data))
         
@@ -291,7 +299,7 @@ test_all_learners_train_predict_vimp <- function(learners,
       
       # Test that models can be used to predict survival probabilities.
       if(outcome_type %in% c("survival", "competing_risk")){
-        testthat::test_that(paste0("Sample survival predictions for ", outcome_type, " can be made using ", learner, " for a one-feature data set."), {
+        test_fun(paste0("Sample survival predictions for ", outcome_type, " can be made using ", learner, " for a one-feature data set."), {
           # Expect predictions to be made.
           prediction_table <- suppressWarnings(.predict(model, one_feature_data, type="survival_probability", time=1000))
           
@@ -306,7 +314,7 @@ test_all_learners_train_predict_vimp <- function(learners,
           testthat::expect_equal(any_predictions_valid(prediction_table, outcome_type), !learner %in% c(except_train, except_predict))
         })
         
-        testthat::test_that(paste0("Sample survival predictions for ", outcome_type, " can be made using ", learner, " for a one-feature, one-sample data set."), {
+        test_fun(paste0("Sample survival predictions for ", outcome_type, " can be made using ", learner, " for a one-feature, one-sample data set."), {
           # Expect predictions to be made.
           prediction_table <- suppressWarnings(.predict(model, data=one_feature_one_sample_data, type="survival_probability", time=1000))
           
@@ -333,7 +341,7 @@ test_all_learners_train_predict_vimp <- function(learners,
                                       time_max=1832))
       
       # Test that models can be created.
-      testthat::test_that(paste0("Model for ", outcome_type, " can not be created using ", learner, " using a bad data set."), {
+      test_fun(paste0("Model for ", outcome_type, " can not be created using ", learner, " using a bad data set."), {
         
         # Test that the model was successfully created.
         testthat::expect_equal(model_is_trained(model), FALSE)
