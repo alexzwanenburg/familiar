@@ -338,6 +338,9 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
                    verbose=TRUE,
                    ...){
             
+            # Suppress NOTES due to non-standard evaluation in data.table
+            .NATURAL <- NULL
+            
             # Get feature expression data
             feature_expression <- export_feature_expressions(object=object,
                                                              evaluation_time=evaluation_times)
@@ -774,6 +777,9 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
                                          show_outcome,
                                          dendrogram_height,
                                          outcome_height){
+  
+  # Suppress NOTES due to non-standard evaluation in data.table
+  .NATURAL <- NULL
   
   # Define elements that need to be shared. Note that "guide" and "strip_y" may
   # be absent.

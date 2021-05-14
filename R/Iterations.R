@@ -174,7 +174,7 @@
 .create_iterations <- function(data, experiment_setup, settings, override_external_validation=FALSE, iteration_list=NULL){
 
   # Suppress NOTES due to non-standard evaluation in data.table
-  main_data_id <- NULL
+  main_data_id <- batch_id <- NULL
   
   # Get unique main data ids
   main_data_ids <- unique(experiment_setup$main_data_id)
@@ -404,7 +404,7 @@
           }
           
           # Clean variables
-          rm(cv_iter_list, run, n_samples, sample_identifiers)
+          rm(cv_iter_list, sample_identifiers)
         }
         
         # Add to iteration list
@@ -643,7 +643,7 @@
   # Cross-validation
 
   # Suppress NOTES due to non-standard evaluation in data.table
-  outcome <- fold_id <- sample_order_id <- n <- i.n <- NULL
+  outcome <- fold_id <- sample_order_id <- n <- i.n <- .NATURAL <- NULL
 
   # Obtain id columns
   id_columns <- get_id_columns(id_depth="series")
@@ -929,7 +929,7 @@
 .create_bootstraps <- function(data, n_iter, sample_identifiers=NULL, settings=NULL, outcome_type=NULL, stratify=TRUE){
 
   # Suppress NOTES due to non-standard evaluation in data.table
-  outcome <- outcome_present <- NULL
+  outcome <- outcome_present <- .NATURAL <- NULL
   keep <- sample_order_id <- cumulative_n <- i.n <- n <- NULL
   
   # Obtain id columns
@@ -1269,7 +1269,7 @@
   # Methods to address class imbalance
 
   # Suppress NOTES due to non-standard evaluation in data.table
-  outcome <- n <- partition <- i.n <- sample_order_id <- keep <- cumulative_n <- NULL
+  outcome <- n <- partition <- i.n <- sample_order_id <- keep <- cumulative_n <- .NATURAL <- NULL
   
   if(is.null(outcome_type)) outcome_type <- settings$data$outcome_type
   if(is.null(imbalance_method)) imbalance_method <- settings$data$imbalance_method

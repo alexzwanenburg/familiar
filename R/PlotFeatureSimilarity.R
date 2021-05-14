@@ -452,6 +452,9 @@ setMethod("plot_feature_similarity", signature(object="familiarCollection"),
                                           show_dendrogram,
                                           dendrogram_height){
   
+  # Suppress NOTES due to non-standard evaluation in data.table
+  .NATURAL <- NULL
+  
   # Split by facet. This generates a list of data splits with faceting
   # information that allows for positioning.
   plot_layout_table <- plotting.get_plot_layout_table(x=x,

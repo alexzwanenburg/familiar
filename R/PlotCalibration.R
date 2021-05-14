@@ -254,6 +254,9 @@ setMethod("plot_calibration_data", signature(object="familiarCollection"),
                    units=waiver(),
                    ...){
             
+            # Suppress NOTES due to non-standard evaluation in data.table
+            .NATURAL <- NULL
+            
             # Get input data
             x <- export_calibration_data(object=object,
                                          aggregate_results=TRUE)

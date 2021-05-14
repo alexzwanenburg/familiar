@@ -189,6 +189,9 @@ get_data_from_backend <- function(backend_type=NULL, server_port=NULL, sample_id
 .get_data_from_backend <- function(sample_identifiers=NULL, column_names=NULL){
   # This is the support function that operates on the processes 
   
+  # Suppress NOTES due to non-standard evaluation in data.table
+  .NATURAL <- NULL
+  
   # Identify the environment where the master_data object lives.
   if(exists("familiar_global_env")){
     if(exists("master_data", where=familiar_global_env)){

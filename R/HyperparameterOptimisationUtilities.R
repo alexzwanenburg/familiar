@@ -530,6 +530,9 @@
 .compute_hyperparameter_optimisation_score <- function(score_table,
                                                        optimisation_function){
   
+  # Suppress NOTES due to non-standard evaluation in data.table
+  .NATURAL <- NULL
+  
   if(is_empty(score_table)) return(NULL)
   
   # Compute optimisation score.
@@ -587,7 +590,7 @@
   # Find the best configurations based on the optimisation score
   
   # Suppress NOTES due to non-standard evaluation in data.table
-  optimisation_score <- time_taken <- NULL
+  optimisation_score <- time_taken <- .NATURAL <- NULL
   
   # Compute time taken.
   time_table <- optimisation_score_table[, list("time_taken"=stats::median(time_taken, na.rm=TRUE)), by="param_id"]

@@ -226,7 +226,7 @@ setMethod("plot_univariate_importance", signature(object="familiarCollection"),
                    ...){
             
             # Suppress NOTES due to non-standard evaluation in data.table
-            value <- NULL
+            value <- .NATURAL <- NULL
             
             ##### Check data ########################################
 
@@ -242,7 +242,6 @@ setMethod("plot_univariate_importance", signature(object="familiarCollection"),
             
             # Check that the data are not evaluated at the model level.
             if(all(sapply(x, function(x) (x@detail_level == "model")))){
-              browser()
               ..warning_no_comparison_between_models()
               return(NULL)
             }

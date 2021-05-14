@@ -327,7 +327,7 @@ setMethod("..train", signature(object="familiarGLMnet", data="dataObject"),
             } else {
               ..error_reached_unreachable_code(paste0("..train,familiarGLMnet: encountered unknown learner of unknown class: ", paste0(class(object), collapse=", ")))
             }
-
+            
             # Check if the model trained at all.
             if(inherits(model, "error")) return(callNextMethod())
             

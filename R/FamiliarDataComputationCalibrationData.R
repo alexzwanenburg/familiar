@@ -504,6 +504,9 @@ setMethod("extract_calibration_data", signature(object="familiarEnsemble"),
 
 ..compute_calibration_data_survival <- function(groups, data, time, ii){
   
+  # Suppress NOTES due to non-standard evaluation in data.table
+  .NATURAL <- NULL
+  
   # Placeholder variables
   obs_prob <- exp_prob <- n_g <- km_var <- numeric(length(groups))
   
@@ -647,12 +650,16 @@ setMethod("extract_calibration_data", signature(object="familiarEnsemble"),
 
 ..compute_calibration_data_categorical <- function(groups, data, ii){
   
+  # Suppress NOTES due to non-standard evaluation in data.table
+  .NATURAL <- NULL
+  
+  # Set placeholders.
   obs_prob <- exp_prob <- n_g <- n_pos <- n_neg <- numeric(length(groups))
   
   # Check that the groups list contains at least one entry.
   if(is_empty(groups)) return(NULL)
   
-  # Get oberved and expected probabilities over the groups
+  # Get observed and expected probabilities over the groups
   for(jj in seq_along(groups)){
     # Find data for the current group
     group_data <- data[unique(groups[[jj]]), on=.NATURAL]
@@ -753,6 +760,10 @@ setMethod("extract_calibration_data", signature(object="familiarEnsemble"),
 
 ..compute_calibration_data_regression <- function(groups, data, ii){
   
+  # Suppress NOTES due to non-standard evaluation in data.table
+  .NATURAL <- NULL
+  
+  # Set placeholders.
   obs_prob <- exp_prob <- n_g <- numeric(length(groups))
   
   # Check that the groups list contains at least one entry.

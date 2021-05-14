@@ -108,7 +108,7 @@ setMethod("..compute_data_element_estimates", signature(x="familiarDataElementCa
           function(x, x_list=NULL, ...){
             
             # Suppress NOTES due to non-standard evaluation in data.table
-            min_value <- max_value <- NULL
+            min_value <- max_value <- time <- NULL
             
             # It might be that x was only used to direct to this method.
             if(!is.null(x_list)) x <- x_list

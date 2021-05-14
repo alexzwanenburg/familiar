@@ -1,7 +1,7 @@
 combat.get_normalisation_parameters <- function(x, batch_normalisation_method, cl=NULL, progress_bar=TRUE){
   # Suppress NOTES due to non-standard evaluation in data.table
   value <- n <- is_valid <- invariant <- n_features <- NULL
-  gamma_hat <- norm_method <- NULL
+  gamma_hat <- norm_method <- .NATURAL <- NULL
   
   # Get the batch identifier column.
   batch_id_column <- get_id_columns(single_column="batch")

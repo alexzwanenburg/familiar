@@ -244,7 +244,7 @@ setMethod("plot_kaplan_meier", signature(object="familiarCollection"),
                    ...){
             
             # Suppress NOTES due to non-standard evaluation in data.table
-            risk_group <- NULL
+            risk_group <- .NATURAL <- NULL
             
             # Get input data
             x <- export_risk_stratification_data(object=object,
@@ -522,6 +522,9 @@ setMethod("plot_kaplan_meier", signature(object="familiarCollection"),
                                censor_shape,
                                show_logrank,
                                show_survival_table){
+  
+  # Suppress NOTES due to non-standard evaluation in data.table
+  .NATURAL <- NULL
   
   # Split by facet. This generates a list of data splits with faceting
   # information that allows for positioning.

@@ -299,7 +299,7 @@ setMethod("optimise_hyperparameters", signature(object="familiarModel", data="da
                    ...){
             
             # Suppress NOTES due to non-standard evaluation in data.table
-            param_id <- NULL
+            param_id <- .NATURAL <- NULL
             
             if(!is.null(experiment_info) & verbose){
               logger.message(paste0("\nStarting hyperparameter optimisation for data subsample ",
