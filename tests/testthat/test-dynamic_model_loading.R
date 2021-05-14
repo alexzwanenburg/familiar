@@ -7,4 +7,4 @@ familiar:::integrated_test(dynamic_model_loading=TRUE,
                            cluster_method="none",
                            imputation_method="simple",
                            parallel=FALSE,
-                           compute_ensemble_ci=FALSE)
+                           estimation_type="point")
