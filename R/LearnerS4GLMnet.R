@@ -289,40 +289,40 @@ setMethod("..train", signature(object="familiarGLMnet", data="dataObject"),
             # Train the model.
             if(is(object, "familiarGLMnetRidge")){
               # Attempt to train the model
-              model <- tryCatch(cv.glmnet(x = as.matrix(encoded_data$encoded_data@data[, mget(feature_columns)]),
-                                          y = outcome_data,
-                                          family = object@hyperparameters$family,
-                                          alpha = 0.0,
-                                          standardize = object@hyperparameters$normalise,
-                                          nfolds = NULL,
-                                          foldid = fold_table$fold_id,
-                                          parallel = FALSE),
-                                error=identity)
+              model <- suppressWarnings(tryCatch(cv.glmnet(x = as.matrix(encoded_data$encoded_data@data[, mget(feature_columns)]),
+                                                           y = outcome_data,
+                                                           family = object@hyperparameters$family,
+                                                           alpha = 0.0,
+                                                           standardize = object@hyperparameters$normalise,
+                                                           nfolds = NULL,
+                                                           foldid = fold_table$fold_id,
+                                                           parallel = FALSE),
+                                                 error=identity))
               
               
             } else if(is(object, "familiarGLMnetLasso")){
               # Attempt to train the model
-              model <- tryCatch(cv.glmnet(x = as.matrix(encoded_data$encoded_data@data[, mget(feature_columns)]),
-                                          y = outcome_data,
-                                          family = object@hyperparameters$family,
-                                          alpha = 1.0,
-                                          standardize = object@hyperparameters$normalise,
-                                          nfolds = NULL,
-                                          foldid = fold_table$fold_id,
-                                          parallel = FALSE),
-                                error=identity)
+              model <- suppressWarnings(tryCatch(cv.glmnet(x = as.matrix(encoded_data$encoded_data@data[, mget(feature_columns)]),
+                                                           y = outcome_data,
+                                                           family = object@hyperparameters$family,
+                                                           alpha = 1.0,
+                                                           standardize = object@hyperparameters$normalise,
+                                                           nfolds = NULL,
+                                                           foldid = fold_table$fold_id,
+                                                           parallel = FALSE),
+                                                 error=identity))
               
             } else if(is(object, "familiarGLMnetElasticNet")){
               # Attempt to train the model
-              model <- tryCatch(cv.glmnet(x = as.matrix(encoded_data$encoded_data@data[, mget(feature_columns)]),
-                                          y = outcome_data,
-                                          family = object@hyperparameters$family,
-                                          alpha = object@hyperparameters$alpha,
-                                          standardize = object@hyperparameters$normalise,
-                                          nfolds = NULL,
-                                          foldid = fold_table$fold_id,
-                                          parallel = FALSE),
-                                error=identity)
+              model <- suppressWarnings(tryCatch(cv.glmnet(x = as.matrix(encoded_data$encoded_data@data[, mget(feature_columns)]),
+                                                           y = outcome_data,
+                                                           family = object@hyperparameters$family,
+                                                           alpha = object@hyperparameters$alpha,
+                                                           standardize = object@hyperparameters$normalise,
+                                                           nfolds = NULL,
+                                                           foldid = fold_table$fold_id,
+                                                           parallel = FALSE),
+                                                 error=identity))
               
             } else {
               ..error_reached_unreachable_code(paste0("..train,familiarGLMnet: encountered unknown learner of unknown class: ", paste0(class(object), collapse=", ")))
