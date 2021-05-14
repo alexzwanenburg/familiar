@@ -329,7 +329,7 @@ setMethod("extract_permutation_vimp", signature(object="familiarEnsemble"),
                            ...)
   
   # Flatten the instance list.
-  bootstrap_data <- .flatten_nested_list(bootstrap_data)
+  bootstrap_data <- .flatten_nested_list(bootstrap_data, flatten=TRUE)
   
   # Iterate over elements.
   data_elements <- fam_mapply(cl=cl,
