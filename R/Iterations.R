@@ -643,7 +643,7 @@
   # Cross-validation
 
   # Suppress NOTES due to non-standard evaluation in data.table
-  outcome <- fold_id <- sample_order_id <- n <- i.n <- .NATURAL <- NULL
+  outcome <- fold_id <- sample_order_id <- n <- i.n <- assign_to_training <- .NATURAL <- NULL
 
   # Obtain id columns
   id_columns <- get_id_columns(id_depth="series")
