@@ -6,18 +6,6 @@ familiar:::test_all_learners_available(learners=familiar:::.get_available_svm_ep
 # Don't perform any further tests on CRAN due to time of running the complete test.
 testthat::skip_on_cran()
 
-familiar:::test_hyperparameter_optimisation(learners=familiar:::.get_available_svm_c_learners(show_general=TRUE),
-                                            debug=FALSE,
-                                            parallel=FALSE)
-
-familiar:::test_hyperparameter_optimisation(learners=familiar:::.get_available_svm_nu_learners(show_general=TRUE),
-                                            debug=FALSE,
-                                            parallel=FALSE)
-
-familiar:::test_hyperparameter_optimisation(learners=familiar:::.get_available_svm_eps_learners(show_general=TRUE),
-                                            debug=FALSE,
-                                            parallel=FALSE)
-
 familiar:::test_all_learners_train_predict_vimp(learners=familiar:::.get_available_svm_c_learners(show_general=FALSE),
                                                 hyperparameter_list=list("binomial"=list("c"=-1.0,
                                                                                          "gamma"=0.1,
@@ -285,3 +273,19 @@ testthat::test_that("SVM model can train on wide data", {
   # Valid predictions can be made.
   testthat::expect_equal(familiar:::any_predictions_valid(familiar:::.predict(wide_model, wide_data), outcome_type=wide_data@outcome_type), TRUE)
 })
+
+
+testthat::skip("Skip hyperparameter optimisation, unless manual.")
+
+familiar:::test_hyperparameter_optimisation(learners=familiar:::.get_available_svm_c_learners(show_general=TRUE),
+                                            debug=FALSE,
+                                            parallel=FALSE)
+
+familiar:::test_hyperparameter_optimisation(learners=familiar:::.get_available_svm_nu_learners(show_general=TRUE),
+                                            debug=FALSE,
+                                            parallel=FALSE)
+
+familiar:::test_hyperparameter_optimisation(learners=familiar:::.get_available_svm_eps_learners(show_general=TRUE),
+                                            debug=FALSE,
+                                            parallel=FALSE)
+

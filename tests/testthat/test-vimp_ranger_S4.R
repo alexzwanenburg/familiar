@@ -3,10 +3,6 @@ familiar:::test_all_vimp_methods_available(familiar:::.get_available_ranger_vimp
 # Don't perform any further tests on CRAN due to time of running the complete test.
 testthat::skip_on_cran()
 
-familiar:::test_hyperparameter_optimisation(vimp_methods=familiar:::.get_available_ranger_vimp_methods(show_general=TRUE),
-                                            debug=FALSE,
-                                            parallel=FALSE)
-
 familiar:::test_all_vimp_methods(familiar:::.get_available_ranger_vimp_methods(show_general=FALSE),
                                  hyperparameter_list=list("count"=list("n_tree"=4,
                                                                        "sample_size"=1.00,
@@ -390,3 +386,10 @@ testthat::test_that(paste0("The ranger random forest hold-out permutation method
   
   testthat::expect_equal(all(vimp_table[rank <= 2]$name %in% c("nodes", "rx")), TRUE)
 })
+
+
+testthat::skip("Skip hyperparameter optimisation, unless manual.")
+
+familiar:::test_hyperparameter_optimisation(vimp_methods=familiar:::.get_available_ranger_vimp_methods(show_general=TRUE),
+                                            debug=FALSE,
+                                            parallel=FALSE)

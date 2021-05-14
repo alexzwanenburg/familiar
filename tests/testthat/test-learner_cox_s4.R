@@ -7,11 +7,6 @@ testthat::skip_on_cran()
 # Generic test
 familiar:::test_all_learners_train_predict_vimp(learners=familiar:::.get_available_cox_learners(show_general=TRUE))
 
-# Test hyperparameters
-familiar:::test_hyperparameter_optimisation(learners=familiar:::.get_available_cox_learners(show_general=TRUE),
-                                            debug=FALSE,
-                                            parallel=FALSE)
-
 
 # Create test data sets.
 good_data <- familiar:::test.create_good_data_set("survival")
@@ -75,3 +70,12 @@ testthat::test_that("Cox model does not train for wide data", {
   # No valid survival probability predictions.
   testthat::expect_equal(familiar:::any_predictions_valid(familiar:::.predict(wide_model, wide_data, type="survival_probability", time=1000), outcome_type=wide_data@outcome_type), FALSE)
 })
+
+
+testthat::skip("Skip hyperparameter optimisation, unless manual.")
+
+
+# Test hyperparameters
+familiar:::test_hyperparameter_optimisation(learners=familiar:::.get_available_cox_learners(show_general=TRUE),
+                                            debug=FALSE,
+                                            parallel=FALSE)

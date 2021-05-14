@@ -4,11 +4,6 @@ familiar:::test_all_learners_available(learners=familiar:::.get_available_glm_le
 # Don't perform any further tests on CRAN due to time of running the complete test.
 testthat::skip_on_cran()
 
-# Test hyperparameters
-familiar:::test_hyperparameter_optimisation(learners=familiar:::.get_available_glm_learners(show_general=TRUE),
-                                            debug=FALSE,
-                                            parallel=FALSE)
-
 familiar:::test_all_learners_train_predict_vimp(learners=familiar:::.get_available_glm_learners(show_general=FALSE))
 
 #####Count outcome tests-------------------------------------------------------------
@@ -296,3 +291,11 @@ testthat::test_that("Generalised linear model cannot train on wide data", {
   # Valid survival probability predictions can not be made.
   testthat::expect_equal(familiar:::any_predictions_valid(familiar:::.predict(wide_model, wide_data, type="survival_probability", time=1000), outcome_type=wide_data@outcome_type), FALSE)
 })
+
+
+testthat::skip("Skip hyperparameter optimisation, unless manual.")
+
+# Test hyperparameters
+familiar:::test_hyperparameter_optimisation(learners=familiar:::.get_available_glm_learners(show_general=TRUE),
+                                            debug=FALSE,
+                                            parallel=FALSE)

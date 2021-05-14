@@ -4,10 +4,6 @@ familiar:::test_all_learners_available(learners=familiar:::.get_available_xgboos
 # Don't perform any further tests on CRAN due to time of running the complete test.
 testthat::skip_on_cran()
 
-familiar:::test_hyperparameter_optimisation(learners=familiar:::.get_available_xgboost_dart_learners(show_general=TRUE),
-                                            debug=FALSE,
-                                            parallel=FALSE)
-
 familiar:::test_all_learners_train_predict_vimp(learners=familiar:::.get_available_xgboost_dart_learners(show_general=FALSE),
                                                 hyperparameter_list=list("count"=list("n_boost" = 2,
                                                                                       "learning_rate" = -1,
@@ -113,15 +109,15 @@ testthat::test_that("Extreme gradient boosting dart tree model has variable impo
   # Extract the variable importance table.
   vimp_table <- familiar:::..vimp(good_model)
   
-  # Expect that the vimp table has two rows.
-  testthat::expect_equal(nrow(vimp_table), 11)
+  # Expect that the vimp table has less than 10 rows.
+  testthat::expect_equal(nrow(vimp_table) <= get_n_features(good_data), TRUE)
   
   # Expect that the names are the same as that of the features.
   testthat::expect_equal(all(vimp_table$name %in% familiar:::get_feature_columns(good_data)), TRUE)
   
   # Expect that avg_rooms has rank 1 and lower_status_percentage has rank 2.
-  testthat::expect_equal(vimp_table[rank == 1, ]$name %in% c("avg_rooms", "lower_status_percentage"), TRUE)
-  testthat::expect_equal(vimp_table[rank == 2, ]$name %in% c("avg_rooms", "lower_status_percentage"), TRUE)
+  testthat::expect_equal(vimp_table[rank == 1, ]$name %in% c("avg_rooms", "lower_status_percentage", "per_capita_crime", "residence_before_1940_proportion"), TRUE)
+  testthat::expect_equal(vimp_table[rank == 2, ]$name %in% c("avg_rooms", "lower_status_percentage", "per_capita_crime", "residence_before_1940_proportion"), TRUE)
 })
 
 
@@ -456,3 +452,10 @@ testthat::test_that("Extreme gradient boosting dart tree model can train and pre
   # Valid survival probability predictions can be made.
   testthat::expect_equal(familiar:::any_predictions_valid(familiar:::.predict(wide_model, wide_data, type="survival_probability", time=1000), outcome_type=wide_data@outcome_type), TRUE)
 })
+
+
+testthat::skip("Skip hyperparameter optimisation, unless manual.")
+
+familiar:::test_hyperparameter_optimisation(learners=familiar:::.get_available_xgboost_dart_learners(show_general=TRUE),
+                                            debug=FALSE,
+                                            parallel=FALSE)

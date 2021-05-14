@@ -4,10 +4,6 @@ familiar:::test_all_learners_available(learners=familiar:::.get_available_ranger
 # Don't perform any further tests on CRAN due to time of running the complete test.
 testthat::skip_on_cran()
 
-familiar:::test_hyperparameter_optimisation(learners=familiar:::.get_available_ranger_learners(show_general=TRUE),
-                                            debug=FALSE,
-                                            parallel=FALSE)
-
 familiar:::test_all_learners_train_predict_vimp(learners=familiar:::.get_available_ranger_learners(show_general=FALSE),
                                                 hyperparameter_list=list("count"=list("n_tree"=4,
                                                                                       "sample_size"=1.00,
@@ -395,3 +391,11 @@ testthat::test_that("Ranger random forest model can train on wide data", {
   # Valid survival probability predictions can be made.
   testthat::expect_equal(familiar:::any_predictions_valid(familiar:::.predict(wide_model, wide_data, type="survival_probability", time=1000), outcome_type=wide_data@outcome_type), TRUE)
 })
+
+
+
+testthat::skip("Skip hyperparameter optimisation, unless manual.")
+
+familiar:::test_hyperparameter_optimisation(learners=familiar:::.get_available_ranger_learners(show_general=TRUE),
+                                            debug=FALSE,
+                                            parallel=FALSE)
