@@ -177,3 +177,5 @@ Collate:
     'VimpMain.R'
     'VimpS4CoreLearn.R'
     'zzz.R'
+Config/testthat/parallel: true
+Config/testthat/edition: 3
