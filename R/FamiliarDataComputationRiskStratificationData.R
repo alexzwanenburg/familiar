@@ -95,9 +95,12 @@ setMethod("extract_risk_stratification_data", signature(object="familiarEnsemble
             
             # Test if models are properly loaded
             if(!is_model_loaded(object=object)) ..error_ensemble_models_not_loaded()
-            browser()
-            # Check available stratification methods.
+            
+            # Load models.
             model_list <- ..get_model(object=object)
+            if(is_empty(model_list)) return(NULL)
+            
+            # Check available stratification methods.
             available_stratification_method <- unique(unlist(lapply(model_list, function(fam_model) (fam_model@km_info$stratification_method))))
             
             if(is.waive(stratification_method)) stratification_method <- available_stratification_method
