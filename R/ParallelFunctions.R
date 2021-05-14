@@ -552,7 +552,7 @@ fam_mapply_lb <- function(cl=NULL,
                                            assign=assign)
       }
       
-      # Only for testing
+      # # Only for testing
       # y_test <- do.call(mapply,
       #                   args=list("FUN"=.chopped_apply,
       #                             "dots"=dots,
@@ -577,6 +577,7 @@ fam_mapply_lb <- function(cl=NULL,
       overhead_end <- microbenchmark::get_nanotime()
       
       # Collect data and concatenate to a flat list.
+      y <- unlist(y, recursive=FALSE)
       y <- .flatten_nested_fam_apply(y)
       
       # Compute overhead and process times. Overhead time is computed from the
@@ -761,6 +762,7 @@ fam_mapply_lb <- function(cl=NULL,
     if(measure_time) overhead_end <- microbenchmark::get_nanotime()
     
     # Collect data and concatenate to a flat list.
+    y <- unlist(y, recursive=FALSE)
     y <- .flatten_nested_fam_apply(y)
     
     # Reorder results to original order. This is because the stacking algorithm
@@ -781,8 +783,8 @@ fam_mapply_lb <- function(cl=NULL,
     }
     
     # Add in initial list.
-    y <- .flatten_nested_fam_apply(c(list(y_initial), list(y)))
-
+    y <- .flatten_nested_list(c(list(y_initial), list(y)), flatten=TRUE)
+    
   } else {
     ..error_reached_unreachable_code(".fam_apply: no correct combination found.")
   }
@@ -907,13 +909,8 @@ fam_mapply_lb <- function(cl=NULL,
   
   if(measure_time) process_total_end <- microbenchmark::get_nanotime()
   
-  # Collect items.
-  y <- .flatten_nested_list(y)
-  
-  if(!is.null(y$process_time)) y$process_time <- simplify2array(y$process_time)
-  
   # Set total process time (which may vary between nodes.)
-  if(measure_time) y$process_time_total <- (process_total_end - process_total_start) / 1E9
+  if(measure_time) y[[1]]$process_time_total <- (process_total_end - process_total_start) / 1E9
   
   return(y)
 }

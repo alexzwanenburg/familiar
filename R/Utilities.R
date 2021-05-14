@@ -1500,12 +1500,12 @@ paste_s <- function(...){
     
     # Iterate over nested lists, and contents of the element.
     for(ii in seq_along(x)){
-      if(!inherits(x[[ii]][[element_name]], "list") & !flatten){
-        # Treat data.table differently, because c() casts data.tables to a list.
-        element_content <- c(element_content, list(x[[ii]][[element_name]]))
+      if(flatten){
+        element_content <- c(element_content, x[[ii]][[element_name]])
         
       } else {
-        element_content <- c(element_content, x[[ii]][[element_name]])
+        # Treat data.table differently, because c() casts data.tables to a list.
+        element_content <- c(element_content, list(x[[ii]][[element_name]]))
       }
     }
     
