@@ -11,8 +11,8 @@ setClass("familiarXGBoost",
                     "feature_order" = "character"),
          prototype=list("encoding_reference_table" = NULL,
                         "outcome_table" = NULL,
-                        "outcome_shift" = numeric(),
-                        "outcome_scale" = numeric(),
+                        "outcome_shift" = 0.0,
+                        "outcome_scale" = 1.0,
                         "feature_order"=character()))
 
 setClass("familiarXGBoostLM",
@@ -382,13 +382,15 @@ setMethod("..train", signature(object="familiarXGBoost", data="dataObject"),
               # Set outcome_labels
               outcome_labels <- encoded_data$encoded_data@data[[outcome_columns[1]]]
               
-              # Determine normalisation parameters so that outcome can be
-              # normalised to [0, 1] range.
-              object@outcome_shift <- min(outcome_labels)
-              object@outcome_scale <- max(outcome_labels) - min(outcome_labels)
-              
-              # Normalise outcome labels.
-              outcome_labels <- (outcome_labels - object@outcome_shift) / object@outcome_scale
+              # # Determine normalisation parameters so that outcome can be
+              # # normalised to [0, 1] range (for logistic regression).
+              if(object@hyperparameters$learn_objective == "continuous_logistic"){
+                object@outcome_shift <- min(outcome_labels)
+                object@outcome_scale <- max(outcome_labels) - min(outcome_labels)
+                
+                # Normalise outcome labels.
+                outcome_labels <- (outcome_labels - object@outcome_shift) / object@outcome_scale
+              }
               
             } else if(object@outcome_type == "survival"){
               
