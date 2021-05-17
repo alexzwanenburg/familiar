@@ -955,7 +955,7 @@ fam_mapply_lb <- function(cl=NULL,
     index <- list(n_x)
     
   } else if(!is.null(stacking_data)){
-    index <- lapply(split(stacking_data, by="node_id", sorted=TRUE), function(list_element) (list_element$original_index))
+    index <- unname(lapply(split(stacking_data, by="node_id", sorted=TRUE), function(list_element) (list_element$original_index)))
     
   } else {
     index <- structure(split(n_x,
