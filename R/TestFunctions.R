@@ -2640,10 +2640,10 @@ debug_test_that <- function(desc, code){
 
 
 
-.test_start_cluster <- function(){
+.test_start_cluster <- function(n_cores=NULL){
   
   # Determine the number of available cores.
-  n_cores <- parallel::detectCores() - 1L
+  if(is.null(n_cores)) n_cores <- parallel::detectCores() - 1L
   
   if(n_cores < 2) return(NULL)
   
