@@ -1109,7 +1109,7 @@ test_hyperparameter_optimisation <- function(vimp_methods=NULL,
     on.exit(data.table::setDTthreads(0L), add=TRUE)
     
     # Start local cluster in the overall process.
-    cl <- .test_start_cluster()
+    cl <- .test_start_cluster(n_cores=4L)
     on.exit(.terminate_cluster(cl), add=TRUE)
     
   } else {
@@ -1656,7 +1656,7 @@ test_plots <- function(plot_function,
     on.exit(data.table::setDTthreads(0L), add=TRUE)
     
     # Start local cluster in the overall process.
-    cl <- .test_start_cluster()
+    cl <- .test_start_cluster(n_cores=4L)
     on.exit(.terminate_cluster(cl), add=TRUE)
     
   } else {
@@ -2029,7 +2029,7 @@ test_plot_ordering <- function(plot_function,
     on.exit(data.table::setDTthreads(0L), add=TRUE)
     
     # Start local cluster in the overall process.
-    cl <- .test_start_cluster()
+    cl <- .test_start_cluster(n_cores=4L)
     on.exit(.terminate_cluster(cl), add=TRUE)
     
   } else {
@@ -2643,7 +2643,12 @@ debug_test_that <- function(desc, code){
 .test_start_cluster <- function(n_cores=NULL){
   
   # Determine the number of available cores.
-  if(is.null(n_cores)) n_cores <- parallel::detectCores() - 1L
+  n_cores_available <- parallel::detectCores() - 1L
+  
+  # Determine the number of available cores.
+  if(is.null(n_cores)) n_cores <- n_cores_available
+  
+  if(n_cores > n_cores_available) n_cores <- n_cores_available
   
   if(n_cores < 2) return(NULL)
   
