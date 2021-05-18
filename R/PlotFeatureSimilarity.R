@@ -385,10 +385,9 @@ setMethod("plot_feature_similarity", signature(object="familiarCollection"),
                 subtype <- "similarity"
                 
                 # Determine the subtype
-                if(!is.null(split_by)){
-                  subtype <- paste0(subtype,
-                                    paste0(sapply(split_by, function(ii, x) (x[[ii]][1]), x=x_sub), collapse="_"),
-                                    collapse="_")
+                if(!is.null(split_by)){        
+                  subtype <- c(subtype, as.character(sapply(split_by, function(jj, x) (x[[jj]][1]), x=x_sub)))
+                  subtype <- paste0(subtype, collapse="_")
                 }
                 
                 # Identify unique features:
