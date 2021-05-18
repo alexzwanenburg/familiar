@@ -1,5 +1,8 @@
 familiar:::test_all_vimp_methods_available(familiar:::.get_available_regression_vimp_methods(show_general=TRUE))
 
+# Don't perform any further tests on CRAN due to time of running the complete test.
+testthat::skip_on_cran()
+
 familiar:::test_hyperparameter_optimisation(vimp_methods=familiar:::.get_available_regression_vimp_methods(show_general=TRUE),
                                             debug=FALSE,
                                             parallel=FALSE,
@@ -109,5 +112,5 @@ testthat::test_that(paste0("Multivariate regression correctly ranks survival out
   
   vimp_table <- suppressWarnings(familiar:::.vimp(vimp_object, data))
   
-  testthat::expect_equal(all(vimp_table[rank <= 2]$name %in% c("nodes", "rx")), TRUE)
+  testthat::expect_equal(all(vimp_table[rank <= 2]$name %in% c("nodes", "rx", "adhere")), TRUE)
 })

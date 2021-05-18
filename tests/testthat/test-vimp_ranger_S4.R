@@ -340,7 +340,7 @@ testthat::test_that(paste0("The ranger random forest impurity method correctly r
   
   vimp_table <- suppressWarnings(familiar:::.vimp(vimp_object, data))
   
-  testthat::expect_equal(all(vimp_table[rank <= 2]$name %in% c("nodes", "rx")), TRUE)
+  testthat::expect_equal(all(vimp_table[rank <= 2]$name %in% c("nodes", "rx", "adhere")), TRUE)
 })
 
 
