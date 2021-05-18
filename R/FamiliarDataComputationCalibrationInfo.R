@@ -139,12 +139,17 @@ setMethod("..compute_data_element_estimates", signature(x="familiarDataElementCa
               }
               
             } else if (x[[1]]@outcome_type %in% c("survival")) {
+              
               # Identify all unique time points.
               new_time <- sort(unique(data$time))
 
               # Find non-time grouping columns.
               grouping_column <- setdiff(colnames(data),
                                          c("time", x[[1]]@value_column))
+              
+              # Select only unique data points to prevent warnings during
+              # approximation.
+              data <- unique(data)
               
               if(length(grouping_column) > 0){
                 # Interpolate survival columns by grouping column.
