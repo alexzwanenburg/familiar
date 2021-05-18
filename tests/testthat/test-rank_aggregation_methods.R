@@ -91,7 +91,7 @@ testthat::test_that("Borda rank aggregation is correct", {
   
   aggregated_rank_table <- familiar:::rank.aggregate_feature_ranks(data, 3L, "borda")
   
-  testthat::expect_equivalent(aggregated_rank_table, expected_rank_table)
+  testthat::expect_equal(aggregated_rank_table, expected_rank_table)
 })
 
 ##### Enhanced borda aggregation ###############################
@@ -102,7 +102,7 @@ testthat::test_that("Enhanced borda rank aggregation is correct", {
   
   aggregated_rank_table <- familiar:::rank.aggregate_feature_ranks(data, 3L, "enhanced_borda")
   
-  testthat::expect_equivalent(aggregated_rank_table, expected_rank_table)
+  testthat::expect_equal(aggregated_rank_table, expected_rank_table, ignore_attr=TRUE)
 })
 
 ##### Truncated borda aggregation ###############################
@@ -113,7 +113,7 @@ testthat::test_that("Truncated borda rank aggregation is correct", {
   
   aggregated_rank_table <- familiar:::rank.aggregate_feature_ranks(data, 3L, "truncated_borda")
   
-  testthat::expect_equivalent(aggregated_rank_table, expected_rank_table)
+  testthat::expect_equal(aggregated_rank_table, expected_rank_table, ignore_attr=TRUE)
 })
 
 ##### Enhanced truncated borda aggregation ###############################
@@ -124,5 +124,5 @@ testthat::test_that("Enchanced truncated borda rank aggregation is correct", {
   
   aggregated_rank_table <- familiar:::rank.aggregate_feature_ranks(data, 3L, "enhanced_truncated_borda")
   
-  testthat::expect_equivalent(aggregated_rank_table, expected_rank_table)
+  testthat::expect_equal(aggregated_rank_table, expected_rank_table, ignore_attr=TRUE)
 })
