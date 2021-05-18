@@ -882,6 +882,10 @@ setMethod("optimise_hyperparameters", signature(object="familiarModel", data="da
   
   if(is(object, "familiarVimpMethod")){
     vimp_method <- object@vimp_method
+    
+  } else if(is_vimp){
+    vimp_method <- object@learner
+    
   } else {
     vimp_method <- object@fs_method
   }
