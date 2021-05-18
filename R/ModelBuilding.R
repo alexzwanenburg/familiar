@@ -1,14 +1,19 @@
-run_model_development <- function(cl, proj_list, settings, file_paths, message_indent=0L){
+run_model_development <- function(cl, project_list, settings, file_paths, message_indent=0L){
   # Model building
 
   # Check which data object is required for performing model building
-  mb_data_id <- getProcessDataID(proj_list=proj_list, process_step="mb")
-
+  mb_data_id <- .get_process_step_data_identifier(project_list=project_list,
+                                                  process_step="mb")
+  
   # Check whether pre-processing has been conducted
-  check_pre_processing(cl=cl, data_id=mb_data_id, file_paths=file_paths, project_id=proj_list$project_id)
+  check_pre_processing(cl=cl,
+                       data_id=mb_data_id,
+                       file_paths=file_paths,
+                       project_id=project_list$project_id)
 
   # Get runs
-  run_list <- getRunList(iter_list=proj_list$iter_list, data_id=mb_data_id)
+  run_list <- .get_run_list(iteration_list=project_list$iter_list,
+                            data_id=mb_data_id)
 
   # Identify combinations of feature selection methods and learners
   run_methods <- get_fs_learner_combinations(settings=settings)
@@ -24,14 +29,15 @@ run_model_development <- function(cl, proj_list, settings, file_paths, message_i
   for(iter_methods in run_methods){
 
     # Check which runs have been completed and skip if all methods were analysed
-    iter_run_list <- add_model_data_to_run_list(methods=iter_methods, run_list=run_list,
-                                                proj_list=proj_list, settings=settings,
-                                                file_paths=file_paths, filter_existing=TRUE)
+    iter_run_list <- add_model_data_to_run_list(methods=iter_methods,
+                                                run_list=run_list,
+                                                proj_list=project_list,
+                                                settings=settings,
+                                                file_paths=file_paths,
+                                                filter_existing=TRUE)
     
     # Skip if all learners were assessed
-    if(length(iter_run_list)==0) {
-      next()
-    }
+    if(length(iter_run_list)==0) next()
 
     # Message
     logger.message(paste0("\nModel building: starting model building using \"",
@@ -41,11 +47,11 @@ run_model_development <- function(cl, proj_list, settings, file_paths, message_i
     
     # Optimise hyperparameters of models used for model building
     hpo_list <- run_hyperparameter_optimisation(cl=cl,
-                                                project_list=proj_list,
+                                                project_list=project_list,
                                                 data_id=mb_data_id,
                                                 settings=settings,
                                                 file_paths=file_paths,
-                                                fs_method=iter_methods$fs_method,
+                                                vimp_method=iter_methods$fs_method,
                                                 learner=iter_methods$learner,
                                                 message_indent=message_indent + 1L)
     
@@ -87,7 +93,9 @@ build_model <- function(run, hpo_list){
   ############### Initialisation ##################################################################
 
   # Get hyper-parameters
-  param_list        <- .find_hyperparameters_for_run(run=run, hpo_list=hpo_list)
+  param_list        <- .find_hyperparameters_for_run(run=run,
+                                                     hpo_list=hpo_list,
+                                                     as_list=TRUE)
 
   # Get feature ranks
   dt_ranks          <- rank.get_feature_ranks(run=run, fs_method=run$fs_method, settings=settings, proj_list=proj_list, file_paths=file_paths)
@@ -98,20 +106,6 @@ build_model <- function(run, hpo_list){
   # Load feature_info_list
   feature_info_list <- get_feature_info_list(run=run)
   
-  # Select features
-  selected_features <- get_signature(feature_info_list=feature_info_list, dt_ranks=dt_ranks, fs_method=run$fs_method, param=param_list, settings=settings)
-  
-  # Find features that are required for processing the data
-  required_features <- find_required_features(features=selected_features, feature_info_list=feature_info_list)
-
-  # Find important features, i.e. those that constitute the signature either individually or as part of a cluster
-  important_features <- find_important_features(features=selected_features, feature_info_list=feature_info_list)
-  
-  # Find pre-processing data
-  feature_info_list <- feature_info_list[required_features]
-
-  ############### Model building ################################################################
-
   # Create familiar model
   fam_model <- methods::new("familiarModel",
                             outcome_type = settings$data$outcome_type,
@@ -120,20 +114,33 @@ build_model <- function(run, hpo_list){
                             run_table = run$run_table,
                             hyperparameters = param_list,
                             hyperparameter_data = NULL,
-                            signature = selected_features,
-                            req_feature_cols =  required_features,
-                            important_features = important_features,
                             feature_info = feature_info_list,
                             outcome_info = .get_outcome_info(),
                             project_id = proj_list$project_id,
                             settings = settings$eval)
   
+  # Select features
+  fam_model <- set_signature(object=fam_model,
+                             rank_table=dt_ranks,
+                             minimise_footprint=TRUE)
+  
+  ############### Model building ################################################################
+  
   # Add package version
   fam_model <- add_package_version(object=fam_model)
 
   # Train model
-  fam_model <- .train(object=fam_model, data=data, get_additional_info=TRUE)
-
+  fam_model <- .train(object=fam_model,
+                      data=data,
+                      get_additional_info=TRUE)
+  
+  # Add novelty detector
+  fam_model <- .train_novelty_detector(object=fam_model,
+                                       data=data)
+  
+  # Add model name
+  fam_model <- set_object_name(fam_model)
+  
   # Save model
   save(list=fam_model, file=file_paths$mb_dir)
 }
@@ -159,10 +166,6 @@ add_model_data_to_run_list <- function(methods, run_list, proj_list, settings, f
   run_list  <- lapply(seq_len(nrow(dt_run)), function(ii, dt, run_list, fs_method, learner)
     (append(run_list[[ii]], c("mb_file"=dt$mb_file[ii], "fs_method"=fs_method, "learner"=learner))),
     dt=dt_run, run_list=run_list, fs_method=fs_method, learner=learner)
-
-  # # Determine if the directory where the model building files will be stored exists, and create it otherwise
-  # mb_dir    <- unique(dirname(dt_run$mb_file))
-  # if(!dir.exists(mb_dir)){ dir.create(mb_dir, recursive=TRUE) }
 
   # Filter runs corresponding to existing models from the run list
   if(filter_existing == TRUE) {

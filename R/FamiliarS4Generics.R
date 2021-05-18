@@ -4,23 +4,31 @@ setGeneric("save")
 # Predict method. This is a standard method converted to S4.
 setGeneric(".predict", function(object, data, ...) standardGeneric(".predict"))
 
+setGeneric(".predict_novelty", function(object, data, ...) standardGeneric(".predict_novelty"))
+
+setGeneric(".predict_risk_stratification", function(object, data, ...) standardGeneric(".predict_risk_stratification"))
+
 setGeneric("train", function(data, ...) standardGeneric("train"))
 
 setGeneric(".train", function(object, data, ...) standardGeneric(".train"))
 
+setGeneric(".train_novelty_detector", function(object, data, ...) standardGeneric(".train_novelty_detector"))
+
+setGeneric("get_signature", function(object, ...) standardGeneric("get_signature"))
+
+setGeneric("set_signature", function(object, ...) standardGeneric("set_signature"))
+
 setGeneric("model_is_trained", function(object, ...) standardGeneric("model_is_trained"))
 
-setGeneric("extract_calibration_info", function(object, ...) standardGeneric("extract_calibration_info"))
-
-setGeneric("assess_stratification", function(object, ...) standardGeneric("assess_stratification"))
-
-setGeneric("assess_calibration", function(object, ...) standardGeneric("assess_calibration"))
-
-setGeneric("compute_calibration_data", function(object, data, ...) standardGeneric("compute_calibration_data"))
-
-setGeneric("assign_risk_groups", function(object, data, ...) standardGeneric("assign_risk_groups"))
-
 setGeneric("complete_familiar_ensemble", function(object, ...) standardGeneric("complete_familiar_ensemble"))
+
+setGeneric("..get_model_file_path", function(ii, object, ...) standardGeneric("..get_model_file_path"))
+
+setGeneric("..get_model", function(ii, object, ...) standardGeneric("..get_model"))
+
+setGeneric("..can_detach_models", function(ii, object, ...) standardGeneric("..can_detach_models"))
+
+setGeneric("..update_model_list", function(object, ...) standardGeneric("..update_model_list"))
 
 setGeneric("load_models", function(object, ...) standardGeneric("load_models"))
 
@@ -36,13 +44,9 @@ setGeneric("get_object_name", function(object, ...) standardGeneric("get_object_
 
 setGeneric("process_input_data", function(object, data, ...) standardGeneric("process_input_data"))
 
-setGeneric("create_data_object", function(object, data, ...) standardGeneric("create_data_object"))
-
 setGeneric("load_delayed_data", function(data, object, ...) standardGeneric("load_delayed_data"))
 
 setGeneric("select_data_from_samples", function(data, samples, ...) standardGeneric("select_data_from_samples"))
-
-setGeneric("get_unique_samples", function(data, ...) standardGeneric("get_unique_samples"))
 
 setGeneric("filter_features", function(data, ...) standardGeneric("filter_features"))
 
@@ -76,7 +80,6 @@ setGeneric("has_calibration_info", function(object) standardGeneric("has_calibra
 
 setGeneric("extract_settings_from_data", function(data, ...) standardGeneric("extract_settings_from_data"))
 
-setGeneric("as_data_object", function(data, ...) standardGeneric("as_data_object"))
 
 ##### Methods to see and update labels of data in familiarCollection objects.
 setGeneric(".set_labels", function(x, ...) standardGeneric(".set_labels"))
@@ -86,6 +89,8 @@ setGeneric(".get_labels", function(x, ...) standardGeneric(".get_labels"))
 setGeneric(".construct_label_table", function(x, ...) standardGeneric(".construct_label_table"))
 
 setGeneric(".apply_labels", function(data, object, ...) standardGeneric(".apply_labels"))
+
+setGeneric("set_object_name", function(x, ...) standardGeneric("set_object_name"))
 
 setGeneric("set_data_set_names", function(x, ...) standardGeneric("set_data_set_names"))
 
@@ -126,9 +131,9 @@ setGeneric("get_class_name_levels", function(x, ...) standardGeneric("get_class_
 
 ##### Export methods #####
 # Additional methods are found in FamiliarCollectionExport.R
-setGeneric(".summarise_model_performance", function(object, ...) standardGeneric(".summarise_model_performance"))
-
 setGeneric(".export_to_file", function(data, object, dir_path, ...) standardGeneric(".export_to_file"))
+
+setGeneric(".export", function(x, ...) standardGeneric(".export"))
 
 ##### conversion & loading #####
 # Additional methods are documented in FamiliarObjectConversion.R
@@ -139,6 +144,8 @@ setGeneric("load_familiar_object", function(object, ...) standardGeneric("load_f
 setGeneric("is_available", function(object, ...) standardGeneric("is_available"))
 
 setGeneric("is_in_signature", function(object, ...) standardGeneric("is_in_signature"))
+
+setGeneric("is_in_novelty", function(object, ...) standardGeneric("is_in_novelty"))
 
 setGeneric("update_removed_status", function(object, ...) standardGeneric("update_removed_status"))
 
@@ -164,6 +171,8 @@ setGeneric("get_n_features", function(x, ...) standardGeneric("get_n_features"))
 
 setGeneric("has_feature_data", function(x, ...) standardGeneric("has_feature_data"))
 
+setGeneric("get_unique_row_names", function(x, ...) standardGeneric("get_unique_row_names"))
+
 setGeneric("get_class_probability_name", function(x, ...) standardGeneric("get_class_probability_name"))
 
 setGeneric("encode_categorical_variables", function(object, data, ...) standardGeneric("encode_categorical_variables"))
@@ -174,11 +183,10 @@ setGeneric("get_placeholder_prediction_table", function(object, data, ...) stand
 
 setGeneric("has_bad_training_data", function(object, data, ...) standardGeneric("has_bad_training_data"))
 
-setGeneric("bootstrapper", function(data, ...) standardGeneric("bootstrapper"))
+setGeneric("fam_sample", function(x, ...) standardGeneric("fam_sample"))
 
 setGeneric("get_bootstrap_sample", function(data, ...) standardGeneric("get_bootstrap_sample"))
 
-setGeneric("universal_extractor", function(object, ...) standardGeneric("universal_extractor"))
 
 ##### familiarModel learner methods #####
 setGeneric("promote_learner", function(object, ...) standardGeneric("promote_learner"))
@@ -207,6 +215,7 @@ setGeneric("..get_distribution_family", function(object, ...) standardGeneric(".
 
 setGeneric("..update_outcome", function(object, data, ...) standardGeneric("..update_outcome"))
 
+setGeneric("optimise_hyperparameters", function(object, data, ...) standardGeneric("optimise_hyperparameters"))
 
 #####familiarVimpMethod variable importance methods #####
 setGeneric(".vimp", function(object, ...) standardGeneric(".vimp"))
@@ -224,3 +233,25 @@ setGeneric("compute_metric_score", function(metric, ...) standardGeneric("comput
 setGeneric("compute_objective_score", function(metric, ...) standardGeneric("compute_objective_score"))
 
 setGeneric("set_metric_baseline_value", function(metric, ...) standardGeneric("set_metric_baseline_value"))
+
+
+#####familiarDataElement#####
+setGeneric("extract_dispatcher", function(object, proto_data_element, ...) standardGeneric("extract_dispatcher"))
+
+setGeneric("identify_element_sets", function(x, ...) standardGeneric("identify_element_sets"))
+
+setGeneric("merge_data_elements", function(x, ...) standardGeneric("merge_data_elements"))
+
+setGeneric("add_data_element_identifier", function(x, ...) standardGeneric("add_data_element_identifier"))
+
+setGeneric("add_data_element_bootstrap", function(x, ...) standardGeneric("add_data_element_bootstrap"))
+
+setGeneric(".add_point_estimate_from_elements", function(x, ...) standardGeneric(".add_point_estimate_from_elements"))
+
+setGeneric(".identifier_as_data_attribute", function(x, ...) standardGeneric(".identifier_as_data_attribute"))
+
+setGeneric(".compute_data_element_estimates", function(x, ...) standardGeneric(".compute_data_element_estimates"))
+
+setGeneric("..compute_data_element_estimates", function(x, ...) standardGeneric("..compute_data_element_estimates"))
+
+setGeneric("collect", function(x, ...) standardGeneric("collect"))

@@ -259,25 +259,15 @@ setMethod("get_default_hyperparameters", signature(object="familiarMBoost"),
 
 #####get_prediction_type#####
 setMethod("get_prediction_type", signature(object="familiarMBoost"),
-          function(object, type=NULL){
+          function(object, type="default"){
             
 
             if(object@outcome_type != "survival") return(callNextMethod())
-            
-            # The prediction type is a bit more complicated for mboost methods.
-            if(is.null(type)){
-              if(object@hyperparameters$family %in% c("cox", "cindex", "gehan")){
-                return("hazard_ratio")
-                
-              } else if(object@hyperparameters$family %in% c("weibull", "lognormal", "surv_loglog")){
-                return("expected_survival_time")
-              }
-            }
-            
-            if(type == "link" & object@hyperparameters$family %in% c("cox", "cindex", "gehan")){
+
+            if(type == "default" & all(object@hyperparameters$family %in% c("cox", "cindex", "gehan"))){
               return("hazard_ratio")
               
-            } else if(type == "response" & object@hyperparameters$family %in% c("weibull", "lognormal", "surv_loglog")) {
+            } else if(type == "default" & all(object@hyperparameters$family %in% c("weibull", "lognormal", "surv_loglog"))) {
               return("expected_survival_time")
               
             } else if(type == "survival_probability"){
@@ -301,6 +291,9 @@ setMethod("..train", signature(object="familiarMBoost", data="dataObject"),
             
             # Check if the training data is ok.
             if(has_bad_training_data(object=object, data=data)) return(callNextMethod())
+            
+            # Check if hyperparameters are set.
+            if(is.null(object@hyperparameters)) return(callNextMethod())
             
             # Use effect coding to convert categorical data into encoded data -
             # this is required to deal with factors with missing/new levels
@@ -341,12 +334,12 @@ setMethod("..train", signature(object="familiarMBoost", data="dataObject"),
             
             if(is(object, "familiarMBoostLM")){
               # Attempt to create model
-              model <- tryCatch(mboost::glmboost(formula,
-                                                 data=encoded_data$encoded_data@data,
-                                                 family=family,
-                                                 center=FALSE,
-                                                 control=control_object),
-                                error=identity)
+              model <- suppressWarnings(tryCatch(mboost::glmboost(formula,
+                                                                  data=encoded_data$encoded_data@data,
+                                                                  family=family,
+                                                                  center=FALSE,
+                                                                  control=control_object),
+                                                 error=identity))
               
             } else if(is(object, "familiarMBoostTree")){
               # Set tree controls. Note that every parameter except max depth is
@@ -358,12 +351,12 @@ setMethod("..train", signature(object="familiarMBoost", data="dataObject"),
                                                              saveinfo = FALSE)
               
               # Attempt to create model
-              model <- tryCatch(mboost::blackboost(formula,
-                                                   data=encoded_data$encoded_data@data,
-                                                   family=family,
-                                                   control=control_object,
-                                                   tree_controls=tree_control_object),
-                                error=identity)
+              model <- suppressWarnings(tryCatch(mboost::blackboost(formula,
+                                                                    data=encoded_data$encoded_data@data,
+                                                                    family=family,
+                                                                    control=control_object,
+                                                                    tree_controls=tree_control_object),
+                                                 error=identity))
               
             } else {
               ..error_reached_unreachable_code(paste0("..train,familiarMBoost: encountered unknown learner of unknown class: ", paste0(class(object), collapse=", ")))
@@ -387,106 +380,140 @@ setMethod("..train", signature(object="familiarMBoost", data="dataObject"),
 
 #####..predict#####
 setMethod("..predict", signature(object="familiarMBoost", data="dataObject"),
-          function(object, data, type=NULL, ...){
+          function(object, data, type="default", ...){
             
-            # Check if the model was trained.
-            if(!model_is_trained(object)) return(callNextMethod())
-            
-            # Check if the data is empty.
-            if(is_empty(data)) return(callNextMethod())
-            
-            # Set type
-            if(is.null(type)){
+            if(type == "default"){
+              ##### Default method #############################################
+              
+              # Check if the model was trained.
+              if(!model_is_trained(object)) return(callNextMethod())
+              
+              # Check if the data is empty.
+              if(is_empty(data)) return(callNextMethod())
+              
+              # Set default type
               prediction_type <- "response"
               
+              # For several family variants the default type is link instead of
+              # response.
               if(object@hyperparameters$family %in% c("auc", "cox", "cindex", "gehan")){
                 prediction_type <- "link"
               }
+
+              # Encode data so that the features are the same as in the training.
+              encoded_data <- encode_categorical_variables(data=data,
+                                                           object=object,
+                                                           encoding_method="dummy",
+                                                           drop_levels=FALSE)
               
-            } else {
-              prediction_type <- type
-            }
-            
-            # Encode data so that the features are the same as in the training.
-            encoded_data <- encode_categorical_variables(data=data,
-                                                         object=object,
-                                                         encoding_method="dummy",
-                                                         drop_levels=FALSE)
-            
-            # Get an empty prediction table.
-            prediction_table <- get_placeholder_prediction_table(object=object,
-                                                                 data=encoded_data$encoded_data)
-            
-            # Make predictions.
-            if(is(object, "familiarMBoostLM")){
-              model_predictions <- mboost::predict.glmboost(object=object@model,
+              # Get an empty prediction table.
+              prediction_table <- get_placeholder_prediction_table(object=object,
+                                                                   data=encoded_data$encoded_data,
+                                                                   type=type)
+              
+              # Make predictions.
+              if(is(object, "familiarMBoostLM")){
+                model_predictions <- mboost::predict.glmboost(object=object@model,
+                                                              newdata=encoded_data$encoded_data@data,
+                                                              type=prediction_type)
+                
+              } else if(is(object, "familiarMBoostTree")){
+                model_predictions <- mboost::predict.mboost(object=object@model,
                                                             newdata=encoded_data$encoded_data@data,
                                                             type=prediction_type)
-              
-            } else if(is(object, "familiarMBoostTree")){
-              model_predictions <- mboost::predict.mboost(object=object@model,
-                                                          newdata=encoded_data$encoded_data@data,
-                                                          type=prediction_type)
-              
-            } else {
-              return(callNextMethod())
-            }
-            
-            
-            if(object@outcome_type == "binomial"){
-              #####Binomial outcomes######
-              
-              if(object@hyperparameters$family %in% "auc"){
-                # AUC produces the linear predictor, not class probabilities.
-                # These are set here, prior to re-calibration.
-                model_predictions <- 0.5 + model_predictions
-              }
-              
-              # Obtain class levels.
-              class_levels <- get_outcome_class_levels(x=object)
-              
-              # Add class probabilities (glm always gives probability for the
-              # second class).
-              class_probability_columns <- get_class_probability_name(x=object)
-              prediction_table[, (class_probability_columns[1]):= 1.0 - model_predictions]
-              prediction_table[, (class_probability_columns[2]):= model_predictions]
-              
-              # Update predicted class based on provided probabilities.
-              class_predictions <- class_levels[apply(prediction_table[, mget(class_probability_columns)], 1, which.max)]
-              class_predictions <- factor(class_predictions, levels=class_levels)
-              prediction_table[, "predicted_class":=class_predictions]
-              
-            } else if(object@outcome_type %in% c("continuous", "count")){
-              #####Numerical outcomes######
-              
-              # Extract predicted regression values.
-              prediction_table[, "predicted_outcome":=model_predictions[, 1]]
-              
-            } else if(object@outcome_type %in% c("survival")){
-              #####Survival outcomes######
-              
-              # Check model family and convert linear predictors to hazard
-              # ratio.
-              if(object@hyperparameters$family %in% "cox"){
-                # Cox partial likelihood produces the linear predictor, not
-                # relative risks.
-                model_predictions <- exp(model_predictions)
                 
-              } else if(object@hyperparameters$family %in% c("cindex", "gehan")){
-                # Concordance probability and gehan loss produce "time-like"
-                # predictions before calibration using cox models, whereas
-                # "risk-like" is expected.
-                model_predictions <- - model_predictions
+              } else {
+                return(callNextMethod())
               }
               
-              # Add predictions to the prediction table.
-              prediction_table[, "predicted_outcome":=model_predictions[, 1]]
+              
+              if(object@outcome_type == "binomial"){
+                #####Binomial outcomes##########################################
+                
+                if(object@hyperparameters$family %in% "auc"){
+                  # AUC produces the linear predictor, not class probabilities.
+                  # These are set here, prior to re-calibration.
+                  model_predictions <- 0.5 + model_predictions
+                }
+                
+                # Obtain class levels.
+                class_levels <- get_outcome_class_levels(x=object)
+                
+                # Add class probabilities (glm always gives probability for the
+                # second class).
+                class_probability_columns <- get_class_probability_name(x=object)
+                prediction_table[, (class_probability_columns[1]):= 1.0 - model_predictions]
+                prediction_table[, (class_probability_columns[2]):= model_predictions]
+                
+                # Update predicted class based on provided probabilities.
+                class_predictions <- class_levels[apply(prediction_table[, mget(class_probability_columns)], 1, which.max)]
+                class_predictions <- factor(class_predictions, levels=class_levels)
+                prediction_table[, "predicted_class":=class_predictions]
+                
+              } else if(object@outcome_type %in% c("continuous", "count")){
+                #####Numerical outcomes#########################################
+                
+                # Extract predicted regression values.
+                prediction_table[, "predicted_outcome":=model_predictions[, 1]]
+                
+              } else if(object@outcome_type %in% c("survival")){
+                #####Survival outcomes##########################################
+                
+                # Check model family and convert linear predictors to hazard
+                # ratio.
+                if(object@hyperparameters$family %in% "cox"){
+                  # Cox partial likelihood produces the linear predictor, not
+                  # relative risks.
+                  model_predictions <- exp(model_predictions)
+                  
+                } else if(object@hyperparameters$family %in% c("cindex", "gehan")){
+                  # Concordance probability and gehan loss produce "time-like"
+                  # predictions before calibration using cox models, whereas
+                  # "risk-like" is expected.
+                  model_predictions <- - model_predictions
+                }
+                
+                # Add predictions to the prediction table.
+                prediction_table[, "predicted_outcome":=model_predictions[, 1]]
+                
+              } else {
+                ..error_outcome_type_not_implemented(object@outcome_type)
+              }
+              
+              return(prediction_table)
               
             } else {
-              ..error_outcome_type_not_implemented(object@outcome_type)
+              ##### User-specified method ######################################
+              
+              # Check if the model was trained.
+              if(!model_is_trained(object)) return(NULL)
+              
+              # Check if the data is empty.
+              if(is_empty(data)) return(NULL)
+              
+              # Encode data so that the features are the same as in the training.
+              encoded_data <- encode_categorical_variables(data=data,
+                                                           object=object,
+                                                           encoding_method="dummy",
+                                                           drop_levels=FALSE)
+              
+              # Make predictions.
+              if(is(object, "familiarMBoostLM")){
+                return(mboost::predict.glmboost(object=object@model,
+                                                newdata=encoded_data$encoded_data@data,
+                                                type=type,
+                                                ...))
+                
+              } else if(is(object, "familiarMBoostTree")){
+                return(mboost::predict.mboost(object=object@model,
+                                              newdata=encoded_data$encoded_data@data,
+                                              type=type,
+                                              ...))
+                
+              } else {
+                return(NULL)
+              }
             }
-            
-            return(prediction_table)
           })
 
 

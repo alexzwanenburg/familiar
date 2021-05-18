@@ -145,7 +145,7 @@
   }
   
   if(file_paths$is_temporary){
-    logger.warning(paste0("Configuration: A temporary R directory is created for the analysis: ", tempdir()))
+    logger.message(paste0("Configuration: A temporary R directory is created for the analysis: ", tempdir()))
   }
   
   return(file_paths)
@@ -356,7 +356,11 @@
                                        dots))
 
   # Set the general parallel switch to FALSE if all workflow steps disabled parallel processing.
-  settings$run$parallel <- settings$prep$do_parallel | settings$fs$do_parallel | settings$mb$do_parallel | settings$hpo$do_parallel | settings$eval$do_parallel
+  settings$run$parallel <- (settings$prep$do_parallel |
+                              settings$fs$do_parallel |
+                              settings$mb$do_parallel |
+                              settings$hpo$do_parallel %in% c("TRUE", "inner", "outer") |
+                              settings$eval$do_parallel %in% c("TRUE", "inner", "outer"))
     
   return(settings)
 }
@@ -365,12 +369,42 @@
 #' Internal function for parsing settings related to the computational setup
 #'
 #' @param config A list of settings, e.g. from an xml file.
-#' @param sample_id_column (**recommended**) Name of the column containing
-#'   sample or subject identifiers. This parameter is required if more than one
-#'   dataset is provided.
 #' @param batch_id_column (**recommended**) Name of the column containing batch
 #'   or cohort identifiers. This parameter is required if more than one dataset
 #'   is provided, or if external validation is performed.
+#'
+#'   In familiar any row of data is organised by four identifiers:
+#'
+#'   * The batch identifier `batch_id_column`: This denotes the group to which a
+#'   set of samples belongs, e.g. patients from a single study, samples measured
+#'   in a batch, etc. The batch identifier is used for batch normalisation, as
+#'   well as selection of development and validation datasets.
+#'
+#'   * The sample identifier `sample_id_column`: This denotes the sample level,
+#'   e.g. data from a single individual. Subsets of data, e.g. bootstraps or
+#'   cross-validation folds, are created at this level.
+#'
+#'   * The series identifier `series_id_column`: Indicates measurements on a
+#'   single sample that may not share the same outcome value, e.g. a time
+#'   series, or the number of cells in a view.
+#'
+#'   * The repetition identifier: Indicates repeated measurements in a single
+#'   series where any feature values may differ, but the outcome does not.
+#'   Repetition identifiers are always implicitly set when multiple entries for
+#'   the same series of the same sample in the same batch that share the same
+#'   outcome are encountered.
+#'
+#' @param sample_id_column (**recommended**) Name of the column containing
+#'   sample or subject identifiers. See `batch_id_column` above for more
+#'   details.
+#'
+#'   If unset, every row will be identified as a single sample.
+#' @param series_id_column (**optional**) Name of the column containing series
+#'   identifiers, which distinguish between measurements that are part of a
+#'   series for a single sample. See `batch_id_column` above for more details.
+#'
+#'   If unset, rows which share the same batch and sample identifiers but have a
+#'   different outcome are assigned unique series identifiers.
 #' @param development_batch_id (*optional*) One or more batch or cohort
 #'   identifiers to constitute data sets for development. Defaults to all, or
 #'   all minus the identifiers in `validation_batch_id` for external validation.
@@ -431,7 +465,7 @@
 #'
 #' @param censoring_indicator (**recommended**) Indicator for right-censoring in
 #'   `survival` and `competing_risk` analyses. `familiar` will automatically
-#'   recognise `0`, `false`, `f`, `n`, `no` ascensoring indicators, including
+#'   recognise `0`, `false`, `f`, `n`, `no` as censoring indicators, including
 #'   different capitalisations. If this parameter is set, it replaces the
 #'   default values.
 #'
@@ -443,17 +477,23 @@
 #'
 #' @param signature (*optional*) One or more names of feature columns that are
 #'   considered part of a specific signature. Features specified here will
-#'   always be used for modeling. Ranking from feature selection has no effect
+#'   always be used for modelling. Ranking from feature selection has no effect
 #'   for these features.
+#'
+#' @param novelty_features (*optional*) One or more names of feature columns
+#'   that should be included for the purpose of novelty detection.
+#'
 #' @param exclude_features (*optional*) Feature columns that will be removed
-#'   from the data set. Cannot overlap with features in `signature` or
-#'   `include_features`.
+#'   from the data set. Cannot overlap with features in `signature`,
+#'   `novelty_features` or `include_features`.
+#'
 #' @param include_features (*optional*) Feature columns that are specifically
 #'   included in the data set. By default all features are included. Cannot
 #'   overlap with `exclude_features`, but may overlap `signature`. Features in
-#'   `signature` are always included. If both `exclude_features` and
-#'   `include_features` are provided, `include_features` takes precedence,
-#'   provided that there is no overlap between the two.
+#'   `signature` and `novelty_features` are always included. If both
+#'   `exclude_features` and `include_features` are provided, `include_features`
+#'   takes precedence, provided that there is no overlap between the two.
+#'
 #' @param experimental_design (**required**) Defines what the experiment looks
 #'   like, e.g. `cv(bt(fs,20)+mb,3,2)+ev` for 2 times repeated 3-fold
 #'   cross-validation with nested feature selection on 20 bootstraps and
@@ -528,8 +568,9 @@
 #' @md
 #' @keywords internal
 .parse_experiment_settings <- function(config=NULL,
-                                       sample_id_column=waiver(),
                                        batch_id_column=waiver(),
+                                       sample_id_column=waiver(),
+                                       series_id_column=waiver(),
                                        development_batch_id=waiver(),
                                        validation_batch_id=waiver(),
                                        outcome_name=waiver(),
@@ -540,6 +581,7 @@
                                        competing_risk_indicator=waiver(),
                                        class_levels=waiver(),
                                        signature=waiver(),
+                                       novelty_features=waiver(),
                                        exclude_features=waiver(),
                                        include_features=waiver(),
                                        experimental_design=waiver(),
@@ -577,13 +619,21 @@
     settings$sample_col <- check_column_name(settings$sample_col)
   }
   
-  # Cohort identifier column
+  # Batch identifier column
   settings$batch_col  <- .parse_arg(x_config=config$batch_id_column, x_var=batch_id_column,
                                     var_name="batch_id_column", type="character", optional=TRUE, default=NULL)
   
   # Update column name
   if(!is.null(settings$batch_col)){
     settings$batch_col <- check_column_name(settings$batch_col)
+  }
+  
+  # Series identifier column
+  settings$series_col <- .parse_arg(x_config=config$series_id_column, x_var=series_id_column,
+                                    var_name="series_id_column", type="character", optional=TRUE, default=NULL)
+  
+  if(!is.null(settings$series_col)){
+    settings$series_col <- check_column_name(settings$series_col)
   }
   
   # Development cohort identifier
@@ -630,25 +680,25 @@
   settings$signature <- .parse_arg(x_config=config$signature, x_var=signature,
                                    var_name="signature", type="character_list", optional=TRUE, default=NULL)
   
-  if(!is.null(settings$signature)){
-    settings$signature <- check_column_name(settings$signature)
-  }
+  if(!is.null(settings$signature)) settings$signature <- check_column_name(settings$signature)
+  
+  # Novelty features
+  settings$novelty_features <- .parse_arg(x_config=config$novelty_features, x_var=novelty_features,
+                                          var_name="novelty_features", type="character_list", optional=TRUE, default=NULL)
+  
+  if(!is.null(settings$novelty_features)) settings$novelty_features <- check_column_name(settings$novelty_features)
   
   # Included features
   settings$include_features <- .parse_arg(x_config=config$include_features, x_var=include_features,
                                           var_name="include_features", type="character_list", optional=TRUE, default=NULL)
   
-  if(!is.null(settings$include_features)){
-    settings$include_features <- check_column_name(settings$include_features)
-  }
+  if(!is.null(settings$include_features)) settings$include_features <- check_column_name(settings$include_features)
   
   # Excluded features
   settings$exclude_features <- .parse_arg(x_config=config$exclude_features, x_var=exclude_features,
                                           var_name="exclude_features", type="character_list", optional=TRUE, default=NULL)
   
-  if(!is.null(settings$exclude_features)){
-    settings$exclude_features <- check_column_name(settings$exclude_features)
-  }
+  if(!is.null(settings$exclude_features)) settings$exclude_features <- check_column_name(settings$exclude_features)
   
   return(settings)
 }
@@ -1373,7 +1423,7 @@
                                           var_name="transformation_method", type="character", optional=TRUE, default="yeo_johnson")
   
   .check_parameter_value_is_valid(x=settings$transform_method, var_name="transformation_method",
-                                  values=c("none", "yeo_johnson", "yeo_johnson_trim", "yeo_johnson_winsor", "box_cox", "box_cox_trim", "box_cox_winsor"))
+                                  values=.get_available_transformation_methods())
   
   # Normalisation method
   settings$normalisation_method <- .parse_arg(x_config=config$normalisation_method, x_var=normalisation_method,
@@ -1602,9 +1652,7 @@
   
   settings$param <- .parse_hyperparameters(data=data, parameter_list=settings$param,
                                            outcome_type=outcome_type, fs_method=settings$fs_methods)
-  # sapply(settings$fs_methods, vimp.check_fs_parameters, user_param=settings$param, outcome_type=outcome_type)
-  
-  
+
   # Variable importance aggregation methods
   settings$aggregation <- .parse_arg(x_config=config$vimp_aggregation_method, x_var=vimp_aggregation_method,
                                      var_name="vimp_aggregation_method", type="character", optional=TRUE, default="mean")
@@ -1613,7 +1661,7 @@
   
   # Variable importance rank threshold (used by some aggregation methods)
   settings$aggr_rank_threshold <- .parse_arg(x_config=config$vimp_aggregation_rank_threshold, x_var=vimp_aggregation_rank_threshold,
-                                             var_name="vimp_aggregation_rank_threshold", type="integer", optional=TRUE, default=NULL)
+                                             var_name="vimp_aggregation_rank_threshold", type="integer", optional=TRUE, default=5L)
   
   if(!is.null(settings$aggr_rank_threshold)){
     .check_number_in_valid_range(x=settings$aggr_rank_threshold, var_name="vimp_aggregation_rank_threshold", range=c(1, Inf))
@@ -1732,17 +1780,20 @@
 #'
 #'   This parameter only affects hyperparameter optimisation of learners. The
 #'   default is `TRUE`.
-#' @param smbo_random_initialisation (*optional*) Logical indicating random
-#'   (`TRUE`) or grid-based (`FALSE`) initialisation of combinations of
-#'   hyperparameters. If random initialisation is selected, up to 200 unique
-#'   combinations will be randomly generated and assessed during the initial
-#'   step of the sequential model-based boosting (SMBO) algorithm (Hutter et
-#'   al., 2011). If a grid-based initialisation is selected, up to 100
-#'   permutations will be randomly selected from the complete parameter grid and
-#'   assessed during the initial SMBO step.
+#' @param smbo_random_initialisation (*optional*) String indicating the
+#'   initialisation method for the hyperparameter space. Can be one of
+#'   `fixed_subsample` (default), `fixed`, or `random`. `fixed` and
+#'   `fixed_subsample` first create hyperparameter sets from a range of default
+#'   values set by familiar. `fixed_subsample` then randomly draws up to
+#'   `smbo_n_random_sets` from the grid. `random` does not rely upon a fixed
+#'   grid, and randomly draws up to `smbo_n_random_sets` hyperparameter sets
+#'   from the hyperparameter space.
+#' @param smbo_n_random_sets (*optional*) Number of random or subsampled
+#'   hyperparameters drawn during the initialisation process. Default: `100`.
+#'   Cannot be smaller than `10`. The parameter is not used when
+#'   `smbo_random_initialisation` is `fixed`, as the entire pre-defined grid
+#'   will be explored.
 #'
-#'   The default is `TRUE` (random initialisation). Grid-based initialisation
-#'   uses pre-defined parameter ranges.
 #' @param max_smbo_iterations (*optional*) Maximum number of intensify
 #'   iterations of the SMBO algorithm. During an intensify iteration a run-off
 #'   occurs between the current *best* hyperparameter combination and either 10
@@ -1778,7 +1829,9 @@
 #'   SMBO step and the steps in each intensify iteration.
 #'
 #'   The default value is `5`. The value cannot be larger than
-#'   `optimisation_bootstraps`.
+#'   `optimisation_bootstraps`. Values of `1` or `2` may hinder exploration by
+#'   optimistically or pessimistically biasing parameter sets on a single or two
+#'   bootstraps.
 #' @param smbo_intensify_steps (*optional*) The number of steps in each SMBO
 #'   intensify iteration. Each step a new set of `smbo_step_bootstraps`
 #'   bootstraps is drawn and used in the run-off between the incumbent *best*
@@ -1883,7 +1936,11 @@
 #' @param parallel_hyperparameter_optimisation (*optional*) Enable parallel
 #'   processing for hyperparameter optimisation. Defaults to `TRUE`. When set to
 #'   `FALSE`, this will disable the use of parallel processing while performing
-#'   optimisation, regardless of the settings of the `parallel` parameter.
+#'   optimisation, regardless of the settings of the `parallel` parameter. The
+#'   parameter moreover specifies whether parallelisation takes place within the
+#'   optimisation algorithm (`inner`, default), or in an outer loop ( `outer`)
+#'   over learners, data subsamples, etc.
+#'
 #'   `parallel_hyperparameter_optimisation` is ignored if `parallel=FALSE`.
 #' @param ... Unused arguments.
 #'
@@ -1911,6 +1968,7 @@
                                                         optimisation_bootstraps=waiver(),
                                                         optimisation_determine_vimp=waiver(),
                                                         smbo_random_initialisation=waiver(),
+                                                        smbo_n_random_sets = waiver(),
                                                         max_smbo_iterations=waiver(),
                                                         smbo_stop_convergent_iterations=waiver(),
                                                         smbo_stop_tolerance=waiver(),
@@ -1925,9 +1983,17 @@
   settings <- list()
   
   # Randomisation of initial parameter grid
-  settings$hpo_randomise_init_grid <- .parse_arg(x_config=config$smbo_random_initialisation, x_var=smbo_random_initialisation,
-                                                 var_name="smbo_random_initialisation", type="logical", optional=TRUE, default=TRUE)
+  settings$hpo_grid_initialisation_method <- .parse_arg(x_config=config$smbo_random_initialisation, x_var=smbo_random_initialisation,
+                                                        var_name="smbo_random_initialisation", type="character", optional=TRUE, default="fixed_subsample")
   
+  .check_parameter_value_is_valid(x=settings$hpo_grid_initialisation_method, var_name="smbo_random_initialisation",
+                                  values=c("fixed_subsample", "fixed", "random"))
+  
+  # Number of samples in the initial parameter grid.
+  settings$hpo_n_grid_initialisation_samples <- .parse_arg(x_config=config$smbo_n_random_sets, x_var=smbo_n_random_sets,
+                                                           var_name="smbo_n_random_sets", type="integer", optional=TRUE, default=100)
+  
+  .check_number_in_valid_range(x=settings$hpo_n_grid_initialisation_samples, var_name="smbo_n_random_sets", range=c(10, Inf))
   
   # Variable importance for the bootstraps
   settings$hpo_determine_vimp <- .parse_arg(x_config=config$optimisation_determine_vimp, x_var=optimisation_determine_vimp,
@@ -1988,46 +2054,35 @@
                                        var_name="optimisation_function", type="character", optional=TRUE, default="balanced")
   
   .check_parameter_value_is_valid(x=settings$hpo_optimisation_function, var_name="optimisation_function",
-                                  values=c("max_validation", "balanced", "stronger_balance"))
+                                  values=.get_available_optimisation_functions())
   
-  # Aqcuisition function
+  # Acquisition function
   settings$hpo_acquisition_function <- .parse_arg(x_config=config$acquisition_function, x_var=acquisition_function,
                                                   var_name="acquisition_function", type="character", optional=TRUE, default="expected_improvement")
   
   .check_parameter_value_is_valid(x=settings$hpo_acquisition_function, var_name="acquisition_function",
-                                  values=c("improvement_probability", "improvement_empirical_probability", "expected_improvement",
-                                           "upper_confidence_bound", "bayes_upper_confidence_bound"))
+                                  values=.get_available_acquisition_functions())
   
   # Performance metric for hyperparameter optimisation
   settings$hpo_metric <- .parse_arg(x_config=config$optimisation_metric, x_var=optimisation_metric,
                                     var_name="optimisation_metric", type="character_list", optional=TRUE, default=NULL)
   
   # Set default metric
-  if(is.null(settings$hpo_metric)){
-    if(outcome_type %in% c("binomial", "multinomial")){
-      settings$hpo_metric <- "auc_roc"
-    } else if(outcome_type == "continuous"){
-      settings$hpo_metric <- "mse"
-    } else if(outcome_type == "count"){
-      settings$hpo_metric <- "msle"
-    } else if(outcome_type == "survival"){
-      settings$hpo_metric <- "concordance_index"
-    } else if(outcome_type == "competing_risk"){
-      ..error_outcome_type_not_implemented(outcome_type)
-    } else {
-      ..error_no_known_outcome_type(outcome_type)
-    }
-  }
+  if(is.null(settings$hpo_metric)) settings$hpo_metric <- .get_default_metric(outcome_type=outcome_type)
   
   # Check if the metric is ok. Packed into a for loop to enable multi-metric optimisation in the future
   sapply(settings$hpo_metric, metric.check_outcome_type, outcome_type=outcome_type)
   
+  
   # Parallelisation switch for parallel processing
   settings$do_parallel <- .parse_arg(x_config=config$parallel_hyperparameter_optimisation, x_var=parallel_hyperparameter_optimisation,
-                                     var_name="parallel_hyperparameter_optimisation", type="logical", optional=TRUE, default=TRUE)
+                                     var_name="parallel_hyperparameter_optimisation", type="character", optional=TRUE, default="TRUE")
+  
+  .check_parameter_value_is_valid(x=settings$do_parallel, var_name="parallel_hyperparameter_optimisation",
+                                  values=c("TRUE", "FALSE", "inner", "outer"))
   
   # Disable if parallel is FALSE
-  if(!parallel) { settings$do_parallel <- FALSE }
+  if(!parallel) settings$do_parallel <- "FALSE"
   
   return(settings) 
 }
@@ -2074,6 +2129,58 @@
 #'  from both the global layer and the next lower level.
 #'
 #'  Setting the flag to `true` saves computation time.
+#'@param skip_evaluation_elements (*optional*) Specifies which evaluation steps,
+#'  if any, should be skipped as part of the evaluation process. Defaults to
+#'  `none`, which means that all relevant evaluation steps are performed. It can
+#'  have one or more of the following values:
+#'
+#'  * `none`, `false`: no steps are skipped.
+#'
+#'  * `auc_data`: data for assessing and plotting the area under the receiver
+#'  operating characteristic curve are not computed.
+#'
+#'  * `calibration_data`: data for assessing and plotting model calibration are
+#'  not computed.
+#'
+#'  * `calibration_info`
+#'
+#'  * `confusion_matrix`: data for assessing and plotting a confusion matrix are
+#'  not collected.
+#'
+#'  * `decision_curve_analyis`: data for performing a decision curve analysis
+#'  are not computed.
+#'
+#'  * `feature_expressions`: data for assessing and plotting sample clustering
+#'  are not computed.
+#'  
+#'  * `feature_similarity`: data for assessing and plotting feature clusters are
+#'  not computed.
+#'
+#'  * `fs_vimp`: data for assessing and plotting feature selection-based
+#'  variable importance are not collected.
+#'
+#'  * `hyperparameters`: data for assessing model hyperparameters are not
+#'  collected.
+#'
+#'  * `model_performance`: data for assessing and visualising model performance
+#'  are not created.
+#'
+#'  * `model_vimp`: data for assessing and plotting model-based variable
+#'  importance are not collected.
+#'
+#'  * `permutation_vimp`: data for assessing and plotting model-agnostic
+#'  permutation variable importance are not computed.
+#'
+#'  * `prediction_data`: predictions for each sample are not made and exported.
+#'  
+#'  * `risk_stratification_data`: data for assessing and plotting Kaplan-Meier survival
+#'  curves are not collected.
+#'  
+#'  * `risk_stratification_info`: data for assessing stratification into risk groups
+#'  are not computed.
+#'
+#'  * `univariate_analysis`: data for assessing and plotting univariate feature
+#'  importance are not computed.
 #'@param ensemble_method (*optional*) Method for ensembling predictions from
 #'  models for the same sample. Available methods are:
 #'
@@ -2082,6 +2189,8 @@
 #'
 #'  * `mean`: Use the mean of the predicted values as the ensemble value for a
 #'  sample.
+#'
+#'  This parameter is only used if `detail_level` is `ensemble`.
 #'
 #'@param evaluation_metric (*optional*) One or more metrics for assessing model
 #'  performance. See the vignette on performance metrics for the available
@@ -2092,6 +2201,91 @@
 #'  depends on the value of `confidence_level` (Davison and Hinkley, 1997).
 #'
 #'  If unset, the metric in the `optimisation_metric` variable is used.
+#'
+#'@param detail_level (*optional*) Sets the level at which results are computed
+#'  and aggregated.
+#'
+#'  * `ensemble`: Results are computed at the ensemble level, i.e. over all
+#'  models in the ensemble. This means that, for example, bias-corrected
+#'  estimates of model performance are assessed by creating (at least) 20
+#'  bootstraps and computing the model performance of the ensemble model for
+#'  each bootstrap.
+#'
+#'  * `hybrid` (default): Results are computed at the level of models in an
+#'  ensemble. This means that, for example, bias-corrected estimates of model
+#'  performance are directly computed using the models in the ensemble. If there
+#'  are at least 20 trained models in the ensemble, performance is computed for
+#'  each model, in contrast to `ensemble` where performance is computed for the
+#'  ensemble of models. If there are less than 20 trained models in the
+#'  ensemble, bootstraps are created so that at least 20 point estimates can be
+#'  made.
+#'
+#'  * `model` (to be implemented): Results are computed at the model level. This
+#'  means that, for example, bias-corrected estimates of model performance are
+#'  assessed by creating (at least) 20 bootstraps and computing the performance
+#'  of the model for each bootstrap.
+#'
+#'  Note that each level of detail has a different interpretation for bootstrap
+#'  confidence intervals. For `ensemble` and `model` these are the confidence
+#'  intervals for the ensemble and an individual model, respectively. That is,
+#'  the confidence interval describes the range where an estimate produced by a
+#'  respective ensemble or model trained on a repeat of the experiment may be
+#'  found with the probability of the confidence level. For `hybrid`, it
+#'  represents the range where any single model trained on a repeat of the
+#'  experiment may be found with the probability of the confidence level. By
+#'  definition, confidence intervals obtained using `hybrid` are at least as
+#'  wide as those for `ensemble`. `hybrid` offers the correct interpretation if
+#'  the goal of the analysis is to assess the result of a single, unspecified,
+#'  model.
+#'
+#'  `hybrid` is generally computationally less expensive then `ensemble`, which
+#'  in turn is somewhat less expensive than `model`.
+#'  
+#'  A non-default `detail_level` parameter can be
+#'  specified for separate evaluation steps by providing a parameter value in a
+#'  named list with data elements, e.g. `list("auc_data"="ensemble",
+#'  "model_performance"="hybrid")`. This parameter can be set for the following
+#'  data elements: `auc_data`, `decision_curve_analyis`, `model_performance`,
+#'  `permutation_vimp`, `prediction_data` and `confusion_matrix`.
+#'
+#'@param estimation_type (*optional*) Sets the type of estimation that should be
+#'  possible. This has the following options:
+#'
+#'  * `point`: Point estimates.
+#'
+#'  * `bias_correction` or `bc`: Bias-corrected estimates. A bias-corrected
+#'  estimate is computed from (at least) 20 point estimates, and `familiar` may
+#'  bootstrap the data to create them.
+#'
+#'  * `bootstrap_confidence_interval` or `bci` (default): Bias-corrected
+#'  estimates with bootstrap confidence intervals (Efron and Hastie, 2016). The
+#'  number of point estimates required depends on the `confidence_level`
+#'  parameter, and `familiar` may bootstrap the data to create them. In some
+#'  cases no bootstrap data
+#'
+#'  As with `detail_level`, a non-default `estimation_type` parameter can be
+#'  specified for separate evaluation steps by providing a parameter value in a
+#'  named list with data elements, e.g. `list("auc_data"="bci",
+#'  "model_performance"="point")`. This parameter can be set for the following
+#'  data elements: `auc_data`, `decision_curve_analyis`, `model_performance`,
+#'  `permutation_vimp`, and `prediction_data`.
+#'
+#'@param aggregate_results (*optional*) Flag that signifies whether results
+#'  should be aggregated during evaluation. If `estimation_type` is
+#'  `bias_correction` or `bc`, aggregation leads to a single bias-corrected
+#'  estimate. If `estimation_type` is `bootstrap_confidence_interval` or `bci`,
+#'  aggregation leads to a single bias-corrected estimate with lower and upper
+#'  boundaries of the confidence interval. This has no effect if
+#'  `estimation_type` is `point`.
+#'
+#'  The default value is equal to `TRUE` except when assessing metrics to assess
+#'  model performance, as the default violin plot requires underlying data.
+#'
+#'  As with `detail_level` and `estimation_type`, a non-default
+#'  `aggregate_results` parameter can be specified for separate evaluation steps
+#'  by providing a parameter value in a named list with data elements, e.g.
+#'  `list("auc_data"=TRUE, , "model_performance"=FALSE)`. This parameter exists
+#'  for the same elements as `estimation_type`.
 #'
 #'@param confidence_level (*optional*) Numeric value for the level at which
 #'  confidence intervals are determined. In the case bootstraps are used to
@@ -2105,55 +2299,14 @@
 #'  confidence intervals (Efron and Hastie, 2016). The following methods are
 #'  implemented:
 #'
-#'  * `percentile`: Confidence intervals obtained using the percentile method.
+#'  * `percentile` (default): Confidence intervals obtained using the percentile
+#'  method.
 #'
-#'  * `bc` (default): Bias-corrected confidence intervals.
+#'  * `bc`: Bias-corrected confidence intervals.
 #'
 #'  Note that the standard method is not implemented because this method is
 #'  often not suitable due to non-normal distributions. The bias-corrected and
 #'  accelerated (BCa) method is not implemented yet.
-#'
-#'@param compute_model_data (*optional*) This parameter can be set to enable
-#'  computation of data based on individual models. The parameter can take on or
-#'  more of the following values: `all`, `model_performance`, `auc_data`,
-#'  `confusion_matrix`, `decision_curve_analyis`, `permutation_vimp`,
-#'  `performance_data`, as well as `true`, `false` and `none`.
-#'
-#'  By default, data is computed for the ensemble as a whole, but not for
-#'  underlying models.
-#'
-#'@param compute_model_ci (*optional*) This parameter can be set to enable
-#'  computation of bootstrap confidence intervals for individual models in
-#'  several parts of the evaluation. The parameter can take one or more of the
-#'  following values: `all`, `model_performance`, `auc_data`,
-#'  `decision_curve_analyis`, `permutation_vimp` as well as `true`, `false` and
-#'  `none`.
-#'
-#'  By default, bootstrap confidence intervals are not computed for individual
-#'  models. Note that this parameter has no effect unless data is computed for
-#'  individual models as well, which is managed by the `compute_model_data`
-#'  parameter.
-#'
-#'@param compute_ensemble_ci (*optional*) This parameter can be set to enable
-#'  computation of bootstrap confidence intervals for ensemble models in several
-#'  parts of the evaluation. The parameter can take one or more of the following
-#'  values: `all`, `model_performance`, `auc_data`, `decision_curve_analyis`,
-#'  `permutation_vimp` as well as `true`, `false` and `none`.
-#'
-#'  By default, bootstrap confidence intervals are computed for ensemble models.
-#'
-#'@param aggregate_ci (*optional*) Bootstraps are used to determine confidence
-#'  intervals. This information can be stored for export. However, in many cases
-#'  this is not necessary, and keeping the bootstrap data can lead to large
-#'  `familiarData` and `familiarCollection` objects. This provides the option to
-#'  aggregate the bootstrap data by computing the confidence interval directly.
-#'
-#'  This parameter can take one or more of the following values: `all`,
-#'  `model_performance`, `auc_data`, `decision_curve_analyis`,
-#'  `permutation_vimp` as well as `true`, `false` and `none`. By default,
-#'  bootstrap data is aggregated by computing confidence intervals for
-#'  receiver-operating characteristic curves, decision curves and permutation
-#'  variable importance.
 #'
 #'@param feature_cluster_method (*optional*) Method used to perform clustering
 #'  of features. The same methods as for the `cluster_method` configuration
@@ -2336,10 +2489,21 @@
 #'  If unset, `evaluation_times` will be equal to `time_max`.
 #'
 #'  This parameter is only relevant for `survival` outcomes.
+#'@param dynamic_model_loading (*optional*) Enables dynamic loading of models
+#'  during the evaluation process, if `TRUE`. Defaults to `FALSE`. Dynamic
+#'  loading of models may reduce the overall memory footprint, at the cost of
+#'  increased disk or network IO. Models can only be dynamically loaded if they
+#'  are found at an accessible disk or network location. Setting this parameter
+#'  to `TRUE` may help if parallel processing causes out-of-memory issues during
+#'  evaluation.
 #'@param parallel_evaluation (*optional*) Enable parallel processing for
 #'  hyperparameter optimisation. Defaults to `TRUE`. When set to `FALSE`, this
 #'  will disable the use of parallel processing while performing optimisation,
-#'  regardless of the settings of the `parallel` parameter.
+#'  regardless of the settings of the `parallel` parameter. The parameter
+#'  moreover specifies whether parallelisation takes place within the evaluation
+#'  process steps (`inner`, default), or in an outer loop ( `outer`) over
+#'  learners, data subsamples, etc.
+#'
 #'  `parallel_evaluation` is ignored if `parallel=FALSE`.
 #'@param ... Unused arguments.
 #'
@@ -2366,14 +2530,14 @@
                                        prep_cluster_similarity_threshold,
                                        prep_cluster_similarity_metric,
                                        evaluate_top_level_only=waiver(),
+                                       skip_evaluation_elements=waiver(),
                                        ensemble_method=waiver(),
                                        evaluation_metric=waiver(),
+                                       detail_level=waiver(),
+                                       estimation_type=waiver(),
+                                       aggregate_results=waiver(),
                                        confidence_level=waiver(),
                                        bootstrap_ci_method=waiver(),
-                                       compute_model_data=waiver(),
-                                       compute_model_ci=waiver(),
-                                       compute_ensemble_ci=waiver(),
-                                       aggregate_ci=waiver(),
                                        feature_cluster_method=waiver(),
                                        feature_cluster_cut_method=waiver(),
                                        feature_linkage_method=waiver(),
@@ -2387,20 +2551,37 @@
                                        eval_icc_type=waiver(),
                                        stratification_method=waiver(),
                                        stratification_threshold=waiver(),
-                                       stratification_ensemble_method=waiver(),
                                        time_max=waiver(),
                                        evaluation_times=waiver(),
+                                       dynamic_model_loading=waiver(),
                                        parallel_evaluation=waiver(),
                                        ...){
   
   # Suppress NOTES due to non-standard evaluation in data.table
-  outcome_event <- cohort_id <- NULL
+  outcome_event <- batch_id <- NULL
   
   settings <- list()
   
   # Flag that limits the depth of the evaluation.
   settings$pool_only <- .parse_arg(x_config=config$evaluate_top_level_only, x_var=evaluate_top_level_only,
                                    var_name="evaluate_top_level_only", type="logical", optional=TRUE, default=TRUE)
+  
+  # Specify any specific elements of the evaluation to skip.
+  settings$evaluation_data_elements <- .parse_arg(x_config=config$skip_evaluation_elements, x_var=skip_evaluation_elements,
+                                                  var_name="skip_evaluation_elements", type="character_list", optional=TRUE, default="none")
+  
+  settings$evaluation_data_elements <- tolower(settings$evaluation_data_elements)
+  .check_parameter_value_is_valid(x=settings$evaluation_data_elements, var_name="skip_evaluation_elements",
+                                  values=c(.get_available_data_elements(), "none", "false"))
+  
+  if(any(settings$evaluation_data_elements %in% c("none", "false"))){
+    settings$evaluation_data_elements <- NULL
+  }
+  
+  # Instead of specifying the elements to skip, we specify the elements to keep.
+  settings$evaluation_data_elements <- setdiff(.get_available_data_elements(),
+                                               settings$evaluation_data_elements)
+  
   
   # Method for ensemble predictions
   settings$ensemble_method <- .parse_arg(x_config=config$ensemble_method, x_var=ensemble_method,
@@ -2416,81 +2597,125 @@
   
   sapply(settings$metric, metric.check_outcome_type, outcome_type=outcome_type)
   
+  # Level at which evaluations are computed.
+  settings$detail_level <- .parse_arg(x_config=config$detail_level, x_var=detail_level,
+                                      var_name="detail_level", type="list", optional=TRUE, default=list())
+  
+  if(length(settings$detail_level) == 0){
+    # Default - use method-specific settings.
+    settings$detail_level <- NULL
+    
+  } else if(length(settings$detail_level) == 1 & is.null(names(settings$detail_level))){
+    
+    # Check that the contents are a correctly specified, single string.
+    .check_parameter_value_is_valid(x=settings$detail_level[[1]], var_name="detail_level",
+                                    values=c("ensemble", "hybrid", "model"))
+    
+    # Add provided detail level to each possible element.
+    settings$detail_level <- lapply(.get_available_data_elements(check_has_detail_level=TRUE),
+                                    function(x, detail_level) (detail_level),
+                                    detail_level = settings$detail_level[[1]])
+    
+    # Add name of respective data elements.
+    names(settings$detail_level) <- .get_available_data_elements(check_has_detail_level=TRUE)
+                                                                 
+  } else {
+    
+    # Check that the list elements are correctly specified.
+    sapply(names(settings$detail_level), .check_parameter_value_is_valid,
+           var_name="detail_level (data element name)",
+           values=.get_available_data_elements(check_has_detail_level=TRUE))
+    
+    # Check that the list contents are correctly specified.
+    sapply(names(settings$detail_level), function(element_name, x){
+      .check_parameter_value_is_valid(x[[element_name]],
+                                      var_name=paste0("detail_level (", element_name, ")"),
+                                      values=c("ensemble", "hybrid", "model"))
+    }, x = settings$detail_level)
+  }
+  
+  
+  # Type of estimation performed.
+  settings$estimation_type <- .parse_arg(x_config=config$estimation_type, x_var=estimation_type,
+                                         var_name="estimation_type", type="list", optional=TRUE, default=list())
+  
+  if(length(settings$estimation_type) == 0){
+    # Default - use method-specific settings.
+    settings$estimation_type <- NULL
+    
+  } else if(length(settings$estimation_type) == 1 & is.null(names(settings$estimation_type))){
+    
+    # Check that the contents are a correctly specified, single string.
+    .check_parameter_value_is_valid(x=settings$estimation_type[[1]], var_name="estimation_type",
+                                    values=c("point", "bias_correction", "bc", "bootstrap_confidence_interval", "bci"))
+    
+    # Add provided estimation type to each possible element.
+    settings$estimation_type <- lapply(.get_available_data_elements(check_has_estimation_type=TRUE),
+                                       function(x, estimation_type) (estimation_type),
+                                       estimation_type = settings$estimation_type[[1]])
+    
+    # Add name of respective data elements.
+    names(settings$estimation_type) <- .get_available_data_elements(check_has_estimation_type=TRUE)
+    
+  } else {
+    
+    # Check that the list elements are correctly specified.
+    sapply(names(settings$estimation_type), .check_parameter_value_is_valid,
+           var_name="estimation_type (data element name)",
+           values=.get_available_data_elements(check_has_estimation_type=TRUE))
+    
+    # Check that the list contents are correctly specified.
+    sapply(names(settings$estimation_type), function(element_name, x){
+      .check_parameter_value_is_valid(x[[element_name]],
+                                      var_name=paste0("estimation_type (", element_name, ")"),
+                                      values=c("point", "bias_correction", "bc", "bootstrap_confidence_interval", "bci"))
+    }, x = settings$estimation_type)
+  }
+  
+  
+  # Aggregate results.
+  settings$aggregate_results <- .parse_arg(x_config=config$aggregate_results, x_var=aggregate_results,
+                                           var_name="aggregate_results", type="list", optional=TRUE, default=list())
+  
+  if(length(settings$aggregate_results) == 0){
+    # Default - use method-specific settings.
+    settings$aggregate_results <- NULL
+    
+  } else if(length(settings$aggregate_results) == 1 & is.null(names(settings$aggregate_results))){
+    
+    # Check that the contents are a correctly specified, single string.
+    .check_parameter_value_is_valid(x=tolower(settings$aggregate_results[[1]]), var_name="aggregate_results",
+                                    values=c("true", "false", "none", "all", "default"))
+    
+    # Add provided aggregate_results value to each possible element.
+    settings$aggregate_results <- lapply(.get_available_data_elements(check_has_estimation_type=TRUE),
+                                         function(x, aggregate_results) (aggregate_results),
+                                         aggregate_results = tolower(settings$aggregate_results[[1]]))
+    
+    # Add name of respective data elements.
+    names(settings$aggregate_results) <- .get_available_data_elements(check_has_estimation_type=TRUE)
+    
+  } else {
+    
+    # Check that the list elements are correctly specified.
+    sapply(names(settings$aggregate_results), .check_parameter_value_is_valid,
+           var_name="aggregate_results (data element name)",
+           values=.get_available_data_elements(check_has_estimation_type=TRUE))
+    
+    # Check that the list contents are correctly specified.
+    sapply(names(settings$aggregate_results), function(element_name, x){
+      .check_parameter_value_is_valid(tolower(x[[element_name]]),
+                                      var_name=paste0("aggregate_results (", element_name, ")"),
+                                      values=c("true", "false", "none", "all", "default"))
+    }, x = settings$aggregate_results)
+  }
   
   # Bootstrap confidence interval.
   settings$bootstrap_ci_method <- .parse_arg(x_config=config$bootstrap_ci_method, x_var=bootstrap_ci_method,
-                                             var_name="bootstrap_ci_method", type="character", optional=TRUE, default="bc")
+                                             var_name="bootstrap_ci_method", type="character", optional=TRUE, default="percentile")
   
   .check_parameter_value_is_valid(x=settings$bootstrap_ci_method, var_name="bootstrap_ci_method",
                                   values=.get_available_bootstrap_confidence_interval_methods())
-  
-  # List of available confidence interval elements.
-  evaluation_ci_elements <- c("all", "model_performance", "auc_data",
-                              "decision_curve_analyis", "permutation_vimp",
-                              "true", "false", "none")
-  
-  # Enable or disable computation of data for individual models.
-  settings$compute_model_data <- .parse_arg(x_config=config$compute_model_data, x_var=compute_model_data,
-                                            var_name="compute_model_data", type="character_list", optional=TRUE,
-                                            default="none")
-  
-  settings$compute_model_data <- tolower(settings$compute_model_data)
-  .check_parameter_value_is_valid(x=settings$compute_model_data, var_name="compute_model_data", 
-                                  values=c(evaluation_ci_elements, "performance_data", "confusion_matrix"))
-  
-  # Enable or disable computation of confidence intervals for individual models.
-  settings$compute_model_ci <- .parse_arg(x_config=config$compute_model_ci, x_var=compute_model_ci,
-                                          var_name="compute_model_ci", type="character_list", optional=TRUE,
-                                          default="none")
-  
-  settings$compute_model_ci <- tolower(settings$compute_model_ci)
-  .check_parameter_value_is_valid(x=settings$compute_model_ci, var_name="compute_model_ci",
-                                  values=evaluation_ci_elements)
-  
-  # Handle none, false, true and all values.
-  if(any(settings$compute_model_ci %in% c("none", "false"))){
-    settings$compute_model_ci <- NULL
-    
-  } else if(any(settings$compute_model_ci %in% c("true", "all"))){
-    settings$compute_model_ci <- "all"
-  }
-  
-  
-  # Enable or disable computation of confidence intervals for ensemble models.
-  settings$compute_ensemble_ci <- .parse_arg(x_config=config$compute_ensemble_ci, x_var=compute_ensemble_ci,
-                                             var_name="compute_ensemble_ci", type="character_list", optional=TRUE,
-                                             default="all")
-  
-  settings$compute_ensemble_ci <- tolower(settings$compute_ensemble_ci)
-  .check_parameter_value_is_valid(x=settings$compute_ensemble_ci, var_name="compute_ensemble_ci",
-                                  values=evaluation_ci_elements)
-  
-  # Handle none, false, true and all values.
-  if(any(settings$compute_ensemble_ci %in% c("none", "false"))){
-    settings$compute_ensemble_ci <- NULL
-    
-  } else if(any(settings$compute_ensemble_ci %in% c("true", "all"))){
-    settings$compute_ensemble_ci <- "all"
-  }
-  
-  
-  # Parts for which confidence intervals should be determined.
-  settings$aggregate_ci <- .parse_arg(x_config=config$aggregate_ci, x_var=aggregate_ci,
-                                      var_name="aggregate_ci", type="character_list", optional=TRUE,
-                                      default=c("auc_data", "decision_curve_analyis", "permutation_vimp"))
-  
-  settings$aggregate_ci <- tolower(settings$aggregate_ci)
-  .check_parameter_value_is_valid(x=settings$aggregate_ci, var_name="aggregate_ci",
-                                  values=evaluation_ci_elements)
-  
-  # Handle none, false, true and all values.
-  if(any(settings$aggregate_ci %in% c("none", "false"))){
-    settings$aggregate_ci <- NULL
-    
-  } else if(any(settings$aggregate_ci %in% c("true", "all"))){
-    settings$aggregate_ci <- "all"
-  }
-  
   
   # Width of the confidence intervals
   settings$confidence_level <- .parse_arg(x_config=config$confidence_level, x_var=confidence_level,
@@ -2550,8 +2775,12 @@
   rank.check_aggregation_method(method=settings$aggregation)
   
   # Variable importance rank threshold (used by some aggregation methods)
-  settings$aggr_rank_threshold <- .parse_arg(x_config=config$eval_aggregation_rank_threshold, x_var=eval_aggregation_rank_threshold,
-                                             var_name="eval_aggregation_rank_threshold", type="integer", optional=TRUE, default=vimp_aggregation_rank_threshold)
+  settings$aggr_rank_threshold <- .parse_arg(x_config=config$eval_aggregation_rank_threshold,
+                                             x_var=eval_aggregation_rank_threshold,
+                                             var_name="eval_aggregation_rank_threshold",
+                                             type="integer",
+                                             optional=TRUE,
+                                             default=vimp_aggregation_rank_threshold)
   
   if(!is.null(settings$aggr_rank_threshold)){
     .check_number_in_valid_range(x=settings$aggr_rank_threshold, var_name="eval_aggregation_rank_threshold", range=c(1, Inf))
@@ -2581,15 +2810,6 @@
   
   sapply(settings$strat_quant_threshold, .check_number_in_valid_range, var_name="stratification_threshold", range=c(0.0, 1.0), closed=c(FALSE, FALSE))
   
-  
-  # Method used to ensemble predicted stratifications by multiple models.
-  settings$strat_ensemble_method <- .parse_arg(x_config=config$stratification_ensemble_method, x_var=stratification_ensemble_method,
-                                               var_name="stratification_ensemble_method", type="character", optional=TRUE, default="ensemble_mode")
-  
-  .check_parameter_value_is_valid(x=settings$strat_ensemble_method, var_name="stratification_ensemble_method",
-                                  values=.get_available_stratification_ensemble_methods())
-
-    
   # Study end time (this is used for plotting, and Uno's concordance index)
   settings$time_max <- .parse_arg(x_config=config$time_max, x_var=time_max,
                                   var_name="time_max", type="numeric", optional=TRUE, default=NULL)
@@ -2608,7 +2828,7 @@
         settings$time_max <- max(settings$eval_times)
       } else {
         # 98th percentile of all outcome times.
-        settings$time_max <- stats::quantile(data[outcome_event==1 & cohort_id %in% development_batch_id]$outcome_time, probs=0.98, names=FALSE)
+        settings$time_max <- stats::quantile(data[outcome_event==1 & batch_id %in% development_batch_id]$outcome_time, probs=0.98, names=FALSE)
       }
     }
     
@@ -2622,12 +2842,23 @@
     sapply(settings$eval_times, .check_number_in_valid_range, var_name="evaluation_time", range=c(0.0, Inf), closed=c(FALSE, TRUE))
   }
   
+  # Dynamic loading of models during evaluation.
+  settings$auto_detach <- .parse_arg(x_config=config$dynamic_model_loading, x_var=dynamic_model_loading,
+                                     var_name="dynamic_model_loading", type="logical", optional=TRUE, default=FALSE)
+  
   # Parallelisation switch for parallel processing
   settings$do_parallel <- .parse_arg(x_config=config$parallel_evaluation, x_var=parallel_evaluation,
                                      var_name="parallel_evaluation", type="logical", optional=TRUE, default=TRUE)
   
+  # Parallelisation switch for parallel processing
+  settings$do_parallel <- .parse_arg(x_config=config$parallel_evaluation, x_var=parallel_evaluation,
+                                     var_name="parallel_evaluation", type="character", optional=TRUE, default="TRUE")
+  
+  .check_parameter_value_is_valid(x=settings$do_parallel, var_name="parallel_evaluation",
+                                  values=c("TRUE", "FALSE", "inner", "outer"))
+  
   # Disable if parallel is FALSE
-  if(!parallel) { settings$do_parallel <- FALSE }
+  if(!parallel) settings$do_parallel <- "FALSE"
   
   # Return list of settings
   return(settings)

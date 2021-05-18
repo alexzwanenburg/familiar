@@ -71,6 +71,9 @@ similarity.pseudo_r2 <- function(x, y, x_categorical, y_categorical, similarity_
   # Check if there is sufficient data left over.
   if(nrow(data) <= 1) return(as.double(NA))
   
+  # Check if there are more than one unique values in x and or y.
+  if(length(unique(x)) == 1 & length(unique(y)) == 1) return(1.0)
+  
   # Compute log-likelihoods so that the pseudo-R^2 measures can be computed.
   if(analysis_info$type == "gaussian"){
     # Numerical y variable

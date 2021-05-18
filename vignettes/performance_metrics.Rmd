@@ -90,11 +90,11 @@ more (`multinomial`) is often not trivial. For many metrics, `familiar` uses a
 one-versus-all approach. Here, all classes are iteratively used as the
 'positive' class, with the remainder grouped as 'negative'. Three options can be
 used to obtain performance values for `multinomial` problems, with an
-implementation similar to `scikit.learn`:
+implementation similar to that of `scikit.learn`:
 
-* `micro`: True positives, true negatives, false positives and false negatives
-are computed for each class iteration, and then summed over all classes. The
-score is subsequently calculated.
+* `micro`: The number of true positives, true negatives, false positives and
+false negatives are computed for each class iteration, and then summed over all
+classes. The score is subsequently calculated.
 
 * `macro`: A score is computed for each class iteration, and then averaged.
 

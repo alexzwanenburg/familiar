@@ -48,9 +48,8 @@ setMethod("get_default_hyperparameters", signature(object="familiarKNN"),
             # names only.
             if(is.null(data)) return(param)
             
-            # Get the number of subjects
-            n_samples <- nrow(data@data)
-            n_classes <- length(get_outcome_class_levels(x=data))
+            # Get the number of unique series.
+            n_samples <- data.table::uniqueN(data@data, by=get_id_columns(id_depth="series"))
             
             
             ##### Signature size ###############################################
@@ -60,14 +59,14 @@ setMethod("get_default_hyperparameters", signature(object="familiarKNN"),
             ##### Number of nearest neighbours k ###############################
             
             # Define the range for the number of nearest neighbour clusters.
-            k_range <- c(1, ceiling(2*n_samples^(1/3)))
+            k_range <- c(1, max(c(1, ceiling(2*n_samples^(1/3)))))
             
             # Define the default value.
-            k_default <- c(1, 2, 5, 10, 20)
+            k_default <- sort(unique(c(1, 2, 5, 10, 20, k_range)))
             k_default <- k_default[k_default >= k_range[1] & k_default <= k_range[2]]
             
             param$k <- .set_hyperparameter(default=k_default, type="integer", range=k_range,
-                                           valid_range=c(n_classes, Inf), randomise=TRUE)
+                                           valid_range=c(1L, Inf), randomise=TRUE)
             
             if(is(object, "familiarKNNradial")){
               ##### Radial basis function kernel gamma #########################
@@ -89,6 +88,9 @@ setMethod("..train", signature(object="familiarKNN", data="dataObject"),
             
             # Check if training data is ok.
             if(has_bad_training_data(object=object, data=data)) return(callNextMethod())
+            
+            # Check if hyperparameters are set.
+            if(is.null(object@hyperparameters)) return(callNextMethod())
             
             # Find feature columns in the data.
             feature_columns <- get_feature_columns(x=data)
@@ -129,38 +131,60 @@ setMethod("..train", signature(object="familiarKNN", data="dataObject"),
 
 #####..predict#####
 setMethod("..predict", signature(object="familiarKNN", data="dataObject"),
-          function(object, data, ...){
+          function(object, data, type="default", ...){
             
-            # Check if the model was trained.
-            if(!model_is_trained(object)) return(callNextMethod())
-            
-            # Check if the data is empty.
-            if(is_empty(data)) return(callNextMethod())
-            
-            # Get an empty prediction table.
-            prediction_table <- get_placeholder_prediction_table(object=object,
-                                                                 data=data)
-            
-            # Use the model for prediction.
-            model_predictions <- predict(object=object@model,
-                                         newdata=data@data)
-            
-            # Obtain class levels.
-            class_levels <- get_outcome_class_levels(x=object)
-            
-            # Add class probabilities.
-            class_probability_columns <- get_class_probability_name(x=object)
-            for(ii in seq_along(class_probability_columns)){
-              prediction_table[, (class_probability_columns[ii]):=model_predictions$posterior[, class_levels[ii]]]
+            if(type == "default"){
+              ##### Default method #############################################
+              
+              # Check if the model was trained.
+              if(!model_is_trained(object)) return(callNextMethod())
+              
+              # Check if the data is empty.
+              if(is_empty(data)) return(callNextMethod())
+              
+              # Get an empty prediction table.
+              prediction_table <- get_placeholder_prediction_table(object=object,
+                                                                   data=data,
+                                                                   type=type)
+              
+              # Use the model for prediction.
+              model_predictions <- predict(object=object@model,
+                                           newdata=data@data)
+              
+              # Obtain class levels.
+              class_levels <- get_outcome_class_levels(x=object)
+              
+              # Add class probabilities.
+              class_probability_columns <- get_class_probability_name(x=object)
+              for(ii in seq_along(class_probability_columns)){
+                prediction_table[, (class_probability_columns[ii]):=model_predictions$posterior[, class_levels[ii]]]
+              }
+              
+              # Add the predicted class.
+              prediction_table[, "predicted_class":=model_predictions$class]
+              
+              return(prediction_table)
+              
+            } else {
+              ##### User-specified method ######################################
+              # Note: the predict method for klaR::sknn does not actually have a
+              # type argument at the moment.
+              
+              # Check if the model was trained.
+              if(!model_is_trained(object)) return(NULL)
+              
+              # Check if the data is empty.
+              if(is_empty(data)) return(NULL)
+              
+              # Use the model for prediction.
+              return(predict(object=object@model,
+                             newdata=data@data,
+                             type=type,
+                             ...))
             }
-            
-            # Add the predicted class.
-            prediction_table[, "predicted_class":=model_predictions$class]
-            
-            return(prediction_table)
           })
 
 
 
 #####..vimp#####
-# KNN does not have a variable importance method.
+# KNN does not have an associated variable importance method.

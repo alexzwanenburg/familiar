@@ -36,10 +36,20 @@ test_all_learners_available <- function(learners){
 
 
 
-test_all_learners_train_predict_vimp <- function(learners, hyperparameter_list=NULL,
-                                                 except_train=NULL, except_predict=NULL,
+test_all_learners_train_predict_vimp <- function(learners,
+                                                 hyperparameter_list=NULL,
+                                                 except_train=NULL,
+                                                 except_predict=NULL,
                                                  except_predict_survival=NULL,
-                                                 has_vimp=TRUE){
+                                                 has_vimp=TRUE,
+                                                 debug=FALSE){
+  
+  if(debug){
+    test_fun <- debug_test_that
+    
+  } else {
+    test_fun <- testthat::test_that
+  }
   
   # Iterate over the outcome type.
   for(outcome_type in c("count", "continuous", "binomial", "multinomial", "survival")){
@@ -90,7 +100,7 @@ test_all_learners_train_predict_vimp <- function(learners, hyperparameter_list=N
                                       time_max=1832))
       
       # Test that models can be created.
-      testthat::test_that(paste0("Model for ", outcome_type, " can be created using ", learner, " using a complete data set."), {
+      test_fun(paste0("Model for ", outcome_type, " can be created using ", learner, " using a complete data set."), {
         
         # Test that the model was successfully created.
         testthat::expect_equal(model_is_trained(model),
@@ -103,7 +113,7 @@ test_all_learners_train_predict_vimp <- function(learners, hyperparameter_list=N
       })
       
       # Test that models can be used to predict the outcome.
-      testthat::test_that(paste0("Sample predictions for ", outcome_type, " can be made using ", learner, " for a complete data set."), {
+      test_fun(paste0("Sample predictions for ", outcome_type, " can be made using ", learner, " for a complete data set."), {
         # Expect predictions to be made.
         prediction_table <- suppressWarnings(.predict(model, data=full_data))
         
@@ -121,7 +131,7 @@ test_all_learners_train_predict_vimp <- function(learners, hyperparameter_list=N
       })
       
       # Test that models can be used to predict the outcome.
-      testthat::test_that(paste0("Sample predictions for ", outcome_type, " can be made using ", learner, " for a one-sample data set."), {
+      test_fun(paste0("Sample predictions for ", outcome_type, " can be made using ", learner, " for a one-sample data set."), {
         # Expect predictions to be made.
         prediction_table <- suppressWarnings(.predict(model, data=full_one_sample_data))
         
@@ -139,7 +149,7 @@ test_all_learners_train_predict_vimp <- function(learners, hyperparameter_list=N
       })
       
       # Test that models cannot predict for empty datasets.
-      testthat::test_that(paste0("Sample predictions for ", outcome_type, " can not be made using ", learner, " for an empty data set."), {
+      test_fun(paste0("Sample predictions for ", outcome_type, " can not be made using ", learner, " for an empty data set."), {
         # Expect predictions to be made.
         prediction_table <- suppressWarnings(.predict(model, data=empty_data))
         
@@ -149,29 +159,40 @@ test_all_learners_train_predict_vimp <- function(learners, hyperparameter_list=N
       
       # Test that models can be used to predict survival probabilities.
       if(outcome_type %in% c("survival", "competing_risk")){
-        testthat::test_that(paste0("Sample survival predictions for ", outcome_type, " can be made using ", learner, " for a complete data set."), {
+        test_fun(paste0("Sample survival predictions for ", outcome_type, " can be made using ", learner, " for a complete data set."), {
           # Expect predictions to be made.
           prediction_table <- suppressWarnings(.predict(model, full_data, type="survival_probability", time=1000))
           
           # Test that the predictions were successfully made.
           testthat::expect_equal(any_predictions_valid(prediction_table, outcome_type),
                                  ifelse(learner %in% c(except_train, except_predict, except_predict_survival), FALSE, TRUE))
+          
+          prediction_table <- suppressWarnings(.predict(model, full_data, type="risk_stratification", time=1000))
+          
+          # Test that the predictions were successfully made.
+          testthat::expect_equal(any_predictions_valid(prediction_table, outcome_type), !learner %in% c(except_train, except_predict))
         })
         
-        testthat::test_that(paste0("Sample survival predictions for ", outcome_type, " can be made using ", learner, " for a one-sample data set."), {
+        test_fun(paste0("Sample survival predictions for ", outcome_type, " can be made using ", learner, " for a one-sample data set."), {
           # Expect predictions to be made.
           prediction_table <- suppressWarnings(.predict(model, data=full_one_sample_data, type="survival_probability", time=1000))
           
           # Test that the predictions were successfully made.
           testthat::expect_equal(any_predictions_valid(prediction_table, outcome_type),
                                  ifelse(learner %in% c(except_train, except_predict, except_predict_survival), FALSE, TRUE))
+          
+          # Expect predictions to be made.
+          prediction_table <- suppressWarnings(.predict(model, data=full_one_sample_data, type="risk_stratification", time=1000))
+          
+          # Test that the predictions were successfully made.
+          testthat::expect_equal(any_predictions_valid(prediction_table, outcome_type), !learner %in% c(except_train, except_predict))
         })
       }
       
       # Test that the model has variable importance.
-      testthat::test_that(paste0("Model has variable importance for ", outcome_type, " and ", learner, "for the complete data set."), {
+      test_fun(paste0("Model has variable importance for ", outcome_type, " and ", learner, " for the complete data set."), {
         # Extract the variable importance table.
-        vimp_table <- suppressWarnings(..vimp(model))
+        vimp_table <- suppressWarnings(..vimp(model, full_data))
         
         if(has_vimp){
           # Get the number of features
@@ -204,7 +225,7 @@ test_all_learners_train_predict_vimp <- function(learners, hyperparameter_list=N
                                       create_bootstrap=TRUE))
       
       # Test that models can be created.
-      testthat::test_that(paste0("Model for ", outcome_type, " can be created using ", learner, " using a complete data set."), {
+      test_fun(paste0("Model for ", outcome_type, " can be created using ", learner, " using a complete data set."), {
         
         # Test that the model was successfully created.
         testthat::expect_equal(model_is_trained(model),
@@ -228,7 +249,7 @@ test_all_learners_train_predict_vimp <- function(learners, hyperparameter_list=N
                                       time_max=1832))
       
       # Test that models can be created.
-      testthat::test_that(paste0("Model for ", outcome_type, " can be created using ", learner, " using a one-feature data set."), {
+      test_fun(paste0("Model for ", outcome_type, " can be created using ", learner, " using a one-feature data set."), {
         
         # Test that the model was successfully created.
         testthat::expect_equal(model_is_trained(model),
@@ -241,7 +262,7 @@ test_all_learners_train_predict_vimp <- function(learners, hyperparameter_list=N
       })
       
       # Test that models can be used to predict the outcome.
-      testthat::test_that(paste0("Sample predictions for ", outcome_type, " can be made using ", learner, " for a one-feature data set."), {
+      test_fun(paste0("Sample predictions for ", outcome_type, " can be made using ", learner, " for a one-feature data set."), {
         # Expect predictions to be made.
         prediction_table <- suppressWarnings(.predict(model, data=one_feature_data))
         
@@ -259,7 +280,7 @@ test_all_learners_train_predict_vimp <- function(learners, hyperparameter_list=N
       })
       
       # Test that models can be used to predict the outcome.
-      testthat::test_that(paste0("Sample predictions for ", outcome_type, " can be made using ", learner, " for a one-feature, one-sample data set."), {
+      test_fun(paste0("Sample predictions for ", outcome_type, " can be made using ", learner, " for a one-feature, one-sample data set."), {
         # Expect predictions to be made.
         prediction_table <- suppressWarnings(.predict(model, data=one_feature_one_sample_data))
         
@@ -278,22 +299,34 @@ test_all_learners_train_predict_vimp <- function(learners, hyperparameter_list=N
       
       # Test that models can be used to predict survival probabilities.
       if(outcome_type %in% c("survival", "competing_risk")){
-        testthat::test_that(paste0("Sample survival predictions for ", outcome_type, " can be made using ", learner, " for a one-feature data set."), {
+        test_fun(paste0("Sample survival predictions for ", outcome_type, " can be made using ", learner, " for a one-feature data set."), {
           # Expect predictions to be made.
           prediction_table <- suppressWarnings(.predict(model, one_feature_data, type="survival_probability", time=1000))
           
           # Test that the predictions were successfully made.
           testthat::expect_equal(any_predictions_valid(prediction_table, outcome_type),
                                  ifelse(learner %in% c(except_train, except_predict, except_predict_survival), FALSE, TRUE))
+          
+          # Expect predictions to be made.
+          prediction_table <- suppressWarnings(.predict(model, one_feature_data, type="risk_stratification", time=1000))
+          
+          # Test that the predictions were successfully made.
+          testthat::expect_equal(any_predictions_valid(prediction_table, outcome_type), !learner %in% c(except_train, except_predict))
         })
         
-        testthat::test_that(paste0("Sample survival predictions for ", outcome_type, " can be made using ", learner, " for a one-feature, one-sample data set."), {
+        test_fun(paste0("Sample survival predictions for ", outcome_type, " can be made using ", learner, " for a one-feature, one-sample data set."), {
           # Expect predictions to be made.
           prediction_table <- suppressWarnings(.predict(model, data=one_feature_one_sample_data, type="survival_probability", time=1000))
           
           # Test that the predictions were successfully made.
           testthat::expect_equal(any_predictions_valid(prediction_table, outcome_type),
                                  ifelse(learner %in% c(except_train, except_predict, except_predict_survival), FALSE, TRUE))
+          
+          # Expect predictions to be made.
+          prediction_table <- suppressWarnings(.predict(model, data=one_feature_one_sample_data, type="risk_stratification", time=1000))
+          
+          # Test that the predictions were successfully made.
+          testthat::expect_equal(any_predictions_valid(prediction_table, outcome_type), !learner %in% c(except_train, except_predict))
         })
       }
       
@@ -308,7 +341,7 @@ test_all_learners_train_predict_vimp <- function(learners, hyperparameter_list=N
                                       time_max=1832))
       
       # Test that models can be created.
-      testthat::test_that(paste0("Model for ", outcome_type, " can not be created using ", learner, " using a bad data set."), {
+      test_fun(paste0("Model for ", outcome_type, " can not be created using ", learner, " using a bad data set."), {
         
         # Test that the model was successfully created.
         testthat::expect_equal(model_is_trained(model), FALSE)
@@ -1037,6 +1070,558 @@ test_all_metrics <- function(metrics,
 }
 
 
+
+test_hyperparameter_optimisation <- function(vimp_methods=NULL,
+                                             learners=NULL,
+                                             outcome_type_available=c("count", "continuous", "binomial", "multinomial", "survival"),
+                                             always_available=FALSE,
+                                             no_hyperparameters=FALSE,
+                                             n_max_bootstraps=25L,
+                                             n_max_optimisation_steps=3L,
+                                             n_max_intensify_steps=2L,
+                                             n_random_sets=20L,
+                                             n_challengers=10L,
+                                             ...,
+                                             test_specific_config=FALSE,
+                                             debug=FALSE,
+                                             parallel=waiver()){
+  
+  if(debug){
+    test_fun <- debug_test_that
+    verbose <- TRUE
+  } else {
+    test_fun <- testthat::test_that
+    verbose <- FALSE
+  }
+  
+  # Set parallelisation.
+  if(is.waive(parallel)) parallel <- !debug
+  
+  if(parallel){
+    # Set options.
+    # Disable randomForestSRC OpenMP core use.
+    options(rf.cores=as.integer(1))
+    on.exit(options(rf.cores=-1L), add=TRUE)
+    
+    # Disable multithreading on data.table to prevent reduced performance due to
+    # resource collisions with familiar parallelisation.
+    data.table::setDTthreads(1L)
+    on.exit(data.table::setDTthreads(0L), add=TRUE)
+    
+    # Start local cluster in the overall process.
+    cl <- .test_start_cluster(n_cores=4L)
+    on.exit(.terminate_cluster(cl), add=TRUE)
+    
+  } else {
+    cl <- NULL
+  }
+  
+  # Clean up dots
+  dots <- list(...)
+  dots$cl <- NULL
+  dots$verbose <- NULL
+  
+  
+  if(is.null(learners)){
+    is_vimp <- TRUE
+    method_pool <- vimp_methods
+    
+    if(is.null(learners)) learners <- "glm"
+    
+  } else {
+    is_vimp <- FALSE
+    method_pool <- learners
+    
+    if(is.null(vimp_methods)) vimp_methods <- "mim"
+  }
+  
+  # Iterate over the outcome type.
+  for(outcome_type in outcome_type_available){
+
+    # Multi-feature data sets.
+    full_data <- test.create_good_data_set(outcome_type)
+    identical_sample_data <- test.create_all_identical_data_set(outcome_type)
+    full_one_sample_data <- test.create_one_sample_data_set(outcome_type)
+    empty_data <- test.create_empty_data_set(outcome_type)
+    
+    # One-feature data sets.
+    one_feature_data <- test.create_one_feature_data_set(outcome_type)
+    one_feature_one_sample_data <- test.create_one_feature_one_sample_data_set(outcome_type)
+    one_feature_invariant_data <- test.create_one_feature_invariant_data_set(outcome_type)
+
+    # Set exceptions per outcome type.
+    .always_available <- always_available
+    if(is.character(.always_available)) .always_available <- any(.always_available == outcome_type)
+    
+    # Iterate over learners or variable importance methods..
+    for(current_method in method_pool){
+      
+      if(is_vimp){
+        learner <- learners
+        vimp_method <- current_method
+        
+      } else {
+        learner <- current_method
+        vimp_method <- vimp_methods
+      }
+      
+      
+      if(!learner.check_outcome_type(learner=learner, outcome_type=outcome_type, as_flag=TRUE)) next()
+      if(!vimp.check_outcome_type(method=vimp_method, outcome_type=outcome_type, as_flag=TRUE)) next()
+      
+      #####Full data set--------------------------------------------------------
+      
+      # Create object
+      object <- .test_create_hyperparameter_object(data=full_data,
+                                                   vimp_method=vimp_method,
+                                                   learner=learner,
+                                                   is_vimp=is_vimp,
+                                                   set_signature_feature=TRUE)
+      
+      # Check that object is available for the outcome.
+      if(!is_available(object)) next()
+      
+      if(verbose) message(paste0("\nComputing hyperparameters for ", current_method,
+                                 ifelse(is_vimp, " variable importance method", " learner"), " and ",
+                                 outcome_type, " outcomes for a complete data set."))
+      
+      # Hyperparameter optimisation on a full dataset.
+      new_object <- do.call(optimise_hyperparameters,
+                            args=c(list("object"=object,
+                                        "data"=full_data,
+                                        "cl"=cl,
+                                        "n_max_bootstraps"=n_max_bootstraps,
+                                        "n_max_optimisation_steps"=n_max_optimisation_steps,
+                                        "n_max_intensify_steps"=n_max_intensify_steps,
+                                        "n_random_sets"=n_random_sets,
+                                        "n_challengers"=n_challengers,
+                                        "is_vimp"=is_vimp,
+                                        "verbose"=verbose),
+                                   dots))
+
+      # Test that hyperparameters were set.
+      test_fun(paste0("1. Hyperparameters for the ", current_method,
+                      ifelse(is_vimp, " variable importance method", " learner"), " and ",
+                      outcome_type, " outcomes can be created for a complete data set."), {
+                        
+                        if(no_hyperparameters){
+                          # Test that no hyperparameters are set.
+                          testthat::expect_equal(is.null(new_object@hyperparameters), TRUE)
+                          
+                        } else if(!no_hyperparameters | always_available){
+                          # Test that hyperparameters are set.
+                          testthat::expect_equal(is.null(new_object@hyperparameters), FALSE)
+                          
+                          # Test that all hyperparameters are set.
+                          testthat::expect_setequal(names(new_object@hyperparameters), names(get_default_hyperparameters(object)))
+                          
+                          if(!is_vimp){
+                            if(!is.null(new_object@hyperparameter_data)){
+                              # Test that sign_size hyperparameters make
+                              # sense. 
+                              testthat::expect_equal(all(new_object@hyperparameter_data$sign_size >= 2), TRUE)
+                              testthat::expect_equal(all(new_object@hyperparameter_data$sign_size <= get_n_features(full_data)), TRUE)
+                              
+                              if(vimp_method == "signature_only"){
+                                testthat::expect_equal(all(new_object@hyperparameter_data$sign_size == 2), TRUE)
+                              }
+                              
+                              if(vimp_method == "none"){
+                                testthat::expect_equal(all(new_object@hyperparameter_data$sign_size == get_n_features(full_data)), TRUE)
+                              }
+                            }
+                          }
+                        }
+                      })
+      
+      if(verbose) message(paste0("\nComputing hyperparameters for ", current_method,
+                                 ifelse(is_vimp, " variable importance method", " learner"), " and ",
+                                 outcome_type, " outcomes for a data set with only identical entries."))
+      
+      # Optimise for data that are completely identical.
+      new_object <- do.call(optimise_hyperparameters,
+                            args=c(list("object"=object,
+                                        "data"=identical_sample_data,
+                                        "cl"=cl,
+                                        "n_max_bootstraps"=n_max_bootstraps,
+                                        "n_max_optimisation_steps"=n_max_optimisation_steps,
+                                        "n_max_intensify_steps"=n_max_intensify_steps,
+                                        "n_random_sets"=n_random_sets,
+                                        "n_challengers"=n_challengers,
+                                        "is_vimp"=is_vimp,
+                                        "verbose"=verbose),
+                                   dots))
+      
+      # Test that hyperparameters were set.
+      test_fun(paste0("2. Hyperparameters for the ", current_method,
+                      ifelse(is_vimp, " variable importance method", " learner"), " and ",
+                      outcome_type, " outcomes can be created for a data set with only identical entries."), {
+                        
+                        if(no_hyperparameters | !always_available){
+                          # Test that no hyperparameters are set. Models cannot
+                          # train on completely invariant data.
+                          testthat::expect_equal(is.null(new_object@hyperparameters), TRUE)
+                          
+                        } else if(always_available){
+                          # Test that hyperparameters are set.
+                          testthat::expect_equal(is.null(new_object@hyperparameters), FALSE)
+                          
+                          # Test that all hyperparameters are set.
+                          testthat::expect_setequal(names(new_object@hyperparameters), names(get_default_hyperparameters(object)))
+                          
+                          if(!is_vimp){
+                            if(!is.null(new_object@hyperparameter_data)){
+                              # Test that sign_size hyperparameters make
+                              # sense. 
+                              testthat::expect_equal(all(new_object@hyperparameter_data$sign_size >= 2), TRUE)
+                              testthat::expect_equal(all(new_object@hyperparameter_data$sign_size <= get_n_features(full_data)), TRUE)
+                              
+                              if(vimp_method == "signature_only"){
+                                testthat::expect_equal(all(new_object@hyperparameter_data$sign_size == 2), TRUE)
+                              }
+                              
+                              if(vimp_method == "none"){
+                                testthat::expect_equal(all(new_object@hyperparameter_data$sign_size == get_n_features(full_data)), TRUE)
+                              }
+                            }
+                          }
+                        }
+                      })
+      
+      if(verbose) message(paste0("\nComputing hyperparameters for ", current_method,
+                                 ifelse(is_vimp, " variable importance method", " learner"), " and ",
+                                 outcome_type, " outcomes for a data set with only one entry."))
+      
+      # Optimise for data that consist of only one sample.
+      new_object <- do.call(optimise_hyperparameters,
+                            args=c(list("object"=object,
+                                        "data"=full_one_sample_data,
+                                        "cl"=cl,
+                                        "n_max_bootstraps"=n_max_bootstraps,
+                                        "n_max_optimisation_steps"=n_max_optimisation_steps,
+                                        "n_max_intensify_steps"=n_max_intensify_steps,
+                                        "n_random_sets"=n_random_sets,
+                                        "n_challengers"=n_challengers,
+                                        "is_vimp"=is_vimp,
+                                        "verbose"=verbose),
+                                   dots))
+      
+      # Test.
+      test_fun(paste0("3. Hyperparameters for the ", current_method,
+                      ifelse(is_vimp, " variable importance method", " learner"), " and ",
+                      outcome_type, " outcomes can be created for a data set with only one entry."), {
+                        
+                        if(no_hyperparameters){
+                          # Test that no hyperparameters are set. Single entry
+                          # data cannot be used to generate hyperparameter sets
+                          # unless they are always available.
+                          testthat::expect_equal(is.null(new_object@hyperparameters), TRUE)
+                          
+                        } else if(always_available){
+                          # Test that hyperparameters are set.
+                          testthat::expect_equal(is.null(new_object@hyperparameters), FALSE)
+                          
+                          # Test that all hyperparameters are set.
+                          testthat::expect_setequal(names(new_object@hyperparameters), names(get_default_hyperparameters(object)))
+                          
+                          if(!is_vimp) {
+                            if(!is.null(new_object@hyperparameter_data)){
+                              # Test that sign_size hyperparameters make
+                              # sense. 
+                              testthat::expect_equal(all(new_object@hyperparameter_data$sign_size >= 2), TRUE)
+                              testthat::expect_equal(all(new_object@hyperparameter_data$sign_size <= get_n_features(full_data)), TRUE)
+                              
+                              if(vimp_method == "signature_only"){
+                                testthat::expect_equal(all(new_object@hyperparameter_data$sign_size == 2), TRUE)
+                              }
+                              
+                              if(vimp_method == "none"){
+                                testthat::expect_equal(all(new_object@hyperparameter_data$sign_size == get_n_features(full_data)), TRUE)
+                              }
+                            }
+                          }
+                          
+                        } else {
+                          # Not always available, but with hyperparameters. For
+                          # some methods all hyperparameters can still be set,
+                          # i.e. all typically randomised hyperparameters depend
+                          # only on the number of features. Therefore, this is a
+                          # softer check.
+                          
+                          if(!is.null(new_object@hyperparameters)){
+                            # Test that all hyperparameters are set.
+                            testthat::expect_setequal(names(new_object@hyperparameters), names(get_default_hyperparameters(object)))
+                            
+                            if(!is_vimp){
+                              if(!is.null(new_object@hyperparameter_data)){
+                                # Test that sign_size hyperparameters make
+                                # sense. 
+                                testthat::expect_equal(all(new_object@hyperparameter_data$sign_size == 2), TRUE)
+                              }
+                            }
+                            
+                          } else {
+                            # Bogus test to prevent skipping.
+                            testthat::expect_equal(is.null(new_object@hyperparameters), TRUE)
+                          }
+                        }
+                      })
+      
+      if(verbose) message(paste0("\nComputing hyperparameters for ", current_method,
+                                 ifelse(is_vimp, " variable importance method", " learner"), " and ",
+                                 outcome_type, " outcomes for an empty data set."))
+      
+      # Optimise when data is missing.
+      new_object <- do.call(optimise_hyperparameters,
+                            args=c(list("object"=object,
+                                        "data"=empty_data,
+                                        "cl"=cl,
+                                        "n_max_bootstraps"=n_max_bootstraps,
+                                        "n_max_optimisation_steps"=n_max_optimisation_steps,
+                                        "n_max_intensify_steps"=n_max_intensify_steps,
+                                        "n_random_sets"=n_random_sets,
+                                        "n_challengers"=n_challengers,
+                                        "is_vimp"=is_vimp,
+                                        "verbose"=verbose),
+                                   dots))
+      
+      # Test.
+      test_fun(paste0("4. Hyperparameters for the ", current_method,
+                      ifelse(is_vimp, " variable importance method", " learner"), " and ",
+                      outcome_type, " outcomes ",
+                      ifelse(always_available, "can", "cannot"),
+                      " be created for an empty data set."), {
+                        
+                        if(no_hyperparameters){
+                          # Test that no hyperparameters are set. Empty datasets
+                          # cannot be used to create hyperparameters.
+                          testthat::expect_equal(is.null(new_object@hyperparameters), TRUE)
+                          
+                        } else if(always_available){
+                          # Test that hyperparameters are set.
+                          testthat::expect_equal(is.null(new_object@hyperparameters), FALSE)
+                          
+                          # Test that all hyperparameters are set.
+                          testthat::expect_setequal(names(new_object@hyperparameters), names(get_default_hyperparameters(object)))
+                          
+                        } else {
+                          # Not always available, but with hyperparameters. For
+                          # some methods all hyperparameters can still be set,
+                          # i.e. all typically randomised hyperparameters depend
+                          # only on the number of features. Therefore, this is a
+                          # softer check.
+                          
+                          if(!is.null(new_object@hyperparameters)){
+                            # Test that all hyperparameters are set.
+                            testthat::expect_setequal(names(new_object@hyperparameters), names(get_default_hyperparameters(object)))
+                            
+                            if(!is_vimp & !is.null(new_object@hyperparameter_data)){
+                              # Test that sign_size hyperparameters make
+                              # sense. 
+                              testthat::expect_equal(all(new_object@hyperparameter_data$sign_size == 2), TRUE)
+                            }
+                            
+                          } else {
+                            # Bogus test to prevent skipping.
+                            testthat::expect_equal(is.null(new_object@hyperparameters), TRUE)
+                          }
+                        }
+                      })
+      
+      
+      
+      #####One-feature data set-------------------------------------------------
+      # Create object
+      object <- .test_create_hyperparameter_object(data=one_feature_data,
+                                                   vimp_method=vimp_method,
+                                                   learner=learner,
+                                                   is_vimp=is_vimp,
+                                                   set_signature_feature=FALSE)
+      
+      if(verbose) message(paste0("\nComputing hyperparameters for ", current_method,
+                                 ifelse(is_vimp, " variable importance method", " learner"), " and ",
+                                 outcome_type, " outcomes for a data set with only one feature."))
+      
+      # Optimise parameters for a dataset with only one feature.
+      new_object <- do.call(optimise_hyperparameters,
+                            args=c(list("object"=object,
+                                        "data"=one_feature_data,
+                                        "cl"=cl,
+                                        "n_max_bootstraps"=n_max_bootstraps,
+                                        "n_max_optimisation_steps"=n_max_optimisation_steps,
+                                        "n_max_intensify_steps"=n_max_intensify_steps,
+                                        "n_random_sets"=n_random_sets,
+                                        "n_challengers"=n_challengers,
+                                        "is_vimp"=is_vimp,
+                                        "verbose"=verbose),
+                                   dots))
+      
+      test_fun(paste0("5. Hyperparameters for the ", current_method,
+                      ifelse(is_vimp, " variable importance method", " learner"), " and ",
+                      outcome_type, " outcomes can be created for a data set with only one feature."), {
+                        
+                        if(no_hyperparameters){
+                          # Test that no hyperparameters are set.
+                          testthat::expect_equal(is.null(new_object@hyperparameters), TRUE)
+                          
+                        } else if(!no_hyperparameters | always_available){
+                          # Test that hyperparameters are set.
+                          testthat::expect_equal(is.null(new_object@hyperparameters), FALSE)
+                          
+                          # Test that all hyperparameters are set.
+                          testthat::expect_setequal(names(new_object@hyperparameters), names(get_default_hyperparameters(object)))
+                          
+                          if(!is_vimp){
+                            if(!is.null(new_object@hyperparameter_data)){
+                              # Test that sign_size hyperparameters make
+                              # sense. 
+                              testthat::expect_equal(all(new_object@hyperparameter_data$sign_size == 1), TRUE)
+                            }
+                          }
+                        }
+                      })
+      
+      if(verbose) message(paste0("\nComputing hyperparameters for ", current_method,
+                                 ifelse(is_vimp, " variable importance method", " learner"), " and ",
+                                 outcome_type, " outcomes for a data set with only one feature and sample."))
+      
+      # Optimise parameters for a dataset with only one feature and sample.
+      new_object <- do.call(optimise_hyperparameters,
+                            args=c(list("object"=object,
+                                        "data"=one_feature_one_sample_data,
+                                        "cl"=cl,
+                                        "n_max_bootstraps"=n_max_bootstraps,
+                                        "n_max_optimisation_steps"=n_max_optimisation_steps,
+                                        "n_max_intensify_steps"=n_max_intensify_steps,
+                                        "n_random_sets"=n_random_sets,
+                                        "n_challengers"=n_challengers,
+                                        "is_vimp"=is_vimp,
+                                        "verbose"=verbose),
+                                   dots))
+      
+      test_fun(paste0("6. Hyperparameters for the ", current_method,
+                      ifelse(is_vimp, " variable importance method", " learner"), " and ",
+                      outcome_type, " outcomes can be created for a data set with only one feature and sample."), {
+                        
+                        if(no_hyperparameters){
+                          # Test that no hyperparameters are set.
+                          # Hyperparameters cannot be set for datasets with only
+                          # a single sample.
+                          testthat::expect_equal(is.null(new_object@hyperparameters), TRUE)
+                          
+                        } else if(always_available){
+                          # Test that hyperparameters are set.
+                          testthat::expect_equal(is.null(new_object@hyperparameters), FALSE)
+                          
+                          # Test that all hyperparameters are set.
+                          testthat::expect_setequal(names(new_object@hyperparameters), names(get_default_hyperparameters(object)))
+                          
+                          if(!is_vimp){
+                            if(!is.null(new_object@hyperparameter_data)){
+                              # Test that sign_size hyperparameters make
+                              # sense. 
+                              testthat::expect_equal(all(new_object@hyperparameter_data$sign_size == 1), TRUE)
+                            }
+                          }
+                          
+                        } else {
+                          # Not always available, but with hyperparameters. For
+                          # some methods all hyperparameters can still be set,
+                          # i.e. all typically randomised hyperparameters depend
+                          # only on the number of features. Therefore, this is a
+                          # softer check.
+                          
+                          if(!is.null(new_object@hyperparameters)){
+                            # Test that all hyperparameters are set.
+                            testthat::expect_setequal(names(new_object@hyperparameters), names(get_default_hyperparameters(object)))
+                            
+                            if(!is_vimp){
+                              if(!is.null(new_object@hyperparameter_data)){
+                                # Test that sign_size hyperparameters make
+                                # sense. 
+                                testthat::expect_equal(all(new_object@hyperparameter_data$sign_size == 1), TRUE)
+                              }
+                            }
+                            
+                          } else {
+                            # Bogus test to prevent skipping.
+                            testthat::expect_equal(is.null(new_object@hyperparameters), TRUE)
+                          }
+                        } 
+                      })
+      
+      if(verbose) message(paste0("\nComputing hyperparameters for ", current_method,
+                                 ifelse(is_vimp, " variable importance method", " learner"), " and ",
+                                 outcome_type, " outcomes for a data set with only one, invariant feature."))
+      
+      # Optimise parameters for a dataset with only one, invariant feature.
+      new_object <- do.call(optimise_hyperparameters,
+                            args=c(list("object"=object,
+                                        "data"=one_feature_invariant_data,
+                                        "cl"=cl,
+                                        "n_max_bootstraps"=n_max_bootstraps,
+                                        "n_max_optimisation_steps"=n_max_optimisation_steps,
+                                        "n_max_intensify_steps"=n_max_intensify_steps,
+                                        "n_random_sets"=n_random_sets,
+                                        "n_challengers"=n_challengers,
+                                        "is_vimp"=is_vimp,
+                                        "verbose"=verbose),
+                                   dots))
+      
+      test_fun(paste0("7. Hyperparameters for the ", current_method,
+                      ifelse(is_vimp, " variable importance method", " learner"), " and ",
+                      outcome_type, " outcomes can be created for a data set with only one, invariant feature."), {
+                        
+                        if(no_hyperparameters){
+                          # Test that no hyperparameters are set.
+                          # Hyperparameters cannot be set for datasets with
+                          # invariant features.
+                          testthat::expect_equal(is.null(new_object@hyperparameters), TRUE)
+                          
+                        } else if(always_available){
+                          # Test that hyperparameters are set.
+                          testthat::expect_equal(is.null(new_object@hyperparameters), FALSE)
+                          
+                          # Test that all hyperparameters are set.
+                          testthat::expect_setequal(names(new_object@hyperparameters), names(get_default_hyperparameters(object)))
+                          
+                          if(!is_vimp){
+                            if(!is.null(new_object@hyperparameter_data)){
+                              # Test that sign_size hyperparameters make
+                              # sense. 
+                              testthat::expect_equal(all(new_object@hyperparameter_data$sign_size == 1), TRUE)
+                            }
+                          }
+                          
+                        } else {
+                          # Not always available, but with hyperparameters. For
+                          # some methods all hyperparameters can still be set,
+                          # i.e. all typically randomised hyperparameters depend
+                          # only on the number of features. Therefore, this is a
+                          # softer check.
+                          
+                          if(!is.null(new_object@hyperparameters)){
+                            # Test that all hyperparameters are set.
+                            testthat::expect_setequal(names(new_object@hyperparameters), names(get_default_hyperparameters(object)))
+                            
+                            if(!is_vimp){
+                              if(!is.null(new_object@hyperparameter_data)){
+                                # Test that sign_size hyperparameters make
+                                # sense. 
+                                testthat::expect_equal(all(new_object@hyperparameter_data$sign_size == 1), TRUE)
+                              }
+                            }                            
+                          } else {
+                            # Bogus test to prevent skipping.
+                            testthat::expect_equal(is.null(new_object@hyperparameters), TRUE)
+                          }
+                        }
+                      })
+    }   
+  }
+}
+
+
 test_plots <- function(plot_function,
                        data_element,
                        outcome_type_available=c("count", "continuous", "binomial", "multinomial", "survival"),
@@ -1045,7 +1630,8 @@ test_plots <- function(plot_function,
                        ...,
                        plot_args=list(),
                        test_specific_config=FALSE,
-                       debug=FALSE){
+                       debug=FALSE,
+                       parallel=waiver()){
   
   if(debug){
     test_fun <- debug_test_that
@@ -1053,6 +1639,28 @@ test_plots <- function(plot_function,
     
   } else {
     test_fun <- testthat::test_that
+  }
+  
+  # Set parallelisation.
+  if(is.waive(parallel)) parallel <- !debug
+  
+  if(parallel){
+    # Set options.
+    # Disable randomForestSRC OpenMP core use.
+    options(rf.cores=as.integer(1))
+    on.exit(options(rf.cores=-1L), add=TRUE)
+    
+    # Disable multithreading on data.table to prevent reduced performance due to
+    # resource collisions with familiar parallelisation.
+    data.table::setDTthreads(1L)
+    on.exit(data.table::setDTthreads(0L), add=TRUE)
+    
+    # Start local cluster in the overall process.
+    cl <- .test_start_cluster(n_cores=4L)
+    on.exit(.terminate_cluster(cl), add=TRUE)
+    
+  } else {
+    cl <- NULL
   }
   
   # Iterate over the outcome type.
@@ -1066,6 +1674,7 @@ test_plots <- function(plot_function,
     one_feature_one_sample_data <- test.create_one_feature_one_sample_data_set(outcome_type)
     one_feature_invariant_data <- test.create_one_feature_invariant_data_set(outcome_type)
     empty_data <- test.create_empty_data_set(outcome_type)
+    multi_data <- test_create_multiple_synthetic_series(outcome_type=outcome_type)
     
     # Set exceptions per outcome type.
     .always_available <- always_available
@@ -1084,45 +1693,48 @@ test_plots <- function(plot_function,
                                             "survival"="cox"))
     
     #####Full data set########################################################
-    
+
     # Train the model.
-    model_full_1 <- suppressWarnings(train(data=full_data,
+    model_full_1 <- suppressWarnings(train(cl=cl,
+                                           data=full_data,
                                            cluster_method="none",
                                            imputation_method="simple",
                                            fs_method="mim",
                                            hyperparameter_list=hyperparameters,
                                            learner="lasso",
                                            time_max=1832))
-    
+
     model_full_2 <- model_full_1
     model_full_2@fs_method <- "mifs"
-    
+
     # Create familiar data objects.
     data_good_full_1 <- as_familiar_data(object=model_full_1,
                                          data=full_data,
                                          data_element=data_element,
+                                         cl=cl,
                                          ...)
     data_good_full_2 <- as_familiar_data(object=model_full_2,
                                          data=full_data,
                                          data_element=data_element,
+                                         cl=cl,
                                          ...)
-    
+
     # Create a completely intact dataset.
     test_fun(paste0("1. Plots for ", outcome_type, " outcomes ",
                     ifelse(outcome_type %in% outcome_type_available, "can", "cannot"),
                     " be created for a complete data set."), {
-                      
+
                       object <- list(data_good_full_1, data_good_full_2, data_good_full_1, data_good_full_2)
-                      object <- mapply(set_data_set_names, object, c("development_1", "development_2", "validation_1", "validation_2"))
+                      object <- mapply(set_object_name, object, c("development_1", "development_2", "validation_1", "validation_2"))
 
                       collection <- suppressWarnings(as_familiar_collection(object, familiar_data_names=c("development", "development", "validation", "validation")))
-                      
+
                       plot_list <- do.call(plot_function, args=c(list("object"=collection), plot_args))
                       which_present <- .test_which_plot_present(plot_list)
-                      
+
                       if(outcome_type %in% outcome_type_available){
-                        testthat::expect_equal(all(which_present), TRUE) 
-                        
+                        testthat::expect_equal(all(which_present), TRUE)
+
                       } else {
                         testthat::expect_equal(all(!which_present), TRUE)
                       }
@@ -1132,30 +1744,54 @@ test_plots <- function(plot_function,
     # tested.
     if(test_specific_config) next()
     
+    # Ensemble from multiple datasets.
+    multi_model_set <- suppressWarnings(lapply(multi_data,
+                                               train,
+                                               cluster_method="hclust",
+                                               imputation_method="simple",
+                                               fs_method="mim",
+                                               hyperparameter_list=hyperparameters,
+                                               learner="lasso",
+                                               cluster_similarity_threshold=0.7,
+                                               time_max=60))
+    
+    # Create data from ensemble of multiple models
+    multi_model_full <- as_familiar_data(object=multi_model_set,
+                                         data=multi_data[[1]],
+                                         data_element=data_element,
+                                         cl=cl,
+                                         ...)
+    
     # Create additional familiar data objects.
     data_empty_full_1 <- as_familiar_data(object=model_full_1,
                                           data=empty_data,
                                           data_element=data_element,
+                                          cl=cl,
                                           ...)
     data_empty_full_2 <- as_familiar_data(object=model_full_2,
                                           data=empty_data,
                                           data_element=data_element,
+                                          cl=cl,
                                           ...)
     data_one_sample_full_1 <- as_familiar_data(object=model_full_1,
                                                data=full_one_sample_data,
                                                data_element=data_element,
+                                               cl=cl,
                                                ...)
     data_one_sample_full_2 <- as_familiar_data(object=model_full_2,
                                                data=full_one_sample_data,
                                                data_element=data_element,
+                                               cl=cl,
                                                ...)
     data_identical_full_1 <- as_familiar_data(object=model_full_1,
                                               data=identical_sample_data,
                                               data_element=data_element,
+                                              cl=cl,
                                               ...)
     data_identical_full_2 <- as_familiar_data(object=model_full_2,
                                               data=identical_sample_data,
                                               data_element=data_element,
+                                              cl=cl,
                                               ...)
     
     # Create a dataset with a missing quadrant.
@@ -1164,7 +1800,7 @@ test_plots <- function(plot_function,
                     " be created for a dataset with some missing data."), {
                       
                       object <- list(data_good_full_1, data_good_full_2, data_empty_full_1, data_good_full_2)
-                      object <- mapply(set_data_set_names, object, c("development_1", "development_2", "validation_1", "validation_2"))
+                      object <- mapply(set_object_name, object, c("development_1", "development_2", "validation_1", "validation_2"))
                       
                       collection <- suppressWarnings(as_familiar_collection(object, familiar_data_names=c("development", "development", "validation", "validation")))
                       
@@ -1185,7 +1821,7 @@ test_plots <- function(plot_function,
                     " be created for a dataset with completely missing data."), {
                       
                       object <- list(data_empty_full_1, data_empty_full_2, data_empty_full_1, data_empty_full_2)
-                      object <- mapply(set_data_set_names, object, c("development_1", "development_2", "validation_1", "validation_2"))
+                      object <- mapply(set_object_name, object, c("development_1", "development_2", "validation_1", "validation_2"))
                       
                       collection <- suppressWarnings(as_familiar_collection(object, familiar_data_names=c("development", "development", "validation", "validation")))
                       
@@ -1206,7 +1842,7 @@ test_plots <- function(plot_function,
                     " be created for a dataset where some data only have one sample."), {
                       
                       object <- list(data_good_full_1, data_good_full_2, data_one_sample_full_1, data_one_sample_full_2)
-                      object <- mapply(set_data_set_names, object, c("development_1", "development_2", "validation_1", "validation_2"))
+                      object <- mapply(set_object_name, object, c("development_1", "development_2", "validation_1", "validation_2"))
                       
                       collection <- suppressWarnings(as_familiar_collection(object, familiar_data_names=c("development", "development", "validation", "validation")))
                       
@@ -1227,9 +1863,29 @@ test_plots <- function(plot_function,
                     " be created for a dataset where some data only have identical samples."), {
                       
                       object <- list(data_good_full_1, data_good_full_2, data_identical_full_1, data_identical_full_2)
-                      object <- mapply(set_data_set_names, object, c("development_1", "development_2", "validation_1", "validation_2"))
+                      object <- mapply(set_object_name, object, c("development_1", "development_2", "validation_1", "validation_2"))
                       
                       collection <- suppressWarnings(as_familiar_collection(object, familiar_data_names=c("development", "development", "validation", "validation")))
+                      
+                      plot_list <- do.call(plot_function, args=c(list("object"=collection), plot_args))
+                      which_present <- .test_which_plot_present(plot_list)
+                      
+                      if(outcome_type %in% outcome_type_available){
+                        testthat::expect_equal(all(which_present), TRUE) 
+                        
+                      } else {
+                        testthat::expect_equal(all(!which_present), TRUE)
+                      }
+                    })
+    
+    test_fun(paste0("6. Plots for ", outcome_type, " outcomes ",
+                    ifelse(outcome_type %in% outcome_type_available, "can", "cannot"),
+                    " be created for a dataset created from an ensemble of multiple models."), {
+                      
+                      object <- list(multi_model_full)
+                      object <- mapply(set_object_name, object, c("development_1"))
+                      
+                      collection <- suppressWarnings(as_familiar_collection(object, familiar_data_names=c("development")))
                       
                       plot_list <- do.call(plot_function, args=c(list("object"=collection), plot_args))
                       which_present <- .test_which_plot_present(plot_list)
@@ -1257,21 +1913,21 @@ test_plots <- function(plot_function,
     model_one_2@fs_method <- "mifs"
     
     # Create familiar data objects.
-    data_good_one_1 <- as_familiar_data(object=model_one_1, data=one_feature_data, data_element=data_element, ...)
-    data_good_one_2 <- as_familiar_data(object=model_one_2, data=one_feature_data, data_element=data_element, ...)
-    data_one_sample_one_1 <- as_familiar_data(object=model_one_1, data=one_feature_one_sample_data, data_element=data_element, ...)
-    data_one_sample_one_2 <- as_familiar_data(object=model_one_2, data=one_feature_one_sample_data, data_element=data_element, ...)
-    data_identical_one_1 <- as_familiar_data(object=model_one_1, data=one_feature_invariant_data, data_element=data_element, ...)
-    data_identical_one_2 <- as_familiar_data(object=model_one_2, data=one_feature_invariant_data, data_element=data_element, ...)
+    data_good_one_1 <- as_familiar_data(object=model_one_1, data=one_feature_data, data_element=data_element, cl=cl, ...)
+    data_good_one_2 <- as_familiar_data(object=model_one_2, data=one_feature_data, data_element=data_element, cl=cl, ...)
+    data_one_sample_one_1 <- as_familiar_data(object=model_one_1, data=one_feature_one_sample_data, data_element=data_element, cl=cl, ...)
+    data_one_sample_one_2 <- as_familiar_data(object=model_one_2, data=one_feature_one_sample_data, data_element=data_element, cl=cl, ...)
+    data_identical_one_1 <- as_familiar_data(object=model_one_1, data=one_feature_invariant_data, data_element=data_element, cl=cl, ...)
+    data_identical_one_2 <- as_familiar_data(object=model_one_2, data=one_feature_invariant_data, data_element=data_element, cl=cl, ...)
     
     
     # Create a completely intact, one sample dataset.
-    test_fun(paste0("6. Plots for ", outcome_type, " outcomes ",
+    test_fun(paste0("7. Plots for ", outcome_type, " outcomes ",
                     ifelse(outcome_type %in% outcome_type_available && !.except_one_feature, "can", "cannot"),
                     " be created for a complete one-feature data set."), {
                       
                       object <- list(data_good_one_1, data_good_one_2, data_good_one_1, data_good_one_2)
-                      object <- mapply(set_data_set_names, object, c("development_1", "development_2", "validation_1", "validation_2"))
+                      object <- mapply(set_object_name, object, c("development_1", "development_2", "validation_1", "validation_2"))
                       
                       collection <- suppressWarnings(as_familiar_collection(object, familiar_data_names=c("development", "development", "validation", "validation")))
                       
@@ -1290,12 +1946,12 @@ test_plots <- function(plot_function,
                     })
     
     # Create a dataset with a one-sample quadrant.
-    test_fun(paste0("7. Plots for ", outcome_type, " outcomes ",
+    test_fun(paste0("8. Plots for ", outcome_type, " outcomes ",
                     ifelse(outcome_type %in% outcome_type_available && !.except_one_feature, "can", "cannot"),
                     " be created for a dataset with some one-sample data."), {
                       
                       object <- list(data_good_one_1, data_good_one_2, data_one_sample_one_1, data_one_sample_one_2)
-                      object <- mapply(set_data_set_names, object, c("development_1", "development_2", "validation_1", "validation_2"))
+                      object <- mapply(set_object_name, object, c("development_1", "development_2", "validation_1", "validation_2"))
                       
                       collection <- suppressWarnings(as_familiar_collection(object, familiar_data_names=c("development", "development", "validation", "validation")))
                       
@@ -1314,12 +1970,12 @@ test_plots <- function(plot_function,
                     })
     
     # Create a dataset with some identical data.
-    test_fun(paste0("8. Plots for ", outcome_type, " outcomes ",
+    test_fun(paste0("9. Plots for ", outcome_type, " outcomes ",
                     ifelse(outcome_type %in% outcome_type_available && !.except_one_feature, "can", "cannot"),
                     " be created for a dataset with some invariant data."), {
                       
                       object <- list(data_good_one_1, data_good_one_2, data_identical_one_1, data_identical_one_2)
-                      object <- mapply(set_data_set_names, object, c("development_1", "development_2", "validation_1", "validation_2"))
+                      object <- mapply(set_object_name, object, c("development_1", "development_2", "validation_1", "validation_2"))
                       
                       collection <- suppressWarnings(as_familiar_collection(object, familiar_data_names=c("development", "development", "validation", "validation")))
                       
@@ -1346,14 +2002,38 @@ test_plot_ordering <- function(plot_function,
                                outcome_type_available=c("count", "continuous", "binomial", "multinomial", "survival"),
                                ...,
                                plot_args=list(),
-                               debug=FALSE){
+                               debug=FALSE,
+                               parallel=waiver()){
   
+  # Set debug options.
   if(debug){
     test_fun <- debug_test_that
     plot_args$draw <- TRUE
     
   } else {
     test_fun <- testthat::test_that
+  }
+  
+  # Set parallelisation.
+  if(is.waive(parallel)) parallel <- !debug
+  
+  if(parallel){
+    # Set options.
+    # Disable randomForestSRC OpenMP core use.
+    options(rf.cores=as.integer(1))
+    on.exit(options(rf.cores=-1L), add=TRUE)
+    
+    # Disable multithreading on data.table to prevent reduced performance due to
+    # resource collisions with familiar parallelisation.
+    data.table::setDTthreads(1L)
+    on.exit(data.table::setDTthreads(0L), add=TRUE)
+    
+    # Start local cluster in the overall process.
+    cl <- .test_start_cluster(n_cores=4L)
+    on.exit(.terminate_cluster(cl), add=TRUE)
+    
+  } else {
+    cl <- NULL
   }
   
   # Iterate over the outcome type.
@@ -1410,19 +2090,19 @@ test_plot_ordering <- function(plot_function,
     ##### Create the plot ######################################################
     
     # Create familiar data objects.
-    data_good_full_lasso_1 <- as_familiar_data(object=model_full_lasso_1, data=full_data, data_element=data_element, ...)
-    data_good_full_lasso_2 <- as_familiar_data(object=model_full_lasso_2, data=full_data, data_element=data_element, ...)
-    data_good_full_glm_1 <- as_familiar_data(object=model_full_glm_1, data=full_data, data_element=data_element, ...)
-    data_good_full_glm_2 <- as_familiar_data(object=model_full_glm_2, data=full_data, data_element=data_element, ...)
-    data_empty_glm_1 <- as_familiar_data(object=model_full_glm_1, data=empty_data, data_element=data_element, ...)
-    data_empty_lasso_2 <- as_familiar_data(object=model_full_lasso_2, data=empty_data, data_element=data_element, ...)
+    data_good_full_lasso_1 <- as_familiar_data(object=model_full_lasso_1, data=full_data, data_element=data_element, cl=cl, ...)
+    data_good_full_lasso_2 <- as_familiar_data(object=model_full_lasso_2, data=full_data, data_element=data_element, cl=cl, ...)
+    data_good_full_glm_1 <- as_familiar_data(object=model_full_glm_1, data=full_data, data_element=data_element, cl=cl, ...)
+    data_good_full_glm_2 <- as_familiar_data(object=model_full_glm_2, data=full_data, data_element=data_element, cl=cl, ...)
+    data_empty_glm_1 <- as_familiar_data(object=model_full_glm_1, data=empty_data, data_element=data_element, cl=cl, ...)
+    data_empty_lasso_2 <- as_familiar_data(object=model_full_lasso_2, data=empty_data, data_element=data_element, cl=cl, ...)
     
     # Create a test dataset with multiple components
     test_fun(paste0("Plots for ", outcome_type, " outcomes can be created."), {
                       
                       object <- list(data_good_full_lasso_1, data_empty_lasso_2, data_good_full_lasso_1, data_good_full_lasso_2,
                                      data_good_full_glm_1, data_good_full_glm_2, data_empty_glm_1, data_good_full_glm_2)
-                      object <- mapply(set_data_set_names, object, c("development_lasso_1", "development_lasso_2", "validation_lasso_1", "validation_lasso_2",
+                      object <- mapply(set_object_name, object, c("development_lasso_1", "development_lasso_2", "validation_lasso_1", "validation_lasso_2",
                                                                      "development_glm_1", "development_glm_2", "validation_glm_1", "validation_glm_2"))
                       
                       collection <- suppressWarnings(as_familiar_collection(object, familiar_data_names=c("development", "development", "validation", "validation",
@@ -1438,6 +2118,465 @@ test_plot_ordering <- function(plot_function,
                         testthat::expect_equal(all(!which_present), TRUE)
                       }
                     })
+  }
+}
+
+
+test_export <- function(export_function,
+                        data_element,
+                        outcome_type_available=c("count", "continuous", "binomial", "multinomial", "survival"),
+                        always_available=FALSE,
+                        except_one_feature=FALSE,
+                        ...,
+                        export_args=list(),
+                        test_specific_config=FALSE,
+                        n_models=1L,
+                        create_novelty_detector=FALSE,
+                        debug=FALSE){
+  
+  if(debug){
+    test_fun <- debug_test_that
+
+  } else {
+    test_fun <- testthat::test_that
+  }
+  
+  
+  # Iterate over the outcome type.
+  for(outcome_type in c("count", "continuous", "binomial", "multinomial", "survival")){
+    
+    # Obtain data.
+    full_data <- test.create_good_data_set(outcome_type)
+    identical_sample_data <- test.create_all_identical_data_set(outcome_type)
+    full_one_sample_data <- test.create_one_sample_data_set(outcome_type)
+    one_feature_data <- test.create_one_feature_data_set(outcome_type)
+    one_feature_one_sample_data <- test.create_one_feature_one_sample_data_set(outcome_type)
+    one_feature_invariant_data <- test.create_one_feature_invariant_data_set(outcome_type)
+    empty_data <- test.create_empty_data_set(outcome_type)
+    multi_data <- test_create_multiple_synthetic_series(outcome_type=outcome_type)
+    
+    # Set exceptions per outcome type.
+    .always_available <- always_available
+    if(is.character(.always_available)) .always_available <- any(.always_available == outcome_type)
+    
+    .except_one_feature <- except_one_feature
+    if(is.character(.except_one_feature)) .except_one_feature <- any(.except_one_feature == outcome_type)
+    
+    # Parse hyperparameter list
+    hyperparameters <- list("sign_size"=get_n_features(full_data),
+                            "family"=switch(outcome_type,
+                                            "continuous"="gaussian",
+                                            "count"="poisson",
+                                            "binomial"="binomial",
+                                            "multinomial"="multinomial",
+                                            "survival"="cox"))
+    
+    #####Full data set########################################################
+    
+    if(n_models == 1){
+      # Train the model.
+      model_full_1 <- suppressWarnings(train(data=full_data,
+                                             cluster_method="none",
+                                             imputation_method="simple",
+                                             fs_method="mim",
+                                             hyperparameter_list=hyperparameters,
+                                             learner="lasso",
+                                             time_max=1832,
+                                             create_novelty_detector=create_novelty_detector))
+      
+      model_full_2 <- model_full_1
+      model_full_2@fs_method <- "mifs"
+      
+    } else {
+      # Train a set of models.
+      model_full_1 <- list()
+      model_full_2 <- list()
+      
+      for(ii in seq_len(n_models)){
+        temp_model_1 <- suppressWarnings(train(data=full_data,
+                                             cluster_method="none",
+                                             imputation_method="simple",
+                                             fs_method="mim",
+                                             hyperparameter_list=hyperparameters,
+                                             learner="lasso",
+                                             time_max=1832,
+                                             create_bootstrap=TRUE,
+                                             create_novelty_detector=create_novelty_detector))
+        
+        temp_model_2 <- temp_model_1
+        temp_model_2@fs_method <- "mifs"
+        
+        model_full_1[[ii]] <- temp_model_1
+        model_full_2[[ii]] <- temp_model_2
+      }
+    }
+    
+    
+    # Create familiar data objects.
+    data_good_full_1 <- as_familiar_data(object=model_full_1,
+                                         data=full_data,
+                                         data_element=data_element,
+                                         ...)
+    
+    data_good_full_2 <- as_familiar_data(object=model_full_2,
+                                         data=full_data,
+                                         data_element=data_element,
+                                         ...)
+    
+    # Create a completely intact dataset.
+    test_fun(paste0("1. Export data for ", outcome_type, " outcomes ",
+                    ifelse(outcome_type %in% outcome_type_available, "can", "cannot"),
+                    " be created for a complete data set."), {
+                      
+                      object <- list(data_good_full_1, data_good_full_2, data_good_full_1, data_good_full_2)
+                      object <- mapply(set_object_name, object, c("development_1", "development_2", "validation_1", "validation_2"))
+                      
+                      collection <- suppressWarnings(as_familiar_collection(object, familiar_data_names=c("development", "development", "validation", "validation")))
+                      
+                      data_elements <- do.call(export_function, args=c(list("object"=collection), export_args))
+                      which_present <- .test_which_data_element_present(data_elements, outcome_type=outcome_type)
+
+                      if(outcome_type %in% outcome_type_available){
+                        testthat::expect_equal(all(which_present), TRUE) 
+                        
+                        if(debug) show(data_elements)
+                        
+                      } else {
+                        testthat::expect_equal(all(!which_present), TRUE)
+                      }
+                    })
+    
+    # Go to next outcome type if only a specific configuration needs to be
+    # tested.
+    if(test_specific_config) next()
+    
+    # Ensemble from multiple datasets.
+    multi_model_set <- suppressWarnings(lapply(multi_data,
+                                               train,
+                                               cluster_method="hclust",
+                                               imputation_method="simple",
+                                               fs_method="mim",
+                                               hyperparameter_list=hyperparameters,
+                                               learner="lasso",
+                                               cluster_similarity_threshold=0.7,
+                                               time_max=1832,
+                                               create_novelty_detector=create_novelty_detector))
+    
+    # Create data from ensemble of multiple models
+    multi_model_full <- as_familiar_data(object=multi_model_set,
+                                         data=multi_data[[1]],
+                                         data_element=data_element,
+                                         ...)
+    
+    # Create additional familiar data objects.
+    data_empty_full_1 <- as_familiar_data(object=model_full_1,
+                                          data=empty_data,
+                                          data_element=data_element,
+                                          ...)
+    data_empty_full_2 <- as_familiar_data(object=model_full_2,
+                                          data=empty_data,
+                                          data_element=data_element,
+                                          ...)
+    data_one_sample_full_1 <- as_familiar_data(object=model_full_1,
+                                               data=full_one_sample_data,
+                                               data_element=data_element,
+                                               ...)
+    data_one_sample_full_2 <- as_familiar_data(object=model_full_2,
+                                               data=full_one_sample_data,
+                                               data_element=data_element,
+                                               ...)
+    data_identical_full_1 <- as_familiar_data(object=model_full_1,
+                                              data=identical_sample_data,
+                                              data_element=data_element,
+                                              ...)
+    data_identical_full_2 <- as_familiar_data(object=model_full_2,
+                                              data=identical_sample_data,
+                                              data_element=data_element,
+                                              ...)
+    
+    # Create a dataset with a missing quadrant.
+    test_fun(paste0("2. Export data for ", outcome_type, " outcomes ",
+                    ifelse(outcome_type %in% outcome_type_available, "can", "cannot"),
+                    " be created for a dataset with some missing data."), {
+                      
+                      object <- list(data_good_full_1, data_good_full_2, data_empty_full_1, data_good_full_2)
+                      object <- mapply(set_object_name, object, c("development_1", "development_2", "validation_1", "validation_2"))
+                      
+                      collection <- suppressWarnings(as_familiar_collection(object, familiar_data_names=c("development", "development", "validation", "validation")))
+                      
+                      data_elements <- do.call(export_function, args=c(list("object"=collection), export_args))
+                      which_present <- .test_which_data_element_present(data_elements, outcome_type=outcome_type)
+                      
+                      if(outcome_type %in% outcome_type_available){
+                        testthat::expect_equal(any(which_present), TRUE) 
+                        
+                        if(debug) show(data_elements)
+                        
+                      } else {
+                        testthat::expect_equal(all(!which_present), TRUE)
+                      }
+                    })
+    
+    # Create a dataset with all missing quadrants
+    test_fun(paste0("3. Export data for ", outcome_type, " outcomes ",
+                    ifelse(.always_available, "can", "cannot"),
+                    " be created for a dataset with completely missing data."), {
+                      
+                      object <- list(data_empty_full_1, data_empty_full_2, data_empty_full_1, data_empty_full_2)
+                      object <- mapply(set_object_name, object, c("development_1", "development_2", "validation_1", "validation_2"))
+                      
+                      collection <- suppressWarnings(as_familiar_collection(object, familiar_data_names=c("development", "development", "validation", "validation")))
+                      
+                      data_elements <- do.call(export_function, args=c(list("object"=collection), export_args))
+                      which_present <- .test_which_data_element_present(data_elements, outcome_type=outcome_type)
+                      
+                      if(outcome_type %in% outcome_type_available & .always_available){
+                        testthat::expect_equal(all(which_present), TRUE) 
+                        
+                        if(debug) show(data_elements)
+                        
+                      } else {
+                        testthat::expect_equal(all(!which_present), TRUE)
+                      }
+                    })
+    
+    # Create dataset with one-sample quadrants for validation
+    test_fun(paste0("4. Export data for ", outcome_type, " outcomes ",
+                    ifelse(outcome_type %in% outcome_type_available, "can", "cannot"),
+                    " be created for a dataset where some data only have one sample."), {
+                      
+                      object <- list(data_good_full_1, data_good_full_2, data_one_sample_full_1, data_one_sample_full_2)
+                      object <- mapply(set_object_name, object, c("development_1", "development_2", "validation_1", "validation_2"))
+                      
+                      collection <- suppressWarnings(as_familiar_collection(object, familiar_data_names=c("development", "development", "validation", "validation")))
+                      
+                      data_elements <- do.call(export_function, args=c(list("object"=collection), export_args))
+                      which_present <- .test_which_data_element_present(data_elements, outcome_type=outcome_type)
+                      
+                      if(outcome_type %in% outcome_type_available){
+                        testthat::expect_equal(any(which_present), TRUE) 
+                        
+                        if(debug) show(data_elements)
+                        
+                      } else {
+                        testthat::expect_equal(all(!which_present), TRUE)
+                      }
+                    })
+    
+    # Create dataset with some quadrants with identical data
+    test_fun(paste0("5. Export data for ", outcome_type, " outcomes ",
+                    ifelse(outcome_type %in% outcome_type_available, "can", "cannot"),
+                    " be created for a dataset where some data only have identical samples."), {
+                      
+                      object <- list(data_good_full_1, data_good_full_2, data_identical_full_1, data_identical_full_2)
+                      object <- mapply(set_object_name, object, c("development_1", "development_2", "validation_1", "validation_2"))
+                      
+                      collection <- suppressWarnings(as_familiar_collection(object, familiar_data_names=c("development", "development", "validation", "validation")))
+                      
+                      data_elements <- do.call(export_function, args=c(list("object"=collection), export_args))
+                      which_present <- .test_which_data_element_present(data_elements, outcome_type=outcome_type)
+                      
+                      if(outcome_type %in% outcome_type_available){
+                        testthat::expect_equal(all(which_present), TRUE) 
+                        
+                        if(debug) show(data_elements)
+                        
+                      } else {
+                        testthat::expect_equal(all(!which_present), TRUE)
+                      }
+                    })
+    
+    test_fun(paste0("6. Export data for ", outcome_type, " outcomes ",
+                    ifelse(outcome_type %in% outcome_type_available, "can", "cannot"),
+                    " be created for a dataset created from an ensemble of multiple models."), {
+                      
+                      object <- list(multi_model_full)
+                      object <- mapply(set_object_name, object, c("development_1"))
+                      
+                      collection <- suppressWarnings(as_familiar_collection(object, familiar_data_names=c("development")))
+                      
+                      data_elements <- do.call(export_function, args=c(list("object"=collection), export_args))
+                      which_present <- .test_which_data_element_present(data_elements, outcome_type=outcome_type)
+                      
+                      if(outcome_type %in% outcome_type_available){
+                        testthat::expect_equal(all(which_present), TRUE) 
+                        
+                        if(debug) show(data_elements)
+                        
+                      } else {
+                        testthat::expect_equal(all(!which_present), TRUE)
+                      }
+                    })
+    
+    #####One-feature data set###################################################
+    
+    # Train the model.
+    model_one_1 <- suppressWarnings(train(data=one_feature_data,
+                                          cluster_method="none",
+                                          imputation_method="simple",
+                                          fs_method="mim",
+                                          hyperparameter_list=hyperparameters,
+                                          learner="lasso",
+                                          time_max=1832,
+                                          create_novelty_detector=create_novelty_detector))
+    
+    model_one_2 <- model_one_1
+    model_one_2@fs_method <- "mifs"
+    
+    # Create familiar data objects.
+    data_good_one_1 <- as_familiar_data(object=model_one_1, data=one_feature_data, data_element=data_element, ...)
+    data_good_one_2 <- as_familiar_data(object=model_one_2, data=one_feature_data, data_element=data_element, ...)
+    data_one_sample_one_1 <- as_familiar_data(object=model_one_1, data=one_feature_one_sample_data, data_element=data_element, ...)
+    data_one_sample_one_2 <- as_familiar_data(object=model_one_2, data=one_feature_one_sample_data, data_element=data_element, ...)
+    data_identical_one_1 <- as_familiar_data(object=model_one_1, data=one_feature_invariant_data, data_element=data_element, ...)
+    data_identical_one_2 <- as_familiar_data(object=model_one_2, data=one_feature_invariant_data, data_element=data_element, ...)
+    
+    
+    # Create a completely intact, one sample dataset.
+    test_fun(paste0("7. Export data for ", outcome_type, " outcomes ",
+                    ifelse(outcome_type %in% outcome_type_available && !.except_one_feature, "can", "cannot"),
+                    " be created for a complete one-feature data set."), {
+                      
+                      object <- list(data_good_one_1, data_good_one_2, data_good_one_1, data_good_one_2)
+                      object <- mapply(set_object_name, object, c("development_1", "development_2", "validation_1", "validation_2"))
+                      
+                      collection <- suppressWarnings(as_familiar_collection(object, familiar_data_names=c("development", "development", "validation", "validation")))
+                      
+                      data_elements <- do.call(export_function, args=c(list("object"=collection), export_args))
+                      which_present <- .test_which_data_element_present(data_elements, outcome_type=outcome_type)
+                      
+                      if(outcome_type %in% outcome_type_available & !.except_one_feature){
+                        testthat::expect_equal(all(which_present), TRUE) 
+                        
+                        if(debug) show(data_elements)
+                        
+                      } else if(!outcome_type %in% outcome_type_available){
+                        testthat::expect_equal(all(!which_present), TRUE)
+
+                      } else {
+                        testthat::expect_equal(any(!which_present), TRUE)
+                      }
+                    })
+    
+    # Create a dataset with a one-sample quadrant.
+    test_fun(paste0("8. Export data for ", outcome_type, " outcomes ",
+                    ifelse(outcome_type %in% outcome_type_available && !.except_one_feature, "can", "cannot"),
+                    " be created for a dataset with some one-sample data."), {
+                      
+                      object <- list(data_good_one_1, data_good_one_2, data_one_sample_one_1, data_one_sample_one_2)
+                      object <- mapply(set_object_name, object, c("development_1", "development_2", "validation_1", "validation_2"))
+                      
+                      collection <- suppressWarnings(as_familiar_collection(object, familiar_data_names=c("development", "development", "validation", "validation")))
+                      
+                      data_elements <- do.call(export_function, args=c(list("object"=collection), export_args))
+                      which_present <- .test_which_data_element_present(data_elements, outcome_type=outcome_type)
+                      
+                      if(outcome_type %in% outcome_type_available & !.except_one_feature){
+                        testthat::expect_equal(any(which_present), TRUE) 
+                        
+                        if(debug) show(data_elements)
+                        
+                      } else if(!outcome_type %in% outcome_type_available){
+                        testthat::expect_equal(all(!which_present), TRUE)
+                        
+                      } else {
+                        testthat::expect_equal(any(!which_present), TRUE)
+                      }
+                    })
+    
+    # Create a dataset with some identical data.
+    test_fun(paste0("9. Export data for ", outcome_type, " outcomes ",
+                    ifelse(outcome_type %in% outcome_type_available && !.except_one_feature, "can", "cannot"),
+                    " be created for a dataset with some invariant data."), {
+                      
+                      object <- list(data_good_one_1, data_good_one_2, data_identical_one_1, data_identical_one_2)
+                      object <- mapply(set_object_name, object, c("development_1", "development_2", "validation_1", "validation_2"))
+                      
+                      collection <- suppressWarnings(as_familiar_collection(object, familiar_data_names=c("development", "development", "validation", "validation")))
+                      
+                      data_elements <- do.call(export_function, args=c(list("object"=collection), export_args))
+                      which_present <- .test_which_data_element_present(data_elements, outcome_type=outcome_type)
+                      
+                      if(outcome_type %in% outcome_type_available & !.except_one_feature){
+                        testthat::expect_equal(any(which_present), TRUE) 
+                        
+                        if(debug) show(data_elements)
+                        
+                      } else if(!outcome_type %in% outcome_type_available){
+                        testthat::expect_equal(all(!which_present), TRUE)
+                        
+                      } else {
+                        testthat::expect_equal(any(!which_present), TRUE)
+                      }
+                    })
+  }
+}
+
+
+
+integrated_test <- function(..., debug=FALSE){
+  
+  if(debug){
+    test_fun <- debug_test_that
+    suppress_fun <- identity
+    
+  } else {
+    test_fun <- testthat::test_that
+    suppress_fun <- suppressMessages
+  }
+  
+  for(outcome_type in c("count", "continuous", "binomial", "multinomial", "survival")){
+    
+    test_fun(paste0("Experiment for a good dataset with ", outcome_type, " outcome functions correctly."), {
+
+      # Create datasets
+      full_data <- test.create_good_data_set(outcome_type)
+
+      # Parse hyperparameter list
+      hyperparameters <- list("sign_size"=get_n_features(full_data),
+                              "family"=switch(outcome_type,
+                                              "continuous"="gaussian",
+                                              "count"="poisson",
+                                              "binomial"="binomial",
+                                              "multinomial"="multinomial",
+                                              "survival"="cox"))
+
+      output <- suppress_fun(summon_familiar(data=full_data,
+                                             learner="lasso",
+                                             hyperparameter=list("lasso"=hyperparameters),
+                                             ...))
+
+      testthat::expect_equal(is.null(output), FALSE)
+    })
+
+    
+    test_fun(paste0("Experiment for a bad dataset with ", outcome_type, " outcome functions correctly."), {
+      
+      # Create datasets. We explicitly insert NA data to pass an initial
+      # plausibility check.
+      bad_data <- test.create_bad_data_set(outcome_type=outcome_type,
+                                           add_na_data=TRUE)
+      
+      # Parse hyperparameter list
+      hyperparameters <- list("sign_size"=get_n_features(bad_data),
+                              "family"=switch(outcome_type,
+                                              "continuous"="gaussian",
+                                              "count"="poisson",
+                                              "binomial"="binomial",
+                                              "multinomial"="multinomial",
+                                              "survival"="cox"))
+      
+      # Note that we set a very high feature_max_fraction_missing to deal with
+      # NA rows in the dataset. Also time is explicitly set to prevent an error.
+      output <- suppress_fun(summon_familiar(data=bad_data,
+                                             learner="lasso",
+                                             hyperparameter=list("lasso"=hyperparameters),
+                                             feature_max_fraction_missing=0.95,
+                                             time_max=1832,
+                                             ...))
+      
+      testthat::expect_equal(is.null(output), FALSE) 
+    })
   }
 }
 
@@ -1479,4 +2618,114 @@ debug_test_that <- function(desc, code){
   if(length(p) == 0) return(FALSE)
   
   return(sapply(p, gtable::is.gtable) | sapply(p, ggplot2::is.ggplot))
+}
+
+
+.test_which_data_element_present <- function(x, outcome_type){
+  
+  # Check if the top element is null or empty.
+  if(is_empty(x)) return(FALSE)
+  
+  data_element_present <- !sapply(x, is_empty)
+  if(!any(data_element_present)) return(FALSE)
+  
+  # Class-specific tests.
+  if(all(sapply(x, is, class2="familiarDataElementPredictionTable"))){
+    return(sapply(x, function(x, outcome_type) (any_predictions_valid(x@data, outcome_type)), outcome_type=outcome_type))
+    
+  }
+  
+  return(data_element_present)
+}
+
+
+
+.test_start_cluster <- function(n_cores=NULL){
+  
+  # Determine the number of available cores.
+  n_cores_available <- parallel::detectCores() - 1L
+  
+  # Determine the number of available cores.
+  if(is.null(n_cores)) n_cores <- n_cores_available
+  
+  if(n_cores > n_cores_available) n_cores <- n_cores_available
+  
+  if(n_cores < 2) return(NULL)
+  
+  assign("is_external_cluster", FALSE, envir=familiar_global_env)
+  
+  # Start a new cluster
+  cl <- .start_cluster(n_cores=n_cores,
+                       cluster_type="psock")
+  
+  # If the cluster doesn't start, return a NULL
+  if(is.null(cl)) return(NULL)
+  
+  # Set library paths to avoid issues with non-standard library locations.
+  libs <- .libPaths()
+  parallel::clusterExport(cl=cl, varlist="libs", envir=environment())
+  parallel::clusterEvalQ(cl=cl, .libPaths(libs))
+  
+  # Load familiar and data.table libraries to each cluster node.
+  parallel::clusterEvalQ(cl=cl, library(familiar))
+  parallel::clusterEvalQ(cl=cl, library(data.table))
+  
+  # Set options on each cluster node.
+  parallel::clusterEvalQ(cl=cl, options(rf.cores=as.integer(1)))
+  parallel::clusterEvalQ(cl=cl, data.table::setDTthreads(1L))
+  
+  return(cl)
+}
+
+
+
+.test_create_hyperparameter_object <- function(data,
+                                               vimp_method,
+                                               learner,
+                                               is_vimp,
+                                               set_signature_feature=FALSE){
+  
+  if(set_signature_feature){
+    signature_features <- get_feature_columns(data)[1:2]
+    
+  } else {
+    signature_features <- NULL
+  }
+  
+  # Create feature info list.
+  feature_info_list <- create_feature_info(data=data,
+                                           fs_method=vimp_method,
+                                           learner=learner,
+                                           cluster_method="none",
+                                           imputation_method="simple",
+                                           signature=signature_features,
+                                           parallel=FALSE)
+  
+  # Find required features.
+  required_features <- find_required_features(features=get_available_features(feature_info_list=feature_info_list),
+                                              feature_info_list=feature_info_list)
+  
+ 
+  if(is_vimp){
+    # Create the variable importance met hod object or familiar model object
+    # to compute variable importance with.
+    object <- promote_vimp_method(object=methods::new("familiarVimpMethod",
+                                                      outcome_type = data@outcome_type,
+                                                      vimp_method = vimp_method,
+                                                      required_features = required_features,
+                                                      feature_info = feature_info_list,
+                                                      outcome_info = data@outcome_info))
+    
+  } else {
+    # Create familiar model object.
+    object <- promote_learner(object=methods::new("familiarModel",
+                                                  outcome_type = data@outcome_type,
+                                                  learner = learner,
+                                                  fs_method = vimp_method,
+                                                  required_features =  required_features,
+                                                  feature_info = feature_info_list,
+                                                  outcome_info = data@outcome_info))
+  }
+  
+  return(object)
 }

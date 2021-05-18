@@ -1,4 +1,4 @@
-add_batch_normalisation_parameters <- function(cl=NULL, feature_info_list, data_obj, settings=NULL){
+add_batch_normalisation_parameters <- function(cl=NULL, feature_info_list, data_obj, settings=NULL, batch_normalisation_method=NULL){
   # Find batch normalisation parameters and add them to the feature_info_list
 
   # Check if the feature_info_list is empty. This may occur for empty models.
@@ -7,10 +7,10 @@ add_batch_normalisation_parameters <- function(cl=NULL, feature_info_list, data_
   }
   
   # Find the batch_normalisation_method.
-  if(!is.null(settings)){
+  if(!is.null(settings) & is.null(batch_normalisation_method)){
     batch_normalisation_method <- settings$prep$batch_normalisation_method
     
-  } else {
+  } else if(is.null(batch_normalisation_method)){
     
     # Attempt to identify the methods from feature_info_list
     batch_normalisation_parameter_lists <- extract_from_slot(object_list=feature_info_list,
@@ -38,30 +38,23 @@ add_batch_normalisation_parameters <- function(cl=NULL, feature_info_list, data_
     }
   }
   
-  # Determine which columns contain feature data
-  feature_columns <- get_feature_columns(x=data_obj)
-  
-  # Split features into numerical and categorical features
-  numeric_features <- intersect(feature_columns, sapply(feature_info_list, function(list_entry){
-    if(list_entry@feature_type=="numeric") {
-      return(list_entry@name)
-    } else {
-      return(NULL)
-    }
-  }))
-  categorical_features <- setdiff(feature_columns, numeric_features)
-  
   # Find available batches in the data
-  available_batch_ids <- unique(data_obj@data$cohort_id)
+  available_batch_ids <- unique(data_obj@data[[get_id_columns(single_column="batch")]])
   
   # Find batches already known in feature_info_list
   known_batches <- names(feature_info_list[[1]]@batch_normalisation_parameters)
   
   # Return if all batches are already known.
   unknown_batches <- setdiff(available_batch_ids, known_batches)
-  if(length(unknown_batches) == 0){
-    return(feature_info_list)
-  }
+  if(length(unknown_batches) == 0) return(feature_info_list)
+  
+  # Determine which columns contain feature data
+  feature_columns <- get_feature_columns(x=data_obj)
+  
+  # Split features into numeric and categorical features.
+  numeric_features <- intersect(names(feature_info_list)[sapply(feature_info_list, function(list_entry) (list_entry@feature_type == "numeric"))],
+                                feature_columns)
+  categorical_features <- setdiff(feature_columns, numeric_features)
   
   # Obtain normalisation parameters for numeric features
   if(batch_normalisation_method %in% .get_available_batch_normalisation_methods("basic")){
@@ -137,7 +130,8 @@ batch_normalise.set_basic_normalisation_parameters <- function(cl=NULL,
                                           feature_info_list=feature_info_list,
                                           data=data,
                                           batch_normalisation_method=batch_normalisation_method,
-                                          batches=batches)
+                                          batches=batches,
+                                          chopchop=TRUE)
   
   # Set names of the updated list
   names(updated_feature_info_list) <- features
@@ -150,7 +144,7 @@ batch_normalise.set_basic_normalisation_parameters <- function(cl=NULL,
 batch_normalise.get_normalisation_per_feature <- function(feature, feature_info_list, data, batch_normalisation_method, batches){
   
   # Suppress NOTES due to non-standard evaluation in data.table
-  cohort_id <- NULL
+  batch_id <- NULL
   
   # Get object corresponding to the current featues
   object <- feature_info_list[[feature]]
@@ -159,7 +153,7 @@ batch_normalise.get_normalisation_per_feature <- function(feature, feature_info_
   batch_parameter_list <- lapply(batches, function(batch_identifier, object, data, feature, batch_normalisation_method){
     
     # Extract vector of values
-    x <- data[cohort_id==batch_identifier, ][[feature]]
+    x <- data[batch_id==batch_identifier, ][[feature]]
     
     # Obtain batch normalisaton for the curent feature
     batch_normalisation_parameters <- batch_normalise.get_normalisation_parameters(x=x,
@@ -172,11 +166,12 @@ batch_normalise.get_normalisation_per_feature <- function(feature, feature_info_
   names(batch_parameter_list) <- batches
   
   # Add to list of existing batch normalisation parameters (if any)
-  object@batch_normalisation_parameters <- append(object@batch_normalisation_parameters,
-                                                  batch_parameter_list)
+  object@batch_normalisation_parameters <- c(object@batch_normalisation_parameters,
+                                             batch_parameter_list)
   
   return(object)
 }
+
 
 
 batch_normalise.set_combat_normalisation_parameters <- function(cl=NULL,
@@ -188,13 +183,12 @@ batch_normalise.set_combat_normalisation_parameters <- function(cl=NULL,
                                                                 progress_bar=TRUE){
   
   # Suppress NOTES due to non-standard evaluation in data.table
-  cohort_id <- feature <- NULL
+  batch_id <- feature <- NULL
   
   # Check length of features
-  if(length(features) == 0){
-    return(NULL)
+  if(length(features) == 0) return(NULL)
     
-  } else if(length(features) < 3){
+  if(length(features) < 3){
     # Combat using cross-feature information, which is impossible to obtain for
     # less than three features.
     return(batch_normalise.set_basic_normalisation_parameters(cl=cl,
@@ -207,7 +201,7 @@ batch_normalise.set_combat_normalisation_parameters <- function(cl=NULL,
   }
   
   # Isolate the dataset
-  x <- data.table::copy(data[cohort_id %in% batches, c("cohort_id", features), with=FALSE])
+  x <- data.table::copy(data[batch_id %in% batches, mget(c(get_id_columns(single_column="batch"), features))])
   
   # Obtain combat batch parameters. This is a data.table
   batch_parameters <- combat.get_normalisation_parameters(x=x,
@@ -218,6 +212,9 @@ batch_normalise.set_combat_normalisation_parameters <- function(cl=NULL,
   # Update feature info list with batch parameters.
   updated_feature_info_list <- lapply(features, function(current_feature, batch_parameters, feature_info_list){
 
+    # Determine the name of the batch identifier column.
+    batch_id_column <- get_id_columns(single_column="batch")
+    
     # Identify the current featureInfo object from feature_info_list.
     object <- feature_info_list[[current_feature]]
     
@@ -225,7 +222,7 @@ batch_normalise.set_combat_normalisation_parameters <- function(cl=NULL,
     feature_batch_parameters <- batch_parameters[feature==current_feature]
     
     # Parse the batch_parameters table to a list
-    batch_parameter_list <- lapply(split(feature_batch_parameters, by="cohort_id", sorted=FALSE), function(x){
+    batch_parameter_list <- lapply(split(feature_batch_parameters, by=batch_id_column, sorted=FALSE), function(x){
       return(list("norm_method"=x$norm_method[1],
                   "norm_shift"=x$norm_shift[1],
                   "norm_scale"=x$norm_scale[1],
@@ -233,7 +230,7 @@ batch_normalise.set_combat_normalisation_parameters <- function(cl=NULL,
     })
     
     # Set names to the parameter list
-    names(batch_parameter_list) <- feature_batch_parameters$cohort_id
+    names(batch_parameter_list) <- feature_batch_parameters[[batch_id_column]]
     
     # Add to list of existing batch normalisation parameters (if any)
     object@batch_normalisation_parameters <- append(object@batch_normalisation_parameters,
@@ -328,7 +325,7 @@ batch_normalise.replace_unknown_parameters <- function(parameter_set, known_para
   # Check if there are any known parameters that can be used for imputation.
   if(length(known_parameters) == 0){
     # Return none in case there is no data that can be used for imputation.
-    return(list("norm_method"="none", "norm_shift"=0, "norm_scale"=1))
+    return(list("norm_method"="none", "norm_shift"=NA_real_, "norm_scale"=NA_real_))
   }
   
   # Procedure for other standardardisation methods
@@ -357,11 +354,11 @@ batch_normalise.apply_normalisation <- function(x, feature_info, invert=FALSE){
   x[, "order_index_id":=.I]
   
   # Iterate over batches to determine the transformed data.
-  y <- lapply(split(x, by="cohort_id", sorted=FALSE, keep.by=TRUE),
+  y <- lapply(split(x, by=get_id_columns(id_depth="batch"), sorted=FALSE, keep.by=TRUE),
               function(x, feature_info, invert){
                 
                 # Identify the id of the current batch
-                current_batch_id <- x$cohort_id[1]
+                current_batch_id <- x[[get_id_columns(single_column="batch")]][1]
                 
                 # Find the batch-normalisation parameters
                 norm_param <- feature_info@batch_normalisation_parameters[[as.character(current_batch_id)]]
@@ -369,18 +366,13 @@ batch_normalise.apply_normalisation <- function(x, feature_info, invert=FALSE){
                 # Determine the normalisation method
                 norm_method <- norm_param$norm_method[1]
                 
-                if(norm_method %in% .get_available_batch_normalisation_methods("basic")){
+                if(norm_method %in% .get_available_batch_normalisation_methods("all")){
                   y <- normalise.apply_normalisation(x = x[[feature_info@name]],
                                                      norm_param = norm_param,
                                                      invert = invert)
-                  
-                } else if(norm_method %in% .get_available_batch_normalisation_methods("combat")){
-                  y <- combat.apply_normalisation(x = x[[feature_info@name]],
-                                                  norm_param = norm_param,
-                                                  invert = invert)
-                  
+
                 } else {
-                  ..error_reached_unreachable_code("batch_normalise.apply_normalisation_unknwon_batch_normalisation_method")
+                  ..error_reached_unreachable_code(paste0("batch_normalise.apply_normalisation: encountered an unknown batch normalisation method: ", norm_method))
                 }
               
                 # Return y

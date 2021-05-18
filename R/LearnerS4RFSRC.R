@@ -3,7 +3,9 @@
 NULL
 
 setClass("familiarRFSRC",
-         contains="familiarModel")
+         contains="familiarModel",
+         slots=list("seed"="ANY"),
+         prototype=list("seed"=NULL))
 
 .get_available_rfsrc_learners <- function(show_general=TRUE) return(c("random_forest", "random_forest_rfsrc"))
 
@@ -49,7 +51,7 @@ setMethod("get_default_hyperparameters", signature(object="familiarRFSRC"),
             if(is.null(data)) return(param)
             
             # Get the number of samples
-            n_samples <- nrow(unique(data@data, by=c("subject_id", "cohort_id")))
+            n_samples <- data.table::uniqueN(data@data, by=get_id_columns(id_depth="series"))
             
             ###### Signature size ########################################################
             param$sign_size <- .get_default_sign_size(data_obj=data)
@@ -169,10 +171,10 @@ setMethod("get_default_hyperparameters", signature(object="familiarRFSRC"),
 
 #####get_prediction_type#####
 setMethod("get_prediction_type", signature(object="familiarRFSRC"),
-          function(object, type=NULL){
+          function(object, type="default"){
             
             if(object@outcome_type == "survival"){
-              if(is.null(type)){
+              if(type == "default"){
                 # Standard predictions.
                 return("cumulative_hazard")
                 
@@ -196,7 +198,7 @@ setMethod("get_prediction_type", signature(object="familiarRFSRC"),
 
 #####..train####
 setMethod("..train", signature(object="familiarRFSRC", data="dataObject"),
-          function(object, data){
+          function(object, data, anonymous=TRUE){
             
             # Aggregate repeated measurement data - randomForestSRC does not
             # facilitate repeated measurements.
@@ -204,6 +206,9 @@ setMethod("..train", signature(object="familiarRFSRC", data="dataObject"),
             
             # Check if the training data is ok.
             if(has_bad_training_data(object=object, data=data)) return(callNextMethod())
+            
+            # Check if hyperparameters are set.
+            if(is.null(object@hyperparameters)) return(callNextMethod())
             
             # Find feature columns in data table
             feature_columns <- get_feature_columns(x=data)
@@ -229,20 +234,36 @@ setMethod("..train", signature(object="familiarRFSRC", data="dataObject"),
             sample_size <- ceiling(param$sample_size * nrow(data@data))
             sample_type <- ifelse(sample_size == nrow(data@data), "swr", "swor")
             
+            # Set forest seed. If object comes with a defined seed use the seed.
+            forest_seed <- ifelse(is.null(object@seed), as.integer(stats::runif(1, -100000, -1)), object@seed)
+            
+            # Use anonymised version for the forest, if available.
+            if(utils::packageVersion("randomForestSRC") >= "2.11.0" & anonymous){
+              forest_function <- randomForestSRC::rfsrc.anonymous
+              
+            } else {
+              forest_function <- randomForestSRC::rfsrc
+            }
+            
             # Generate random forest.
-            model <- randomForestSRC::rfsrc(formula,
-                                            data = data@data,
-                                            ntree = 2^param$n_tree,
-                                            samptype = sample_type,
-                                            sampsize = sample_size,
-                                            mtry = max(c(1, ceiling(param$m_try * length(feature_columns)))),
-                                            nodesize = param$node_size,
-                                            nodedepth = param$tree_depth,
-                                            nsplit = param$n_split,
-                                            splitrule = param$split_rule)
+            model <- forest_function(formula,
+                                     data = data@data,
+                                     ntree = 2^param$n_tree,
+                                     samptype = sample_type,
+                                     sampsize = sample_size,
+                                     mtry = max(c(1, ceiling(param$m_try * length(feature_columns)))),
+                                     nodesize = param$node_size,
+                                     nodedepth = param$tree_depth,
+                                     nsplit = param$n_split,
+                                     splitrule = param$split_rule,
+                                     seed = forest_seed)
             
             # Add model to the object.
             object@model <- model
+            
+            # Store the seed used to create the object. This helps recreate the
+            # object in case the model is an anonymous forest.
+            object@seed <- forest_seed
             
             return(object)
           })
@@ -251,89 +272,95 @@ setMethod("..train", signature(object="familiarRFSRC", data="dataObject"),
 
 #####..predict#####
 setMethod("..predict", signature(object="familiarRFSRC", data="dataObject"),
-          function(object, data, type=NULL, time=NULL, ...){
+          function(object, data, type="default", time=NULL, ...){
             
-            # Check if the model was trained.
-            if(!model_is_trained(object)) return(callNextMethod())
-            
-            # Check if the data is empty.
-            if(is_empty(data)) return(callNextMethod())
-            
-            # Set the prediction type
-            if(is.null(type)){
-              if(object@outcome_type %in% c("survival")){
-                type <- "cumulative_hazard"
+            if(type %in% c("default", "survival_probability")){
+              ##### Default method #############################################
+              
+              # Check if the model was trained.
+              if(!model_is_trained(object)) return(callNextMethod())
+              
+              # Check if the data is empty.
+              if(is_empty(data)) return(callNextMethod())
+              
+              # Get an empty prediction table.
+              prediction_table <- get_placeholder_prediction_table(object=object,
+                                                                   data=data,
+                                                                   type=type)
+              
+              # Make predictions using the model.
+              model_predictions <- predict(object=object@model,
+                                           newdata=data@data)
+              
+              
+              if(object@outcome_type %in% c("binomial", "multinomial")){
+                #####Categorical outcomes######
                 
-              } else if(object@outcome_type %in% c("binomial", "multinomial", "count", "continuous")){
-                type <- "response"
+                # Set predicted class.
+                prediction_table[, "predicted_class":=model_predictions$class]
                 
-              } else {
-                ..error_outcome_type_not_implemented(object@outcome_type)
-              }
+                # Add class probabilities.
+                class_probability_columns <- get_class_probability_name(x=object)
+                for(ii in seq_along(class_probability_columns)){
+                  prediction_table[, (class_probability_columns[ii]):=model_predictions$predicted[, ii]]
+                }
+                
+              } else if(object@outcome_type %in% c("continuous", "count")){
+                #####Numerical outcomes######
+                
+                # Extract predicted regression values.
+                prediction_table[, "predicted_outcome":=model_predictions$predicted]
+                
+              } else if(object@outcome_type %in% c("survival")){
+                #####Survival outcomes######
+                
+                # Get the unique event times
+                event_times <- model_predictions$time.interest
+                
+                # Set default time, if not provided.
+                time <- ifelse(is.null(time), max(event_times), time)
+                
+                if(type == "default"){
+                  # Cumulative hazard.
+                  
+                  # Get the cumulative hazards at the given time point.
+                  prediction_table <- process_random_forest_survival_predictions(event_matrix=model_predictions$chf,
+                                                                                 event_times=event_times,
+                                                                                 prediction_table=prediction_table,
+                                                                                 time=time,
+                                                                                 type="cumulative_hazard")
+                  
+                } else if(type == "survival_probability"){
+                  # Survival probability.
+                  
+                  # Get the survival probability at the given time point.
+                  prediction_table <- process_random_forest_survival_predictions(event_matrix=model_predictions$survival,
+                                                                                 event_times=event_times,
+                                                                                 prediction_table=prediction_table,
+                                                                                 time=time,
+                                                                                 type="survival")
+                  
+                } else {
+                  ..error_outcome_type_not_implemented(object@outcome_type)
+                }
+              }  
+              
+              return(prediction_table)
+              
+            } else {
+              ##### User-specified method ######################################
+              
+              # Check if the model was trained.
+              if(!model_is_trained(object)) return(NULL)
+              
+              # Check if the data is empty.
+              if(is_empty(data)) return(NULL)
+              
+              # Make predictions using the model.
+              return(predict(object=object@model,
+                             newdata=data@data,
+                             ...))
             }
-            
-            # Get an empty prediction table.
-            prediction_table <- get_placeholder_prediction_table(object=object,
-                                                                 data=data)
-            
-            # Make predictions using the model.
-            model_predictions <- predict(object=object@model,
-                                         newdata=data@data)
-            
-            
-            if(object@outcome_type %in% c("binomial", "multinomial")){
-              #####Categorical outcomes######
-              
-              # Set predicted class.
-              prediction_table[, "predicted_class":=model_predictions$class]
-              
-              # Add class probabilities.
-              class_probability_columns <- get_class_probability_name(x=object)
-              for(ii in seq_along(class_probability_columns)){
-                prediction_table[, (class_probability_columns[ii]):=model_predictions$predicted[, ii]]
-              }
-              
-            } else if(object@outcome_type %in% c("continuous", "count")){
-              #####Numerical outcomes######
-              
-              # Extract predicted regression values.
-              prediction_table[, "predicted_outcome":=model_predictions$predicted]
-              
-            } else if(object@outcome_type %in% c("survival")){
-              #####Survival outcomes######
-              
-              # Get the unique event times
-              event_times <- model_predictions$time.interest
-              
-              # Set default time, if not provided.
-              time <- ifelse(is.null(time), max(event_times), time)
-              
-              if(type %in% c("response", "cumulative_hazard")){
-                # Cumulative hazard.
-                
-                # Get the cumulative hazards at the given time point.
-                prediction_table <- process_random_forest_survival_predictions(event_matrix=model_predictions$chf,
-                                                                               event_times=event_times,
-                                                                               prediction_table=prediction_table,
-                                                                               time=time,
-                                                                               type="cumulative_hazard")
-                
-              } else if(type %in% c("survival", "survival_probability")){
-                # Survival probability.
-                
-                # Get the survival probability at the given time point.
-                prediction_table <- process_random_forest_survival_predictions(event_matrix=model_predictions$survival,
-                                                                               event_times=event_times,
-                                                                               prediction_table=prediction_table,
-                                                                               time=time,
-                                                                               type="survival")
-                
-              } else {
-                ..error_outcome_type_not_implemented(object@outcome_type)
-              }
-            }  
-            
-            return(prediction_table)
           })
 
 
@@ -357,7 +384,9 @@ setMethod("..vimp", signature(object="familiarRFSRC"),
             score <- NULL
             
             # Attempt to train the model if it has not been trained yet.
-            if(!model_is_trained(object)) object <- ..train(object, data)
+            if(!model_is_trained(object)) object <- ..train(object=object,
+                                                            data=data,
+                                                            anonymous=FALSE)
             
             # Check if the model has been trained upon retry.
             if(!model_is_trained(object)) return(callNextMethod())
@@ -369,8 +398,18 @@ setMethod("..vimp", signature(object="familiarRFSRC"),
             # Extract the variable importance score
             if(vimp_method == "permutation"){
               
+              # Check if the model is anonymous, and rebuild if it is. VIMP does
+              # not work otherwise.
+              if(inherits(object@model, "anonymous")) object <- ..train(object=object,
+                                                                        data=data,
+                                                                        anonymous=FALSE)
+              
               # Determine permutation variable importance
-              vimp_score <- randomForestSRC::vimp(object=object@model, importance="permute")$importance
+              vimp_score <- randomForestSRC::vimp(object=object@model,
+                                                  importance="permute")$importance
+              
+              # Check that the variable importance score is not empty.
+              if(is_empty(vimp_score)) return(callNextMethod())
               
               # The variable importance score for binomial and multinomial outcomes is per class
               if(is.matrix(vimp_score)){
@@ -387,8 +426,20 @@ setMethod("..vimp", signature(object="familiarRFSRC"),
               vimp_table[, "multi_var":=TRUE]
 
             } else if(vimp_method == "minimum_depth"){
+              
+              # Check if the model is anonymous, and rebuild if it is. VIMP does
+              # not work otherwise.
+              if(inherits(object@model, "anonymous")) object <- ..train(object=object,
+                                                                        data=data,
+                                                                        anonymous=FALSE)
+              
               # Determine minimum depth variable importance
-              vimp_score <- randomForestSRC::var.select(object=object@model, method="md", verbose=FALSE)$md.obj$order
+              vimp_score <- randomForestSRC::var.select(object=object@model,
+                                                        method="md",
+                                                        verbose=FALSE)$md.obj$order
+              
+              # Check that the variable importance score is not empty.
+              if(is_empty(vimp_score)) return(callNextMethod())
               
               # Select the "min depth" column, which is the first column
               if(is.matrix(vimp_score)){
@@ -405,6 +456,13 @@ setMethod("..vimp", signature(object="familiarRFSRC"),
               vimp_table[, "multi_var":=TRUE]
               
             } else if(vimp_method == "variable_hunting"){
+              
+              # Check if the model is anonymous, and rebuild if it is. VIMP does
+              # not work otherwise.
+              if(inherits(object@model, "anonymous")) object <- ..train(object=object,
+                                                                        data=data,
+                                                                        anonymous=FALSE)
+              
               # Perform variable hunting
               vimp_score <- randomForestSRC::var.select(object=object@model,
                                                         method="vh",
@@ -413,6 +471,9 @@ setMethod("..vimp", signature(object="familiarRFSRC"),
                                                         nrep=object@hyperparameters$fs_vh_n_rep,
                                                         verbose=FALSE,
                                                         refit=FALSE)$varselect
+              
+              # Check that the variable importance score is not empty.
+              if(is_empty(vimp_score)) return(callNextMethod())
               
               # Select the "rel.freq" column, which is the second column
               if(is.matrix(vimp_score)){
@@ -471,7 +532,6 @@ setMethod("..vimp", signature(object="familiarRFSRC"),
               # Perform holdout variable importance.
               vimp_score <-randomForestSRC::holdout.vimp(formula,
                                                          data = data@data,
-                                                         ntree = 2^object@hyperparameters$n_tree,
                                                          samptype = sample_type,
                                                          sampsize = sample_size,
                                                          mtry = max(c(1, ceiling(object@hyperparameters$m_try * get_n_features(data)))),
@@ -479,7 +539,19 @@ setMethod("..vimp", signature(object="familiarRFSRC"),
                                                          nodedepth = object@hyperparameters$tree_depth,
                                                          nsplit = object@hyperparameters$n_split,
                                                          splitrule = object@hyperparameters$split_rule,
-                                                         verbose=FALSE)
+                                                         verbose=FALSE)$importance
+              
+              # Check that the variable importance score is not empty.
+              if(is_empty(vimp_score)) return(callNextMethod())
+              
+              # Select the "all" column, which is the first column
+              if(is.matrix(vimp_score)){
+                vimp_score_names <- rownames(vimp_score)
+                vimp_score <- vimp_score[, 1]
+                
+              } else {
+                vimp_score_names  <- names(vimp_score)
+              }
               
               # Create the variable importance data table
               vimp_table <- data.table::data.table("score"=vimp_score, "name"=names(vimp_score))

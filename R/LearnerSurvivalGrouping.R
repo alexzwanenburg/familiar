@@ -155,15 +155,15 @@ learner.assign_risk_group_names <- function(risk_group, cutoff){
   
   if(n_groups==2){
     # Stratification into low and high-risk groups
-    y <- factor(risk_group, levels=seq_len(n_groups), labels=c("low", "high")) 
+    y <- factor(risk_group, levels=seq_len(n_groups), labels=c("low", "high"), ordered=TRUE) 
    
   } else if(n_groups==3){
     # Stratification into low, moderate and high-risk groups
-    y <- factor(risk_group, levels=seq_len(n_groups), labels=c("low", "moderate", "high"))
+    y <- factor(risk_group, levels=seq_len(n_groups), labels=c("low", "moderate", "high"), ordered=TRUE)
     
   } else {
     # Assign numbers
-    y <- factor(risk_group, levels=seq_len(n_groups))
+    y <- factor(risk_group, levels=seq_len(n_groups), ordered=TRUE)
     
   }
   
@@ -184,153 +184,5 @@ learner.get_mean_risk_group <- function(risk_group){
   # Check if the risk_group_num still falls within the range
   risk_group_num <- ifelse(risk_group_num > n, n, risk_group_num)
   
-  return(factor(group_names[risk_group_num], levels=group_names))
-}
-
-
-learner.assess_stratification <- function(risk_group_table, p_adjust_method="holm"){
-
-  # Suppress NOTES due to non-standard evaluation in data.table
-  p_value <- NULL
-  
-  # Make a local copy
-  risk_group_table <- data.table::copy(risk_group_table)
-  
-  ##### Log rank test #####
-
-    # Overall log rank test results
-  overall_test_results <- learner.perform_log_rank_test(risk_group_table=risk_group_table, all_groups=TRUE)
-
-  if(nlevels(risk_group_table$risk_group) >= 2){
-    # Get all pairs
-    pairwise_combinations <- utils::combn(x=levels(risk_group_table$risk_group), m=2, simplify=FALSE)
-    
-    # Perform a log rank test for each separate pair
-    pairwise_test_results <- data.table::rbindlist(lapply(pairwise_combinations, learner.perform_log_rank_test,
-                                                          risk_group_table=risk_group_table, all_groups=FALSE))
-    
-    # Adjust p-value for multiple testing correction
-    pairwise_test_results[, "p_value_adj":=stats::p.adjust(p_value, method=p_adjust_method)]
-    
-    # Combine overall and pairwise results
-    log_rank_results <- rbind(overall_test_results, pairwise_test_results)
-    
-  } else {
-    log_rank_results <- overall_test_results
-  }
-  
-  ##### Group hazard ratio results #####
-  
-  # Extract Hazard Ratio test results using different risk groups as reference
-  hr_test_results <- data.table::rbindlist(lapply(levels(risk_group_table$risk_group), learner.perform_hazard_ratio_test,
-                                                         risk_group_table=risk_group_table, p_adjust_method=p_adjust_method))
-  
-  # Return test results
-  return(list("logrank"=log_rank_results, "hr_ratio"=hr_test_results))
-}
-
-
-
-learner.perform_hazard_ratio_test <- function(reference_group, risk_group_table, p_adjust_method="holm"){
-  
-    # Suppress NOTES due to non-standard evaluation in data.table
-    p_value <- NULL
-
-    # Define an empty placeholder table
-    empty_table <- data.table::data.table("strat_method"=character(0),
-                                          "test"=character(0),
-                                          "reference_group"=character(0),
-                                          "risk_group"=character(0),
-                                          "hazard_ratio"=numeric(0),
-                                          "hr_lower_95"=numeric(0),
-                                          "hr_upper_95"=numeric(0),
-                                          "p_value"=numeric(0),
-                                          "p_value_adj"=numeric(0))
-    
-    if(is_empty(risk_group_table)) return(empty_table)
-    
-    # Create a local copy
-    risk_group_table <- data.table::copy(risk_group_table)
-    risk_group_table <- droplevels(risk_group_table)
-    
-    # Determine the number of risk groups
-    n_groups <- nlevels(risk_group_table$risk_group)
-    
-    # Check that there are at least two groups.
-    if(n_groups < 2) return(empty_table)
-    
-    # Reset the reference risk group
-    risk_group_table$risk_group <- stats::relevel(risk_group_table$risk_group, ref=reference_group)
-    
-    # Create model
-    model_obj <- survival::coxph(survival::Surv(time=outcome_time, event=outcome_event) ~ risk_group, data=risk_group_table)
-    
-    # Extract summary information concerning hazard ratios
-    summary_info <- summary(model_obj)
-    
-    # Include results into data table
-    test_data <- data.table::data.table("strat_method"=risk_group_table$strat_method[1], "test"="hazard_ratio_test",
-                                        "reference_group"=reference_group, "risk_group"=levels(risk_group_table$risk_group)[-1],
-                                        "hazard_ratio"=summary_info$conf.int[, 1],
-                                        "hr_lower_95"=summary_info$conf.int[, 3],
-                                        "hr_upper_95"=summary_info$conf.int[, 4],
-                                        "p_value"=summary_info$coefficients[, 5])
-    
-    # Apply multiple testing correction
-    test_data[, "p_value_adj":=stats::p.adjust(p_value, method=p_adjust_method)]
-    
-    # Return test results
-    return(test_data)
-}
-
-
-
-learner.perform_log_rank_test <- function(selected_groups=NULL, risk_group_table, all_groups=TRUE){
-  
-  # Suppress NOTES due to non-standard evaluation in data.table
-  risk_group <- NULL
-  
-  # Create an empty placeholder table
-  empty_table <- data.table::data.table("strat_method"=character(0),
-                                        "test"=character(0),
-                                        "risk_group_1"=character(0),
-                                        "risk_group_2"=character(0),
-                                        "p_value"=numeric(0),
-                                        "p_value_adj"=numeric(0))
-  
-  if(is_empty(risk_group_table)) return(empty_table)
-  
-  # Drop levels from the risk group table
-  risk_group_table <- data.table::copy(risk_group_table)
-  risk_group_table <- droplevels(risk_group_table)
-  
-  # Get groups
-  if(is.null(selected_groups)) selected_groups <- levels(risk_group_table$risk_group)
-
-  # Determine the number of groups (this is important for calculating the p-value from the chi-square score)
-  n_groups <- nlevels(risk_group_table$risk_group)
-  
-  # Ensure that at least two risk groups are present in the data.
-  if(n_groups < 2) return(empty_table)
-  
-  # Determine chi-square of log-rank test
-  chi_sq <- survival::survdiff(survival::Surv(time=outcome_time, event=outcome_event)~risk_group,
-                               data=risk_group_table[risk_group %in% selected_groups],
-                               subset=NULL, na.action="na.omit")$chisq
-  
-  # Derive p-value
-  p_value  <- stats::pchisq(q=chi_sq, df=n_groups-1, lower.tail=FALSE)
-  
-  if(all_groups==TRUE){
-    test_data <- data.table::data.table("strat_method"=risk_group_table$strat_method[1], "test"="logrank",
-                                        "risk_group_1"="all", "risk_group_2"="all",
-                                        "p_value"=p_value, "p_value_adj"=p_value)
-    
-  } else {
-    test_data <- data.table::data.table("strat_method"=risk_group_table$strat_method[1], "test"="logrank",
-                                        "risk_group_1"=selected_groups[1], "risk_group_2"=selected_groups[2],
-                                        "p_value"=p_value, "p_value_adj"=as.double(NA))
-  }
-  
-  return(test_data)
+  return(factor(group_names[risk_group_num], levels=group_names, ordered=TRUE))
 }

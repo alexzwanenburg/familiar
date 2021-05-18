@@ -8,6 +8,10 @@
 \usage{
 plot_sample_clustering(
   object,
+  feature_cluster_method = waiver(),
+  feature_linkage_method = waiver(),
+  sample_cluster_method = waiver(),
+  sample_linkage_method = waiver(),
   draw = FALSE,
   dir_path = NULL,
   split_by = NULL,
@@ -42,7 +46,7 @@ plot_sample_clustering(
   show_outcome = TRUE,
   dendrogram_height = grid::unit(1.5, "cm"),
   outcome_height = grid::unit(0.3, "cm"),
-  evaluation_times = NULL,
+  evaluation_times = waiver(),
   width = waiver(),
   height = waiver(),
   units = waiver(),
@@ -52,6 +56,10 @@ plot_sample_clustering(
 
 \S4method{plot_sample_clustering}{ANY}(
   object,
+  feature_cluster_method = waiver(),
+  feature_linkage_method = waiver(),
+  sample_cluster_method = waiver(),
+  sample_linkage_method = waiver(),
   draw = FALSE,
   dir_path = NULL,
   split_by = NULL,
@@ -86,7 +94,7 @@ plot_sample_clustering(
   show_outcome = TRUE,
   dendrogram_height = grid::unit(1.5, "cm"),
   outcome_height = grid::unit(0.3, "cm"),
-  evaluation_times = NULL,
+  evaluation_times = waiver(),
   width = waiver(),
   height = waiver(),
   units = waiver(),
@@ -96,6 +104,10 @@ plot_sample_clustering(
 
 \S4method{plot_sample_clustering}{familiarCollection}(
   object,
+  feature_cluster_method = waiver(),
+  feature_linkage_method = waiver(),
+  sample_cluster_method = waiver(),
+  sample_linkage_method = waiver(),
   draw = FALSE,
   dir_path = NULL,
   split_by = NULL,
@@ -130,7 +142,7 @@ plot_sample_clustering(
   show_outcome = TRUE,
   dendrogram_height = grid::unit(1.5, "cm"),
   outcome_height = grid::unit(0.3, "cm"),
-  evaluation_times = NULL,
+  evaluation_times = waiver(),
   width = waiver(),
   height = waiver(),
   units = waiver(),
@@ -139,11 +151,44 @@ plot_sample_clustering(
 )
 }
 \arguments{
-\item{object}{\code{familiarCollection} object, or one or more \code{familiarData}
-objects, that will be internally converted to a \code{familiarCollection} object.
-It is also possible to provide a \code{familiarEnsemble} or one or more
-\code{familiarModel} objects together with the data from which data is computed
-prior to export. Paths to such files can also be provided.}
+\item{object}{A \code{familiarCollection} object, or other other objects from which
+a \code{familiarCollection} can be extracted. See details for more information.}
+
+\item{feature_cluster_method}{The method used to perform clustering. These are
+the same methods as for the \code{cluster_method} configuration parameter:
+\code{none}, \code{hclust}, \code{agnes}, \code{diana} and \code{pam}.
+
+\code{none} cannot be used when extracting data regarding mutual correlation or
+feature expressions.
+
+If not provided explicitly, this parameter is read from settings used at
+creation of the underlying \code{familiarModel} objects.}
+
+\item{feature_linkage_method}{The method used for agglomerative clustering in
+\code{hclust} and \code{agnes}. These are the same methods as for the
+\code{cluster_linkage_method} configuration parameter: \code{average}, \code{single},
+\code{complete}, \code{weighted}, and \code{ward}.
+
+If not provided explicitly, this parameter is read from settings used at
+creation of the underlying \code{familiarModel} objects.}
+
+\item{sample_cluster_method}{The method used to perform clustering based on
+distance between samples. These are the same methods as for the
+\code{cluster_method} configuration parameter: \code{hclust}, \code{agnes}, \code{diana} and
+\code{pam}.
+
+\code{none} cannot be used when extracting data for feature expressions.
+
+If not provided explicitly, this parameter is read from settings used at
+creation of the underlying \code{familiarModel} objects.}
+
+\item{sample_linkage_method}{The method used for agglomerative clustering in
+\code{hclust} and \code{agnes}. These are the same methods as for the
+\code{cluster_linkage_method} configuration parameter: \code{average}, \code{single},
+\code{complete}, \code{weighted}, and \code{ward}.
+
+If not provided explicitly, this parameter is read from settings used at
+creation of the underlying \code{familiarModel} objects.}
 
 \item{draw}{(\emph{optional}) Draws the plot if TRUE.}
 

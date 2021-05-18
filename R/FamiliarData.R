@@ -2,6 +2,36 @@
 #' @include FamiliarS4Classes.R
 NULL
 
+
+#####show (familiarData)#####
+setMethod("show", signature(object="familiarData"),
+          function(object){
+            
+            # Create an initial descriptor.
+            data_str <- paste0("A dataset (", object@name, "; v", object@familiar_version, ")")
+            
+            # Add the generating ensemble, if available.
+            if(length(object@generating_ensemble) > 0){
+              data_str <- paste0(data_str, " created using ", object@generating_ensemble, ".\n")
+              
+            } else {
+              data_str <- paste0(data_str, ".\n")
+            }
+            cat(data_str)
+            
+            # Details concerning the generating ensemble.
+            cat(paste0("\nThe ensemble that created this dataset contained of one or more ",
+                       object@learner,
+                       " models with variable importance computed by the ",
+                       object@fs_method,
+                       " variable importance method.\n"))
+            
+            # Outcome details
+            cat("\nThe following outcome was modelled:\n")
+            show(object@outcome_info)
+          })
+
+
 #####save (familiarData)#####
 setMethod("save", signature(list="familiarData", file="character"),
           function(list, file) {
@@ -27,10 +57,17 @@ setMethod("get_object_name", signature(object="familiarData"),
               object_name <- paste(data_pooling, ensemble_data_id, ensemble_run_id, ifelse(object@is_validation, "validation", "development"), "data", sep=".")
             } else {
               # Create the full name of the object
-              object_name <- get_object_file_name(learner=object@learner, fs_method=object@fs_method, project_id=object@project_id, data_id=ensemble_data_id,
-                                                  run_id=ensemble_run_id, pool_data_id=pool_data_id, pool_run_id=pool_run_id,
-                                                  object_type="familiarData", is_ensemble=data_pooling=="ensemble",
-                                                  is_validation=object@is_validation, with_extension=FALSE)
+              object_name <- get_object_file_name(learner=object@learner,
+                                                  fs_method=object@fs_method,
+                                                  project_id=object@project_id,
+                                                  data_id=ensemble_data_id,
+                                                  run_id=ensemble_run_id,
+                                                  pool_data_id=pool_data_id,
+                                                  pool_run_id=pool_run_id,
+                                                  object_type="familiarData",
+                                                  is_ensemble=data_pooling=="ensemble",
+                                                  is_validation=object@is_validation,
+                                                  with_extension=FALSE)
             }
             
             return(object_name)
@@ -97,18 +134,20 @@ setMethod("add_identifiers", signature(data="ANY", object="familiarData"),
             
           })
 
-#####set_data_set_names#####
 
-#' @title Name dataset
+
+#####set_object_name (familiarData)#####
+
+#' @title Set the name of a `familiarData` object.
 #'  
 #' @description Set the `name` slot using the object name.
 #'
 #' @param x A `familiarData` object.
 #' 
-#' @return A `familiarData` object with a generated name.
+#' @return A `familiarData` object with a generated or a provided name.
 #' @md
 #' @keywords internal
-setMethod("set_data_set_names", signature(x="familiarData"),
+setMethod("set_object_name", signature(x="familiarData"),
           function(x, new=NULL){
 
             if(x@project_id == 0 & is.null(new)){

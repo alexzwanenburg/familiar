@@ -34,7 +34,7 @@ setMethod("is_available", signature(object="familiarGLM"),
             
             # Check outcome type and learner.
             if(outcome_type == "binomial" & learner %in% c("glm", "glm_logistic", "glm_probit",
-                                                         "glm_cauchy", "glm_log", "glm_loglog")){
+                                                           "glm_cauchy", "glm_loglog")){
               return(TRUE)
               
             } else if(outcome_type == "multinomial" & learner %in% c("glm", "glm_multinomial")) {
@@ -88,7 +88,7 @@ setMethod("get_default_hyperparameters", signature(object="familiarGLM"),
               # If no family is specified, the default behaviour is to identify the family
               # through optimisation.
               if(outcome_type=="binomial") {
-                family_default <- c("logistic", "probit", "loglog", "cauchy", "log_binomial")
+                family_default <- c("logistic", "probit", "loglog", "cauchy")
                 
               } else if(outcome_type=="continuous"){
                 family_default <- c("gaussian", "log_gaussian", "inv_gaussian", "poisson", "log_poisson")
@@ -109,10 +109,7 @@ setMethod("get_default_hyperparameters", signature(object="familiarGLM"),
             } else if(fam == "log") {
               # "log" is a collection of different families, that should be specified
               # according to the outcome type.
-              if(outcome_type=="binomial") {
-                family_default <- "log_binomial"
-                
-              } else if(outcome_type=="continuous") {
+              if(outcome_type=="continuous") {
                 family_default <- c("log_gaussian", "log_poisson")
                 
               } else if(outcome_type=="count") {
@@ -137,14 +134,12 @@ setMethod("get_default_hyperparameters", signature(object="familiarGLM"),
 
 #####get_prediction_type#####
 setMethod("get_prediction_type", signature(object="familiarGLM"),
-          function(object, type=NULL){
+          function(object, type="default"){
             
             if(object@outcome_type != "survival") return(callNextMethod())
             
             # This is a backup in case glm is used to refer to CoxPH methods.
-            if(is.null(type)) return("hazard_ratio")
-            
-            if(type == "risk"){
+            if(type == "default"){
               return("hazard_ratio")
               
             } else if(type == "survival_probability"){
@@ -172,6 +167,9 @@ setMethod("..train", signature(object="familiarGLM", data="dataObject"),
             # Check if training data is ok.
             if(has_bad_training_data(object=object, data=data)) return(callNextMethod())
             
+            # Check if hyperparameters are set.
+            if(is.null(object@hyperparameters)) return(callNextMethod())
+            
             # Use effect coding to convert categorical data into encoded data -
             # this is required to deal with factors with missing/new levels
             # between training and test data sets.
@@ -192,17 +190,17 @@ setMethod("..train", signature(object="familiarGLM", data="dataObject"),
             
             if(object@outcome_type %in% c("binomial", "continuous", "count")){
               # Generate model
-              model <- tryCatch(stats::glm(formula,
-                                           data=encoded_data$encoded_data@data,
-                                           family=family,
-                                           model=FALSE),
+              model <- tryCatch(suppressWarnings(stats::glm(formula,
+                                                            data=encoded_data$encoded_data@data,
+                                                            family=family,
+                                                            model=FALSE)),
                                 error=identity)
               
             } else if(object@outcome_type=="multinomial"){
               # Generate model
-              model <- tryCatch(VGAM::vglm(formula,
-                                           data=encoded_data$encoded_data@data,
-                                           family=family),
+              model <- tryCatch(suppressWarnings(VGAM::vglm(formula,
+                                                            data=encoded_data$encoded_data@data,
+                                                            family=family)),
                                 error=identity)
               
             } else {
@@ -228,84 +226,126 @@ setMethod("..train", signature(object="familiarGLM", data="dataObject"),
 
 #####..predict#####
 setMethod("..predict", signature(object="familiarGLM", data="dataObject"),
-          function(object, data, type="response", ...){
+          function(object, data, type="default", ...){
             
-            # Check if the model was trained.
-            if(!model_is_trained(object)) return(callNextMethod())
-            
-            # Check if the data is empty.
-            if(is_empty(data)) return(callNextMethod())
-            
-            # Encode data so that the features are the same as in the training.
-            encoded_data <- encode_categorical_variables(data=data,
-                                                         object=object,
-                                                         encoding_method="dummy",
-                                                         drop_levels=FALSE)
-            
-            # Get an empty prediction table.
-            prediction_table <- get_placeholder_prediction_table(object=object,
-                                                                 data=encoded_data$encoded_data)
-            
-            if(object@outcome_type == "binomial"){
-              #####Binomial outcomes######
+            if(type == "default"){
+              ##### Default method #############################################
               
-              # Use the model for prediction.
-              model_predictions <- predict(object=object@model,
-                                           newdata=encoded_data$encoded_data@data,
-                                           type=type)
+              # Check if the model was trained.
+              if(!model_is_trained(object)) return(callNextMethod())
               
-              # Obtain class levels.
-              class_levels <- get_outcome_class_levels(x=object)
+              # Check if the data is empty.
+              if(is_empty(data)) return(callNextMethod())
               
-              # Add class probabilities (glm always gives probability for the
-              # second class).
-              class_probability_columns <- get_class_probability_name(x=object)
-              prediction_table[, (class_probability_columns[1]):= 1.0 - model_predictions]
-              prediction_table[, (class_probability_columns[2]):= model_predictions]
+              # Encode data so that the features are the same as in the training.
+              encoded_data <- encode_categorical_variables(data=data,
+                                                           object=object,
+                                                           encoding_method="dummy",
+                                                           drop_levels=FALSE)
               
-              # Update predicted class based on provided probabilities.
-              class_predictions <- class_levels[apply(prediction_table[, mget(class_probability_columns)], 1, which.max)]
-              class_predictions <- factor(class_predictions, levels=class_levels)
-              prediction_table[, "predicted_class":=class_predictions]
+              # Get an empty prediction table.
+              prediction_table <- get_placeholder_prediction_table(object=object,
+                                                                   data=encoded_data$encoded_data,
+                                                                   type=type)
               
-            } else if(object@outcome_type == "multinomial") {
-              #####Multinomial outcomes######
-              
-              # Use the model for prediction.
-              model_predictions <- suppressWarnings(VGAM::predictvglm(object=object@model,
-                                                                      newdata=encoded_data$encoded_data@data,
-                                                                      type=type))
-              
-              # Obtain class levels.
-              class_levels <- get_outcome_class_levels(x=object)
-              
-              # Add class probabilities.
-              class_probability_columns <- get_class_probability_name(x=object)
-              for(ii in seq_along(class_probability_columns)){
-                prediction_table[, (class_probability_columns[ii]):=model_predictions[, ii]]
+              if(object@outcome_type == "binomial"){
+                #####Binomial outcomes######
+                
+                # Use the model for prediction.
+                model_predictions <- suppressWarnings(predict(object=object@model,
+                                                              newdata=encoded_data$encoded_data@data,
+                                                              type="response"))
+                
+                # Obtain class levels.
+                class_levels <- get_outcome_class_levels(x=object)
+                
+                # Add class probabilities (glm always gives probability for the
+                # second class).
+                class_probability_columns <- get_class_probability_name(x=object)
+                prediction_table[, (class_probability_columns[1]):= 1.0 - model_predictions]
+                prediction_table[, (class_probability_columns[2]):= model_predictions]
+                
+                # Update predicted class based on provided probabilities.
+                class_predictions <- class_levels[apply(prediction_table[, mget(class_probability_columns)], 1, which.max)]
+                class_predictions <- factor(class_predictions, levels=class_levels)
+                prediction_table[, "predicted_class":=class_predictions]
+                
+              } else if(object@outcome_type == "multinomial") {
+                #####Multinomial outcomes######
+                
+                # Use the model for prediction.
+                model_predictions <- suppressWarnings(VGAM::predictvglm(object=object@model,
+                                                                        newdata=encoded_data$encoded_data@data,
+                                                                        type="response"))
+                
+                # Obtain class levels.
+                class_levels <- get_outcome_class_levels(x=object)
+                
+                # Add class probabilities.
+                class_probability_columns <- get_class_probability_name(x=object)
+                for(ii in seq_along(class_probability_columns)){
+                  prediction_table[, (class_probability_columns[ii]):=model_predictions[, ii]]
+                }
+                
+                # Update predicted class based on provided probabilities.
+                class_predictions <- class_levels[apply(prediction_table[, mget(class_probability_columns)], 1, which.max)]
+                class_predictions <- factor(class_predictions, levels=class_levels)
+                prediction_table[, "predicted_class":=class_predictions]
+                
+              } else if(object@outcome_type %in% c("continuous", "count")){
+                #####Count and continuous outcomes#####
+                
+                # Use the model for prediction.
+                model_predictions <- suppressWarnings(predict(object=object@model,
+                                                              newdata=encoded_data$encoded_data@data,
+                                                              type="response"))
+                
+                # Add regression.
+                prediction_table[, "predicted_outcome":=model_predictions]
+                
+              } else {
+                ..error_outcome_type_not_implemented(object@outcome_type)
               }
               
-              # Update predicted class based on provided probabilities.
-              class_predictions <- class_levels[apply(prediction_table[, mget(class_probability_columns)], 1, which.max)]
-              class_predictions <- factor(class_predictions, levels=class_levels)
-              prediction_table[, "predicted_class":=class_predictions]
-              
-            } else if(object@outcome_type %in% c("continuous", "count")){
-              #####Count and continuous outcomes#####
-              
-              # Use the model for prediction.
-              model_predictions <- predict(object=object@model,
-                                           newdata=encoded_data$encoded_data@data,
-                                           type=type)
-              
-              # Add regression.
-              prediction_table[, "predicted_outcome":=model_predictions]
+              return(prediction_table)
               
             } else {
-              ..error_outcome_type_not_implemented(object@outcome_type)
+              ##### User-specified method ######################################
+              
+              # Check if the model was trained.
+              if(!model_is_trained(object)) return(callNextMethod())
+              
+              # Check if the data is empty.
+              if(is_empty(data)) return(callNextMethod())
+              
+              # Encode data so that the features are the same as in the training.
+              encoded_data <- encode_categorical_variables(data=data,
+                                                           object=object,
+                                                           encoding_method="dummy",
+                                                           drop_levels=FALSE)
+              
+              if(object@outcome_type  %in% c("continuous", "count", "binomial")){
+                #####Binomial, count and continuous outcomes####################
+                
+                # Use the model for prediction.
+                return(predict(object=object@model,
+                               newdata=encoded_data$encoded_data@data,
+                               type=type,
+                               ...))
+                
+              } else if(object@outcome_type == "multinomial") {
+                #####Multinomial outcomes#######################################
+                
+                # Use the model for prediction.
+                return(suppressWarnings(VGAM::predictvglm(object=object@model,
+                                                          newdata=encoded_data$encoded_data@data,
+                                                          type=type,
+                                                          ...)))
+                
+              } else {
+                ..error_outcome_type_not_implemented(object@outcome_type)
+              }
             }
-            
-            return(prediction_table)
           })
 
 
@@ -378,9 +418,6 @@ setMethod("..get_distribution_family", signature(object="familiarGLM"),
             } else if(family == "cauchy"){
               family_fun <- stats::binomial(link="cauchit")
               
-            } else if(family == "log_binomial"){
-              family_fun <- stats::binomial(link="log")
-              
             } else if(family == "loglog"){
               family_fun <- stats::binomial(link="cloglog")
               
@@ -444,10 +481,7 @@ setMethod("..set_vimp_parameters", signature(object="familiarGLM"),
             } else if(family_str == "log") {
               # "log" is a collection of different families, that should be specified
               # according to the outcome type.
-              if(object@outcome_type=="binomial") {
-                family_default <- "log_binomial"
-                
-              } else if(object@outcome_type=="continuous") {
+              if(object@outcome_type=="continuous") {
                 family_default <- c("log_gaussian")
                 
               } else if(object@outcome_type=="count") {

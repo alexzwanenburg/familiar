@@ -1,7 +1,15 @@
 familiar:::test_all_vimp_methods_available(familiar:::.get_available_univariate_mutual_information_vimp_method(show_general=TRUE))
+familiar:::test_hyperparameter_optimisation(vimp_methods=familiar:::.get_available_univariate_mutual_information_vimp_method(show_general=TRUE),
+                                            debug=FALSE,
+                                            parallel=FALSE,
+                                            no_hyperparameters=TRUE)
 familiar:::test_all_vimp_methods(familiar:::.get_available_univariate_mutual_information_vimp_method(show_general=FALSE))
 
 familiar:::test_all_vimp_methods_available(familiar:::.get_available_multivariate_mutual_information_vimp_method(show_general=TRUE))
+familiar:::test_hyperparameter_optimisation(vimp_methods=familiar:::.get_available_multivariate_mutual_information_vimp_method(show_general=TRUE),
+                                            debug=FALSE,
+                                            parallel=FALSE,
+                                            no_hyperparameters=TRUE)
 familiar:::test_all_vimp_methods(familiar:::.get_available_multivariate_mutual_information_vimp_method(show_general=FALSE))
 
 ##### Count outcome #####

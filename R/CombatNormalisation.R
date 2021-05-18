@@ -1,7 +1,10 @@
 combat.get_normalisation_parameters <- function(x, batch_normalisation_method, cl=NULL, progress_bar=TRUE){
   # Suppress NOTES due to non-standard evaluation in data.table
-  value <- n <- n_valid_features <- is_valid <- NULL
-  gamma_hat <- norm_method <- NULL
+  value <- n <- is_valid <- invariant <- n_features <- NULL
+  gamma_hat <- norm_method <- .NATURAL <- NULL
+  
+  # Get the batch identifier column.
+  batch_id_column <- get_id_columns(single_column="batch")
   
   # Set a minimum threshold for valid sample sizes
   min_valid_samples <- 10
@@ -11,37 +14,42 @@ combat.get_normalisation_parameters <- function(x, batch_normalisation_method, c
   is_parametric <- batch_normalisation_method %in% c("combat_p", "combat_parametric")
   
   # Convert the table from wide to long format
-  x <- melt(x, id.vars="cohort_id", variable.name="feature", value.name="value")
+  x <- data.table::melt(x, id.vars=batch_id_column, variable.name="feature", value.name="value")
+
+  # Sum the number of instances with a valid value, and determine whether all
+  # values are singular.
+  aggregate_table <- x[, list("n"=sum(is.finite(value)),
+                              "invariant"=is_singular_data(value)),
+                       by=c(batch_id_column, "feature")]
   
-  # Determine the number of valid samples per feature in each batch
-  x[, "n":=sum(is.finite(value)), by=c("cohort_id", "feature")]
+  # A feature/batch combination is valid if it is not invariant and has
+  # sufficient instances with a finite value.
+  aggregate_table[, "is_valid":=invariant==FALSE & n >= min_valid_samples]
   
-  # Obtain aggregate table.
-  aggregate_table <- unique(x[, c("cohort_id", "feature", "n"), with=FALSE])
+  # Determine the number of features available in each batch.
+  aggregate_table[, "n_features":=sum(is_valid), by=c(batch_id_column)]
   
-  # Determine the number of features with sufficient samples in each batch.
-  aggregate_table[, "n_valid_features":=sum(n >= min_valid_features), by="cohort_id"]
+  # If a batch does not have sufficient features (3 or more), mark as invalid.
+  aggregate_table[n_features < min_valid_features, "is_valid":=FALSE]
   
-  # Determine which entries in the table can be used.
-  aggregate_table[, "is_valid":=FALSE]
-  aggregate_table[n >= min_valid_samples & n_valid_features >= min_valid_features, "is_valid":=TRUE]
-  
-  # Filter table x so that only valid entries remain. First add the is_valid
-  # column to x through merging.
-  x <- merge(x=x, y=aggregate_table[, c("cohort_id", "feature", "is_valid"), with=FALSE], by=c("cohort_id", "feature"))
-  
-  # Then filter by valid feature value and is_valid. This table is called z,
+  # Drop invariant and n_features columns, as these are no longer required.
+  aggregate_table[, ":="("n_features"=NULL, "invariant"=NULL)]
+
+  # First select for which combat can be used. This table is called z,
   # after the name for standardized data in Johnson et al. Note that overall
   # standardisation is conducted prior to batch-normalisation in familiar, and
   # is external to this function.
-  z <- data.table::copy(x[is.finite(value) & is_valid==TRUE])
+  z <- x[aggregate_table[is_valid == TRUE], on=.NATURAL]
   
   if(!is_empty(z)){
+    # Remove NA or infinite values.
+    z <- z[is.finite(value)]
+    
     # Determine the mean (gamma_hat) of each feature in each batch.
-    z[, "gamma_hat":=mean(value), by=c("cohort_id", "feature")]
+    z[, "gamma_hat":=mean(value), by=c(batch_id_column, "feature")]
   
     # Determine the variance (delta_hat_squared) of each feature in each batch.
-    z[, "delta_hat_squared":=1/n * sum((value - gamma_hat)^2.0), by=c("cohort_id", "feature")]
+    z[, "delta_hat_squared":=1/n * sum((value - gamma_hat)^2.0), by=c(batch_id_column, "feature")]
 
     if(is_parametric){
       # Parameteric empirical bayes-estimation.
@@ -65,16 +73,16 @@ combat.get_normalisation_parameters <- function(x, batch_normalisation_method, c
     combat_batch_parameters <- list()
   }
   
-  # Take invalid entries and try to push them through a normal
+  # Take invalid batches and features and push them through a normal
   # batch-standardisation scheme.
-  z <- data.table::copy(x[is_valid == FALSE])
+  z <- x[aggregate_table[is_valid == FALSE], on=.NATURAL]
   
   if(!is_empty(z)){
     # Obtain normal parameters
     normal_batch_parameters <- combat.non_combat_solver(z=z, cl=cl, progress_bar=progress_bar)
     
-    # Update the norm_method. Note that any "unknown" is not updated.
-    normal_batch_parameters[norm_method != "unknown", "norm_method":=batch_normalisation_method]
+    # Update the norm_method. Note that any "unknown" or "none" is not updated.
+    normal_batch_parameters[!norm_method %in% c("unknown", "none"), "norm_method":=batch_normalisation_method]
     normal_batch_parameters <- list(normal_batch_parameters)
     
   } else {
@@ -88,27 +96,6 @@ combat.get_normalisation_parameters <- function(x, batch_normalisation_method, c
 }
 
 
-combat.apply_normalisation <- function(x, norm_param, invert){
-
-  # Find the normalisation method
-  norm_method <- norm_param$norm_method[1]
-  
-  if(norm_method %in% .get_available_batch_normalisation_methods("combat")){
-    
-    if(invert){
-      y <- x * norm_param$norm_scale[1] + norm_param$norm_shift[1]
-    } else {
-      # Shift and scale parameters for standard and quantile methods
-      y <- (x - norm_param$norm_shift[1]) / (norm_param$norm_scale[1])
-    }
-    return(y)
-    
-  } else {
-    ..error_reached_unreachable_code("combat.apply_normalisation_unknown_normalisation_method")
-  }
-}
-
-
   
 combat.iterative_parametric_bayes_solver <- function(z, tolerance=0.0001, max_iterations=20, cl=NULL, progress_bar=TRUE){
   # In the empirical Bayes approach with parametric priors, the posterior
@@ -117,29 +104,32 @@ combat.iterative_parametric_bayes_solver <- function(z, tolerance=0.0001, max_it
   # Suppress NOTES due to non-standard evaluation in data.table
   gamma_hat <- delta_hat_squared <- NULL
   
+  # Get the batch identifier column.
+  batch_id_column <- get_id_columns(single_column="batch")
+  
   # Create new table by removing value and taking only unique rows.
   z_short <- unique(data.table::copy(z)[, "value":=NULL])
 
   # Determine gamma_bar, which is the average value of gamma_hat across
   # features within each batch. 1 value per batch.
-  z_short[, "gamma_bar":=mean(gamma_hat), by="cohort_id"]
+  z_short[, "gamma_bar":=mean(gamma_hat), by=batch_id_column]
   
   # Determine tau_bar_squared, which is the prior for variance in the normal
   # distribution of gamma_hat. 1 value per batch.
-  z_short[, "tau_bar_squared":=stats::var(gamma_hat), by="cohort_id"]
+  z_short[, "tau_bar_squared":=stats::var(gamma_hat), by=batch_id_column]
   
   # Determine lambda_bar (also called alpha) priors for the inverse gamma
   # distribution according to Johnson et al, supplement A3.1. 1 value per batch
-  z_short[, "lambda_bar":=combat.lambda_prior(delta_hat_squared), by="cohort_id"]
+  z_short[, "lambda_bar":=combat.lambda_prior(delta_hat_squared), by=batch_id_column]
   
   # Determine theta_bar (also called beta) priors according to Johnson et al.
   # supplement A3.1. 1 value per batch
-  z_short[, "theta_bar":=combat.theta_prior(delta_hat_squared), by="cohort_id"]
+  z_short[, "theta_bar":=combat.theta_prior(delta_hat_squared), by=batch_id_column]
 
-  # Split by batchS
+  # Split by batch.
   batch_parameters <- fam_lapply_lb(cl=cl,
                                     assign=NULL,
-                                    X=split(z, by="cohort_id"),
+                                    X=split(z, by=batch_id_column),
                                     FUN=.combat.iterative_parametric_bayes_solver,
                                     progress_bar=progress_bar,
                                     z_short=z_short,
@@ -158,12 +148,16 @@ combat.iterative_parametric_bayes_solver <- function(z, tolerance=0.0001, max_it
   # combat.iterative_parametric_bayes_solver function
   
   # Suppress NOTES due to non-standard evaluation in data.table
-  cohort_id <- NULL
+  batch_id <- NULL
   value <- n <- gamma_hat <- tau_bar_squared <- gamma_bar <- gamma_star_new <- sum_squared_error <- NULL
   delta_star_squared_old <- delta_star_squared_new <- delta_hat_squared <- theta_bar <- lambda_bar <- NULL
   
+  # Get the batch identifier column.
+  batch_id_column <- get_id_columns(single_column="batch")
+  
   # Limit z_short to the current batch.
-  z_short <- data.table::copy(z_short[cohort_id == z$cohort_id[1]])
+  current_batch_id <- z[[batch_id_column]][1]
+  z_short <- data.table::copy(z_short[batch_id == current_batch_id])
   
   # Initialise conditional posteriors. 1 value per feature per batch.
   z_short[, ":="("gamma_star_old"=gamma_hat, "delta_star_squared_old"=delta_hat_squared)]
@@ -178,13 +172,13 @@ combat.iterative_parametric_bayes_solver <- function(z, tolerance=0.0001, max_it
     z_short[, "gamma_star_new":=combat.gamma_posterior(n, tau_bar_squared, gamma_hat, delta_star_squared_old, gamma_bar)]
     
     # Merge z_short back into z prior to computing the sum squared error.
-    z_new <- merge(x=z[, c("cohort_id", "feature", "value"), with=FALSE],
-                   y=z_short[, c("cohort_id", "feature", "gamma_star_new"), with=FALSE],
-                   by=c("cohort_id", "feature"), all=TRUE)
+    z_new <- merge(x=z[, mget(c(batch_id_column, "feature", "value"))],
+                   y=z_short[, mget(c(batch_id_column, "feature", "gamma_star_new"))],
+                   by=c(batch_id_column, "feature"), all=TRUE)
     
     # Compute sum squared error in equation 3.1 for the delta_star_squared posterior.
-    z_new <- z_new[, list("sum_squared_error"=sum((value - gamma_star_new)^2)), by=c("cohort_id", "feature")]
-    z_short <- merge(x=z_short, y=z_new, by=c("cohort_id", "feature"), all=TRUE)
+    z_new <- z_new[, list("sum_squared_error"=sum((value - gamma_star_new)^2)), by=c(batch_id_column, "feature")]
+    z_short <- merge(x=z_short, y=z_new, by=c(batch_id_column, "feature"), all=TRUE)
     
     # Update the conditional delta_star_squared posterior.
     z_short[, "delta_star_squared_new":=combat.delta_squared_posterior(theta_bar, sum_squared_error, n, lambda_bar)]
@@ -207,7 +201,7 @@ combat.iterative_parametric_bayes_solver <- function(z, tolerance=0.0001, max_it
   # Rename gamma_star_new and delta_star_squared_new
   data.table::setnames(x=z_short, old=c("gamma_star_new", "delta_star"), new=c("norm_shift", "norm_scale"))
 
-  return(z_short[, c("cohort_id", "feature", "norm_shift", "norm_scale", "n"), with=FALSE])
+  return(z_short[, mget(c(batch_id_column, "feature", "norm_shift", "norm_scale", "n"))])
 }
 
 
@@ -232,11 +226,12 @@ combat.non_parametric_bayes_solver <- function(z, n_sample_features=50, cl=NULL,
   # Iterate over batches and features to obtain batch parameters.
   batch_parameters <- fam_lapply(cl=cl,
                                  assign=NULL,
-                                 X=split(z, by=c("cohort_id", "feature")),
+                                 X=split(z, by=c(get_id_columns(single_column="batch"), "feature"), drop=TRUE),
                                  FUN=.combat.non_parametric_bayes_solver,
                                  progress_bar=progress_bar,
                                  z_short=z_short,
-                                 n_sample_features=n_sample_features)
+                                 n_sample_features=n_sample_features,
+                                 chopchop=TRUE)
   
   # Concatenate to single table.
   batch_parameters <- data.table::rbindlist(batch_parameters)
@@ -248,12 +243,18 @@ combat.non_parametric_bayes_solver <- function(z, n_sample_features=50, cl=NULL,
 .combat.non_parametric_bayes_solver <- function(z, z_short, n_sample_features){
 
   # Suppress NOTES due to non-standard evaluation in data.table
-  cohort_id <- feature <- NULL
+  batch_id <- feature <- NULL
+  
+  # Get the batch identifier column.
+  batch_id_column <- get_id_columns(single_column="batch")
+  
+  # Limit z_short to the current batch.
+  current_batch_id <- z[[batch_id_column]][1]
   
   # Select the current cohort from z_short. Note that like in sva and other
   # codes, we interpret the g"=1...G in the supplement of Johnson et al. to
   # indicate that the current feature is not directly considered.
-  z_short <- data.table::copy(z_short[cohort_id == z$cohort_id[1] & feature != z$feature[1]])
+  z_short <- data.table::copy(z_short[batch_id == current_batch_id & feature != z$feature[1]])
   
   # Find the number of features that are used to compute w_ig".
   features <- z_short$feature
@@ -267,28 +268,38 @@ combat.non_parametric_bayes_solver <- function(z, n_sample_features=50, cl=NULL,
   # Make selection
   z_short <- droplevels(z_short[feature %in% selected_features])
   
-  w_ig <- sapply(split(z_short, by="feature", sorted=FALSE),
-                 function(prior_pair, x){
-                   # Compute sum((x-gamma_hat)^2) term in the product of the
-                   # probability density functions of the normal distribution
-                   # over x.
-                   sum_squared_error <- sum((x - prior_pair$gamma_hat[1])^2)
-                   
-                   # Compute w_ig" = L(Z_ig | gamma_hat_ig", delta_hat_squared_ig")
-                   # for the current feature in g".
-                   w_ig <- 1.0 / (2.0 * pi * prior_pair$delta_hat_squared[1])^(length(x)/2) * exp(-sum_squared_error / (2 * prior_pair$delta_hat_squared[1]))
-                   
-                   return(w_ig)
-                 }, x=z$value)
+  # Compute data for the weights w_ig that are used to reconstruct gamma_star
+  # and delta_star_squared for the selected feature in the calling function.
+  # (the selected_features variable contains the set difference of all
+  # difference and the feature in the calling features.)
+  weight_data <- lapply(split(z_short, by="feature", sorted=FALSE),
+                        function(prior_pair, x){
+                          # Compute sum((x-gamma_hat)^2) term in the product of the
+                          # probability density functions of the normal distribution
+                          # over x.
+                          sum_squared_error <- sum((x - prior_pair$gamma_hat[1])^2)
+                          
+                          # Compute w_ig" = L(Z_ig | gamma_hat_ig", delta_hat_squared_ig")
+                          # for the current feature in g".
+                          w_ig <- 1.0 / (2.0 * pi * prior_pair$delta_hat_squared[1])^(length(x)/2) * exp(-sum_squared_error / (2 * prior_pair$delta_hat_squared[1]))
+                          
+                          # Replace NaNs and other problematic values.
+                          if(!is.finite(w_ig)) w_ig <- 0.0
+                          
+                          return(data.table::data.table("feature"=prior_pair$feature[1],
+                                                        "w"=w_ig,
+                                                        "gamma_hat"=prior_pair$gamma_hat[1],
+                                                        "delta_hat_squared"=prior_pair$delta_hat_squared[1]))
+                        }, x=z$value)
   
-  # Replace NaNs and other problematic values.
-  w_ig[!is.finite(w_ig)] <- 0.0
+  # Combine to data.table
+  weight_data <- data.table::rbindlist(weight_data)
   
   # Compute gamma_star and delta_star_squared according to Johnson et al.
-  gamma_star <- sum(w_ig * z_short$gamma_hat) / sum(w_ig)
-  delta_star_squared <- sum(w_ig * z_short$delta_hat_squared) / sum(w_ig)
+  gamma_star <- sum(weight_data$w * weight_data$gamma_hat) / sum(weight_data$w)
+  delta_star_squared <- sum(weight_data$w * weight_data$delta_hat_squared) / sum(weight_data$w)
   
-  return(data.table::data.table("cohort_id"=z$cohort_id[1],
+  return(data.table::data.table("batch_id"=z[[batch_id_column]][1],
                                 "feature"=z$feature[1],
                                 "norm_shift"=gamma_star,
                                 "norm_scale"=sqrt(delta_star_squared),
@@ -302,9 +313,10 @@ combat.non_combat_solver <- function(z, cl=NULL, progress_bar=TRUE){
   # Extract parameters for each feature in each batch.
   batch_parameters <- fam_lapply(cl=cl,
                                  assign=NULL,
-                                 X=split(z, by=c("cohort_id", "feature")),
+                                 X=split(z, by=c(get_id_columns(single_column="batch"), "feature"), drop=TRUE),
                                  FUN=.combat.non_combat_solver,
-                                 progress_bar=progress_bar)
+                                 progress_bar=progress_bar,
+                                 chopchop=TRUE)
   
   # Combine into single table
   batch_parameters <- data.table::rbindlist(batch_parameters)
@@ -314,10 +326,11 @@ combat.non_combat_solver <- function(z, cl=NULL, progress_bar=TRUE){
 
 
 .combat.non_combat_solver <- function(z){
+  
   # Obtain batch parameters using per-batch standardisation.
   batch_parameters <- batch_normalise.get_normalisation_parameters(z$value, norm_method="standardisation")
   
-  return(data.table::data.table("cohort_id"=z$cohort_id[1],
+  return(data.table::data.table("batch_id"=z[[get_id_columns(single_column="batch")]][1],
                                 "feature"=z$feature[1],
                                 "norm_shift"=batch_parameters$norm_shift,
                                 "norm_scale"=batch_parameters$norm_scale,

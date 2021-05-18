@@ -1,6 +1,6 @@
 Package: familiar
 Title: End-To-End Machine Learning and Data Analysis Framework
-Version: 0.0.0.53
+Version: 0.0.0.54
 Authors@R: c(
    person("Alex", "Zwanenburg",
           email = "alexander.zwanenburg@nct-dresden.de",
@@ -21,6 +21,7 @@ LazyData: true
 RoxygenNote: 7.1.1
 VignetteBuilder: knitr
 Imports: methods,
+    microbenchmark,
     callr (>= 3.4.3),
     rlang (>= 0.3.4),
     data.table,
@@ -34,7 +35,8 @@ Imports: methods,
     partykit,
     ggplot2 (>= 3.0.0),
     gtable,
-    kernlab,
+    isotree,
+    e1071,
     klaR,
     xgboost,
     glmnet,
@@ -46,6 +48,7 @@ Imports: methods,
     maxstat
 Suggests:
     dynamicTreeCut,
+    rmarkdown,
     fastcluster,
     Rservecoop,
     RSclient,
@@ -77,26 +80,37 @@ Collate:
     'FamiliarCollection.R'
     'FamiliarCollectionExport.R'
     'FamiliarData.R'
-    'FamiliarDataCollectors.R'
     'FamiliarDataComputation.R'
+    'FamiliarDataComputationAUCCurves.R'
+    'FamiliarDataComputationCalibrationData.R'
+    'FamiliarDataComputationCalibrationInfo.R'
     'FamiliarDataComputationConfusionMatrix.R'
     'FamiliarDataComputationDecisionCurveAnalysis.R'
+    'FamiliarDataComputationFeatureExpression.R'
+    'FamiliarDataComputationFeatureSimilarity.R'
+    'FamiliarDataComputationHyperparameters.R'
     'FamiliarDataComputationModelPerformance.R'
     'FamiliarDataComputationPermutationVimp.R'
     'FamiliarDataComputationPredictionData.R'
-    'FamiliarDataComputationROCCurve.R'
+    'FamiliarDataComputationRiskStratificationData.R'
+    'FamiliarDataComputationRiskStratificationInfo.R'
+    'FamiliarDataComputationSampleSimilarity.R'
+    'FamiliarDataComputationUnivariateAnalysis.R'
+    'FamiliarDataComputationVimp.R'
+    'FamiliarDataElement.R'
     'FamiliarEnsemble.R'
     'FamiliarModel.R'
     'FamiliarObjectConversion.R'
+    'FamiliarObjectUpdate.R'
     'FamiliarSharedS4Methods.R'
     'FamiliarVimpMethod.R'
     'FeatureInfo.R'
     'FeatureSelection.R'
     'HyperparameterOptimisation.R'
+    'HyperparameterOptimisationMetaLearners.R'
+    'HyperparameterOptimisationUtilities.R'
     'Imputation.R'
     'Iterations.R'
-    'LearnerCalibration.R'
-    'LearnerCalibrationTests.R'
     'LearnerS4XGBoost.R'
     'LearnerS4SurvivalRegression.R'
     'LearnerS4SVM.R'
@@ -163,3 +177,5 @@ Collate:
     'VimpMain.R'
     'VimpS4CoreLearn.R'
     'zzz.R'
+Config/testthat/parallel: true
+Config/testthat/edition: 3

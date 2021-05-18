@@ -1,128 +1,63 @@
 # First test if all selectable learners are also available
 familiar:::test_all_learners_available(learners=familiar:::.get_available_svm_c_learners(show_general=TRUE))
-familiar:::test_all_learners_available(learners=familiar:::.get_available_svm_c_bound_learners(show_general=TRUE))
 familiar:::test_all_learners_available(learners=familiar:::.get_available_svm_nu_learners(show_general=TRUE))
 familiar:::test_all_learners_available(learners=familiar:::.get_available_svm_eps_learners(show_general=TRUE))
-familiar:::test_all_learners_available(learners=familiar:::.get_available_svm_eps_bound_learners(show_general=TRUE))
 
 # Don't perform any further tests on CRAN due to time of running the complete test.
 testthat::skip_on_cran()
 
-testthat::skip("Skipping svm tests. Some tests appear to get stuck when run with devtools::test as part of a complete test. Initialisation issues?")
-
 familiar:::test_all_learners_train_predict_vimp(learners=familiar:::.get_available_svm_c_learners(show_general=FALSE),
                                                 hyperparameter_list=list("binomial"=list("c"=-1.0,
-                                                                                         "sigma"=1.0,
+                                                                                         "gamma"=0.1,
                                                                                          "degree"=2.0,
-                                                                                         "scale"=-1.0,
-                                                                                         "offset"=0.0,
-                                                                                         "order"=1.0),
+                                                                                         "offset"=0.0),
                                                                          "multinomial"=list("c"=-1.0,
-                                                                                            "sigma"=1.0,
+                                                                                            "gamma"=0.1,
                                                                                             "degree"=2.0,
-                                                                                            "scale"=-1.0,
-                                                                                            "offset"=0.0,
-                                                                                            "order"=1.0)),
+                                                                                            "offset"=0.0)),
                                                 has_vimp=FALSE)
 
-familiar:::test_all_learners_train_predict_vimp(learners=familiar:::.get_available_svm_c_bound_learners(show_general=FALSE),
-                                                hyperparameter_list=list("binomial"=list("c"=-1.0,
-                                                                                         "sigma"=1.0,
-                                                                                         "degree"=2.0,
-                                                                                         "scale"=-1.0,
-                                                                                         "offset"=0.0,
-                                                                                         "order"=1.0),
-                                                                         "multinomial"=list("c"=-1.0,
-                                                                                            "sigma"=1.0,
-                                                                                            "degree"=2.0,
-                                                                                            "scale"=-1.0,
-                                                                                            "offset"=0.0,
-                                                                                            "order"=1.0)),
-                                                has_vimp=FALSE)
 
-# These tests are not always stable for binomial and multinomial outcomes. We
-# may have to run SMBO to identify good sets.
-# familiar:::test_all_learners_train_predict_vimp(learners=familiar:::.get_available_svm_nu_learners(show_general=FALSE),
-#                                                 hyperparameter_list=list("count"=list("c"=-4.0,
-#                                                                                       "epsilon"=0.0,
-#                                                                                       "nu"=-4.0,
-#                                                                                       "sigma"=1.0,
-#                                                                                       "degree"=2.0,
-#                                                                                       "scale"=-1.0,
-#                                                                                       "offset"=0.0,
-#                                                                                       "order"=1.0),
-#                                                                          "continuous"=list("c"=-4.0,
-#                                                                                            "epsilon"=0.0,
-#                                                                                            "nu"=-4.0,
-#                                                                                            "sigma"=1.0,
-#                                                                                            "degree"=2.0,
-#                                                                                            "scale"=-1.0,
-#                                                                                            "offset"=0.0,
-#                                                                                            "order"=1.0),
-#                                                                          "binomial"=list("c"=-5.0,
-#                                                                                          "epsilon"=0.0,
-#                                                                                          "nu"=-4.0,
-#                                                                                          "sigma"=-2.0,
-#                                                                                          "degree"=1.0,
-#                                                                                          "scale"=-1.0,
-#                                                                                          "offset"=0.0,
-#                                                                                          "order"=1.0),
-#                                                                          "multinomial"=list("c"=-4.0,
-#                                                                                             "epsilon"=0.0,
-#                                                                                             "nu"=-4.0,
-#                                                                                             "sigma"=-2.0,
-#                                                                                             "degree"=1.0,
-#                                                                                             "scale"=-1.0,
-#                                                                                             "offset"=0.0,
-#                                                                                             "order"=1.0)),
-#                                                 has_vimp=FALSE)
+familiar:::test_all_learners_train_predict_vimp(learners=familiar:::.get_available_svm_nu_learners(show_general=FALSE),
+                                                hyperparameter_list=list("count"=list("c"=-1.0,
+                                                                                      "epsilon"=0.0,
+                                                                                      "nu"=-4.0,
+                                                                                      "gamma"=0.1,
+                                                                                      "degree"=2.0,
+                                                                                      "offset"=0.0),
+                                                                         "continuous"=list("c"=-1.0,
+                                                                                           "epsilon"=0.0,
+                                                                                           "nu"=-4.0,
+                                                                                           "gamma"=0.1,
+                                                                                           "degree"=2.0,
+                                                                                           "offset"=0.0),
+                                                                         "binomial"=list("c"=-1.0,
+                                                                                         "epsilon"=0.0,
+                                                                                         "nu"=-4.0,
+                                                                                         "gamma"=0.1,
+                                                                                         "degree"=2.0,
+                                                                                         "offset"=0.0),
+                                                                         "multinomial"=list("c"=-1.0,
+                                                                                            "epsilon"=0.0,
+                                                                                            "nu"=-4.0,
+                                                                                            "gamma"=0.1,
+                                                                                            "degree"=2.0,
+                                                                                            "offset"=0.0)),
+                                                has_vimp=FALSE)
 
 
 familiar:::test_all_learners_train_predict_vimp(learners=familiar:::.get_available_svm_eps_learners(show_general=FALSE),
                                                 hyperparameter_list=list("count"=list("c"=-1.0,
                                                                                       "epsilon"=0.0,
-                                                                                      "sigma"=1.0,
+                                                                                      "gamma"=0.1,
                                                                                       "degree"=2.0,
-                                                                                      "scale"=-1.0,
-                                                                                      "offset"=0.0,
-                                                                                      "order"=1.0),
+                                                                                      "offset"=0.0),
                                                                          "continuous"=list("c"=-1.0,
                                                                                            "epsilon"=0.0,
-                                                                                           "sigma"=1.0,
+                                                                                           "gamma"=0.1,
                                                                                            "degree"=2.0,
-                                                                                           "scale"=-1.0,
-                                                                                           "offset"=0.0,
-                                                                                           "order"=1.0)),
+                                                                                           "offset"=0.0)),
                                                 has_vimp=FALSE)
-
-familiar:::test_all_learners_train_predict_vimp(learners=familiar:::.get_available_svm_eps_bound_learners(show_general=FALSE),
-                                                hyperparameter_list=list("count"=list("c"=-1.0,
-                                                                                      "epsilon"=0.0,
-                                                                                      "sigma"=1.0,
-                                                                                      "degree"=2.0,
-                                                                                      "scale"=-1.0,
-                                                                                      "offset"=0.0,
-                                                                                      "order"=1.0),
-                                                                         "continuous"=list("c"=-1.0,
-                                                                                           "epsilon"=0.0,
-                                                                                           "sigma"=1.0,
-                                                                                           "degree"=2.0,
-                                                                                           "scale"=-1.0,
-                                                                                           "offset"=0.0,
-                                                                                           "order"=1.0)),
-                                                has_vimp=FALSE)
-
-good_data <- familiar:::test.create_good_data_set("binomial")
-
-# Train the model using the good dataset.
-good_model <- familiar:::train(data=good_data,
-                               cluster_method="none",
-                               imputation_method="simple",
-                               hyperparameter_list=list("sign_size"=familiar:::get_n_features(good_data),
-                                                        "c"=-4.0,
-                                                        "epsilon"=0.0,
-                                                        "nu"=-4.0),
-                               learner="svm_nu_vanilla")
 
 
 #####Count outcome tests-------------------------------------------------------------
@@ -138,8 +73,8 @@ good_model <- familiar:::train(data=good_data,
                                hyperparameter_list=list("sign_size"=familiar:::get_n_features(good_data),
                                                         "c"=-1.0,
                                                         "epsilon"=0.0,
-                                                        "sigma"=1.0),
-                               learner="svm_eps_rbf")
+                                                        "gamma"=0.0),
+                               learner="svm_eps_radial")
 
 # Train the model using wide data.
 wide_model <- familiar:::train(data=wide_data,
@@ -148,8 +83,8 @@ wide_model <- familiar:::train(data=wide_data,
                                hyperparameter_list=list("sign_size"=familiar:::get_n_features(good_data),
                                                         "c"=-1.0,
                                                         "epsilon"=0.0,
-                                                        "sigma"=1.0),
-                               learner="svm_eps_rbf")
+                                                        "gamma"=0.0),
+                               learner="svm_eps_radial")
 
 testthat::test_that("SVM model trained correctly", {
   # Model trained
@@ -193,8 +128,8 @@ good_model <- familiar:::train(data=good_data,
                                hyperparameter_list=list("sign_size"=familiar:::get_n_features(good_data),
                                                         "c"=-1.0,
                                                         "epsilon"=0.0,
-                                                        "sigma"=1.0),
-                               learner="svm_eps_rbf")
+                                                        "gamma"=1.0),
+                               learner="svm_eps_radial")
 
 # Train the model using wide data.
 wide_model <- familiar:::train(data=wide_data,
@@ -203,8 +138,8 @@ wide_model <- familiar:::train(data=wide_data,
                                hyperparameter_list=list("sign_size"=familiar:::get_n_features(good_data),
                                                         "c"=-1.0,
                                                         "epsilon"=0.0,
-                                                        "sigma"=1.0),
-                               learner="svm_eps_rbf")
+                                                        "gamma"=1.0),
+                               learner="svm_eps_radial")
 
 testthat::test_that("SVM model trained correctly", {
   # Model trained
@@ -246,8 +181,8 @@ good_model <- familiar:::train(data=good_data,
                                imputation_method="simple",
                                hyperparameter_list=list("sign_size"=familiar:::get_n_features(good_data),
                                                         "c"=-1.0,
-                                                        "sigma"=1.0),
-                               learner="svm_c_rbf")
+                                                        "gamma"=1.0),
+                               learner="svm_c_radial")
 
 # Train the model using wide data.
 wide_model <- familiar:::train(data=good_data,
@@ -255,8 +190,8 @@ wide_model <- familiar:::train(data=good_data,
                                imputation_method="simple",
                                hyperparameter_list=list("sign_size"=familiar:::get_n_features(good_data),
                                                         "c"=-1.0,
-                                                        "sigma"=1.0),
-                               learner="svm_c_rbf")
+                                                        "gamma"=1.0),
+                               learner="svm_c_radial")
 
 testthat::test_that("SVM model trained correctly", {
   # Model trained
@@ -299,8 +234,8 @@ good_model <- familiar:::train(data=good_data,
                                imputation_method="simple",
                                hyperparameter_list=list("sign_size"=familiar:::get_n_features(good_data),
                                                         "c"=-1.0,
-                                                        "sigma"=1.0),
-                               learner="svm_c_rbf")
+                                                        "gamma"=1.0),
+                               learner="svm_c_radial")
 
 # Train the model using wide data.
 wide_model <- familiar:::train(data=good_data,
@@ -308,8 +243,8 @@ wide_model <- familiar:::train(data=good_data,
                                imputation_method="simple",
                                hyperparameter_list=list("sign_size"=familiar:::get_n_features(good_data),
                                                         "c"=-1.0,
-                                                        "sigma"=1.0),
-                               learner="svm_c_rbf")
+                                                        "gamma"=1.0),
+                               learner="svm_c_radial")
 
 testthat::test_that("SVM model trained correctly", {
   # Model trained
@@ -338,3 +273,19 @@ testthat::test_that("SVM model can train on wide data", {
   # Valid predictions can be made.
   testthat::expect_equal(familiar:::any_predictions_valid(familiar:::.predict(wide_model, wide_data), outcome_type=wide_data@outcome_type), TRUE)
 })
+
+
+testthat::skip("Skip hyperparameter optimisation, unless manual.")
+
+familiar:::test_hyperparameter_optimisation(learners=familiar:::.get_available_svm_c_learners(show_general=TRUE),
+                                            debug=FALSE,
+                                            parallel=FALSE)
+
+familiar:::test_hyperparameter_optimisation(learners=familiar:::.get_available_svm_nu_learners(show_general=TRUE),
+                                            debug=FALSE,
+                                            parallel=FALSE)
+
+familiar:::test_hyperparameter_optimisation(learners=familiar:::.get_available_svm_eps_learners(show_general=TRUE),
+                                            debug=FALSE,
+                                            parallel=FALSE)
+

@@ -6,6 +6,7 @@
 #' @name familiar
 #' @import data.table
 #' @import methods
+#' @importFrom isotree isolation.forest
 #' @importFrom stats predict coef
 #' @importFrom survival Surv coxph survreg
 #' @importFrom utils head tail getFromNamespace
@@ -83,7 +84,7 @@ summon_familiar <- function(formula=NULL, data=NULL, cl=NULL, config=NULL, confi
   # Disable multithreading on data.table to prevent reduced performance due to
   # resource collisions with familiar parallelisation.
   data.table::setDTthreads(1L)
-  on.exit(data.table::setDTthreads(0L))
+  on.exit(data.table::setDTthreads(0L), add=TRUE)
   
 
   ##### Load configuration file -----------------------------------
@@ -105,23 +106,36 @@ summon_familiar <- function(formula=NULL, data=NULL, cl=NULL, config=NULL, confi
     data <- file_paths$data
   }
   
+  # Make sure to remove the directory if it is on the temporary path.
+  if(file_paths$is_temporary) on.exit(unlink(file_paths$experiment_dir, recursive=TRUE), add=TRUE)
+  
   ##### Load data -------------------------------------------------------------------
   # Parse experiment and data settings
   settings <- .parse_initial_settings(config=config, ...)
   
-  # Load data
-  data <- do.call(.load_data, args=append(list("data"=data), settings$data))
-  
-  # Update settings
-  settings <- .update_initial_settings(formula=formula, data=data, settings=settings)
-  
-  # Create a generic outcome object
-  outcome_info <- create_outcome_info(settings=settings)
+  if(is(data, "dataObject")){
+    # Reconstitute settings from the data.
+    new_settings <- extract_settings_from_data(data)
+    
+    # Replace settings with new settings.
+    settings$data[names(new_settings$data)] <- new_settings$data
+    
+    # Extract data as a data.table.
+    data <- data@data
+    
+  } else {
+    # Load data.
+    data <- do.call(.load_data, args=append(list("data"=data), settings$data))
+    
+    # Update settings
+    settings <- .update_initial_settings(formula=formula, data=data, settings=settings)
+  }
   
   # Parse data
   data <- .finish_data_preparation(data = data,
                                    sample_id_column = settings$data$sample_col,
                                    batch_id_column = settings$data$batch_col,
+                                   series_id_column = settings$data$series_col,
                                    outcome_column = settings$data$outcome_col,
                                    outcome_type = settings$data$outcome_type,
                                    include_features = settings$data$include_features,
@@ -129,22 +143,30 @@ summon_familiar <- function(formula=NULL, data=NULL, cl=NULL, config=NULL, confi
                                    censoring_indicator=settings$data$censoring_indicator,
                                    event_indicator=settings$data$event_indicator,
                                    competing_risk_indicator=settings$data$competing_risk_indicator)
-  
 
-  
   # Derive experimental design
   experiment_setup <- extract_experimental_setup(experimental_design=settings$data$exp_design,
                                                  file_dir=file_paths$iterations_dir)
   
   # Check experiment settings
-  settings <- .update_experimental_design_settings(section_table=experiment_setup, data=data, settings=settings)
+  settings <- .update_experimental_design_settings(section_table=experiment_setup,
+                                                   data=data,
+                                                   settings=settings)
   
   # Import remaining settings
-  settings <- .parse_general_settings(config=config, data=data, settings=settings, ...)
+  settings <- .parse_general_settings(config=config,
+                                      data=data,
+                                      settings=settings,
+                                      ...)
+  
+  # Create a generic outcome object
+  outcome_info <- create_outcome_info(settings=settings)
   
   # Define iterations etc.
-  project_info <- .get_iteration_data(file_dir=file_paths$iterations_dir, data=data,
-                                      experiment_setup=experiment_setup, settings=settings)
+  project_info <- .get_iteration_data(file_dir=file_paths$iterations_dir,
+                                      data=data,
+                                      experiment_setup=experiment_setup,
+                                      settings=settings)
   
   # In case the iterations are loaded from a iterations file provided by the
   # user, perform some checks on the experimental design given the current data
@@ -161,7 +183,9 @@ summon_familiar <- function(formula=NULL, data=NULL, cl=NULL, config=NULL, confi
   }
   
   # Generate feature info
-  feature_info_list <- .get_feature_info_data(data=data, file_paths=file_paths, project_id=project_info$project_id,
+  feature_info_list <- .get_feature_info_data(data=data,
+                                              file_paths=file_paths,
+                                              project_id=project_info$project_id,
                                               outcome_type=settings$data$outcome_type)
 
   # Identify if an external cluster is provided, and required.
@@ -171,7 +195,7 @@ summon_familiar <- function(formula=NULL, data=NULL, cl=NULL, config=NULL, confi
   } else {
     is_external_cluster <- FALSE
   }
-
+  
   # Assign objects that should be accessible everywhere to the familiar global
   # environment. Note that .assign_data_to_backend will also start backend
   # server processes.
@@ -194,12 +218,13 @@ summon_familiar <- function(formula=NULL, data=NULL, cl=NULL, config=NULL, confi
   
   # Make sure that backend server will close after the process finishes.
   on.exit(shutdown_backend_server(backend_type=settings$run$backend_type,
-                                  server_port=settings$run$server_port))
+                                  server_port=settings$run$server_port),
+          add=TRUE)
   
   if(settings$run$parallel & !settings$run$restart_cluster & !is_external_cluster){
     # Start local cluster in the overall process.
     cl <- .restart_cluster(cl=NULL, assign="all")
-    on.exit(.terminate_cluster(cl))
+    on.exit(.terminate_cluster(cl), add=TRUE)
     
   } else if(settings$run$parallel & settings$run$restart_cluster & !is_external_cluster){
     # Start processes locally.
@@ -212,10 +237,10 @@ summon_familiar <- function(formula=NULL, data=NULL, cl=NULL, config=NULL, confi
   
   
   # Start feature selection
-  run_feature_selection(cl=cl, proj_list=project_info, settings=settings, file_paths=file_paths)
+  run_feature_selection(cl=cl, project_list=project_info, settings=settings, file_paths=file_paths)
   
   # Start model building
-  run_model_development(cl=cl, proj_list=project_info, settings=settings, file_paths=file_paths)
+  run_model_development(cl=cl, project_list=project_info, settings=settings, file_paths=file_paths)
   
   # Start evaluation
   run_evaluation(cl=cl, proj_list=project_info, settings=settings, file_paths=file_paths)
@@ -225,15 +250,11 @@ summon_familiar <- function(formula=NULL, data=NULL, cl=NULL, config=NULL, confi
     # familiarCollection objects.
     familiar_list <- .import_all_familiar_objects(file_paths=file_paths)
     
-    # Remove the temporary folder
-    unlink(x=file_paths$experiment_dir, recursive=TRUE)
-    
     # Return list with objects
     return(familiar_list)
     
   } else {
-    
-    return(invisible())
+    return(invisible(TRUE))
   }
 }
 
@@ -425,15 +446,15 @@ get_project_list <- function(){
   model_files <- sapply(model_files, function(x, dir_path) (file.path(dir_path, x)), dir_path=file_paths$mb_dir)
   
   # Load familiarModel files and add to list
-  familiar_list$familiarModel <- lapply(model_files, readRDS)
+  familiar_list$familiarModel <- load_familiar_object(model_files)
   
   
   # Find familiarEnsemble files
-  ensemble_files <- list.files(path=file_paths$mb_dir, pattern="ensemble.RDS|pool.RDS", recursive=TRUE)
+  ensemble_files <- list.files(path=file_paths$mb_dir, pattern="ensemble.RDS", recursive=TRUE)
   ensemble_files <- sapply(ensemble_files, function(x, dir_path) (file.path(dir_path, x)), dir_path=file_paths$mb_dir)
   
   # Load familiarEnsemble files and add to list
-  familiar_list$familiarEnsemble <- lapply(ensemble_files, readRDS)
+  familiar_list$familiarEnsemble <- load_familiar_object(ensemble_files)
   
   
   # Find familiarData files
@@ -441,15 +462,15 @@ get_project_list <- function(){
   data_files <- sapply(data_files, function(x, dir_path) (file.path(dir_path, x)), dir_path=file_paths$fam_data_dir)
   
   # Load familiarData files and add to list
-  familiar_list$familiarData <- lapply(data_files, readRDS)
+  familiar_list$familiarData <- load_familiar_object(data_files)
   
   
   # Find familiarCollection files
-  coll_files <- list.files(path=file_paths$fam_coll_dir, pattern="collection.RDS")
+  coll_files <- list.files(path=file_paths$fam_coll_dir, pattern="ensemble.RDS|pooled_data.RDS")
   coll_files <- sapply(coll_files, function(x, dir_path) (file.path(dir_path, x)), dir_path=file_paths$fam_coll_dir)
   
   # Load familiarCollection files and add to list
-  familiar_list$familiarCollection <- lapply(coll_files, readRDS)
+  familiar_list$familiarCollection <- load_familiar_object(coll_files)
   
   return(familiar_list)
 }

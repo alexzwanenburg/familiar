@@ -10,7 +10,7 @@ A familiarCollection object aggregates data from one or more familiarData object
 \section{Slots}{
 
 \describe{
-\item{\code{collection_name}}{character.}
+\item{\code{name}}{character}
 
 \item{\code{data_sets}}{character.}
 
@@ -28,9 +28,9 @@ A familiarCollection object aggregates data from one or more familiarData object
 
 \item{\code{hyperparameter_data}}{ANY.}
 
-\item{\code{req_feature_cols}}{ANY.}
+\item{\code{required_features}}{ANY.}
 
-\item{\code{important_features}}{ANY.}
+\item{\code{model_features}}{ANY.}
 
 \item{\code{learner}}{character.}
 
@@ -58,7 +58,9 @@ A familiarCollection object aggregates data from one or more familiarData object
 
 \item{\code{feature_expressions}}{ANY.}
 
-\item{\code{mutual_correlation}}{ANY.}
+\item{\code{feature_similarity}}{ANY.}
+
+\item{\code{sample_similarity}}{ANY.}
 
 \item{\code{data_set_labels}}{ANY.}
 

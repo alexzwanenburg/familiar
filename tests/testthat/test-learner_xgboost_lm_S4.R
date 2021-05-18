@@ -298,7 +298,7 @@ wide_data <- familiar:::test.create_wide_data_set("survival")
 good_model <- familiar:::train(data=good_data,
                                cluster_method="none",
                                imputation_method="simple",
-                               hyperparameter_list=list("sign_size"=familiar:::get_n_features(wide_data),
+                               hyperparameter_list=list("sign_size"=familiar:::get_n_features(good_data),
                                                         "n_boost" = 2,
                                                         "learning_rate" = -1,
                                                         "lambda" = 0.0,
@@ -336,8 +336,8 @@ testthat::test_that("Extreme gradient boosting regression model has variable imp
   # Extract the variable importance table.
   vimp_table <- familiar:::..vimp(good_model)
   
-  # Expect that the vimp table has two rows.
-  testthat::expect_equal(nrow(vimp_table), 2)
+  # Expect that the vimp table has three rows.
+  testthat::expect_equal(nrow(vimp_table), 3)
   
   # Expect that the names are the same as that of the features.
   testthat::expect_equal(all(familiar:::get_feature_columns(good_data) %in% vimp_table$name), TRUE)
@@ -362,3 +362,11 @@ testthat::test_that("Extreme gradient boosting regression model can train and pr
   # Valid survival probability predictions can be made.
   testthat::expect_equal(familiar:::any_predictions_valid(familiar:::.predict(wide_model, wide_data, type="survival_probability", time=1000), outcome_type=wide_data@outcome_type), TRUE)
 })
+
+
+testthat::skip("Skip hyperparameter optimisation, unless manual.")
+
+familiar:::test_hyperparameter_optimisation(learners=familiar:::.get_available_xgboost_lm_learners(show_general=TRUE),
+                                            n_random_sets=100L,
+                                            debug=TRUE,
+                                            parallel=FALSE)

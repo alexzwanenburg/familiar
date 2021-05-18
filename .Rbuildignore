@@ -5,3 +5,6 @@
 ^LICENSE\.txt$
 ^NEWS$
 ^cran-comments\.md$
+^doc$
+^Meta$
+^\.data$

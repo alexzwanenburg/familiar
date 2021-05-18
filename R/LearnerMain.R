@@ -34,10 +34,6 @@ setMethod("promote_learner", signature(object="familiarModel"),
               # C-classification support vector machines.
               object <- methods::new("familiarSVMC", object)
               
-            } else if(learner %in% .get_available_svm_c_bound_learners()){
-              # Bound constraint C-classification support vector machines.
-              object <- methods::new("familiarSVMCBound", object)
-              
             } else if(learner %in% .get_available_svm_nu_learners()){
               # Nu-classification and regression support vector machines.
               object <- methods::new("familiarSVMNu", object)
@@ -45,10 +41,6 @@ setMethod("promote_learner", signature(object="familiarModel"),
             } else if(learner %in% .get_available_svm_eps_learners()){
               # Epsilon regression support vector machines.
               object <- methods::new("familiarSVMEps", object)
-              
-            } else if(learner %in% .get_available_svm_eps_bound_learners()){
-              # Bound constraint epsilon regression support vector machines.
-              object <- methods::new("familiarSVMEpsBound", object)
               
             } else if(learner %in% .get_available_glm_learners()){
               # Generalised linear models
@@ -235,12 +227,16 @@ learner.check_model_prediction_type <- function(learner, outcome_type){
   outcome_type <- data_obj@outcome_type
   
   # Determine the number of samples and features
-  n_samples <- nrow(unique(data_obj@data, by=c("subject_id", "cohort_id")))
+  n_samples <- data.table::uniqueN(data_obj@data, by=get_id_columns(id_depth="series"))
   n_features <- get_n_features(data_obj)
   
   # Determine the actual range of features dynamically.
-  if(restrict_samples){
+  if(restrict_samples &  n_samples > 1){
     sign_size_range <- c(1, min(n_samples - 1, n_features))
+    
+  } else if(restrict_samples & n_samples <= 1){
+    sign_size_range <- c(1, 1)
+    
   } else {
     sign_size_range <- c(1, n_features)
   }

@@ -38,7 +38,7 @@ familiar_data_creation_unit_test <- function(outcome_type){
     # Test with small, but good dataset.
     fam_data <- suppressWarnings(familiar::as_familiar_data(object=fam_model,
                                                             data=familiar:::test.create_small_good_data_set(outcome_type=outcome_type),
-                                                            compute_ensemble_ci="none",
+                                                            estimation_type="point",
                                                             verbose=FALSE))
     
     # Test that an familiarDataObject is created.
@@ -50,7 +50,7 @@ familiar_data_creation_unit_test <- function(outcome_type){
     # Test with one-sample dataset.
     fam_data <- familiar::as_familiar_data(object=fam_model,
                                            data=familiar:::test.create_one_sample_data_set(outcome_type=outcome_type),
-                                           compute_ensemble_ci="none",
+                                           estimation_type="point",
                                            verbose=FALSE)
     
     # Test that an familiarDataObject is created.
@@ -62,7 +62,7 @@ familiar_data_creation_unit_test <- function(outcome_type){
     # Test with empty dataset
     fam_data <- familiar::as_familiar_data(object=fam_model,
                                            data=familiar:::test.create_empty_data_set(outcome_type=outcome_type),
-                                           compute_ensemble_ci="none",
+                                           estimation_type="point",
                                            verbose=FALSE)
     
     # Test that an familiarDataObject is created.
@@ -74,7 +74,7 @@ familiar_data_creation_unit_test <- function(outcome_type){
     # Test with bad dataset
     fam_data <- suppressWarnings(familiar::as_familiar_data(object=fam_model,
                                                             data=familiar:::test.create_small_bad_data_set(outcome_type=outcome_type),
-                                                            compute_ensemble_ci="none",
+                                                            estimation_type="point",
                                                             verbose=FALSE))
     
     # Test that an familiarDataObject is created.
@@ -97,7 +97,7 @@ familiar_data_creation_unit_test <- function(outcome_type){
     # Test with one-feature dataset.
     fam_data <- suppressWarnings(familiar::as_familiar_data(object=fam_model,
                                                             data=data,
-                                                            compute_ensemble_ci="none",
+                                                            estimation_type="point",
                                                             verbose=FALSE))
     
     # Test that an familiarDataObject is created.
@@ -109,7 +109,7 @@ familiar_data_creation_unit_test <- function(outcome_type){
     # Test with one-sample dataset
     fam_data <- familiar::as_familiar_data(object=fam_model,
                                            data=familiar:::test.create_one_feature_one_sample_data_set(outcome_type=outcome_type),
-                                           compute_ensemble_ci="none",
+                                           estimation_type="point",
                                            verbose=FALSE)
     
     # Test that an familiarDataObject is created.
@@ -132,7 +132,7 @@ familiar_data_creation_unit_test <- function(outcome_type){
     # Test with small, but good dataset.
     fam_data <- suppressWarnings(familiar::as_familiar_data(object=fam_model,
                                                             data=familiar:::test.create_small_good_data_set(outcome_type=outcome_type),
-                                                            compute_ensemble_ci="none",
+                                                            estimation_type="point",
                                                             verbose=FALSE))
     
     # Test that an familiarDataObject is created.
@@ -144,7 +144,7 @@ familiar_data_creation_unit_test <- function(outcome_type){
     # Test with one-sample dataset.
     fam_data <- familiar::as_familiar_data(object=fam_model,
                                            data=familiar:::test.create_one_sample_data_set(outcome_type=outcome_type),
-                                           compute_ensemble_ci="none",
+                                           estimation_type="point",
                                            verbose=FALSE)
     
     # Test that an familiarDataObject is created.
@@ -156,7 +156,7 @@ familiar_data_creation_unit_test <- function(outcome_type){
     # Test with empty dataset
     fam_data <- familiar::as_familiar_data(object=fam_model,
                                            data=familiar:::test.create_empty_data_set(outcome_type=outcome_type),
-                                           compute_ensemble_ci="none",
+                                           estimation_type="point",
                                            verbose=FALSE)
     
     # Test that an familiarDataObject is created.

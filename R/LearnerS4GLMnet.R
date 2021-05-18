@@ -140,7 +140,7 @@ setMethod("get_default_hyperparameters", signature(object="familiarGLMnet"),
             if(fam != "") fam <- stringi::stri_replace_first_regex(str=fam, pattern="_", replace="")
             
             # Determine number of subjects
-            n_samples <- data.table::uniqueN(data@data, by=c("subject_id", "cohort_id"))
+            n_samples <- data.table::uniqueN(data@data, by=get_id_columns(id_depth="series"))
             
             ##### Signature size ###############################################
             param$sign_size <- .get_default_sign_size(data_obj=data)
@@ -211,16 +211,15 @@ setMethod("get_default_hyperparameters", signature(object="familiarGLMnet"),
           })
 
 
+
 #####get_prediction_type#####
 setMethod("get_prediction_type", signature(object="familiarGLMnet"),
-          function(object, type=NULL){
+          function(object, type="default"){
             
             if(object@outcome_type != "survival" & object@learner %in% c("elastic_net", "elastic_net_cox", "lasso", "lasso_cox", "ridge", "ridge_cox")) return(callNextMethod())
             
-            # This is a backup in case glm is used to refer to CoxPH methods.
-            if(is.null(type)) return("hazard_ratio")
-            
-            if(type == "risk"){
+            # Default are hazard ratios.
+            if(type == "default"){
               return("hazard_ratio")
               
             } else if(type == "survival_probability"){
@@ -239,6 +238,9 @@ setMethod("..train", signature(object="familiarGLMnet", data="dataObject"),
             
             # Check if training data is ok.
             if(has_bad_training_data(object=object, data=data)) return(callNextMethod())
+            
+            # Check if hyperparameters are set.
+            if(is.null(object@hyperparameters)) return(callNextMethod())
             
             # For data with one feature, switch to familiarGLM.
             if(get_n_features(data) == 1){
@@ -268,62 +270,64 @@ setMethod("..train", signature(object="familiarGLMnet", data="dataObject"),
               outcome_data <- data@data$outcome
             }
             
+            # Determine id columns
+            id_columns <- get_id_columns("series")
+            
             # Generate folds using our own fold generating algorithm to handle repeated measurements
-            fold_table <- .create_cv(sample_identifiers = unique(encoded_data$encoded_data@data$subject_id),
-                                     n_folds = object@hyperparameters$n_folds,
+            fold_table <- .create_cv(n_folds = object@hyperparameters$n_folds,
                                      outcome_type = object@outcome_type,
                                      data = encoded_data$encoded_data@data,
                                      stratify = FALSE,
                                      return_fold_id = TRUE)
             
-            # Order according to subject_id in encoded_data$encoded_data@data so
+            # Order according to samples in encoded_data$encoded_data@data so
             # that fold_id corresponds to the correct rows.
             fold_table <- merge(x=fold_table,
-                                y=encoded_data$encoded_data@data[, "subject_id"],
-                                by="subject_id")
+                                y=encoded_data$encoded_data@data[, mget(id_columns)],
+                                by=id_columns)
             
             # Train the model.
             if(is(object, "familiarGLMnetRidge")){
               # Attempt to train the model
-              model <- tryCatch(cv.glmnet(x = as.matrix(encoded_data$encoded_data@data[, mget(feature_columns)]),
-                                          y = outcome_data,
-                                          family = object@hyperparameters$family,
-                                          alpha = 0.0,
-                                          standardize = object@hyperparameters$normalise,
-                                          nfolds = NULL,
-                                          foldid = fold_table$fold_id,
-                                          parallel = FALSE),
-                                error=identity)
+              model <- suppressWarnings(tryCatch(cv.glmnet(x = as.matrix(encoded_data$encoded_data@data[, mget(feature_columns)]),
+                                                           y = outcome_data,
+                                                           family = object@hyperparameters$family,
+                                                           alpha = 0.0,
+                                                           standardize = object@hyperparameters$normalise,
+                                                           nfolds = NULL,
+                                                           foldid = fold_table$fold_id,
+                                                           parallel = FALSE),
+                                                 error=identity))
               
               
             } else if(is(object, "familiarGLMnetLasso")){
               # Attempt to train the model
-              model <- tryCatch(cv.glmnet(x = as.matrix(encoded_data$encoded_data@data[, mget(feature_columns)]),
-                                          y = outcome_data,
-                                          family = object@hyperparameters$family,
-                                          alpha = 1.0,
-                                          standardize = object@hyperparameters$normalise,
-                                          nfolds = NULL,
-                                          foldid = fold_table$fold_id,
-                                          parallel = FALSE),
-                                error=identity)
+              model <- suppressWarnings(tryCatch(cv.glmnet(x = as.matrix(encoded_data$encoded_data@data[, mget(feature_columns)]),
+                                                           y = outcome_data,
+                                                           family = object@hyperparameters$family,
+                                                           alpha = 1.0,
+                                                           standardize = object@hyperparameters$normalise,
+                                                           nfolds = NULL,
+                                                           foldid = fold_table$fold_id,
+                                                           parallel = FALSE),
+                                                 error=identity))
               
             } else if(is(object, "familiarGLMnetElasticNet")){
               # Attempt to train the model
-              model <- tryCatch(cv.glmnet(x = as.matrix(encoded_data$encoded_data@data[, mget(feature_columns)]),
-                                          y = outcome_data,
-                                          family = object@hyperparameters$family,
-                                          alpha = object@hyperparameters$alpha,
-                                          standardize = object@hyperparameters$normalise,
-                                          nfolds = NULL,
-                                          foldid = fold_table$fold_id,
-                                          parallel = FALSE),
-                                error=identity)
+              model <- suppressWarnings(tryCatch(cv.glmnet(x = as.matrix(encoded_data$encoded_data@data[, mget(feature_columns)]),
+                                                           y = outcome_data,
+                                                           family = object@hyperparameters$family,
+                                                           alpha = object@hyperparameters$alpha,
+                                                           standardize = object@hyperparameters$normalise,
+                                                           nfolds = NULL,
+                                                           foldid = fold_table$fold_id,
+                                                           parallel = FALSE),
+                                                 error=identity))
               
             } else {
               ..error_reached_unreachable_code(paste0("..train,familiarGLMnet: encountered unknown learner of unknown class: ", paste0(class(object), collapse=", ")))
             }
-
+            
             # Check if the model trained at all.
             if(inherits(model, "error")) return(callNextMethod())
             
@@ -343,95 +347,122 @@ setMethod("..train", signature(object="familiarGLMnet", data="dataObject"),
 
 #####..predict#####
 setMethod("..predict", signature(object="familiarGLMnet", data="dataObject"),
-          function(object, data, type="response", ...){
+          function(object, data, type="default", ...){
             
-            # Check if the model was trained.
-            if(!model_is_trained(object)) return(callNextMethod())
-            
-            # Check if the data is empty.
-            if(is_empty(data)) return(callNextMethod())
-            
-            # Encode data so that the features are the same as in the training.
-            encoded_data <- encode_categorical_variables(data=data,
-                                                         object=object,
-                                                         encoding_method="dummy",
-                                                         drop_levels=FALSE)
-            
-            # Get an empty prediction table.
-            prediction_table <- get_placeholder_prediction_table(object=object,
-                                                                 data=encoded_data$encoded_data)
-            
-            if(object@outcome_type == "binomial"){
-              #####Binomial outcomes######
+            if(type == "default"){
+              ##### Default method #############################################
               
-              # Use the model to predict class probabilities.
-              model_predictions <- predict(object=object@model,
-                                           newx=as.matrix(encoded_data$encoded_data@data[, mget(object@feature_order)]),
-                                           s=object@hyperparameters$lambda_min,
-                                           type=type)
+              # Check if the model was trained.
+              if(!model_is_trained(object)) return(callNextMethod())
               
-              # Obtain class levels.
-              class_levels <- get_outcome_class_levels(x=object)
+              # Check if the data is empty.
+              if(is_empty(data)) return(callNextMethod())
               
-              # Add class probabilities (glmnet always gives probability for the
-              # second class).
-              class_probability_columns <- get_class_probability_name(x=object)
-              prediction_table[, (class_probability_columns[1]):= 1.0 - model_predictions]
-              prediction_table[, (class_probability_columns[2]):= model_predictions]
+              # Encode data so that the features are the same as in the training.
+              encoded_data <- encode_categorical_variables(data=data,
+                                                           object=object,
+                                                           encoding_method="dummy",
+                                                           drop_levels=FALSE)
               
-              # Update predicted class based on provided probabilities.
-              class_predictions <- class_levels[apply(prediction_table[, mget(class_probability_columns)], 1, which.max)]
-              class_predictions <- factor(class_predictions, levels=class_levels)
-              prediction_table[, "predicted_class":=class_predictions]
+              # Get an empty prediction table.
+              prediction_table <- get_placeholder_prediction_table(object=object,
+                                                                   data=encoded_data$encoded_data,
+                                                                   type=type)
               
-            } else if(object@outcome_type == "multinomial") {
-              #####Multinomial outcomes######
-              
-              # Use the model to predict class probabilities.
-              model_predictions <- predict(object=object@model,
-                                           newx=as.matrix(encoded_data$encoded_data@data[, mget(object@feature_order)]),
-                                           s=object@hyperparameters$lambda_min,
-                                           type=type)[, , 1]
-              
-              # Obtain class levels.
-              class_levels <- get_outcome_class_levels(x=object)
-              
-              # Add class probabilities.
-              class_probability_columns <- get_class_probability_name(x=object)
-              for(ii in seq_along(class_probability_columns)){
+              if(object@outcome_type == "binomial"){
+                #####Binomial outcomes##########################################
                 
-                if(is.matrix(model_predictions)){
-                  # Check if model_predictions is a matrix.
-                  prediction_table[, (class_probability_columns[ii]):=model_predictions[, class_levels[ii]]]
+                # Use the model to predict class probabilities.
+                model_predictions <- predict(object=object@model,
+                                             newx=as.matrix(encoded_data$encoded_data@data[, mget(object@feature_order)]),
+                                             s=object@hyperparameters$lambda_min,
+                                             type="response")
+                
+                # Obtain class levels.
+                class_levels <- get_outcome_class_levels(x=object)
+                
+                # Add class probabilities (glmnet always gives probability for the
+                # second class).
+                class_probability_columns <- get_class_probability_name(x=object)
+                prediction_table[, (class_probability_columns[1]):= 1.0 - model_predictions]
+                prediction_table[, (class_probability_columns[2]):= model_predictions]
+                
+                # Update predicted class based on provided probabilities.
+                class_predictions <- class_levels[apply(prediction_table[, mget(class_probability_columns)], 1, which.max)]
+                class_predictions <- factor(class_predictions, levels=class_levels)
+                prediction_table[, "predicted_class":=class_predictions]
+                
+              } else if(object@outcome_type == "multinomial") {
+                #####Multinomial outcomes#######################################
+                
+                # Use the model to predict class probabilities.
+                model_predictions <- predict(object=object@model,
+                                             newx=as.matrix(encoded_data$encoded_data@data[, mget(object@feature_order)]),
+                                             s=object@hyperparameters$lambda_min,
+                                             type="response")[, , 1]
+                
+                # Obtain class levels.
+                class_levels <- get_outcome_class_levels(x=object)
+                
+                # Add class probabilities.
+                class_probability_columns <- get_class_probability_name(x=object)
+                for(ii in seq_along(class_probability_columns)){
                   
-                } else {
-                  # Or not.
-                  prediction_table[, (class_probability_columns[ii]):=model_predictions[class_levels[ii]]]
+                  if(is.matrix(model_predictions)){
+                    # Check if model_predictions is a matrix.
+                    prediction_table[, (class_probability_columns[ii]):=model_predictions[, class_levels[ii]]]
+                    
+                  } else {
+                    # Or not.
+                    prediction_table[, (class_probability_columns[ii]):=model_predictions[class_levels[ii]]]
+                  }
                 }
+                
+                # Update predicted class based on provided probabilities.
+                class_predictions <- class_levels[apply(prediction_table[, mget(class_probability_columns)], 1, which.max)]
+                class_predictions <- factor(class_predictions, levels=class_levels)
+                prediction_table[, "predicted_class":=class_predictions]
+                
+              } else if(object@outcome_type %in% c("survival", "continuous", "count")){
+                #####Survival, count and continuous outcomes####################
+                
+                # Use the model for prediction.
+                model_predictions <- predict(object=object@model,
+                                             newx=as.matrix(encoded_data$encoded_data@data[, mget(object@feature_order)]),
+                                             s=object@hyperparameters$lambda_min,
+                                             type="response")
+                
+                # Add regression.
+                prediction_table[, "predicted_outcome":=model_predictions]
+                
+              } else {
+                ..error_outcome_type_not_implemented(object@outcome_type)
               }
               
-              # Update predicted class based on provided probabilities.
-              class_predictions <- class_levels[apply(prediction_table[, mget(class_probability_columns)], 1, which.max)]
-              class_predictions <- factor(class_predictions, levels=class_levels)
-              prediction_table[, "predicted_class":=class_predictions]
-              
-            } else if(object@outcome_type %in% c("survival", "continuous", "count")){
-              #####Count and continuous outcomes#####
-              
-              # Use the model for prediction.
-              model_predictions <- predict(object=object@model,
-                                           newx=as.matrix(encoded_data$encoded_data@data[, mget(object@feature_order)]),
-                                           s=object@hyperparameters$lambda_min,
-                                           type=type)
-              
-              # Add regression.
-              prediction_table[, "predicted_outcome":=model_predictions]
+              return(prediction_table)
               
             } else {
-              ..error_outcome_type_not_implemented(object@outcome_type)
+              ##### User-specified method ######################################
+              
+              # Check if the model was trained.
+              if(!model_is_trained(object)) return(NULL)
+              
+              # Check if the data is empty.
+              if(is_empty(data)) return(NULL)
+              
+              # Encode data so that the features are the same as in the training.
+              encoded_data <- encode_categorical_variables(data=data,
+                                                           object=object,
+                                                           encoding_method="dummy",
+                                                           drop_levels=FALSE)
+              
+              # Use the model to predict class probabilities.
+              return(predict(object=object@model,
+                             newx=as.matrix(encoded_data$encoded_data@data[, mget(object@feature_order)]),
+                             s=object@hyperparameters$lambda_min,
+                             type=type,
+                             ...))
             }
-            
-            return(prediction_table)
           })
 
 

@@ -48,12 +48,10 @@ setMethod("get_default_hyperparameters", signature(object="familiarCoxPH"),
 
 #####get_prediction_type#####
 setMethod("get_prediction_type", signature(object="familiarCoxPH"),
-          function(object, type=NULL){
+          function(object, type="default"){
             
             # Cox proportional hazards models predict relative risks
-            if(is.null(type)) return("hazard_ratio")
-            
-            if(type == "risk"){
+            if(type == "default"){
               return("hazard_ratio")
               
             } else if(type == "survival_probability"){
@@ -72,6 +70,9 @@ setMethod("..train", signature(object="familiarCoxPH", data="dataObject"),
             
             # Check if training data is ok.
             if(has_bad_training_data(object=object, data=data)) return(callNextMethod())
+            
+            # Check if hyperparameters are set.
+            if(is.null(object@hyperparameters)) return(callNextMethod())
             
             # Use effect coding to convert categorical data into encoded data -
             # this is required to deal with factors with missing/new levels
@@ -120,33 +121,58 @@ setMethod("..train", signature(object="familiarCoxPH", data="dataObject"),
 
 #####..predict#####
 setMethod("..predict", signature(object="familiarCoxPH", data="dataObject"),
-          function(object, data, type="risk", ...){
+          function(object, data, type="default", ...){
             
-            # Check if the model was trained.
-            if(!model_is_trained(object)) return(callNextMethod())
-            
-            # Check if the data is empty.
-            if(is_empty(data)) return(callNextMethod())
-            
-            # Encode data so that the features are the same as in the training.
-            encoded_data <- encode_categorical_variables(data=data,
-                                                         object=object,
-                                                         encoding_method="dummy",
-                                                         drop_levels=FALSE)
-            
-            # Get an empty prediction table.
-            prediction_table <- get_placeholder_prediction_table(object=object,
-                                                                 data=encoded_data$encoded_data)
-            
-            # Use the model for prediction.
-            model_predictions <- predict(object=object@model,
-                                         newdata=encoded_data$encoded_data@data,
-                                         type=type)
-            
-            # Update the prediction table.
-            prediction_table[, "predicted_outcome":=model_predictions]
-            
-            return(prediction_table)
+            if(type == "default"){
+              ##### Default method #############################################
+              
+              # Check if the model was trained.
+              if(!model_is_trained(object)) return(callNextMethod())
+              
+              # Check if the data is empty.
+              if(is_empty(data)) return(callNextMethod())
+              
+              # Encode data so that the features are the same as in the training.
+              encoded_data <- encode_categorical_variables(data=data,
+                                                           object=object,
+                                                           encoding_method="dummy",
+                                                           drop_levels=FALSE)
+              
+              # Get an empty prediction table.
+              prediction_table <- get_placeholder_prediction_table(object=object,
+                                                                   data=encoded_data$encoded_data,
+                                                                   type=type)
+              
+              # Use the model for prediction.
+              model_predictions <- predict(object=object@model,
+                                           newdata=encoded_data$encoded_data@data,
+                                           type="risk")
+              
+              # Update the prediction table.
+              prediction_table[, "predicted_outcome":=model_predictions]
+              
+              return(prediction_table)
+              
+            } else {
+              ##### User-specified method ######################################
+              
+              # Check if the model was trained.
+              if(!model_is_trained(object)) return(NULL)
+              
+              # Check if the data is empty.
+              if(is_empty(data)) return(NULL)
+              
+              # Encode data so that the features are the same as in the training.
+              encoded_data <- encode_categorical_variables(data=data,
+                                                           object=object,
+                                                           encoding_method="dummy",
+                                                           drop_levels=FALSE)
+              
+              return(predict(object=object@model,
+                             newdata=encoded_data$encoded_data@data,
+                             type=type,
+                             ...))
+            }
           })
 
 

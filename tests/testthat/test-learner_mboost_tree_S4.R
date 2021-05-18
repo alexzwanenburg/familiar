@@ -239,3 +239,10 @@ testthat::test_that("Gradient boosting tree model can train and predict on wide 
   # Valid survival probability predictions can be made.
   testthat::expect_equal(familiar:::any_predictions_valid(familiar:::.predict(wide_model, wide_data, type="survival_probability", time=1000), outcome_type=wide_data@outcome_type), TRUE)
 })
+
+
+testthat::skip("Skip hyperparameter optimisation, unless manual.")
+
+familiar:::test_hyperparameter_optimisation(learners=familiar:::.get_available_mboost_tree_learners(show_general=TRUE),
+                                            debug=FALSE,
+                                            parallel=FALSE)

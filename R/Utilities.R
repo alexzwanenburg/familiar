@@ -56,7 +56,8 @@ compute_univariable_p_values <- function(cl=NULL, data_obj, feature_columns){
                                      X=data_obj@data[, mget(feature_columns)],
                                      FUN=univariate_fun,
                                      progress_bar=FALSE,
-                                     outcome_data=data_obj@data[, mget(outcome_columns)])
+                                     outcome_data=data_obj@data[, mget(outcome_columns)],
+                                     chopchop=TRUE)
   
   return(coefficient_p_values)
 }
@@ -358,27 +359,32 @@ compute_icc <- function(x, feature, id_data, type="1"){
   # systematically biased.
   
   # Suppress NOTES due to non-standard evaluation in data.table
-  value <- mu <- subject_id <- cohort_id <- repetition_id <- bj <- ai <- NULL
+  value <- mu <- bj <- ai <- NULL
+  
+  # Determine identifier columns.
+  sample_id_columns <- get_id_columns(id_depth="series")
+  repetition_id_column <- get_id_columns(single_column="repetition_id")
   
   # Create data table from x and combine with id_data
   data <- data.table::data.table("value"=x)
   data <- cbind(id_data, data)
   
   # Calculate each parameter in the equation
-  data[,"mu":=mean(value, na.rm=TRUE)][,"bj":=mean(value, na.rm=TRUE)-mu, by=list(subject_id,cohort_id)][,"ai":=mean(value, na.rm=TRUE)-mu, by=list(repetition_id)][,"eij":=value-mu-bj-ai]
+  data[,"mu":=mean(value, na.rm=TRUE)][,"bj":=mean(value, na.rm=TRUE)-mu, by=sample_id_columns][,"ai":=mean(value, na.rm=TRUE)-mu, by=repetition_id_column][,"eij":=value-mu-bj-ai]
   
   # Calculate
-  n_subjects <- data.table::uniqueN(data, by="subject_id")
-  n_raters   <- data.table::uniqueN(data, by="repetition_id")
+  n_samples <- data.table::uniqueN(data, by=sample_id_columns)
+  n_raters   <- data.table::uniqueN(data, by=repetition_id_column)
   
-  # Calculate mean squared errors: msb between subjects (bj), msj between raters (ai), mse of error (eij) and msw of error with rater (ai + eij)
-  if(n_subjects > 1){
-    msb <- sum(data$bj^2, na.rm=TRUE) / (n_subjects-1)
+  # Calculate mean squared errors: msb between subjects (bj), msj between raters
+  # (ai), mse of error (eij) and msw of error with rater (ai + eij).
+  if(n_samples > 1){
+    msb <- sum(data$bj^2, na.rm=TRUE) / (n_samples-1)
   }
   
   if(type=="1"){
     # Calculate mean squared of error with rater
-    msw       <- (sum(data$eij^2, na.rm=TRUE) + sum(data$ai^2, na.rm=TRUE)) / (n_subjects * (n_raters-1))
+    msw       <- (sum(data$eij^2, na.rm=TRUE) + sum(data$ai^2, na.rm=TRUE)) / (n_samples * (n_raters-1))
     
     # Calculate icc for individual rater and rater panel
     if(msb==0 & msw==0) {
@@ -391,8 +397,8 @@ compute_icc <- function(x, feature, id_data, type="1"){
       
       # Fisher score
       s_fisher         <- msb/msw
-      s_fisher_low     <- s_fisher / stats::qf(0.975, n_subjects-1, n_subjects * (n_raters-1))
-      s_fisher_up      <- s_fisher / stats::qf(0.025, n_subjects-1, n_subjects * (n_raters-1))
+      s_fisher_low     <- s_fisher / stats::qf(0.975, n_samples-1, n_samples * (n_raters-1))
+      s_fisher_up      <- s_fisher / stats::qf(0.025, n_samples-1, n_samples * (n_raters-1))
       
       # Calcuate confidence intervals from fisher score
       icc_ci_low       <- (s_fisher_low - 1) / (s_fisher_low + n_raters - 1)
@@ -405,7 +411,7 @@ compute_icc <- function(x, feature, id_data, type="1"){
   if(type=="2"){
     # Calculate mean squared error (mse) and mean squared rater error (msj)
     msj <- sum(data$ai^2, na.rm=TRUE) / (n_raters-1)
-    mse <- sum(data$eij^2, na.rm=TRUE) / ((n_subjects-1) * (n_raters-1))
+    mse <- sum(data$eij^2, na.rm=TRUE) / ((n_samples-1) * (n_raters-1))
     
     # Calculate icc for individual rater and rater panel
     if(msb==0 & mse==0) {
@@ -413,19 +419,19 @@ compute_icc <- function(x, feature, id_data, type="1"){
       icc_panel <- 1
       icc_ci_low <- 1; icc_ci_up <- 1; icc_panel_ci_low <- 1; icc_panel_ci_up <- 1
     } else {
-      icc       <- (msb-mse) / (msb+ (n_raters-1) * mse + (n_raters/n_subjects) * (msj-mse))
-      icc_panel <- (msb-mse) / (msb + (msj-mse)/n_subjects)
+      icc       <- (msb-mse) / (msb+ (n_raters-1) * mse + (n_raters/n_samples) * (msj-mse))
+      icc_panel <- (msb-mse) / (msb + (msj-mse)/n_samples)
       
       # Determine confidence intervals
-      vn <- (n_raters-1)*(n_subjects-1) * (n_raters*icc*msj/mse +  n_subjects*(1+(n_raters-1)*icc) - n_raters*icc)^2
-      vd <- (n_subjects-1) * n_raters^2 * icc^2 * (msj/mse)^2   + (n_subjects*(1+(n_raters-1)*icc) - n_raters*icc)^2
+      vn <- (n_raters-1)*(n_samples-1) * (n_raters*icc*msj/mse +  n_samples*(1+(n_raters-1)*icc) - n_raters*icc)^2
+      vd <- (n_samples-1) * n_raters^2 * icc^2 * (msj/mse)^2   + (n_samples*(1+(n_raters-1)*icc) - n_raters*icc)^2
       v  <- vn/vd
-      thresh_low       <- stats::qf(0.975, n_subjects-1, v)
-      thresh_up        <- stats::qf(0.025, n_subjects-1, v)
+      thresh_low       <- stats::qf(0.975, n_samples-1, v)
+      thresh_up        <- stats::qf(0.025, n_samples-1, v)
       
       # Calcuate confidence intervals from fisher score
-      icc_ci_low       <- n_subjects * (msb - thresh_low*mse) / (thresh_low*(n_raters*msj+(n_raters*n_subjects-n_raters-n_subjects)*mse) + n_subjects*msb)
-      icc_ci_up        <- n_subjects * (msb - thresh_up*mse)  / (thresh_up*(n_raters*msj+(n_raters*n_subjects-n_raters-n_subjects)*mse)  + n_subjects*msb)
+      icc_ci_low       <- n_samples * (msb - thresh_low*mse) / (thresh_low*(n_raters*msj+(n_raters*n_samples-n_raters-n_samples)*mse) + n_samples*msb)
+      icc_ci_up        <- n_samples * (msb - thresh_up*mse)  / (thresh_up*(n_raters*msj+(n_raters*n_samples-n_raters-n_samples)*mse)  + n_samples*msb)
       icc_panel_ci_low <- icc_ci_low * n_raters / (1 + icc_ci_low*(n_raters-1) )
       icc_panel_ci_up  <- icc_ci_up * n_raters /  (1 + icc_ci_up*(n_raters-1) )
     }
@@ -433,7 +439,7 @@ compute_icc <- function(x, feature, id_data, type="1"){
   
   if(type=="3"){
     # Calculate mean squared error (mse)
-    mse <- sum(data$eij^2, na.rm=TRUE) / ((n_subjects-1) * (n_raters-1))
+    mse <- sum(data$eij^2, na.rm=TRUE) / ((n_samples-1) * (n_raters-1))
     
     # Calculate icc for individual rater and rater panel
     if(msb==0 & mse==0) {
@@ -446,8 +452,8 @@ compute_icc <- function(x, feature, id_data, type="1"){
       
       # Fisher score
       s_fisher     <- msb/mse
-      s_fisher_low <- s_fisher / stats::qf(0.975, n_subjects-1, (n_subjects-1) * (n_raters-1))
-      s_fisher_up  <- s_fisher / stats::qf(0.025, n_subjects-1, (n_subjects-1) * (n_raters-1))
+      s_fisher_low <- s_fisher / stats::qf(0.975, n_samples-1, (n_samples-1) * (n_raters-1))
+      s_fisher_up  <- s_fisher / stats::qf(0.025, n_samples-1, (n_samples-1) * (n_raters-1))
       
       # Calcuate confidence intervals from fisher score
       icc_ci_low       <- (s_fisher_low - 1) / (s_fisher_low + n_raters - 1)
@@ -467,7 +473,7 @@ compute_icc <- function(x, feature, id_data, type="1"){
     if(!is.finite(icc_ci_up)) icc_panel_ci_up <- 1.0
   }
   
-  return(data.table::data.table("name"=feature,
+  return(data.table::data.table("feature"=feature,
                                 "icc"=icc,
                                 "icc_low"=icc_ci_low,
                                 "icc_up"=icc_ci_up,
@@ -522,39 +528,28 @@ applyContrastReference <- function(dt, dt_ref, method){
 }
 
 
-# createNonValidPredictionTable <- function(dt, outcome_type){
-#   # Create skeleton
-#   dt_pred <- dt[, get_non_feature_columns(x=outcome_type), with=FALSE]
-# 
-#   # Add prediction columns
-#   if(outcome_type %in% c("survival", "continuous", "count")){
-#     # For survival and continuous outcomes, a single column is required
-#     dt_pred$outcome_pred         <- as.double(NA)
-#   } else if (outcome_type %in% c("binomial", "multinomial")){
-#     # For binomial and multinomial outcomes, we add both predicted class and predicted class probabilities
-#     dt_pred$outcome_pred_class   <- as.character(NA)
-# 
-#     # Add class probabilities
-#     outcome_pred_class_prob_cols <- check_column_name(column_name=paste0("outcome_pred_prob_", levels(dt$outcome)))
-#     for(ii in 1:length(outcome_pred_class_prob_cols)){
-#       dt_pred[, (outcome_pred_class_prob_cols[ii]):=as.double(NA)]
-#     }
-#   } else if(outcome_type == "competing_risk"){
-#     ..error_outcome_type_not_implemented(outcome_type)
-#   }
-# 
-#   # Return without valid data prediction table
-#   return(dt_pred)
-# }
-
 any_predictions_valid <- function(prediction_table, outcome_type){
   
   if(is_empty(prediction_table)){
     return(FALSE)
   }
   
-  if(outcome_type %in% c("survival", "continuous", "count", "competing_risk")){
+  if(outcome_type %in% c("continuous", "count")){
     return(any(is.finite(prediction_table$predicted_outcome)))
+    
+  } else if(outcome_type %in% c("survival", "competing_risk")){
+    if("predicted_outcome" %in% colnames(prediction_table)){
+      return(any(is.finite(prediction_table$predicted_outcome)))
+      
+    } else if("survival_probability" %in% colnames(prediction_table)){
+      return(any(is.finite(prediction_table$survival_probability)))
+    
+    } else if("risk_group" %in% colnames(prediction_table)){
+      return(any(!is.na(prediction_table$risk_group)))
+      
+    } else {
+      return(FALSE)
+    }
     
   } else if(outcome_type %in% c("binomial", "multinomial")){
     return(!all(is.na(prediction_table$predicted_class)))
@@ -562,7 +557,6 @@ any_predictions_valid <- function(prediction_table, outcome_type){
   } else {
     ..error_no_known_outcome_type(outcome_type)
   }
-  
 }
 
 remove_nonvalid_predictions <- function(prediction_table, outcome_type){
@@ -652,6 +646,23 @@ strip_calibration_table <- function(calibration_data, outcome_type){
 }
 
 
+harmonic_p_value <- function(x){
+  
+  if(data.table::is.data.table(x)){
+   
+    # Compute harmonic mean p-value.
+    y <- 1.0 / sum(1.0 / nrow(x) * 1.0 / x$p_value)
+    
+    return(list("p_value"=y)) 
+    
+  } else {
+    # Compute harmonic mean p-value.
+    y <- 1.0 / sum(1.0 / length(x) * 1.0 / x)
+    
+    return(y)
+  }
+}
+
 
 get_mode <- function(x) {
   # Ken Williams:
@@ -662,6 +673,34 @@ get_mode <- function(x) {
   return(ux)
 }
 
+
+get_estimate <- function(x, na.rm=TRUE){
+  
+  # Remove NA values.
+  if(na.rm) x <- x[!is.na(x)]
+  
+  if(is.numeric(x)){
+    
+    # Determine the estimate.
+    if(length(x) > 0){
+      y <- mean(x)
+      
+    } else {
+      y <- NA_real_
+    }
+    
+  } else {
+    # Determine the estimate.
+    if(length(x) > 0){
+      y <- get_mode(x)
+      
+    } else {
+      y <- NA
+    }
+  }
+  
+  return(y)
+}
 
 
 .sanitise_dots <- function(class, ...){
@@ -791,20 +830,46 @@ get_placeholder_vimp_table <- function(){
 
 
 
-get_id_columns <- function(sample_level_only=FALSE){
-  # Generate the names of the non-feature columns
-  if(sample_level_only){
-    return(c("subject_id", "cohort_id"))
+get_id_columns <- function(id_depth="repetition", single_column=NULL){
+  
+  # Check that until_depth is correctly specified.
+  if(!id_depth %in% c("batch", "sample", "series", "repetition")){
+    ..error_value_not_allowed(x=id_depth, var_name="id_depth", values=c("batch", "sample", "series", "repetition"))
+  }
+  
+  if(is.null(single_column)){
+    # Generate the names of the non-feature columns
+    id_columns <- switch(id_depth,
+                         "batch" = "batch_id",
+                         "sample" = c("batch_id", "sample_id"),
+                         "series" = c("batch_id", "sample_id", "series_id"),
+                         "repetition" = c("batch_id", "sample_id", "series_id", "repetition_id"))
     
   } else {
-    return(c("subject_id", "cohort_id", "repetition_id"))
+    id_columns <- switch(single_column,
+                         "batch" = "batch_id",
+                         "sample" = "sample_id",
+                         "series" = "series_id",
+                         "repetition" = "repetition_id")
   }
+  
+  
+  return(id_columns)
 }
 
 
-
-get_object_file_name <- function(learner, fs_method, project_id, data_id, run_id, pool_data_id=NULL, pool_run_id=NULL,
-                                 object_type, is_ensemble=NULL, is_validation=NULL, with_extension=TRUE, dir_path=NULL){
+get_object_file_name <- function(learner,
+                                 fs_method,
+                                 project_id,
+                                 data_id,
+                                 run_id,
+                                 pool_data_id=NULL,
+                                 pool_run_id=NULL,
+                                 object_type,
+                                 is_ensemble=NULL,
+                                 is_validation=NULL,
+                                 with_extension=TRUE,
+                                 dir_path=NULL){
   # Generate file name for an object
   
   if(!object_type %in% c("familiarModel", "familiarEnsemble", "familiarData")){
@@ -909,7 +974,9 @@ extract_from_slot <- function(object_list, slot_name, slot_element=NULL, na.rm=F
     slot_values <- slot_values[!sapply(slot_values, is.null)]
     
     # Then remove NA
-    slot_values <- slot_values[!sapply(slot_values, is.null)]
+    if(is.numeric(slot_values) | is.logical(slot_values) | is.character(slot_values)){
+      slot_values <- slot_values[!sapply(slot_values, is.na)]
+    }
     
     # Check if the slot values are numeric, and remove infinite values if so
     if(is.numeric(slot_values)){
@@ -1028,10 +1095,21 @@ process_random_forest_survival_predictions <- function(event_matrix, event_times
     event_table <- data.table::rbindlist(event_table)
   }
   
-  # Remove predicted_outcome from the prediction table.
-  prediction_table[, "predicted_outcome":=NULL]
+  if(type == "cumulative_hazard"){
+    # Remove predicted_outcome from the prediction table.
+    prediction_table[, "predicted_outcome":=NULL]
+    
+  } else {
+    # Remove survival_probability from the prediction table.
+    prediction_table[, "survival_probability":=NULL]
+    
+    # Update response column.
+    data.table::setnames(event_table,
+                         old="predicted_outcome",
+                         new="survival_probability")
+  }
   
-  # Then merge the event table into the prediction table.
+  # Merge the event table into the prediction table.
   prediction_table <- merge(x=prediction_table, y=event_table, by=id_columns)
   
   return(prediction_table)
@@ -1319,11 +1397,12 @@ is.encapsulated_path <- function(x){ return(inherits(x, "encapsulated_path")) }
 
 
 quiet <- function(x) { 
-  # Hadley Wickham (http://r.789695.n4.nabble.com/Suppressing-output-e-g-from-cat-td859876.html)
+  # Removes all output to console.
   
-  sink(tempfile()) 
+  sink(nullfile()) 
   on.exit(sink()) 
-  invisible(force(x)) 
+  
+  invisible(utils::capture.output(x, file=nullfile(), type="message"))
 } 
 
 .append_new <- function(l, new){
@@ -1343,31 +1422,6 @@ quiet <- function(x) {
   }
   
   return(append(l, new))
-}
-
-
-fam_sample <- function(x, size, replace=FALSE, prob=NULL){
-  # This function prevents the documented behaviour of the sample function,
-  # where if x is positive, numeric and only has one element, it interprets x as
-  # a series of x, i.e. x=seq_len(x). That's bad news if x is a sample
-  # identifier.
-  
-  if(length(x) == 1){
-    
-    # Check that size is not greater than 1, if items are to be drawn without
-    # replacement.
-    if(!replace & size > 1){
-      stop("cannot take a sample larger than the population when 'replace = FALSE'")
-    }
-    
-    return(rep_len(x=x, length.out=size))
-    
-  } else {
-    # If x is a vector, array or list with multiple elements, then all of the
-    # above is not an issue, and we can make use of sample.
-    
-    return(sample(x=x, size=size, replace=replace, prob=prob))
-  }
 }
 
 
@@ -1430,4 +1484,75 @@ paste_s <- function(...){
   return(factor(x=x,
                 levels=preprocessing_levels,
                 ordered=TRUE))
+}
+
+
+.flatten_nested_list <- function(x, flatten=FALSE){
+  
+  # Identify names of elements.
+  element_names <- unique(unlist(lapply(x, names)))
+  
+  # Create a flattened list.
+  flattened_list <- lapply(element_names, function(element_name, x, flatten){
+    
+    # Obtain content stored in each element.
+    element_content <- NULL
+    
+    # Iterate over nested lists, and contents of the element.
+    for(ii in seq_along(x)){
+      if(flatten){
+        element_content <- c(element_content, x[[ii]][[element_name]])
+        
+      } else {
+        # Treat data.table differently, because c() casts data.tables to a list.
+        element_content <- c(element_content, list(x[[ii]][[element_name]]))
+      }
+    }
+    
+    # Set names of elements
+    if(!is.null(names(x))){
+      if(length(names(x)) == length(element_content)){
+        names(element_content) <- names(x)
+      }
+    } 
+    
+    return(element_content)
+  },
+  x = x,
+  flatten = flatten)
+  
+  # Set names of the list elements.
+  names(flattened_list) <- element_names
+  
+  return(flattened_list)
+}
+
+
+dmapply <- function(FUN, ..., MoreArgs=NULL){
+  # mapply for use within data.table. This parses the result of FUN to a flat
+  # list. data.table then adds the contents of the list as columns.
+  
+  # Apply function.
+  x <- mapply(FUN, ..., MoreArgs=MoreArgs, SIMPLIFY=FALSE)
+  
+  # Combine to data.table.
+  x <- data.table::rbindlist(x, use.names=TRUE)
+  
+  # Return as list.
+  return(as.list(x))
+}
+
+
+dlapply <- function(X, FUN, ...){
+  # lapply for use within data.table. This parses the result of FUN to a flat
+  # list. data.table then adds the contents of the list as columns.
+  
+  # Apply function.
+  x <- lapply(X, FUN, ...)
+  
+  # Combine to data.table.
+  x <- data.table::rbindlist(x, use.names=TRUE)
+  
+  # Return as list.
+  return(as.list(x))
 }

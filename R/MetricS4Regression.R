@@ -137,7 +137,7 @@ setMethod("compute_metric_score", signature(metric="familiarMetricMSLE"),
             if(is_empty(data)) return(callNextMethod())
             
             # Compute the mean squared log error.
-            score <- sum((log1p(data$outcome) - log1p(data$predicted_outcome))^2) / nrow(data)
+            score <- suppressWarnings(sum((log1p(data$outcome) - log1p(data$predicted_outcome))^2, na.rm=TRUE)) / nrow(data)
             
             if(!is.finite(score)) return(callNextMethod())
             

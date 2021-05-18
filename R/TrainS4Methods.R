@@ -18,7 +18,7 @@ setMethod("train", signature(data="data.table"),
 
 
 setMethod("train", signature(data="dataObject"),
-          function(data, learner, hyperparameter_list=list(), create_bootstrap=FALSE, ...){
+          function(data, learner, hyperparameter_list=list(), create_bootstrap=FALSE, create_novelty_detector=FALSE, cl=NULL, ...){
             
             #####Prepare settings###############################################
             
@@ -26,7 +26,7 @@ setMethod("train", signature(data="dataObject"),
             settings <- extract_settings_from_data(data)
             
             # Update some missing settings that can be fixed within this method.
-            settings$data$train_cohorts <- unique(data@data[["cohort_id"]])
+            settings$data$train_cohorts <- unique(data@data[[get_id_columns(single_column="batch")]])
             
             # Parse the remaining settings that are important. Remove
             # outcome_type from ... This prevents an error caused by multiple
@@ -76,7 +76,7 @@ setMethod("train", signature(data="dataObject"),
             feature_info_list <- feature_info_list[["generic"]]
             
             # Perform some pre-processing (i.e. remove singular features)
-            feature_info_list <- .determine_preprocessing_parameters(cl=NULL,
+            feature_info_list <- .determine_preprocessing_parameters(cl=cl,
                                                                      data=data,
                                                                      feature_info_list=feature_info_list,
                                                                      settings=settings,
@@ -93,9 +93,10 @@ setMethod("train", signature(data="dataObject"),
             required_features <- find_required_features(features=selected_features,
                                                         feature_info_list=feature_info_list)
             
-            # Find important features, i.e. those that constitute the signature either individually or as part of a cluster
-            important_features <- find_important_features(features=selected_features,
-                                                          feature_info_list=feature_info_list)
+            # Find important features, i.e. those that constitute the signature
+            # either individually or as part of a cluster.
+            model_features <- find_model_features(features=selected_features,
+                                                  feature_info_list=feature_info_list)
             
             #####Prepare hyperparameters########################################
             
@@ -129,9 +130,8 @@ setMethod("train", signature(data="dataObject"),
                                    learner = learner,
                                    fs_method = "none",
                                    hyperparameters = param_list,
-                                   signature = selected_features,
-                                   req_feature_cols =  required_features,
-                                   important_features = important_features,
+                                   required_features =  required_features,
+                                   model_features = model_features,
                                    run_table = get_placeholder_run_table(),
                                    feature_info = feature_info_list,
                                    outcome_info = outcome_info,
@@ -148,13 +148,22 @@ setMethod("train", signature(data="dataObject"),
             
             # Create bootstraps.
             if(create_bootstrap){
-              data <- select_data_from_samples(data=data, samples=fam_sample(x=data@data$subject_id,
-                                                                             size=nrow(data@data),
-                                                                             replace=TRUE))
+              data <- select_data_from_samples(data=data,
+                                               samples=fam_sample(x=data@data,
+                                                                  replace=TRUE))
             }
             
             # Train model.
             object <- .train(object=object, data=data, get_additional_info=TRUE)
+            
+            # Add novelty detector
+            if(create_novelty_detector){
+              object <- .train_novelty_detector(object=object,
+                                                data=data)
+            }
+            
+            # Generate a placeholder name for the familiarModel object
+            object <- set_object_name(x=object)
             
             return(object)
           })

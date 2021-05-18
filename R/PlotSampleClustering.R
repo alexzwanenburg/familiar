@@ -91,6 +91,8 @@ NULL
 #'  time-to-event survival outcomes are determined. Only used for `survival`
 #'  outcome. If not specified, the values used when creating the underlying
 #'  `familiarData` objects are used.
+#'@inheritParams export_feature_similarity
+#'@inheritParams export_sample_similarity
 #'@inheritParams as_familiar_collection
 #'@inheritParams plot_univariate_importance
 #'@inheritParams plotting.check_input_args
@@ -133,6 +135,10 @@ NULL
 #'@rdname plot_sample_clustering-methods
 setGeneric("plot_sample_clustering",
            function(object,
+                    feature_cluster_method=waiver(),
+                    feature_linkage_method=waiver(),
+                    sample_cluster_method=waiver(),
+                    sample_linkage_method=waiver(),
                     draw=FALSE,
                     dir_path=NULL,
                     split_by=NULL,
@@ -167,7 +173,7 @@ setGeneric("plot_sample_clustering",
                     show_outcome=TRUE,
                     dendrogram_height=grid::unit(1.5, "cm"),
                     outcome_height=grid::unit(0.3, "cm"),
-                    evaluation_times=NULL,
+                    evaluation_times=waiver(),
                     width=waiver(),
                     height=waiver(),
                     units=waiver(),
@@ -179,6 +185,10 @@ setGeneric("plot_sample_clustering",
 #'@rdname plot_sample_clustering-methods
 setMethod("plot_sample_clustering", signature(object="ANY"),
           function(object,
+                   feature_cluster_method=waiver(),
+                   feature_linkage_method=waiver(),
+                   sample_cluster_method=waiver(),
+                   sample_linkage_method=waiver(),
                    draw=FALSE,
                    dir_path=NULL,
                    split_by=NULL,
@@ -213,7 +223,7 @@ setMethod("plot_sample_clustering", signature(object="ANY"),
                    show_outcome=TRUE,
                    dendrogram_height=grid::unit(1.5, "cm"),
                    outcome_height=grid::unit(0.3, "cm"),
-                   evaluation_times=NULL,
+                   evaluation_times=waiver(),
                    width=waiver(),
                    height=waiver(),
                    units=waiver(),
@@ -222,10 +232,20 @@ setMethod("plot_sample_clustering", signature(object="ANY"),
             
             # Attempt conversion to familiarCollection object.
             object <- do.call(as_familiar_collection,
-                              args=append(list("object"=object, "data_element"="feature_expressions"), list(...)))
+                              args=c(list("object"=object,
+                                          "data_element"="feature_expressions",
+                                          "feature_cluster_method"=feature_cluster_method,
+                                          "feature_linkage_method"=feature_linkage_method,
+                                          "sample_cluster_method"=sample_cluster_method,
+                                          "sample_linkage_method"=sample_linkage_method),
+                                     list(...)))
             
             return(do.call(plot_sample_clustering,
                            args=list("object"=object,
+                                     "feature_cluster_method"=feature_cluster_method,
+                                     "feature_linkage_method"=feature_linkage_method,
+                                     "sample_cluster_method"=sample_cluster_method,
+                                     "sample_linkage_method"=sample_linkage_method,
                                      "draw"=draw,
                                      "dir_path"=dir_path,
                                      "split_by"=split_by,
@@ -273,6 +293,10 @@ setMethod("plot_sample_clustering", signature(object="ANY"),
 #'@rdname plot_sample_clustering-methods
 setMethod("plot_sample_clustering", signature(object="familiarCollection"),
           function(object,
+                   feature_cluster_method=waiver(),
+                   feature_linkage_method=waiver(),
+                   sample_cluster_method=waiver(),
+                   sample_linkage_method=waiver(),
                    draw=FALSE,
                    dir_path=NULL,
                    split_by=NULL,
@@ -307,46 +331,50 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
                    show_outcome=TRUE,
                    dendrogram_height=grid::unit(1.5, "cm"),
                    outcome_height=grid::unit(0.3, "cm"),
-                   evaluation_times=NULL,
+                   evaluation_times=waiver(),
                    width=waiver(),
                    height=waiver(),
                    units=waiver(),
                    verbose=TRUE,
                    ...){
             
-            # Get input data
-            x <- export_feature_expressions(object=object)
+            # Suppress NOTES due to non-standard evaluation in data.table
+            .NATURAL <- NULL
             
-            # Skip empty data.
-            if(is.null(x)) return(NULL)
-            if(length(x) == 0) return(NULL)
+            # Get feature expression data
+            feature_expression <- export_feature_expressions(object=object,
+                                                             evaluation_time=evaluation_times)
             
-            # Give x names
-            names(x) <- as.character(seq_along(x))
+            # Get feature similarity data.
+            feature_similarity <- export_feature_similarity(object=object,
+                                                            feature_cluster_method=feature_cluster_method,
+                                                            feature_linkage_method=feature_linkage_method,
+                                                            export_dendrogram=FALSE,
+                                                            export_ordered_data=FALSE)[[1]]
             
-            # Collect data sets, learners and feature selection methods, so that
-            # splitting can be organised.
-            y <- lapply(seq_along(x), function(ii, x){
-              
-              # Check for empty entries
-              if(is_empty(x[[ii]]$data)) return(NULL)
-              
-              # Extract data_set, fs_method and learner columns.
-              y <- head(x[[ii]]$data[, c("data_set", "fs_method", "learner")], n=1)
-              
-              # Insert list_id ii
-              y[, "list_id":=as.character(ii)]
-              
-              return(y)
-            }, x=x)
+            # Get feature similarity data.
+            sample_similarity <- export_sample_similarity(object=object,
+                                                          sample_cluster_method=sample_cluster_method,
+                                                          sample_linkage_method=sample_linkage_method)[[1]]
             
-            # Concatenate to a single data table.
-            y <- data.table::rbindlist(y)
+            # Check that the data are not empty.
+            if(is_empty(feature_expression)) return(NULL)
             
-            # Update labelling
-            y$data_set <- factor(y$data_set, levels=unique(get_data_set_names(object)))
-            y$fs_method <- factor(y$fs_method, levels=unique(get_fs_method_names(object)))
-            y$learner <- factor(y$learner, levels=unique(get_learner_names(object)))
+            if(all(sapply(feature_expression, is_empty))) return(NULL)
+            feature_expression <- feature_expression[!sapply(feature_expression, is_empty)]
+            
+            # Build an identifier table.
+            identifier_table <- lapply(feature_expression, function(x){
+              return(unique(x@data[, mget(x@grouping_column)]))
+            })
+            
+            # Combine to table.
+            identifier_table <- data.table::rbindlist(identifier_table, use.names=TRUE)
+            
+            # Add row identifiers to make it easier to track the list elements
+            # for feature expression.
+            identifier_table[, "list_id":=.I]
+            
             
             ##### Check input arguments ----------------------------------------
             
@@ -387,7 +415,8 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
               else show_normalised_data <- "none"
               
             } else {
-              .check_parameter_value_is_valid(x=show_normalised_data, var_name="show_normalised_data",
+              .check_parameter_value_is_valid(x=show_normalised_data,
+                                              var_name="show_normalised_data",
                                               values=c("none", "fixed", "set_normalisation"))
             }
             
@@ -413,7 +442,8 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
             }
             
             # check outcome_legend_label
-            plotting.check_input_label(label_var=outcome_legend_label, var_name="outcome_legend_label")
+            plotting.check_input_label(label_var=outcome_legend_label,
+                                       var_name="outcome_legend_label")
             
             # x_axis_by & y_axis_by
             available_axis_variables <- c("feature", "sample")
@@ -467,22 +497,15 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
               .check_argument_length(show_feature_dendrogram, "show_feature_dendrogram", min=1, max=1)
             }
             
-            # Check if cluster objects are present and have the correct hclust
-            # class.
-            if(!is.null(show_feature_dendrogram)){
-              can_draw_feature_dendrogram <- sapply(x, function(list_entry) (inherits(list_entry$feature_cluster_object, "hclust")))
+            # Check that the data allows for creating a dendrogram.
+            if(is_empty(feature_similarity)){
+              show_feature_dendrogram <- NULL
               
-              if(all(!can_draw_feature_dendrogram)){
-                if(verbose){
-                  warning(paste0("Cannot draw the feature dendrogram as the cluster objects are not of the \"hclust\" class. ",
-                                 "This may occur if partitioning around medioids is used for clustering."))
-                }
-                
-                show_feature_dendrogram <- NULL
-              }
+            } else if(!feature_similarity@cluster_method %in% c("hclust", "agnes", "diana")){
+              show_feature_dendrogram <- NULL
             }
             
-            
+
             # show_sample_dendrogram
             if(is.logical(show_sample_dendrogram)){
               
@@ -506,22 +529,14 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
               .check_argument_length(show_sample_dendrogram, "show_sample_dendrogram", min=1, max=1)
             }
             
-            # Check if cluster objects are present and have the correct hclust
-            # class.
-            if(!is.null(show_sample_dendrogram)){
-              can_draw_sample_dendrogram <- sapply(x, function(list_entry) (inherits(list_entry$feature_cluster_object, "hclust")))
+            # Check that the data allows for creating a dendrogram.
+            if(is_empty(sample_similarity)){
+              show_sample_dendrogram <- NULL
               
-              if(all(!can_draw_sample_dendrogram)){
-                if(verbose){
-                  warning(paste0("Cannot draw the sample dendrogram as the cluster objects are not of the \"hclust\" class. ",
-                                 "This may occur if partitioning around medioids is used for clustering."))
-                }
-                
-                can_draw_feature_dendrogram <- NULL
-              }
+            } else if(!sample_similarity@cluster_method %in% c("hclust", "agnes", "diana")){
+              show_sample_dendrogram <- NULL
             }
-            
-            
+
             # Check if the dendrogram_height argument is correct.
             if(!is.null(show_sample_dendrogram) | !is.null(show_feature_dendrogram)){
               plotting.check_grid_unit(x=dendrogram_height, var_name="dendrogram_height")
@@ -551,10 +566,7 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
             }
             
             # Check if the outcome_height argument is correct.
-            if(!is.null(show_outcome)){
-              plotting.check_grid_unit(x=outcome_height, var_name="outcome_height")
-            }
-            
+            if(!is.null(show_outcome)) plotting.check_grid_unit(x=outcome_height, var_name="outcome_height")
             
             # Add default splitting variables
             if(is.null(split_by) & is.null(facet_by)){
@@ -567,7 +579,7 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
             }
             
             # Check splitting variables and generate sanitised output
-            split_var_list <- plotting.check_data_handling(x=y,
+            split_var_list <- plotting.check_data_handling(x=identifier_table,
                                                            split_by=split_by,
                                                            facet_by=facet_by,
                                                            available=c("data_set", "fs_method", "learner"))
@@ -590,28 +602,44 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
             
             # Split data.
             if(!is.null(split_by)){
-              y_split <- split(y, by=split_by, drop=FALSE)
+              x_split <- split(identifier_table, by=split_by, drop=FALSE)
               
             } else {
-              y_split <- list("null.name"=y)
+              x_split <- list("null.name"=identifier_table)
             }
             
             # Store plots to list in case dir_path is absent.
             if(is.null(dir_path)) plot_list <- list()
             
-            # Iterate over data splits.
-            for(ii in names(y_split)){
+            # Iterate over splits
+            for(x_sub in x_split){
               
-              # Skip empty datasets.
-              if(is_empty(y_split[[ii]])) next()
+              if(is_empty(x_sub)) next()
               
-              # Skip sets with empty similarity data.
-              data_are_empty <- sapply(x[y_split[[ii]]$list_id], function(list_entry) (is_empty(list_entry$data) | is_empty(list_entry$feature_order) | is_empty(list_entry$sample_order)))
-              if(all(data_are_empty)) next()
+              # Select relevant feature expressions from list.
+              feature_expression_split <- feature_expression[x_sub$list_id]
               
+              # Select data for feature similarity.
+              feature_similarity_split <- NULL
+              if(!is_empty(feature_similarity)){
+                feature_similarity_split <- methods::new("familiarDataElementFeatureSimilarity",
+                                                         feature_similarity,
+                                                         data=feature_similarity@data[x_sub, on=.NATURAL, nomatch=NULL])
+              } 
+              
+              # Select data for sample similarity
+              sample_similarity_split <- NULL
+              if(!is_empty(sample_similarity)){
+                sample_similarity_split <- methods::new("familiarDataElementSampleSimilarity",
+                                                         sample_similarity,
+                                                         data=sample_similarity@data[x_sub, on=.NATURAL, nomatch=NULL])
+              } 
+
               # Generate plot
-              p <- .plot_sample_clustering_plot(x=y_split[[ii]],
-                                                data=x,
+              p <- .plot_sample_clustering_plot(x=x_sub,
+                                                data=feature_expression_split,
+                                                feature_similarity=feature_similarity_split,
+                                                sample_similarity=sample_similarity_split,
                                                 outcome_type=object@outcome_type,
                                                 x_axis_by=x_axis_by,
                                                 y_axis_by=y_axis_by,
@@ -643,8 +671,7 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
                                                 show_normalised_data=show_normalised_data,
                                                 show_outcome=show_outcome,
                                                 dendrogram_height=dendrogram_height,
-                                                outcome_height=outcome_height,
-                                                evaluation_times=evaluation_times)
+                                                outcome_height=outcome_height)
               
               # Check empty output
               if(is.null(p)) next()
@@ -656,36 +683,24 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
               if(!is.null(dir_path)){
                 
                 # Add plot type as a subtype.
-                subtype <- character(0)
+                subtype <- NULL
                 
                 # Determine the subtype
                 if(!is.null(split_by)){
-                  subtype <- c(subtype, as.character(sapply(split_by, function(jj, y) (y[[jj]][1]), y=y_split[[ii]])))
-                  subtype <- paste0(subtype, collapse="_")
+                  subtype <- paste0(as.character(sapply(split_by, function(jj, x) (x[[jj]][1]), x=x_sub)),
+                                    collapse="_")
                 }
                 
-                # Find features
-                features <- lapply(x[y_split[[ii]]$list_id], function(list_entry){
-                  if(is_empty(list_entry$data)) return(NULL)
-                  
-                  return(list_entry$feature_order$name)
-                })
-                
-                # Identify unique features:
+                # Find unique features
+                features <- lapply(feature_expression_split, function(x) (x@value_column))
                 features <- unique(unlist(features))
                 
-                # Find samples
-                samples <- lapply(x[y_split[[ii]]$list_id], function(list_entry){
-                  if(is_empty(list_entry$data)) return(NULL)
-                  
-                  return(list_entry$sample_order$name)
-                })
-                
-                # Identify unique samples.
+                # Find unique samples
+                samples <- lapply(feature_expression_split, function(x) (x@data$sample_name))
                 samples <- unique(unlist(samples))
                 
                 # Obtain decent default values for the plot.
-                def_plot_dims <- .determine_sample_clustering_plot_dimensions(x=y_split[[ii]],
+                def_plot_dims <- .determine_sample_clustering_plot_dimensions(x=x_sub,
                                                                               x_axis_by=x_axis_by,
                                                                               y_axis_by=y_axis_by,
                                                                               facet_by=facet_by,
@@ -698,19 +713,20 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
                 
                 # Save to file.
                 do.call(plotting.save_plot_to_file,
-                        args=append(list("plot_obj"=p,
-                                         "object"=object,
-                                         "dir_path"=dir_path,
-                                         "type"="feature_expression",
-                                         "subtype"=subtype,
-                                         "height"=ifelse(is.waive(height), def_plot_dims[1], height),
-                                         "width"=ifelse(is.waive(width), def_plot_dims[2], width),
-                                         "units"=ifelse(is.waive(units), "cm", units)),
-                                    list(...)))
+                        args=c(list("plot_obj"=p,
+                                    "object"=object,
+                                    "dir_path"=dir_path,
+                                    "type"="feature_expression",
+                                    "subtype"=subtype,
+                                    "height"=ifelse(is.waive(height), def_plot_dims[1], height),
+                                    "width"=ifelse(is.waive(width), def_plot_dims[2], width),
+                                    "units"=ifelse(is.waive(units), "cm", units)),
+                               list(...)))
                 
               } else {
                 # Store as list for export.
-                plot_list <- append(plot_list, list(p))
+                plot_list <- c(plot_list,
+                               list(p))
               }
             }
             
@@ -727,6 +743,8 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
 
 .plot_sample_clustering_plot <- function(x,
                                          data,
+                                         feature_similarity,
+                                         sample_similarity,
                                          outcome_type,
                                          x_axis_by,
                                          y_axis_by,
@@ -758,44 +776,43 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
                                          show_normalised_data,
                                          show_outcome,
                                          dendrogram_height,
-                                         outcome_height,
-                                         evaluation_times){
+                                         outcome_height){
+  
+  # Suppress NOTES due to non-standard evaluation in data.table
+  .NATURAL <- NULL
   
   # Define elements that need to be shared. Note that "guide" and "strip_y" may
   # be absent.
   elements <- c("guide", "strip_x", "strip_y")
-  if(x_label_shared == "overall") { elements <- append(elements, "axis_title_x")}
-  if(y_label_shared == "overall") { elements <- append(elements, "axis_title_y")}
+  if(x_label_shared == "overall") elements <- c(elements, "axis_title_x")
+  if(y_label_shared == "overall") elements <- c(elements, "axis_title_y")
   
-  # Determine the list identifiers for the current selection of data.
-  list_id <- as.character(unique(x$list_id))
   
   ##### gradient_palette_range and expression_data #############################
   
   # Determine the range of the gradient palette.
   if(is.waive(gradient_palette_range)){
+    
     if(show_normalised_data == "none"){
       # Default to an empty range.
       gradient_palette_range <- c(NA, NA)
       
     } else if(show_normalised_data == "fixed"){
       # Identify the normalisation method used to convert the data.
-      normalisation_method <- lapply(list_id, function(ii, data){
+      normalisation_method <- lapply(data, function(data){
         
         # Obtain the normalisation methods for each feature in the current
         # dataset.
-        normalisation_method <- sapply(data[[ii]]$feature_info, function(feature){
-          return(feature@normalisation_parameters$norm_method)
-        })
-        
+        normalisation_method <- sapply(data@feature_info, function(feature) (feature@normalisation_parameters$norm_method))
+                                       
         return(unname(normalisation_method))
-        
-      }, data=data)
+      })
       
       # Select the normalisation methods that we should consider.
       normalisation_method <- unique(unlist(normalisation_method))
       if(all(normalisation_method == "none")){
         normalisation_method <- "none"
+        
       } else {
         normalisation_method <- setdiff(normalisation_method, "none")
       }
@@ -819,46 +836,34 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
   }
   
   # Normalise expression data
-  expression_data <- lapply(list_id, function(ii, data, show_normalised_data){
-    
-    # Normalise expression data
-    expression_data <- .normalise_expression_data(x=data[[ii]]$data,
-                                                  show_normalised_data=show_normalised_data,
-                                                  feature_info=data[[ii]]$feature_info)
-    
-    return(expression_data)
-    
-  }, data=data, show_normalised_data=show_normalised_data)
-  
-  # Name the expression data sets by the list identifiers so that they can be
-  # recognised and addressed by name.
-  names(expression_data) <- list_id
+  data <- lapply(data,
+                 .normalise_expression_data,
+                 show_normalised_data=show_normalised_data)
   
   # Ensure that a gradient palette range is set. This is required because the
   # legend is shared between all facets and .
   if(any(!is.finite(gradient_palette_range))){
     
     # Iterate over expression data to find minimum and maximum
-    feature_ranges <- lapply(list_id, function(ii, expression_data, data){
+    feature_ranges <- lapply(data, function(data){
       
-      if(is_empty(expression_data[[ii]])){
-        return(data.table::data.table("min_value"=numeric(0),
-                                      "max_value"=numeric(0))) 
-      }
+      if(is_empty(data)) return(data.table::data.table("min_value"=numeric(0),
+                                                       "max_value"=numeric(0))) 
       
       # Find feature value ranges in the current expression data.
-      feature_ranges <- lapply(data[[ii]]$feature_info, function(feature, expression_data){
+      feature_ranges <- lapply(data@feature_info, function(feature, x){
         
         # Only numeric features have a range.
         if(feature@feature_type == "numeric"){
           
           # Find feature values that are finite.
-          feature_data <- expression_data[[feature@name]]
+          feature_data <- x[[feature@name]]
           feature_data <- feature_data[is.finite(feature_data)]
           
           if(length(feature_data) == 0){
             return(data.table::data.table("min_value"=numeric(0),
                                           "max_value"=numeric(0)))
+            
           } else {
             return(data.table::data.table("min_value"=as.double(min(feature_data, na.rm=FALSE)),
                                           "max_value"=as.double(max(feature_data, na.rm=FALSE))))
@@ -868,17 +873,17 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
           return(data.table::data.table("min_value"=numeric(0),
                                         "max_value"=numeric(0)))
         }
-      }, expression_data=expression_data[[ii]])
+      },
+      x=data@data)
       
       # Combine ranges for all features.
-      feature_ranges <- data.table::rbindlist(feature_ranges)
+      feature_ranges <- data.table::rbindlist(feature_ranges, use.names=TRUE)
       
       return(feature_ranges)
-      
-    }, data=data, expression_data=expression_data)
+    })
     
     # Combine ranges
-    feature_ranges <- data.table::rbindlist(feature_ranges)
+    feature_ranges <- data.table::rbindlist(feature_ranges, use.names=TRUE)
     
     if(is_empty(feature_ranges)){
       # Set a default if all features are categorical.
@@ -905,56 +910,56 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
   
   # Process outcome plot data for plotting.
   if(!is.null(show_outcome)){
-    # Normalise expression data
-    outcome_plot_data <- lapply(list_id, function(ii, data, outcome_type, evaluation_times){
-      if(is_empty(x)) return(NULL)
+    
+    # Iterate over data elements to create outcome plot data.
+    outcome_plot_data <- lapply(data, function(data, outcome_type){
+      
+      if(is_empty(data)) return(NULL)
 
       if(outcome_type %in% c("survival", "competing_risk")){
-        if(is.null(evaluation_times)) evaluation_times <- data[[ii]]$evaluation_times
+        evaluation_times <- data@evaluation_time
         
-        outcome_plot_data <- .process_expression_survival_outcome(x=data[[ii]]$data,
+        outcome_plot_data <- .process_expression_survival_outcome(x=data@data,
                                                                   evaluation_times=evaluation_times)
+        
       } else {
-        outcome_plot_data <- .process_expression_generic_outcome(x=data[[ii]]$data)
+        outcome_plot_data <- .process_expression_generic_outcome(x=data@data)
       }
       
       return(outcome_plot_data)
       
-    }, data=data, outcome_type=outcome_type, evaluation_times=evaluation_times)
-    
-    # Name the outcome plot data sets by the list identifiers so that they can be
-    # recognised and addressed by name.
-    names(outcome_plot_data) <- list_id
+    },
+    outcome_type=outcome_type)
     
   } else {
-    outcome_plot_data <- list()
+    outcome_plot_data <- NULL
   }
 
-  # Update the outcome palette range based on 
+  # Update the outcome palette range based on data present.
   if(any(!is.finite(outcome_palette_range)) & outcome_type %in% c("continuous", "count") & !is.null(show_outcome)){
     
-    # Iterate over outcome_plot_data to find minimum and maximum
-    outcome_ranges <- lapply(list_id, function(ii, outcome_plot_data){
+    # Iterate over outcome_plot_data to find minimum and maximum values.
+    outcome_ranges <- lapply(outcome_plot_data, function(x){
       
-      if(is_empty(outcome_plot_data[[ii]])){
+      if(is_empty(x)){
         return(data.table::data.table("min_value"=numeric(0),
                                       "max_value"=numeric(0)))
         
       } else {
-        return(data.table::data.table("min_value"=as.double(min(outcome_plot_data[[ii]]$value, na.rm=TRUE)),
-                                      "max_value"=as.double(max(outcome_plot_data[[ii]]$value, na.rm=TRUE))))
+        return(data.table::data.table("min_value"=as.double(min(x$value, na.rm=TRUE)),
+                                      "max_value"=as.double(max(x$value, na.rm=TRUE))))
       }
-    }, outcome_plot_data=outcome_plot_data)
+    })
     
     # Combine outcome ranges
-    outcome_ranges <- data.table::rbindlist(outcome_ranges)
+    outcome_ranges <- data.table::rbindlist(outcome_ranges,
+                                            use.names=TRUE)
     
     if(is_empty(outcome_ranges)){
       # Set a default if all features are categorical.
       outcome_palette_range <- c(0.0, 1.0)
       
     } else {
-      
       # Find a nice range for missing values of the palette range.
       outcome_palette_range <- plotting.nice_range(input_range=outcome_palette_range,
                                                     x=c(min(outcome_ranges$min_value),
@@ -962,43 +967,76 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
     }
   }
   
-  ##### Plot creation ##########################################################
+  ##### plot creation ##########################################################
   
-  # Split by facet. This generates a list of data splits with facetting
+  # Update the list identifiers in x.
+  x <- data.table::copy(x)[, "list_id":=.I]
+  
+  # Split by facet. This generates a list of data splits with faceting
   # information that allows for positioning.
   plot_layout_table <- plotting.get_plot_layout_table(x=x,
                                                       facet_by=facet_by,
                                                       facet_wrap_cols=facet_wrap_cols)
   
-  # Split data into facets. This is done by row.
-  x_split_list <- plotting.split_data_by_facet(x=x,
-                                               plot_layout_table=plot_layout_table)
+  # Define the split in data required for faceting.
+  data_split <- split(plot_layout_table,
+                      by=c("col_id", "row_id"),
+                      sorted=TRUE)
   
   # Create plots to join
   figure_list <- list()
   extracted_element_list <- list()
   
-  for(ii in seq_along(x_split_list)){
+  for(current_split in data_split){
     
-    x_split <- x_split_list[[ii]]
+    # Get current split on the identifier table.
+    if(is.null(facet_by)){
+      x_split <- x
+    } else {
+      x_split <- x[current_split, on=.NATURAL]
+    }
     
-    # Find the cluster object for features
-    feature_cluster_object <- data[[x_split$list_id]]$feature_cluster_object
+    # Get expression data split and outcome data split.
+    expression_data_split <- data[x_split$list_id]
+    outcome_plot_data_split <- outcome_plot_data[x_split$list_id]
     
-    # Find the cluster object for samples
-    sample_cluster_object <- data[[x_split$list_id]]$sample_cluster_object
+    # Check data for a single facet is present.
+    if(length(expression_data_split) > 1 | length(outcome_plot_data_split) > 1){
+      ..error_reached_unreachable_code(".plot_sample_clustering_plot: cannot process data from multiple facets simultaneously.")
+    }
     
-    # Find the feature similarity metric
-    feature_similarity_metric <- data[[x_split$list_id]]$feature_similarity_metric
+    # Extract data elements from list.
+    expression_data_split <- expression_data_split[[1]]
+    outcome_plot_data_split <- outcome_plot_data_split[[1]]
     
-    # Find the sample similarity metric
-    sample_similarity_metric <- data[[x_split$list_id]]$sample_similarity_metric
+    # Split feature similarity.
+    if(is.null(facet_by) | is_empty(feature_similarity)){
+      feature_similarity_split <- feature_similarity
+      
+    } else {
+      feature_similarity_split <- methods::new("familiarDataElementFeatureSimilarity",
+                                               feature_similarity,
+                                               data=feature_similarity@data[current_split, on=.NATURAL, nomatch=NULL])
+    }
+    
+    # Split sample_similarity.
+    if(is.null(facet_by) | is_empty(sample_similarity)){
+      sample_similarity_split <- sample_similarity
+      
+    } else {
+      sample_similarity_split <- methods::new("familiarDataElementSampleSimilarity",
+                                              sample_similarity,
+                                              data=sample_similarity@data[current_split, on=.NATURAL, nomatch=NULL])
+    }
+    
+    # Add cluster objects to feature and sample similarity data.
+    feature_similarity_split <- ..compute_feature_similarity_dendrogram(feature_similarity_split)
+    sample_similarity_split <- ..compute_sample_similarity_dendrogram(sample_similarity_split)
 
     # Complete the expression data
-    plot_data <- .complete_expression_table(x=expression_data[[x_split$list_id]],
-                                            feature_info=data[[x_split$list_id]]$feature_info,
-                                            feature_order=data[[x_split$list_id]]$feature_order,
-                                            sample_order=data[[x_split$list_id]]$sample_order,
+    plot_data <- .complete_expression_table(x=expression_data_split,
+                                            feature_similarity=feature_similarity_split,
+                                            sample_similarity=sample_similarity_split,
                                             gradient_palette_range=gradient_palette_range)
     
     # Create expression heatmap
@@ -1031,103 +1069,104 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
                                                extension="main")
     
     # Add sample dendogram
-    if(!is.null(show_sample_dendrogram) & inherits(sample_cluster_object, "hclust")){
-      
-      # Obtain dendogram plotting data as line segments.
-      dendro_data <- plotting.dendrogram_as_table(h=sample_cluster_object,
-                                                  similarity_metric=sample_similarity_metric)
-      
-      # Find the right axes settings.
-      if(show_sample_dendrogram %in% c("left", "right")){
-        dist_range <- x_range
-        dist_n_breaks <- x_n_breaks
-        dist_breaks <- x_breaks
-      } else {
-        dist_range <- y_range
-        dist_n_breaks <- y_n_breaks
-        dist_breaks <- y_breaks
+    if(!is.null(sample_similarity_split)){
+      if(!is.null(show_sample_dendrogram) & inherits(sample_similarity_split@dendrogram, "hclust")){
+        
+        # Obtain dendogram plotting data as line segments.
+        dendro_data <- plotting.dendrogram_as_table(h=sample_similarity_split@dendrogram,
+                                                    similarity_metric=sample_similarity_split@similarity_metric)
+        
+        # Find the right axes settings.
+        if(show_sample_dendrogram %in% c("left", "right")){
+          dist_range <- x_range
+          dist_n_breaks <- x_n_breaks
+          dist_breaks <- x_breaks
+        } else {
+          dist_range <- y_range
+          dist_n_breaks <- y_n_breaks
+          dist_breaks <- y_breaks
+        }
+        
+        # Plot dendrogram
+        p_dendro <- .create_expression_dendrogram_plot(x=dendro_data,
+                                                       position=show_sample_dendrogram,
+                                                       ggtheme=ggtheme,
+                                                       dist_range=dist_range,
+                                                       dist_n_breaks=dist_n_breaks,
+                                                       dist_breaks=dist_breaks,
+                                                       plot_height=dendrogram_height,
+                                                       rotate_x_tick_labels=rotate_x_tick_labels)
+        
+        # Determine the axis element
+        axis_element <- ifelse(show_sample_dendrogram %in% c("top", "bottom"), "axis-l", "axis-b")
+        
+        # Extract dendrogram gtable, which consists of the panel and the height
+        # axis.
+        g_sample_dendro <- .gtable_extract(g=plotting.to_grob(p_dendro),
+                                           element=c("panel", axis_element),
+                                           partial_match=TRUE)
+        
+        # Insert the dendrogram at the position correct position around the
+        # heatmap.
+        g_heatmap <- .gtable_insert(g=g_heatmap,
+                                    g_new=g_sample_dendro,
+                                    where=show_sample_dendrogram,
+                                    ref_element="panel-main",
+                                    partial_match=TRUE)
       }
-      
-      # Plot dendogram
-      p_dendro <- .create_expression_dendrogram_plot(x=dendro_data,
-                                                    position=show_sample_dendrogram,
-                                                    ggtheme=ggtheme,
-                                                    dist_range=dist_range,
-                                                    dist_n_breaks=dist_n_breaks,
-                                                    dist_breaks=dist_breaks,
-                                                    plot_height=dendrogram_height,
-                                                    rotate_x_tick_labels=rotate_x_tick_labels)
-      
-      # Determine the axis element
-      axis_element <- ifelse(show_sample_dendrogram %in% c("top", "bottom"), "axis-l", "axis-b")
-      
-      # Extract dendodram gtable, which consists of the panel and the height
-      # axis.
-      g_sample_dendro <- .gtable_extract(g=plotting.to_grob(p_dendro),
-                                         element=c("panel", axis_element),
-                                         partial_match=TRUE)
-      
-      # Insert the dendrogram at the position correct position around the
-      # heatmap.
-      g_heatmap <- .gtable_insert(g=g_heatmap,
-                                  g_new=g_sample_dendro,
-                                  where=show_sample_dendrogram,
-                                  ref_element="panel-main",
-                                  partial_match=TRUE)
     }
     
-    # Add feature dendogram
-    if(!is.null(show_feature_dendrogram) & inherits(feature_cluster_object, "hclust")){
-      # Obtain dendogram plotting data as line segments.
-      dendro_data <- plotting.dendrogram_as_table(h=feature_cluster_object,
-                                                  similarity_metric=feature_similarity_metric)
-      
-      # Find the right axes settings.
-      if(show_feature_dendrogram %in% c("left", "right")){
-        dist_range <- x_range
-        dist_n_breaks <- x_n_breaks
-        dist_breaks <- x_breaks
-      } else {
-        dist_range <- y_range
-        dist_n_breaks <- y_n_breaks
-        dist_breaks <- y_breaks
+    # Add feature dendrogram
+    if(!is.null(feature_similarity_split)){
+      if(!is.null(show_feature_dendrogram) & inherits(feature_similarity_split@dendrogram, "hclust")){
+        # Obtain dendrogram plotting data as line segments.
+        dendro_data <- plotting.dendrogram_as_table(h=feature_similarity_split@dendrogram,
+                                                    similarity_metric=feature_similarity_split@similarity_metric)
+        
+        # Find the right axes settings.
+        if(show_feature_dendrogram %in% c("left", "right")){
+          dist_range <- x_range
+          dist_n_breaks <- x_n_breaks
+          dist_breaks <- x_breaks
+        } else {
+          dist_range <- y_range
+          dist_n_breaks <- y_n_breaks
+          dist_breaks <- y_breaks
+        }
+        
+        # Plot dendogram
+        p_dendro <- .create_expression_dendrogram_plot(x=dendro_data,
+                                                       position=show_feature_dendrogram,
+                                                       ggtheme=ggtheme,
+                                                       dist_range=dist_range,
+                                                       dist_n_breaks=dist_n_breaks,
+                                                       dist_breaks=dist_breaks,
+                                                       plot_height=dendrogram_height,
+                                                       rotate_x_tick_labels=rotate_x_tick_labels)
+        
+        # Determine the axis element
+        axis_element <- ifelse(show_feature_dendrogram %in% c("top", "bottom"), "axis-l", "axis-b")
+        
+        # Extract dendodram gtable, which consists of the panel and the height
+        # axis.
+        g_feature_dendro <- .gtable_extract(g=plotting.to_grob(p_dendro),
+                                            element=c("panel", axis_element),
+                                            partial_match=TRUE)
+        
+        # Insert the dendrogram at the position correct position around the
+        # heatmap.
+        g_heatmap <- .gtable_insert(g=g_heatmap,
+                                    g_new=g_feature_dendro,
+                                    where=show_feature_dendrogram,
+                                    ref_element="panel-main",
+                                    partial_match=TRUE)
       }
-      
-      # Plot dendogram
-      p_dendro <- .create_expression_dendrogram_plot(x=dendro_data,
-                                                    position=show_feature_dendrogram,
-                                                    ggtheme=ggtheme,
-                                                    dist_range=dist_range,
-                                                    dist_n_breaks=dist_n_breaks,
-                                                    dist_breaks=dist_breaks,
-                                                    plot_height=dendrogram_height,
-                                                    rotate_x_tick_labels=rotate_x_tick_labels)
-      
-      # Determine the axis element
-      axis_element <- ifelse(show_feature_dendrogram %in% c("top", "bottom"), "axis-l", "axis-b")
-      
-      # Extract dendodram gtable, which consists of the panel and the height
-      # axis.
-      g_feature_dendro <- .gtable_extract(g=plotting.to_grob(p_dendro),
-                                          element=c("panel", axis_element),
-                                          partial_match=TRUE)
-      
-      # Insert the dendrogram at the position correct position around the
-      # heatmap.
-      g_heatmap <- .gtable_insert(g=g_heatmap,
-                                  g_new=g_feature_dendro,
-                                  where=show_feature_dendrogram,
-                                  ref_element="panel-main",
-                                  partial_match=TRUE)
     }
     
     if(!is.null(show_outcome) & gtable::is.gtable(g_heatmap)){
       
-      # Find evaluation times (will still be NULL for outcome_type other than survival and competing_risk)
-      if(is.null(evaluation_times)) evaluation_times <- data[[x_split$list_id]]$evaluation_times
-
       # Create expression outcome plot.
-      p_outcome <- .create_expression_outcome_plot(x=outcome_plot_data[[x_split$list_id]],
+      p_outcome <- .create_expression_outcome_plot(x=outcome_plot_data_split,
                                                    ggtheme=ggtheme,
                                                    position=show_outcome,
                                                    outcome_type=outcome_type,
@@ -1135,7 +1174,7 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
                                                    outcome_palette_range=outcome_palette_range,
                                                    outcome_legend_label=outcome_legend_label,
                                                    plot_height=outcome_height,
-                                                   sample_order=data[[x_split$list_id]]$sample_order,
+                                                   sample_similarity=sample_similarity_split,
                                                    rotate_x_tick_labels=rotate_x_tick_labels)
       
       # Convert to grob
@@ -1244,7 +1283,8 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
   
   
   # Colors
-  gradient_colours <- plotting.get_palette(x=gradient_palette, palette_type=palette_type)
+  gradient_colours <- plotting.get_palette(x=gradient_palette,
+                                           palette_type=palette_type)
   
   # Add gradient palette. If the legend is not shown, legend_label equals NULL.
   p <- p + ggplot2::scale_fill_gradientn(name=legend_label,
@@ -1277,11 +1317,17 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
   p <- p + ggplot2::scale_y_discrete(position=y_axis_position, expand=c(0, 0))
   
   # Set labels.
-  p <- p + ggplot2::labs(x=x_label, y=y_label, title=plot_title, subtitle=plot_sub_title, caption=caption)
+  p <- p + ggplot2::labs(x=x_label,
+                         y=y_label,
+                         title=plot_title,
+                         subtitle=plot_sub_title,
+                         caption=caption)
   
-  # Determine how plots are facetted. The actual facets are created in the
+  # Determine how plots are faceted. The actual facets are created in the
   # calling function, not here.
-  facet_by_list <- plotting.parse_facet_by(x=x, facet_by=facet_by, facet_wrap_cols=facet_wrap_cols)
+  facet_by_list <- plotting.parse_facet_by(x=x@data,
+                                           facet_by=facet_by,
+                                           facet_wrap_cols=facet_wrap_cols)
   
   if(!is.null(facet_by)){
     if(is.null(facet_wrap_cols)){
@@ -1308,13 +1354,13 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
 
 
 .create_expression_dendrogram_plot <- function(x,
-                                              position,
-                                              ggtheme,
-                                              dist_range,
-                                              dist_n_breaks,
-                                              dist_breaks,
-                                              plot_height,
-                                              rotate_x_tick_labels){
+                                               position,
+                                               ggtheme,
+                                               dist_range,
+                                               dist_n_breaks,
+                                               dist_breaks,
+                                               plot_height,
+                                               rotate_x_tick_labels){
   
   # Check if there is any data to plot.
   if(is_empty(x)) return(NULL)
@@ -1423,7 +1469,7 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
                                             outcome_palette_range,
                                             outcome_legend_label,
                                             plot_height,
-                                            sample_order,
+                                            sample_similarity,
                                             rotate_x_tick_labels){
 
   # Set type of palette that is to be used for default palettes.
@@ -1440,13 +1486,32 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
     ..error_outcome_type_not_implemented(outcome_type)
   }
   
+  # Determine sample order.
+  if(is.null(sample_similarity)){
+    # Placeholder in case the sample_similarity object is NULL.
+    sample_order <- data.table::data.table("name"=unique(x$sample))
+    sample_order[, "label_order":=.I]
+    
+  } else if(is.null(sample_similarity@dendrogram)){
+    # Placeholder in case the dendrogram object is NULL.
+    sample_order <- data.table::data.table("name"=unique(x$sample))
+    sample_order[, "label_order":=.I]
+    
+  } else {
+    # Default option.
+    sample_order <- cluster.extract_label_order(cluster_object=sample_similarity@dendrogram,
+                                                cluster_method=sample_similarity@cluster_method)
+  }
+  
   # Correctly order the samples
-  x$sample <- factor(x$sample, levels=sample_order$name[order(sample_order$label_order)])
+  x$sample <- factor(x$sample,
+                     levels=sample_order$name[order(sample_order$label_order)])
   
   # Create basic plot
-  p <- ggplot2::ggplot(data=x, mapping=ggplot2::aes(x=!!sym("sample"),
-                                                    y=!!sym("evaluation_point"),
-                                                    fill=!!sym("value")))
+  p <- ggplot2::ggplot(data=x,
+                       mapping=ggplot2::aes(x=!!sym("sample"),
+                                            y=!!sym("evaluation_point"),
+                                            fill=!!sym("value")))
   
   # Add plot theme
   p <- p + ggtheme
@@ -1603,12 +1668,13 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
 
 
 
-.normalise_expression_data <- function(x,
-                                       show_normalised_data,
-                                       feature_info){
+.normalise_expression_data <- function(x, show_normalised_data){
   
   # Check for empty data
   if(is_empty(x)) return(NULL)
+  
+  # Make local copy of data element to avoid updating by reference.
+  x@data <- data.table::copy(x@data)
   
   # Apply normalisation
   if(show_normalised_data == "fixed"){
@@ -1618,23 +1684,23 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
     # normalisation as a consequence.
     
     # Transform features
-    x <- transform_features(data=x,
-                            feature_info_list=feature_info,
-                            features=names(feature_info),
-                            invert=FALSE)
+    x@data <- transform_features(data=x@data,
+                                 feature_info_list=x@feature_info,
+                                 features=names(x@feature_info),
+                                 invert=FALSE)
     
     # Normalise features
-    x <- normalise_features(data=x,
-                            feature_info_list=feature_info,
-                            features=names(feature_info),
-                            invert=FALSE)
+    x@data <- normalise_features(data=x@data,
+                                 feature_info_list=x@feature_info,
+                                 features=names(x@feature_info),
+                                 invert=FALSE)
     
   } else if(show_normalised_data == "set_normalisation"){
     
     # Normalise features within the current dataset.
-    for(curr_feat in names(feature_info)){
-      x[, (curr_feat):=.normalise(get(curr_feat),
-                                  norm_method="standardisation_winsor")]
+    for(curr_feat in names(x@feature_info)){
+      x@data[, (curr_feat):=.normalise(get(curr_feat),
+                                       norm_method="standardisation_winsor")]
     }
   }
   
@@ -1644,16 +1710,15 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
 
 
 .complete_expression_table <- function(x,
-                                       feature_info,
-                                       feature_order,
-                                       sample_order,
+                                       feature_similarity,
+                                       sample_similarity,
                                        gradient_palette_range){
   
   if(is_empty(x)) return(NULL)
   
   # Replace categorical features by numerical values and scale to 0.05-.95 of
   # the z-range.
-  categorical_features <- lapply(feature_info, function(feature){
+  categorical_features <- lapply(x@feature_info, function(feature){
     if(feature@feature_type == "factor"){
       return(feature@name)
       
@@ -1679,35 +1744,72 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
     
     for(feature in categorical_features){
       # Convert categorical data to numerical data.
-      numeric_data <- as.numeric(x[[feature]])
+      numeric_data <- as.numeric(x@data[[feature]])
       
       # Determine the range of the input value range.
-      input_value_range <- c(1, length(feature_info[[feature]]@levels))
+      input_value_range <- c(1, length(x@feature_info[[feature]]@levels))
       
       # Convert numeric data to the output range.
       numeric_data <- (numeric_data - input_value_range[1]) / (diff(input_value_range)) * diff(output_value_range) + output_value_range[1]
       
       # Update column
-      x[[feature]] <- numeric_data
+      x@data[[feature]] <- numeric_data
     }
   }
   
-  # Copy x and revert feature_1 and feature_2 so that all pairs are present.
-  x <- data.table::melt(data=x,
-                        measure.vars=names(feature_info),
-                        variable.name="feature",
-                        value.name="value",
-                        variable.factor=TRUE,
-                        value.factor=FALSE)
+  # Copy x and revert feature_name_1 and feature_name_2 so that all pairs are
+  # present.
+  data <- data.table::melt(data=x@data,
+                           measure.vars=names(x@feature_info),
+                           variable.name="feature",
+                           value.name="value",
+                           variable.factor=TRUE,
+                           value.factor=FALSE)
   
-  # Change subject_id to sample
-  data.table::setnames(x=x, old="subject_id", new="sample")
+  # Change sample_name to sample
+  data.table::setnames(x=data, old="sample_name", new="sample")
+  
+  # Determine feature order.
+  if(is.null(feature_similarity)){
+    # Placeholder in case the feature_similarity object is NULL.
+    feature_order <- data.table::data.table("name"=unique(data$feature))
+    feature_order[, "label_order":=.I]
+  
+  } else if(is.null(feature_similarity@dendrogram)){
+    # Placeholder in case the dendrogram object is NULL.
+    feature_order <- data.table::data.table("name"=unique(data$feature))
+    feature_order[, "label_order":=.I]
+    
+  } else {
+    # Default option.
+    feature_order <- cluster.extract_label_order(cluster_object=feature_similarity@dendrogram,
+                                                 cluster_method=feature_similarity@cluster_method)
+  }
+  
+  # Determine sample order.
+  if(is.null(sample_similarity)){
+    # Placeholder in case the sample_similarity object is NULL.
+    sample_order <- data.table::data.table("name"=x@data$sample_name)
+    sample_order[, "label_order":=.I]
+    
+  } else if(is.null(sample_similarity@dendrogram)){
+    # Placeholder in case the dendrogram object is NULL.
+    sample_order <- data.table::data.table("name"=x@data$sample_name)
+    sample_order[, "label_order":=.I]
+    
+  } else {
+    # Default option.
+    sample_order <- cluster.extract_label_order(cluster_object=sample_similarity@dendrogram,
+                                                cluster_method=sample_similarity@cluster_method)
+  }
   
   # Set feature and sample order
-  x$feature <- factor(x$feature, levels=feature_order$name[order(feature_order$label_order)])
-  x$sample <- factor(x$sample, levels=sample_order$name[order(sample_order$label_order)])
-
-  return(x)
+  data$feature <- factor(data$feature,
+                         levels=feature_order$name[order(feature_order$label_order)])
+  data$sample <- factor(data$sample,
+                        levels=sample_order$name[order(sample_order$label_order)])
+  
+  return(data)
 }
 
 
@@ -1715,10 +1817,10 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
 .process_expression_generic_outcome <- function(x){
   
   # Keep only one copy for each sample.
-  x <- data.table::copy(x[, c("subject_id", "outcome")])
+  x <- data.table::copy(x[, c("sample_name", "outcome")])
   
   # Rename columns
-  data.table::setnames(x, old=c("subject_id", "outcome"), new=c("sample", "value"))
+  data.table::setnames(x, old=c("sample_name", "outcome"), new=c("sample", "value"))
   
   # Set evaluation point (which is on the y-axis)
   x$evaluation_point <- factor("1", levels="1")
@@ -1736,7 +1838,7 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
   sapply(evaluation_times, .check_number_in_valid_range, var_name="evaluation_times", range=c(0.0, Inf), closed=c(FALSE, TRUE))
  
   # Keep only one copy for each sample.
-  x <- data.table::copy(x[, c("subject_id", "outcome_time", "outcome_event")])
+  x <- data.table::copy(x[, c("sample_name", "outcome_time", "outcome_event")])
   
   plot_data <- lapply(evaluation_times, function(eval_time, x){
     # Make a copy with the relevant data.
@@ -1767,7 +1869,7 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
   plot_data$evaluation_point <- factor(plot_data$evaluation_point, levels=evaluation_times)
   
   # Change subject_id to sample
-  data.table::setnames(plot_data, old="subject_id", new="sample")
+  data.table::setnames(plot_data, old="sample_name", new="sample")
   
   return(plot_data)
 }

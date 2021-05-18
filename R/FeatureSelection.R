@@ -1,16 +1,23 @@
-run_feature_selection <- function(cl, proj_list, settings, file_paths, message_indent=0L){
+run_feature_selection <- function(cl, project_list, settings, file_paths, message_indent=0L){
 
   # Check which data object is required for performing feature selection
-  fs_data_id <- getProcessDataID(proj_list=proj_list, process_step="fs")
-
+  fs_data_id <- .get_process_step_data_identifier(project_list=project_list,
+                                                  process_step="fs")
+  
   # Get feature selection methods that still need to be checked
-  run_fs_methods <- .find_missing_feature_selection_data(proj_list=proj_list, settings=settings, file_paths=file_paths)
+  run_fs_methods <- .find_missing_feature_selection_data(proj_list=project_list,
+                                                         settings=settings,
+                                                         file_paths=file_paths)
 
   # Check whether pre-processing has been conducted
-  check_pre_processing(cl=cl, data_id=fs_data_id, file_paths=file_paths, project_id=proj_list$project_id)
+  check_pre_processing(cl=cl,
+                       data_id=fs_data_id,
+                       file_paths=file_paths,
+                       project_id=project_list$project_id)
 
   # Get runs
-  run_list <- getRunList(iter_list=proj_list$iter_list, data_id=fs_data_id)
+  run_list <- .get_run_list(iteration_list=project_list$iter_list,
+                            data_id=fs_data_id)
   
   # Remove cluster information in case no parallelisation is provided.
   if(!settings$fs$do_parallel){
@@ -28,11 +35,11 @@ run_feature_selection <- function(cl, proj_list, settings, file_paths, message_i
 
     # Optimise models used for feature selection
     hpo_list <- run_hyperparameter_optimisation(cl=cl,
-                                                project_list=proj_list,
+                                                project_list=project_list,
                                                 data_id=fs_data_id,
                                                 settings=settings,
                                                 file_paths=file_paths,
-                                                fs_method=curr_fs_method,
+                                                vimp_method=curr_fs_method,
                                                 message_indent=message_indent + 1L)
     
     # Create variable importance information by iterating over the list of runs.
@@ -43,12 +50,12 @@ run_feature_selection <- function(cl, proj_list, settings, file_paths, message_i
                                progress_bar=TRUE,
                                MoreArgs=list("fs_method"=curr_fs_method,
                                              "hpo_list"=hpo_list,
-                                             "proj_list"=proj_list,
+                                             "proj_list"=project_list,
                                              "settings"=settings,
                                              "file_paths"=file_paths))
     
     # Save to file
-    saveRDS(vimp_list, file=.get_feature_selection_data_filename(proj_list=proj_list,
+    saveRDS(vimp_list, file=.get_feature_selection_data_filename(proj_list=project_list,
                                                                  fs_method=curr_fs_method,
                                                                  file_paths=file_paths))
 
@@ -78,7 +85,9 @@ compute_variable_importance <- function(run, fs_method, hpo_list, proj_list, set
                        outcome_info = create_outcome_info(settings=settings))
   
   ############## Select parameters ################################################################
-  parameter_list <- .find_hyperparameters_for_run(run=run, hpo_list=hpo_list)
+  parameter_list <- .find_hyperparameters_for_run(run=run,
+                                                  hpo_list=hpo_list,
+                                                  as_list=TRUE)
 
   ############## Variable importance calculation ##################################################
   
@@ -97,13 +106,13 @@ compute_variable_importance <- function(run, fs_method, hpo_list, proj_list, set
   # Create the variable importance method object or familiar model object to
   # compute variable importance with.
   vimp_object <- methods::new("familiarVimpMethod",
-                              outcome_type=data@outcome_type,
-                              hyperparameters=parameter_list,
-                              vimp_method=fs_method,
-                              outcome_info=.get_outcome_info(),
-                              feature_info=feature_info_list,
-                              req_feature_cols=required_features,
-                              run_table=run$run_table)
+                              outcome_type = data@outcome_type,
+                              hyperparameters = parameter_list,
+                              vimp_method = fs_method,
+                              outcome_info = .get_outcome_info(),
+                              feature_info = feature_info_list,
+                              required_features = required_features,
+                              run_table = run$run_table)
 
   # Compute variable importance.
   vimp_table <- .vimp(object=vimp_object, data=data)
@@ -117,7 +126,7 @@ compute_variable_importance <- function(run, fs_method, hpo_list, proj_list, set
     
   } else {
     # Obtain the list of identifiers.
-    id_list <- getIterID(run=run)
+    id_list <- .get_iteration_identifiers(run=run)
 
     # Add identifiers to variable importance data table
     vimp_table$data_id   <- id_list$data

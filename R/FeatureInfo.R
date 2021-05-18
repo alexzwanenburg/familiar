@@ -2,6 +2,54 @@
 #' @include FamiliarS4Classes.R
 NULL
 
+create_feature_info <- function(data, signature=NULL, ...){
+  # This creates a list of featureInfo objects, with processing, based on data.
+  # This code is primarily used within unit tests.
+  
+   #####Prepare settings###############################################
+  
+  # Reconstitute settings from the data.
+  settings <- extract_settings_from_data(data=data)
+  
+  # Update some missing settings that can be fixed within this method.
+  settings$data$train_cohorts <- unique(data@data[[get_id_columns(single_column="batch")]])
+  
+  # Parse the remaining settings that are important. Remove
+  # outcome_type from ... This prevents an error caused by multiple
+  # matching arguments.
+  dots <- list(...)
+  
+  settings <- do.call(.parse_general_settings,
+                      args=c(list("settings"=settings,
+                                  "data"=data@data),
+                             dots))
+  
+  
+  #####Prepare featureInfo objects####################################
+  
+  # Create a list of featureInfo objects.
+  feature_info_list <- .get_feature_info_data(data=data@data,
+                                              file_paths=NULL,
+                                              project_id=character(),
+                                              outcome_type=data@outcome_type)
+  
+  # Extract the generic data.
+  feature_info_list <- feature_info_list[["generic"]]
+  
+  # Add signature feature info
+  feature_info_list <- add_signature_info(feature_info_list=feature_info_list, signature=signature)
+  
+  # Perform some pre-processing (i.e. remove singular features)
+  feature_info_list <- .determine_preprocessing_parameters(cl=NULL,
+                                                           data=data,
+                                                           feature_info_list=feature_info_list,
+                                                           settings=settings,
+                                                           verbose=FALSE)
+  
+  return(feature_info_list)
+}
+
+
 .get_feature_info_data <- function(data, file_paths, project_id, outcome_type){
   
   # Create path to the feature info file
@@ -101,9 +149,7 @@ add_signature_info <- function(feature_info_list, signature=NULL){
   # Sets the in_signature flag on features in the signature variable.
   
   # Check if there is a signature
-  if(is.null(signature)){
-    return(feature_info_list)
-  }
+  if(is.null(signature)) return(feature_info_list)
   
   # Set signature status
   upd_list <- lapply(signature, function(signature_feature, feature_info_list){
@@ -130,6 +176,37 @@ add_signature_info <- function(feature_info_list, signature=NULL){
 }
 
 
+add_novelty_info <- function(feature_info_list, novelty_features=NULL){
+  # Sets the in_novelty flag on features in the novelty_features variable.
+  
+  # Check if there is a signature
+  if(is.null(novelty_features)) return(feature_info_list)
+  
+  # Set signature status
+  upd_list <- lapply(novelty_features, function(novelty_feature, feature_info_list){
+    
+    # Obtain object
+    object <- feature_info_list[[novelty_feature]]
+    
+    # Mark signature
+    object@in_novelty <- TRUE
+    
+    # Update removed status
+    object <- update_removed_status(object=object)
+    
+    return(object)
+  }, feature_info_list=feature_info_list)
+  
+  # Update the names
+  names(upd_list) <- novelty_features
+  
+  # Copy into the list
+  feature_info_list[novelty_features] <- upd_list
+  
+  return(feature_info_list)
+}
+
+
 add_missing_value_fractions <- function(cl=NULL, feature_info_list, data, threshold){
   # Add the fraction of missing values for features
 
@@ -141,7 +218,8 @@ add_missing_value_fractions <- function(cl=NULL, feature_info_list, data, thresh
                             assign=NULL,
                             X=data@data[, mget(feature_columns)],
                             FUN=function(data) (return(sum(is_valid_data(data)))),
-                            progress_bar=FALSE)
+                            progress_bar=FALSE,
+                            chopchop=TRUE)
   
   # Determine fraction of missing values
   missing_frac    <- 1.0 - n_valid_val / nrow(data@data)
@@ -261,7 +339,8 @@ compute_feature_distribution_data <- function(cl, feature_info_list, data_obj){
                                      FUN=.compute_feature_distribution_data,
                                      object=feature_info_list[feature_columns],
                                      x=data_obj@data[, mget(feature_columns)],
-                                     progress_bar=FALSE)
+                                     progress_bar=FALSE,
+                                     chopchop=TRUE)
 
   if(length(feature_columns) > 0){
     feature_info_list[feature_columns] <- updated_feature_info
@@ -319,7 +398,8 @@ find_invariant_features <- function(cl=NULL, feature_info_list, data_obj){
                                   assign=NULL,
                                   X=data_obj@data[, mget(feature_columns)],
                                   FUN=is_singular_data,
-                                  progress_bar=FALSE)
+                                  progress_bar=FALSE,
+                                  chopchop=TRUE)
   
   singular_features <- feature_columns[singular_features]
   
@@ -371,7 +451,8 @@ find_low_variance_features <- function(cl=NULL, feature_info_list, data_obj, set
                                   X=data_obj@data[, mget(numeric_columns)],
                                   FUN=stats::var,
                                   progress_bar=FALSE,
-                                  na.rm=TRUE)
+                                  na.rm=TRUE,
+                                  chopchop=TRUE)
   
   # Define a data table containing the variances
   dt_var <- data.table::data.table("name"=numeric_columns, "variance"=feature_variances)
@@ -464,14 +545,15 @@ find_non_robust_features <- function(cl=NULL, feature_info_list, data_obj, setti
                          x=data_obj@data[, mget(numeric_columns)],
                          feature=numeric_columns,
                          progress_bar=FALSE,
-                         MoreArgs=list("id_data"=data_obj@data[, c("subject_id", "cohort_id", "repetition_id")],
-                                       "type"=icc_type))
+                         MoreArgs=list("id_data"=data_obj@data[, mget(get_id_columns())],
+                                       "type"=icc_type),
+                         chopchop=TRUE)
   
   # Combine ICC data from list
   icc_table <- data.table::rbindlist(icc_list)
   
   # Identify the features with low robustness
-  low_robustness_features <- icc_table[get(icc_filter_column) < icc_threshold]$name
+  low_robustness_features <- icc_table[get(icc_filter_column) < icc_threshold]$feature
   
   # Set removal flags for features with low robustness
   if(length(low_robustness_features) > 0){
@@ -525,8 +607,10 @@ find_unimportant_features <- function(cl=NULL, feature_info_list, data_obj, sett
   
   # Generate bootstraps
   n_iter         <- 10
-  iter_list      <- .create_bootstraps(sample_identifiers=get_unique_samples(data=data_obj), n_iter=n_iter,
-                                       settings=settings, data=data_obj@data, stratify=TRUE)
+  iter_list      <- .create_bootstraps(n_iter=n_iter,
+                                       settings=settings,
+                                       data=data_obj@data,
+                                       stratify=TRUE)
   
   
   ##### Calculate metric values over the full data #####
@@ -652,20 +736,23 @@ find_unimportant_features <- function(cl=NULL, feature_info_list, data_obj, sett
 }
 
 
-get_available_features <- function(feature_info_list, data_obj=NULL, exclude_signature=FALSE){
+get_available_features <- function(feature_info_list, data_obj=NULL, exclude_signature=FALSE, exclude_novelty=FALSE){
   # Determine the intersect of features a removed slot == FALSE and 
   # available columns in dt (if not NULL).
+  
+  # Check that any features are available.
+  if(length(feature_info_list) == 0) return(NULL)
   
   available_list_features <- names(feature_info_list)[sapply(feature_info_list, is_available)]
   
   if(!is.null(data_obj)){
     available_data_features <- get_feature_columns(x=data_obj)
     
-    # The set of available features is the intersect of both
+    # The set of available features is the intersect of both.
     available_features <- intersect(available_list_features, available_data_features)
   } else {
     
-    # The set of available features is equal to available_list_features
+    # The set of available features is equal to available_list_features.
     available_features <- available_list_features
   }
   
@@ -673,8 +760,18 @@ get_available_features <- function(feature_info_list, data_obj=NULL, exclude_sig
     # Determine the features in the signature
     signature_features <- names(feature_info_list)[sapply(feature_info_list, is_in_signature)]
     
-    # Exclude these from the available features, e.g. for operations that only work on non-signature features
+    # Exclude these from the available features, e.g. for operations that only
+    # work on non-signature features.
     available_features <- setdiff(available_features, signature_features)
+  }
+  
+  if(exclude_novelty){
+    # Determine the features that are specifically novelty features.
+    novelty_features <- names(feature_info_list)[sapply(feature_info_list, is_in_novelty)]
+    
+    # Exclude these from the available features, e.g. for operations that only
+    # work on non-signature features.
+    available_features <- setdiff(available_features, novelty_features)
   }
   
   return(available_features)
@@ -683,9 +780,7 @@ get_available_features <- function(feature_info_list, data_obj=NULL, exclude_sig
 
 find_required_features <- function(features, feature_info_list){
 
-  if(length(features) == 0){
-    return(features)
-  }
+  if(length(features) == 0) return(features)
   
   # Make sure that the input features are original features
   features <- features_before_clustering(features=features, feature_info_list=feature_info_list)
@@ -699,12 +794,26 @@ find_required_features <- function(features, feature_info_list){
 }
 
 
-find_important_features <- function(features, feature_info_list){
+find_model_features <- function(features, feature_info_list){
   
   # Important features are original features
   features <- features_before_clustering(features=features, feature_info_list=feature_info_list)
   
   return(features)
+}
+
+
+find_novelty_features <- function(model_features=NULL, feature_info_list){
+  
+  # Find additional features that should be used for novelty detection.
+  novelty_features <- unlist(lapply(feature_info_list, function(feature_info) {
+    # Check if the feature is a novelty feature.
+    if(!feature_info@in_novelty) return(NULL)
+    
+    return(feature_info@name)
+  }))
+  
+  return(union(model_features, novelty_features))
 }
 
 
@@ -773,22 +882,34 @@ get_cluster_table <- function(feature_info_list, selected_features=NULL){
   
   # Return an empty table in case there are no selected columns
   if(length(selected_features) == 0){
-    return(data.table::data.table("name"=character(0), "type"=character(0), "cluster_name"=character(0), "invert"=logical(0), "weight"=logical(0)))
+    return(data.table::data.table("name"=character(0),
+                                  "type"=character(0),
+                                  "cluster_name"=character(0),
+                                  "invert"=logical(0),
+                                  "weight"=logical(0)))
   }
   
   # Generate a cluster table
-  cluster_table <- rbindlist(lapply(selected_features, function(ii, feature_info_list){
+  cluster_table <- data.table::rbindlist(lapply(selected_features, function(ii, feature_info_list){
     
     # Get featureInfo for the current feature
     object <- feature_info_list[[ii]]
     
     if(is.null(object@cluster_parameters)){
       # Do not collect data from features that do not form clusters
-      return(data.table::data.table("name"=character(0), "type"=character(0), "cluster_name"=character(0), "invert"=logical(0), "weight"=logical(0)))
+      return(data.table::data.table("name"=character(0),
+                                    "type"=character(0),
+                                    "cluster_name"=character(0),
+                                    "invert"=logical(0),
+                                    "weight"=logical(0)))
        
     } else if(object@cluster_parameters$weight == 0.0){
       # Do not collect data from features that have no weight.
-      return(data.table::data.table("name"=character(0), "type"=character(0), "cluster_name"=character(0), "invert"=logical(0), "weight"=logical(0)))
+      return(data.table::data.table("name"=character(0),
+                                    "type"=character(0),
+                                    "cluster_name"=character(0),
+                                    "invert"=logical(0),
+                                    "weight"=logical(0)))
       
     } else {
       return(data.table::data.table("name" = object@name,
@@ -843,14 +964,13 @@ trim_unused_features_from_list <- function(feature_info_list){
 
 
 
-collect_and_aggregate_feature_info <- function(feature, object, stop_at="imputation"){
+.collect_and_aggregate_feature_info <- function(feature, object, model_list, stop_at="imputation"){
   
   # Suppress NOTES due to non-standard evaluation in data.table
-  norm_method <- norm_shift <- norm_scale <- n <- batch_id <- NULL
   min <- Q1 <- median <- Q3 <- max <- count <- NULL
   
   # Find all featureInfo objects for the current feature
-  feature_info_list <- lapply(object@model_list, function(fam_model, feature){
+  feature_info_list <- lapply(model_list, function(fam_model, feature){
     if(is.null(fam_model@feature_info[[feature]])){
       return(NULL)
     } else {
@@ -939,98 +1059,34 @@ collect_and_aggregate_feature_info <- function(feature, object, stop_at="imputat
     feature_info@distribution <- distr_list
   }
   
-  # Transformation parameters
-  transform_method_used <- extract_from_slot(object_list=feature_info_list, slot_name="transformation_parameters", slot_element="transform_method")
-  transform_lambda_used <- extract_from_slot(object_list=feature_info_list, slot_name="transformation_parameters", slot_element="transform_lambda")
-  transform_method <- get_mode(transform_method_used)
-  transform_lambda <- get_mode(transform_lambda_used)
+  # Extract transformation parameter data.
+  transformation_parameter_data <- ..collect_and_aggregate_transformation_info(feature_info_list=feature_info_list)
   
-  feature_info@transformation_parameters <- list("transform_method" = transform_method,
-                                                 "transform_lambda" = transform_lambda)
+  # Set the aggregated transformation parameters.
+  feature_info@transformation_parameters <- transformation_parameter_data$parameters
   
-  if(stop_at == "transformation"){
-    return(feature_info)
-  }
+  # Apply the mask to select only valid instances.
+  feature_info_list <- feature_info_list[transformation_parameter_data$instance_mask]
   
-  # Create a transform mask id so that we only extract remaining parameters from those lists that have a matching method and lambda
-  transform_mask_id <- (transform_method_used == transform_method) & sapply(transform_lambda_used, identical, transform_lambda)
+  if(stop_at == "transformation") return(feature_info)
   
-  if(sum(transform_mask_id) > 0) feature_info_list <- feature_info_list[transform_mask_id]
   
-  # Normalisation parameters
-  normalisation_method <- get_mode(extract_from_slot(object_list=feature_info_list, slot_name="normalisation_parameters", slot_element="norm_method"))
-  normalisation_shift  <- mean(extract_from_slot(object_list=feature_info_list, slot_name="normalisation_parameters", slot_element="norm_shift"))
-  normalisation_scale  <- mean(extract_from_slot(object_list=feature_info_list, slot_name="normalisation_parameters", slot_element="norm_scale"))
+  # Extract normalisation parameter data.
+  normalisation_parameter_data <- ..collect_and_aggregate_normalisation_info(feature_info_list=feature_info_list)
   
-  feature_info@normalisation_parameters <- list("norm_method" = normalisation_method,
-                                                "norm_shift" = normalisation_shift,
-                                                "norm_scale" = normalisation_scale)
+  # Set the aggregated normalisation methods.
+  feature_info@normalisation_parameters <- normalisation_parameter_data$parameters
   
-  if(stop_at == "normalisation"){
-    return(feature_info)
-  }
+  # Apply the mask to select only valid instances.
+  feature_info_list <- feature_info_list[normalisation_parameter_data$instance_mask]
   
-  # Parse all existing parameters
-  batch_parameter_list <- lapply(feature_info_list, function(current_feature_info) {
-    
-    # Return NULL if parameters are missing.
-    if(is.null(current_feature_info@batch_normalisation_parameters)){
-      return(NULL)
-    }
-    
-    # Extract hyperparameters from each batch for the current featureInfo object.
-    parameter_table <- lapply(names(current_feature_info@batch_normalisation_parameters), function(batch_name, current_feature_info){
-
-      # Parse hyperparameters for in each batch to a ble
-      parameter_table <- data.table::as.data.table(current_feature_info@batch_normalisation_parameters[[batch_name]])
-      
-      # Add batch identifier
-      parameter_table[, "batch_id":=batch_name]
-      
-      return(parameter_table)
-      
-    }, current_feature_info=current_feature_info)
-    
-    # Combine list of parameter tables to a single table
-    parameter_table <- data.table::rbindlist(parameter_table)
-    
-    return(parameter_table)
-  })
+  if(stop_at == "normalisation") return(feature_info)
   
-  # Combine list of parameter table into a single table.
-  batch_parameter_table <- data.table::rbindlist(batch_parameter_list)
+  # Extract batch normalisation parameter data.
+  batch_normalisation_parameter_data <- ..collect_and_aggregate_batch_normalisation_info(feature_info_list=feature_info_list)
+ 
   
-  # Check if the table contains data
-  if(!is_empty(batch_parameter_table)){
-
-    # Aggregate and summarise data.
-    batch_parameter_table <- batch_parameter_table[, list("norm_method"=get_mode(norm_method),
-                                                          "norm_shift"=mean(norm_shift, na.rm=TRUE),
-                                                          "norm_scale"=mean(norm_scale, na.rm=TRUE),
-                                                          "n"=stats::median(n, na.rm=TRUE)), by="batch_id"]
-    
-    # Identify batch names.
-    batch_names <- batch_parameter_table$batch_id
-    
-    # Parse the aggregated batch normalisation parameters into lists.
-    batch_parameter_list <- lapply(batch_names, function(batch_name, parameter_table){
-      
-      # Find list of batch parameters by converting the single-row table for the
-      # current batch to a list.
-      parameter_list <- as.list(parameter_table[batch_id==batch_name])
-      
-      # Remove the batch_id list element.
-      parameter_list$batch_id <- NULL
-      
-      return(parameter_list)
-    }, parameter_table=batch_parameter_table)
-    
-    # Give each list entry the corresponding name.
-    names(batch_parameter_list) <- batch_names
-    
-    # Update feature_info
-    feature_info@batch_normalisation_parameters <- batch_parameter_list
-  }
+  
   
   if(stop_at == "batch_normalisation"){
     return(feature_info)
@@ -1060,6 +1116,445 @@ collect_and_aggregate_feature_info <- function(feature, object, stop_at="imputat
 }
 
 
+..collect_and_aggregate_transformation_info <- function(feature_info_list){
+  # Aggregate transformation parameters. This function exists so that it can be
+  # tested as part of a unit test.
+  
+  # Suppress NOTES due to non-standard evaluation in data.table
+  is_valid <- transform_method <- transform_lambda <- NULL
+  
+  # Extract all transformation parameters and aggregate to a table.
+  transformation_parameters <- lapply(feature_info_list, function(current_feature_info) data.table::as.data.table(current_feature_info@transformation_parameters))
+  transformation_parameters <- data.table::rbindlist(transformation_parameters)
+  
+  if(all(transformation_parameters$transform_method == "none")){
+    # If all transformation methods across the feature instances are none, none
+    # of the parameters is valid.
+    transformation_parameters[, "is_valid":=FALSE]
+    
+    # Set default parameters.
+    transformation_parameter_list <- list("transform_method" = "none",
+                                          "transform_lambda" = NA_real_)
+    
+  } else {
+    # This means that are some methods that are not "none".
+    
+    # Set the is_valid flag for all entries that have a transformation method
+    # other than "none".
+    transformation_parameters[, "is_valid":=transform_method != "none"]
+    
+    if(all(is.na(transformation_parameters[is_valid == TRUE]$transform_lambda))){
+      # Mark all instances as invalid.
+      transformation_parameters[is.na(transform_lambda), "is_valid":=FALSE]
+      
+      # Check if all lambda's for valid transformations are NA.
+      transformation_parameter_list <- list("transform_method" = "none",
+                                            "transform_lambda" = NA_real_)
+      
+    } else {
+      # Mark those instances with NA lambda as invalid.
+      transformation_parameters[is.na(transform_lambda), "is_valid":=FALSE]
+      
+      # Get the most common transformation method.
+      selected_transformation_method <- get_mode(transformation_parameters[is_valid == TRUE]$transform_method)
+      
+      # Set all instances with transformation methods that are not equal to the
+      # selected method to invalid.
+      transformation_parameters[transform_method != selected_transformation_method, "is_valid":=FALSE]
+      
+      # From the remaining, select the median lambda.
+      remaining_lambda <- transformation_parameters[is_valid == TRUE,]$transform_lambda
+      selected_lambda <- remaining_lambda[which.min(abs(remaining_lambda - stats::median(remaining_lambda)))]
+      
+      # Set instances with a lambda other than the selected lambda (with a small
+      # tolerance) to invalid.
+      transformation_parameters[!data.table::between(selected_lambda,
+                                                     lower=selected_lambda-0.1,
+                                                     upper=selected_lambda+0.1,
+                                                     incbounds=TRUE), "is_valid":=FALSE]
+      
+      # Set the transformation parameter.
+      transformation_parameter_list <- list("transform_method" = selected_transformation_method,
+                                            "transform_lambda" = selected_lambda)
+    }
+  }
+  
+  # Generate the mask for identifying instances of the feature that have the
+  # selected transformation parameter.
+  if(any(transformation_parameters$is_valid)){
+    valid_instance_mask <- transformation_parameters$is_valid
+    
+  } else {
+    # If all are invalid, transformation is not performed, and all instances
+    # should be kept.
+    valid_instance_mask <- rep_len(TRUE, length.out=length(feature_info_list))
+  }
+  
+  return(list("parameters"=transformation_parameter_list,
+              "instance_mask"=valid_instance_mask))
+}
+
+
+..collect_and_aggregate_normalisation_info <- function(feature_info_list){
+  # Aggregate normalisation parameters. This function exists so that it can be
+  # tested as part of a unit test.
+  
+  # Suppress NOTES due to non-standard evaluation in data.table
+  is_valid <- norm_method <- norm_shift <- NULL
+  
+  # Extract all normalisation parameters and aggregate to a table.
+  normalisation_parameters <- lapply(feature_info_list, function(current_feature_info) data.table::as.data.table(current_feature_info@normalisation_parameters))
+  normalisation_parameters <- data.table::rbindlist(normalisation_parameters)
+  
+  if(all(normalisation_parameters$norm_method == "none")){
+    # If all normalisation methods across the feature instances are none, none
+    # of the parameters are valid.
+    normalisation_parameters[, "is_valid":=FALSE]
+    
+    # Set default parameters.
+    normalisation_parameter_list <- list("norm_method" = "none",
+                                         "norm_shift" = NA_real_,
+                                         "norm_scale" = NA_real_)
+    
+  } else {
+    # This means that are some methods that are not "none".
+    
+    # Set the is_valid flag for all entries that have a normalisation method
+    # other than "none".
+    normalisation_parameters[, "is_valid":=norm_method != "none"]
+    
+    if(all(is.na(normalisation_parameters[is_valid == TRUE]$norm_shift))){
+      # Mark all instances as invalid.
+      normalisation_parameters[is.na(norm_shift), "is_valid":=FALSE]
+      
+      # Set default parameters.
+      normalisation_parameter_list <- list("norm_method" = "none",
+                                           "norm_shift" = NA_real_,
+                                           "norm_scale" = NA_real_)
+      
+    } else {
+      # Mark those instances with NA shift as invalid.
+      normalisation_parameters[is.na(norm_shift), "is_valid":=FALSE]
+      
+      # Get the most common normalisation method.
+      selected_normalisation_method <- get_mode(normalisation_parameters[is_valid == TRUE]$norm_method)
+      
+      # Set all instances with normalisation methods that are not equal to the
+      # selected method to invalid.
+      normalisation_parameters[norm_method != selected_normalisation_method, "is_valid":=FALSE]
+      
+      # From the remaining, select the average shift and scale parameters.
+      selected_normalisation_shift <- mean(normalisation_parameters[is_valid == TRUE]$norm_shift)
+      selected_normalisation_scale <- mean(normalisation_parameters[is_valid == TRUE]$norm_scale)
+      
+      # Set the normalisation parameter.
+      normalisation_parameter_list <- list("norm_method" = selected_normalisation_method,
+                                           "norm_shift" = selected_normalisation_shift,
+                                           "norm_scale" = selected_normalisation_scale)
+    }
+  }
+  
+  # Generate the mask for identifying instances of the feature that have the
+  # selected normalisation method.
+  if(any(normalisation_parameters$is_valid)){
+    valid_instance_mask <- normalisation_parameters$is_valid
+    
+  } else {
+    # If all are invalid, normalisation is not performed, and all instances
+    # should be kept.
+    valid_instance_mask <- rep_len(TRUE, length.out=length(feature_info_list))
+  }
+  
+  return(list("parameters"=normalisation_parameter_list,
+              "instance_mask"=valid_instance_mask))
+  
+}
+
+
+..collect_and_aggregate_batch_normalisation_info <- function(feature_info_list){
+  # Aggregate batch normalisation parameters. This function exists so that it
+  # can be tested as part of a unit test.
+  
+  # Suppress NOTES due to non-standard evaluation in data.table
+  is_valid <- norm_method <- norm_shift <- NULL
+  
+  # Get the batch identifier column.
+  batch_id_column <- get_id_columns(single_column="batch")
+  
+  # Aggregate all existing parameters to a table.
+  batch_parameters <- lapply(feature_info_list, function(current_feature_info, batch_id_column) {
+    
+    # Return NULL if parameters are missing.
+    if(is.null(current_feature_info@batch_normalisation_parameters)) return(NULL)
+    
+    # Extract batch parameters from each batch for the current featureInfo object.
+    parameter_table <- lapply(names(current_feature_info@batch_normalisation_parameters), function(batch_name, current_feature_info, batch_id_column){
+      
+      # Parse hyperparameters for in each batch to a ble
+      parameter_table <- data.table::as.data.table(current_feature_info@batch_normalisation_parameters[[batch_name]])
+      
+      # Add batch identifier
+      parameter_table[, (batch_id_column):=batch_name]
+      
+      return(parameter_table)
+      
+    },
+    current_feature_info=current_feature_info,
+    batch_id_column=batch_id_column)
+    
+    # Combine list of parameter tables to a single table
+    parameter_table <- data.table::rbindlist(parameter_table)
+    
+    return(parameter_table)
+  },
+  batch_id_column=batch_id_column)
+  
+  # Combine list of parameter table into a single table.
+  batch_parameters <- data.table::rbindlist(batch_parameters)
+  
+  if(is_empty(batch_parameters)) return(NULL)
+  
+  # Get all batch identifiers
+  # batch_ids <- unique(batch_parameters[[batch_id_column]])
+  
+  # Extract batch parameters.
+  batch_parameter_list <- lapply(split(batch_parameters, by=batch_id_column), function(batch_parameters){
+    
+    if(all(batch_parameters$norm_method == "none")){
+      # If all batch normalisation methods across the feature instances are
+      # none, none of the parameters are valid.
+      batch_parameters[, "is_valid":=FALSE]
+      
+      # Set default parameters.
+      batch_parameter_list <- list("norm_method" = "none",
+                                   "norm_shift" = NA_real_,
+                                   "norm_scale" = NA_real_,
+                                   "n" = 0L)
+      
+    } else {
+      # This means that are some batch normalisation methods that are not
+      # "none".
+      
+      # Set the is_valid flag for all entries that have a batch normalisation
+      # method other than "none".
+      batch_parameters[, "is_valid":=norm_method != "none"]
+      
+      if(all(is.na(batch_parameters[is_valid == TRUE]$norm_shift))){
+        # Mark all instances as invalid.
+        batch_parameters[is.na(norm_shift), "is_valid":=FALSE]
+        
+        # Set default parameters.
+        batch_parameter_list <- list("norm_method" = "none",
+                                     "norm_shift" = NA_real_,
+                                     "norm_scale" = NA_real_,
+                                     "n" = 0L)
+        
+      } else {
+        # Mark those instances with NA shift as invalid.
+        batch_parameters[is.na(norm_shift), "is_valid":=FALSE]
+        
+        # Get the most common normalisation method.
+        selected_batch_normalisation_method <- get_mode(batch_parameters[is_valid == TRUE]$norm_method)
+        
+        # Set all instances with normalisation methods that are not equal to the
+        # selected method to invalid.
+        batch_parameters[norm_method != selected_batch_normalisation_method, "is_valid":=FALSE]
+        
+        # From the remaining, select the average shift and scale parameters.
+        selected_batch_normalisation_shift <- mean(batch_parameters[is_valid == TRUE]$norm_shift)
+        selected_batch_normalisation_scale <- mean(batch_parameters[is_valid == TRUE]$norm_scale)
+        selected_n <- as.integer(stats::median(batch_parameters[is_valid == TRUE]$n))
+        
+        # Set the normalisation parameter.
+        batch_parameter_list <- list("norm_method" = selected_batch_normalisation_method,
+                                     "norm_shift" = selected_batch_normalisation_shift,
+                                     "norm_scale" = selected_batch_normalisation_scale,
+                                     "n" = selected_n)
+      }
+      
+      return(batch_parameter_list)
+    }
+  })
+  
+  return(batch_parameter_list)
+}
+
+
+.show_simple_feature_info <- function(object, line_end=""){
+  # Determine the feature type.
+  if(object@feature_type == "factor"){
+    if(object@ordered){
+      feature_type <- "ordinal"
+    } else {
+      feature_type <- "categorical"
+    }
+    
+  } else {
+    feature_type <- "numeric"
+  }
+  
+  # Initialise the feature string.
+  feature_str <- paste0(object@name, " (", feature_type, ")")
+  
+  if(feature_type == "categorical"){
+    # Show levels, including which level is the reference.
+    classes_str <- object@levels
+    classes_str[1] <- paste0(classes_str[1], " (reference)")
+    
+    feature_str <- paste0(feature_str, ", with levels: ", paste_s(classes_str))
+    
+  } else if(feature_type == "ordinal"){
+    # Show ordered levels of the ordinal.
+    feature_str <- paste0(feature_str, ", with levels: ", paste0(object@levels, collapse= " < "))
+    
+  }
+  
+  return(paste0(feature_str, line_end))
+}
+
+
+#####show (featureInfo)#####
+setMethod("show", signature(object="featureInfo"),
+          function(object){
+            
+            # Create basic feature string.
+            feature_str <- .show_simple_feature_info(object=object)
+
+            # Transformation parameters.
+            # Placeholder string
+            transform_str <- character(0L)
+            
+            # Attempt to create an actual descriptor, if meaningful.
+            if(!is.null(object@transformation_parameters)){
+              if(object@transformation_parameters$transform_method != "none"){
+                if(object@transformation_parameters$transform_lambda != 1.0){
+                  transform_str <- paste0("  transformation (",
+                                          object@transformation_parameters$transform_method,
+                                          ") with \u03BB = ",
+                                          object@transformation_parameters$transform_lambda,
+                                          ".\n")
+                }
+              }
+            }
+            
+            # Normalisation parameters
+            # Placeholder string
+            normalisation_str <- character(0L)
+            
+            # Attempt to create an actual descriptor, if meaningful.
+            if(!is.null(object@normalisation_parameters)){
+              if(object@normalisation_parameters$norm_method != "none"){
+                if(object@normalisation_parameters$norm_shift != 0.0 &
+                   object@normalisation_parameters$norm_scale != 1.0){
+                  normalisation_str <- paste0("  normalisation (",
+                                              object@normalisation_parameters$norm_method,
+                                              ") with shift = ",
+                                              object@normalisation_parameters$norm_shift,
+                                              " and scale = ",
+                                              object@normalisation_parameters$norm_scale,
+                                              ".\n")
+                }
+              }
+            }
+            
+            # Batch normalisation parameters
+            if(!is.null(object@batch_normalisation_parameters)){
+              batch_norm_str <- sapply(seq_along(object@batch_normalisation_parameters), function(ii, x){
+                
+                # Placeholder string
+                batch_norm_str <- ""
+                
+                # Attempt to create an actual descriptor, if meaningful.
+                if(!x[[ii]]$norm_method %in% c("none", "unknown")){
+                  if(x[[ii]]$norm_shift != 0.0 & x[[ii]]$norm_scale != 1.0){
+                    batch_norm_str <- paste0("  batch-normalisation (",
+                                             x[[ii]]$norm_method,
+                                             ") for ",
+                                             names(x)[ii],
+                                             " with shift = ",
+                                             x[[ii]]$norm_shift,
+                                             " and scale = ",
+                                             x[[ii]]$norm_scale,
+                                             ".\n")
+                  }
+                }
+                
+                return(batch_norm_str)
+              }, x=object@batch_normalisation_parameters)
+              
+              # Collate the string.
+              batch_norm_str <- paste0(batch_norm_str, collapse="")
+              
+              # Replace by default placeholder.
+              if(batch_norm_str == "") batch_norm_str <- character(0L)
+              
+            } else {
+              batch_norm_str <- character(0L)
+            }
+            
+            # Clustering
+            # Placeholder string
+            cluster_str <- character(0L)
+            
+            # Attempt to create an actual descriptor, if meaningful.
+            if(!is.null(object@cluster_parameters)){
+              if(object@cluster_parameters$cluster_size > 1){
+                
+                # Find the feature(s) required to form the cluster.
+                cluster_feature_names <- object@cluster_parameters$required_features
+                
+                if(length(cluster_feature_names) == 1){
+                  # Only one feature is required to form the cluster.
+                  if(cluster_feature_names == object@name){
+                    # The current feature is the reference feature.
+                    cluster_str <- paste0("  forms cluster (",
+                                          object@cluster_parameters$method,
+                                          ") with ",
+                                          object@cluster_parameters$cluster_size - 1,
+                                          " other features, and is the reference feature.\n")
+                    
+                  } else {
+                    # The current feature is not the reference feature.
+                    cluster_str <- paste0("  forms cluster (",
+                                          object@cluster_parameters$method,
+                                          ") with ",
+                                          object@cluster_parameters$cluster_size - 1,
+                                          " other features, with ",
+                                          cluster_feature_names,
+                                          " as the reference feature.\n")
+                  }
+                  
+                } else {
+                  # Multiple features are required to form the cluster.
+                  cluster_str <- paste0("  forms cluster (",
+                                        object@cluster_parameters$method,
+                                        ") with ",
+                                        paste_s(setdiff(cluster_feature_names, object@name)),
+                                        ".\n")
+                }
+              }
+            }
+            
+            # Make the feature string complete, depending on additional
+            # information.
+            if(length(transform_str) == 0 &
+               length(normalisation_str) == 0 &
+               length(batch_norm_str) == 0 &
+               length(cluster_str) == 0){
+              feature_str <- paste0(feature_str, ".\n")
+              
+            } else {
+              feature_str <- paste0(feature_str, ":\n")
+            }
+            
+            # Export to console.
+            cat(feature_str)
+            if(length(transform_str) > 0) cat(transform_str)
+            if(length(normalisation_str) > 0) cat(normalisation_str)
+            if(length(batch_norm_str) > 0) cat(batch_norm_str)
+            if(length(cluster_str) > 0) cat(cluster_str)
+          })
+
 
 
 #####is_in_signature#####
@@ -1067,6 +1562,14 @@ setMethod("is_in_signature", signature(object="featureInfo"),
           function(object){
             
             return(object@in_signature)
+          })
+
+
+#####is_in_novelty#####
+setMethod("is_in_novelty", signature(object="featureInfo"),
+          function(object){
+            
+            return(object@in_novelty)
           })
 
 
@@ -1087,6 +1590,8 @@ setMethod("update_removed_status", signature(object="featureInfo"),
             if(object@removed_unknown_type){
               object@removed <- TRUE
             } else if(object@in_signature){
+              object@removed <- FALSE
+            } else if(object@in_novelty){
               object@removed <- FALSE
             } else if(object@removed_missing_values){
               object@removed <- TRUE

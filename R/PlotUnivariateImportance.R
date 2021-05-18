@@ -12,9 +12,10 @@ NULL
 #'@param dir_path (*optional*) Path to the directory where created figures are
 #'  saved to. Output is saved in the `variable_importance` subdirectory. If NULL
 #'  no figures are saved, but are returned instead.
-#'@param importance_metric (*optional*) Indicates type of p-value that is shown.
-#'  One of `fdr`, `p_value` or `q_value` for FDR-corrected p-values, uncorrected
-#'  p-values and q-values respectively. q-values may not be available.
+#'@param p_adjustment_method (*optional*) Indicates type of p-value that is shown.
+#'  One of `holm`, `hochberg`, `hommel`, `bonferroni`, `BH`, `BY`,
+#' `fdr`, `none`, `p_value` or `q_value` for adjusted p-values, uncorrected
+#'  p-values and q-values. q-values may not be available.
 #'@param show_cluster (*optional*) Show which features were clustered together.
 #'@param ggtheme (*optional*) `ggplot` theme to use for plotting.
 #'@param discrete_palette (*optional*) Palette used to fill the bars in case a
@@ -33,6 +34,8 @@ NULL
 #'@param units (*optional*) Plot size unit. Either `cm` (default), `mm` or `in`.
 #'@param verbose Flag to indicate whether feedback should be provided for the
 #'  plotting.
+#'@inheritParams export_univariate_analysis_data
+#'@inheritParams export_feature_similarity
 #'@inheritParams as_familiar_collection
 #'@inheritParams plotting.check_input_args
 #'@inheritParams plotting.check_data_handling
@@ -67,9 +70,9 @@ NULL
 #'  palette by using colour names listed by `grDevices::colors()` or through
 #'  hexadecimal RGB strings.
 #'
-#'  Labeling methods such as `set_fs_method_names` or `set_feature_names` can be
-#'  applied to the `familiarCollection` object to update labels, and order the
-#'  output in the figure.
+#'  Labelling methods such as `set_fs_method_names` or `set_feature_names` can
+#'  be applied to the `familiarCollection` object to update labels, and order
+#'  the output in the figure.
 #'
 #'@return `NULL` or list of plot objects, if `dir_path` is `NULL`.
 #'
@@ -78,9 +81,13 @@ NULL
 #'@rdname plot_univariate_importance-methods
 setGeneric("plot_univariate_importance",
            function(object,
+                    feature_cluster_method=waiver(),
+                    feature_linkage_method=waiver(),
+                    feature_cluster_cut_method=waiver(),
+                    feature_similarity_threshold=waiver(),
                     draw=FALSE,
                     dir_path=NULL,
-                    importance_metric=c("fdr", "p_value", "q_value"),
+                    p_adjustment_method=waiver(),
                     split_by=NULL,
                     color_by=NULL,
                     facet_by=NULL,
@@ -110,9 +117,13 @@ setGeneric("plot_univariate_importance",
 #'@rdname plot_univariate_importance-methods
 setMethod("plot_univariate_importance", signature(object="ANY"),
           function(object,
+                   feature_cluster_method=waiver(),
+                   feature_linkage_method=waiver(),
+                   feature_cluster_cut_method=waiver(),
+                   feature_similarity_threshold=waiver(),
                    draw=FALSE,
                    dir_path=NULL,
-                   importance_metric=c("fdr", "p_value", "q_value"),
+                   p_adjustment_method=waiver(),
                    split_by=NULL,
                    color_by=NULL,
                    facet_by=NULL,
@@ -139,13 +150,23 @@ setMethod("plot_univariate_importance", signature(object="ANY"),
             
             # Attempt conversion to familiarCollection object.
             object <- do.call(as_familiar_collection,
-                              args=append(list("object"=object, "data_element"="univariate_analysis"), list(...)))
+                              args=c(list("object"=object,
+                                          "data_element"="univariate_analysis",
+                                          "feature_cluster_method"=feature_cluster_method,
+                                          "feature_linkage_method"=feature_linkage_method,
+                                          "feature_cluster_cut_method"=feature_cluster_cut_method,
+                                          "feature_similarity_threshold"=feature_similarity_threshold),
+                                     list(...)))
             
             return(do.call(plot_univariate_importance,
                            args=list("object"=object,
+                                     "feature_cluster_method"=feature_cluster_method,
+                                     "feature_linkage_method"=feature_linkage_method,
+                                     "feature_cluster_cut_method"=feature_cluster_cut_method,
+                                     "feature_similarity_threshold"=feature_similarity_threshold,
                                      "draw"=draw,
                                      "dir_path"=dir_path,
-                                     "importance_metric"=importance_metric,
+                                     "p_adjustment_method"=p_adjustment_method,
                                      "split_by"=split_by,
                                      "color_by"=color_by,
                                      "facet_by"=facet_by,
@@ -175,9 +196,13 @@ setMethod("plot_univariate_importance", signature(object="ANY"),
 #'@rdname plot_univariate_importance-methods
 setMethod("plot_univariate_importance", signature(object="familiarCollection"),
           function(object,
+                   feature_cluster_method=waiver(),
+                   feature_linkage_method=waiver(),
+                   feature_cluster_cut_method=waiver(),
+                   feature_similarity_threshold=waiver(),
                    draw=FALSE,
                    dir_path=NULL,
-                   importance_metric=c("fdr", "p_value", "q_value"),
+                   p_adjustment_method=waiver(),
                    split_by=NULL,
                    color_by=NULL,
                    facet_by=NULL,
@@ -202,20 +227,68 @@ setMethod("plot_univariate_importance", signature(object="familiarCollection"),
                    verbose=TRUE,
                    ...){
             
-            ##### Check input arguments ########################################
+            # Suppress NOTES due to non-standard evaluation in data.table
+            value <- .NATURAL <- NULL
+            
+            ##### Check data ########################################
 
             # Get input data.
-            x <- export_univariate_analysis_data(object=object)
+            x <- export_univariate_analysis_data(object=object,
+                                                 p_adjustment_method=p_adjustment_method)
+            
+            # Use only the univariate data.
+            x <- x$univariate
+            
+            # Check that the data are not empty.
+            if(is_empty(x)) return(NULL)
+            
+            # Check that the data are not evaluated at the model level.
+            if(all(sapply(x, function(x) (x@detail_level == "model")))){
+              ..warning_no_comparison_between_models()
+              return(NULL)
+            }
+            
+            # Obtain data element from list.
+            if(is.list(x)){
+              if(is_empty(x)) return(NULL)
+              
+              if(length(x) > 1) ..error_reached_unreachable_code("plot_decision_curve: list of data elements contains unmerged elements.")
+              
+              # Get x directly.
+              x <- x[[1]]
+            }
+            
+            # Check that the data are not empty.
+            if(is_empty(x)) return(NULL)
+            
+            # Get feature similarity data.
+            feature_similarity <- export_feature_similarity(object=object,
+                                                            feature_cluster_method=feature_cluster_method,
+                                                            feature_linkage_method=feature_linkage_method,
+                                                            feature_cluster_cut_method=feature_cluster_cut_method,
+                                                            feature_similarity_threshold=feature_similarity_threshold,
+                                                            export_dendrogram=FALSE,
+                                                            export_ordered_data=FALSE,
+                                                            export_clustering=TRUE)[[1]]
+            
+            ##### Update data ##################################################
+            
+            # Set default adjust method.
+            if(is.waive(p_adjustment_method)) p_adjustment_method <- "fdr"
             
             # Determine the metric column.
-            metric_col <- .plot_univariate_check_importance_metric(metric=importance_metric, x=x, verbose=verbose)
-            if(is.null(metric_col)) return(NULL)
+            column_data <- .plot_univariate_check_p_adjustment_method(method=p_adjustment_method,
+                                                                      x=x@data,
+                                                                      verbose=verbose)
+            if(is.null(column_data)) return(NULL)
+            
+            data.table::setnames(x@data, old=column_data$value_column, new="value")
             
             # Update p-values below the machine precision (i.e. p=0.0). 
-            x[eval(parse(text=metric_col)) <= 0.0, (metric_col):=2 * .Machine$double.eps]
+            x@data[value <= 0.0, "value":=2 * .Machine$double.eps]
             
             # Convert p-value column to logarithmic scale
-            x[, "log_value":=-log10(get(metric_col))]
+            x@data[, "log_value":=-log10(value)]
             
             # ggtheme
             if(!is(ggtheme, "theme")) ggtheme <- plotting.get_theme(use_theme=ggtheme)
@@ -228,10 +301,10 @@ setMethod("plot_univariate_importance", signature(object="familiarCollection"),
 
             # x_range
             if(is.null(x_range) & is.null(significance_level_shown)){
-              x_range <- c(0, max(x$log_value, na.rm=TRUE))
+              x_range <- c(0, max(x@data$log_value, na.rm=TRUE))
               
             } else if(is.null(x_range) & !is.null(significance_level_shown)){
-              x_range <- c(0, max(c(max(x$log_value, na.rm=TRUE),
+              x_range <- c(0, max(c(max(x@data$log_value, na.rm=TRUE),
                                     max(-log10(significance_level_shown)))))
             }
             
@@ -249,14 +322,20 @@ setMethod("plot_univariate_importance", signature(object="familiarCollection"),
             
             # x_label Set default name for x-axis label
             if(is.waive(x_label)){
-              label_name <- switch(importance_metric[1],
-                                   "fdr" = "FDR-corrected p-value",
-                                   "p_value" = "p-value",
-                                   "q_value" = "q-value")
+              label_name <- column_data$label
               
               x_label <- bquote(-log[10]*"("*.(label_name)*")")
             }
-
+            
+            # Check show_cluster
+            .check_parameter_value_is_valid(show_cluster, var_name="show_cluster", values=c(FALSE, TRUE))
+            
+            # Clusters cannot be generated in case no cluster information is
+            # present.
+            if(is_empty(feature_similarity)){
+              show_cluster <- FALSE
+            }
+            
             # Set default splitting variables if none are provided.
             if(is.null(split_by) & is.null(color_by) & is.null(facet_by)){
               split_by <- c("fs_method", "learner")
@@ -264,7 +343,7 @@ setMethod("plot_univariate_importance", signature(object="familiarCollection"),
             }
             
             # Check splitting variables and generate sanitised output.
-            split_var_list <- plotting.check_data_handling(x=x,
+            split_var_list <- plotting.check_data_handling(x=x@data,
                                                            split_by=split_by,
                                                            color_by=color_by,
                                                            facet_by=facet_by,
@@ -294,9 +373,9 @@ setMethod("plot_univariate_importance", signature(object="familiarCollection"),
             
             # Split data
             if(!is.null(split_by)){
-              x_split <- split(x, by=split_by)
+              x_split <- split(x@data, by=split_by)
             } else {
-              x_split <- list(x)
+              x_split <- list(x@data)
             }
             
             # Store plots to list in case no dir_path is provided
@@ -306,6 +385,24 @@ setMethod("plot_univariate_importance", signature(object="familiarCollection"),
             for(x_sub in x_split){
               
               if(is_empty(x_sub)) next()
+              
+              # Join cluster and univariate data.
+              if(show_cluster){
+                # Join on common columns. These are feature plus any column in
+                # split_by.
+                x_temporary <- feature_similarity@data[x_sub, on=.NATURAL]
+                
+                # Check that the resulting data is not empty, because this would
+                # mean that there is e.g. only one feature.
+                if(is_empty(x_temporary)){
+                  x_temporary <- data.table::copy(x_sub)
+                  x_temporary[, ":="("cluster_id"=.I,
+                                     "cluster_size"=1L)]
+                }
+                
+                # Replace x_sub
+                x_sub <- x_temporary
+              }
               
               # Generate plot
               p <- .plot_univariate_importance(x=x_sub,
@@ -348,19 +445,19 @@ setMethod("plot_univariate_importance", signature(object="familiarCollection"),
 
                 # Save to file.
                 do.call(plotting.save_plot_to_file,
-                        args=append(list("plot_obj"=p,
-                                         "object"=object,
-                                         "dir_path"=dir_path,
-                                         "type"="variable_importance",
-                                         "subtype"=subtype,
-                                         "height"=ifelse(is.waive(height), def_plot_dims[1], height),
-                                         "width"=ifelse(is.waive(width), def_plot_dims[2], width),
-                                         "units"=ifelse(is.waive(units), "cm", units)),
-                                    list(...)))
+                        args=c(list("plot_obj"=p,
+                                    "object"=object,
+                                    "dir_path"=dir_path,
+                                    "type"="variable_importance",
+                                    "subtype"=subtype,
+                                    "height"=ifelse(is.waive(height), def_plot_dims[1], height),
+                                    "width"=ifelse(is.waive(width), def_plot_dims[2], width),
+                                    "units"=ifelse(is.waive(units), "cm", units)),
+                               list(...)))
                 
               } else {
                 # Store as list and export
-                plot_list <- append(plot_list, list(p))
+                plot_list <- c(plot_list, list(p))
               }
             }
             
@@ -407,23 +504,28 @@ setMethod("plot_univariate_importance", signature(object="familiarCollection"),
   
   # Create local copy
   x <- data.table::copy(x)
-
+  
   # Drop levels and reorder table so that features are sorted by the log-values
-  x$name <- droplevels(x$name)
-  x      <- x[order(log_value)]
-  x$name <- factor(x$name, levels=unique(x$name))
+  x$feature <- droplevels(x$feature)
+  x <- x[order(log_value)]
+  x$feature <- factor(x$feature, levels=unique(x$feature))
 
   # Generate a guide table
-  guide_list <- plotting.create_guide_table(x=x, color_by=color_by, discrete_palette=discrete_palette)
+  guide_list <- plotting.create_guide_table(x=x,
+                                            color_by=color_by,
+                                            discrete_palette=discrete_palette)
   
   # Extract data
   x <- guide_list$data
 
   # Check if cluster information should be shown.
-  if(show_cluster) x <- plotting.add_cluster_name(x=x, color_by=color_by, facet_by=facet_by)
+  if(show_cluster) x <- plotting.add_cluster_name(x=x,
+                                                  color_by=color_by,
+                                                  facet_by=facet_by)
   
   # Create basic plot
-  p <- ggplot2::ggplot(data=x, mapping=ggplot2::aes(x=!!sym("name"), y=!!sym("log_value")))
+  p <- ggplot2::ggplot(data=x,
+                       mapping=ggplot2::aes(x=!!sym("feature"), y=!!sym("log_value")))
   p <- p + ggplot2::coord_flip()
   p <- p + ggtheme
   
@@ -433,7 +535,10 @@ setMethod("plot_univariate_importance", signature(object="familiarCollection"),
     # Extract guide_table for color
     g_color <- guide_list$guide_color
     
-    p <- p + ggplot2::geom_bar(stat="identity", mapping=ggplot2::aes(fill=!!sym("color_breaks")), position="dodge")
+    p <- p + ggplot2::geom_bar(stat="identity",
+                               mapping=ggplot2::aes(fill=!!sym("color_breaks")),
+                               position="dodge")
+    
     p <- p + ggplot2::scale_fill_manual(name=legend_label$guide_color,
                                         values=g_color$color_values,
                                         breaks=g_color$color_breaks,
@@ -441,8 +546,11 @@ setMethod("plot_univariate_importance", signature(object="familiarCollection"),
     
   } else if(!is.waive(gradient_palette)) {
     # Coloring by log of the p-value
-    p <- p + ggplot2::geom_bar(stat="identity", mapping=ggplot2::aes(fill=!!sym("log_value")), show.legend=FALSE)
-    p <- p + ggplot2::scale_fill_gradientn(colors=plotting.get_palette(x=gradient_palette, palette_type="sequential"),
+    p <- p + ggplot2::geom_bar(stat="identity",
+                               mapping=ggplot2::aes(fill=!!sym("log_value")),
+                               show.legend=FALSE)
+    p <- p + ggplot2::scale_fill_gradientn(colors=plotting.get_palette(x=gradient_palette,
+                                                                       palette_type="sequential"),
                                            limits=x_range)
     
   } else {
@@ -451,17 +559,23 @@ setMethod("plot_univariate_importance", signature(object="familiarCollection"),
   }
 
   # Set breaks and limits
-  p <- p + ggplot2::scale_y_continuous(breaks=x_breaks, limits=x_range)
+  p <- p + ggplot2::scale_y_continuous(breaks=x_breaks,
+                                       limits=x_range)
   
   # Determine how things are facetted
-  facet_by_list <- plotting.parse_facet_by(x=x, facet_by=facet_by, facet_wrap_cols=facet_wrap_cols)
+  facet_by_list <- plotting.parse_facet_by(x=x,
+                                           facet_by=facet_by,
+                                           facet_wrap_cols=facet_wrap_cols)
   
   if(!is.null(facet_by)){
     if(is.null(facet_wrap_cols)){
       # Use a grid
-      p <- p + ggplot2::facet_grid(rows=facet_by_list$facet_rows, cols=facet_by_list$facet_cols, labeller="label_context")
+      p <- p + ggplot2::facet_grid(rows=facet_by_list$facet_rows,
+                                   cols=facet_by_list$facet_cols,
+                                   labeller="label_context")
     } else {
-      p <- p + ggplot2::facet_wrap(facets=facet_by_list$facet_by, labeller="label_context")
+      p <- p + ggplot2::facet_wrap(facets=facet_by_list$facet_by,
+                                   labeller="label_context")
     }
   }
   
@@ -493,25 +607,33 @@ setMethod("plot_univariate_importance", signature(object="familiarCollection"),
   # Add vertical lines for significance levels.
   if(!is.null(significance_level_shown)){
     for(curr_signif_level in significance_level_shown){
-      p <- p + ggplot2::geom_hline(yintercept=-log10(curr_signif_level), linetype="dotted")
+      p <- p + ggplot2::geom_hline(yintercept=-log10(curr_signif_level),
+                                   linetype="dotted")
     }
   }
   
   # Update labels. Note that the inversion of x_label and y_label is correct, as the coordinates were flipped
-  p <- p + ggplot2::labs(x=y_label, y=x_label, title=plot_title, subtitle=plot_sub_title, caption=caption)
+  p <- p + ggplot2::labs(x=y_label,
+                         y=x_label,
+                         title=plot_title, 
+                         subtitle=plot_sub_title,
+                         caption=caption)
 
   return(p)
 }
 
 
+
 .determine_univariate_importance_plot_dimensions <- function(x, facet_by, facet_wrap_cols){
   
   # Get plot layout dimensions
-  plot_dims <- plotting.get_plot_layout_dims(x=x, facet_by=facet_by, facet_wrap_cols=facet_wrap_cols)
+  plot_dims <- plotting.get_plot_layout_dims(x=x,
+                                             facet_by=facet_by,
+                                             facet_wrap_cols=facet_wrap_cols)
 
   # Determine the number of features within each facet.
-  n_features <- data.table::uniqueN(x=x$name)
-  longest_name <- max(sapply(levels(x$name), nchar))
+  n_features <- data.table::uniqueN(x=x$feature)
+  longest_name <- max(sapply(levels(x$feature), nchar))
   
   # Assume each feature takes up about 14 points (~5mm) with 2 point (0.7mm) spacing. Then add some room for other plot elements.
   default_height <- n_features * 0.5 + (n_features - 1) * 0.07 + 1.0
@@ -530,27 +652,45 @@ setMethod("plot_univariate_importance", signature(object="familiarCollection"),
 
 
 
-.plot_univariate_check_importance_metric <- function(x, metric, verbose=TRUE){
+.plot_univariate_check_p_adjustment_method <- function(x, method, verbose=TRUE){
   
-  .check_parameter_value_is_valid(x=metric[1], var_name="importance_metric", values=c("fdr", "p_value", "q_value"))
+  .check_parameter_value_is_valid(x=method,
+                                  var_name="p_adjustment_method",
+                                  values=c(stats::p.adjust.methods, "p_value", "q_value"))
   
-  metric_col <- switch(metric[1],
-                       "fdr" = "p_value_corrected",
-                       "p_value" = "p_value",
-                       "q_value" = "q_value")
+  value_column <- switch(method,
+                         "holm" = "adjusted_p_value",
+                         "hochberg" = "adjusted_p_value",
+                         "hommel" = "adjusted_p_value",
+                         "bonferroni" = "adjusted_p_value",
+                         "BH" = "adjusted_p_value",
+                         "BY" = "adjusted_p_value",
+                         "fdr" = "adjusted_p_value",
+                         "none" = "p_value",
+                         "p_value" = "p_value",
+                         "q_value" = "q_value")
+  
+  label_name <- switch(method,
+                         "holm" = "Holm corrected p-value",
+                         "hochberg" = "Hochberg corrected p-value",
+                         "hommel" = "Hommel corrected p-value",
+                         "bonferroni" = "Bonferroni corrected p-value",
+                         "BH" = "Benjamini-Hochberg corrected p-value",
+                         "BY" = "Benjamini-Yekutieli corrected p-value",
+                         "fdr" = "FDR-corrected p-value",
+                         "none" = "p-value",
+                         "p_value" = "p-value",
+                         "q_value" = "q-value")
+  
   
   # Check if the column is present.
-  if(is.null(x[[metric_col]])){
-    if(verbose){
-      warning(paste0("Univariate importance can not be plotted as the requested metric (",
-                     metric[1], ") was not found in the data."))
-    }
-    
-    return(NULL)
+  if(is.null(x[[value_column]])){
+    stop(paste0("Univariate importance can not be plotted as the values for the requested p adjustment method (",
+                value_column, ") were not found in the data."))
   }
   
   # Check if any values are valid.
-  if(all(is.na(x[[metric_col]]))){
+  if(all(!is.finite(x[[value_column]]))){
     if(verbose){
       warning("Univariate importance can not be plotted as all values are NA.")
     }
@@ -558,5 +698,6 @@ setMethod("plot_univariate_importance", signature(object="familiarCollection"),
     return(NULL)
   }
   
-  return(metric_col)
+  return(list("value_column"=value_column,
+              "label"=label_name))
 }

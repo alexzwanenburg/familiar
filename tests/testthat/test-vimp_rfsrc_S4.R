@@ -4,6 +4,7 @@ familiar:::test_all_vimp_methods_available(familiar:::.get_available_rfsrc_vimp_
 testthat::skip_on_cran()
 
 familiar:::test_all_vimp_methods(familiar:::.get_available_rfsrc_vimp_methods(show_general=FALSE),
+                                 debug=FALSE,
                                  hyperparameter_list=list("count"=list("n_tree"=4,
                                                                        "sample_size"=0.50,
                                                                        "m_try"=0.3,
@@ -487,3 +488,10 @@ testthat::test_that(paste0("The RFSRC random forest variable hunting method corr
   
   testthat::expect_equal(all(vimp_table[rank <= 2]$name %in% familiar:::get_feature_columns(data)), TRUE)
 })
+
+
+testthat::skip("Skip hyperparameter optimisation, unless manual.")
+
+familiar:::test_hyperparameter_optimisation(vimp_methods=familiar:::.get_available_rfsrc_vimp_methods(show_general=TRUE),
+                                            debug=FALSE,
+                                            parallel=FALSE)

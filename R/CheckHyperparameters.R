@@ -191,7 +191,7 @@ NULL
 
 
 
-.update_hyperparameters <- function(parameter_list, user_list=NULL){
+.update_hyperparameters <- function(parameter_list, user_list=NULL, n_features=NULL){
   
   # Check if any parameters are provided
   if(length(parameter_list) == 0){ return(parameter_list) }
@@ -210,7 +210,7 @@ NULL
       # uniqueness, as the number of values affects how this parameter is
       # interpreted.
       if(parameter_name == "sign_size"){
-        user_values[user_values > parameter_list[[parameter_name]]$range[2] ] <- parameter_list[[parameter_name]]$range[2]
+        user_values[user_values > n_features] <- n_features
       }
       
       if(length(user_values) == 1){
@@ -219,16 +219,57 @@ NULL
         parameter_list[[parameter_name]]$randomise <- FALSE
         
       } else if(length(user_values) > 1){
-        # User provides multiple values for a parameter
-        parameter_list[[parameter_name]]$init_config <- user_values
-        parameter_list[[parameter_name]]$range <- user_values
-        parameter_list[[parameter_name]]$randomise <- TRUE
-        
+
+        if(parameter_list[[parameter_name]]$type %in% c("numeric", "integer")){
+          
+          if(length(user_values) == 2){
+            # Find initial values from the default and from the user-provided
+            # range. Only values within the latter range are used.
+            initial_values <- sort(unique(c(parameter_list[[parameter_name]]$init_config, user_values)))
+            initial_values <- initial_values[initial_values >= user_values[1] & initial_values <= user_values[2]]
+            
+          } else {
+            # For more than 2 values, copy the user values directly.
+            initial_values <- user_values
+          }
+          
+          parameter_list[[parameter_name]]$init_config <- initial_values
+          parameter_list[[parameter_name]]$range <- user_values
+          parameter_list[[parameter_name]]$randomise <- TRUE
+          
+        } else {
+          # User provides multiple values for a parameter
+          parameter_list[[parameter_name]]$init_config <- user_values
+          parameter_list[[parameter_name]]$range <- user_values
+          parameter_list[[parameter_name]]$randomise <- TRUE
+        }
+      
       } else {
         # This code should never be reached as such cases should be captures by
         # .parse_hyperparameters earlier in the workflow.
         ..error_reached_unreachable_code("update_hyperparameters_zero_length_argument")
       }
+    }
+    
+    # Identify parameters that only allow for a single value.
+    if(length(unique(parameter_list[[parameter_name]]$range)) == 1){
+      parameter_list[[parameter_name]]$init_config <- parameter_list[[parameter_name]]$range[1]
+      parameter_list[[parameter_name]]$range <- parameter_list[[parameter_name]]$range[1]
+      parameter_list[[parameter_name]]$randomise <- FALSE
+    }
+    
+    # Check if the parameters fall within the valid range.
+    if(parameter_list[[parameter_name]]$type %in% c("numeric", "integer")){
+      sapply(parameter_list[[parameter_name]]$init_config,
+             .check_number_in_valid_range,
+             var_name=parameter_name,
+             range=parameter_list[[parameter_name]]$valid_range)
+      
+    } else {
+      sapply(parameter_list[[parameter_name]]$init_config,
+             .check_parameter_value_is_valid,
+             var_name=parameter_name,
+             values=parameter_list[[parameter_name]]$valid_range)
     }
   }
   

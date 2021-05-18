@@ -1,9 +1,7 @@
 run_evaluation <- function(cl, proj_list, settings, file_paths){
   # performs evaluation of the data
   
-  if(!settings$eval$do_parallel){
-    cl <- NULL
-  }
+  if(settings$eval$do_parallel == "FALSE") cl <- NULL
   
   # Extract data from ensembles
   data_set_list <- .prepare_familiar_data_sets(cl=cl, only_pooling=settings$eval$pool_only)
@@ -55,10 +53,12 @@ run_evaluation <- function(cl, proj_list, settings, file_paths){
   project_id <- project_list$project_id
   
   # Check which data object is required for performing model building
-  mb_data_id <- getProcessDataID(proj_list=project_list, process_step="mb")
+  mb_data_id <- .get_process_step_data_identifier(project_list=project_list,
+                                                  process_step="mb")
   
   # Get runs
-  run_list <- getRunList(iter_list=project_list$iter_list, data_id=mb_data_id)
+  run_list <- .get_run_list(iteration_list=project_list$iter_list,
+                            data_id=mb_data_id)
   
   # Get list of data collection pools
   data_sets <- data.table::rbindlist(.get_ensemble_structure_info(run_list=run_list,
@@ -88,7 +88,8 @@ run_evaluation <- function(cl, proj_list, settings, file_paths){
                 by=c("learner", "fs_method")]
   
   # Add paths to data
-  data_set_list[, "data_dir_path":=get_object_dir_path(dir_path=file_paths$fam_data_dir, object_type="familiarData")]
+  data_set_list[, "data_dir_path":=get_object_dir_path(dir_path=file_paths$fam_data_dir,
+                                                       object_type="familiarData")]
   
   # Set paths to familiar ensembles
   data_set_list[, "fam_ensemble":=get_object_file_name(dir_path=model_dir_path,
@@ -149,7 +150,7 @@ run_evaluation <- function(cl, proj_list, settings, file_paths){
   # Re-check which ensembles exist
   data_set_list[, "fam_ensemble_exists":=file.exists(fam_ensemble)]
   if(!all(data_set_list$fam_ensemble_exists)){
-    ..error_reached_unreachable_code(".prepare_familiar_data_sets_not_all_familiarEnsemble_objects_were_created.")
+    ..error_reached_unreachable_code(".prepare_familiar_data_sets: not all familiarEnsemble objects were created.")
   }
 
   # Find any new familiarData objects that may have to be created.
@@ -167,27 +168,20 @@ run_evaluation <- function(cl, proj_list, settings, file_paths){
     
     logger.message("\nEvaluation: Processing data to create familiarData objects.")
     
-    # Allow automated switching between internal and external loops.
-    if(settings$eval$do_parallel & nrow(new_data_table) > length(cl)){
-      # Perform parallelisation of the outer loop.
-      outer_parallel <- show_progress_bar <- TRUE
-      cl_outer <- cl
-      cl_inner <- NULL
-     
-      logger.message(paste0("Evaluation: Parallel processing is done in the outer loop. ",
-                            "No progress can be displayed."))
-      
-    } else if(settings$eval$do_parallel){
-      # Perform parallelisation in the internal processes.
-      outer_parallel <- show_progress_bar <- FALSE
-      cl_outer <- NULL
+    # Set outer vs. inner loop parallelisation.
+    if(settings$eval$do_parallel %in% c("TRUE", "inner")){
       cl_inner <- cl
+      cl_outer <- NULL
+      
+    } else if(settings$eval$do_parallel %in% c("outer")){
+      cl_inner <- NULL
+      cl_outer <- cl
+      
+      if(!is.null(cl_outer)) logger.message(paste0("Evaluation: Parallel processing is done in the outer loop. ",
+                                                   "No progress can be displayed."))
       
     } else {
-      # No parallelisation is conducted.
-      outer_parallel <- show_progress_bar <- FALSE
-      cl_outer <- NULL
-      cl_inner <- NULL
+      cl_inner <- cl_outer <- NULL
     }
     
     # Perform the necessary computations to create familiarData objects.
@@ -195,7 +189,7 @@ run_evaluation <- function(cl, proj_list, settings, file_paths){
                   assign="all",
                   FUN=.create_familiar_data_runtime,
                   pool_data_table=split(new_data_table, by="fam_data"),
-                  progress_bar=show_progress_bar,
+                  progress_bar=!is.null(cl_outer),
                   MoreArgs=list("cl"=cl_inner,
                                 "dir_path"=file_paths$fam_data_dir))
   }  
@@ -384,8 +378,8 @@ run_evaluation <- function(cl, proj_list, settings, file_paths){
                                learner=ensemble_table$learner[1],
                                fs_method=ensemble_table$fs_method[1])
   
-  # Load models
-  fam_ensemble <- load_models(object=fam_ensemble, dir_path=dir_path)
+  # Load models and prevent auto-detaching.
+  fam_ensemble <- load_models(object=fam_ensemble, dir_path=dir_path, suppress_auto_detach=TRUE)
 
   # Create a run table
   fam_ensemble@run_table <- list("run_table"=lapply(fam_ensemble@model_list, function(fam_model) fam_model@run_table),
@@ -410,7 +404,7 @@ run_evaluation <- function(cl, proj_list, settings, file_paths){
                         " of ", pool_data_table$n_sets, "."))
   
   # Load the familiarEnsemble
-  fam_ensemble <- readRDS(pool_data_table$fam_ensemble)
+  fam_ensemble <- load_familiar_object(pool_data_table$fam_ensemble)
   
   # Define a dataObject with delayed reading. This enables the proper selection
   # of development and training data for each familiarModel used in the
@@ -431,12 +425,16 @@ run_evaluation <- function(cl, proj_list, settings, file_paths){
   fam_data <- extract_data(object = fam_ensemble,
                            data = data_obj,
                            cl=cl,
+                           data_element = settings$eval$evaluation_data_elements,
                            time_max = settings$eval$time_max,
                            eval_times = settings$eval$eval_times,
+                           detail_level = settings$eval$detail_level,
+                           estimation_type = settings$eval$estimation_type,
+                           aggregate_results = settings$eval$aggregate_results,
                            aggregation_method = settings$eval$aggregation,
                            rank_threshold = settings$eval$aggr_rank_threshold,
                            ensemble_method = settings$eval$ensemble_method,
-                           stratification_ensemble_method = settings$eval$strat_ensemble_method,
+                           stratification_method = settings$eval$strat_method,
                            metric = settings$eval$metric,
                            feature_cluster_method = settings$eval$feature_cluster_method,
                            feature_cluster_cut_method=settings$eval$feature_cluster_cut_method,
@@ -448,10 +446,7 @@ run_evaluation <- function(cl, proj_list, settings, file_paths){
                            sample_similarity_metric=settings$eval$sample_similarity_metric,
                            confidence_level = settings$eval$confidence_level,
                            bootstrap_ci_method = settings$eval$bootstrap_ci_method,
-                           compute_model_data = settings$eval$compute_model_data,
-                           compute_model_ci = settings$eval$compute_model_ci,
-                           compute_ensemble_ci = settings$eval$compute_ensemble_ci,
-                           aggregate_ci = settings$eval$aggregate_ci,
+                           dynamic_model_loading = settings$eval$auto_detach,
                            icc_type= settings$eval$icc_type,
                            message_indent=1L,
                            verbose=TRUE)
@@ -462,7 +457,7 @@ run_evaluation <- function(cl, proj_list, settings, file_paths){
                                                           "pool_perturb_level"=pool_data_table$pool_perturb_level)]
   
   # Set a placeholder name for the familiarData object
-  fam_data <- set_data_set_names(x=fam_data)
+  fam_data <- set_object_name(x=fam_data)
   
   # Save the familiarData object
   save(list=fam_data, file=dir_path)
@@ -538,7 +533,7 @@ run_evaluation <- function(cl, proj_list, settings, file_paths){
     
   } else {
     # Read from drive.
-    fam_collection <- readRDS(fam_collection_file)
+    fam_collection <- load_familiar_object(fam_collection_file)
   }
   
   logger.message(paste0("\nEvaluation: Exporting data from collection ", collection_info$collection_name))

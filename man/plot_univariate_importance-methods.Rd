@@ -8,9 +8,13 @@
 \usage{
 plot_univariate_importance(
   object,
+  feature_cluster_method = waiver(),
+  feature_linkage_method = waiver(),
+  feature_cluster_cut_method = waiver(),
+  feature_similarity_threshold = waiver(),
   draw = FALSE,
   dir_path = NULL,
-  importance_metric = c("fdr", "p_value", "q_value"),
+  p_adjustment_method = waiver(),
   split_by = NULL,
   color_by = NULL,
   facet_by = NULL,
@@ -38,9 +42,13 @@ plot_univariate_importance(
 
 \S4method{plot_univariate_importance}{ANY}(
   object,
+  feature_cluster_method = waiver(),
+  feature_linkage_method = waiver(),
+  feature_cluster_cut_method = waiver(),
+  feature_similarity_threshold = waiver(),
   draw = FALSE,
   dir_path = NULL,
-  importance_metric = c("fdr", "p_value", "q_value"),
+  p_adjustment_method = waiver(),
   split_by = NULL,
   color_by = NULL,
   facet_by = NULL,
@@ -68,9 +76,13 @@ plot_univariate_importance(
 
 \S4method{plot_univariate_importance}{familiarCollection}(
   object,
+  feature_cluster_method = waiver(),
+  feature_linkage_method = waiver(),
+  feature_cluster_cut_method = waiver(),
+  feature_similarity_threshold = waiver(),
   draw = FALSE,
   dir_path = NULL,
-  importance_metric = c("fdr", "p_value", "q_value"),
+  p_adjustment_method = waiver(),
   split_by = NULL,
   color_by = NULL,
   facet_by = NULL,
@@ -97,11 +109,46 @@ plot_univariate_importance(
 )
 }
 \arguments{
-\item{object}{\code{familiarCollection} object, or one or more \code{familiarData}
-objects, that will be internally converted to a \code{familiarCollection} object.
-It is also possible to provide a \code{familiarEnsemble} or one or more
-\code{familiarModel} objects together with the data from which data is computed
-prior to export. Paths to such files can also be provided.}
+\item{object}{A \code{familiarCollection} object, or other other objects from which
+a \code{familiarCollection} can be extracted. See details for more information.}
+
+\item{feature_cluster_method}{The method used to perform clustering. These are
+the same methods as for the \code{cluster_method} configuration parameter:
+\code{none}, \code{hclust}, \code{agnes}, \code{diana} and \code{pam}.
+
+\code{none} cannot be used when extracting data regarding mutual correlation or
+feature expressions.
+
+If not provided explicitly, this parameter is read from settings used at
+creation of the underlying \code{familiarModel} objects.}
+
+\item{feature_linkage_method}{The method used for agglomerative clustering in
+\code{hclust} and \code{agnes}. These are the same methods as for the
+\code{cluster_linkage_method} configuration parameter: \code{average}, \code{single},
+\code{complete}, \code{weighted}, and \code{ward}.
+
+If not provided explicitly, this parameter is read from settings used at
+creation of the underlying \code{familiarModel} objects.}
+
+\item{feature_cluster_cut_method}{The method used to divide features into
+separate clusters. The available methods are the same as for the
+\code{cluster_cut_method} configuration parameter: \code{silhouette}, \code{fixed_cut} and
+\code{dynamic_cut}.
+
+\code{silhouette} is available for all cluster methods, but \code{fixed_cut} only
+applies to methods that create hierarchical trees (\code{hclust}, \code{agnes} and
+\code{diana}). \code{dynamic_cut} requires the \code{dynamicTreeCut} package and can only
+be used with \code{agnes} and \code{hclust}.
+
+If not provided explicitly, this parameter is read from settings used at
+creation of the underlying \code{familiarModel} objects.}
+
+\item{feature_similarity_threshold}{The threshold level for pair-wise
+similarity that is required to form feature clusters with the \code{fixed_cut}
+method.
+
+If not provided explicitly, this parameter is read from settings used at
+creation of the underlying \code{familiarModel} objects.}
 
 \item{draw}{(\emph{optional}) Draws the plot if TRUE.}
 
@@ -109,9 +156,10 @@ prior to export. Paths to such files can also be provided.}
 saved to. Output is saved in the \code{variable_importance} subdirectory. If NULL
 no figures are saved, but are returned instead.}
 
-\item{importance_metric}{(\emph{optional}) Indicates type of p-value that is shown.
-One of \code{fdr}, \code{p_value} or \code{q_value} for FDR-corrected p-values, uncorrected
-p-values and q-values respectively. q-values may not be available.}
+\item{p_adjustment_method}{(\emph{optional}) Indicates type of p-value that is shown.
+One of \code{holm}, \code{hochberg}, \code{hommel}, \code{bonferroni}, \code{BH}, \code{BY},
+\code{fdr}, \code{none}, \code{p_value} or \code{q_value} for adjusted p-values, uncorrected
+p-values and q-values. q-values may not be available.}
 
 \item{split_by}{(\emph{optional}) Splitting variables. This refers to column names
 on which datasets are split. A separate figure is created for each split.
@@ -242,7 +290,7 @@ palette based on palettes in Tableau are used. You may also specify your own
 palette by using colour names listed by \code{grDevices::colors()} or through
 hexadecimal RGB strings.
 
-Labeling methods such as \code{set_fs_method_names} or \code{set_feature_names} can be
-applied to the \code{familiarCollection} object to update labels, and order the
-output in the figure.
+Labelling methods such as \code{set_fs_method_names} or \code{set_feature_names} can
+be applied to the \code{familiarCollection} object to update labels, and order
+the output in the figure.
 }

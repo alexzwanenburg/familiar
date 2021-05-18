@@ -224,6 +224,29 @@ as_metric <- function(metric,
 }
 
 
+.get_default_metric <- function(outcome_type){
+  if(outcome_type %in% c("binomial", "multinomial")){
+    default_metric <- "auc_roc"
+    
+  } else if(outcome_type == "continuous"){
+    default_metric <- "mse"
+    
+  } else if(outcome_type == "count"){
+    default_metric <-  "msle"
+    
+  } else if(outcome_type == "survival"){
+    default_metric <- "concordance_index"
+    
+  } else if(outcome_type == "competing_risk"){
+    ..error_outcome_type_not_implemented(outcome_type)
+    
+  } else {
+    ..error_no_known_outcome_type(outcome_type)
+  }
+  
+  return(default_metric)
+}
+
 
 #####is_available#####
 setMethod("is_available", signature(object="familiarMetric"),
@@ -437,8 +460,13 @@ setMethod("set_metric_baseline_value", signature(metric="familiarMetric"),
             } else if(metric@outcome_type %in% c("survival")){
               
               # Median baseline survival
-              mean_survival_probability <- sum(c(min(outcome_info@distribution$survival_probability$survival_probability),
-                                                 max(outcome_info@distribution$survival_probability$survival_probability))) / 2.0
+              if(!is.null(outcome_info@distribution$survival_probability)){
+                mean_survival_probability <- sum(c(min(outcome_info@distribution$survival_probability$survival_probability),
+                                                   max(outcome_info@distribution$survival_probability$survival_probability))) / 2.0
+                
+              } else {
+                mean_survival_probability <- NA_real_
+              }
               
               # Fill the prediction_table.
               prediction_table[, "predicted_outcome":=mean_survival_probability]
@@ -591,3 +619,8 @@ metric.optim_score.max_validation <- function(training=NULL, validation) return(
 metric.optim_score.balanced <- function(training, validation) return(validation - abs(validation - training))
 
 metric.optim_score.stronger_balance <- function(training, validation) return(validation - 2.0 * abs(validation - training))
+
+
+.get_available_optimisation_functions <- function(){
+  return(c("max_validation", "balanced", "stronger_balance"))
+}

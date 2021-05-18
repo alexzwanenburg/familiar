@@ -118,3 +118,14 @@ testthat::test_that("k-nearest neighbour model can train on wide data", {
   # Valid predictions cannot be made.
   testthat::expect_equal(familiar:::any_predictions_valid(familiar:::.predict(wide_model, wide_data), outcome_type=wide_data@outcome_type), TRUE)
 })
+
+
+testthat::skip("Skip hyperparameter optimisation, unless manual.")
+
+familiar:::test_hyperparameter_optimisation(learners=familiar:::.get_available_linear_knn_learners(show_general=TRUE),
+                                            debug=FALSE,
+                                            parallel=FALSE)
+
+familiar:::test_hyperparameter_optimisation(learners=familiar:::.get_available_radial_knn_learners(show_general=TRUE),
+                                            debug=FALSE,
+                                            parallel=FALSE)

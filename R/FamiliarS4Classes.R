@@ -1,6 +1,8 @@
 ####familiarModel####
 setClass("familiarModel",
          slots = list(
+           # Model name.
+           name = "character",
            # Model container
            model = "ANY",
            # Outcome type
@@ -23,12 +25,13 @@ setClass("familiarModel",
            learner = "character",
            # Name of feature selection method
            fs_method = "character",
-           # Features included in the model
-           signature = "ANY",
-           # Required features for complete reconstruction, including imputation
-           req_feature_cols = "ANY",
-           # Features that are required for reconstruction, without imputation (i.e. features that are in the signature directly or as part of a cluster)
-           important_features = "ANY",
+           # Required features for complete reconstruction, including
+           # imputation.
+           required_features = "ANY",
+           # Features that are required for the model.
+           model_features = "ANY",
+           # Features that are required for novelty detection.
+           novelty_features = "ANY",
            # Run table for the current model
            run_table = "ANY",
            # Information required to assess model calibrations (e.g. baseline survival)
@@ -45,6 +48,7 @@ setClass("familiarModel",
            familiar_version = "ANY"
          ),
          prototype = list(
+           name = character(0),
            model = NULL,
            outcome_type = NA_character_,
            outcome_info = NULL,
@@ -56,9 +60,9 @@ setClass("familiarModel",
            novelty_detector = NULL,
            learner = NA_character_,
            fs_method = NA_character_,
-           signature = NULL,
-           req_feature_cols = NULL,
-           important_features = NULL,
+           required_features = NULL,
+           model_features = NULL,
+           novelty_features = NULL,
            calibration_info = NULL,
            km_info = NULL,
            run_table = NULL,
@@ -69,41 +73,59 @@ setClass("familiarModel",
          )
 )
 
-#####familiarEnsemble#####
+####familiarEnsemble#####
 setClass("familiarEnsemble",
          slots = list(
-           # Model container
+           # Ensemble name
+           name = "character",
+           # Model container.
            model_list = "ANY",
-           # Model outcome type
+           # Model outcome type.
            outcome_type = "character",
            # Outcome info, such as class levels, mean values etc.
            outcome_info = "ANY",
            # Info related to the columns in the dataset.
            data_column_info = "ANY",
-           # Name of learner
+           # Name of learner.
            learner = "character",
-           # Name of feature selection method
+           # Name of feature selection method.
            fs_method = "character",
-           # Data required for feature pre-processing
+           # Data required for feature pre-processing.
            feature_info = "ANY",
-           # Required features for complete reconstruction, including imputation
-           req_feature_cols = "ANY",
-           # Features that are required for reconstruction, without imputation (i.e. features that are in the signature directly or as part of a cluster)
-           important_features = "ANY",
-           # Set of run tables for the current ensemble. This is only required for processing internal data.
+           # Required features for complete reconstruction, including
+           # imputation.
+           required_features = "ANY",
+           # Features that are required for reconstruction, without imputation
+           # (i.e. features that are in the signature directly or as part of a
+           # cluster)
+           model_features = "ANY",
+           # Features that are required for novelty detection.
+           novelty_features = "ANY",
+           # Set of run tables for the current ensemble. This is only required
+           # for processing internal data.
            run_table = "ANY",
-           # Information required to assess model calibrations (e.g. baseline survival)
+           # Information required to assess model calibrations (e.g. baseline
+           # survival)
            calibration_info = "ANY",
-           # Evaluation settings. This allows default values for external use of existing models.
+           # Path to the model directory. Required for auto-detaching.
+           model_dir_path = "character",
+           # Flag that signals auto-detaching. This means that models are loaded
+           # and discarded one-by-one. This saves memory, but comes at the cost
+           # of IO overhead. Moreover, its not possible if the models are not
+           # stored on drive in the first place.
+           auto_detach = "logical",
+           # Evaluation settings. This allows default values for external use of
+           # existing models.
            settings = "ANY",
-           # Flags anonymisation of the model
+           # Flags anonymisation of the model.
            is_anonymised = "logical",
-           # Project identifier for consistency tracking
+           # Project identifier for consistency tracking.
            project_id = "ANY",
-           # Package version for backward compatibility
+           # Package version for backward compatibility checks.
            familiar_version = "ANY"
          ),
          prototype = list(
+           name = character(0),
            model_list = NULL,
            outcome_type = NA_character_,
            outcome_info = NULL,
@@ -111,10 +133,13 @@ setClass("familiarEnsemble",
            learner = NA_character_,
            fs_method = NA_character_,
            feature_info = NULL,
-           req_feature_cols = NULL,
-           important_features = NULL,
+           required_features = NULL,
+           model_features = NULL,
+           novelty_features = NULL,
            run_table = NULL,
            calibration_info = NULL,
+           model_dir_path = NA_character_,
+           auto_detach = FALSE,
            settings = NULL,
            is_anonymised = FALSE,
            project_id = NULL,
@@ -122,7 +147,7 @@ setClass("familiarEnsemble",
          )
 )
 
-#####familiarData#####
+####familiarData#####
 setClass("familiarData",
          slots = list(
            # Name of the familiar data set
@@ -142,11 +167,11 @@ setClass("familiarData",
            # Hyperparameter data, e.g. for visualising the hyperparameter space.
            hyperparameter_data = "ANY",
            # Required features to update the data
-           req_feature_cols = "ANY",
+           required_features = "ANY",
            # Features that are required for reconstruction, without imputation
            # (i.e. features that are in the signature directly or as part of a
            # cluster)
-           important_features = "ANY",
+           model_features = "ANY",
            # Name of learner
            learner = "character",
            # Name of feature selection method
@@ -176,7 +201,9 @@ setClass("familiarData",
            # Information concerning feature expression for individual samples
            feature_expressions = "ANY",
            # Information concerning mutual correlations between features
-           mutual_correlation = "ANY",
+           feature_similarity = "ANY",
+           # Information concerning similarity between samples.
+           sample_similarity = "ANY",
            # Information on individual conditional expectation
            ice_data = "ANY",
            # Flag to signal whether the data concerns validation data (TRUE) or
@@ -200,8 +227,8 @@ setClass("familiarData",
            permutation_vimp = NULL,
            hyperparameters = NULL,
            hyperparameter_data = NULL,
-           req_feature_cols = NULL,
-           important_features = NULL,
+           required_features = NULL,
+           model_features = NULL,
            learner = NA_character_,
            fs_method = NA_character_,
            pooling_table = NULL,
@@ -216,7 +243,8 @@ setClass("familiarData",
            auc_data = NULL,
            univariate_analysis = NULL,
            feature_expressions = NULL,
-           mutual_correlation = NULL,
+           feature_similarity = NULL,
+           sample_similarity = NULL,
            ice_data = NULL,
            is_validation = FALSE,
            is_anonymised = FALSE,
@@ -226,11 +254,11 @@ setClass("familiarData",
          )
 )
 
-#####familiarCollection#####
+####familiarCollection#####
 #' Collection of familiar data.
 #'
 #' A familiarCollection object aggregates data from one or more familiarData objects.
-#' @slot collection_name character. 
+#' @slot name character 
 #' @slot data_sets character. 
 #' @slot outcome_type character. 
 #' @slot outcome_info ANY. 
@@ -239,8 +267,8 @@ setClass("familiarData",
 #' @slot permutation_vimp ANY.
 #' @slot hyperparameters ANY.
 #' @slot hyperparameter_data ANY.
-#' @slot req_feature_cols ANY.
-#' @slot important_features ANY. 
+#' @slot required_features ANY.
+#' @slot model_features ANY. 
 #' @slot learner character. 
 #' @slot fs_method character. 
 #' @slot prediction_data ANY.
@@ -254,7 +282,8 @@ setClass("familiarData",
 #' @slot auc_data ANY. 
 #' @slot univariate_analysis ANY. 
 #' @slot feature_expressions ANY. 
-#' @slot mutual_correlation ANY. 
+#' @slot feature_similarity ANY.
+#' @slot sample_similarity ANY.
 #' @slot data_set_labels ANY.
 #' @slot ice_data ANY,
 #' @slot learner_labels ANY. 
@@ -271,7 +300,7 @@ setClass("familiarData",
 setClass("familiarCollection",
          slots = list(
            # Name of the collection
-           collection_name = "character",
+           name = "character",
            # Name of the underlying data sets
            data_sets = "character",
            # Model outcome type
@@ -289,10 +318,10 @@ setClass("familiarCollection",
            # Hyperparameter data, e.g. for visualising the hyperparameter space.
            hyperparameter_data = "ANY",
            # Required features to update the data
-           req_feature_cols = "ANY",
+           required_features = "ANY",
            # Important features, e.g. features that ended up in a signature
            # individually or as part of a cluster
-           important_features = "ANY",
+           model_features = "ANY",
            # Name of learner
            learner = "character",
            # Name of feature selection method
@@ -320,7 +349,9 @@ setClass("familiarCollection",
            # Information concerning feature expression for individual samples
            feature_expressions = "ANY",
            # Information concerning mutual correlations between features
-           mutual_correlation = "ANY",
+           feature_similarity = "ANY",
+           # Information concerning similarity between samples.
+           sample_similarity = "ANY",
            # Information on individual conditional expectation
            ice_data = "ANY",
            # Label and order of data names
@@ -343,7 +374,7 @@ setClass("familiarCollection",
            familiar_version = "ANY"
          ),
          prototype = list(
-           collection_name = NA_character_,
+           name = character(0),
            data_sets = character(0),
            outcome_type = NA_character_,
            outcome_info = NULL,
@@ -352,8 +383,8 @@ setClass("familiarCollection",
            permutation_vimp = NULL,
            hyperparameters = NULL,
            hyperparameter_data = NULL,
-           req_feature_cols = NULL,
-           important_features = NULL,
+           required_features = NULL,
+           model_features = NULL,
            learner = NA_character_,
            fs_method = NA_character_,
            prediction_data = NULL,
@@ -367,7 +398,8 @@ setClass("familiarCollection",
            auc_data = NULL,
            univariate_analysis = NULL,
            feature_expressions = NULL,
-           mutual_correlation = NULL,
+           feature_similarity = NULL,
+           sample_similarity = NULL,
            ice_data = NULL,
            data_set_labels = NULL,
            learner_labels = NULL,
@@ -382,7 +414,7 @@ setClass("familiarCollection",
 )
 
 
-#####dataObject#####
+####dataObject#####
 
 #' Data object
 #'
@@ -442,7 +474,7 @@ setClass("dataObject",
          )
 )
 
-#####featureInfo#####
+####featureInfo#####
 setClass("featureInfo",
          slots = list(
            name = "character",
@@ -504,7 +536,7 @@ setClass("featureInfo",
          )
 )
 
-#####outcomeInfo#####
+####outcomeInfo#####
 setClass("outcomeInfo",
          slots = list(
            # Name of the outcome
@@ -572,9 +604,11 @@ setClass("familiarVimpMethod",
            # Data required for feature pre-processing
            feature_info = "ANY",
            # Required features for complete reconstruction, including imputation
-           req_feature_cols = "ANY",
+           required_features = "ANY",
            # Run table for the current vimp method
-           run_table = "ANY"
+           run_table = "ANY",
+           # Project identifier for consistency tracking
+           project_id = "ANY"
          ),
          prototype = list(
            outcome_type = NA_character_,
@@ -582,8 +616,9 @@ setClass("familiarVimpMethod",
            vimp_method = NA_character_,
            outcome_info = NULL,
            feature_info = NULL,
-           req_feature_cols = NULL,
-           run_table = NULL
+           required_features = NULL,
+           run_table = NULL,
+           project_id = NULL
          )
 )
 
@@ -612,4 +647,46 @@ setClass("familiarMetric",
            value_range = c(NA_real_, NA_real_),
            baseline_value = NULL,
            higher_better = TRUE)
+)
+
+
+
+####familiarDataElement#####
+setClass("familiarDataElement",
+         slots = list(
+           # The primary results.
+           data = "ANY",
+           # Identifiers of the data, e.g. the generating model name, the
+           # feature-selection method and learner.
+           identifiers = "ANY",
+           # The level of detail at which the data was computed.
+           detail_level = "character",
+           # The kind of estimation for which the data was computed, e.g.
+           # bias-corrected estimates.
+           estimation_type = "character",
+           # The confidence level for which data was computed. Only set if the
+           # correct estimation type is set.
+           confidence_level = "ANY",
+           # The method used to compute the bootstrap confidence intervals from
+           # the data.
+           bootstrap_ci_method = "character",
+           # The column that contains the relevant data. Useful for merging and
+           # identifying bootstraps.
+           value_column = "character",
+           # The column(s) required for grouping the data. Useful for determining confidence intervals.
+           grouping_column = "ANY",
+           # Flag that signals whether the data is aggregated, e.g. by computing
+           # confidence intervals and a bias-corrected value.
+           is_aggregated = "logical"
+         ),
+         prototype = list(
+           data = NULL,
+           identifiers = NULL,
+           detail_level = NA_character_,
+           estimation_type = NA_character_,
+           confidence_level = NULL,
+           bootstrap_ci_method = NA_character_,
+           value_column = NA_character_,
+           grouping_column = NULL,
+           is_aggregated = FALSE)
 )

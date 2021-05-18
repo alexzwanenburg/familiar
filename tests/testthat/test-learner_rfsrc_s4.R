@@ -71,7 +71,7 @@ testthat::test_that("Random forest SRC model trained correctly", {
 testthat::test_that("Random forest SRC model has variable importance", {
   
   # Extract the variable importance table.
-  vimp_table <- familiar:::..vimp(good_model)
+  vimp_table <- familiar:::..vimp(good_model, data=good_data)
   
   # Expect that the vimp table has two rows.
   testthat::expect_equal(nrow(vimp_table), 13)
@@ -92,7 +92,7 @@ testthat::test_that("Random forest SRC model can train on wide data", {
   testthat::expect_equal(familiar:::model_is_trained(wide_model), TRUE)
   
   # Variable importance table is present.
-  testthat::expect_equal(is_empty(familiar:::..vimp(wide_model)), FALSE)
+  testthat::expect_equal(is_empty(familiar:::..vimp(wide_model, data=wide_data)), FALSE)
   
   # Valid predictions.
   testthat::expect_equal(familiar:::any_predictions_valid(familiar:::.predict(wide_model, wide_data), outcome_type=wide_data@outcome_type), TRUE)
@@ -138,7 +138,7 @@ testthat::test_that("Random forest SRC model trained correctly", {
 testthat::test_that("Random forest SRC model has variable importance", {
   
   # Extract the variable importance table.
-  vimp_table <- familiar:::..vimp(good_model)
+  vimp_table <- familiar:::..vimp(good_model, data=good_data)
   
   # Expect that the vimp table has two rows.
   testthat::expect_equal(nrow(vimp_table), 10)
@@ -157,7 +157,7 @@ testthat::test_that("Random forest SRC model can train on wide data", {
   testthat::expect_equal(familiar:::model_is_trained(wide_model), TRUE)
   
   # Variable importance table is present.
-  testthat::expect_equal(is_empty(familiar:::..vimp(wide_model)), FALSE)
+  testthat::expect_equal(is_empty(familiar:::..vimp(wide_model, data=wide_data)), FALSE)
   
   # Valid predictions.
   testthat::expect_equal(familiar:::any_predictions_valid(familiar:::.predict(wide_model, wide_data), outcome_type=wide_data@outcome_type), TRUE)
@@ -203,7 +203,7 @@ testthat::test_that("Random forest SRC model trained correctly", {
 testthat::test_that("Random forest SRC model has variable importance", {
   
   # Extract the variable importance table.
-  vimp_table <- familiar:::..vimp(good_model)
+  vimp_table <- familiar:::..vimp(good_model, data=good_data)
   
   # Expect that the vimp table has two rows.
   testthat::expect_equal(nrow(vimp_table), 8)
@@ -211,10 +211,8 @@ testthat::test_that("Random forest SRC model has variable importance", {
   # Expect that the names are the same as that of the features.
   testthat::expect_equal(all(familiar:::get_feature_columns(good_data) %in% vimp_table$name), TRUE)
   
-  # Expect that cell_shape_uniformity has rank 1 and clump_thickness has rank 2.
-  testthat::expect_equal(vimp_table[rank == 1, ]$name %in% c("cell_shape_uniformity", "bare_nuclei"), TRUE)
-  
   # Disabled test because vimp by the random forest is unstable.
+  # testthat::expect_equal(vimp_table[rank == 1, ]$name %in% c("cell_shape_uniformity", "bare_nuclei"), TRUE)
   # testthat::expect_equal(vimp_table[rank == 2, ]$name, "marginal_adhesion")
 })
 
@@ -225,7 +223,7 @@ testthat::test_that("Random forest SRC model can train on wide data", {
   testthat::expect_equal(familiar:::model_is_trained(wide_model), TRUE)
   
   # Variable importance table is present.
-  testthat::expect_equal(is_empty(familiar:::..vimp(wide_model)), FALSE)
+  testthat::expect_equal(is_empty(familiar:::..vimp(wide_model, data=wide_data)), FALSE)
   
   # Valid predictions.
   testthat::expect_equal(familiar:::any_predictions_valid(familiar:::.predict(wide_model, wide_data), outcome_type=wide_data@outcome_type), TRUE)
@@ -272,7 +270,7 @@ testthat::test_that("Random forest SRC model trained correctly", {
 testthat::test_that("Random forest SRC model has variable importance", {
   
   # Extract the variable importance table.
-  vimp_table <- familiar:::..vimp(good_model)
+  vimp_table <- familiar:::..vimp(good_model, data=good_data)
   
   # Expect that the vimp table has two rows.
   testthat::expect_equal(nrow(vimp_table), 4)
@@ -293,7 +291,7 @@ testthat::test_that("Random forest SRC model can train on wide data", {
   testthat::expect_equal(familiar:::model_is_trained(wide_model), TRUE)
   
   # Variable importance table is present.
-  testthat::expect_equal(is_empty(familiar:::..vimp(wide_model)), FALSE)
+  testthat::expect_equal(is_empty(familiar:::..vimp(wide_model, data=wide_data)), FALSE)
   
   # Valid predictions.
   testthat::expect_equal(familiar:::any_predictions_valid(familiar:::.predict(wide_model, wide_data), outcome_type=wide_data@outcome_type), TRUE)
@@ -349,17 +347,17 @@ testthat::test_that("Random forest SRC model trained correctly", {
 testthat::test_that("Random forest SRC model has variable importance", {
   
   # Extract the variable importance table.
-  vimp_table <- familiar:::..vimp(good_model)
+  vimp_table <- familiar:::..vimp(good_model, data=good_data)
   
-  # Expect that the vimp table has two rows.
-  testthat::expect_equal(nrow(vimp_table), 2)
+  # Expect that the vimp table has three rows.
+  testthat::expect_equal(nrow(vimp_table), 3)
   
   # Expect that the names are the same as that of the features.
   testthat::expect_equal(all(familiar:::get_feature_columns(good_data) %in% vimp_table$name), TRUE)
   
   # Expect that nodes has rank 1 and rx has rank 2.
   testthat::expect_equal(vimp_table[rank == 1, ]$name, "nodes")
-  testthat::expect_equal(vimp_table[rank == 2, ]$name, "rx")
+  testthat::expect_equal(vimp_table[rank == 2, ]$name %in% c("rx", "adhere"), TRUE)
 })
 
 
@@ -369,7 +367,7 @@ testthat::test_that("Random forest SRC model can train on wide data", {
   testthat::expect_equal(familiar:::model_is_trained(wide_model), TRUE)
   
   # Variable importance table is present
-  testthat::expect_equal(is_empty(familiar:::..vimp(wide_model)), FALSE)
+  testthat::expect_equal(is_empty(familiar:::..vimp(wide_model, data=wide_data)), FALSE)
   
   # Valid predictions are possible.
   testthat::expect_equal(familiar:::any_predictions_valid(familiar:::.predict(wide_model, wide_data), outcome_type=wide_data@outcome_type), TRUE)
@@ -377,3 +375,10 @@ testthat::test_that("Random forest SRC model can train on wide data", {
   # Valid survival probability predictions can be made.
   testthat::expect_equal(familiar:::any_predictions_valid(familiar:::.predict(wide_model, wide_data, type="survival_probability", time=1000), outcome_type=wide_data@outcome_type), TRUE)
 })
+
+
+testthat::skip("Skip hyperparameter optimisation, unless manual.")
+
+familiar:::test_hyperparameter_optimisation(learners=familiar:::.get_available_rfsrc_learners(show_general=TRUE),
+                                            debug=FALSE,
+                                            parallel=TRUE)

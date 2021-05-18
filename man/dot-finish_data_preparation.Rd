@@ -8,6 +8,7 @@
   data,
   sample_id_column,
   batch_id_column,
+  series_id_column,
   outcome_column,
   outcome_type,
   include_features,
@@ -22,12 +23,40 @@
 \item{data}{data.table with feature data}
 
 \item{sample_id_column}{(\strong{recommended}) Name of the column containing
-sample or subject identifiers. This parameter is required if more than one
-dataset is provided.}
+sample or subject identifiers. See \code{batch_id_column} above for more
+details.
+
+If unset, every row will be identified as a single sample.}
 
 \item{batch_id_column}{(\strong{recommended}) Name of the column containing batch
 or cohort identifiers. This parameter is required if more than one dataset
-is provided, or if external validation is performed.}
+is provided, or if external validation is performed.
+
+In familiar any row of data is organised by four identifiers:
+\itemize{
+\item The batch identifier \code{batch_id_column}: This denotes the group to which a
+set of samples belongs, e.g. patients from a single study, samples measured
+in a batch, etc. The batch identifier is used for batch normalisation, as
+well as selection of development and validation datasets.
+\item The sample identifier \code{sample_id_column}: This denotes the sample level,
+e.g. data from a single individual. Subsets of data, e.g. bootstraps or
+cross-validation folds, are created at this level.
+\item The series identifier \code{series_id_column}: Indicates measurements on a
+single sample that may not share the same outcome value, e.g. a time
+series, or the number of cells in a view.
+\item The repetition identifier: Indicates repeated measurements in a single
+series where any feature values may differ, but the outcome does not.
+Repetition identifiers are always implicitly set when multiple entries for
+the same series of the same sample in the same batch that share the same
+outcome are encountered.
+}}
+
+\item{series_id_column}{(\strong{optional}) Name of the column containing series
+identifiers, which distinguish between measurements that are part of a
+series for a single sample. See \code{batch_id_column} above for more details.
+
+If unset, rows which share the same batch and sample identifiers but have a
+different outcome are assigned unique series identifiers.}
 
 \item{outcome_column}{(\strong{recommended}) Name of the column containing the
 outcome of interest. May be identified from a formula, if a formula is
@@ -59,9 +88,9 @@ is currently not a valid choice for \code{outcome_type}.}
 \item{include_features}{(\emph{optional}) Feature columns that are specifically
 included in the data set. By default all features are included. Cannot
 overlap with \code{exclude_features}, but may overlap \code{signature}. Features in
-\code{signature} are always included. If both \code{exclude_features} and
-\code{include_features} are provided, \code{include_features} takes precedence,
-provided that there is no overlap between the two.}
+\code{signature} and \code{novelty_features} are always included. If both
+\code{exclude_features} and \code{include_features} are provided, \code{include_features}
+takes precedence, provided that there is no overlap between the two.}
 
 \item{class_levels}{(\emph{optional}) Class levels for \code{binomial} or \code{multinomial}
 outcomes. This argument can be used to specify the ordering of levels for
@@ -70,7 +99,7 @@ present in the outcome column.}
 
 \item{censoring_indicator}{(\strong{recommended}) Indicator for right-censoring in
 \code{survival} and \code{competing_risk} analyses. \code{familiar} will automatically
-recognise \code{0}, \code{false}, \code{f}, \code{n}, \code{no} ascensoring indicators, including
+recognise \code{0}, \code{false}, \code{f}, \code{n}, \code{no} as censoring indicators, including
 different capitalisations. If this parameter is set, it replaces the
 default values.}
 
@@ -85,9 +114,10 @@ unset, all values other than those specified by the \code{event_indicator} and
 \code{censoring_indicator} parameters are considered to indicate competing
 risks.}
 
-\item{reference}{list with class levels (\code{levels}) and ordering (\code{ordered}) per list entry. Each list entry
-should have the name of the corresponding feature. The intended use is that \code{featureInfo} objects
-are parsed to generate such a reference.}
+\item{reference}{list with class levels (\code{levels}) and ordering (\code{ordered})
+per list entry. Each list entry should have the name of the corresponding
+feature. The intended use is that \code{featureInfo} objects are parsed to
+generate such a reference.}
 }
 \value{
 data.table with expected column names.
@@ -96,12 +126,12 @@ data.table with expected column names.
 Internal function for finalising generic data processing
 }
 \details{
-This function is used to update data.table provided by loading the data. When part
-of the main familiar workflow, this function is used after .parse_initial_settings
---> .load_data --> .update_initial_settings.
+This function is used to update data.table provided by loading the
+data. When part of the main familiar workflow, this function is used after
+.parse_initial_settings --> .load_data --> .update_initial_settings.
 
-When used to parse external data (e.g. in conjunction with familiarModel) it follows
-after .load_data. Hence the function contains several checks which are otherwise part of
-.update_initial_settings.
+When used to parse external data (e.g. in conjunction with familiarModel)
+it follows after .load_data. Hence the function contains several checks
+which are otherwise part of .update_initial_settings.
 }
 \keyword{internal}

@@ -1,3 +1,17 @@
+..warning_missing_cohorts <- function(x){
+  logger.warning(paste0("Creating iterations: ",
+                        ifelse(length(x) > 1, "Cohorts ", "Cohort "),
+                        paste_s(x),
+                        ifelse(length(x) > 1, " were", " was"),
+                        " not found in the data table."))
+}
+
+
+..warning_no_comparison_between_models <- function(){
+  logger.warning(paste0("Cannot create plots to compare directly between models. Please use the hybrid or ensemble detail levels."))
+}
+
+
 ..error_no_known_outcome_type <- function(outcome_type){
   stop(paste0("Outcome type was not recognised. Found: ", outcome_type,
              ". One of binomial, multinomial, continuous, count, ",

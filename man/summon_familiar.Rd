@@ -94,12 +94,39 @@ Alternatively, data can be provided using the \code{data} argument. These data
 are expected to be \code{data.frame} or \code{data.table} objects or paths to data
 files. The latter are handled in the same way as file paths provided to
 \code{data_file}.}
-    \item{\code{sample_id_column}}{(\strong{recommended}) Name of the column containing
-sample or subject identifiers. This parameter is required if more than one
-dataset is provided.}
     \item{\code{batch_id_column}}{(\strong{recommended}) Name of the column containing batch
 or cohort identifiers. This parameter is required if more than one dataset
-is provided, or if external validation is performed.}
+is provided, or if external validation is performed.
+
+In familiar any row of data is organised by four identifiers:
+\itemize{
+\item The batch identifier \code{batch_id_column}: This denotes the group to which a
+set of samples belongs, e.g. patients from a single study, samples measured
+in a batch, etc. The batch identifier is used for batch normalisation, as
+well as selection of development and validation datasets.
+\item The sample identifier \code{sample_id_column}: This denotes the sample level,
+e.g. data from a single individual. Subsets of data, e.g. bootstraps or
+cross-validation folds, are created at this level.
+\item The series identifier \code{series_id_column}: Indicates measurements on a
+single sample that may not share the same outcome value, e.g. a time
+series, or the number of cells in a view.
+\item The repetition identifier: Indicates repeated measurements in a single
+series where any feature values may differ, but the outcome does not.
+Repetition identifiers are always implicitly set when multiple entries for
+the same series of the same sample in the same batch that share the same
+outcome are encountered.
+}}
+    \item{\code{sample_id_column}}{(\strong{recommended}) Name of the column containing
+sample or subject identifiers. See \code{batch_id_column} above for more
+details.
+
+If unset, every row will be identified as a single sample.}
+    \item{\code{series_id_column}}{(\strong{optional}) Name of the column containing series
+identifiers, which distinguish between measurements that are part of a
+series for a single sample. See \code{batch_id_column} above for more details.
+
+If unset, rows which share the same batch and sample identifiers but have a
+different outcome are assigned unique series identifiers.}
     \item{\code{development_batch_id}}{(\emph{optional}) One or more batch or cohort
 identifiers to constitute data sets for development. Defaults to all, or
 all minus the identifiers in \code{validation_batch_id} for external validation.
@@ -151,7 +178,7 @@ and \code{competing_risk} analyses. \code{familiar} will automatically recognise
 capitalisations. If this parameter is set, it replaces the default values.}
     \item{\code{censoring_indicator}}{(\strong{recommended}) Indicator for right-censoring in
 \code{survival} and \code{competing_risk} analyses. \code{familiar} will automatically
-recognise \code{0}, \code{false}, \code{f}, \code{n}, \code{no} ascensoring indicators, including
+recognise \code{0}, \code{false}, \code{f}, \code{n}, \code{no} as censoring indicators, including
 different capitalisations. If this parameter is set, it replaces the
 default values.}
     \item{\code{competing_risk_indicator}}{(\strong{recommended}) Indicator for competing
@@ -161,17 +188,19 @@ unset, all values other than those specified by the \code{event_indicator} and
 risks.}
     \item{\code{signature}}{(\emph{optional}) One or more names of feature columns that are
 considered part of a specific signature. Features specified here will
-always be used for modeling. Ranking from feature selection has no effect
+always be used for modelling. Ranking from feature selection has no effect
 for these features.}
+    \item{\code{novelty_features}}{(\emph{optional}) One or more names of feature columns
+that should be included for the purpose of novelty detection.}
     \item{\code{exclude_features}}{(\emph{optional}) Feature columns that will be removed
-from the data set. Cannot overlap with features in \code{signature} or
-\code{include_features}.}
+from the data set. Cannot overlap with features in \code{signature},
+\code{novelty_features} or \code{include_features}.}
     \item{\code{include_features}}{(\emph{optional}) Feature columns that are specifically
 included in the data set. By default all features are included. Cannot
 overlap with \code{exclude_features}, but may overlap \code{signature}. Features in
-\code{signature} are always included. If both \code{exclude_features} and
-\code{include_features} are provided, \code{include_features} takes precedence,
-provided that there is no overlap between the two.}
+\code{signature} and \code{novelty_features} are always included. If both
+\code{exclude_features} and \code{include_features} are provided, \code{include_features}
+takes precedence, provided that there is no overlap between the two.}
     \item{\code{experimental_design}}{(\strong{required}) Defines what the experiment looks
 like, e.g. \code{cv(bt(fs,20)+mb,3,2)+ev} for 2 times repeated 3-fold
 cross-validation with nested feature selection on 20 bootstraps and
@@ -739,17 +768,19 @@ be used is randomly selected for each bootstrap.
 
 This parameter only affects hyperparameter optimisation of learners. The
 default is \code{TRUE}.}
-    \item{\code{smbo_random_initialisation}}{(\emph{optional}) Logical indicating random
-(\code{TRUE}) or grid-based (\code{FALSE}) initialisation of combinations of
-hyperparameters. If random initialisation is selected, up to 200 unique
-combinations will be randomly generated and assessed during the initial
-step of the sequential model-based boosting (SMBO) algorithm (Hutter et
-al., 2011). If a grid-based initialisation is selected, up to 100
-permutations will be randomly selected from the complete parameter grid and
-assessed during the initial SMBO step.
-
-The default is \code{TRUE} (random initialisation). Grid-based initialisation
-uses pre-defined parameter ranges.}
+    \item{\code{smbo_random_initialisation}}{(\emph{optional}) String indicating the
+initialisation method for the hyperparameter space. Can be one of
+\code{fixed_subsample} (default), \code{fixed}, or \code{random}. \code{fixed} and
+\code{fixed_subsample} first create hyperparameter sets from a range of default
+values set by familiar. \code{fixed_subsample} then randomly draws up to
+\code{smbo_n_random_sets} from the grid. \code{random} does not rely upon a fixed
+grid, and randomly draws up to \code{smbo_n_random_sets} hyperparameter sets
+from the hyperparameter space.}
+    \item{\code{smbo_n_random_sets}}{(\emph{optional}) Number of random or subsampled
+hyperparameters drawn during the initialisation process. Default: \code{100}.
+Cannot be smaller than \code{10}. The parameter is not used when
+\code{smbo_random_initialisation} is \code{fixed}, as the entire pre-defined grid
+will be explored.}
     \item{\code{max_smbo_iterations}}{(\emph{optional}) Maximum number of intensify
 iterations of the SMBO algorithm. During an intensify iteration a run-off
 occurs between the current \emph{best} hyperparameter combination and either 10
@@ -785,7 +816,9 @@ the set of \code{optimisation_bootstraps} bootstraps as data for the initial
 SMBO step and the steps in each intensify iteration.
 
 The default value is \code{5}. The value cannot be larger than
-\code{optimisation_bootstraps}.}
+\code{optimisation_bootstraps}. Values of \code{1} or \code{2} may hinder exploration by
+optimistically or pessimistically biasing parameter sets on a single or two
+bootstraps.}
     \item{\code{smbo_intensify_steps}}{(\emph{optional}) The number of steps in each SMBO
 intensify iteration. Each step a new set of \code{smbo_step_bootstraps}
 bootstraps is drawn and used in the run-off between the incumbent \emph{best}
@@ -880,7 +913,11 @@ upper confidence bound of the distribution (Kaufmann et al., 2012).
     \item{\code{parallel_hyperparameter_optimisation}}{(\emph{optional}) Enable parallel
 processing for hyperparameter optimisation. Defaults to \code{TRUE}. When set to
 \code{FALSE}, this will disable the use of parallel processing while performing
-optimisation, regardless of the settings of the \code{parallel} parameter.
+optimisation, regardless of the settings of the \code{parallel} parameter. The
+parameter moreover specifies whether parallelisation takes place within the
+optimisation algorithm (\code{inner}, default), or in an outer loop ( \code{outer})
+over learners, data subsamples, etc.
+
 \code{parallel_hyperparameter_optimisation} is ignored if \code{parallel=FALSE}.}
     \item{\code{evaluate_top_level_only}}{(\emph{optional}) Flag that signals that only
 evaluation at the most global experiment level is required. Consider a
@@ -896,6 +933,43 @@ are not computed and shown. When the flag is \code{false}, results are computed
 from both the global layer and the next lower level.
 
 Setting the flag to \code{true} saves computation time.}
+    \item{\code{skip_evaluation_elements}}{(\emph{optional}) Specifies which evaluation steps,
+if any, should be skipped as part of the evaluation process. Defaults to
+\code{none}, which means that all relevant evaluation steps are performed. It can
+have one or more of the following values:
+\itemize{
+\item \code{none}, \code{false}: no steps are skipped.
+\item \code{auc_data}: data for assessing and plotting the area under the receiver
+operating characteristic curve are not computed.
+\item \code{calibration_data}: data for assessing and plotting model calibration are
+not computed.
+\item \code{calibration_info}
+\item \code{confusion_matrix}: data for assessing and plotting a confusion matrix are
+not collected.
+\item \code{decision_curve_analyis}: data for performing a decision curve analysis
+are not computed.
+\item \code{feature_expressions}: data for assessing and plotting sample clustering
+are not computed.
+\item \code{feature_similarity}: data for assessing and plotting feature clusters are
+not computed.
+\item \code{fs_vimp}: data for assessing and plotting feature selection-based
+variable importance are not collected.
+\item \code{hyperparameters}: data for assessing model hyperparameters are not
+collected.
+\item \code{model_performance}: data for assessing and visualising model performance
+are not created.
+\item \code{model_vimp}: data for assessing and plotting model-based variable
+importance are not collected.
+\item \code{permutation_vimp}: data for assessing and plotting model-agnostic
+permutation variable importance are not computed.
+\item \code{prediction_data}: predictions for each sample are not made and exported.
+\item \code{risk_stratification_data}: data for assessing and plotting Kaplan-Meier survival
+curves are not collected.
+\item \code{risk_stratification_info}: data for assessing stratification into risk groups
+are not computed.
+\item \code{univariate_analysis}: data for assessing and plotting univariate feature
+importance are not computed.
+}}
     \item{\code{ensemble_method}}{(\emph{optional}) Method for ensembling predictions from
 models for the same sample. Available methods are:
 \itemize{
@@ -903,7 +977,9 @@ models for the same sample. Available methods are:
 value for a sample.
 \item \code{mean}: Use the mean of the predicted values as the ensemble value for a
 sample.
-}}
+}
+
+This parameter is only used if \code{detail_level} is \code{ensemble}.}
     \item{\code{evaluation_metric}}{(\emph{optional}) One or more metrics for assessing model
 performance. See the vignette on performance metrics for the available
 metrics.
@@ -913,6 +989,84 @@ metric during evaluation. This is done using bootstraps, the number of which
 depends on the value of \code{confidence_level} (Davison and Hinkley, 1997).
 
 If unset, the metric in the \code{optimisation_metric} variable is used.}
+    \item{\code{detail_level}}{(\emph{optional}) Sets the level at which results are computed
+and aggregated.
+\itemize{
+\item \code{ensemble}: Results are computed at the ensemble level, i.e. over all
+models in the ensemble. This means that, for example, bias-corrected
+estimates of model performance are assessed by creating (at least) 20
+bootstraps and computing the model performance of the ensemble model for
+each bootstrap.
+\item \code{hybrid} (default): Results are computed at the level of models in an
+ensemble. This means that, for example, bias-corrected estimates of model
+performance are directly computed using the models in the ensemble. If there
+are at least 20 trained models in the ensemble, performance is computed for
+each model, in contrast to \code{ensemble} where performance is computed for the
+ensemble of models. If there are less than 20 trained models in the
+ensemble, bootstraps are created so that at least 20 point estimates can be
+made.
+\item \code{model} (to be implemented): Results are computed at the model level. This
+means that, for example, bias-corrected estimates of model performance are
+assessed by creating (at least) 20 bootstraps and computing the performance
+of the model for each bootstrap.
+}
+
+Note that each level of detail has a different interpretation for bootstrap
+confidence intervals. For \code{ensemble} and \code{model} these are the confidence
+intervals for the ensemble and an individual model, respectively. That is,
+the confidence interval describes the range where an estimate produced by a
+respective ensemble or model trained on a repeat of the experiment may be
+found with the probability of the confidence level. For \code{hybrid}, it
+represents the range where any single model trained on a repeat of the
+experiment may be found with the probability of the confidence level. By
+definition, confidence intervals obtained using \code{hybrid} are at least as
+wide as those for \code{ensemble}. \code{hybrid} offers the correct interpretation if
+the goal of the analysis is to assess the result of a single, unspecified,
+model.
+
+\code{hybrid} is generally computationally less expensive then \code{ensemble}, which
+in turn is somewhat less expensive than \code{model}.
+
+A non-default \code{detail_level} parameter can be
+specified for separate evaluation steps by providing a parameter value in a
+named list with data elements, e.g. \code{list("auc_data"="ensemble", "model_performance"="hybrid")}. This parameter can be set for the following
+data elements: \code{auc_data}, \code{decision_curve_analyis}, \code{model_performance},
+\code{permutation_vimp}, \code{prediction_data} and \code{confusion_matrix}.}
+    \item{\code{estimation_type}}{(\emph{optional}) Sets the type of estimation that should be
+possible. This has the following options:
+\itemize{
+\item \code{point}: Point estimates.
+\item \code{bias_correction} or \code{bc}: Bias-corrected estimates. A bias-corrected
+estimate is computed from (at least) 20 point estimates, and \code{familiar} may
+bootstrap the data to create them.
+\item \code{bootstrap_confidence_interval} or \code{bci} (default): Bias-corrected
+estimates with bootstrap confidence intervals (Efron and Hastie, 2016). The
+number of point estimates required depends on the \code{confidence_level}
+parameter, and \code{familiar} may bootstrap the data to create them. In some
+cases no bootstrap data
+}
+
+As with \code{detail_level}, a non-default \code{estimation_type} parameter can be
+specified for separate evaluation steps by providing a parameter value in a
+named list with data elements, e.g. \code{list("auc_data"="bci", "model_performance"="point")}. This parameter can be set for the following
+data elements: \code{auc_data}, \code{decision_curve_analyis}, \code{model_performance},
+\code{permutation_vimp}, and \code{prediction_data}.}
+    \item{\code{aggregate_results}}{(\emph{optional}) Flag that signifies whether results
+should be aggregated during evaluation. If \code{estimation_type} is
+\code{bias_correction} or \code{bc}, aggregation leads to a single bias-corrected
+estimate. If \code{estimation_type} is \code{bootstrap_confidence_interval} or \code{bci},
+aggregation leads to a single bias-corrected estimate with lower and upper
+boundaries of the confidence interval. This has no effect if
+\code{estimation_type} is \code{point}.
+
+The default value is equal to \code{TRUE} except when assessing metrics to assess
+model performance, as the default violin plot requires underlying data.
+
+As with \code{detail_level} and \code{estimation_type}, a non-default
+\code{aggregate_results} parameter can be specified for separate evaluation steps
+by providing a parameter value in a named list with data elements, e.g.
+\code{list("auc_data"=TRUE, , "model_performance"=FALSE)}. This parameter exists
+for the same elements as \code{estimation_type}.}
     \item{\code{confidence_level}}{(\emph{optional}) Numeric value for the level at which
 confidence intervals are determined. In the case bootstraps are used to
 determine the confidence intervals bootstrap estimation, \code{familiar} uses the
@@ -924,51 +1078,14 @@ The default value is \code{0.95}.}
 confidence intervals (Efron and Hastie, 2016). The following methods are
 implemented:
 \itemize{
-\item \code{percentile}: Confidence intervals obtained using the percentile method.
-\item \code{bc} (default): Bias-corrected confidence intervals.
+\item \code{percentile} (default): Confidence intervals obtained using the percentile
+method.
+\item \code{bc}: Bias-corrected confidence intervals.
 }
 
 Note that the standard method is not implemented because this method is
 often not suitable due to non-normal distributions. The bias-corrected and
 accelerated (BCa) method is not implemented yet.}
-    \item{\code{compute_model_data}}{(\emph{optional}) This parameter can be set to enable
-computation of data based on individual models. The parameter can take on or
-more of the following values: \code{all}, \code{model_performance}, \code{auc_data},
-\code{confusion_matrix}, \code{decision_curve_analyis}, \code{permutation_vimp},
-\code{performance_data}, as well as \code{true}, \code{false} and \code{none}.
-
-By default, data is computed for the ensemble as a whole, but not for
-underlying models.}
-    \item{\code{compute_model_ci}}{(\emph{optional}) This parameter can be set to enable
-computation of bootstrap confidence intervals for individual models in
-several parts of the evaluation. The parameter can take one or more of the
-following values: \code{all}, \code{model_performance}, \code{auc_data},
-\code{decision_curve_analyis}, \code{permutation_vimp} as well as \code{true}, \code{false} and
-\code{none}.
-
-By default, bootstrap confidence intervals are not computed for individual
-models. Note that this parameter has no effect unless data is computed for
-individual models as well, which is managed by the \code{compute_model_data}
-parameter.}
-    \item{\code{compute_ensemble_ci}}{(\emph{optional}) This parameter can be set to enable
-computation of bootstrap confidence intervals for ensemble models in several
-parts of the evaluation. The parameter can take one or more of the following
-values: \code{all}, \code{model_performance}, \code{auc_data}, \code{decision_curve_analyis},
-\code{permutation_vimp} as well as \code{true}, \code{false} and \code{none}.
-
-By default, bootstrap confidence intervals are computed for ensemble models.}
-    \item{\code{aggregate_ci}}{(\emph{optional}) Bootstraps are used to determine confidence
-intervals. This information can be stored for export. However, in many cases
-this is not necessary, and keeping the bootstrap data can lead to large
-\code{familiarData} and \code{familiarCollection} objects. This provides the option to
-aggregate the bootstrap data by computing the confidence interval directly.
-
-This parameter can take one or more of the following values: \code{all},
-\code{model_performance}, \code{auc_data}, \code{decision_curve_analyis},
-\code{permutation_vimp} as well as \code{true}, \code{false} and \code{none}. By default,
-bootstrap data is aggregated by computing confidence intervals for
-receiver-operating characteristic curves, decision curves and permutation
-variable importance.}
     \item{\code{feature_cluster_method}}{(\emph{optional}) Method used to perform clustering
 of features. The same methods as for the \code{cluster_method} configuration
 parameter are available: \code{none}, \code{hclust}, \code{agnes}, \code{diana} and \code{pam}.
@@ -1099,28 +1216,6 @@ divide samples into three equally sized groups. If \code{fixed} is not among the
 selected stratification methods, this parameter is ignored.
 
 This parameter is only relevant for \code{survival} outcomes.}
-    \item{\code{stratification_ensemble_method}}{(\emph{optional}) Method for ensembling the
-risk group assignments from different models for the same sample.
-
-The following methods are available:
-\itemize{
-\item \code{ensemble_mean}: Risk groups are determined for each sample using the
-threshold values of the different models in the ensemble. The risk groups
-are treated as ordinal and encoded using integer values. The mean of the
-encoded values is computed. The risk group bin containing the mean value is
-then used as the ensemble-based risk group.
-\item \code{ensemble_mode} (default): Risk groups are determined for each sample
-using the threshold values of the different models in the ensemble. The most
-commonly assigned risk group is then used as the ensemble-based risk group.
-\item \code{median_threshold}: The median threshold value for each risk group is
-determined from the threshold values of the different models in the
-ensemble. The resulting threshold(s) are then applied to the ensemble
-prediction of a sample to identify the ensemble-based risk group.
-\item \code{mean_threshold}: Similar to \code{median_threshold}, but uses the mean
-threshold value for each risk group.
-}
-
-This parameter is only relevant for \code{survival} outcomes.}
     \item{\code{time_max}}{(\emph{optional}) Time point which is used as the benchmark for
 e.g. cumulative risks generated by random forest, or the cutoff for Uno's
 concordance index.
@@ -1138,10 +1233,21 @@ observed survival probabilities depend on time.
 If unset, \code{evaluation_times} will be equal to \code{time_max}.
 
 This parameter is only relevant for \code{survival} outcomes.}
+    \item{\code{dynamic_model_loading}}{(\emph{optional}) Enables dynamic loading of models
+during the evaluation process, if \code{TRUE}. Defaults to \code{FALSE}. Dynamic
+loading of models may reduce the overall memory footprint, at the cost of
+increased disk or network IO. Models can only be dynamically loaded if they
+are found at an accessible disk or network location. Setting this parameter
+to \code{TRUE} may help if parallel processing causes out-of-memory issues during
+evaluation.}
     \item{\code{parallel_evaluation}}{(\emph{optional}) Enable parallel processing for
 hyperparameter optimisation. Defaults to \code{TRUE}. When set to \code{FALSE}, this
 will disable the use of parallel processing while performing optimisation,
-regardless of the settings of the \code{parallel} parameter.
+regardless of the settings of the \code{parallel} parameter. The parameter
+moreover specifies whether parallelisation takes place within the evaluation
+process steps (\code{inner}, default), or in an outer loop ( \code{outer}) over
+learners, data subsamples, etc.
+
 \code{parallel_evaluation} is ignored if \code{parallel=FALSE}.}
   }}
 }

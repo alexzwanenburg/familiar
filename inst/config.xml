@@ -17,10 +17,12 @@
       <imbalance_correction_method></imbalance_correction_method>
       <!-- Number of partitions with random sampling (optional, default:10; only used when random_sample is selected as class imbalance correction method)-->
       <imbalance_n_partitions></imbalance_n_partitions>
-      <!-- Name of data column with subject identifiers (required for separate data and outcome files, otherwise optional) -->
-      <sample_id_column>required</sample_id_column>
-      <!-- Name of data column with cohort identifiers (required for external validation experiments, otherwise optional) -->
+       <!-- Name of data column with cohort identifiers (required for external validation experiments, otherwise optional) -->
       <batch_id_column></batch_id_column>
+      <!-- Name of data column with sample identifiers (required for separate data and outcome files, otherwise optional) -->
+      <sample_id_column>required</sample_id_column>
+      <!-- Name of data column with series identifiers that identify separate measurements for a sample (optional) -->
+      <series_id_column></series_id_column>
       <!-- Development cohort (required for external validation, otherwise optional) - note
       that also for internal validation only the development cohort will be used. -->
       <development_batch_id></development_batch_id>
@@ -40,8 +42,10 @@
       <censoring_indicator></censoring_indicator>
       <!-- Indicator for competing risks in competing risk analysis (recommended) -->
       <competing_risk_indicator></competing_risk_indicator>
-      <!-- Signature, column names for features that should always be included in a model  (optional) -->
+      <!-- Signature, column names for features that should always be included in a model (optional) -->
       <signature></signature>
+      <!-- Novelty feature, column names for features that should be included for novelty detection (optional) -->
+      <novelty_features></novelty_features>
       <!-- Names of features/columns which are to be removed (optional) -->
       <exclude_features></exclude_features>
       <!-- Names of features/columns that should be exclusively selected (optional) -->
@@ -138,8 +142,10 @@
       <optimisation_bootstraps></optimisation_bootstraps>
       <!-- Whether variable importance should be computed seperately for each bootstrap (true) when optimising learner hyperparameters or the feature selection results should be used (false). (optional, default: true) -->
       <optimisation_determine_vimp></optimisation_determine_vimp>
-      <!-- Randomisation of the initial hyperparameter grid. (optional, default: true; otherwise will initialise using pre-determined hyperparameters) -->
+      <!-- Randomisation of the initial hyperparameter grid. (optional, default: fixed_subsample) -->
       <smbo_random_initialisation></smbo_random_initialisation>
+      <!-- Number of random or subsampled hyperparameter sets to be drawn during initialisation (optional: default:100) -->
+      <smbo_n_random_sets></smbo_n_random_sets>
       <!-- Maximum number of iterations of sequential model based optimisation (optional, default: 20) -->
       <max_smbo_iterations></max_smbo_iterations>
       <!-- Number of bootstraps evaluated during each SMBO initial and intensify iteration (optional, default: 5) -->
@@ -158,6 +164,8 @@
     <evaluation>
       <!-- Evaluate only the most important experiment level (true), or additionally evaluate underlying levels (false) (optional, default: true)-->
       <evaluate_top_level_only></evaluate_top_level_only>
+      <!-- Evaluation steps that should be skipped (optional, default: none) -->
+      <skip_evaluation_elements></skip_evaluation_elements>
       <!-- Method for clustering features (optional, default: same as cluster_method) -->
       <feature_cluster_method></feature_cluster_method>
       <!-- Linkage method for clustering features (optional, default: same as cluster_linkage_method) -->
@@ -178,18 +186,16 @@
       <ensemble_method></ensemble_method>
       <!-- Metric(s) for assessing model performance (optional, default: same as metric for hyperparameter_optimisation, multiple possible) -->
       <evaluation_metric></evaluation_metric>
+      <!-- Level at which evaluation steps are computed (optional, default: hybrid) -->
+      <detail_level></detail_level>
+      <!-- Type of estimate being computed (optional, default: bootstrap_confidence_interval) -->
+      <estimation_type></estimation_type>
+      <!-- Whether results should be aggregated at run-time (optional: default) --> 
+      <aggregate_results></aggregate_results>
       <!-- Confidence level for confidence intervals (optional, default: 0.95) -->
       <confidence_level></confidence_level>
-      <!-- Method for bootstrap confidence interval (optional, default: bc) -->
+      <!-- Method for bootstrap confidence interval (optional, default: percentile) -->
       <bootstrap_ci_method></bootstrap_ci_method>
-      <!-- Compute data for individual models. Individual evaluation steps can be selected. Optional (default: none)-->
-      <compute_model_data></compute_model_data>
-      <!-- Compute bootstraps confidence intervals for individual models. Individual evaluation steps can be selected. Optional (default: none) -->
-      <compute_model_ci></compute_model_ci>
-      <!-- Compute bootstraps confidence intervals for ensemble models. Individual evaluation steps can be selected. Optional (default: all) -->
-      <compute_ensemble_ci></compute_ensemble_ci>
-      <!-- Computation steps where confidence intervals may be determined during computation, instead of during export (optional, default: auc_data, decision_curve_analyis, permutation_vimp) -->
-      <aggregate_ci></aggregate_ci>
       <!-- Method for aggregating variable importances (optional, default: same as method in feature_selection) -->
       <eval_aggregation_method></eval_aggregation_method>
       <!-- Rank threshold for determining the best features (optional, default: same as rank threshold in feature_selection) -->
@@ -200,12 +206,12 @@
       <stratification_method></stratification_method>
       <!-- Stratification quantile thresholds (optional, only for "fixed", default:0.333,0.667; needs to be in range (0.0, 1.0)). Thresholds define samples with ascending (increasing) risk -->
       <stratification_threshold></stratification_threshold>
-      <!-- Ensemble stratification method used for creating risk groups in ensembles of models (optional, default: "ensemble_mode", otherwise: "ensemble_mean", "mean_threshold" or "median_threshold"). -->
-      <stratification_ensemble_method></stratification_ensemble_method>
       <!-- Study end time. This affects Kaplan-Meier plots and some survival metrics (optional, default: based on 98th percentile in data) -->
       <time_max></time_max>
       <!-- Time points at which calibration for survival models is assessed (optional, default: same as end_time; multiple values possible) -->
       <evaluation_times></evaluation_times>
+      <!-- Flags dynamic loading of models during evaluation (optional, default: False) -->
+      <dynamic_model_loading></dynamic_model_loading>
       <!-- Parallel processing for evaluation (optional; default: true) -->
       <parallel_evaluation></parallel_evaluation>
     </evaluation>

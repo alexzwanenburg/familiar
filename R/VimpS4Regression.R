@@ -109,8 +109,7 @@ setMethod("..vimp", signature(object="familiarRegressionVimp"),
             feature_columns  <- get_feature_columns(x=data)
 
             # Generate iteration list.
-            iteration_list <- .create_bootstraps(sample_identifiers=data@data$subject_id,
-                                                 n_iter=object@hyperparameters$n_bootstrap,
+            iteration_list <- .create_bootstraps(n_iter=object@hyperparameters$n_bootstrap,
                                                  outcome_type=object@outcome_type,
                                                  data=data@data)
             
@@ -201,8 +200,7 @@ setMethod("..vimp", signature(object="familiarRegressionVimp"),
             
             while(length(available_features) > 0 ){
               # Generate new iteration list.
-              iteration_list <- .create_bootstraps(sample_identifiers=data@data$subject_id,
-                                                   n_iter=object@hyperparameters$n_bootstrap,
+              iteration_list <- .create_bootstraps(n_iter=object@hyperparameters$n_bootstrap,
                                                    outcome_type=object@outcome_type,
                                                    data=data@data)
               

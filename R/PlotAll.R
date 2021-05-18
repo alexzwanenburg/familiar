@@ -16,19 +16,24 @@ setMethod("plot_all", signature(object="familiarCollection"),
                                                             list(...)))
             
             # Feature occurrence (unclustered)
-            do.call(plot_feature_occurrence, args=append(list("object"=object,
-                                                              "dir_path"=dir_path),
-                                                         list(...)))
+            do.call(plot_feature_selection_occurrence, args=c(list("object"=object,
+                                                                        "dir_path"=dir_path),
+                                                                   list(...)))
             
             # Feature ranking (unclustered)
-            do.call(plot_feature_ranks, args=append(list("object"=object,
-                                                         "dir_path"=dir_path),
-                                                    list(...)))
+            do.call(plot_feature_selection_variable_importance, args=c(list("object"=object,
+                                                                            "dir_path"=dir_path),
+                                                                       list(...)))
             
-            # Feature signature ranking (unclustered)
-            do.call(plot_model_signature_ranks, args=append(list("object"=object,
+            # Model signature occurrence (unclustered)
+            do.call(plot_model_signature_occurrence, args=c(list("object"=object,
                                                                  "dir_path"=dir_path),
                                                             list(...)))
+            
+            # Model signature ranking (unclustered)
+            do.call(plot_model_signature_variable_importance, args=c(list("object"=object,
+                                                                          "dir_path"=dir_path),
+                                                                     list(...)))
             
             # Permutation variable importance
             do.call(plot_permutation_variable_importance, args=c(list("object"=object,
@@ -74,8 +79,6 @@ setMethod("plot_all", signature(object="familiarCollection"),
             do.call(plot_confusion_matrix, args=append(list("object"=object,
                                                             "dir_path"=dir_path),
                                                        list(...)))
-            
-            # Decision curve analysis.
             
           })
 

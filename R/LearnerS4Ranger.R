@@ -47,7 +47,7 @@ setMethod("get_default_hyperparameters", signature(object="familiarRanger"),
             if(is.null(data)) return(param)
             
             # Get the number of samples
-            n_samples <- nrow(unique(data@data, by=c("subject_id", "cohort_id")))
+            n_samples <- data.table::uniqueN(data@data, by=get_id_columns(id_depth="series"))
             
             ###### Signature size ##############################################
             param$sign_size <- .get_default_sign_size(data_obj=data)
@@ -164,10 +164,10 @@ setMethod("get_default_hyperparameters", signature(object="familiarRanger"),
 
 #####get_prediction_type#####
 setMethod("get_prediction_type", signature(object="familiarRanger"),
-          function(object, type=NULL){
+          function(object, type="default"){
             
             if(object@outcome_type == "survival"){
-              if(is.null(type)){
+              if(type == "default"){
                 # Standard predictions.
                 return("cumulative_hazard")
                 
@@ -199,6 +199,9 @@ setMethod("..train", signature(object="familiarRanger", data="dataObject"),
             
             # Check if the training data is ok.
             if(has_bad_training_data(object=object, data=data)) return(callNextMethod())
+            
+            # Check if hyperparameters are set.
+            if(is.null(object@hyperparameters)) return(callNextMethod())
             
             # Find feature columns in data table
             feature_columns <- get_feature_columns(x=data)
@@ -267,108 +270,128 @@ setMethod("..train", signature(object="familiarRanger", data="dataObject"),
 
 #####..predict#####
 setMethod("..predict", signature(object="familiarRanger", data="dataObject"),
-          function(object, data, type=NULL, time=NULL, ...){
+          function(object, data, type="default", time=NULL, ...){
             
-            # Check if the model was trained.
-            if(!model_is_trained(object)) return(callNextMethod())
-            
-            # Check if the data is empty.
-            if(is_empty(data)) return(callNextMethod())
-            
-            # Set the prediction type
-            if(is.null(type)){
-              if(object@outcome_type %in% c("survival")){
-                type <- "cumulative_hazard"
+            if(type %in% c("default", "survival_probability")){
+              ##### Default method #############################################
+              
+              # Check if the model was trained.
+              if(!model_is_trained(object)) return(callNextMethod())
+              
+              # Check if the data is empty.
+              if(is_empty(data)) return(callNextMethod())
+              
+              # Get an empty prediction table.
+              prediction_table <- get_placeholder_prediction_table(object=object,
+                                                                   data=data,
+                                                                   type=type)
+              
+              # Make predictions using the model.
+              if(inherits(object@model, "ranger")){
+                model_predictions <- suppressWarnings(predict(object=object@model,
+                                                              data=data@data,
+                                                              type="response",
+                                                              num.threads=1,
+                                                              verbose=FALSE))
                 
-              } else if(object@outcome_type %in% c("binomial", "multinomial", "count", "continuous")){
-                type <- "response"
+              } else if(inherits(object@model, "holdoutRF")){
+                model_predictions <- suppressWarnings(predict(object=object@model$rf1,
+                                                              data=data@data,
+                                                              type="response",
+                                                              num.threads=1,
+                                                              verbose=FALSE))
+                
+              } else {
+                ..error_reached_unreachable_code(paste0("..predict,familiarRanger,dataObject: unknown model class detected ", class(object@model), ". Expected: ranger, holdoutRF"))
+              }
+              
+              
+              if(object@outcome_type %in% c("binomial", "multinomial")){
+                #####Categorical outcomes######
+                
+                # Extract class levels from the predictions.
+                class_levels <- colnames(model_predictions$predictions)
+                
+                # We have to determine the predicted class based on the class
+                # probabilities. We do so by first determining the column with the
+                # maximum probability. Subsequently we read the corresponding
+                # class level, i.e. column name.
+                class_predicted <- class_levels[apply(model_predictions$predictions, 1, which.max)]
+                class_predicted <- factor(class_predicted, levels=get_outcome_class_levels(x=object))
+                
+                # Set predicted class.
+                prediction_table[, "predicted_class":=class_predicted]
+                
+                # Add class probabilities.
+                class_probability_columns <- get_class_probability_name(x=class_levels)
+                for(ii in seq_along(class_probability_columns)){
+                  prediction_table[, (class_probability_columns[ii]):=model_predictions$predictions[, ii]]
+                }
+                
+              } else if(object@outcome_type %in% c("continuous", "count")){
+                #####Numerical outcomes######
+                
+                # Extract predicted regression values.
+                prediction_table[, "predicted_outcome":=model_predictions$predictions]
+                
+              } else if(object@outcome_type %in% c("survival")){
+                #####Survival outcomes######
+                
+                # Get the unique event times
+                if(inherits(object@model, "ranger")){
+                  event_times <- ranger::timepoints(object@model)
+                  
+                } else {
+                  event_times <- ranger::timepoints(object@model$rf1)
+                }
+                
+                # Set default time, if not provided.
+                time <- ifelse(is.null(time), max(event_times), time)
+                
+                if(type == "default"){
+                  # Cumulative hazard.
+                  
+                  # Get the cumulative hazards at the given time point.
+                  prediction_table <- process_random_forest_survival_predictions(event_matrix=model_predictions$chf,
+                                                                                 event_times=event_times,
+                                                                                 prediction_table=prediction_table,
+                                                                                 time=time,
+                                                                                 type="cumulative_hazard")
+                  
+                } else if(type == "survival_probability"){
+                  # Survival probability.
+                  
+                  # Get the survival probability at the given time point.
+                  prediction_table <- process_random_forest_survival_predictions(event_matrix=model_predictions$survival,
+                                                                                 event_times=event_times,
+                                                                                 prediction_table=prediction_table,
+                                                                                 time=time,
+                                                                                 type="survival")
+                  
+                }
                 
               } else {
                 ..error_outcome_type_not_implemented(object@outcome_type)
               }
-            }
-            
-            # Set the prediction type
-            prediction_type <- ifelse(type %in% c("cumulative_hazard", "survival_probability"),
-                                      "response",
-                                      type)
-            
-            # Get an empty prediction table.
-            prediction_table <- get_placeholder_prediction_table(object=object,
-                                                                 data=data)
-            
-            # Make predictions using the model.
-            model_predictions <- predict(object=object@model,
-                                         data=data@data,
-                                         type=prediction_type,
-                                         num.threads=1,
-                                         verbose=FALSE)
-            
-            
-            if(object@outcome_type %in% c("binomial", "multinomial")){
-              #####Categorical outcomes######
               
-              # Extract class levels from the predictions.
-              class_levels <- colnames(model_predictions$predictions)
-              
-              # We have to determine the predicted class based on the class
-              # probabilities. We do so by first determining the column with the
-              # maximum probability. Subsequently we read the corresponding
-              # class level, i.e. column name.
-              class_predicted <- class_levels[apply(model_predictions$predictions, 1, which.max)]
-              class_predicted <- factor(class_predicted, levels=get_outcome_class_levels(x=object))
-              
-              # Set predicted class.
-              prediction_table[, "predicted_class":=class_predicted]
-              
-              # Add class probabilities.
-              class_probability_columns <- get_class_probability_name(x=class_levels)
-              for(ii in seq_along(class_probability_columns)){
-                prediction_table[, (class_probability_columns[ii]):=model_predictions$predictions[, ii]]
-              }
-              
-            } else if(object@outcome_type %in% c("continuous", "count")){
-              #####Numerical outcomes######
-              
-              # Extract predicted regression values.
-              prediction_table[, "predicted_outcome":=model_predictions$predictions]
-            
-            } else if(object@outcome_type %in% c("survival")){
-              #####Survival outcomes######
-              
-              # Get the unique event times
-              event_times <- ranger::timepoints(object@model)
-              
-              # Set default time, if not provided.
-              time <- ifelse(is.null(time), max(event_times), time)
-              
-              if(type %in% c("response", "cumulative_hazard")){
-                # Cumulative hazard.
-                
-                # Get the cumulative hazards at the given time point.
-                prediction_table <- process_random_forest_survival_predictions(event_matrix=model_predictions$chf,
-                                                                               event_times=event_times,
-                                                                               prediction_table=prediction_table,
-                                                                               time=time,
-                                                                               type="cumulative_hazard")
-                
-              } else if(type %in% c("survival", "survival_probability")){
-                # Survival probability.
-                
-                # Get the survival probability at the given time point.
-                prediction_table <- process_random_forest_survival_predictions(event_matrix=model_predictions$survival,
-                                                                               event_times=event_times,
-                                                                               prediction_table=prediction_table,
-                                                                               time=time,
-                                                                               type="survival")
-                
-              }
+              return(prediction_table)
               
             } else {
-              ..error_outcome_type_not_implemented(object@outcome_type)
+              ##### User-specified method ######################################
+              
+              # Check if the model was trained.
+              if(!model_is_trained(object)) return(NULL)
+              
+              # Check if the data is empty.
+              if(is_empty(data)) return(NULL)
+              
+              # Make predictions using the model.
+              return(predict(object=object@model,
+                             data=data@data,
+                             type=type,
+                             num.threads=1,
+                             ...))
             }
-            
-            return(prediction_table)
           })
 
 

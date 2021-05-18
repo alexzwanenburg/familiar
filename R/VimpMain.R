@@ -56,13 +56,15 @@ setMethod("promote_vimp_method", signature(object="familiarVimpMethod"),
               
               # Create a familiarModel and promote to the right class.
               object <- methods::new("familiarModel",
+                                     fs_method = "none",
                                      learner = method,
                                      outcome_type = object@outcome_type,
                                      hyperparameters = object@hyperparameters,
                                      outcome_info = object@outcome_info,
                                      feature_info = object@feature_info,
-                                     req_feature_cols = object@req_feature_cols,
-                                     run_table = object@run_table)
+                                     required_features = object@required_features,
+                                     run_table = object@run_table,
+                                     project_id = object@project_id)
               
               # Promote to the correct subclass.
               object <- promote_learner(object)
@@ -72,13 +74,15 @@ setMethod("promote_vimp_method", signature(object="familiarVimpMethod"),
               
               # Create a familiarModel and promote to the right class.
               object <- methods::new("familiarModel",
+                                     fs_method = "none",
                                      learner = method,
                                      outcome_type = object@outcome_type,
                                      hyperparameters = object@hyperparameters,
                                      outcome_info = object@outcome_info,
                                      feature_info = object@feature_info,
-                                     req_feature_cols = object@req_feature_cols,
-                                     run_table = object@run_table)
+                                     required_features = object@required_features,
+                                     run_table = object@run_table,
+                                     project_id = object@project_id)
               
               # Promote to the correct subclass.
               object <- promote_learner(object)
@@ -88,13 +92,15 @@ setMethod("promote_vimp_method", signature(object="familiarVimpMethod"),
               
               # Create a familiarModel and promote to the right class.
               object <- methods::new("familiarModel",
+                                     fs_method = "none",
                                      learner = method,
                                      outcome_type = object@outcome_type,
                                      hyperparameters = object@hyperparameters,
                                      outcome_info = object@outcome_info,
                                      feature_info = object@feature_info,
-                                     req_feature_cols = object@req_feature_cols,
-                                     run_table = object@run_table)
+                                     required_features = object@required_features,
+                                     run_table = object@run_table,
+                                     project_id = object@project_id)
               
               # Promote to the correct subclass.
               object <- promote_learner(object)
@@ -104,13 +110,15 @@ setMethod("promote_vimp_method", signature(object="familiarVimpMethod"),
               
               # Create a familiarModel and promote to the right class.
               object <- methods::new("familiarModel",
+                                     fs_method = "none",
                                      learner = "random_forest_rfsrc",
                                      outcome_type = object@outcome_type,
                                      hyperparameters = object@hyperparameters,
                                      outcome_info = object@outcome_info,
                                      feature_info = object@feature_info,
-                                     req_feature_cols = object@req_feature_cols,
-                                     run_table = object@run_table)
+                                     required_features = object@required_features,
+                                     run_table = object@run_table,
+                                     project_id = object@project_id)
               
               # Promote to the correct subclass.
               object <- promote_learner(object)
@@ -123,13 +131,15 @@ setMethod("promote_vimp_method", signature(object="familiarVimpMethod"),
               
               # Create a familiarModel and promote to the right class.
               object <- methods::new("familiarModel",
+                                     fs_method = "none",
                                      learner = "random_forest_ranger",
                                      outcome_type = object@outcome_type,
                                      hyperparameters = object@hyperparameters,
                                      outcome_info = object@outcome_info,
                                      feature_info = object@feature_info,
-                                     req_feature_cols = object@req_feature_cols,
-                                     run_table = object@run_table)
+                                     required_features = object@required_features,
+                                     run_table = object@run_table,
+                                     project_id = object@project_id)
               
               # Promote to the correct subclass.
               object <- promote_learner(object)
@@ -183,7 +193,7 @@ vimp.get_fs_parameters <- function(data, method, outcome_type, names_only=FALSE)
 
 
 
-vimp.check_outcome_type <- function(method, outcome_type){
+vimp.check_outcome_type <- function(method, outcome_type, as_flag=FALSE){
 
   # Create familiarModel
   vimp_method_object <- methods::new("familiarVimpMethod",
@@ -195,6 +205,8 @@ vimp.check_outcome_type <- function(method, outcome_type){
   
   # Check validity.
   vimp_method_available <- is_available(vimp_method_object)
+  
+  if(as_flag) return(vimp_method_available)
   
   # Check if the vimp method or familiar model has been successfully promoted.
   if(!is_subclass(class(vimp_method_object)[1], "familiarVimpMethod") & !is_subclass(class(vimp_method_object)[1], "familiarModel")){
@@ -300,7 +312,7 @@ setMethod("prepare_vimp_object", signature(data="dataObject"),
             settings <- extract_settings_from_data(data)
             
             # Update some missing settings that can be fixed within this method.
-            settings$data$train_cohorts <- unique(data@data[["cohort_id"]])
+            settings$data$train_cohorts <- unique(data@data[[get_id_columns(single_column="batch")]])
             
             # Parse the remaining settings that are important. Remove
             # outcome_type from ... This prevents an error caused by multiple
@@ -388,8 +400,8 @@ setMethod("prepare_vimp_object", signature(data="dataObject"),
                                    hyperparameters = param_list,
                                    outcome_info = data@outcome_info,
                                    feature_info = feature_info_list,
-                                   req_feature_cols = find_required_features(features=get_feature_columns(data),
-                                                                             feature_info_list=feature_info_list))
+                                   required_features = find_required_features(features=get_feature_columns(data),
+                                                                              feature_info_list=feature_info_list))
             
             # Promote object to correct subclass.
             object <- promote_vimp_method(object)

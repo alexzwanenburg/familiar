@@ -2,6 +2,8 @@
 #' @include FamiliarS4Classes.R
 NULL
 
+
+#####.set_labels#####
 setMethod(".set_labels", signature(x="familiarCollection"),
           function(x, old_label, new_label, new_order, upd_slot){
 
@@ -128,6 +130,8 @@ setMethod(".set_labels", signature(x="familiarCollection"),
             return(x)
           })
 
+
+#####.construct_label_table#####
 setMethod(".construct_label_table", signature(x="familiarCollection"),
           function(x, upd_slot){
             # Constructs a new label table if required.
@@ -147,7 +151,7 @@ setMethod(".construct_label_table", signature(x="familiarCollection"),
               data <- slot(x, "fs_method")
               
             } else if(upd_slot == "feature_labels") {
-              data <- unique(c(slot(x, "req_feature_cols"), x@fs_vimp$vimp_table$name))
+              data <- unique(c(slot(x, "required_features"), x@fs_vimp$vimp_table$name))
               
             } else if(upd_slot == "km_group_labels") {
               data <- unique(c("low", "moderate", "high", unlist(sapply(names(x@km_data), function(curr_method)(levels(x@km_data[[curr_method]]$data$risk_group))))))
@@ -165,6 +169,8 @@ setMethod(".construct_label_table", signature(x="familiarCollection"),
             return(x)
           })
 
+
+#####.get_labels#####
 setMethod(".get_labels", signature(x="familiarCollection"),
           function(x, upd_slot, get_levels=FALSE){
             # Get ordered levels (i.e. internal column from the label table) from the specific slot
@@ -225,6 +231,7 @@ setMethod("set_data_set_names", signature(x="familiarCollection"),
 
 
 
+#####set_learner_names#####
 #' @title Rename learners for plotting and export
 #'  
 #' @description Tabular exports and figures created from a familiarCollection object can be customised by providing names for the learners.
@@ -249,6 +256,7 @@ setMethod("set_learner_names", signature(x="familiarCollection"),
 
 
 
+#####set_fs_method_names#####
 #' @title Rename feature selection methods for plotting and export
 #'  
 #' @description Tabular exports and figures created from a familiarCollection object can be customised by providing names for the feature selection methods.
@@ -273,6 +281,7 @@ setMethod("set_fs_method_names", signature(x="familiarCollection"),
 
 
 
+#####set_feature_names#####
 #' @title Rename features for plotting and export
 #'  
 #' @description Tabular exports and figures created from a familiarCollection object can be customised by providing names for features.
@@ -297,6 +306,7 @@ setMethod("set_feature_names", signature(x="familiarCollection"),
 
 
 
+#####set_risk_group_names#####
 #' @title Rename risk groups for plotting and export
 #'  
 #' @description Tabular exports and figures created from a familiarCollection object can be customised by providing names for risk groups in survival analysis.
@@ -320,6 +330,7 @@ setMethod("set_risk_group_names", signature(x="familiarCollection"),
 
 
 
+#####set_class_names#####
 #' @title Rename outcome classes for plotting and export
 #'  
 #' @description Tabular exports and figures created from a familiarCollection object can be customised by providing names for outcome classes.
@@ -343,6 +354,7 @@ setMethod("set_class_names", signature(x="familiarCollection"),
 
 
 
+#####get_data_set_names#####
 #' @title Get current name of datasets
 #'  
 #' @description Datasets in familiarCollection objects can have custom names for export and plotting. This function retrieves the currently assigned names.
@@ -363,6 +375,7 @@ setMethod("get_data_set_names", signature(x="familiarCollection"),
 
 
 
+#####get_learner_names#####
 #' @title Get current learner name labels
 #'  
 #' @description Learners in familiarCollection objects can have custom names for export and plotting. This function retrieves the currently assigned names.
@@ -383,6 +396,7 @@ setMethod("get_learner_names", signature(x="familiarCollection"),
 
 
 
+#####get_fs_method_names#####
 #' @title Get current feature selection method name labels
 #'  
 #' @description Feature selection methods in familiarCollection objects can have custom names for export and plotting. This function retrieves the currently assigned names.
@@ -403,6 +417,7 @@ setMethod("get_fs_method_names", signature(x="familiarCollection"),
 
 
 
+#####get_feature_names#####
 #' @title Get current feature labels
 #'  
 #' @description Features in familiarCollection objects can have custom names for export and plotting. This function retrieves the currently assigned names.
@@ -423,6 +438,7 @@ setMethod("get_feature_names", signature(x="familiarCollection"),
 
 
 
+#####get_risk_group_names#####
 #' @title Get current risk group labels
 #'  
 #' @description Risk groups in familiarCollection objects can have custom names for export and plotting. This function retrieves the currently assigned names.
@@ -443,6 +459,7 @@ setMethod("get_risk_group_names", signature(x="familiarCollection"),
 
 
 
+#####get_class_names#####
 #' @title Get outcome class labels
 #'  
 #' @description Outcome classes in familiarCollection objects can have custom names for export and plotting. This function retrieves the currently assigned names.
@@ -461,25 +478,32 @@ setMethod("get_risk_group_names", signature(x="familiarCollection"),
 setMethod("get_class_names", signature(x="familiarCollection"),
           function(x) { .get_labels(x=x, upd_slot="class_labels", get_levels=FALSE) })
 
+#####get_data_set_name_levels#####
 setMethod("get_data_set_name_levels", signature(x="familiarCollection"),
           function(x) { .get_labels(x=x, upd_slot="data_set_labels", get_levels=TRUE) })
 
+#####get_learner_name_levels#####
 setMethod("get_learner_name_levels", signature(x="familiarCollection"),
           function(x) { .get_labels(x=x, upd_slot="learner_labels", get_levels=TRUE) })
 
+#####get_fs_method_name_levels#####
 setMethod("get_fs_method_name_levels", signature(x="familiarCollection"),
           function(x) { .get_labels(x=x, upd_slot="fs_method_labels", get_levels=TRUE) })
 
+#####get_feature_name_levels#####
 setMethod("get_feature_name_levels", signature(x="familiarCollection"),
           function(x) { .get_labels(x=x, upd_slot="feature_labels", get_levels=TRUE) })
 
+#####get_risk_group_name_levels#####
 setMethod("get_risk_group_name_levels", signature(x="familiarCollection"),
           function(x) { .get_labels(x=x, upd_slot="km_group_labels", get_levels=TRUE) })
 
+#####get_class_name_levels#####
 setMethod("get_class_name_levels", signature(x="familiarCollection"),
           function(x) { .get_labels(x=x, upd_slot="class_labels", get_levels=TRUE) })
 
 
+#####add_package_version (collection)#####
 setMethod("add_package_version", signature(object="familiarCollection"),
           function(object){
             
@@ -487,16 +511,32 @@ setMethod("add_package_version", signature(object="familiarCollection"),
             return(.add_package_version(object=object))
           })
 
+#####save (collection)#####
 setMethod("save", signature(list="familiarCollection", file="character"),
           function(list, file) {
             .save(object=list, dir_path=file)
           })
 
+#####get_object_name (collection)#####
 setMethod("get_object_name", signature(object="familiarCollection"),
           function(object, abbreviated=FALSE){
       
             # Get the full name of the object
-            object_name <- object@collection_name
+            object_name <- object@name
             
             return(object_name)
+          })
+
+
+#####show (collection)######
+setMethod("show", signature(object="familiarCollection"),
+          function(object){
+            
+            # Create an initial descriptor.
+            cat(paste0("A collection of datasets (", object@name, "; v", object@familiar_version, "):\n"))
+            lapply(object@data_sets, function(x) cat(paste0("  ", x, "\n")))
+            
+            # Outcome details
+            cat("\nThe collection contains data for the following outcome:\n")
+            show(object@outcome_info)
           })

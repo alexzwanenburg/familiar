@@ -321,8 +321,8 @@ get_outcome_info_from_backend <- function(){
   distr_list <- list()
   
   # Find outcome data
-  x <- data.table::copy(data@data[repetition_id == 1, mget(outcome_columns)])
-  
+  x <- data.table::copy(unique(data@data, by=get_id_columns(id_depth="series")))
+
   if(object@outcome_type %in% c("binomial", "multinomial")){
     
     # Number of samples
@@ -414,3 +414,76 @@ get_outcome_info_from_backend <- function(){
   return(object)
 }
 
+
+
+#####show (outcomeInfo)#####
+setMethod("show", signature(object="outcomeInfo"),
+          function(object){
+            # Basic outcome information.
+            outcome_name <- object@name
+            if(length(outcome_name) == 0) outcome_name <- "outcome"
+            
+            # Form basic string.
+            outcome_str <- paste0(outcome_name, " (", object@outcome_type, ")")
+            
+            # Adapt string per outcome-type
+            if(object@outcome_type %in% c("binomial")){
+              
+              # Show the reference class.
+              outcome_classes <- object@levels
+              outcome_classes[1] <- paste0(outcome_classes[1], " (reference)")
+              
+              # Add to the outcome string.
+              outcome_str <- paste0(outcome_str, ", with classes: ", paste_s(outcome_classes), ".\n")
+              
+            } else if(object@outcome_type %in% c("multinomial")){
+              # Show the outcome classes.
+              outcome_str <- paste0(outcome_str, ", with classes: ", paste_s(object@levels), ".\n")
+              
+            } else if(object@outcome_type %in% c("count", "continuous")){
+              # No further details provided.
+              outcome_str <- paste0(outcome_str, ".\n")
+              
+            } else if(object@outcome_type %in% c("survival")){
+              # Show the censoring and event values.
+              if(length(object@censored) > 0){
+                censoring_str <- paste0("censoring: ", paste_s(object@censored))
+                event_str <- paste0("event: ", paste_s(object@event))
+                
+                # Add to outcome string.
+                outcome_str <- paste0(outcome_str, ", with ", censoring_str, "; and ", event_str, ".\n")
+                
+              } else {
+                event_str <- paste0("event: ", paste_s(object@event))
+                
+                # Add to outcome string.
+                outcome_str <- paste0(outcome_str, ", without censoring; and ", event_str, ".\n")
+              }
+              
+            } else if(object@outcome_type %in% c("competing_risk")){
+              if(length(object@censored) > 0){
+                censoring_str <- paste0("with censoring: ", paste_s(object@censored))
+               
+              } else {
+                censoring_str <- "without censoring"
+              }
+              
+              if(length(object@competing_risk) > 0){
+                competing_risk_str <- paste0(ifelse(length(object@competing_risk) > 1, "competing risks: ", "competing risk: "),
+                                             paste_s(object@competing_risk))
+              } else {
+                competing_risk_str <- "no competing risks"
+              }
+              
+              event_str <- paste0("event: ", paste_s(object@event))
+              
+              # Add to outcome string.
+              outcome_str <- paste0(outcome_str, ", ", censoring_str, "; ", event_str, "; and ", competing_risk_str, ".\n")
+              
+            } else {
+              ..error_no_known_outcome_type(object@outcome_type)
+            }
+            
+            # Print to terminal.
+            cat(paste0(outcome_str))
+          })

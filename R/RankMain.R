@@ -11,7 +11,7 @@ rank.get_vimp_table <- function(run, fs_method, proj_list, file_paths, decluster
   # Try and identify matching data and run ids between vimp_list entries and run$run_table
   # Start at the bottom and try to match.
   for(ii in rev(run$run_table$perturb_level)){
-    run_id_list <- getIterID(run=run, perturb_level=ii)
+    run_id_list <- .get_iteration_identifiers(run=run, perturb_level=ii)
     
     # Check whether there are any matching data and run ids by determining the number of rows in the table after matching
     match_vimp <- sapply(vimp_list, function(iter_vimp, run_id_list) (nrow(iter_vimp$run_table[data_id==run_id_list$data & run_id==run_id_list$run])>0),
@@ -56,10 +56,21 @@ rank.get_vimp_table <- function(run, fs_method, proj_list, file_paths, decluster
 }
 
 
-rank.get_feature_ranks <- function(run=NULL, fs_method=NULL, settings=NULL, proj_list=NULL, file_paths=NULL,
-                                   decluster=FALSE, rank_threshold=NULL, aggregation_method=NULL,
-                                   translation_table=NULL, vimp_table=NULL){
+rank.get_feature_ranks <- function(run=NULL,
+                                   fs_method=NULL,
+                                   settings=NULL,
+                                   proj_list=NULL,
+                                   file_paths=NULL,
+                                   decluster=FALSE,
+                                   rank_threshold=NULL,
+                                   aggregation_method=NULL,
+                                   translation_table=NULL,
+                                   vimp_table=NULL){
 
+  if(is.null(settings)) settings <- get_settings()
+  if(is.null(proj_list)) proj_list <- get_project_list()
+  if(is.null(file_paths)) file_paths <- get_file_paths()
+  
   # Obtain the variable importance table for the current run from the file
   # system.
   if(is.null(vimp_table)){
@@ -394,16 +405,21 @@ rank.consensus_clustering <- function(vimp_table){
     return(cluster_table)
   }
   
+  # Get grouping columns
+  grouping_columns <- c("data_id", "run_id", "model_name")
+  grouping_columns <- intersect(colnames(vimp_table),
+                                grouping_columns)
+  
   # Construct list of tables with co-clustered pairs.
-  co_cluster_list <- lapply(split(vimp_table, by=c("data_id", "run_id")), function(vimp_table){
+  co_cluster_list <- lapply(split(vimp_table, by=c(grouping_columns)), function(vimp_table){
 
     # Find features in the current table
     features <- vimp_table$name
     
     # Check if there are any feature pairs present in the data.
     if(length(features) < 2){
-      return(data.table::data.table("feature_1"=character(0),
-                                    "feature_2"=character(0),
+      return(data.table::data.table("feature_name_1"=character(0),
+                                    "feature_name_2"=character(0),
                                     "is_co_clustered"=logical(0)))
     }
     
@@ -416,8 +432,8 @@ rank.consensus_clustering <- function(vimp_table){
       return(x[combinations[1, ii]] == x[combinations[2, ii]])
     }, combinations=combinations, x=vimp_table$cluster_id)
     
-    co_cluster_table <- data.table::data.table("feature_1"=features[combinations[1, ]],
-                                               "feature_2"=features[combinations[2, ]],
+    co_cluster_table <- data.table::data.table("feature_name_1"=features[combinations[1, ]],
+                                               "feature_name_2"=features[combinations[2, ]],
                                                "is_co_clustered"=is_co_clustered)
     
     return(co_cluster_table)
@@ -442,21 +458,21 @@ rank.consensus_clustering <- function(vimp_table){
   # Summarise data.
   co_cluster_table <- co_cluster_table[, list("n_co_clustered"=sum(is_co_clustered),
                                               "n_total"=.N),
-                                       by=c("feature_1", "feature_2")]
+                                       by=c("feature_name_1", "feature_name_2")]
   
   # Bind with the same table, but with columns inverted. This is done because
   # pairs A and B and B and A are actually the same, but this is not accounted
   # for in the previous table.
   co_cluster_table <- rbind(co_cluster_table,
-                            data.table::data.table("feature_1"=co_cluster_table$feature_2,
-                                                   "feature_2"=co_cluster_table$feature_1,
+                            data.table::data.table("feature_name_1"=co_cluster_table$feature_name_2,
+                                                   "feature_name_2"=co_cluster_table$feature_name_1,
                                                    "n_co_clustered"=co_cluster_table$n_co_clustered,
                                                    "n_total"=co_cluster_table$n_total))
   
   # Summarise data again.
   co_cluster_table <- co_cluster_table[, list("n_co_clustered"=sum(n_co_clustered),
                                               "n_total"=sum(n_total)),
-                                       by=c("feature_1", "feature_2")]
+                                       by=c("feature_name_1", "feature_name_2")]
   
   # Find distance as 1 minus the fraction of co-cluster occurrence. This means
   # that features with pairwise distance 0.0 are always found together, whereas
@@ -466,22 +482,24 @@ rank.consensus_clustering <- function(vimp_table){
   # Drop columns which are now longer used: n_co_clustered, n_total
   co_cluster_table[, ":="("n_co_clustered"=NULL, "n_total"=NULL)]
   
-  # Add in diagonal (feature_1 == feature_2). These always have distance 0.0.
+  # Add in diagonal (feature_name_1 == feature_name_2). These always have distance 0.0.
   co_cluster_table <- rbind(co_cluster_table,
-                            data.table::data.table("feature_1"=features,
-                                                   "feature_2"=features,
+                            data.table::data.table("feature_name_1"=features,
+                                                   "feature_name_2"=features,
                                                    "value"=0.0))
   
   # Remove any duplicate entries introduced by adding the diagonal.
-  co_cluster_table <- co_cluster_table[, list("value"=min(value)), by=c("feature_1", "feature_2")]
+  co_cluster_table <- co_cluster_table[,
+                                       list("value"=min(value)),
+                                       by=c("feature_name_1", "feature_name_2")]
   
   # Create n x n table
   co_cluster_table  <- data.table::dcast(co_cluster_table,
-                                         feature_1 ~ feature_2,
+                                         feature_name_1 ~ feature_name_2,
                                          value.var="value")
   
-  rownames(co_cluster_table) <- co_cluster_table$feature_1
-  co_cluster_table[, "feature_1":=NULL]
+  rownames(co_cluster_table) <- co_cluster_table$feature_name_1
+  co_cluster_table[, "feature_name_1":=NULL]
   
   # Create a distance matrix, and set missing pairs to 1.0.
   co_cluster_table[is.na(co_cluster_table)] <- 1.0

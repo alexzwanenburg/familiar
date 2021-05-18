@@ -58,7 +58,7 @@
                                    signature=settings$data$signature,
                                    exclude_features=settings$data$exclude_features,
                                    include_features=settings$data$include_features,
-                                   other_id_column=settings$data$batch_col,
+                                   other_id_column=c(settings$data$batch_col, settings$data$series_col),
                                    outcome_column=settings$data$outcome_col,
                                    col_type="sample")
     
@@ -75,12 +75,30 @@
                                    signature=settings$data$signature,
                                    exclude_features=settings$data$exclude_features,
                                    include_features=settings$data$include_features,
-                                   other_id_column=settings$data$sample_col,
+                                   other_id_column=c(settings$data$sample_col, settings$data$series_col), 
                                    outcome_column=settings$data$outcome_col,
                                    col_type="batch")
     
     # Remove the batch identifier column from the set of predictors
     predictor_vars <- predictor_vars[!predictor_vars %in% settings$data$batch_col]
+  }
+  
+  
+  #####series_col-------------------------------------------------------
+  if(!is.null(settings$data$series_col)){
+    
+    # Check input
+    .check_input_identifier_column(id_column=settings$data$series_col,
+                                   data=data,
+                                   signature=settings$data$signature,
+                                   exclude_features=settings$data$exclude_features,
+                                   include_features=settings$data$include_features,
+                                   other_id_column=c(settings$data$batch_col, settings$data$sample_col),
+                                   outcome_column=settings$data$outcome_col,
+                                   col_type="series")
+    
+    # Remove the batch identifier column from the set of predictors
+    predictor_vars <- predictor_vars[!predictor_vars %in% settings$data$series_col]
   }
 
   
@@ -90,8 +108,10 @@
     
     # Attempt to determine the outcome_col from the set difference of all features and the union
     # of signature, include_features and exclude_features.
-    outcome_col <- setdiff(predictor_vars, union(union(settings$data$exclude_features, settings$data$include_features),
-                                                 settings$data$signature))
+    outcome_col <- setdiff(predictor_vars, c(settings$data$exclude_features,
+                                             settings$data$include_features,
+                                             settings$data$signature,
+                                             settings$data$novelty_features))
     
     if(length(outcome_col) == 1){
       warning(paste(outcome_col, "was selected as an outcome column. It is recommended",
@@ -118,6 +138,7 @@
   if(length(settings$data$outcome_col) > 2){
     stop(paste("Only one or two (in case of survival endpoints), may be specified"))
   }
+  
   
   #####outcome_type--------------------------------
   if(is.null(settings$data$outcome_type)){
@@ -178,6 +199,24 @@
     }
   }
   
+  #####novelty_features-----------------------------------
+  if(!is.null(settings$data$novelty_features)){
+    # Check for overlap with exclude_features
+    overlap_cols <- intersect(settings$data$novelty_features, settings$data$exclude_features)
+    if(length(overlap_cols) > 0){
+      stop(paste("One or more columns were provided that both appear in novelty_features and",
+                 "among the features that should be removed. There can be no overlap. Found:",
+                 paste0(overlap_cols, collapse=", ")))
+    }
+    
+    # Check if all features in novelty_features appear in the data
+    missing_cols <- settings$data$novelty_features[!settings$data$novelty_features %in% predictor_vars]
+    if(length(missing_cols) > 0){
+      stop(paste("One or more features assigned to novelty_features were not found in the data set:",
+                 paste0(missing_cols, sep=", ")))
+    }
+  }
+  
   #####exclude_features----------------------------
   if(!is.null(settings$data$exclude_features)){
     
@@ -216,11 +255,14 @@
   # Determine which features should go to include_features.
   if(!is.null(settings$data$exclude_features)){
     # Select everything but the features marked for exclusion
-    settings$data$include_features <- setdiff(predictor_vars, settings$data$exclude_features)
+    settings$data$include_features <- setdiff(predictor_vars,
+                                              settings$data$exclude_features)
     
   } else if(!is.null(settings$data$include_features)){
     # Select features marked for inclusion and signature, in so far as these do not overlap.
-    settings$data$include_features <- union(settings$data$include_features, settings$data$signature)
+    settings$data$include_features <- unique(c(settings$data$include_features,
+                                               settings$data$signature,
+                                               settings$data$novelty_features))
     
   } else {
     # Select all available predictor variables.
@@ -233,8 +275,8 @@
   if(is.null(settings$data$outcome_name) & !settings$data$outcome_type %in% c("survival", "competing_risk")){
     settings$data$outcome_name <- settings$data$outcome_col[1]
     
-  } else if(is.null(settings$data$outcome)){
-    settings$data$outcome_name <- character(0L)
+  } else if(is.null(settings$data$outcome_name)){
+    settings$data$outcome_name <- "outcome"
   }
   
   return(settings)
@@ -269,7 +311,7 @@
   }
   
   # Determine the available batch identifiers
-  available_batch_ids <- unique(data$cohort_id)
+  available_batch_ids <- unique(data[[get_id_columns(single_column="batch")]])
   
   # Determine what happens if batch identifiers are not specified for both
   # development and validation.
@@ -735,6 +777,10 @@
   } else {
     settings$data$competing_risk_indicator <- NULL
   }
+  
+  # Make sure that columns are organised as time, event
+  time_column <- setdiff(settings$data$outcome_col, event_column)
+  settings$data$outcome_col <- c(time_column, event_column)
   
   return(settings)
 }

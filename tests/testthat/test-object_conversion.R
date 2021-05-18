@@ -26,7 +26,7 @@ testthat::test_that("Conversion of multiple familiarModel objects to familiarEns
 testthat::test_that("Conversion of single familiarModel to familiarData works", {
   testthat::expect_s4_class(familiar::as_familiar_data(object=fam_model,
                                                        data=data,
-                                                       compute_ensemble_ci=FALSE,
+                                                       estimation_type="point",
                                                        verbose=FALSE),
                             "familiarData")
 })
@@ -34,7 +34,7 @@ testthat::test_that("Conversion of single familiarModel to familiarData works", 
 testthat::test_that("Conversion of multiple familiarModel objects to familiarData works", {
   testthat::expect_s4_class(familiar::as_familiar_data(object=list(fam_model, fam_model),
                                                        data=data,
-                                                       compute_ensemble_ci=FALSE,
+                                                       estimation_type="point",
                                                        verbose=FALSE),
                             "familiarData")
 })
@@ -42,7 +42,7 @@ testthat::test_that("Conversion of multiple familiarModel objects to familiarDat
 testthat::test_that("Conversion of single familiarModel to familiarCollection works", {
   testthat::expect_s4_class(familiar::as_familiar_collection(object=fam_model,
                                                              data=data,
-                                                             compute_ensemble_ci=FALSE,
+                                                             estimation_type="point",
                                                              verbose=FALSE),
                             "familiarCollection")
 })
@@ -50,7 +50,7 @@ testthat::test_that("Conversion of single familiarModel to familiarCollection wo
 testthat::test_that("Conversion of multiple familiarModel objects to familiarCollection works", {
   testthat::expect_s4_class(familiar::as_familiar_collection(object=list(fam_model, fam_model),
                                                              data=data,
-                                                             compute_ensemble_ci=FALSE,
+                                                             estimation_type="point",
                                                              verbose=FALSE),
                             "familiarCollection")
 })
@@ -71,7 +71,7 @@ testthat::test_that("Conversion of multiple familiarEnsemble objects to familiar
 testthat::test_that("Conversion of familiarEnsemble to familiarData works", {
   testthat::expect_s4_class(familiar::as_familiar_data(object=fam_ensemble,
                                                        data=data,
-                                                       compute_ensemble_ci=FALSE,
+                                                       estimation_type="point",
                                                        verbose=FALSE),
                             "familiarData")
 })
@@ -83,7 +83,7 @@ testthat::test_that("Conversion of multiple familiarEnsemble objects to familiar
 testthat::test_that("Conversion of familiarEnsemble to familiarCollection works", {
   testthat::expect_s4_class(familiar::as_familiar_collection(object=fam_ensemble,
                                                              data=data,
-                                                             compute_ensemble_ci=FALSE,
+                                                             estimation_type="point",
                                                              verbose=FALSE),
                             "familiarCollection")
 })
@@ -97,10 +97,10 @@ testthat::test_that("Conversion of multiple familiarEnsemble objects to familiar
 
 # Create familiarData from fam_model objects.
 fam_data_1 <- familiar::as_familiar_data(object=list(fam_model, fam_model),
-                                         compute_ensemble_ci=FALSE,
+                                         estimation_type="point",
                                          data=data)
 fam_data_2 <- familiar::as_familiar_data(object=list(fam_model, fam_model),
-                                         compute_ensemble_ci=FALSE,
+                                         estimation_type="point",
                                          data=data)
 
 testthat::test_that("Conversion of familiarData to familiarEnsemble fails", {

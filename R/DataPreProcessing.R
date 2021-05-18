@@ -12,7 +12,7 @@ get_feature_info_file <- function(file_paths, project_id){
 get_feature_info_list <- function(run){
   
   # Find pre-processing control element for the current run
-  pre_proc_id_list <- getPreprocessingID(run=run)
+  pre_proc_id_list <- .get_preprocessing_iteration_identifiers(run=run)
   
   # Load feature info list from backend
   feature_info_list <- get_feature_info_from_backend(data_id=pre_proc_id_list$data,
@@ -29,13 +29,16 @@ check_pre_processing <- function(cl, data_id, file_paths, project_id){
                                                      run_id=waiver())
   
   # Identify the data_id for pre-processing
-  pre_process_data_id <- getPreprocessingID(run=getRunList(iter_list=get_project_list()$iter_list, data_id=data_id, run_id=1))$data
+  pre_process_data_id <- .get_preprocessing_iteration_identifiers(run=.get_run_list(iteration_list=get_project_list()$iter_list,
+                                                                                    data_id=data_id,
+                                                                                    run_id=1))$data
   
   # Find the iteration list
-  iter_list <- getRunList(iter_list=get_project_list()$iter_list, data_id=pre_process_data_id)
+  iteration_list <- .get_run_list(iteration_list=get_project_list()$iter_list,
+                                  data_id=pre_process_data_id)
   
   # Determine all available runs
-  all_runs <- names(iter_list)
+  all_runs <- names(iteration_list)
   
   # Determine file name
   feature_info_file <- get_feature_info_file(file_paths=file_paths, project_id=project_id)
@@ -47,14 +50,14 @@ check_pre_processing <- function(cl, data_id, file_paths, project_id){
     list_name <- .get_feature_info_list_name(data_id=pre_process_data_id, run_id=run_id)
     
     # Determine if the pre-processing data has already been stored
-    if(!is.null(feature_info_list[[list_name]])){
-      next()
-    }
+    if(!is.null(feature_info_list[[list_name]])) next()
     
     logger.message(paste0("\nPre-processing: Starting preprocessing for run ", run_id, " of ", length(all_runs), "."))
     
     # Find pre-processing parameters
-    feature_info_list[[list_name]] <- determine_pre_processing_parameters(cl=cl, data_id=pre_process_data_id, run_id=run_id)
+    feature_info_list[[list_name]] <- determine_pre_processing_parameters(cl=cl,
+                                                                          data_id=pre_process_data_id,
+                                                                          run_id=run_id)
 
     # Write to file
     saveRDS(feature_info_list, file=feature_info_file)
@@ -75,33 +78,44 @@ determine_pre_processing_parameters <- function(cl, data_id, run_id){
   feature_info_list <- get_feature_info_from_backend()
   
   # Add workflow control info
-  feature_info_list  <- add_control_info(feature_info_list=feature_info_list, data_id=data_id, run_id=run_id)
+  feature_info_list <- add_control_info(feature_info_list=feature_info_list, data_id=data_id, run_id=run_id)
   
   # Add signature feature info
-  feature_info_list  <- add_signature_info(feature_info_list=feature_info_list, signature=settings$data$signature)
+  feature_info_list <- add_signature_info(feature_info_list=feature_info_list, signature=settings$data$signature)
 
+  # Add novelty feature info
+  feature_info_list <- add_novelty_info(feature_info_list=feature_info_list,
+                                        novelty_features=settings$data$novelty_features)
+  
   # Find the run list
-  run_list     <- getRunList(iter_list=get_project_list()$iter_list, data_id=data_id, run_id=run_id)
-  run_subj_id  <- unique(getSubjectIDs(run=run_list, train_or_validate="train"))
-
+  run_list <- .get_run_list(iteration_list=get_project_list()$iter_list,
+                            data_id=data_id,
+                            run_id=run_id)
+  
+  # Select unique samples
+  sample_identifiers <- .get_sample_identifiers(run=run_list,
+                                                train_or_validate="train")
+  sample_identifiers <- unique(sample_identifiers)
+  
   # Find currently available features
   available_features <- get_available_features(feature_info_list=feature_info_list)
 
   # Create a dataObject
-  data_obj <- methods::new("dataObject",
-                           data=get_data_from_backend(sample_identifiers=run_subj_id),
-                           preprocessing_level="none",
-                           outcome_type=settings$data$outcome_type)
+  data <- methods::new("dataObject",
+                       data = get_data_from_backend(sample_identifiers=sample_identifiers),
+                       preprocessing_level = "none",
+                       outcome_type = settings$data$outcome_type)
   
   # Remove unavailable features from the data object.
-  data_obj <- filter_features(data=data_obj, available_features=available_features)
+  data <- filter_features(data=data,
+                          available_features=available_features)
   
   # Unload cluster locally, if it is not required
   if(!settings$prep$do_parallel) cl <- NULL 
   
   return(.determine_preprocessing_parameters(cl=cl,
-                                             data=data_obj,
-                                             feature_info_list = feature_info_list,
+                                             data=data,
+                                             feature_info_list=feature_info_list,
                                              settings=settings,
                                              verbose=TRUE))
 }
@@ -119,7 +133,7 @@ determine_pre_processing_parameters <- function(cl, data_id, run_id){
   
   ##### Remove samples with missing outcome data #####
   if(verbose){
-    n_samples_current <- uniqueN(data@data, by=c("subject_id", "cohort_id"))
+    n_samples_current <- data.table::uniqueN(data@data, by=get_id_columns(id_depth="sample"))
     logger.message(paste0("Pre-processing: ", n_samples_current, " samples were initially available."))
   }
   
@@ -128,7 +142,7 @@ determine_pre_processing_parameters <- function(cl, data_id, run_id){
   if(is_empty(data)) stop("The provided training dataset lacks outcome data.")
   
   if(verbose){
-    n_samples_remain <- uniqueN(data@data, by=c("subject_id", "cohort_id"))
+    n_samples_remain <- data.table::uniqueN(data@data, by=get_id_columns(id_depth="sample"))
     
     n_samples_removed <- n_samples_current - n_samples_remain
     logger.message(paste0("Pre-processing: ", n_samples_removed,
@@ -178,7 +192,7 @@ determine_pre_processing_parameters <- function(cl, data_id, run_id){
   
   # Message how many subjects were removed
   if(verbose){
-    n_samples_remain <- uniqueN(data@data, by=c("subject_id", "cohort_id"))
+    n_samples_remain <- data.table::uniqueN(data@data, by=get_id_columns(id_depth="sample"))
     logger.message(paste0("Pre-processing: ", n_samples_current-n_samples_remain,
                           " samples were removed because of missing feature data. ",
                           n_samples_remain, " samples remain."))

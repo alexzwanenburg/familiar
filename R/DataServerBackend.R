@@ -48,7 +48,16 @@
     ..error_reached_unreachable_code(".get_selected_backend_type: backend_type was not found in familiar_global_env or .GlobalEnv")
   }
   
-  return(get("backend_type", envir=data_env))
+  backend_type <- tryCatch(get("backend_type", envir=data_env),
+                           error=identity)
+  
+  if(inherits(backend_type, "error")){
+    .assign_backend_options_to_global(backend_type="none",
+                                      server_port=NULL)
+    backend_type <- "none"
+  }
+  
+  return(backend_type)
 }
 
 
@@ -181,7 +190,7 @@ get_data_from_backend <- function(backend_type=NULL, server_port=NULL, sample_id
   # This is the support function that operates on the processes 
   
   # Suppress NOTES due to non-standard evaluation in data.table
-  subject_id <- NULL
+  .NATURAL <- NULL
   
   # Identify the environment where the master_data object lives.
   if(exists("familiar_global_env")){
@@ -210,11 +219,11 @@ get_data_from_backend <- function(backend_type=NULL, server_port=NULL, sample_id
     
   } else if(!is.null(sample_identifiers) & is.null(column_names)){
     # Get entire rows from the dataset.
-    x <- data.table::copy(get("master_data", envir=data_env)[subject_id %in% sample_identifiers])
+    x <- data.table::copy(get("master_data", envir=data_env)[sample_identifiers, on=.NATURAL])
     
   } else {
     # Get certain columns and rows from the dataset.
-    x <- data.table::copy(get("master_data", envir=data_env)[subject_id %in% sample_identifiers, mget(column_names)])
+    x <- data.table::copy(get("master_data", envir=data_env)[sample_identifiers, mget(column_names), on=.NATURAL])
   }
   
   return(x)

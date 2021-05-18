@@ -3,113 +3,61 @@
 }
 
 
-.compute_bootstrap_ci <- function(x0, xb, target_column, bootstrap_ci_method="bc",
-                                  additional_splitting_variable=NULL,
-                                  confidence_level=0.95,
-                                  cl=NULL,
-                                  verbose=FALSE,
-                                  message_indent=0L){
+
+
+..bootstrap_ci <- function(x, x_0=NULL, confidence_level=NULL, percentiles=NULL, bootstrap_ci_method="percentile", ...){
   
-  # Suppress NOTES due to non-standard evaluation in data.table
-  bootstrap_id <- NULL
-  
-  # Perform some simple consistency checks.
-  if(is_empty(x0)) return(x0)
-  if(is_empty(xb)) return(x0)
-  
-  if(!(data.table::is.data.table(x0) & data.table::is.data.table(xb))){
-    ..error_reached_unreachable_code(".compute_bootstrap_ci: both x0 and xb should be data.tables.")
+  # Test confidence level
+  if(!is.null(confidence_level)){
+    if(confidence_level >= 1.0){
+      stop("A 100% confidence interval does not exist.")
+    } else if(confidence_level <= 0.0){
+      stop("The confidence interval cannot be smaller than 0.")
+    }
+    
+    # Compute percentiles from confidence level, and add the median.
+    percentiles <- c(0.5,
+                     (1.0 - confidence_level) / 2.0,
+                     1.0 - (1.0 - confidence_level) / 2.0)
   }
   
-  if(!target_column %in% colnames(x0) | !target_column %in% colnames(xb)){
-    ..error_reached_unreachable_code(".compute_bootstrap_ci: target column does not appear in the data.tables.")
-  }
-  
-  if(!is.null(additional_splitting_variable)){
-    if(!all(additional_splitting_variable %in% colnames(x0))){
-      ..error_reached_unreachable_code(".compute_bootstrap_ci: not all splitting variables were found in the x0 data.table.")
+  if(!is.null(percentiles)){
+    if(any(percentiles > 1.0)){
+      stop("Percentiles cannot be greater than 1.")
+    } else if(any(percentiles < 0.0)){
+      stop("Percentiles cannot be smaller than 0.")
     }
   }
   
-  if(verbose){
-    logger.message(paste0("Computing ", 100 * confidence_level, "% bootstrap intervals using the ",
-                          bootstrap_ci_method, " method."),
-                   indent=message_indent)
+  if(is.null(confidence_level) & is.null(percentiles)) ..error_reached_unreachable_code("..bootstrap_ic: confidence_interval and percentiles arguments cannot both be NULL.")
+  
+  # For values that are not numeric, return mode. Note that the name "median" is
+  # used for compatibility purposes.
+  if(!is.numeric(x)) return(list("median"=get_mode(x)))
+  
+  # Set up percentile names.
+  if(!is.null(confidence_level)){
+    # When a confidence level is provided, use standard naming.
+    percentile_names <- c("median", "ci_low", "ci_up")
+    
+  } else {
+    # Select unique percentiles as a precaution.
+    percentiles <- unique(percentiles)
+    
+    # When confidence intervals are not provided, use naming based on the
+    # percentiles. Determine the number of decimal digits that should be used to
+    # parse the numbers (minimum 2).
+    percentile_names_digits <- nchar(sub(".*\\.", "", percentiles))
+    percentile_names_digits <- max(c(percentile_names_digits, 2))
+    
+    # Set percentile names by passing them through the column name
+    # checker.
+    percentile_names <- check_column_name(paste0("q_", format(percentiles, nsmall=percentile_names_digits)))
   }
   
-  # Set splitting variables.
-  splitting_variables <- c("data_set", "learner", "fs_method", "pos_class", "eval_time", "evaluation_time", additional_splitting_variable)
-  
-  # Add a bootstrap_id column to facilitate merger with bootstrap data.
-  x0[, "bootstrap_id":=0L]
-  
-  # Combine datasets.
-  data <- data.table::rbindlist(list(x0, xb), use.names=TRUE)
-  
-  # Select only splitting variables that appear in data.
-  splitting_variables <- intersect(colnames(data), splitting_variables)
-  
-  # Split the data and compute confidence intervals.
-  data <- fam_lapply(cl=cl,
-                     X=split(data, by=splitting_variables, keep.by=TRUE),
-                     FUN=function(data, target_column, confidence_level, bootstrap_ci_method){
-                       
-                       # Check that the split contains any data.
-                       if(is_empty(data)) return(NULL)
-                       
-                       # Select point estimate and bootstrap estimates.
-                       x0 <- data[bootstrap_id == 0, ][[target_column]]
-                       xb <- data[bootstrap_id != 0, ][[target_column]]
-                       
-                       if(length(x0) != 1) ..error_reached_unreachable_code(".compute_bootstrap_ci: no, or more than one point estimate in split.")
-                       
-                       # Compute bootstrap confidence interval for the current
-                       # split.
-                       ci_data <- ..bootstrap_ci(x=xb,
-                                                 x_0=x0,
-                                                 confidence_level=confidence_level,
-                                                 bootstrap_ci_method=bootstrap_ci_method)
-                       
-                       # Make a copy and drop the bootstrap_id column.
-                       output_data <- data.table::copy(data[bootstrap_id == 0, ])[, "bootstrap_id":=NULL]
-                       
-                       # Replace the value in the target column by the median in
-                       # ci_data.
-                       output_data[, (target_column):=ci_data$median]
-                       
-                       # Add confidence interval boundaries.
-                       output_data[, ":="("ci_low"=ci_data$ci_low,
-                                          "ci_up"=ci_data$ci_up)]
-                       
-                       return(output_data)
-                     },
-                     target_column=target_column,
-                     confidence_level=confidence_level,
-                     bootstrap_ci_method=bootstrap_ci_method,
-                     progress_bar=verbose)
-  
- 
-  # Combine into a single dataset
-  data <- data.table::rbindlist(data, use.names=TRUE)
-  
-  return(data)
-}
-
-
-
-..bootstrap_ci <- function(x, x_0=NULL, confidence_level=0.95, bootstrap_ci_method="percentile"){
-  
-  # Test significance level alpha.
-  if(confidence_level >= 1.0){
-    stop("A 100% confidence interval does not exist.")
-  } else if(confidence_level <= 0.0){
-    stop("The confidence interval cannot be smaller than 0.")
-  }
-  
-  # Define empty summary list.
-  empty_list <- list("median"=NA_real_,
-                     "ci_low"=NA_real_,
-                     "ci_up"=NA_real_)
+  # Create an empty list.
+  empty_list <- as.list(rep(NA_real_, length(percentile_names)))
+  names(empty_list) <- percentile_names
   
   # Select finite values.
   x <- x[is.finite(x)]
@@ -122,18 +70,13 @@
   if(bootstrap_ci_method == "percentile"){
     # Follows the percentile method of Efron, B. & Hastie, T. Computer Age
     # Statistical Inference. (Cambridge University Press, 2016).
-    
-    # Define percentiles based on the alpha level..
-    percentiles <- c((1.0 - confidence_level) / 2.0,
-                     1.0 - (1.0 - confidence_level) / 2.0)
-    
+   
     # Compute percentiles within the data set
     percentile_values <- stats::quantile(x, probs=percentiles, names=FALSE)
     
     # Generate a summary list
-    summary_list <- list("median"=stats::median(x),
-                         "ci_low"=percentile_values[1],
-                         "ci_up"=percentile_values[2])
+    summary_list <- as.list(percentile_values)
+    names(summary_list) <- percentile_names
     
   } else if(bootstrap_ci_method == "bc"){
     # Follows the bias-corrected (BC) method of Efron, B. & Hastie, T. Computer
@@ -154,35 +97,66 @@
       summary_list <- ..bootstrap_ci(x=x,
                                      x_0=x_0,
                                      confidence_level=confidence_level,
+                                     percentiles=percentiles,
                                      bootstrap_ci_method="percentile")
       
-      # Replace the median in the list by the point estimate.
-      summary_list$median <- x_0
-      
-      # Check boundary issues where the point estimate lays outside the
-      # confidence interval.
-      if(x_0 < summary_list$ci_low) summary_list$ci_low <- x_0
-      if(x_0 > summary_list$ci_up) summary_list$ci_up <- x_0
-  
       return(summary_list)
     }
     
+    # Add median in case its missing
+    if(!is.null(confidence_level))
+    
     # Define the z-statistic for bounds of the confidence interval.
-    z_alpha <- stats::qnorm(c((1.0 - confidence_level) / 2.0,
-                              1.0 - (1.0 - confidence_level) / 2.0))
+    z_alpha <- stats::qnorm(percentiles)
     
     # Define bias-corrected percentiles.
-    percentiles <- stats::pnorm((2.0 * z_0 + z_alpha))
+    bc_percentiles <- stats::pnorm((2.0 * z_0 + z_alpha))
     
     # Compute percentiles within the data set
-    percentile_values <- stats::quantile(x, probs=percentiles, names=FALSE)
+    percentile_values <- stats::quantile(x, probs=bc_percentiles, names=FALSE)
     
     # Generate a summary list
-    summary_list <- list("median"=x_0,
-                         "ci_low"=percentile_values[1],
-                         "ci_up"=percentile_values[2])
+    summary_list <- as.list(percentile_values)
+    names(summary_list) <- percentile_names
   }
   
+  return(summary_list)
+}
+
+
+..bootstrap_bias_correction <- function(x){
+  
+  # Define empty summary list.
+  empty_list <- list("median"=NA_real_)
+  
+  # Select finite values.
+  x <- x[is.finite(x)]
+  
+  if(length(x) == 0) return(empty_list)
+  
+  # Compute the median value over the bootstraps.
+  if(is.numeric(x)){
+    summary_list <- list("median" = stats::median(x))
+    
+  } else if(is.ordered(x)){
+    # Determine the mean average risk group. This requires discretisation
+    # as rounding toward the nearest group would overinflate center groups.
+    x_levels <- levels(x)
+    n <- length(x)
+    
+    # Discretise bins floor((mu - 1) / ((n-1) / n)) + 1. See fixed bin size
+    # discretisation.
+    x_num <- floor(n * (mean(as.numeric(x), na.rm=TRUE) - 1) / (n - 1)) + 1
+    
+    # Check if the x_num still falls within the range.
+    x_num <- ifelse(x_num > n, n, x_num)
+    
+    # Re-encode and add to list.
+    summary_list <- list("median" = factor(x_levels[x_num], levels=x_levels, ordered=TRUE))
+    
+  } else {
+    summary_list <- list("median" = get_mode(x))
+  }
   
   return(summary_list)
 }

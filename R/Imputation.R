@@ -159,7 +159,8 @@ impute.add_lasso_imputation_info <- function(cl=NULL, feature_info_list, data_ob
                            progress_bar=verbose,
                            feature_info_list=feature_info_list,
                            data_obj=data_obj,
-                           uncensored_data_obj=uncensored_data_obj)
+                           uncensored_data_obj=uncensored_data_obj,
+                           chopchop=TRUE)
     
     # Set names of the update object list
     names(upd_list) <- feature_columns
@@ -276,7 +277,8 @@ impute.impute_lasso <- function(cl=NULL, feature_info_list, data_obj, uncensored
                                  progress_bar=FALSE,
                                  data_obj=data_obj,
                                  uncensored_data_obj=uncensored_data_obj,
-                                 feature_info_list=feature_info_list)
+                                 feature_info_list=feature_info_list,
+                                 chopchop=TRUE)
   
   # Set replacement names
   names(replacement_list) <- censored_features
@@ -331,7 +333,8 @@ impute.add_simple_imputation_info <- function(cl=NULL, feature_info_list, data_o
                          FUN=.add_info,
                          progress_bar=verbose,
                          feature_info_list=feature_info_list,
-                         data_obj=data_obj)
+                         data_obj=data_obj,
+                         chopchop=TRUE)
   
   # Set names of the update object list
   names(upd_list) <- feature_columns
@@ -383,7 +386,8 @@ impute.impute_simple <- function(cl=NULL, data_obj, feature_info_list, censored_
                                  FUN=.get_imputed_values,
                                  progress_bar=FALSE,
                                  data_obj=data_obj,
-                                 feature_info_list=feature_info_list)
+                                 feature_info_list=feature_info_list,
+                                 chopchop=TRUE)
   
   # Set replacement names
   names(replacement_list) <- censored_features

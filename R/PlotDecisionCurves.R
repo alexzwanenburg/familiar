@@ -25,9 +25,9 @@ NULL
 #'@details This function generates plots for decision curves.
 #'
 #'  Available splitting variables are: `fs_method`, `learner`, `data_set` and
-#'  `pos_class` (categorical outcomes) or `evaluation_time` (survival outcomes).
+#'  `positive_class` (categorical outcomes) or `evaluation_time` (survival outcomes).
 #'  By default, the data is split by `fs_method` and `learner`, with faceting by
-#'  `data_set` and colouring by `pos_class` or `evaluation_time`.
+#'  `data_set` and colouring by `positive_class` or `evaluation_time`.
 #'
 #'  Available palettes for `discrete_palette` are those listed by
 #'  `grDevices::palette.pals()` (requires R >= 4.0.0), `grDevices::hcl.pals()`
@@ -196,17 +196,34 @@ setMethod("plot_decision_curve", signature(object="familiarCollection"),
                    units=waiver(),
                    ...){
 
+            # Suppress NOTES due to non-standard evaluation in data.table
+            curve_type <- ci_low <- ci_up <- net_benefit <- NULL
+            
             # Get input data.
-            x <- export_decision_curve_analysis_data(object=object, export_raw=FALSE)
+            x <- export_decision_curve_analysis_data(object=object, aggregate_results=TRUE)
             
-            # Check for empty data
-            if(is.null(x)) return(NULL)
-            if(is_empty(x$ensemble)) return(NULL)
-            if(is_empty(x$ensemble$data)) return(NULL)
-            if(is_empty(x$ensemble$intervention_all)) return(NULL)
+            # Check that the data are not empty.
+            if(is_empty(x)) return(NULL)
             
-            # Extract the data for the ensemble.
-            x <- x$ensemble
+            # Check that the data are not evaluated at the model level.
+            if(all(sapply(x, function(x) (x@detail_level == "model")))){
+              ..warning_no_comparison_between_models()
+              return(NULL)
+            }
+            
+            # Obtain data element from list.
+            if(is.list(x)){
+              if(is_empty(x)) return(NULL)
+              
+              if(length(x) > 1) ..error_reached_unreachable_code("plot_decision_curve: list of data elements contains unmerged elements.")
+              
+              # Get x directly.
+              x <- x[[1]]
+            }
+            
+            # Check that the data are not empty.
+            if(is_empty(x)) return(NULL)
+            
             
             ##### Check input arguments ------------------------------------------------
 
@@ -238,19 +255,19 @@ setMethod("plot_decision_curve", signature(object="familiarCollection"),
             
             # Set the style of the confidence interval to none, in case no
             # confidence interval data is present.
-            if(is_empty(x$data$ci_low) | is_empty(x$data$ci_up)) conf_int_style <- "none"
+            if(!x@estimation_type %in% c("bci", "bootstrap_confidence_interval")) conf_int_style <- "none"
 
             # y_range
             if(is.null(y_range)){
               if(conf_int_style != "none"){
                 # Base the y-range on the confidence intervals.
-                y_range <- c(min(x$data$ci_low[is.finite(x$data$ci_low)]),
-                             max(x$data$ci_up[is.finite(x$data$ci_up)]))
+                y_range <- c(min(x@data[curve_type == "model" & is.finite(ci_low)]$ci_low),
+                             max(x@data[curve_type == "model" & is.finite(ci_up)]$ci_up))
                 
               } else {
                 # Base the y-range on the range of the benefit.
-                y_range <- c(min(c(0.0, min(x$data$net_benefit[is.finite(x$data$net_benefit)]))),
-                             max(c(0.0, max(x$data$net_benefit[is.finite(x$data$net_benefit)]))))
+                y_range <- c(min(c(0.0, min(x@data[curve_type == "model" & is.finite(net_benefit)]$net_benefit))),
+                             max(c(0.0, max(x@data[curve_type == "model" & is.finite(net_benefit)]$net_benefit))))
               }
             }
             
@@ -270,7 +287,7 @@ setMethod("plot_decision_curve", signature(object="familiarCollection"),
             }
 
             if(object@outcome_type %in% c("binomial", "multinomial")){
-              split_variable <- "pos_class"
+              split_variable <- "positive_class"
               
             } else if(object@outcome_type %in% c("survival")){
               split_variable <- "evaluation_time"
@@ -282,17 +299,17 @@ setMethod("plot_decision_curve", signature(object="familiarCollection"),
             # Splitting variables
             if(is.null(split_by) & is.null(facet_by) & is.null(color_by)){
               # Determine the number of learners and feature_selection methods.
-              n_learner <- nlevels(x$data$learner)
-              n_fs_method <- nlevels(x$data$fs_method)
+              n_learner <- nlevels(x@data$learner)
+              n_fs_method <- nlevels(x@data$fs_method)
               
               if(object@outcome_type %in% c("multinomial")){
-                n_class_or_time <- nlevels(x$data$pos_class)
+                n_class_or_time <- nlevels(x@data$positive_class)
                 
               } else if(object@outcome_type %in% c("binomial")){
                 n_class_or_time <- 1L
               
               } else if(object@outcome_type %in% c("survival")){
-                n_class_or_time <- data.table::uniqueN(x$data, by="evaluation_time")
+                n_class_or_time <- nlevels(x@data$evaluation_time)
                 
               } else {
                 ..error_outcome_type_not_implemented(object@outcome_type)
@@ -353,7 +370,7 @@ setMethod("plot_decision_curve", signature(object="familiarCollection"),
             }
             
             # Check splitting variables and generate sanitised output
-            split_var_list <- plotting.check_data_handling(x=x$data,
+            split_var_list <- plotting.check_data_handling(x=x@data,
                                                            split_by=split_by,
                                                            color_by=color_by,
                                                            facet_by=facet_by,
@@ -385,20 +402,12 @@ setMethod("plot_decision_curve", signature(object="familiarCollection"),
             
             ##### Create plots ---------------------------------------------------------
             
-            # Combine the data with intervention data before splitting
-            intervention_data <- x$intervention_all
-            data.table::setnames(intervention_data, old="net_benefit", new="intervention_all")
-            
-            x <- merge(x=x$data,
-                       y=intervention_data,
-                       by=setdiff(colnames(intervention_data), "intervention_all"))
-            
             # Split data
             if(!is.null(split_by)){
-              x_split <- split(x, by=split_by)
+              x_split <- split(x@data, by=split_by)
               
             } else {
-              x_split <- list("null.name"=x)
+              x_split <- list("null.name"=x@data)
             }
             
             # Store plots to list in case dir_path is absent.
@@ -500,6 +509,9 @@ setMethod("plot_decision_curve", signature(object="familiarCollection"),
                                  conf_int_style,
                                  conf_int_alpha){
   
+  # Suppress NOTES due to non-standard evaluation in data.table
+  curve_type <- NULL
+  
   # Generate a guide table.
   guide_list <- plotting.create_guide_table(x=x, color_by=color_by,
                                             discrete_palette=discrete_palette)
@@ -508,8 +520,9 @@ setMethod("plot_decision_curve", signature(object="familiarCollection"),
   x <- guide_list$data
   
   # Create basic plot
-  p <- ggplot2::ggplot(data=x, mapping=ggplot2::aes(x=!!sym("threshold_probability"),
-                                                    y=!!sym("net_benefit")))
+  p <- ggplot2::ggplot(data=x[curve_type == "model"],
+                       mapping=ggplot2::aes(x=!!sym("threshold_probability"),
+                                            y=!!sym("net_benefit")))
   
   # Add theme
   p <- p + ggtheme
@@ -521,7 +534,9 @@ setMethod("plot_decision_curve", signature(object="familiarCollection"),
     p <- p + ggplot2::geom_line()
     
     # Intervention for all.
-    p <- p + ggplot2::geom_line(mapping=ggplot2::aes(y=!!sym("intervention_all")))
+    p <- p + ggplot2::geom_line(data=x[curve_type == "intervention_all"],
+                                mapping=ggplot2::aes(x=!!sym("threshold_probability"),
+                                                     y=!!sym("net_benefit")))
     
     # Intervention for none.
     p <- p + ggplot2::geom_hline(yintercept=0.0)
@@ -531,7 +546,10 @@ setMethod("plot_decision_curve", signature(object="familiarCollection"),
     p <- p + ggplot2::geom_line(mapping=ggplot2::aes(colour=!!sym("color_breaks")))
     
     # Intervention for all.
-    p <- p + ggplot2::geom_line(mapping=ggplot2::aes(y=!!sym("intervention_all"),
+    # Intervention for all.
+    p <- p + ggplot2::geom_line(data=x[curve_type == "intervention_all"],
+                                mapping=ggplot2::aes(x=!!sym("threshold_probability"),
+                                                     y=!!sym("net_benefit"),
                                                      colour=!!sym("color_breaks")))
     
     # Intervention for none.
@@ -555,23 +573,39 @@ setMethod("plot_decision_curve", signature(object="familiarCollection"),
   # Plot confidence intervals
   if(conf_int_style[1]!="none"){
     if(conf_int_style[1] == "step"){
-      p <- p + ggplot2::geom_step(mapping=ggplot2::aes(y=!!sym("ci_low"),
-                                                       colour=!!sym("color_breaks")),
-                                  linetype="dashed")
+      if(is.null(color_by)){
+        p <- p + ggplot2::geom_step(mapping=ggplot2::aes(y=!!sym("ci_low")),
+                                    linetype="dashed")
+        
+        p <- p + ggplot2::geom_step(mapping=ggplot2::aes(y=!!sym("ci_up")),
+                                    linetype="dashed")
+        
+      } else {
+        p <- p + ggplot2::geom_step(mapping=ggplot2::aes(y=!!sym("ci_low"),
+                                                         colour=!!sym("color_breaks")),
+                                    linetype="dashed")
+        
+        p <- p + ggplot2::geom_step(mapping=ggplot2::aes(y=!!sym("ci_up"),
+                                                         colour=!!sym("color_breaks")),
+                                    linetype="dashed")
+      }
       
-      p <- p + ggplot2::geom_step(mapping=ggplot2::aes(y=!!sym("ci_up"),
-                                                       colour=!!sym("color_breaks")),
-                                  linetype="dashed")
       
       # Remove linetype from the legend.
       p <- p + ggplot2::scale_linetype(guide=FALSE)
       
     } else if(conf_int_style[1] == "ribbon"){
-      
-      p <- p + ggplot2::geom_ribbon(mapping=ggplot2::aes(ymin=!!sym("ci_low"),
-                                                         ymax=!!sym("ci_up"),
-                                                         fill=!!sym("color_breaks")),
-                                    alpha=conf_int_alpha)
+      if(is.null(color_by)){
+        p <- p + ggplot2::geom_ribbon(mapping=ggplot2::aes(ymin=!!sym("ci_low"),
+                                                           ymax=!!sym("ci_up")),
+                                      alpha=conf_int_alpha)
+        
+      } else {
+        p <- p + ggplot2::geom_ribbon(mapping=ggplot2::aes(ymin=!!sym("ci_low"),
+                                                           ymax=!!sym("ci_up"),
+                                                           fill=!!sym("color_breaks")),
+                                      alpha=conf_int_alpha)
+      }
     }
   }
   
@@ -580,18 +614,29 @@ setMethod("plot_decision_curve", signature(object="familiarCollection"),
   p <- p + ggplot2::scale_y_continuous(breaks=y_breaks, limits=y_range)
   
   # Labels
-  p <- p + ggplot2::labs(x=x_label, y=y_label, title=plot_title, subtitle=plot_sub_title, caption=caption)
+  p <- p + ggplot2::labs(x=x_label,
+                         y=y_label,
+                         title=plot_title,
+                         subtitle=plot_sub_title,
+                         caption=caption)
   
   # Determine how things are faceted.
-  facet_by_list <- plotting.parse_facet_by(x=x, facet_by=facet_by, facet_wrap_cols=facet_wrap_cols)
+  facet_by_list <- plotting.parse_facet_by(x=x,
+                                           facet_by=facet_by,
+                                           facet_wrap_cols=facet_wrap_cols)
   
   if(!is.null(facet_by)){
     if(is.null(facet_wrap_cols)){
       # Use a grid
-      p <- p + ggplot2::facet_grid(rows=facet_by_list$facet_rows, cols=facet_by_list$facet_cols, labeller="label_context", drop=TRUE)
+      p <- p + ggplot2::facet_grid(rows=facet_by_list$facet_rows,
+                                   cols=facet_by_list$facet_cols,
+                                   labeller="label_context",
+                                   drop=TRUE)
       
     } else {
-      p <- p + ggplot2::facet_wrap(facets=facet_by_list$facet_by, labeller="label_context", drop=TRUE)
+      p <- p + ggplot2::facet_wrap(facets=facet_by_list$facet_by,
+                                   labeller="label_context",
+                                   drop=TRUE)
     }
   }
   
