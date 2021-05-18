@@ -201,7 +201,13 @@ setMethod(".export_to_file", signature(data="data.table", object="familiarCollec
             if(!dir.exists(file_dir)) dir.create(file_dir, recursive=TRUE)
             
             # Generate file name.
-            base_file_name <- paste(type, paste0(subtype, collapse="_"), sep="_")
+            if(length(subtype) == 0){
+              base_file_name <- type
+              
+            } else {
+              base_file_name <- paste(type, paste0(subtype, collapse="_"), sep="_")
+            }
+            
             file_name <- file.path(file_dir, paste0(base_file_name, ".csv"))
             
             # Write data to file.
@@ -226,7 +232,12 @@ setMethod(".export_to_file", signature(data="character", object="familiarCollect
             if(!dir.exists(file_dir)) dir.create(file_dir, recursive=TRUE)
             
             # Generate file name
-            base_file_name <- paste(type, paste0(subtype, collapse="_"), sep="_")
+            if(length(subtype) == 0){
+              base_file_name <- type
+            } else {
+              base_file_name <- paste(type, paste0(subtype, collapse="_"), sep="_")
+            }
+            
             file_name <- file.path(file_dir, paste0(base_file_name, ".txt"))
             
             # Write to text file with each element of x on a new line.
