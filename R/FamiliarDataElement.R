@@ -402,7 +402,7 @@ setMethod("collect", signature(x="familiarData"),
 
 #####.export (familiarCollection)------------------------------------------------
 setMethod(".export", signature(x="familiarCollection"),
-          function(x, data_elements=NULL, data_slot=NULL, dir_path=NULL, type, subtype, object_class=NULL, ...){
+          function(x, data_elements=NULL, data_slot=NULL, dir_path=NULL, type, subtype=NULL, object_class=NULL, ...){
             
             # Obtain the data elements from the attribute slot indicated by
             # data_slot.
