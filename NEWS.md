@@ -1,3 +1,18 @@
+# Development
+
+## Bug fixes
+
+* Fixed a bug that caused clustered features not to be exported for the purpose
+of reporting (aggregate) variable importance.
+
+* Fixed a bug that caused model-based variable importance to be exported when
+calling the `export_fs_vimp` method with any `object` that is not a
+`familiarCollection` object.
+
+* Fixed a bug that prevented rank aggregation method and thresholds from being
+set while exporting variable importance using `export_fs_vimp` or
+`export_model_vimp`.
+
 # Version 0.0.0.54 (Pre-release)
 
 ## Major changes:

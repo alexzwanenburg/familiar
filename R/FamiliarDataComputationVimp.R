@@ -234,14 +234,21 @@ setMethod("..compute_data_element_estimates", signature(x="familiarDataElementVi
                                                  aggregation_method=x[[1]]@rank_aggregation_method,
                                                  rank_threshold=x[[1]]@rank_threshold)
             
-            # Replace clusters by individual features.
-            data <- rank.decluster_vimp_table(vimp_table=data,
-                                              translation_table=translation_table)
+            # Merge the translation table into the data.
+            data <- merge(x=data,
+                          y=translation_table,
+                          by.x="name",
+                          by.y="feature_name")
             
             # Update column names.
             data.table::setnames(data,
                                  old=c("name", "aggr_rank", "aggr_score"),
                                  new=c("feature", "rank", "score"))
+            
+            # Remove cluster_name
+            data[, "cluster_name":=NULL]
+            
+            # Order by rank.
             data <- data[order(rank)]
             
             # Add cluster size.
@@ -425,7 +432,9 @@ setMethod("export_model_vimp", signature(object="ANY"),
             return(do.call(export_model_vimp,
                            args=c(list("object"=object,
                                        "dir_path"=dir_path,
-                                       "aggregate_results"=aggregate_results),
+                                       "aggregate_results"=aggregate_results,
+                                       "aggregation_method"=aggregation_method,
+                                       "rank_threshold"=rank_threshold),
                                   list(...))))
           })
 
@@ -596,9 +605,11 @@ setMethod("export_fs_vimp", signature(object="ANY"),
                                           "rank_threshold"=rank_threshold),
                                      list(...)))
             
-            return(do.call(export_model_vimp,
+            return(do.call(export_fs_vimp,
                            args=c(list("object"=object,
                                        "dir_path"=dir_path,
-                                       "aggregate_results"=aggregate_results),
+                                       "aggregate_results"=aggregate_results,
+                                       "aggregation_method"=aggregation_method,
+                                       "rank_threshold"=rank_threshold),
                                   list(...))))
           })
