@@ -54,6 +54,13 @@ setMethod("update_object", signature(object="familiarModel"),
               attr(object, "name") <- NA_character_
             }
             
+            if(object@familiar_version < "0.0.0.55"){
+              
+              # Add anynomised_function attribut that contains replacement
+              # functions.
+              attr(object, "anynomised_function") <- list()
+            }
+            
             if(!methods::validObject(object)) stop("Could not update the familiarModel object to the most recent definition.")
             
             # Update package version.
