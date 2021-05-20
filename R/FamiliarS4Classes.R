@@ -42,6 +42,8 @@ setClass("familiarModel",
            settings = "ANY",
            # Flags anonymisation of the model
            is_anonymised = "logical",
+           # Anonymised functions
+           anynomised_function = "list",
            # Project identifier for consistency tracking
            project_id = "ANY",
            # Package version for backward compatibility
@@ -68,6 +70,7 @@ setClass("familiarModel",
            run_table = NULL,
            settings = NULL,
            is_anonymised = FALSE,
+           anynomised_function = list(),
            project_id = NULL,
            familiar_version = NULL
          )
