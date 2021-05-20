@@ -299,7 +299,6 @@ setMethod("..train", signature(object="familiarGLMnet", data="dataObject"),
                                                            parallel = FALSE),
                                                  error=identity))
               
-              
             } else if(is(object, "familiarGLMnetLasso")){
               # Attempt to train the model
               model <- suppressWarnings(tryCatch(cv.glmnet(x = as.matrix(encoded_data$encoded_data@data[, mget(feature_columns)]),
@@ -564,3 +563,35 @@ setMethod("..set_calibration_info", signature(object="familiarGLMnet"),
             
             return(object)
           })
+
+
+setMethod(".trim_model", signature(object="familiarGLMnet"),
+          function(object, ...){
+
+            # Update model.
+            object@model <- ..trim_glmnet(object@model)
+            
+            # Set anonymised to TRUE.
+            object@is_anonymised <- TRUE
+            
+            # Default method for models that lack a more specific method.
+            return(object)
+          })
+
+
+..trim_glmnet <- function(object){
+  # Function to trim glmnet objects.
+  
+  # Check if the object is a glmnet object.
+  if(!(inherits(object, "glmnet") | inherits(object, "cv.glmnet"))) return(object)
+  
+  # Replace calls
+  object$call <- call("nullcall")
+  
+  # Specific to cv.glmnet.
+  if(!is.null(object$glmnet.fit)){
+    object$glmnet.fit$call <- call("nullcall")  
+  }
+  
+  return(object)
+}
