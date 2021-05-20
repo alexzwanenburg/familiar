@@ -35,3 +35,13 @@
   
   return(NULL)
 }
+
+
+.replace_environment <- function(x){
+  
+  if(".Environment" %in% attributes(x)){
+    attr(x, ".Environment") <- rlang::empty_env()
+  }
+  
+  return(x)
+}
