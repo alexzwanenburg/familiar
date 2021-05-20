@@ -133,7 +133,10 @@ impute.add_lasso_imputation_info <- function(cl=NULL, feature_info_list, data_ob
                           family = distribution,
                           lambda = lasso_model$lambda.1se,
                           standardize = FALSE)
-
+    
+    # Remove extraneous information from the model.
+    lasso_model <- ..trim_glmnet(lasso_model)
+    
     # Add lasso model and required features to the information.
     if(!is.list(object@imputation_parameters)){
       object@imputation_parameters <- list("lasso_model" = list(lasso_model),
