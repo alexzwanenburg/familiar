@@ -493,6 +493,35 @@ setMethod("..set_vimp_parameters", signature(object="familiarModel"),
 setMethod("..vimp", signature(object="familiarModel"),
           function(object, ...) return(get_placeholder_vimp_table()))
 
+#####trim_model (familiarModel)-------------------------------------------------
+setMethod("trim_model", signature(object="familiarModel"),
+          function(object, ...){
+            
+            # Do not trim the model if there is nothing to trim.
+            if(!model_is_trained(object)) return(object)
+            
+            # Trim the model.
+            trimmed_object <- .trim_model(object=object)
+            
+            # Skip further processing if the model object was not trimmed.
+            if(!trimmed_object@is_anonymised) return(object)
+            
+            # Go over different functions.
+            trimmed_object@anynomised_function <- .replace_broken_functions(object=object,
+                                                                            trimmed_object=trimmed_object)
+            
+            return(trimmed_object)
+          })
+
+
+#####.trim_model (familiarModel)------------------------------------------------
+setMethod(".trim_model", signature(object="familiarModel"),
+          function(object, ...){
+            # Default method for models that lack a more specific method.
+            return(object)
+          })
+
+
 ####has_calibration_info####
 setMethod("has_calibration_info", signature(object="familiarModel"),
           function(object) return(!is.null(object@calibration_info)))

@@ -1,7 +1,8 @@
-# Save method for model saving. The save function appears in base and is always explicity imported.
+# Save method for model saving. The save function appears in base and is always
+# explicity imported.
 setGeneric("save")
 
-# Predict method. This is a standard method converted to S4.
+
 setGeneric(".predict", function(object, data, ...) standardGeneric(".predict"))
 
 setGeneric(".predict_novelty", function(object, data, ...) standardGeneric(".predict_novelty"))
@@ -216,6 +217,11 @@ setGeneric("..get_distribution_family", function(object, ...) standardGeneric(".
 setGeneric("..update_outcome", function(object, data, ...) standardGeneric("..update_outcome"))
 
 setGeneric("optimise_hyperparameters", function(object, data, ...) standardGeneric("optimise_hyperparameters"))
+
+setGeneric("trim_model", function(object, ...) standardGeneric("trim_model"))
+
+setGeneric(".trim_model", function(object, ...) standardGeneric(".trim_model"))
+
 
 #####familiarVimpMethod variable importance methods #####
 setGeneric(".vimp", function(object, ...) standardGeneric(".vimp"))
