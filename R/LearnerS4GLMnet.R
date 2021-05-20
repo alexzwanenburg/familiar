@@ -546,7 +546,7 @@ setMethod("..vimp", signature(object="familiarGLMnet"),
 
 
 
-#####..set_calibration_info#####
+#####..set_calibration_info-----------------------------------------------------
 setMethod("..set_calibration_info", signature(object="familiarGLMnet"),
           function(object, data){
             
@@ -565,6 +565,7 @@ setMethod("..set_calibration_info", signature(object="familiarGLMnet"),
           })
 
 
+#####.trim_model----------------------------------------------------------------
 setMethod(".trim_model", signature(object="familiarGLMnet"),
           function(object, ...){
 
@@ -577,6 +578,7 @@ setMethod(".trim_model", signature(object="familiarGLMnet"),
             # Default method for models that lack a more specific method.
             return(object)
           })
+
 
 
 ..trim_glmnet <- function(object){

@@ -241,3 +241,22 @@ setMethod("..set_calibration_info", signature(object="familiarCoxPH"),
             
             return(object)
           })
+
+
+
+#####.trim_model----------------------------------------------------------------
+setMethod(".trim_model", signature(object="familiarCoxPH"),
+          function(object, ...){
+            
+            # Update model by removing the call.
+            object@model$call <- call("nullcall")
+            
+            # Remove .Environment.
+            object@model$terms <- .replace_environment(object@model$terms)
+            
+            # Set anonymised to TRUE.
+            object@is_anonymised <- TRUE
+            
+            # Default method for models that lack a more specific method.
+            return(object)
+          })
