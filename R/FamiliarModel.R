@@ -5,7 +5,7 @@ NULL
 
 #####.train#####
 setMethod(".train", signature(object="familiarModel", data="dataObject"),
-          function(object, data, get_additional_info=FALSE, is_pre_processed=FALSE) {
+          function(object, data, get_additional_info=FALSE, is_pre_processed=FALSE, trim_model=TRUE) {
             # Train method for model training
             
             # Check if the class of object is a subclass of familiarModel.
@@ -62,6 +62,8 @@ setMethod(".train", signature(object="familiarModel", data="dataObject"),
               # Add column data
               object <- add_data_column_info(object=object)
             }
+            
+            if(trim_model) object <- trim_model(object=object)
             
             # Add outcome distribution data
             object@outcome_info <- .compute_outcome_distribution_data(object=object@outcome_info, data=data)
