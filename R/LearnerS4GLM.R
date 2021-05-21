@@ -193,7 +193,9 @@ setMethod("..train", signature(object="familiarGLM", data="dataObject"),
               model <- tryCatch(suppressWarnings(stats::glm(formula,
                                                             data=encoded_data$encoded_data@data,
                                                             family=family,
-                                                            model=FALSE)),
+                                                            model=FALSE,
+                                                            x=FALSE,
+                                                            y=FALSE)),
                                 error=identity)
               
             } else if(object@outcome_type=="multinomial"){
@@ -496,5 +498,54 @@ setMethod("..set_vimp_parameters", signature(object="familiarGLM"),
             # Update family hyperparameter.
             object@hyperparameters$family <- family_default
             
+            return(object)
+          })
+
+
+#####.trim_model----------------------------------------------------------------
+setMethod(".trim_model", signature(object="familiarGLM"),
+          function(object, ...){
+            
+            if(object@outcome_type == "multinomial"){
+              # Update model by removing the call.
+              object@model@call <- call("trimmed")
+              
+              # Remove .Environment.
+              object@model@terms$terms <- .replace_environment(object@model@terms$terms)
+              object@model@misc$formula <- .replace_environment(object@model@misc$formula)
+              
+              # Remove elements that contain sample-specific values.
+              object@model@predictors <- matrix(0)
+              object@model@effects <- numeric(0)
+              object@model@qr$qr <- NULL
+              object@model@fitted.values <- matrix(0)
+              object@model@residuals <- matrix(0)
+              object@model@weights <- matrix(0)
+              object@model@x <- matrix(0)
+              object@model@y <- matrix(0)
+              
+            } else {
+              # Update model by removing the call.
+              object@model$call <- call("trimmed")
+              
+              # Remove .Environment.
+              object@model$terms <- .replace_environment(object@model$terms)
+              object@model$formula <- .replace_environment(object@model$formula)
+              
+              # Remove elements that contain sample-specific values.
+              object@model$fitted.values <- NULL
+              object@model$data <- NULL
+              object@model$linear.predictors <- NULL
+              object@model$prior.weights <- NULL
+              object@model$weights <- NULL
+              object@model$qr$qr <- NULL
+              object@model$residuals <- NULL
+              object@model$effects <- NULL
+            }
+            
+            # Set anonymised to TRUE.
+            object@is_anonymised <- TRUE
+            
+            # Default method for models that lack a more specific method.
             return(object)
           })
