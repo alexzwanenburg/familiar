@@ -114,6 +114,9 @@ setMethod("..train", signature(object="familiarCoxPH", data="dataObject"),
             # Add the contrast references to model_list
             object@encoding_reference_table <- encoded_data$reference_table
             
+            # Set learner version
+            object@learner_version <- utils::packageVersion("survival")
+            
             return(object)
           })
 
