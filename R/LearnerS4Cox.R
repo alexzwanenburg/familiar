@@ -249,10 +249,15 @@ setMethod(".trim_model", signature(object="familiarCoxPH"),
           function(object, ...){
             
             # Update model by removing the call.
-            object@model$call <- call("nullcall")
+            object@model$call <- call("trimmed")
             
             # Remove .Environment.
             object@model$terms <- .replace_environment(object@model$terms)
+            object@model$formula <- .replace_environment(object@model$formula)
+            
+            # Remove elements that contain sample-specific values.
+            object@model$linear.predictors <- NULL
+            object@model$residuals <- NULL
             
             # Set anonymised to TRUE.
             object@is_anonymised <- TRUE
