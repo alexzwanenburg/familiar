@@ -313,7 +313,7 @@ setMethod("..vimp", signature(object="familiarSurvRegr"),
             if(!model_is_trained(object)) return(callNextMethod())
             
             # Define p-values
-            coefficient_z_values <- coefficient_one_sample_z_test(model=object@model)
+            coefficient_z_values <- .compute_z_statistic(object)
             coefficient_z_values <- coefficient_z_values[names(coefficient_z_values) != "(Intercept)"]
             
             if(length(coefficient_z_values) == 0) return(callNextMethod())

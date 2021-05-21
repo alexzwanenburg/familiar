@@ -360,7 +360,7 @@ setMethod("..vimp", signature(object="familiarGLM"),
             if(!model_is_trained(object)) return(callNextMethod())
             
             # Compute z-values
-            coefficient_z_values <- coefficient_one_sample_z_test(model=object@model)
+            coefficient_z_values <- .compute_z_statistic(object)
             
             if(is(object@model, "vglm")){
               
