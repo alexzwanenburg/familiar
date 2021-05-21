@@ -47,7 +47,9 @@ setClass("familiarModel",
            # Project identifier for consistency tracking
            project_id = "ANY",
            # Package version for backward compatibility
-           familiar_version = "ANY"
+           familiar_version = "ANY",
+           # Version of the learner for reproducibility.
+           learner_version = "ANY"
          ),
          prototype = list(
            name = character(0),
@@ -72,7 +74,8 @@ setClass("familiarModel",
            is_anonymised = FALSE,
            anynomised_function = list(),
            project_id = NULL,
-           familiar_version = NULL
+           familiar_version = NULL,
+           learner_version = as.package_version("0.0.0")
          )
 )
 
