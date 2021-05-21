@@ -54,10 +54,11 @@
 }
 
 
+
 .replace_environment <- function(x){
   
-  if(".Environment" %in% attributes(x)){
-    attr(x, ".Environment") <- rlang::empty_env()
+  if(".Environment" %in% names(attributes(x))){
+    attr(x, ".Environment") <- rlang::base_env()
   }
   
   return(x)
