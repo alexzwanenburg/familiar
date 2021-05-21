@@ -31,7 +31,24 @@
   quiet(new_info <- tryCatch(do.call(FUN, list(trimmed_object@model)),
                              error=identity))
   
-  if(inherits(new_info, "error")) return(initial_info)
+  if(inherits(new_info, "error")){
+    
+    # Check for elements that contain stuff.
+    if(is.list(initial_info)){
+      if(!is.null(names(initial_info))){
+        # Check for call.
+        if(is.call(initial_info$call)) initial_info$call <- call("trimmed")
+        
+        # Check for formula.
+        if(inherits(initial_info$formula, "formula")) initial_info$formula <- .replace_environment(initial_info$formula)
+        
+        # Check for terms.
+        if(inherits(initial_info$terms, "terms")) initial_info$terms <- .replace_environment(initial_info$terms)
+      }
+    }
+    
+    return(initial_info)
+  } 
   
   return(NULL)
 }
