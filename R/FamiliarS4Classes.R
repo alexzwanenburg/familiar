@@ -38,12 +38,14 @@ setClass("familiarModel",
            calibration_info = "ANY",
            # Information required to do perform a Kaplan-Meier analysis using the model
            km_info = "ANY",
-           # Evaluation settings. This allows default values for external use of existing models.
+           # Evaluation settings. This allows default values for external use of
+           # existing models.
            settings = "ANY",
-           # Flags anonymisation of the model
+           # Flags trimming of the model
            is_anonymised = "logical",
-           # Anonymised functions
-           anynomised_function = "list",
+           # Restores functions lost due to model trimming, such as coef or
+           # vcov.
+           trimmed_function = "list",
            # Project identifier for consistency tracking
            project_id = "ANY",
            # Package version for backward compatibility
@@ -74,7 +76,7 @@ setClass("familiarModel",
            run_table = NULL,
            settings = NULL,
            is_anonymised = FALSE,
-           anynomised_function = list(),
+           trimmed_function = list(),
            project_id = NULL,
            familiar_version = NULL,
            learner_package = NA_character_,

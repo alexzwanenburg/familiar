@@ -509,8 +509,8 @@ setMethod("trim_model", signature(object="familiarModel"),
             if(!trimmed_object@is_anonymised) return(object)
             
             # Go over different functions.
-            trimmed_object@anynomised_function <- .replace_broken_functions(object=object,
-                                                                            trimmed_object=trimmed_object)
+            trimmed_object@trimmed_function <- .replace_broken_functions(object=object,
+                                                                         trimmed_object=trimmed_object)
             
             return(trimmed_object)
           })

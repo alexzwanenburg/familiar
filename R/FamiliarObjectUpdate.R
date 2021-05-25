@@ -56,9 +56,8 @@ setMethod("update_object", signature(object="familiarModel"),
             
             if(object@familiar_version < "0.0.0.55"){
               
-              # Add anynomised_function attribut that contains replacement
-              # functions.
-              attr(object, "anynomised_function") <- list()
+              # Add missing attributes.
+              attr(object, "trimmed_function") <- list()
               attr(object, "learner_package") <- character(0L)
               attr(object, "learner_version") <- as.package_version("0.0.0")
             }

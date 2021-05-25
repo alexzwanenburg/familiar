@@ -1187,12 +1187,12 @@ is_valid_data <- function(x){
   if(is(model, "familiarModel")){
     # Attempt to extract the estimates and the covariance matrix from the
     # familiarModel object.
-    if(!is.null(model@anynomised_function$coef)){
-      mu <- model@anynomised_function$coef
+    if(!is.null(model@trimmed_function$coef)){
+      mu <- model@trimmed_function$coef
     }
     
-    if(!is.null(model@anynomised_function$vcov)){
-      cov_matrix <- model@anynomised_function$vcov
+    if(!is.null(model@trimmed_function$vcov)){
+      cov_matrix <- model@trimmed_function$vcov
     }
     
     # Extract the model itself.
