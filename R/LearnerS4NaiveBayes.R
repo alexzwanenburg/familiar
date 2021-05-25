@@ -138,8 +138,7 @@ setMethod("..predict", signature(object="familiarNaiveBayes", data="dataObject")
               # Check if the data is empty.
               if(is_empty(data)) return(NULL)
               
-              # Use the model for prediction. Note that klaR::NaiveBayes does
-              # not actually take a type argument currently.
+              # Use the model for prediction.
               return(predict(object=object@model,
                              newdata=data@data,
                              type=type,
