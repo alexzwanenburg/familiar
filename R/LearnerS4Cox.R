@@ -115,6 +115,7 @@ setMethod("..train", signature(object="familiarCoxPH", data="dataObject"),
             object@encoding_reference_table <- encoded_data$reference_table
             
             # Set learner version
+            object@learner_package <- "survival"
             object@learner_version <- utils::packageVersion("survival")
             
             return(object)

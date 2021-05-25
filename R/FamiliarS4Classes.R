@@ -48,6 +48,8 @@ setClass("familiarModel",
            project_id = "ANY",
            # Package version for backward compatibility
            familiar_version = "ANY",
+           # Name of the package used to train the learner.
+           learner_package = "character",
            # Version of the learner for reproducibility.
            learner_version = "ANY"
          ),
@@ -75,6 +77,7 @@ setClass("familiarModel",
            anynomised_function = list(),
            project_id = NULL,
            familiar_version = NULL,
+           learner_package = NA_character_,
            learner_version = as.package_version("0.0.0")
          )
 )

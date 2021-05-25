@@ -340,6 +340,7 @@ setMethod("..train", signature(object="familiarGLMnet", data="dataObject"),
             object@feature_order <- feature_columns
             
             # Set learner version
+            object@learner_package <- "glmnet"
             object@learner_version <- utils::packageVersion("glmnet")
             
             return(object)

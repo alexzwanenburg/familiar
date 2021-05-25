@@ -222,6 +222,7 @@ setMethod("..train", signature(object="familiarGLM", data="dataObject"),
             object@encoding_reference_table <- encoded_data$reference_table
             
             # Set learner version
+            object@learner_package <- ifelse(object@outcome_type == "multinomial", "VGAM", "stats")
             object@learner_version <- if(object@outcome_type == "multinomial") utils::packageVersion("VGAM") else utils::packageVersion("stats")
             
             return(object)

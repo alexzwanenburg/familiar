@@ -127,7 +127,6 @@ setMethod("train", signature(data="dataObject"),
             
             # Obtain the final list of hyperparameters.
             param_list <- lapply(param_list, function(hyperparameter_entry) hyperparameter_entry$init_config)
-
             
             #####Prepare model and data#########################################
             
