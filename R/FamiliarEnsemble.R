@@ -76,7 +76,6 @@ setMethod("complete_familiar_ensemble", signature(object="familiarEnsemble"),
                                          model_dir_path = object@model_dir_path,
                                          auto_detach = object@auto_detach,
                                          settings = model_list[[1]]@settings,
-                                         is_anonymised = all(extract_from_slot(object_list=model_list, slot_name="is_anonymised")),
                                          project_id = model_list[[1]]@project_id)
             
             # Add package version to the ensemble

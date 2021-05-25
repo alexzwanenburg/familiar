@@ -576,8 +576,8 @@ setMethod(".trim_model", signature(object="familiarGLMnet"),
             # Update model.
             object@model <- ..trim_glmnet(object@model)
             
-            # Set anonymised to TRUE.
-            object@is_anonymised <- TRUE
+            # Set is_trimmed to TRUE.
+            object@is_trimmed <- TRUE
             
             # Default method for models that lack a more specific method.
             return(object)

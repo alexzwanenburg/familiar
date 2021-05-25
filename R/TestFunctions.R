@@ -107,10 +107,10 @@ test_all_learners_train_predict_vimp <- function(learners,
       # Check that the model can be trimmed.
       test_fun(paste0("Model for ", outcome_type, " created using ", learner, " can be trimmed."), {
         if(can_trim){
-          testthat::expect_equal(trimmed_model@is_anonymised, TRUE)
+          testthat::expect_equal(trimmed_model@is_trimmed, TRUE)
           
         } else {
-          testthat::expect_equal(trimmed_model@is_anonymised, FALSE)
+          testthat::expect_equal(trimmed_model@is_trimmed, FALSE)
         }
       })
       

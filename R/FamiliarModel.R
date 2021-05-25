@@ -506,7 +506,7 @@ setMethod("trim_model", signature(object="familiarModel"),
             trimmed_object <- .trim_model(object=object)
             
             # Skip further processing if the model object was not trimmed.
-            if(!trimmed_object@is_anonymised) return(object)
+            if(!trimmed_object@is_trimmed) return(object)
             
             # Go over different functions.
             trimmed_object@trimmed_function <- .replace_broken_functions(object=object,

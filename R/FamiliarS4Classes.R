@@ -42,7 +42,7 @@ setClass("familiarModel",
            # existing models.
            settings = "ANY",
            # Flags trimming of the model
-           is_anonymised = "logical",
+           is_trimmed = "logical",
            # Restores functions lost due to model trimming, such as coef or
            # vcov.
            trimmed_function = "list",
@@ -75,7 +75,7 @@ setClass("familiarModel",
            km_info = NULL,
            run_table = NULL,
            settings = NULL,
-           is_anonymised = FALSE,
+           is_trimmed = FALSE,
            trimmed_function = list(),
            project_id = NULL,
            familiar_version = NULL,
@@ -128,8 +128,6 @@ setClass("familiarEnsemble",
            # Evaluation settings. This allows default values for external use of
            # existing models.
            settings = "ANY",
-           # Flags anonymisation of the model.
-           is_anonymised = "logical",
            # Project identifier for consistency tracking.
            project_id = "ANY",
            # Package version for backward compatibility checks.
@@ -152,7 +150,6 @@ setClass("familiarEnsemble",
            model_dir_path = NA_character_,
            auto_detach = FALSE,
            settings = NULL,
-           is_anonymised = FALSE,
            project_id = NULL,
            familiar_version = NULL
          )
@@ -220,8 +217,6 @@ setClass("familiarData",
            # Flag to signal whether the data concerns validation data (TRUE) or
            # development data (FALSE)
            is_validation = "logical",
-           # Flag to signal whether the data is anonymised
-           is_anonymised = "logical",
            # Name of the model ensemble used to generate this data
            generating_ensemble = "character",
            # Project identifier
@@ -258,7 +253,6 @@ setClass("familiarData",
            sample_similarity = NULL,
            ice_data = NULL,
            is_validation = FALSE,
-           is_anonymised = FALSE,
            generating_ensemble = character(0),
            project_id = NULL,
            familiar_version = NULL
@@ -302,7 +296,6 @@ setClass("familiarData",
 #' @slot feature_labels ANY. 
 #' @slot km_group_labels ANY.
 #' @slot class_labels ANY. 
-#' @slot is_anonymised logical. 
 #' @slot project_id ANY. 
 #' @slot familiar_version ANY. 
 #'
@@ -377,8 +370,6 @@ setClass("familiarCollection",
            km_group_labels = "ANY",
            # Label and order of outcome classes
            class_labels = "ANY",
-           # Flag to signal whether the data is anonymised
-           is_anonymised = "logical",
            # Project identifier
            project_id = "ANY",
            # Package version for backward compatibility
@@ -418,7 +409,6 @@ setClass("familiarCollection",
            feature_labels = NULL,
            km_group_labels = NULL,
            class_labels = NULL,
-           is_anonymised = FALSE,
            project_id = NULL,
            familiar_version = NULL
          )

@@ -263,8 +263,8 @@ setMethod(".trim_model", signature(object="familiarCoxPH"),
             object@model$linear.predictors <- NULL
             object@model$residuals <- NULL
             
-            # Set anonymised to TRUE.
-            object@is_anonymised <- TRUE
+            # Set is_trimmed to TRUE.
+            object@is_trimmed <- TRUE
             
             # Default method for models that lack a more specific method.
             return(object)
