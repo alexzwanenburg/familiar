@@ -45,7 +45,8 @@ Imports: methods,
     scales,
     stringi,
     xml2,
-    maxstat
+    maxstat,
+    proxy
 Suggests:
     dynamicTreeCut,
     rmarkdown,
