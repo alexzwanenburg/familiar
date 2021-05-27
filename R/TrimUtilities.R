@@ -16,8 +16,11 @@
                                   object=object,
                                   trimmed_object=trimmed_object)
   
-  # Return non-null items.
-  return(replacement_functions[!sapply(replacement_functions, is.null)])
+  # Get non-null items and add to existing functions.
+  trimmed_object@trimmed_function <- c(trimmed_object@trimmed_function,
+                                       replacement_functions[!sapply(replacement_functions, is.null)])
+  
+  return(trimmed_object)
 }
 
 
