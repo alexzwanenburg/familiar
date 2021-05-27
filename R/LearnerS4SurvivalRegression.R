@@ -145,6 +145,10 @@ setMethod("..train", signature(object="familiarSurvRegr", data="dataObject"),
             # Add the contrast references to model_list
             object@encoding_reference_table <- encoded_data$reference_table
             
+            # Set learner version
+            object@learner_package <- "survival"
+            object@learner_version <- utils::packageVersion("survival")
+            
             return(object)
           })
 
@@ -313,7 +317,7 @@ setMethod("..vimp", signature(object="familiarSurvRegr"),
             if(!model_is_trained(object)) return(callNextMethod())
             
             # Define p-values
-            coefficient_z_values <- coefficient_one_sample_z_test(model=object@model)
+            coefficient_z_values <- .compute_z_statistic(object)
             coefficient_z_values <- coefficient_z_values[names(coefficient_z_values) != "(Intercept)"]
             
             if(length(coefficient_z_values) == 0) return(callNextMethod())
@@ -375,5 +379,30 @@ setMethod("..set_vimp_parameters", signature(object="familiarSurvRegr"),
             # Set the distribution parameter
             object@hyperparameters$distribution <- distribution_default
             
+            return(object)
+          })
+
+
+
+#####.trim_model----------------------------------------------------------------
+setMethod(".trim_model", signature(object="familiarSurvRegr"),
+          function(object, ...){
+            
+            # Update model by removing the call.
+            object@model$call <- call("trimmed")
+            
+            # Add show.
+            object <- .capture_show(object)
+            
+            # Remove .Environment.
+            object@model$terms <- .replace_environment(object@model$terms)
+
+            # Remove elements that contain sample-specific values.
+            object@model$linear.predictors <- NULL
+            
+            # Set is_trimmed to TRUE.
+            object@is_trimmed <- TRUE
+            
+            # Default method for models that lack a more specific method.
             return(object)
           })

@@ -22,13 +22,9 @@ setMethod("promote_learner", signature(object="familiarModel"),
               # Naive bayes model
               object <- methods::new("familiarNaiveBayes", object)
             
-            } else if(learner %in% .get_available_radial_knn_learners()){
+            } else if(learner %in% .get_available_knn_learners()){
               # k-nearest neighbours model with radial kernel
-              object <- methods::new("familiarKNNradial", object)
-              
-            } else if(learner %in% .get_available_linear_knn_learners()){
-              # k-nearest neighbours model with radial kernel
-              object <- methods::new("familiarKNNlinear", object)
+              object <- methods::new("familiarKNN", object)
               
             } else if(learner %in% .get_available_svm_c_learners()){
               # C-classification support vector machines.

@@ -665,7 +665,6 @@ setMethod("extract_data", signature(object="familiarEnsemble"),
                                      feature_similarity = feature_similarity,
                                      sample_similarity = sample_similarity,
                                      ice_data = NULL,
-                                     is_anonymised = FALSE,
                                      is_validation = data@load_validation,
                                      generating_ensemble = get_object_name(object=object, abbreviated=FALSE),
                                      project_id = object@project_id)

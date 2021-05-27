@@ -5,7 +5,7 @@ NULL
 
 #####.train#####
 setMethod(".train", signature(object="familiarModel", data="dataObject"),
-          function(object, data, get_additional_info=FALSE, is_pre_processed=FALSE) {
+          function(object, data, get_additional_info=FALSE, is_pre_processed=FALSE, trim_model=TRUE) {
             # Train method for model training
             
             # Check if the class of object is a subclass of familiarModel.
@@ -62,6 +62,8 @@ setMethod(".train", signature(object="familiarModel", data="dataObject"),
               # Add column data
               object <- add_data_column_info(object=object)
             }
+            
+            if(trim_model) object <- trim_model(object=object)
             
             # Add outcome distribution data
             object@outcome_info <- .compute_outcome_distribution_data(object=object@outcome_info, data=data)
@@ -129,13 +131,20 @@ setMethod("show", signature(object="familiarModel"),
               
             } else {
               cat(paste0("A ", object@learner, " model (class: ", class(object)[1],
-                         "; v", object@familiar_version, ").\n"))
+                         "; v", object@familiar_version, ")",
+                         " trained using ", object@learner_package, " (",
+                         as.character(object@learner_version), ") package.\n"))
               
               cat(paste0("\n--------------- Model details ---------------"))
               
               # Model details
-              show(object@model)
-              
+              if(object@is_trimmed){
+                cat(object@trimmed_function$show, sep="\n")
+                
+              } else {
+                show(object@model)
+              }
+
               cat(paste0("---------------------------------------------\n"))
               
               # Outcome details
@@ -492,6 +501,35 @@ setMethod("..set_vimp_parameters", signature(object="familiarModel"),
 #####..vimp######
 setMethod("..vimp", signature(object="familiarModel"),
           function(object, ...) return(get_placeholder_vimp_table()))
+
+#####trim_model (familiarModel)-------------------------------------------------
+setMethod("trim_model", signature(object="familiarModel"),
+          function(object, ...){
+            
+            # Do not trim the model if there is nothing to trim.
+            if(!model_is_trained(object)) return(object)
+            
+            # Trim the model.
+            trimmed_object <- .trim_model(object=object)
+            
+            # Skip further processing if the model object was not trimmed.
+            if(!trimmed_object@is_trimmed) return(object)
+            
+            # Go over different functions.
+            trimmed_object <- .replace_broken_functions(object=object,
+                                                        trimmed_object=trimmed_object)
+            
+            return(trimmed_object)
+          })
+
+
+#####.trim_model (familiarModel)------------------------------------------------
+setMethod(".trim_model", signature(object="familiarModel"),
+          function(object, ...){
+            # Default method for models that lack a more specific method.
+            return(object)
+          })
+
 
 ####has_calibration_info####
 setMethod("has_calibration_info", signature(object="familiarModel"),

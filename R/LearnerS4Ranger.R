@@ -263,6 +263,10 @@ setMethod("..train", signature(object="familiarRanger", data="dataObject"),
             # Add model
             object@model <- model
             
+            # Set learner version
+            object@learner_package <- "ranger"
+            object@learner_version <- utils::packageVersion("ranger")
+            
             return(object)
           })
 
@@ -492,6 +496,26 @@ setMethod("..set_vimp_parameters", signature(object="familiarRanger"),
             
             # Store in the object
             object@hyperparameters <- hyperparameters
+            
+            return(object)
+          })
+
+
+##### .trim_model---------------------------------------------------------------
+setMethod(".trim_model", signature(object="familiarRanger"),
+          function(object, ...){
+            
+            # Update model by removing the call.
+            object@model$call <- call("trimmed")
+            
+            # Add show.
+            object <- .capture_show(object)
+            
+            # Remove the predictions.
+            object@model$predictions <- NULL
+            
+            # Set is_trimmed to TRUE.
+            object@is_trimmed <- TRUE
             
             return(object)
           })

@@ -30,13 +30,22 @@ setMethod("get_default_hyperparameters", signature(object="familiarNaiveBayes"),
             # Initialise list and declare hyperparameter entries.
             param <- list()
             param$sign_size <- list()
+            param$laplace <- list()
             
             # If data is explicitly set to NULL, return the list with
             # hyperparameter names only.
             if(is.null(data)) return(param)
             
-            ##### Signature size ###############################################
+            ##### Signature size -----------------------------------------------
             param$sign_size <- .get_default_sign_size(data_obj=data, restrict_samples=TRUE)
+            
+            
+            ##### Laplace smoothing parameter ----------------------------------
+            param$laplace <- .set_hyperparameter(default=c(0, 1, 2, 5),
+                                                 type="numeric",
+                                                 range=c(0, 10),
+                                                 valid_range=c(0, Inf),
+                                                 randomise=TRUE)
             
             return(param)
           })
@@ -56,19 +65,14 @@ setMethod("..train", signature(object="familiarNaiveBayes", data="dataObject"),
             # Find feature columns in the data.
             feature_columns <- get_feature_columns(x=data)
             
-            # Select feature columns which are invariant
-            invariant_features <- feature_columns[sapply(feature_columns, function(feature, data) (is_singular_data(data[[feature]])), data=data@data)]
-            feature_columns <- setdiff(feature_columns, invariant_features)
-            
-            if(length(feature_columns) == 0) return(callNextMethod())
-            
             # Parse formula
-            formula <- stats::reformulate(termlabels=feature_columns, response=quote(outcome))
+            formula <- stats::reformulate(termlabels=feature_columns,
+                                          response=quote(outcome))
             
-            # Generate model. NOTE: NaiveBayes is directly imported through
-            # NAMESPACE as predict is not exported by klaR.
-            model <- tryCatch(NaiveBayes(formula,
-                                         data=data@data),
+            # Create the model.
+            model <- tryCatch(e1071::naiveBayes(formula,
+                                                data=data@data,
+                                                laplace=object@hyperparameters$laplace),
                               error=identity)
             
             # Check if the model trained at all.
@@ -76,7 +80,11 @@ setMethod("..train", signature(object="familiarNaiveBayes", data="dataObject"),
             
             # Add model to the familiarModel object.
             object@model <- model
-          
+            
+            # Set learner version
+            object@learner_package <- "e1071"
+            object@learner_version <- utils::packageVersion("e1071")
+            
             return(object)
           })
 
@@ -100,9 +108,10 @@ setMethod("..predict", signature(object="familiarNaiveBayes", data="dataObject")
                                                                    data=data,
                                                                    type=type)
               
-              # Use the model for prediction.
-              model_predictions <- suppressWarnings(predict(object=object@model,
-                                                            newdata=data@data))
+              # Use the model to predict class probabilities.
+              model_predictions <- predict(object=object@model,
+                                           newdata=data@data,
+                                           type="raw")
               
               # Obtain class levels.
               class_levels <- get_outcome_class_levels(x=object)
@@ -110,11 +119,13 @@ setMethod("..predict", signature(object="familiarNaiveBayes", data="dataObject")
               # Add class probabilities.
               class_probability_columns <- get_class_probability_name(x=object)
               for(ii in seq_along(class_probability_columns)){
-                prediction_table[, (class_probability_columns[ii]):=model_predictions$posterior[, class_levels[ii]]]
+                prediction_table[, (class_probability_columns[ii]):=model_predictions[, class_levels[ii]]]
               }
               
-              # Add the predicted class.
-              prediction_table[, "predicted_class":=model_predictions$class]
+              # Update predicted class based on provided probabilities.
+              class_predictions <- class_levels[apply(prediction_table[, mget(class_probability_columns)], 1, which.max)]
+              class_predictions <- factor(class_predictions, levels=class_levels)
+              prediction_table[, "predicted_class":=class_predictions]
               
               return(prediction_table)
               
@@ -127,8 +138,7 @@ setMethod("..predict", signature(object="familiarNaiveBayes", data="dataObject")
               # Check if the data is empty.
               if(is_empty(data)) return(NULL)
               
-              # Use the model for prediction. Note that klaR::NaiveBayes does
-              # not actually take a type argument currently.
+              # Use the model for prediction.
               return(predict(object=object@model,
                              newdata=data@data,
                              type=type,
@@ -140,3 +150,20 @@ setMethod("..predict", signature(object="familiarNaiveBayes", data="dataObject")
 
 #####..vimp#####
 # Naive Bayes does not have an associated variable importance method.
+
+#####.trim_model----------------------------------------------------------------
+setMethod(".trim_model", signature(object="familiarNaiveBayes"),
+          function(object, ...){
+            
+            # Update model by removing the call.
+            object@model$call <- call("trimmed")
+            
+            # Add show.
+            object <- .capture_show(object)
+            
+            # Set is_trimmed to TRUE.
+            object@is_trimmed <- TRUE
+            
+            # Default method for models that lack a more specific method.
+            return(object)
+          })

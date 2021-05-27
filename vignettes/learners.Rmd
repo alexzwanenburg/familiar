@@ -127,24 +127,29 @@ Learning algorithms create models that relate input data to the outcome. Develop
 |**bayesian models**|
 | naive bayes | `naive_bayes`                     | × | × |   |   |   |
 |**nearest neighbour models**|
-| k-nearest neighbours | `k_nearest_neighbours`                         | × | × |   |   |   |
-| k-nearest neighbours (radial kernel)| `k_nearest_neighbours_radial`   | × | × |   |   |   |
+| k-nearest neighbours^b^ | `k_nearest_neighbours_*`, `knn_*`              | × | × | x | x |   |
 |**support vector machines**|
-| $C$-classification^b^ | `svm_c_*`                                     | × | × |   |   |   |
-| $\nu$-classification/ regression^b^ | `svm_nu_*`                      | × | × | × | × |   |
-| $\epsilon$-regression^b^ | `svm_eps_*`                                |   |   | × | × |   |
-| linear kernel^c^ | `svm_*_linear`               | × | × | × | × |   |
-| polynomial kernel^c^ | `svm_*_polynomial`       | × | × | × | × |   |
-| radial kernel^c^ | `svm_*_radial`               | × | × | × | × |   |
-| sigmoid kernel^c^ | `svm_*_sigmoid`             | × | × | × | × |   |
+| $C$-classification^c^ | `svm_c_*`                                     | × | × |   |   |   |
+| $\nu$-classification/ regression^c^ | `svm_nu_*`                      | × | × | × | × |   |
+| $\epsilon$-regression^c^ | `svm_eps_*`                                |   |   | × | × |   |
+| linear kernel^d^ | `svm_*_linear`               | × | × | × | × |   |
+| polynomial kernel^d^ | `svm_*_polynomial`       | × | × | × | × |   |
+| radial kernel^d^ | `svm_*_radial`               | × | × | × | × |   |
+| sigmoid kernel^d^ | `svm_*_sigmoid`             | × | × | × | × |   |
 
 Table: Overview of learners implemented in familiar.
 
-^a^ These learners test multiple distributions or linking families and attempt to find the best option.
+^a^ These learners test multiple distributions or linking families and attempt
+to find the best option.
 
-^b^ SVM kernel is indicated by `*`. If omitted (e.g. `svm_c`), the radial basis function is used as kernel.
+^b^ k-nearest neighbours learners allow for setting the distance metric using
+`*`. If omitted (e.g. `knn`), the kernel is either `euclidean` (numeric
+features) or `gower` (mixed features).
 
-^c^ SVM type is indicated by `*`, and must be one of `c`, `nu`, or `epsilon`.
+^c^ SVM kernel is indicated by `*`. If omitted (e.g. `svm_c`), the radial basis
+function is used as kernel.
+
+^d^ SVM type is indicated by `*`, and must be one of `c`, `nu`, or `epsilon`.
 
 ## Configuration options
 
@@ -274,9 +279,13 @@ Boosting is a procedure which combines many weak learners to form a more powerfu
 
 ## Random forest (RFSRC)
 
-Random forests (explain) [@Breiman2001-ao]. The random forest learner is implemented through the `randomForestSRC` package, which provides a unified interface for different types of forests [@Ishwaran2008-hz; @Ishwaran2011-gu].
+Random forests (explain) [@Breiman2001-ao]. The random forest learner is
+implemented through the `randomForestSRC` package, which provides a unified
+interface for different types of forests [@Ishwaran2008-hz; @Ishwaran2011-gu].
 
-An outcome variable that represents count-type data is first transformed using a $\log(x+1)$ transformation. Predicted responses are then transformed to the original scale using the inverse $\exp(x)-1$ transformation.
+An outcome variable that represents count-type data is first transformed using a
+$\log(x+1)$ transformation. Predicted responses are then transformed to the
+original scale using the inverse $\exp(x)-1$ transformation.
 
 Hyperparameters for random forest learners are shown in the table below.
 
@@ -291,11 +300,19 @@ Hyperparameters for random forest learners are shown in the table below.
 | number of split points | `n_split` | $\mathbb{Z} \in \left[0, \infty\right)$ | no | By default, splitting is deterministic and has one split point ($0$).|
 | splitting rule | `split_rule` | `gini`, `auc`, `entropy`, `mse`, `quantile.regr`, `la.quantile.regr`, `logrank`, `logrankscore`, `bs.gradient` | no | Default splitting rules are `gini` for `binomial` and `multinonial` outcomes, `mse` for `continuous` and `count` outcomes and `logrank` for `survival` outcomes.|
 
-Note that optimising that optimising the number of trees can be slow, as big forests take longer to construct and perform more computations for predictions. Hence hyperparameter optimisation may be sped up by limiting the range of the `n_tree` parameter, or setting a single value.
+Note that optimising that optimising the number of trees can be slow, as big
+forests take longer to construct and perform more computations for predictions.
+Hence hyperparameter optimisation may be sped up by limiting the range of the
+`n_tree` parameter, or setting a single value.
 
 ## Random forest (ranger)
 
-The second implementation of random forests comes from the `ranger` package [@Wright2017-wc]. It is generally faster than the implementation in `randomForestSRC`, and also allows different splitting rules, such as maximally selected rank statistics [@Lausen1992-qh; @Wright2017-sj] and concordance index based splitting [@Schmid2016-ie]. Hyperparameters for the random forest are shown in the table below.
+The second implementation of random forests comes from the `ranger` package
+[@Wright2017-wc]. It is generally faster than the implementation in
+`randomForestSRC`, and also allows different splitting rules, such as maximally
+selected rank statistics [@Lausen1992-qh; @Wright2017-sj] and concordance index
+based splitting [@Schmid2016-ie]. Hyperparameters for the random forest are
+shown in the table below.
 
 | **parameter** | **tag** | **values** | **optimised** | **comments** |
 |:--------------|:--------|:----------:|:----------:|:-------------|
@@ -308,33 +325,49 @@ The second implementation of random forests comes from the `ranger` package [@Wr
 | splitting rule | `split_rule` | `gini`, `extratrees`, `variance`, `logrank`, `C`, `maxstat`| no | Default splitting rules are `gini` for `binomial` and `multinomial` outcomes and `maxstat` for `continuous`, `count` and `survival` outcomes.|
 | significance split threshold | `alpha` | $\mathbb{R} \in \left(0.0, 1.0\right]$ | `maxstat` | Minimum significance level for further splitting. The default range is $\left[10^{-6}, 1.0\right]$ |
 
-Note that optimising that optimising the number of trees can be slow, as big forests take longer to construct and perform more computations for predictions. Hence hyperparameter optimisation may be sped up by limiting the range of the `n_tree` parameter, or setting a single value.
+Note that optimising that optimising the number of trees can be slow, as big
+forests take longer to construct and perform more computations for predictions.
+Hence hyperparameter optimisation may be sped up by limiting the range of the
+`n_tree` parameter, or setting a single value.
 
 ## Naive Bayes
 
-The naive Bayes classifier uses Bayes rule to predict posterior probabilities. The naive Bayes classifier uses the `klaR::NaiveBayes` function [@Weihs2005-gt]. The only hyperparameter of the classifier is shown in the table below.
+The naive Bayes classifier uses Bayes rule to predict posterior probabilities.
+The naive Bayes classifier uses the `e1071::naiveBayes` function
+[@Meyer2021-aq]. The  hyperparameters of the classifier are shown in the table
+below.
 
 | **parameter** | **tag** | **values** | **optimised** | **comments** |
 |:--------------|:--------|:----------:|:----------:|:-------------|
 | signature size |`sign_size` | $\mathbb{Z} \in \left[1,n\right]$ | yes | -- |
+| laplace smoothing | `laplace` | $\mathbb{R} \in \left[0.0, \infty \right)$ | yes | The default range is $\left[0, 10\right]$. |
 
 ## *k*-nearest neighbours
 
-*k*-nearest neighbours is a simple clustering algorithm that classifies samples based on the classes of their *k* nearest neighbours in feature space. The `klaR::sknn` function is used to implement *k*-nearest neighbours [@Weihs2005-gt]. The hyperparameters are shown in the table below.
+*k*-nearest neighbours is a simple clustering algorithm that classifies samples
+based on the classes of their *k* nearest neighbours in feature space. The
+`e1071::gknn` function is used to implement *k*-nearest neighbours
+[@Meyer2021-aq]. The hyperparameters are shown in the table below.
 
 | **parameter** | **tag** | **values** | **optimised** | **comments** |
 |:--------------|:--------|:----------:|:----------:|:-------------|
 | signature size |`sign_size` | $\mathbb{Z} \in \left[1,n\right]$ | yes | -- |
 | number of nearest neighbours | `k` | $\mathbb{Z} \in \left[1,m\right]$ | yes | The default range is $\left[1, \lceil 2 m^{1/3} \rceil \right]$, with $m$ the number of samples. |
-| radial basis gamma | `gamma` | $\mathbb{R} \in \left[-5, \infty\right)$ | `k_nearest_neighbours_radial` | This parameter is expressed on a $\log_{10}$ scale with a $10^{-5}$ offset, i.e. the actual input value will be $10^\texttt{gamma} - 10^{-5}$.|
-
-Note that optimising the number of nearest neighbours can be computationally slow. If this is an issue, provide a smaller range. Setting the parameter directly is not recommended, as the number of clusters may influence model performance considerably.
+| distance metric | `distance_metric` | all metrics supported by `proxy::dist` | yes | The default set of metrics is `gower`, `euclidean` and `manhattan`.|
 
 ## Support vector machines
 
-Support vector machines were originally defined to identify optimal margins between classes for classification problems. Support vector machines were popularized after the use of the kernel trick was described. Using the kernel trick the calculations are performed in an implicit high-dimensional feature space, which is considerably more efficient than explicit calculations [@Boser1992-nk].
+Support vector machines were originally defined to identify optimal margins
+between classes for classification problems. Support vector machines were
+popularized after the use of the kernel trick was described. Using the kernel
+trick the calculations are performed in an implicit high-dimensional feature
+space, which is considerably more efficient than explicit calculations
+[@Boser1992-nk].
 
-Familiar implements SVM using `e1071::svm`. We tried `kernlab::ksvm`, but this function would reproducibly freeze during unit testing. By default, both features and outcome data are scaled internally. This was used to derive the default hyperparameter ranges specified in the table below.
+Familiar implements SVM using `e1071::svm`. We tried `kernlab::ksvm`, but this
+function would reproducibly freeze during unit testing. By default, both
+features and outcome data are scaled internally. This was used to derive the
+default hyperparameter ranges specified in the table below.
 
 | **parameter** | **tag** | **values** | **optimised** | **comments** |
 |:--------------|:--------|:----------:|:----------:|:-------------|
@@ -363,15 +396,36 @@ The following kernels are implemented:
 
 
 # Hyperparameter optimization
-Hyperparameter optimisation is conducted to select those model parameters for the given data set that are more likely to lead to generalisable results. Familiar implements an algorithm that is largely based on sequential model-based optimisation (SMBO) [@Hutter2011-ea].
+
+Hyperparameter optimisation is conducted to select those model parameters for
+the given data set that are more likely to lead to generalisable results.
+Familiar implements an algorithm that is largely based on sequential model-based
+optimisation (SMBO) [@Hutter2011-ea].
 
 The current algorithm does differ from the originally proposed algorithm in several ways:
 
-* The intensify step, where challenger configurations are compared with the best known configuration, is done in parallel, not sequentially.
-* During the intensify step the likelihood that a promising challenger configuration is at least as good as the best known configuration is assessed using a paired, non-parametric Wilcoxon signed-rank test. If it is highly unlikely to be better (default: $p \leq 0.05$), the candidate is eliminated from further intensification.
-* Early stopping criteria are included for converging objective scores and unaltered best configurations over multiple iterations.
-* Every second iteration, candidates are drawn randomly from both random configurations and random configurations in the local neighbourhood of the current best candidate, i.e. the acquisition function (e.g. expected improvement) is ignored. Originally, the algorithm only selected candidates using the acquisition function. This change forces the algorithm to more fully explore the hyperparameter space.
-* The metric used for computing the optimisation score is not the logarithm of computation time, and can be chosen from any of the available performance metrics.
+* The intensify step, where challenger configurations are compared with the best
+known configuration, is done in parallel, not sequentially.
+
+* During the intensify step the likelihood that a promising challenger
+configuration is at least as good as the best known configuration is assessed
+using a paired, non-parametric Wilcoxon signed-rank test. If it is highly
+unlikely to be better (default: $p \leq 0.05$), the candidate is eliminated from
+further intensification.
+
+* Early stopping criteria are included for converging objective scores and
+unaltered best configurations over multiple iterations.
+
+* Every second iteration, candidates are drawn randomly from both random
+configurations and random configurations in the local neighbourhood of the
+current best candidate, i.e. the acquisition function (e.g. expected
+improvement) is ignored. Originally, the algorithm only selected candidates
+using the acquisition function. This change forces the algorithm to more fully
+explore the hyperparameter space.
+
+* The metric used for computing the optimisation score is not the logarithm of
+computation time, and can be chosen from any of the available performance
+metrics.
 
 In summary, the algorithm works as follows:
 

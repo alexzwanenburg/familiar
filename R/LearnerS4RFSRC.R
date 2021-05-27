@@ -265,6 +265,10 @@ setMethod("..train", signature(object="familiarRFSRC", data="dataObject"),
             # object in case the model is an anonymous forest.
             object@seed <- forest_seed
             
+            # Set learner version
+            object@learner_package <- "randomForestSRC"
+            object@learner_version <- utils::packageVersion("randomForestSRC")
+            
             return(object)
           })
 
@@ -621,6 +625,31 @@ setMethod("..set_vimp_parameters", signature(object="familiarRFSRC"),
 
             # Store in the object
             object@hyperparameters <- hyperparameters
+            
+            return(object)
+          })
+
+
+
+##### .trim_model---------------------------------------------------------------
+setMethod(".trim_model", signature(object="familiarRFSRC"),
+          function(object, ...){
+            
+            # Update model by removing the call.
+            object@model$call <- call("trimmed")
+            
+            # Add show.
+            object <- .capture_show(object)
+            
+            # Remove the predictions.
+            object@model$predicted <- NULL
+            object@model$predicted.oob <- NULL
+            
+            # Remove yvar due to redundancy.
+            object@model$yvar <- NULL
+            
+            # Set is_trimmed to TRUE.
+            object@is_trimmed <- TRUE
             
             return(object)
           })

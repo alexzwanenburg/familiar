@@ -42,6 +42,7 @@ test_all_learners_train_predict_vimp <- function(learners,
                                                  except_predict=NULL,
                                                  except_predict_survival=NULL,
                                                  has_vimp=TRUE,
+                                                 can_trim=TRUE,
                                                  debug=FALSE){
   
   if(debug){
@@ -91,13 +92,27 @@ test_all_learners_train_predict_vimp <- function(learners,
       
       #####Full data set########################################################
       
-      # Train the model..
+      # Train the model.
       model <- suppressWarnings(train(data=full_data,
                                       cluster_method="none",
                                       imputation_method="simple",
                                       hyperparameter_list=hyperparameters,
                                       learner=learner,
-                                      time_max=1832))
+                                      time_max=1832,
+                                      trim_model = FALSE))
+      
+      # Create a trimmed model.
+      trimmed_model <- trim_model(model)
+      
+      # Check that the model can be trimmed.
+      test_fun(paste0("Model for ", outcome_type, " created using ", learner, " can be trimmed."), {
+        if(can_trim){
+          testthat::expect_equal(trimmed_model@is_trimmed, TRUE)
+          
+        } else {
+          testthat::expect_equal(trimmed_model@is_trimmed, FALSE)
+        }
+      })
       
       # Test that models can be created.
       test_fun(paste0("Model for ", outcome_type, " can be created using ", learner, " using a complete data set."), {
@@ -128,6 +143,14 @@ test_all_learners_train_predict_vimp <- function(learners,
           # Expect that the class levels are the same as those in the model.
           testthat::expect_equal(levels(prediction_table$predicted_class), get_outcome_class_levels(model))
         }
+        
+        # Expect that the trimmed model produces the same predictions.
+        prediction_table_trim <- suppressWarnings(.predict(trimmed_model,
+                                                           data=full_data))
+        
+        testthat::expect_equal(prediction_table,
+                               prediction_table_trim,
+                               ignore_attr=TRUE)
       })
       
       # Test that models can be used to predict the outcome.
@@ -146,6 +169,14 @@ test_all_learners_train_predict_vimp <- function(learners,
           # Expect that the class levels are the same as those in the model.
           testthat::expect_equal(levels(prediction_table$predicted_class), get_outcome_class_levels(model))
         }
+        
+        # Expect that the trimmed model produces the same predictions.
+        prediction_table_trim <- suppressWarnings(.predict(trimmed_model,
+                                                           data=full_one_sample_data))
+        
+        testthat::expect_equal(prediction_table,
+                               prediction_table_trim,
+                               ignore_attr=TRUE)
       })
       
       # Test that models cannot predict for empty datasets.
@@ -160,39 +191,99 @@ test_all_learners_train_predict_vimp <- function(learners,
       # Test that models can be used to predict survival probabilities.
       if(outcome_type %in% c("survival", "competing_risk")){
         test_fun(paste0("Sample survival predictions for ", outcome_type, " can be made using ", learner, " for a complete data set."), {
+          
           # Expect predictions to be made.
-          prediction_table <- suppressWarnings(.predict(model, full_data, type="survival_probability", time=1000))
+          prediction_table <- suppressWarnings(.predict(model,
+                                                        data=full_data,
+                                                        type="survival_probability",
+                                                        time=1000))
           
           # Test that the predictions were successfully made.
           testthat::expect_equal(any_predictions_valid(prediction_table, outcome_type),
                                  ifelse(learner %in% c(except_train, except_predict, except_predict_survival), FALSE, TRUE))
           
-          prediction_table <- suppressWarnings(.predict(model, full_data, type="risk_stratification", time=1000))
+          # Expect that the trimmed model produces the same predictions.
+          prediction_table_trim <- suppressWarnings(.predict(trimmed_model,
+                                                             data=full_data,
+                                                             type="survival_probability",
+                                                             time=1000))
+          
+          testthat::expect_equal(prediction_table,
+                                 prediction_table_trim,
+                                 ignore_attr=TRUE)
+          
+          # Predict stratification.
+          prediction_table <- suppressWarnings(.predict(model,
+                                                        data=full_data,
+                                                        type="risk_stratification",
+                                                        time=1000))
           
           # Test that the predictions were successfully made.
           testthat::expect_equal(any_predictions_valid(prediction_table, outcome_type), !learner %in% c(except_train, except_predict))
+          
+          # Expect that the trimmed model produces the same predictions.
+          prediction_table_trim <- suppressWarnings(.predict(trimmed_model,
+                                                             data=full_data,
+                                                             type="risk_stratification",
+                                                             time=1000))
+          
+          testthat::expect_equal(prediction_table,
+                                 prediction_table_trim,
+                                 ignore_attr=TRUE)
         })
         
         test_fun(paste0("Sample survival predictions for ", outcome_type, " can be made using ", learner, " for a one-sample data set."), {
+          
           # Expect predictions to be made.
-          prediction_table <- suppressWarnings(.predict(model, data=full_one_sample_data, type="survival_probability", time=1000))
+          prediction_table <- suppressWarnings(.predict(model,
+                                                        data=full_one_sample_data,
+                                                        type="survival_probability",
+                                                        time=1000))
           
           # Test that the predictions were successfully made.
           testthat::expect_equal(any_predictions_valid(prediction_table, outcome_type),
                                  ifelse(learner %in% c(except_train, except_predict, except_predict_survival), FALSE, TRUE))
           
+          # Expect that the trimmed model produces the same predictions.
+          prediction_table_trim <- suppressWarnings(.predict(trimmed_model,
+                                                             data=full_one_sample_data,
+                                                             type="survival_probability",
+                                                             time=1000))
+          
+          testthat::expect_equal(prediction_table,
+                                 prediction_table_trim,
+                                 ignore_attr=TRUE)
+          
           # Expect predictions to be made.
-          prediction_table <- suppressWarnings(.predict(model, data=full_one_sample_data, type="risk_stratification", time=1000))
+          prediction_table <- suppressWarnings(.predict(model,
+                                                        data=full_one_sample_data,
+                                                        type="risk_stratification",
+                                                        time=1000))
           
           # Test that the predictions were successfully made.
           testthat::expect_equal(any_predictions_valid(prediction_table, outcome_type), !learner %in% c(except_train, except_predict))
+          
+          # Expect that the trimmed model produces the same predictions.
+          prediction_table_trim <- suppressWarnings(.predict(trimmed_model,
+                                                             data=full_one_sample_data,
+                                                             type="risk_stratification",
+                                                             time=1000))
+          
+          testthat::expect_equal(prediction_table,
+                                 prediction_table_trim,
+                                 ignore_attr=TRUE)
+          
         })
       }
       
       # Test that the model has variable importance.
       test_fun(paste0("Model has variable importance for ", outcome_type, " and ", learner, " for the complete data set."), {
         # Extract the variable importance table.
-        vimp_table <- suppressWarnings(..vimp(model, full_data))
+        vimp_table <- suppressWarnings(..vimp(model, data=full_data))
+        
+        # Extract the variable importanct table for the trimmed model.
+        vimp_table_trim <- suppressWarnings(..vimp(trimmed_model,
+                                                   data=full_data))
         
         if(has_vimp){
           # Get the number of features
@@ -200,15 +291,17 @@ test_all_learners_train_predict_vimp <- function(learners,
           
           # Expect that the vimp table has two rows.
           testthat::expect_equal(nrow(vimp_table) > 0 & nrow(vimp_table) <= n_features, TRUE)
+          testthat::expect_equal(nrow(vimp_table_trim) > 0 & nrow(vimp_table_trim) <= n_features, TRUE)
           
           # Expect that the names in the vimp table correspond to those of the
           # features.
           testthat::expect_equal(all(vimp_table$name %in% get_feature_columns(full_data)), TRUE)
+          testthat::expect_equal(all(vimp_table_trim$name %in% get_feature_columns(full_data)), TRUE)
           
         } else {
-          
           # Expect that the vimp table has no rows.
           testthat::expect_equal(nrow(vimp_table), 0)
+          testthat::expect_equal(nrow(vimp_table_trim), 0)
         }
       })
       
@@ -222,7 +315,8 @@ test_all_learners_train_predict_vimp <- function(learners,
                                       hyperparameter_list=hyperparameters,
                                       learner=learner,
                                       time_max=1832,
-                                      create_bootstrap=TRUE))
+                                      create_bootstrap=TRUE,
+                                      trim_model=FALSE))
       
       # Test that models can be created.
       test_fun(paste0("Model for ", outcome_type, " can be created using ", learner, " using a complete data set."), {
@@ -248,6 +342,9 @@ test_all_learners_train_predict_vimp <- function(learners,
                                       learner=learner,
                                       time_max=1832))
       
+      # Create a trimmed model.
+      trimmed_model <- trim_model(model)
+      
       # Test that models can be created.
       test_fun(paste0("Model for ", outcome_type, " can be created using ", learner, " using a one-feature data set."), {
         
@@ -264,7 +361,8 @@ test_all_learners_train_predict_vimp <- function(learners,
       # Test that models can be used to predict the outcome.
       test_fun(paste0("Sample predictions for ", outcome_type, " can be made using ", learner, " for a one-feature data set."), {
         # Expect predictions to be made.
-        prediction_table <- suppressWarnings(.predict(model, data=one_feature_data))
+        prediction_table <- suppressWarnings(.predict(model,
+                                                      data=one_feature_data))
         
         # Test that the predictions were successfully made.
         testthat::expect_equal(any_predictions_valid(prediction_table, outcome_type),
@@ -277,12 +375,21 @@ test_all_learners_train_predict_vimp <- function(learners,
           # Expect that the class levels are the same as those in the model.
           testthat::expect_equal(levels(prediction_table$predicted_class), get_outcome_class_levels(model))
         }
+        
+        # Expect that the trimmed model produces the same predictions.
+        prediction_table_trim <- suppressWarnings(.predict(trimmed_model,
+                                                           data=one_feature_data))
+        
+        testthat::expect_equal(prediction_table,
+                               prediction_table_trim,
+                               ignore_attr=TRUE)
       })
       
       # Test that models can be used to predict the outcome.
       test_fun(paste0("Sample predictions for ", outcome_type, " can be made using ", learner, " for a one-feature, one-sample data set."), {
         # Expect predictions to be made.
-        prediction_table <- suppressWarnings(.predict(model, data=one_feature_one_sample_data))
+        prediction_table <- suppressWarnings(.predict(model,
+                                                      data=one_feature_one_sample_data))
         
         # Test that the predictions were successfully made.
         testthat::expect_equal(any_predictions_valid(prediction_table, outcome_type),
@@ -295,20 +402,54 @@ test_all_learners_train_predict_vimp <- function(learners,
           # Expect that the class levels are the same as those in the model.
           testthat::expect_equal(levels(prediction_table$predicted_class), get_outcome_class_levels(model))
         }
+        
+        # Expect that the trimmed model produces the same predictions.
+        prediction_table_trim <- suppressWarnings(.predict(trimmed_model,
+                                                           data=one_feature_one_sample_data))
+        
+        testthat::expect_equal(prediction_table,
+                               prediction_table_trim,
+                               ignore_attr=TRUE)
       })
       
       # Test that models can be used to predict survival probabilities.
       if(outcome_type %in% c("survival", "competing_risk")){
         test_fun(paste0("Sample survival predictions for ", outcome_type, " can be made using ", learner, " for a one-feature data set."), {
           # Expect predictions to be made.
-          prediction_table <- suppressWarnings(.predict(model, one_feature_data, type="survival_probability", time=1000))
+          prediction_table <- suppressWarnings(.predict(model,
+                                                        data=one_feature_data,
+                                                        type="survival_probability",
+                                                        time=1000))
+          
+          # Expect that the trimmed model produces the same predictions.
+          prediction_table_trim <- suppressWarnings(.predict(trimmed_model,
+                                                             data=one_feature_data,
+                                                             type="survival_probability",
+                                                             time=1000))
+          
+          testthat::expect_equal(prediction_table,
+                                 prediction_table_trim,
+                                 ignore_attr=TRUE)
           
           # Test that the predictions were successfully made.
           testthat::expect_equal(any_predictions_valid(prediction_table, outcome_type),
                                  ifelse(learner %in% c(except_train, except_predict, except_predict_survival), FALSE, TRUE))
           
           # Expect predictions to be made.
-          prediction_table <- suppressWarnings(.predict(model, one_feature_data, type="risk_stratification", time=1000))
+          prediction_table <- suppressWarnings(.predict(model,
+                                                        data=one_feature_data,
+                                                        type="risk_stratification",
+                                                        time=1000))
+          
+          # Expect that the trimmed model produces the same predictions.
+          prediction_table_trim <- suppressWarnings(.predict(trimmed_model,
+                                                             data=one_feature_data,
+                                                             type="risk_stratification",
+                                                             time=1000))
+          
+          testthat::expect_equal(prediction_table,
+                                 prediction_table_trim,
+                                 ignore_attr=TRUE)
           
           # Test that the predictions were successfully made.
           testthat::expect_equal(any_predictions_valid(prediction_table, outcome_type), !learner %in% c(except_train, except_predict))
@@ -316,17 +457,43 @@ test_all_learners_train_predict_vimp <- function(learners,
         
         test_fun(paste0("Sample survival predictions for ", outcome_type, " can be made using ", learner, " for a one-feature, one-sample data set."), {
           # Expect predictions to be made.
-          prediction_table <- suppressWarnings(.predict(model, data=one_feature_one_sample_data, type="survival_probability", time=1000))
+          prediction_table <- suppressWarnings(.predict(model,
+                                                        data=one_feature_one_sample_data,
+                                                        type="survival_probability",
+                                                        time=1000))
           
           # Test that the predictions were successfully made.
           testthat::expect_equal(any_predictions_valid(prediction_table, outcome_type),
                                  ifelse(learner %in% c(except_train, except_predict, except_predict_survival), FALSE, TRUE))
           
+          # Expect that the trimmed model produces the same predictions.
+          prediction_table_trim <- suppressWarnings(.predict(trimmed_model,
+                                                             data=one_feature_one_sample_data,
+                                                             type="survival_probability",
+                                                             time=1000))
+          
+          testthat::expect_equal(prediction_table,
+                                 prediction_table_trim,
+                                 ignore_attr=TRUE)
+          
           # Expect predictions to be made.
-          prediction_table <- suppressWarnings(.predict(model, data=one_feature_one_sample_data, type="risk_stratification", time=1000))
+          prediction_table <- suppressWarnings(.predict(model,
+                                                        data=one_feature_one_sample_data,
+                                                        type="risk_stratification",
+                                                        time=1000))
           
           # Test that the predictions were successfully made.
           testthat::expect_equal(any_predictions_valid(prediction_table, outcome_type), !learner %in% c(except_train, except_predict))
+          
+          # Expect that the trimmed model produces the same predictions.
+          prediction_table_trim <- suppressWarnings(.predict(trimmed_model,
+                                                             data=one_feature_one_sample_data,
+                                                             type="risk_stratification",
+                                                             time=1000))
+          
+          testthat::expect_equal(prediction_table,
+                                 prediction_table_trim,
+                                 ignore_attr=TRUE)
         })
       }
       

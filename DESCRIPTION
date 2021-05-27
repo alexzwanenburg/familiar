@@ -1,6 +1,6 @@
 Package: familiar
 Title: End-To-End Machine Learning and Data Analysis Framework
-Version: 0.0.0.54
+Version: 0.0.0.55
 Authors@R: c(
    person("Alex", "Zwanenburg",
           email = "alexander.zwanenburg@nct-dresden.de",
@@ -36,8 +36,7 @@ Imports: methods,
     ggplot2 (>= 3.0.0),
     gtable,
     isotree,
-    e1071,
-    klaR,
+    e1071 (>= 1.7.5),
     xgboost,
     glmnet,
     ranger,
@@ -45,7 +44,8 @@ Imports: methods,
     scales,
     stringi,
     xml2,
-    maxstat
+    maxstat,
+    proxy
 Suggests:
     dynamicTreeCut,
     rmarkdown,
@@ -56,7 +56,7 @@ Suggests:
     qvalue,
     cowplot,
     knitr,
-    testthat (>= 2.1.0),
+    testthat (>= 3.0.0),
     Ecdat,
     MASS
 Collate: 
@@ -167,6 +167,7 @@ Collate:
     'TestFunctions.R'
     'TrainS4Methods.R'
     'Transformation.R'
+    'TrimUtilities.R'
     'Utilities.R'
     'UtilitiesS4.R'
     'VimpS4Regression.R'

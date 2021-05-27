@@ -374,6 +374,10 @@ setMethod("..train", signature(object="familiarMBoost", data="dataObject"),
             # Add feature order
             object@feature_order <- feature_columns
             
+            # Set learner version
+            object@learner_package <- "mboost"
+            object@learner_version <- utils::packageVersion("mboost")
+            
             return(object)
           })
 
@@ -547,8 +551,14 @@ setMethod("..vimp", signature(object="familiarMBoostLM"),
             # Check if the model has been trained upon retry.
             if(!model_is_trained(object)) return(callNextMethod())
             
-            # Use varimp function from mboost to extract a data table.
-            vimp_score <- data.table::as.data.table(mboost::varimp(object@model))
+            if(object@is_trimmed){
+              # Use stored data.
+              vimp_score <- data.table::as.data.table(object@trimmed_function$varimp)
+              
+            } else {
+              # Use varimp function from mboost to extract a data table.
+              vimp_score <- data.table::as.data.table(mboost::varimp(object@model))
+            }
             
             # Select only existing features.
             vimp_score <- vimp_score[variable %in% object@feature_order, ]
@@ -709,4 +719,156 @@ setMethod("..update_outcome", signature(object="familiarMBoost", data="dataObjec
             }
             
             return(data)
+          })
+
+
+#####.trim_model----------------------------------------------------------------
+setMethod(".trim_model", signature(object="familiarMBoost"),
+          function(object, ...){
+            
+            # Create a duplicate of the object to avoid changing the input
+            # object by reference. Since we will be changing environments, we
+            # don't want to update object by reference.
+            object <- rlang::duplicate(object)
+            
+            # Update model by removing the call.
+            object@model$call <- call("trimmed")
+            
+            # Add show.
+            object <- .capture_show(object)
+            
+            # Remove unused elements
+            object@model$ustart <- NULL
+            object@model$response <- NULL
+            object@model$`(weights)` <- NULL
+            object@model$rownames <- NULL
+            object@model$baselearner <- NULL
+            object@model$basemodel <- NULL
+            
+            if(is(object, "familiarMBoostLM")){
+              
+              # Clean the main environment of familiarMBoostLM objects.
+              main_env <- environment(object@model$model.frame)
+              main_env_dupl <- .duplicate_environment(main_env)
+              
+              # Remove most environment variables, except those that are
+              # necessary for prediction.
+              main_env_variables <- setdiff(ls(main_env_dupl, all.names=TRUE),
+                                            c("mf", "na.action", "contrasts.arg", "cm"))
+              .remove(main_env_variables, envir=main_env_dupl)
+              
+              # Remove leftover sample data.
+              evalq(mf <- head(mf, n=0L), envir=main_env_dupl)
+              
+              # Assign duplicate environment
+              object@model <- .change_environment(object@model,
+                                                  old_env=main_env,
+                                                  new_env=main_env_dupl)
+            }
+            # Clean the main subsidiary environment.
+            subs_env <- environment(object@model$predict)
+            subs_env_dupl <- .duplicate_environment(subs_env)
+            
+            # Remove
+            .remove("fit", "fit1", "oob", "response",
+                    "u", "ustart", "weights", "y", "yna",
+                    "basefit", "blfit", "blg", "boost", envir=subs_env_dupl)
+            
+            # Assign duplicate environment
+            object@model <- .change_environment(object@model,
+                                                old_env=subs_env,
+                                                new_env=subs_env_dupl)
+            
+            # Change environment of elements in the subsidiary environment.
+            .change_environment(subs_env_dupl,
+                                old_env=subs_env,
+                                new_env=subs_env_dupl)
+            
+            # Remove copies of the sample data from bl in the subsidiary
+            # environment.
+            bl <- get("bl", envir=subs_env_dupl)
+            for(ii in seq_along(bl)){
+              x_env <- environment(bl[[ii]]$fit)
+              x_env_dupl <- .duplicate_environment(x_env)
+              
+              if(is(object, "familiarMBoostLM")){
+                # Linear model-specific data.
+                
+                # Strip data.
+                evalq(X <- head(X, n=0L), envir=x_env_dupl)
+                
+                # Remove weights
+                .remove("weights", envir=x_env_dupl)
+                
+              } else {
+                
+                # Tree-specific data.
+                evalq(df <- head(df, n=0L), envir=x_env_dupl)
+                evalq(mymf <- head(mymf, n=0L), envir=x_env_dupl)
+                
+                .remove("weights", "y", "Y", envir=x_env_dupl)
+                
+                # Update d
+                d <- get("d", envir=x_env_dupl)
+                
+                # Shrink d
+                d$data <- head(d$data, n=0L)
+                
+                # Update terms by removing the environment.
+                d$terms <- lapply(d$terms, .replace_environment)
+                
+                # Update zindex.
+                for(ii in seq_along(d$zindex)){
+                  if(is.null(d$zindex[[ii]])) next()
+                  
+                  d$zindex[[ii]] <- head(d$zindex[[ii]], n=0L)
+                }
+                
+                # Re-assign d
+                assign("d", d, envir=x_env_dupl)
+                
+              }
+              
+              # Update the elements in the environment directly. This includes
+              # bl.
+              .change_environment(subs_env_dupl,
+                                  old_env=x_env,
+                                  new_env=x_env_dupl)
+              
+              # Make sure that x_env_dupl is self-referenced.
+              .change_environment(x_env_dupl,
+                                  old_env=x_env,
+                                  new_env=x_env_dupl)
+              
+            }
+            
+            # Clean up the ens variable in the subsidiary environment.
+            if(is(object, "familiarMBoostLM")){
+              ens <- get("ens", envir=subs_env_dupl)
+              for(ii in seq_along(ens)){
+                x_env <- environment(ens[[ii]]$fitted)
+                x_env_dupl <- .duplicate_environment(x_env)
+                
+                # Remove y
+                .remove("y", envir=x_env_dupl)
+                
+                # Update the elements in the environment directly. This includes
+                # ens itself.
+                .change_environment(subs_env_dupl,
+                                    old_env=x_env,
+                                    new_env=x_env_dupl)
+                
+                # The old environment also appears in the new environment,
+                # notably in "ret".
+                .change_environment(x_env_dupl,
+                                    old_env=x_env,
+                                    new_env=x_env_dupl)
+              }
+            }
+            
+            # Set is_trimmed to TRUE.
+            object@is_trimmed <- TRUE
+            
+            # Default method for models that lack a more specific method.
+            return(object)
           })

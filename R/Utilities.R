@@ -102,7 +102,7 @@ compute_univariable_p_values <- function(cl=NULL, data_obj, feature_columns){
   if(inherits(model, "error")) return(NA_real_)
   
   # Compute z-statistic.
-  z <- coefficient_one_sample_z_test(model)
+  z <- .compute_z_statistic(model)
   
   # Remove intercept (if present).
   z <- z[names(z) != "(Intercept)"]
@@ -155,7 +155,7 @@ compute_univariable_p_values <- function(cl=NULL, data_obj, feature_columns){
   if(inherits(model, "error")) return(NA_real_)
   
   # Compute z-statistic.
-  z <- coefficient_one_sample_z_test(model)
+  z <- .compute_z_statistic(model)
   
   # Remove intercept (if present).
   z <- z[names(z) != "(Intercept)"]
@@ -208,7 +208,7 @@ compute_univariable_p_values <- function(cl=NULL, data_obj, feature_columns){
   if(inherits(model, "error")) return(NA_real_)
   
   # Compute z-statistic.
-  z <- coefficient_one_sample_z_test(model)
+  z <- .compute_z_statistic(model)
   
   # Remove intercept (if present).
   z <- z[names(z) != "(Intercept)"]
@@ -261,7 +261,7 @@ compute_univariable_p_values <- function(cl=NULL, data_obj, feature_columns){
   if(inherits(model, "error")) return(NA_real_)
   
   # Compute z-statistic
-  z <- coefficient_one_sample_z_test(model)
+  z <- .compute_z_statistic(model)
   
   # Remove intercept (if present).
   z <- z[names(z) != "(Intercept)"]
@@ -314,7 +314,7 @@ compute_univariable_p_values <- function(cl=NULL, data_obj, feature_columns){
   if(inherits(model, "error")) return(NA_real_)
   
   # Compute z-statistic
-  z <- coefficient_one_sample_z_test(model)
+  z <- .compute_z_statistic(model)
   
   # Remove intercept (if present).
   z <- z[names(z) != "(Intercept)"]
@@ -1180,63 +1180,57 @@ is_valid_data <- function(x){
 }
 
 
-coefficient_one_sample_z_test <- function(model, mean=0){
+.compute_z_statistic <- function(model){
   
-  # Provides location test for unrestriced regression models
-  if(inherits(model, "vglm")){
-    # VGAM::vglm-based methods
-    mu    <- VGAM::coefvlm(model)
-    
-    if(is.matrix(mu)){
-      stdevs <- matrix(sqrt(diag(VGAM::vcovvlm(model))), ncol=ncol(mu), byrow=TRUE)
-    } else {
-      stdevs <- sqrt(diag(VGAM::vcovvlm(model)))
-      stdevs <- stdevs[names(stdevs) %in% names(mu)][names(mu)]
+  mu <- cov_matrix <- NULL
+  
+  if(is(model, "familiarModel")){
+    # Attempt to extract the estimates and the covariance matrix from the
+    # familiarModel object.
+    if(!is.null(model@trimmed_function$coef)){
+      mu <- model@trimmed_function$coef
     }
-  } else {
-    # glm-based methods
-    mu    <- stats::coef(model)
     
-    if(is.matrix(mu)){
-      stdevs <- matrix(sqrt(diag(stats::vcov(model))), ncol=ncol(mu), byrow=TRUE)
-    } else {
-      stdevs <- sqrt(diag(stats::vcov(model)))
+    if(!is.null(model@trimmed_function$vcov)){
+      cov_matrix <- model@trimmed_function$vcov
+    }
+    
+    # Extract the model itself.
+    model <- model@model
+  }
+  
+  if(is(model, "vglm")){
+    if(is.null(mu)) mu <- VGAM::coefvlm(model)
+    if(is.null(cov_matrix)) cov_matrix <- VGAM::vcovvlm(model)
+    
+  } else {
+    if(is.null(mu)) mu <- stats::coef(model)
+    if(is.null(cov_matrix)) cov_matrix <- stats::vcov(model)
+  }
+  
+  if(is.matrix(mu)){
+    stdevs <- matrix(sqrt(diag(stats::vcov(model))), ncol=ncol(mu), byrow=TRUE)
+    
+  } else {
+    stdevs <- sqrt(diag(cov_matrix))
+    
+    # Order standard deviations according to the estimates.
+    if(is.null(names(stdevs))){
+      stdevs <- stdevs[seq_along(mu)]
       
-      if(is.null(names(stdevs))){
-        # Case where no names are provided
-        stdevs <- stdevs[seq_len(length(mu))]
-      } else {
-        stdevs <- stdevs[names(stdevs) %in% names(mu)][names(mu)]
-      }
+    } else {
+      stdevs <- stdevs[names(stdevs) %in% names(mu)][names(mu)]
     }
   }
   
   # Compute z-score
-  z  <- (mu-mean)/stdevs
+  z  <- mu / stdevs
   
-  # Return p-value based on z-score
+  # Return z-score, as p-values can become very small.
   return(abs(z))
 }
 
 
-
-
-vectorAsString <- function(ref_names){
-  # Parses a character vector to a string
-  vect_str = ""
-
-  for(ii in 1:length(ref_names)){
-    if(ii==1){
-      vect_str <- c(vect_str, ref_names[ii])
-    } else if(ii==length(ref_names)){
-      vect_str <- c(vect_str, paste0(" and ", ref_names[ii]))
-    } else {
-      vect_str <- c(vect_str, paste0(", ", ref_names[ii]))
-    }
-  }
-
-  vect_str <- paste0(vect_str, collapse="")
-}
 
 is_package_installed <- function(name, version=NULL, verbose=FALSE){
 
@@ -1263,6 +1257,7 @@ is_package_installed <- function(name, version=NULL, verbose=FALSE){
 
   return(is_installed)
 }
+
 
 
 is_any <- function(object, class2){

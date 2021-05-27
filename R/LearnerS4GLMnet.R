@@ -299,7 +299,6 @@ setMethod("..train", signature(object="familiarGLMnet", data="dataObject"),
                                                            parallel = FALSE),
                                                  error=identity))
               
-              
             } else if(is(object, "familiarGLMnetLasso")){
               # Attempt to train the model
               model <- suppressWarnings(tryCatch(cv.glmnet(x = as.matrix(encoded_data$encoded_data@data[, mget(feature_columns)]),
@@ -339,6 +338,10 @@ setMethod("..train", signature(object="familiarGLMnet", data="dataObject"),
             
             # Add feature order
             object@feature_order <- feature_columns
+            
+            # Set learner version
+            object@learner_package <- "glmnet"
+            object@learner_version <- utils::packageVersion("glmnet")
             
             return(object)
           })
@@ -547,7 +550,7 @@ setMethod("..vimp", signature(object="familiarGLMnet"),
 
 
 
-#####..set_calibration_info#####
+#####..set_calibration_info-----------------------------------------------------
 setMethod("..set_calibration_info", signature(object="familiarGLMnet"),
           function(object, data){
             
@@ -564,3 +567,37 @@ setMethod("..set_calibration_info", signature(object="familiarGLMnet"),
             
             return(object)
           })
+
+
+#####.trim_model----------------------------------------------------------------
+setMethod(".trim_model", signature(object="familiarGLMnet"),
+          function(object, ...){
+
+            # Update model.
+            object@model <- ..trim_glmnet(object@model)
+            
+            # Set is_trimmed to TRUE.
+            object@is_trimmed <- TRUE
+            
+            # Default method for models that lack a more specific method.
+            return(object)
+          })
+
+
+
+..trim_glmnet <- function(object){
+  # Function to trim glmnet objects.
+  
+  # Check if the object is a glmnet object.
+  if(!(inherits(object, "glmnet") | inherits(object, "cv.glmnet"))) return(object)
+  
+  # Replace calls
+  object$call <- call("nullcall")
+  
+  # Specific to cv.glmnet.
+  if(!is.null(object$glmnet.fit)){
+    object$glmnet.fit$call <- call("nullcall")  
+  }
+  
+  return(object)
+}

@@ -18,7 +18,14 @@ setMethod("train", signature(data="data.table"),
 
 
 setMethod("train", signature(data="dataObject"),
-          function(data, learner, hyperparameter_list=list(), create_bootstrap=FALSE, create_novelty_detector=FALSE, cl=NULL, ...){
+          function(data,
+                   learner,
+                   hyperparameter_list=list(),
+                   create_bootstrap=FALSE,
+                   create_novelty_detector=FALSE,
+                   cl=NULL,
+                   trim_model=TRUE,
+                   ...){
             
             #####Prepare settings###############################################
             
@@ -120,7 +127,6 @@ setMethod("train", signature(data="dataObject"),
             
             # Obtain the final list of hyperparameters.
             param_list <- lapply(param_list, function(hyperparameter_entry) hyperparameter_entry$init_config)
-
             
             #####Prepare model and data#########################################
             
@@ -154,7 +160,10 @@ setMethod("train", signature(data="dataObject"),
             }
             
             # Train model.
-            object <- .train(object=object, data=data, get_additional_info=TRUE)
+            object <- .train(object=object,
+                             data=data,
+                             get_additional_info=TRUE,
+                             trim_model=trim_model)
             
             # Add novelty detector
             if(create_novelty_detector){

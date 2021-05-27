@@ -76,8 +76,6 @@ A familiarCollection object aggregates data from one or more familiarData object
 
 \item{\code{class_labels}}{ANY.}
 
-\item{\code{is_anonymised}}{logical.}
-
 \item{\code{project_id}}{ANY.}
 
 \item{\code{familiar_version}}{ANY.}
