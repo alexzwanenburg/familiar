@@ -283,7 +283,7 @@ test_all_learners_train_predict_vimp <- function(learners,
         
         # Extract the variable importanct table for the trimmed model.
         vimp_table_trim <- suppressWarnings(..vimp(trimmed_model,
-                                                   data-full_data))
+                                                   data=full_data))
         
         if(has_vimp){
           # Get the number of features
