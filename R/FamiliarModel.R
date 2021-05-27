@@ -131,13 +131,20 @@ setMethod("show", signature(object="familiarModel"),
               
             } else {
               cat(paste0("A ", object@learner, " model (class: ", class(object)[1],
-                         "; v", object@familiar_version, ").\n"))
+                         "; v", object@familiar_version, ")",
+                         " trained using ", object@learner_package, " (",
+                         as.character(object@learner_version), ") package.\n"))
               
               cat(paste0("\n--------------- Model details ---------------"))
               
               # Model details
-              show(object@model)
-              
+              if(object@is_trimmed){
+                cat(object@trimmed_function$show, sep="\n")
+                
+              } else {
+                show(object@model)
+              }
+
               cat(paste0("---------------------------------------------\n"))
               
               # Outcome details
