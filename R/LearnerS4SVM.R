@@ -256,6 +256,10 @@ setMethod("..train", signature(object="familiarSVM", data="dataObject"),
             # Add model
             object@model <- model
             
+            # Set learner version
+            object@learner_package <- "e1071"
+            object@learner_version <- utils::packageVersion("e1071")
+            
             return(object)
           })
 
@@ -330,4 +334,23 @@ setMethod("..predict", signature(object="familiarSVM", data="dataObject"),
               return(prediction_table)
               
             }
+          })
+
+
+
+#####.trim_model----------------------------------------------------------------
+setMethod(".trim_model", signature(object="familiarSVM"),
+          function(object, ...){
+            
+            # Update model by removing the call.
+            object@model$call <- call("trimmed")
+            
+            # Remove .Environment.
+            object@model$terms <- .replace_environment(object@model$terms)
+            
+            # Set is_trimmed to TRUE.
+            object@is_trimmed <- TRUE
+            
+            # Default method for models that lack a more specific method.
+            return(object)
           })
