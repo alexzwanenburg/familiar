@@ -734,6 +734,9 @@ setMethod(".trim_model", signature(object="familiarMBoost"),
             # Update model by removing the call.
             object@model$call <- call("trimmed")
             
+            # Add show.
+            object <- .capture_show(object)
+            
             # Remove unused elements
             object@model$ustart <- NULL
             object@model$response <- NULL

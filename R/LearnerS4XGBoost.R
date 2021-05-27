@@ -788,6 +788,9 @@ setMethod(".trim_model", signature(object="familiarXGBoost"),
             # Update model by removing the call.
             object@model$call <- call("trimmed")
             
+            # Add show.
+            object <- .capture_show(object)
+            
             # Remove raw
             object@model$raw <- NULL
             

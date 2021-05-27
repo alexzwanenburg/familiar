@@ -158,6 +158,9 @@ setMethod(".trim_model", signature(object="familiarNaiveBayes"),
             # Update model by removing the call.
             object@model$call <- call("trimmed")
             
+            # Add show.
+            object <- .capture_show(object)
+            
             # Set is_trimmed to TRUE.
             object@is_trimmed <- TRUE
             

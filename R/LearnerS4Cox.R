@@ -255,6 +255,9 @@ setMethod(".trim_model", signature(object="familiarCoxPH"),
             # Update model by removing the call.
             object@model$call <- call("trimmed")
             
+            # Add show.
+            object <- .capture_show(object)
+            
             # Remove .Environment.
             object@model$terms <- .replace_environment(object@model$terms)
             object@model$formula <- .replace_environment(object@model$formula)

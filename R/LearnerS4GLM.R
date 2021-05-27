@@ -514,6 +514,9 @@ setMethod(".trim_model", signature(object="familiarGLM"),
               # Update model by removing the call.
               object@model@call <- call("trimmed")
               
+              # Add show.
+              object <- .capture_show(object)
+              
               # Remove .Environment.
               object@model@terms$terms <- .replace_environment(object@model@terms$terms)
               object@model@misc$formula <- .replace_environment(object@model@misc$formula)
@@ -531,6 +534,9 @@ setMethod(".trim_model", signature(object="familiarGLM"),
             } else {
               # Update model by removing the call.
               object@model$call <- call("trimmed")
+              
+              # Add show.
+              object <- .capture_show(object)
               
               # Remove .Environment.
               object@model$terms <- .replace_environment(object@model$terms)

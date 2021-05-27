@@ -638,6 +638,9 @@ setMethod(".trim_model", signature(object="familiarRFSRC"),
             # Update model by removing the call.
             object@model$call <- call("trimmed")
             
+            # Add show.
+            object <- .capture_show(object)
+            
             # Remove the predictions.
             object@model$predicted <- NULL
             object@model$predicted.oob <- NULL
