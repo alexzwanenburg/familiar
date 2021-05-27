@@ -8,6 +8,31 @@
 
 
 
+.capture_show <- function(object){
+  
+  # Capture message
+  captured_message <- utils::capture.output(show(object@model), file=NULL)
+  
+  # Remove call.
+  call_present <- stringi::stri_startswith(str=captured_message, fixed="Call:")
+  if(any(call_present)){
+    call_present <- which(call_present)
+    call_present <- c(call_present - 1L, call_present)
+    call_present <- setdiff(call_present, 0L)
+    
+    # Remove lines from message.
+    captured_message <- captured_message[-c(call_present)]
+  }
+  
+  # Add to trimmed functions.
+  object@trimmed_function <- c(object@trimmed_function,
+                               list("show"=captured_message))
+  
+  return(object)
+}
+
+
+
 .replace_broken_functions <- function(object, trimmed_object){
   
   # Generate replacement functions, if required.
