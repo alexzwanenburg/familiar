@@ -11,7 +11,11 @@
 .capture_show <- function(object){
   
   # Capture message
-  captured_message <- utils::capture.output(show(object@model), file=NULL)
+  captured_message <- suppressWarnings(tryCatch(utils::capture.output(show(object@model), file=NULL),
+                                                error=identity))
+  
+  # Check if show generated an error.
+  if(inherits(captured_message, "error")) return(object)
   
   # Remove call.
   call_present <- stringi::stri_startswith(str=captured_message, fixed="Call:")
