@@ -498,6 +498,10 @@ setMethod("..train", signature(object="familiarXGBoost", data="dataObject"),
             # Add feature order
             object@feature_order <- feature_columns
             
+            # Set learner version
+            object@learner_package <- "xgboost"
+            object@learner_version <- utils::packageVersion("xgboost")
+            
             return(object)
           })
 
@@ -774,4 +778,22 @@ setMethod("..set_recalibration_model", signature(object="familiarXGBoost", data=
             } else {
               return(callNextMethod())
             }
+          })
+
+
+#####.trim_model----------------------------------------------------------------
+setMethod(".trim_model", signature(object="familiarXGBoost"),
+          function(object, ...){
+            
+            # Update model by removing the call.
+            object@model$call <- call("trimmed")
+            
+            # Remove raw
+            object@model$raw <- NULL
+            
+            # Set is_trimmed to TRUE.
+            object@is_trimmed <- TRUE
+            
+            # Default method for models that lack a more specific method.
+            return(object)
           })
