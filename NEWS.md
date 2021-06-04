@@ -1,5 +1,23 @@
 # Development
 
+## Major changes
+
+* All models are now trimmed to remove unnecessary objects such as nested
+environments, copies of training data, etc. This should cause an overall smaller
+memory footprint. Note that this does not necessarily imply anonymisation of the
+data. Notably, k-nearest neighbour learners still maintain a copy of the
+training dataset internally.
+
+* Naive Bayes and k-nearest neighbour learners now use the `e1071` package
+instead of `klaR`, which has been deprecated from familiar. Some hyperparameters
+changed accordingly. See the *learners* vignette.
+
+## Minor changes
+
+* A `sample_limit` parameter was added to limit the number of samples used
+during evaluation. This parameter can be specified for the `sample_similarity`
+evaluation step.
+
 ## Bug fixes
 
 * Fixed a bug that caused clustered features not to be exported for the purpose
@@ -12,6 +30,9 @@ calling the `export_fs_vimp` method with any `object` that is not a
 * Fixed a bug that prevented rank aggregation method and thresholds from being
 set while exporting variable importance using `export_fs_vimp` or
 `export_model_vimp`.
+
+* Fixed an error that occurred when attempting to fit calibration data with `NA`
+values.
 
 # Version 0.0.0.54 (Pre-release)
 
