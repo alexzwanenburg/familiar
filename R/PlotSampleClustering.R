@@ -139,6 +139,7 @@ setGeneric("plot_sample_clustering",
                     feature_linkage_method=waiver(),
                     sample_cluster_method=waiver(),
                     sample_linkage_method=waiver(),
+                    sample_limit=waiver(),
                     draw=FALSE,
                     dir_path=NULL,
                     split_by=NULL,
@@ -189,6 +190,7 @@ setMethod("plot_sample_clustering", signature(object="ANY"),
                    feature_linkage_method=waiver(),
                    sample_cluster_method=waiver(),
                    sample_linkage_method=waiver(),
+                   sample_limit=waiver(),
                    draw=FALSE,
                    dir_path=NULL,
                    split_by=NULL,
@@ -234,6 +236,7 @@ setMethod("plot_sample_clustering", signature(object="ANY"),
             object <- do.call(as_familiar_collection,
                               args=c(list("object"=object,
                                           "data_element"="feature_expressions",
+                                          "sample_limit"=sample_limit,
                                           "feature_cluster_method"=feature_cluster_method,
                                           "feature_linkage_method"=feature_linkage_method,
                                           "sample_cluster_method"=sample_cluster_method,
@@ -297,6 +300,7 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
                    feature_linkage_method=waiver(),
                    sample_cluster_method=waiver(),
                    sample_linkage_method=waiver(),
+                   sample_limit=waiver(),
                    draw=FALSE,
                    dir_path=NULL,
                    split_by=NULL,
@@ -354,6 +358,7 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
             
             # Get feature similarity data.
             sample_similarity <- export_sample_similarity(object=object,
+                                                          sample_limit=sample_limit,
                                                           sample_cluster_method=sample_cluster_method,
                                                           sample_linkage_method=sample_linkage_method)[[1]]
             
@@ -1713,6 +1718,8 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
                                        feature_similarity,
                                        sample_similarity,
                                        gradient_palette_range){
+  # Suppress NOTES due to non-standard evaluation in data.table
+  feature <- sample <- NULL
   
   if(is_empty(x)) return(NULL)
   
@@ -1802,6 +1809,9 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
     sample_order <- cluster.extract_label_order(cluster_object=sample_similarity@dendrogram,
                                                 cluster_method=sample_similarity@cluster_method)
   }
+  
+  # Keep only features and samples that are in feature order and sample order.
+  data <- data[feature %in% feature_order$name & sample %in% sample_order$name]
   
   # Set feature and sample order
   data$feature <- factor(data$feature,
