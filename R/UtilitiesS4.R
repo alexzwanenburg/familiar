@@ -740,6 +740,109 @@ setMethod("get_bootstrap_sample", signature(data="NULL"), function(data, seed=NU
 
 
 
+#####get_subsample-------------------------------------------------------------
+setMethod("get_subsample", signature(data="dataObject"),
+          function(data, seed=NULL, size=NULL, outcome_type=NULL, ...){
+            # This function randomly selects up to "size" samples from the data.
+            # Set seed for reproducible results.
+            if(!is.null(seed)){
+              if(is.finite(seed)){
+                set.seed(seed)
+                on.exit(set.seed(NULL))
+              } 
+            }
+            
+            if(is.null(outcome_type)) outcome_type <- data@outcome_type
+            
+            if(.as_preprocessing_level(data) > "none"){
+              # Indicating that some preprocessing has taken please.
+              
+              # Bootstrap the data element.
+              data@data <- get_subsample(data=data@data,
+                                          size=size,
+                                          outcome_type=outcome_type)
+              
+            } else if(length(data@sample_set_on_load) > 0){
+              
+              # Subsample data.
+              data@sample_set_on_load <- get_subsample(data=data@sample_set_on_load,
+                                                       size=size,
+                                                       outcome_type=outcome_type)
+              
+            } else {
+              ..error_reached_unreachable_code("get_boostrap_sample,dataObject: could not identify a suitable method for bootstrapping.")
+            }
+            
+            return(data)
+          })
+
+
+setMethod("get_subsample", signature(data="data.table"),
+          function(data, seed=NULL, size=NULL, outcome_type=NULL, ...){
+            
+            # Suppress NOTES due to non-standard evaluation in data.table
+            .NATURAL <- NULL
+            
+            # If no size is set, 
+            if(is.null(size)) return(data)
+            
+            # Set seed for reproducible results.
+            if(!is.null(seed)){
+              if(is.finite(seed)){
+                set.seed(seed)
+                on.exit(set.seed(NULL))
+              } 
+            }
+            
+            # Update size, if required.
+            if(size > nrow(data)) size <- nrow(data)
+            
+            # If size is equal to the number of data elements, return the entire
+            # data.
+            if(size == nrow(data)) return(data)
+            
+            # Find identifier columns at the sample level, i.e. excluding
+            # repetitions and series.
+            id_columns <- intersect(get_id_columns(id_depth="sample"), colnames(data))
+            
+            if(length(id_columns) == 0){
+              # Sample rows.
+              row_ids <- fam_sample(x=seq_len(nrow(data)),
+                                    size=size,
+                                    replace=FALSE)
+              
+              # Create a subset.
+              data <- data[row_ids, ]
+              
+            } else if(is.null(outcome_type)){
+              # Sample rows.
+              row_ids <- fam_sample(x=seq_len(nrow(data)),
+                                    size=size,
+                                    replace=FALSE)
+              
+              # Create a subset.
+              data <- data[row_ids, ]
+              
+            } else {
+              # Get subsample.
+              id_table <- .create_subsample(data,
+                                            size=size, 
+                                            n_iter=1L,
+                                            outcome_type=outcome_type)
+              
+              # Isolate identifier table.
+              id_table <- id_table$train_list[[1]]
+              
+              # Select data.
+              data <- data[id_table, on=.NATURAL]
+            }
+            
+            return(data)
+          })
+
+
+setMethod("get_subsample", signature(data="NULL"), function(data, seed=NULL, ...) return(NULL))
+
 #####fam_sample-----------------------------------------------------------------
 setMethod("fam_sample", signature(x="ANY"),
           function(x, size=NULL, replace=FALSE, prob=NULL, ...){

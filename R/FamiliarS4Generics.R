@@ -188,6 +188,8 @@ setGeneric("fam_sample", function(x, ...) standardGeneric("fam_sample"))
 
 setGeneric("get_bootstrap_sample", function(data, ...) standardGeneric("get_bootstrap_sample"))
 
+setGeneric("get_subsample", function(data, ...) standardGeneric("get_subsample"))
+
 
 ##### familiarModel learner methods #####
 setGeneric("promote_learner", function(object, ...) standardGeneric("promote_learner"))
