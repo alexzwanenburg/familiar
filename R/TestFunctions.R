@@ -2681,6 +2681,119 @@ test_export <- function(export_function,
 
 
 
+test_export_specific <- function(export_function,
+                                 data_element,
+                                 outcome_type_available=c("count", "continuous", "binomial", "multinomial", "survival"),
+                                 ...,
+                                 export_args=list(),
+                                 use_data_set="full",
+                                 n_models=1L,
+                                 create_novelty_detector=FALSE,
+                                 debug=FALSE){
+  
+  if(debug){
+    test_fun <- debug_test_that
+    
+  } else {
+    test_fun <- testthat::test_that
+  }
+  
+  # Create list for output.
+  out_elements <- list()
+  
+  # Iterate over the outcome type.
+  for(outcome_type in c("count", "continuous", "binomial", "multinomial", "survival")){
+    
+    # Obtain data.
+    main_data <- test.create_good_data_set(outcome_type)
+    
+    data <- switch(use_data_set,
+                   "full"=test.create_good_data_set(outcome_type),
+                   "identical"=test.create_all_identical_data_set(outcome_type),
+                   "one_sample"=test.create_one_sample_data_set(outcome_type))
+    
+    # Parse hyperparameter list
+    hyperparameters <- list("sign_size"=get_n_features(main_data),
+                            "family"=switch(outcome_type,
+                                            "continuous"="gaussian",
+                                            "count"="poisson",
+                                            "binomial"="binomial",
+                                            "multinomial"="multinomial",
+                                            "survival"="cox"))
+
+    if(n_models == 1){
+      # Train the model.
+      model_full_1 <- suppressWarnings(train(data=main_data,
+                                             cluster_method="none",
+                                             imputation_method="simple",
+                                             fs_method="mim",
+                                             hyperparameter_list=hyperparameters,
+                                             learner="lasso",
+                                             time_max=1832,
+                                             create_novelty_detector=create_novelty_detector))
+      
+      model_full_2 <- model_full_1
+      model_full_2@fs_method <- "mifs"
+      
+    } else {
+      # Train a set of models.
+      model_full_1 <- list()
+      model_full_2 <- list()
+      
+      for(ii in seq_len(n_models)){
+        temp_model_1 <- suppressWarnings(train(data=main_data,
+                                               cluster_method="none",
+                                               imputation_method="simple",
+                                               fs_method="mim",
+                                               hyperparameter_list=hyperparameters,
+                                               learner="lasso",
+                                               time_max=1832,
+                                               create_bootstrap=TRUE,
+                                               create_novelty_detector=create_novelty_detector))
+        
+        temp_model_2 <- temp_model_1
+        temp_model_2@fs_method <- "mifs"
+        
+        model_full_1[[ii]] <- temp_model_1
+        model_full_2[[ii]] <- temp_model_2
+      }
+    }
+    
+    
+    # Create familiar data objects.
+    data_good_full_1 <- as_familiar_data(object=model_full_1,
+                                         data=data,
+                                         data_element=data_element,
+                                         ...)
+    
+    data_good_full_2 <- as_familiar_data(object=model_full_2,
+                                         data=data,
+                                         data_element=data_element,
+                                         ...)
+    
+    # Generate data objects and names.
+    object <- list(data_good_full_1, data_good_full_2, data_good_full_1, data_good_full_2)
+    object <- mapply(set_object_name, object, c("development_1", "development_2", "validation_1", "validation_2"))
+    
+    # Process to collect.
+    collection <- suppressWarnings(as_familiar_collection(object, familiar_data_names=c("development", "development", "validation", "validation")))
+    
+    # Create data elements.
+    data_elements <- do.call(export_function, args=c(list("object"=collection),
+                                                     export_args))
+    
+    # Save data elements and add name.
+    current_element <- list(data_elements)
+    names(current_element) <- outcome_type
+    
+    out_elements <- c(out_elements, current_element)
+  }
+  
+  return(out_elements)
+}
+
+
+
 integrated_test <- function(..., debug=FALSE){
   
   if(debug){
