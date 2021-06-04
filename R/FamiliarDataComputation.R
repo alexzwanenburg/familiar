@@ -3,7 +3,9 @@
 NULL
 
 
-.get_available_data_elements <- function(check_has_estimation_type=FALSE, check_has_detail_level=FALSE){
+.get_available_data_elements <- function(check_has_estimation_type=FALSE,
+                                         check_has_detail_level=FALSE, 
+                                         check_has_sample_limit=FALSE){
   
   # All data elements.
   all_data_elements <- c("auc_data", "calibration_data", "calibration_info", "confusion_matrix",
@@ -20,12 +22,19 @@ NULL
   # Data elements that allow setting a detail level.
   can_set_detail_level <- c(can_set_estimation_type, "calibration_info", "confusion_matrix", "risk_stratification_data", "risk_stratification_info")
   
-  # Data elements that allow for setting an estimation type but not detail level.
+  # Data elements that allow for setting an estimation type but not detail
+  # level.
   can_set_estimation_type <- c(can_set_estimation_type, "feature_similarity")
+  
+  # Data elements that allow for setting a sample limit.
+  can_set_sample_limit <- c("sample_similarity")
+  
+  if(check_has_sample_limit){
+    all_data_elements <- intersect(all_data_elements, can_set_sample_limit)
+  }
   
   if(check_has_estimation_type){
     all_data_elements <- intersect(all_data_elements, can_set_estimation_type)
-    
   } 
   
   if(check_has_detail_level){
