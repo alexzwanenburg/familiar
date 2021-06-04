@@ -963,12 +963,18 @@ setMethod("extract_calibration_data", signature(object="familiarEnsemble"),
 
 ..compute_calibration_data_interpolated <- function(data, method="loess"){
   
+  # Suppress NOTES due to non-standard evaluation in data.table
+  observed <- expected <- NULL
+  
   # Set interpolation range for expected values. This allows for aggregating
   # observed values based on the expected value.
   expected_interpolated <- seq(from=0.000, to=1.000, by=0.005)
   
   # Select only unique entries.
   data <- unique(data)
+  
+  # Select only instances where expected and observed are finite values.
+  data <- data[is.finite(expected) & is.finite(observed)]
   
   # Determine the number of unique expected values.
   n_instances <- data.table::uniqueN(data, by="expected")
@@ -988,6 +994,16 @@ setMethod("extract_calibration_data", signature(object="familiarEnsemble"),
       return(list("expected"=NA_real_,
                   "observed"=NA_real_))
     }
+    
+  } else if(method == "linear"){
+    
+    if(n_instances < 2){
+      return(list("expected"=NA_real_,
+                  "observed"=NA_real_))
+    }
+    
+  } else {
+    ..error_reached_unreachable_code(paste0("..compute_calibration_data_interpolated: unexpected interpolation method encountered: ", method))
   }
   
   if(method == "linear"){
