@@ -109,6 +109,24 @@ NULL
 
 
 
+.parse_sample_limit <- function(x, default, data_element){
+  
+  if(is.null(x) | is.waive(x)) return(default)
+  
+  # detail level is stored in a list, by data_element.
+  if(is.list(x)) x <- x[[data_element]]
+  
+  if(is.null(x)) return(default)
+  
+  if(x == "default") return(default)
+  
+  .check_number_in_valid_range(x=x, var_name="sample_limit",
+                               range=c(20L, Inf))
+  
+  return(x)
+}
+
+
 
 #'@title Internal function to create a familiarData object.
 #'
