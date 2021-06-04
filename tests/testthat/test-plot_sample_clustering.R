@@ -87,6 +87,16 @@ familiar:::test_plot_ordering(plot_function=familiar:::plot_sample_clustering,
                               debug=debug_flag)
 
 
+# With sample limit
+familiar:::test_plot_ordering(plot_function=familiar:::plot_sample_clustering,
+                              data_element="feature_expressions",
+                              outcome_type_available=c("count", "continuous", "binomial", "multinomial", "survival"),
+                              plot_args=list("facet_by"=c("learner", "fs_method", "data_set"),
+                                             "sample_limit"=20L,
+                                             "verbose"=FALSE),
+                              debug=debug_flag)
+
+
 # Test multiple evaluation times
 familiar:::test_plot_ordering(plot_function=familiar:::plot_sample_clustering,
                               data_element="feature_expressions",

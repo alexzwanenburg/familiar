@@ -3,7 +3,9 @@
 NULL
 
 
-.get_available_data_elements <- function(check_has_estimation_type=FALSE, check_has_detail_level=FALSE){
+.get_available_data_elements <- function(check_has_estimation_type=FALSE,
+                                         check_has_detail_level=FALSE, 
+                                         check_has_sample_limit=FALSE){
   
   # All data elements.
   all_data_elements <- c("auc_data", "calibration_data", "calibration_info", "confusion_matrix",
@@ -20,12 +22,19 @@ NULL
   # Data elements that allow setting a detail level.
   can_set_detail_level <- c(can_set_estimation_type, "calibration_info", "confusion_matrix", "risk_stratification_data", "risk_stratification_info")
   
-  # Data elements that allow for setting an estimation type but not detail level.
+  # Data elements that allow for setting an estimation type but not detail
+  # level.
   can_set_estimation_type <- c(can_set_estimation_type, "feature_similarity")
+  
+  # Data elements that allow for setting a sample limit.
+  can_set_sample_limit <- c("sample_similarity")
+  
+  if(check_has_sample_limit){
+    all_data_elements <- intersect(all_data_elements, can_set_sample_limit)
+  }
   
   if(check_has_estimation_type){
     all_data_elements <- intersect(all_data_elements, can_set_estimation_type)
-    
   } 
   
   if(check_has_detail_level){
@@ -98,6 +107,24 @@ NULL
   return(FALSE)
 }
 
+
+
+.parse_sample_limit <- function(x, default, data_element){
+  
+  if(is.null(x) | is.waive(x)) return(default)
+  
+  # detail level is stored in a list, by data_element.
+  if(is.list(x)) x <- x[[data_element]]
+  
+  if(is.null(x)) return(default)
+  
+  if(x == "default") return(default)
+  
+  .check_number_in_valid_range(x=x, var_name="sample_limit",
+                               range=c(20L, Inf))
+  
+  return(x)
+}
 
 
 
@@ -278,6 +305,7 @@ setGeneric("extract_data", function(object,
                                     sample_cluster_method=waiver(),
                                     sample_linkage_method=waiver(),
                                     sample_similarity_metric=waiver(),
+                                    sample_limit=waiver(),
                                     detail_level=waiver(),
                                     estimation_type=waiver(),
                                     aggregate_results=waiver(),
@@ -310,6 +338,7 @@ setMethod("extract_data", signature(object="familiarEnsemble"),
                    sample_cluster_method=waiver(),
                    sample_linkage_method=waiver(),
                    sample_similarity_metric=waiver(),
+                   sample_limit=waiver(),
                    detail_level=waiver(),
                    estimation_type=waiver(),
                    aggregate_results=waiver(),
@@ -383,6 +412,7 @@ setMethod("extract_data", signature(object="familiarEnsemble"),
                                                              data=data,
                                                              cl=cl,
                                                              is_pre_processed=is_pre_processed,
+                                                             sample_limit=sample_limit,
                                                              sample_similarity_metric=sample_similarity_metric,
                                                              sample_cluster_method=sample_cluster_method,
                                                              sample_linkage_method=sample_linkage_method,
@@ -443,8 +473,8 @@ setMethod("extract_data", signature(object="familiarEnsemble"),
             if(any(c("feature_expressions") %in% data_element)){
               expression_info <- extract_feature_expression(object=object,
                                                             data=data,
-                                                            feature_similarity,
-                                                            sample_similarity,
+                                                            feature_similarity=feature_similarity,
+                                                            sample_similarity=sample_similarity,
                                                             feature_cluster_method=feature_cluster_method,
                                                             feature_linkage_method=feature_linkage_method,
                                                             feature_similarity_metric=feature_similarity_metric,
