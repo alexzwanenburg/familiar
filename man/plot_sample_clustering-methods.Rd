@@ -12,6 +12,7 @@ plot_sample_clustering(
   feature_linkage_method = waiver(),
   sample_cluster_method = waiver(),
   sample_linkage_method = waiver(),
+  sample_limit = waiver(),
   draw = FALSE,
   dir_path = NULL,
   split_by = NULL,
@@ -60,6 +61,7 @@ plot_sample_clustering(
   feature_linkage_method = waiver(),
   sample_cluster_method = waiver(),
   sample_linkage_method = waiver(),
+  sample_limit = waiver(),
   draw = FALSE,
   dir_path = NULL,
   split_by = NULL,
@@ -108,6 +110,7 @@ plot_sample_clustering(
   feature_linkage_method = waiver(),
   sample_cluster_method = waiver(),
   sample_linkage_method = waiver(),
+  sample_limit = waiver(),
   draw = FALSE,
   dir_path = NULL,
   split_by = NULL,
@@ -189,6 +192,13 @@ creation of the underlying \code{familiarModel} objects.}
 
 If not provided explicitly, this parameter is read from settings used at
 creation of the underlying \code{familiarModel} objects.}
+
+\item{sample_limit}{(\emph{optional}) Set the upper limit of the number of samples
+that are used during evaluation steps. Cannot be less than 20.
+
+This setting can be specified per data element by providing a parameter
+value in a named list with data elements, e.g.
+\code{list("sample_similarity"=100, "permutation_vimp"=1000)}.}
 
 \item{draw}{(\emph{optional}) Draws the plot if TRUE.}
 

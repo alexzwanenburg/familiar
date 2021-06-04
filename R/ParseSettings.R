@@ -2152,7 +2152,7 @@
 #'
 #'  * `feature_expressions`: data for assessing and plotting sample clustering
 #'  are not computed.
-#'  
+#'
 #'  * `feature_similarity`: data for assessing and plotting feature clusters are
 #'  not computed.
 #'
@@ -2172,12 +2172,12 @@
 #'  permutation variable importance are not computed.
 #'
 #'  * `prediction_data`: predictions for each sample are not made and exported.
-#'  
-#'  * `risk_stratification_data`: data for assessing and plotting Kaplan-Meier survival
-#'  curves are not collected.
-#'  
-#'  * `risk_stratification_info`: data for assessing stratification into risk groups
-#'  are not computed.
+#'
+#'  * `risk_stratification_data`: data for assessing and plotting Kaplan-Meier
+#'  survival curves are not collected.
+#'
+#'  * `risk_stratification_info`: data for assessing stratification into risk
+#'  groups are not computed.
 #'
 #'  * `univariate_analysis`: data for assessing and plotting univariate feature
 #'  importance are not computed.
@@ -2201,6 +2201,13 @@
 #'  depends on the value of `confidence_level` (Davison and Hinkley, 1997).
 #'
 #'  If unset, the metric in the `optimisation_metric` variable is used.
+#'
+#'@param sample_limit (*optional*) Set the upper limit of the number of samples
+#'  that are used during evaluation steps. Cannot be less than 20.
+#'
+#'  This setting can be specified per data element by providing a parameter
+#'  value in a named list with data elements, e.g.
+#'  `list("sample_similarity"=100, "permutation_vimp"=1000)`.
 #'
 #'@param detail_level (*optional*) Sets the level at which results are computed
 #'  and aggregated.
@@ -2240,13 +2247,13 @@
 #'
 #'  `hybrid` is generally computationally less expensive then `ensemble`, which
 #'  in turn is somewhat less expensive than `model`.
-#'  
-#'  A non-default `detail_level` parameter can be
-#'  specified for separate evaluation steps by providing a parameter value in a
-#'  named list with data elements, e.g. `list("auc_data"="ensemble",
-#'  "model_performance"="hybrid")`. This parameter can be set for the following
-#'  data elements: `auc_data`, `decision_curve_analyis`, `model_performance`,
-#'  `permutation_vimp`, `prediction_data` and `confusion_matrix`.
+#'
+#'  A non-default `detail_level` parameter can be specified for separate
+#'  evaluation steps by providing a parameter value in a named list with data
+#'  elements, e.g. `list("auc_data"="ensemble", "model_performance"="hybrid")`.
+#'  This parameter can be set for the following data elements: `auc_data`,
+#'  `decision_curve_analyis`, `model_performance`, `permutation_vimp`,
+#'  `prediction_data` and `confusion_matrix`.
 #'
 #'@param estimation_type (*optional*) Sets the type of estimation that should be
 #'  possible. This has the following options:
@@ -2533,6 +2540,7 @@
                                        skip_evaluation_elements=waiver(),
                                        ensemble_method=waiver(),
                                        evaluation_metric=waiver(),
+                                       sample_limit=waiver(),
                                        detail_level=waiver(),
                                        estimation_type=waiver(),
                                        aggregate_results=waiver(),
@@ -2596,6 +2604,46 @@
                                 var_name="evaluation_metric", type="character_list", optional=TRUE, default=hpo_metric)
   
   sapply(settings$metric, metric.check_outcome_type, outcome_type=outcome_type)
+  
+  # Number of samples that should be analysed.
+  settings$sample_limit <- .parse_arg(x_config=config$sample_limit, x_var=sample_limit,
+                                      var_name="sample_limit", type="list", optional=TRUE, default=list())
+  
+  if(length(settings$sample_limit) == 0){
+    # Default - use method-specific settings.
+    settings$sample_limit <- NULL
+    
+  } else if(length(settings$sample_limit) == 1 & is.null(names(settings$sample_limit))){
+    
+    # Check that the contents are a correctly specified. At least 20 samples
+    # should be present.
+    .check_number_in_valid_range(settings$sample_limit[[1]], var_name="sample_limit",
+                                 range=c(20L, Inf))
+    
+    # Add provided detail level to each possible element.
+    settings$sample_limit <- lapply(.get_available_data_elements(check_has_sample_limit=TRUE),
+                                    function(x, sample_limit) (sample_limit),
+                                    sample_limit = settings$sample_limit[[1]])
+    
+    # Add name of respective data elements.
+    names(settings$sample_limit) <- .get_available_data_elements(check_has_sample_limit=TRUE)
+    
+  } else {
+    
+    # Check that the list elements are correctly specified.
+    sapply(names(settings$sample_limit), .check_parameter_value_is_valid,
+           var_name="sample_limit (data element name)",
+           values=.get_available_data_elements(check_has_sample_limit=TRUE))
+    
+    # Check that the list contents are correctly specified.
+    sapply(names(settings$sample_limit), function(element_name, x){
+      
+      .check_number_in_valid_range(x[[element_name]],
+                                   var_name=paste0("sample_limit (", element_name, ")"),
+                                   range=c(20L, Inf))
+      
+    }, x = settings$sample_limit)
+  }
   
   # Level at which evaluations are computed.
   settings$detail_level <- .parse_arg(x_config=config$detail_level, x_var=detail_level,
