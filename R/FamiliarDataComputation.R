@@ -13,21 +13,22 @@ NULL
                          "fs_vimp", "hyperparameters", "model_performance",
                          "model_vimp", "permutation_vimp", "prediction_data",
                          "risk_stratification_data", "risk_stratification_info",
-                         "univariate_analysis", "feature_similarity", "sample_similarity")
+                         "univariate_analysis", "feature_similarity", "sample_similarity", "ice_data")
   
   # Data elements that allow setting an estimation type.
   can_set_estimation_type <- c("auc_data", "calibration_data", "decision_curve_analyis",
-                               "model_performance", "permutation_vimp",  "prediction_data")
+                               "model_performance", "permutation_vimp",  "prediction_data", "ice_data")
   
   # Data elements that allow setting a detail level.
-  can_set_detail_level <- c(can_set_estimation_type, "calibration_info", "confusion_matrix", "risk_stratification_data", "risk_stratification_info")
+  can_set_detail_level <- c(can_set_estimation_type, "calibration_info", "confusion_matrix",
+                            "risk_stratification_data", "risk_stratification_info")
   
   # Data elements that allow for setting an estimation type but not detail
   # level.
   can_set_estimation_type <- c(can_set_estimation_type, "feature_similarity")
   
   # Data elements that allow for setting a sample limit.
-  can_set_sample_limit <- c("sample_similarity")
+  can_set_sample_limit <- c("sample_similarity", "ice_data")
   
   if(check_has_sample_limit){
     all_data_elements <- intersect(all_data_elements, can_set_sample_limit)
@@ -380,6 +381,29 @@ setMethod("extract_data", signature(object="familiarEnsemble"),
             object <- load_models(object=object, drop_untrained=TRUE)
             
             
+            # Extract feature variable importance
+            if(any(c("ice_data") %in% data_element)){
+              ice_data <- extract_ice(object=object,
+                                      data=data,
+                                      cl=cl,
+                                      ensemble_method=ensemble_method,
+                                      eval_times=eval_times,
+                                      sample_limit=sample_limit,
+                                      detail_level=detail_level,
+                                      estimation_type=estimation_type,
+                                      aggregate_results=aggregate_results,
+                                      confidence_level=confidence_level,
+                                      bootstrap_ci_method=bootstrap_ci_method,
+                                      is_pre_processed=is_pre_processed,
+                                      message_indent=message_indent,
+                                      verbose=verbose,
+                                      ...)
+              
+            } else {
+              ice_data <- NULL
+            }
+            
+            
             # Extract feature distance tables,
             if(any(c("feature_similarity", "univariate_analysis", "feature_expressions", "permutation_vimp") %in% data_element)){
               # Not for the fs_vimp and model_vimp data elements. This is
@@ -421,7 +445,8 @@ setMethod("extract_data", signature(object="familiarEnsemble"),
             } else {
               sample_similarity <- NULL
             }
-
+            
+            
             # Extract feature variable importance
             if(any(c("fs_vimp") %in% data_element)){
               fs_vimp_info <- extract_fs_vimp(object=object,
@@ -694,7 +719,7 @@ setMethod("extract_data", signature(object="familiarEnsemble"),
                                      feature_expressions = expression_info,
                                      feature_similarity = feature_similarity,
                                      sample_similarity = sample_similarity,
-                                     ice_data = NULL,
+                                     ice_data = ice_data,
                                      is_validation = data@load_validation,
                                      generating_ensemble = get_object_name(object=object, abbreviated=FALSE),
                                      project_id = object@project_id)

@@ -2209,6 +2209,9 @@
 #'  value in a named list with data elements, e.g.
 #'  `list("sample_similarity"=100, "permutation_vimp"=1000)`.
 #'
+#'  This parameter can be set for the following data elements:
+#'  `sample_similarity` and `ice_data`.
+#'
 #'@param detail_level (*optional*) Sets the level at which results are computed
 #'  and aggregated.
 #'
@@ -2253,7 +2256,7 @@
 #'  elements, e.g. `list("auc_data"="ensemble", "model_performance"="hybrid")`.
 #'  This parameter can be set for the following data elements: `auc_data`,
 #'  `decision_curve_analyis`, `model_performance`, `permutation_vimp`,
-#'  `prediction_data` and `confusion_matrix`.
+#'  `ice_data`, `prediction_data` and `confusion_matrix`.
 #'
 #'@param estimation_type (*optional*) Sets the type of estimation that should be
 #'  possible. This has the following options:
@@ -2275,7 +2278,7 @@
 #'  named list with data elements, e.g. `list("auc_data"="bci",
 #'  "model_performance"="point")`. This parameter can be set for the following
 #'  data elements: `auc_data`, `decision_curve_analyis`, `model_performance`,
-#'  `permutation_vimp`, and `prediction_data`.
+#'  `permutation_vimp`, `ice_data`, and `prediction_data`.
 #'
 #'@param aggregate_results (*optional*) Flag that signifies whether results
 #'  should be aggregated during evaluation. If `estimation_type` is

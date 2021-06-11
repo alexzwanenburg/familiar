@@ -12,6 +12,8 @@ training dataset internally.
 instead of `klaR`, which has been deprecated from familiar. Some hyperparameters
 changed accordingly. See the *learners* vignette.
 
+* Added individual conditional expectation and partial dependence plots.
+
 ## Minor changes
 
 * A `sample_limit` parameter was added to limit the number of samples used
