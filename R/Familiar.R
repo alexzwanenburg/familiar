@@ -11,6 +11,7 @@
 #' @importFrom survival Surv coxph survreg
 #' @importFrom utils head tail getFromNamespace
 #' @importFrom ranger ranger
+#' @importFrom e1071 svm
 #' @importFrom klaR NaiveBayes sknn
 #' @importFrom xgboost xgb.train
 #' @importFrom rlang quo quos enquo enquos sym syms ensym ensyms parse_expr parse_exprs
