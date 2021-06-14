@@ -224,7 +224,7 @@ setMethod("extract_ice", signature(object="familiarEnsemble"),
     # Add features as identifier.
     data_elements <- add_data_element_identifier(x=data_elements, feature_x=features)
   }
-  
+  browser()
   # Iterate over elements.
   ice_data <- fam_mapply(cl=cl,
                          assign=NULL,
@@ -250,12 +250,68 @@ setMethod("extract_ice", signature(object="familiarEnsemble"),
                                verbose=FALSE,
                                message_indent){
   
+  browser()
+  # Divide feature(s) into points.
+  if(data_element@identifiers$feature_x){
+    # Generate range
+    feature_x_range <- .create_feature_range(feature_info=object@feature_info,
+                                             feature=data_element@identifiers$feature_x,
+                                             n=n_sample_points)
+    
+    # Add feature values.
+    data_elements <- add_data_element_identifier(x=data_element,
+                                                 feature_x_value=feature_x_range)
+  }
+    
+  if(!is.null(data_element@identifiers$feature_y)){
+    feature_y_range <- .create_feature_range(feature_info=object@feature_info,
+                                             feature=data_element@identifiers$feature_y,
+                                             n=n_sample_points)
+    
+    # Add feature values.
+    data_elements <- add_data_element_identifier(x=data_elements,
+                                                 feature_y_value=feature_y_range)
+  }
   
-  
+  # Iterate over elements.
+  data_elements <- lapply(data_elements,
+                          ...extract_ice_data,
+                          data=data,
+                          object=object)
   
   # Generate partial dependence data.
   
   
   return(list(ice_data,
               pd_data))
+}
+
+
+
+.create_feature_range <- function(feature_info, feature, n){
+  browser()
+  # Find the feature information associated with the feature.
+  feature_info <- feature_info[[feature]]
+  
+  # Check that the feature info is present.
+  if(is.null(feature_info)){
+    stop(paste0("Feature information could not be found for the ", feature, " feature."))
+  }
+  
+  # Determine if the feature is categorical or numerical.
+  if(feature_info@feature_type == "factor"){
+    feature_range <- feature_info@levels
+    feature_range <- factor(feature_range, levels=feature_range)
+    
+  } else if(feature_info@feature_type == "numeric"){
+    
+    
+  } else {
+    ..error_reached_unreachable_code(paste0(".create_feature_range: encountered unknown feature type (",
+                                            feature_info@feature_type,
+                                            ") for the ",
+                                            feature,
+                                            " feature."))
+  }
+  
 }
