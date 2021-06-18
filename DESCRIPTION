@@ -89,6 +89,7 @@ Collate:
     'FamiliarDataComputationFeatureExpression.R'
     'FamiliarDataComputationFeatureSimilarity.R'
     'FamiliarDataComputationHyperparameters.R'
+    'FamiliarDataComputationICE.R'
     'FamiliarDataComputationModelPerformance.R'
     'FamiliarDataComputationPermutationVimp.R'
     'FamiliarDataComputationPredictionData.R'

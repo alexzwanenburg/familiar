@@ -2702,7 +2702,7 @@ test_export_specific <- function(export_function,
   out_elements <- list()
   
   # Iterate over the outcome type.
-  for(outcome_type in c("count", "continuous", "binomial", "multinomial", "survival")){
+  for(outcome_type in outcome_type_available){
     
     # Obtain data.
     main_data <- test.create_good_data_set(outcome_type)

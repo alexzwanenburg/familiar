@@ -198,7 +198,10 @@ that are used during evaluation steps. Cannot be less than 20.
 
 This setting can be specified per data element by providing a parameter
 value in a named list with data elements, e.g.
-\code{list("sample_similarity"=100, "permutation_vimp"=1000)}.}
+\code{list("sample_similarity"=100, "permutation_vimp"=1000)}.
+
+This parameter can be set for the following data elements:
+\code{sample_similarity} and \code{ice_data}.}
 
 \item{draw}{(\emph{optional}) Draws the plot if TRUE.}
 

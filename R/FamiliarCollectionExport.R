@@ -113,6 +113,17 @@ setMethod("export_all", signature(object="familiarCollection"),
             # Export mutual-correlation data
             feature_similarity <- export_feature_similarity(object=object, dir_path=dir_path)
             
+            # Export partial dependence data
+            pd_data <- export_partial_dependence_data(object=object,
+                                                      dir_path=dir_path,
+                                                      aggregate_results=ifelse(is.waive(aggregate_results), TRUE, aggregate_results))
+            
+            # Export individual conditional expectation data
+            ice_data <- export_ice_data(object=object,
+                                        dir_path=dir_path,
+                                        aggregate_results=ifelse(is.waive(aggregate_results), TRUE, aggregate_results))
+            
+            
             if(is.null(dir_path)){
               return(list("fs_vimp" = list("default"=fs_vimp, "occurrence"=fs_vimp_occurrence),
                           "model_vimp" = list("default"=model_vimp, "occurrence"=model_vimp_occurrence),
@@ -129,7 +140,9 @@ setMethod("export_all", signature(object="familiarCollection"),
                           "auc_data" = auc_data,
                           "univariate_analysis" = univariate_analysis,
                           "feature_expressions" = feature_expressions,
-                          "feature_similarity" = feature_similarity))
+                          "feature_similarity" = feature_similarity,
+                          "pd_data" = pd_data,
+                          "ice_data" = pd_data))
             }
           })
 
