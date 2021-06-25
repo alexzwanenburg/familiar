@@ -28,7 +28,7 @@ results <- familiar:::test_export_specific(export_function=familiar:::export_ice
                                            debug=TRUE)
 
 
-testthat::test_that("A single features can be specified.", {
+testthat::test_that("A single feature can be specified.", {
   
   testthat::expect_equal(results$survival[[1]]@identifiers$feature_x, "nodes")
   testthat::expect_equal(length(results$survival), 1L)
@@ -50,4 +50,47 @@ testthat::test_that("Two features can be specified.", {
   testthat::expect_equal(results$survival[[1]]@identifiers$feature_x, "rx")
   testthat::expect_equal(results$survival[[1]]@identifiers$feature_y, "nodes")
   testthat::expect_equal(length(results$survival), 1L)
+})
+
+
+# Test that test_export_specific works when specifying two features and their
+# ranges.
+results <- familiar:::test_export_specific(export_function=familiar:::export_ice_data,
+                                           outcome_type_available="survival",
+                                           data_element="ice_data",
+                                           features=c("rx", "nodes"),
+                                           feature_x_range=c("Obs", "Lev+5FU"),
+                                           feature_y_range=c(0, 10),
+                                           n_sample_points=5L,
+                                           sample_limit=20L,
+                                           create_novelty_detector=FALSE,
+                                           debug=TRUE)
+
+
+testthat::test_that("Ranges and features can specified.", {
+  
+  testthat::expect_setequal(unique(results$survival[[1]]@data$feature_x_value), c("Obs", "Lev+5FU"))
+  testthat::expect_equal(all(results$survival[[1]]@data$feature_y_value <= 10), TRUE)
+  testthat::expect_equal(all(results$survival[[1]]@data$feature_y_value >= 0), TRUE)
+  testthat::expect_equal(data.table::uniqueN(results$survival[[1]]@data$feature_y_value), 5L)
+})
+
+
+# Test that test_export_specific works when specifying two features and their
+# specific ranges.
+results <- familiar:::test_export_specific(export_function=familiar:::export_ice_data,
+                                           outcome_type_available="survival",
+                                           data_element="ice_data",
+                                           features=c("rx", "nodes"),
+                                           feature_x_range=c("Obs", "Lev+5FU"),
+                                           feature_y_range=c(0, 5, 10, 15),
+                                           sample_limit=20L,
+                                           create_novelty_detector=FALSE,
+                                           debug=TRUE)
+
+
+testthat::test_that("Ranges and features can specified.", {
+  
+  testthat::expect_setequal(unique(results$survival[[1]]@data$feature_x_value), c("Obs", "Lev+5FU"))
+  testthat::expect_setequal(unique(results$survival[[1]]@data$feature_y_value), c(0, 5, 10, 15))
 })
