@@ -150,6 +150,7 @@ Collate:
     'PlotFeatureRanking.R'
     'PlotFeatureSimilarity.R'
     'PlotGTable.R'
+    'PlotICE.R'
     'PlotInputArguments.R'
     'PlotKaplanMeier.R'
     'PlotModelPerformance.R'
