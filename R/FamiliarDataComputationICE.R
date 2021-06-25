@@ -3,14 +3,10 @@
 NULL
 
 setClass("familiarDataElementIndividualConditionalExpectation",
-         contains="familiarDataElement",
-         slots=list("class_levels"="ANY"),
-         prototype = methods::prototype(class_levels=NULL))
+         contains="familiarDataElement")
 
 setClass("familiarDataElementPartialDependence",
-         contains="familiarDataElement",
-         slots=list("class_levels"="ANY"),
-         prototype = methods::prototype(class_levels=NULL))
+         contains="familiarDataElement")
 
 
 #'@title Internal function to extract data for individual conditional
@@ -21,6 +17,15 @@ setClass("familiarDataElementPartialDependence",
 #'
 #'@param features Names of the feature or features (2) assessed simultaneously.
 #'  By default `NULL`, which means that all features are assessed one-by-one.
+#'@param feature_x_range When one or two features are defined using `features`,
+#'  `feature_x_range` can be used to set the range of values for the first
+#'  feature. For numeric features, a vector of two values is assumed to indicate
+#'  a range from which `n_sample_points` are uniformly sampled. A vector of more
+#'  than two values is interpreted as is, i.e. these represent the values to be
+#'  sampled. For categorical features, values should represent a (sub)set of
+#'  available levels.
+#'@param feature_y_range As `feature_x_range`, but for the second feature in
+#'  case two features are defined.
 #'@param n_sample_points Number of points used to sample continuous features.
 #'@inheritParams extract_data
 #'
@@ -32,6 +37,8 @@ setGeneric("extract_ice", function(object,
                                    data,
                                    cl=NULL,
                                    features=NULL,
+                                   feature_x_range=NULL,
+                                   feature_y_range=NULL,
                                    n_sample_points=50L,
                                    ensemble_method=waiver(),
                                    eval_times=waiver(),
@@ -52,6 +59,8 @@ setMethod("extract_ice", signature(object="familiarEnsemble"),
                    data,
                    cl=NULL,
                    features=NULL,
+                   feature_x_range=NULL,
+                   feature_y_range=NULL,
                    n_sample_points=50L,
                    ensemble_method=waiver(),
                    eval_times=waiver(),
@@ -153,6 +162,8 @@ setMethod("extract_ice", signature(object="familiarEnsemble"),
                                            object=object,
                                            data=data,
                                            features=features,
+                                           feature_x_range=feature_x_range,
+                                           feature_y_range=feature_y_range,
                                            sample_limit=sample_limit,
                                            n_sample_points=n_sample_points,
                                            proto_data_element=proto_data_element,
@@ -207,11 +218,6 @@ setMethod("extract_ice", signature(object="familiarEnsemble"),
   
   # Aggregate data.
   data <- aggregate_data(data)
-  
-  # Set class levels.
-  if(object@outcome_type %in% c("binomial", "multinomial")){
-    proto_data_element@class_levels <- get_outcome_class_levels(object)
-  }
   
   # Add evaluation time as a identifier to the data element.
   if(length(eval_times) > 0 & object@outcome_type == "survival"){
@@ -286,6 +292,8 @@ setMethod("extract_ice", signature(object="familiarEnsemble"),
                                data,
                                object,
                                aggregate_results,
+                               feature_x_range=NULL,
+                               feature_y_range=NULL,
                                n_sample_points,
                                ensemble_method,
                                verbose=FALSE,
@@ -297,6 +305,7 @@ setMethod("extract_ice", signature(object="familiarEnsemble"),
   feature_x_range <- .create_feature_range(feature_info=object@feature_info,
                                            feature=data_element@identifiers$feature_x,
                                            column_type=class(data@data[[data_element@identifiers$feature_x]]),
+                                           feature_range=feature_x_range,
                                            n=n_sample_points)
   
   # Add feature values.
@@ -307,6 +316,7 @@ setMethod("extract_ice", signature(object="familiarEnsemble"),
     feature_y_range <- .create_feature_range(feature_info=object@feature_info,
                                              feature=data_element@identifiers$feature_y,
                                              column_type=class(data@data[[data_element@identifiers$feature_y]]),
+                                             feature_range=feature_y_range,
                                              n=n_sample_points)
     
     # Add feature values.
@@ -382,28 +392,50 @@ setMethod("extract_ice", signature(object="familiarEnsemble"),
   # Create unique row names for samples and insert.
   ice_data[, "sample":=get_unique_row_names(x=data)]
 
-  # Generate partial dependence data by computing the average over the ICE data.
-  pd_data <- ice_data[, lapply(.SD, mean, na.rm=TRUE), .SDcols=prediction_columns]
+   if(object@outcome_type %in% c("binomial", "multinomial")){
+
+    # Determine class levels.
+    class_levels <- get_outcome_class_levels(object)
+    
+    # Find probability names.
+    probability_names <- get_class_probability_name(object)
+    
+    # Convert table from wide to long format.
+    ice_data <- data.table::melt(data=ice_data,
+                                 measure.vars=probability_names,
+                                 variable.name="positive_class",
+                                 value.name="probability")
+    
+    # Replace labels by class names.
+    ice_data$positive_class <- factor(ice_data$positive_class,
+                                      levels=probability_names,
+                                      labels=class_levels)
+    
+    # Add positive class as identifier.
+    data_elements <- add_data_element_identifier(x=data_element,
+                                                 positive_class=class_levels)
+    
+    # Create ice and pd plot data.
+    data_elements <- lapply(data_elements,
+                            .create_ice_and_pd_objects,
+                            data=ice_data,
+                            outcome_type=object@outcome_type,
+                            value_columns=c("probability", "novelty"))
+   } else {
+     
+     # Create ice and pd plot data.
+     data_elements <- .create_ice_and_pd_objects(data_element,
+                                                 data=ice_data,
+                                                 outcome_type=object@outcome_type,
+                                                 value_columns=prediction_columns)
+  }
   
-  # Create ice and pd data elements.
-  ice_data_element <- data_element
-  pd_data_element <- methods::new("familiarDataElementPartialDependence", data_element)
-  
-  # Update ice data element.
-  ice_data_element@grouping_column <- "sample"
-  ice_data_element@data <- ice_data
-  ice_data_element@value_column <- prediction_columns
-  
-  # Update pd data element.
-  pd_data_element@data <- pd_data
-  pd_data_element@value_column <- prediction_columns
-  
-  return(list(ice_data_element, pd_data_element))
+  return(data_elements)
 }
 
 
 
-.create_feature_range <- function(feature_info, feature, n, column_type){
+.create_feature_range <- function(feature_info, feature, feature_range, n, column_type){
   
   # Find the feature information associated with the feature.
   feature_info <- feature_info[[feature]]
@@ -415,29 +447,68 @@ setMethod("extract_ice", signature(object="familiarEnsemble"),
   
   # Determine if the feature is categorical or numerical.
   if(feature_info@feature_type == "factor"){
+    
     # Get the levels.
-    feature_range <- feature_info@levels
-    feature_range <- factor(feature_range, levels=feature_range)
+    feature_levels <- feature_info@levels
+    
+    if(is.null(feature_range)){
+      feature_range <- factor(feature_levels, levels=feature_levels)
+      
+    } else if(!all(feature_range %in% feature_levels)){
+      stop(paste0("One or more levels defined in the feature range for creating ",
+                  "individual conditional expectation and partial dependence plots do not ",
+                  "match levels found in training data: ",
+                  paste_s(setdiff(feature_range, feature_levels)),
+                  ". Check for misspelled levels."))
+    }
+    # If not null, and no mismatches occur, use feature_range directly.
     
   } else if(feature_info@feature_type == "numeric"){
     
-    # Create the range of values.
-    if(n == 1){
-      feature_range <- as.numeric(feature_info@distribution$fivenum)[3]
+    if(!is.null(feature_range)){
+      # Check that values are numeric.
+      if(!is.numeric(feature_range)){
+        stop(paste0("Numeric values are required to define the feature range for creating ",
+                    "individual conditional expectation and partial dependence plots."))
+      } 
+      
+      # Check that all values are finite.
+      if(any(!is.finite(feature_range))){
+        stop(paste0("Numeric values for creating individual conditional expectation and partial dependence ",
+                    " plots should be finite. NA and infinite values are not allowed."))
+      }
+        
+      # Sort values.
+      feature_range <- sort(unique(feature_range))
+      
+      # If two values are defined, interpret as range, and sample from it.
+      # If not, use feature_range directly.
+      if(length(feature_range) == 2){
+        feature_range <- stats::approx(x=c(0.00, 1.00),
+                                       y=feature_range,
+                                       n=n,
+                                       method="linear")$y
+      }
       
     } else {
-      # Sample the five-number summary.
-      feature_range <- stats::spline(x=c(0.00, 0.25, 0.50, 0.75, 1.00),
-                                     y=as.numeric(feature_info@distribution$fivenum),
-                                     n=n,
-                                     method="hyman")$y
-      
-      # Convert to integer if required.
-      if(any(column_type == "integer")) feature_range <- as.integer(feature_range)
-      
-      # Select unique values.
-      feature_range <- unique(feature_range)
+      # Create the range of values from the feature distribution.
+      if(n == 1){
+        feature_range <- as.numeric(feature_info@distribution$fivenum)[3]
+        
+      } else {
+        # Sample the five-number summary.
+        feature_range <- stats::spline(x=c(0.00, 0.25, 0.50, 0.75, 1.00),
+                                       y=as.numeric(feature_info@distribution$fivenum),
+                                       n=n,
+                                       method="hyman")$y
+      }
     }
+    
+    # Convert to integer if required.
+    if(any(column_type == "integer")) feature_range <- as.integer(feature_range)
+    
+    # Select unique values.
+    feature_range <- unique(feature_range)
     
   } else {
     ..error_reached_unreachable_code(paste0(".create_feature_range: encountered unknown feature type (",
@@ -448,6 +519,67 @@ setMethod("extract_ice", signature(object="familiarEnsemble"),
   }
   
   return(feature_range)
+}
+
+
+.create_ice_and_pd_objects <- function(data_element,
+                                       data,
+                                       outcome_type,
+                                       value_columns){
+  # Suppress NOTES due to non-standard evaluation in data.table
+  positive_class <- NULL
+  
+  # Make a local copy.
+  data <- data.table::copy(data)
+  
+  if(outcome_type %in% c("binomial", "multinomial")){
+    # Select only data corresponding to the positive class.
+    data <- data[positive_class == data_element@identifiers$positive_class]
+    
+    # Drop the positive class column.
+    data[, "positive_class":=NULL]
+  }
+  
+  # Average values to obtain the 
+  pd_data <- data[, lapply(.SD, mean, na.rm=TRUE), .SDcols=value_columns]
+  
+  # Create ice and pd data elements.
+  ice_data_element <- data_element
+  pd_data_element <- methods::new("familiarDataElementPartialDependence", data_element)
+  
+  # Update ice data element.
+  ice_data_element@grouping_column <- "sample"
+  ice_data_element@data <- data
+  ice_data_element@value_column <- value_columns
+  
+  # Update pd data element.
+  pd_data_element@data <- pd_data
+  pd_data_element@value_column <- value_columns
+  
+  return(list(ice_data_element, pd_data_element))
+}
+  
+
+.update_ice_and_pd_output <- function(x, outcome_type){
+  browser()
+  # Make a local copy.
+  x@data <- data.table::copy(x@data)
+  
+  # Rename main value column to a consist name.
+  if(outcome_type %in% c("binomial", "multinomial")){
+    data.table::setnames(x@data, old="probability", new="value")
+    
+  } else if(outcome_type %in% c("continuous", "count")){
+    data.table::setnames(x@data, old="predicted_outcome", new="value")
+    
+  } else if(outcome_type %in% c("survival")){
+    data.table::setnames(x@data, old="survival_probability", new="value")
+    
+  } else {
+    ..error_outcome_type_not_implemented(outcome_type)
+  }
+  
+  return(x)
 }
 
 
