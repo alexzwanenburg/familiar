@@ -526,6 +526,7 @@ setMethod("extract_ice", signature(object="familiarEnsemble"),
                                        data,
                                        outcome_type,
                                        value_columns){
+
   # Suppress NOTES due to non-standard evaluation in data.table
   positive_class <- NULL
   
@@ -560,28 +561,119 @@ setMethod("extract_ice", signature(object="familiarEnsemble"),
 }
   
 
-.update_ice_and_pd_output <- function(x, outcome_type){
+.update_ice_and_pd_output <- function(x, outcome_type, anchor_values=NULL){
   browser()
+  # Suppress NOTES due to non-standard evaluation in data.table
+  feature_x_value <- feature_x_value <- value <- NULL
+  
   # Make a local copy.
   x@data <- data.table::copy(x@data)
   
   # Rename main value column to a consist name.
   if(outcome_type %in% c("binomial", "multinomial")){
-    data.table::setnames(x@data, old="probability", new="value")
+    old_value_column <- "probability"
     
   } else if(outcome_type %in% c("continuous", "count")){
-    data.table::setnames(x@data, old="predicted_outcome", new="value")
-    
+    old_value_column <- "predicted_outcome"
+
   } else if(outcome_type %in% c("survival")){
-    data.table::setnames(x@data, old="survival_probability", new="value")
-    
+    old_value_column <- "survival_probability"
+
   } else {
     ..error_outcome_type_not_implemented(outcome_type)
+  }
+  
+  # Update confidence interval names.
+  if(x@estimation_type %in% c("bci", "bootstrap_confidence_interval")){
+    old_value_column <- paste0(old_value_column, c("", "_ci_low", "_ci_up"))
+    new_value_column <- c("value", "value_ci_low", "value_ci_up")
+    
+  } else {
+    new_value_column <- "value"
+  }
+  
+  # Replace column names.
+  data.table::setnames(x@data, old=old_value_column, new=new_value_column)
+  
+  browser()
+  # Find anchor value.
+  x_anchor <- tryCatch(anchor_values[[x@identifiers$feature_x]],
+                       error=function(err)(return(NULL)))
+  
+  if(!is.null(x_anchor)){
+    
+    if(length(x_anchor) > 1) stop(paste0("Only a single value can be provided as an anchor value for the ", x@identifiers$feature_x, " feature."))
+    
+    # Return NULL in case an anchor is set -- centering invalidates PD plots.
+    if(is(x, "familiarDataElementPartialDependence")) return(NULL)
+    
+    # Identify anchor values and subtract them per set of grouping columns
+    # (minus sample).
+    grouping_columns <- setdiff(x@grouping_column, "sample")
+    
+    if(length(grouping_columns) > 0){
+      x@data[, (new_value_column):=lapply(.SD,
+                                          ..anchor_ice_values,
+                                          x=feature_x_value,
+                                          x_anchor=x_anchor,
+                                          y_offset=value,
+                                          name=x@identifiers$feature_x),
+             by=c(grouping_columns),
+             .SDcols=new_value_column]
+      
+    } else {
+      x@data[, (new_value_column):=lapply(.SD,
+                                          ..anchor_ice_values,
+                                          x=feature_x_value,
+                                          x_anchor=x_anchor,
+                                          y_offset=value,
+                                          name=x@identifiers$feature_x),
+             .SDcols=new_value_column]
+    }
   }
   
   return(x)
 }
 
+
+..anchor_ice_values <- function(y_in, x, x_anchor, y_offset, name){
+  browser()
+  if(is.numeric(x)){
+    if(!is.numeric(x_anchor)) stop(paste0("Anchor value of the ", name, " feature should be numeric."))
+    
+    # Check for out-of-range anchor values.
+    if(x_anchor < min(x) | x_anchor > max(x)){
+      warning(paste0("Anchor value of the ", name, " feature lies outside computed range. ",
+                     "The nearest value is used instead."))
+      
+      if(x_anchor < min(x)) x_anchor <- min(x)
+      if(x_anchor > max(x)) x_anchor <- max(x)
+    }
+    
+    # Set anchor value
+    if(x_anchor %in% x){
+      y_anchor_value <- y_offset[x == x_anchor]
+        
+    } else {
+      y_anchor_value <- stats::spline(x=x,
+                                      y=y_offset,
+                                      xout=x_anchor,
+                                      method="hyman")$y
+    }
+    
+  } else if(is.factor(x)){
+    if(!x_anchor %in% levels(x)) stop(paste0("Anchor value (", x_anchor ,") of the ", name,
+                                             " feature was not found among the computed levels (",
+                                             paste_s(levels(x)), ")."))
+    
+    
+  } else {
+    if(!x_anchor %in% x) stop(paste0("Anchor value (", x_anchor ,") of the ", name,
+                                     " feature was not found among the available values."))
+  }
+  
+  
+}
 
 
 #####export_ice_data#####

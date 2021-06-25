@@ -222,12 +222,35 @@ setMethod("plot_ice", signature(object="familiarCollection"),
                    ...){
             
             # Suppress NOTES due to non-standard evaluation in data.table
-            curve_type <- ci_low <- ci_up <- net_benefit <- NULL
+            
             
             # Get input data.
             if(show_ice){
               ice_data <- export_ice_data(object=object,
                                           aggregate_results=TRUE)
+              
+              # Check anchor values.
+              if(length(ice_data) > 0 & !is.null(anchor_values)){
+                
+                # Determine feature names.
+                feature_names <- unique(c(sapply(ice_data, function(x) (x@identifiers$feature_x)),
+                                          sapply(ice_data, function(x) (x@identifiers$feature_y))))
+                
+                # Check if names are provided to anchor values.
+                if(length(feature_names) > 1 & length(names(anchor_values)) == 0){
+                  stop(paste0("Data for plotting individual conditional expectation plots for more than one feature are present. ",
+                              "However, the anchor values for centering the plots could not be assigned because they were not named. ",
+                              "Please provide a named vector or list."))
+                }
+                
+                # Check if the names provided to anchor values match existing
+                # values.
+                if(length(setdiff(names(anchor_values), feature_names)) > 0){
+                  warning(paste0("One or more feature names specified as anchor values do not exist as features for which data for ",
+                                 "plotting individual conditional expectation plots were computed: ",
+                                 paste_s(setdiff(names(anchor_values), feature_names))))
+                }
+              }
               
               # Check that the data are not empty.
               if(is_empty(ice_data)) return(NULL)
@@ -249,10 +272,17 @@ setMethod("plot_ice", signature(object="familiarCollection"),
               if(is_empty(ice_data)) return(NULL)
               
               # Update the output so that it is more consistent.
-              ice_data <- lapply(ice_data, .update_ice_and_pd_output, outcome_type=object@outcome_type)
+              ice_data <- lapply(ice_data,
+                                 .update_ice_and_pd_output,
+                                 outcome_type=object@outcome_type,
+                                 anchor_values=anchor_values)
               
             } else {
+              # Set ice_data to NULL
               ice_data <- NULL
+              
+              # Remove anchors if show_ice is FALSE.
+              anchor_values <- NULL
             }
             
             if(show_pd){
@@ -279,7 +309,10 @@ setMethod("plot_ice", signature(object="familiarCollection"),
               if(is_empty(pd_data)) return(NULL)
               
               # Update the output so that it is more consistent.
-              pd_data <- lapply(pd_data, .update_ice_and_pd_output, outcome_type=object@outcome_type)
+              pd_data <- lapply(pd_data,
+                                .update_ice_and_pd_output,
+                                outcome_type=object@outcome_type,
+                                anchor_values=anchor_values)
               
             } else {
               pd_data <- NULL
@@ -291,9 +324,6 @@ setMethod("plot_ice", signature(object="familiarCollection"),
                              "individual conditional expectation and/or partial dependence plots."))
               return(NULL)
             }
-      
-            # Remove anchors if show_ice is FALSE.
-            if(!show_ice) anchor_values <- NULL
             
             ##### Check input arguments ------------------------------------------------
             
@@ -309,7 +339,7 @@ setMethod("plot_ice", signature(object="familiarCollection"),
               if(!all(sapply(pd_data, function(x) (x@estimation_type %in% c("bci", "bootstrap_confidence_interval"))))) conf_int_style <- "none"
               
             } else {
-              if(!all(sapply(pd_data, function(x) (x@estimation_type %in% c("bci", "bootstrap_confidence_interval"))))) conf_int_style <- "none"
+              if(!all(sapply(ice_data, function(x) (x@estimation_type %in% c("bci", "bootstrap_confidence_interval"))))) conf_int_style <- "none"
             }
             
             
