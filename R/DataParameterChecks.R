@@ -170,7 +170,7 @@
       settings$data$class_levels <- levels(data[[settings$data$outcome_col]])
       
     } else {
-      settings$data$class_levels <- unique_na(data[[settings$data$outcome_col]])
+      settings$data$class_levels <- sort(unique_na(data[[settings$data$outcome_col]]))
     }
   }
   
