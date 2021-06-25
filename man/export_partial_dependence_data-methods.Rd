@@ -42,6 +42,15 @@ aggregated for export.}
   \describe{
     \item{\code{features}}{Names of the feature or features (2) assessed simultaneously.
 By default \code{NULL}, which means that all features are assessed one-by-one.}
+    \item{\code{feature_x_range}}{When one or two features are defined using \code{features},
+\code{feature_x_range} can be used to set the range of values for the first
+feature. For numeric features, a vector of two values is assumed to indicate
+a range from which \code{n_sample_points} are uniformly sampled. A vector of more
+than two values is interpreted as is, i.e. these represent the values to be
+sampled. For categorical features, values should represent a (sub)set of
+available levels.}
+    \item{\code{feature_y_range}}{As \code{feature_x_range}, but for the second feature in
+case two features are defined.}
     \item{\code{n_sample_points}}{Number of points used to sample continuous features.}
     \item{\code{data}}{A \code{dataObject} object, \code{data.table} or \code{data.frame} that
 constitutes the data that are used to compute}
