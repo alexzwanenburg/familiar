@@ -463,19 +463,19 @@ setMethod("plot_decision_curve", signature(object="familiarCollection"),
                 
                 # Save to file.
                 do.call(plotting.save_plot_to_file,
-                        args=append(list("plot_obj"=p,
-                                         "object"=object,
-                                         "dir_path"=dir_path,
-                                         "type"="decision_curve_analysis",
-                                         "subtype"=subtype,
-                                         "height"=ifelse(is.waive(height), def_plot_dims[1], height),
-                                         "width"=ifelse(is.waive(width), def_plot_dims[2], width),
-                                         "units"=ifelse(is.waive(units), "cm", units)),
-                                    list(...)))
+                        args=c(list("plot_obj"=p,
+                                    "object"=object,
+                                    "dir_path"=dir_path,
+                                    "type"="decision_curve_analysis",
+                                    "subtype"=subtype,
+                                    "height"=ifelse(is.waive(height), def_plot_dims[1], height),
+                                    "width"=ifelse(is.waive(width), def_plot_dims[2], width),
+                                    "units"=ifelse(is.waive(units), "cm", units)),
+                               list(...)))
                 
               } else {
                 # Store as list for export.
-                plot_list <- append(plot_list, list(p))
+                plot_list <- c(plot_list, list(p))
               }
             }
             
@@ -491,23 +491,23 @@ setMethod("plot_decision_curve", signature(object="familiarCollection"),
 
 
 .plot_decision_curve_plot <- function(x,
-                                 color_by,
-                                 facet_by,
-                                 facet_wrap_cols,
-                                 ggtheme,
-                                 discrete_palette,
-                                 x_label,
-                                 y_label,
-                                 legend_label,
-                                 plot_title,
-                                 plot_sub_title,
-                                 caption,
-                                 x_range,
-                                 x_breaks,
-                                 y_range,
-                                 y_breaks,
-                                 conf_int_style,
-                                 conf_int_alpha){
+                                      color_by,
+                                      facet_by,
+                                      facet_wrap_cols,
+                                      ggtheme,
+                                      discrete_palette,
+                                      x_label,
+                                      y_label,
+                                      legend_label,
+                                      plot_title,
+                                      plot_sub_title,
+                                      caption,
+                                      x_range,
+                                      x_breaks,
+                                      y_range,
+                                      y_breaks,
+                                      conf_int_style,
+                                      conf_int_alpha){
   
   # Suppress NOTES due to non-standard evaluation in data.table
   curve_type <- NULL
