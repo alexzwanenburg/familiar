@@ -24,6 +24,8 @@ evaluation step.
 `class_levels` parameter, are now sorted before being set based on the data.
 Previously class levels would be set based on order of appearance.
 
+* Isolation forests are now grown with a decreased memory footprint.
+
 ## Bug fixes
 
 * Fixed a bug that caused clustered features not to be exported for the purpose

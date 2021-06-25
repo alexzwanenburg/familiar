@@ -111,9 +111,28 @@ setMethod(".train_novelty_detector", signature(object="familiarModel", data="dat
                                                      ordered=FALSE)
             }
             
-            # Create a isolation forest.
+            # Vary the number of samples to limit memory footprint for large
+            # sample sizes.
+            sample_size <- max(c(128,
+                                 2^ceiling(log2(sqrt(nrow(data@data))))))
+            if(nrow(data@data) < sample_size) sample_size <- nrow(data@data)
+            
+            # Vary the number of trees to limit memory footprint for large
+            # sample sizes.
+            ntrees <- max(c(64,
+                            ceiling((sqrt(nrow(data@data))))))
+            
+            
+            # Create an isolation forest. Note that in addition to specifying
+            # the number of trees and the number of samples assessed for each
+            # tree, missing_action is set to "fail" -- this decreases model
+            # footprint and is not necessary as familiar has its own imputation
+            # routines.
             detector <- isotree::isolation.forest(df=data@data[, mget(get_feature_columns(data))],
-                                                  nthreads=1L)
+                                                  sample_size=sample_size,
+                                                  ntrees=ntrees,
+                                                  nthreads=1L,
+                                                  missing_action="fail")
             
             # Add the detector to the familiarModel object.
             object@novelty_detector <- detector
