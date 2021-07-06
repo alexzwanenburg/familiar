@@ -225,98 +225,66 @@ setMethod("plot_ice", signature(object="familiarCollection"),
             
             
             # Get input data.
-            if(show_ice){
-              ice_data <- export_ice_data(object=object,
-                                          aggregate_results=TRUE)
+            ice_data <- export_ice_data(object=object,
+                                        aggregate_results=TRUE)
+            
+            pd_data <- export_partial_dependence_data(object=object,
+                                                      aggregate_results=TRUE)
+            
+            # Check anchor values.
+            if(length(ice_data) > 0 & !is.null(anchor_values)){
               
-              # Check anchor values.
-              if(length(ice_data) > 0 & !is.null(anchor_values)){
-                
-                # Determine feature names.
-                feature_names <- unique(c(sapply(ice_data, function(x) (x@identifiers$feature_x)),
-                                          sapply(ice_data, function(x) (x@identifiers$feature_y))))
-                
-                # Check if names are provided to anchor values.
-                if(length(feature_names) > 1 & length(names(anchor_values)) == 0){
-                  stop(paste0("Data for plotting individual conditional expectation plots for more than one feature are present. ",
-                              "However, the anchor values for centering the plots could not be assigned because they were not named. ",
-                              "Please provide a named vector or list."))
-                }
-                
-                # Check if the names provided to anchor values match existing
-                # values.
-                if(length(setdiff(names(anchor_values), feature_names)) > 0){
-                  warning(paste0("One or more feature names specified as anchor values do not exist as features for which data for ",
-                                 "plotting individual conditional expectation plots were computed: ",
-                                 paste_s(setdiff(names(anchor_values), feature_names))))
-                }
+              # Determine feature names.
+              feature_names <- unique(c(sapply(ice_data, function(x) (x@identifiers$feature_x)),
+                                        sapply(ice_data, function(x) (x@identifiers$feature_y))))
+              
+              # Check if names are provided to anchor values.
+              if(length(feature_names) > 1 & length(names(anchor_values)) == 0){
+                stop(paste0("Data for plotting individual conditional expectation plots for more than one feature are present. ",
+                            "However, the anchor values for centering the plots could not be assigned because they were not named. ",
+                            "Please provide a named vector or list."))
               }
               
-              # Check that the data are not empty.
-              if(is_empty(ice_data)) return(NULL)
-              
-              # Check that the data are not evaluated at the model level.
-              if(all(sapply(ice_data, function(x) (x@detail_level == "model")))){
-                ..warning_no_comparison_between_models()
-                return(NULL)
+              # Check if the names provided to anchor values match existing
+              # values.
+              if(length(setdiff(names(anchor_values), feature_names)) > 0){
+                warning(paste0("One or more feature names specified as anchor values do not exist as features for which data for ",
+                               "plotting individual conditional expectation plots were computed: ",
+                               paste_s(setdiff(names(anchor_values), feature_names))))
               }
-              
-              # Obtain data element from list.
-              if(is.list(ice_data)){
-                if(is_empty(ice_data)) return(NULL)
-                
-                if(all(sapply(ice_data, is_empty))) return(NULL)
-              }
-              
-              # Check that the data are not empty.
-              if(is_empty(ice_data)) return(NULL)
-              
-              # Update the output so that it is more consistent.
-              ice_data <- lapply(ice_data,
-                                 .update_ice_and_pd_output,
-                                 outcome_type=object@outcome_type,
-                                 anchor_values=anchor_values)
-              
-            } else {
-              # Set ice_data to NULL
-              ice_data <- NULL
-              
-              # Remove anchors if show_ice is FALSE.
-              anchor_values <- NULL
             }
             
-            if(show_pd){
-              pd_data <- export_partial_dependence_data(object=object,
-                                                        aggregate_results=TRUE)
-              
-              # Check that the data are not empty.
-              if(is_empty(pd_data)) return(NULL)
-              
-              # Check that the data are not evaluated at the model level.
-              if(all(sapply(pd_data, function(x) (x@detail_level == "model")))){
-                ..warning_no_comparison_between_models()
-                return(NULL)
-              }
-              
-              # Obtain data element from list.
-              if(is.list(pd_data)){
-                if(is_empty(pd_data)) return(NULL)
-                
-                if(all(sapply(pd_data, is_empty))) return(NULL)
-              }
-              
-              # Check that the data are not empty.
-              if(is_empty(pd_data)) return(NULL)
-              
-              # Update the output so that it is more consistent.
-              pd_data <- lapply(pd_data,
-                                .update_ice_and_pd_output,
-                                outcome_type=object@outcome_type,
-                                anchor_values=anchor_values)
-              
-            } else {
-              pd_data <- NULL
+            # Check that the data are not empty.
+            if(is_empty(ice_data)) return(NULL)
+            
+            # Check that the data are not evaluated at the model level.
+            if(all(sapply(ice_data, function(x) (x@detail_level == "model")))){
+              ..warning_no_comparison_between_models()
+              return(NULL)
             }
+            
+            # Obtain data element from list.
+            if(is.list(ice_data)){
+              if(is_empty(ice_data)) return(NULL)
+              
+              if(all(sapply(ice_data, is_empty))) return(NULL)
+            }
+            
+            # Check that the data are not empty.
+            if(is_empty(ice_data)) return(NULL)
+            browser()
+            # Update the output so that it is more consistent.
+            data <- mapply(.update_ice_and_pd_output,
+                           ice_data=ice_data,
+                           pd_data=pd_data,
+                           MoreArgs=list("outcome_type"=object@outcome_type,
+                                         "anchor_values"=anchor_values),
+                           SIMPLIFY=FALSE)
+          
+            # Flatten nested list.
+            data <- .flatten_nested_list(data)
+            ice_data <- data$ice_data
+            pd_data <- data$pd_data
             
             # Check that show_pd and show_ice are not both FALSE.
             if(!show_pd & !show_ice){
@@ -342,98 +310,34 @@ setMethod("plot_ice", signature(object="familiarCollection"),
               if(!all(sapply(ice_data, function(x) (x@estimation_type %in% c("bci", "bootstrap_confidence_interval"))))) conf_int_style <- "none"
             }
             
-            
-          
-            
-            if(object@outcome_type %in% c("binomial", "multinomial")){
-              split_variable <- "positive_class"
-              
-            } else if(object@outcome_type %in% c("survival")){
-              split_variable <- "evaluation_time"
+            # Determine splitting variables present in the dataset.
+            if(show_ice){
+              plot_data <- identify_element_sets(ice_data, ignore_grouping_column=FALSE)
               
             } else {
-              ..error_outcome_type_not_implemented(object@outcome_type)
+              plot_data <- identify_element_sets(pd_data, ignore_grouping_column=FALSE)
             }
             
-            # Splitting variables
+            browser()
+            
             if(is.null(split_by) & is.null(facet_by) & is.null(color_by)){
-              # Determine the number of learners and feature_selection methods.
-              n_learner <- nlevels(x@data$learner)
-              n_fs_method <- nlevels(x@data$fs_method)
-              
-              if(object@outcome_type %in% c("multinomial")){
-                n_class_or_time <- nlevels(x@data$positive_class)
-                
-              } else if(object@outcome_type %in% c("binomial")){
-                n_class_or_time <- 1L
-                
-              } else if(object@outcome_type %in% c("survival")){
-                n_class_or_time <- nlevels(x@data$evaluation_time)
-                
-              } else {
-                ..error_outcome_type_not_implemented(object@outcome_type)
-              }
-              
-              if(n_learner > 1 & n_fs_method > 1){
-                # Split by learner and feature selection method.
-                split_by <- c("fs_method", "learner")
-                
-                if(n_class_or_time > 1){
-                  color_by <- split_variable
-                  facet_by <- "data_set"
-                  
-                } else {
-                  color_by <- c("data_set", split_variable)
-                }
-                
-              } else if(n_learner > 1){
-                # Implying n_fs_method == 1
-                
-                if(n_class_or_time > 1){
-                  split_by <- c("fs_method", "learner")
-                  color_by <- split_variable
-                  facet_by <- "data_set"
-                  
-                } else {
-                  split_by <- c("fs_method")
-                  color_by <- c("learner")
-                  facet_by <- c("data_set", split_variable)
-                }
-                
-              } else if(n_fs_method > 1){
-                # Implying n_learner == 1
-                
-                if(n_class_or_time > 1){
-                  split_by <- c("fs_method", "learner")
-                  color_by <- split_variable
-                  facet_by <- "data_set"
-                  
-                } else {
-                  split_by <- "learner"
-                  color_by <- "fs_method"
-                  facet_by <- c("data_set", split_variable)
-                }
-                
-              } else {
-                # Implying n_learner == n_fs_method == 1
-                split_by <- c("fs_method", "learner")
-                
-                if(n_class_or_time > 1){
-                  color_by <- split_variable
-                  facet_by <- "data_set"
-                  
-                } else {
-                  color_by <- c("data_set", split_variable)
-                }
-              }
+              split_by <- c("fs_method", "learner", "feature_x", "feature_y")
+              facet_by <- c("data_set", "positive_class", "evaluation_time")
+              color_by <- NULL
             }
             
             # Check splitting variables and generate sanitised output
-            split_var_list <- plotting.check_data_handling(x=x@data,
+            split_var_list <- plotting.check_data_handling(x=ice_data@data,
                                                            split_by=split_by,
                                                            color_by=color_by,
                                                            facet_by=facet_by,
-                                                           available=c("fs_method", "learner", "data_set", split_variable))
+                                                           available=c("fs_method",
+                                                                       "learner",
+                                                                       "feature_x",
+                                                                       "feature_y",
+                                                                       "data_set",
+                                                                       "positive_class",
+                                                                       "evaluation_time"))
             
             # Update splitting variables
             split_by <- split_var_list$split_by
