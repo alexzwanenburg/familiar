@@ -190,7 +190,7 @@ setMethod("identify_element_sets", signature(x="list"),
 
 #####identify_element_sets (familiarDataElement)--------------------------------
 setMethod("identify_element_sets", signature(x="familiarDataElement"),
-          function(x, ignore_estimation_type=FALSE, ...){
+          function(x, ignore_estimation_type=FALSE, ignore_grouping_column=TRUE, ...){
             
             # Get the identifiers and the detail level and combine to a list.
             id_list <- c(x@identifiers,
@@ -199,6 +199,9 @@ setMethod("identify_element_sets", signature(x="familiarDataElement"),
             
             # Add the estimation type if it is not to be ignored.
             if(!ignore_estimation_type) id_list <- c(id_list, list("estimation_type"=x@estimation_type))
+            
+            # Add data from grouping columns, if they are not to be ignored.
+            if(!ignore_grouping_column & !is.null(x@grouping_column)) id_list <- c(id_list, unique(x@data[, mget(x@grouping_column)]))
             
             return(data.table::as.data.table(id_list))
           })
