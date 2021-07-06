@@ -541,12 +541,8 @@ setMethod("extract_ice", signature(object="familiarEnsemble"),
     data[, "positive_class":=NULL]
   }
   
-  # Average values to obtain the 
-  pd_data <- data[, lapply(.SD, mean, na.rm=TRUE), .SDcols=value_columns]
-  
   # Create ice and pd data elements.
   ice_data_element <- data_element
-  pd_data_element <- methods::new("familiarDataElementPartialDependence", data_element)
   
   # Update ice data element.
   ice_data_element@grouping_column <- "sample"
@@ -554,20 +550,50 @@ setMethod("extract_ice", signature(object="familiarEnsemble"),
   ice_data_element@value_column <- value_columns
   
   # Update pd data element.
-  pd_data_element@data <- pd_data
-  pd_data_element@value_column <- value_columns
+  pd_data_element <- .create_pd_object(ice_data_element)
   
   return(list(ice_data_element, pd_data_element))
 }
   
 
-.update_ice_and_pd_output <- function(x, outcome_type, anchor_values=NULL){
-  browser()
-  # Suppress NOTES due to non-standard evaluation in data.table
-  feature_x_value <- feature_x_value <- value <- NULL
+
+.create_pd_object <- function(ice_data_element){
   
-  # Make a local copy.
-  x@data <- data.table::copy(x@data)
+  # Create partial dependence data.
+  pd_data_element <- methods::new("familiarDataElementPartialDependence", ice_data_element)
+  
+  # Select grouping columns.
+  grouping_columns <- setdiff(ice_data_element@grouping_column, "sample")
+  pd_data_element@grouping_column <- grouping_columns
+  
+  # Average data.
+  if(length(grouping_columns) > 0){
+    pd_data_element@data <- pd_data_element@data[, lapply(.SD, mean, na.rm=TRUE),
+                                                 .SDcols=ice_data_element@value_column,
+                                                 by=c(grouping_columns)]
+    
+  } else {
+    pd_data_element@data <- pd_data_element@data[, lapply(.SD, mean, na.rm=TRUE),
+                                                 .SDcols=ice_data_element@value_column]
+  }
+  
+  return(pd_data_element)
+}
+
+
+
+.update_ice_and_pd_output <- function(ice_data, pd_data, outcome_type, anchor_values=NULL){
+  
+  # Find anchor value for the x-feature. It will be NULL if the current feature
+  # does does not appear in anchor_values.
+  x_anchor <- tryCatch(anchor_values[[ice_data@identifiers$feature_x]],
+                       error=function(err)(return(NULL)))
+  
+  # Find anchor value for the y-feature. It will be NULL if the current feature
+  # does does not appear in anchor_values, or there is not y-feature associated
+  # with the data.
+  y_anchor <- tryCatch(anchor_values[[ice_data@identifiers$feature_y]],
+                       error=function(err)(return(NULL)))
   
   # Rename main value column to a consist name.
   if(outcome_type %in% c("binomial", "multinomial")){
@@ -575,16 +601,16 @@ setMethod("extract_ice", signature(object="familiarEnsemble"),
     
   } else if(outcome_type %in% c("continuous", "count")){
     old_value_column <- "predicted_outcome"
-
+    
   } else if(outcome_type %in% c("survival")){
     old_value_column <- "survival_probability"
-
+    
   } else {
     ..error_outcome_type_not_implemented(outcome_type)
   }
   
   # Update confidence interval names.
-  if(x@estimation_type %in% c("bci", "bootstrap_confidence_interval")){
+  if(ice_data@estimation_type %in% c("bci", "bootstrap_confidence_interval")){
     old_value_column <- paste0(old_value_column, c("", "_ci_low", "_ci_up"))
     new_value_column <- c("value", "value_ci_low", "value_ci_up")
     
@@ -593,42 +619,104 @@ setMethod("extract_ice", signature(object="familiarEnsemble"),
   }
   
   # Replace column names.
-  data.table::setnames(x@data, old=old_value_column, new=new_value_column)
+  data.table::setnames(ice_data@data, old=old_value_column, new=new_value_column)
+  data.table::setnames(pd_data@data, old=old_value_column, new=new_value_column)
   
-  browser()
-  # Find anchor value.
-  x_anchor <- tryCatch(anchor_values[[x@identifiers$feature_x]],
-                       error=function(err)(return(NULL)))
+  # Update value column attributes.
+  ice_data@value_column <- c(new_value_column,
+                             setdiff(ice_data@value_column, old_value_column))
+  pd_data@value_column <- c(new_value_column,
+                            setdiff(pd_data@value_column, old_value_column))
+  
+  if(!is.null(x_anchor) | !is.null(y_anchor)){
+    
+    # Update individual conditional expectation data.
+    ice_data <- ..update_ice_and_pd_output(x=ice_data,
+                                           x_anchor=x_anchor,
+                                           y_anchor=y_anchor,
+                                           value_column=new_value_column,
+                                           outcome_type=outcome_type,
+                                           anchor_values=anchor_values)
+    
+    # Update partial dependence data.
+    pd_data <- .create_pd_object(ice_data)
+  }
+  
+  return(list("ice_data"=ice_data,
+              "pd_data"=pd_data))
+}
+
+
+
+..update_ice_and_pd_output <- function(x, x_anchor=NULL, y_anchor=NULL, value_column, outcome_type, anchor_values=NULL){
+  
+  # Suppress NOTES due to non-standard evaluation in data.table
+  feature_x_value <- feature_x_value <- feature_y_value <- value <- NULL
   
   if(!is.null(x_anchor)){
     
     if(length(x_anchor) > 1) stop(paste0("Only a single value can be provided as an anchor value for the ", x@identifiers$feature_x, " feature."))
+
+    # Identify anchor values and subtract them per set of grouping columns
+    # (minus feature_x_value).
+    grouping_columns <- setdiff(x@grouping_column, c("feature_x_value"))
+    
+    if(length(grouping_columns) > 0){
+      x@data[, (value_column):=lapply(.SD,
+                                      ..anchor_ice_values,
+                                      x=feature_x_value,
+                                      x_anchor=x_anchor,
+                                      y_offset=value,
+                                      name=x@identifiers$feature_x),
+             by=c(grouping_columns),
+             .SDcols=value_column]
+      
+    } else {
+      x@data[, (value_column):=lapply(.SD,
+                                      ..anchor_ice_values,
+                                      x=feature_x_value,
+                                      x_anchor=x_anchor,
+                                      y_offset=value,
+                                      name=x@identifiers$feature_x),
+             .SDcols=value_column]
+    }
+  }
+  
+  # Find anchor value for the y-feature. It will be NULL if the current feature
+  # does does not appear in anchor_values, or there is not y-feature associated
+  # with the data.
+  y_anchor <- tryCatch(anchor_values[[x@identifiers$feature_y]],
+                       error=function(err)(return(NULL)))
+  
+  if(!is.null(y_anchor)){
+    
+    if(length(y_anchor) > 1) stop(paste0("Only a single value can be provided as an anchor value for the ", x@identifiers$feature_y, " feature."))
     
     # Return NULL in case an anchor is set -- centering invalidates PD plots.
     if(is(x, "familiarDataElementPartialDependence")) return(NULL)
     
     # Identify anchor values and subtract them per set of grouping columns
-    # (minus sample).
-    grouping_columns <- setdiff(x@grouping_column, "sample")
+    # (minus feature_y_value).
+    grouping_columns <- setdiff(x@grouping_column, c("feature_y_value"))
     
     if(length(grouping_columns) > 0){
-      x@data[, (new_value_column):=lapply(.SD,
-                                          ..anchor_ice_values,
-                                          x=feature_x_value,
-                                          x_anchor=x_anchor,
-                                          y_offset=value,
-                                          name=x@identifiers$feature_x),
+      x@data[, (value_column):=lapply(.SD,
+                                      ..anchor_ice_values,
+                                      x=feature_y_value,
+                                      x_anchor=y_anchor,
+                                      y_offset=value,
+                                      name=x@identifiers$feature_y),
              by=c(grouping_columns),
-             .SDcols=new_value_column]
+             .SDcols=value_column]
       
     } else {
-      x@data[, (new_value_column):=lapply(.SD,
-                                          ..anchor_ice_values,
-                                          x=feature_x_value,
-                                          x_anchor=x_anchor,
-                                          y_offset=value,
-                                          name=x@identifiers$feature_x),
-             .SDcols=new_value_column]
+      x@data[, (value_column):=lapply(.SD,
+                                      ..anchor_ice_values,
+                                      x=feature_y_value,
+                                      x_anchor=y_anchor,
+                                      y_offset=value,
+                                      name=x@identifiers$feature_y),
+             .SDcols=value_column]
     }
   }
   
@@ -637,17 +725,19 @@ setMethod("extract_ice", signature(object="familiarEnsemble"),
 
 
 ..anchor_ice_values <- function(y_in, x, x_anchor, y_offset, name){
-  browser()
+  
   if(is.numeric(x)){
     if(!is.numeric(x_anchor)) stop(paste0("Anchor value of the ", name, " feature should be numeric."))
     
     # Check for out-of-range anchor values.
     if(x_anchor < min(x) | x_anchor > max(x)){
-      warning(paste0("Anchor value of the ", name, " feature lies outside computed range. ",
-                     "The nearest value is used instead."))
+      x_anchor_old <- x_anchor
       
       if(x_anchor < min(x)) x_anchor <- min(x)
       if(x_anchor > max(x)) x_anchor <- max(x)
+      
+      warning(paste0("Anchor value (", x_anchor_old, ") of the ", name, " feature lies outside computed range. ",
+                     "The nearest value (", x_anchor, ") is used instead."))
     }
     
     # Set anchor value
@@ -657,8 +747,7 @@ setMethod("extract_ice", signature(object="familiarEnsemble"),
     } else {
       y_anchor_value <- stats::spline(x=x,
                                       y=y_offset,
-                                      xout=x_anchor,
-                                      method="hyman")$y
+                                      xout=x_anchor)$y
     }
     
   } else if(is.factor(x)){
@@ -666,13 +755,20 @@ setMethod("extract_ice", signature(object="familiarEnsemble"),
                                              " feature was not found among the computed levels (",
                                              paste_s(levels(x)), ")."))
     
+    # Set anchor value by selecting the level corresponding to x_anchor.
+    y_anchor_value <- y_offset[x == x_anchor]
+    
     
   } else {
     if(!x_anchor %in% x) stop(paste0("Anchor value (", x_anchor ,") of the ", name,
                                      " feature was not found among the available values."))
+    
+    # Set anchor value by selecting the value corresponding to x_anchor.
+    y_anchor_value <- y_offset[x == x_anchor]
   }
   
-  
+  # Subtract the anchor value.
+  return(y_in - y_anchor_value)
 }
 
 
