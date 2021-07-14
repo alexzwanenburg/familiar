@@ -397,7 +397,7 @@ setMethod("plot_feature_similarity", signature(object="familiarCollection"),
                 def_plot_dims <- .determine_feature_similarity_plot_dimensions(x=x_sub,
                                                                               facet_by=facet_by,
                                                                               facet_wrap_cols=facet_wrap_cols,
-                                                                              features=features,
+                                                                              features=as.character(features),
                                                                               show_dendrogram=show_dendrogram,
                                                                               rotate_x_tick_labels=rotate_x_tick_labels)
                 
