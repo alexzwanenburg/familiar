@@ -28,6 +28,9 @@ Previously class levels would be set based on order of appearance.
 
 ## Bug fixes
 
+* Fixed a bug that caused features not incorporated in models to not be exported
+for the purpose of reporting (aggregate) variable importance.
+
 * Fixed a bug that caused clustered features not to be exported for the purpose
 of reporting (aggregate) variable importance.
 

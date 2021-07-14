@@ -452,11 +452,22 @@ setMethod(".apply_labels", signature(data="familiarDataElement", object="familia
             if(has_feature){
               for(current_column_name in c("name", "feature_name_1", "feature_name_2", "feature")){
                 if(!is.null(x[[current_column_name]])){
-                  data.table::set(x,
-                                  j=current_column_name,
-                                  value = factor(x=x[[current_column_name]],
-                                                 levels=get_feature_name_levels(x=object),
-                                                 labels=get_feature_names(x=object)))
+                  # Check if all feature names are actually in the object. Some
+                  # features may be missing for e.g. variable importance because
+                  # they were not required for the model.
+                  if(all(unique(x[[current_column_name]]) %in% get_feature_name_levels(x=object))){
+                    data.table::set(x,
+                                    j=current_column_name,
+                                    value = factor(x=x[[current_column_name]],
+                                                   levels=get_feature_name_levels(x=object),
+                                                   labels=get_feature_names(x=object)))
+                    
+                  } else {
+                    data.table::set(x,
+                                    j=current_column_name,
+                                    value = factor(x=x[[current_column_name]],
+                                                   levels=unique(x[[current_column_name]])))
+                  }
                 }
               }
             }
