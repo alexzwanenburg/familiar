@@ -117,8 +117,11 @@ plotting.check_data_handling <- function(x,
     
   }
   
+  # Filter available down to those present in the data.
+  filter_available <- intersect(available, colnames(x))
+  
   # Filter available down to those that have more than one variable
-  filter_available <- available[sapply(available, function(ii, x) (data.table::uniqueN(x=x, by=ii) > 1), x=x)]
+  filter_available <- filter_available[sapply(filter_available, function(ii, x) (data.table::uniqueN(x=x, by=ii) > 1), x=x)]
   
   if(is.null(filter_available)){
     return(list())

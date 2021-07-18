@@ -16,6 +16,8 @@ plot_ice(
   facet_wrap_cols = NULL,
   ggtheme = NULL,
   discrete_palette = NULL,
+  gradient_palette = NULL,
+  gradient_palette_range = NULL,
   x_label = waiver(),
   y_label = waiver(),
   legend_label = waiver(),
@@ -28,10 +30,12 @@ plot_ice(
   y_range = NULL,
   y_n_breaks = 5,
   y_breaks = NULL,
+  value_scales = waiver(),
   conf_int_style = c("ribbon", "step", "none"),
   conf_int_alpha = 0.4,
   show_ice = TRUE,
   show_pd = TRUE,
+  show_novelty = TRUE,
   anchor_values = NULL,
   width = waiver(),
   height = waiver(),
@@ -49,6 +53,8 @@ plot_ice(
   facet_wrap_cols = NULL,
   ggtheme = NULL,
   discrete_palette = NULL,
+  gradient_palette = NULL,
+  gradient_palette_range = NULL,
   x_label = waiver(),
   y_label = waiver(),
   legend_label = waiver(),
@@ -61,10 +67,12 @@ plot_ice(
   y_range = NULL,
   y_n_breaks = 5,
   y_breaks = NULL,
+  value_scales = waiver(),
   conf_int_style = c("ribbon", "step", "none"),
   conf_int_alpha = 0.4,
   show_ice = TRUE,
   show_pd = TRUE,
+  show_novelty = TRUE,
   anchor_values = NULL,
   width = waiver(),
   height = waiver(),
@@ -82,6 +90,8 @@ plot_ice(
   facet_wrap_cols = NULL,
   ggtheme = NULL,
   discrete_palette = NULL,
+  gradient_palette = NULL,
+  gradient_palette_range = NULL,
   x_label = waiver(),
   y_label = waiver(),
   legend_label = waiver(),
@@ -94,10 +104,12 @@ plot_ice(
   y_range = NULL,
   y_n_breaks = 5,
   y_breaks = NULL,
+  value_scales = waiver(),
   conf_int_style = c("ribbon", "step", "none"),
   conf_int_alpha = 0.4,
   show_ice = TRUE,
   show_pd = TRUE,
+  show_novelty = TRUE,
   anchor_values = NULL,
   width = waiver(),
   height = waiver(),
@@ -140,8 +152,17 @@ wrapping. If NULL, a facet grid is produced instead.}
 
 \item{ggtheme}{(\emph{optional}) \code{ggplot} theme to use for plotting.}
 
-\item{discrete_palette}{(\emph{optional}) Palette to use to color the different
+\item{discrete_palette}{(\emph{optional}) Palette to use to colour the different
 plot elements in case a value was provided to the \code{color_by} argument.}
+
+\item{gradient_palette}{(\emph{optional}) Sequential or divergent palette used to
+colour the raster in 2D individual conditional expectation or partial
+dependence plots. This argument is not used for 1D plots.}
+
+\item{gradient_palette_range}{(\emph{optional}) Numerical range used to span the
+gradient for 2D plots. This should be a range of two values, e.g. \code{c(0, 1)}.
+By default, values are determined from the data, dependent on the
+\code{value_scales} parameter. This parameter is ignored for 1D plots.}
 
 \item{x_label}{(\emph{optional}) Label to provide to the x-axis. If NULL, no label
 is shown.}
@@ -177,6 +198,22 @@ is unset.}
 
 \item{y_breaks}{(\emph{optional}) Break points on the y-axis of the plot.}
 
+\item{value_scales}{(\emph{optional}) Sets scaling of predicted values. This
+parameter has several options:
+\itemize{
+\item \code{fixed} (default): The value axis for all features will have the same
+range.
+\item \code{feature}: The value axis for each feature will have the same range. This
+option is unavailable for 2D plots.
+\item \code{figure}: The  value axis for all facets in a figure will have the same
+range.
+\item \code{facet}: Each facet has its own range. This option is unavailable for 2D
+plots.
+}
+
+For 1D plots, this option is ignored if the \code{y_range} is provided, whereas
+for 2D it is ignored if the \code{gradient_palette_range} is provided.}
+
 \item{conf_int_style}{(\emph{optional}) Confidence interval style. See details for
 allowed styles.}
 
@@ -192,8 +229,10 @@ plots should be created.}
 created. Note that if an anchor is set for a particular feature, its partial
 dependence cannot be shown.}
 
+\item{show_novelty}{(\emph{optional}) Sets whether novelty is shown in plots.}
+
 \item{anchor_values}{(\emph{optional}) A single value or a named list or array of
-values that are used to center the individual conditional expectation plot.
+values that are used to centre the individual conditional expectation plot.
 A single value is valid if and only if only a single feature is assessed.
 Otherwise, values Has no effect if the plot is not shown, i.e.
 \code{show_ice=FALSE}. A partial dependence plot cannot be shown for those
@@ -236,32 +275,48 @@ This method creates individual conditional expectation plots
 based on data in a familiarCollection object.
 }
 \details{
-This function generates plots for decision curves.
+This function generates individual conditional expectation plots.
+These plots come in two varieties, namely 1D and 2D. 1D plots show the
+predicted value as function of a single feature, whereas 2D plots show the
+predicted value as a function of two features.
 
 Available splitting variables are: \code{feature}, \code{fs_method}, \code{learner},
 \code{data_set} and \code{positive_class} (categorical outcomes) or \code{evaluation_time}
-(survival outcomes). By default, the data is split by \code{feature}, \code{fs_method}
-and \code{learner}, with faceting by \code{data_set} and colouring by \code{positive_class}
-or \code{evaluation_time}.
+(survival outcomes). By default, for 1D ICE plots the data are split by
+\code{feature}, \code{fs_method} and \code{learner}, with faceting by \code{data_set},
+\code{positive_class} or \code{evaluation_time}. If only partial dependence is shown,
+\code{positive_class} and \code{evaluation_time} are used to set colours instead. For
+2D plots, by default the data are split by \code{feature}, \code{fs_method} and
+\code{learner}, with faceting by \code{data_set}, \code{positive_class} or
+\code{evaluation_time}. The \code{color_by} argument cannot be used with 2D plots, and
+attempting to do so causes an error.
 
-Available palettes for \code{discrete_palette} are those listed by
-\code{grDevices::palette.pals()} (requires R >= 4.0.0), \code{grDevices::hcl.pals()}
-(requires R >= 3.6.0) and \code{rainbow}, \code{heat.colors}, \code{terrain.colors},
-\code{topo.colors} and \code{cm.colors}, which correspond to the palettes of the same
-name in \code{grDevices}. If not specified, a default palette based on palettes
-in Tableau are used. You may also specify your own palette by using colour
-names listed by \code{grDevices::colors()} or through hexadecimal RGB strings.
+The splitting variables indicated by \code{color_by} are coloured according to
+the \code{discrete_palette} parameter. This parameter is therefore only used for
+1D plots. Available palettes for \code{discrete_palette} and \code{gradient_palette}
+are those listed by \code{grDevices::palette.pals()} (requires R >= 4.0.0),
+\code{grDevices::hcl.pals()} (requires R >= 3.6.0) and \code{rainbow}, \code{heat.colors},
+\code{terrain.colors}, \code{topo.colors} and \code{cm.colors}, which correspond to the
+palettes of the same name in \code{grDevices}. If not specified, a default
+palette based on palettes in Tableau are used. You may also specify your own
+palette by using colour names listed by \code{grDevices::colors()} or through
+hexadecimal RGB strings.
 
-Bootstrap confidence intervals of the individual conditional expectation
-plot (if present) can be shown using various styles set by \code{conf_int_style}:
+Bootstrap confidence intervals of the partial dependence plots can be shown
+using various styles set by \code{conf_int_style}:
 \itemize{
 \item \code{ribbon} (default): confidence intervals are shown as a ribbon with an
-opacity of \code{conf_int_alpha} around the point estimate of the decision curve.
+opacity of \code{conf_int_alpha} around the point estimate of the partial
+dependence.
 \item \code{step} (default): confidence intervals are shown as a step function around
-the point estimate of the decision curve.
+the point estimate of the partial dependence.
 \item \code{none}: confidence intervals are not shown. The point estimate of the
-decision curve is shown as usual.
+partial dependence is shown as usual.
 }
+
+Note that when bootstrap confidence intervals were computed, they were also
+computed for individual samples in individual conditional expectation plots.
+To avoid clutter, only point estimates for individual samples are shown.
 
 Labelling methods such as \code{set_fs_method_names} or \code{set_data_set_names} can
 be applied to the \code{familiarCollection} object to update labels, and order
