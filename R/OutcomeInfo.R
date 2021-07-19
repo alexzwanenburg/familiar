@@ -208,6 +208,12 @@ get_outcome_info_from_backend <- function(){
         # Interpolate at the unique times.
         incidence_table <- lapply(x, function(outcome_info_object, item, unique_times){
           
+          # Check that the object is not empty.
+          if(is_empty(outcome_info_object@distribution[[item]])) return(NULL)
+          
+          # Check that there is at least unique times.
+          if(data.table::uniqueN(outcome_info_object@distribution[[item]]$time) < 2) return(NULL)
+          
           # Interpolate the data at the unique time points.
           incidence <- stats::approx(x=outcome_info_object@distribution[[item]]$time,
                                      y=outcome_info_object@distribution[[item]][[item]],
@@ -242,6 +248,12 @@ get_outcome_info_from_backend <- function(){
         # Interpolate at the unique times.
         survival_table <- lapply(x, function(outcome_info_object, item, unique_times){
           
+          # Check that the object is not empty.
+          if(is_empty(outcome_info_object@distribution[[item]])) return(NULL)
+          
+          # Check that there is at least unique times.
+          if(data.table::uniqueN(outcome_info_object@distribution[[item]]$time) < 2) return(NULL)
+          
           # Interpolate the data at the unique time points.
           survival_probability <- stats::approx(x=outcome_info_object@distribution[[item]]$time,
                                                 y=outcome_info_object@distribution[[item]][[item]],
@@ -270,7 +282,7 @@ get_outcome_info_from_backend <- function(){
         
       } else {
         # Find mean value
-        distr_list[[item]] <- mean(extract_from_slot(x, "distribution", item, na.rm=TRUE))
+        distr_list[[item]] <- mean(unlist(extract_from_slot(x, "distribution", item, na.rm=TRUE)))
       }
       
     }
