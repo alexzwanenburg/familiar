@@ -30,7 +30,9 @@ plot_ice(
   y_range = NULL,
   y_n_breaks = 5,
   y_breaks = NULL,
+  novelty_range = NULL,
   value_scales = waiver(),
+  novelty_scales = waiver(),
   conf_int_style = c("ribbon", "step", "none"),
   conf_int_alpha = 0.4,
   show_ice = TRUE,
@@ -67,7 +69,9 @@ plot_ice(
   y_range = NULL,
   y_n_breaks = 5,
   y_breaks = NULL,
+  novelty_range = NULL,
   value_scales = waiver(),
+  novelty_scales = waiver(),
   conf_int_style = c("ribbon", "step", "none"),
   conf_int_alpha = 0.4,
   show_ice = TRUE,
@@ -104,7 +108,9 @@ plot_ice(
   y_range = NULL,
   y_n_breaks = 5,
   y_breaks = NULL,
+  novelty_range = NULL,
   value_scales = waiver(),
+  novelty_scales = waiver(),
   conf_int_style = c("ribbon", "step", "none"),
   conf_int_alpha = 0.4,
   show_ice = TRUE,
@@ -198,6 +204,12 @@ is unset.}
 
 \item{y_breaks}{(\emph{optional}) Break points on the y-axis of the plot.}
 
+\item{novelty_range}{(\emph{optional}) Numerical range used to span the range of
+novelty values. This determines the size of the bubbles in 2D, and
+transparency of lines in 1D. This should be a range of two values, e.g.
+\code{c(0, 1)}. By default, values are determined from the data, dependent on the
+\code{value_scales} parameter. This parameter is ignored if \code{show_novelty=FALSE}.}
+
 \item{value_scales}{(\emph{optional}) Sets scaling of predicted values. This
 parameter has several options:
 \itemize{
@@ -205,7 +217,7 @@ parameter has several options:
 range.
 \item \code{feature}: The value axis for each feature will have the same range. This
 option is unavailable for 2D plots.
-\item \code{figure}: The  value axis for all facets in a figure will have the same
+\item \code{figure}: The value axis for all facets in a figure will have the same
 range.
 \item \code{facet}: Each facet has its own range. This option is unavailable for 2D
 plots.
@@ -213,6 +225,13 @@ plots.
 
 For 1D plots, this option is ignored if the \code{y_range} is provided, whereas
 for 2D it is ignored if the \code{gradient_palette_range} is provided.}
+
+\item{novelty_scales}{(\emph{optional}) Sets scaling of novelty values, similar to
+the \code{value_scales} parameter, but with more limited options:
+\itemize{
+\item \code{fixed} (default): The novelty will have the same range for all features.
+\item \code{figure}: The novelty will have the same range for all facets in a figure.
+}}
 
 \item{conf_int_style}{(\emph{optional}) Confidence interval style. See details for
 allowed styles.}
@@ -254,7 +273,7 @@ aggregated for export.}
     \item{\code{filename}}{File name to create on disk.}
     \item{\code{plot}}{Plot to save, defaults to last plot displayed.}
     \item{\code{device}}{Device to use. Can either be a device function
-(e.g. \code{\link[=png]{png()}}), or one of "eps", "ps", "tex" (pictex),
+(e.g. \link{png}), or one of "eps", "ps", "tex" (pictex),
 "pdf", "jpeg", "tiff", "png", "bmp", "svg" or "wmf" (windows only).}
     \item{\code{path}}{Path of the directory to save plot to: \code{path} and \code{filename}
 are combined to create the fully qualified file name. Defaults to the
@@ -262,9 +281,11 @@ working directory.}
     \item{\code{scale}}{Multiplicative scaling factor.}
     \item{\code{dpi}}{Plot resolution. Also accepts a string input: "retina" (320),
 "print" (300), or "screen" (72). Applies only to raster output types.}
-    \item{\code{limitsize}}{When \code{TRUE} (the default), \code{ggsave} will not
+    \item{\code{limitsize}}{When \code{TRUE} (the default), \code{ggsave()} will not
 save images larger than 50x50 inches, to prevent the common error of
 specifying dimensions in pixels.}
+    \item{\code{bg}}{Background colour. If \code{NULL}, uses the \code{plot.background} fill value
+from the plot theme.}
   }}
 }
 \value{

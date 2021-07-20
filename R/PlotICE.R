@@ -21,6 +21,11 @@ NULL
 #'  gradient for 2D plots. This should be a range of two values, e.g. `c(0, 1)`.
 #'  By default, values are determined from the data, dependent on the
 #'  `value_scales` parameter. This parameter is ignored for 1D plots.
+#'@param novelty_range (*optional*) Numerical range used to span the range of
+#'  novelty values. This determines the size of the bubbles in 2D, and
+#'  transparency of lines in 1D. This should be a range of two values, e.g.
+#'  `c(0, 1)`. By default, values are determined from the data, dependent on the
+#'  `value_scales` parameter. This parameter is ignored if `show_novelty=FALSE`.
 #'@param value_scales (*optional*) Sets scaling of predicted values. This
 #'  parameter has several options:
 #'
@@ -30,7 +35,7 @@ NULL
 #'  * `feature`: The value axis for each feature will have the same range. This
 #'  option is unavailable for 2D plots.
 #'
-#'  * `figure`: The  value axis for all facets in a figure will have the same
+#'  * `figure`: The value axis for all facets in a figure will have the same
 #'  range.
 #'
 #'  * `facet`: Each facet has its own range. This option is unavailable for 2D
@@ -38,6 +43,13 @@ NULL
 #'
 #'  For 1D plots, this option is ignored if the `y_range` is provided, whereas
 #'  for 2D it is ignored if the `gradient_palette_range` is provided.
+#'@param novelty_scales (*optional*) Sets scaling of novelty values, similar to
+#'  the `value_scales` parameter, but with more limited options:
+#'
+#'  * `fixed` (default): The novelty will have the same range for all features.
+#'
+#'  * `figure`: The novelty will have the same range for all facets in a figure.
+#'
 #'@param show_ice (*optional*) Sets whether individual conditional expectation
 #'  plots should be created.
 #'@param show_pd (*optional*) Sets whether partial dependence plots should be
@@ -146,7 +158,9 @@ setGeneric("plot_ice",
                     y_range=NULL,
                     y_n_breaks=5,
                     y_breaks=NULL,
+                    novelty_range=NULL,
                     value_scales=waiver(),
+                    novelty_scales=waiver(),
                     conf_int_style=c("ribbon", "step", "none"),
                     conf_int_alpha=0.4,
                     show_ice=TRUE,
@@ -185,7 +199,9 @@ setMethod("plot_ice", signature(object="ANY"),
                    y_range=NULL,
                    y_n_breaks=5,
                    y_breaks=NULL,
+                   novelty_range=NULL,
                    value_scales=waiver(),
+                   novelty_scales=waiver(),
                    conf_int_style=c("ribbon", "step", "none"),
                    conf_int_alpha=0.4,
                    show_ice=TRUE,
@@ -226,7 +242,9 @@ setMethod("plot_ice", signature(object="ANY"),
                                      "y_range"=y_range,
                                      "y_n_breaks"=y_n_breaks,
                                      "y_breaks"=y_breaks,
+                                     "novelty_range"=novelty_range,
                                      "value_scales"=value_scales,
+                                     "novelty_scales"=novelty_scales,
                                      "conf_int_style"=conf_int_style,
                                      "conf_int_alpha"=conf_int_alpha,
                                      "show_ice"=show_ice,
@@ -266,7 +284,9 @@ setMethod("plot_ice", signature(object="familiarCollection"),
                    y_range=NULL,
                    y_n_breaks=5,
                    y_breaks=NULL,
+                   novelty_range=NULL,
                    value_scales=waiver(),
+                   novelty_scales=waiver(),
                    conf_int_style=c("ribbon", "step", "none"),
                    conf_int_alpha=0.4,
                    show_ice=TRUE,
@@ -355,18 +375,6 @@ setMethod("plot_ice", signature(object="familiarCollection"),
             # ggtheme
             if(!inherits(ggtheme, "theme")) ggtheme <- plotting.get_theme(use_theme=ggtheme)
 
-            # conf_int_style
-            if(length(conf_int_style) > 1) conf_int_style <- head(conf_int_style, n=1)
-            
-            # Set the style of the confidence interval to none, in case no
-            # confidence interval data is present.
-            if(show_pd){
-              if(!all(sapply(pd_data, function(x) (x@estimation_type %in% c("bci", "bootstrap_confidence_interval"))))) conf_int_style <- "none"
-              
-            } else {
-              conf_int_style <- NULL
-            }
-            
             # Determine whether 1D or 2D plots are shown.
             show_2d <- any(sapply(ice_data, function(x) (!is.null(x@identifiers$feature_y))))
             
@@ -377,11 +385,25 @@ setMethod("plot_ice", signature(object="familiarCollection"),
               show_ice <- FALSE
             }
             
-            # Determine identifiers that should be dropped frpm plot_data.
-            if(show_2d){
-              dropped_identifiers <- c("sample", "feature_x_value", "feature_y_value")
+            # conf_int_style
+            if(length(conf_int_style) > 1) conf_int_style <- head(conf_int_style, n=1)
+            
+            # Set the style of the confidence interval to none, in case no
+            # confidence interval data is present.
+            if(show_pd & !show_2d){
+              if(!all(sapply(pd_data, function(x) (x@estimation_type %in% c("bci", "bootstrap_confidence_interval"))))) conf_int_style <- "none"
+              
             } else {
+              conf_int_style <- "none"
+            }
+            
+            # Determine identifiers that should be dropped from plot_data.
+            if(show_2d){
+              dropped_identifiers <- c("feature_x_value", "feature_y_value")
+            } else if(show_ice) {
               dropped_identifiers <- c("sample", "feature_x_value")
+            } else {
+              dropped_identifiers <- c("feature_x_value")
             }
             
             # Determine splitting variables present in the dataset.
@@ -488,18 +510,21 @@ setMethod("plot_ice", signature(object="familiarCollection"),
               # The value range is the same for all features.
               value_range <- .create_ice_plot_value_range(x=pd_data,
                                                           scale_method="fixed",
-                                                          outcome_type=object@outcome_type)
+                                                          outcome_type=object@outcome_type,
+                                                          confidence_interval=conf_int_style != "none")
               
             } else if(!show_2d & value_scales == "fixed"){
               # The value range is the same for all features.
               if(!is.null(show_ice)){
                 value_range <- .create_ice_plot_value_range(x=ice_data,
                                                             scale_method="fixed",
-                                                            outcome_type=object@outcome_type)
+                                                            outcome_type=object@outcome_type,
+                                                            confidence_interval=conf_int_style != "none")
               } else {
                 value_range <- .create_ice_plot_value_range(x=pd_data,
                                                             scale_method="fixed",
-                                                            outcome_type=object@outcome_type)
+                                                            outcome_type=object@outcome_type,
+                                                            confidence_interval=conf_int_style != "none")
               }
               
             } else if(!show_2d & value_scales == "feature"){
@@ -507,16 +532,52 @@ setMethod("plot_ice", signature(object="familiarCollection"),
               if(!is.null(show_ice)){
                 value_range <- .create_ice_plot_value_range(x=ice_data,
                                                             scale_method="feature",
-                                                            outcome_type=object@outcome_type)
+                                                            outcome_type=object@outcome_type,
+                                                            confidence_interval=conf_int_style != "none")
               } else {
                 value_range <- .create_ice_plot_value_range(x=pd_data,
                                                             scale_method="feature",
-                                                            outcome_type=object@outcome_type)
+                                                            outcome_type=object@outcome_type,
+                                                            confidence_interval=conf_int_style != "none")
               }
               
             } else {
               # We will create value-ranges downstream.
               value_range <- NULL
+            }
+            
+            
+            # Set novelty scales
+            if(is.waive(novelty_scales)) novelty_scales <- "fixed"
+            
+            # Check if the novelty scales are correctly defined.
+            .check_parameter_value_is_valid(novelty_scales, var_name="novelty_scales", values=c("fixed", "figure"))
+            
+            if(!is.null(novelty_range)){
+              # The value range is provided by the user.
+              novelty_range <- unique(plot_data[, c("feature_x", "feature_y")])[, ":="("min_value"=novelty_range[1],
+                                                                                       "max_value"=novelty_range[2])]
+            } else if(novelty_scales == "fixed"){
+              # The novelty range is the same for all features.
+              if(!is.null(show_ice)){
+                novelty_range <- .create_ice_plot_novelty_range(x=ice_data,
+                                                                scale_method="fixed",
+                                                                outcome_type=object@outcome_type)
+              } else {
+                novelty_range <- .create_ice_plot_novelty_range(x=pd_data,
+                                                                scale_method="fixed",
+                                                                outcome_type=object@outcome_type)
+              }
+              
+            } else {
+              novelty_range <- NULL
+            }
+            
+            # Set plot function.
+            if(show_2d){
+              plot_function <- .create_2d_ice_plot
+            } else {
+              plot_function <- .create_1d_ice_plot
             }
 
             
@@ -543,11 +604,14 @@ setMethod("plot_ice", signature(object="familiarCollection"),
               p <- .plot_ice(x=x_split[[ii]],
                              ice_data=ice_data,
                              pd_data=pd_data,
+                             plot_function=plot_function,
                              color_by=color_by,
                              facet_by=facet_by,
                              facet_wrap_cols=facet_wrap_cols,
                              ggtheme=ggtheme,
                              discrete_palette=discrete_palette,
+                             gradient_palette=gradient_palette,
+                             gradient_palette_range=gradient_palette_range,
                              x_label=x_label,
                              y_label=y_label,
                              legend_label=legend_label,
@@ -560,9 +624,15 @@ setMethod("plot_ice", signature(object="familiarCollection"),
                              y_range=y_range,
                              y_breaks=y_breaks,
                              y_n_breaks=y_n_breaks,
+                             value_scales=value_scales,
+                             value_range=value_range,
+                             novelty_scales=novelty_scales,
+                             novelty_range=novelty_range,
                              conf_int_style=conf_int_style,
                              conf_int_alpha=conf_int_alpha,
-                             show_novelty=show_novelty)
+                             show_novelty=show_novelty,
+                             show_2d=show_2d,
+                             outcome_type=object@outcome_type)
               
               # Check empty output
               if(is.null(p)) next()
@@ -574,12 +644,13 @@ setMethod("plot_ice", signature(object="familiarCollection"),
               if(!is.null(dir_path)){
                 
                 subtype <- ifelse(show_ice, "ice", "pd")
+                if(show_2d) subtype <- c(subtype, "2d")
                 
                 # Determine the subtype
                 if(!is.null(split_by)){
                   subtype <- c(subtype, as.character(sapply(split_by, function(jj, x) (x[[jj]][1]), x=x_split[[ii]])))
-                  subtype <- paste0(subtype, collapse="_")
                 }
+                subtype <- paste0(subtype, collapse="_")
                 
                 # Obtain decent default values for the plot.
                 def_plot_dims <- .determine_ice_plot_dimensions(x=x_split[[ii]],
@@ -618,11 +689,14 @@ setMethod("plot_ice", signature(object="familiarCollection"),
 .plot_ice <- function(x,
                       ice_data,
                       pd_data,
+                      plot_function,
                       color_by,
                       facet_by,
                       facet_wrap_cols,
                       ggtheme,
                       discrete_palette,
+                      gradient_palette,
+                      gradient_palette_range,
                       x_label,
                       y_label,
                       legend_label,
@@ -635,10 +709,17 @@ setMethod("plot_ice", signature(object="familiarCollection"),
                       y_range,
                       y_breaks,
                       y_n_breaks,
+                      value_scales,
+                      value_range,
+                      novelty_scales,
+                      novelty_range,
                       conf_int_style,
                       conf_int_alpha,
-                      show_novelty){
+                      show_novelty,
+                      show_2d,
+                      outcome_type){
   
+  browser()
   # Split by facet. This generates a list of data splits with faceting
   # information that allows for positioning.
   plot_layout_table <- plotting.get_plot_layout_table(x=x,
@@ -649,7 +730,57 @@ setMethod("plot_ice", signature(object="familiarCollection"),
   data_facet_list <- plotting.split_data_by_facet(x=x,
                                                   plot_layout_table=plot_layout_table)
   
-  browser()
+  # Set value scales.
+  if(is.null(value_range) & value_scales == "figure"){
+    # Keep only data that are used to set the scale.
+    plot_ice_data <- .select_ice_plot_data(x=x, data=ice_data)
+    plot_pd_data <- .select_ice_plot_data(x=x, data=pd_data)
+    
+    if(!is.null(plot_ice_data)){
+      value_range <- .create_ice_plot_value_range(x=plot_ice_data,
+                                                  scale_method="figure",
+                                                  outcome_type=outcome_type,
+                                                  confidence_interval=conf_int_style != "none")
+    } else {
+      value_range <- .create_ice_plot_value_range(x=plot_pd_data,
+                                                  scale_method="figure",
+                                                  outcome_type=outcome_type,
+                                                  confidence_interval=conf_int_style != "none")
+    }
+  }
+  
+  # Set novelty scales
+  if(is.null(novelty_range) & novelty_scales == "figure"){
+    # Keep only data that are used to set the scale.
+    plot_ice_data <- .select_ice_plot_data(x=x, data=ice_data)
+    plot_pd_data <- .select_ice_plot_data(x=x, data=pd_data)
+    
+    if(!is.null(plot_ice_data)){
+      novelty_range <- .create_ice_plot_novelty_range(x=plot_ice_data,
+                                                      scale_method="figure",
+                                                      outcome_type=outcome_type)
+    } else {
+      novelty_range <- .create_ice_plot_novelty_range(x=plot_pd_data,
+                                                      scale_method="figure",
+                                                      outcome_type=outcome_type)
+    }
+  }
+  
+  
+  # x_label_shared
+  # if(!is.waive(x_label_shared)){
+  #   plotting.check_input_args(x_label_shared=x_label_shared)
+  # } else {
+  #   x_label_shared <- "column"
+  # }
+  # 
+  # # y_label_shared
+  # if(!is.waive(y_label_shared)){
+  #   plotting.check_input_args(y_label_shared=y_label_shared)
+  # } else {
+  #   y_label_shared <- "row"
+  # }
+  
   
   # Placeholders for plots.
   figure_list <- list()
@@ -658,89 +789,52 @@ setMethod("plot_ice", signature(object="familiarCollection"),
   # Iterate over facets
   for(ii in names(data_facet_list)){
     browser()
-    # Create calibration plot.
-    p_ice <- .create_ice_plot(x=data_facet_list[[ii]],
-                              ice_data,
-                              pd_data,
-                              color_by,
-                              facet_by,
-                              facet_wrap_cols,
-                              ggtheme,
-                              discrete_palette,
-                              x_label,
-                              y_label,
-                              legend_label,
-                              plot_title,
-                              plot_sub_title,
-                              caption,
-                              x_range,
-                              x_breaks,
-                              x_n_breaks,
-                              y_range,
-                              y_breaks,
-                              y_n_breaks,
-                              conf_int_style,
-                              conf_int_alpha,
-                              show_novelty)
+    # Set facet_data
+    facet_data <- data_facet_list[[ii]]
     
-    p_calibration <- .create_calibration_plot(x=data_facet_list[[ii]],
-                                              color_by=color_by,
-                                              facet_by=facet_by,
-                                              facet_wrap_cols=facet_wrap_cols,
-                                              ggtheme=ggtheme,
-                                              discrete_palette=discrete_palette,
-                                              x_label=x_label,
-                                              y_label=y_label,
-                                              legend_label=legend_label,
-                                              plot_title=plot_title,
-                                              plot_sub_title=plot_sub_title,
-                                              caption=caption,
-                                              x_range=x_range,
-                                              x_breaks=x_breaks,
-                                              y_range=y_range,
-                                              y_breaks=y_breaks,
-                                              conf_int_alpha=conf_int_alpha,
-                                              conf_int_style=conf_int_style,
-                                              show_calibration_fit=show_calibration_fit,
-                                              show_goodness_of_fit=show_goodness_of_fit,
-                                              linear_test=linear_test_facet_list[[ii]],
-                                              gof_test=gof_test_facet_list[[ii]],
-                                              outcome_type=outcome_type,
-                                              grouping_column=grouping_column,
-                                              is_point=is_point)
+    # Keep only data that are used to set the scale.
+    facet_ice_data <- .select_ice_plot_data(x=facet_data, data=ice_data)
+    facet_pd_data <- .select_ice_plot_data(x=facet_data, data=pd_data)
+    
+    p_main <- do.call(plot_function,
+                      args=list("ice_data"=facet_ice_data,
+                                "pd_data"=facet_pd_data,
+                                "color_by"=color_by,
+                                "facet_by"=facet_by,
+                                "facet_wrap_cols"=facet_wrap_cols,
+                                "ggtheme"=ggtheme,
+                                "discrete_palette"=discrete_palette,
+                                "gradient_palette"=gradient_palette,
+                                "gradient_palette_range"=gradient_palette_range,
+                                "x_label"=x_label,
+                                "y_label"=y_label,
+                                "legend_label"=legend_label,
+                                "plot_title"=plot_title,
+                                "plot_sub_title"=plot_sub_title,
+                                "caption"=caption,
+                                "x_range"=x_range,
+                                "x_breaks"=x_breaks,
+                                "x_n_breaks"=x_n_breaks,
+                                "y_range"=y_range,
+                                "y_breaks"=y_breaks,
+                                "y_n_breaks"=y_n_breaks,
+                                "value_scales"=value_scales,
+                                "value_range"=value_range,
+                                "novelty_range"=novelty_range,
+                                "conf_int_style"=conf_int_style,
+                                "conf_int_alpha"=conf_int_alpha,
+                                "show_novelty"=show_novelty,
+                                "outcome_type"=outcome_type))
     
     # Extract plot elements from the main calibration plot.
-    extracted_elements <- plotting.extract_plot_elements(p=p_calibration)
+    extracted_elements <- plotting.extract_plot_elements(p=p_main)
     
     # Remove extracted elements from the plot.
-    p_calibration <- plotting.remove_plot_elements(p=p_calibration)
+    p_main <- plotting.remove_plot_elements(p=p_main)
     
     # Rename plot elements.
-    g_calibration <- plotting.rename_plot_elements(g=plotting.to_grob(p_calibration),
+    g_calibration <- plotting.rename_plot_elements(g=plotting.to_grob(p_main),
                                                    extension="main")
-    
-    if(show_density & gtable::is.gtable(g_calibration) & !is_empty(density_facet_list[[ii]])){
-      
-      # Procedure for normal density plots.
-      p_margin <- .create_calibration_density_subplot(x=density_facet_list[[ii]],
-                                                      ggtheme=ggtheme,
-                                                      x_range=x_range,
-                                                      x_breaks=x_breaks,
-                                                      flip=FALSE,
-                                                      plot_height=density_plot_height)
-      
-      # Extract the panel element from the density plot.
-      g_margin <- .gtable_extract(g=plotting.to_grob(p_margin),
-                                  element=c("panel"),
-                                  partial_match=TRUE)
-      
-      # Insert in the calibration plot at the top margin.
-      g_calibration <- .gtable_insert(g=g_calibration,
-                                      g_new=g_margin,
-                                      where="top",
-                                      ref_element="panel-main",
-                                      partial_match=TRUE)
-    }
     
     # Add combined grob to list
     figure_list <- c(figure_list, list(g_calibration))
@@ -748,7 +842,7 @@ setMethod("plot_ice", signature(object="familiarCollection"),
     # Add extract elements to the grob_element_list
     extracted_element_list <- c(extracted_element_list, list(extracted_elements))
   }
-  
+  browser()
   # Update the layout table.
   plot_layout_table <- plotting.update_plot_layout_table(plot_layout_table=plot_layout_table,
                                                          grobs=figure_list,
@@ -765,193 +859,274 @@ setMethod("plot_ice", signature(object="familiarCollection"),
                                 ggtheme=ggtheme)
   
   return(g)
-  
-  
+}
+
+
+.create_1d_ice_plot <- function(ice_data,
+                                pd_data,
+                                color_by,
+                                facet_by,
+                                facet_wrap_cols,
+                                ggtheme,
+                                discrete_palette,
+                                x_label,
+                                y_label,
+                                legend_label,
+                                plot_title,
+                                plot_sub_title,
+                                caption,
+                                x_range,
+                                x_breaks,
+                                x_n_breaks,
+                                y_breaks,
+                                y_n_breaks,
+                                value_scales,
+                                value_range,
+                                novelty_range,
+                                conf_int_style,
+                                conf_int_alpha,
+                                show_novelty,
+                                outcome_type,
+                                ...){
   # Suppress NOTES due to non-standard evaluation in data.table
-  curve_type <- NULL
+  feature_x <- NULL
   
-  # x_label
-  if(is.waive(x_label)) x_label <- "threshold probability"
-  
-  # y_label
-  if(is.waive(y_label)) y_label <- "net benefit"
-  
-  # x_range
-  if(is.null(x_range)) x_range <- c(0.0, 1.0)
-  
-  # x_breaks
-  if(is.null(x_breaks)){
-    plotting.check_input_args(x_n_breaks=x_n_breaks)
-    
-    # Create breaks
-    x_breaks <- labeling::extended(m=x_n_breaks,
-                                   dmin=x_range[1],
-                                   dmax=x_range[2],
-                                   only.loose=TRUE)
+  # Get the data that determines the plot characteristics.
+  if(!is.null(ice_data)){
+    plot_data <- ice_data[[1]]@data
+  } else {
+    plot_data <- pd_data[[1]]@data
   }
   
-  # y_range
-  if(is.null(y_range)){
-    if(conf_int_style != "none"){
-      # Base the y-range on the confidence intervals.
-      y_range <- c(min(x@data[curve_type == "model" & is.finite(ci_low)]$ci_low),
-                   max(x@data[curve_type == "model" & is.finite(ci_up)]$ci_up))
-      
+  # Set value range
+  if(is.null(value_range) & value_scales == "facet"){
+    if(!is.null(ice_data)){
+      value_range <- .create_ice_plot_value_range(x=ice_data,
+                                                  scale_method="facet",
+                                                  outcome_type=outcome_type,
+                                                  confidence_interval=conf_int_style != "none")
     } else {
-      # Base the y-range on the range of the benefit.
-      y_range <- c(min(c(0.0, min(x@data[curve_type == "model" & is.finite(net_benefit)]$net_benefit))),
-                   max(c(0.0, max(x@data[curve_type == "model" & is.finite(net_benefit)]$net_benefit))))
+      value_range <- .create_ice_plot_value_range(x=pd_data,
+                                                  scale_method="facet",
+                                                  outcome_type=outcome_type,
+                                                  confidence_interval=conf_int_style != "none")
     }
   }
+  
+  # x_range
+  if(is.numeric(plot_data$feature_x_value)){
+    if(is.null(x_range)) x_range <- c(min(plot_data$feature_x_value),
+                                      max(plot_data$feature_x_value))
+    
+    # x_breaks
+    if(is.null(x_breaks)){
+      plotting.check_input_args(x_n_breaks=x_n_breaks)
+      
+      # Create breaks and update x_range
+      x_breaks <- labeling::extended(m=x_n_breaks,
+                                     dmin=x_range[1],
+                                     dmax=x_range[2],
+                                     only.loose=TRUE)
+      
+      # Update x_range
+      x_range  <- c(head(x_breaks, n=1),
+                    tail(x_breaks, n=1))
+    }
+    
+    plotting.check_input_args(x_range=x_range)
+  }
+  browser()
+  # Find the correct y-range
+  value_range <- value_range[feature_x == as.character(plot_data$feature_x)]
+  y_range <- c(value_range$min_value, value_range$max_value)
   
   # y_breaks
   if(is.null(y_breaks)){
     plotting.check_input_args(y_n_breaks=y_n_breaks)
     
-    # Create breaks
+    # Create breaks and update y_range
     y_breaks <- labeling::extended(m=y_n_breaks,
                                    dmin=y_range[1],
                                    dmax=y_range[2],
                                    only.loose=TRUE)
     
-    # Adapt the y-range.
+    # Update y-range
     y_range <- c(head(y_breaks, n=1),
                  tail(y_breaks, n=1))
   }
   
-  # Generate a guide table.
-  guide_list <- plotting.create_guide_table(x=x, color_by=color_by,
-                                            discrete_palette=discrete_palette)
+  plotting.check_input_args(y_range=y_range)
   
-  # Extract data
-  x <- guide_list$data
+  # Set up plot.
+}
+
+
+
+.create_2d_ice_plot <- function(pd_data,
+                                facet_by,
+                                facet_wrap_cols,
+                                ggtheme,
+                                gradient_palette,
+                                gradient_palette_range,
+                                x_label,
+                                y_label,
+                                legend_label,
+                                plot_title,
+                                plot_sub_title,
+                                caption,
+                                x_range,
+                                x_breaks,
+                                x_n_breaks,
+                                y_range,
+                                y_breaks,
+                                y_n_breaks,
+                                value_scales,
+                                value_range,
+                                novelty_range,
+                                conf_int_style,
+                                conf_int_alpha,
+                                show_novelty,
+                                outcome_type,
+                                ...){
+  # Suppress NOTES due to non-standard evaluation in data.table
+  feature_x <- feature_y <- NULL
+  browser()
+  # Get the data that determines the plot characteristics.
+  plot_data <- pd_data[[1]]@data
   
-  # Create basic plot
-  p <- ggplot2::ggplot(data=x[curve_type == "model"],
-                       mapping=ggplot2::aes(x=!!sym("threshold_probability"),
-                                            y=!!sym("net_benefit")))
+  # Set value range
+  if(is.null(value_range) & value_scales == "facet"){
+      value_range <- .create_ice_plot_value_range(x=pd_data,
+                                                  scale_method="facet",
+                                                  outcome_type=outcome_type,
+                                                  confidence_interval=conf_int_style != "none")
+      
+  } else if(is.null(value_range)){
+    ..error_reached_unreachable_code(".create_2d_ice_plot: No value range was set, and value_scales was not recognised either.")
+  }
   
-  # Add theme
+  # x_range
+  if(is.numeric(plot_data$feature_x_value)){
+    if(is.null(x_range)) x_range <- c(min(plot_data$feature_x_value, na.rm=TRUE),
+                                      max(plot_data$feature_x_value, na.rm=TRUE))
+    
+    # x_breaks
+    if(is.null(x_breaks)){
+      plotting.check_input_args(x_n_breaks=x_n_breaks)
+      
+      # Create breaks and update x_range
+      x_breaks <- labeling::extended(m=x_n_breaks,
+                                     dmin=x_range[1],
+                                     dmax=x_range[2],
+                                     only.loose=TRUE)
+      
+      # Update x_range
+      x_range  <- c(head(x_breaks, n=1),
+                    tail(x_breaks, n=1))
+    }
+    
+    plotting.check_input_args(x_range=x_range)
+  }
+  
+  # y_range
+  if(is.numeric(plot_data$feature_y_value)){
+    if(is.null(y_range)) y_range <- c(min(plot_data$feature_y_value, na.rm=TRUE),
+                                      max(plot_data$feature_y_value, na.rm=TRUE))
+    
+    # y_breaks
+    if(is.null(y_breaks)){
+      plotting.check_input_args(y_n_breaks=y_n_breaks)
+      
+      # Create breaks and update y_range
+      y_breaks <- labeling::extended(m=y_n_breaks,
+                                     dmin=y_range[1],
+                                     dmax=y_range[2],
+                                     only.loose=TRUE)
+      
+      # Update y_range
+      y_range  <- c(head(y_breaks, n=1),
+                    tail(y_breaks, n=1))
+    }
+    
+    plotting.check_input_args(y_range=y_range)
+  }
+  
+  browser()
+  # Find the correct value-range
+  value_range <- value_range[feature_x == as.character(plot_data$feature_x[1]) &
+                               feature_y == as.character(plot_data$feature_y[1])]
+  value_range <- c(value_range$min_value, value_range$max_value)
+  
+  # Update show_novelty to check for non-finite values in the novelty data.
+  show_novelty <- show_novelty & all(is.finite(plot_data$novelty))
+  
+  # Create basic plot.
+  p <- ggplot2::ggplot()
   p <- p + ggtheme
   
-  # Add decision curve, the curve for intervention for all, and the curve for no
-  # intervention.
-  if(is.null(color_by)){
-    # Model-based curve without colour-based splitting.
-    p <- p + ggplot2::geom_line()
-    
-    # Intervention for all.
-    p <- p + ggplot2::geom_line(data=x[curve_type == "intervention_all"],
-                                mapping=ggplot2::aes(x=!!sym("threshold_probability"),
-                                                     y=!!sym("net_benefit")))
-    
-    # Intervention for none.
-    p <- p + ggplot2::geom_hline(yintercept=0.0)
+  if(show_novelty){
+    # Create point cloud with size of points by novelty -> bubblechart.
+    p <- p + ggplot2::geom_point(data=plot_data,
+                                 mapping=ggplot2::aes(x=!!sym("feature_x_value"),
+                                                      y=!!sym("feature_y_value"),
+                                                      colour=!!sym("value"),
+                                                      size=!!sym("novelty")))
     
   } else {
-    # Model-based curve with colour-based splitting.
-    p <- p + ggplot2::geom_line(mapping=ggplot2::aes(colour=!!sym("color_breaks")))
-    
-    # Intervention for all.
-    # Intervention for all.
-    p <- p + ggplot2::geom_line(data=x[curve_type == "intervention_all"],
-                                mapping=ggplot2::aes(x=!!sym("threshold_probability"),
-                                                     y=!!sym("net_benefit"),
-                                                     colour=!!sym("color_breaks")))
-    
-    # Intervention for none.
-    p <- p + ggplot2::geom_hline(yintercept=0.0)
-    
-    # Extract guidetable for color
-    g_color <- guide_list$guide_color
-    
-    # Set colour and fill (fill may be unused)
-    p <- p + ggplot2::scale_colour_manual(name=legend_label$guide_color,
-                                          values=g_color$color_values,
-                                          breaks=g_color$color_breaks,
-                                          drop=FALSE)
-    
-    p <- p + ggplot2::scale_fill_manual(name=legend_label$guide_color,
-                                        values=g_color$color_values,
-                                        breaks=g_color$color_breaks,
-                                        drop=FALSE)
+    # TODO: Specify coordinates for rectangle.
+    # Create raster in case novelty is not or cannot be shown.
+    p <- p + ggplot2::geom_tile(data=plot_data,
+                                mapping=ggplot2::aes(x=!!sym("feature_x_value"),
+                                                     y=!!sym("feature_y_value"),
+                                                     fill=!!sym("value")))
   }
   
-  # Plot confidence intervals
-  if(conf_int_style[1]!="none"){
-    if(conf_int_style[1] == "step"){
-      if(is.null(color_by)){
-        p <- p + ggplot2::geom_step(mapping=ggplot2::aes(y=!!sym("ci_low")),
-                                    linetype="dashed")
-        
-        p <- p + ggplot2::geom_step(mapping=ggplot2::aes(y=!!sym("ci_up")),
-                                    linetype="dashed")
-        
-      } else {
-        p <- p + ggplot2::geom_step(mapping=ggplot2::aes(y=!!sym("ci_low"),
-                                                         colour=!!sym("color_breaks")),
-                                    linetype="dashed")
-        
-        p <- p + ggplot2::geom_step(mapping=ggplot2::aes(y=!!sym("ci_up"),
-                                                         colour=!!sym("color_breaks")),
-                                    linetype="dashed")
-      }
-      
-      
-      # Remove linetype from the legend.
-      p <- p + ggplot2::scale_linetype(guide=FALSE)
-      
-    } else if(conf_int_style[1] == "ribbon"){
-      if(is.null(color_by)){
-        p <- p + ggplot2::geom_ribbon(mapping=ggplot2::aes(ymin=!!sym("ci_low"),
-                                                           ymax=!!sym("ci_up")),
-                                      alpha=conf_int_alpha)
-        
-      } else {
-        p <- p + ggplot2::geom_ribbon(mapping=ggplot2::aes(ymin=!!sym("ci_low"),
-                                                           ymax=!!sym("ci_up"),
-                                                           fill=!!sym("color_breaks")),
-                                      alpha=conf_int_alpha)
-      }
-    }
+  # Set colours used for plotting 
+  gradient_colours <- plotting.get_palette(x=gradient_palette,
+                                           palette_type="sequential")
+  
+  # Add gradient palette as fill.
+  p <- p + ggplot2::scale_fill_gradientn(name=legend_label,
+                                         colors=gradient_colours,
+                                         limits=value_range)
+  
+  if(show_novelty){
+    # Add size scale.
+    browser()
+    # TODO: Add in novelty scales.
+    p <- p + ggplot2::scale_size(trans="reverse")
   }
   
-  # Update x and y scales
-  p <- p + ggplot2::scale_x_continuous(breaks=x_breaks, limits=x_range)
-  p <- p + ggplot2::scale_y_continuous(breaks=y_breaks, limits=y_range)
-  
-  # Labels
-  p <- p + ggplot2::labs(x=x_label,
-                         y=y_label,
-                         title=plot_title,
-                         subtitle=plot_sub_title,
-                         caption=caption)
-  
-  # Determine how things are faceted.
-  facet_by_list <- plotting.parse_facet_by(x=x,
-                                           facet_by=facet_by,
-                                           facet_wrap_cols=facet_wrap_cols)
+  # Determine how things are facetted
+  facet_by_list <- plotting.parse_facet_by(x=plot_data, facet_by=facet_by, facet_wrap_cols=facet_wrap_cols)
   
   if(!is.null(facet_by)){
     if(is.null(facet_wrap_cols)){
       # Use a grid
       p <- p + ggplot2::facet_grid(rows=facet_by_list$facet_rows,
                                    cols=facet_by_list$facet_cols,
-                                   labeller="label_context",
-                                   drop=TRUE)
+                                   labeller="label_context")
       
     } else {
       p <- p + ggplot2::facet_wrap(facets=facet_by_list$facet_by,
-                                   labeller="label_context",
-                                   drop=TRUE)
+                                   labeller="label_context")
     }
   }
   
+  # Update labels.
+  p <- p + ggplot2::labs(x=x_label,
+                         y=y_label,
+                         title=plot_title,
+                         subtitle=plot_sub_title,
+                         caption=caption)
+  
+  # Rotate x-axis ticks
+  # if(rotate_x_tick_labels){
+  #   p <- p + ggplot2::theme(axis.text.x=ggplot2::element_text(vjust=0.25, hjust=1.0, angle=90.0))
+  # }
+  browser()
   return(p)
 }
-
-
-.create_ice_plot <- function()
 
 
 
@@ -980,20 +1155,20 @@ setMethod("plot_ice", signature(object="familiarCollection"),
 
 
 
-.create_ice_plot_value_range <- function(x, scale_method, outcome_type){
-
+.create_ice_plot_value_range <- function(x, scale_method, outcome_type, confidence_interval=FALSE){
   # Suppress NOTES due to non-standard evaluation in data.table
   min_value <- max_value <- NULL
   
   # Obtain value ranges.
-  value_range <- lapply(x, ..create_ice_plot_value_range)
+  value_range <- lapply(x, ..create_ice_plot_value_range, confidence_interval=confidence_interval)
   value_range <- data.table::rbindlist(value_range, use.names=TRUE)
   
   if(scale_method %in% c("fixed", "figure")){
     if(outcome_type %in% c("binomial", "multinomial", "survival")){
       # Check if probabilities all lie in the expected range.
       if(all(value_range$min_value >= 0.0) & all(value_range$max_value <= 1.0)){
-        value_range[, ":="("min_value"=0.0, "max_value"=1.0)]
+        value_range[, ":="("min_value"=0.0,
+                           "max_value"=1.0)]
         
       } else {
         value_range[, ":="("min_value"=min(min_value),
@@ -1016,17 +1191,17 @@ setMethod("plot_ice", signature(object="familiarCollection"),
                 by=c("feature_x")]
     
   } else {
-    
+    ..error_reached_unreachable_code(paste0(".create_ice_plot_value_range: unknown scale_method encountered: ", scale_method))
   }
-  
+
   return(value_range)
 }
 
 
 
-..create_ice_plot_value_range <- function(x){
+..create_ice_plot_value_range <- function(x, confidence_interval){
   # Extract value range information.
-  browser()
+  
   # Get the x-feature
   value_range <- list("feature_x"=x@identifiers$feature_x)
   
@@ -1034,9 +1209,87 @@ setMethod("plot_ice", signature(object="familiarCollection"),
   if(!is.null(x@identifiers$feature_y)) value_range <- c(value_range, list("feature_y"=x@identifiers$feature_y))
   
   # Get minimum and maximum values.
-  value_range <- c(value_range, list("min_value"=min(x@data$value),
-                                     "max_value"=max(x@data$value)))
-  
+  if(confidence_interval){
+    value_range <- c(value_range, list("min_value"=min(x@data$value_ci_low),
+                                       "max_value"=max(x@data$value_ci_up)))
+  } else {
+    value_range <- c(value_range, list("min_value"=min(x@data$value),
+                                       "max_value"=max(x@data$value)))
+  }
+
   # Return as data.table.
   return(data.table::as.data.table(value_range))
+}
+
+
+
+.create_ice_plot_novelty_range <- function(x, scale_method, outcome_type){
+  # Suppress NOTES due to non-standard evaluation in data.table
+  min_novelty <- max_novelty <- NULL
+  
+  # Obtain value ranges.
+  novelty_range <- lapply(x, ..create_ice_plot_novelty_range)
+  novelty_range <- data.table::rbindlist(novelty_range, use.names=TRUE)
+  
+  if(any(is.finite(novelty_range$min_novelty)) & any(is.finite(novelty_range$max_novelty))){
+    novelty_range[, ":="("min_novelty"=min(min_novelty, na.rm=TRUE),
+                         "max_novelty"=max(max_novelty, na.rm=TRUE))]
+  } else {
+    novelty_range[, ":="("min_novelty"=NA_real_,
+                         "max_novelty"=NA_real_)]
+  }
+  
+  return(novelty_range)
+}
+
+
+
+..create_ice_plot_novelty_range <- function(x){
+  # Extract novelty range information.
+  
+  # Get the x-feature
+  novelty_range <- list("feature_x"=x@identifiers$feature_x)
+  
+  # Get the y-feature, if present.
+  if(!is.null(x@identifiers$feature_y)) novelty_range <- c(novelty_range, list("feature_y"=x@identifiers$feature_y))
+  
+  if(any(is.finite(x@data$novelty))){
+    # Get minimum and maximum novelty features.
+    novelty_range <- c(novelty_range, list("min_novelty"=min(x@data$novelty, na.rm=TRUE),
+                                           "max_novelty"=max(x@data$novelty, na.rm=TRUE)))
+    
+  } else {
+    novelty_range <- c(novelty_range, list("min_novelty"=NA_real_,
+                                           "max_novelty"=NA_real_))
+  }
+  
+  # Return as data.table.
+  return(data.table::as.data.table(novelty_range))
+}
+
+
+
+.select_ice_plot_data <- function(x, data){
+  # Check that data is not empty.
+  if(is_empty(data)) return(NULL)
+  
+  return(lapply(split(x, by="list_id"), ..select_ice_plot_data, data=data))
+}
+
+
+
+..select_ice_plot_data <- function(x, data){
+  # Suppress NOTES due to non-standard evaluation in data.table
+  .NATURAL <- NULL
+  
+  # Get list identifier.
+  selected_list_index <- x$list_id[1]
+  
+  # Select the correct data element.
+  data <- data[[selected_list_index]]
+  
+  # Select the subset of the data.
+  data@data <- data@data[x, on=.NATURAL]
+  
+  return(data)
 }

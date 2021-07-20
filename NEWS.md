@@ -45,6 +45,9 @@ set while exporting variable importance using `export_fs_vimp` or
 * Fixed an error that occurred when attempting to fit calibration data with `NA`
 values.
 
+* Fixed an error that occurred when attempting to interpolate survival
+probabilities when collecting pooled data.
+
 # Version 0.0.0.54 (Pre-release)
 
 ## Major changes:
