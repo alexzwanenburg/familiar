@@ -26,6 +26,11 @@ Previously class levels would be set based on order of appearance.
 
 * Isolation forests are now grown with a decreased memory footprint.
 
+* Presence of instances with a survival time of 0 or lower will produce a
+warning. Though familiar itself will handle such instances just fine, other
+packages will produce errors. Since familiar captures such errors and handles
+them internally, a warning is provided to indicate potential issues.
+
 ## Bug fixes
 
 * Fixed a bug that caused features not incorporated in models to not be exported

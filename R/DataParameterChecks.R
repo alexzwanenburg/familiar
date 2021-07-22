@@ -1001,6 +1001,33 @@
 
 
 
+#' Internal function to test plausibility of provided survival times.
+#'
+#' This function checks whether non-positive outcome time is present in the
+#' data. This may produce unexpected results for some packages. For example,
+#' glmnet will not train if an instance has a survival time of 0 or lower.
+#'
+#' @param data Data set as loaded using the `.load_data` function.
+#' @inheritParams .parse_experiment_settings
+#'
+#' @return NULL
+#' @md
+#' @keywords internal
+.check_survival_time_plausibility <- function(data, outcome_type, outcome_column){
+  if(outcome_type %in% c("survival", "competing_risk")){
+    
+    # Find the levels in the data
+    outcome_time <- unique_na(data[[outcome_column]])
+    
+    if(length(outcome_type) > 0){
+      if(any(outcome_time <= 0.0)) logger.warning(paste0("Survival data contain instances with non-positive (zero or negative) time. ",
+                                                         "Some packages that could be used during the analysis, such as glmnet, will not be able to produce useful models."))
+    }
+  }
+}
+
+
+
 #' Internal function to test plausibility of provided class levels
 #'
 #' This function checks whether categorical levels are present in the data that
@@ -1025,6 +1052,7 @@
                  paste0(missing_levels, collapse=", ")))
   }
 }
+
 
 
 #' Internal function to check whether feature columns are found in the data
