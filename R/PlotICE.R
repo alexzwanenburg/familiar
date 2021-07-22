@@ -893,9 +893,9 @@ setMethod("plot_ice", signature(object="familiarCollection"),
   
   # Get the data that determines the plot characteristics.
   if(!is.null(ice_data)){
-    plot_data <- ice_data[[1]]@data
+    plot_data <- data.table::copy(ice_data[[1]]@data)
   } else {
-    plot_data <- pd_data[[1]]@data
+    plot_data <- data.table::copy(pd_data[[1]]@data)
   }
   
   # Set value range
@@ -989,10 +989,10 @@ setMethod("plot_ice", signature(object="familiarCollection"),
                                 outcome_type,
                                 ...){
   # Suppress NOTES due to non-standard evaluation in data.table
-  feature_x <- feature_y <- NULL
+  feature_x <- feature_y <- feature_x_value <- feature_y_value <- NULL
   browser()
   # Get the data that determines the plot characteristics.
-  plot_data <- pd_data[[1]]@data
+  plot_data <- data.table::copy(pd_data[[1]]@data)[order(feature_x_value, feature_y_value)]
   
   # Set value range
   if(is.null(value_range) & value_scales == "facet"){
@@ -1061,23 +1061,28 @@ setMethod("plot_ice", signature(object="familiarCollection"),
   show_novelty <- show_novelty & all(is.finite(plot_data$novelty))
   
   # Create basic plot.
-  p <- ggplot2::ggplot()
+  p <- ggplot2::ggplot(data=plot_data,
+                       mapping=ggplot2::aes(x=!!sym("feature_x_value"),
+                                            y=!!sym("feature_y_value")))
   p <- p + ggtheme
   
   if(show_novelty){
     # Create point cloud with size of points by novelty -> bubblechart.
     p <- p + ggplot2::geom_point(data=plot_data,
-                                 mapping=ggplot2::aes(x=!!sym("feature_x_value"),
-                                                      y=!!sym("feature_y_value"),
-                                                      colour=!!sym("value"),
+                                 mapping=ggplot2::aes(colour=!!sym("value"),
                                                       size=!!sym("novelty")))
     
   } else {
     # TODO: Specify coordinates for rectangle.
+    plot_data[, c("xmin", "xmax"):=..set_edge_points(feature_x_value, range=x_range, type="x"), by="feature_y_value"]
+    plot_data[, c("ymin", "ymax"):=..set_edge_points(feature_y_value, range=y_range, type="y"), by="feature_x_value"]
+    
     # Create raster in case novelty is not or cannot be shown.
-    p <- p + ggplot2::geom_tile(data=plot_data,
-                                mapping=ggplot2::aes(x=!!sym("feature_x_value"),
-                                                     y=!!sym("feature_y_value"),
+    p <- p + ggplot2::geom_rect(data=plot_data,
+                                mapping=ggplot2::aes(xmin=!!sym("xmin"),
+                                                     xmax=!!sym("xmax"),
+                                                     ymin=!!sym("ymin"),
+                                                     ymax=!!sym("ymax"),
                                                      fill=!!sym("value")))
   }
   

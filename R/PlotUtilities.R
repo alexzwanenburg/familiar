@@ -2154,3 +2154,48 @@ plotting.combine_guides <- function(g, ggtheme, no_empty=TRUE){
   
   return(g)
 }
+
+
+..set_edge_points <- function(x, range, type){
+  # Function used to determine edge points, such as used for ggplot2::geom_rect.
+  if(!is.numeric(x)){
+    x <- as.numeric(x) - 0.5
+    range <- c(0.0, length(x))
+  }
+  
+  if(length(x) > 1){
+    # Make sure x is sorted ascendingly.
+    sort_index <- sort(x, index.return=TRUE)$ix
+    x <- x[sort_index]
+    
+    # Compute difference between subsequent values.
+    diff_x <- diff(x)
+    
+    # Compute edges.
+    xmax <- c(head(x, n=length(x)-1L) + diff_x  / 2.0,
+              tail(x, n=1L) + tail(diff_x, n=1L) / 2.0)
+    xmin <- c(head(x, n=1L) - head(diff_x, n=1L) / 2.0,
+              tail(x, n=length(x)-1L) - diff_x / 2.0)
+
+    # Shuffle back to input order.
+    xmax[sort_index] <- xmax
+    xmin[sort_index] <- xmin
+    
+  } else {
+    xmin <- range[1]
+    xmax <- range[2]
+  }
+  
+  edge_points <- list(xmin, xmax)
+  if(type == "x"){
+    names(edge_points) <- c("xmin", "xmax")
+    
+  } else if(type == "y"){
+    names(edge_points) <- c("ymin", "ymax")
+    
+  } else {
+    ..error_reached_unreachable_code(paste0("..set_edge_points: unknown type specified: ", type))
+  }
+  
+  return(edge_points)
+}
