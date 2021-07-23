@@ -2159,8 +2159,8 @@ plotting.combine_guides <- function(g, ggtheme, no_empty=TRUE){
 ..set_edge_points <- function(x, range, type){
   # Function used to determine edge points, such as used for ggplot2::geom_rect.
   if(!is.numeric(x)){
-    x <- as.numeric(x) - 0.5
-    range <- c(0.0, length(x))
+    x <- as.numeric(x)
+    range <- c(0.5, length(x) + 0.5)
   }
   
   if(length(x) > 1){

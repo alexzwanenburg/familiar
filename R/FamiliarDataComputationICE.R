@@ -228,6 +228,7 @@ setMethod("extract_ice", signature(object="familiarEnsemble"),
   }
   
   if(!is.null(features)){
+    
     # Check that the features exist in the data set.
     if(!all(features %in% c(object@model_features))){
       warning(paste0("Data for individual conditional expectation or partial dependence plots could not be computed for ",
@@ -589,11 +590,19 @@ setMethod("extract_ice", signature(object="familiarEnsemble"),
   x_anchor <- tryCatch(anchor_values[[ice_data@identifiers$feature_x]],
                        error=function(err)(return(NULL)))
   
+  if(!is.null(x_anchor)){
+    if(length(x_anchor) > 1) stop(paste0("Only a single value can be provided as an anchor value for the ", ice_data@identifiers$feature_x, " feature."))
+  }
+  
   # Find anchor value for the y-feature. It will be NULL if the current feature
   # does does not appear in anchor_values, or there is not y-feature associated
   # with the data.
   y_anchor <- tryCatch(anchor_values[[ice_data@identifiers$feature_y]],
                        error=function(err)(return(NULL)))
+  
+  if(!is.null(y_anchor)){
+    if(length(y_anchor) > 1) stop(paste0("Only a single value can be provided as an anchor value for the ", ice_data@identifiers$feature_y, " feature."))
+  }
   
   # Rename main value column to a consist name.
   if(outcome_type %in% c("binomial", "multinomial")){
@@ -653,78 +662,171 @@ setMethod("extract_ice", signature(object="familiarEnsemble"),
   # Suppress NOTES due to non-standard evaluation in data.table
   feature_x_value <- feature_x_value <- feature_y_value <- value <- NULL
   
-  if(!is.null(x_anchor)){
+  # Subtract anchor values.
+  if(!is.null(x_anchor) & !is.null(y_anchor)){
+  
+    # Set grouping columns.
+    grouping_columns <- setdiff(x@grouping_column, c("feature_x_value", "feature_y_value"))
     
-    if(length(x_anchor) > 1) stop(paste0("Only a single value can be provided as an anchor value for the ", x@identifiers$feature_x, " feature."))
-
-    # Identify anchor values and subtract them per set of grouping columns
-    # (minus feature_x_value).
+    # Subtract anchor value for 2D plots with x and y anchors.
+    if(length(grouping_columns) > 0){
+      x@data[, (value_column):=lapply(.SD,
+                                      ..anchor_ice_values_2D,
+                                      x=feature_x_value,
+                                      x_anchor=x_anchor,
+                                      y=feature_y_value,
+                                      y_anchor=y_anchor,
+                                      value_offset=value,
+                                      x_name=x@identifiers$feature_x,
+                                      y_name=x@identifiers$feature_y),
+             by=c(grouping_columns),
+             .SDcols=value_column]
+      
+    } else {
+      x@data[, (value_column):=lapply(.SD,
+                                      ..anchor_ice_values_1D,
+                                      x=feature_x_value,
+                                      x_anchor=x_anchor,
+                                      y=feature_y_value,
+                                      y_anchor=y_anchor,
+                                      value_offset=value,
+                                      x_name=x@identifiers$feature_x,
+                                      y_name=x@identifiers$feature_y),
+             .SDcols=value_column]
+    }
+    
+  } else if(!is.null(x_anchor)){
+    # Set grouping columns.
     grouping_columns <- setdiff(x@grouping_column, c("feature_x_value"))
     
+    # Subtract anchor value for x anchor.
     if(length(grouping_columns) > 0){
       x@data[, (value_column):=lapply(.SD,
-                                      ..anchor_ice_values,
+                                      ..anchor_ice_values_1D,
                                       x=feature_x_value,
                                       x_anchor=x_anchor,
-                                      y_offset=value,
+                                      value_offset=value,
                                       name=x@identifiers$feature_x),
              by=c(grouping_columns),
              .SDcols=value_column]
       
     } else {
       x@data[, (value_column):=lapply(.SD,
-                                      ..anchor_ice_values,
+                                      ..anchor_ice_values_1D,
                                       x=feature_x_value,
                                       x_anchor=x_anchor,
-                                      y_offset=value,
+                                      value_offset=value,
                                       name=x@identifiers$feature_x),
              .SDcols=value_column]
     }
-  }
-  
-  # Find anchor value for the y-feature. It will be NULL if the current feature
-  # does does not appear in anchor_values, or there is not y-feature associated
-  # with the data.
-  y_anchor <- tryCatch(anchor_values[[x@identifiers$feature_y]],
-                       error=function(err)(return(NULL)))
-  
-  if(!is.null(y_anchor)){
     
-    if(length(y_anchor) > 1) stop(paste0("Only a single value can be provided as an anchor value for the ", x@identifiers$feature_y, " feature."))
-    
-    # Return NULL in case an anchor is set -- centering invalidates PD plots.
-    if(is(x, "familiarDataElementPartialDependence")) return(NULL)
-    
-    # Identify anchor values and subtract them per set of grouping columns
-    # (minus feature_y_value).
+  } else if(!is.null(y_anchor)){
+    # Set grouping columns.
     grouping_columns <- setdiff(x@grouping_column, c("feature_y_value"))
     
+    # Subtract anchor value for y anchor.
     if(length(grouping_columns) > 0){
       x@data[, (value_column):=lapply(.SD,
-                                      ..anchor_ice_values,
+                                      ..anchor_ice_values_1D,
                                       x=feature_y_value,
                                       x_anchor=y_anchor,
-                                      y_offset=value,
+                                      value_offset=value,
                                       name=x@identifiers$feature_y),
              by=c(grouping_columns),
              .SDcols=value_column]
       
     } else {
       x@data[, (value_column):=lapply(.SD,
-                                      ..anchor_ice_values,
+                                      ..anchor_ice_values_1D,
                                       x=feature_y_value,
                                       x_anchor=y_anchor,
-                                      y_offset=value,
+                                      value_offset=value,
                                       name=x@identifiers$feature_y),
              .SDcols=value_column]
     }
+    
+  } else {
+    # No anchor values were set.
+    return(x)
   }
   
   return(x)
 }
 
 
-..anchor_ice_values <- function(y_in, x, x_anchor, y_offset, name){
+..anchor_ice_values_1D <- function(value_in, x, x_anchor, value_offset, name){
+  
+  # Check anchor value.
+  x_anchor <- .check_anchor_value(x=x, x_anchor=x_anchor, name=name)
+  
+  if(is.numeric(x)){
+    # Set anchor value
+    if(x_anchor %in% x){
+      anchor_value <- value_offset[x == x_anchor]
+        
+    } else {
+      # Interpolate.
+      anchor_value <- stats::spline(x=x,
+                                    y=value_offset,
+                                    xout=x_anchor)$y
+    }
+  } else {
+    # Set anchor value by selecting the value corresponding to x_anchor.
+    anchor_value <- value_offset[x == x_anchor]
+  }
+  
+  # Subtract the anchor value.
+  return(value_in - anchor_value)
+}
+
+
+
+..anchor_ice_values_2D <- function(value_in, x, x_anchor, y, y_anchor, value_offset, x_name, y_name){
+  # This is a bit more tricky since we need to do a surface interpolation which
+  # R does not support out of the box. The akima package has a weird licence.
+  
+  # Check anchor values.
+  x_anchor <- .check_anchor_value(x=x, x_anchor=x_anchor, name=x_name)
+  y_anchor <- .check_anchor_value(x=y, x_anchor=y_anchor, name=y_name)
+  
+  if(x_anchor %in% x & y_anchor %in% y){
+    # Simple - no interpolation needed.
+    anchor_value <- value_offset[x == x_anchor & y == y_anchor]
+    
+  } else if(x_anchor %in% x){
+    # Interpolation in y.
+    anchor_value <- stats::spline(x=y[x == x_anchor],
+                                  y=value_offset[x == x_anchor],
+                                  xout=y_anchor)$y
+    
+  } else if(y_anchor %in% y){
+    # Interpolation in x.
+    anchor_value <- stats::spline(x=x[y == y_anchor],
+                                  y=value_offset[y == y_anchor],
+                                  xout=x_anchor)$y
+    
+  } else {
+    # Interpolation using random forest.
+    model <- ranger::ranger(value ~ x + y,
+                            data=data.table::data.table("x"=x, "y"=y, "value"=value_offset),
+                            num.trees=100,
+                            num.threads=1L,
+                            seed=1L)
+    
+    anchor_value <- predict(model,
+                            data.table::data.table("x"=x_anchor, "y"=y_anchor),
+                            num.threads=1L)$predictions
+  }
+  
+  
+  # Subtract the anchor value.
+  return(value_in - anchor_value)
+}
+
+
+
+.check_anchor_value <- function(x, x_anchor, name){
+  # Checks the anchor value, and updates it if needed.
   
   if(is.numeric(x)){
     if(!is.numeric(x_anchor)) stop(paste0("Anchor value of the ", name, " feature should be numeric."))
@@ -739,36 +841,19 @@ setMethod("extract_ice", signature(object="familiarEnsemble"),
       warning(paste0("Anchor value (", x_anchor_old, ") of the ", name, " feature lies outside computed range. ",
                      "The nearest value (", x_anchor, ") is used instead."))
     }
-    
-    # Set anchor value
-    if(x_anchor %in% x){
-      y_anchor_value <- y_offset[x == x_anchor]
-        
-    } else {
-      y_anchor_value <- stats::spline(x=x,
-                                      y=y_offset,
-                                      xout=x_anchor)$y
-    }
-    
   } else if(is.factor(x)){
+    
+    # Check that the anchor value appears in the levels of x.
     if(!x_anchor %in% levels(x)) stop(paste0("Anchor value (", x_anchor ,") of the ", name,
                                              " feature was not found among the computed levels (",
                                              paste_s(levels(x)), ")."))
     
-    # Set anchor value by selecting the level corresponding to x_anchor.
-    y_anchor_value <- y_offset[x == x_anchor]
-    
-    
   } else {
     if(!x_anchor %in% x) stop(paste0("Anchor value (", x_anchor ,") of the ", name,
                                      " feature was not found among the available values."))
-    
-    # Set anchor value by selecting the value corresponding to x_anchor.
-    y_anchor_value <- y_offset[x == x_anchor]
   }
   
-  # Subtract the anchor value.
-  return(y_in - y_anchor_value)
+  return(x_anchor)
 }
 
 

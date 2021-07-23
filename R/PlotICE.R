@@ -465,8 +465,20 @@ setMethod("plot_ice", signature(object="familiarCollection"),
             facet_by <- split_var_list$facet_by
             
             # Create a legend label
-            legend_label <- plotting.create_legend_label(user_label=legend_label,
-                                                         color_by=color_by)
+            if(show_2d & is.waive(legend_label)){
+              legend_label <- switch(object@outcome_type,
+                                     "binomial"="probability",
+                                     "multinomial"="probability",
+                                     "count"="value",
+                                     "continuous"="value",
+                                     "survival"="probability",
+                                     "competing_risk"="probability")
+              
+            } else if(!show_2d){
+              legend_label <- plotting.create_legend_label(user_label=legend_label,
+                                                           color_by=color_by)
+            }
+            
             
             # Check input arguments for validity.
             plotting.check_input_args(conf_int_alpha=conf_int_alpha,
@@ -1051,7 +1063,7 @@ setMethod("plot_ice", signature(object="familiarCollection"),
     plotting.check_input_args(y_range=y_range)
   }
   
-  browser()
+  
   # Find the correct value-range
   value_range <- value_range[feature_x == as.character(plot_data$feature_x[1]) &
                                feature_y == as.character(plot_data$feature_y[1])]
@@ -1060,22 +1072,43 @@ setMethod("plot_ice", signature(object="familiarCollection"),
   # Update show_novelty to check for non-finite values in the novelty data.
   show_novelty <- show_novelty & all(is.finite(plot_data$novelty))
   
+  # Set x and y-labels
+  if(is.waive(x_label)) x_label <- as.character(plot_data$feature_x[1])
+  if(is.waive(y_label)) y_label <- as.character(plot_data$feature_y[1])
+  
+  plotting.check_input_args(x_label=x_label,
+                            y_label=y_label)
+  
   # Create basic plot.
   p <- ggplot2::ggplot(data=plot_data,
                        mapping=ggplot2::aes(x=!!sym("feature_x_value"),
                                             y=!!sym("feature_y_value")))
   p <- p + ggtheme
   
-  if(show_novelty){
+  if(!all(is.finite(value_range))){
+    # Blank elements in case the value range is unset, e.g. because the model
+    # cannot compute survival probabilities. This happens for some mboost
+    # learners.
+    p <- p + ggplot2::geom_blank()
+    
+  } else if(show_novelty){
+    browser()
     # Create point cloud with size of points by novelty -> bubblechart.
     p <- p + ggplot2::geom_point(data=plot_data,
                                  mapping=ggplot2::aes(colour=!!sym("value"),
                                                       size=!!sym("novelty")))
     
+    # TODO: Add in novelty scales.
+    p <- p + ggplot2::scale_size(trans="reverse")
+    
   } else {
-    # TODO: Specify coordinates for rectangle.
+    # Specify coordinates for rectangle.
     plot_data[, c("xmin", "xmax"):=..set_edge_points(feature_x_value, range=x_range, type="x"), by="feature_y_value"]
     plot_data[, c("ymin", "ymax"):=..set_edge_points(feature_y_value, range=y_range, type="y"), by="feature_x_value"]
+    
+    # Insert points. This will help set up the figure - otherwise the plot
+    # cannot be drawn.
+    p <- p + ggplot2::geom_point()
     
     # Create raster in case novelty is not or cannot be shown.
     p <- p + ggplot2::geom_rect(data=plot_data,
@@ -1095,15 +1128,10 @@ setMethod("plot_ice", signature(object="familiarCollection"),
                                          colors=gradient_colours,
                                          limits=value_range)
   
-  if(show_novelty){
-    # Add size scale.
-    browser()
-    # TODO: Add in novelty scales.
-    p <- p + ggplot2::scale_size(trans="reverse")
-  }
-  
-  # Determine how things are facetted
-  facet_by_list <- plotting.parse_facet_by(x=plot_data, facet_by=facet_by, facet_wrap_cols=facet_wrap_cols)
+  # Determine how things are facetted.
+  facet_by_list <- plotting.parse_facet_by(x=plot_data, 
+                                           facet_by=facet_by,
+                                           facet_wrap_cols=facet_wrap_cols)
   
   if(!is.null(facet_by)){
     if(is.null(facet_wrap_cols)){
