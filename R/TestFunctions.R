@@ -2347,6 +2347,9 @@ test_plots <- function(plot_function,
     one_feature_invariant_data <- test.create_one_feature_invariant_data_set(outcome_type)
     empty_data <- test.create_empty_data_set(outcome_type)
     multi_data <- test_create_multiple_synthetic_series(outcome_type=outcome_type)
+    no_censoring_data <- test.create_good_data_no_censoring_set(outcome_type)
+    one_censored_data <- test.create_good_data_one_censored_set(outcome_type)
+    few_censored_data <- test.create_good_data_few_censored_set(outcome_type)
     
     # Set exceptions per outcome type.
     .always_available <- always_available
@@ -2664,6 +2667,63 @@ test_plots <- function(plot_function,
                         testthat::expect_equal(any(!which_present), TRUE)
                       }
                     })
+    
+    #####Data set with limited censoring########################################
+    if(outcome_type %in% c("survival", "competing_risk")){
+      # Train the model.
+      model_cens_1 <- suppressWarnings(train(cl=cl,
+                                             data=no_censoring_data,
+                                             cluster_method="none",
+                                             imputation_method="simple",
+                                             fs_method="mim",
+                                             hyperparameter_list=hyperparameters,
+                                             learner="lasso",
+                                             time_max=1832))
+      
+      model_cens_2 <- suppressWarnings(train(cl=cl,
+                                             data=one_censored_data,
+                                             cluster_method="none",
+                                             imputation_method="simple",
+                                             fs_method="mim",
+                                             hyperparameter_list=hyperparameters,
+                                             learner="lasso",
+                                             time_max=1832))
+      
+      model_cens_3 <- suppressWarnings(train(cl=cl,
+                                             data=few_censored_data,
+                                             cluster_method="none",
+                                             imputation_method="simple",
+                                             fs_method="mim",
+                                             hyperparameter_list=hyperparameters,
+                                             learner="lasso",
+                                             time_max=1832))
+      
+      data_cens_1 <- as_familiar_data(object=model_cens_1, data=no_censoring_data, data_element=data_element, cl=cl, ...)
+      data_cens_2 <- as_familiar_data(object=model_cens_2, data=one_censored_data, data_element=data_element, cl=cl, ...)
+      data_cens_3 <- as_familiar_data(object=model_cens_3, data=few_censored_data, data_element=data_element, cl=cl, ...)
+      
+      # Create a dataset with some identical data.
+      test_fun(paste0("10. Plots for ", outcome_type, " outcomes ",
+                      ifelse(outcome_type %in% outcome_type_available, "can", "cannot"),
+                      " be created for a data set that includes no or limited censoring."), {
+                        
+                        object <- list(data_cens_1, data_cens_2, data_cens_3)
+                        object <- mapply(set_object_name, object, c("no_censoring", "one_censored", "few_censored"))
+                        
+                        collection <- suppressWarnings(as_familiar_collection(object, familiar_data_names=c("no_censoring", "one_censored", "few_censored")))
+                        
+                        plot_list <- do.call(plot_function, args=c(list("object"=collection), plot_args))
+                        which_present <- .test_which_plot_present(plot_list)
+                        
+                        if(outcome_type %in% outcome_type_available){
+                          testthat::expect_equal(all(which_present), TRUE)
+                          
+                        } else {
+                          testthat::expect_equal(all(!which_present), TRUE)
+                        }
+                      })
+      
+    }
   }
 }
 
