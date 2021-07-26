@@ -2854,6 +2854,7 @@ test_plot_ordering <- function(plot_function,
 }
 
 
+
 test_export <- function(export_function,
                         data_element,
                         outcome_type_available=c("count", "continuous", "binomial", "multinomial", "survival"),
@@ -2864,7 +2865,8 @@ test_export <- function(export_function,
                         test_specific_config=FALSE,
                         n_models=1L,
                         create_novelty_detector=FALSE,
-                        debug=FALSE){
+                        debug=FALSE,
+                        parallel=waiver()){
   
   if(debug){
     test_fun <- debug_test_that
@@ -2873,6 +2875,27 @@ test_export <- function(export_function,
     test_fun <- testthat::test_that
   }
   
+  # Set parallelisation.
+  if(is.waive(parallel)) parallel <- !debug
+  
+  if(parallel){
+    # Set options.
+    # Disable randomForestSRC OpenMP core use.
+    options(rf.cores=as.integer(1))
+    on.exit(options(rf.cores=-1L), add=TRUE)
+    
+    # Disable multithreading on data.table to prevent reduced performance due to
+    # resource collisions with familiar parallelisation.
+    data.table::setDTthreads(1L)
+    on.exit(data.table::setDTthreads(0L), add=TRUE)
+    
+    # Start local cluster in the overall process.
+    cl <- .test_start_cluster(n_cores=4L)
+    on.exit(.terminate_cluster(cl), add=TRUE)
+    
+  } else {
+    cl <- NULL
+  }
   
   # Iterate over the outcome type.
   for(outcome_type in c("count", "continuous", "binomial", "multinomial", "survival")){
@@ -2886,6 +2909,9 @@ test_export <- function(export_function,
     one_feature_invariant_data <- test.create_one_feature_invariant_data_set(outcome_type)
     empty_data <- test.create_empty_data_set(outcome_type)
     multi_data <- test_create_multiple_synthetic_series(outcome_type=outcome_type)
+    no_censoring_data <- test.create_good_data_no_censoring_set(outcome_type)
+    one_censored_data <- test.create_good_data_one_censored_set(outcome_type)
+    few_censored_data <- test.create_good_data_few_censored_set(outcome_type)
     
     # Set exceptions per outcome type.
     .always_available <- always_available
@@ -2907,7 +2933,8 @@ test_export <- function(export_function,
     
     if(n_models == 1){
       # Train the model.
-      model_full_1 <- suppressWarnings(train(data=full_data,
+      model_full_1 <- suppressWarnings(train(cl=cl,
+                                             data=full_data,
                                              cluster_method="none",
                                              imputation_method="simple",
                                              fs_method="mim",
@@ -2925,15 +2952,16 @@ test_export <- function(export_function,
       model_full_2 <- list()
       
       for(ii in seq_len(n_models)){
-        temp_model_1 <- suppressWarnings(train(data=full_data,
-                                             cluster_method="none",
-                                             imputation_method="simple",
-                                             fs_method="mim",
-                                             hyperparameter_list=hyperparameters,
-                                             learner="lasso",
-                                             time_max=1832,
-                                             create_bootstrap=TRUE,
-                                             create_novelty_detector=create_novelty_detector))
+        temp_model_1 <- suppressWarnings(train(cl=cl,
+                                               data=full_data,
+                                               cluster_method="none",
+                                               imputation_method="simple",
+                                               fs_method="mim",
+                                               hyperparameter_list=hyperparameters,
+                                               learner="lasso",
+                                               time_max=1832,
+                                               create_bootstrap=TRUE,
+                                               create_novelty_detector=create_novelty_detector))
         
         temp_model_2 <- temp_model_1
         temp_model_2@fs_method <- "mifs"
@@ -2948,11 +2976,13 @@ test_export <- function(export_function,
     data_good_full_1 <- as_familiar_data(object=model_full_1,
                                          data=full_data,
                                          data_element=data_element,
+                                         cl=cl,
                                          ...)
     
     data_good_full_2 <- as_familiar_data(object=model_full_2,
                                          data=full_data,
                                          data_element=data_element,
+                                         cl=cl,
                                          ...)
     
     # Create a completely intact dataset.
@@ -2998,32 +3028,39 @@ test_export <- function(export_function,
     multi_model_full <- as_familiar_data(object=multi_model_set,
                                          data=multi_data[[1]],
                                          data_element=data_element,
+                                         cl=cl,
                                          ...)
     
     # Create additional familiar data objects.
     data_empty_full_1 <- as_familiar_data(object=model_full_1,
                                           data=empty_data,
                                           data_element=data_element,
+                                          cl=cl,
                                           ...)
     data_empty_full_2 <- as_familiar_data(object=model_full_2,
                                           data=empty_data,
                                           data_element=data_element,
+                                          cl=cl,
                                           ...)
     data_one_sample_full_1 <- as_familiar_data(object=model_full_1,
                                                data=full_one_sample_data,
                                                data_element=data_element,
+                                               cl=cl,
                                                ...)
     data_one_sample_full_2 <- as_familiar_data(object=model_full_2,
                                                data=full_one_sample_data,
                                                data_element=data_element,
+                                               cl=cl,
                                                ...)
     data_identical_full_1 <- as_familiar_data(object=model_full_1,
                                               data=identical_sample_data,
                                               data_element=data_element,
+                                              cl=cl,
                                               ...)
     data_identical_full_2 <- as_familiar_data(object=model_full_2,
                                               data=identical_sample_data,
                                               data_element=data_element,
+                                              cl=cl,
                                               ...)
     
     # Create a dataset with a missing quadrant.
@@ -3143,7 +3180,8 @@ test_export <- function(export_function,
     #####One-feature data set###################################################
     
     # Train the model.
-    model_one_1 <- suppressWarnings(train(data=one_feature_data,
+    model_one_1 <- suppressWarnings(train(cl=cl,
+                                          data=one_feature_data,
                                           cluster_method="none",
                                           imputation_method="simple",
                                           fs_method="mim",
@@ -3156,12 +3194,12 @@ test_export <- function(export_function,
     model_one_2@fs_method <- "mifs"
     
     # Create familiar data objects.
-    data_good_one_1 <- as_familiar_data(object=model_one_1, data=one_feature_data, data_element=data_element, ...)
-    data_good_one_2 <- as_familiar_data(object=model_one_2, data=one_feature_data, data_element=data_element, ...)
-    data_one_sample_one_1 <- as_familiar_data(object=model_one_1, data=one_feature_one_sample_data, data_element=data_element, ...)
-    data_one_sample_one_2 <- as_familiar_data(object=model_one_2, data=one_feature_one_sample_data, data_element=data_element, ...)
-    data_identical_one_1 <- as_familiar_data(object=model_one_1, data=one_feature_invariant_data, data_element=data_element, ...)
-    data_identical_one_2 <- as_familiar_data(object=model_one_2, data=one_feature_invariant_data, data_element=data_element, ...)
+    data_good_one_1 <- as_familiar_data(object=model_one_1, data=one_feature_data, data_element=data_element, cl=cl, ...)
+    data_good_one_2 <- as_familiar_data(object=model_one_2, data=one_feature_data, data_element=data_element, cl=cl, ...)
+    data_one_sample_one_1 <- as_familiar_data(object=model_one_1, data=one_feature_one_sample_data, data_element=data_element, cl=cl, ...)
+    data_one_sample_one_2 <- as_familiar_data(object=model_one_2, data=one_feature_one_sample_data, data_element=data_element, cl=cl, ...)
+    data_identical_one_1 <- as_familiar_data(object=model_one_1, data=one_feature_invariant_data, data_element=data_element, cl=cl, ...)
+    data_identical_one_2 <- as_familiar_data(object=model_one_2, data=one_feature_invariant_data, data_element=data_element, cl=cl, ...)
     
     
     # Create a completely intact, one sample dataset.
@@ -3241,6 +3279,65 @@ test_export <- function(export_function,
                         testthat::expect_equal(any(!which_present), TRUE)
                       }
                     })
+    
+    #####Data set with limited censoring########################################
+    if(outcome_type %in% c("survival", "competing_risk")){
+      # Train the model.
+      model_cens_1 <- suppressWarnings(train(cl=cl,
+                                             data=no_censoring_data,
+                                             cluster_method="none",
+                                             imputation_method="simple",
+                                             fs_method="mim",
+                                             hyperparameter_list=hyperparameters,
+                                             learner="lasso",
+                                             time_max=1832))
+      
+      model_cens_2 <- suppressWarnings(train(cl=cl,
+                                             data=one_censored_data,
+                                             cluster_method="none",
+                                             imputation_method="simple",
+                                             fs_method="mim",
+                                             hyperparameter_list=hyperparameters,
+                                             learner="lasso",
+                                             time_max=1832))
+      
+      model_cens_3 <- suppressWarnings(train(cl=cl,
+                                             data=few_censored_data,
+                                             cluster_method="none",
+                                             imputation_method="simple",
+                                             fs_method="mim",
+                                             hyperparameter_list=hyperparameters,
+                                             learner="lasso",
+                                             time_max=1832))
+      
+      data_cens_1 <- as_familiar_data(object=model_cens_1, data=no_censoring_data, data_element=data_element, cl=cl, ...)
+      data_cens_2 <- as_familiar_data(object=model_cens_2, data=one_censored_data, data_element=data_element, cl=cl, ...)
+      data_cens_3 <- as_familiar_data(object=model_cens_3, data=few_censored_data, data_element=data_element, cl=cl, ...)
+      
+      # Create a dataset with some identical data.
+      test_fun(paste0("10. Exports for ", outcome_type, " outcomes ",
+                      ifelse(outcome_type %in% outcome_type_available, "can", "cannot"),
+                      " be created for a data set that includes no or limited censoring."), {
+                        
+                        object <- list(data_cens_1, data_cens_2, data_cens_3)
+                        object <- mapply(set_object_name, object, c("no_censoring", "one_censored", "few_censored"))
+                        
+                        collection <- suppressWarnings(as_familiar_collection(object, familiar_data_names=c("no_censoring", "one_censored", "few_censored")))
+                        
+                        data_elements <- do.call(export_function, args=c(list("object"=collection), export_args))
+                        which_present <- .test_which_data_element_present(data_elements, outcome_type=outcome_type)
+                        
+                        if(outcome_type %in% outcome_type_available){
+                          testthat::expect_equal(all(which_present), TRUE) 
+                          
+                          if(debug) show(data_elements)
+                          
+                        } else {
+                          testthat::expect_equal(all(!which_present), TRUE)
+                        }
+                      })
+      
+    }
   }
 }
 
@@ -3464,6 +3561,7 @@ debug_test_that <- function(desc, code){
   
   return(sapply(p, gtable::is.gtable) | sapply(p, ggplot2::is.ggplot))
 }
+
 
 
 .test_which_data_element_present <- function(x, outcome_type){
