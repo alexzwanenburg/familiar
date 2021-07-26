@@ -53,6 +53,9 @@ values.
 * Fixed an error that occurred when attempting to interpolate survival
 probabilities when collecting pooled data.
 
+* Fixed an issue with models from the `glmnet` package not training for rare
+classes / events or censoring in small datasets.
+
 # Version 0.0.0.54 (Pre-release)
 
 ## Major changes:
