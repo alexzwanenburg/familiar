@@ -916,6 +916,11 @@
   }
   
   if(return_fold_id){
+    
+    # Assign any instances with fold_id == -1 to the first fold to prevent very
+    # small folds from being formed.
+    subset_table[fold_id == -1L, "fold_id":=1L]
+    
     return(subset_table[, mget(c(id_columns, "fold_id"))])
     
   } else {
