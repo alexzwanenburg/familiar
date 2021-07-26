@@ -161,6 +161,57 @@ test.create_good_data_invariant_set <- function(outcome_type){
 
 
 
+test.create_good_data_no_censoring_set <- function(outcome_type){
+  
+  if(!outcome_type %in% c("survival", "competing_risk")) return(NULL)
+  
+  # Create good dataset first and work from there.
+  data <- test.create_good_data_set(outcome_type=outcome_type)
+  
+  # Set all data to event.
+  data@data[, "outcome_event":=1]
+  
+  return(data)
+}
+
+
+
+test.create_good_data_one_censored_set <- function(outcome_type){
+  
+  if(!outcome_type %in% c("survival", "competing_risk")) return(NULL)
+  
+  # Create good dataset first and work from there.
+  data <- test.create_good_data_set(outcome_type=outcome_type)
+  
+  # Set all data to event.
+  data@data[, "outcome_event":=1]
+  
+  # Set one instance to censored.
+  data@data[1L, "outcome_event":=0]
+  
+  return(data)
+}
+
+
+
+test.create_good_data_few_censored_set <- function(outcome_type){
+  
+  if(!outcome_type %in% c("survival", "competing_risk")) return(NULL)
+  
+  # Create good dataset first and work from there.
+  data <- test.create_good_data_set(outcome_type=outcome_type)
+  
+  # Set all data to event.
+  data@data[, "outcome_event":=1]
+  
+  # Set a few instances to censored.
+  data@data[seq_len(4), "outcome_event":=0]
+  
+  return(data)
+}
+
+
+
 test.create_empty_data_set <- function(outcome_type){
   
   # Create good dataset first and work from there.
