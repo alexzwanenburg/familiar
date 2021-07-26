@@ -1147,6 +1147,9 @@ test_all_metrics <- function(metrics,
     one_feature_invariant_data <- test.create_one_feature_invariant_data_set(outcome_type)
     empty_data <- test.create_empty_data_set(outcome_type)
     bad_data <- test.create_bad_data_set(outcome_type)
+    no_censoring_data <- test.create_good_data_no_censoring_set(outcome_type)
+    one_censored_data <- test.create_good_data_one_censored_set(outcome_type)
+    few_censored_data <- test.create_good_data_few_censored_set(outcome_type)
     
     # Set exceptions per outcome type.
     .except_one_sample <- except_one_sample
@@ -1189,7 +1192,7 @@ test_all_metrics <- function(metrics,
                                  object=model)
       
       # Test that metric values can be computed for the full model.
-      testthat::test_that(paste0("1. Model performance for ", outcome_type, " outcomes can be assessed by the ",
+      testthat::test_that(paste0("1A. Model performance for ", outcome_type, " outcomes can be assessed by the ",
                                  metric_object@name, " (", metric_object@metric, ") metric for a complete data set."), {
                                    
                                    # Expect predictions to be made.
@@ -1232,6 +1235,146 @@ test_all_metrics <- function(metrics,
                                                                               upper=1.0),
                                                           TRUE)
                                  })
+      
+      if(outcome_type %in% c("survival", "competing_risk")){
+        # Test that metric values can be computed for the full model, but with
+        # data without censored instances.
+        testthat::test_that(paste0("1B. Model performance for ", outcome_type, " outcomes can be assessed by the ",
+                                   metric_object@name, " (", metric_object@metric, ") metric for a data set without censoring."), {
+                                     
+                                     # Expect predictions to be made.
+                                     prediction_table <- suppressWarnings(.predict(model, data=no_censoring_data))
+                                     
+                                     # Test that the predictions were successfully made.
+                                     testthat::expect_equal(any_predictions_valid(prediction_table, outcome_type), TRUE)
+                                     
+                                     if(outcome_type %in% c("binomial", "multinomial")){
+                                       # Expect that the predicted_class column is
+                                       # a factor.
+                                       testthat::expect_s3_class(prediction_table$predicted_class, "factor")
+                                       
+                                       # Expect that the class levels are the same
+                                       # as those in the model.
+                                       testthat::expect_equal(levels(prediction_table$predicted_class), get_outcome_class_levels(model))
+                                     }
+                                     
+                                     # Compute a score.
+                                     score <- compute_metric_score(metric=metric_object,
+                                                                   data=prediction_table,
+                                                                   object=model)
+                                     
+                                     # Compute an objective score.
+                                     objective_score <- compute_objective_score(metric=metric_object,
+                                                                                data=prediction_table,
+                                                                                object=model)
+                                     
+                                     # Expect that the score is a finite,
+                                     # non-missing number.
+                                     testthat::expect_equal(data.table::between(score,
+                                                                                lower=metric_object@value_range[1],
+                                                                                upper=metric_object@value_range[2]),
+                                                            TRUE)
+                                     
+                                     # Expect that the objective score is a
+                                     # non-missing number in the range [-1, 1].
+                                     testthat::expect_equal(data.table::between(objective_score,
+                                                                                lower=-1.0,
+                                                                                upper=1.0),
+                                                            TRUE)
+                                   })
+        
+        # Test that metric values can be computed for the full model, but with
+        # data with one censored instance.
+        testthat::test_that(paste0("1C. Model performance for ", outcome_type, " outcomes can be assessed by the ",
+                                   metric_object@name, " (", metric_object@metric, ") metric for a data set with one censored insteances."), {
+                                     
+                                     # Expect predictions to be made.
+                                     prediction_table <- suppressWarnings(.predict(model, data=one_censored_data))
+                                     
+                                     # Test that the predictions were successfully made.
+                                     testthat::expect_equal(any_predictions_valid(prediction_table, outcome_type), TRUE)
+                                     
+                                     if(outcome_type %in% c("binomial", "multinomial")){
+                                       # Expect that the predicted_class column is
+                                       # a factor.
+                                       testthat::expect_s3_class(prediction_table$predicted_class, "factor")
+                                       
+                                       # Expect that the class levels are the same
+                                       # as those in the model.
+                                       testthat::expect_equal(levels(prediction_table$predicted_class), get_outcome_class_levels(model))
+                                     }
+                                     
+                                     # Compute a score.
+                                     score <- compute_metric_score(metric=metric_object,
+                                                                   data=prediction_table,
+                                                                   object=model)
+                                     
+                                     # Compute an objective score.
+                                     objective_score <- compute_objective_score(metric=metric_object,
+                                                                                data=prediction_table,
+                                                                                object=model)
+                                     
+                                     # Expect that the score is a finite,
+                                     # non-missing number.
+                                     testthat::expect_equal(data.table::between(score,
+                                                                                lower=metric_object@value_range[1],
+                                                                                upper=metric_object@value_range[2]),
+                                                            TRUE)
+                                     
+                                     # Expect that the objective score is a
+                                     # non-missing number in the range [-1, 1].
+                                     testthat::expect_equal(data.table::between(objective_score,
+                                                                                lower=-1.0,
+                                                                                upper=1.0),
+                                                            TRUE)
+                                   })
+        
+        # Test that metric values can be computed for the full model, but with
+        # data with few censored instances.
+        testthat::test_that(paste0("1D. Model performance for ", outcome_type, " outcomes can be assessed by the ",
+                                   metric_object@name, " (", metric_object@metric, ") metric for a data set with few censored samples."), {
+                                     
+                                     # Expect predictions to be made.
+                                     prediction_table <- suppressWarnings(.predict(model, data=few_censored_data))
+                                     
+                                     # Test that the predictions were successfully made.
+                                     testthat::expect_equal(any_predictions_valid(prediction_table, outcome_type), TRUE)
+                                     
+                                     if(outcome_type %in% c("binomial", "multinomial")){
+                                       # Expect that the predicted_class column is
+                                       # a factor.
+                                       testthat::expect_s3_class(prediction_table$predicted_class, "factor")
+                                       
+                                       # Expect that the class levels are the same
+                                       # as those in the model.
+                                       testthat::expect_equal(levels(prediction_table$predicted_class), get_outcome_class_levels(model))
+                                     }
+                                     
+                                     # Compute a score.
+                                     score <- compute_metric_score(metric=metric_object,
+                                                                   data=prediction_table,
+                                                                   object=model)
+                                     
+                                     # Compute an objective score.
+                                     objective_score <- compute_objective_score(metric=metric_object,
+                                                                                data=prediction_table,
+                                                                                object=model)
+                                     
+                                     # Expect that the score is a finite,
+                                     # non-missing number.
+                                     testthat::expect_equal(data.table::between(score,
+                                                                                lower=metric_object@value_range[1],
+                                                                                upper=metric_object@value_range[2]),
+                                                            TRUE)
+                                     
+                                     # Expect that the objective score is a
+                                     # non-missing number in the range [-1, 1].
+                                     testthat::expect_equal(data.table::between(objective_score,
+                                                                                lower=-1.0,
+                                                                                upper=1.0),
+                                                            TRUE)
+                                   })
+      }
       
       # Test that metric values cannot be computed for a one-sample dataset.
       testthat::test_that(paste0("2. Model performance for ", outcome_type, " outcomes ",
