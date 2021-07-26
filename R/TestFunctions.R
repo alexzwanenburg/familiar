@@ -706,7 +706,7 @@ test_all_learners_train_predict_vimp <- function(learners,
         })
       }
       
-      #####Data set with few censored instance#####################################
+      #####Data set with few censored instances#####################################
       if(outcome_type %in% c("survival", "competing_risk")){
         
         # Set up non-censoring dataset.
@@ -1003,10 +1003,95 @@ test_all_vimp_methods <- function(vimp_methods,
         testthat::expect_equal(is_empty(vimp_table), TRUE)
       })
       
+      if(outcome_type %in% c("survival", "competing_risk")){
+        #####No censoring data set########################################################
+        
+        no_censoring_data <- test.create_good_data_no_censoring_set(outcome_type)
+        
+        # Process dataset.
+        vimp_object <- prepare_vimp_object(data=no_censoring_data,
+                                           vimp_method=vimp_method,
+                                           vimp_method_parameter_list=hyperparameters,
+                                           outcome_type=outcome_type,
+                                           cluster_method="none",
+                                           imputation_method="simple")
+        
+        
+        test_fun(paste0("Variable importance can be computed for ", outcome_type, " with the ", vimp_method, " using a data set without censoring."), {
+          
+          vimp_table <- suppressWarnings(.vimp(vimp_object, no_censoring_data))
+          
+          # Get the number of features
+          n_features <- get_n_features(full_data)
+          
+          # Expect that the vimp table is not empty..
+          testthat::expect_equal(nrow(vimp_table) > 0 & nrow(vimp_table) <= n_features, TRUE)
+          
+          # Expect that the names in the vimp table correspond to those of the
+          # features.
+          testthat::expect_equal(all(vimp_table$name %in% get_feature_columns(full_data)), TRUE)
+        })
+        
+        
+        #####Data set with one censored instance########################################################
+        
+        one_censored_data <- test.create_good_data_one_censored_set(outcome_type)
+        
+        # Process dataset.
+        vimp_object <- prepare_vimp_object(data=one_censored_data,
+                                           vimp_method=vimp_method,
+                                           vimp_method_parameter_list=hyperparameters,
+                                           outcome_type=outcome_type,
+                                           cluster_method="none",
+                                           imputation_method="simple")
+        
+        
+        test_fun(paste0("Variable importance can be computed for ", outcome_type, " with the ", vimp_method, " using a data set with one censored instance."), {
+          
+          vimp_table <- suppressWarnings(.vimp(vimp_object, one_censored_data))
+          
+          # Get the number of features
+          n_features <- get_n_features(full_data)
+          
+          # Expect that the vimp table is not empty..
+          testthat::expect_equal(nrow(vimp_table) > 0 & nrow(vimp_table) <= n_features, TRUE)
+          
+          # Expect that the names in the vimp table correspond to those of the
+          # features.
+          testthat::expect_equal(all(vimp_table$name %in% get_feature_columns(full_data)), TRUE)
+        })
+        
+        
+        #####Data set with few censored instances########################################################
+        
+        few_censored_data <- test.create_good_data_few_censored_set(outcome_type)
+        
+        # Process dataset.
+        vimp_object <- prepare_vimp_object(data=few_censored_data,
+                                           vimp_method=vimp_method,
+                                           vimp_method_parameter_list=hyperparameters,
+                                           outcome_type=outcome_type,
+                                           cluster_method="none",
+                                           imputation_method="simple")
+        
+        
+        test_fun(paste0("Variable importance can be computed for ", outcome_type, " with the ", vimp_method, " using a data set with few censored instances."), {
+          
+          vimp_table <- suppressWarnings(.vimp(vimp_object, few_censored_data))
+          
+          # Get the number of features
+          n_features <- get_n_features(full_data)
+          
+          # Expect that the vimp table is not empty..
+          testthat::expect_equal(nrow(vimp_table) > 0 & nrow(vimp_table) <= n_features, TRUE)
+          
+          # Expect that the names in the vimp table correspond to those of the
+          # features.
+          testthat::expect_equal(all(vimp_table$name %in% get_feature_columns(full_data)), TRUE)
+        })
+      }
     }
-    
   }
-  
 }
 
 
