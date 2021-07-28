@@ -5,6 +5,22 @@ familiar:::test_plot_ordering(plot_function=familiar:::plot_ice,
                               outcome_type_available=c("survival"),
                               debug=TRUE)
 
+
+
+# 1D plot without novelty.
+familiar:::test_plot_ordering(plot_function=familiar:::plot_ice,
+                              data_element="ice_data",
+                              outcome_type_available="survival",
+                              features=c("nodes"),
+                              plot_args=list("anchor_values"=list("nodes"=2.5),
+                                             "value_scales"="figure"),
+                              sample_limit=20L,
+                              n_sample_points=10L,
+                              debug=TRUE)
+
+
+
+# 2D plot without novelty.
 familiar:::test_plot_ordering(plot_function=familiar:::plot_ice,
                               data_element="ice_data",
                               outcome_type_available="survival",
@@ -14,6 +30,19 @@ familiar:::test_plot_ordering(plot_function=familiar:::plot_ice,
                                              "value_scales"="figure"),
                               sample_limit=20L,
                               n_sample_points=10L,
+                              debug=TRUE)
+
+# 2D plot with novelty.
+familiar:::test_plot_ordering(plot_function=familiar:::plot_ice,
+                              data_element="ice_data",
+                              outcome_type_available="survival",
+                              features=c("rx", "nodes"),
+                              plot_args=list("anchor_values"=list("rx"="Obs",
+                                                                  "nodes"=2.5),
+                                             "value_scales"="figure"),
+                              sample_limit=20L,
+                              n_sample_points=10L,
+                              create_novelty_detector=TRUE,
                               debug=TRUE)
 
 familiar:::test_plot_ordering(plot_function=familiar:::plot_ice,
