@@ -876,6 +876,7 @@ setMethod("plot_ice", signature(object="familiarCollection"),
 }
 
 
+
 .create_1d_ice_plot <- function(ice_data,
                                 pd_data,
                                 color_by,
@@ -949,7 +950,7 @@ setMethod("plot_ice", signature(object="familiarCollection"),
     
     plotting.check_input_args(x_range=x_range)
   }
-  browser()
+  
   # Find the correct y-range
   value_range <- value_range[feature_x == as.character(plot_data$feature_x)]
   y_range <- c(value_range$min_value, value_range$max_value)
@@ -972,6 +973,7 @@ setMethod("plot_ice", signature(object="familiarCollection"),
   plotting.check_input_args(y_range=y_range)
   
   # Set up plot.
+  browser()
 }
 
 
@@ -1005,7 +1007,7 @@ setMethod("plot_ice", signature(object="familiarCollection"),
                                 ...){
   # Suppress NOTES due to non-standard evaluation in data.table
   feature_x <- feature_y <- feature_x_value <- feature_y_value <- NULL
-  browser()
+  
   # Get the data that determines the plot characteristics.
   plot_data <- data.table::copy(pd_data[[1]]@data)[order(feature_x_value, feature_y_value)]
   
@@ -1095,13 +1097,13 @@ setMethod("plot_ice", signature(object="familiarCollection"),
     p <- p + ggplot2::geom_blank()
     
   } else if(show_novelty){
-    browser()
+    
     # Create point cloud with size of points by novelty -> bubblechart.
     p <- p + ggplot2::geom_point(data=plot_data,
                                  mapping=ggplot2::aes(colour=!!sym("value"),
                                                       size=!!sym("novelty")))
     
-    # TODO: Add in novelty scales.
+    # Invert novelty values, since higher values indicates greater novelty.
     p <- p + ggplot2::scale_size(trans="reverse")
     
   } else {
@@ -1173,7 +1175,7 @@ setMethod("plot_ice", signature(object="familiarCollection"),
   # if(rotate_x_tick_labels){
   #   p <- p + ggplot2::theme(axis.text.x=ggplot2::element_text(vjust=0.25, hjust=1.0, angle=90.0))
   # }
-  browser()
+  
   return(p)
 }
 
