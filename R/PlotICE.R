@@ -13,7 +13,9 @@ NULL
 #'  `explanation` subdirectory. If `NULL`, figures are written to the folder,
 #'  but are returned instead.
 #'@param discrete_palette (*optional*) Palette to use to colour the different
-#'  plot elements in case a value was provided to the `color_by` argument.
+#'  plot elements in case a value was provided to the `color_by` argument. For
+#'  2D individual conditional expectation plots without novelty, the initial
+#'  colour determines the colour of the points indicating sample values.
 #'@param gradient_palette (*optional*) Sequential or divergent palette used to
 #'  colour the raster in 2D individual conditional expectation or partial
 #'  dependence plots. This argument is not used for 1D plots.
@@ -978,6 +980,7 @@ setMethod("plot_ice", signature(object="familiarCollection"),
                                 facet_by,
                                 facet_wrap_cols,
                                 ggtheme,
+                                discrete_palette,
                                 gradient_palette,
                                 gradient_palette_range,
                                 x_label,
@@ -1102,6 +1105,16 @@ setMethod("plot_ice", signature(object="familiarCollection"),
     p <- p + ggplot2::scale_size(trans="reverse")
     
   } else {
+    # Set colour for value points.
+    if(!is.null(discrete_palette)){
+      colour <- plotting.get_palette(x=discrete_palette,
+                                     n=1L,
+                                     palette_type="qualitative")
+      
+    } else {
+      colour <- "white"
+    }
+    
     # Specify coordinates for rectangle.
     plot_data[, c("xmin", "xmax"):=..set_edge_points(feature_x_value, range=x_range, type="x"), by="feature_y_value"]
     plot_data[, c("ymin", "ymax"):=..set_edge_points(feature_y_value, range=y_range, type="y"), by="feature_x_value"]
@@ -1117,6 +1130,9 @@ setMethod("plot_ice", signature(object="familiarCollection"),
                                                      ymin=!!sym("ymin"),
                                                      ymax=!!sym("ymax"),
                                                      fill=!!sym("value")))
+    
+    # Draw points on top.
+    p <- p + ggplot2::geom_point(colour=colour)
   }
   
   # Set colours used for plotting 

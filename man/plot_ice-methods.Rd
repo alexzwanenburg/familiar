@@ -159,7 +159,9 @@ wrapping. If NULL, a facet grid is produced instead.}
 \item{ggtheme}{(\emph{optional}) \code{ggplot} theme to use for plotting.}
 
 \item{discrete_palette}{(\emph{optional}) Palette to use to colour the different
-plot elements in case a value was provided to the \code{color_by} argument.}
+plot elements in case a value was provided to the \code{color_by} argument. For
+2D individual conditional expectation plots without novelty, the initial
+colour determines the colour of the points indicating sample values.}
 
 \item{gradient_palette}{(\emph{optional}) Sequential or divergent palette used to
 colour the raster in 2D individual conditional expectation or partial
