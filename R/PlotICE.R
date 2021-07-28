@@ -905,7 +905,7 @@ setMethod("plot_ice", signature(object="familiarCollection"),
                                 ...){
   # Suppress NOTES due to non-standard evaluation in data.table
   feature_x <- NULL
-  
+  browser()
   # Get the data that determines the plot characteristics.
   if(!is.null(ice_data)){
     plot_data <- data.table::copy(ice_data[[1]]@data)
@@ -952,7 +952,7 @@ setMethod("plot_ice", signature(object="familiarCollection"),
   }
   
   # Find the correct y-range
-  value_range <- value_range[feature_x == as.character(plot_data$feature_x)]
+  value_range <- value_range[feature_x == as.character(plot_data$feature_x[1])]
   y_range <- c(value_range$min_value, value_range$max_value)
   
   # y_breaks
