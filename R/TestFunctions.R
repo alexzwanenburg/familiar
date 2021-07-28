@@ -2302,6 +2302,7 @@ test_plots <- function(plot_function,
                        ...,
                        plot_args=list(),
                        test_specific_config=FALSE,
+                       create_novelty_detector=FALSE,
                        debug=FALSE,
                        parallel=waiver()){
   
@@ -2377,7 +2378,8 @@ test_plots <- function(plot_function,
                                            fs_method="mim",
                                            hyperparameter_list=hyperparameters,
                                            learner="lasso",
-                                           time_max=1832))
+                                           time_max=1832,
+                                           create_novelty_detector=create_novelty_detector))
 
     model_full_2 <- model_full_1
     model_full_2@fs_method <- "mifs"
@@ -2428,7 +2430,8 @@ test_plots <- function(plot_function,
                                                hyperparameter_list=hyperparameters,
                                                learner="lasso",
                                                cluster_similarity_threshold=0.7,
-                                               time_max=60))
+                                               time_max=60,
+                                               create_novelty_detector=create_novelty_detector))
     
     # Create data from ensemble of multiple models
     multi_model_full <- as_familiar_data(object=multi_model_set,
@@ -2577,12 +2580,13 @@ test_plots <- function(plot_function,
     
     # Train the model.
     model_one_1 <- suppressWarnings(train(data=one_feature_data,
-                                           cluster_method="none",
-                                           imputation_method="simple",
-                                           fs_method="mim",
-                                           hyperparameter_list=hyperparameters,
-                                           learner="lasso",
-                                           time_max=1832))
+                                          cluster_method="none",
+                                          imputation_method="simple",
+                                          fs_method="mim",
+                                          hyperparameter_list=hyperparameters,
+                                          learner="lasso",
+                                          time_max=1832,
+                                          create_novelty_detector=create_novelty_detector))
     
     model_one_2 <- model_one_1
     model_one_2@fs_method <- "mifs"
@@ -2678,7 +2682,8 @@ test_plots <- function(plot_function,
                                              fs_method="mim",
                                              hyperparameter_list=hyperparameters,
                                              learner="lasso",
-                                             time_max=1832))
+                                             time_max=1832,
+                                             create_novelty_detector=create_novelty_detector))
       
       model_cens_2 <- suppressWarnings(train(cl=cl,
                                              data=one_censored_data,
@@ -2687,7 +2692,8 @@ test_plots <- function(plot_function,
                                              fs_method="mim",
                                              hyperparameter_list=hyperparameters,
                                              learner="lasso",
-                                             time_max=1832))
+                                             time_max=1832,
+                                             create_novelty_detector=create_novelty_detector))
       
       model_cens_3 <- suppressWarnings(train(cl=cl,
                                              data=few_censored_data,
@@ -2696,7 +2702,8 @@ test_plots <- function(plot_function,
                                              fs_method="mim",
                                              hyperparameter_list=hyperparameters,
                                              learner="lasso",
-                                             time_max=1832))
+                                             time_max=1832,
+                                             create_novelty_detector=create_novelty_detector))
       
       data_cens_1 <- as_familiar_data(object=model_cens_1, data=no_censoring_data, data_element=data_element, cl=cl, ...)
       data_cens_2 <- as_familiar_data(object=model_cens_2, data=one_censored_data, data_element=data_element, cl=cl, ...)
@@ -2734,6 +2741,7 @@ test_plot_ordering <- function(plot_function,
                                outcome_type_available=c("count", "continuous", "binomial", "multinomial", "survival"),
                                ...,
                                plot_args=list(),
+                               create_novelty_detector=FALSE,
                                debug=FALSE,
                                parallel=waiver()){
   
@@ -2792,7 +2800,8 @@ test_plot_ordering <- function(plot_function,
                                                  fs_method="mim",
                                                  hyperparameter_list=hyperparameters_lasso,
                                                  learner="lasso",
-                                                 time_max=1832))
+                                                 time_max=1832,
+                                                 create_novelty_detector=create_novelty_detector))
     
     model_full_lasso_2 <- model_full_lasso_1
     model_full_lasso_2@fs_method <- "mifs"
@@ -2814,7 +2823,8 @@ test_plot_ordering <- function(plot_function,
                                                fs_method="mim",
                                                hyperparameter_list=hyperparameters_glm,
                                                learner="glm",
-                                               time_max=1832))
+                                               time_max=1832,
+                                               create_novelty_detector=create_novelty_detector))
     
     model_full_glm_2 <- model_full_glm_1
     model_full_glm_2@fs_method <- "mifs"
