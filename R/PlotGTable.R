@@ -308,7 +308,8 @@
                                  spacer=NULL,
                                  attempt_replace=FALSE,
                                  partial_match_ref=FALSE,
-                                 partial_match_along=FALSE){
+                                 partial_match_along=FALSE,
+                                 update_dimensions=TRUE){
   
   # Intended for inserting elements that stretch multiple along_elements. It can
   # also be used for inserting elements directly (without along_elements) and/or
@@ -447,7 +448,7 @@
     # Rows are inserted, and we need to update column width for new elements
     # that span a single column.
     if(new_position[["l"]] == new_position[["r"]]){
-      if(!is.null(g_new$grobs[[1]]$width)){
+      if(!is.null(g_new$grobs[[1]]$width) & update_dimensions){
         g$widths[new_position[["l"]]] <- max(grid::unit.c(g$widths[new_position[["l"]]], g_new$grobs[[1]]$width))
       }
     }
@@ -457,7 +458,7 @@
     # Columns are inserted, and we need to update row heights for new elements
     # that span a single row.
     if(new_position[["t"]] == new_position[["b"]]){
-      if(!is.null(g_new$grobs[[1]]$height)){
+      if(!is.null(g_new$grobs[[1]]$height) & update_dimensions){
         g$heights[new_position[["t"]]] <- max(grid::unit.c(g$heights[new_position[["t"]]], g_new$grobs[[1]]$height))
       }
     }

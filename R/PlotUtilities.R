@@ -1102,7 +1102,8 @@ plotting.reinsert_plot_elements <- function(g=NULL, elements=NULL, grob_list, gg
                                     spacer=list("l"=plotting.get_legend_spacing(ggtheme=ggtheme, axis="y")),
                                     where=legend_position,
                                     partial_match_ref=TRUE,
-                                    partial_match_along=TRUE)
+                                    partial_match_along=TRUE,
+                                    update_dimensions=FALSE)
           
           break()
         }
@@ -1122,7 +1123,8 @@ plotting.reinsert_plot_elements <- function(g=NULL, elements=NULL, grob_list, gg
                                     spacer=list("r"=plotting.get_legend_spacing(ggtheme=ggtheme, axis="y")),
                                     where=legend_position,
                                     partial_match_ref=TRUE,
-                                    partial_match_along=TRUE)
+                                    partial_match_along=TRUE,
+                                    update_dimensions=FALSE)
           
           break()
         }
@@ -1142,7 +1144,8 @@ plotting.reinsert_plot_elements <- function(g=NULL, elements=NULL, grob_list, gg
                                     spacer=list("t"=plotting.get_legend_spacing(ggtheme=ggtheme, axis="x")),
                                     where=legend_position,
                                     partial_match_ref=TRUE,
-                                    partial_match_along=TRUE)
+                                    partial_match_along=TRUE,
+                                    update_dimensions=FALSE)
           
           break()
         }
@@ -1162,7 +1165,8 @@ plotting.reinsert_plot_elements <- function(g=NULL, elements=NULL, grob_list, gg
                                     spacer=list("b"=plotting.get_legend_spacing(ggtheme=ggtheme, axis="x")),
                                     where=legend_position,
                                     partial_match_ref=TRUE,
-                                    partial_match_along=TRUE)
+                                    partial_match_along=TRUE,
+                                    update_dimensions=FALSE)
           
           break()
         }
