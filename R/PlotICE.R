@@ -57,6 +57,10 @@ NULL
 #'
 #'  * `figure`: The novelty will have the same range for all facets in a figure.
 #'
+#'@param ice_default_alpha (*optional*) Default transparency (value) of sample
+#'  lines in an 1D plot. When novelty is shown, this is the transparency
+#'  corresponding to the least novel points. The confidence interval alpha
+#'  values is scaled by this value.
 #'@param show_ice (*optional*) Sets whether individual conditional expectation
 #'  plots should be created.
 #'@param show_pd (*optional*) Sets whether partial dependence plots should be
@@ -160,6 +164,7 @@ setGeneric("plot_ice",
                     novelty_scales=waiver(),
                     conf_int_style=c("ribbon", "step", "none"),
                     conf_int_alpha=0.4,
+                    ice_default_alpha=0.6,
                     n_max_samples_shown=50L,
                     show_ice=TRUE,
                     show_pd=TRUE,
@@ -202,6 +207,7 @@ setMethod("plot_ice", signature(object="ANY"),
                    novelty_scales=waiver(),
                    conf_int_style=c("ribbon", "step", "none"),
                    conf_int_alpha=0.4,
+                   ice_default_alpha=0.6,
                    n_max_samples_shown=50L,
                    show_ice=TRUE,
                    show_pd=TRUE,
@@ -247,6 +253,7 @@ setMethod("plot_ice", signature(object="ANY"),
                                      "novelty_scales"=novelty_scales,
                                      "conf_int_style"=conf_int_style,
                                      "conf_int_alpha"=conf_int_alpha,
+                                     "ice_default_alpha"=ice_default_alpha,
                                      "show_ice"=show_ice,
                                      "show_pd"=show_pd,
                                      "show_novelty"=show_novelty,
@@ -289,6 +296,7 @@ setMethod("plot_ice", signature(object="familiarCollection"),
                    novelty_scales=waiver(),
                    conf_int_style=c("ribbon", "step", "none"),
                    conf_int_alpha=0.4,
+                   ice_default_alpha=0.6,
                    n_max_samples_shown=50L,
                    show_ice=TRUE,
                    show_pd=TRUE,
@@ -498,7 +506,6 @@ setMethod("plot_ice", signature(object="familiarCollection"),
                                                            color_by=color_by)
             }
             
-            
             # Check input arguments for validity.
             plotting.check_input_args(conf_int_alpha=conf_int_alpha,
                                       conf_int_style=conf_int_style,
@@ -603,6 +610,11 @@ setMethod("plot_ice", signature(object="familiarCollection"),
               novelty_range <- NULL
             }
             
+            # Check the transparency value,
+            .check_number_in_valid_range(x=ice_default_alpha,
+                                         var="ice_default_alpha",
+                                         range=c(0.0, 1.0))
+            
             # Set plot function.
             if(show_2d){
               plot_function <- .create_2d_ice_plot
@@ -660,6 +672,7 @@ setMethod("plot_ice", signature(object="familiarCollection"),
                              novelty_range=novelty_range,
                              conf_int_style=conf_int_style,
                              conf_int_alpha=conf_int_alpha,
+                             ice_default_alpha=ice_default_alpha,
                              show_novelty=show_novelty,
                              show_ice=show_ice,
                              show_pd=show_pd,
@@ -749,6 +762,7 @@ setMethod("plot_ice", signature(object="familiarCollection"),
                       novelty_range,
                       conf_int_style,
                       conf_int_alpha,
+                      ice_default_alpha,
                       show_novelty,
                       show_ice,
                       show_pd,
@@ -877,6 +891,7 @@ setMethod("plot_ice", signature(object="familiarCollection"),
                                 "novelty_range"=novelty_range,
                                 "conf_int_style"=conf_int_style,
                                 "conf_int_alpha"=conf_int_alpha,
+                                "ice_default_alpha"=ice_default_alpha,
                                 "show_novelty"=show_novelty,
                                 "show_ice"=show_ice,
                                 "show_pd"=show_pd,
@@ -943,6 +958,7 @@ setMethod("plot_ice", signature(object="familiarCollection"),
                                 novelty_range,
                                 conf_int_style,
                                 conf_int_alpha,
+                                ice_default_alpha,
                                 show_novelty,
                                 show_ice,
                                 show_pd,
@@ -1096,6 +1112,14 @@ setMethod("plot_ice", signature(object="familiarCollection"),
                                                  color_by=color_by,
                                                  discrete_palette=discrete_palette,
                                                  combine_legend=FALSE)
+    
+    # Set grouping variable to deal with point-group complaints.
+    if(is.factor(pd_guide_list$data$feature_x_value)){
+      pd_group_variable <- 1
+    } else {
+      pd_group_variable <- NULL
+    }
+    
   } else {
     pd_guide_list <- NULL
   }
@@ -1104,6 +1128,9 @@ setMethod("plot_ice", signature(object="familiarCollection"),
   # Make pd line thicker than ice lines.
   ice_line_size <- 0.5 * ggtheme$line$size
   pd_line_size <- 6 * ice_line_size
+  
+  # In case only partial dependency plots are shown, update ice_default_alpha
+  if(!show_ice) ice_default_alpha <- 1.0
   
   # Create basic plot.
   p <- ggplot2::ggplot(data=plot_data,
@@ -1149,21 +1176,24 @@ setMethod("plot_ice", signature(object="familiarCollection"),
                                     mapping=ggplot2::aes(x=!!sym("feature_x_value"),
                                                          y=!!sym("value"),
                                                          alpha=!!sym("novelty"),
-                                                         colour=!!sym("color_breaks")),
+                                                         colour=!!sym("color_breaks"),
+                                                         group=pd_group_variable),
                                     size=pd_line_size)
       } else {
         # Create lines with alpha.
         p <- p + ggplot2::geom_line(data=pd_guide_list$data,
                                     mapping=ggplot2::aes(x=!!sym("feature_x_value"),
                                                          y=!!sym("value"),
-                                                         alpha=!!sym("novelty")),
+                                                         alpha=!!sym("novelty"),
+                                                         group=pd_group_variable),
                                     size=pd_line_size)
       }
     }
-   
+    
     # Invert novelty values, since higher values indicates greater novelty.
     p <- p + ggplot2::scale_alpha(trans="reverse",
-                                  limits=novelty_range)
+                                  limits=novelty_range,
+                                  range=c(0.1, 1.0) * ice_default_alpha)
     
   } else {
     # Without novelty
@@ -1176,7 +1206,8 @@ setMethod("plot_ice", signature(object="familiarCollection"),
                                                          y=!!sym("value"),
                                                          group=!!sym("color_breaks_sample"),
                                                          colour=!!sym("color_breaks")),
-                                    size=ice_line_size)
+                                    size=ice_line_size,
+                                    alpha=ice_default_alpha)
         
       } else {
         # Create lines with alpha.
@@ -1184,7 +1215,8 @@ setMethod("plot_ice", signature(object="familiarCollection"),
                                     mapping=ggplot2::aes(x=!!sym("feature_x_value"),
                                                          y=!!sym("value"),
                                                          group=!!sym("sample")),
-                                    size=ice_line_size)
+                                    size=ice_line_size,
+                                    alpha=ice_default_alpha)
       }
     }
     
@@ -1194,14 +1226,16 @@ setMethod("plot_ice", signature(object="familiarCollection"),
         p <- p + ggplot2::geom_line(data=pd_guide_list$data,
                                     mapping=ggplot2::aes(x=!!sym("feature_x_value"),
                                                          y=!!sym("value"),
-                                                         colour=!!sym("color_breaks")),
+                                                         colour=!!sym("color_breaks"),
+                                                         group=pd_group_variable),
                                     size=pd_line_size)
         
       } else {
         # Create lines with alpha.
         p <- p + ggplot2::geom_line(data=pd_guide_list$data,
                                     mapping=ggplot2::aes(x=!!sym("feature_x_value"),
-                                                         y=!!sym("value")),
+                                                         y=!!sym("value"),
+                                                         group=pd_group_variable),
                                     size=pd_line_size)
       }
     }
@@ -1255,6 +1289,9 @@ setMethod("plot_ice", signature(object="familiarCollection"),
       p <- p + ggplot2::scale_linetype(guide=FALSE)
       
     } else if(conf_int_style[1] == "ribbon"){
+      
+      if(show_novelty) conf_int_alpha <- conf_int_alpha * ice_default_alpha
+      
       if(is.null(color_by)){
         p <- p + ggplot2::geom_ribbon(data=pd_guide_list$data,
                                       mapping=ggplot2::aes(x=!!sym("feature_x_value"),

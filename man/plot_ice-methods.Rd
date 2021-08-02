@@ -35,6 +35,7 @@ plot_ice(
   novelty_scales = waiver(),
   conf_int_style = c("ribbon", "step", "none"),
   conf_int_alpha = 0.4,
+  ice_default_alpha = 0.6,
   n_max_samples_shown = 50L,
   show_ice = TRUE,
   show_pd = TRUE,
@@ -75,6 +76,7 @@ plot_ice(
   novelty_scales = waiver(),
   conf_int_style = c("ribbon", "step", "none"),
   conf_int_alpha = 0.4,
+  ice_default_alpha = 0.6,
   n_max_samples_shown = 50L,
   show_ice = TRUE,
   show_pd = TRUE,
@@ -115,6 +117,7 @@ plot_ice(
   novelty_scales = waiver(),
   conf_int_style = c("ribbon", "step", "none"),
   conf_int_alpha = 0.4,
+  ice_default_alpha = 0.6,
   n_max_samples_shown = 50L,
   show_ice = TRUE,
   show_pd = TRUE,
@@ -245,6 +248,11 @@ allowed styles.}
 confidence intervals or, alternatively, other plot elements with which the
 confidence interval overlaps. Only values between 0.0 (fully transparent)
 and 1.0 (fully opaque) are allowed.}
+
+\item{ice_default_alpha}{(\emph{optional}) Default transparency (value) of sample
+lines in an 1D plot. When novelty is shown, this is the transparency
+corresponding to the least novel points. The confidence interval alpha
+values is scaled by this value.}
 
 \item{n_max_samples_shown}{(\emph{optional}) Maximum number of samples shown in an
 individual conditional expectation plot. Defaults to 50. These samples are
