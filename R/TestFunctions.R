@@ -2845,7 +2845,7 @@ test_plot_ordering <- function(plot_function,
                       object <- list(data_good_full_lasso_1, data_empty_lasso_2, data_good_full_lasso_1, data_good_full_lasso_2,
                                      data_good_full_glm_1, data_good_full_glm_2, data_empty_glm_1, data_good_full_glm_2)
                       object <- mapply(set_object_name, object, c("development_lasso_1", "development_lasso_2", "validation_lasso_1", "validation_lasso_2",
-                                                                     "development_glm_1", "development_glm_2", "validation_glm_1", "validation_glm_2"))
+                                                                  "development_glm_1", "development_glm_2", "validation_glm_1", "validation_glm_2"))
                       
                       collection <- suppressWarnings(as_familiar_collection(object, familiar_data_names=c("development", "development", "validation", "validation",
                                                                                                           "development", "development", "validation", "validation")))

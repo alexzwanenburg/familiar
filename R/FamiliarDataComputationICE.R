@@ -583,7 +583,9 @@ setMethod("extract_ice", signature(object="familiarEnsemble"),
 
 
 
-.update_ice_and_pd_output <- function(ice_data, pd_data, outcome_type, anchor_values=NULL){
+.update_ice_and_pd_output <- function(ice_data, pd_data, outcome_type, anchor_values=NULL, n_samples=NULL, seed){
+  
+  if(is_empty(ice_data)) return(list("ice_data"=ice_data, "pd_data"=pd_data))
   
   # Find anchor value for the x-feature. It will be NULL if the current feature
   # does does not appear in anchor_values.
@@ -649,6 +651,18 @@ setMethod("extract_ice", signature(object="familiarEnsemble"),
     
     # Update partial dependence data.
     pd_data <- .create_pd_object(ice_data)
+  }
+  
+  if(!is.null(n_samples)){
+    # Select up to n_samples. These samples are random between experiments, but
+    # fixed within one, as we explicitly set the random seed to be used.
+    cropped_ice_data <- lapply(split(ice_data@data, by="data_set", drop=TRUE),
+                               ..restrict_ice_samples,
+                               n_samples=n_samples,
+                               seed=seed)
+    
+    # Replace data attribute with the limited sample list.
+    ice_data@data <- data.table::rbindlist(cropped_ice_data, use.names=TRUE)
   }
   
   return(list("ice_data"=ice_data,
@@ -752,6 +766,36 @@ setMethod("extract_ice", signature(object="familiarEnsemble"),
   
   return(x)
 }
+
+
+
+..restrict_ice_samples <- function(x, n_samples, seed){
+  
+  # Suppress NOTES due to non-standard evaluation in data.table
+  sample <- NULL
+  
+  if(is.null(n_samples)) return(x)
+
+  # Select unique sample identifiers.
+  sample_identifiers <- unique(x$sample)
+  
+  # Do not sample if the number of available samples is smaller than n_samples.
+  if(length(sample_identifiers) < n_samples) return(x)
+  
+  # Sample with fixed seed.
+  set.seed(seed)
+  on.exit(set.seed(NULL))
+  
+  # Select samples.
+  selected_identifiers <- fam_sample(x=sample_identifiers,
+                                     size=n_samples,
+                                     replace=FALSE) 
+  
+  x <- x[sample %in% selected_identifiers]
+  
+  return(x)
+}
+
 
 
 ..anchor_ice_values_1D <- function(value_in, x, x_anchor, value_offset, name){
