@@ -694,6 +694,23 @@ test.create_small_bad_data_set <- function(outcome_type){
 
 
 
+test.create_prospective_data_set <- function(outcome_type){
+  # Prospective data has NA for outcome.
+  
+  data <- test.create_good_data_set(outcome_type=outcome_type)
+  
+  if(outcome_type %in% c("survival", "competing_risk")){
+    data@data[, ":="("outcome_time"=NA,
+                     "outcome_event"=NA)]
+  } else {
+    data@data[, ":="("outcome"=NA)]
+  }
+  
+  return(data)  
+}
+
+
+
 test_create_synthetic_series_data <- function(outcome_type, n_batch=3, n_samples=10, n_series=3, n_rep=3, n_numeric=4L, rare_outcome=FALSE, random_seed=1844){
   
   # Suppress NOTES due to non-standard evaluation in data.table
