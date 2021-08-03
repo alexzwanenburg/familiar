@@ -447,20 +447,40 @@ setMethod("plot_ice", signature(object="familiarCollection"),
             if(is.null(split_by) & is.null(facet_by) & is.null(color_by)){
               if(show_2d){
                 split_by <- c("fs_method", "learner", "feature_x", "feature_y")
-                facet_by <- c("data_set", "positive_class", "evaluation_time")
+                
+                facet_by <- c("data_set")
+                if(object@outcome_type == "multinomial") facet_by <- c(facet_by, "positive_class")
+                if(object@outcome_type == "survival") facet_by <- c(facet_by, "evaluation_time")
+                
                 color_by <- NULL
                 
               } else if(show_ice) {
-                split_by <- c("fs_method", "learner", "feature_x", "feature_y")
-                facet_by <- c("data_set", "positive_class", "evaluation_time")
+                split_by <- c("fs_method", "learner", "feature_x")
+                
+                facet_by <- c("data_set")
+                if(object@outcome_type == "multinomial") facet_by <- c(facet_by, "positive_class")
+                if(object@outcome_type == "survival") facet_by <- c(facet_by, "evaluation_time")
+                
                 color_by <- NULL
 
               } else if(show_pd) {
-                split_by <- c("fs_method", "learner", "feature_x", "feature_y")
+                split_by <- c("fs_method", "learner", "feature_x")
                 facet_by <- c("data_set")
-                color_by <- c("positive_class", "evaluation_time")
+                
+                color_by <- NULL
+                if(object@outcome_type == "multinomial") color_by <- c("positive_class")
+                if(object@outcome_type == "survival") color_by <- c("evaluation_time")
               }
             }
+            
+            # Determine splitting variables.
+            available_splitting_vars <- c("fs_method", "learner", "data_set", "feature_x")
+            if(show_2d) available_splitting_vars <- c(available_splitting_vars, "feature_y")
+            
+            if(object@outcome_type %in% c("survival")) available_splitting_vars <- c(available_splitting_vars, "evaluation_time")
+              
+            if(object@outcome_type %in% c("multinomial")) available_splitting_vars <- c(available_splitting_vars, "positive_class")
+            
             
             # Check that the color_by parameter is not set for 2d plots.
             if(show_2d & !is.null(color_by)){
@@ -474,13 +494,7 @@ setMethod("plot_ice", signature(object="familiarCollection"),
                                                            split_by=split_by,
                                                            color_by=color_by,
                                                            facet_by=facet_by,
-                                                           available=c("fs_method",
-                                                                       "learner",
-                                                                       "feature_x",
-                                                                       "feature_y",
-                                                                       "data_set",
-                                                                       "positive_class",
-                                                                       "evaluation_time"))
+                                                           available=available_splitting_vars)
             
             # Update splitting variables
             split_by <- split_var_list$split_by
