@@ -1255,20 +1255,24 @@ setMethod("plot_ice", signature(object="familiarCollection"),
     }
   }
   
-    # Set colour
-    if(!is.null(color_by)){
-      # Extract guide_table for colour.
-      if(show_ice){
-        g_color <- ice_guide_list$guide_color
-      } else {
-        g_color <- pd_guide_list$guide_color
-      }
-      
-      p <- p + ggplot2::scale_colour_manual(name=legend_label$guide_color,
-                                            values=g_color$color_values,
-                                            breaks=g_color$color_breaks,
-                                            drop=FALSE)
+  # Set colour
+  if(!is.null(color_by)){
+    # Extract guide_table for colour.
+    if(show_ice){
+      g_color <- ice_guide_list$guide_color
+    } else {
+      g_color <- pd_guide_list$guide_color
     }
+    
+    p <- p + ggplot2::scale_colour_manual(name=legend_label$guide_color,
+                                          values=g_color$color_values,
+                                          breaks=g_color$color_breaks,
+                                          drop=FALSE)
+  }
+  
+  # Update x and y scales
+  p <- p + ggplot2::scale_x_continuous(breaks=x_breaks, limits=x_range)
+  p <- p + ggplot2::scale_y_continuous(breaks=y_breaks, limits=y_range)
   
   # Plot confidence intervals.
   if(conf_int_style[1]!="none"){
@@ -1566,6 +1570,10 @@ setMethod("plot_ice", signature(object="familiarCollection"),
   p <- p + ggplot2::scale_fill_gradientn(name=legend_label,
                                          colors=gradient_colours,
                                          limits=value_range)
+  
+  # Update x and y scales
+  p <- p + ggplot2::scale_x_continuous(breaks=x_breaks, limits=x_range)
+  p <- p + ggplot2::scale_y_continuous(breaks=y_breaks, limits=y_range)
   
   # Determine how things are facetted.
   facet_by_list <- plotting.parse_facet_by(x=plot_data, 
