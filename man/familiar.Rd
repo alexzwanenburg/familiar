@@ -19,6 +19,9 @@ Authors:
 Other contributors:
 \itemize{
   \item Stefan Leger [contributor]
+  \item Iram Shahzadi [contributor]
+  \item Technische Universität Dresden [copyright holder]
+  \item German Cancer Research Center (DKFZ) [copyright holder]
 }
 
 }

@@ -1,19 +1,30 @@
 Package: familiar
-Title: End-To-End Machine Learning and Data Analysis Framework
+Title: End-to-end automated Machine Learning
 Version: 0.0.0.55
 Authors@R: c(
-   person("Alex", "Zwanenburg",
-          email = "alexander.zwanenburg@nct-dresden.de",
-          role = c("aut", "cre"),
-          comment = c(ORCID = "0000-0002-0342-9545")),
-   person("Steffen", "Löck", role="aut"),
-   person("Stefan", "Leger", role="ctb"))
-Description: Encapsulates the modelling and validation workflow for
-   (big) data analysis. Automatically performs steps such as data normalization,
-   dimensionality reduction, feature selection, hyper-parameter optimization,
-   model building and validation. Risk of biases is minimised through minimal
-   required user input, automation and separating development and training
-   data. Model discrimination and calibration are assessed.
+    person("Alex", "Zwanenburg",
+           email = "alexander.zwanenburg@nct-dresden.de",
+           role = c("aut", "cre"),
+           comment = c(ORCID = "0000-0002-0342-9545")),
+    person("Steffen", "Löck", role="aut"),
+    person("Stefan", "Leger", role="ctb"),
+    person("Iram", "Shahzadi", role="ctb"),
+    person("Technische Universität Dresden", role="cph"),
+    person("German Cancer Research Center (DKFZ)", role="cph"))
+Description: End-to-end, automated machine learning package for creating 
+    trustworthy and interpretable machine learning models. Familiar supports
+    modelling of regression, categorical and time-to-event (survival) outcomes.
+    Models created using familiar are self-containing, and their use does not
+    require additional information such as baseline survival, feature
+    clustering, or feature transformation and normalisation parameters. In
+    addition, an novelty or out-of-distribution detector is trained
+    simultaneously and contained with every model. Model performance,
+    calibration, risk group stratification, (permutation) variable importance,
+    individual conditional expectation, partial dependence, and more, are
+    assessed automatically as part of the evaluation process and exported in
+    tabular format and plotted, and may also be computed manually using export
+    and plot functions. Where possible, metrics and values obtained during the
+    evaluation process come with confidence intervals.
 Depends: R (>= 3.4.0)
 License: EUPL
 Encoding: UTF-8
