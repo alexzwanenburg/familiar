@@ -393,13 +393,14 @@ setMethod("extract_ice", signature(object="familiarEnsemble"),
   # Create unique row names for samples and insert.
   ice_data[, "sample":=get_unique_row_names(x=data)]
 
-   if(object@outcome_type %in% c("binomial", "multinomial")){
-
+  if(object@outcome_type %in% c("binomial", "multinomial")){
+    
     # Determine class levels.
     class_levels <- get_outcome_class_levels(object)
+    if(object@outcome_type == "binomial") class_levels <- class_levels[2]
     
     # Find probability names.
-    probability_names <- get_class_probability_name(object)
+    probability_names <- get_class_probability_name(class_levels)
     
     # Convert table from wide to long format.
     ice_data <- data.table::melt(data=ice_data,
