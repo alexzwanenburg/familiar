@@ -1040,6 +1040,9 @@ setMethod("plot_ice", signature(object="familiarCollection"),
     }
     
     plotting.check_input_args(x_range=x_range)
+    
+  } else {
+    x_range <- NULL
   }
  
   # Find the correct y-range
@@ -1271,8 +1274,8 @@ setMethod("plot_ice", signature(object="familiarCollection"),
   }
   
   # Update x and y scales
-  p <- p + ggplot2::scale_x_continuous(breaks=x_breaks, limits=x_range)
-  p <- p + ggplot2::scale_y_continuous(breaks=y_breaks, limits=y_range)
+  if(!is.null(x_range)) p <- p + ggplot2::scale_x_continuous(breaks=x_breaks, limits=x_range)
+  if(!is.null(y_range)) p <- p + ggplot2::scale_y_continuous(breaks=y_breaks, limits=y_range)
   
   # Plot confidence intervals.
   if(conf_int_style[1]!="none"){
@@ -1395,13 +1398,11 @@ setMethod("plot_ice", signature(object="familiarCollection"),
   feature_x <- feature_y <- feature_x_value <- feature_y_value <- NULL
   
   # Get the data that determines the plot characteristics.
-  data_present <- TRUE
   if(!is_empty(pd_data[[1]])){
     plot_data <- data.table::copy(pd_data[[1]]@data)[order(feature_x_value, feature_y_value)]
     
   } else {
     plot_data <- facet_data
-    data_present <- FALSE
   }
   
   # Set value range
@@ -1436,6 +1437,9 @@ setMethod("plot_ice", signature(object="familiarCollection"),
     }
     
     plotting.check_input_args(x_range=x_range)
+    
+  } else {
+    x_range <- NULL
   }
   
   # y_range
@@ -1459,8 +1463,10 @@ setMethod("plot_ice", signature(object="familiarCollection"),
     }
     
     plotting.check_input_args(y_range=y_range)
+    
+  } else {
+    y_range <- NULL
   }
-  
   
   # Find the correct value-range
   value_range <- value_range[feature_x == as.character(plot_data$feature_x[1]) &
@@ -1520,6 +1526,12 @@ setMethod("plot_ice", signature(object="familiarCollection"),
     # cannot compute survival probabilities. This happens for some mboost
     # learners.
     p <- p + ggplot2::geom_blank()
+    p <- p + ggplot2::theme(axis.line.x = ggplot2::element_blank(),
+                            axis.ticks.x=ggplot2::element_blank(),
+                            axis.text.x=ggplot2::element_blank(),
+                            axis.line.y = ggplot2::element_blank(),
+                            axis.ticks.y=ggplot2::element_blank(),
+                            axis.text.y=ggplot2::element_blank())
     
   } else if(show_novelty){
     # Create point cloud with size of points by novelty -> bubblechart.
@@ -1572,8 +1584,8 @@ setMethod("plot_ice", signature(object="familiarCollection"),
                                          limits=value_range)
   
   # Update x and y scales
-  p <- p + ggplot2::scale_x_continuous(breaks=x_breaks, limits=x_range)
-  p <- p + ggplot2::scale_y_continuous(breaks=y_breaks, limits=y_range)
+  if(!is.null(x_range)) p <- p + ggplot2::scale_x_continuous(breaks=x_breaks, limits=x_range)
+  if(!is.null(y_range)) p <- p + ggplot2::scale_y_continuous(breaks=y_breaks, limits=y_range)
   
   # Determine how things are facetted.
   facet_by_list <- plotting.parse_facet_by(x=plot_data, 
