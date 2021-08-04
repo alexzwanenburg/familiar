@@ -12,7 +12,9 @@ training dataset internally.
 instead of `klaR`, which has been deprecated from familiar. Some hyperparameters
 changed accordingly. See the *learners* vignette.
 
-* Added individual conditional expectation and partial dependence plots.
+* Added individual conditional expectation and partial dependence plots. These
+plots show the response of a model across a range of values for a particular
+feature.
 
 ## Minor changes
 
