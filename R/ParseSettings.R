@@ -280,6 +280,11 @@
 #'   bounds for bandit problems. in Artificial intelligence and statistics
 #'   592–600 (2012).
 #'
+#'   1. Jamieson, K. & Talwalkar, A. Non-stochastic Best Arm Identification and
+#'   Hyperparameter Optimization. in Proceedings of the 19th International
+#'   Conference on Artificial Intelligence and Statistics (eds. Gretton, A. &
+#'   Robert, C. C.) vol. 51 240–248 (PMLR, 2016).
+#'
 #'   1. Davison, A. C. & Hinkley, D. V. Bootstrap methods and their application.
 #'   (Cambridge University Press, 1997).
 #'
@@ -1839,19 +1844,6 @@
 #'
 #'   The default value is `3`. Higher numbers allow for a more detailed
 #'   comparison, but this comes with added computational cost.
-#' @param smbo_intensify_stop_p_value (*optional*) The p-value threshold which
-#'   is used to test the hypothesis that a challenger hyperparameter set and the
-#'   incumbent set have the same performance. A paired Wilcoxon test is
-#'   performed, with the alternative hypothesis that the challenger set is less
-#'   performant.
-#'
-#'   The p-value from the test is compared to `smbo_intensify_stop_p_value` and
-#'   if it is found lower, the challenger set is eliminated and not used in any
-#'   further intensify steps during the current iteration. Elimination of sets
-#'   of hyperparameters that are unlikely to lead to better models improves
-#'   computational efficiency.
-#'
-#'   The default value is `0.05`.
 #'
 #' @param optimisation_metric (*optional*) One or more metrics used to compute
 #'   performance scores. See the vignette on performance metrics for the
@@ -1932,7 +1924,29 @@
 #'
 #'   * `bayes_upper_confidence_bound`:This acquisition function is based on the
 #'   upper confidence bound of the distribution (Kaufmann et al., 2012).
+#' @param exploration_method (*optional*) Method used to steer exploration in
+#'   post-initialisation intensive searching steps. As stated earlier, each SMBO
+#'   iteration step compares suggested alternative parameter sets with an
+#'   incumbent **best** set in a series of steps. The exploration method
+#'   controls how the set of alternative parameter sets is pruned after each
+#'   step in an iteration. Can be one of the following:
 #'
+#'   * `successive_halving` (default): The set of alternative parameter sets is
+#'   pruned by removing the worst performing half of the sets after each step
+#'   (Jamieson and Talwalkar, 2016).
+#'
+#'   * `stochastic_reject`: The set of alternative parameter sets is pruned by
+#'   comparing the performance of each parameter set with that of the incumbent
+#'   **best** parameter set using a paired Wilcoxon test based on shared
+#'   bootstraps. Parameter sets that perform significantly worse, at an alpha
+#'   level indicated by `smbo_intensify_stop_p_value`, are pruned.
+#'
+#'   * `none`: The set of alternative parameter sets is not pruned.
+#'
+#' @param smbo_intensify_stop_p_value (*optional*) The p-value threshold used
+#'   for the `stochastic_reject` exploration method.
+#'
+#'   The default value is `0.05`.
 #' @param parallel_hyperparameter_optimisation (*optional*) Enable parallel
 #'   processing for hyperparameter optimisation. Defaults to `TRUE`. When set to
 #'   `FALSE`, this will disable the use of parallel processing while performing
@@ -1962,6 +1976,11 @@
 #'   1. Kaufmann, E., Cappé, O. & Garivier, A. On Bayesian upper confidence
 #'   bounds for bandit problems. in Artificial intelligence and statistics
 #'   592–600 (2012).
+#'
+#'   1. Jamieson, K. & Talwalkar, A. Non-stochastic Best Arm Identification and
+#'   Hyperparameter Optimization. in Proceedings of the 19th International
+#'   Conference on Artificial Intelligence and Statistics (eds. Gretton, A. &
+#'   Robert, C. C.) vol. 51 240–248 (PMLR, 2016).
 #' @md
 #' @keywords internal
 .parse_hyperparameter_optimisation_settings <- function(config=NULL, parallel, outcome_type,
@@ -1978,6 +1997,7 @@
                                                         optimisation_function=waiver(),
                                                         optimisation_metric=waiver(),
                                                         acquisition_function=waiver(),
+                                                        exploration_method=waiver(),
                                                         parallel_hyperparameter_optimisation=waiver(),
                                                         ...){
   settings <- list()
@@ -2062,6 +2082,18 @@
   
   .check_parameter_value_is_valid(x=settings$hpo_acquisition_function, var_name="acquisition_function",
                                   values=.get_available_acquisition_functions())
+  
+  # Exploration method
+  settings$hpo_exploration_method <- .parse_arg(x_config=config$exploration_method,
+                                                x_var=exploration_method,
+                                                var_name="exploration_method",
+                                                type="character",
+                                                optional=TRUE,
+                                                default="successive_halving")
+  
+  .check_parameter_value_is_valid(x=settings$hpo_exploration_method,
+                                  var_name="exploration_method",
+                                  values=c("successive_halving", "stochastic_reject", "none"))
   
   # Performance metric for hyperparameter optimisation
   settings$hpo_metric <- .parse_arg(x_config=config$optimisation_metric, x_var=optimisation_metric,

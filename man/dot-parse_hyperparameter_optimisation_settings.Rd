@@ -22,6 +22,7 @@ optimisation}
   optimisation_function = waiver(),
   optimisation_metric = waiver(),
   acquisition_function = waiver(),
+  exploration_method = waiver(),
   parallel_hyperparameter_optimisation = waiver(),
   ...
 )
@@ -126,17 +127,8 @@ hyperparameter combination and its challengers.
 The default value is \code{3}. Higher numbers allow for a more detailed
 comparison, but this comes with added computational cost.}
 
-\item{smbo_intensify_stop_p_value}{(\emph{optional}) The p-value threshold which
-is used to test the hypothesis that a challenger hyperparameter set and the
-incumbent set have the same performance. A paired Wilcoxon test is
-performed, with the alternative hypothesis that the challenger set is less
-performant.
-
-The p-value from the test is compared to \code{smbo_intensify_stop_p_value} and
-if it is found lower, the challenger set is eliminated and not used in any
-further intensify steps during the current iteration. Elimination of sets
-of hyperparameters that are unlikely to lead to better models improves
-computational efficiency.
+\item{smbo_intensify_stop_p_value}{(\emph{optional}) The p-value threshold used
+for the \code{stochastic_reject} exploration method.
 
 The default value is \code{0.05}.}
 
@@ -214,6 +206,24 @@ confidence bound of the distribution (Srinivas et al., 2012).
 upper confidence bound of the distribution (Kaufmann et al., 2012).
 }}
 
+\item{exploration_method}{(\emph{optional}) Method used to steer exploration in
+post-initialisation intensive searching steps. As stated earlier, each SMBO
+iteration step compares suggested alternative parameter sets with an
+incumbent \strong{best} set in a series of steps. The exploration method
+controls how the set of alternative parameter sets is pruned after each
+step in an iteration. Can be one of the following:
+\itemize{
+\item \code{successive_halving} (default): The set of alternative parameter sets is
+pruned by removing the worst performing half of the sets after each step
+(Jamieson and Talwalkar, 2016).
+\item \code{stochastic_reject}: The set of alternative parameter sets is pruned by
+comparing the performance of each parameter set with that of the incumbent
+\strong{best} parameter set using a paired Wilcoxon test based on shared
+bootstraps. Parameter sets that perform significantly worse, at an alpha
+level indicated by \code{smbo_intensify_stop_p_value}, are pruned.
+\item \code{none}: The set of alternative parameter sets is not pruned.
+}}
+
 \item{parallel_hyperparameter_optimisation}{(\emph{optional}) Enable parallel
 processing for hyperparameter optimisation. Defaults to \code{TRUE}. When set to
 \code{FALSE}, this will disable the use of parallel processing while performing
@@ -248,6 +258,10 @@ the Bandit Setting. IEEE Trans. Inf. Theory 58, 3250–3265 (2012)
 \item Kaufmann, E., Cappé, O. & Garivier, A. On Bayesian upper confidence
 bounds for bandit problems. in Artificial intelligence and statistics
 592–600 (2012).
+\item Jamieson, K. & Talwalkar, A. Non-stochastic Best Arm Identification and
+Hyperparameter Optimization. in Proceedings of the 19th International
+Conference on Artificial Intelligence and Statistics (eds. Gretton, A. &
+Robert, C. C.) vol. 51 240–248 (PMLR, 2016).
 }
 }
 \keyword{internal}

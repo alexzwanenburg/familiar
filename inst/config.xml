@@ -138,6 +138,8 @@
       <optimisation_function></optimisation_function>
       <!-- The acquisition function that is to be used for guiding exploration of the hyperparameter space (optional, default: expected_improvement -->
       <acquisition_function></acquisition_function>
+      <!-- The exploration method defines how alternative hyperparameter sets are pruned during search (optional, default: successive_halving) -->
+      <exploration_method></exploration_method>
       <!-- Maximum number of bootstraps to evaluate hyperparameters on (optional, default: 200) -->
       <optimisation_bootstraps></optimisation_bootstraps>
       <!-- Whether variable importance should be computed seperately for each bootstrap (true) when optimising learner hyperparameters or the feature selection results should be used (false). (optional, default: true) -->

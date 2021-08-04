@@ -143,6 +143,7 @@ run_hyperparameter_optimisation <- function(cl=NULL,
                                                  "acquisition_function"=settings$hpo$hpo_acquisition_function,
                                                  "grid_initialisation_method"=settings$hpo$hpo_grid_initialisation_method,
                                                  "n_random_sets"=settings$hpo$hpo_n_grid_initialisation_samples,
+                                                 "exploration_method"=settings$hpo$hpo_exploration_method,
                                                  "determine_vimp"=settings$hpo$hpo_determine_vimp,
                                                  "measure_time"=TRUE,
                                                  "hyperparameter_learner"="random_forest",
@@ -282,6 +283,7 @@ setMethod("optimise_hyperparameters", signature(object="familiarModel", data="da
                    optimisation_function="balanced",
                    acquisition_function="expected_improvement",
                    grid_initialisation_method="fixed_subsample",
+                   exploration_method="successive_halving",
                    n_random_sets=100L,
                    determine_vimp=TRUE,
                    measure_time=TRUE,
@@ -723,6 +725,7 @@ setMethod("optimise_hyperparameters", signature(object="familiarModel", data="da
                                                                                     parameter_id_incumbent=parameter_id_incumbent,
                                                                                     parameter_id_challenger=parameter_id_challenger,
                                                                                     acquisition_function=acquisition_function,
+                                                                                    exploration_method=exploration_method,
                                                                                     intensify_stop_p_value=intensify_stop_p_value)
                 
                 # Extract hyperparameter set identifiers.
