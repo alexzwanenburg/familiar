@@ -1005,7 +1005,7 @@ setMethod("plot_ice", signature(object="familiarCollection"),
   }
   
   # Set value range
-  if(is.null(value_range) & value_scales == "facet"){
+  if(is.null(value_range) & value_scales == "facet" & data_present){
     if(show_ice){
       value_range <- .create_ice_plot_value_range(x=ice_data,
                                                   scale_method="facet",
