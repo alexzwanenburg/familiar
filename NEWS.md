@@ -12,13 +12,31 @@ training dataset internally.
 instead of `klaR`, which has been deprecated from familiar. Some hyperparameters
 changed accordingly. See the *learners* vignette.
 
+* Added individual conditional expectation and partial dependence plots. These
+plots show the response of a model across a range of values for a particular
+feature.
+
 ## Minor changes
 
 * A `sample_limit` parameter was added to limit the number of samples used
 during evaluation. This parameter can be specified for the `sample_similarity`
 evaluation step.
 
+* Class levels for categorical outcomes, if not explicitly specified using the
+`class_levels` parameter, are now sorted before being set based on the data.
+Previously class levels would be set based on order of appearance.
+
+* Isolation forests are now grown with a decreased memory footprint.
+
+* Presence of instances with a survival time of 0 or lower will produce a
+warning. Though familiar itself will handle such instances just fine, other
+packages will produce errors. Since familiar captures such errors and handles
+them internally, a warning is provided to indicate potential issues.
+
 ## Bug fixes
+
+* Fixed a bug that caused features not incorporated in models to not be exported
+for the purpose of reporting (aggregate) variable importance.
 
 * Fixed a bug that caused clustered features not to be exported for the purpose
 of reporting (aggregate) variable importance.
@@ -33,6 +51,12 @@ set while exporting variable importance using `export_fs_vimp` or
 
 * Fixed an error that occurred when attempting to fit calibration data with `NA`
 values.
+
+* Fixed an error that occurred when attempting to interpolate survival
+probabilities when collecting pooled data.
+
+* Fixed an issue with models from the `glmnet` package not training for rare
+classes / events or censoring in small datasets.
 
 # Version 0.0.0.54 (Pre-release)
 

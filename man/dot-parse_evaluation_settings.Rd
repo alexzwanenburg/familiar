@@ -163,7 +163,10 @@ that are used during evaluation steps. Cannot be less than 20.
 
 This setting can be specified per data element by providing a parameter
 value in a named list with data elements, e.g.
-\code{list("sample_similarity"=100, "permutation_vimp"=1000)}.}
+\code{list("sample_similarity"=100, "permutation_vimp"=1000)}.
+
+This parameter can be set for the following data elements:
+\code{sample_similarity} and \code{ice_data}.}
 
 \item{detail_level}{(\emph{optional}) Sets the level at which results are computed
 and aggregated.
@@ -208,7 +211,7 @@ evaluation steps by providing a parameter value in a named list with data
 elements, e.g. \code{list("auc_data"="ensemble", "model_performance"="hybrid")}.
 This parameter can be set for the following data elements: \code{auc_data},
 \code{decision_curve_analyis}, \code{model_performance}, \code{permutation_vimp},
-\code{prediction_data} and \code{confusion_matrix}.}
+\code{ice_data}, \code{prediction_data} and \code{confusion_matrix}.}
 
 \item{estimation_type}{(\emph{optional}) Sets the type of estimation that should be
 possible. This has the following options:
@@ -228,7 +231,7 @@ As with \code{detail_level}, a non-default \code{estimation_type} parameter can 
 specified for separate evaluation steps by providing a parameter value in a
 named list with data elements, e.g. \code{list("auc_data"="bci", "model_performance"="point")}. This parameter can be set for the following
 data elements: \code{auc_data}, \code{decision_curve_analyis}, \code{model_performance},
-\code{permutation_vimp}, and \code{prediction_data}.}
+\code{permutation_vimp}, \code{ice_data}, and \code{prediction_data}.}
 
 \item{aggregate_results}{(\emph{optional}) Flag that signifies whether results
 should be aggregated during evaluation. If \code{estimation_type} is

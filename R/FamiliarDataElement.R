@@ -164,7 +164,7 @@ setMethod(".identifier_as_data_attribute", signature(x="familiarDataElement"),
 
 #####identify_element_sets (list)-----------------------------------------------
 setMethod("identify_element_sets", signature(x="list"),
-          function(x, ...){
+          function(x, drop_identiers=NULL, ...){
             
             # Check that that the list is not empty.
             if(is_empty(x)) return(NULL)
@@ -174,10 +174,30 @@ setMethod("identify_element_sets", signature(x="list"),
             if(all(empty_elements)) return(NULL)
             
             # Iterate over list.
-            id_table <- lapply(x, identify_element_sets, ...)
+            id_table <- mapply(identify_element_sets,
+                               x=x,
+                               ii=seq_along(x),
+                               MoreArgs=list(...),
+                               SIMPLIFY=FALSE)
             
             # Combine to table and add group ids and model ids.
             id_table <- data.table::rbindlist(id_table, use.names=TRUE)
+            
+            # Drop identifiers.
+            if(!is.null(drop_identiers)){
+              
+              # Check that 
+              if(!all(drop_identiers %in% colnames(id_table))){
+                stop(paste0("One or more identifiers to be dropped were not found in the table with identifiers: ",
+                            paste_s(setdiff(drop_identiers, colnames(id_table)))))
+              }
+              
+              # Drop identifiers
+              id_table[, (drop_identiers):=NULL]
+              
+              # Keep unique entries.
+              id_table <- unique(id_table)
+            }
             
             # Add group identifier.
             id_table[, "group_id":=.GRP, by=c(colnames(id_table))] 
@@ -190,7 +210,7 @@ setMethod("identify_element_sets", signature(x="list"),
 
 #####identify_element_sets (familiarDataElement)--------------------------------
 setMethod("identify_element_sets", signature(x="familiarDataElement"),
-          function(x, ignore_estimation_type=FALSE, ...){
+          function(x, ii, ignore_estimation_type=FALSE, ignore_grouping_column=TRUE, ignore_list_identifier=TRUE, ...){
             
             # Get the identifiers and the detail level and combine to a list.
             id_list <- c(x@identifiers,
@@ -199,6 +219,12 @@ setMethod("identify_element_sets", signature(x="familiarDataElement"),
             
             # Add the estimation type if it is not to be ignored.
             if(!ignore_estimation_type) id_list <- c(id_list, list("estimation_type"=x@estimation_type))
+            
+            # Add data from grouping columns, if they are not to be ignored.
+            if(!ignore_grouping_column & !is.null(x@grouping_column)) id_list <- c(id_list, unique(x@data[, mget(x@grouping_column)]))
+            
+            # Add list identifier.
+            if(!ignore_list_identifier) id_list <- c(id_list, "list_id"=ii)
             
             return(data.table::as.data.table(id_list))
           })

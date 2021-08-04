@@ -51,7 +51,7 @@ As with \code{detail_level}, a non-default \code{estimation_type} parameter can 
 specified for separate evaluation steps by providing a parameter value in a
 named list with data elements, e.g. \code{list("auc_data"="bci", "model_performance"="point")}. This parameter can be set for the following
 data elements: \code{auc_data}, \code{decision_curve_analyis}, \code{model_performance},
-\code{permutation_vimp}, and \code{prediction_data}.}
+\code{permutation_vimp}, \code{ice_data}, and \code{prediction_data}.}
 
 \item{aggregate_results}{(\emph{optional}) Flag that signifies whether results
 should be aggregated during evaluation. If \code{estimation_type} is

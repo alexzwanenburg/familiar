@@ -519,10 +519,287 @@ test_all_learners_train_predict_vimp <- function(learners,
         }
       })
       
+      
+      #####No censoring data sets##################################################
+      if(outcome_type %in% c("survival", "competing_risk")){
+        
+        # Set up non-censoring dataset.
+        no_censoring_data <- test.create_good_data_no_censoring_set(outcome_type)
+        
+        # Train the model.
+        model <- suppressWarnings(train(data=no_censoring_data,
+                                        cluster_method="none",
+                                        imputation_method="simple",
+                                        hyperparameter_list=hyperparameters,
+                                        learner=learner,
+                                        time_max=1832))
+        
+        # Create a trimmed model.
+        trimmed_model <- trim_model(model)
+        
+        # Test that models can be created.
+        test_fun(paste0("Model for ", outcome_type, " can be created using ", learner, " using a data set without censoring."), {
+          
+          # Test that the model was successfully created.
+          testthat::expect_equal(model_is_trained(model),
+                                 ifelse(learner %in% except_train, FALSE, TRUE))
+          
+          if(outcome_type == "survival"){
+            # Calibration info is present
+            testthat::expect_equal(has_calibration_info(model), TRUE)
+          }
+        })
+        
+        # Test that models can be used to predict the outcome.
+        test_fun(paste0("Sample predictions for ", outcome_type, " can be made using ", learner, " for a data set without censoring."), {
+          # Expect predictions to be made.
+          prediction_table <- suppressWarnings(.predict(model,
+                                                        data=no_censoring_data))
+          
+          # Test that the predictions were successfully made.
+          testthat::expect_equal(any_predictions_valid(prediction_table, outcome_type),
+                                 ifelse(learner %in% c(except_train, except_predict), FALSE, TRUE))
+          
+          # Expect that the trimmed model produces the same predictions.
+          prediction_table_trim <- suppressWarnings(.predict(trimmed_model,
+                                                             data=no_censoring_data))
+          
+          testthat::expect_equal(prediction_table,
+                                 prediction_table_trim,
+                                 ignore_attr=TRUE)
+        })
+        
+        
+        # Test that models can be used to predict survival probabilities.
+        test_fun(paste0("Sample survival predictions for ", outcome_type, " can be made using ", learner, " for a data set without censoring."), {
+          # Expect predictions to be made.
+          prediction_table <- suppressWarnings(.predict(model,
+                                                        data=no_censoring_data,
+                                                        type="survival_probability",
+                                                        time=1000))
+          
+          # Expect that the trimmed model produces the same predictions.
+          prediction_table_trim <- suppressWarnings(.predict(trimmed_model,
+                                                             data=no_censoring_data,
+                                                             type="survival_probability",
+                                                             time=1000))
+          
+          testthat::expect_equal(prediction_table,
+                                 prediction_table_trim,
+                                 ignore_attr=TRUE)
+          
+          # Test that the predictions were successfully made.
+          testthat::expect_equal(any_predictions_valid(prediction_table, outcome_type),
+                                 ifelse(learner %in% c(except_train, except_predict, except_predict_survival), FALSE, TRUE))
+          
+          # Expect predictions to be made.
+          prediction_table <- suppressWarnings(.predict(model,
+                                                        data=no_censoring_data,
+                                                        type="risk_stratification",
+                                                        time=1000))
+          
+          # Expect that the trimmed model produces the same predictions.
+          prediction_table_trim <- suppressWarnings(.predict(trimmed_model,
+                                                             data=no_censoring_data,
+                                                             type="risk_stratification",
+                                                             time=1000))
+          
+          testthat::expect_equal(prediction_table,
+                                 prediction_table_trim,
+                                 ignore_attr=TRUE)
+          
+          # Test that the predictions were successfully made.
+          testthat::expect_equal(any_predictions_valid(prediction_table, outcome_type), !learner %in% c(except_train, except_predict))
+        })
+      }
+      
+      #####Data set with one censored instance#####################################
+      if(outcome_type %in% c("survival", "competing_risk")){
+        
+        # Set up non-censoring dataset.
+        one_censoring_data <- test.create_good_data_one_censored_set(outcome_type)
+        
+        # Train the model.
+        model <- suppressWarnings(train(data=one_censoring_data,
+                                        cluster_method="none",
+                                        imputation_method="simple",
+                                        hyperparameter_list=hyperparameters,
+                                        learner=learner,
+                                        time_max=1832))
+        
+        # Create a trimmed model.
+        trimmed_model <- trim_model(model)
+        
+        # Test that models can be created.
+        test_fun(paste0("Model for ", outcome_type, " can be created using ", learner, " using a data set with one censored sample."), {
+          
+          # Test that the model was successfully created.
+          testthat::expect_equal(model_is_trained(model),
+                                 ifelse(learner %in% except_train, FALSE, TRUE))
+          
+          if(outcome_type == "survival"){
+            # Calibration info is present
+            testthat::expect_equal(has_calibration_info(model), TRUE)
+          }
+        })
+        
+        # Test that models can be used to predict the outcome.
+        test_fun(paste0("Sample predictions for ", outcome_type, " can be made using ", learner, " for a data set with one censored sample."), {
+          # Expect predictions to be made.
+          prediction_table <- suppressWarnings(.predict(model,
+                                                        data=one_censoring_data))
+          
+          # Test that the predictions were successfully made.
+          testthat::expect_equal(any_predictions_valid(prediction_table, outcome_type),
+                                 ifelse(learner %in% c(except_train, except_predict), FALSE, TRUE))
+          
+          # Expect that the trimmed model produces the same predictions.
+          prediction_table_trim <- suppressWarnings(.predict(trimmed_model,
+                                                             data=one_censoring_data))
+          
+          testthat::expect_equal(prediction_table,
+                                 prediction_table_trim,
+                                 ignore_attr=TRUE)
+        })
+        
+        
+        # Test that models can be used to predict survival probabilities.
+        test_fun(paste0("Sample survival predictions for ", outcome_type, " can be made using ", learner, " for a data set with one censored sample."), {
+          # Expect predictions to be made.
+          prediction_table <- suppressWarnings(.predict(model,
+                                                        data=one_censoring_data,
+                                                        type="survival_probability",
+                                                        time=1000))
+          
+          # Expect that the trimmed model produces the same predictions.
+          prediction_table_trim <- suppressWarnings(.predict(trimmed_model,
+                                                             data=one_censoring_data,
+                                                             type="survival_probability",
+                                                             time=1000))
+          
+          testthat::expect_equal(prediction_table,
+                                 prediction_table_trim,
+                                 ignore_attr=TRUE)
+          
+          # Test that the predictions were successfully made.
+          testthat::expect_equal(any_predictions_valid(prediction_table, outcome_type),
+                                 ifelse(learner %in% c(except_train, except_predict, except_predict_survival), FALSE, TRUE))
+          
+          # Expect predictions to be made.
+          prediction_table <- suppressWarnings(.predict(model,
+                                                        data=one_censoring_data,
+                                                        type="risk_stratification",
+                                                        time=1000))
+          
+          # Expect that the trimmed model produces the same predictions.
+          prediction_table_trim <- suppressWarnings(.predict(trimmed_model,
+                                                             data=one_censoring_data,
+                                                             type="risk_stratification",
+                                                             time=1000))
+          
+          testthat::expect_equal(prediction_table,
+                                 prediction_table_trim,
+                                 ignore_attr=TRUE)
+          
+          # Test that the predictions were successfully made.
+          testthat::expect_equal(any_predictions_valid(prediction_table, outcome_type), !learner %in% c(except_train, except_predict))
+        })
+      }
+      
+      #####Data set with few censored instances#####################################
+      if(outcome_type %in% c("survival", "competing_risk")){
+        
+        # Set up non-censoring dataset.
+        few_censoring_data <- test.create_good_data_few_censored_set(outcome_type)
+        
+        # Train the model.
+        model <- suppressWarnings(train(data=few_censoring_data,
+                                        cluster_method="none",
+                                        imputation_method="simple",
+                                        hyperparameter_list=hyperparameters,
+                                        learner=learner,
+                                        time_max=1832))
+        
+        # Create a trimmed model.
+        trimmed_model <- trim_model(model)
+        
+        # Test that models can be created.
+        test_fun(paste0("Model for ", outcome_type, " can be created using ", learner, " using a data set with few censored samples."), {
+          
+          # Test that the model was successfully created.
+          testthat::expect_equal(model_is_trained(model),
+                                 ifelse(learner %in% except_train, FALSE, TRUE))
+          
+          if(outcome_type == "survival"){
+            # Calibration info is present
+            testthat::expect_equal(has_calibration_info(model), TRUE)
+          }
+        })
+        
+        # Test that models can be used to predict the outcome.
+        test_fun(paste0("Sample predictions for ", outcome_type, " can be made using ", learner, " for a data set with few censored samples."), {
+          # Expect predictions to be made.
+          prediction_table <- suppressWarnings(.predict(model,
+                                                        data=few_censoring_data))
+          
+          # Test that the predictions were successfully made.
+          testthat::expect_equal(any_predictions_valid(prediction_table, outcome_type),
+                                 ifelse(learner %in% c(except_train, except_predict), FALSE, TRUE))
+          
+          # Expect that the trimmed model produces the same predictions.
+          prediction_table_trim <- suppressWarnings(.predict(trimmed_model,
+                                                             data=few_censoring_data))
+          
+          testthat::expect_equal(prediction_table,
+                                 prediction_table_trim,
+                                 ignore_attr=TRUE)
+        })
+        
+        
+        # Test that models can be used to predict survival probabilities.
+        test_fun(paste0("Sample survival predictions for ", outcome_type, " can be made using ", learner, " for a data set with few censored samples."), {
+          # Expect predictions to be made.
+          prediction_table <- suppressWarnings(.predict(model,
+                                                        data=few_censoring_data,
+                                                        type="survival_probability",
+                                                        time=1000))
+          
+          # Expect that the trimmed model produces the same predictions.
+          prediction_table_trim <- suppressWarnings(.predict(trimmed_model,
+                                                             data=few_censoring_data,
+                                                             type="survival_probability",
+                                                             time=1000))
+          
+          testthat::expect_equal(prediction_table,
+                                 prediction_table_trim,
+                                 ignore_attr=TRUE)
+          
+          # Test that the predictions were successfully made.
+          testthat::expect_equal(any_predictions_valid(prediction_table, outcome_type),
+                                 ifelse(learner %in% c(except_train, except_predict, except_predict_survival), FALSE, TRUE))
+          
+          # Expect predictions to be made.
+          prediction_table <- suppressWarnings(.predict(model,
+                                                        data=few_censoring_data,
+                                                        type="risk_stratification",
+                                                        time=1000))
+          
+          # Expect that the trimmed model produces the same predictions.
+          prediction_table_trim <- suppressWarnings(.predict(trimmed_model,
+                                                             data=few_censoring_data,
+                                                             type="risk_stratification",
+                                                             time=1000))
+          
+          testthat::expect_equal(prediction_table,
+                                 prediction_table_trim,
+                                 ignore_attr=TRUE)
+          
+          # Test that the predictions were successfully made.
+          testthat::expect_equal(any_predictions_valid(prediction_table, outcome_type), !learner %in% c(except_train, except_predict))
+        })
+      }
     }
-    
   }
-  
 }
 
 
@@ -726,10 +1003,95 @@ test_all_vimp_methods <- function(vimp_methods,
         testthat::expect_equal(is_empty(vimp_table), TRUE)
       })
       
+      if(outcome_type %in% c("survival", "competing_risk")){
+        #####No censoring data set########################################################
+        
+        no_censoring_data <- test.create_good_data_no_censoring_set(outcome_type)
+        
+        # Process dataset.
+        vimp_object <- prepare_vimp_object(data=no_censoring_data,
+                                           vimp_method=vimp_method,
+                                           vimp_method_parameter_list=hyperparameters,
+                                           outcome_type=outcome_type,
+                                           cluster_method="none",
+                                           imputation_method="simple")
+        
+        
+        test_fun(paste0("Variable importance can be computed for ", outcome_type, " with the ", vimp_method, " using a data set without censoring."), {
+          
+          vimp_table <- suppressWarnings(.vimp(vimp_object, no_censoring_data))
+          
+          # Get the number of features
+          n_features <- get_n_features(full_data)
+          
+          # Expect that the vimp table is not empty..
+          testthat::expect_equal(nrow(vimp_table) > 0 & nrow(vimp_table) <= n_features, TRUE)
+          
+          # Expect that the names in the vimp table correspond to those of the
+          # features.
+          testthat::expect_equal(all(vimp_table$name %in% get_feature_columns(full_data)), TRUE)
+        })
+        
+        
+        #####Data set with one censored instance########################################################
+        
+        one_censored_data <- test.create_good_data_one_censored_set(outcome_type)
+        
+        # Process dataset.
+        vimp_object <- prepare_vimp_object(data=one_censored_data,
+                                           vimp_method=vimp_method,
+                                           vimp_method_parameter_list=hyperparameters,
+                                           outcome_type=outcome_type,
+                                           cluster_method="none",
+                                           imputation_method="simple")
+        
+        
+        test_fun(paste0("Variable importance can be computed for ", outcome_type, " with the ", vimp_method, " using a data set with one censored instance."), {
+          
+          vimp_table <- suppressWarnings(.vimp(vimp_object, one_censored_data))
+          
+          # Get the number of features
+          n_features <- get_n_features(full_data)
+          
+          # Expect that the vimp table is not empty..
+          testthat::expect_equal(nrow(vimp_table) > 0 & nrow(vimp_table) <= n_features, TRUE)
+          
+          # Expect that the names in the vimp table correspond to those of the
+          # features.
+          testthat::expect_equal(all(vimp_table$name %in% get_feature_columns(full_data)), TRUE)
+        })
+        
+        
+        #####Data set with few censored instances########################################################
+        
+        few_censored_data <- test.create_good_data_few_censored_set(outcome_type)
+        
+        # Process dataset.
+        vimp_object <- prepare_vimp_object(data=few_censored_data,
+                                           vimp_method=vimp_method,
+                                           vimp_method_parameter_list=hyperparameters,
+                                           outcome_type=outcome_type,
+                                           cluster_method="none",
+                                           imputation_method="simple")
+        
+        
+        test_fun(paste0("Variable importance can be computed for ", outcome_type, " with the ", vimp_method, " using a data set with few censored instances."), {
+          
+          vimp_table <- suppressWarnings(.vimp(vimp_object, few_censored_data))
+          
+          # Get the number of features
+          n_features <- get_n_features(full_data)
+          
+          # Expect that the vimp table is not empty..
+          testthat::expect_equal(nrow(vimp_table) > 0 & nrow(vimp_table) <= n_features, TRUE)
+          
+          # Expect that the names in the vimp table correspond to those of the
+          # features.
+          testthat::expect_equal(all(vimp_table$name %in% get_feature_columns(full_data)), TRUE)
+        })
+      }
     }
-    
   }
-  
 }
 
 
@@ -785,6 +1147,9 @@ test_all_metrics <- function(metrics,
     one_feature_invariant_data <- test.create_one_feature_invariant_data_set(outcome_type)
     empty_data <- test.create_empty_data_set(outcome_type)
     bad_data <- test.create_bad_data_set(outcome_type)
+    no_censoring_data <- test.create_good_data_no_censoring_set(outcome_type)
+    one_censored_data <- test.create_good_data_one_censored_set(outcome_type)
+    few_censored_data <- test.create_good_data_few_censored_set(outcome_type)
     
     # Set exceptions per outcome type.
     .except_one_sample <- except_one_sample
@@ -827,7 +1192,7 @@ test_all_metrics <- function(metrics,
                                  object=model)
       
       # Test that metric values can be computed for the full model.
-      testthat::test_that(paste0("1. Model performance for ", outcome_type, " outcomes can be assessed by the ",
+      testthat::test_that(paste0("1A. Model performance for ", outcome_type, " outcomes can be assessed by the ",
                                  metric_object@name, " (", metric_object@metric, ") metric for a complete data set."), {
                                    
                                    # Expect predictions to be made.
@@ -870,6 +1235,146 @@ test_all_metrics <- function(metrics,
                                                                               upper=1.0),
                                                           TRUE)
                                  })
+      
+      if(outcome_type %in% c("survival", "competing_risk")){
+        # Test that metric values can be computed for the full model, but with
+        # data without censored instances.
+        testthat::test_that(paste0("1B. Model performance for ", outcome_type, " outcomes can be assessed by the ",
+                                   metric_object@name, " (", metric_object@metric, ") metric for a data set without censoring."), {
+                                     
+                                     # Expect predictions to be made.
+                                     prediction_table <- suppressWarnings(.predict(model, data=no_censoring_data))
+                                     
+                                     # Test that the predictions were successfully made.
+                                     testthat::expect_equal(any_predictions_valid(prediction_table, outcome_type), TRUE)
+                                     
+                                     if(outcome_type %in% c("binomial", "multinomial")){
+                                       # Expect that the predicted_class column is
+                                       # a factor.
+                                       testthat::expect_s3_class(prediction_table$predicted_class, "factor")
+                                       
+                                       # Expect that the class levels are the same
+                                       # as those in the model.
+                                       testthat::expect_equal(levels(prediction_table$predicted_class), get_outcome_class_levels(model))
+                                     }
+                                     
+                                     # Compute a score.
+                                     score <- compute_metric_score(metric=metric_object,
+                                                                   data=prediction_table,
+                                                                   object=model)
+                                     
+                                     # Compute an objective score.
+                                     objective_score <- compute_objective_score(metric=metric_object,
+                                                                                data=prediction_table,
+                                                                                object=model)
+                                     
+                                     # Expect that the score is a finite,
+                                     # non-missing number.
+                                     testthat::expect_equal(data.table::between(score,
+                                                                                lower=metric_object@value_range[1],
+                                                                                upper=metric_object@value_range[2]),
+                                                            TRUE)
+                                     
+                                     # Expect that the objective score is a
+                                     # non-missing number in the range [-1, 1].
+                                     testthat::expect_equal(data.table::between(objective_score,
+                                                                                lower=-1.0,
+                                                                                upper=1.0),
+                                                            TRUE)
+                                   })
+        
+        # Test that metric values can be computed for the full model, but with
+        # data with one censored instance.
+        testthat::test_that(paste0("1C. Model performance for ", outcome_type, " outcomes can be assessed by the ",
+                                   metric_object@name, " (", metric_object@metric, ") metric for a data set with one censored insteances."), {
+                                     
+                                     # Expect predictions to be made.
+                                     prediction_table <- suppressWarnings(.predict(model, data=one_censored_data))
+                                     
+                                     # Test that the predictions were successfully made.
+                                     testthat::expect_equal(any_predictions_valid(prediction_table, outcome_type), TRUE)
+                                     
+                                     if(outcome_type %in% c("binomial", "multinomial")){
+                                       # Expect that the predicted_class column is
+                                       # a factor.
+                                       testthat::expect_s3_class(prediction_table$predicted_class, "factor")
+                                       
+                                       # Expect that the class levels are the same
+                                       # as those in the model.
+                                       testthat::expect_equal(levels(prediction_table$predicted_class), get_outcome_class_levels(model))
+                                     }
+                                     
+                                     # Compute a score.
+                                     score <- compute_metric_score(metric=metric_object,
+                                                                   data=prediction_table,
+                                                                   object=model)
+                                     
+                                     # Compute an objective score.
+                                     objective_score <- compute_objective_score(metric=metric_object,
+                                                                                data=prediction_table,
+                                                                                object=model)
+                                     
+                                     # Expect that the score is a finite,
+                                     # non-missing number.
+                                     testthat::expect_equal(data.table::between(score,
+                                                                                lower=metric_object@value_range[1],
+                                                                                upper=metric_object@value_range[2]),
+                                                            TRUE)
+                                     
+                                     # Expect that the objective score is a
+                                     # non-missing number in the range [-1, 1].
+                                     testthat::expect_equal(data.table::between(objective_score,
+                                                                                lower=-1.0,
+                                                                                upper=1.0),
+                                                            TRUE)
+                                   })
+        
+        # Test that metric values can be computed for the full model, but with
+        # data with few censored instances.
+        testthat::test_that(paste0("1D. Model performance for ", outcome_type, " outcomes can be assessed by the ",
+                                   metric_object@name, " (", metric_object@metric, ") metric for a data set with few censored samples."), {
+                                     
+                                     # Expect predictions to be made.
+                                     prediction_table <- suppressWarnings(.predict(model, data=few_censored_data))
+                                     
+                                     # Test that the predictions were successfully made.
+                                     testthat::expect_equal(any_predictions_valid(prediction_table, outcome_type), TRUE)
+                                     
+                                     if(outcome_type %in% c("binomial", "multinomial")){
+                                       # Expect that the predicted_class column is
+                                       # a factor.
+                                       testthat::expect_s3_class(prediction_table$predicted_class, "factor")
+                                       
+                                       # Expect that the class levels are the same
+                                       # as those in the model.
+                                       testthat::expect_equal(levels(prediction_table$predicted_class), get_outcome_class_levels(model))
+                                     }
+                                     
+                                     # Compute a score.
+                                     score <- compute_metric_score(metric=metric_object,
+                                                                   data=prediction_table,
+                                                                   object=model)
+                                     
+                                     # Compute an objective score.
+                                     objective_score <- compute_objective_score(metric=metric_object,
+                                                                                data=prediction_table,
+                                                                                object=model)
+                                     
+                                     # Expect that the score is a finite,
+                                     # non-missing number.
+                                     testthat::expect_equal(data.table::between(score,
+                                                                                lower=metric_object@value_range[1],
+                                                                                upper=metric_object@value_range[2]),
+                                                            TRUE)
+                                     
+                                     # Expect that the objective score is a
+                                     # non-missing number in the range [-1, 1].
+                                     testthat::expect_equal(data.table::between(objective_score,
+                                                                                lower=-1.0,
+                                                                                upper=1.0),
+                                                            TRUE)
+                                   })
+      }
       
       # Test that metric values cannot be computed for a one-sample dataset.
       testthat::test_that(paste0("2. Model performance for ", outcome_type, " outcomes ",
@@ -1794,9 +2299,12 @@ test_plots <- function(plot_function,
                        outcome_type_available=c("count", "continuous", "binomial", "multinomial", "survival"),
                        always_available=FALSE,
                        except_one_feature=FALSE,
+                       except_failed_survival_prediction=TRUE,
+                       except_prospective=FALSE,
                        ...,
                        plot_args=list(),
                        test_specific_config=FALSE,
+                       create_novelty_detector=FALSE,
                        debug=FALSE,
                        parallel=waiver()){
   
@@ -1831,8 +2339,8 @@ test_plots <- function(plot_function,
   }
   
   # Iterate over the outcome type.
-  for(outcome_type in c("count", "continuous", "binomial", "multinomial", "survival")){
-    
+  for(outcome_type in c("survival", "binomial", "multinomial", "count", "continuous")){
+  
     # Obtain data.
     full_data <- test.create_good_data_set(outcome_type)
     identical_sample_data <- test.create_all_identical_data_set(outcome_type)
@@ -1842,6 +2350,10 @@ test_plots <- function(plot_function,
     one_feature_invariant_data <- test.create_one_feature_invariant_data_set(outcome_type)
     empty_data <- test.create_empty_data_set(outcome_type)
     multi_data <- test_create_multiple_synthetic_series(outcome_type=outcome_type)
+    no_censoring_data <- test.create_good_data_no_censoring_set(outcome_type)
+    one_censored_data <- test.create_good_data_one_censored_set(outcome_type)
+    few_censored_data <- test.create_good_data_few_censored_set(outcome_type)
+    prospective_data <- test.create_prospective_data_set(outcome_type)
     
     # Set exceptions per outcome type.
     .always_available <- always_available
@@ -1849,6 +2361,16 @@ test_plots <- function(plot_function,
     
     .except_one_feature <- except_one_feature
     if(is.character(.except_one_feature)) .except_one_feature <- any(.except_one_feature == outcome_type)
+    
+    .except_failed_survival_prediction <- except_failed_survival_prediction
+    if(is.character(.except_failed_survival_prediction)) .except_failed_survival_prediction <- any(.except_failed_survival_prediction == outcome_type)
+    
+    .except_prospective <- except_prospective
+    if(is.character(.except_prospective)) .except_prospective <- any(.except_prospective == outcome_type)
+    
+    if(.always_available){
+      .except_one_feature <- .except_prospective <- .except_failed_survival_prediction <- FALSE
+    }
     
     # Parse hyperparameter list
     hyperparameters <- list("sign_size"=get_n_features(full_data),
@@ -1858,6 +2380,7 @@ test_plots <- function(plot_function,
                                             "binomial"="binomial",
                                             "multinomial"="multinomial",
                                             "survival"="cox"))
+    
     
     #####Full data set########################################################
 
@@ -1869,7 +2392,8 @@ test_plots <- function(plot_function,
                                            fs_method="mim",
                                            hyperparameter_list=hyperparameters,
                                            learner="lasso",
-                                           time_max=1832))
+                                           time_max=1832,
+                                           create_novelty_detector=create_novelty_detector))
 
     model_full_2 <- model_full_1
     model_full_2@fs_method <- "mifs"
@@ -1911,6 +2435,38 @@ test_plots <- function(plot_function,
     # tested.
     if(test_specific_config) next()
     
+    # Create familiar data objects.
+    data_prospective_full_1 <- as_familiar_data(object=model_full_1,
+                                                data=prospective_data,
+                                                data_element=data_element,
+                                                cl=cl,
+                                                ...)
+    
+    # Create a completely intact dataset.
+    test_fun(paste0("2. Plots for ", outcome_type, " outcomes ",
+                    ifelse(outcome_type %in% outcome_type_available & !.except_prospective, "can", "cannot"),
+                    " be created for a prospective data set without known outcome."), {
+                      
+                      object <- list(data_prospective_full_1)
+                      object <- mapply(set_object_name, object, c("prospective"))
+                      
+                      collection <- suppressWarnings(as_familiar_collection(object, familiar_data_names=c("prospective")))
+                      
+                      plot_list <- do.call(plot_function, args=c(list("object"=collection), plot_args))
+                      which_present <- .test_which_plot_present(plot_list)
+                      
+                      if(outcome_type %in% outcome_type_available & !.except_prospective){
+                        testthat::expect_equal(all(which_present), TRUE) 
+                        
+                      } else if(!outcome_type %in% outcome_type_available){
+                        testthat::expect_equal(all(!which_present), TRUE)
+                        
+                      } else {
+                        testthat::expect_equal(any(!which_present), TRUE)
+                      }
+                    })
+    
+    
     # Ensemble from multiple datasets.
     multi_model_set <- suppressWarnings(lapply(multi_data,
                                                train,
@@ -1920,7 +2476,8 @@ test_plots <- function(plot_function,
                                                hyperparameter_list=hyperparameters,
                                                learner="lasso",
                                                cluster_similarity_threshold=0.7,
-                                               time_max=60))
+                                               time_max=60,
+                                               create_novelty_detector=create_novelty_detector))
     
     # Create data from ensemble of multiple models
     multi_model_full <- as_familiar_data(object=multi_model_set,
@@ -1962,7 +2519,7 @@ test_plots <- function(plot_function,
                                               ...)
     
     # Create a dataset with a missing quadrant.
-    test_fun(paste0("2. Plots for ", outcome_type, " outcomes ",
+    test_fun(paste0("3. Plots for ", outcome_type, " outcomes ",
                     ifelse(outcome_type %in% outcome_type_available, "can", "cannot"),
                     " be created for a dataset with some missing data."), {
                       
@@ -1983,7 +2540,7 @@ test_plots <- function(plot_function,
                     })
     
     # Create a dataset with all missing quadrants
-    test_fun(paste0("3. Plots for ", outcome_type, " outcomes ",
+    test_fun(paste0("4. Plots for ", outcome_type, " outcomes ",
                     ifelse(.always_available, "can", "cannot"),
                     " be created for a dataset with completely missing data."), {
                       
@@ -2004,7 +2561,7 @@ test_plots <- function(plot_function,
                     })
     
     # Create dataset with one-sample quadrants for validation
-    test_fun(paste0("4. Plots for ", outcome_type, " outcomes ",
+    test_fun(paste0("5. Plots for ", outcome_type, " outcomes ",
                     ifelse(outcome_type %in% outcome_type_available, "can", "cannot"),
                     " be created for a dataset where some data only have one sample."), {
                       
@@ -2025,7 +2582,7 @@ test_plots <- function(plot_function,
                     })
     
     # Create dataset with some quadrants with identical data
-    test_fun(paste0("5. Plots for ", outcome_type, " outcomes ",
+    test_fun(paste0("6. Plots for ", outcome_type, " outcomes ",
                     ifelse(outcome_type %in% outcome_type_available, "can", "cannot"),
                     " be created for a dataset where some data only have identical samples."), {
                       
@@ -2045,7 +2602,7 @@ test_plots <- function(plot_function,
                       }
                     })
     
-    test_fun(paste0("6. Plots for ", outcome_type, " outcomes ",
+    test_fun(paste0("7. Plots for ", outcome_type, " outcomes ",
                     ifelse(outcome_type %in% outcome_type_available, "can", "cannot"),
                     " be created for a dataset created from an ensemble of multiple models."), {
                       
@@ -2069,12 +2626,13 @@ test_plots <- function(plot_function,
     
     # Train the model.
     model_one_1 <- suppressWarnings(train(data=one_feature_data,
-                                           cluster_method="none",
-                                           imputation_method="simple",
-                                           fs_method="mim",
-                                           hyperparameter_list=hyperparameters,
-                                           learner="lasso",
-                                           time_max=1832))
+                                          cluster_method="none",
+                                          imputation_method="simple",
+                                          fs_method="mim",
+                                          hyperparameter_list=hyperparameters,
+                                          learner="lasso",
+                                          time_max=1832,
+                                          create_novelty_detector=create_novelty_detector))
     
     model_one_2 <- model_one_1
     model_one_2@fs_method <- "mifs"
@@ -2089,7 +2647,7 @@ test_plots <- function(plot_function,
     
     
     # Create a completely intact, one sample dataset.
-    test_fun(paste0("7. Plots for ", outcome_type, " outcomes ",
+    test_fun(paste0("8. Plots for ", outcome_type, " outcomes ",
                     ifelse(outcome_type %in% outcome_type_available && !.except_one_feature, "can", "cannot"),
                     " be created for a complete one-feature data set."), {
                       
@@ -2113,7 +2671,7 @@ test_plots <- function(plot_function,
                     })
     
     # Create a dataset with a one-sample quadrant.
-    test_fun(paste0("8. Plots for ", outcome_type, " outcomes ",
+    test_fun(paste0("9. Plots for ", outcome_type, " outcomes ",
                     ifelse(outcome_type %in% outcome_type_available && !.except_one_feature, "can", "cannot"),
                     " be created for a dataset with some one-sample data."), {
                       
@@ -2137,7 +2695,7 @@ test_plots <- function(plot_function,
                     })
     
     # Create a dataset with some identical data.
-    test_fun(paste0("9. Plots for ", outcome_type, " outcomes ",
+    test_fun(paste0("10. Plots for ", outcome_type, " outcomes ",
                     ifelse(outcome_type %in% outcome_type_available && !.except_one_feature, "can", "cannot"),
                     " be created for a dataset with some invariant data."), {
                       
@@ -2159,6 +2717,101 @@ test_plots <- function(plot_function,
                         testthat::expect_equal(any(!which_present), TRUE)
                       }
                     })
+    
+    #####Data set with limited censoring########################################
+    if(outcome_type %in% c("survival", "competing_risk")){
+      # Train the model.
+      model_cens_1 <- suppressWarnings(train(cl=cl,
+                                             data=no_censoring_data,
+                                             cluster_method="none",
+                                             imputation_method="simple",
+                                             fs_method="mim",
+                                             hyperparameter_list=hyperparameters,
+                                             learner="lasso",
+                                             time_max=1832,
+                                             create_novelty_detector=create_novelty_detector))
+      
+      model_cens_2 <- suppressWarnings(train(cl=cl,
+                                             data=one_censored_data,
+                                             cluster_method="none",
+                                             imputation_method="simple",
+                                             fs_method="mim",
+                                             hyperparameter_list=hyperparameters,
+                                             learner="lasso",
+                                             time_max=1832,
+                                             create_novelty_detector=create_novelty_detector))
+      
+      model_cens_3 <- suppressWarnings(train(cl=cl,
+                                             data=few_censored_data,
+                                             cluster_method="none",
+                                             imputation_method="simple",
+                                             fs_method="mim",
+                                             hyperparameter_list=hyperparameters,
+                                             learner="lasso",
+                                             time_max=1832,
+                                             create_novelty_detector=create_novelty_detector))
+      
+      data_cens_1 <- as_familiar_data(object=model_cens_1, data=no_censoring_data, data_element=data_element, cl=cl, ...)
+      data_cens_2 <- as_familiar_data(object=model_cens_2, data=one_censored_data, data_element=data_element, cl=cl, ...)
+      data_cens_3 <- as_familiar_data(object=model_cens_3, data=few_censored_data, data_element=data_element, cl=cl, ...)
+      
+      # Create a dataset with some identical data.
+      test_fun(paste0("11. Plots for ", outcome_type, " outcomes ",
+                      ifelse(outcome_type %in% outcome_type_available, "can", "cannot"),
+                      " be created for a data set that includes no or limited censoring."), {
+                        
+                        object <- list(data_cens_1, data_cens_2, data_cens_3)
+                        object <- mapply(set_object_name, object, c("no_censoring", "one_censored", "few_censored"))
+                        
+                        collection <- suppressWarnings(as_familiar_collection(object, familiar_data_names=c("no_censoring", "one_censored", "few_censored")))
+                        
+                        plot_list <- do.call(plot_function, args=c(list("object"=collection), plot_args))
+                        which_present <- .test_which_plot_present(plot_list)
+                        
+                        if(outcome_type %in% outcome_type_available){
+                          testthat::expect_equal(all(which_present), TRUE)
+                          
+                        } else {
+                          testthat::expect_equal(all(!which_present), TRUE)
+                        }
+                      })
+    }
+    
+    ##### Model with missing survival predictions ##############################
+    if(outcome_type %in% c("survival", "competing_risk")){
+      # Train the model.
+      model_failed_predictions <- suppressWarnings(train(cl=cl,
+                                                         data=full_data,
+                                                         cluster_method="none",
+                                                         imputation_method="simple",
+                                                         fs_method="mim",
+                                                         hyperparameter_list=hyperparameters,
+                                                         learner="lasso_test",
+                                                         time_max=1832,
+                                                         create_novelty_detector=create_novelty_detector))
+      
+      failed_prediction_data <- as_familiar_data(object=model_failed_predictions, data=full_data, data_element=data_element, cl=cl, ...)
+      
+      test_fun(paste0("12. Plots for ", outcome_type, " outcomes ",
+                      ifelse(outcome_type %in% outcome_type_available && .except_failed_survival_prediction, "can", "cannot"),
+                      " be created for models that do not allow for predicting survival probabilitiies."), {
+                        
+                        collection <- suppressWarnings(as_familiar_collection(failed_prediction_data, familiar_data_names=c("no_survival_predictions")))
+                        
+                        plot_list <- do.call(plot_function, args=c(list("object"=collection), plot_args))
+                        which_present <- .test_which_plot_present(plot_list)
+                        
+                        if(outcome_type %in% outcome_type_available & !.except_failed_survival_prediction){
+                          testthat::expect_equal(all(which_present), TRUE) 
+                          
+                        } else if(!outcome_type %in% outcome_type_available){
+                          testthat::expect_equal(all(!which_present), TRUE)
+                          
+                        } else {
+                          testthat::expect_equal(any(!which_present), TRUE)
+                        }
+                      })
+    }
   }
 }
 
@@ -2169,6 +2822,7 @@ test_plot_ordering <- function(plot_function,
                                outcome_type_available=c("count", "continuous", "binomial", "multinomial", "survival"),
                                ...,
                                plot_args=list(),
+                               create_novelty_detector=FALSE,
                                debug=FALSE,
                                parallel=waiver()){
   
@@ -2227,7 +2881,8 @@ test_plot_ordering <- function(plot_function,
                                                  fs_method="mim",
                                                  hyperparameter_list=hyperparameters_lasso,
                                                  learner="lasso",
-                                                 time_max=1832))
+                                                 time_max=1832,
+                                                 create_novelty_detector=create_novelty_detector))
     
     model_full_lasso_2 <- model_full_lasso_1
     model_full_lasso_2@fs_method <- "mifs"
@@ -2249,7 +2904,8 @@ test_plot_ordering <- function(plot_function,
                                                fs_method="mim",
                                                hyperparameter_list=hyperparameters_glm,
                                                learner="glm",
-                                               time_max=1832))
+                                               time_max=1832,
+                                               create_novelty_detector=create_novelty_detector))
     
     model_full_glm_2 <- model_full_glm_1
     model_full_glm_2@fs_method <- "mifs"
@@ -2270,7 +2926,7 @@ test_plot_ordering <- function(plot_function,
                       object <- list(data_good_full_lasso_1, data_empty_lasso_2, data_good_full_lasso_1, data_good_full_lasso_2,
                                      data_good_full_glm_1, data_good_full_glm_2, data_empty_glm_1, data_good_full_glm_2)
                       object <- mapply(set_object_name, object, c("development_lasso_1", "development_lasso_2", "validation_lasso_1", "validation_lasso_2",
-                                                                     "development_glm_1", "development_glm_2", "validation_glm_1", "validation_glm_2"))
+                                                                  "development_glm_1", "development_glm_2", "validation_glm_1", "validation_glm_2"))
                       
                       collection <- suppressWarnings(as_familiar_collection(object, familiar_data_names=c("development", "development", "validation", "validation",
                                                                                                           "development", "development", "validation", "validation")))
@@ -2289,17 +2945,21 @@ test_plot_ordering <- function(plot_function,
 }
 
 
+
 test_export <- function(export_function,
                         data_element,
                         outcome_type_available=c("count", "continuous", "binomial", "multinomial", "survival"),
                         always_available=FALSE,
                         except_one_feature=FALSE,
+                        except_prospective=FALSE,
+                        except_failed_survival_prediction=TRUE,
                         ...,
                         export_args=list(),
                         test_specific_config=FALSE,
                         n_models=1L,
                         create_novelty_detector=FALSE,
-                        debug=FALSE){
+                        debug=FALSE,
+                        parallel=waiver()){
   
   if(debug){
     test_fun <- debug_test_that
@@ -2308,6 +2968,27 @@ test_export <- function(export_function,
     test_fun <- testthat::test_that
   }
   
+  # Set parallelisation.
+  if(is.waive(parallel)) parallel <- !debug
+  
+  if(parallel){
+    # Set options.
+    # Disable randomForestSRC OpenMP core use.
+    options(rf.cores=as.integer(1))
+    on.exit(options(rf.cores=-1L), add=TRUE)
+    
+    # Disable multithreading on data.table to prevent reduced performance due to
+    # resource collisions with familiar parallelisation.
+    data.table::setDTthreads(1L)
+    on.exit(data.table::setDTthreads(0L), add=TRUE)
+    
+    # Start local cluster in the overall process.
+    cl <- .test_start_cluster(n_cores=4L)
+    on.exit(.terminate_cluster(cl), add=TRUE)
+    
+  } else {
+    cl <- NULL
+  }
   
   # Iterate over the outcome type.
   for(outcome_type in c("count", "continuous", "binomial", "multinomial", "survival")){
@@ -2321,6 +3002,10 @@ test_export <- function(export_function,
     one_feature_invariant_data <- test.create_one_feature_invariant_data_set(outcome_type)
     empty_data <- test.create_empty_data_set(outcome_type)
     multi_data <- test_create_multiple_synthetic_series(outcome_type=outcome_type)
+    no_censoring_data <- test.create_good_data_no_censoring_set(outcome_type)
+    one_censored_data <- test.create_good_data_one_censored_set(outcome_type)
+    few_censored_data <- test.create_good_data_few_censored_set(outcome_type)
+    prospective_data <- test.create_prospective_data_set(outcome_type)
     
     # Set exceptions per outcome type.
     .always_available <- always_available
@@ -2328,6 +3013,16 @@ test_export <- function(export_function,
     
     .except_one_feature <- except_one_feature
     if(is.character(.except_one_feature)) .except_one_feature <- any(.except_one_feature == outcome_type)
+    
+    .except_prospective <- except_prospective
+    if(is.character(.except_prospective)) .except_prospective <- any(.except_prospective == outcome_type)
+    
+    .except_failed_survival_prediction <- except_failed_survival_prediction
+    if(is.character(.except_failed_survival_prediction)) .except_failed_survival_prediction <- any(.except_failed_survival_prediction == outcome_type)
+    
+    if(.always_available){
+      .except_one_feature <- .except_prospective <- .except_failed_survival_prediction <- FALSE
+    }
     
     # Parse hyperparameter list
     hyperparameters <- list("sign_size"=get_n_features(full_data),
@@ -2342,7 +3037,8 @@ test_export <- function(export_function,
     
     if(n_models == 1){
       # Train the model.
-      model_full_1 <- suppressWarnings(train(data=full_data,
+      model_full_1 <- suppressWarnings(train(cl=cl,
+                                             data=full_data,
                                              cluster_method="none",
                                              imputation_method="simple",
                                              fs_method="mim",
@@ -2360,15 +3056,16 @@ test_export <- function(export_function,
       model_full_2 <- list()
       
       for(ii in seq_len(n_models)){
-        temp_model_1 <- suppressWarnings(train(data=full_data,
-                                             cluster_method="none",
-                                             imputation_method="simple",
-                                             fs_method="mim",
-                                             hyperparameter_list=hyperparameters,
-                                             learner="lasso",
-                                             time_max=1832,
-                                             create_bootstrap=TRUE,
-                                             create_novelty_detector=create_novelty_detector))
+        temp_model_1 <- suppressWarnings(train(cl=cl,
+                                               data=full_data,
+                                               cluster_method="none",
+                                               imputation_method="simple",
+                                               fs_method="mim",
+                                               hyperparameter_list=hyperparameters,
+                                               learner="lasso",
+                                               time_max=1832,
+                                               create_bootstrap=TRUE,
+                                               create_novelty_detector=create_novelty_detector))
         
         temp_model_2 <- temp_model_1
         temp_model_2@fs_method <- "mifs"
@@ -2383,11 +3080,13 @@ test_export <- function(export_function,
     data_good_full_1 <- as_familiar_data(object=model_full_1,
                                          data=full_data,
                                          data_element=data_element,
+                                         cl=cl,
                                          ...)
     
     data_good_full_2 <- as_familiar_data(object=model_full_2,
                                          data=full_data,
                                          data_element=data_element,
+                                         cl=cl,
                                          ...)
     
     # Create a completely intact dataset.
@@ -2417,6 +3116,39 @@ test_export <- function(export_function,
     # tested.
     if(test_specific_config) next()
     
+    data_prospective_full_1 <- as_familiar_data(object=model_full_1,
+                                                data=prospective_data,
+                                                data_element=data_element,
+                                                cl=cl,
+                                                ...)
+    
+    # Test prospective data set..
+    test_fun(paste0("2. Export data for ", outcome_type, " outcomes ",
+                    ifelse(outcome_type %in% outcome_type_available & !.except_prospective, "can", "cannot"),
+                    " be created for a prospective data set without known outcome."), {
+                      
+                      object <- list(data_prospective_full_1)
+                      object <- mapply(set_object_name, object, c("prospective"))
+                      
+                      collection <- suppressWarnings(as_familiar_collection(object, familiar_data_names=c("prospective")))
+                      
+                      data_elements <- do.call(export_function, args=c(list("object"=collection), export_args))
+                      which_present <- .test_which_data_element_present(data_elements, outcome_type=outcome_type)
+                      
+                      if(outcome_type %in% outcome_type_available & !.except_prospective){
+                        testthat::expect_equal(all(which_present), TRUE) 
+                        
+                        if(debug) show(data_elements)
+                        
+                      } else if(!outcome_type %in% outcome_type_available){
+                        testthat::expect_equal(all(!which_present), TRUE)
+                        
+                      } else {
+                        testthat::expect_equal(any(!which_present), TRUE)
+                      }
+                    })
+    
+    
     # Ensemble from multiple datasets.
     multi_model_set <- suppressWarnings(lapply(multi_data,
                                                train,
@@ -2433,36 +3165,43 @@ test_export <- function(export_function,
     multi_model_full <- as_familiar_data(object=multi_model_set,
                                          data=multi_data[[1]],
                                          data_element=data_element,
+                                         cl=cl,
                                          ...)
     
     # Create additional familiar data objects.
     data_empty_full_1 <- as_familiar_data(object=model_full_1,
                                           data=empty_data,
                                           data_element=data_element,
+                                          cl=cl,
                                           ...)
     data_empty_full_2 <- as_familiar_data(object=model_full_2,
                                           data=empty_data,
                                           data_element=data_element,
+                                          cl=cl,
                                           ...)
     data_one_sample_full_1 <- as_familiar_data(object=model_full_1,
                                                data=full_one_sample_data,
                                                data_element=data_element,
+                                               cl=cl,
                                                ...)
     data_one_sample_full_2 <- as_familiar_data(object=model_full_2,
                                                data=full_one_sample_data,
                                                data_element=data_element,
+                                               cl=cl,
                                                ...)
     data_identical_full_1 <- as_familiar_data(object=model_full_1,
                                               data=identical_sample_data,
                                               data_element=data_element,
+                                              cl=cl,
                                               ...)
     data_identical_full_2 <- as_familiar_data(object=model_full_2,
                                               data=identical_sample_data,
                                               data_element=data_element,
+                                              cl=cl,
                                               ...)
     
     # Create a dataset with a missing quadrant.
-    test_fun(paste0("2. Export data for ", outcome_type, " outcomes ",
+    test_fun(paste0("3. Export data for ", outcome_type, " outcomes ",
                     ifelse(outcome_type %in% outcome_type_available, "can", "cannot"),
                     " be created for a dataset with some missing data."), {
                       
@@ -2485,7 +3224,7 @@ test_export <- function(export_function,
                     })
     
     # Create a dataset with all missing quadrants
-    test_fun(paste0("3. Export data for ", outcome_type, " outcomes ",
+    test_fun(paste0("4. Export data for ", outcome_type, " outcomes ",
                     ifelse(.always_available, "can", "cannot"),
                     " be created for a dataset with completely missing data."), {
                       
@@ -2508,7 +3247,7 @@ test_export <- function(export_function,
                     })
     
     # Create dataset with one-sample quadrants for validation
-    test_fun(paste0("4. Export data for ", outcome_type, " outcomes ",
+    test_fun(paste0("5. Export data for ", outcome_type, " outcomes ",
                     ifelse(outcome_type %in% outcome_type_available, "can", "cannot"),
                     " be created for a dataset where some data only have one sample."), {
                       
@@ -2531,7 +3270,7 @@ test_export <- function(export_function,
                     })
     
     # Create dataset with some quadrants with identical data
-    test_fun(paste0("5. Export data for ", outcome_type, " outcomes ",
+    test_fun(paste0("6. Export data for ", outcome_type, " outcomes ",
                     ifelse(outcome_type %in% outcome_type_available, "can", "cannot"),
                     " be created for a dataset where some data only have identical samples."), {
                       
@@ -2553,7 +3292,7 @@ test_export <- function(export_function,
                       }
                     })
     
-    test_fun(paste0("6. Export data for ", outcome_type, " outcomes ",
+    test_fun(paste0("7. Export data for ", outcome_type, " outcomes ",
                     ifelse(outcome_type %in% outcome_type_available, "can", "cannot"),
                     " be created for a dataset created from an ensemble of multiple models."), {
                       
@@ -2578,7 +3317,8 @@ test_export <- function(export_function,
     #####One-feature data set###################################################
     
     # Train the model.
-    model_one_1 <- suppressWarnings(train(data=one_feature_data,
+    model_one_1 <- suppressWarnings(train(cl=cl,
+                                          data=one_feature_data,
                                           cluster_method="none",
                                           imputation_method="simple",
                                           fs_method="mim",
@@ -2591,16 +3331,16 @@ test_export <- function(export_function,
     model_one_2@fs_method <- "mifs"
     
     # Create familiar data objects.
-    data_good_one_1 <- as_familiar_data(object=model_one_1, data=one_feature_data, data_element=data_element, ...)
-    data_good_one_2 <- as_familiar_data(object=model_one_2, data=one_feature_data, data_element=data_element, ...)
-    data_one_sample_one_1 <- as_familiar_data(object=model_one_1, data=one_feature_one_sample_data, data_element=data_element, ...)
-    data_one_sample_one_2 <- as_familiar_data(object=model_one_2, data=one_feature_one_sample_data, data_element=data_element, ...)
-    data_identical_one_1 <- as_familiar_data(object=model_one_1, data=one_feature_invariant_data, data_element=data_element, ...)
-    data_identical_one_2 <- as_familiar_data(object=model_one_2, data=one_feature_invariant_data, data_element=data_element, ...)
+    data_good_one_1 <- as_familiar_data(object=model_one_1, data=one_feature_data, data_element=data_element, cl=cl, ...)
+    data_good_one_2 <- as_familiar_data(object=model_one_2, data=one_feature_data, data_element=data_element, cl=cl, ...)
+    data_one_sample_one_1 <- as_familiar_data(object=model_one_1, data=one_feature_one_sample_data, data_element=data_element, cl=cl, ...)
+    data_one_sample_one_2 <- as_familiar_data(object=model_one_2, data=one_feature_one_sample_data, data_element=data_element, cl=cl, ...)
+    data_identical_one_1 <- as_familiar_data(object=model_one_1, data=one_feature_invariant_data, data_element=data_element, cl=cl, ...)
+    data_identical_one_2 <- as_familiar_data(object=model_one_2, data=one_feature_invariant_data, data_element=data_element, cl=cl, ...)
     
     
     # Create a completely intact, one sample dataset.
-    test_fun(paste0("7. Export data for ", outcome_type, " outcomes ",
+    test_fun(paste0("8. Export data for ", outcome_type, " outcomes ",
                     ifelse(outcome_type %in% outcome_type_available && !.except_one_feature, "can", "cannot"),
                     " be created for a complete one-feature data set."), {
                       
@@ -2626,7 +3366,7 @@ test_export <- function(export_function,
                     })
     
     # Create a dataset with a one-sample quadrant.
-    test_fun(paste0("8. Export data for ", outcome_type, " outcomes ",
+    test_fun(paste0("9. Export data for ", outcome_type, " outcomes ",
                     ifelse(outcome_type %in% outcome_type_available && !.except_one_feature, "can", "cannot"),
                     " be created for a dataset with some one-sample data."), {
                       
@@ -2652,7 +3392,7 @@ test_export <- function(export_function,
                     })
     
     # Create a dataset with some identical data.
-    test_fun(paste0("9. Export data for ", outcome_type, " outcomes ",
+    test_fun(paste0("10. Export data for ", outcome_type, " outcomes ",
                     ifelse(outcome_type %in% outcome_type_available && !.except_one_feature, "can", "cannot"),
                     " be created for a dataset with some invariant data."), {
                       
@@ -2676,6 +3416,104 @@ test_export <- function(export_function,
                         testthat::expect_equal(any(!which_present), TRUE)
                       }
                     })
+    
+    #####Data set with limited censoring########################################
+    if(outcome_type %in% c("survival", "competing_risk")){
+      # Train the model.
+      model_cens_1 <- suppressWarnings(train(cl=cl,
+                                             data=no_censoring_data,
+                                             cluster_method="none",
+                                             imputation_method="simple",
+                                             fs_method="mim",
+                                             hyperparameter_list=hyperparameters,
+                                             learner="lasso",
+                                             time_max=1832))
+      
+      model_cens_2 <- suppressWarnings(train(cl=cl,
+                                             data=one_censored_data,
+                                             cluster_method="none",
+                                             imputation_method="simple",
+                                             fs_method="mim",
+                                             hyperparameter_list=hyperparameters,
+                                             learner="lasso",
+                                             time_max=1832))
+      
+      model_cens_3 <- suppressWarnings(train(cl=cl,
+                                             data=few_censored_data,
+                                             cluster_method="none",
+                                             imputation_method="simple",
+                                             fs_method="mim",
+                                             hyperparameter_list=hyperparameters,
+                                             learner="lasso",
+                                             time_max=1832))
+      
+      data_cens_1 <- as_familiar_data(object=model_cens_1, data=no_censoring_data, data_element=data_element, cl=cl, ...)
+      data_cens_2 <- as_familiar_data(object=model_cens_2, data=one_censored_data, data_element=data_element, cl=cl, ...)
+      data_cens_3 <- as_familiar_data(object=model_cens_3, data=few_censored_data, data_element=data_element, cl=cl, ...)
+      
+      # Create a dataset with some identical data.
+      test_fun(paste0("11. Exports for ", outcome_type, " outcomes ",
+                      ifelse(outcome_type %in% outcome_type_available, "can", "cannot"),
+                      " be created for a data set that includes no or limited censoring."), {
+                        
+                        object <- list(data_cens_1, data_cens_2, data_cens_3)
+                        object <- mapply(set_object_name, object, c("no_censoring", "one_censored", "few_censored"))
+                        
+                        collection <- suppressWarnings(as_familiar_collection(object, familiar_data_names=c("no_censoring", "one_censored", "few_censored")))
+                        
+                        data_elements <- do.call(export_function, args=c(list("object"=collection), export_args))
+                        which_present <- .test_which_data_element_present(data_elements, outcome_type=outcome_type)
+                        
+                        if(outcome_type %in% outcome_type_available){
+                          testthat::expect_equal(all(which_present), TRUE) 
+                          
+                          if(debug) show(data_elements)
+                          
+                        } else {
+                          testthat::expect_equal(all(!which_present), TRUE)
+                        }
+                      })
+      
+    }
+    
+    ##### Model with missing survival predictions ##############################
+    if(outcome_type %in% c("survival", "competing_risk")){
+      # Train the model.
+      model_failed_predictions <- suppressWarnings(train(cl=cl,
+                                                         data=full_data,
+                                                         cluster_method="none",
+                                                         imputation_method="simple",
+                                                         fs_method="mim",
+                                                         hyperparameter_list=hyperparameters,
+                                                         learner="lasso_test",
+                                                         time_max=1832,
+                                                         create_novelty_detector=create_novelty_detector))
+      
+      failed_prediction_data <- as_familiar_data(object=model_failed_predictions, data=full_data, data_element=data_element, cl=cl, ...)
+      
+      test_fun(paste0("12. Exports for ", outcome_type, " outcomes ",
+                      ifelse(outcome_type %in% outcome_type_available && .except_failed_survival_prediction, "can", "cannot"),
+                      " be created for models that do not allow for predicting survival probabilitiies."), {
+                        
+                        collection <- suppressWarnings(as_familiar_collection(failed_prediction_data, familiar_data_names=c("no_survival_predictions")))
+                        
+                        data_elements <- do.call(export_function, args=c(list("object"=collection), export_args))
+                        which_present <- .test_which_data_element_present(data_elements, outcome_type=outcome_type)
+                        
+                        if(outcome_type %in% outcome_type_available & !.except_failed_survival_prediction){
+                          testthat::expect_equal(all(which_present), TRUE) 
+                          
+                          if(debug) show(data_elements)
+                          
+                        } else if(!outcome_type %in% outcome_type_available){
+                          testthat::expect_equal(all(!which_present), TRUE)
+                          
+                        } else {
+                          testthat::expect_equal(any(!which_present), TRUE)
+                        }
+                      })
+    }
+    
   }
 }
 
@@ -2702,7 +3540,7 @@ test_export_specific <- function(export_function,
   out_elements <- list()
   
   # Iterate over the outcome type.
-  for(outcome_type in c("count", "continuous", "binomial", "multinomial", "survival")){
+  for(outcome_type in outcome_type_available){
     
     # Obtain data.
     main_data <- test.create_good_data_set(outcome_type)
@@ -2899,6 +3737,7 @@ debug_test_that <- function(desc, code){
   
   return(sapply(p, gtable::is.gtable) | sapply(p, ggplot2::is.ggplot))
 }
+
 
 
 .test_which_data_element_present <- function(x, outcome_type){

@@ -117,8 +117,11 @@ plotting.check_data_handling <- function(x,
     
   }
   
+  # Filter available down to those present in the data.
+  filter_available <- intersect(available, colnames(x))
+  
   # Filter available down to those that have more than one variable
-  filter_available <- available[sapply(available, function(ii, x) (data.table::uniqueN(x=x, by=ii) > 1), x=x)]
+  filter_available <- filter_available[sapply(filter_available, function(ii, x) (data.table::uniqueN(x=x, by=ii) > 1), x=x)]
   
   if(is.null(filter_available)){
     return(list())
@@ -1099,7 +1102,8 @@ plotting.reinsert_plot_elements <- function(g=NULL, elements=NULL, grob_list, gg
                                     spacer=list("l"=plotting.get_legend_spacing(ggtheme=ggtheme, axis="y")),
                                     where=legend_position,
                                     partial_match_ref=TRUE,
-                                    partial_match_along=TRUE)
+                                    partial_match_along=TRUE,
+                                    update_dimensions=FALSE)
           
           break()
         }
@@ -1119,7 +1123,8 @@ plotting.reinsert_plot_elements <- function(g=NULL, elements=NULL, grob_list, gg
                                     spacer=list("r"=plotting.get_legend_spacing(ggtheme=ggtheme, axis="y")),
                                     where=legend_position,
                                     partial_match_ref=TRUE,
-                                    partial_match_along=TRUE)
+                                    partial_match_along=TRUE,
+                                    update_dimensions=FALSE)
           
           break()
         }
@@ -1139,7 +1144,8 @@ plotting.reinsert_plot_elements <- function(g=NULL, elements=NULL, grob_list, gg
                                     spacer=list("t"=plotting.get_legend_spacing(ggtheme=ggtheme, axis="x")),
                                     where=legend_position,
                                     partial_match_ref=TRUE,
-                                    partial_match_along=TRUE)
+                                    partial_match_along=TRUE,
+                                    update_dimensions=FALSE)
           
           break()
         }
@@ -1159,7 +1165,8 @@ plotting.reinsert_plot_elements <- function(g=NULL, elements=NULL, grob_list, gg
                                     spacer=list("b"=plotting.get_legend_spacing(ggtheme=ggtheme, axis="x")),
                                     where=legend_position,
                                     partial_match_ref=TRUE,
-                                    partial_match_along=TRUE)
+                                    partial_match_along=TRUE,
+                                    update_dimensions=FALSE)
           
           break()
         }
@@ -2150,4 +2157,49 @@ plotting.combine_guides <- function(g, ggtheme, no_empty=TRUE){
                              clip="inherit")
   
   return(g)
+}
+
+
+..set_edge_points <- function(x, range, type){
+  # Function used to determine edge points, such as used for ggplot2::geom_rect.
+  if(!is.numeric(x)){
+    x <- as.numeric(x)
+    range <- c(0.5, length(x) + 0.5)
+  }
+  
+  if(length(x) > 1){
+    # Make sure x is sorted ascendingly.
+    sort_index <- sort(x, index.return=TRUE)$ix
+    x <- x[sort_index]
+    
+    # Compute difference between subsequent values.
+    diff_x <- diff(x)
+    
+    # Compute edges.
+    xmax <- c(head(x, n=length(x)-1L) + diff_x  / 2.0,
+              tail(x, n=1L) + tail(diff_x, n=1L) / 2.0)
+    xmin <- c(head(x, n=1L) - head(diff_x, n=1L) / 2.0,
+              tail(x, n=length(x)-1L) - diff_x / 2.0)
+
+    # Shuffle back to input order.
+    xmax[sort_index] <- xmax
+    xmin[sort_index] <- xmin
+    
+  } else {
+    xmin <- range[1]
+    xmax <- range[2]
+  }
+  
+  edge_points <- list(xmin, xmax)
+  if(type == "x"){
+    names(edge_points) <- c("xmin", "xmax")
+    
+  } else if(type == "y"){
+    names(edge_points) <- c("ymin", "ymax")
+    
+  } else {
+    ..error_reached_unreachable_code(paste0("..set_edge_points: unknown type specified: ", type))
+  }
+  
+  return(edge_points)
 }

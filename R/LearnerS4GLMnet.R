@@ -18,6 +18,9 @@ setClass("familiarGLMnetLasso",
 setClass("familiarGLMnetElasticNet",
          contains="familiarGLMnet")
 
+setClass("familiarGLMnetLassoTest",
+         contains="familiarGLMnetLasso")
+
 
 .get_available_glmnet_ridge_learners <- function(show_general=TRUE){
   
@@ -138,6 +141,9 @@ setMethod("get_default_hyperparameters", signature(object="familiarGLMnet"),
             # Determine the family.
             fam <- stringi::stri_replace_first_regex(str=object@learner, pattern="elastic_net|lasso|ridge", replace="")
             if(fam != "") fam <- stringi::stri_replace_first_regex(str=fam, pattern="_", replace="")
+            
+            # Check for lasso_test
+            if(object@learner == "lasso_test") fam <- ""
             
             # Determine number of subjects
             n_samples <- data.table::uniqueN(data@data, by=get_id_columns(id_depth="series"))
@@ -470,6 +476,11 @@ setMethod("..predict", signature(object="familiarGLMnet", data="dataObject"),
 
 
 
+
+
+
+
+
 #####..predict_survival_probability#####
 setMethod("..predict_survival_probability", signature(object="familiarGLMnet", data="dataObject"),
           function(object, data, time){
@@ -601,3 +612,86 @@ setMethod(".trim_model", signature(object="familiarGLMnet"),
   
   return(object)
 }
+
+
+
+
+.get_available_glmnet_lasso_learners_test <- function(show_general=TRUE){
+  
+  # Learners
+  learners <- c("lasso_test")
+
+  return(learners)
+}
+
+
+#####is_available (test) #######################################################
+setMethod("is_available", signature(object="familiarGLMnetLassoTest"),
+          function(object, ...){
+            return(TRUE)
+          })
+
+
+
+#####..predict (test) ##########################################################
+setMethod("..predict", signature(object="familiarGLMnetLassoTest", data="dataObject"),
+          function(object, data, type="default", ...){
+            
+            # Check if the model was trained.
+            if(!model_is_trained(object)) return(callNextMethod())
+            
+            # Check if the data is empty.
+            if(is_empty(data)) return(callNextMethod())
+            
+            # Encode data so that the features are the same as in the training.
+            encoded_data <- encode_categorical_variables(data=data,
+                                                         object=object,
+                                                         encoding_method="dummy",
+                                                         drop_levels=FALSE)
+            
+            # Get an empty prediction table.
+            prediction_table <- get_placeholder_prediction_table(object=object,
+                                                                 data=encoded_data$encoded_data,
+                                                                 type=type)
+            
+            return(prediction_table)
+          })
+
+
+#####get_prediction_type (test)#####
+setMethod("get_prediction_type", signature(object="familiarGLMnetLassoTest"),
+          function(object, type="default"){
+            
+            if(object@outcome_type != "survival") return(callNextMethod())
+            
+            # Default are hazard ratios.
+            if(type == "default"){
+              return("hazard_ratio")
+              
+            } else if(type == "survival_probability"){
+              return("survival_probability")
+              
+            } else {
+              ..error_reached_unreachable_code("get_prediction_type,familiarGLMnetLassoTest: unknown type")
+            }
+          })
+
+
+#####..predict_survival_probability (test) #####
+setMethod("..predict_survival_probability", signature(object="familiarGLMnetLassoTest", data="dataObject"),
+          function(object, data, time){
+            
+            if(object@outcome_type != "survival") return(callNextMethod())
+            
+            # If time is unset, read the max time stored by the model.
+            if(is.null(time)) time <- object@settings$time_max
+            
+            # Predict, just to obtain a correctly formatted table.
+            survival_table <- learner.survival_probability_relative_risk(object=object, data=data, time=time)
+            
+            # Set predicted values to NA.
+            survival_table[, "survival_probability":=NA_real_]
+            
+            return(survival_table)
+          })
+

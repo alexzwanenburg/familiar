@@ -485,6 +485,15 @@
     }
   }
   
+  # Check survival time for positivity.
+  if(outcome_type %in% c("survival", "competing_risk")){
+    time_column <- get_outcome_columns(x=outcome_type)[1]
+    
+    .check_survival_time_plausibility(data=data,
+                                      outcome_column=time_column,
+                                      outcome_type=outcome_type)
+  }
+  
   # Find outcome columns.
   outcome_cols <- get_outcome_columns(x=outcome_type)
   

@@ -90,6 +90,9 @@ setMethod("promote_learner", signature(object="familiarModel"),
               # Extreme gradient boosted trees
               object <- methods::new("familiarXGBoostDart", object)
 
+            } else if(learner %in% .get_available_glmnet_lasso_learners_test()){
+              # Lasso penalised regression models for testing purposes.
+              object <- methods::new("familiarGLMnetLassoTest", object)
             }
             
             # Returned object can be a standard familiarModel
