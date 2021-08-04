@@ -567,7 +567,7 @@ setMethod("plot_ice", signature(object="familiarCollection"),
               
             } else if(!show_2d & value_scales == "fixed"){
               # The value range is the same for all features.
-              if(!is.null(show_ice)){
+              if(show_ice){
                 value_range <- .create_ice_plot_value_range(x=ice_data,
                                                             scale_method="fixed",
                                                             outcome_type=object@outcome_type,
@@ -581,7 +581,7 @@ setMethod("plot_ice", signature(object="familiarCollection"),
               
             } else if(!show_2d & value_scales == "feature"){
               # Every feature has its value range.
-              if(!is.null(show_ice)){
+              if(show_ice){
                 value_range <- .create_ice_plot_value_range(x=ice_data,
                                                             scale_method="feature",
                                                             outcome_type=object@outcome_type,
