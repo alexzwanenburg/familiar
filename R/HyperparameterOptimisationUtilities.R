@@ -133,7 +133,14 @@
         updated_list[[selected_parameter]] <- new_hp_val_float
       }
       
-    } else if(parameter_type %in% c("factor", "logical")){
+    } else if(parameter_type %in% c("factor")){
+      # Find range of available options
+      available_parameter_values <- parameter_range[parameter_range != current_parameter_value]
+      
+      # Randomly select one option
+      updated_list[[selected_parameter]] <- factor(fam_sample(available_parameter_values, size=1), levels=parameter_range)
+      
+    } else if(parameter_type %in% c("logical")){
       # Find range of available options
       available_parameter_values <- parameter_range[parameter_range != current_parameter_value]
       
@@ -188,13 +195,16 @@
           updated_list[[selected_parameter]] <- new_hp_val_float
         }
         
-      } else if(parameter_type %in% c("factor", "logical")){
+      } else if(parameter_type %in% c("factor")){
         # Randomly select one option
+        updated_list[[selected_parameter]] <- factor(fam_sample(parameter_range, size=1), levels=parameter_range)
+        
+      } else if(parameter_type %in% c("logical")){
         updated_list[[selected_parameter]] <- fam_sample(parameter_range, size=1)
       }
     }
   }
-  
+
   # Return a randomised configuration as a data.table
   return(data.table::as.data.table(updated_list))
 }
@@ -977,4 +987,35 @@
     return(list("challenger_score"=challenger_score,
                 "incumbent_score"=incumbent_score))
   }
+}
+
+
+
+.encode_categorical_hyperparameters <- function(parameter_list){
+  
+  # Iterate over hyperparameters.
+  parameter_list <- lapply(parameter_list, ..encode_categorical_hyperparameters)
+  
+  return(parameter_list)
+}
+
+
+
+..encode_categorical_hyperparameters <- function(x){
+  # Encodes the init_config element of x in case x is a categorical
+  # hyperparameter.
+  
+  # Skip if x is not categorical.
+  if(x$type != "factor") return(x)
+  
+  if(x$randomise){
+    # Assign valid range as levels, in case the hyperparameter is randomised.
+    x$init_config <- factor(x$init_config, levels=x$valid_range)
+    
+  } else {
+    # Assign only the selected level as factor.
+    x$init_config <- factor(x$init_config, levels=x$init_config)
+  }
+  
+  return(x)
 }

@@ -191,7 +191,8 @@ setMethod("get_default_hyperparameters", signature(object="familiarXGBoost"),
             
             
             # Set the learn_objective parameter
-            param$learn_objective <- .set_hyperparameter(default=learn_objective_default, type="factor",
+            param$learn_objective <- .set_hyperparameter(default=learn_objective_default,
+                                                         type="factor",
                                                          range=learn_objective_default,
                                                          randomise=ifelse(length(learn_objective_default) > 1, TRUE, FALSE))
             
@@ -283,7 +284,9 @@ setMethod("get_default_hyperparameters", signature(object="familiarXGBoost"),
               ###### Dart booster sample type ##################################
               
               # Select the sample algorithm used by Dart booster.
-              param$sample_type <- .set_hyperparameter(default=c("uniform", "weighted"), type="factor", range=c("uniform", "weighted"),
+              param$sample_type <- .set_hyperparameter(default=c("uniform", "weighted"),
+                                                       type="factor",
+                                                       range=c("uniform", "weighted"),
                                                        randomise=TRUE)
               
               ##### Dart booster tree drop rate ################################
@@ -308,7 +311,7 @@ setMethod("get_prediction_type", signature(object="familiarXGBoost"),
             
             # The prediction type is a bit more complicated for xgboost methods.
             if(type == "default"){
-              if(object@hyperparameters$learn_objective %in% c("cox")){
+              if(as.character(object@hyperparameters$learn_objective %in% c("cox"))){
                 return("hazard_ratio")
               }
               
@@ -317,7 +320,7 @@ setMethod("get_prediction_type", signature(object="familiarXGBoost"),
               
             } else {
               ..error_reached_unreachable_code(paste0("get_prediction_type,familiarXGBoost: unknown type (", type,
-                                                      ") for the current objective (", object@hyperparameters$learn_objective, ")."))
+                                                      ") for the current objective (", as.character(object@hyperparameters$learn_objective), ")."))
             }
           })
 
@@ -384,7 +387,7 @@ setMethod("..train", signature(object="familiarXGBoost", data="dataObject"),
               
               # # Determine normalisation parameters so that outcome can be
               # # normalised to [0, 1] range (for logistic regression).
-              if(object@hyperparameters$learn_objective == "continuous_logistic"){
+              if(as.character(object@hyperparameters$learn_objective) == "continuous_logistic"){
                 object@outcome_shift <- min(outcome_labels)
                 object@outcome_scale <- max(outcome_labels) - min(outcome_labels)
                 
@@ -472,7 +475,7 @@ setMethod("..train", signature(object="familiarXGBoost", data="dataObject"),
                                                       "gamma" = 10^object@hyperparameters$gamma - 10^-6,
                                                       "lambda" = 10^object@hyperparameters$lambda - 10^-6,
                                                       "alpha" = 10^object@hyperparameters$alpha - 10^-6,
-                                                      "sample_type" = object@hyperparameters$sample_type,
+                                                      "sample_type" = as.character(object@hyperparameters$sample_type),
                                                       "rate_drop" = object@hyperparameters$rate_drop,
                                                       "objective" = ..get_distribution_family(object),
                                                       "num_class" = n_classes),
@@ -641,7 +644,7 @@ setMethod("..predict_survival_probability", signature(object="familiarXGBoost", 
             if(!object@outcome_type %in% c("survival")) return(callNextMethod())
             
             # We can only predict probability for Cox.
-            if(!object@hyperparameters$learn_objective %in% c("cox")) return(callNextMethod())
+            if(!as.character(object@hyperparameters$learn_objective %in% c("cox"))) return(callNextMethod())
             
             # If time is unset, read the max time stored by the model.
             if(is.null(time)) time <- object@settings$time_max
@@ -728,7 +731,7 @@ setMethod("..get_distribution_family", signature(object="familiarXGBoost"),
             objective <- object@hyperparameters$learn_objective
             
             # Check that the learn_objective hyperparameter exists.
-            if(!is.character(objective)){
+            if(!is.character(objective) & !is.factor(objective)){
               ..error_reached_unreachable_code("..get_distribution_family,familiarXGBoost: learn_objective hyperparameter was not set.")
             }
             

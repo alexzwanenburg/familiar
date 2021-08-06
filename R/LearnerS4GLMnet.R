@@ -297,7 +297,7 @@ setMethod("..train", signature(object="familiarGLMnet", data="dataObject"),
               # Attempt to train the model
               model <- suppressWarnings(tryCatch(cv.glmnet(x = as.matrix(encoded_data$encoded_data@data[, mget(feature_columns)]),
                                                            y = outcome_data,
-                                                           family = object@hyperparameters$family,
+                                                           family = as.character(object@hyperparameters$family),
                                                            alpha = 0.0,
                                                            standardize = object@hyperparameters$normalise,
                                                            nfolds = NULL,
@@ -309,7 +309,7 @@ setMethod("..train", signature(object="familiarGLMnet", data="dataObject"),
               # Attempt to train the model
               model <- suppressWarnings(tryCatch(cv.glmnet(x = as.matrix(encoded_data$encoded_data@data[, mget(feature_columns)]),
                                                            y = outcome_data,
-                                                           family = object@hyperparameters$family,
+                                                           family = as.character(object@hyperparameters$family),
                                                            alpha = 1.0,
                                                            standardize = object@hyperparameters$normalise,
                                                            nfolds = NULL,
@@ -321,7 +321,7 @@ setMethod("..train", signature(object="familiarGLMnet", data="dataObject"),
               # Attempt to train the model
               model <- suppressWarnings(tryCatch(cv.glmnet(x = as.matrix(encoded_data$encoded_data@data[, mget(feature_columns)]),
                                                            y = outcome_data,
-                                                           family = object@hyperparameters$family,
+                                                           family = as.character(object@hyperparameters$family),
                                                            alpha = object@hyperparameters$alpha,
                                                            standardize = object@hyperparameters$normalise,
                                                            nfolds = NULL,
@@ -384,7 +384,7 @@ setMethod("..predict", signature(object="familiarGLMnet", data="dataObject"),
                 # Use the model to predict class probabilities.
                 model_predictions <- predict(object=object@model,
                                              newx=as.matrix(encoded_data$encoded_data@data[, mget(object@feature_order)]),
-                                             s=object@hyperparameters$lambda_min,
+                                             s=as.character(object@hyperparameters$lambda_min),
                                              type="response")
                 
                 # Obtain class levels.
@@ -407,7 +407,7 @@ setMethod("..predict", signature(object="familiarGLMnet", data="dataObject"),
                 # Use the model to predict class probabilities.
                 model_predictions <- predict(object=object@model,
                                              newx=as.matrix(encoded_data$encoded_data@data[, mget(object@feature_order)]),
-                                             s=object@hyperparameters$lambda_min,
+                                             s=as.character(object@hyperparameters$lambda_min),
                                              type="response")[, , 1]
                 
                 # Obtain class levels.
@@ -438,7 +438,7 @@ setMethod("..predict", signature(object="familiarGLMnet", data="dataObject"),
                 # Use the model for prediction.
                 model_predictions <- predict(object=object@model,
                                              newx=as.matrix(encoded_data$encoded_data@data[, mget(object@feature_order)]),
-                                             s=object@hyperparameters$lambda_min,
+                                             s=as.character(object@hyperparameters$lambda_min),
                                              type="response")
                 
                 # Add regression.
@@ -468,7 +468,7 @@ setMethod("..predict", signature(object="familiarGLMnet", data="dataObject"),
               # Use the model to predict class probabilities.
               return(predict(object=object@model,
                              newx=as.matrix(encoded_data$encoded_data@data[, mget(object@feature_order)]),
-                             s=object@hyperparameters$lambda_min,
+                             s=as.character(object@hyperparameters$lambda_min),
                              type=type,
                              ...))
             }
@@ -515,7 +515,7 @@ setMethod("..vimp", signature(object="familiarGLMnet"),
             if(object@hyperparameters$family == "multinomial"){
               # Read coefficient lists
               coefficient_list <- coef(object@model,
-                                       s=object@hyperparameters$lambda_min)
+                                       s=as.character(object@hyperparameters$lambda_min))
               
               # Parse into matrix and retrieve row names
               coefficient_matrix <- sapply(coefficient_list, as.matrix)
@@ -527,7 +527,7 @@ setMethod("..vimp", signature(object="familiarGLMnet"),
             } else {
               # Read coefficient matrix
               coefficient_matrix <- as.matrix(coef(object@model,
-                                                   s=object@hyperparameters$lambda_min))
+                                                   s=as.character(object@hyperparameters$lambda_min)))
               
               # Compute variable importance score
               vimp_score <- abs(coefficient_matrix)[, 1]

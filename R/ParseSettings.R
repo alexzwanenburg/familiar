@@ -1885,26 +1885,37 @@
 #'   * `stronger_balance`: Computes \eqn{s'_{oob} - 2.0 |s'_{oob} - s'_{ib}|}.
 #'   Stronger penalty than in the `balanced` objective.
 #'
+#' @param hyperparameter_learner (*optional*) Any point in the hyperparameter
+#'   space has a single, scalar, optimisation score value that is *a priori*
+#'   unknown. During the optimisation process, the algorithm samples from the
+#'   hyperparameter space by selecting hyperparameter sets and computing the
+#'   optimisation score value for one or more bootstraps. For each
+#'   hyperparameter set the resulting values are distributed around the actual
+#'   value. The learner indicated by `hyperparameter_learner` is then used to
+#'   infer optimisation score estimates for unsampled parts of the
+#'   hyperparameter space.
+#'
+#'   The following models are available:
+#'
+#'   * `bayesian_additive_regression_trees` or `bart` (default):
+#'
+#'   * `gaussian_process`: 
+#'
+#'   * `random_forest`: Creates a random forest for inference. Originally
+#'   suggested by Hutter et al. (2011). A weakness of random forests is their
+#'   lack of extrapolation beyond observed values, which limits their usefulness
+#'   in exploiting promising areas of hyperparameter space.
+#'
+#'   * `random` or `random_search`: Forgoes the use of models to steer
+#'   optimisation. Instead, a random search is performed.
+#'
 #' @param acquisition_function (*optional*) The acquisition function influences
-#'   how new hyperparameter sets are selected.
-#'
-#'   Any point in the hyperparameter space has a single, scalar, optimisation
-#'   score value that is *a priori* unknown. During the optimisation process,
-#'   the algorithm samples from the hyperparameter space by selecting
-#'   hyperparameter sets and computing the optimisation score value for one or
-#'   more bootstraps. For each hyperparameter set the resulting values are
-#'   distributed around the actual value. A random forest is then trained using
-#'   all the resulting values.
-#'
-#'   The random forest maps positions in the hyperparameter space to the 1D real
-#'   space of optimisation values. The distribution of optimisation values at
-#'   each point is captured by individual decision trees.
-#'
-#'   The algorithm uses the random forest to search the hyperparameter space for
-#'   hyperparameter sets that are either likely better than the best known set
-#'   (*exploitation*) or where there is considerable uncertainty
-#'   (*exploration*). The acquisition function quantifies this (Shahriari et
-#'   al., 2016).
+#'   how new hyperparameter sets are selected. The algorithm uses the model
+#'   learned by the learner indicated by `hyperparameter_learner` to search the
+#'   hyperparameter space for hyperparameter sets that are either likely better
+#'   than the best known set (*exploitation*) or where there is considerable
+#'   uncertainty (*exploration*). The acquisition function quantifies this
+#'   (Shahriari et al., 2016).
 #'
 #'   The following acquisition functions are available, and are described in
 #'   more detail in the *learner algorithms* vignette:
@@ -1922,7 +1933,7 @@
 #'   * `upper_confidence_bound`: This acquisition function is based on the upper
 #'   confidence bound of the distribution (Srinivas et al., 2012).
 #'
-#'   * `bayes_upper_confidence_bound`:This acquisition function is based on the
+#'   * `bayes_upper_confidence_bound`: This acquisition function is based on the
 #'   upper confidence bound of the distribution (Kaufmann et al., 2012).
 #' @param exploration_method (*optional*) Method used to steer exploration in
 #'   post-initialisation intensive searching steps. As stated earlier, each SMBO
@@ -1998,6 +2009,7 @@
                                                         optimisation_metric=waiver(),
                                                         acquisition_function=waiver(),
                                                         exploration_method=waiver(),
+                                                        hyperparameter_learner=waiver(),
                                                         parallel_hyperparameter_optimisation=waiver(),
                                                         ...){
   settings <- list()
@@ -2105,6 +2117,18 @@
   # Check if the metric is ok. Packed into a for loop to enable multi-metric optimisation in the future
   sapply(settings$hpo_metric, metric.check_outcome_type, outcome_type=outcome_type)
   
+  
+  # Hyperparameter learner
+  settings$hpo_hyperparameter_learner <- .parse_arg(x_config=config$hyperparameter_learner,
+                                                    x_var=hyperparameter_learner,
+                                                    var_name="hyperparameter_learner",
+                                                    type="character",
+                                                    optional=TRUE,
+                                                    default="bart")
+  
+  .check_parameter_value_is_valid(x=settings$hpo_hyperparameter_learner,
+                                  var_name="hyperparameter_learner",
+                                  values=c("random_forest", "gaussian_process", "bayesian_additive_regression_tree", "bart", "random", "random_search"))
   
   # Parallelisation switch for parallel processing
   settings$do_parallel <- .parse_arg(x_config=config$parallel_hyperparameter_optimisation, x_var=parallel_hyperparameter_optimisation,

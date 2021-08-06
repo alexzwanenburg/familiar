@@ -264,10 +264,10 @@ setMethod("get_prediction_type", signature(object="familiarMBoost"),
 
             if(object@outcome_type != "survival") return(callNextMethod())
 
-            if(type == "default" & all(object@hyperparameters$family %in% c("cox", "cindex", "gehan"))){
+            if(type == "default" & all(as.character(object@hyperparameters$family) %in% c("cox", "cindex", "gehan"))){
               return("hazard_ratio")
               
-            } else if(type == "default" & all(object@hyperparameters$family %in% c("weibull", "lognormal", "surv_loglog"))) {
+            } else if(type == "default" & all(as.character(object@hyperparameters$family) %in% c("weibull", "lognormal", "surv_loglog"))) {
               return("expected_survival_time")
               
             } else if(type == "survival_probability"){
@@ -275,7 +275,7 @@ setMethod("get_prediction_type", signature(object="familiarMBoost"),
               
             } else {
               ..error_reached_unreachable_code(paste0("get_prediction_type,familiarGLM: unknown type (", type,
-                                                      ") for the current family (", object@hyperparameters$family, ")."))
+                                                      ") for the current family (", as.character(object@hyperparameters$family), ")."))
             }
           })
 
@@ -400,7 +400,7 @@ setMethod("..predict", signature(object="familiarMBoost", data="dataObject"),
               
               # For several family variants the default type is link instead of
               # response.
-              if(object@hyperparameters$family %in% c("auc", "cox", "cindex", "gehan")){
+              if(as.character(object@hyperparameters$family) %in% c("auc", "cox", "cindex", "gehan")){
                 prediction_type <- "link"
               }
 
@@ -434,7 +434,7 @@ setMethod("..predict", signature(object="familiarMBoost", data="dataObject"),
               if(object@outcome_type == "binomial"){
                 #####Binomial outcomes##########################################
                 
-                if(object@hyperparameters$family %in% "auc"){
+                if(as.character(object@hyperparameters$family) %in% "auc"){
                   # AUC produces the linear predictor, not class probabilities.
                   # These are set here, prior to re-calibration.
                   model_predictions <- 0.5 + model_predictions
@@ -465,12 +465,12 @@ setMethod("..predict", signature(object="familiarMBoost", data="dataObject"),
                 
                 # Check model family and convert linear predictors to hazard
                 # ratio.
-                if(object@hyperparameters$family %in% "cox"){
+                if(as.character(object@hyperparameters$family) %in% "cox"){
                   # Cox partial likelihood produces the linear predictor, not
                   # relative risks.
                   model_predictions <- exp(model_predictions)
                   
-                } else if(object@hyperparameters$family %in% c("cindex", "gehan")){
+                } else if(as.character(object@hyperparameters$family) %in% c("cindex", "gehan")){
                   # Concordance probability and gehan loss produce "time-like"
                   # predictions before calibration using cox models, whereas
                   # "risk-like" is expected.
@@ -531,7 +531,7 @@ setMethod("..predict_survival_probability", signature(object="familiarMBoost", d
             
             # Weibull, log-normal and log-log don't have an associated survival
             # probability function.
-            if(object@hyperparameters$family %in% c("weibull", "lognormal", "surv_loglog")) return(callNextMethod())
+            if(as.character(object@hyperparameters$family) %in% c("weibull", "lognormal", "surv_loglog")) return(callNextMethod())
             
             # If time is unset, read the max time stored by the model.
             if(is.null(time)) time <- object@settings$time_max
@@ -611,7 +611,7 @@ setMethod("..get_distribution_family", signature(object="familiarMBoost"),
             family <- object@hyperparameters$family
             
             # Check that the family hyperparameter exists.
-            if(!is.character(family)){
+            if(!is.character(family) & !is.factor(family)){
               ..error_reached_unreachable_code("..get_distribution_family,familiarMBoost: family hyperparameter was not set.")
             }
             
@@ -680,7 +680,7 @@ setMethod("..get_distribution_family", signature(object="familiarMBoost"),
 setMethod("..set_recalibration_model", signature(object="familiarMBoost", data="dataObject"),
           function(object, data, time=NULL){
             # Recalibration is performed using standard methods
-            if(object@outcome_type %in% c("survival") & object@hyperparameters$family %in% c("gehan", "cindex")){
+            if(object@outcome_type %in% c("survival") & as.character(object@hyperparameters$family) %in% c("gehan", "cindex")){
               
               # Calibrate the models.
               object@calibration_model <- learner.recalibrate_model(object=object, data=data, time=time)
@@ -688,7 +688,7 @@ setMethod("..set_recalibration_model", signature(object="familiarMBoost", data="
               # Return object.
               return(object)
               
-            } else if(object@outcome_type %in% c("binomial") & object@hyperparameters$family %in% c("auc")){
+            } else if(object@outcome_type %in% c("binomial") & as.character(object@hyperparameters$family) %in% c("auc")){
               
               # Calibrate the models.
               object@calibration_model <- learner.recalibrate_model(object=object, data=data)
@@ -711,7 +711,7 @@ setMethod("..update_outcome", signature(object="familiarMBoost", data="dataObjec
             
             if(is_empty(data)) return(data)
             
-            if(object@outcome_type %in% c("count", "continuous") & object@hyperparameters$family %in% c("poisson")){
+            if(object@outcome_type %in% c("count", "continuous") & as.character(object@hyperparameters$family) %in% c("poisson")){
               # Make a copy to prevent updating by reference.
               data@data <- data.table::copy(data@data)
               

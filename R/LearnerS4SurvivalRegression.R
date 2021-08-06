@@ -63,7 +63,9 @@ setMethod("get_default_hyperparameters", signature(object="familiarSurvRegr"),
             }
             
             # Set the distribution parameter
-            param$distribution <- .set_hyperparameter(default=distribution_default, type="factor", range=distribution_default,
+            param$distribution <- .set_hyperparameter(default=distribution_default,
+                                                      type="factor",
+                                                      range=distribution_default,
                                                       randomise=ifelse(length(distribution_default) > 1, TRUE, FALSE))
             
             # Return hyper-parameters
@@ -127,7 +129,7 @@ setMethod("..train", signature(object="familiarSurvRegr", data="dataObject"),
                                             data=encoded_data$encoded_data@data,
                                             control=model_control,
                                             y=FALSE,
-                                            dist=object@hyperparameters$distribution),
+                                            dist=as.character(object@hyperparameters$distribution)),
                                     error=identity))
             
             # Check if the model trained at all.

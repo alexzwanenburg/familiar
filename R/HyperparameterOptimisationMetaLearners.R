@@ -8,7 +8,8 @@
                                                    acquisition_function,
                                                    n_max_bootstraps,
                                                    n_challengers=20L,
-                                                   measure_time){
+                                                   measure_time,
+                                                   random_admixture_fraction=0.20){
   
   # Suppress NOTES due to non-standard evaluation in data.table
   param_id <- expected_train_time <- expected_improvement <- NULL
@@ -35,7 +36,7 @@
                                                       n=1)
   
   # Set a flag for local search, vs. random search.
-  local_search <- smbo_iter %% 2 == 0
+  # local_search <- smbo_iter %% 2 == 0
   
   # Get acquisition data.
   acquisition_data <- ..get_acquisition_function_parameters(optimisation_score_table=optimisation_score_table,
@@ -43,43 +44,38 @@
                                                             n_max_bootstraps=n_max_bootstraps)
   
   ##### Generate random sets----------------------------------------------------
-  n_random_sets <- 200
-  
+  # In general, draw about 10 times as much random sets then required.
+  n_random_sets <- ceiling(n_challengers * random_admixture_fraction)
+  browser()
   # Generate random sets
-  random_sets <- lapply(seq_len(n_random_sets), function(ii,
-                                                         parameter_list,
-                                                         hyperparameter_learner,
-                                                         score_optimisation_model,
-                                                         time_optimisation_model,
-                                                         acquisition_data,
-                                                         acquisition_function){
+  random_sets <- lapply(seq_len(n_random_sets * 10), function(ii,
+                                                              parameter_list){
     
     # Create random configuration.
     random_set <- ..randomise_hyperparameter_set(parameter_list=parameter_list, local=FALSE)
     
-    # Add the utility value..
-    random_set[, "expected_improvement":=.compute_utility_value(parameter_set=random_set,
-                                                                score_model=score_optimisation_model,
-                                                                hyperparameter_learner=hyperparameter_learner,
-                                                                acquisition_data=acquisition_data,
-                                                                acquisition_function=acquisition_function)]
-    
-    # Add the expected training time.
-    random_set[, "expected_train_time":=.compute_expected_train_time(parameter_set=random_set,
-                                                                     time_model=time_optimisation_model)]
-    
-    return(random_set)
   },
-  parameter_list=parameter_list,
-  score_optimisation_model=score_optimisation_model,
-  time_optimisation_model=time_optimisation_model,
-  hyperparameter_learner=hyperparameter_learner,
-  acquisition_data=acquisition_data,
-  acquisition_function=acquisition_function)
+  parameter_list=parameter_list)
   
+  # Combine random sets into a data.table.
+  random_sets <- unique(data.table::rbindlist(random_sets,
+                                              use.names=TRUE))
+  
+  if(!is_empty(random_sets) & !hyperparameter_learner %in% c("random", "random_search")){
+    random_sets[, "expected_improvement":=.compute_utility_value(parameter_set=.SD,
+                                                                 score_model=score_optimisation_model,
+                                                                 hyperparameter_learner=hyperparameter_learner,
+                                                                 acquisition_data=acquisition_data,
+                                                                 acquisition_function=acquisition_function)]
+  }
   
   ##### Identify local sets ----------------------------------------------------
-  if(local_search){
+  n_local_sets <- ceiling(n_challengers * (1.0 - random_admixture_fraction))
+  
+  # Find local sets
+  local_sets <- list()
+  
+  if(n_local_sets > 0){
     
     # Make local copy of parameter table.
     temp_parameter_table <- data.table::copy(parameter_table)
@@ -100,11 +96,8 @@
     # Select only parameters with allowable time.
     if(measure_time) temp_parameter_table <- temp_parameter_table[expected_train_time < acquisition_data$max_time]
     
-    # Select the 10 best parameter sets
-    best_sets <- head(temp_parameter_table[order(-expected_improvement)], n=10L)
-    
-    # Find local sets
-    local_sets <- list()
+    # Select up n_local_sets best parameter sets as starting point
+    best_sets <- head(temp_parameter_table[order(-expected_improvement)], n=n_local_sets)
     
     # Perform a local search
     for(best_param_id in best_sets$param_id){
@@ -118,7 +111,7 @@
       # Determine the expected improvement for the currently selected set
       selected_set_expected_improvement <- selected_set$expected_improvement[1]
       
-      while(iter_local_step < n_local_steps & iter_no_improv < n_max_no_improv){
+      while(iter_local_step < n_local_steps & iter_no_improv < n_max_no_improv & length(local_sets) < n_local_sets){
         
         # Randomise configuration
         local_random_set <- ..randomise_hyperparameter_set(parameter_table=selected_set,
@@ -163,7 +156,19 @@
     }
   }
   
+  # Combine local sets
+  local_sets <- unique(data.table::rbindlist(local_sets))
+  
+  browser()
   ##### Select challengers -----------------------------------------------------
+  
+  # Preferentially select in the following order:
+  # 1. Local sets that were not observed before, with highest utility first.
+  # 2. Local sets that were observed before, with highest utility first..
+  # 3. Random sets that were not observed before, with highest utility first..
+  # 4. Random sets that were observed before, with highest utility first..
+  
+  
   if(local_search){
     
     # Combine original, local and random sets.
@@ -267,6 +272,13 @@
     model <- ..hyperparameter_gaussian_process_optimisation_score_learner(score_table=score_table,
                                                                           parameter_table=parameter_table)
     
+  } else if(hyperparameter_learner %in% c("bayesian_additive_regression_trees", "bart")){
+    model <- ..hyperparameter_bart_optimisation_score_learner(score_table=score_table,
+                                                              parameter_table=parameter_table)
+    
+  } else if(hyperparameter_learner %in% c("random", "random_search")){
+    model <- NULL
+    
   } else {
     ..error_reached_unreachable_code(paste0(".create_hyperparameter_score_optimisation_model: hyperparameter_learner was not recognised: ", hyperparameter_learner))
   }
@@ -279,13 +291,16 @@
 .create_hyperparameter_time_optimisation_model <- function(hyperparameter_learner="random_forest",
                                                            score_table,
                                                            parameter_table){
-    
-  if(hyperparameter_learner == "random_forest"){
-    model <- ..hyperparameter_random_forest_time_learner(score_table=score_table,
-                                                         parameter_table=parameter_table)
-  } else {
-    ..error_reached_unreachable_code(paste0(".create_hyperparameter_time_optimisation_model: hyperparameter_learner was not recognised: ", hyperparameter_learner))
-  }
+  
+  model <- ..hyperparameter_random_forest_time_learner(score_table=score_table,
+                                                       parameter_table=parameter_table)
+  
+  # if(hyperparameter_learner == "random_forest"){
+  #   model <- ..hyperparameter_random_forest_time_learner(score_table=score_table,
+  #                                                        parameter_table=parameter_table)
+  # } else {
+  #   ..error_reached_unreachable_code(paste0(".create_hyperparameter_time_optimisation_model: hyperparameter_learner was not recognised: ", hyperparameter_learner))
+  # }
   
   return(model)
 }
@@ -405,27 +420,103 @@
 
 
 
+..hyperparameter_bart_optimisation_score_learner <- function(score_table, parameter_table){
+  # Suppress NOTES due to non-standard evaluation in data.table
+  optimisation_score <- NULL
+  
+  # Merge score and parameter data tables on param id.
+  joint_table <- merge(x=score_table,
+                       y=parameter_table,
+                       by="param_id",
+                       all=FALSE)
+  
+  # Replace NA entries with the minimum optimisation score.
+  joint_table[is.na(optimisation_score), optimisation_score:=-1.0]
+  
+  # Get parameter names.
+  parameter_names <- setdiff(colnames(parameter_table),
+                             c("param_id", "run_id", "optimisation_score", "time_taken"))
+  
+  # Get training data and response.
+  x <- joint_table[, mget(parameter_names)]
+  
+  # Encode categorical variables.
+  x_encoded <- encode_categorical_variables(data=x,
+                                            object=NULL,
+                                            encoding_method="dummy",
+                                            drop_levels=FALSE)$encoded_data
+  
+  # Get optimisation score as response.
+  y <- joint_table$optimisation_score
+  
+  # Create model. Note that prediction by BART is expensive for large ndpost.
+  quiet(bart_model <- BART::wbart(x.train=data.frame(x_encoded), y.train=y, ntree=100, ndpost=50))
+  
+  return(bart_model)
+}
+
+
 .compute_utility_value <- function(parameter_set,
                                    score_model,
                                    hyperparameter_learner,
                                    acquisition_data,
                                    acquisition_function){
-  # Compute expected improvement.
-  
-  # Predict objective scores for every tree using the configuration in the parameter table
+  # Predict score and compute .
   if(hyperparameter_learner == "random_forest"){
-    prediction_list <- predict(score_model,
-                               data=parameter_set,
-                               predict.all=TRUE,
-                               num.threads=1L,
-                               verbose=FALSE)
+    # Compute score per decision tree in the random forest.
+    predicted_scores <- predict(score_model,
+                                data=parameter_set,
+                                predict.all=TRUE,
+                                num.threads=1L,
+                                verbose=FALSE)$predictions
+    
+    # Compute utility scores.
+    utility_scores <- apply(predicted_scores,
+                            MARGIN=1,
+                            ..compute_utility_score,
+                            acquisition_function=acquisition_function,
+                            acquisition_data=acquisition_data,
+                            n_parameters=ncol(parameter_set))
     
   } else if(hyperparameter_learner == "gaussian_process") {
     browser()
+    
+  } else if(hyperparameter_learner %in% c("bayesian_additive_regression_trees", "bart")){
+    browser()
+    # Drop columns not in the model object.
+    modelled_parameters <- colnames(score_model$varcount)
+    
+    # Encode categorical variables.
+    x_encoded <- encode_categorical_variables(data=parameter_set,
+                                              object=NULL,
+                                              encoding_method="dummy",
+                                              drop_levels=FALSE)$encoded_data
+    
+    # Get predicted values.
+    quiet(predicted_scores <- predict(score_model, data.frame(x_encoded[, mget(modelled_parameters)])))
+    
+    # Compute utility scores.
+    utility_scores <- apply(predicted_scores,
+                            MARGIN=2,
+                            ..compute_utility_score,
+                            acquisition_function=acquisition_function,
+                            acquisition_data=acquisition_data,
+                            n_parameters=ncol(parameter_set))
+    
+  } else if(hyperparameter_learner %in% c("random", "random_search")){
+    # Utility scores are not used for utility scores.
+    utility_scores <- rep_len(NA_real_, nrow(parameter_set))
+    
   } else {
     ..error_reached_unreachable_code(paste0(".compute_utility_value: hyperparameter_learner was not recognised: ", hyperparameter_learner))
   }
   
+  return(utility_scores)
+}
+
+
+
+..compute_utility_score <- function(x, acquisition_function, acquisition_data, n_parameters){
   
   if(acquisition_function == "improvement_probability"){
     # The definition of probability of improvement is found in Shahriari, B.,
@@ -435,8 +526,8 @@
     
     # Calculate predicted mean objective score and its standard deviation over
     # the trees.
-    mu <- mean(prediction_list$predictions)
-    sigma <- stats::sd(prediction_list$predictions)
+    mu <- mean(x)
+    sigma <- stats::sd(x)
     
     # Get the incumbent score.
     tau <- acquisition_data$tau
@@ -447,7 +538,7 @@
   } else if(acquisition_function == "improvement_empirical_probability"){
     
     # Compute the empirical probability of improvement.
-    alpha <- sum(prediction_list$predictions > acquisition_data$tau) / length(prediction_list$predictions)
+    alpha <- sum(x > acquisition_data$tau) / length(x)
     
   } else if(acquisition_function == "expected_improvement"){
     # The definition of expected improvement is found in Shahriari, B., Swersky,
@@ -456,8 +547,8 @@
     
     # Calculate predicted mean objective score and its standard deviation over
     # the trees.
-    mu <- mean(prediction_list$predictions)
-    sigma <- stats::sd(prediction_list$predictions)
+    mu <- mean(x)
+    sigma <- stats::sd(x)
     
     # Get the incumbent score.
     tau <- acquisition_data$tau
@@ -480,11 +571,11 @@
     
     # Calculate predicted mean objective score and its standard deviation over
     # the trees.
-    mu <- mean(prediction_list$predictions)
-    sigma <- stats::sd(prediction_list$predictions)
+    mu <- mean(x)
+    sigma <- stats::sd(x)
     
     # Compute the beta parameter.
-    beta <- 2/5 * log(5/3 * ncol(parameter_set) * (acquisition_data$t + 1)^2 * pi^2)
+    beta <- 2/5 * log(5/3 * n_parameters * (acquisition_data$t + 1)^2 * pi^2)
     
     # Compute alpha
     alpha <- mu + beta * sigma
@@ -499,7 +590,7 @@
     q <- 1.0 - 1.0 / (acquisition_data$t + 1)
     
     # Compute alpha
-    alpha <- stats::quantile(x=prediction_list$predictions,
+    alpha <- stats::quantile(x=x,
                              probs=q,
                              names=FALSE)
     

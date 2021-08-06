@@ -861,26 +861,34 @@ perform well on both development and validation data.
 \item \code{stronger_balance}: Computes \eqn{s'_{oob} - 2.0 |s'_{oob} - s'_{ib}|}.
 Stronger penalty than in the \code{balanced} objective.
 }}
+    \item{\code{hyperparameter_learner}}{(\emph{optional}) Any point in the hyperparameter
+space has a single, scalar, optimisation score value that is \emph{a priori}
+unknown. During the optimisation process, the algorithm samples from the
+hyperparameter space by selecting hyperparameter sets and computing the
+optimisation score value for one or more bootstraps. For each
+hyperparameter set the resulting values are distributed around the actual
+value. The learner indicated by \code{hyperparameter_learner} is then used to
+infer optimisation score estimates for unsampled parts of the
+hyperparameter space.
+
+The following models are available:
+\itemize{
+\item \code{bayesian_additive_regression_trees} or \code{bart} (default):
+\item \code{gaussian_process}:
+\item \code{random_forest}: Creates a random forest for inference. Originally
+suggested by Hutter et al. (2011). A weakness of random forests is their
+lack of extrapolation beyond observed values, which limits their usefulness
+in exploiting promising areas of hyperparameter space.
+\item \code{random} or \code{random_search}: Forgoes the use of models to steer
+optimisation. Instead, a random search is performed.
+}}
     \item{\code{acquisition_function}}{(\emph{optional}) The acquisition function influences
-how new hyperparameter sets are selected.
-
-Any point in the hyperparameter space has a single, scalar, optimisation
-score value that is \emph{a priori} unknown. During the optimisation process,
-the algorithm samples from the hyperparameter space by selecting
-hyperparameter sets and computing the optimisation score value for one or
-more bootstraps. For each hyperparameter set the resulting values are
-distributed around the actual value. A random forest is then trained using
-all the resulting values.
-
-The random forest maps positions in the hyperparameter space to the 1D real
-space of optimisation values. The distribution of optimisation values at
-each point is captured by individual decision trees.
-
-The algorithm uses the random forest to search the hyperparameter space for
-hyperparameter sets that are either likely better than the best known set
-(\emph{exploitation}) or where there is considerable uncertainty
-(\emph{exploration}). The acquisition function quantifies this (Shahriari et
-al., 2016).
+how new hyperparameter sets are selected. The algorithm uses the model
+learned by the learner indicated by \code{hyperparameter_learner} to search the
+hyperparameter space for hyperparameter sets that are either likely better
+than the best known set (\emph{exploitation}) or where there is considerable
+uncertainty (\emph{exploration}). The acquisition function quantifies this
+(Shahriari et al., 2016).
 
 The following acquisition functions are available, and are described in
 more detail in the \emph{learner algorithms} vignette:
@@ -894,7 +902,7 @@ predicted by the individual decision trees.
 \item \code{expected_improvement} (default): Computes expected improvement.
 \item \code{upper_confidence_bound}: This acquisition function is based on the upper
 confidence bound of the distribution (Srinivas et al., 2012).
-\item \code{bayes_upper_confidence_bound}:This acquisition function is based on the
+\item \code{bayes_upper_confidence_bound}: This acquisition function is based on the
 upper confidence bound of the distribution (Kaufmann et al., 2012).
 }}
     \item{\code{exploration_method}}{(\emph{optional}) Method used to steer exploration in

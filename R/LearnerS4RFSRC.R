@@ -255,7 +255,7 @@ setMethod("..train", signature(object="familiarRFSRC", data="dataObject"),
                                      nodesize = param$node_size,
                                      nodedepth = param$tree_depth,
                                      nsplit = param$n_split,
-                                     splitrule = param$split_rule,
+                                     splitrule = as.character(param$split_rule),
                                      seed = forest_seed)
             
             # Add model to the object.
@@ -398,6 +398,7 @@ setMethod("..vimp", signature(object="familiarRFSRC"),
             # Find the vimp_method specified.
             vimp_method <- object@hyperparameters$fs_vimp_method
             if(is.null(vimp_method)) ..error_reached_unreachable_code("..vimp,familiarRFSRC: vimp method was not specified as a hyperparameter (fs_vimp_method)")
+            vimp_method <- as.character(vimp_method)
             
             # Extract the variable importance score
             if(vimp_method == "permutation"){
@@ -542,7 +543,7 @@ setMethod("..vimp", signature(object="familiarRFSRC"),
                                                          nodesize = object@hyperparameters$node_size,
                                                          nodedepth = object@hyperparameters$tree_depth,
                                                          nsplit = object@hyperparameters$n_split,
-                                                         splitrule = object@hyperparameters$split_rule,
+                                                         splitrule = as.character(object@hyperparameters$split_rule),
                                                          verbose=FALSE)$importance
               
               # Check that the variable importance score is not empty.

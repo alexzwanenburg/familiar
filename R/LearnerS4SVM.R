@@ -115,7 +115,9 @@ setMethod("get_default_hyperparameters", signature(object="familiarSVM"),
             # the internal naming used by e1071::svm.
             
             # Set the svm kernel.
-            param$kernel <- .set_hyperparameter(default=svm_kernel, type="factor", range=svm_kernel,
+            param$kernel <- .set_hyperparameter(default=svm_kernel,
+                                                type="factor",
+                                                range=svm_kernel,
                                                 randomise=FALSE)
             
             
@@ -206,10 +208,8 @@ setMethod("..train", signature(object="familiarSVM", data="dataObject"),
             if(is(object, "familiarSVMEps")) svm_type <- "eps-regression"
             
             # Set svm-related parameters.
-            svm_parameter_list <- list("kernel"=object@hyperparameters$kernel,
+            svm_parameter_list <- list("kernel"=as.character(object@hyperparameters$kernel),
                                        "cost"=10^(object@hyperparameters$c))
-            
-            
             
             # Set nu-parameter (which not all svm types use).
             if(is(object, "familiarSVMNu")){

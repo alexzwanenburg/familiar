@@ -142,7 +142,7 @@ setMethod("..train", signature(object="familiarKNN", data="dataObject"),
             model <- tryCatch(e1071::gknn(formula,
                                           data=data@data,
                                           k=object@hyperparameters$k,
-                                          method=object@hyperparameters$distance_metric,
+                                          method=as.character(object@hyperparameters$distance_metric),
                                           scale=FALSE))
             
             # Check if the model trained at all.

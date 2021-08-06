@@ -426,12 +426,23 @@ setMethod("encode_categorical_variables", signature(data="data.table", object="A
                 x <- droplevels(x)
               }
               
-              # Get names of levels and number of levels
-              level_names <- levels(x)
-              level_count <- nlevels(x)
+              if(is.factor(x)){
+                # Get names of levels and number of levels
+                level_names <- levels(x)
+                level_count <- nlevels(x)
+                
+              } else if(is.character(x)){
+                level_names <- unique(x)
+                level_count <- length(level_names)
+                
+              } else if(is.logical(x)){
+                level_names <- c(FALSE, TRUE)
+                level_count <- 2
+              }
+              
               
               # Apply coding scheme
-              if(encoding_method=="effect"){
+              if(encoding_method=="effect" | level_count == 1){
                 # Effect/one-hot encoding
                 curr_contrast_list  <- lapply(level_names, function(ii, x) (as.numeric(x==ii)), x=x)
                 

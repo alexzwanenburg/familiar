@@ -410,7 +410,7 @@ setMethod("..get_distribution_family", signature(object="familiarGLM"),
             family <- object@hyperparameters$family
             
             # Check that the family hyperparameter exists.
-            if(!is.character(family)){
+            if(!is.character(family) & !is.factor(family)){
               ..error_reached_unreachable_code("..get_distribution_family,familiarGLM: family hyperparameter was not set.")
             }
             

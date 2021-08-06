@@ -146,7 +146,7 @@ run_hyperparameter_optimisation <- function(cl=NULL,
                                                  "exploration_method"=settings$hpo$hpo_exploration_method,
                                                  "determine_vimp"=settings$hpo$hpo_determine_vimp,
                                                  "measure_time"=TRUE,
-                                                 "hyperparameter_learner"="random_forest",
+                                                 "hyperparameter_learner"=settings$hpo$hpo_hyperparameter_learner,
                                                  "n_max_bootstraps"=settings$hpo$hpo_max_bootstraps,
                                                  "n_intensify_step_bootstraps"=settings$hpo$hpo_bootstraps,
                                                  "n_max_optimisation_steps"=settings$hpo$hpo_smbo_iter_max,
@@ -287,7 +287,7 @@ setMethod("optimise_hyperparameters", signature(object="familiarModel", data="da
                    n_random_sets=100L,
                    determine_vimp=TRUE,
                    measure_time=TRUE,
-                   hyperparameter_learner="random_forest",
+                   hyperparameter_learner="bart",
                    n_max_bootstraps=200L,
                    n_intensify_step_bootstraps=5L,
                    n_max_optimisation_steps=20L,
@@ -332,7 +332,7 @@ setMethod("optimise_hyperparameters", signature(object="familiarModel", data="da
             # Check if hyperparameter learner is correctly specified.
             .check_parameter_value_is_valid(x=hyperparameter_learner,
                                             var_name="hyperparameter_learner",
-                                            values=c("random_forest", "gaussian_process"))
+                                            values=c("random_forest", "gaussian_process", "bayesian_additive_regression_trees", "bart", "random", "random_search"))
             
             ##### Create and update hyperparameter sets ------------------------
             
@@ -413,6 +413,10 @@ setMethod("optimise_hyperparameters", signature(object="familiarModel", data="da
             
             
             ##### Create initial set of randomised hyperparameters and bootstraps -------------
+            
+            # Update the parameter list to make sure that categorical variables
+            # are encoded as factors.
+            parameter_list <- .encode_categorical_hyperparameters(parameter_list)
             
             # Create initial set of configurations.
             parameter_table <- ..create_initial_hyperparameter_set(parameter_list=parameter_list,

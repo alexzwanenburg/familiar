@@ -16,6 +16,10 @@ changed accordingly. See the *learners* vignette.
 plots show the response of a model across a range of values for a particular
 feature.
 
+* Hyperparameter optimisation now allows for more flexibility concerning
+exploration method and the model used to infer suitability of new hyperparameter
+sets. The exploration method can be set using the `exploration_method` argument.
+
 ## Minor changes
 
 * A `sample_limit` parameter was added to limit the number of samples used
@@ -57,6 +61,10 @@ probabilities when collecting pooled data.
 
 * Fixed an issue with models from the `glmnet` package not training for rare
 classes / events or censoring in small datasets.
+
+* Fixed an issue that could cause main panels in composite plots that consist of
+one row of facets and have a legend guide to be have the same height as the
+guide.
 
 # Version 0.0.0.54 (Pre-release)
 
