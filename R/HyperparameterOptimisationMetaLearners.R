@@ -12,12 +12,11 @@
                                                    random_admixture_fraction=0.20){
   
   # Suppress NOTES due to non-standard evaluation in data.table
-  param_id <- expected_train_time <- expected_improvement <- NULL
+  param_id <- expected_train_time <- expected_improvement <- optimisation_score <- weight <- n_select <- .NATURAL <- i.param_id <- NULL
   
-  # Set max number of local steps and max number of failure to improve expected
-  # improvement.
-  n_local_steps <- 10
-  n_max_no_improv <- 5
+  # Set the maximum number of local steps based on the number of randomisable
+  # hyperparameters.
+  n_max_local_steps <- 2 * sum(sapply(parameter_list, function(x) (x$randomise)))
   
   # Compute the optimisation score. This creates a table with optimisation
   # scores per bootstrap and parameter identifier.
@@ -35,18 +34,17 @@
                                                       acquisition_function=acquisition_function,
                                                       n=1)
   
-  # Set a flag for local search, vs. random search.
-  # local_search <- smbo_iter %% 2 == 0
-  
   # Get acquisition data.
   acquisition_data <- ..get_acquisition_function_parameters(optimisation_score_table=optimisation_score_table,
                                                             acquisition_function=acquisition_function,
                                                             n_max_bootstraps=n_max_bootstraps)
   
   ##### Generate random sets----------------------------------------------------
+  if(hyperparameter_learner %in% c("random", "random_search")) random_admixture_fraction <- 1.0
+  
   # In general, draw about 10 times as much random sets then required.
   n_random_sets <- ceiling(n_challengers * random_admixture_fraction)
-  browser()
+  
   # Generate random sets
   random_sets <- lapply(seq_len(n_random_sets * 10), function(ii,
                                                               parameter_list){
@@ -61,6 +59,7 @@
   random_sets <- unique(data.table::rbindlist(random_sets,
                                               use.names=TRUE))
   
+  # Compute expected improvement.
   if(!is_empty(random_sets) & !hyperparameter_learner %in% c("random", "random_search")){
     random_sets[, "expected_improvement":=.compute_utility_value(parameter_set=.SD,
                                                                  score_model=score_optimisation_model,
@@ -69,190 +68,268 @@
                                                                  acquisition_function=acquisition_function)]
   }
   
+  # Compute expect train time.
+  if(!is_empty(random_sets)){
+    random_sets[, "expected_train_time":=.compute_expected_train_time(parameter_set=.SD,
+                                                                      time_model=time_optimisation_model)]
+    
+  }
+  
   ##### Identify local sets ----------------------------------------------------
   n_local_sets <- ceiling(n_challengers * (1.0 - random_admixture_fraction))
   
   # Find local sets
   local_sets <- list()
   
-  if(n_local_sets > 0){
+  if(n_local_sets > 0 & !hyperparameter_learner %in% c("random", "random_search")){
     
-    # Make local copy of parameter table.
-    temp_parameter_table <- data.table::copy(parameter_table)
+    # Create a table of summary scores to identify the best sets.
+    summary_score_table <- metric.summarise_optimisation_score(score_table=optimisation_score_table, method=acquisition_function)
     
-    # Compute expected improvement for the sets in the parameter table
-    temp_parameter_table[, "expected_improvement":=.compute_utility_value(parameter_set=.SD,
-                                                                          score_model=score_optimisation_model,
-                                                                          hyperparameter_learner=hyperparameter_learner,
-                                                                          acquisition_data=acquisition_data,
-                                                                          acquisition_function=acquisition_function),
-                         by=param_id]
+    # Find the most promising samples by comparing against the median.
+    summary_score_table[, "weight":=optimisation_score - stats::median(optimisation_score)]
     
-    # Add the expected training time.
-    temp_parameter_table[, "expected_train_time":=.compute_expected_train_time(parameter_set=.SD,
-                                                                               time_model=time_optimisation_model),
-                         by=param_id]
+    # If all parameters have the same optimisation score (an edge case), assign
+    # weight 1 to each, that is, all hyperparameter sets are as likely to be
+    # sampled.
+    if(all(summary_score_table$weight == 0.0)) summary_score_table[, "weight":=1.0]
     
-    # Select only parameters with allowable time.
-    if(measure_time) temp_parameter_table <- temp_parameter_table[expected_train_time < acquisition_data$max_time]
+    # Remove 0 and negative weights.
+    summary_score_table <- summary_score_table[weight > 0.0]
     
-    # Select up n_local_sets best parameter sets as starting point
-    best_sets <- head(temp_parameter_table[order(-expected_improvement)], n=n_local_sets)
+    # Select the hyperparameter ids to sample, starting with the most promising
+    # samples first.
+    summary_score_table <- summary_score_table[, "n_select":=round(2 * n_local_sets * weight^2/sum(weight^2))][order(-optimisation_score )]
+    selected_best_parameter_id <- unlist(mapply(function(x, n) (rep(x, times=n)), x=summary_score_table$param_id, n=summary_score_table$n_select))
     
-    # Perform a local search
-    for(best_param_id in best_sets$param_id){
+    # Perform a local search.
+    for(best_param_id in selected_best_parameter_id){
       
-      # Initialise iterator variables
-      iter_local_step <- iter_no_improv  <- 0
+      # Initialise iterator variable
+      iter_local_step <- 0
       
       # Select initial configuration for local search
-      selected_set <- temp_parameter_table[param_id==best_param_id, ]
+      selected_set <- parameter_table[param_id==best_param_id, ]
       
-      # Determine the expected improvement for the currently selected set
-      selected_set_expected_improvement <- selected_set$expected_improvement[1]
-      
-      while(iter_local_step < n_local_steps & iter_no_improv < n_max_no_improv & length(local_sets) < n_local_sets){
+      while(iter_local_step < n_max_local_steps){
         
         # Randomise configuration
         local_random_set <- ..randomise_hyperparameter_set(parameter_table=selected_set,
                                                            parameter_list=parameter_list,
                                                            local=TRUE)
         
-        # Compute the expected improvement for the local set
-        local_random_set[, "expected_improvement":=.compute_utility_value(parameter_set=local_random_set,
-                                                                          score_model=score_optimisation_model,
-                                                                          hyperparameter_learner=hyperparameter_learner,
-                                                                          acquisition_data=acquisition_data,
-                                                                          acquisition_function=acquisition_function)]
+        # Add configuration to list
+        local_sets <- c(local_sets,
+                        list(local_random_set))
         
-        local_random_set_expected_improvement <- local_random_set$expected_improvement
+        # Continue search from current set
+        selected_set <- local_random_set
         
-        # Accept new configuration if there is an expected improvement
-        if(local_random_set_expected_improvement > selected_set_expected_improvement){
-          
-          # Add time estimate.
-          local_random_set[, "expected_train_time":=.compute_expected_train_time(parameter_set=.SD,
-                                                                                 time_model=time_optimisation_model)]
-          
-          # Add configuration to list
-          local_sets <- c(local_sets,
-                          list(local_random_set))
-          
-          # Continue search from current set
-          selected_set <- local_random_set
-          selected_set_expected_improvement <- local_random_set_expected_improvement
-          
-          # Update iterator
-          iter_local_step <- iter_local_step + 1
-          
-          # Reset iterator for no improvements in expected improvement.
-          iter_no_improv  <- 0
-          
-        } else {
-          # Increment the failure to improve iterator
-          iter_no_improv  <- iter_no_improv + 1
-        }
+        # Update iterator
+        iter_local_step <- iter_local_step + 1
       }
     }
   }
   
-  # Combine local sets
+  # Combine local sets.
   local_sets <- unique(data.table::rbindlist(local_sets))
   
-  browser()
-  ##### Select challengers -----------------------------------------------------
-  
-  # Preferentially select in the following order:
-  # 1. Local sets that were not observed before, with highest utility first.
-  # 2. Local sets that were observed before, with highest utility first..
-  # 3. Random sets that were not observed before, with highest utility first..
-  # 4. Random sets that were observed before, with highest utility first..
-  
-  
-  if(local_search){
+  if(!is_empty(local_sets)){
+    # Compute expected improvement.
+    local_sets[, "expected_improvement":=.compute_utility_value(parameter_set=.SD,
+                                                                 score_model=score_optimisation_model,
+                                                                 hyperparameter_learner=hyperparameter_learner,
+                                                                 acquisition_data=acquisition_data,
+                                                                 acquisition_function=acquisition_function)]
     
-    # Combine original, local and random sets.
-    new_sets <- data.table::rbindlist(c(list(temp_parameter_table[, -c("param_id")]),
-                                        c(local_sets, random_sets)),
-                                      use.names=TRUE)
-    
-    # Select only unique parameter sets
-    new_sets <- unique(new_sets,
-                       by=names(parameter_list))
-    
-    # Merge in original parameter-ids
-    new_sets <- merge(x=new_sets,
-                      y=parameter_table,
-                      by=names(parameter_list),
-                      all.x=TRUE,
-                      all.y=FALSE)
-    
-    # Keep all sets except the incumbent, as it cannot have a run-off against
-    # itself.
-    new_sets <- new_sets[param_id != incumbent_set_data$param_id | is.na(param_id)]
-    
-    # Select only parameters with allowable time.
-    if(measure_time) new_sets <- new_sets[expected_train_time < acquisition_data$max_time]
-    
-    # Sort by expected improvement and select up to 20 best
-    challenger_sets <- head(new_sets[(order(-expected_improvement))], n_challengers)
-    
-  } else {
-    
-    # Combine random sets into a data.table, but only select unique sets
-    new_sets <- unique(data.table::rbindlist(random_sets),
-                       by=names(parameter_list))
-    
-    # Merge in original parameter set ids
-    new_sets <- merge(x=new_sets,
-                      y=parameter_table,
-                      by=names(parameter_list),
-                      all.x=TRUE,
-                      all.y=FALSE)
-    
-    # Keep all sets except the incumbent, as it cannot have a run-off against
-    # itself.
-    new_sets <- new_sets[param_id != incumbent_set_data$param_id | is.na(param_id)]
-    
-    # Select only parameters with allowable time.
-    if(measure_time) new_sets <- new_sets[expected_train_time < acquisition_data$max_time]
-    
-    # Prefer challengers to be parameters that have not been seen.
-    challenger_sets <- head(new_sets[is.na(param_id)], n_challengers)
-    
-    # Pad with challengers that contain parameter sets that were previously
-    # visited.
-    if(nrow(challenger_sets) < n_challengers){
-      additional_challengers <- new_sets[!is.na(param_id)]
-      
-      n_additional_challengers <- n_challengers - nrow(challenger_sets)
-      if(n_additional_challengers > nrow(additional_challengers)) n_additional_challengers <- nrow(additional_challengers)
-      
-      if(n_additional_challengers > 0){
-        additional_challengers <- additional_challengers[fam_sample(x=seq_len(nrow(additional_challengers)),
-                                                                    size=n_additional_challengers)]
-        
-      } else {
-        additional_challengers <- NULL
-      }
-      
-      # Add challenger sets.
-      challenger_sets <- data.table::rbindlist(list(challenger_sets, additional_challengers), use.names=TRUE)
-    }
+    # Compute expected train time.
+    local_sets[, "expected_train_time":=.compute_expected_train_time(parameter_set=.SD,
+                                                                     time_model=time_optimisation_model)]
   }
   
-  # Remove expected improvement
-  challenger_sets[, ":="("expected_improvement"=NULL,
-                         "expected_train_time"=NULL)]
   
-  # Provide a new parameter id for new configurations
-  if(any(is.na(challenger_sets$param_id))){
+  ##### Select challengers -----------------------------------------------------
+  
+  local_challenger_sets <- list()
+  random_challenger_sets <- list()
+  
+  if(hyperparameter_learner %in% c("random", "random_search")){
+    # Preferentially select in the following order:
+    # 1. Random sets that were not observed before.
+    # 2. Random sets that were observed before.
     
-    # Find the largest existing parameter id
-    max_param_id <- max(parameter_table$param_id)
+    # Remove incumbent set.
+    if(!is_empty(random_sets)) random_sets <- random_sets[!parameter_table[param_id == incumbent_set_data$param_id], on=.NATURAL]
     
-    # Generate parameter ids for new parameter sets. 
-    challenger_sets[is.na(param_id), "param_id":=max_param_id + .I]
+    # Select only parameter sets that can be evaluated within the allowed time.
+    if(measure_time & !is_empty(random_sets)) random_sets <- random_sets[expected_train_time < acquisition_data$max_time]
+    
+    # Consider random sets.
+    if(!is_empty(random_sets)){
+      
+      # Random sets that were not observed before.
+      selected_sets <- random_sets[!parameter_table, on=.NATURAL]
+      
+      if(!is_empty(selected_sets) & n_random_sets > 0){
+        # Select up to n_random_sets of random samples sets that were not
+        # selected previously.
+        selected_sets <- head(selected_sets, n=n_random_sets)
+        
+        # Add to challenger sets and reduce the number of challengers to select.
+        random_challenger_sets <- list(selected_sets)
+        n_challengers <- n_challengers - nrow(selected_sets)
+        n_random_sets <- min(c(n_random_sets - nrow(selected_sets), n_challengers))
+      }
+      
+      # Random sets that were observed before.
+      selected_sets <- random_sets[parameter_table, on=.NATURAL]
+      
+      if(!is_empty(selected_sets) & n_random_sets > 0){
+        # Select up to n_random_sets of random samples sets that were observed
+        # selected previously.
+        selected_sets <- head(selected_sets, n=n_random_sets)
+        
+        # Add to challenger sets and reduce the number of challengers to select.
+        random_challenger_sets <- c(random_challenger_sets, list(selected_sets))
+        n_challengers <- n_challengers - nrow(selected_sets)
+      }
+    }
+    
+    if(!is_empty(random_challenger_sets)){
+      # Concatenate challenger sets.
+      challenger_sets <- data.table::rbindlist(random_challenger_sets, use.names=TRUE)
+      
+      # Remove expected time from challenger sets.
+      challenger_sets[, ":="("expected_train_time"=NULL)]
+      
+    } else {
+      challenger_sets <- NULL
+    }
+    
+    
+  } else {
+    # Preferentially select in the following order:
+    # 1. Local sets that were not observed before, with highest utility first.
+    # 2. Local sets that were observed before, with highest utility first.
+    # 3. Random sets that were not observed before, with highest utility first.
+    # 4. Random sets that were observed before, with highest utility first.
+    
+    # First, remove incumbent.
+    if(!is_empty(local_sets)) local_sets <- local_sets[!parameter_table[param_id == incumbent_set_data$param_id], on=.NATURAL]
+    
+    # Select only parameter sets that can be evaluated within the allowed time.
+    if(measure_time & !is_empty(local_sets)) local_sets <- local_sets[expected_train_time < acquisition_data$max_time]
+    
+    # Consider local sets.
+    if(!is_empty(local_sets)){
+      # Local sets that were not observed before, with highest utility first.
+      selected_sets <- local_sets[!parameter_table, on=.NATURAL]
+      
+      if(!is_empty(selected_sets)){
+        # Select up to n_local_sets of locally samples sets that were not
+        # selected previously.
+        selected_sets <- head(selected_sets[order(-expected_improvement)], n=n_local_sets)
+        
+        # Add to challenger sets and reduce the number of challengers to select.
+        local_challenger_sets <- list(selected_sets)
+        n_challengers <- n_challengers - nrow(selected_sets)
+        n_local_sets <- min(c(n_local_sets - nrow(selected_sets), n_challengers))
+      }
+      
+      # Local sets that were observed before, with highest utility first.
+      selected_sets <- local_sets[parameter_table, on=.NATURAL]
+      
+      if(!is_empty(selected_sets) & n_local_sets > 0){
+        # Select up to n_local_sets of locally samples sets that were observed
+        # selected previously.
+        selected_sets <- head(selected_sets[order(-expected_improvement)], n=n_local_sets)
+        
+        # Add to challenger sets and reduce the number of challengers to select.
+        local_challenger_sets <- c(local_challenger_sets, nrow(selected_sets))
+        n_challengers <- n_challengers - nrow(selected_sets)
+      }
+    }
+    
+    if(!is_empty(local_challenger_sets)){
+      # Concatenate challenger sets.
+      local_challenger_sets <- data.table::rbindlist(local_challenger_sets, use.names=TRUE)
+      
+      # Remove expected improvement and time from challenger sets.
+      local_challenger_sets[, ":="("expected_improvement"=NULL,
+                                   "expected_train_time"=NULL)]
+    }
+    
+    # Remove incumbent and already selected challenger sets.
+    if(!is_empty(random_sets)) random_sets <- random_sets[!parameter_table[param_id == incumbent_set_data$param_id], on=.NATURAL]
+    if(!is_empty(random_sets) & !is_empty(local_challenger_sets) > 0) random_sets <- random_sets[!local_challenger_sets, on=.NATURAL]
+    
+    # Select only parameter sets that can be evaluated within the allowed time.
+    if(measure_time & !is_empty(random_sets)) random_sets <- random_sets[expected_train_time < acquisition_data$max_time]
+    
+    # Update n_random_sets to compensate for selected challengers.
+    n_random_sets <- min(c(n_challengers, n_random_sets))
+    
+    # Consider random sets.
+    if(!is_empty(random_sets)){
+      
+      # Random sets that were not observed before, with highest utility first.
+      selected_sets <- random_sets[!parameter_table, on=.NATURAL]
+      
+      if(!is_empty(selected_sets) & n_random_sets > 0){
+        # Select up to n_random_sets of random samples sets that were not
+        # selected previously.
+        selected_sets <- head(selected_sets[order(-expected_improvement)], n=n_random_sets)
+        
+        # Add to challenger sets and reduce the number of challengers to select.
+        random_challenger_sets <- list(selected_sets)
+        n_challengers <- n_challengers - nrow(selected_sets)
+        n_random_sets <- min(c(n_random_sets - nrow(selected_sets), n_challengers))
+      }
+      
+      # Random sets that were observed before, with highest utility first.
+      selected_sets <- random_sets[parameter_table, on=.NATURAL]
+      
+      if(!is_empty(selected_sets) & n_random_sets > 0){
+        # Select up to n_random_sets of random samples sets that were observed
+        # selected previously.
+        selected_sets <- head(selected_sets[order(-expected_improvement)], n=n_random_sets)
+        
+        # Add to challenger sets and reduce the number of challengers to select.
+        random_challenger_sets <- c(random_challenger_sets, nrow(selected_sets))
+        n_challengers <- n_challengers - nrow(selected_sets)
+      }
+    }
+    
+    if(!is_empty(random_challenger_sets)){
+      # Concatenate challenger sets.
+      random_challenger_sets <- data.table::rbindlist(random_challenger_sets, use.names=TRUE)
+      
+      # Remove expected improvement and time from challenger sets.
+      random_challenger_sets[, ":="("expected_improvement"=NULL,
+                                    "expected_train_time"=NULL)]
+    }
+    
+    # Combine to challenger sets.
+    challenger_sets <- data.table::rbindlist(list(local_challenger_sets, random_challenger_sets),
+                                             use.names=TRUE)
+  }
+  
+  # Add parameter identifiers for known sets.
+  if(!is_empty(challenger_sets)){
+    # Left-join with parameter table to add in known parameters
+    challenger_sets <- challenger_sets[parameter_table, "param_id":=i.param_id, on=.NATURAL]
+    
+    # Fill out missing parameter ids.
+    if(any(is.na(challenger_sets$param_id))){
+      # Find the largest existing parameter id.
+      max_param_id <- max(parameter_table$param_id)
+      
+      # Generate parameter ids for new parameter sets. 
+      challenger_sets[is.na(param_id), "param_id":=max_param_id + .I]
+    }
+    
+  } else {
+    challenger_sets <- NULL
   }
   
   return(challenger_sets)
@@ -482,7 +559,6 @@
     browser()
     
   } else if(hyperparameter_learner %in% c("bayesian_additive_regression_trees", "bart")){
-    browser()
     # Drop columns not in the model object.
     modelled_parameters <- colnames(score_model$varcount)
     

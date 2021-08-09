@@ -37,6 +37,14 @@ warning. Though familiar itself will handle such instances just fine, other
 packages will produce errors. Since familiar captures such errors and handles
 them internally, a warning is provided to indicate potential issues.
 
+* The hyperparameter optimisation algorithm performs an improved search of the
+local neighbourhood of good hyperparameter sets. Previously large parts of local
+neighbourhoods were ignored as their utility may not have exceeded that of the
+seed set. The algorithm is now no longer myopic. Instead, the seed set is used
+as starting point for exploration, and a random path through hyperparameter
+space is charted. The most promising hyperparameter sets are chosen after
+repeating this procedure several times and for several seed points.
+
 ## Bug fixes
 
 * Fixed a bug that caused features not incorporated in models to not be exported
