@@ -287,7 +287,7 @@ setMethod("optimise_hyperparameters", signature(object="familiarModel", data="da
                    n_random_sets=100L,
                    determine_vimp=TRUE,
                    measure_time=TRUE,
-                   hyperparameter_learner="bart",
+                   hyperparameter_learner="gaussian_process",
                    n_max_bootstraps=200L,
                    n_intensify_step_bootstraps=5L,
                    n_max_optimisation_steps=20L,

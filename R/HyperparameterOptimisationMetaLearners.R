@@ -337,9 +337,9 @@
 
 
 
-.create_hyperparameter_score_optimisation_model <-  function(hyperparameter_learner,
-                                                             score_table,
-                                                             parameter_table){
+.create_hyperparameter_score_optimisation_model <- function(hyperparameter_learner,
+                                                            score_table,
+                                                            parameter_table){
   
   if(hyperparameter_learner == "random_forest"){
     model <- ..hyperparameter_random_forest_optimisation_score_learner(score_table=score_table,
@@ -491,8 +491,20 @@
   parameter_names <- setdiff(colnames(parameter_table),
                              c("param_id", "run_id", "optimisation_score", "time_taken"))
   
-  # TODO: finish
-  browser()
+  # Get training data and response.
+  x <- joint_table[, mget(parameter_names)]
+  
+  # Encode categorical variables.
+  x_encoded <- encode_categorical_variables(data=x,
+                                            object=NULL,
+                                            encoding_method="dummy",
+                                            drop_levels=FALSE)$encoded_data
+  
+  # Get optimisation score as response.
+  y <- joint_table$optimisation_score
+  
+  return(list("X"=as.matrix(x_encoded),
+              "Z"=y))
 }
 
 
@@ -556,7 +568,24 @@
                             n_parameters=ncol(parameter_set))
     
   } else if(hyperparameter_learner == "gaussian_process") {
-    browser()
+    # Encode categorical variables.
+    x_encoded <- encode_categorical_variables(data=parameter_set,
+                                              object=NULL,
+                                              encoding_method="dummy",
+                                              drop_levels=FALSE)$encoded_data
+    
+    # Infer scores for the hyperparameters.
+    quiet(predicted_scores <- laGP::aGP(X=score_model$X,
+                                        Z=score_model$Z,
+                                        XX=as.matrix(x_encoded)))
+    
+    # Compute utility_scores
+    utility_scores <- mapply(..compute_utility_score,
+                             mu=predicted_scores$mean,
+                             sigma=sqrt(predicted_scores$var),
+                             MoreArgs=list("acquisition_function"=acquisition_function,
+                                           "acquisition_data"=acquisition_data,
+                                           "n_parameters"=ncol(parameter_set)))
     
   } else if(hyperparameter_learner %in% c("bayesian_additive_regression_trees", "bart")){
     # Drop columns not in the model object.
@@ -592,18 +621,20 @@
 
 
 
-..compute_utility_score <- function(x, acquisition_function, acquisition_data, n_parameters){
+..compute_utility_score <- function(x=NULL, mu=NULL, sigma=NULL, acquisition_function, acquisition_data, n_parameters){
+  
+  if(is.null(mu)) mu <- mean(x)
+  if(is.null(sigma)) sigma <- stats::sd(x)
+  
+  if(!is.null(x)) if(all(!is.finite(x))) return(0.0)
+  if(!is.finite(mu)) return(0.0)
+  if(!is.finite(sigma)) return(0.0)
   
   if(acquisition_function == "improvement_probability"){
     # The definition of probability of improvement is found in Shahriari, B.,
     # Swersky, K., Wang, Z., Adams, R. P. & de Freitas, N. Taking the Human Out
     # of the Loop: A Review of Bayesian Optimization. Proc. IEEE 104, 148–175
     # (2016)
-    
-    # Calculate predicted mean objective score and its standard deviation over
-    # the trees.
-    mu <- mean(x)
-    sigma <- stats::sd(x)
     
     # Get the incumbent score.
     tau <- acquisition_data$tau
@@ -613,18 +644,22 @@
     
   } else if(acquisition_function == "improvement_empirical_probability"){
     
-    # Compute the empirical probability of improvement.
-    alpha <- sum(x > acquisition_data$tau) / length(x)
+    # Get the incumbent score.
+    tau <- acquisition_data$tau
+    
+    if(!is.null(x)){
+      # Compute the empirical probability of improvement.
+      alpha <- sum(x > tau) / length(x)
+      
+    } else {
+      # Compute the stochastic probability of improvement.
+      alpha <- stats::pnorm((mu - tau) / sigma)
+    }
     
   } else if(acquisition_function == "expected_improvement"){
     # The definition of expected improvement is found in Shahriari, B., Swersky,
     # K., Wang, Z., Adams, R. P. & de Freitas, N. Taking the Human Out of the
     # Loop: A Review of Bayesian Optimization. Proc. IEEE 104, 148–175 (2016).
-    
-    # Calculate predicted mean objective score and its standard deviation over
-    # the trees.
-    mu <- mean(x)
-    sigma <- stats::sd(x)
     
     # Get the incumbent score.
     tau <- acquisition_data$tau
@@ -645,11 +680,6 @@
     # Bounds for Gaussian Process Optimization in the Bandit Setting. IEEE
     # Trans. Inf. Theory 58, 3250–3265 (2012).
     
-    # Calculate predicted mean objective score and its standard deviation over
-    # the trees.
-    mu <- mean(x)
-    sigma <- stats::sd(x)
-    
     # Compute the beta parameter.
     beta <- 2/5 * log(5/3 * n_parameters * (acquisition_data$t + 1)^2 * pi^2)
     
@@ -665,10 +695,15 @@
     # Compute the quantile we are interested in.
     q <- 1.0 - 1.0 / (acquisition_data$t + 1)
     
-    # Compute alpha
-    alpha <- stats::quantile(x=x,
-                             probs=q,
-                             names=FALSE)
+    if(!is.null(x)){
+      # Compute empiric alpha.
+      alpha <- stats::quantile(x=x,
+                               probs=q,
+                               names=FALSE)
+    } else {
+      # Stochastic alpha.
+      alpha <- stats::qnorm(q, mean=mu, sd=sigma)
+    }
     
   } else {
     ..error_reached_unreachable_code(paste0("hpo.acquisition_function: unknown acquisition function: ", acquisition_function))

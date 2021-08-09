@@ -57,7 +57,8 @@ Imports: methods,
     stringi,
     xml2,
     maxstat,
-    proxy
+    proxy,
+    laGP
 Suggests:
     dynamicTreeCut,
     rmarkdown,
