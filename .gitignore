@@ -5,3 +5,4 @@ man/figures/Thumbs.db
 doc
 Meta
 tests/testthat/Rplots.pdf
+inst/doc
