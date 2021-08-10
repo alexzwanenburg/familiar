@@ -307,7 +307,7 @@ setMethod("optimise_hyperparameters", signature(object="familiarModel", data="da
               logger.message(paste0("\nStarting hyperparameter optimisation for data subsample ",
                                     experiment_info$experiment_id, " of ",
                                     experiment_info$n_experiment_total, "."),
-                                              indent=message_indent)
+                             indent=message_indent)
             }
             
             
@@ -332,6 +332,41 @@ setMethod("optimise_hyperparameters", signature(object="familiarModel", data="da
             .check_parameter_value_is_valid(x=hyperparameter_learner,
                                             var_name="hyperparameter_learner",
                                             values=.get_available_hyperparameter_learners())
+            
+            if(verbose){
+              # Report on methodology used.
+              optimisation_description <- switch(optimisation_function,
+                                                 "max_validation"="maximising out-of-bag performance",
+                                                 "balanced"="maximising out-of-bag performance while constraining performance differences between in-bag and out-of-bag data",
+                                                 "stronger_balance"="maximum out-of-bag performance while strongly constraining performance differences between in-bag and out-of-bag data")
+              
+              inference_description <- switch(hyperparameter_learner,
+                                              "random_forest"="selected after inferring utility using a Random Forest",
+                                              "gaussian_process"="selected after inferring utility using a localised approximate Gaussian Process",
+                                              "bayesian_additive_regression_trees"="selected after inferring utility using Bayesian Additive Regression Trees",
+                                              "bart"="selected after inferring utility using Bayesian Additive Regression Trees",
+                                              "random"="drawn randomly",
+                                              "random_search"="drawn randomly")
+              
+              if(!hyperparameter_learner %in% c("random", "random_search")){
+                utility_description <- switch(acquisition_function,
+                                              "improvement_probability"="probability of improvement over the best known hyperparameter set",
+                                              "improvement_empirical_probability"="empirical probability of improvement over the best known hyperparameter set",
+                                              "expected_improvement"="expected improvement",
+                                              "upper_confidence_bound"="the upper regret bound",
+                                              "bayes_upper_confidence_bound"="the Bayesian upper confidence bound")
+                
+                utility_description <- paste0("\nUtility is measured as ", utility_description, ".")
+              } else {
+                utility_description <- ""
+              }
+              
+              logger.message(paste0("Hyperparameter optimisation is conducted using the ", paste_s(metric), ifelse(length(metric) > 1, " metrics", "metric"),
+                                    " by ", optimisation_description, ".",
+                                    "\nCandidate hyperparameter sets after the initial run are ", inference_description, ". ",
+                                    utility_description),
+                             indent=message_indent)
+            }
             
             ##### Create and update hyperparameter sets ------------------------
             
