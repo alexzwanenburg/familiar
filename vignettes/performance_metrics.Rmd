@@ -247,7 +247,7 @@ The mean squared error is defined as $1/N \sum_i^N \left(\epsilon_i \right)^2$.
 
 ### Mean squared log error
 
-Mean squared log error is defined as $1/N \sum_i^N \log\left(y_i + 1\right) - \log(\hat{y}_i + 1\right)^2$. Note that this score only applies to observed and predicted values in the positive domain. It is not defined for negative values.
+Mean squared log error is defined as $1/N \sum_i^N \left(\log \left(y_i + 1\right) - \log\left(\hat{y}_i + 1\right)\right)^2$. Note that this score only applies to observed and predicted values in the positive domain. It is not defined for negative values.
 
 ### Median absolute error
 
@@ -265,7 +265,7 @@ The root mean square error is defined as $\sqrt{1/N \sum_i^N \left(\epsilon_i \r
 
 ### Root mean square log error
 
-The root mean square log error is defined as $\sqrt{1/N \sum_i^N \log\left(y_i + 1\right) - \log(\hat{y}_i + 1\right)^2}$. Note that this score only applies to observed and predicted values in the positive domain. It is not defined for negative values.
+The root mean square log error is defined as $\sqrt{1/N \sum_i^N \left(\log \left(y_i + 1\right) - \log\left(\hat{y}_i + 1\right)\right)^2}$. Note that this score only applies to observed and predicted values in the positive domain. It is not defined for negative values.
 
 ## Survival outcomes
 
