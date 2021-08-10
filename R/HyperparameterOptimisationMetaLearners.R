@@ -747,10 +747,30 @@
 }
 
 
+
 .get_available_acquisition_functions <- function(){
   return(c("improvement_probability",
            "improvement_empirical_probability",
            "expected_improvement",
            "upper_confidence_bound",
            "bayes_upper_confidence_bound"))
+}
+
+
+
+.get_available_hyperparameter_learners <- function(){
+  return(c("random_forest",
+           "gaussian_process",
+           "bayesian_additive_regression_tree", 
+           "bart",
+           "random",
+           "random_search"))
+}
+
+
+
+.get_available_hyperparameter_exploration_methods <- function(){
+  return(c("successive_halving",
+           "stochastic_reject",
+           "none"))
 }

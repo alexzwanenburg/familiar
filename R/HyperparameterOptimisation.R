@@ -321,18 +321,17 @@ setMethod("optimise_hyperparameters", signature(object="familiarModel", data="da
             # Check if optimisation_function is correctly specified.
             .check_parameter_value_is_valid(x=optimisation_function,
                                             var_name="optimisation_function",
-                                            values=c("max_validation", "balanced", "stronger_balance"))
+                                            values=.get_available_optimisation_functions())
             
             # Check if acquisition_function is correctly specified.
             .check_parameter_value_is_valid(x=acquisition_function,
                                             var_name="acquisition_function",
-                                            values=c("improvement_probability", "improvement_empirical_probability", "expected_improvement",
-                                                     "upper_confidence_bound", "bayes_upper_confidence_bound"))
+                                            values=.get_available_acquisition_functions())
             
             # Check if hyperparameter learner is correctly specified.
             .check_parameter_value_is_valid(x=hyperparameter_learner,
                                             var_name="hyperparameter_learner",
-                                            values=c("random_forest", "gaussian_process", "bayesian_additive_regression_trees", "bart", "random", "random_search"))
+                                            values=.get_available_hyperparameter_learners())
             
             ##### Create and update hyperparameter sets ------------------------
             

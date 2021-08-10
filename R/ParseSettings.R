@@ -2124,7 +2124,7 @@
   
   .check_parameter_value_is_valid(x=settings$hpo_exploration_method,
                                   var_name="exploration_method",
-                                  values=c("successive_halving", "stochastic_reject", "none"))
+                                  values=.get_available_hyperparameter_exploration_methods())
   
   # Performance metric for hyperparameter optimisation
   settings$hpo_metric <- .parse_arg(x_config=config$optimisation_metric, x_var=optimisation_metric,
@@ -2147,7 +2147,7 @@
   
   .check_parameter_value_is_valid(x=settings$hpo_hyperparameter_learner,
                                   var_name="hyperparameter_learner",
-                                  values=c("random_forest", "gaussian_process", "bayesian_additive_regression_tree", "bart", "random", "random_search"))
+                                  values=.get_available_hyperparameter_learners())
   
   # Parallelisation switch for parallel processing
   settings$do_parallel <- .parse_arg(x_config=config$parallel_hyperparameter_optimisation, x_var=parallel_hyperparameter_optimisation,
