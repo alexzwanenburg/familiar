@@ -7,7 +7,7 @@ bibliography: "refs.bib"
 vignette: >
   %\VignetteIndexEntry{Learning algorithms}
   %\VignetteEngine{knitr::rmarkdown}
-  \usepackage[utf8]{inputenc}
+  %\VignetteEncoding{UTF-8}
 ---
 
 ```{r setup, include=FALSE}
