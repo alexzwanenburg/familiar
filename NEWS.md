@@ -16,9 +16,41 @@ changed accordingly. See the *learners* vignette.
 plots show the response of a model across a range of values for a particular
 feature.
 
-* Hyperparameter optimisation now allows for more flexibility concerning
-exploration method and the model used to infer suitability of new hyperparameter
-sets. The exploration method can be set using the `exploration_method` argument.
+* Hyperparameter optimisation now allows for more flexibility in setting the
+exploration method. The exploration method determines how less promising
+hyperparameter sets are pruned during intensification steps. The exploration
+method can be set using the `exploration_method` argument. Familiar currently
+supports the following options:
+
+    * `successive_halving` (default): The set of alternative parameter sets is
+pruned by removing the worst performing half of the sets after each step. The
+set of investigated parameter sets gets progressively smaller.
+
+    * `stochastic_reject`: The set of alternative parameter sets is pruned by
+comparing the performance of each parameter set with that of the incumbent
+*best* parameter set using a paired Wilcoxon test. This was the previous default.
+
+    * `none`: The set of alternative parameter sets is not pruned.
+
+* We can now also change the hyperparameter learner used to infer suitability of
+candidate hyperparameter sets for further exploration. The learner can be set
+using the `hyperparameter_learner` argument, and supports the following options:
+
+    * `gaussian_process` (default): Creates a localised approximate Gaussian
+    deterministic Gaussian Processes.
+
+    * `bayesian_additive_regression_trees` or `bart`: Uses Bayesian Additive
+    Regression Trees for inference. Unlike standard random forests, BART allows
+    for estimating posterior distributions directly and can extrapolate.
+
+    * `random_forest`: Creates a random forest for inference. A weakness of
+    random forests is their lack of extrapolation beyond observed values, which
+    limits their usefulness in exploiting promising areas of hyperparameter
+    space. This was the previously supported option.
+
+    * `random` or `random_search`: Forgoes the use of models to steer
+    optimisation. Instead, a random search is performed. This means the
+    hyperparameter space is sampled at random.
 
 ## Minor changes
 

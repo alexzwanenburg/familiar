@@ -285,6 +285,13 @@
 #'   Conference on Artificial Intelligence and Statistics (eds. Gretton, A. &
 #'   Robert, C. C.) vol. 51 240–248 (PMLR, 2016).
 #'
+#'   1. Gramacy, R. B. laGP: Large-Scale Spatial Modeling via Local Approximate
+#'   Gaussian Processes in R. Journal of Statistical Software 72, 1–46 (2016)
+#'
+#'   1. Sparapani, R., Spanbauer, C. & McCulloch, R. Nonparametric Machine
+#'   Learning and Efficient Computation with Bayesian Additive Regression Trees:
+#'   The BART R Package. Journal of Statistical Software 97, 1–66 (2021)
+#'
 #'   1. Davison, A. C. & Hinkley, D. V. Bootstrap methods and their application.
 #'   (Cambridge University Press, 1997).
 #'
@@ -1897,9 +1904,14 @@
 #'
 #'   The following models are available:
 #'
-#'   * `bayesian_additive_regression_trees` or `bart` (default):
+#'   * `bayesian_additive_regression_trees` or `bart`: Uses Bayesian Additive
+#'   Regression Trees (Sparapani et al., 2021) for inference. Unlike standard
+#'   random forests, BART allows for estimating posterior distributions directly
+#'   and can extrapolate.
 #'
-#'   * `gaussian_process`: 
+#'   * `gaussian_process` (default): Creates a localised approximate Gaussian
+#'   process for inference (Gramacy, 2016). This allows for better scaling than
+#'   deterministic Gaussian Processes.
 #'
 #'   * `random_forest`: Creates a random forest for inference. Originally
 #'   suggested by Hutter et al. (2011). A weakness of random forests is their
@@ -1992,6 +2004,13 @@
 #'   Hyperparameter Optimization. in Proceedings of the 19th International
 #'   Conference on Artificial Intelligence and Statistics (eds. Gretton, A. &
 #'   Robert, C. C.) vol. 51 240–248 (PMLR, 2016).
+#'
+#'   1. Gramacy, R. B. laGP: Large-Scale Spatial Modeling via Local Approximate
+#'   Gaussian Processes in R. Journal of Statistical Software 72, 1–46 (2016)
+#'
+#'   1. Sparapani, R., Spanbauer, C. & McCulloch, R. Nonparametric Machine
+#'   Learning and Efficient Computation with Bayesian Additive Regression Trees:
+#'   The BART R Package. Journal of Statistical Software 97, 1–66 (2021)
 #' @md
 #' @keywords internal
 .parse_hyperparameter_optimisation_settings <- function(config=NULL, parallel, outcome_type,
@@ -2124,7 +2143,7 @@
                                                     var_name="hyperparameter_learner",
                                                     type="character",
                                                     optional=TRUE,
-                                                    default="bart")
+                                                    default="gaussian_process")
   
   .check_parameter_value_is_valid(x=settings$hpo_hyperparameter_learner,
                                   var_name="hyperparameter_learner",

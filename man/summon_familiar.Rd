@@ -873,8 +873,13 @@ hyperparameter space.
 
 The following models are available:
 \itemize{
-\item \code{bayesian_additive_regression_trees} or \code{bart} (default):
-\item \code{gaussian_process}:
+\item \code{bayesian_additive_regression_trees} or \code{bart}: Uses Bayesian Additive
+Regression Trees (Sparapani et al., 2021) for inference. Unlike standard
+random forests, BART allows for estimating posterior distributions directly
+and can extrapolate.
+\item \code{gaussian_process} (default): Creates a localised approximate Gaussian
+process for inference (Gramacy, 2016). This allows for better scaling than
+deterministic Gaussian Processes.
 \item \code{random_forest}: Creates a random forest for inference. Originally
 suggested by Hutter et al. (2011). A weakness of random forests is their
 lack of extrapolation beyond observed values, which limits their usefulness
@@ -1349,6 +1354,11 @@ bounds for bandit problems. in Artificial intelligence and statistics
 Hyperparameter Optimization. in Proceedings of the 19th International
 Conference on Artificial Intelligence and Statistics (eds. Gretton, A. &
 Robert, C. C.) vol. 51 240–248 (PMLR, 2016).
+\item Gramacy, R. B. laGP: Large-Scale Spatial Modeling via Local Approximate
+Gaussian Processes in R. Journal of Statistical Software 72, 1–46 (2016)
+\item Sparapani, R., Spanbauer, C. & McCulloch, R. Nonparametric Machine
+Learning and Efficient Computation with Bayesian Additive Regression Trees:
+The BART R Package. Journal of Statistical Software 97, 1–66 (2021)
 \item Davison, A. C. & Hinkley, D. V. Bootstrap methods and their application.
 (Cambridge University Press, 1997).
 \item Efron, B. & Hastie, T. Computer Age Statistical Inference. (Cambridge
