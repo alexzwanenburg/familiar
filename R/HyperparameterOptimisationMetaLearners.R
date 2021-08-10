@@ -23,6 +23,15 @@
   optimisation_score_table <- .compute_hyperparameter_optimisation_score(score_table=score_table,
                                                                          optimisation_function=optimisation_function)
   
+  # Check for minimal size of optimisation_score_table to prevent errors in
+  # laGP.
+  if(hyperparameter_learner == "gaussian_process" & nrow(score_table) < 8){
+    logger.warning(paste0("Insufficient instances (<8) in the score table to derive an approximate Gaussian Process. ",
+                          "Switching to random search until suffcient instances are created."))
+    
+    hyperparameter_learner <- "random"
+  }
+  
   # Create a model to predict the optimisation score for a given parameter set.
   score_optimisation_model <- .create_hyperparameter_score_optimisation_model(hyperparameter_learner=hyperparameter_learner,
                                                                               score_table=optimisation_score_table,
@@ -574,10 +583,16 @@
                                               encoding_method="dummy",
                                               drop_levels=FALSE)$encoded_data
     
+    # Update the end-size parameter, if the number of instances is smaller than
+    # the default of 51. Note that we already capture end_size of 7 or smaller
+    # in the parent function.
+    end_size <- ifelse(nrow(score_model$X) < 51, nrow(score_model$X) - 1, 50)
+    
     # Infer scores for the hyperparameters.
     quiet(predicted_scores <- laGP::aGP(X=score_model$X,
                                         Z=score_model$Z,
-                                        XX=as.matrix(x_encoded)))
+                                        XX=as.matrix(x_encoded),
+                                        end=end_size))
     
     # Compute utility_scores
     utility_scores <- mapply(..compute_utility_score,
