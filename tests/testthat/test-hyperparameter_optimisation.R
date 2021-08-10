@@ -3,13 +3,16 @@ testthat::skip_on_cran()
 
 verbose <- FALSE
 
-##### Test acquisition functions for random_forest #############################
-for(acquisition_function in familiar:::.get_available_acquisition_functions()){
-  familiar:::test_hyperparameter_optimisation(learners="glm_logistic",
-                                              outcome_type_available="binomial",
-                                              acquisition_function=acquisition_function,
-                                              debug=FALSE,
-                                              parallel=FALSE)
+##### Test acquisition functions for all hyperparameter learners ###############
+for(hyperparameter_learner in familiar:::.get_available_hyperparameter_learners()){
+  for(acquisition_function in familiar:::.get_available_acquisition_functions()){
+    familiar:::test_hyperparameter_optimisation(learners="glm_logistic",
+                                                outcome_type_available="binomial",
+                                                acquisition_function=acquisition_function,
+                                                hyperparameter_learner=hyperparameter_learner,
+                                                debug=FALSE,
+                                                parallel=FALSE)
+  }
 }
 
 
@@ -31,6 +34,17 @@ for(optimisation_function in familiar:::.get_available_optimisation_functions())
                                               debug=FALSE,
                                               parallel=FALSE)
 }
+
+
+##### Test hyperparameter learners for learner with only one hyperparameter. #######
+for(hyperparameter_learner in familiar:::.get_available_hyperparameter_learners()){
+  familiar:::test_hyperparameter_optimisation(learners="cox",
+                                              outcome_type_available="survival",
+                                              hyperparameter_learner=hyperparameter_learner,
+                                              debug=FALSE,
+                                              parallel=FALSE)
+}
+
 
 ##### Test without measuring time ##############################################
 familiar:::test_hyperparameter_optimisation(learners="glm_logistic",
