@@ -361,7 +361,7 @@ setMethod("optimise_hyperparameters", signature(object="familiarModel", data="da
                 utility_description <- ""
               }
               
-              logger.message(paste0("Hyperparameter optimisation is conducted using the ", paste_s(metric), ifelse(length(metric) > 1, " metrics", "metric"),
+              logger.message(paste0("Hyperparameter optimisation is conducted using the ", paste_s(metric), ifelse(length(metric) > 1, " metrics", " metric"),
                                     " by ", optimisation_description, ".",
                                     "\nCandidate hyperparameter sets after the initial run are ", inference_description, ". ",
                                     utility_description),
