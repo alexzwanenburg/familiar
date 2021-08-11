@@ -32,6 +32,20 @@
     hyperparameter_learner <- "random"
   }
   
+  # Check if all hyperparameters are invariant.
+  if(!hyperparameter_learner %in% c("random", "random_search")){
+    
+    # Get parameter names.
+    parameter_names <- setdiff(colnames(parameter_table),
+                               c("param_id", "run_id", "optimisation_score", "time_taken"))
+    
+    if(all(sapply(parameter_table[, mget(parameter_names)], is_singular_data))){
+      logger.warning(paste0("All hyperparameters are currently invariant. Switching to random search until non-invariant instances are created."))
+      
+      hyperparameter_learner <- "random"
+    }
+  }
+  
   # Create a model to predict the optimisation score for a given parameter set.
   score_optimisation_model <- .create_hyperparameter_score_optimisation_model(hyperparameter_learner=hyperparameter_learner,
                                                                               score_table=optimisation_score_table,
