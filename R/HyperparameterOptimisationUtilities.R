@@ -13,6 +13,7 @@
     parameter_table <- data.table::as.data.table(value_list)
     
   } else {
+    
     if(grid_initialisation_method %in% "random"){
       # Create completely random hyperparameter sets.
 
