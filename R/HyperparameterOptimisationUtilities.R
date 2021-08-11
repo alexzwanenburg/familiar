@@ -960,9 +960,11 @@
   run_id_match    <- intersect(challenger_score_table$run_id,
                                incumbent_score_table$run_id)
   
-  # Select rows that match.
-  challenger_score_table <- challenger_score_table[run_id %in% run_id_match, ][is.na(optimisation_score), "optimisation_score":=-1.0]
-  incumbent_score_table <- incumbent_score_table[run_id %in% run_id_match, ][is.na(optimisation_score), "optimisation_score":=-1.0]
+  # Select rows that match. Note that optimisation score is updated locally to
+  # avoid update by reference on protected slices of the score table in
+  # .compare_hyperparameter_optimisation_scores.
+  challenger_score_table <- data.table::copy(challenger_score_table[run_id %in% run_id_match, ])[is.na(optimisation_score), "optimisation_score":=-1.0]
+  incumbent_score_table <- data.table::copy(incumbent_score_table[run_id %in% run_id_match, ])[is.na(optimisation_score), "optimisation_score":=-1.0]
   
   # Calculate the aggregate optimisation score for challenger and incumbent for
   # the matching bootstraps.
