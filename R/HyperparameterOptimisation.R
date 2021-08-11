@@ -674,7 +674,7 @@ setMethod("optimise_hyperparameters", signature(object="familiarModel", data="da
                                                                         n_challengers=n_challengers)
               
               # Check that any challenger datasets were found. 
-              if(nrow(challenger_data) == 0) break()
+              if(is_empty(challenger_data)) break()
               
               # Add challenger parameters to the parameter table
               parameter_table <- rbind(parameter_table,
