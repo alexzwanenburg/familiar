@@ -538,6 +538,11 @@
   # Get training data and response.
   x <- joint_table[, mget(parameter_names)]
   
+  # Drop invariant columns.
+  invariant_columns <- sapply(x, is_singular_data)
+  parameter_names <- parameter_names[!invariant_columns]
+  x <- joint_table[, mget(parameter_names)]
+  
   # Encode categorical variables.
   x_encoded <- encode_categorical_variables(data=x,
                                             object=NULL,
