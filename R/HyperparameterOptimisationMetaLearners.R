@@ -12,7 +12,8 @@
                                                    random_admixture_fraction=0.20){
   
   # Suppress NOTES due to non-standard evaluation in data.table
-  param_id <- expected_train_time <- expected_improvement <- optimisation_score <- weight <- n_select <- .NATURAL <- i.param_id <- NULL
+  param_id <- expected_train_time <- expected_improvement <- optimisation_score <- weight <- NULL 
+  is_observed <- .NATURAL <- i.param_id <- NULL
   
   # Set the maximum number of local steps based on the number of randomisable
   # hyperparameters.
@@ -190,13 +191,15 @@
     # Consider random sets.
     if(!is_empty(random_sets)){
       
-      # Random sets that were not observed before.
-      selected_sets <- random_sets[!parameter_table, on=.NATURAL]
+      # Set observed status
+      random_sets[, "is_observed":=FALSE]
+      random_sets[parameter_table, "is_observed":=TRUE, on=.NATURAL]
       
-      if(!is_empty(selected_sets) & n_random_sets > 0){
+      # Random sets that were not observed before.
+      if(any(!random_sets$is_observed) & n_random_sets > 0){
         # Select up to n_random_sets of random samples sets that were not
         # selected previously.
-        selected_sets <- head(selected_sets, n=n_random_sets)
+        selected_sets <- head(random_sets[is_observed==FALSE], n=n_random_sets)
         
         # Add to challenger sets and reduce the number of challengers to select.
         random_challenger_sets <- list(selected_sets)
@@ -205,12 +208,10 @@
       }
       
       # Random sets that were observed before.
-      selected_sets <- random_sets[parameter_table, on=.NATURAL]
-      
-      if(!is_empty(selected_sets) & n_random_sets > 0){
+      if(any(random_sets$is_observed) & n_random_sets > 0){
         # Select up to n_random_sets of random samples sets that were observed
         # selected previously.
-        selected_sets <- head(selected_sets, n=n_random_sets)
+        selected_sets <- head(random_sets[is_observed==TRUE], n=n_random_sets)
         
         # Add to challenger sets and reduce the number of challengers to select.
         random_challenger_sets <- c(random_challenger_sets, list(selected_sets))
@@ -223,7 +224,8 @@
       challenger_sets <- data.table::rbindlist(random_challenger_sets, use.names=TRUE)
       
       # Remove expected time from challenger sets.
-      challenger_sets[, ":="("expected_train_time"=NULL)]
+      challenger_sets[, ":="("expected_train_time"=NULL,
+                             "is_observed"=NULL)]
       
     } else {
       challenger_sets <- NULL
@@ -245,13 +247,16 @@
     
     # Consider local sets.
     if(!is_empty(local_sets)){
-      # Local sets that were not observed before, with highest utility first.
-      selected_sets <- local_sets[!parameter_table, on=.NATURAL]
       
-      if(!is_empty(selected_sets)){
-        # Select up to n_local_sets of locally samples sets that were not
+      # Set observed status
+      local_sets[, "is_observed":=FALSE]
+      local_sets[parameter_table, "is_observed":=TRUE, on=.NATURAL]
+      
+      # Local sets that were not observed before, with highest utility first.
+      if(any(!local_sets$is_observed)){
+        # Select up to n_local_sets of locally sampled sets that were not
         # selected previously.
-        selected_sets <- head(selected_sets[order(-expected_improvement)], n=n_local_sets)
+        selected_sets <- head(local_sets[is_observed==FALSE][order(-expected_improvement)], n=n_local_sets)
         
         # Add to challenger sets and reduce the number of challengers to select.
         local_challenger_sets <- list(selected_sets)
@@ -260,12 +265,10 @@
       }
       
       # Local sets that were observed before, with highest utility first.
-      selected_sets <- local_sets[parameter_table, on=.NATURAL]
-      
-      if(!is_empty(selected_sets) & n_local_sets > 0){
+      if(any(local_sets$is_observed) & n_local_sets > 0){
         # Select up to n_local_sets of locally samples sets that were observed
         # selected previously.
-        selected_sets <- head(selected_sets[order(-expected_improvement)], n=n_local_sets)
+        selected_sets <- head(local_sets[is_observed==TRUE][order(-expected_improvement)], n=n_local_sets)
         
         # Add to challenger sets and reduce the number of challengers to select.
         local_challenger_sets <- c(local_challenger_sets, nrow(selected_sets))
@@ -279,7 +282,8 @@
       
       # Remove expected improvement and time from challenger sets.
       local_challenger_sets[, ":="("expected_improvement"=NULL,
-                                   "expected_train_time"=NULL)]
+                                   "expected_train_time"=NULL,
+                                   "is_observed"=NULL)]
     }
     
     # Remove incumbent and already selected challenger sets.
@@ -295,13 +299,15 @@
     # Consider random sets.
     if(!is_empty(random_sets)){
       
-      # Random sets that were not observed before, with highest utility first.
-      selected_sets <- random_sets[!parameter_table, on=.NATURAL]
+      # Set observed status
+      random_sets[, "is_observed":=FALSE]
+      random_sets[parameter_table, "is_observed":=TRUE, on=.NATURAL]
       
-      if(!is_empty(selected_sets) & n_random_sets > 0){
+      # Random sets that were not observed before, with highest utility first.
+      if(any(!random_sets$is_observed) & n_random_sets > 0){
         # Select up to n_random_sets of random samples sets that were not
         # selected previously.
-        selected_sets <- head(selected_sets[order(-expected_improvement)], n=n_random_sets)
+        selected_sets <- head(random_sets[is_observed==FALSE][order(-expected_improvement)], n=n_random_sets)
         
         # Add to challenger sets and reduce the number of challengers to select.
         random_challenger_sets <- list(selected_sets)
@@ -310,12 +316,10 @@
       }
       
       # Random sets that were observed before, with highest utility first.
-      selected_sets <- random_sets[parameter_table, on=.NATURAL]
-      
-      if(!is_empty(selected_sets) & n_random_sets > 0){
+      if(any(random_sets$is_observed) & n_random_sets > 0){
         # Select up to n_random_sets of random samples sets that were observed
         # selected previously.
-        selected_sets <- head(selected_sets[order(-expected_improvement)], n=n_random_sets)
+        selected_sets <- head(random_sets[is_observed==TRUE][order(-expected_improvement)], n=n_random_sets)
         
         # Add to challenger sets and reduce the number of challengers to select.
         random_challenger_sets <- c(random_challenger_sets, nrow(selected_sets))
@@ -329,7 +333,8 @@
       
       # Remove expected improvement and time from challenger sets.
       random_challenger_sets[, ":="("expected_improvement"=NULL,
-                                    "expected_train_time"=NULL)]
+                                    "expected_train_time"=NULL,
+                                    "is_observed"=NULL)]
     }
     
     # Combine to challenger sets.
