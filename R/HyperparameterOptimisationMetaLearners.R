@@ -271,7 +271,7 @@
         selected_sets <- head(local_sets[is_observed==TRUE][order(-expected_improvement)], n=n_local_sets)
         
         # Add to challenger sets and reduce the number of challengers to select.
-        local_challenger_sets <- c(local_challenger_sets, nrow(selected_sets))
+        local_challenger_sets <- c(local_challenger_sets, list(selected_sets))
         n_challengers <- n_challengers - nrow(selected_sets)
       }
     }
@@ -322,7 +322,7 @@
         selected_sets <- head(random_sets[is_observed==TRUE][order(-expected_improvement)], n=n_random_sets)
         
         # Add to challenger sets and reduce the number of challengers to select.
-        random_challenger_sets <- c(random_challenger_sets, nrow(selected_sets))
+        random_challenger_sets <- c(random_challenger_sets, list(selected_sets))
         n_challengers <- n_challengers - nrow(selected_sets)
       }
     }
