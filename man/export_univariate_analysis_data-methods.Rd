@@ -34,10 +34,10 @@ a \code{familiarCollection} can be extracted. See details for more information.}
 \item{dir_path}{Path to folder where extracted data should be saved. \code{NULL}
 will allow export as a structured list of data.tables.}
 
-\item{p_adjustment_method}{(\emph{optional}) Indicates type of p-value that is shown.
-One of \code{holm}, \code{hochberg}, \code{hommel}, \code{bonferroni}, \code{BH}, \code{BY},
-\code{fdr}, \code{none}, \code{p_value} or \code{q_value} for adjusted p-values, uncorrected
-p-values and q-values. q-values may not be available.}
+\item{p_adjustment_method}{(\emph{optional}) Indicates type of p-value that is
+shown. One of \code{holm}, \code{hochberg}, \code{hommel}, \code{bonferroni}, \code{BH}, \code{BY}, \code{fdr},
+\code{none}, \code{p_value} or \code{q_value} for adjusted p-values, uncorrected p-values
+and q-values. q-values may not be available.}
 
 \item{...}{
   Arguments passed on to \code{\link[=extract_univariate_analysis]{extract_univariate_analysis}}, \code{\link[=as_familiar_collection]{as_familiar_collection}}

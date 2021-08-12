@@ -26,19 +26,20 @@ setClass("familiarDataElementRobustness",
 #'  univariate analysis of important features.
 #'@md
 #'@keywords internal
-setGeneric("extract_univariate_analysis", function(object,
-                                                   data,
-                                                   cl=NULL,
-                                                   icc_type=waiver(),
-                                                   feature_similarity=NULL,
-                                                   feature_cluster_method=waiver(),
-                                                   feature_cluster_cut_method=waiver(),
-                                                   feature_linkage_method=waiver(),
-                                                   feature_similarity_threshold=waiver(),
-                                                   feature_similarity_metric=waiver(),
-                                                   message_indent=0L,
-                                                   verbose=FALSE,
-                                                   ...) standardGeneric("extract_univariate_analysis"))
+setGeneric("extract_univariate_analysis",
+           function(object,
+                    data,
+                    cl=NULL,
+                    icc_type=waiver(),
+                    feature_similarity=NULL,
+                    feature_cluster_method=waiver(),
+                    feature_cluster_cut_method=waiver(),
+                    feature_linkage_method=waiver(),
+                    feature_similarity_threshold=waiver(),
+                    feature_similarity_metric=waiver(),
+                    message_indent=0L,
+                    verbose=FALSE,
+                    ...) standardGeneric("extract_univariate_analysis"))
 
 #####extract_univariate_analysis#####
 setMethod("extract_univariate_analysis", signature(object="familiarEnsemble", data="ANY"),
