@@ -285,7 +285,7 @@ the number of features and the number of facets.}
 \item{units}{(\emph{optional}) Plot size unit. Either \code{cm} (default), \code{mm} or \verb{in}.}
 
 \item{...}{
-  Arguments passed on to \code{\link[=export_ice_data]{export_ice_data}}, \code{\link[ggplot2:ggsave]{ggplot2::ggsave}}
+  Arguments passed on to \code{\link[=export_ice_data]{export_ice_data}}, \code{\link[ggplot2:ggsave]{ggplot2::ggsave}}, \code{\link[=extract_ice]{extract_ice}}
   \describe{
     \item{\code{aggregate_results}}{Flag that signifies whether results should be
 aggregated for export.}
@@ -305,6 +305,131 @@ save images larger than 50x50 inches, to prevent the common error of
 specifying dimensions in pixels.}
     \item{\code{bg}}{Background colour. If \code{NULL}, uses the \code{plot.background} fill value
 from the plot theme.}
+    \item{\code{features}}{Names of the feature or features (2) assessed simultaneously.
+By default \code{NULL}, which means that all features are assessed one-by-one.}
+    \item{\code{feature_x_range}}{When one or two features are defined using \code{features},
+\code{feature_x_range} can be used to set the range of values for the first
+feature. For numeric features, a vector of two values is assumed to indicate
+a range from which \code{n_sample_points} are uniformly sampled. A vector of more
+than two values is interpreted as is, i.e. these represent the values to be
+sampled. For categorical features, values should represent a (sub)set of
+available levels.}
+    \item{\code{feature_y_range}}{As \code{feature_x_range}, but for the second feature in
+case two features are defined.}
+    \item{\code{n_sample_points}}{Number of points used to sample continuous features.}
+    \item{\code{data}}{A \code{dataObject} object, \code{data.table} or \code{data.frame} that
+constitutes the data that are used to compute}
+    \item{\code{cl}}{Cluster created using the \code{parallel} package. This cluster is then
+used to speed up computation through parallellisation.}
+    \item{\code{ensemble_method}}{Method for ensembling predictions from models for the
+same sample. Available methods are:
+\itemize{
+\item \code{mean}: Use the mean of the predicted values as the ensemble value for a
+sample.
+}}
+    \item{\code{eval_times}}{One or more time points that are used for in analysis of
+survival problems when data has to be assessed at a set time, e.g.
+calibration. If not provided explicitly, this parameter is read from
+settings used at creation of the underlying \code{familiarModel} objects. Only
+used for \code{survival} outcomes.}
+    \item{\code{sample_limit}}{(\emph{optional}) Set the upper limit of the number of samples
+that are used during evaluation steps. Cannot be less than 20.
+
+This setting can be specified per data element by providing a parameter
+value in a named list with data elements, e.g.
+\code{list("sample_similarity"=100, "permutation_vimp"=1000)}.
+
+This parameter can be set for the following data elements:
+\code{sample_similarity} and \code{ice_data}.}
+    \item{\code{detail_level}}{(\emph{optional}) Sets the level at which results are computed
+and aggregated.
+\itemize{
+\item \code{ensemble}: Results are computed at the ensemble level, i.e. over all
+models in the ensemble. This means that, for example, bias-corrected
+estimates of model performance are assessed by creating (at least) 20
+bootstraps and computing the model performance of the ensemble model for
+each bootstrap.
+\item \code{hybrid} (default): Results are computed at the level of models in an
+ensemble. This means that, for example, bias-corrected estimates of model
+performance are directly computed using the models in the ensemble. If there
+are at least 20 trained models in the ensemble, performance is computed for
+each model, in contrast to \code{ensemble} where performance is computed for the
+ensemble of models. If there are less than 20 trained models in the
+ensemble, bootstraps are created so that at least 20 point estimates can be
+made.
+\item \code{model} (to be implemented): Results are computed at the model level. This
+means that, for example, bias-corrected estimates of model performance are
+assessed by creating (at least) 20 bootstraps and computing the performance
+of the model for each bootstrap.
+}
+
+Note that each level of detail has a different interpretation for bootstrap
+confidence intervals. For \code{ensemble} and \code{model} these are the confidence
+intervals for the ensemble and an individual model, respectively. That is,
+the confidence interval describes the range where an estimate produced by a
+respective ensemble or model trained on a repeat of the experiment may be
+found with the probability of the confidence level. For \code{hybrid}, it
+represents the range where any single model trained on a repeat of the
+experiment may be found with the probability of the confidence level. By
+definition, confidence intervals obtained using \code{hybrid} are at least as
+wide as those for \code{ensemble}. \code{hybrid} offers the correct interpretation if
+the goal of the analysis is to assess the result of a single, unspecified,
+model.
+
+\code{hybrid} is generally computationally less expensive then \code{ensemble}, which
+in turn is somewhat less expensive than \code{model}.
+
+A non-default \code{detail_level} parameter can be specified for separate
+evaluation steps by providing a parameter value in a named list with data
+elements, e.g. \code{list("auc_data"="ensemble", "model_performance"="hybrid")}.
+This parameter can be set for the following data elements: \code{auc_data},
+\code{decision_curve_analyis}, \code{model_performance}, \code{permutation_vimp},
+\code{ice_data}, \code{prediction_data} and \code{confusion_matrix}.}
+    \item{\code{estimation_type}}{(\emph{optional}) Sets the type of estimation that should be
+possible. This has the following options:
+\itemize{
+\item \code{point}: Point estimates.
+\item \code{bias_correction} or \code{bc}: Bias-corrected estimates. A bias-corrected
+estimate is computed from (at least) 20 point estimates, and \code{familiar} may
+bootstrap the data to create them.
+\item \code{bootstrap_confidence_interval} or \code{bci} (default): Bias-corrected
+estimates with bootstrap confidence intervals (Efron and Hastie, 2016). The
+number of point estimates required depends on the \code{confidence_level}
+parameter, and \code{familiar} may bootstrap the data to create them. In some
+cases no bootstrap data
+}
+
+As with \code{detail_level}, a non-default \code{estimation_type} parameter can be
+specified for separate evaluation steps by providing a parameter value in a
+named list with data elements, e.g. \code{list("auc_data"="bci", "model_performance"="point")}. This parameter can be set for the following
+data elements: \code{auc_data}, \code{decision_curve_analyis}, \code{model_performance},
+\code{permutation_vimp}, \code{ice_data}, and \code{prediction_data}.}
+    \item{\code{confidence_level}}{(\emph{optional}) Numeric value for the level at which
+confidence intervals are determined. In the case bootstraps are used to
+determine the confidence intervals bootstrap estimation, \code{familiar} uses the
+rule of thumb \eqn{n = 20 / ci.level} to determine the number of required
+bootstraps.
+
+The default value is \code{0.95}.}
+    \item{\code{bootstrap_ci_method}}{(\emph{optional}) Method used to determine bootstrap
+confidence intervals (Efron and Hastie, 2016). The following methods are
+implemented:
+\itemize{
+\item \code{percentile} (default): Confidence intervals obtained using the percentile
+method.
+\item \code{bc}: Bias-corrected confidence intervals.
+}
+
+Note that the standard method is not implemented because this method is
+often not suitable due to non-normal distributions. The bias-corrected and
+accelerated (BCa) method is not implemented yet.}
+    \item{\code{is_pre_processed}}{Flag that indicates whether the data was already
+pre-processed externally, e.g. normalised and clustered. Only used if the
+\code{data} argument is a \code{data.table} or \code{data.frame}.}
+    \item{\code{message_indent}}{Number of indentation steps for messages shown during
+computation and extraction of various data elements.}
+    \item{\code{verbose}}{Flag to indicate whether feedback should be provided on the
+computation and extraction of various data elements.}
   }}
 }
 \value{

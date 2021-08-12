@@ -80,6 +80,7 @@ NULL
 #'@inheritParams plotting.check_data_handling
 #'@inheritDotParams export_ice_data -object
 #'@inheritDotParams ggplot2::ggsave -height -width -units
+#'@inheritDotParams extract_ice -object
 #'
 #'@details This function generates individual conditional expectation plots.
 #'  These plots come in two varieties, namely 1D and 2D. 1D plots show the
