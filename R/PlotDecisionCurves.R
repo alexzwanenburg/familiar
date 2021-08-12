@@ -21,6 +21,7 @@ NULL
 #'@inheritParams plotting.check_data_handling
 #'@inheritDotParams as_familiar_collection -object
 #'@inheritDotParams ggplot2::ggsave -height -width -units
+#'@inheritDotParams extract_decision_curve_data -object
 #'
 #'@details This function generates plots for decision curves.
 #'
@@ -132,7 +133,9 @@ setMethod("plot_decision_curve", signature(object="ANY"),
             
             # Attempt conversion to familiarCollection object.
             object <- do.call(as_familiar_collection,
-                              args=append(list("object"=object, "data_element"="decision_curve_analyis"), list(...)))
+                              args=c(list("object"=object,
+                                          "data_element"="decision_curve_analyis"),
+                                     list(...)))
             
             return(do.call(plot_decision_curve,
                            args=list("object"=object,
