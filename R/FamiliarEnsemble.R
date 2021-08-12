@@ -388,8 +388,14 @@ setMethod("..update_model_list", signature(object="familiarEnsemble"),
               })
               
               # Throw an error if any model does not exist.
+              if(all(!model_exists)) stop(paste0("None of the models could be found: ",
+                                                 paste_s(unlist(object@model_list)),
+                                                 ". \n\nThis is likely because the models are no longer found in the same location as they were created. ",
+                                                 "Use the update_model_dir_path method to update the path for the directory containing the models."))
+              
               if(any(!model_exists)) stop(paste0("The following models in the ensemble could not be found: ",
-                                                 paste_s(unlist(object@model_list[!model_exists]))))
+                                                 paste_s(unlist(object@model_list[!model_exists])),
+                                                 "."))
             }
             
             # Check the model_dir_path slot if auto_detach is on. In that case
@@ -447,6 +453,64 @@ setMethod("..can_detach_models", signature(ii="missing", object="familiarEnsembl
             }
           })
 
+
+#'@title Updates model directory path for ensemble objects.
+#'
+#'@description Updates the model directory path of a `familiarEnsemble` object.
+#'
+#'@param object A `familiarEnsemble` object, or one or more `familiarModel`
+#'  objects that will be internally converted to a `familiarEnsemble` object.
+#'  Paths to such objects can also be provided.
+#'@param ... Unused arguments.
+#'
+#'@details Ensemble models created by familiar are often written to a directory
+#'  on a local drive or network. In such cases, the actual models are detached,
+#'  and paths to the models are stored instead. When the models are moved from
+#'  their original location, they can no longer be found and attached to the
+#'  ensemble. This method allows for pointing to the new directory containing
+#'  the models.
+#'
+#'@return A `familiarEnsemble` object.
+#'@exportMethod update_model_dir_path
+#'@md
+#'@rdname update_model_dir_path-methods
+setGeneric("update_model_dir_path", function(object, ...) standardGeneric("update_model_dir_path"))
+
+
+#####update_model_dir_path (familiarEnsemble)#####
+#'@rdname update_model_dir_path-methods
+setMethod("update_model_dir_path", signature(object="familiarEnsemble"),
+          function(object, dir_path){
+            
+            # Check if the directory indicated by dir_path exists.
+            if(!dir.exists(dir_path)){
+              # Check whether a path to a file may have accidentally been
+              # provided.
+              if(file.exists(dir_path)){
+                dir_path <- dirname(dir_path)
+                
+              } else {
+                stop(paste0("The new model directory does not exist, or cannot be accessed. Found: ", dir_path))
+              }
+            } 
+            
+            # Assign to attribute slot.
+            object@model_dir_path <- dir_path
+            
+            return(object)
+          })
+
+
+#####update_model_dir_path(ANY)#####
+#'@rdname update_model_dir_path-methods
+setMethod("update_model_dir_path", signature(object="ANY"),
+          function(object, dir_path){
+            # Attempt to convert object to familiar ensemble.
+            object <- as_familiar_ensemble(object)
+            
+            # Update path to model directory
+            return(update_model_dir_path(object=object, dir_path=dir_path))
+          })
 
 
 #####load_models#####
