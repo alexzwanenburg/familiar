@@ -34,6 +34,7 @@ NULL
 #'@inheritParams plotting.check_data_handling
 #'@inheritDotParams as_familiar_collection -object
 #'@inheritDotParams ggplot2::ggsave -height -width -units
+#'@inheritDotParams extract_calibration_data -object
 #'
 #'@details This function generates a calibration plot for each model in each
 #'  dataset. Any data used for calibration (e.g. baseline survival) is obtained
