@@ -37,6 +37,7 @@ NULL
 #'@inheritParams plot_univariate_importance
 #'@inheritParams plotting.check_input_args
 #'@inheritParams plotting.check_data_handling
+#'@inheritDotParams extract_performance -object
 #'@inheritDotParams as_familiar_collection -object
 #'@inheritDotParams ggplot2::ggsave -height -width -units
 #'
@@ -154,7 +155,7 @@ setMethod("plot_model_performance", signature(object="ANY"),
             
             # Attempt conversion to familiarCollection object.
             object <- do.call(as_familiar_collection,
-                              args=append(list("object"=object, "data_element"="model_performance"), list(...)))
+                              args=c(list("object"=object, "data_element"="model_performance"), list(...)))
             
             return(do.call(plot_model_performance,
                            args=list("object"=object,
