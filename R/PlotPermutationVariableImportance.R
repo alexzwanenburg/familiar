@@ -26,6 +26,7 @@ NULL
 #'@inheritParams plotting.check_data_handling
 #'@inheritDotParams as_familiar_collection -object
 #'@inheritDotParams ggplot2::ggsave -height -width -units
+#'@inheritDotParams extract_permutation_vimp -object
 #'
 #'@details This function generates a horizontal barplot that lists features by
 #'  the estimated model improvement over that of a dataset where the respective
@@ -146,7 +147,8 @@ setMethod("plot_permutation_variable_importance", signature(object="ANY"),
             
             # Attempt conversion to familiarCollection object.
             object <- do.call(as_familiar_collection,
-                              args=append(list("object"=object, "data_element"="permutation_vimp"), list(...)))
+                              args=c(list("object"=object, "data_element"="permutation_vimp"),
+                                     list(...)))
             
             return(do.call(plot_permutation_variable_importance,
                            args=list("object"=object,
@@ -554,15 +556,15 @@ setMethod("plot_permutation_variable_importance", signature(object="familiarColl
                 
                 # Save to file.
                 do.call(plotting.save_plot_to_file,
-                        args=append(list("plot_obj"=p,
-                                         "object"=object,
-                                         "dir_path"=dir_path,
-                                         "type"="variable_importance",
-                                         "subtype"=subtype,
-                                         "height"=ifelse(is.waive(height), def_plot_dims[1], height),
-                                         "width"=ifelse(is.waive(width), def_plot_dims[2], width),
-                                         "units"=ifelse(is.waive(units), "cm", units)),
-                                    list(...)))
+                        args=c(list("plot_obj"=p,
+                                    "object"=object,
+                                    "dir_path"=dir_path,
+                                    "type"="variable_importance",
+                                    "subtype"=subtype,
+                                    "height"=ifelse(is.waive(height), def_plot_dims[1], height),
+                                    "width"=ifelse(is.waive(width), def_plot_dims[2], width),
+                                    "units"=ifelse(is.waive(units), "cm", units)),
+                               list(...)))
                 
               } else {
                 # Store as list and export
