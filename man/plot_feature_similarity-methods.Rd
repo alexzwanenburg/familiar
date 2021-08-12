@@ -258,7 +258,7 @@ the number of features and the number of facets.}
 \item{units}{(\emph{optional}) Plot size unit. Either \code{cm} (default), \code{mm} or \verb{in}.}
 
 \item{...}{
-  Arguments passed on to \code{\link[=as_familiar_collection]{as_familiar_collection}}, \code{\link[ggplot2:ggsave]{ggplot2::ggsave}}
+  Arguments passed on to \code{\link[=as_familiar_collection]{as_familiar_collection}}, \code{\link[ggplot2:ggsave]{ggplot2::ggsave}}, \code{\link[=extract_feature_similarity]{extract_feature_similarity}}
   \describe{
     \item{\code{familiar_data_names}}{Names of the dataset(s). Only used if the \code{object} parameter
 is one or more \code{familiarData} objects.}
@@ -279,6 +279,79 @@ save images larger than 50x50 inches, to prevent the common error of
 specifying dimensions in pixels.}
     \item{\code{bg}}{Background colour. If \code{NULL}, uses the \code{plot.background} fill value
 from the plot theme.}
+    \item{\code{data}}{A \code{dataObject} object, \code{data.table} or \code{data.frame} that
+constitutes the data that are used to compute}
+    \item{\code{cl}}{Cluster created using the \code{parallel} package. This cluster is then
+used to speed up computation through parallellisation.}
+    \item{\code{estimation_type}}{(\emph{optional}) Sets the type of estimation that should be
+possible. This has the following options:
+\itemize{
+\item \code{point}: Point estimates.
+\item \code{bias_correction} or \code{bc}: Bias-corrected estimates. A bias-corrected
+estimate is computed from (at least) 20 point estimates, and \code{familiar} may
+bootstrap the data to create them.
+\item \code{bootstrap_confidence_interval} or \code{bci} (default): Bias-corrected
+estimates with bootstrap confidence intervals (Efron and Hastie, 2016). The
+number of point estimates required depends on the \code{confidence_level}
+parameter, and \code{familiar} may bootstrap the data to create them. In some
+cases no bootstrap data
+}
+
+As with \code{detail_level}, a non-default \code{estimation_type} parameter can be
+specified for separate evaluation steps by providing a parameter value in a
+named list with data elements, e.g. \code{list("auc_data"="bci", "model_performance"="point")}. This parameter can be set for the following
+data elements: \code{auc_data}, \code{decision_curve_analyis}, \code{model_performance},
+\code{permutation_vimp}, \code{ice_data}, and \code{prediction_data}.}
+    \item{\code{aggregate_results}}{(\emph{optional}) Flag that signifies whether results
+should be aggregated during evaluation. If \code{estimation_type} is
+\code{bias_correction} or \code{bc}, aggregation leads to a single bias-corrected
+estimate. If \code{estimation_type} is \code{bootstrap_confidence_interval} or \code{bci},
+aggregation leads to a single bias-corrected estimate with lower and upper
+boundaries of the confidence interval. This has no effect if
+\code{estimation_type} is \code{point}.
+
+The default value is equal to \code{TRUE} except when assessing metrics to assess
+model performance, as the default violin plot requires underlying data.
+
+As with \code{detail_level} and \code{estimation_type}, a non-default
+\code{aggregate_results} parameter can be specified for separate evaluation steps
+by providing a parameter value in a named list with data elements, e.g.
+\code{list("auc_data"=TRUE, , "model_performance"=FALSE)}. This parameter exists
+for the same elements as \code{estimation_type}.}
+    \item{\code{confidence_level}}{(\emph{optional}) Numeric value for the level at which
+confidence intervals are determined. In the case bootstraps are used to
+determine the confidence intervals bootstrap estimation, \code{familiar} uses the
+rule of thumb \eqn{n = 20 / ci.level} to determine the number of required
+bootstraps.
+
+The default value is \code{0.95}.}
+    \item{\code{bootstrap_ci_method}}{(\emph{optional}) Method used to determine bootstrap
+confidence intervals (Efron and Hastie, 2016). The following methods are
+implemented:
+\itemize{
+\item \code{percentile} (default): Confidence intervals obtained using the percentile
+method.
+\item \code{bc}: Bias-corrected confidence intervals.
+}
+
+Note that the standard method is not implemented because this method is
+often not suitable due to non-normal distributions. The bias-corrected and
+accelerated (BCa) method is not implemented yet.}
+    \item{\code{is_pre_processed}}{Flag that indicates whether the data was already
+pre-processed externally, e.g. normalised and clustered. Only used if the
+\code{data} argument is a \code{data.table} or \code{data.frame}.}
+    \item{\code{feature_similarity_metric}}{Metric to determine pairwise similarity
+between features. Similarity is computed in the same manner as for
+clustering, and \code{feature_similarity_metric} therefore has the same options
+as \code{cluster_similarity_metric}: \code{mcfadden_r2}, \code{cox_snell_r2},
+\code{nagelkerke_r2}, \code{spearman}, \code{kendall} and \code{pearson}.
+
+If not provided explicitly, this parameter is read from settings used at
+creation of the underlying \code{familiarModel} objects.}
+    \item{\code{verbose}}{Flag to indicate whether feedback should be provided on the
+computation and extraction of various data elements.}
+    \item{\code{message_indent}}{Number of indentation steps for messages shown during
+computation and extraction of various data elements.}
   }}
 }
 \value{
