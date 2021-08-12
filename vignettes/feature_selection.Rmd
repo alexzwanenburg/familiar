@@ -2,7 +2,10 @@
 title: "Feature selection methods"
 author: "Alex Zwanenburg"
 date: "`r Sys.Date()`"
-output: rmarkdown::html_vignette
+output:
+  rmarkdown::html_vignette:
+    includes:
+      after_body: license.html
 bibliography: "refs.bib"
 vignette: >
   %\VignetteIndexEntry{Feature selection methods}
@@ -14,307 +17,707 @@ vignette: >
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-# Feature selection methods
+Feature selection methods in familiar measure variable importance in a
+univariate or multivariate setting.
 
-Feature selection methods in familiar measure variable importance in a univariate or multivariate setting. 
+| **method**                                           | **tag**                                    | **binomial** | **multinomial** | **continuous** | **count** | **survival** |
+|:-----------------------------------------------------|:-------------------------------------------|:------------:|:---------------:|:--------------:|:---------:|:------------:|
+| **correlation**                                      |                                            |              |                 |                |           |              |
+| Pearson's *r*                                        | `pearson`                                  |              |                 |       ×        |     ×     |      ×       |
+| Spearman's *ρ*                                       | `spearman`                                 |              |                 |       ×        |     ×     |      ×       |
+| Kendall's *τ*                                        | `kendall`                                  |              |                 |       ×        |     ×     |      ×       |
+| **concordance**                                      |                                            |              |                 |                |           |              |
+| concordance^a^                                       | `concordance`                              |      ×       |        ×        |       ×        |     ×     |      ×       |
+| **CORElearn**                                        |                                            |              |                 |                |           |              |
+| information gain ratio                               | `gain_ratio`                               |      ×       |        ×        |                |           |              |
+| gini-index                                           | `gini`                                     |      ×       |        ×        |                |           |              |
+| minimum description length                           | `mdl`                                      |      ×       |        ×        |                |           |              |
+| ReliefF with exponential weighting of distance ranks | `relieff_exp_rank`                         |      ×       |        ×        |       ×        |     ×     |              |
+| **mutual information**                               |                                            |              |                 |                |           |              |
+| mutual information maximisation                      | `mim`                                      |      ×       |        ×        |       ×        |     ×     |      ×       |
+| mutual information features selection                | `mifs`                                     |      ×       |        ×        |       ×        |     ×     |      ×       |
+| minimum redundancy maximum relevance                 | `mrmr`                                     |      ×       |        ×        |       ×        |     ×     |      ×       |
+| **univariate regression**                            |                                            |              |                 |                |           |              |
+| univariate regression                                | `univariate_regression`                    |      ×       |        ×        |       ×        |     ×     |      ×       |
+| **multivariate regression**                          |                                            |              |                 |                |           |              |
+| multivariate regression                              | `multivariate_regression`                  |      ×       |        ×        |       ×        |     ×     |      ×       |
+| **lasso regression**                                 |                                            |              |                 |                |           |              |
+| general^a^                                           | `lasso`                                    |      ×       |        ×        |       ×        |     ×     |      ×       |
+| logistic                                             | `lasso_binomial`                           |      ×       |                 |                |           |              |
+| multi-logistic                                       | `lasso_multinomial`                        |              |        ×        |                |           |              |
+| normal (gaussian)                                    | `lasso_gaussian`                           |              |                 |       ×        |           |              |
+| poisson                                              | `lasso_poisson`                            |              |                 |                |     ×     |              |
+| cox                                                  | `lasso_cox`                                |              |                 |                |           |      ×       |
+| **ridge regression**                                 |                                            |              |                 |                |           |              |
+| general^a^                                           | `ridge`                                    |      ×       |        ×        |       ×        |     ×     |      ×       |
+| logistic                                             | `ridge_binomial`                           |      ×       |                 |                |           |              |
+| multi-logistic                                       | `ridge_multinomial`                        |              |        ×        |                |           |              |
+| normal (gaussian)                                    | `ridge_gaussian`                           |              |                 |       ×        |           |              |
+| poisson                                              | `ridge_poisson`                            |              |                 |                |     ×     |              |
+| cox                                                  | `ridge_cox`                                |              |                 |                |           |      ×       |
+| **elastic net regression**                           |                                            |              |                 |                |           |              |
+| general^a,b^                                         | `elastic_net`                              |      ×       |        ×        |       ×        |     ×     |      ×       |
+| logistic^b^                                          | `elastic_net_binomial`                     |      ×       |                 |                |           |              |
+| multi-logistic^b^                                    | `elastic_net_multinomial`                  |              |        ×        |                |           |              |
+| normal (gaussian)^b^                                 | `elastic_net_gaussian`                     |              |                 |       ×        |           |              |
+| poisson^b^                                           | `elastic_net_poisson`                      |              |                 |                |     ×     |              |
+| cox^b^                                               | `elastic_net_cox`                          |              |                 |                |           |      ×       |
+| **random forest (RFSRC) variable importance**        |                                            |              |                 |                |           |              |
+| permutation^b^                                       | `random_forest_permutation`                |      ×       |        ×        |       ×        |     ×     |      ×       |
+| minimum depth^b^                                     | `random_forest_minimum_depth`              |      ×       |        ×        |       ×        |     ×     |      ×       |
+| variable hunting^b^                                  | `random_forest_variable_hunting`           |      ×       |        ×        |       ×        |     ×     |      ×       |
+| hold-out ^b^                                         | `random_forest_holdout`                    |      ×       |        ×        |       ×        |     ×     |      ×       |
+| **random forest (ranger) variable importance**       |                                            |              |                 |                |           |              |
+| permutation^b^                                       | `random_forest_ranger_permutation`         |      ×       |        ×        |       ×        |     ×     |      ×       |
+| hold-out permutation^b^                              | `random_forest_ranger_holdout_permutation` |      ×       |        ×        |       ×        |     ×     |      ×       |
+| impurity^b^                                          | `random_forest_ranger_impurity`            |      ×       |        ×        |       ×        |     ×     |      x       |
+| **special methods**                                  |                                            |              |                 |                |           |              |
+| no selection                                         | `none`                                     |      ×       |        ×        |       ×        |     ×     |      ×       |
+| random selection                                     | `random`                                   |      ×       |        ×        |       ×        |     ×     |      ×       |
+| signature only                                       | `signature_only`                           |      ×       |        ×        |       ×        |     ×     |      ×       |
 
-| **method** | **tag** | **binomial** | **multinomial** | **continuous** | **count** | **survival** |
-|:-----------|:--------|:------------:|:---------------:|:--------------:|:---------:|:------------:|
-| **correlation** |
-| Pearson's *r* | `pearson`                                             |   |   | × | × | × |
-| Spearman's *ρ* | `spearman`                                           |   |   | × | × | × |
-| Kendall's *τ* | `kendall`                                             |   |   | × | × | × |
-| **concordance** |
-| concordance^a^ | `concordance`                                        | × | × | × | × | × |
-| **CORElearn** |
-| information gain ratio | `gain_ratio`                                 | × | × |   |   |   |
-| gini-index | `gini`                                                   | × | × |   |   |   |
-| minimum description length | `mdl`                                    | × | × |   |   |   |
-| ReliefF with exponential weighting of distance ranks | `relieff_exp_rank`       | × | × | × | × |   |
-| **mutual information**|
-| mutual information maximisation | `mim`                               | × | × | × | × | × |
-| mutual information features selection | `mifs`                        | × | × | × | × | × |
-| minimum redundancy maximum relevance | `mrmr`                         | × | × | × | × | × |
-| **univariate regression** |
-| univariate regression | `univariate_regression`                       | × | × | × | × | × |
-| **multivariate regression**| 
-| multivariate regression | `multivariate_regression`                   | × | × | × | × | × |
-| **lasso regression**| 
-| general^a^ | `lasso`                                                  | × | × | × | × | × |
-| logistic | `lasso_binomial`                                           | × |   |   |   |   |
-| multi-logistic | `lasso_multinomial`                                  |   | × |   |   |   |
-| normal (gaussian) | `lasso_gaussian`                                  |   |   | × |   |   |
-| poisson | `lasso_poisson`                                             |   |   |   | × |   |
-| cox | `lasso_cox`                                                     |   |   |   |   | × |
-| **ridge regression**|
-| general^a^ | `ridge`                                                  | × | × | × | × | × |
-| logistic | `ridge_binomial`                                           | × |   |   |   |   |
-| multi-logistic | `ridge_multinomial`                                  |   | × |   |   |   |
-| normal (gaussian) | `ridge_gaussian`                                  |   |   | × |   |   |
-| poisson | `ridge_poisson`                                             |   |   |   | × |   |
-| cox | `ridge_cox`                                                     |   |   |   |   | × |
-| **elastic net regression**| 
-| general^a,b^ | `elastic_net`                                          | × | × | × | × | × |
-| logistic^b^ | `elastic_net_binomial`                                  | × |   |   |   |   |
-| multi-logistic^b^ | `elastic_net_multinomial`                         |   | × |   |   |   |
-| normal (gaussian)^b^ | `elastic_net_gaussian`                         |   |   | × |   |   |
-| poisson^b^ | `elastic_net_poisson`                                    |   |   |   | × |   |
-| cox^b^ | `elastic_net_cox`                                            |   |   |   |   | × |
-| **random forest (RFSRC) variable importance**|
-| permutation^b^ | `random_forest_permutation`                          | × | × | × | × | × |
-| minimum depth^b^ | `random_forest_minimum_depth`                      | × | × | × | × | × |
-| variable hunting^b^ | `random_forest_variable_hunting`                | × | × | × | × | × |
-| hold-out ^b^ | `random_forest_holdout`                                | × | × | × | × | × |
-| **random forest (ranger) variable importance**|
-| permutation^b^ | `random_forest_ranger_permutation`                   | × | × | × | × | × |
-| hold-out permutation^b^ | `random_forest_ranger_holdout_permutation`  | × | × | × | × | × |
-| impurity^b^ | `random_forest_ranger_impurity`                         | × | × | × | × | x |
-| **special methods**|
-| no selection | `none`                                                 | × | × | × | × | × |
-| random selection | `random`                                           | × | × | × | × | × |
-| signature only | `signature_only`                                     | × | × | × | × | × |
+: Overview of feature selection methods. ^a^ This is a general method where an
+appropriate specific method will be chosen, or multiple distributions or linking
+families are tested in an attempt to find the best option. ^b^ This method
+requires hyperparameter optimisation.
 
-Table: Overview of feature selection methods. ^a^ This is a general method where an appropriate specific method will be chosen, or multiple distributions or linking families are tested in an attempt to find the best option. ^b^ This method requires hyperparameter optimisation.
+# Configuration options
 
-## Configuration options
+Feature selection methods and related options can be provided within the
+`feature_selection` tag in the *xml* file.
 
-Feature selection methods and related options can be provided within the `feature_selection` tag in the *xml* file.
++-----------------+---------------------------------------+-------------------+
+| **tag** /       | **description**                       | **default**       |
+| **argument**    |                                       |                   |
++:===============:+:======================================+:=================:+
+| `fs_method`     | The desired feature selection method. | -- (required)     |
+|                 | Multiple selection methods may be     |                   |
+|                 | provided at the same time. This       |                   |
+|                 | setting has no default and must be    |                   |
+|                 | provided.                             |                   |
++-----------------+---------------------------------------+-------------------+
+| `fs_me          | Several feature selection methods     | -- (optional)     |
+| thod_parameter` | have hyperparameters that can be set  |                   |
+|                 | and/or optimised.                     |                   |
++-----------------+---------------------------------------+-------------------+
+| `vimp_aggr      | The aggregation method used to        | `mean`            |
+| egation_method` | aggregate feature ranks over          |                   |
+|                 | different bootstraps.                 |                   |
++-----------------+---------------------------------------+-------------------+
+| `vi             | Several aggregation methods count     | `NULL`            |
+| mp_aggregation_ | features if they have a rank below    |                   |
+| rank_threshold` | the threshold, i.e. are among the     |                   |
+|                 | most important features. If `NULL`, a |                   |
+|                 | dynamic threshold is determined by    |                   |
+|                 | Otsu-thresholding.                    |                   |
++-----------------+---------------------------------------+-------------------+
+| `parallel_fea   | Enables parallel processing for       | `TRUE`            |
+| ture_selection` | feature selection. Ignored if         |                   |
+|                 | `parallel=FALSE`.                     |                   |
++-----------------+---------------------------------------+-------------------+
 
-| **tag** / **argument** | **description** | **default** |
-|:----------:|:-------------------------|:-----------:|
-| `fs_method` | The desired feature selection method. Multiple selection methods may be provided at the same time. This setting has no default and must be provided. | -- (required) |
-| `fs_method_parameter` | Several feature selection methods have hyperparameters that can be set and/or optimised. | -- (optional) |
-| `vimp_aggregation_method` | The aggregation method used to aggregate feature ranks over different bootstraps. | `mean` |
-| `vimp_aggregation_rank_threshold` | Several aggregation methods count features if they have a rank below the threshold, i.e. are among the most important features. If `NULL`, a dynamic threshold is determined by Otsu-thresholding. | `NULL` | 
-| `parallel_feature_selection` | Enables parallel processing for feature selection. Ignored if `parallel=FALSE`. | `TRUE` |
+## Providing parameters for feature selection
 
-### Providing parameters for feature selection
+Some of the feature selection methods, notably those based on random forests and
+(penalised) regression, allow the user to provide additional parameters. These
+parameters are mentioned under the respective entries. Moreover, some of these
+parameters are model parameters. In this case, these parameters are optimised
+using hyperparameter optimisation, which is the described in the *learning
+algorithms* vignette.
 
-Some of the feature selection methods, notably those based on random forests and (penalised) regression, allow the user to provide additional parameters. These parameters are mentioned under the respective entries. Moreover, some of these parameters are model parameters. In this case, these parameters are optimised using hyperparameter optimisation, which is the described in the *learning algorithms* vignette.
+The syntax for such parameters is the same as for hyperparameter optimisation.
+For the `multivariate_regression` feature selection method the `alpha` parameter
+(which determines feature drop-out during forward selection) may be provided as
+follows using the configuration file:
 
-The syntax for such parameters is the same as for hyperparameter optimisation. For the `multivariate_regression` feature selection method the `alpha` parameter (which determines feature drop-out during forward selection) may be provided as follows using the configuration file:
-```
-<fs_method_parameter>
-  <multivariate_regression>
-    <alpha>0.05</alpha>
-  </multivariate_regression>
-</fs_method_parameter>
-```
+    <fs_method_parameter>
+      <multivariate_regression>
+        <alpha>0.05</alpha>
+      </multivariate_regression>
+    </fs_method_parameter>
 
-Or as a nested list passed as the `fs_method_parameter` argument to `summon_familiar`:
-```
-fs_method_parameter = list("multivariate_regression"=list("alpha"=0.05))
-```
+Or as a nested list passed as the `fs_method_parameter` argument to
+`summon_familiar`:
 
-## Correlation methods {#sect:vimp_correlation}
+    fs_method_parameter = list("multivariate_regression"=list("alpha"=0.05))
 
-Correlation methods determine variable importance by assessing the correlation between a feature and the outcome of interest. High (anti-)correlation indicates an important feature, whereas low (anti-)correlation indicates that a feature is not directly related to the outcome. Correlation-based variable importance is determined using the `cor` function of the `stats` package that is part of the R core distribution [@rcore2018].
+# Correlation methods {#sect:vimp_correlation}
+
+Correlation methods determine variable importance by assessing the correlation
+between a feature and the outcome of interest. High (anti-)correlation indicates
+an important feature, whereas low (anti-)correlation indicates that a feature is
+not directly related to the outcome. Correlation-based variable importance is
+determined using the `cor` function of the `stats` package that is part of the R
+core distribution [@rcore2018].
 
 Three correlation coefficients can be computed:
 
-* `pearson`: Pearson’s $r$
-* `spearman`: Spearman’s $\rho$
-* `kendall`: Kendall’s $\tau$
+-   `pearson`: Pearson's $r$
+-   `spearman`: Spearman's $\rho$
+-   `kendall`: Kendall's $\tau$
 
-To compute correlation of features with survival outcomes, only samples with an event are taken into account.
+To compute correlation of features with survival outcomes, only samples with an
+event are taken into account.
 
-## Concordance methods
+# Concordance methods
 
-Concordance methods assess how well the ordering of feature values corresponds to the ordering of the outcome. The method internally refers to the `gini` method for binomial and multinomial outcomes and to the `kendall` method for continuous and count outcomes. For survival outcomes, concordance is measured using the `concordance_index`.
+Concordance methods assess how well the ordering of feature values corresponds
+to the ordering of the outcome. The method internally refers to the `gini`
+method for binomial and multinomial outcomes and to the `kendall` method for
+continuous and count outcomes. For survival outcomes, concordance is measured
+using the `concordance_index`.
 
-## CORElearn methods
+# CORElearn methods
 
-Familiar provides an interface to several feature selection methods implemented in the `CORElearn` package. These methods are the Information Gain Ratio (`gain_ratio`), the Gini-index (`gini`), Minimum Description Length (`mdl`) and ReliefF and rReliefF with exponantial distance rank weighting (`relieff_exp_rank`).
+Familiar provides an interface to several feature selection methods implemented
+in the `CORElearn` package. These methods are the Information Gain Ratio
+(`gain_ratio`), the Gini-index (`gini`), Minimum Description Length (`mdl`) and
+ReliefF and rReliefF with exponantial distance rank weighting
+(`relieff_exp_rank`).
 
-## Mutual information
+# Mutual information
 
-Mutual information $I$ is a measure of interdependency between two variables $x$ and $y$. In the context of feature selection, $x$ is a feature vector and $y$ is the outcome vector.
+Mutual information $I$ is a measure of interdependency between two variables $x$
+and $y$. In the context of feature selection, $x$ is a feature vector and $y$ is
+the outcome vector.
 
-Computing mutual information requires that probability distributions of $x$ and $y$ are known. In practice we don't know either one. For categorical $x$ and $y$ we can use the sample estimates instead. For continuous or mixed data the situation is more complex.
+Computing mutual information requires that probability distributions of $x$ and
+$y$ are known. In practice we don't know either one. For categorical $x$ and $y$
+we can use the sample estimates instead. For continuous or mixed data the
+situation is more complex.
 
-In familiar we therefore used to following three approaches to compute mutual information:
+In familiar we therefore used to following three approaches to compute mutual
+information:
 
-1. For binomial and multinomial outcomes mutual information is computed using sample estimates. In case of continuous $x$, these are discretised into $\lceil 2 n^{1/3}\rceil$ bins, with $n$ the number of samples, after which computation is conducted as if $x$ was a categorical variable.
-2. For continuous and count outcomes, we use the approximation proposed by De Jay et al. after Gel'fand and Yaglom [@Gelfand1959-de; @De_Jay2013-yl]: $I = -0.5\log(1-\rho(x,y)^2 + \epsilon)$, with $\rho(x,y)$ Spearman's correlation coefficient and $\epsilon$ a small positive number to prevent $\log(0)$.
-3. For survival outcomes the second method is adapted for use with a concordance index: $I  = -0.5 \log(1-(2*(ci-0.5))^2 + \epsilon)$, with $ci$ the concordance index.
+1.  For binomial and multinomial outcomes mutual information is computed using
+    sample estimates. In case of continuous $x$, these are discretised into
+    $\lceil 2 n^{1/3}\rceil$ bins, with $n$ the number of samples, after which
+    computation is conducted as if $x$ was a categorical variable.
+2.  For continuous and count outcomes, we use the approximation proposed by De
+    Jay et al. after Gel'fand and Yaglom [@Gelfand1959-de; @De_Jay2013-yl]:
+    $I = -0.5\log(1-\rho(x,y)^2 + \epsilon)$, with $\rho(x,y)$ Spearman's
+    correlation coefficient and $\epsilon$ a small positive number to prevent
+    $\log(0)$.
+3.  For survival outcomes the second method is adapted for use with a
+    concordance index: $I = -0.5 \log(1-(2*(ci-0.5))^2 + \epsilon)$, with $ci$
+    the concordance index.
 
-We opted to adapt the approach based on the outcome type as this ensures that a single consistent approach is used to assess all feature data in an analysis, thus making results comparable.
+We opted to adapt the approach based on the outcome type as this ensures that a
+single consistent approach is used to assess all feature data in an analysis,
+thus making results comparable.
 
-### Mutual information maximisation
+## Mutual information maximisation
 
-The `mim` method is a univariate method that ranks each feature by its mutual information with the outcome.
+The `mim` method is a univariate method that ranks each feature by its mutual
+information with the outcome.
 
-### Mutual information feature selection
+## Mutual information feature selection
 
-Mutual information feature selection (MIFS) finds a feature set that maximises mutual information [@Battiti1994-ja]. This is done using forward selection. As in mutual information maximisation, mutual information $I_{y,j}$ between each feature and the outcome is computed.  Starting from a potential pool of all features, the feature with the highest mutual information is selected and removed from the pool.
+Mutual information feature selection (MIFS) finds a feature set that maximises
+mutual information [@Battiti1994-ja]. This is done using forward selection. As
+in mutual information maximisation, mutual information $I_{y,j}$ between each
+feature and the outcome is computed. Starting from a potential pool of all
+features, the feature with the highest mutual information is selected and
+removed from the pool.
 
-The remainder proceeds iteratively. The mutual information $I_{s,1j}$ between the previously selected feature and the remaining features is computed. This mutual information is also called *redundancy*. The feature with the highest mutual information with the outcome and least redundancy (i.e. maximum $I_{y,j} - I_{s,1j}$) is selected next, and removed from the pool of remaining features. Then the mutual information $I_{s,2j}$ between this feature and remaining features is computed, and the feature that maximises $I_{y,j} - I{s,1j} - I_{s,2j}$ is selected, and so forth.
+The remainder proceeds iteratively. The mutual information $I_{s,1j}$ between
+the previously selected feature and the remaining features is computed. This
+mutual information is also called *redundancy*. The feature with the highest
+mutual information with the outcome and least redundancy (i.e. maximum
+$I_{y,j} - I_{s,1j}$) is selected next, and removed from the pool of remaining
+features. Then the mutual information $I_{s,2j}$ between this feature and
+remaining features is computed, and the feature that maximises
+$I_{y,j} - I{s,1j} - I_{s,2j}$ is selected, and so forth.
 
-The iterative process stops if there is no feature $j$ for which $I_{y,j} - \sum_{i\in S}  I_{s,ij} > 0$, with $S$ being the subset of selected features, or all features have been exhausted.
+The iterative process stops if there is no feature $j$ for which
+$I_{y,j} - \sum_{i\in S} I_{s,ij} > 0$, with $S$ being the subset of selected
+features, or all features have been exhausted.
 
-To reduce the number of required computations, the implementation in familiar actively filters out any feature $j$ for which $I_{y,j} - \sum_{i\in S}  I_{s,ij} \leq 0$ at the earliest instance, as the $\sum_{i\in S}  I_{s,ij}$ term will monotonously increase.
+To reduce the number of required computations, the implementation in familiar
+actively filters out any feature $j$ for which
+$I_{y,j} - \sum_{i\in S} I_{s,ij} \leq 0$ at the earliest instance, as the
+$\sum_{i\in S} I_{s,ij}$ term will monotonously increase.
 
-### Minimum redundancy maximum relevance
+## Minimum redundancy maximum relevance
 
-Minimum redundancy maximum relevance (mRMR) feature selection is similar to MIFS, but differs in the way redundancy is used during optimisation [@Peng2005-oo]. Whereas for MIFS the optimisation criterion is $I_{y,j} - \sum_{i\in S}I_{s,ij}$, in mRMR the optimisation criterion is $I_{y,j} - \frac{1}{\left|S\right|}\sum_{i\in S}I_{s,ij}$, with $\left|S\right|$ the number of features already selected.
+Minimum redundancy maximum relevance (mRMR) feature selection is similar to
+MIFS, but differs in the way redundancy is used during optimisation
+[@Peng2005-oo]. Whereas for MIFS the optimisation criterion is
+$I_{y,j} - \sum_{i\in S}I_{s,ij}$, in mRMR the optimisation criterion is
+$I_{y,j} - \frac{1}{\left|S\right|}\sum_{i\in S}I_{s,ij}$, with $\left|S\right|$
+the number of features already selected.
 
-Unlike in MIFS, the $\frac{1}{\left|S\right|}\sum_{i\in S}I_{s,ij}$ term is not monotonically increasing. As a consequence, features cannot be safely filtered. To limit computational complexity, we still remove features for which $I_{y,j} - \frac{1}{\left|S\right| + 3}\sum_{i\in S}I_{s,ij} \leq 0$, as such features are unlikely to be selected.
+Unlike in MIFS, the $\frac{1}{\left|S\right|}\sum_{i\in S}I_{s,ij}$ term is not
+monotonically increasing. As a consequence, features cannot be safely filtered.
+To limit computational complexity, we still remove features for which
+$I_{y,j} - \frac{1}{\left|S\right| + 3}\sum_{i\in S}I_{s,ij} \leq 0$, as such
+features are unlikely to be selected.
 
-## Univariate and multivariate regression
+# Univariate and multivariate regression
 
-Univariate and multivariate regression perform feature selection by performing regression using a feature or set of features as predictors. The performance of the regression model is then measured using a metric. Training and testing of regression models is repeated multiple times using bootstraps. For each bootstrap, the in-bag samples are used for training and the out-of-bag samples are using for testing.
+Univariate and multivariate regression perform feature selection by performing
+regression using a feature or set of features as predictors. The performance of
+the regression model is then measured using a metric. Training and testing of
+regression models is repeated multiple times using bootstraps. For each
+bootstrap, the in-bag samples are used for training and the out-of-bag samples
+are using for testing.
 
-This also defines the parameters of both methods, which are shown in the table below.
+This also defines the parameters of both methods, which are shown in the table
+below.
 
-| **parameter** | **tag** | **values** | **optimised** | **comments** |
-|:--------------|:--------|:----------:|:----------:|:-------------|
-| regression learner | `learner` | dependent on outcome | no | Any generalised linear regression model from the *learning algorithms* vignette can be selected. Default values are `glm_logistic` for binomial, `glm_multinomial` for multinomial, `glm_gaussian` for continuous, `glm_poisson` for count, and `cox` for survival outcomes. |
-| performance metric | `metric` | dependent on outcome | no | Any metric from the *performance metrics* vignette can be selected. Default values are `auc_roc` for binomial and multinomial, `mse` for continuous, `msle` for count and `concordance_index` for survival outcomes |
-| number of bootstraps | `n_bootstrap` | $\mathbb{Z} \in \left[1, \infty\right)$ | no | The default value is $10$. |
-| drop-out alpha level | `alpha` | $\mathbb{R} \in \left[0, 1\right]$ | no | The default value is $0.05$. Only used in multivariate regression. |
++------------------+----------+--------------+--------------+-----------------+
+| **parameter**    | **tag**  | **values**   | *            | **comments**    |
+|                  |          |              | *optimised** |                 |
++:=================+:=========+:============:+:============:+:================+
+| regression       | `        | dependent on | no           | Any generalised |
+| learner          | learner` | outcome      |              | linear          |
+|                  |          |              |              | regression      |
+|                  |          |              |              | model from the  |
+|                  |          |              |              | *learning       |
+|                  |          |              |              | algorithms*     |
+|                  |          |              |              | vignette can be |
+|                  |          |              |              | selected.       |
+|                  |          |              |              | Default values  |
+|                  |          |              |              | are             |
+|                  |          |              |              | `glm_logistic`  |
+|                  |          |              |              | for binomial,   |
+|                  |          |              |              | `g              |
+|                  |          |              |              | lm_multinomial` |
+|                  |          |              |              | for             |
+|                  |          |              |              | multinomial,    |
+|                  |          |              |              | `glm_gaussian`  |
+|                  |          |              |              | for continuous, |
+|                  |          |              |              | `glm_poisson`   |
+|                  |          |              |              | for count, and  |
+|                  |          |              |              | `cox` for       |
+|                  |          |              |              | survival        |
+|                  |          |              |              | outcomes.       |
++------------------+----------+--------------+--------------+-----------------+
+| performance      | `metric` | dependent on | no           | Any metric from |
+| metric           |          | outcome      |              | the             |
+|                  |          |              |              | *performance    |
+|                  |          |              |              | metrics*        |
+|                  |          |              |              | vignette can be |
+|                  |          |              |              | selected.       |
+|                  |          |              |              | Default values  |
+|                  |          |              |              | are `auc_roc`   |
+|                  |          |              |              | for binomial    |
+|                  |          |              |              | and             |
+|                  |          |              |              | multinomial,    |
+|                  |          |              |              | `mse` for       |
+|                  |          |              |              | continuous,     |
+|                  |          |              |              | `msle` for      |
+|                  |          |              |              | count and       |
+|                  |          |              |              | `con            |
+|                  |          |              |              | cordance_index` |
+|                  |          |              |              | for survival    |
+|                  |          |              |              | outcomes        |
++------------------+----------+--------------+--------------+-----------------+
+| number of        | `n_bo    | $\m          | no           | The default     |
+| bootstraps       | otstrap` | athbb{Z} \in |              | value is $10$.  |
+|                  |          |  \left[1, \i |              |                 |
+|                  |          | nfty\right)$ |              |                 |
++------------------+----------+--------------+--------------+-----------------+
+| drop-out alpha   | `alpha`  | $\mathbb{R   | no           | The default     |
+| level            |          | } \in \left[ |              | value is        |
+|                  |          | 0, 1\right]$ |              | $0.05$. Only    |
+|                  |          |              |              | used in         |
+|                  |          |              |              | multivariate    |
+|                  |          |              |              | regression.     |
++------------------+----------+--------------+--------------+-----------------+
 
-### Univariate regression
+## Univariate regression
 
-In the univariate regression method, a regression model is built with each feature separately using the in-bag data of the bootstrap. Then this model is evaluated using the metric, expressed using an objective representation (see *computing the objective score* in the *learning algorithms* vignette). The objective representation $s^*$ is computed on both in-bag (IB) and out-of-bag (OOB) data. Subsequently the `balanced` objective score $f$ is computed: $f=s^*_{OOB} - \left|s^*_{OOB}-s^*_{IB}\right|$.
+In the univariate regression method, a regression model is built with each
+feature separately using the in-bag data of the bootstrap. Then this model is
+evaluated using the metric, expressed using an objective representation (see
+*computing the objective score* in the *learning algorithms* vignette). The
+objective representation $s^*$ is computed on both in-bag (IB) and out-of-bag
+(OOB) data. Subsequently the `balanced` objective score $f$ is computed:
+$f=s^*_{OOB} - \left|s^*_{OOB}-s^*_{IB}\right|$.
 
-The objective score $f$ is subsequently averaged over all bootstraps to obtain the variable importance of a feature.
+The objective score $f$ is subsequently averaged over all bootstraps to obtain
+the variable importance of a feature.
 
-### Multivariate regression
+## Multivariate regression
 
-The procedure described for univariate regression forms the first step in multivariate regression. The remainder follows forward selection. The most important feature is assigned to the subset of selected features and removed from the set of available features. Separate regression models are then built with each remaining feature and all the feature(s) in the selected feature subset as predictors. Thus the subset of selected features iteratively increases in size until no features are remaining or the objective score no longer increases.
+The procedure described for univariate regression forms the first step in
+multivariate regression. The remainder follows forward selection. The most
+important feature is assigned to the subset of selected features and removed
+from the set of available features. Separate regression models are then built
+with each remaining feature and all the feature(s) in the selected feature
+subset as predictors. Thus the subset of selected features iteratively increases
+in size until no features are remaining or the objective score no longer
+increases.
 
-To limit mostly redundant computation, features that are unlikely to be selected are activily removed. To do so, the standard deviation of the objective score over the boostraps is computed for each feature. The (one-sided, upper-tail) quantile $q$ corresponding to the alpha-level indicated by parameter `alpha` is subsequently computed. If the obtained mean objective score is $q$ standard deviations or more below the best objective score, the feature is removed.
+To limit mostly redundant computation, features that are unlikely to be selected
+are activily removed. To do so, the standard deviation of the objective score
+over the boostraps is computed for each feature. The (one-sided, upper-tail)
+quantile $q$ corresponding to the alpha-level indicated by parameter `alpha` is
+subsequently computed. If the obtained mean objective score is $q$ standard
+deviations or more below the best objective score, the feature is removed.
 
-## Lasso, ridge and elastic net regression
+# Lasso, ridge and elastic net regression
 
-Penalised regression is also a form of feature selection, as it selects an 'optimal' set of features to create a regression model. As features are usually normalised as part of pre-processing, the magnitude of each coefficient can be interpreted as its importance. All three shrinkage methods are implemented using the `glmnet` package [@Hastie2009-ed; @Simon2011-ih].
+Penalised regression is also a form of feature selection, as it selects an
+'optimal' set of features to create a regression model. As features are usually
+normalised as part of pre-processing, the magnitude of each coefficient can be
+interpreted as its importance. All three shrinkage methods are implemented using
+the `glmnet` package [@Hastie2009-ed; @Simon2011-ih].
 
-Only elastic net regression has a model hyperparameter that requires optimisation, but other parameters may be set as well, as shown in the table below:
+Only elastic net regression has a model hyperparameter that requires
+optimisation, but other parameters may be set as well, as shown in the table
+below:
 
-| **parameter** | **tag** | **values** | **optimised** | **comments** |
-|:--------------|:--------|:----------:|:----------:|:-------------|
-| family | `family` | `gaussian`, `binomial`, `poisson`, `multinomial`, `cox` | continuous outcomes | For continuous outcomes `gaussian` and `poisson` may be tested. The family is not optimised when it is specified, e.g. `lasso_gaussian`. For other outcomes only one applicable family exists.|
-| elastic net penalty | `alpha` | $\mathbb{R} \in \left[0,1\right]$ | elastic net | This penalty is fixed for ridge regression (`alpha = 0`) and lasso (`alpha = 1`). |
-| optimal lambda | `lambda_min` | `lambda.1se`, `lambda.min` | no | Default is `lambda.min`.|
-| number of CV folds | `n_folds` | $\mathbb{Z} \in \left[3,n\right]$ | no | Default is $3$ if $n<30$, $\lfloor n/10\rfloor$ if $30\leq n \leq 200$ and $20$ if $n>200$.|
-| normalisation | `normalise` | `FALSE`, `TRUE` | no | Default is `FALSE`, as normalisation is part of pre-processing in familiar.|
++------------------+----------+--------------+--------------+-----------------+
+| **parameter**    | **tag**  | **values**   | *            | **comments**    |
+|                  |          |              | *optimised** |                 |
++:=================+:=========+:============:+:============:+:================+
+| family           | `family` | `gaussian`,  | continuous   | For continuous  |
+|                  |          | `binomial`,  | outcomes     | outcomes        |
+|                  |          | `poisson`,   |              | `gaussian` and  |
+|                  |          | `m           |              | `poisson` may   |
+|                  |          | ultinomial`, |              | be tested. The  |
+|                  |          | `cox`        |              | family is not   |
+|                  |          |              |              | optimised when  |
+|                  |          |              |              | it is           |
+|                  |          |              |              | specified, e.g. |
+|                  |          |              |              | `l              |
+|                  |          |              |              | asso_gaussian`. |
+|                  |          |              |              | For other       |
+|                  |          |              |              | outcomes only   |
+|                  |          |              |              | one applicable  |
+|                  |          |              |              | family exists.  |
++------------------+----------+--------------+--------------+-----------------+
+| elastic net      | `alpha`  | $\mathbb{    | elastic net  | This penalty is |
+| penalty          |          | R} \in \left |              | fixed for ridge |
+|                  |          | [0,1\right]$ |              | regression      |
+|                  |          |              |              | (`alpha = 0`)   |
+|                  |          |              |              | and lasso       |
+|                  |          |              |              | (`alpha = 1`).  |
++------------------+----------+--------------+--------------+-----------------+
+| optimal lambda   | `lam     | `            | no           | Default is      |
+|                  | bda_min` | lambda.1se`, |              | `lambda.min`.   |
+|                  |          | `lambda.min` |              |                 |
++------------------+----------+--------------+--------------+-----------------+
+| number of CV     | `        | $\mathbb{    | no           | Default is $3$  |
+| folds            | n_folds` | Z} \in \left |              | if $n<30$,      |
+|                  |          | [3,n\right]$ |              | $\lflo          |
+|                  |          |              |              | or n/10\rfloor$ |
+|                  |          |              |              | if              |
+|                  |          |              |              | $30\            |
+|                  |          |              |              | leq n \leq 200$ |
+|                  |          |              |              | and $20$ if     |
+|                  |          |              |              | $n>200$.        |
++------------------+----------+--------------+--------------+-----------------+
+| normalisation    | `no      | `FALSE`,     | no           | Default is      |
+|                  | rmalise` | `TRUE`       |              | `FALSE`, as     |
+|                  |          |              |              | normalisation   |
+|                  |          |              |              | is part of      |
+|                  |          |              |              | pre-processing  |
+|                  |          |              |              | in familiar.    |
++------------------+----------+--------------+--------------+-----------------+
 
-## Random forest-based methods
+# Random forest-based methods
 
-Several feature selection methods are based on random forests. All these methods require that a random forest model exists. Hence, `familiar` will train a random forest based on the training data. Random forest learners have a set of hyperparameters that are optimised prior to training, and these make up most of the method-specific parameters. These parameters, which are slightly different for `ranger`-based and `randomForestSRC`-based methods, are shown below.
+Several feature selection methods are based on random forests. All these methods
+require that a random forest model exists. Hence, `familiar` will train a random
+forest based on the training data. Random forest learners have a set of
+hyperparameters that are optimised prior to training, and these make up most of
+the method-specific parameters. These parameters, which are slightly different
+for `ranger`-based and `randomForestSRC`-based methods, are shown below.
 
-| **parameter** | **tag** | **values** | **optimised** | **comments** |
-|:--------------|:--------|:----------:|:----------:|:-------------|
-| number of trees | `n_tree` | $\mathbb{Z} \in \left[0,\infty\right)$ | yes |  This parameter is expressed on the $\log_{2}$ scale, i.e. the actual input value will be $2^\texttt{n_tree}$ [@Oshiro2012-mq]. The default range is $\left[4, 10\right]$.|
-| subsampling fraction | `sample_size` | $\mathbb{R} \in \left(0, 1.0\right]$ | yes | Fraction of available data that is used for to create a single tree. The default range is $\left[2 / m, 1.0\right]$, with $m$ the number of samples. |
-| number of features at each node | `m_try` | $\mathbb{R} \in \left[0.0, 1.0\right]$ | yes | Familiar ensures that there is always at least one candidate feature. |
-| node size | `node_size` | $\mathbb{Z} \in \left[1, \infty\right)$ | yes | Minimum number of unique samples in terminal nodes. The default range is $\left[5, \lfloor m / 3\rfloor\right]$, with $m$ the number of samples.|
-| maximum tree depth | `tree_depth` | $\mathbb{Z} \in \left[1,\infty\right)$ | yes | Maximum depth to which trees are allowed to grow. The default range is $\left[1, 10\right]$. |
-| number of split points | `n_split` | $\mathbb{Z} \in \left[0, \infty\right)$ | no | By default, splitting is deterministic and has one split point ($0$).|
-| splitting rule (`randomForestSRC` only) | `split_rule` | `gini`, `auc`, `entropy`, `mse`, `quantile.regr`, `la.quantile.regr`, `logrank`, `logrankscore`, `bs.gradient` | no | Default splitting rules are `gini` for `binomial` and `multinonial` outcomes, `mse` for `continuous` and `count` outcomes and `logrank` for `survival` outcomes.|
-| splitting rule (`ranger` only) | `split_rule` | `gini`, `hellinger`, `extratrees`, `beta`, `variance`, `logrank`, `C`, `maxstat`| no | Default splitting rules are `gini` for `binomial` and `multinomial` outcomes and `maxstat` for `continuous`, `count` and `survival` outcomes.|
-| significance split threshold (`ranger` only) | `alpha` | $\mathbb{R} \in \left(0.0, 1.0\right]$ | `maxstat` | Minimum significance level for further splitting. The default range is $\left[10^{-6}, 1.0\right]$ |
-| variable hunting cross-validation folds | `fs_vh_fold` | $\mathbb{Z} \in \left[2, \infty\right)$ | no | Number of cross-validation folds for the `random_forest_variable_hunting` method. The default is $5$. |
-| variable hunting step size | `fs_vh_step_size` | $\mathbb{Z} \in \left[1, \infty\right)$ | no | Step size for the `random_forest_variable_hunting` method. The default is $1$. |
-| variable hunting iterations | `fs_vh_n_rep` | $\mathbb{Z} \in \left[1, \infty\right)$ | no | Number of Monte Carlo iterations for the `random_forest_variable_hunting` method. The default is $50$. |
++------------------+----------+--------------+--------------+-----------------+
+| **parameter**    | **tag**  | **values**   | *            | **comments**    |
+|                  |          |              | *optimised** |                 |
++:=================+:=========+:============:+:============:+:================+
+| number of trees  | `n_tree` | $\           | yes          | This parameter  |
+|                  |          | mathbb{Z} \i |              | is expressed on |
+|                  |          | n \left[0,\i |              | the $\log_{2}$  |
+|                  |          | nfty\right)$ |              | scale, i.e. the |
+|                  |          |              |              | actual input    |
+|                  |          |              |              | value will be   |
+|                  |          |              |              | $2^\            |
+|                  |          |              |              | texttt{n_tree}$ |
+|                  |          |              |              | [@              |
+|                  |          |              |              | Oshiro2012-mq]. |
+|                  |          |              |              | The default     |
+|                  |          |              |              | range is        |
+|                  |          |              |              | $\left[4,       |
+|                  |          |              |              |  10\right]\$\$. |
++------------------+----------+--------------+--------------+-----------------+
+| subsampling      | `samp    | $\mathbb{R}  | yes          | Fraction of     |
+| fraction         | le_size` | \in \left(0, |              | available data  |
+|                  |          |  1.0\right]$ |              | that is used    |
+|                  |          |              |              | for to create a |
+|                  |          |              |              | single tree.    |
+|                  |          |              |              | The default     |
+|                  |          |              |              | range is        |
+|                  |          |              |              | $\left[2 /      |
+|                  |          |              |              | m, 1.0\right]$, |
+|                  |          |              |              | with $m$ the    |
+|                  |          |              |              | number of       |
+|                  |          |              |              | samples.        |
++------------------+----------+--------------+--------------+-----------------+
+| number of        | `m_try`  | $\           | yes          | Familiar        |
+| features at each |          | mathbb{R} \i |              | ensures that    |
+| node             |          | n \left[0.0, |              | there is always |
+|                  |          |  1.0\right]$ |              | at least one    |
+|                  |          |              |              | candidate       |
+|                  |          |              |              | feature.        |
++------------------+----------+--------------+--------------+-----------------+
+| node size        | `no      | $\m          | yes          | Minimum number  |
+|                  | de_size` | athbb{Z} \in |              | of unique       |
+|                  |          |  \left[1, \i |              | samples in      |
+|                  |          | nfty\right)$ |              | terminal nodes. |
+|                  |          |              |              | The default     |
+|                  |          |              |              | range is        |
+|                  |          |              |              | $\left[5,       |
+|                  |          |              |              |  \lfloor m / 3\ |
+|                  |          |              |              | rfloor\right]$, |
+|                  |          |              |              | with $m$ the    |
+|                  |          |              |              | number of       |
+|                  |          |              |              | samples.        |
++------------------+----------+--------------+--------------+-----------------+
+| maximum tree     | `tre     | $\           | yes          | Maximum depth   |
+| depth            | e_depth` | mathbb{Z} \i |              | to which trees  |
+|                  |          | n \left[1,\i |              | are allowed to  |
+|                  |          | nfty\right)$ |              | grow. The       |
+|                  |          |              |              | default range   |
+|                  |          |              |              | is              |
+|                  |          |              |              | $\left          |
+|                  |          |              |              | [1, 10\right]$. |
++------------------+----------+--------------+--------------+-----------------+
+| number of split  | `        | $\m          | no           | By default,     |
+| points           | n_split` | athbb{Z} \in |              | splitting is    |
+|                  |          |  \left[0, \i |              | deterministic   |
+|                  |          | nfty\right)$ |              | and has one     |
+|                  |          |              |              | split point     |
+|                  |          |              |              | ($0$).          |
++------------------+----------+--------------+--------------+-----------------+
+| splitting rule   | `spl     | `gini`,      | no           | Default         |
+| (`               | it_rule` | `auc`,       |              | splitting rules |
+| randomForestSRC` |          | `entropy`,   |              | are `gini` for  |
+| only)            |          | `mse`,       |              | `binomial` and  |
+|                  |          | `qua         |              | `multinonial`   |
+|                  |          | ntile.regr`, |              | outcomes, `mse` |
+|                  |          | `la.qua      |              | for             |
+|                  |          | ntile.regr`, |              | `continuous`    |
+|                  |          | `logrank`,   |              | and `count`     |
+|                  |          | `lo          |              | outcomes and    |
+|                  |          | grankscore`, |              | `logrank` for   |
+|                  |          | `            |              | `survival`      |
+|                  |          | bs.gradient` |              | outcomes.       |
++------------------+----------+--------------+--------------+-----------------+
+| splitting rule   | `spl     | `gini`,      | no           | Default         |
+| (`ranger` only)  | it_rule` | `hellinger`, |              | splitting rules |
+|                  |          | `            |              | are `gini` for  |
+|                  |          | extratrees`, |              | `binomial` and  |
+|                  |          | `beta`,      |              | `multinomial`   |
+|                  |          | `variance`,  |              | outcomes and    |
+|                  |          | `logrank`,   |              | `maxstat` for   |
+|                  |          | `C`,         |              | `continuous`,   |
+|                  |          | `maxstat`    |              | `count` and     |
+|                  |          |              |              | `survival`      |
+|                  |          |              |              | outcomes.       |
++------------------+----------+--------------+--------------+-----------------+
+| significance     | `alpha`  | $\           | `maxstat`    | Minimum         |
+| split threshold  |          | mathbb{R} \i |              | significance    |
+| (`ranger` only)  |          | n \left(0.0, |              | level for       |
+|                  |          |  1.0\right]$ |              | further         |
+|                  |          |              |              | splitting. The  |
+|                  |          |              |              | default range   |
+|                  |          |              |              | is              |
+|                  |          |              |              | $\left[10^{-    |
+|                  |          |              |              | 6}, 1.0\right]$ |
++------------------+----------+--------------+--------------+-----------------+
+| variable hunting | `fs_     | $\m          | no           | Number of       |
+| cross-validation | vh_fold` | athbb{Z} \in |              | c               |
+| folds            |          |  \left[2, \i |              | ross-validation |
+|                  |          | nfty\right)$ |              | folds for the   |
+|                  |          |              |              | `r              |
+|                  |          |              |              | andom_forest_va |
+|                  |          |              |              | riable_hunting` |
+|                  |          |              |              | method. The     |
+|                  |          |              |              | default is $5$. |
++------------------+----------+--------------+--------------+-----------------+
+| variable hunting | `        | $\m          | no           | Step size for   |
+| step size        | fs_vh_st | athbb{Z} \in |              | the             |
+|                  | ep_size` |  \left[1, \i |              | `r              |
+|                  |          | nfty\right)$ |              | andom_forest_va |
+|                  |          |              |              | riable_hunting` |
+|                  |          |              |              | method. The     |
+|                  |          |              |              | default is $1$. |
++------------------+----------+--------------+--------------+-----------------+
+| variable hunting | `fs_v    | $\m          | no           | Number of Monte |
+| iterations       | h_n_rep` | athbb{Z} \in |              | Carlo           |
+|                  |          |  \left[1, \i |              | iterations for  |
+|                  |          | nfty\right)$ |              | the             |
+|                  |          |              |              | `r              |
+|                  |          |              |              | andom_forest_va |
+|                  |          |              |              | riable_hunting` |
+|                  |          |              |              | method. The     |
+|                  |          |              |              | default is      |
+|                  |          |              |              | $50$.           |
++------------------+----------+--------------+--------------+-----------------+
 
-### Permutation importance
+## Permutation importance
 
-The permutation importance method is implemented by `random_forest_permutation` (`randomForestSRC` package) and `random_forest_ranger_permutation` (`ranger` package). In short, this method functions as follows [Ishwaran2007-va]. As usual, each tree in the random forest is constructed using the in-bag samples of a bootstrap of the data. The predictive performance of each model is first measured using the out-of-bag data. Subsequently, the out-of-bag instances for each feature are randomly permuted, and predictive performance is assessed again. The difference between the normal performance and the permuted performance is used as a measure of the variable importance. For important features, this difference is large, whereas for irrelevant features the difference is negligible or even negative.
+The permutation importance method is implemented by `random_forest_permutation`
+(`randomForestSRC` package) and `random_forest_ranger_permutation` (`ranger`
+package). In short, this method functions as follows [Ishwaran2007-va]. As
+usual, each tree in the random forest is constructed using the in-bag samples of
+a bootstrap of the data. The predictive performance of each model is first
+measured using the out-of-bag data. Subsequently, the out-of-bag instances for
+each feature are randomly permuted, and predictive performance is assessed
+again. The difference between the normal performance and the permuted
+performance is used as a measure of the variable importance. For important
+features, this difference is large, whereas for irrelevant features the
+difference is negligible or even negative.
 
-### Holdout permutation importance
+## Holdout permutation importance
 
-This variant on permutation importance (`random_forest_ranger_holdout_permutation`) is implemented using `ranger::holdoutRF`. Instead of using out-of-bag to compute feature importance, two cross-validation folds are used. A random forest is trained on either fold, and variable importance determined on the other [@Janitza2018-kl].
+This variant on permutation importance
+(`random_forest_ranger_holdout_permutation`) is implemented using
+`ranger::holdoutRF`. Instead of using out-of-bag to compute feature importance,
+two cross-validation folds are used. A random forest is trained on either fold,
+and variable importance determined on the other [@Janitza2018-kl].
 
-The hold-out variable importance method implemented in the `randomForestSRC` package (`random_forest_holdout`) is implemented using `randomForestSRC::holdout.vimp`. It is similar to the previous variant, but does not cross-validation folds. Instead, out-of-bag prediction errors for models trained with and without each feature are compared.
+The hold-out variable importance method implemented in the `randomForestSRC`
+package (`random_forest_holdout`) is implemented using
+`randomForestSRC::holdout.vimp`. It is similar to the previous variant, but does
+not cross-validation folds. Instead, out-of-bag prediction errors for models
+trained with and without each feature are compared.
 
-### Minimum depth variable selection
+## Minimum depth variable selection
 
-Important features tend to appear closer to the root of trees in random forests. Therefore the position of each feature within a tree is assessed in minimum depth variable selection [@Ishwaran2010-zv].
+Important features tend to appear closer to the root of trees in random forests.
+Therefore the position of each feature within a tree is assessed in minimum
+depth variable selection [@Ishwaran2010-zv].
 
-### Variable hunting
+## Variable hunting
 
-Variable hunting is implemented using the variable hunting algorithm implemented in `randomForestSRC`. Ishwaran suggest using it when minimum depth variable selection leads to high computational load or a larger set of variables should be found [@Ishwaran2010-zv].
+Variable hunting is implemented using the variable hunting algorithm implemented
+in `randomForestSRC`. Ishwaran suggest using it when minimum depth variable
+selection leads to high computational load or a larger set of variables should
+be found [@Ishwaran2010-zv].
 
 The variable hunting selection method has several parameters which can be set.
 
-### Impurity importance
+## Impurity importance
 
-At each node, the data is split into (two) subsets, which connects to two branches. Compared to two subsets, each single subset is more pure than prior to splitting. As a concrete example, in regression problems the variance of each of the subsets is lower than that of the data prior to splitting. The decrease in variance specifically, or the decrease of impurity generally, is then used to assess feature importance.
+At each node, the data is split into (two) subsets, which connects to two
+branches. Compared to two subsets, each single subset is more pure than prior to
+splitting. As a concrete example, in regression problems the variance of each of
+the subsets is lower than that of the data prior to splitting. The decrease in
+variance specifically, or the decrease of impurity generally, is then used to
+assess feature importance.
 
-`familiar` uses the `impurity_corrected` importance measure, which is unbiased to the number of split points of a feature and its distribution [@Nembrini2018-ay].
+`familiar` uses the `impurity_corrected` importance measure, which is unbiased
+to the number of split points of a feature and its distribution
+[@Nembrini2018-ay].
 
-## Special methods
+# Special methods
 
-Familiar offers several methods that are special in that they are not feature selection methods in the sense that they determine a variable importance that can be used for establishing feature rankings.
+Familiar offers several methods that are special in that they are not feature
+selection methods in the sense that they determine a variable importance that
+can be used for establishing feature rankings.
 
-### No feature selection
+## No feature selection
 
-As the name suggests, the `none` method avoids feature selection altogether. All features are passed into a model. Feature order is randomly shuffled prior to building a model to avoid influence of the provided feature order.  
+As the name suggests, the `none` method avoids feature selection altogether. All
+features are passed into a model. Feature order is randomly shuffled prior to
+building a model to avoid influence of the provided feature order.
 
-### Random feature selection
+## Random feature selection
 
-The `random` method randomly draws features prior to model building. It does not assign a random variable importance to a feature. New features are drawn each time a model is build. All features are available for the draw, but only $m$ features are drawn. Here $m$ is the signature size that is usually optimised by hyperparameter optimisation. 
+The `random` method randomly draws features prior to model building. It does not
+assign a random variable importance to a feature. New features are drawn each
+time a model is build. All features are available for the draw, but only $m$
+features are drawn. Here $m$ is the signature size that is usually optimised by
+hyperparameter optimisation.
 
-### Signature only
+## Signature only
 
-The user may provide any number of features as part of the `signature` tag. However, additional features may be added to the signature through feature selection. To make sure that only the provided features enter a model, the `signature_only` method may be used.
+The user may provide any number of features as part of the `signature` tag.
+However, additional features may be added to the signature through feature
+selection. To make sure that only the provided features enter a model, the
+`signature_only` method may be used.
 
 # Aggregating variable importance
 
-In case of feature selection or modelling in the presence of resampling, the ranks of features may need to be aggregated across the different instances. The rank aggregation methods shown in the table below can be used for this purpose. Several methods require a threshold to indicate the size of the set of most highly ranked features.
+In case of feature selection or modelling in the presence of resampling, the
+ranks of features may need to be aggregated across the different instances. The
+rank aggregation methods shown in the table below can be used for this purpose.
+Several methods require a threshold to indicate the size of the set of most
+highly ranked features.
 
-| **aggregatiom methodr** | **tag** | **comments** |
-|:--------------|:--------|:----------:|
-| mean rank | `mean` | |
-| median rank | `median` | |
-| best rank | `best` | |
-| worst rank | `worst` | |
-| stability selection | `stability` | uses threshold |
-| exponential selection | `exponential` | uses threshold  |
-| borda ranking | `borda` | |
-| enhanced borda ranking | `enhanced_borda`| uses threshold |
-| truncated borda ranking | `truncated_borda` | uses threshold |
+| **aggregation method**           | **tag**                    |  **comments**  |
+|:---------------------------------|:---------------------------|:--------------:|
+| mean rank                        | `mean`                     |                |
+| median rank                      | `median`                   |                |
+| best rank                        | `best`                     |                |
+| worst rank                       | `worst`                    |                |
+| stability selection              | `stability`                | uses threshold |
+| exponential selection            | `exponential`              | uses threshold |
+| borda ranking                    | `borda`                    |                |
+| enhanced borda ranking           | `enhanced_borda`           | uses threshold |
+| truncated borda ranking          | `truncated_borda`          | uses threshold |
 | enhanced truncated borda ranking | `enhanced_truncated_borda` | uses threshold |
 
 ## Mean rank aggregation
 
-The mean rank aggregation method ranks features by computing the mean rank of a feature across all instances that contain it.
+The mean rank aggregation method ranks features by computing the mean rank of a
+feature across all instances that contain it.
 
 ## Median rank aggregation
 
-The median rank aggregation method ranks features by computing the median rank of a feature across all instances that contain it.
+The median rank aggregation method ranks features by computing the median rank
+of a feature across all instances that contain it.
 
 ## Best rank aggregation
 
-The best rank aggregation method ranks features by the best rank that a feature has across all instances that contain it.
+The best rank aggregation method ranks features by the best rank that a feature
+has across all instances that contain it.
 
 ## Worst rank aggregation
 
-The worst rank aggregation method ranks features by the worst rank that a feature has across all instances that contain it.
+The worst rank aggregation method ranks features by the worst rank that a
+feature has across all instances that contain it.
 
 ## Stability rank aggregation
 
-The stability aggregation method ranks features by their occurrence within the set of highly ranked features across all instances *reference missing*.
+The stability aggregation method ranks features by their occurrence within the
+set of highly ranked features across all instances *reference missing*.
 
 ## Exponential rank aggregation
 
-The exponential aggregation method ranks features by the sum of the negative exponentials of their normalised ranks in instances where they occur within the set of highly ranked features *reference missing*.
+The exponential aggregation method ranks features by the sum of the negative
+exponentials of their normalised ranks in instances where they occur within the
+set of highly ranked features *reference missing*.
 
 ## Borda rank aggregation
 
-Borda rank aggregation ranks a feature by the sum of normalised ranks (the borda score) across all instances that contain it. In case all instances contain all features, the result is equivalent to the mean aggregation method *reference missing*.
+Borda rank aggregation ranks a feature by the sum of normalised ranks (the borda
+score) across all instances that contain it. In case all instances contain all
+features, the result is equivalent to the mean aggregation method *reference
+missing*.
 
 ## Enhanced borda rank aggregation
 
-Enhanced borda rank aggregation combines borda rank aggregation with stability rank aggregation. The borda score is multiplied by the occurrence of the feature within the set of highly ranked features across all instances *reference missin*.
+Enhanced borda rank aggregation combines borda rank aggregation with stability
+rank aggregation. The borda score is multiplied by the occurrence of the feature
+within the set of highly ranked features across all instances *reference
+missin*.
 
 ## Truncated borda rank aggregation
 
-Truncated borda rank aggregation is borda rank aggregation performed with only the set of most highly ranked features in each instance.
+Truncated borda rank aggregation is borda rank aggregation performed with only
+the set of most highly ranked features in each instance.
 
 ## Truncated enhanced borda rank aggregation
 
-Truncated enhanced borda rank aggregation is enhanced borda aggregation performed with only the set of most highly ranked features in each instance.
+Truncated enhanced borda rank aggregation is enhanced borda aggregation
+performed with only the set of most highly ranked features in each instance.
 
 # References
