@@ -2217,7 +2217,9 @@
 #'  * `calibration_data`: data for assessing and plotting model calibration are
 #'  not computed.
 #'
-#'  * `calibration_info`
+#'  * `calibration_info`: data required to assess calibration, such as baseline
+#'  survival curves, are not collected. These data will still be present in the
+#'  models.
 #'
 #'  * `confusion_matrix`: data for assessing and plotting a confusion matrix are
 #'  not collected.
@@ -2235,7 +2237,10 @@
 #'  variable importance are not collected.
 #'
 #'  * `hyperparameters`: data for assessing model hyperparameters are not
-#'  collected.
+#'  collected. These data will still be present in the models.
+#'
+#'  * `ice_data`: data for individual conditional expectation and partial
+#'  dependence plots are not created.
 #'
 #'  * `model_performance`: data for assessing and visualising model performance
 #'  are not created.

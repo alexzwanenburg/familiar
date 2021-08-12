@@ -109,7 +109,9 @@ have one or more of the following values:
 operating characteristic curve are not computed.
 \item \code{calibration_data}: data for assessing and plotting model calibration are
 not computed.
-\item \code{calibration_info}
+\item \code{calibration_info}: data required to assess calibration, such as baseline
+survival curves, are not collected. These data will still be present in the
+models.
 \item \code{confusion_matrix}: data for assessing and plotting a confusion matrix are
 not collected.
 \item \code{decision_curve_analyis}: data for performing a decision curve analysis
@@ -121,7 +123,9 @@ not computed.
 \item \code{fs_vimp}: data for assessing and plotting feature selection-based
 variable importance are not collected.
 \item \code{hyperparameters}: data for assessing model hyperparameters are not
-collected.
+collected. These data will still be present in the models.
+\item \code{ice_data}: data for individual conditional expectation and partial
+dependence plots are not created.
 \item \code{model_performance}: data for assessing and visualising model performance
 are not created.
 \item \code{model_vimp}: data for assessing and plotting model-based variable
