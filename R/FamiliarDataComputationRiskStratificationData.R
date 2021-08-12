@@ -36,16 +36,17 @@ setClass("familiarDataElementRiskLogrank",
 #'  stratification.
 #'@md
 #'@keywords internal
-setGeneric("extract_risk_stratification_data", function(object,
-                                                        data,
-                                                        cl=NULL,
-                                                        is_pre_processed=FALSE,
-                                                        ensemble_method=waiver(),
-                                                        detail_level=waiver(),
-                                                        confidence_level=waiver(),
-                                                        message_indent=0L,
-                                                        verbose=FALSE,
-                                                        ...) standardGeneric("extract_risk_stratification_data"))
+setGeneric("extract_risk_stratification_data",
+           function(object,
+                    data,
+                    cl=NULL,
+                    is_pre_processed=FALSE,
+                    ensemble_method=waiver(),
+                    detail_level=waiver(),
+                    confidence_level=waiver(),
+                    message_indent=0L,
+                    verbose=FALSE,
+                    ...) standardGeneric("extract_risk_stratification_data"))
 
 #####extract_risk_stratification_data#####
 setMethod("extract_risk_stratification_data", signature(object="familiarEnsemble"),

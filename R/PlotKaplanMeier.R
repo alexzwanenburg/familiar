@@ -37,6 +37,7 @@ NULL
 #'@inheritParams plotting.check_data_handling
 #'@inheritDotParams as_familiar_collection -object
 #'@inheritDotParams ggplot2::ggsave -height -width -units
+#'@inheritDotParams extract_risk_stratification_data -object
 #'
 #'@details This function generates a Kaplan-Meier survival plot based on risk
 #'  group stratification by the learners.
