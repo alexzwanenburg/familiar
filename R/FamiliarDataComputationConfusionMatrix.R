@@ -55,6 +55,7 @@ setMethod("extract_confusion_matrix", signature(object="familiarEnsemble"),
             
             # Check the level detail.
             detail_level <- .parse_detail_level(x = detail_level,
+                                                object = object,
                                                 default = "ensemble",
                                                 data_element = "confusion_matrix")
             

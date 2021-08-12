@@ -125,6 +125,7 @@ setMethod("extract_feature_similarity", signature(object="familiarEnsemble", dat
             
             # Check the estimation type.
             estimation_type <- .parse_estimation_type(x = estimation_type,
+                                                      object = object,
                                                       default = "point",
                                                       data_element = "feature_similarity",
                                                       detail_level = "ensemble",
@@ -132,6 +133,7 @@ setMethod("extract_feature_similarity", signature(object="familiarEnsemble", dat
             
             # Check whether results should be aggregated.
             aggregate_results <- .parse_aggregate_results(x = aggregate_results,
+                                                          object = object,
                                                           default = TRUE,
                                                           data_element = "feature_similarity")
             

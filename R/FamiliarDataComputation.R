@@ -47,9 +47,11 @@ NULL
 
 
 
-.parse_detail_level <- function(x, default, data_element){
+.parse_detail_level <- function(x, object, default, data_element){
   
-  if(is.null(x) | is.waive(x)) return(default)
+  if(is.waive(x)) x <- object@settings$detail_level
+  
+  if(is.null(x)) return(default)
   
   # detail level is stored in a list, by data_element.
   if(is.list(x)) x <- x[[data_element]]
@@ -64,7 +66,7 @@ NULL
 
 
 
-.parse_estimation_type <- function(x, default, data_element, detail_level, has_internal_bootstrap){
+.parse_estimation_type <- function(x, object, default, data_element, detail_level, has_internal_bootstrap){
   
   # Change to default to point if the detail_level is model.
   if(detail_level == "model") default <- "point"
@@ -74,7 +76,9 @@ NULL
   # hybrid).
   if(!has_internal_bootstrap & detail_level %in% c("ensemble", "model") & default != "point") default <- "point"
   
-  if(is.null(x) | is.waive(x)) return(default)
+  if(is.waive(x)) x <- object@settings$estimation_type
+  
+  if(is.null(x)) return(default)
   
   # detail level is stored in a list, by data_element.
   if(is.list(x)) x <- x[[data_element]]
@@ -89,9 +93,11 @@ NULL
 
 
 
-.parse_aggregate_results <- function(x, default, data_element){
+.parse_aggregate_results <- function(x, object, default, data_element){
   
-  if(is.null(x) | is.waive(x)) return(default)
+  if(is.waive(x)) x <- object@settings$aggregate_results
+  
+  if(is.null(x)) return(default)
   
   # detail level is stored in a list, by data_element.
   if(is.list(x)) x <- x[[data_element]]
@@ -110,9 +116,11 @@ NULL
 
 
 
-.parse_sample_limit <- function(x, default, data_element){
+.parse_sample_limit <- function(x, object, default, data_element){
   
-  if(is.null(x) | is.waive(x)) return(default)
+  if(is.waive(x)) x <- object@settings$sample_limit
+  
+  if(is.null(x)) return(default)
   
   # detail level is stored in a list, by data_element.
   if(is.list(x)) x <- x[[data_element]]
@@ -379,30 +387,6 @@ setMethod("extract_data", signature(object="familiarEnsemble"),
             
             # Load models, and drop any models that were not trained.
             object <- load_models(object=object, drop_untrained=TRUE)
-            
-            
-            # Extract feature variable importance
-            if(any(c("ice_data") %in% data_element)){
-              ice_data <- extract_ice(object=object,
-                                      data=data,
-                                      cl=cl,
-                                      ensemble_method=ensemble_method,
-                                      eval_times=eval_times,
-                                      sample_limit=sample_limit,
-                                      detail_level=detail_level,
-                                      estimation_type=estimation_type,
-                                      aggregate_results=aggregate_results,
-                                      confidence_level=confidence_level,
-                                      bootstrap_ci_method=bootstrap_ci_method,
-                                      is_pre_processed=is_pre_processed,
-                                      message_indent=message_indent,
-                                      verbose=verbose,
-                                      ...)
-              
-            } else {
-              ice_data <- NULL
-            }
-            
             
             # Extract feature distance tables,
             if(any(c("feature_similarity", "univariate_analysis", "feature_expressions", "permutation_vimp") %in% data_element)){
@@ -683,7 +667,31 @@ setMethod("extract_data", signature(object="familiarEnsemble"),
             } else {
               confusion_matrix_info <- NULL
             }
-
+            
+            
+            # Extract feature individual conditional expectation data
+            if(any(c("ice_data") %in% data_element)){
+              ice_data <- extract_ice(object=object,
+                                      data=data,
+                                      cl=cl,
+                                      ensemble_method=ensemble_method,
+                                      eval_times=eval_times,
+                                      sample_limit=sample_limit,
+                                      detail_level=detail_level,
+                                      estimation_type=estimation_type,
+                                      aggregate_results=aggregate_results,
+                                      confidence_level=confidence_level,
+                                      bootstrap_ci_method=bootstrap_ci_method,
+                                      is_pre_processed=is_pre_processed,
+                                      message_indent=message_indent,
+                                      verbose=verbose,
+                                      ...)
+              
+            } else {
+              ice_data <- NULL
+            }
+            
+            
             # Set up a placehold pooling table. This may need to be adepted.
             pooling_table <- data.table::data.table("ensemble_data_id"=object@run_table$ensemble_data_id,
                                                     "ensemble_run_id"=object@run_table$ensemble_run_id,

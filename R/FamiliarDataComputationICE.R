@@ -122,16 +122,19 @@ setMethod("extract_ice", signature(object="familiarEnsemble"),
             
             # Check the sample limit.
             sample_limit <- .parse_sample_limit(x = sample_limit,
+                                                object = object,
                                                 default = Inf,
                                                 data_element = "ice_data")
             
             # Check the level detail.
             detail_level <- .parse_detail_level(x = detail_level,
+                                                object = object,
                                                 default = "hybrid",
                                                 data_element = "ice_data")
             
             # Check the estimation type.
             estimation_type <- .parse_estimation_type(x = estimation_type,
+                                                      object = object,
                                                       default = "bootstrap_confidence_interval",
                                                       data_element = "ice_data",
                                                       detail_level = detail_level,
@@ -139,6 +142,7 @@ setMethod("extract_ice", signature(object="familiarEnsemble"),
             
             # Check whether results should be aggregated.
             aggregate_results <- .parse_aggregate_results(x = aggregate_results,
+                                                          object = object,
                                                           default = TRUE,
                                                           data_element = "ice_data")
             

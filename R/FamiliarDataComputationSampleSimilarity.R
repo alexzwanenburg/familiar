@@ -89,6 +89,7 @@ setMethod("extract_sample_similarity", signature(object="familiarEnsemble", data
             
             # Check the sample limit.
             sample_limit <- .parse_sample_limit(x = sample_limit,
+                                                object = object,
                                                 default = Inf,
                                                 data_element = "sample_similarity")
             
