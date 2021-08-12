@@ -24,19 +24,20 @@ setClass("familiarDataElementAUCCurve",
 #'@return A list with data.tables for single and ensemble model ROC curve data.
 #'@md
 #'@keywords internal
-setGeneric("extract_auc_data", function(object,
-                                        data,
-                                        cl=NULL,
-                                        ensemble_method=waiver(),
-                                        detail_level=waiver(),
-                                        estimation_type=waiver(),
-                                        aggregate_results=waiver(),
-                                        confidence_level=waiver(),
-                                        bootstrap_ci_method=waiver(),
-                                        is_pre_processed=FALSE,
-                                        message_indent=0L,
-                                        verbose=FALSE,
-                                        ...) standardGeneric("extract_auc_data"))
+setGeneric("extract_auc_data",
+           function(object,
+                    data,
+                    cl=NULL,
+                    ensemble_method=waiver(),
+                    detail_level=waiver(),
+                    estimation_type=waiver(),
+                    aggregate_results=waiver(),
+                    confidence_level=waiver(),
+                    bootstrap_ci_method=waiver(),
+                    is_pre_processed=FALSE,
+                    message_indent=0L,
+                    verbose=FALSE,
+                    ...) standardGeneric("extract_auc_data"))
 
 #####extract_auc_data#####
 setMethod("extract_auc_data", signature(object="familiarEnsemble"),

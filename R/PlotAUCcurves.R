@@ -21,6 +21,7 @@ NULL
 #'@inheritParams plotting.check_data_handling
 #'@inheritDotParams as_familiar_collection -object
 #'@inheritDotParams ggplot2::ggsave -height -width -units
+#'@inheritDotParams extract_auc_data -object
 #'
 #'@details This function generates area under the ROC curve plots.
 #'
