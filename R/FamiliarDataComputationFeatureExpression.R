@@ -25,20 +25,21 @@ setClass("familiarDataElementFeatureExpression",
 #'@return A list with a data.table containing feature expressions.
 #'@md
 #'@keywords internal
-setGeneric("extract_feature_expression", function(object,
-                                                  data,
-                                                  feature_similarity,
-                                                  sample_similarity,
-                                                  feature_cluster_method=waiver(),
-                                                  feature_linkage_method=waiver(),
-                                                  feature_similarity_metric=waiver(),
-                                                  sample_cluster_method=waiver(),
-                                                  sample_linkage_method=waiver(),
-                                                  sample_similarity_metric=waiver(),
-                                                  eval_times=waiver(),
-                                                  message_indent=0L,
-                                                  verbose=FALSE,
-                                                  ...) standardGeneric("extract_feature_expression"))
+setGeneric("extract_feature_expression",
+           function(object,
+                    data,
+                    feature_similarity,
+                    sample_similarity,
+                    feature_cluster_method=waiver(),
+                    feature_linkage_method=waiver(),
+                    feature_similarity_metric=waiver(),
+                    sample_cluster_method=waiver(),
+                    sample_linkage_method=waiver(),
+                    sample_similarity_metric=waiver(),
+                    eval_times=waiver(),
+                    message_indent=0L,
+                    verbose=FALSE,
+                    ...) standardGeneric("extract_feature_expression"))
 
 #####extract_feature_expression#####
 setMethod("extract_feature_expression", signature(object="familiarEnsemble", data="ANY"),

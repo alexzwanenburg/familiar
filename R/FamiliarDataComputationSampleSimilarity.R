@@ -38,17 +38,18 @@ setClass("familiarDataElementSampleSimilarity",
 #'  triangular is mirrored.
 #'@md
 #'@keywords internal
-setGeneric("extract_sample_similarity", function(object,
-                                                 data,
-                                                 cl=NULL,
-                                                 is_pre_processed=FALSE,
-                                                 sample_limit=waiver(),
-                                                 sample_cluster_method=waiver(),
-                                                 sample_linkage_method=waiver(),
-                                                 sample_similarity_metric=waiver(),
-                                                 verbose=FALSE,
-                                                 message_indent=0L,
-                                                 ...) standardGeneric("extract_sample_similarity"))
+setGeneric("extract_sample_similarity",
+           function(object,
+                    data,
+                    cl=NULL,
+                    is_pre_processed=FALSE,
+                    sample_limit=waiver(),
+                    sample_cluster_method=waiver(),
+                    sample_linkage_method=waiver(),
+                    sample_similarity_metric=waiver(),
+                    verbose=FALSE,
+                    message_indent=0L,
+                    ...) standardGeneric("extract_sample_similarity"))
 
 
 #####extract_sample_similarity#####
