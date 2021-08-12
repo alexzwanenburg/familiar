@@ -19,15 +19,16 @@ setClass("familiarDataElementConfusionMatrix",
 #'  with a co-occurence count.
 #'@md
 #'@keywords internal
-setGeneric("extract_confusion_matrix", function(object,
-                                                data,
-                                                cl=NULL,
-                                                ensemble_method=waiver(),
-                                                detail_level=waiver(),
-                                                is_pre_processed=FALSE,
-                                                message_indent=0L,
-                                                verbose=FALSE,
-                                                ...) standardGeneric("extract_confusion_matrix"))
+setGeneric("extract_confusion_matrix",
+           function(object,
+                    data,
+                    cl=NULL,
+                    ensemble_method=waiver(),
+                    detail_level=waiver(),
+                    is_pre_processed=FALSE,
+                    message_indent=0L,
+                    verbose=FALSE,
+                    ...) standardGeneric("extract_confusion_matrix"))
 
 #####extract_confusion_matrix#####
 setMethod("extract_confusion_matrix", signature(object="familiarEnsemble"),
