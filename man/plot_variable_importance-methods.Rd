@@ -236,7 +236,7 @@ number of facets, and the length of the longest feature name (if
 \item{units}{(\emph{optional}) Plot size unit. Either \code{cm} (default), \code{mm} or \verb{in}.}
 
 \item{...}{
-  Arguments passed on to \code{\link[=as_familiar_collection]{as_familiar_collection}}, \code{\link[ggplot2:ggsave]{ggplot2::ggsave}}
+  Arguments passed on to \code{\link[=as_familiar_collection]{as_familiar_collection}}, \code{\link[ggplot2:ggsave]{ggplot2::ggsave}}, \code{\link[=extract_fs_vimp]{extract_fs_vimp}}
   \describe{
     \item{\code{familiar_data_names}}{Names of the dataset(s). Only used if the \code{object} parameter
 is one or more \code{familiarData} objects.}
@@ -257,6 +257,10 @@ save images larger than 50x50 inches, to prevent the common error of
 specifying dimensions in pixels.}
     \item{\code{bg}}{Background colour. If \code{NULL}, uses the \code{plot.background} fill value
 from the plot theme.}
+    \item{\code{message_indent}}{Number of indentation steps for messages shown during
+computation and extraction of various data elements.}
+    \item{\code{verbose}}{Flag to indicate whether feedback should be provided on the
+computation and extraction of various data elements.}
   }}
 }
 \value{
