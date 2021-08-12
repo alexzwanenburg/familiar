@@ -12,10 +12,10 @@ NULL
 #'@param dir_path (*optional*) Path to the directory where created figures are
 #'  saved to. Output is saved in the `variable_importance` subdirectory. If NULL
 #'  no figures are saved, but are returned instead.
-#'@param p_adjustment_method (*optional*) Indicates type of p-value that is shown.
-#'  One of `holm`, `hochberg`, `hommel`, `bonferroni`, `BH`, `BY`,
-#' `fdr`, `none`, `p_value` or `q_value` for adjusted p-values, uncorrected
-#'  p-values and q-values. q-values may not be available.
+#'@param p_adjustment_method (*optional*) Indicates type of p-value that is
+#'  shown. One of `holm`, `hochberg`, `hommel`, `bonferroni`, `BH`, `BY`, `fdr`,
+#'  `none`, `p_value` or `q_value` for adjusted p-values, uncorrected p-values
+#'  and q-values. q-values may not be available.
 #'@param show_cluster (*optional*) Show which features were clustered together.
 #'@param ggtheme (*optional*) `ggplot` theme to use for plotting.
 #'@param discrete_palette (*optional*) Palette used to fill the bars in case a
@@ -41,6 +41,7 @@ NULL
 #'@inheritParams plotting.check_data_handling
 #'@inheritDotParams as_familiar_collection -object
 #'@inheritDotParams ggplot2::ggsave -height -width -units
+#'@inheritDotParams extract_univariate_analysis -object -feature_cluster_method -feature_linkage_method -feature_cluster_cut_method -verbose
 #'
 #'@details This function generates a horizontal barplot with the length of the
 #'  bars corresponding to the 10-logarithm of the (multiple-testing corrected)
@@ -155,7 +156,8 @@ setMethod("plot_univariate_importance", signature(object="ANY"),
                                           "feature_cluster_method"=feature_cluster_method,
                                           "feature_linkage_method"=feature_linkage_method,
                                           "feature_cluster_cut_method"=feature_cluster_cut_method,
-                                          "feature_similarity_threshold"=feature_similarity_threshold),
+                                          "feature_similarity_threshold"=feature_similarity_threshold,
+                                          "verbose"=verbose),
                                      list(...)))
             
             return(do.call(plot_univariate_importance,
