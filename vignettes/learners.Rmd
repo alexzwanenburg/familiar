@@ -159,11 +159,29 @@ function is used as kernel.
 Learners, their hyperparameters, and parallelisation options can be specified
 using the tags or arguments below:
 
-|    **tag** / **argument**     | **description**                                                                                                                                                                                                                                                               |  **default**  |
-|:-----------------------------:|:------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|:-------------:|
-|           `learner`           | The desired learner. Multiple learners may be provided at the same time. This setting has no default and must be provided.                                                                                                                                                    | -- (required) |
-|       `hyperparameter`        | Each learner has one or more hyperparameters which can be specified. Sequential model-based optionally is used to identify hyperparameter values from the data unless these are specifically specified here. See the section on hyperparameter optimisation for more details. | -- (optional) |
-| `parallel_mod el_development` | Enables parallel processing for model development. Ignored if `parallel=FALSE`.                                                                                                                                                                                               |    `TRUE`     |
++-----------------+---------------------------------------+-------------------+
+| **tag** /       | **description**                       | **default**       |
+| **argument**    |                                       |                   |
++:===============:+:======================================+:=================:+
+| `learner`       | The desired learner. Multiple         | -- (required)     |
+|                 | learners may be provided at the same  |                   |
+|                 | time. This setting has no default and |                   |
+|                 | must be provided.                     |                   |
++-----------------+---------------------------------------+-------------------+
+| `               | Each learner has one or more          | -- (optional)     |
+| hyperparameter` | hyperparameters which can be          |                   |
+|                 | specified. Sequential model-based     |                   |
+|                 | optionally is used to identify        |                   |
+|                 | hyperparameter values from the data   |                   |
+|                 | unless these are specifically         |                   |
+|                 | specified here. See the section on    |                   |
+|                 | hyperparameter optimisation for more  |                   |
+|                 | details.                              |                   |
++-----------------+---------------------------------------+-------------------+
+| `parallel_mod   | Enables parallel processing for model | `TRUE`            |
+| el_development` | development. Ignored if               |                   |
+|                 | `parallel=FALSE`.                     |                   |
++-----------------+---------------------------------------+-------------------+
 
 : Configuration options for model development.
 
@@ -197,26 +215,21 @@ Linear models for binomial outcomes derive from the `stats` package which is
 part of the R core distribution [@rcore2018]. Hyperparameters for these models
 include linkage functions and are shown in the table below.
 
-+--------------+--------------+--------------+--------------+--------------+
-| *            | **tag**      | **values**   | -            | **comments** |
-| *parameter** |              |              |              |              |
-|              |              |              | \*o          |              |
-|              |              |              | ptimised\*\* |              |
-+:=============+:=============+:============:+:============:+:=============+
-| signature    | `si gn_size` | $\mathbb{ Z  | yes          | --           |
-| size         |              | } \in \left  |              |              |
-|              |              | [1,n\right]$ |              |              |
-+--------------+--------------+--------------+--------------+--------------+
-| linking      | `family`     | `logistic`,  | `glm` only   | The linking  |
-| function     |              | `probit`,    |              | function is  |
-|              |              | `loglog`,    |              | not          |
-|              |              | `cauchy`     |              | optimised    |
-|              |              |              |              | when it is   |
-|              |              |              |              | specified,   |
-|              |              |              |              | e.g.         |
-|              |              |              |              | `gl          |
-|              |              |              |              | m_logistic`. |
-+--------------+--------------+--------------+--------------+--------------+
++------------------+----------+--------------+--------------+-----------------+
+| **parameter**    | **tag**  | **values**   | *            | **comments**    |
+|                  |          |              | *optimised** |                 |
++:=================+:=========+:============:+:============:+:================+
+| signature size   | `si      | $\mathbb{    | yes          | --              |
+|                  | gn_size` | Z} \in \left |              |                 |
+|                  |          | [1,n\right]$ |              |                 |
++------------------+----------+--------------+--------------+-----------------+
+| linking function | `family` | `logistic`,  | `glm` only   | The linking     |
+|                  |          | `probit`,    |              | function is not |
+|                  |          | `loglog`,    |              | optimised when  |
+|                  |          | `cauchy`     |              | it is           |
+|                  |          |              |              | specified, e.g. |
+|                  |          |              |              | `glm_logistic`. |
++------------------+----------+--------------+--------------+-----------------+
 
 ### Linear models for multinomial outcomes
 
@@ -224,22 +237,19 @@ The linear model for multinomial outcomes is implemented using the `VGAM::vglm`
 function [@Yee1996-ql; @Yee2010-rg; @Yee2015-bw]. Hyperparameters for this model
 are shown in the table below.
 
-+--------------+--------------+--------------+--------------+--------------+
-| *            | **tag**      | **values**   | -            | **comments** |
-| *parameter** |              |              |              |              |
-|              |              |              | \*o          |              |
-|              |              |              | ptimised\*\* |              |
-+:=============+:=============+:============:+:============:+:=============+
-| signature    | `si gn_size` | $\mathbb{ Z  | yes          | --           |
-| size         |              | } \in \left  |              |              |
-|              |              | [1,n\right]$ |              |              |
-+--------------+--------------+--------------+--------------+--------------+
-| linking      | `family`     | `            | no           | There is     |
-| function     |              | multinomial` |              | only one     |
-|              |              |              |              | linking      |
-|              |              |              |              | function     |
-|              |              |              |              | available.   |
-+--------------+--------------+--------------+--------------+--------------+
++------------------+----------+--------------+--------------+-----------------+
+| **parameter**    | **tag**  | **values**   | *            | **comments**    |
+|                  |          |              | *optimised** |                 |
++:=================+:=========+:============:+:============:+:================+
+| signature size   | `si      | $\mathbb{    | yes          | --              |
+|                  | gn_size` | Z} \in \left |              |                 |
+|                  |          | [1,n\right]$ |              |                 |
++------------------+----------+--------------+--------------+-----------------+
+| linking function | `family` | `            | no           | There is only   |
+|                  |          | multinomial` |              | one linking     |
+|                  |          |              |              | function        |
+|                  |          |              |              | available.      |
++------------------+----------+--------------+--------------+-----------------+
 
 ### Linear models for continuous and count-type outcomes
 
@@ -247,38 +257,29 @@ Linear models for continuous and count-type outcomes derive from the `stats`
 package of the R core distribution [@rcore2018]. Hyperparameters for these
 models include linkage functions and are shown in the table below.
 
-+--------------+--------------+--------------+--------------+--------------+
-| *            | **tag**      | **values**   | -            | **comments** |
-| *parameter** |              |              |              |              |
-|              |              |              | \*o          |              |
-|              |              |              | ptimised\*\* |              |
-+:=============+:=============+:============:+:============:+:=============+
-| signature    | `si gn_size` | $\mathbb{ Z  | yes          | --           |
-| size         |              | } \in \left  |              |              |
-|              |              | [1,n\right]$ |              |              |
-+--------------+--------------+--------------+--------------+--------------+
-| linking      | `family`     | `gaussian`,  | `glm` only   | The linking  |
-| function     |              | `lo          |              | function is  |
-|              |              | g_gaussian`, |              | not          |
-|              |              | `in          |              | optimised    |
-|              |              | v_gaussian`, |              | when it is   |
-|              |              | `poisson`,   |              | specified,   |
-|              |              | `            |              | e.g.         |
-|              |              | log_poisson` |              | `g           |
-|              |              |              |              | lm_poisson`. |
-|              |              |              |              | `gaussian`,  |
-|              |              |              |              | `lo          |
-|              |              |              |              | g_gaussian`, |
-|              |              |              |              | `i           |
-|              |              |              |              | nv_gaussian` |
-|              |              |              |              | linking      |
-|              |              |              |              | functions    |
-|              |              |              |              | are not      |
-|              |              |              |              | available    |
-|              |              |              |              | for          |
-|              |              |              |              | count-type   |
-|              |              |              |              | outcomes.    |
-+--------------+--------------+--------------+--------------+--------------+
++------------------+----------+--------------+--------------+-----------------+
+| **parameter**    | **tag**  | **values**   | *            | **comments**    |
+|                  |          |              | *optimised** |                 |
++:=================+:=========+:============:+:============:+:================+
+| signature size   | `si      | $\mathbb{    | yes          | --              |
+|                  | gn_size` | Z} \in \left |              |                 |
+|                  |          | [1,n\right]$ |              |                 |
++------------------+----------+--------------+--------------+-----------------+
+| linking function | `family` | `gaussian`,  | `glm` only   | The linking     |
+|                  |          | `lo          |              | function is not |
+|                  |          | g_gaussian`, |              | optimised when  |
+|                  |          | `in          |              | it is           |
+|                  |          | v_gaussian`, |              | specified, e.g. |
+|                  |          | `poisson`,   |              | `glm_poisson`.  |
+|                  |          | `            |              | `gaussian`,     |
+|                  |          | log_poisson` |              | `log_gaussian`, |
+|                  |          |              |              | `inv_gaussian`  |
+|                  |          |              |              | linking         |
+|                  |          |              |              | functions are   |
+|                  |          |              |              | not available   |
+|                  |          |              |              | for count-type  |
+|                  |          |              |              | outcomes.       |
++------------------+----------+--------------+--------------+-----------------+
 
 ### Linear models for survival outcomes
 
@@ -294,35 +295,28 @@ are all based on `survival::survreg` [@Therneau2000-jv].
 Hyperparameters for semi-parametric and parametric survival models are shown in
 the tale below.
 
-+--------------+--------------+--------------+--------------+--------------+
-| *            | **tag**      | **values**   | -            | **comments** |
-| *parameter** |              |              |              |              |
-|              |              |              | \*o          |              |
-|              |              |              | ptimised\*\* |              |
-+:=============+:=============+:============:+:============:+:=============+
-| signature    | `si gn_size` | $\mathbb{ Z  | yes          | --           |
-| size         |              | } \in \left  |              |              |
-|              |              | [1,n\right]$ |              |              |
-+--------------+--------------+--------------+--------------+--------------+
-| linking      | `family`     | `weibull`,   | `su          | The linking  |
-| function     |              | `e           | rvival_regr` | function is  |
-|              |              | xponential`, | only         | not          |
-|              |              | `gaussian`,  |              | optimised    |
-|              |              | `logistic`,  |              | when it is   |
-|              |              | `lognormal`, |              | specified,   |
-|              |              | `            |              | e.g.         |
-|              |              | loglogistic` |              | `            |
-|              |              |              |              | survival _re |
-|              |              |              |              | gr_weibull`. |
-|              |              |              |              | The          |
-|              |              |              |              | no           |
-|              |              |              |              | n-parametric |
-|              |              |              |              | `cox`        |
-|              |              |              |              | learner does |
-|              |              |              |              | not have a   |
-|              |              |              |              | linking      |
-|              |              |              |              | function.    |
-+--------------+--------------+--------------+--------------+--------------+
++------------------+----------+--------------+--------------+-----------------+
+| **parameter**    | **tag**  | **values**   | *            | **comments**    |
+|                  |          |              | *optimised** |                 |
++:=================+:=========+:============:+:============:+:================+
+| signature size   | `si      | $\mathbb{    | yes          | --              |
+|                  | gn_size` | Z} \in \left |              |                 |
+|                  |          | [1,n\right]$ |              |                 |
++------------------+----------+--------------+--------------+-----------------+
+| linking function | `family` | `weibull`,   | `su          | The linking     |
+|                  |          | `e           | rvival_regr` | function is not |
+|                  |          | xponential`, | only         | optimised when  |
+|                  |          | `gaussian`,  |              | it is           |
+|                  |          | `logistic`,  |              | specified, e.g. |
+|                  |          | `lognormal`, |              | `survival       |
+|                  |          | `            |              | _regr_weibull`. |
+|                  |          | loglogistic` |              | The             |
+|                  |          |              |              | non-parametric  |
+|                  |          |              |              | `cox` learner   |
+|                  |          |              |              | does not have a |
+|                  |          |              |              | linking         |
+|                  |          |              |              | function.       |
++------------------+----------+--------------+--------------+-----------------+
 
 ## Lasso, ridge and elastic net regression
 
@@ -337,50 +331,42 @@ table low. The optimal `lambda` parameter is determined by cross-validation as
 part of the `glmnet::cv.glmnet` function, and is not directly determined using
 hyperparameter optimisation.
 
-+--------------+--------------+--------------+--------------+--------------+
-| *            | **tag**      | **values**   | -            | **comments** |
-| *parameter** |              |              |              |              |
-|              |              |              | \*o          |              |
-|              |              |              | ptimised\*\* |              |
-+:=============+:=============+:============:+:============:+:=============+
-| signature    | `si gn_size` | $\mathbb{ Z  | yes          | --           |
-| size         |              | } \in \left  |              |              |
-|              |              | [1,n\right]$ |              |              |
-+--------------+--------------+--------------+--------------+--------------+
-| elastic net  | `alpha`      | $\mathbb{ R  | elastic net  | This penalty |
-| penalty      |              | } \in \left  |              | is fixed for |
-|              |              | [0,1\right]$ |              | ridge        |
-|              |              |              |              | regression   |
-|              |              |              |              | (            |
-|              |              |              |              | `alpha = 0`) |
-|              |              |              |              | and lasso    |
-|              |              |              |              | (`           |
-|              |              |              |              | alpha = 1`). |
-+--------------+--------------+--------------+--------------+--------------+
-| optimal      | `            | `            | no           | Default is   |
-| lambda       | lam bda_min` | lambda.1se`, |              | `            |
-|              |              | `lambda.min` |              | lambda.min`. |
-+--------------+--------------+--------------+--------------+--------------+
-| number of CV | `n_folds`    | $\mathbb{ Z  | no           | Default is   |
-| folds        |              | } \in \left  |              | $3$ if       |
-|              |              | [3,n\right]$ |              | $n<30$,      |
-|              |              |              |              | $\lflo or    |
-|              |              |              |              | n/10\rfloor$ |
-|              |              |              |              | if $30\      |
-|              |              |              |              | leq          |
-|              |              |              |              |  n \leq 200$ |
-|              |              |              |              | and $20$ if  |
-|              |              |              |              | $n>200$.     |
-+--------------+--------------+--------------+--------------+--------------+
-| n            | `no rmalise` | `FALSE`,     | no           | Default is   |
-| ormalisation |              | `TRUE`       |              | `FALSE`, as  |
-|              |              |              |              | n            |
-|              |              |              |              | ormalisation |
-|              |              |              |              | is part of   |
-|              |              |              |              | pr           |
-|              |              |              |              | e-processing |
-|              |              |              |              | in familiar. |
-+--------------+--------------+--------------+--------------+--------------+
++------------------+----------+--------------+--------------+-----------------+
+| **parameter**    | **tag**  | **values**   | *            | **comments**    |
+|                  |          |              | *optimised** |                 |
++:=================+:=========+:============:+:============:+:================+
+| signature size   | `si      | $\mathbb{    | yes          | --              |
+|                  | gn_size` | Z} \in \left |              |                 |
+|                  |          | [1,n\right]$ |              |                 |
++------------------+----------+--------------+--------------+-----------------+
+| elastic net      | `alpha`  | $\mathbb{    | elastic net  | This penalty is |
+| penalty          |          | R} \in \left |              | fixed for ridge |
+|                  |          | [0,1\right]$ |              | regression      |
+|                  |          |              |              | (`alpha = 0`)   |
+|                  |          |              |              | and lasso       |
+|                  |          |              |              | (`alpha = 1`).  |
++------------------+----------+--------------+--------------+-----------------+
+| optimal lambda   | `lam     | `            | no           | Default is      |
+|                  | bda_min` | lambda.1se`, |              | `lambda.min`.   |
+|                  |          | `lambda.min` |              |                 |
++------------------+----------+--------------+--------------+-----------------+
+| number of CV     | `        | $\mathbb{    | no           | Default is $3$  |
+| folds            | n_folds` | Z} \in \left |              | if $n<30$,      |
+|                  |          | [3,n\right]$ |              | $\lflo          |
+|                  |          |              |              | or n/10\rfloor$ |
+|                  |          |              |              | if              |
+|                  |          |              |              | $30\            |
+|                  |          |              |              | leq n \leq 200$ |
+|                  |          |              |              | and $20$ if     |
+|                  |          |              |              | $n>200$.        |
++------------------+----------+--------------+--------------+-----------------+
+| normalisation    | `no      | `FALSE`,     | no           | Default is      |
+|                  | rmalise` | `TRUE`       |              | `FALSE`, as     |
+|                  |          |              |              | normalisation   |
+|                  |          |              |              | is part of      |
+|                  |          |              |              | pre-processing  |
+|                  |          |              |              | in familiar.    |
++------------------+----------+--------------+--------------+-----------------+
 
 ## Boosted generalised linear models and regression trees
 
@@ -391,104 +377,89 @@ implemented using the `mboost` package [@Buhlmann2007-ku; @Hothorn2010-cu;
 trees (`mboost::blackboost`) are implemented. The hyperparameters are shown in
 the table below.
 
-+--------------+--------------+--------------+--------------+--------------+
-| *            | **tag**      | **values**   | -            | **comments** |
-| *parameter** |              |              |              |              |
-|              |              |              | \*o          |              |
-|              |              |              | ptimised\*\* |              |
-+:=============+:=============+:============:+:============:+:=============+
-| signature    | `si gn_size` | $\mathbb{ Z  | yes          | --           |
-| size         |              | } \in \left  |              |              |
-|              |              | [1,n\right]$ |              |              |
-+--------------+--------------+--------------+--------------+--------------+
-| family       | `family`     | `logistic`,  | general tags | The family   |
-|              |              | `probit`,    |              | is not       |
-|              |              | `            |              | optimised    |
-|              |              | bin_loglog`, |              | when it is   |
-|              |              | `cauchy`,    |              | specified,   |
-|              |              | `log`,       |              | e.g.         |
-|              |              | `auc`,       |              | `            |
-|              |              | `gaussian`,  |              | boosted_ tre |
-|              |              | `huber`,     |              | e_gaussian`. |
-|              |              | `laplace`,   |              |              |
-|              |              | `poisson`,   |              |              |
-|              |              | `cox`,       |              |              |
-|              |              | `weibull`,   |              |              |
-|              |              | `lognormal`, |              |              |
-|              |              | `s           |              |              |
-|              |              | urv_loglog`, |              |              |
-|              |              | `gehan`,     |              |              |
-|              |              | `cindex`     |              |              |
-+--------------+--------------+--------------+--------------+--------------+
-| boosting     | `n_boost`    | $\           | yes          | This         |
-| iterations   |              | ma           |              | parameter is |
-|              |              | thbb{R} \i n |              | expressed on |
-|              |              |  \left[0,\i  |              | the          |
-|              |              | nfty\right)$ |              | $\log_{10}$  |
-|              |              |              |              | scale, i.e.  |
-|              |              |              |              | the actual   |
-|              |              |              |              | input value  |
-|              |              |              |              | will be      |
-|              |              |              |              | $10^\te xtt  |
-|              |              |              |              | t{n_boost}$. |
-|              |              |              |              | The default  |
-|              |              |              |              | range is     |
-|              |              |              |              | $\lef t[0    |
-|              |              |              |              | , 3\right]$. |
-+--------------+--------------+--------------+--------------+--------------+
-| learning     | `lea         | $\m at       | yes          | This         |
-| rate         | rni ng_rate` | hbb{R} \in   |              | parameter is |
-|              |              | \left[-\inf  |              | expressed on |
-|              |              | ty,0\right]$ |              | the          |
-|              |              |              |              | $\log_{10}$  |
-|              |              |              |              | scale. The   |
-|              |              |              |              | default      |
-|              |              |              |              | range is     |
-|              |              |              |              | $\lef t[-    |
-|              |              |              |              | 5,0\right]$. |
-+--------------+--------------+--------------+--------------+--------------+
-| maximum tree | `            | $\mathbb{ Z  | trees only   | Maximum      |
-| depth        | tre e_depth` | } \in \left  |              | depth to     |
-|              |              | [1,n\right]$ |              | which trees  |
-|              |              |              |              | are allowed  |
-|              |              |              |              | to grow.     |
-+--------------+--------------+--------------+--------------+--------------+
-| minimum sum  | `m in_ch     | $\           | trees only   | Minimal      |
-| of instance  | ild _weight` | ma           |              | instance     |
-| weight       |              | thbb{R} \i n |              | weight       |
-|              |              |  \left[0,\i  |              | required for |
-|              |              | nfty\right)$ |              | further      |
-|              |              |              |              | branch       |
-|              |              |              |              | p            |
-|              |              |              |              | artitioning, |
-|              |              |              |              | or the       |
-|              |              |              |              | number of    |
-|              |              |              |              | instances    |
-|              |              |              |              | required in  |
-|              |              |              |              | each node.   |
-|              |              |              |              | This         |
-|              |              |              |              | parameter is |
-|              |              |              |              | expressed on |
-|              |              |              |              | the          |
-|              |              |              |              | $\log_{10}$  |
-|              |              |              |              | scale with a |
-|              |              |              |              | $-1$ offset. |
-|              |              |              |              | The default  |
-|              |              |              |              | range is     |
-|              |              |              |              | $\lef t[0    |
-|              |              |              |              | , 2\right]$. |
-+--------------+--------------+--------------+--------------+--------------+
-| significance | `alpha`      | $\           | trees only   | Minimum      |
-| split        |              | ma           |              | significance |
-| threshold    |              | thbb{R} \i n |              | level for    |
-|              |              |  \left(0.0,  |              | further      |
-|              |              |  1.0\right]$ |              | splitting.   |
-|              |              |              |              | The default  |
-|              |              |              |              | range is     |
-|              |              |              |              | $\le         |
-|              |              |              |              | ft[10^{- 6}, |
-|              |              |              |              |  1.0\right]$ |
-+--------------+--------------+--------------+--------------+--------------+
++------------------+----------+--------------+--------------+-----------------+
+| **parameter**    | **tag**  | **values**   | *            | **comments**    |
+|                  |          |              | *optimised** |                 |
++:=================+:=========+:============:+:============:+:================+
+| signature size   | `si      | $\mathbb{    | yes          | --              |
+|                  | gn_size` | Z} \in \left |              |                 |
+|                  |          | [1,n\right]$ |              |                 |
++------------------+----------+--------------+--------------+-----------------+
+| family           | `family` | `logistic`,  | general tags | The family is   |
+|                  |          | `probit`,    |              | not optimised   |
+|                  |          | `            |              | when it is      |
+|                  |          | bin_loglog`, |              | specified, e.g. |
+|                  |          | `cauchy`,    |              | `boosted_       |
+|                  |          | `log`,       |              | tree_gaussian`. |
+|                  |          | `auc`,       |              |                 |
+|                  |          | `gaussian`,  |              |                 |
+|                  |          | `huber`,     |              |                 |
+|                  |          | `laplace`,   |              |                 |
+|                  |          | `poisson`,   |              |                 |
+|                  |          | `cox`,       |              |                 |
+|                  |          | `weibull`,   |              |                 |
+|                  |          | `lognormal`, |              |                 |
+|                  |          | `s           |              |                 |
+|                  |          | urv_loglog`, |              |                 |
+|                  |          | `gehan`,     |              |                 |
+|                  |          | `cindex`     |              |                 |
++------------------+----------+--------------+--------------+-----------------+
+| boosting         | `        | $\           | yes          | This parameter  |
+| iterations       | n_boost` | mathbb{R} \i |              | is expressed on |
+|                  |          | n \left[0,\i |              | the $\log_{10}$ |
+|                  |          | nfty\right)$ |              | scale, i.e. the |
+|                  |          |              |              | actual input    |
+|                  |          |              |              | value will be   |
+|                  |          |              |              | $10^\te         |
+|                  |          |              |              | xttt{n_boost}$. |
+|                  |          |              |              | The default     |
+|                  |          |              |              | range is        |
+|                  |          |              |              | $\lef           |
+|                  |          |              |              | t[0, 3\right]$. |
++------------------+----------+--------------+--------------+-----------------+
+| learning rate    | `learni  | $\m          | yes          | This parameter  |
+|                  | ng_rate` | athbb{R} \in |              | is expressed on |
+|                  |          |  \left[-\inf |              | the $\log_{10}$ |
+|                  |          | ty,0\right]$ |              | scale. The      |
+|                  |          |              |              | default range   |
+|                  |          |              |              | is              |
+|                  |          |              |              | $\lef           |
+|                  |          |              |              | t[-5,0\right]$. |
++------------------+----------+--------------+--------------+-----------------+
+| maximum tree     | `tre     | $\mathbb{    | trees only   | Maximum depth   |
+| depth            | e_depth` | Z} \in \left |              | to which trees  |
+|                  |          | [1,n\right]$ |              | are allowed to  |
+|                  |          |              |              | grow.           |
++------------------+----------+--------------+--------------+-----------------+
+| minimum sum of   | `m       | $\           | trees only   | Minimal         |
+| instance weight  | in_child | mathbb{R} \i |              | instance weight |
+|                  | _weight` | n \left[0,\i |              | required for    |
+|                  |          | nfty\right)$ |              | further branch  |
+|                  |          |              |              | partitioning,   |
+|                  |          |              |              | or the number   |
+|                  |          |              |              | of instances    |
+|                  |          |              |              | required in     |
+|                  |          |              |              | each node. This |
+|                  |          |              |              | parameter is    |
+|                  |          |              |              | expressed on    |
+|                  |          |              |              | the $\log_{10}$ |
+|                  |          |              |              | scale with a    |
+|                  |          |              |              | $-1$ offset.    |
+|                  |          |              |              | The default     |
+|                  |          |              |              | range is        |
+|                  |          |              |              | $\lef           |
+|                  |          |              |              | t[0, 2\right]$. |
++------------------+----------+--------------+--------------+-----------------+
+| significance     | `alpha`  | $\           | trees only   | Minimum         |
+| split threshold  |          | mathbb{R} \i |              | significance    |
+|                  |          | n \left(0.0, |              | level for       |
+|                  |          |  1.0\right]$ |              | further         |
+|                  |          |              |              | splitting. The  |
+|                  |          |              |              | default range   |
+|                  |          |              |              | is              |
+|                  |          |              |              | $\left[10^{-    |
+|                  |          |              |              | 6}, 1.0\right]$ |
++------------------+----------+--------------+--------------+-----------------+
 
 Optimising the number of boosting iterations may be slow as models with a large
 number of boosting iterations take longer to learn and predict from. If this is
@@ -510,177 +481,150 @@ learning competitions. Learners are implemented using the `xgboost` package
 (`xgboost_lm`), regression-tree based boosting (`xgboost_tree`) and
 regression-tree based boosting with dropouts (`xgboost_dart`).
 
-+--------------+--------------+--------------+--------------+--------------+
-| *            | **tag**      | **values**   | -            | **comments** |
-| *parameter** |              |              |              |              |
-|              |              |              | \*o          |              |
-|              |              |              | ptimised\*\* |              |
-+:=============+:=============+:============:+:============:+:=============+
-| signature    | `si gn_size` | $\mathbb{ Z  | yes          | --           |
-| size         |              | } \in \left  |              |              |
-|              |              | [1,n\right]$ |              |              |
-+--------------+--------------+--------------+--------------+--------------+
-| family       | `learn       | `gaussian,`  | general tags | The family   |
-|              | _ob jective` | `continuou   |              | is not       |
-|              |              | s_logistic`, |              | optimised    |
-|              |              | `multinomia  |              | when it is   |
-|              |              | l_logistic`, |              | specified,   |
-|              |              | `binomia     |              | e.g.         |
-|              |              | l_logistic`, |              | `xgbo ost    |
-|              |              | `poisson`,   |              | _lm_linear`. |
-|              |              | `gamma`,     |              |              |
-|              |              | `cox`        |              |              |
-+--------------+--------------+--------------+--------------+--------------+
-| boosting     | `n_boost`    | $\m at       | yes          | This         |
-| iterations   |              | hbb{R} \in   |              | parameter is |
-|              |              | \left[0,\in  |              | expressed on |
-|              |              | fty \right)$ |              | the          |
-|              |              |              |              | $\log_{10}$  |
-|              |              |              |              | scale, i.e.  |
-|              |              |              |              | the actual   |
-|              |              |              |              | value will   |
-|              |              |              |              | be           |
-|              |              |              |              | $10^\te xtt  |
-|              |              |              |              | t{n_boost}$. |
-|              |              |              |              | The default  |
-|              |              |              |              | range is     |
-|              |              |              |              | $\left [0,   |
-|              |              |              |              |  3 \right]$. |
-+--------------+--------------+--------------+--------------+--------------+
-| learning     | `lea         | $\m at       | yes          | This         |
-| rate         | rni ng_rate` | hbb{R} \in   |              | parameter is |
-|              |              | \left(-\inf  |              | expressed on |
-|              |              | ty,0\right]$ |              | the          |
-|              |              |              |              | $\log_{10}$  |
-|              |              |              |              | scale. The   |
-|              |              |              |              | default      |
-|              |              |              |              | range is     |
-|              |              |              |              | $\left[ -5,  |
-|              |              |              |              |  0 \right]$. |
-+--------------+--------------+--------------+--------------+--------------+
-| L1           | `alpha`      | $\ma t       | yes          | This         |
-| re           |              | hbb{R} \in \ |              | parameter is |
-| gularisation |              | left[-6, \i  |              | expressed on |
-|              |              | nfty\right)$ |              | the          |
-|              |              |              |              | $\log_{10}$  |
-|              |              |              |              | scale with a |
-|              |              |              |              | $10^{-6}$    |
-|              |              |              |              | offset. The  |
-|              |              |              |              | default      |
-|              |              |              |              | range is     |
-|              |              |              |              | $\left [-6   |
-|              |              |              |              | , 3\right]$. |
-+--------------+--------------+--------------+--------------+--------------+
-| L2           | `lambda`     | $\ma t       | yes          | This         |
-| re           |              | hbb{R} \in \ |              | parameter is |
-| gularisation |              | left[-6, \i  |              | expressed on |
-|              |              | nfty\right)$ |              | the          |
-|              |              |              |              | $\log_{10}$  |
-|              |              |              |              | scale with a |
-|              |              |              |              | $10^{-6}$    |
-|              |              |              |              | offset. The  |
-|              |              |              |              | default      |
-|              |              |              |              | range is     |
-|              |              |              |              | $\left [-6   |
-|              |              |              |              | , 3\right]$. |
-+--------------+--------------+--------------+--------------+--------------+
-| maximum tree | `            | $\           | `gbtree`,    | Maximum      |
-| depth        | tre e_depth` | ma           | `dart`       | depth to     |
-|              |              | thbb{Z} \i n |              | which trees  |
-|              |              |  \left[1,\i  |              | are allowed  |
-|              |              | nfty\right)$ |              | to grow. The |
-|              |              |              |              | default      |
-|              |              |              |              | range is     |
-|              |              |              |              | $\left [1,   |
-|              |              |              |              |  10\right]$. |
-+--------------+--------------+--------------+--------------+--------------+
-| subsampling  | `s           | $            | `gbtree`,    | Fraction of  |
-| fraction     | amp le_size` | \mathbb{R} \ | `dart`       | available    |
-|              |              | in \left(0,  |              | data that is |
-|              |              |  1.0\right]$ |              | used for to  |
-|              |              |              |              | create a     |
-|              |              |              |              | single tree. |
-|              |              |              |              | The default  |
-|              |              |              |              | range is     |
-|              |              |              |              | $\           |
-|              |              |              |              | left[2 / m,  |
-|              |              |              |              | 1.0\right]$, |
-|              |              |              |              | with $m$ the |
-|              |              |              |              | number of    |
-|              |              |              |              | samples.     |
-+--------------+--------------+--------------+--------------+--------------+
-| minimum sum  | `m in_ch     | $\           | `gbtree`,    | Minimal      |
-| of instance  | ild _weight` | ma           | `dart`       | instance     |
-| weight       |              | thbb{R} \i n |              | weight       |
-|              |              |  \left[0,\i  |              | required for |
-|              |              | nfty\right)$ |              | further      |
-|              |              |              |              | branch       |
-|              |              |              |              | p            |
-|              |              |              |              | artitioning, |
-|              |              |              |              | or the       |
-|              |              |              |              | number of    |
-|              |              |              |              | instances    |
-|              |              |              |              | required in  |
-|              |              |              |              | each node.   |
-|              |              |              |              | This         |
-|              |              |              |              | parameter is |
-|              |              |              |              | expressed on |
-|              |              |              |              | the          |
-|              |              |              |              | $\log_{10}$  |
-|              |              |              |              | scale with a |
-|              |              |              |              | $-1$ offset. |
-|              |              |              |              | The default  |
-|              |              |              |              | range is     |
-|              |              |              |              | $\lef t[0    |
-|              |              |              |              | , 2\right]$. |
-+--------------+--------------+--------------+--------------+--------------+
-| min.         | `gamma`      | $\ma t       | `gbtree`,    | Minimum      |
-| splitting    |              | hbb{R} \in \ | `dart`       | error        |
-| error        |              | left[-6, \i  |              | reduction    |
-| reduction    |              | nfty\right)$ |              | required to  |
-|              |              |              |              | allow        |
-|              |              |              |              | splitting.   |
-|              |              |              |              | This         |
-|              |              |              |              | parameter is |
-|              |              |              |              | expressed on |
-|              |              |              |              | the          |
-|              |              |              |              | $\log_{10}$  |
-|              |              |              |              | scale with a |
-|              |              |              |              | $10^{-6}$    |
-|              |              |              |              | offset. The  |
-|              |              |              |              | default      |
-|              |              |              |              | range is     |
-|              |              |              |              | $\left [-6   |
-|              |              |              |              | , 3\right]$. |
-|              |              |              |              | `continuous` |
-|              |              |              |              | and          |
-|              |              |              |              | `count`-type |
-|              |              |              |              | outcomes are |
-|              |              |              |              | normalised   |
-|              |              |              |              | to the       |
-|              |              |              |              | $\le ft[     |
-|              |              |              |              | 0, 1\right]$ |
-|              |              |              |              | range prior  |
-|              |              |              |              | to model     |
-|              |              |              |              | fitting to   |
-|              |              |              |              | deal with    |
-|              |              |              |              | scaling      |
-|              |              |              |              | issues.      |
-|              |              |              |              | Values are   |
-|              |              |              |              | converted    |
-|              |              |              |              | back to the  |
-|              |              |              |              | original     |
-|              |              |              |              | scale after  |
-|              |              |              |              | prediction.  |
-+--------------+--------------+--------------+--------------+--------------+
-| DART         | `s           | `uniform`,   | `dart`       | --           |
-| sampling     | amp le_type` | `weighted`   |              |              |
-| algorithm    |              |              |              |              |
-+--------------+--------------+--------------+--------------+--------------+
-| drop-out     | `ra te_drop` | $\mathbb{ R  | `dart`       | --           |
-| rate         |              | } \in \left  |              |              |
-|              |              | [0,1\right)$ |              |              |
-+--------------+--------------+--------------+--------------+--------------+
++------------------+----------+--------------+--------------+-----------------+
+| **parameter**    | **tag**  | **values**   | *            | **comments**    |
+|                  |          |              | *optimised** |                 |
++:=================+:=========+:============:+:============:+:================+
+| signature size   | `si      | $\mathbb{    | yes          | --              |
+|                  | gn_size` | Z} \in \left |              |                 |
+|                  |          | [1,n\right]$ |              |                 |
++------------------+----------+--------------+--------------+-----------------+
+| family           | `        | `gaussian,`  | general tags | The family is   |
+|                  | learn_ob | `continuou   |              | not optimised   |
+|                  | jective` | s_logistic`, |              | when it is      |
+|                  |          | `multinomia  |              | specified, e.g. |
+|                  |          | l_logistic`, |              | `xgbo           |
+|                  |          | `binomia     |              | ost_lm_linear`. |
+|                  |          | l_logistic`, |              |                 |
+|                  |          | `poisson`,   |              |                 |
+|                  |          | `gamma`,     |              |                 |
+|                  |          | `cox`        |              |                 |
++------------------+----------+--------------+--------------+-----------------+
+| boosting         | `        | $\m          | yes          | This parameter  |
+| iterations       | n_boost` | athbb{R} \in |              | is expressed on |
+|                  |          |  \left[0,\in |              | the $\log_{10}$ |
+|                  |          | fty \right)$ |              | scale, i.e. the |
+|                  |          |              |              | actual value    |
+|                  |          |              |              | will be         |
+|                  |          |              |              | $10^\te         |
+|                  |          |              |              | xttt{n_boost}$. |
+|                  |          |              |              | The default     |
+|                  |          |              |              | range is        |
+|                  |          |              |              | $\left          |
+|                  |          |              |              | [0, 3 \right]$. |
++------------------+----------+--------------+--------------+-----------------+
+| learning rate    | `learni  | $\m          | yes          | This parameter  |
+|                  | ng_rate` | athbb{R} \in |              | is expressed on |
+|                  |          |  \left(-\inf |              | the $\log_{10}$ |
+|                  |          | ty,0\right]$ |              | scale. The      |
+|                  |          |              |              | default range   |
+|                  |          |              |              | is              |
+|                  |          |              |              | $\left[         |
+|                  |          |              |              | -5, 0 \right]$. |
++------------------+----------+--------------+--------------+-----------------+
+| L1               | `alpha`  | $\ma         | yes          | This parameter  |
+| regularisation   |          | thbb{R} \in  |              | is expressed on |
+|                  |          | \left[-6, \i |              | the $\log_{10}$ |
+|                  |          | nfty\right)$ |              | scale with a    |
+|                  |          |              |              | $10^{-6}$       |
+|                  |          |              |              | offset. The     |
+|                  |          |              |              | default range   |
+|                  |          |              |              | is              |
+|                  |          |              |              | $\left          |
+|                  |          |              |              | [-6, 3\right]$. |
++------------------+----------+--------------+--------------+-----------------+
+| L2               | `lambda` | $\ma         | yes          | This parameter  |
+| regularisation   |          | thbb{R} \in  |              | is expressed on |
+|                  |          | \left[-6, \i |              | the $\log_{10}$ |
+|                  |          | nfty\right)$ |              | scale with a    |
+|                  |          |              |              | $10^{-6}$       |
+|                  |          |              |              | offset. The     |
+|                  |          |              |              | default range   |
+|                  |          |              |              | is              |
+|                  |          |              |              | $\left          |
+|                  |          |              |              | [-6, 3\right]$. |
++------------------+----------+--------------+--------------+-----------------+
+| maximum tree     | `tre     | $\           | `gbtree`,    | Maximum depth   |
+| depth            | e_depth` | mathbb{Z} \i | `dart`       | to which trees  |
+|                  |          | n \left[1,\i |              | are allowed to  |
+|                  |          | nfty\right)$ |              | grow. The       |
+|                  |          |              |              | default range   |
+|                  |          |              |              | is              |
+|                  |          |              |              | $\left          |
+|                  |          |              |              | [1, 10\right]$. |
++------------------+----------+--------------+--------------+-----------------+
+| subsampling      | `samp    | $\mathbb{R}  | `gbtree`,    | Fraction of     |
+| fraction         | le_size` | \in \left(0, | `dart`       | available data  |
+|                  |          |  1.0\right]$ |              | that is used    |
+|                  |          |              |              | for to create a |
+|                  |          |              |              | single tree.    |
+|                  |          |              |              | The default     |
+|                  |          |              |              | range is        |
+|                  |          |              |              | $\left[2 /      |
+|                  |          |              |              | m, 1.0\right]$, |
+|                  |          |              |              | with $m$ the    |
+|                  |          |              |              | number of       |
+|                  |          |              |              | samples.        |
++------------------+----------+--------------+--------------+-----------------+
+| minimum sum of   | `m       | $\           | `gbtree`,    | Minimal         |
+| instance weight  | in_child | mathbb{R} \i | `dart`       | instance weight |
+|                  | _weight` | n \left[0,\i |              | required for    |
+|                  |          | nfty\right)$ |              | further branch  |
+|                  |          |              |              | partitioning,   |
+|                  |          |              |              | or the number   |
+|                  |          |              |              | of instances    |
+|                  |          |              |              | required in     |
+|                  |          |              |              | each node. This |
+|                  |          |              |              | parameter is    |
+|                  |          |              |              | expressed on    |
+|                  |          |              |              | the $\log_{10}$ |
+|                  |          |              |              | scale with a    |
+|                  |          |              |              | $-1$ offset.    |
+|                  |          |              |              | The default     |
+|                  |          |              |              | range is        |
+|                  |          |              |              | $\lef           |
+|                  |          |              |              | t[0, 2\right]$. |
++------------------+----------+--------------+--------------+-----------------+
+| min. splitting   | `gamma`  | $\ma         | `gbtree`,    | Minimum error   |
+| error reduction  |          | thbb{R} \in  | `dart`       | reduction       |
+|                  |          | \left[-6, \i |              | required to     |
+|                  |          | nfty\right)$ |              | allow           |
+|                  |          |              |              | splitting. This |
+|                  |          |              |              | parameter is    |
+|                  |          |              |              | expressed on    |
+|                  |          |              |              | the $\log_{10}$ |
+|                  |          |              |              | scale with a    |
+|                  |          |              |              | $10^{-6}$       |
+|                  |          |              |              | offset. The     |
+|                  |          |              |              | default range   |
+|                  |          |              |              | is              |
+|                  |          |              |              | $\left          |
+|                  |          |              |              | [-6, 3\right]$. |
+|                  |          |              |              | `continuous`    |
+|                  |          |              |              | and             |
+|                  |          |              |              | `count`-type    |
+|                  |          |              |              | outcomes are    |
+|                  |          |              |              | normalised to   |
+|                  |          |              |              | the             |
+|                  |          |              |              | $\le            |
+|                  |          |              |              | ft[0, 1\right]$ |
+|                  |          |              |              | range prior to  |
+|                  |          |              |              | model fitting   |
+|                  |          |              |              | to deal with    |
+|                  |          |              |              | scaling issues. |
+|                  |          |              |              | Values are      |
+|                  |          |              |              | converted back  |
+|                  |          |              |              | to the original |
+|                  |          |              |              | scale after     |
+|                  |          |              |              | prediction.     |
++------------------+----------+--------------+--------------+-----------------+
+| DART sampling    | `samp    | `uniform`,   | `dart`       | --              |
+| algorithm        | le_type` | `weighted`   |              |                 |
++------------------+----------+--------------+--------------+-----------------+
+| drop-out rate    | `ra      | $\mathbb{    | `dart`       | --              |
+|                  | te_drop` | R} \in \left |              |                 |
+|                  |          | [0,1\right)$ |              |                 |
++------------------+----------+--------------+--------------+-----------------+
 
 ## Random forest (RFSRC)
 
@@ -694,112 +638,92 @@ original scale using the inverse $\exp(x)-1$ transformation.
 
 Hyperparameters for random forest learners are shown in the table below.
 
-+--------------+--------------+--------------+--------------+--------------+
-| *            | **tag**      | **values**   | -            | **comments** |
-| *parameter** |              |              |              |              |
-|              |              |              | \*o          |              |
-|              |              |              | ptimised\*\* |              |
-+:=============+:=============+:============:+:============:+:=============+
-| signature    | `si gn_size` | $\mathbb{ Z  | yes          | --           |
-| size         |              | } \in \left  |              |              |
-|              |              | [1,n\right]$ |              |              |
-+--------------+--------------+--------------+--------------+--------------+
-| number of    | `n_tree`     | $\           | yes          | This         |
-| trees        |              | ma           |              | parameter is |
-|              |              | thbb{Z} \i n |              | expressed on |
-|              |              |  \left[0,\i  |              | the          |
-|              |              | nfty\right)$ |              | $\log_{2}$   |
-|              |              |              |              | scale, i.e.  |
-|              |              |              |              | the actual   |
-|              |              |              |              | input value  |
-|              |              |              |              | will be $2^\ |
-|              |              |              |              | tex          |
-|              |              |              |              | ttt{n_tree}$ |
-|              |              |              |              | [\@          |
-|              |              |              |              | Osh          |
-|              |              |              |              | iro2012-mq]. |
-|              |              |              |              | The default  |
-|              |              |              |              | range is     |
-|              |              |              |              | \$\left[4,   |
-|              |              |              |              |  10          |
-|              |              |              |              | \right]\$\$. |
-+--------------+--------------+--------------+--------------+--------------+
-| subsampling  | `s           | $            | yes          | Fraction of  |
-| fraction     | amp le_size` | \mathbb{R} \ |              | available    |
-|              |              | in \left(0,  |              | data that is |
-|              |              |  1.0\right]$ |              | used for to  |
-|              |              |              |              | create a     |
-|              |              |              |              | single tree. |
-|              |              |              |              | The default  |
-|              |              |              |              | range is     |
-|              |              |              |              | $\           |
-|              |              |              |              | left[2 / m,  |
-|              |              |              |              | 1.0\right]$, |
-|              |              |              |              | with $m$ the |
-|              |              |              |              | number of    |
-|              |              |              |              | samples.     |
-+--------------+--------------+--------------+--------------+--------------+
-| number of    | `m_try`      | $\           | yes          | Familiar     |
-| features at  |              | ma           |              | ensures that |
-| each node    |              | thbb{R} \i n |              | there is     |
-|              |              |  \left[0.0,  |              | always at    |
-|              |              |  1.0\right]$ |              | least one    |
-|              |              |              |              | candidate    |
-|              |              |              |              | feature.     |
-+--------------+--------------+--------------+--------------+--------------+
-| node size    | `no de_size` | $\m at       | yes          | Minimum      |
-|              |              | hbb{Z} \in   |              | number of    |
-|              |              | \left[1, \i  |              | unique       |
-|              |              | nfty\right)$ |              | samples in   |
-|              |              |              |              | terminal     |
-|              |              |              |              | nodes. The   |
-|              |              |              |              | default      |
-|              |              |              |              | range is     |
-|              |              |              |              | $            |
-|              |              |              |              | \left[5,  \l |
-|              |              |              |              | floor m / 3\ |
-|              |              |              |              | rfl          |
-|              |              |              |              | oor\right]$, |
-|              |              |              |              | with $m$ the |
-|              |              |              |              | number of    |
-|              |              |              |              | samples.     |
-+--------------+--------------+--------------+--------------+--------------+
-| maximum tree | `            | $\           | yes          | Maximum      |
-| depth        | tre e_depth` | ma           |              | depth to     |
-|              |              | thbb{Z} \i n |              | which trees  |
-|              |              |  \left[1,\i  |              | are allowed  |
-|              |              | nfty\right)$ |              | to grow. The |
-|              |              |              |              | default      |
-|              |              |              |              | range is     |
-|              |              |              |              | $\left [1,   |
-|              |              |              |              |  10\right]$. |
-+--------------+--------------+--------------+--------------+--------------+
-| number of    | `n_split`    | $\m at       | no           | By default,  |
-| split points |              | hbb{Z} \in   |              | splitting is |
-|              |              | \left[0, \i  |              | d            |
-|              |              | nfty\right)$ |              | eterministic |
-|              |              |              |              | and has one  |
-|              |              |              |              | split point  |
-|              |              |              |              | ($0$).       |
-+--------------+--------------+--------------+--------------+--------------+
-| splitting    | `            | `gini`,      | no           | Default      |
-| rule         | spl it_rule` | `auc`,       |              | splitting    |
-|              |              | `entropy`,   |              | rules are    |
-|              |              | `mse`,       |              | `gini` for   |
-|              |              | `qua         |              | `binomial`   |
-|              |              | ntile.regr`, |              | and          |
-|              |              | `la.qua      |              | `            |
-|              |              | ntile.regr`, |              | multinonial` |
-|              |              | `logrank`,   |              | outcomes,    |
-|              |              | `lo          |              | `mse` for    |
-|              |              | grankscore`, |              | `continuous` |
-|              |              | `            |              | and `count`  |
-|              |              | bs.gradient` |              | outcomes and |
-|              |              |              |              | `logrank`    |
-|              |              |              |              | for          |
-|              |              |              |              | `survival`   |
-|              |              |              |              | outcomes.    |
-+--------------+--------------+--------------+--------------+--------------+
++------------------+----------+--------------+--------------+-----------------+
+| **parameter**    | **tag**  | **values**   | *            | **comments**    |
+|                  |          |              | *optimised** |                 |
++:=================+:=========+:============:+:============:+:================+
+| signature size   | `si      | $\mathbb{    | yes          | --              |
+|                  | gn_size` | Z} \in \left |              |                 |
+|                  |          | [1,n\right]$ |              |                 |
++------------------+----------+--------------+--------------+-----------------+
+| number of trees  | `n_tree` | $\           | yes          | This parameter  |
+|                  |          | mathbb{Z} \i |              | is expressed on |
+|                  |          | n \left[0,\i |              | the $\log_{2}$  |
+|                  |          | nfty\right)$ |              | scale, i.e. the |
+|                  |          |              |              | actual input    |
+|                  |          |              |              | value will be   |
+|                  |          |              |              | $2^\            |
+|                  |          |              |              | texttt{n_tree}$ |
+|                  |          |              |              | [@              |
+|                  |          |              |              | Oshiro2012-mq]. |
+|                  |          |              |              | The default     |
+|                  |          |              |              | range is        |
+|                  |          |              |              | $\left[4,       |
+|                  |          |              |              |  10\right]\$\$. |
++------------------+----------+--------------+--------------+-----------------+
+| subsampling      | `samp    | $\mathbb{R}  | yes          | Fraction of     |
+| fraction         | le_size` | \in \left(0, |              | available data  |
+|                  |          |  1.0\right]$ |              | that is used    |
+|                  |          |              |              | for to create a |
+|                  |          |              |              | single tree.    |
+|                  |          |              |              | The default     |
+|                  |          |              |              | range is        |
+|                  |          |              |              | $\left[2 /      |
+|                  |          |              |              | m, 1.0\right]$, |
+|                  |          |              |              | with $m$ the    |
+|                  |          |              |              | number of       |
+|                  |          |              |              | samples.        |
++------------------+----------+--------------+--------------+-----------------+
+| number of        | `m_try`  | $\           | yes          | Familiar        |
+| features at each |          | mathbb{R} \i |              | ensures that    |
+| node             |          | n \left[0.0, |              | there is always |
+|                  |          |  1.0\right]$ |              | at least one    |
+|                  |          |              |              | candidate       |
+|                  |          |              |              | feature.        |
++------------------+----------+--------------+--------------+-----------------+
+| node size        | `no      | $\m          | yes          | Minimum number  |
+|                  | de_size` | athbb{Z} \in |              | of unique       |
+|                  |          |  \left[1, \i |              | samples in      |
+|                  |          | nfty\right)$ |              | terminal nodes. |
+|                  |          |              |              | The default     |
+|                  |          |              |              | range is        |
+|                  |          |              |              | $\left[5,       |
+|                  |          |              |              |  \lfloor m / 3\ |
+|                  |          |              |              | rfloor\right]$, |
+|                  |          |              |              | with $m$ the    |
+|                  |          |              |              | number of       |
+|                  |          |              |              | samples.        |
++------------------+----------+--------------+--------------+-----------------+
+| maximum tree     | `tre     | $\           | yes          | Maximum depth   |
+| depth            | e_depth` | mathbb{Z} \i |              | to which trees  |
+|                  |          | n \left[1,\i |              | are allowed to  |
+|                  |          | nfty\right)$ |              | grow. The       |
+|                  |          |              |              | default range   |
+|                  |          |              |              | is              |
+|                  |          |              |              | $\left          |
+|                  |          |              |              | [1, 10\right]$. |
++------------------+----------+--------------+--------------+-----------------+
+| number of split  | `        | $\m          | no           | By default,     |
+| points           | n_split` | athbb{Z} \in |              | splitting is    |
+|                  |          |  \left[0, \i |              | deterministic   |
+|                  |          | nfty\right)$ |              | and has one     |
+|                  |          |              |              | split point     |
+|                  |          |              |              | ($0$).          |
++------------------+----------+--------------+--------------+-----------------+
+| splitting rule   | `spl     | `gini`,      | no           | Default         |
+|                  | it_rule` | `auc`,       |              | splitting rules |
+|                  |          | `entropy`,   |              | are `gini` for  |
+|                  |          | `mse`,       |              | `binomial` and  |
+|                  |          | `qua         |              | `multinonial`   |
+|                  |          | ntile.regr`, |              | outcomes, `mse` |
+|                  |          | `la.qua      |              | for             |
+|                  |          | ntile.regr`, |              | `continuous`    |
+|                  |          | `logrank`,   |              | and `count`     |
+|                  |          | `lo          |              | outcomes and    |
+|                  |          | grankscore`, |              | `logrank` for   |
+|                  |          | `            |              | `survival`      |
+|                  |          | bs.gradient` |              | outcomes.       |
++------------------+----------+--------------+--------------+-----------------+
 
 Note that optimising that optimising the number of trees can be slow, as big
 forests take longer to construct and perform more computations for predictions.
@@ -815,114 +739,93 @@ selected rank statistics [@Lausen1992-qh; @Wright2017-sj] and concordance index
 based splitting [@Schmid2016-ie]. Hyperparameters for the random forest are
 shown in the table below.
 
-+--------------+--------------+--------------+--------------+--------------+
-| *            | **tag**      | **values**   | -            | **comments** |
-| *parameter** |              |              |              |              |
-|              |              |              | \*o          |              |
-|              |              |              | ptimised\*\* |              |
-+:=============+:=============+:============:+:============:+:=============+
-| signature    | `si gn_size` | $\mathbb{ Z  | yes          | --           |
-| size         |              | } \in \left  |              |              |
-|              |              | [1,n\right]$ |              |              |
-+--------------+--------------+--------------+--------------+--------------+
-| number of    | `n_tree`     | $\           | yes          | This         |
-| trees        |              | ma           |              | parameter is |
-|              |              | thbb{Z} \i n |              | expressed on |
-|              |              |  \left[0,\i  |              | the          |
-|              |              | nfty\right)$ |              | $\log_{2}$   |
-|              |              |              |              | scale, i.e.  |
-|              |              |              |              | the actual   |
-|              |              |              |              | input value  |
-|              |              |              |              | will be $2^\ |
-|              |              |              |              | tex          |
-|              |              |              |              | ttt{n_tree}$ |
-|              |              |              |              | [\@          |
-|              |              |              |              | Osh          |
-|              |              |              |              | iro2012-mq]. |
-|              |              |              |              | The default  |
-|              |              |              |              | range is     |
-|              |              |              |              | \$\left[4,   |
-|              |              |              |              |  10          |
-|              |              |              |              | \right]\$\$. |
-+--------------+--------------+--------------+--------------+--------------+
-| subsampling  | `s           | $            | yes          | Fraction of  |
-| fraction     | amp le_size` | \mathbb{R} \ |              | available    |
-|              |              | in \left(0,  |              | data that is |
-|              |              |  1.0\right]$ |              | used for to  |
-|              |              |              |              | create a     |
-|              |              |              |              | single tree. |
-|              |              |              |              | The default  |
-|              |              |              |              | range is     |
-|              |              |              |              | $\           |
-|              |              |              |              | left[2 / m,  |
-|              |              |              |              | 1.0\right]$, |
-|              |              |              |              | with $m$ the |
-|              |              |              |              | number of    |
-|              |              |              |              | samples.     |
-+--------------+--------------+--------------+--------------+--------------+
-| number of    | `m_try`      | $\           | yes          | Familiar     |
-| features at  |              | ma           |              | ensures that |
-| each node    |              | thbb{R} \i n |              | there is     |
-|              |              |  \left[0.0,  |              | always at    |
-|              |              |  1.0\right]$ |              | least one    |
-|              |              |              |              | candidate    |
-|              |              |              |              | feature.     |
-+--------------+--------------+--------------+--------------+--------------+
-| node size    | `no de_size` | $\m at       | yes          | Minimum      |
-|              |              | hbb{Z} \in   |              | number of    |
-|              |              | \left[1, \i  |              | unique       |
-|              |              | nfty\right)$ |              | samples in   |
-|              |              |              |              | terminal     |
-|              |              |              |              | nodes. The   |
-|              |              |              |              | default      |
-|              |              |              |              | range is     |
-|              |              |              |              | $            |
-|              |              |              |              | \left[5,  \l |
-|              |              |              |              | floor m / 3\ |
-|              |              |              |              | rfl          |
-|              |              |              |              | oor\right]$, |
-|              |              |              |              | with $m$ the |
-|              |              |              |              | number of    |
-|              |              |              |              | samples.     |
-+--------------+--------------+--------------+--------------+--------------+
-| maximum tree | `            | $\           | yes          | Maximum      |
-| depth        | tre e_depth` | ma           |              | depth to     |
-|              |              | thbb{Z} \i n |              | which trees  |
-|              |              |  \left[1,\i  |              | are allowed  |
-|              |              | nfty\right)$ |              | to grow. The |
-|              |              |              |              | default      |
-|              |              |              |              | range is     |
-|              |              |              |              | $\left [1,   |
-|              |              |              |              |  10\right]$. |
-+--------------+--------------+--------------+--------------+--------------+
-| splitting    | `            | `gini`,      | no           | Default      |
-| rule         | spl it_rule` | `            |              | splitting    |
-|              |              | extratrees`, |              | rules are    |
-|              |              | `variance`,  |              | `gini` for   |
-|              |              | `logrank`,   |              | `binomial`   |
-|              |              | `C`,         |              | and          |
-|              |              | `maxstat`    |              | `            |
-|              |              |              |              | multinomial` |
-|              |              |              |              | outcomes and |
-|              |              |              |              | `maxstat`    |
-|              |              |              |              | for          |
-|              |              |              |              | `            |
-|              |              |              |              | continuous`, |
-|              |              |              |              | `count` and  |
-|              |              |              |              | `survival`   |
-|              |              |              |              | outcomes.    |
-+--------------+--------------+--------------+--------------+--------------+
-| significance | `alpha`      | $\           | `maxstat`    | Minimum      |
-| split        |              | ma           |              | significance |
-| threshold    |              | thbb{R} \i n |              | level for    |
-|              |              |  \left(0.0,  |              | further      |
-|              |              |  1.0\right]$ |              | splitting.   |
-|              |              |              |              | The default  |
-|              |              |              |              | range is     |
-|              |              |              |              | $\le         |
-|              |              |              |              | ft[10^{- 6}, |
-|              |              |              |              |  1.0\right]$ |
-+--------------+--------------+--------------+--------------+--------------+
++------------------+----------+--------------+--------------+-----------------+
+| **parameter**    | **tag**  | **values**   | *            | **comments**    |
+|                  |          |              | *optimised** |                 |
++:=================+:=========+:============:+:============:+:================+
+| signature size   | `si      | $\mathbb{    | yes          | --              |
+|                  | gn_size` | Z} \in \left |              |                 |
+|                  |          | [1,n\right]$ |              |                 |
++------------------+----------+--------------+--------------+-----------------+
+| number of trees  | `n_tree` | $\           | yes          | This parameter  |
+|                  |          | mathbb{Z} \i |              | is expressed on |
+|                  |          | n \left[0,\i |              | the $\log_{2}$  |
+|                  |          | nfty\right)$ |              | scale, i.e. the |
+|                  |          |              |              | actual input    |
+|                  |          |              |              | value will be   |
+|                  |          |              |              | $2^\            |
+|                  |          |              |              | texttt{n_tree}$ |
+|                  |          |              |              | [@              |
+|                  |          |              |              | Oshiro2012-mq]. |
+|                  |          |              |              | The default     |
+|                  |          |              |              | range is        |
+|                  |          |              |              | $\left[4,       |
+|                  |          |              |              |  10\right]\$\$. |
++------------------+----------+--------------+--------------+-----------------+
+| subsampling      | `samp    | $\mathbb{R}  | yes          | Fraction of     |
+| fraction         | le_size` | \in \left(0, |              | available data  |
+|                  |          |  1.0\right]$ |              | that is used    |
+|                  |          |              |              | for to create a |
+|                  |          |              |              | single tree.    |
+|                  |          |              |              | The default     |
+|                  |          |              |              | range is        |
+|                  |          |              |              | $\left[2 /      |
+|                  |          |              |              | m, 1.0\right]$, |
+|                  |          |              |              | with $m$ the    |
+|                  |          |              |              | number of       |
+|                  |          |              |              | samples.        |
++------------------+----------+--------------+--------------+-----------------+
+| number of        | `m_try`  | $\           | yes          | Familiar        |
+| features at each |          | mathbb{R} \i |              | ensures that    |
+| node             |          | n \left[0.0, |              | there is always |
+|                  |          |  1.0\right]$ |              | at least one    |
+|                  |          |              |              | candidate       |
+|                  |          |              |              | feature.        |
++------------------+----------+--------------+--------------+-----------------+
+| node size        | `no      | $\m          | yes          | Minimum number  |
+|                  | de_size` | athbb{Z} \in |              | of unique       |
+|                  |          |  \left[1, \i |              | samples in      |
+|                  |          | nfty\right)$ |              | terminal nodes. |
+|                  |          |              |              | The default     |
+|                  |          |              |              | range is        |
+|                  |          |              |              | $\left[5,       |
+|                  |          |              |              |  \lfloor m / 3\ |
+|                  |          |              |              | rfloor\right]$, |
+|                  |          |              |              | with $m$ the    |
+|                  |          |              |              | number of       |
+|                  |          |              |              | samples.        |
++------------------+----------+--------------+--------------+-----------------+
+| maximum tree     | `tre     | $\           | yes          | Maximum depth   |
+| depth            | e_depth` | mathbb{Z} \i |              | to which trees  |
+|                  |          | n \left[1,\i |              | are allowed to  |
+|                  |          | nfty\right)$ |              | grow. The       |
+|                  |          |              |              | default range   |
+|                  |          |              |              | is              |
+|                  |          |              |              | $\left          |
+|                  |          |              |              | [1, 10\right]$. |
++------------------+----------+--------------+--------------+-----------------+
+| splitting rule   | `spl     | `gini`,      | no           | Default         |
+|                  | it_rule` | `            |              | splitting rules |
+|                  |          | extratrees`, |              | are `gini` for  |
+|                  |          | `variance`,  |              | `binomial` and  |
+|                  |          | `logrank`,   |              | `multinomial`   |
+|                  |          | `C`,         |              | outcomes and    |
+|                  |          | `maxstat`    |              | `maxstat` for   |
+|                  |          |              |              | `continuous`,   |
+|                  |          |              |              | `count` and     |
+|                  |          |              |              | `survival`      |
+|                  |          |              |              | outcomes.       |
++------------------+----------+--------------+--------------+-----------------+
+| significance     | `alpha`  | $\           | `maxstat`    | Minimum         |
+| split threshold  |          | mathbb{R} \i |              | significance    |
+|                  |          | n \left(0.0, |              | level for       |
+|                  |          |  1.0\right]$ |              | further         |
+|                  |          |              |              | splitting. The  |
+|                  |          |              |              | default range   |
+|                  |          |              |              | is              |
+|                  |          |              |              | $\left[10^{-    |
+|                  |          |              |              | 6}, 1.0\right]$ |
++------------------+----------+--------------+--------------+-----------------+
 
 Note that optimising that optimising the number of trees can be slow, as big
 forests take longer to construct and perform more computations for predictions.
@@ -936,21 +839,19 @@ The naive Bayes classifier uses the `e1071::naiveBayes` function
 [@Meyer2021-aq]. The hyperparameters of the classifier are shown in the table
 below.
 
-+--------------+--------------+--------------+--------------+--------------+
-| *            | **tag**      | **values**   | -            | **comments** |
-| *parameter** |              |              |              |              |
-|              |              |              | \*o          |              |
-|              |              |              | ptimised\*\* |              |
-+:=============+:=============+:============:+:============:+:=============+
-| signature    | `si gn_size` | $\mathbb{ Z  | yes          | --           |
-| size         |              | } \in \left  |              |              |
-|              |              | [1,n\right]$ |              |              |
-+--------------+--------------+--------------+--------------+--------------+
-| laplace      | `laplace`    | $\math bb    | yes          | The default  |
-| smoothing    |              | {R} \in \l e |              | range is     |
-|              |              | ft[0.0, \in  |              | $\left [0,   |
-|              |              | fty \right)$ |              |  10\right]$. |
-+--------------+--------------+--------------+--------------+--------------+
++------------------+----------+--------------+--------------+-----------------+
+| **parameter**    | **tag**  | **values**   | *            | **comments**    |
+|                  |          |              | *optimised** |                 |
++:=================+:=========+:============:+:============:+:================+
+| signature size   | `si      | $\mathbb{    | yes          | --              |
+|                  | gn_size` | Z} \in \left |              |                 |
+|                  |          | [1,n\right]$ |              |                 |
++------------------+----------+--------------+--------------+-----------------+
+| laplace          | `        | $\math       | yes          | The default     |
+| smoothing        | laplace` | bb{R} \in \l |              | range is        |
+|                  |          | eft[0.0, \in |              | $\left          |
+|                  |          | fty \right)$ |              | [0, 10\right]$. |
++------------------+----------+--------------+--------------+-----------------+
 
 ## *k*-nearest neighbours
 
@@ -959,35 +860,29 @@ based on the classes of their *k* nearest neighbours in feature space. The
 `e1071::gknn` function is used to implement *k*-nearest neighbours
 [@Meyer2021-aq]. The hyperparameters are shown in the table below.
 
-+--------------+--------------+--------------+--------------+--------------+
-| *            | **tag**      | **values**   | -            | **comments** |
-| *parameter** |              |              |              |              |
-|              |              |              | \*o          |              |
-|              |              |              | ptimised\*\* |              |
-+:=============+:=============+:============:+:============:+:=============+
-| signature    | `si gn_size` | $\mathbb{ Z  | yes          | --           |
-| size         |              | } \in \left  |              |              |
-|              |              | [1,n\right]$ |              |              |
-+--------------+--------------+--------------+--------------+--------------+
-| number of    | `k`          | $\mathbb{ Z  | yes          | The default  |
-| nearest      |              | } \in \left  |              | range is     |
-| neighbours   |              | [1,m\right]$ |              | $\lef        |
-|              |              |              |              | t[1, \lc eil |
-|              |              |              |              |  2 m^{1/3} \ |
-|              |              |              |              | rce          |
-|              |              |              |              | il \right]$, |
-|              |              |              |              | with $m$ the |
-|              |              |              |              | number of    |
-|              |              |              |              | samples.     |
-+--------------+--------------+--------------+--------------+--------------+
-| distance     | `dista       | all metrics  | yes          | The default  |
-| metric       | nce _metric` | supported by |              | set of       |
-|              |              | `            |              | metrics is   |
-|              |              | proxy::dist` |              | `gower`,     |
-|              |              |              |              | `euclidean`  |
-|              |              |              |              | and          |
-|              |              |              |              | `manhattan`. |
-+--------------+--------------+--------------+--------------+--------------+
++------------------+----------+--------------+--------------+-----------------+
+| **parameter**    | **tag**  | **values**   | *            | **comments**    |
+|                  |          |              | *optimised** |                 |
++:=================+:=========+:============:+:============:+:================+
+| signature size   | `si      | $\mathbb{    | yes          | --              |
+|                  | gn_size` | Z} \in \left |              |                 |
+|                  |          | [1,n\right]$ |              |                 |
++------------------+----------+--------------+--------------+-----------------+
+| number of        | `k`      | $\mathbb{    | yes          | The default     |
+| nearest          |          | Z} \in \left |              | range is        |
+| neighbours       |          | [1,m\right]$ |              | $\left[1, \lc   |
+|                  |          |              |              | eil 2 m^{1/3} \ |
+|                  |          |              |              | rceil \right]$, |
+|                  |          |              |              | with $m$ the    |
+|                  |          |              |              | number of       |
+|                  |          |              |              | samples.        |
++------------------+----------+--------------+--------------+-----------------+
+| distance metric  | `        | all metrics  | yes          | The default set |
+|                  | distance | supported by |              | of metrics is   |
+|                  | _metric` | `            |              | `gower`,        |
+|                  |          | proxy::dist` |              | `euclidean` and |
+|                  |          |              |              | `manhattan`.    |
++------------------+----------+--------------+--------------+-----------------+
 
 ## Support vector machines
 
@@ -1003,111 +898,95 @@ function would reproducibly freeze during unit testing. By default, both
 features and outcome data are scaled internally. This was used to derive the
 default hyperparameter ranges specified in the table below.
 
-+--------------+--------------+--------------+--------------+--------------+
-| *            | **tag**      | **values**   | -            | **comments** |
-| *parameter** |              |              |              |              |
-|              |              |              | \*o          |              |
-|              |              |              | ptimised\*\* |              |
-+:=============+:=============+:============:+:============:+:=============+
-| signature    | `si gn_size` | $\mathbb{ Z  | yes          | --           |
-| size         |              | } \in \left  |              |              |
-|              |              | [1,n\right]$ |              |              |
-+--------------+--------------+--------------+--------------+--------------+
-| SVM kernel   | `kernel`     | `linear`,    | no           | Default is   |
-|              |              | `            |              | `radial`,    |
-|              |              | polynomial`, |              | unless       |
-|              |              | `radial`,    |              | specified as |
-|              |              | `sigmoid`    |              | part of the  |
-|              |              |              |              | learner      |
-|              |              |              |              | name.        |
-+--------------+--------------+--------------+--------------+--------------+
-| $C$          | `c`          | $\mathbb{R}$ | yes          | The cost for |
-|              |              |              |              | violation of |
-|              |              |              |              | constraints  |
-|              |              |              |              | is expressed |
-|              |              |              |              | on a         |
-|              |              |              |              | $\log_{10}$  |
-|              |              |              |              | scale, i.e.  |
-|              |              |              |              | the actual   |
-|              |              |              |              | value is \$  |
-|              |              |              |              | 10\^\        |
-|              |              |              |              | texttt{c}\$. |
-|              |              |              |              | The default  |
-|              |              |              |              | range is     |
-|              |              |              |              | $\left [-5   |
-|              |              |              |              | , 3\right]$. |
-+--------------+--------------+--------------+--------------+--------------+
-| $\epsilon$   | `epsilon`    | $\mathbb{R}$ | `continuous` | The error    |
-|              |              |              | and `count`  | tolerance    |
-|              |              |              | outcomes     | $\epsilon$   |
-|              |              |              |              | is only used |
-|              |              |              |              | for          |
-|              |              |              |              | regression   |
-|              |              |              |              | SVM.         |
-|              |              |              |              | $\epsilon$   |
-|              |              |              |              | is expressed |
-|              |              |              |              | on a         |
-|              |              |              |              | $\log_{10}$  |
-|              |              |              |              | scale. The   |
-|              |              |              |              | default      |
-|              |              |              |              | range is     |
-|              |              |              |              | $\left [-5   |
-|              |              |              |              | , 1\right]$. |
-+--------------+--------------+--------------+--------------+--------------+
-| $\nu$        | `nu`         | $\mathbb{R}$ | `nu` SVM     | `nu`         |
-|              |              |              | type         | provides     |
-|              |              |              |              | upper bounds |
-|              |              |              |              | for the      |
-|              |              |              |              | fraction of  |
-|              |              |              |              | training     |
-|              |              |              |              | errors and   |
-|              |              |              |              | lower bounds |
-|              |              |              |              | for the      |
-|              |              |              |              | fraction of  |
-|              |              |              |              | support      |
-|              |              |              |              | vectors      |
-|              |              |              |              | [@Ch         |
-|              |              |              |              | ang2011-ck]. |
-|              |              |              |              | It is        |
-|              |              |              |              | expressed on |
-|              |              |              |              | a            |
-|              |              |              |              | $\log_{10}$  |
-|              |              |              |              | scale. The   |
-|              |              |              |              | default      |
-|              |              |              |              | range is     |
-|              |              |              |              | \$\left[-5   |
-|              |              |              |              | , 1          |
-|              |              |              |              | \right]\$\$. |
-+--------------+--------------+--------------+--------------+--------------+
-| inverse      | `gamma`      | $\mathbb{R}$ | non-linear   | This         |
-| kernel width |              |              | kernels      | parameter    |
-|              |              |              |              | specifies    |
-|              |              |              |              | the inverse  |
-|              |              |              |              | of the       |
-|              |              |              |              | kernel       |
-|              |              |              |              | width. It is |
-|              |              |              |              | expressed on |
-|              |              |              |              | the          |
-|              |              |              |              | $\log_{10}$  |
-|              |              |              |              | scale. The   |
-|              |              |              |              | default      |
-|              |              |              |              | range is     |
-|              |              |              |              | $\left [-9   |
-|              |              |              |              | , 3\right]$. |
-+--------------+--------------+--------------+--------------+--------------+
-| polynomial   | `degree`     | $\m at       | polynomial   | The default  |
-| degree       |              | hbb{Z} \in   | kernel       | range is     |
-|              |              | \left[1, \i  |              | $\lef t[1    |
-|              |              | nfty\right)$ |              | , 5\right]$. |
-+--------------+--------------+--------------+--------------+--------------+
-| kernel       | `offset`     | $\m at       | polynomial   | Negative     |
-| offset       |              | hbb{R} \in   | and sigmoid  | values are   |
-|              |              | \left[0, \i  | kernels      | not allowed. |
-|              |              | nfty\right)$ |              | The default  |
-|              |              |              |              | range is     |
-|              |              |              |              | $\left [0,   |
-|              |              |              |              |  1 \right]$. |
-+--------------+--------------+--------------+--------------+--------------+
++------------------+----------+--------------+--------------+-----------------+
+| **parameter**    | **tag**  | **values**   | *            | **comments**    |
+|                  |          |              | *optimised** |                 |
++:=================+:=========+:============:+:============:+:================+
+| signature size   | `si      | $\mathbb{    | yes          | --              |
+|                  | gn_size` | Z} \in \left |              |                 |
+|                  |          | [1,n\right]$ |              |                 |
++------------------+----------+--------------+--------------+-----------------+
+| SVM kernel       | `kernel` | `linear`,    | no           | Default is      |
+|                  |          | `            |              | `radial`,       |
+|                  |          | polynomial`, |              | unless          |
+|                  |          | `radial`,    |              | specified as    |
+|                  |          | `sigmoid`    |              | part of the     |
+|                  |          |              |              | learner name.   |
++------------------+----------+--------------+--------------+-----------------+
+| $C$              | `c`      | $\mathbb{R}$ | yes          | The cost for    |
+|                  |          |              |              | violation of    |
+|                  |          |              |              | constraints is  |
+|                  |          |              |              | expressed on a  |
+|                  |          |              |              | $\log_{10}$     |
+|                  |          |              |              | scale, i.e. the |
+|                  |          |              |              | actual value is |
+|                  |          |              |              | $               |
+|                  |          |              |              | 10^\texttt{c}$. |
+|                  |          |              |              | The default     |
+|                  |          |              |              | range is        |
+|                  |          |              |              | $\left          |
+|                  |          |              |              | [-5, 3\right]$. |
++------------------+----------+--------------+--------------+-----------------+
+| $\epsilon$       | `        | $\mathbb{R}$ | `continuous` | The error       |
+|                  | epsilon` |              | and `count`  | tolerance       |
+|                  |          |              | outcomes     | $\epsilon$ is   |
+|                  |          |              |              | only used for   |
+|                  |          |              |              | regression SVM. |
+|                  |          |              |              | $\epsilon$ is   |
+|                  |          |              |              | expressed on a  |
+|                  |          |              |              | $\log_{10}$     |
+|                  |          |              |              | scale. The      |
+|                  |          |              |              | default range   |
+|                  |          |              |              | is              |
+|                  |          |              |              | $\left          |
+|                  |          |              |              | [-5, 1\right]$. |
++------------------+----------+--------------+--------------+-----------------+
+| $\nu$            | `nu`     | $\mathbb{R}$ | `nu` SVM     | `nu` provides   |
+|                  |          |              | type         | upper bounds    |
+|                  |          |              |              | for the         |
+|                  |          |              |              | fraction of     |
+|                  |          |              |              | training errors |
+|                  |          |              |              | and lower       |
+|                  |          |              |              | bounds for the  |
+|                  |          |              |              | fraction of     |
+|                  |          |              |              | support vectors |
+|                  |          |              |              | [               |
+|                  |          |              |              | @Chang2011-ck]. |
+|                  |          |              |              | It is expressed |
+|                  |          |              |              | on a            |
+|                  |          |              |              | $\log_{10}$     |
+|                  |          |              |              | scale. The      |
+|                  |          |              |              | default range   |
+|                  |          |              |              | is              |
+|                  |          |              |              | $\left[-5       |
+|                  |          |              |              | , 1\right]\$\$. |
++------------------+----------+--------------+--------------+-----------------+
+| inverse kernel   | `gamma`  | $\mathbb{R}$ | non-linear   | This parameter  |
+| width            |          |              | kernels      | specifies the   |
+|                  |          |              |              | inverse of the  |
+|                  |          |              |              | kernel width.   |
+|                  |          |              |              | It is expressed |
+|                  |          |              |              | on the          |
+|                  |          |              |              | $\log_{10}$     |
+|                  |          |              |              | scale. The      |
+|                  |          |              |              | default range   |
+|                  |          |              |              | is              |
+|                  |          |              |              | $\left          |
+|                  |          |              |              | [-9, 3\right]$. |
++------------------+----------+--------------+--------------+-----------------+
+| polynomial       | `degree` | $\m          | polynomial   | The default     |
+| degree           |          | athbb{Z} \in | kernel       | range is        |
+|                  |          |  \left[1, \i |              | $\lef           |
+|                  |          | nfty\right)$ |              | t[1, 5\right]$. |
++------------------+----------+--------------+--------------+-----------------+
+| kernel offset    | `offset` | $\m          | polynomial   | Negative values |
+|                  |          | athbb{R} \in | and sigmoid  | are not         |
+|                  |          |  \left[0, \i | kernels      | allowed. The    |
+|                  |          | nfty\right)$ |              | default range   |
+|                  |          |              |              | is              |
+|                  |          |              |              | $\left          |
+|                  |          |              |              | [0, 1 \right]$. |
++------------------+----------+--------------+--------------+-----------------+
 
 Different types of SVM algorithms exist for classification and regression. The
 following SVM types are implemented:
@@ -1334,20 +1213,67 @@ $\mathbf{x}$ (implicitly for round $m$):
 Hyperparameter optimization may be configured using the tags/arguments in the
 table below.
 
-|          **tag** / **argument**          | **description**                                                                                                                                                                                                                          |                                                     **default**                                                      |
-|:----------------------------------------:|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|:--------------------------------------------------------------------------------------------------------------------:|
-|        `optimisat ion_bootstraps`        | Maximum number of bootstraps during optimisation                                                                                                                                                                                         |                                                        `200`                                                         |
-|      `optimisation_ determine_vimp`      | If `TRUE`, compute variable importance for each bootstrap. If `FALSE` use variable importance computed during the feature selection step.                                                                                                |                                                        `TRUE`                                                        |
-|      `smbo_random_ initialisation`       | If `TRUE` initial parameter sets are generated randomly from default ranges. If `FALSE`, the initial parameter sets are based on a grid in parameter space.                                                                              |                                                        `TRUE`                                                        |
-|          `max_s mbo_iterations`          | Maximum number of intensify iterations of the SMBO algorithm                                                                                                                                                                             |                                                         `30`                                                         |
-|   `sm bo_stop_converg ent_iterations`    | Number of subsequent convergent SMBO iterations required to stop hyperparameter optimisation early.                                                                                                                                      |                                                         `3`                                                          |
-|          `smbo_ stop_tolerance`          | Tolerance for recent optimisation scores to determine convergence                                                                                                                                                                        |                                                        `0.01`                                                        |
-|         `smbo_s tep_bootstraps`          | Number of bootstraps used within each step of an intensify iteration.                                                                                                                                                                    |                                                         `5`                                                          |
-|         `smbo_i ntensify_steps`          | Number of intensify steps within each intensify iteration.                                                                                                                                                                               |                                                         `3`                                                          |
-|      `smbo_intensif y_stop_p_value`      | The p-value level at which the hypothesis that a challenger hyperparameter set and the incumbent set have the same performance is tested. If rejected, i.e. challenger performs worse than incumbent, the challenger leaves the run-off. |                                                        `0.05`                                                        |
-|         `optimis ation_function`         | The optimisation function used (see *computing the optimisation score*).                                                                                                                                                                 |                                                      `balanced`                                                      |
-|          `optim isation_metric`          | The metric used for optimisation, e.g. `auc`. See the vignette on performance metrics for available options.                                                                                                                             | `auc_roc` (`binomial`, `multinomial`); `mse` (`continuous`); `msle` (`count`); and `c oncordance_index` (`survival`) |
-| `paralle l_hyperparamete r_optimisation` | Enables parallel processing for hyperparameter optimisation. Ignored if `parallel=FALSE`.                                                                                                                                                |                                                        `TRUE`                                                        |
++-----------------+---------------------------------------+-------------------+
+| **tag** /       | **description**                       | **default**       |
+| **argument**    |                                       |                   |
++:===============:+:======================================+:=================:+
+| `optimisat      | Maximum number of bootstraps during   | `200`             |
+| ion_bootstraps` | optimisation                          |                   |
++-----------------+---------------------------------------+-------------------+
+| `optimisation_  | If `TRUE`, compute variable           | `TRUE`            |
+| determine_vimp` | importance for each bootstrap. If     |                   |
+|                 | `FALSE` use variable importance       |                   |
+|                 | computed during the feature selection |                   |
+|                 | step.                                 |                   |
++-----------------+---------------------------------------+-------------------+
+| `smbo_random_   | If `TRUE` initial parameter sets are  | `TRUE`            |
+| initialisation` | generated randomly from default       |                   |
+|                 | ranges. If `FALSE`, the initial       |                   |
+|                 | parameter sets are based on a grid in |                   |
+|                 | parameter space.                      |                   |
++-----------------+---------------------------------------+-------------------+
+| `max_s          | Maximum number of intensify           | `30`              |
+| mbo_iterations` | iterations of the SMBO algorithm      |                   |
++-----------------+---------------------------------------+-------------------+
+| `sm             | Number of subsequent convergent SMBO  | `3`               |
+| bo_stop_converg | iterations required to stop           |                   |
+| ent_iterations` | hyperparameter optimisation early.    |                   |
++-----------------+---------------------------------------+-------------------+
+| `smbo_          | Tolerance for recent optimisation     | `0.01`            |
+| stop_tolerance` | scores to determine convergence       |                   |
++-----------------+---------------------------------------+-------------------+
+| `smbo_s         | Number of bootstraps used within each | `5`               |
+| tep_bootstraps` | step of an intensify iteration.       |                   |
++-----------------+---------------------------------------+-------------------+
+| `smbo_i         | Number of intensify steps within each | `3`               |
+| ntensify_steps` | intensify iteration.                  |                   |
++-----------------+---------------------------------------+-------------------+
+| `smbo_intensif  | The p-value level at which the        | `0.05`            |
+| y_stop_p_value` | hypothesis that a challenger          |                   |
+|                 | hyperparameter set and the incumbent  |                   |
+|                 | set have the same performance is      |                   |
+|                 | tested. If rejected, i.e. challenger  |                   |
+|                 | performs worse than incumbent, the    |                   |
+|                 | challenger leaves the run-off.        |                   |
++-----------------+---------------------------------------+-------------------+
+| `optimis        | The optimisation function used (see   | `balanced`        |
+| ation_function` | *computing the optimisation score*).  |                   |
++-----------------+---------------------------------------+-------------------+
+| `optim          | The metric used for optimisation,     | `auc_roc`         |
+| isation_metric` | e.g. `auc`. See the vignette on       | (`binomial`,      |
+|                 | performance metrics for available     | `multinomial`);   |
+|                 | options.                              | `mse`             |
+|                 |                                       | (`continuous`);   |
+|                 |                                       | `msle` (`count`); |
+|                 |                                       | and               |
+|                 |                                       | `c                |
+|                 |                                       | oncordance_index` |
+|                 |                                       | (`survival`)      |
++-----------------+---------------------------------------+-------------------+
+| `paralle        | Enables parallel processing for       | `TRUE`            |
+| l_hyperparamete | hyperparameter optimisation. Ignored  |                   |
+| r_optimisation` | if `parallel=FALSE`.                  |                   |
++-----------------+---------------------------------------+-------------------+
 
 : Configuration options for hyperparameter optimisation.
 
