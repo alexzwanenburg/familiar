@@ -20,5 +20,4 @@ PackageInstallArgs: --no-multiarch --with-keep.source
 PackageCheckArgs: --no-examples
 PackageRoxygenize: rd,collate,namespace
 
-MarkdownWrap: Column
-MarkdownWrapAtColumn: 80
+MarkdownWrap: None
