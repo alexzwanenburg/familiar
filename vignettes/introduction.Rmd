@@ -1,0 +1,70 @@
+---
+title: "Introducing familiar"
+author: "Alex Zwanenburg"
+date: "`r Sys.Date()`"
+output:
+  rmarkdown::html_vignette:
+    includes:
+      after_body: license.html
+    toc: TRUE
+bibliography: "refs.bib"
+vignette: >
+  %\VignetteIndexEntry{Introducing familiar}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+library(familiar)
+```
+
+Familiar is a package that allows for end-to-end machine learning of tabular data, with subsequent evaluation and explanation of models. This vignette provides an overview of its functionality and how to configure and run an experiment.
+
+# Familiar in brief
+
+This section provides a brief overview of the package, and the pipeline encapsulated by the `summon_familiar` function that is used to run an experiment.
+
+## Pipeline
+
+The pipeline follows a standard machine learning process. A development dataset is used to perform the steps listed below. Many aspects of these steps can be configured:
+
+-   **Data processing**: Data are assessed to determine information concerning features.:
+
+    -   Are features categorical (e.g. has the values FALSE, TRUE) or numeric? Which levels does a categorical feature have?
+
+    -   Which features are invariant and should be dropped?
+
+    -   How should numeric features be transformed using a power transformation to make these features behave more according to a normal distribution?
+
+    -   How should numeric features be normalised to reduce differences in scale between features the dataset? Note that familiar also allows for normalisation at the batch level to remove systematic differences in feature values between different batches or cohorts.
+
+    -   How should missing feature values be imputed?
+
+    -   Which features are similar and should be clustered together?
+
+-   **Feature selection**: Which features are important with regard to the endpoint of interest? Familiar supports various univariate and multivariate feature selection methods. However, unlike
+
+-   **Hyperparameter optimisation**:
+
+-   Model training:
+
+## Supported outcomes
+
+# Configuring familiar
+
+# Preparing your data
+
+NOTE: make sure to mention requirement to specify ordinals, categorical features that are encoded as integers; recommend hard-encoding levels of other types of categorical variables.
+
+# Experimental designs
+
+# Feature selection and learners
+
+# Evaluation and explanation
