@@ -23,6 +23,7 @@ knitr::opts_chunk$set(
 
 ```{r setup}
 library(familiar)
+library(data.table)
 ```
 
 Familiar is a package that allows for end-to-end machine learning of tabular data, with subsequent evaluation and explanation of models. This vignette provides an overview of its functionality and how to configure and run an experiment.
@@ -35,31 +36,99 @@ This section provides a brief overview of the package, and the pipeline encapsul
 
 The pipeline follows a standard machine learning process. A development dataset is used to perform the steps listed below. Many aspects of these steps can be configured:
 
--   **Data processing**: Data are assessed to determine information concerning features.:
+-   **Data processing**: Features in the development dataset are assessed during this step:
 
-    -   Are features categorical (e.g. has the values FALSE, TRUE) or numeric? Which levels does a categorical feature have?
+    -   General feature information: Are features categorical (e.g. has the values `FALSE`, `TRUE`) or numeric? Which levels does a categorical or ordinal feature have?
 
-    -   Which features are invariant and should be dropped?
+    -   Invariance: Which features are invariant and should be dropped?
 
-    -   How should numeric features be transformed using a power transformation to make these features behave more according to a normal distribution?
+    -   Transformation: How should numeric features be transformed using a power transformation to make these features behave more according to a normal distribution?
 
-    -   How should numeric features be normalised to reduce differences in scale between features the dataset? Note that familiar also allows for normalisation at the batch level to remove systematic differences in feature values between different batches or cohorts.
+    -   Normalisation: How should numeric features be normalised to reduce differences in scale between features the dataset? Note that familiar also allows for normalisation at the batch level to remove systematic differences in feature values between different batches or cohorts.
 
-    -   How should missing feature values be imputed?
+    -   Robustness: Should non-robust features, assessed using repeated measurements, be filtered?
 
-    -   Which features are similar and should be clustered together?
+    -   Importance: Should generally unimportant features be filtered after univariate analysis?
 
--   **Feature selection**: Which features are important with regard to the endpoint of interest? Familiar supports various univariate and multivariate feature selection methods. However, unlike
+    -   Imputation: How should missing feature values be imputed?
 
--   **Hyperparameter optimisation**:
+    -   Redundancy clustering: Which features are similar and should be clustered together?
 
--   Model training:
+-   **Feature selection**: Which features are important with regard to the endpoint of interest? Familiar supports various univariate and multivariate feature selection methods (see the *Feature selection methods* vignette). Note that feature selection, at least in familiar, is a misnomer. Instead of selecting features, in the sense of selecting the features to be included in a model by a learner, features in the data are ranked according to their importance. Actual feature selection is conducted during hyperparameter optimisation.
+
+-   **Hyperparameter optimisation**: Most learners have hyperparameters, which are parameters that determine a specific aspect of the model created by the learner. Examples are the number of trees in a random forest, the width of the radial kernel in support vector machines, and the number of features in the signature of a model. Such parameters may significantly influence model performance. During hyperparameter optimisation, the aim is to find the set of hyperparameters that leads to a generalisable model. Since hyperparameter spaces can be high-dimensional, familiar uses Bayesian optimisation for efficiently exploring hyperparameter space. The *Learning algorithms* vignette describes model-specific hyperparameters and hyperparameter optimisation in more detail.
+
+-   **Model training**: During the final model training step, the development data are fitted using the previously determined set of hyperparameters. By default, the models are trimmed after creation to remove extraneous information such as copies of the development data. The model objects that are created in this step contain more than just the model. Notably, the following information is included to allow for prospective use and evaluation:
+
+    -   Feature information, as generated during the data processing step, is stored to allow for preparing datasets in the same manner as the development dataset, and checking if new datasets are formatted as expected. It is also used to create default ranges for individual conditional expectation and partial dependence plots.
+
+    -   Outcome information is stored. This is primarily used to check whether outcome data in new datasets are formatted in accordance with the development data. It is also used in computing several performance metrics.
+
+    -   An novelty detector is trained to detect out-of-distribution samples and assess when a model starts extrapolating. The novelty detector is currently based on extended isolation forests in the `isotree` package @Cortes2021-aa .
+
+    -   Models used to recalibrate the output of specific models (see *Learning algorithm* vignette) are stored.
+
+    -   Calibration information is added. This currently is only done for survival analysis, for which we store baseline survival curves @Royston2013-ch .
+
+    -   Risk stratification thresholds used for assigning risk strata are stored.
 
 ## Supported outcomes
 
+Familiar supports modelling and evaluation of several types of endpoints:
+
+-   Categorical endpoints, where the outcome consists of two or more classes. In particular, familiar distinguishes between two-class (`binomial`) and multi-class (`multinomial`) outcomes. These differ in that fewer feature selection methods and learners are available for multi-class outcomes. Additionally some evaluation and explanation steps will assess all classes separately in a one-against-all fashion for multi-class outcomes, whereas for two-class outcomes only the *positive* class is assessed.
+
+-   Numerical endpoints, where the outcome consists of numeric values. Count-like `count` outcomes that follow and generic numerical `continuous` outcomes are supported. If you are unsure that your outcome is generated through some counting or event mechanism, it may be safer to use the more generic option.
+
+-   Survival endpoints, where the outcome consists of a pair of time and event status variables. Familiar supports right-censored time-to-event data (`survival`).
+
+Other endpoints are not supported. Handling of competing risk survival endpoints is planned for future releases.
+
 # Configuring familiar
 
+Familiar is highly configurable. Parameters can be specified in two ways:
+
+1.  Using a configuration file. An empty copy of the configuration file can be obtained using the `familiar::get_xml_config` function. The `familiar::summon_familiar` function should subsequently be called by specifying the `config` argument.
+
+2.  By specifying function arguments for the `familiar::summon_familiar` function, as for any function.
+
+All configuration parameters are documented in the help file of the `familiar::summon_familiar` function. In many cases, the default settings suffice. Some parameters should always be specified:
+
+-   `experimental_design`: Specifies the design of the experiment. This is described more extensively further in the vignette, in the [Experimental designs] section.
+
+-   `fs_method`: Specify one or more feature selection methods. See the *Feature selection methods* vignette for available methods.
+
+-   `learner`: Specify one or more learners used to create models. See the *Learning algorithms* vignette for available learners.
+
+Though not always required, specifying the following parameters are recommended, or required situationally:
+
+-   `experiment_dir`: This specifies the drive location where files generated during the experiment are written to. This includes files containing the trained models, which we usually want to preserve. If this location is not specified, such files are temporarily written to the temporary R directory, and subsequently removed.
+
+-   `outcome_column`: Specifies the name of the column that contains the outcome values. In case of survival outcomes two columns should be specified that contain that indicate time and event status, respectively. The column name does not need to be required in case the formula interface is used.
+
+-   `outcome_type`: Specifies the type of outcome being modelled. Should be one of the outcome types mentioned above in the [Supported outcomes] section. If not specified, it can potentially be inferred from the data contained in the column(s) specified by the `outcome_column` parameter.
+
+-   `class_levels`: Specify the class levels of two-class (`binomial`) and multi-class (`multinomial`) outcomes. For two-class outcomes, the second level specifies the class regarded as the positive class. The values should match values present in the outcome column Specifying this argument is not necessary in case the outcome column is encoded as a factor. If left unspecified, the unique values in the outcome column are used as values.
+
+-   `event_indicator`, `censoring_indicator`, `competing_risk_indicator`: Specifies the values that should be used as event, censoring and competing risk indicators for survival analysis, respectively. Familiar uses default values for censoring (e.g. `0`, `FALSE`, `no`) and event (e.g. `1`, `TRUE`, `yes`) status otherwise. Note that the `competing_risk` outcome type will be fully implemented in a future release.
+
+-   `batch_id_column`, `sample_id_column`, `series_id_column`: Specifies the names of the columns containing batch, sample and series identifiers respectively. These are described in more detail in the [Preparing your data] section.
+
 # Preparing your data
+
+Familiar is used to assessed tabular data. In this case, a table consists of rows that represent instances, and columns that represent features and additional information. This is a very common representation for tabular data. Let us look at the *colon* dataset found in the survival package:
+
+```{r}
+# Get the colon dataset.
+data <- data.table::as.data.table(survival::colon)[etype==1]
+knitr::kable(data[1:5])
+```
+
+Here we see that each row contains a separate instance. The `id` and `study` columns represent identifier columns. Familiar distinguishes four different types of identifiers:
+
+-   Batch identifiers are used to identify data belonging to a batch, cohort or specific dataset. This is typically used for specifying external validation datasets (using the `validation_batch_id` parameter). It also used to define the batches for batch normalisation. The column name containing batch identifiers (if any) can be specified using the `batch_id_column` parameter. If no column with batch identifiers is specified, all instances are assumed to belong to the same batch.
+
+-   Sample identifiers are used to identify data belonging to a single sample, such as a patient, subject, customer, etc. Sample identifiers
 
 NOTE: make sure to mention requirement to specify ordinals, categorical features that are encoded as integers; recommend hard-encoding levels of other types of categorical variables.
 
