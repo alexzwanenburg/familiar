@@ -106,7 +106,7 @@ Though not always required, specifying the following parameters are recommended,
 
 -   `outcome_column`: Specifies the name of the column that contains the outcome values. In case of survival outcomes two columns should be specified that contain that indicate time and event status, respectively. The column name does not need to be required in case the formula interface is used.
 
--   `outcome_type`: Specifies the type of outcome being modelled. Should be one of the outcome types mentioned above in the [Supported outcomes] section. If not specified, it can potentially be inferred from the data contained in the column(s) specified by the `outcome_column` parameter.
+-   `outcome_type`: Specifies the type of outcome being modeled. Should be one of the outcome types mentioned above in the [Supported outcomes] section. If not specified, it can potentially be inferred from the data contained in the column(s) specified by the `outcome_column` parameter.
 
 -   `class_levels`: Specify the class levels of two-class (`binomial`) and multi-class (`multinomial`) outcomes. For two-class outcomes, the second level specifies the class regarded as the positive class. The values should match values present in the outcome column Specifying this argument is not necessary in case the outcome column is encoded as a factor. If left unspecified, the unique values in the outcome column are used as values.
 
@@ -116,21 +116,37 @@ Though not always required, specifying the following parameters are recommended,
 
 # Preparing your data
 
-Familiar is used to assessed tabular data. In this case, a table consists of rows that represent instances, and columns that represent features and additional information. This is a very common representation for tabular data. Let us look at the *colon* dataset found in the survival package:
+Familiar is used to assessed tabular data. In this case, a table consists of rows that represent instances, and columns that represent features and additional information. This is a very common representation for tabular data. Let us look at the *colon* dataset found in the survival package, which contains data from a clinical trial to assess a new anti-cancer drug in patients with colon cancer:
 
 ```{r}
 # Get the colon dataset.
 data <- data.table::as.data.table(survival::colon)[etype==1]
+
+# Drop some irrelevant columns.
+data[, ":="("node4"=NULL, "etype"=NULL)]
+
 knitr::kable(data[1:5])
 ```
 
 Here we see that each row contains a separate instance. The `id` and `study` columns represent identifier columns. Familiar distinguishes four different types of identifiers:
 
--   Batch identifiers are used to identify data belonging to a batch, cohort or specific dataset. This is typically used for specifying external validation datasets (using the `validation_batch_id` parameter). It also used to define the batches for batch normalisation. The column name containing batch identifiers (if any) can be specified using the `batch_id_column` parameter. If no column with batch identifiers is specified, all instances are assumed to belong to the same batch.
+-   Batch identifiers are used to identify data belonging to a batch, cohort or specific dataset. This is typically used for specifying external validation datasets (using the `validation_batch_id` parameter). It also used to define the batches for batch normalisation. The name of the column containing batch identifiers (if any) can be specified using the `batch_id_column` parameter. If no column with batch identifiers is specified, all instances are assumed to belong to the same batch.
 
--   Sample identifiers are used to identify data belonging to a single sample, such as a patient, subject, customer, etc. Sample identifiers
+-   Sample identifiers are used to identify data belonging to a single sample, such as a patient, subject, customer, etc. Sample identifiers are used to ensure that instances from the same sample are not inadvertently spread across development and validation data subsets created for cross-validation or bootstrapping. This prevents information leakage, as instances from the same sample are often related -- knowing one instance would make it easy to predict another, thus increasing the risk of overfitting. The name of the column containing sample identifiers can be specified using the `sample_id_column` parameter. If not specified, it is assumed that each instance represents a separate sample.
 
-NOTE: make sure to mention requirement to specify ordinals, categorical features that are encoded as integers; recommend hard-encoding levels of other types of categorical variables.
+-   Within a sample, it is possible to have multiple series, for example due to measurements at different positions in the same sample. A series differs from repeated measurements while for series the outcome value may change, whereas this is not allowed for repeated measurements. The column containing series identifiers may be specified by providing the column name as the `series_id_column` parameter. If not set, all instances of a sample with a different outcome value will be assigned a unique identifier.
+
+-   Within a sample, or series, it is possible to have repeated measurements, where one or more feature values may change but the outcome value does not. Such instances can for example used to determine feature robustness. Repeated measurement identifiers are automatically assigned for instances that have the same batch, sample and series identifiers.
+
+The *colon* dataset also contains two outcome columns: `time` and `status` that define (censoring) time and survival status respectively. Survival status are encoded as `0` for alive, censored patients and `1` for patients that passed away after treatment. Note that these correspond to default values present in familiar. It is not necessary to pass these values as `censoring_indicator` and `event_indicator` parameters.
+
+The remaining columns represent features. There are two numeric features, `age` and `nodes`, and several categorical and ordinal features encoded with integer values. Familiar will automatically detect and encode features that consist of `character`, `logical` or `factor` type. However it will not automatically convert the features here since they are numeric. This is by design -- familiar cannot determine whether a feature with integer values is intended to be categorical feature or not. Should categorical features that are encoded with integers be present in your dataset, you should manually encode such values in the data prior to passing the data to familiar. For the *colon* dataset, this could be done as follows:
+
+```{r}
+
+```
+
+Manual encoding also has the advantage that ordinal features can be specified. Familiar cannot determine whether features with `character` type values have an associated order and will encode these as regular categorical variables. Another advantage is that manual encoding allows for specifying the reference level, i.e. the first level. Otherwise, the reference level is taken as the first level occurring after sorting the levels.
 
 # Experimental designs
 
