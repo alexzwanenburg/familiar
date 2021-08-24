@@ -30,11 +30,26 @@ Familiar is a package that allows for end-to-end machine learning of tabular dat
 
 # Familiar in brief
 
-This section provides a brief overview of the package, and the pipeline encapsulated by the `summon_familiar` function that is used to run an experiment.
+This section provides installation instructions, a brief overview of the package, and the pipeline encapsulated by the `summon_familiar` function that is used to run an experiment.
+
+## Installing familiar
+
+Stable versions of familiar can be installed from CRAN, as follows:
+
+```{r eval=FALSE, include=TRUE}
+install.packages("familiar")
+```
+
+It can also be installed directly from the GitHub repository:
+
+```{r eval=FALSE, include=TRUE}
+require(devtools)
+devtools::install_github("https://github.com/alexzwanenburg/familiar")
+```
 
 ## Pipeline
 
-The pipeline follows a standard machine learning process. A development dataset is used to perform the steps listed below. Many aspects of these steps can be configured:
+The pipeline implemented in familiar follows a standard machine learning process. A development dataset is used to perform the steps listed below. Many aspects of these steps can be configured, but the overall process is fixed:
 
 -   **Data processing**: Features in the development dataset are assessed during this step:
 
@@ -72,6 +87,8 @@ The pipeline follows a standard machine learning process. A development dataset 
 
     -   Risk stratification thresholds used for assigning risk strata are stored.
 
+After training the models, the models are assessed using the development and any validation datasets. Models, and results from this analysis are written to a local directory.
+
 ## Supported outcomes
 
 Familiar supports modelling and evaluation of several types of endpoints:
@@ -84,7 +101,88 @@ Familiar supports modelling and evaluation of several types of endpoints:
 
 Other endpoints are not supported. Handling of competing risk survival endpoints is planned for future releases.
 
-# Configuring familiar
+# Running familiar
+
+The end-to-end pipeline is implemented in the `summon_familiar` function. This is the main function to use.
+
+In the example below, we use the *iris* dataset, specify some minimal configuration parameters, and run the experiment. In practice, you may need to specify some additional configuration parameters, see the [Configuring familiar] section.
+
+```{r eval=FALSE, include=TRUE}
+
+# Example experiment using the iris dataset.
+# You may want to specify a different path for experiment_dir.
+# This is where results are written to.
+familiar::summon_familiar(data=iris,
+                          experiment_dir=file.path(tempdir(), "familiar_1"),
+                          outcome_type="multinomial",
+                          outcome_column="Species",
+                          experimental_design="fs+mb",
+                          cluster_method="none",
+                          fs_method="mrmr",
+                          learner="glm",
+                          parallel=FALSE)
+```
+
+It is also possible to use a formula instead. This is generally feasible only for datasets with few features:
+
+```{r eval=FALSE, include=TRUE}
+
+# Example experiment using a formula interface.
+# You may want to specify a different path for experiment_dir.
+# This is where results are written to.
+familiar::summon_familiar(Species ~ Sepal.Length + Sepal.Width + Petal.Length + Petal.Width,
+                          data=iris,
+                          experiment_dir=file.path(tempdir(), "familiar_2"),
+                          outcome_type="multinomial",
+                          experimental_design="fs+mb",
+                          cluster_method="none",
+                          fs_method="mrmr",
+                          learner="glm",
+                          parallel=FALSE)
+```
+
+Data does not need to be loaded prior to calling `summon_familiar`. A patch to a *csv* file can also be provided. The data can also be a `data.frame` or `data.table` contained in an *RDS* or *RData* file. Other data formats are currently not supported. If categorical features are encoded using integer values, it is recommended to load the data and manually encode them, as is explained in the [Preparing your data] section.
+
+```{r eval=FALSE, include=TRUE}
+
+# Example experiment using a csv datafile.
+# Note that because the file does not exist,
+# you will not be able to execute the code as is.
+familiar::summon_familiar(data="path_to_data/iris.csv",
+                          experiment_dir=file.path(tempdir(), "familiar_3"),
+                          outcome_type="multinomial",
+                          outcome_column="Species",
+                          class_levels=c("setosa", "versicolor", "virginica"),
+                          experimental_design="fs+mb",
+                          cluster_method="none",
+                          fs_method="mrmr",
+                          learner="glm",
+                          parallel=FALSE)
+```
+
+For reproducibility purposes, it may be useful to configure `summon_familiar` using the configuration *xml* file. In this case, we will point to a data file using the `data_file` parameter.
+
+```{r eval=FALSE, include=TRUE}
+
+# Example experiment using a configuration file.
+# Note that because the file does not exist,
+# you will not be able to execute the code as is.
+familiar::summon_familiar(config="path_to_configuration_file/config.xml")
+```
+
+Configuration parameters may also be mixed between parameters specified in the *xml* file and function arguments. Function arguments supersede parameters specified in the *xml* files in this case:
+
+```{r eval=FALSE, include=TRUE}
+
+# Example experiment using a csv datafile, but with additional arguments.
+# Note that because the configuration file does not exist,
+# you will not be able to execute the code as is.
+familiar::summon_familiar(config="path_to_configuration_file/config.xml",
+                          data=iris,
+                          parallel=FALSE)
+```
+
+## Configuring familiar
 
 Familiar is highly configurable. Parameters can be specified in two ways:
 
@@ -114,7 +212,7 @@ Though not always required, specifying the following parameters are recommended,
 
 -   `batch_id_column`, `sample_id_column`, `series_id_column`: Specifies the names of the columns containing batch, sample and series identifiers respectively. These are described in more detail in the [Preparing your data] section.
 
-# Preparing your data
+## Preparing your data
 
 Familiar is used to assessed tabular data. In this case, a table consists of rows that represent instances, and columns that represent features and additional information. This is a very common representation for tabular data. Let us look at the *colon* dataset found in the survival package, which contains data from a clinical trial to assess a new anti-cancer drug in patients with colon cancer:
 
@@ -128,7 +226,11 @@ data[, ":="("node4"=NULL, "etype"=NULL)]
 knitr::kable(data[1:5])
 ```
 
-Here we see that each row contains a separate instance. The `id` and `study` columns represent identifier columns. Familiar distinguishes four different types of identifiers:
+Here we see that each row contains a separate instance.
+
+### Identifier columns
+
+The `id` and `study` columns represent identifier columns. Familiar distinguishes four different types of identifiers:
 
 -   Batch identifiers are used to identify data belonging to a batch, cohort or specific dataset. This is typically used for specifying external validation datasets (using the `validation_batch_id` parameter). It also used to define the batches for batch normalisation. The name of the column containing batch identifiers (if any) can be specified using the `batch_id_column` parameter. If no column with batch identifiers is specified, all instances are assumed to belong to the same batch.
 
@@ -138,18 +240,31 @@ Here we see that each row contains a separate instance. The `id` and `study` col
 
 -   Within a sample, or series, it is possible to have repeated measurements, where one or more feature values may change but the outcome value does not. Such instances can for example used to determine feature robustness. Repeated measurement identifiers are automatically assigned for instances that have the same batch, sample and series identifiers.
 
+### Outcome columns
+
 The *colon* dataset also contains two outcome columns: `time` and `status` that define (censoring) time and survival status respectively. Survival status are encoded as `0` for alive, censored patients and `1` for patients that passed away after treatment. Note that these correspond to default values present in familiar. It is not necessary to pass these values as `censoring_indicator` and `event_indicator` parameters.
 
-The remaining columns represent features. There are two numeric features, `age` and `nodes`, and several categorical and ordinal features encoded with integer values. Familiar will automatically detect and encode features that consist of `character`, `logical` or `factor` type. However it will not automatically convert the features here since they are numeric. This is by design -- familiar cannot determine whether a feature with integer values is intended to be categorical feature or not. Should categorical features that are encoded with integers be present in your dataset, you should manually encode such values in the data prior to passing the data to familiar. For the *colon* dataset, this could be done as follows:
+### Feature columns
+
+The remaining columns in the *colon* dataset represent features. There are two numeric features, `age` and `nodes`, a categorical feature `rx` and several categorical and ordinal features encoded with integer values. Familiar will automatically detect and encode features that consist of `character`, `logical` or `factor` type. However it will not automatically convert the features encoded with integer values. This is by design -- familiar cannot determine whether a feature with integer values is intended to be categorical feature or not. Should categorical features that are encoded with integers be present in your dataset, you should manually encode such values in the data prior to passing the data to familiar. For the *colon* dataset, this could be done as follows:
 
 ```{r}
+# Categorical features
+data$sex <- factor(x=data$sex, levels=c(0, 1), labels=c("female", "male"))
+data$obstruct <- factor(data$obstruct, levels=c(0, 1), labels=c(FALSE, TRUE))
+data$perfor <- factor(data$perfor, levels=c(0, 1), labels=c(FALSE, TRUE))
+data$adhere <- factor(data$adhere, levels=c(0, 1), labels=c(FALSE, TRUE))
+data$surg <- factor(data$surg, levels=c(0, 1), labels=c("short", "long"))
 
+# Ordinal features
+data$differ <- factor(data$differ, levels=c(1, 2, 3), labels=c("well", "moderate", "poor"), ordered=TRUE)
+data$extent <- factor(data$extent, levels=c(1, 2, 3, 4), labels=c("submucosa", "muscle",  "serosa", "contiguous_structures"), ordered=TRUE)
+
+knitr::kable(data[1:5])
 ```
 
 Manual encoding also has the advantage that ordinal features can be specified. Familiar cannot determine whether features with `character` type values have an associated order and will encode these as regular categorical variables. Another advantage is that manual encoding allows for specifying the reference level, i.e. the first level. Otherwise, the reference level is taken as the first level occurring after sorting the levels.
 
-# Experimental designs
-
-# Feature selection and learners
+## Experimental designs
 
 # Evaluation and explanation
