@@ -526,7 +526,7 @@ test_all_learners_train_predict_vimp <- function(learners,
       })
       
       
-      #####Dataset without censoring data#######################################
+      #####Dataset without censored instances###################################
       if(outcome_type %in% c("survival", "competing_risk")){
         
         # Set up non-censoring dataset.
@@ -618,6 +618,7 @@ test_all_learners_train_predict_vimp <- function(learners,
           testthat::expect_equal(any_predictions_valid(prediction_table, outcome_type), !learner %in% c(except_train, except_predict))
         })
       }
+      
       
       #####Dataset with one censored instance###################################
       if(outcome_type %in% c("survival", "competing_risk")){
@@ -712,6 +713,7 @@ test_all_learners_train_predict_vimp <- function(learners,
         })
       }
       
+      
       #####Dataset with few censored instances##################################
       if(outcome_type %in% c("survival", "competing_risk")){
         
@@ -805,6 +807,7 @@ test_all_learners_train_predict_vimp <- function(learners,
         })
       }
       
+      
       #####Fully prospective dataset############################################
       
       # Train the model.
@@ -822,6 +825,7 @@ test_all_learners_train_predict_vimp <- function(learners,
         # Test that the model was not created.
         testthat::expect_equal(model_is_trained(model), FALSE)
       })
+      
       
       #####Mostly prospective dataset############################################
       
@@ -841,7 +845,9 @@ test_all_learners_train_predict_vimp <- function(learners,
         testthat::expect_equal(model_is_trained(model), FALSE)
       })
       
+      
       #####Partially prospective dataset########################################
+      
       # Train the model.
       model <- suppressWarnings(test_train(data=partially_prospective_data,
                                            cluster_method="none",
@@ -926,6 +932,11 @@ test_all_vimp_methods <- function(vimp_methods,
     empty_data <- test.create_empty_data_set(outcome_type)
     bad_data <- test.create_bad_data_set(outcome_type)
     
+    # Prospective datasets with (partially) missing outcomes
+    fully_prospective_data <- test.create_prospective_data_set(outcome_type)
+    mostly_prospective_data <- test.create_mostly_prospective_data_set(outcome_type)
+    partially_prospective_data <- test.create_partially_prospective_data_set(outcome_type)
+    
     # Iterate over variable importance methods.
     for(vimp_method in vimp_methods){
       
@@ -952,7 +963,7 @@ test_all_vimp_methods <- function(vimp_methods,
       # list of hyperparameters.
       hyperparameters <- hyperparameters[intersect(vimp_method_hyperparameters, names(hyperparameters))]
       
-      #####Full data set########################################################
+      #####Full dataset#########################################################
       
       # Process dataset.
       vimp_object <- prepare_vimp_object(data=full_data,
@@ -963,7 +974,7 @@ test_all_vimp_methods <- function(vimp_methods,
                                          imputation_method="simple")
       
       
-      test_fun(paste0("Variable importance can be computed for ", outcome_type, " with the ", vimp_method, " using a complete data set."), {
+      test_fun(paste0("Variable importance can be computed for ", outcome_type, " with the ", vimp_method, " using a complete dataset."), {
         
         vimp_table <- suppressWarnings(.vimp(vimp_object, full_data))
         
@@ -979,7 +990,7 @@ test_all_vimp_methods <- function(vimp_methods,
       })
       
       
-      test_fun(paste0("Variable importance can be computed for ", outcome_type, " with the ", vimp_method, " using a complete data set with one invariant feature."), {
+      test_fun(paste0("Variable importance can be computed for ", outcome_type, " with the ", vimp_method, " using a complete dataset with one invariant feature."), {
         
         vimp_table <- suppressWarnings(.vimp(vimp_object, full_one_invariant_data))
         
@@ -995,7 +1006,7 @@ test_all_vimp_methods <- function(vimp_methods,
       })
       
       
-      test_fun(paste0("Variable importance cannot be computed for ", outcome_type, " with the ", vimp_method, " using an empty data set."), {
+      test_fun(paste0("Variable importance cannot be computed for ", outcome_type, " with the ", vimp_method, " using an empty dataset."), {
         
         vimp_table <- suppressWarnings(.vimp(vimp_object, empty_data))
         
@@ -1004,7 +1015,7 @@ test_all_vimp_methods <- function(vimp_methods,
       })
       
       
-      test_fun(paste0("Variable importance cannot be computed for ", outcome_type, " with the ", vimp_method, " using a bad data set."), {
+      test_fun(paste0("Variable importance cannot be computed for ", outcome_type, " with the ", vimp_method, " using a bad dataset."), {
         
         vimp_table <- suppressWarnings(.vimp(vimp_object, bad_data))
         
@@ -1013,7 +1024,7 @@ test_all_vimp_methods <- function(vimp_methods,
       })
       
       
-      test_fun(paste0("Variable importance cannot be computed for ", outcome_type, " with the ", vimp_method, " using a one-sample data set."), {
+      test_fun(paste0("Variable importance cannot be computed for ", outcome_type, " with the ", vimp_method, " using a one-sample dataset."), {
         
         vimp_table <- suppressWarnings(.vimp(vimp_object, full_one_sample_data))
         
@@ -1022,7 +1033,7 @@ test_all_vimp_methods <- function(vimp_methods,
       })
       
       
-      #####One-feature data set#################################################
+      #####One-feature dataset##################################################
       
       # Process dataset.
       vimp_object <- prepare_vimp_object(data=one_feature_data,
@@ -1033,7 +1044,7 @@ test_all_vimp_methods <- function(vimp_methods,
                                          imputation_method="simple")
       
       
-      test_fun(paste0("Variable importance can be computed for ", outcome_type, " with the ", vimp_method, " using a one-feature data set."), {
+      test_fun(paste0("Variable importance can be computed for ", outcome_type, " with the ", vimp_method, " using a one-feature dataset."), {
         
         vimp_table <- suppressWarnings(.vimp(vimp_object, one_feature_data))
         
@@ -1046,7 +1057,7 @@ test_all_vimp_methods <- function(vimp_methods,
       })
       
       
-      test_fun(paste0("Variable importance cannot be computed for ", outcome_type, " with the ", vimp_method, " using a one-feature data set with an invariant feature."), {
+      test_fun(paste0("Variable importance cannot be computed for ", outcome_type, " with the ", vimp_method, " using a one-feature dataset with an invariant feature."), {
         
         vimp_table <- suppressWarnings(.vimp(vimp_object, one_feature_invariant_data))
         
@@ -1055,7 +1066,7 @@ test_all_vimp_methods <- function(vimp_methods,
       })
       
       
-      test_fun(paste0("Variable importance cannot be computed for ", outcome_type, " with the ", vimp_method, " using a one-feature, one-sample data set."), {
+      test_fun(paste0("Variable importance cannot be computed for ", outcome_type, " with the ", vimp_method, " using a one-feature, one-sample dataset."), {
         
         vimp_table <- suppressWarnings(.vimp(vimp_object, one_feature_one_sample_data))
         
@@ -1064,7 +1075,7 @@ test_all_vimp_methods <- function(vimp_methods,
       })
       
       if(outcome_type %in% c("survival", "competing_risk")){
-        #####No censoring data set########################################################
+        #####Dataset without censored instances#################################
         
         no_censoring_data <- test.create_good_data_no_censoring_set(outcome_type)
         
@@ -1077,7 +1088,7 @@ test_all_vimp_methods <- function(vimp_methods,
                                            imputation_method="simple")
         
         
-        test_fun(paste0("Variable importance can be computed for ", outcome_type, " with the ", vimp_method, " using a data set without censoring."), {
+        test_fun(paste0("Variable importance can be computed for ", outcome_type, " with the ", vimp_method, " using a dataset without censoring."), {
           
           vimp_table <- suppressWarnings(.vimp(vimp_object, no_censoring_data))
           
@@ -1093,7 +1104,7 @@ test_all_vimp_methods <- function(vimp_methods,
         })
         
         
-        #####Data set with one censored instance########################################################
+        #####Dataset with one censored instance#################################
         
         one_censored_data <- test.create_good_data_one_censored_set(outcome_type)
         
@@ -1106,7 +1117,7 @@ test_all_vimp_methods <- function(vimp_methods,
                                            imputation_method="simple")
         
         
-        test_fun(paste0("Variable importance can be computed for ", outcome_type, " with the ", vimp_method, " using a data set with one censored instance."), {
+        test_fun(paste0("Variable importance can be computed for ", outcome_type, " with the ", vimp_method, " using a dataset with one censored instance."), {
           
           vimp_table <- suppressWarnings(.vimp(vimp_object, one_censored_data))
           
@@ -1122,7 +1133,7 @@ test_all_vimp_methods <- function(vimp_methods,
         })
         
         
-        #####Data set with few censored instances########################################################
+        #####Dataset with few censored instances################################
         
         few_censored_data <- test.create_good_data_few_censored_set(outcome_type)
         
@@ -1135,7 +1146,7 @@ test_all_vimp_methods <- function(vimp_methods,
                                            imputation_method="simple")
         
         
-        test_fun(paste0("Variable importance can be computed for ", outcome_type, " with the ", vimp_method, " using a data set with few censored instances."), {
+        test_fun(paste0("Variable importance can be computed for ", outcome_type, " with the ", vimp_method, " using a dataset with few censored instances."), {
           
           vimp_table <- suppressWarnings(.vimp(vimp_object, few_censored_data))
           
@@ -1150,6 +1161,57 @@ test_all_vimp_methods <- function(vimp_methods,
           testthat::expect_equal(all(vimp_table$name %in% get_feature_columns(full_data)), TRUE)
         })
       }
+
+      
+      #####Fully prospective dataset############################################
+      
+      # Set up the vimp object.
+      vimp_object <- prepare_vimp_object(data=full_data,
+                                         vimp_method=vimp_method,
+                                         vimp_method_parameter_list=hyperparameters,
+                                         outcome_type=outcome_type,
+                                         cluster_method="none",
+                                         imputation_method="simple")
+      
+      test_fun(paste0("Variable importance cannot be computed for ", outcome_type, " with the ", vimp_method,
+                      " for a fully prospective dataset."), {
+        
+        vimp_table <- suppressWarnings(.vimp(vimp_object, fully_prospective_data))
+        
+        # Expect that the vimp table is empty.
+        testthat::expect_equal(is_empty(vimp_table), TRUE)
+      })
+      
+      
+      #####Mostly prospective dataset############################################
+      
+      test_fun(paste0("Variable importance cannot be computed for ", outcome_type, " with the ", vimp_method,
+                      " for an almost fully prospective dataset, where outcome is known for just a single sample."), {
+        
+        vimp_table <- suppressWarnings(.vimp(vimp_object, mostly_prospective_data))
+        
+        # Expect that the vimp table is empty.
+        testthat::expect_equal(is_empty(vimp_table), TRUE)
+      })
+
+      
+      #####Partially prospective dataset########################################
+      
+      test_fun(paste0("Variable importance can be computed for ", outcome_type, " with the ", vimp_method,
+                      " for a partially prospective dataset, where outcome is known for most samples."), {
+        
+        vimp_table <- suppressWarnings(.vimp(vimp_object, partially_prospective_data))
+        
+        # Get the number of features
+        n_features <- get_n_features(full_data)
+        
+        # Expect that the vimp table is not empty..
+        testthat::expect_equal(nrow(vimp_table) > 0 & nrow(vimp_table) <= n_features, TRUE)
+        
+        # Expect that the names in the vimp table correspond to those of the
+        # features.
+        testthat::expect_equal(all(vimp_table$name %in% get_feature_columns(partially_prospective_data)), TRUE)
+      })
     }
   }
 }
