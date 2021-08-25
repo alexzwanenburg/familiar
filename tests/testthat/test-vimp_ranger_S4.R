@@ -362,7 +362,7 @@ testthat::test_that(paste0("The ranger random forest permutation method correctl
   
   vimp_table <- suppressWarnings(familiar:::.vimp(vimp_object, data))
   
-  testthat::expect_equal(all(vimp_table[rank <= 2]$name %in% c("nodes", "rx")), TRUE)
+  testthat::expect_equal(all(vimp_table[rank <= 2]$name %in% c("nodes", "rx", "adhere")), TRUE)
 })
 
 
@@ -384,7 +384,7 @@ testthat::test_that(paste0("The ranger random forest hold-out permutation method
   
   vimp_table <- suppressWarnings(familiar:::.vimp(vimp_object, data))
   
-  testthat::expect_equal(all(vimp_table[rank <= 2]$name %in% c("nodes", "rx")), TRUE)
+  testthat::expect_equal(all(vimp_table[rank <= 2]$name %in% c("nodes", "rx", "adhere")), TRUE)
 })
 
 
