@@ -809,6 +809,7 @@ test_all_learners_train_predict_vimp <- function(learners,
       
       # Train the model.
       model <- suppressWarnings(test_train(data=fully_prospective_data,
+                                           data_bypass=full_data,
                                            cluster_method="none",
                                            imputation_method="simple",
                                            hyperparameter_list=hyperparameters,
@@ -826,6 +827,7 @@ test_all_learners_train_predict_vimp <- function(learners,
       
       # Train the model.
       model <- suppressWarnings(test_train(data=mostly_prospective_data,
+                                           data_bypass=full_data,
                                            cluster_method="none",
                                            imputation_method="simple",
                                            hyperparameter_list=hyperparameters,

@@ -6,13 +6,20 @@ NULL
 setGeneric("test_train", function(data, ...) standardGeneric("test_train"))
 
 setMethod("test_train", signature(data="data.table"),
-          function(data, learner, hyperparameter_list=list(), create_bootstrap=FALSE, ...){
+          function(data, data_bypass=NULL, learner, hyperparameter_list=list(), create_bootstrap=FALSE, ...){
+            
+            if(!is.null(data_bypass)){
+              # Convert data_bypass to dataObject.
+              data_bypass <- do.call(as_data_object, args=c(list("data"=data_bypass),
+                                                            list(...)))
+            }
             
             # Convert data to dataObject.
             data <- do.call(as_data_object, args=c(list("data"=data),
                                                    list(...)))
             
             return(do.call(test_train, args=c(list("data"=data,
+                                                   "data_bypass"=data_bypass,
                                                    "learner"=learner,
                                                    "hyperparameter_list"=hyperparameter_list,
                                                    "create_bootstrap"=create_bootstrap),
@@ -22,6 +29,7 @@ setMethod("test_train", signature(data="data.table"),
 
 setMethod("test_train", signature(data="dataObject"),
           function(data,
+                   data_bypass=NULL,
                    learner,
                    hyperparameter_list=list(),
                    create_bootstrap=FALSE,
@@ -30,13 +38,19 @@ setMethod("test_train", signature(data="dataObject"),
                    trim_model=TRUE,
                    ...){
             
+            # The bypass data allows for bypassing important aspects of the
+            # pre-processing pipeline, e.g. the preprocessing checks. This
+            # enables testing of very rare cases where preprocessing may run
+            # fine, but the subsample does not allow for training.
+            if(is.null(data_bypass)) data_bypass <- data
+            
             #####Prepare settings###############################################
             
             # Reconstitute settings from the data.
-            settings <- extract_settings_from_data(data)
+            settings <- extract_settings_from_data(data_bypass)
             
             # Update some missing settings that can be fixed within this method.
-            settings$data$train_cohorts <- unique(data@data[[get_id_columns(single_column="batch")]])
+            settings$data$train_cohorts <- unique(data_bypass@data[[get_id_columns(single_column="batch")]])
             
             # Parse the remaining settings that are important. Remove
             # outcome_type from ... This prevents an error caused by multiple
@@ -57,7 +71,7 @@ setMethod("test_train", signature(data="dataObject"),
             
             settings <- do.call(.parse_general_settings,
                                 args=c(list("settings"=settings,
-                                            "data"=data@data,
+                                            "data"=data_bypass@data,
                                             "parallel"=FALSE,
                                             "fs_method"="none",
                                             "learner"=learner,
@@ -71,13 +85,13 @@ setMethod("test_train", signature(data="dataObject"),
             #####Prepare outcome_info###########################################
             
             # Create a generic outcome object
-            outcome_info <- data@outcome_info
+            outcome_info <- data_bypass@outcome_info
             
             
             #####Prepare featureInfo objects####################################
             
             # Create a list of featureInfo objects.
-            feature_info_list <- .get_feature_info_data(data=data@data,
+            feature_info_list <- .get_feature_info_data(data=data_bypass@data,
                                                         file_paths=NULL,
                                                         project_id=character(),
                                                         outcome_type=settings$data$outcome_type)
@@ -87,7 +101,7 @@ setMethod("test_train", signature(data="dataObject"),
             
             # Perform some pre-processing (i.e. remove singular features)
             feature_info_list <- .determine_preprocessing_parameters(cl=cl,
-                                                                     data=data,
+                                                                     data=data_bypass,
                                                                      feature_info_list=feature_info_list,
                                                                      settings=settings,
                                                                      verbose=FALSE)
