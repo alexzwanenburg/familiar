@@ -5,14 +5,14 @@ testthat::skip_on_cran()
 data <- familiar:::test.create_small_good_data_set("survival")
 
 # Train a simple linear GLM using the good dataset.
-fam_model <- familiar:::train(data=data,
-                              cluster_method="none",
-                              imputation_method="simple",
-                              hyperparameter_list=list("sign_size"=familiar:::get_n_features(data)),
-                              learner="cox",
-                              hpo_metric="concordance_index",
-                              vimp_aggregation_method="mean",
-                              vimp_aggregation_rank_threshold=5)
+fam_model <- familiar:::test_train(data=data,
+                                   cluster_method="none",
+                                   imputation_method="simple",
+                                   hyperparameter_list=list("sign_size"=familiar:::get_n_features(data)),
+                                   learner="cox",
+                                   hpo_metric="concordance_index",
+                                   vimp_aggregation_method="mean",
+                                   vimp_aggregation_rank_threshold=5)
 
 #####familiarModel-based test###################################################
 testthat::test_that("Conversion of single familiarModel to familiarEnsemble works", {

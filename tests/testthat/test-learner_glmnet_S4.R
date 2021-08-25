@@ -22,18 +22,18 @@ good_data <- familiar:::test.create_good_data_set("count")
 wide_data <- familiar:::test.create_wide_data_set("count")
 
 # Train the model using the good dataset.
-good_model <- familiar:::train(data=good_data,
-                               cluster_method="none",
-                               imputation_method="simple",
-                               hyperparameter_list=list("sign_size"=familiar:::get_n_features(good_data)),
-                               learner="lasso")
+good_model <- familiar:::test_train(data=good_data,
+                                    cluster_method="none",
+                                    imputation_method="simple",
+                                    hyperparameter_list=list("sign_size"=familiar:::get_n_features(good_data)),
+                                    learner="lasso")
 
 # Train the model using wide data.
-wide_model <- familiar:::train(data=wide_data,
-                               cluster_method="none",
-                               imputation_method="simple",
-                               hyperparameter_list=list("sign_size"=familiar:::get_n_features(wide_data)),
-                               learner="lasso")
+wide_model <- familiar:::test_train(data=wide_data,
+                                    cluster_method="none",
+                                    imputation_method="simple",
+                                    hyperparameter_list=list("sign_size"=familiar:::get_n_features(wide_data)),
+                                    learner="lasso")
 
 testthat::test_that("Regularised regression model trained correctly", {
   # Model trained
@@ -78,18 +78,18 @@ good_data <- familiar:::test.create_good_data_set("continuous")
 wide_data <- familiar:::test.create_wide_data_set("continuous")
 
 # Train the model using the good dataset.
-good_model <- familiar:::train(data=good_data,
-                               cluster_method="none",
-                               imputation_method="simple",
-                               hyperparameter_list=list("sign_size"=familiar:::get_n_features(good_data)),
-                               learner="lasso_gaussian")
+good_model <- familiar:::test_train(data=good_data,
+                                    cluster_method="none",
+                                    imputation_method="simple",
+                                    hyperparameter_list=list("sign_size"=familiar:::get_n_features(good_data)),
+                                    learner="lasso_gaussian")
 
 # Train the model using wide data.
-wide_model <- familiar:::train(data=wide_data,
-                               cluster_method="none",
-                               imputation_method="simple",
-                               hyperparameter_list=list("sign_size"=familiar:::get_n_features(wide_data)),
-                               learner="lasso_gaussian")
+wide_model <- familiar:::test_train(data=wide_data,
+                                    cluster_method="none",
+                                    imputation_method="simple",
+                                    hyperparameter_list=list("sign_size"=familiar:::get_n_features(wide_data)),
+                                    learner="lasso_gaussian")
 
 testthat::test_that("Regularised regression model trained correctly", {
   # Model trained
@@ -132,18 +132,18 @@ good_data <- familiar:::test.create_good_data_set("binomial")
 wide_data <- familiar:::test.create_wide_data_set("binomial")
 
 # Train the model using the good dataset.
-good_model <- familiar:::train(data=good_data,
-                               cluster_method="none",
-                               imputation_method="simple",
-                               hyperparameter_list=list("sign_size"=familiar:::get_n_features(good_data)),
-                               learner="lasso_binomial")
+good_model <- familiar:::test_train(data=good_data,
+                                    cluster_method="none",
+                                    imputation_method="simple",
+                                    hyperparameter_list=list("sign_size"=familiar:::get_n_features(good_data)),
+                                    learner="lasso_binomial")
 
 # Train the model using wide data.
-wide_model <- suppressWarnings(familiar:::train(data=wide_data,
-                                                cluster_method="none",
-                                                imputation_method="simple",
-                                                hyperparameter_list=list("sign_size"=familiar:::get_n_features(wide_data)),
-                                                learner="lasso_binomial"))
+wide_model <- suppressWarnings(familiar:::test_train(data=wide_data,
+                                                     cluster_method="none",
+                                                     imputation_method="simple",
+                                                     hyperparameter_list=list("sign_size"=familiar:::get_n_features(wide_data)),
+                                                     learner="lasso_binomial"))
 
 testthat::test_that("Regularised regression model trained correctly", {
   # Model trained
@@ -187,18 +187,18 @@ good_data <- familiar:::test.create_good_data_set("multinomial")
 wide_data <- familiar:::test.create_wide_data_set("multinomial")
 
 # Train the model using the good dataset.
-good_model <- familiar:::train(data=good_data,
-                               cluster_method="none",
-                               imputation_method="simple",
-                               hyperparameter_list=list("sign_size"=familiar:::get_n_features(good_data)),
-                               learner="lasso_multinomial")
+good_model <- familiar:::test_train(data=good_data,
+                                    cluster_method="none",
+                                    imputation_method="simple",
+                                    hyperparameter_list=list("sign_size"=familiar:::get_n_features(good_data)),
+                                    learner="lasso_multinomial")
 
 # Train the model using wide data.
-wide_model <- suppressWarnings(familiar:::train(data=wide_data,
-                                                cluster_method="none",
-                                                imputation_method="simple",
-                                                hyperparameter_list=list("sign_size"=familiar:::get_n_features(wide_data)),
-                                                learner="lasso_multinomial"))
+wide_model <- suppressWarnings(familiar:::test_train(data=wide_data,
+                                                     cluster_method="none",
+                                                     imputation_method="simple",
+                                                     hyperparameter_list=list("sign_size"=familiar:::get_n_features(wide_data)),
+                                                     learner="lasso_multinomial"))
 
 testthat::test_that("Regularised regression model trained correctly", {
   # Model trained
@@ -243,20 +243,20 @@ good_data <- familiar:::test.create_good_data_set("survival")
 wide_data <- familiar:::test.create_wide_data_set("survival")
 
 # Train the model using the good dataset.
-good_model <- familiar:::train(data=good_data,
-                               cluster_method="none",
-                               imputation_method="simple",
-                               hyperparameter_list=list("sign_size"=familiar:::get_n_features(good_data)),
-                               time_max=1832,
-                               learner="lasso_cox")
+good_model <- familiar:::test_train(data=good_data,
+                                    cluster_method="none",
+                                    imputation_method="simple",
+                                    hyperparameter_list=list("sign_size"=familiar:::get_n_features(good_data)),
+                                    time_max=1832,
+                                    learner="lasso_cox")
 
 # Train the model using wide data.
-wide_model <- familiar:::train(data=wide_data,
-                               cluster_method="none",
-                               imputation_method="simple",
-                               hyperparameter_list=list("sign_size"=familiar:::get_n_features(wide_data)),
-                               time_max=1832,
-                               learner="lasso_cox")
+wide_model <- familiar:::test_train(data=wide_data,
+                                    cluster_method="none",
+                                    imputation_method="simple",
+                                    hyperparameter_list=list("sign_size"=familiar:::get_n_features(wide_data)),
+                                    time_max=1832,
+                                    learner="lasso_cox")
 
 testthat::test_that("Regularised regression model trained correctly", {
   # Model trained

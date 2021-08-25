@@ -938,7 +938,7 @@ test_all_vimp_methods <- function(vimp_methods,
       test_fun(paste0("Variable importance cannot be computed for ", outcome_type, " with the ", vimp_method, " using an empty data set."), {
         
         vimp_table <- suppressWarnings(.vimp(vimp_object, empty_data))
-       
+        
         # Expect that the vimp table has two rows.
         testthat::expect_equal(is_empty(vimp_table), TRUE)
       })
@@ -966,11 +966,11 @@ test_all_vimp_methods <- function(vimp_methods,
       
       # Process dataset.
       vimp_object <- prepare_vimp_object(data=one_feature_data,
-                                                    vimp_method=vimp_method,
-                                                    vimp_method_parameter_list=hyperparameters,
-                                                    outcome_type=outcome_type,
-                                                    cluster_method="none",
-                                                    imputation_method="simple")
+                                         vimp_method=vimp_method,
+                                         vimp_method_parameter_list=hyperparameters,
+                                         outcome_type=outcome_type,
+                                         cluster_method="none",
+                                         imputation_method="simple")
       
       
       test_fun(paste0("Variable importance can be computed for ", outcome_type, " with the ", vimp_method, " using a one-feature data set."), {
@@ -1180,12 +1180,12 @@ test_all_metrics <- function(metrics,
       #####Full data set########################################################
       
       # Train the model.
-      model <- suppressWarnings(train(data=full_data,
-                                      cluster_method="none",
-                                      imputation_method="simple",
-                                      hyperparameter_list=hyperparameters,
-                                      learner="glm",
-                                      time_max=1832))
+      model <- suppressWarnings(test_train(data=full_data,
+                                           cluster_method="none",
+                                           imputation_method="simple",
+                                           hyperparameter_list=hyperparameters,
+                                           learner="glm",
+                                           time_max=1832))
       
       # Create metric object
       metric_object <- as_metric(metric=metric,
@@ -1512,12 +1512,12 @@ test_all_metrics <- function(metrics,
       
       #####One-feature data set#################################################
       # Train the model.
-      model <- suppressWarnings(train(data=one_feature_data,
-                                      cluster_method="none",
-                                      imputation_method="simple",
-                                      hyperparameter_list=hyperparameters,
-                                      learner="glm",
-                                      time_max=1832))
+      model <- suppressWarnings(test_train(data=one_feature_data,
+                                           cluster_method="none",
+                                           imputation_method="simple",
+                                           hyperparameter_list=hyperparameters,
+                                           learner="glm",
+                                           time_max=1832))
       
       # Create metric object
       metric_object <- as_metric(metric=metric,
@@ -1686,12 +1686,12 @@ test_all_metrics <- function(metrics,
       
       #####Bad data-set#########################################################
       # Train the model.
-      model <- suppressWarnings(train(data=bad_data,
-                                      cluster_method="none",
-                                      imputation_method="simple",
-                                      hyperparameter_list=hyperparameters,
-                                      learner="glm",
-                                      time_max=1832))
+      model <- suppressWarnings(test_train(data=bad_data,
+                                           cluster_method="none",
+                                           imputation_method="simple",
+                                           hyperparameter_list=hyperparameters,
+                                           learner="glm",
+                                           time_max=1832))
       
       # Create metric object
       metric_object <- as_metric(metric=metric,
@@ -1809,7 +1809,7 @@ test_hyperparameter_optimisation <- function(vimp_methods=NULL,
   
   # Iterate over the outcome type.
   for(outcome_type in outcome_type_available){
-
+    
     # Multi-feature data sets.
     full_data <- test.create_good_data_set(outcome_type)
     identical_sample_data <- test.create_all_identical_data_set(outcome_type)
@@ -1820,7 +1820,7 @@ test_hyperparameter_optimisation <- function(vimp_methods=NULL,
     one_feature_data <- test.create_one_feature_data_set(outcome_type)
     one_feature_one_sample_data <- test.create_one_feature_one_sample_data_set(outcome_type)
     one_feature_invariant_data <- test.create_one_feature_invariant_data_set(outcome_type)
-
+    
     # Set exceptions per outcome type.
     .always_available <- always_available
     if(is.character(.always_available)) .always_available <- any(.always_available == outcome_type)
@@ -1870,7 +1870,7 @@ test_hyperparameter_optimisation <- function(vimp_methods=NULL,
                                         "is_vimp"=is_vimp,
                                         "verbose"=verbose),
                                    dots))
-
+      
       # Test that hyperparameters were set.
       test_fun(paste0("1. Hyperparameters for the ", current_method,
                       ifelse(is_vimp, " variable importance method", " learner"), " and ",
@@ -2340,7 +2340,7 @@ test_plots <- function(plot_function,
   
   # Iterate over the outcome type.
   for(outcome_type in c("survival", "binomial", "multinomial", "count", "continuous")){
-  
+    
     # Obtain data.
     full_data <- test.create_good_data_set(outcome_type)
     identical_sample_data <- test.create_all_identical_data_set(outcome_type)
@@ -2383,21 +2383,21 @@ test_plots <- function(plot_function,
     
     
     #####Full data set########################################################
-
+    
     # Train the model.
-    model_full_1 <- suppressWarnings(train(cl=cl,
-                                           data=full_data,
-                                           cluster_method="none",
-                                           imputation_method="simple",
-                                           fs_method="mim",
-                                           hyperparameter_list=hyperparameters,
-                                           learner="lasso",
-                                           time_max=1832,
-                                           create_novelty_detector=create_novelty_detector))
-
+    model_full_1 <- suppressWarnings(test_train(cl=cl,
+                                                data=full_data,
+                                                cluster_method="none",
+                                                imputation_method="simple",
+                                                fs_method="mim",
+                                                hyperparameter_list=hyperparameters,
+                                                learner="lasso",
+                                                time_max=1832,
+                                                create_novelty_detector=create_novelty_detector))
+    
     model_full_2 <- model_full_1
     model_full_2@fs_method <- "mifs"
-
+    
     # Create familiar data objects.
     data_good_full_1 <- as_familiar_data(object=model_full_1,
                                          data=full_data,
@@ -2409,23 +2409,23 @@ test_plots <- function(plot_function,
                                          data_element=data_element,
                                          cl=cl,
                                          ...)
-
+    
     # Create a completely intact dataset.
     test_fun(paste0("1. Plots for ", outcome_type, " outcomes ",
                     ifelse(outcome_type %in% outcome_type_available, "can", "cannot"),
                     " be created for a complete data set."), {
-
+                      
                       object <- list(data_good_full_1, data_good_full_2, data_good_full_1, data_good_full_2)
                       object <- mapply(set_object_name, object, c("development_1", "development_2", "validation_1", "validation_2"))
-
+                      
                       collection <- suppressWarnings(as_familiar_collection(object, familiar_data_names=c("development", "development", "validation", "validation")))
-
+                      
                       plot_list <- do.call(plot_function, args=c(list("object"=collection), plot_args))
                       which_present <- .test_which_plot_present(plot_list)
-
+                      
                       if(outcome_type %in% outcome_type_available){
                         testthat::expect_equal(all(which_present), TRUE)
-
+                        
                       } else {
                         testthat::expect_equal(all(!which_present), TRUE)
                       }
@@ -2625,14 +2625,14 @@ test_plots <- function(plot_function,
     #####One-feature data set###################################################
     
     # Train the model.
-    model_one_1 <- suppressWarnings(train(data=one_feature_data,
-                                          cluster_method="none",
-                                          imputation_method="simple",
-                                          fs_method="mim",
-                                          hyperparameter_list=hyperparameters,
-                                          learner="lasso",
-                                          time_max=1832,
-                                          create_novelty_detector=create_novelty_detector))
+    model_one_1 <- suppressWarnings(test_train(data=one_feature_data,
+                                               cluster_method="none",
+                                               imputation_method="simple",
+                                               fs_method="mim",
+                                               hyperparameter_list=hyperparameters,
+                                               learner="lasso",
+                                               time_max=1832,
+                                               create_novelty_detector=create_novelty_detector))
     
     model_one_2 <- model_one_1
     model_one_2@fs_method <- "mifs"
@@ -2721,35 +2721,35 @@ test_plots <- function(plot_function,
     #####Data set with limited censoring########################################
     if(outcome_type %in% c("survival", "competing_risk")){
       # Train the model.
-      model_cens_1 <- suppressWarnings(train(cl=cl,
-                                             data=no_censoring_data,
-                                             cluster_method="none",
-                                             imputation_method="simple",
-                                             fs_method="mim",
-                                             hyperparameter_list=hyperparameters,
-                                             learner="lasso",
-                                             time_max=1832,
-                                             create_novelty_detector=create_novelty_detector))
+      model_cens_1 <- suppressWarnings(test_train(cl=cl,
+                                                  data=no_censoring_data,
+                                                  cluster_method="none",
+                                                  imputation_method="simple",
+                                                  fs_method="mim",
+                                                  hyperparameter_list=hyperparameters,
+                                                  learner="lasso",
+                                                  time_max=1832,
+                                                  create_novelty_detector=create_novelty_detector))
       
-      model_cens_2 <- suppressWarnings(train(cl=cl,
-                                             data=one_censored_data,
-                                             cluster_method="none",
-                                             imputation_method="simple",
-                                             fs_method="mim",
-                                             hyperparameter_list=hyperparameters,
-                                             learner="lasso",
-                                             time_max=1832,
-                                             create_novelty_detector=create_novelty_detector))
+      model_cens_2 <- suppressWarnings(test_train(cl=cl,
+                                                  data=one_censored_data,
+                                                  cluster_method="none",
+                                                  imputation_method="simple",
+                                                  fs_method="mim",
+                                                  hyperparameter_list=hyperparameters,
+                                                  learner="lasso",
+                                                  time_max=1832,
+                                                  create_novelty_detector=create_novelty_detector))
       
-      model_cens_3 <- suppressWarnings(train(cl=cl,
-                                             data=few_censored_data,
-                                             cluster_method="none",
-                                             imputation_method="simple",
-                                             fs_method="mim",
-                                             hyperparameter_list=hyperparameters,
-                                             learner="lasso",
-                                             time_max=1832,
-                                             create_novelty_detector=create_novelty_detector))
+      model_cens_3 <- suppressWarnings(test_train(cl=cl,
+                                                  data=few_censored_data,
+                                                  cluster_method="none",
+                                                  imputation_method="simple",
+                                                  fs_method="mim",
+                                                  hyperparameter_list=hyperparameters,
+                                                  learner="lasso",
+                                                  time_max=1832,
+                                                  create_novelty_detector=create_novelty_detector))
       
       data_cens_1 <- as_familiar_data(object=model_cens_1, data=no_censoring_data, data_element=data_element, cl=cl, ...)
       data_cens_2 <- as_familiar_data(object=model_cens_2, data=one_censored_data, data_element=data_element, cl=cl, ...)
@@ -2780,15 +2780,15 @@ test_plots <- function(plot_function,
     ##### Model with missing survival predictions ##############################
     if(outcome_type %in% c("survival", "competing_risk")){
       # Train the model.
-      model_failed_predictions <- suppressWarnings(train(cl=cl,
-                                                         data=full_data,
-                                                         cluster_method="none",
-                                                         imputation_method="simple",
-                                                         fs_method="mim",
-                                                         hyperparameter_list=hyperparameters,
-                                                         learner="lasso_test",
-                                                         time_max=1832,
-                                                         create_novelty_detector=create_novelty_detector))
+      model_failed_predictions <- suppressWarnings(test_train(cl=cl,
+                                                              data=full_data,
+                                                              cluster_method="none",
+                                                              imputation_method="simple",
+                                                              fs_method="mim",
+                                                              hyperparameter_list=hyperparameters,
+                                                              learner="lasso_test",
+                                                              time_max=1832,
+                                                              create_novelty_detector=create_novelty_detector))
       
       failed_prediction_data <- as_familiar_data(object=model_failed_predictions, data=full_data, data_element=data_element, cl=cl, ...)
       
@@ -2875,14 +2875,14 @@ test_plot_ordering <- function(plot_function,
                                                   "survival"="cox"))
     
     # Train the lasso model.
-    model_full_lasso_1 <- suppressWarnings(train(data=full_data,
-                                                 cluster_method="none",
-                                                 imputation_method="simple",
-                                                 fs_method="mim",
-                                                 hyperparameter_list=hyperparameters_lasso,
-                                                 learner="lasso",
-                                                 time_max=1832,
-                                                 create_novelty_detector=create_novelty_detector))
+    model_full_lasso_1 <- suppressWarnings(test_train(data=full_data,
+                                                      cluster_method="none",
+                                                      imputation_method="simple",
+                                                      fs_method="mim",
+                                                      hyperparameter_list=hyperparameters_lasso,
+                                                      learner="lasso",
+                                                      time_max=1832,
+                                                      create_novelty_detector=create_novelty_detector))
     
     model_full_lasso_2 <- model_full_lasso_1
     model_full_lasso_2@fs_method <- "mifs"
@@ -2898,14 +2898,14 @@ test_plot_ordering <- function(plot_function,
                                                 "survival"="cox"))
     
     # Train the model.
-    model_full_glm_1 <- suppressWarnings(train(data=full_data,
-                                               cluster_method="none",
-                                               imputation_method="simple",
-                                               fs_method="mim",
-                                               hyperparameter_list=hyperparameters_glm,
-                                               learner="glm",
-                                               time_max=1832,
-                                               create_novelty_detector=create_novelty_detector))
+    model_full_glm_1 <- suppressWarnings(test_train(data=full_data,
+                                                    cluster_method="none",
+                                                    imputation_method="simple",
+                                                    fs_method="mim",
+                                                    hyperparameter_list=hyperparameters_glm,
+                                                    learner="glm",
+                                                    time_max=1832,
+                                                    create_novelty_detector=create_novelty_detector))
     
     model_full_glm_2 <- model_full_glm_1
     model_full_glm_2@fs_method <- "mifs"
@@ -2922,25 +2922,25 @@ test_plot_ordering <- function(plot_function,
     
     # Create a test dataset with multiple components
     test_fun(paste0("Plots for ", outcome_type, " outcomes can be created."), {
-                      
-                      object <- list(data_good_full_lasso_1, data_empty_lasso_2, data_good_full_lasso_1, data_good_full_lasso_2,
-                                     data_good_full_glm_1, data_good_full_glm_2, data_empty_glm_1, data_good_full_glm_2)
-                      object <- mapply(set_object_name, object, c("development_lasso_1", "development_lasso_2", "validation_lasso_1", "validation_lasso_2",
-                                                                  "development_glm_1", "development_glm_2", "validation_glm_1", "validation_glm_2"))
-                      
-                      collection <- suppressWarnings(as_familiar_collection(object, familiar_data_names=c("development", "development", "validation", "validation",
-                                                                                                          "development", "development", "validation", "validation")))
-                      
-                      plot_list <- do.call(plot_function, args=c(list("object"=collection), plot_args))
-                      which_present <- .test_which_plot_present(plot_list)
-                      
-                      if(outcome_type %in% outcome_type_available){
-                        testthat::expect_equal(all(which_present), TRUE) 
-                        
-                      } else {
-                        testthat::expect_equal(all(!which_present), TRUE)
-                      }
-                    })
+      
+      object <- list(data_good_full_lasso_1, data_empty_lasso_2, data_good_full_lasso_1, data_good_full_lasso_2,
+                     data_good_full_glm_1, data_good_full_glm_2, data_empty_glm_1, data_good_full_glm_2)
+      object <- mapply(set_object_name, object, c("development_lasso_1", "development_lasso_2", "validation_lasso_1", "validation_lasso_2",
+                                                  "development_glm_1", "development_glm_2", "validation_glm_1", "validation_glm_2"))
+      
+      collection <- suppressWarnings(as_familiar_collection(object, familiar_data_names=c("development", "development", "validation", "validation",
+                                                                                          "development", "development", "validation", "validation")))
+      
+      plot_list <- do.call(plot_function, args=c(list("object"=collection), plot_args))
+      which_present <- .test_which_plot_present(plot_list)
+      
+      if(outcome_type %in% outcome_type_available){
+        testthat::expect_equal(all(which_present), TRUE) 
+        
+      } else {
+        testthat::expect_equal(all(!which_present), TRUE)
+      }
+    })
   }
 }
 
@@ -2963,7 +2963,7 @@ test_export <- function(export_function,
   
   if(debug){
     test_fun <- debug_test_that
-
+    
   } else {
     test_fun <- testthat::test_that
   }
@@ -3037,15 +3037,15 @@ test_export <- function(export_function,
     
     if(n_models == 1){
       # Train the model.
-      model_full_1 <- suppressWarnings(train(cl=cl,
-                                             data=full_data,
-                                             cluster_method="none",
-                                             imputation_method="simple",
-                                             fs_method="mim",
-                                             hyperparameter_list=hyperparameters,
-                                             learner="lasso",
-                                             time_max=1832,
-                                             create_novelty_detector=create_novelty_detector))
+      model_full_1 <- suppressWarnings(test_train(cl=cl,
+                                                  data=full_data,
+                                                  cluster_method="none",
+                                                  imputation_method="simple",
+                                                  fs_method="mim",
+                                                  hyperparameter_list=hyperparameters,
+                                                  learner="lasso",
+                                                  time_max=1832,
+                                                  create_novelty_detector=create_novelty_detector))
       
       model_full_2 <- model_full_1
       model_full_2@fs_method <- "mifs"
@@ -3056,16 +3056,16 @@ test_export <- function(export_function,
       model_full_2 <- list()
       
       for(ii in seq_len(n_models)){
-        temp_model_1 <- suppressWarnings(train(cl=cl,
-                                               data=full_data,
-                                               cluster_method="none",
-                                               imputation_method="simple",
-                                               fs_method="mim",
-                                               hyperparameter_list=hyperparameters,
-                                               learner="lasso",
-                                               time_max=1832,
-                                               create_bootstrap=TRUE,
-                                               create_novelty_detector=create_novelty_detector))
+        temp_model_1 <- suppressWarnings(test_train(cl=cl,
+                                                    data=full_data,
+                                                    cluster_method="none",
+                                                    imputation_method="simple",
+                                                    fs_method="mim",
+                                                    hyperparameter_list=hyperparameters,
+                                                    learner="lasso",
+                                                    time_max=1832,
+                                                    create_bootstrap=TRUE,
+                                                    create_novelty_detector=create_novelty_detector))
         
         temp_model_2 <- temp_model_1
         temp_model_2@fs_method <- "mifs"
@@ -3101,7 +3101,7 @@ test_export <- function(export_function,
                       
                       data_elements <- do.call(export_function, args=c(list("object"=collection), export_args))
                       which_present <- .test_which_data_element_present(data_elements, outcome_type=outcome_type)
-
+                      
                       if(outcome_type %in% outcome_type_available){
                         testthat::expect_equal(all(which_present), TRUE) 
                         
@@ -3317,15 +3317,15 @@ test_export <- function(export_function,
     #####One-feature data set###################################################
     
     # Train the model.
-    model_one_1 <- suppressWarnings(train(cl=cl,
-                                          data=one_feature_data,
-                                          cluster_method="none",
-                                          imputation_method="simple",
-                                          fs_method="mim",
-                                          hyperparameter_list=hyperparameters,
-                                          learner="lasso",
-                                          time_max=1832,
-                                          create_novelty_detector=create_novelty_detector))
+    model_one_1 <- suppressWarnings(test_train(cl=cl,
+                                               data=one_feature_data,
+                                               cluster_method="none",
+                                               imputation_method="simple",
+                                               fs_method="mim",
+                                               hyperparameter_list=hyperparameters,
+                                               learner="lasso",
+                                               time_max=1832,
+                                               create_novelty_detector=create_novelty_detector))
     
     model_one_2 <- model_one_1
     model_one_2@fs_method <- "mifs"
@@ -3359,7 +3359,7 @@ test_export <- function(export_function,
                         
                       } else if(!outcome_type %in% outcome_type_available){
                         testthat::expect_equal(all(!which_present), TRUE)
-
+                        
                       } else {
                         testthat::expect_equal(any(!which_present), TRUE)
                       }
@@ -3420,32 +3420,32 @@ test_export <- function(export_function,
     #####Data set with limited censoring########################################
     if(outcome_type %in% c("survival", "competing_risk")){
       # Train the model.
-      model_cens_1 <- suppressWarnings(train(cl=cl,
-                                             data=no_censoring_data,
-                                             cluster_method="none",
-                                             imputation_method="simple",
-                                             fs_method="mim",
-                                             hyperparameter_list=hyperparameters,
-                                             learner="lasso",
-                                             time_max=1832))
+      model_cens_1 <- suppressWarnings(test_train(cl=cl,
+                                                  data=no_censoring_data,
+                                                  cluster_method="none",
+                                                  imputation_method="simple",
+                                                  fs_method="mim",
+                                                  hyperparameter_list=hyperparameters,
+                                                  learner="lasso",
+                                                  time_max=1832))
       
-      model_cens_2 <- suppressWarnings(train(cl=cl,
-                                             data=one_censored_data,
-                                             cluster_method="none",
-                                             imputation_method="simple",
-                                             fs_method="mim",
-                                             hyperparameter_list=hyperparameters,
-                                             learner="lasso",
-                                             time_max=1832))
+      model_cens_2 <- suppressWarnings(test_train(cl=cl,
+                                                  data=one_censored_data,
+                                                  cluster_method="none",
+                                                  imputation_method="simple",
+                                                  fs_method="mim",
+                                                  hyperparameter_list=hyperparameters,
+                                                  learner="lasso",
+                                                  time_max=1832))
       
-      model_cens_3 <- suppressWarnings(train(cl=cl,
-                                             data=few_censored_data,
-                                             cluster_method="none",
-                                             imputation_method="simple",
-                                             fs_method="mim",
-                                             hyperparameter_list=hyperparameters,
-                                             learner="lasso",
-                                             time_max=1832))
+      model_cens_3 <- suppressWarnings(test_train(cl=cl,
+                                                  data=few_censored_data,
+                                                  cluster_method="none",
+                                                  imputation_method="simple",
+                                                  fs_method="mim",
+                                                  hyperparameter_list=hyperparameters,
+                                                  learner="lasso",
+                                                  time_max=1832))
       
       data_cens_1 <- as_familiar_data(object=model_cens_1, data=no_censoring_data, data_element=data_element, cl=cl, ...)
       data_cens_2 <- as_familiar_data(object=model_cens_2, data=one_censored_data, data_element=data_element, cl=cl, ...)
@@ -3479,15 +3479,15 @@ test_export <- function(export_function,
     ##### Model with missing survival predictions ##############################
     if(outcome_type %in% c("survival", "competing_risk")){
       # Train the model.
-      model_failed_predictions <- suppressWarnings(train(cl=cl,
-                                                         data=full_data,
-                                                         cluster_method="none",
-                                                         imputation_method="simple",
-                                                         fs_method="mim",
-                                                         hyperparameter_list=hyperparameters,
-                                                         learner="lasso_test",
-                                                         time_max=1832,
-                                                         create_novelty_detector=create_novelty_detector))
+      model_failed_predictions <- suppressWarnings(test_train(cl=cl,
+                                                              data=full_data,
+                                                              cluster_method="none",
+                                                              imputation_method="simple",
+                                                              fs_method="mim",
+                                                              hyperparameter_list=hyperparameters,
+                                                              learner="lasso_test",
+                                                              time_max=1832,
+                                                              create_novelty_detector=create_novelty_detector))
       
       failed_prediction_data <- as_familiar_data(object=model_failed_predictions, data=full_data, data_element=data_element, cl=cl, ...)
       
@@ -3558,17 +3558,17 @@ test_export_specific <- function(export_function,
                                             "binomial"="binomial",
                                             "multinomial"="multinomial",
                                             "survival"="cox"))
-
+    
     if(n_models == 1){
       # Train the model.
-      model_full_1 <- suppressWarnings(train(data=main_data,
-                                             cluster_method="none",
-                                             imputation_method="simple",
-                                             fs_method="mim",
-                                             hyperparameter_list=hyperparameters,
-                                             learner="lasso",
-                                             time_max=1832,
-                                             create_novelty_detector=create_novelty_detector))
+      model_full_1 <- suppressWarnings(test_train(data=main_data,
+                                                  cluster_method="none",
+                                                  imputation_method="simple",
+                                                  fs_method="mim",
+                                                  hyperparameter_list=hyperparameters,
+                                                  learner="lasso",
+                                                  time_max=1832,
+                                                  create_novelty_detector=create_novelty_detector))
       
       model_full_2 <- model_full_1
       model_full_2@fs_method <- "mifs"
@@ -3579,15 +3579,15 @@ test_export_specific <- function(export_function,
       model_full_2 <- list()
       
       for(ii in seq_len(n_models)){
-        temp_model_1 <- suppressWarnings(train(data=main_data,
-                                               cluster_method="none",
-                                               imputation_method="simple",
-                                               fs_method="mim",
-                                               hyperparameter_list=hyperparameters,
-                                               learner="lasso",
-                                               time_max=1832,
-                                               create_bootstrap=TRUE,
-                                               create_novelty_detector=create_novelty_detector))
+        temp_model_1 <- suppressWarnings(test_train(data=main_data,
+                                                    cluster_method="none",
+                                                    imputation_method="simple",
+                                                    fs_method="mim",
+                                                    hyperparameter_list=hyperparameters,
+                                                    learner="lasso",
+                                                    time_max=1832,
+                                                    create_bootstrap=TRUE,
+                                                    create_novelty_detector=create_novelty_detector))
         
         temp_model_2 <- temp_model_1
         temp_model_2@fs_method <- "mifs"
@@ -3646,10 +3646,10 @@ integrated_test <- function(..., debug=FALSE){
   for(outcome_type in c("count", "continuous", "binomial", "multinomial", "survival")){
     
     test_fun(paste0("Experiment for a good dataset with ", outcome_type, " outcome functions correctly."), {
-
+      
       # Create datasets
       full_data <- test.create_good_data_set(outcome_type)
-
+      
       # Parse hyperparameter list
       hyperparameters <- list("sign_size"=get_n_features(full_data),
                               "family"=switch(outcome_type,
@@ -3658,15 +3658,15 @@ integrated_test <- function(..., debug=FALSE){
                                               "binomial"="binomial",
                                               "multinomial"="multinomial",
                                               "survival"="cox"))
-
+      
       output <- suppress_fun(summon_familiar(data=full_data,
                                              learner="lasso",
                                              hyperparameter=list("lasso"=hyperparameters),
                                              ...))
-
+      
       testthat::expect_equal(is.null(output), FALSE)
     })
-
+    
     
     test_fun(paste0("Experiment for a bad dataset with ", outcome_type, " outcome functions correctly."), {
       
@@ -3824,7 +3824,7 @@ debug_test_that <- function(desc, code){
   required_features <- find_required_features(features=get_available_features(feature_info_list=feature_info_list),
                                               feature_info_list=feature_info_list)
   
- 
+  
   if(is_vimp){
     # Create the variable importance met hod object or familiar model object
     # to compute variable importance with.

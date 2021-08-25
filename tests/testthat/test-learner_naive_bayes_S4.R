@@ -20,20 +20,20 @@ good_data <- familiar:::test.create_good_data_set("binomial")
 wide_data <- familiar:::test.create_wide_data_set("binomial")
 
 # Train the model using the good dataset.
-good_model <- familiar:::train(data=good_data,
-                               cluster_method="none",
-                               imputation_method="simple",
-                               hyperparameter_list=list("sign_size"=familiar:::get_n_features(good_data),
-                                                        "laplace"=0.0),
-                               learner="naive_bayes")
+good_model <- familiar:::test_train(data=good_data,
+                                    cluster_method="none",
+                                    imputation_method="simple",
+                                    hyperparameter_list=list("sign_size"=familiar:::get_n_features(good_data),
+                                                             "laplace"=0.0),
+                                    learner="naive_bayes")
 
 # Train the model using wide data.
-wide_model <- familiar:::train(data=wide_data,
-                               cluster_method="none",
-                               imputation_method="simple",
-                               hyperparameter_list=list("sign_size"=familiar:::get_n_features(wide_data),
-                                                        "laplace"=0.0),
-                               learner="naive_bayes")
+wide_model <- familiar:::test_train(data=wide_data,
+                                    cluster_method="none",
+                                    imputation_method="simple",
+                                    hyperparameter_list=list("sign_size"=familiar:::get_n_features(wide_data),
+                                                             "laplace"=0.0),
+                                    learner="naive_bayes")
 
 testthat::test_that("Naive Bayes model trained correctly", {
   # Model trained
@@ -71,20 +71,20 @@ good_data <- familiar:::test.create_good_data_set("multinomial")
 wide_data <- familiar:::test.create_wide_data_set("multinomial")
 
 # Train the model using the good dataset.
-good_model <- suppressWarnings(familiar:::train(data=good_data,
-                                                cluster_method="none",
-                                                imputation_method="simple",
-                                                hyperparameter_list=list("sign_size"=familiar:::get_n_features(good_data),
-                                                                         "laplace"=0.0),
-                                                learner="naive_bayes"))
+good_model <- suppressWarnings(familiar:::test_train(data=good_data,
+                                                     cluster_method="none",
+                                                     imputation_method="simple",
+                                                     hyperparameter_list=list("sign_size"=familiar:::get_n_features(good_data),
+                                                                              "laplace"=0.0),
+                                                     learner="naive_bayes"))
 
 # Train the model using wide data.
-wide_model <- familiar:::train(data=wide_data,
-                               cluster_method="none",
-                               imputation_method="simple",
-                               hyperparameter_list=list("sign_size"=familiar:::get_n_features(wide_data),
-                                                        "laplace"=0.0),
-                               learner="naive_bayes")
+wide_model <- familiar:::test_train(data=wide_data,
+                                    cluster_method="none",
+                                    imputation_method="simple",
+                                    hyperparameter_list=list("sign_size"=familiar:::get_n_features(wide_data),
+                                                             "laplace"=0.0),
+                                    learner="naive_bayes")
 
 testthat::test_that("Naive Bayes model trained correctly", {
   # Model trained

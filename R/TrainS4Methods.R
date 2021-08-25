@@ -2,22 +2,25 @@
 #' @include FamiliarS4Classes.R
 NULL
 
-setMethod("train", signature(data="data.table"),
+
+setGeneric("test_train", function(data, ...) standardGeneric("test_train"))
+
+setMethod("test_train", signature(data="data.table"),
           function(data, learner, hyperparameter_list=list(), create_bootstrap=FALSE, ...){
             
             # Convert data to dataObject.
             data <- do.call(as_data_object, args=c(list("data"=data),
                                                    list(...)))
             
-            return(do.call(train, args=c(list("data"=data,
-                                              "learner"=learner,
-                                              "hyperparameter_list"=hyperparameter_list,
-                                              "create_bootstrap"=create_bootstrap),
-                                         list(...))))
+            return(do.call(test_train, args=c(list("data"=data,
+                                                   "learner"=learner,
+                                                   "hyperparameter_list"=hyperparameter_list,
+                                                   "create_bootstrap"=create_bootstrap),
+                                              list(...))))
           })
 
 
-setMethod("train", signature(data="dataObject"),
+setMethod("test_train", signature(data="dataObject"),
           function(data,
                    learner,
                    hyperparameter_list=list(),

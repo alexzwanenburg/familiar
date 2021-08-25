@@ -67,24 +67,24 @@ good_data <- familiar:::test.create_good_data_set("count")
 wide_data <- familiar:::test.create_wide_data_set("count")
 
 # Train the model using the good dataset.
-good_model <- familiar:::train(data=good_data,
-                               cluster_method="none",
-                               imputation_method="simple",
-                               hyperparameter_list=list("sign_size"=familiar:::get_n_features(good_data),
-                                                        "c"=-1.0,
-                                                        "epsilon"=0.0,
-                                                        "gamma"=0.0),
-                               learner="svm_eps_radial")
+good_model <- familiar:::test_train(data=good_data,
+                                    cluster_method="none",
+                                    imputation_method="simple",
+                                    hyperparameter_list=list("sign_size"=familiar:::get_n_features(good_data),
+                                                             "c"=-1.0,
+                                                             "epsilon"=0.0,
+                                                             "gamma"=0.0),
+                                    learner="svm_eps_radial")
 
 # Train the model using wide data.
-wide_model <- familiar:::train(data=wide_data,
-                               cluster_method="none",
-                               imputation_method="simple",
-                               hyperparameter_list=list("sign_size"=familiar:::get_n_features(good_data),
-                                                        "c"=-1.0,
-                                                        "epsilon"=0.0,
-                                                        "gamma"=0.0),
-                               learner="svm_eps_radial")
+wide_model <- familiar:::test_train(data=wide_data,
+                                    cluster_method="none",
+                                    imputation_method="simple",
+                                    hyperparameter_list=list("sign_size"=familiar:::get_n_features(good_data),
+                                                             "c"=-1.0,
+                                                             "epsilon"=0.0,
+                                                             "gamma"=0.0),
+                                    learner="svm_eps_radial")
 
 testthat::test_that("SVM model trained correctly", {
   # Model trained
@@ -122,24 +122,24 @@ good_data <- familiar:::test.create_good_data_set("continuous")
 wide_data <- familiar:::test.create_wide_data_set("continuous")
 
 # Train the model using the good dataset.
-good_model <- familiar:::train(data=good_data,
-                               cluster_method="none",
-                               imputation_method="simple",
-                               hyperparameter_list=list("sign_size"=familiar:::get_n_features(good_data),
-                                                        "c"=-1.0,
-                                                        "epsilon"=0.0,
-                                                        "gamma"=1.0),
-                               learner="svm_eps_radial")
+good_model <- familiar:::test_train(data=good_data,
+                                    cluster_method="none",
+                                    imputation_method="simple",
+                                    hyperparameter_list=list("sign_size"=familiar:::get_n_features(good_data),
+                                                             "c"=-1.0,
+                                                             "epsilon"=0.0,
+                                                             "gamma"=1.0),
+                                    learner="svm_eps_radial")
 
 # Train the model using wide data.
-wide_model <- familiar:::train(data=wide_data,
-                               cluster_method="none",
-                               imputation_method="simple",
-                               hyperparameter_list=list("sign_size"=familiar:::get_n_features(good_data),
-                                                        "c"=-1.0,
-                                                        "epsilon"=0.0,
-                                                        "gamma"=1.0),
-                               learner="svm_eps_radial")
+wide_model <- familiar:::test_train(data=wide_data,
+                                    cluster_method="none",
+                                    imputation_method="simple",
+                                    hyperparameter_list=list("sign_size"=familiar:::get_n_features(good_data),
+                                                             "c"=-1.0,
+                                                             "epsilon"=0.0,
+                                                             "gamma"=1.0),
+                                    learner="svm_eps_radial")
 
 testthat::test_that("SVM model trained correctly", {
   # Model trained
@@ -176,22 +176,22 @@ good_data <- familiar:::test.create_good_data_set("binomial")
 wide_data <- familiar:::test.create_wide_data_set("binomial")
 
 # Train the model using the good dataset.
-good_model <- familiar:::train(data=good_data,
-                               cluster_method="none",
-                               imputation_method="simple",
-                               hyperparameter_list=list("sign_size"=familiar:::get_n_features(good_data),
-                                                        "c"=-1.0,
-                                                        "gamma"=1.0),
-                               learner="svm_c_radial")
+good_model <- familiar:::test_train(data=good_data,
+                                    cluster_method="none",
+                                    imputation_method="simple",
+                                    hyperparameter_list=list("sign_size"=familiar:::get_n_features(good_data),
+                                                             "c"=-1.0,
+                                                             "gamma"=1.0),
+                                    learner="svm_c_radial")
 
 # Train the model using wide data.
-wide_model <- familiar:::train(data=good_data,
-                               cluster_method="none",
-                               imputation_method="simple",
-                               hyperparameter_list=list("sign_size"=familiar:::get_n_features(good_data),
-                                                        "c"=-1.0,
-                                                        "gamma"=1.0),
-                               learner="svm_c_radial")
+wide_model <- familiar:::test_train(data=good_data,
+                                    cluster_method="none",
+                                    imputation_method="simple",
+                                    hyperparameter_list=list("sign_size"=familiar:::get_n_features(good_data),
+                                                             "c"=-1.0,
+                                                             "gamma"=1.0),
+                                    learner="svm_c_radial")
 
 testthat::test_that("SVM model trained correctly", {
   # Model trained
@@ -229,22 +229,22 @@ good_data <- familiar:::test.create_good_data_set("multinomial")
 wide_data <- familiar:::test.create_wide_data_set("multinomial")
 
 # Train the model using the good dataset.
-good_model <- familiar:::train(data=good_data,
-                               cluster_method="none",
-                               imputation_method="simple",
-                               hyperparameter_list=list("sign_size"=familiar:::get_n_features(good_data),
-                                                        "c"=-1.0,
-                                                        "gamma"=1.0),
-                               learner="svm_c_radial")
+good_model <- familiar:::test_train(data=good_data,
+                                    cluster_method="none",
+                                    imputation_method="simple",
+                                    hyperparameter_list=list("sign_size"=familiar:::get_n_features(good_data),
+                                                             "c"=-1.0,
+                                                             "gamma"=1.0),
+                                    learner="svm_c_radial")
 
 # Train the model using wide data.
-wide_model <- familiar:::train(data=good_data,
-                               cluster_method="none",
-                               imputation_method="simple",
-                               hyperparameter_list=list("sign_size"=familiar:::get_n_features(good_data),
-                                                        "c"=-1.0,
-                                                        "gamma"=1.0),
-                               learner="svm_c_radial")
+wide_model <- familiar:::test_train(data=good_data,
+                                    cluster_method="none",
+                                    imputation_method="simple",
+                                    hyperparameter_list=list("sign_size"=familiar:::get_n_features(good_data),
+                                                             "c"=-1.0,
+                                                             "gamma"=1.0),
+                                    learner="svm_c_radial")
 
 testthat::test_that("SVM model trained correctly", {
   # Model trained
