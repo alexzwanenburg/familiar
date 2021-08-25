@@ -17,6 +17,9 @@ setMethod(".train", signature(object="familiarModel", data="dataObject"),
                                        is_pre_processed = is_pre_processed,
                                        stop_at="clustering")
             
+            # Work only with data that has known outcomes when training.
+            data <- filter_missing_outcome(data=data)
+            
             # Set the training flag
             can_train <- TRUE
             

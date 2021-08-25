@@ -34,6 +34,10 @@ setMethod(".vimp", signature(object="familiarVimpMethod"),
                                        is_pre_processed=is_pre_processed,
                                        stop_at="clustering")
             
+            # Work only with data that has known outcomes when determining
+            # variable importance.
+            data <- filter_missing_outcome(data=data)
+            
             # Check again if data is absent because data may not have been
             # loaded in the check above.
             if(is_empty(data)) return(get_placeholder_vimp_table())
@@ -77,6 +81,10 @@ setMethod(".vimp", signature(object="familiarModel"),
                                        data=data,
                                        is_pre_processed=is_pre_processed,
                                        stop_at="clustering")
+            
+            # Work only with data that has known outcomes when determining
+            # variable importance.
+            data <- filter_missing_outcome(data=data)
             
             # Check again if data is absent because data may not have been
             # loaded in the check above.

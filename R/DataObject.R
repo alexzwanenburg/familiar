@@ -967,25 +967,23 @@ setMethod("filter_missing_outcome", signature(data="dataObject"),
           function(data, is_validation=FALSE){
             
             # Check if data is empty
-            if(is_empty(data)){
-              return(data)
-            }
+            if(is_empty(data)) return(data)
             
             # Change behaviour by outcome_type
             if(data@outcome_type == "survival"){
               outcome_is_valid <- is_valid_data(data@data[["outcome_time"]]) & is_valid_data(data@data[["outcome_event"]])
+              
             } else if(data@outcome_type %in% c("binomial", "multinomial", "continuous", "count")) {
               outcome_is_valid <- is_valid_data(data@data[["outcome"]])
+              
             } else {
               stop(paste0("Implementation for outcome_type ", data@outcome_type, " is missing."))
             }
             
             if(is_validation){
-              # Check whether all outcome information is missing for validation. It may be a prospective study.
-              # In that case, keep all data.
-              if(all(!outcome_is_valid)){
-                outcome_is_valid <- !outcome_is_valid
-              }
+              # Check whether all outcome information is missing for validation.
+              # It may be a prospective study. In that case, keep all data.
+              if(all(!outcome_is_valid)) outcome_is_valid <- !outcome_is_valid
             }
             
             # Keep only data for which the outcome exists
