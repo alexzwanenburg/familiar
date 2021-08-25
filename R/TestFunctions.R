@@ -63,6 +63,11 @@ test_all_learners_train_predict_vimp <- function(learners,
     empty_data <- test.create_empty_data_set(outcome_type)
     bad_data <- test.create_bad_data_set(outcome_type)
     
+    # Prospective datasets with (partially) missing outcomes
+    fully_prospective_data <- test.create_prospective_data_set(outcome_type)
+    mostly_prospective_data <- test.create_mostly_prospective_data_set(outcome_type)
+    partially_prospective_data <- test.create_partially_prospective_data_set(outcome_type)
+    
     # Iterate over learners.
     for(learner in learners){
       
@@ -90,16 +95,16 @@ test_all_learners_train_predict_vimp <- function(learners,
       # list of hyperparameters.
       hyperparameters <- hyperparameters[intersect(learner_hyperparameters, names(hyperparameters))]
       
-      #####Full data set########################################################
+      #####Full dataset#########################################################
       
       # Train the model.
-      model <- suppressWarnings(train(data=full_data,
-                                      cluster_method="none",
-                                      imputation_method="simple",
-                                      hyperparameter_list=hyperparameters,
-                                      learner=learner,
-                                      time_max=1832,
-                                      trim_model = FALSE))
+      model <- suppressWarnings(test_train(data=full_data,
+                                           cluster_method="none",
+                                           imputation_method="simple",
+                                           hyperparameter_list=hyperparameters,
+                                           learner=learner,
+                                           time_max=1832,
+                                           trim_model = FALSE))
       
       # Create a trimmed model.
       trimmed_model <- trim_model(model)
@@ -115,7 +120,7 @@ test_all_learners_train_predict_vimp <- function(learners,
       })
       
       # Test that models can be created.
-      test_fun(paste0("Model for ", outcome_type, " can be created using ", learner, " using a complete data set."), {
+      test_fun(paste0("Model for ", outcome_type, " can be created using ", learner, " using a complete dataset."), {
         
         # Test that the model was successfully created.
         testthat::expect_equal(model_is_trained(model),
@@ -128,7 +133,7 @@ test_all_learners_train_predict_vimp <- function(learners,
       })
       
       # Test that models can be used to predict the outcome.
-      test_fun(paste0("Sample predictions for ", outcome_type, " can be made using ", learner, " for a complete data set."), {
+      test_fun(paste0("Sample predictions for ", outcome_type, " can be made using ", learner, " for a complete dataset."), {
         # Expect predictions to be made.
         prediction_table <- suppressWarnings(.predict(model, data=full_data))
         
@@ -154,7 +159,7 @@ test_all_learners_train_predict_vimp <- function(learners,
       })
       
       # Test that models can be used to predict the outcome.
-      test_fun(paste0("Sample predictions for ", outcome_type, " can be made using ", learner, " for a one-sample data set."), {
+      test_fun(paste0("Sample predictions for ", outcome_type, " can be made using ", learner, " for a one-sample dataset."), {
         # Expect predictions to be made.
         prediction_table <- suppressWarnings(.predict(model, data=full_one_sample_data))
         
@@ -180,7 +185,7 @@ test_all_learners_train_predict_vimp <- function(learners,
       })
       
       # Test that models cannot predict for empty datasets.
-      test_fun(paste0("Sample predictions for ", outcome_type, " can not be made using ", learner, " for an empty data set."), {
+      test_fun(paste0("Sample predictions for ", outcome_type, " can not be made using ", learner, " for an empty dataset."), {
         # Expect predictions to be made.
         prediction_table <- suppressWarnings(.predict(model, data=empty_data))
         
@@ -188,9 +193,10 @@ test_all_learners_train_predict_vimp <- function(learners,
         testthat::expect_equal(any_predictions_valid(prediction_table, outcome_type), FALSE)
       })
       
+      
       # Test that models can be used to predict survival probabilities.
       if(outcome_type %in% c("survival", "competing_risk")){
-        test_fun(paste0("Sample survival predictions for ", outcome_type, " can be made using ", learner, " for a complete data set."), {
+        test_fun(paste0("Sample survival predictions for ", outcome_type, " can be made using ", learner, " for a complete dataset."), {
           
           # Expect predictions to be made.
           prediction_table <- suppressWarnings(.predict(model,
@@ -232,7 +238,7 @@ test_all_learners_train_predict_vimp <- function(learners,
                                  ignore_attr=TRUE)
         })
         
-        test_fun(paste0("Sample survival predictions for ", outcome_type, " can be made using ", learner, " for a one-sample data set."), {
+        test_fun(paste0("Sample survival predictions for ", outcome_type, " can be made using ", learner, " for a one-sample dataset."), {
           
           # Expect predictions to be made.
           prediction_table <- suppressWarnings(.predict(model,
@@ -277,7 +283,7 @@ test_all_learners_train_predict_vimp <- function(learners,
       }
       
       # Test that the model has variable importance.
-      test_fun(paste0("Model has variable importance for ", outcome_type, " and ", learner, " for the complete data set."), {
+      test_fun(paste0("Model has variable importance for ", outcome_type, " and ", learner, " for the complete dataset."), {
         # Extract the variable importance table.
         vimp_table <- suppressWarnings(..vimp(model, data=full_data))
         
@@ -307,19 +313,19 @@ test_all_learners_train_predict_vimp <- function(learners,
       
       
       
-      #####Bootstrapped data set################################################
+      #####Bootstrapped dataset#################################################
       # Train the model.
-      model <- suppressWarnings(train(data=full_data,
-                                      cluster_method="none",
-                                      imputation_method="simple",
-                                      hyperparameter_list=hyperparameters,
-                                      learner=learner,
-                                      time_max=1832,
-                                      create_bootstrap=TRUE,
-                                      trim_model=FALSE))
+      model <- suppressWarnings(test_train(data=full_data,
+                                           cluster_method="none",
+                                           imputation_method="simple",
+                                           hyperparameter_list=hyperparameters,
+                                           learner=learner,
+                                           time_max=1832,
+                                           create_bootstrap=TRUE,
+                                           trim_model=FALSE))
       
       # Test that models can be created.
-      test_fun(paste0("Model for ", outcome_type, " can be created using ", learner, " using a complete data set."), {
+      test_fun(paste0("Model for ", outcome_type, " can be created using ", learner, " using a complete dataset."), {
         
         # Test that the model was successfully created.
         testthat::expect_equal(model_is_trained(model),
@@ -333,20 +339,20 @@ test_all_learners_train_predict_vimp <- function(learners,
       
       
       
-      #####One-feature data set#################################################
+      #####One-feature dataset##################################################
       # Train the model.
-      model <- suppressWarnings(train(data=one_feature_data,
-                                      cluster_method="none",
-                                      imputation_method="simple",
-                                      hyperparameter_list=hyperparameters,
-                                      learner=learner,
-                                      time_max=1832))
+      model <- suppressWarnings(test_train(data=one_feature_data,
+                                           cluster_method="none",
+                                           imputation_method="simple",
+                                           hyperparameter_list=hyperparameters,
+                                           learner=learner,
+                                           time_max=1832))
       
       # Create a trimmed model.
       trimmed_model <- trim_model(model)
       
       # Test that models can be created.
-      test_fun(paste0("Model for ", outcome_type, " can be created using ", learner, " using a one-feature data set."), {
+      test_fun(paste0("Model for ", outcome_type, " can be created using ", learner, " using a one-feature dataset."), {
         
         # Test that the model was successfully created.
         testthat::expect_equal(model_is_trained(model),
@@ -359,7 +365,7 @@ test_all_learners_train_predict_vimp <- function(learners,
       })
       
       # Test that models can be used to predict the outcome.
-      test_fun(paste0("Sample predictions for ", outcome_type, " can be made using ", learner, " for a one-feature data set."), {
+      test_fun(paste0("Sample predictions for ", outcome_type, " can be made using ", learner, " for a one-feature dataset."), {
         # Expect predictions to be made.
         prediction_table <- suppressWarnings(.predict(model,
                                                       data=one_feature_data))
@@ -386,7 +392,7 @@ test_all_learners_train_predict_vimp <- function(learners,
       })
       
       # Test that models can be used to predict the outcome.
-      test_fun(paste0("Sample predictions for ", outcome_type, " can be made using ", learner, " for a one-feature, one-sample data set."), {
+      test_fun(paste0("Sample predictions for ", outcome_type, " can be made using ", learner, " for a one-feature, one-sample dataset."), {
         # Expect predictions to be made.
         prediction_table <- suppressWarnings(.predict(model,
                                                       data=one_feature_one_sample_data))
@@ -414,7 +420,7 @@ test_all_learners_train_predict_vimp <- function(learners,
       
       # Test that models can be used to predict survival probabilities.
       if(outcome_type %in% c("survival", "competing_risk")){
-        test_fun(paste0("Sample survival predictions for ", outcome_type, " can be made using ", learner, " for a one-feature data set."), {
+        test_fun(paste0("Sample survival predictions for ", outcome_type, " can be made using ", learner, " for a one-feature dataset."), {
           # Expect predictions to be made.
           prediction_table <- suppressWarnings(.predict(model,
                                                         data=one_feature_data,
@@ -455,7 +461,7 @@ test_all_learners_train_predict_vimp <- function(learners,
           testthat::expect_equal(any_predictions_valid(prediction_table, outcome_type), !learner %in% c(except_train, except_predict))
         })
         
-        test_fun(paste0("Sample survival predictions for ", outcome_type, " can be made using ", learner, " for a one-feature, one-sample data set."), {
+        test_fun(paste0("Sample survival predictions for ", outcome_type, " can be made using ", learner, " for a one-feature, one-sample dataset."), {
           # Expect predictions to be made.
           prediction_table <- suppressWarnings(.predict(model,
                                                         data=one_feature_one_sample_data,
@@ -498,17 +504,17 @@ test_all_learners_train_predict_vimp <- function(learners,
       }
       
       
-      #####Bad data-set#########################################################
+      #####Bad dataset##########################################################
       # Train the model.
-      model <- suppressWarnings(train(data=bad_data,
-                                      cluster_method="none",
-                                      imputation_method="simple",
-                                      hyperparameter_list=hyperparameters,
-                                      learner=learner,
-                                      time_max=1832))
+      model <- suppressWarnings(test_train(data=bad_data,
+                                           cluster_method="none",
+                                           imputation_method="simple",
+                                           hyperparameter_list=hyperparameters,
+                                           learner=learner,
+                                           time_max=1832))
       
       # Test that models can be created.
-      test_fun(paste0("Model for ", outcome_type, " can not be created using ", learner, " using a bad data set."), {
+      test_fun(paste0("Model for ", outcome_type, " can not be created using ", learner, " using a bad dataset."), {
         
         # Test that the model was successfully created.
         testthat::expect_equal(model_is_trained(model), FALSE)
@@ -520,25 +526,25 @@ test_all_learners_train_predict_vimp <- function(learners,
       })
       
       
-      #####No censoring data sets##################################################
+      #####Dataset without censoring data#######################################
       if(outcome_type %in% c("survival", "competing_risk")){
         
         # Set up non-censoring dataset.
         no_censoring_data <- test.create_good_data_no_censoring_set(outcome_type)
         
         # Train the model.
-        model <- suppressWarnings(train(data=no_censoring_data,
-                                        cluster_method="none",
-                                        imputation_method="simple",
-                                        hyperparameter_list=hyperparameters,
-                                        learner=learner,
-                                        time_max=1832))
+        model <- suppressWarnings(test_train(data=no_censoring_data,
+                                             cluster_method="none",
+                                             imputation_method="simple",
+                                             hyperparameter_list=hyperparameters,
+                                             learner=learner,
+                                             time_max=1832))
         
         # Create a trimmed model.
         trimmed_model <- trim_model(model)
         
         # Test that models can be created.
-        test_fun(paste0("Model for ", outcome_type, " can be created using ", learner, " using a data set without censoring."), {
+        test_fun(paste0("Model for ", outcome_type, " can be created using ", learner, " using a dataset without censoring."), {
           
           # Test that the model was successfully created.
           testthat::expect_equal(model_is_trained(model),
@@ -551,7 +557,7 @@ test_all_learners_train_predict_vimp <- function(learners,
         })
         
         # Test that models can be used to predict the outcome.
-        test_fun(paste0("Sample predictions for ", outcome_type, " can be made using ", learner, " for a data set without censoring."), {
+        test_fun(paste0("Sample predictions for ", outcome_type, " can be made using ", learner, " for a dataset without censoring."), {
           # Expect predictions to be made.
           prediction_table <- suppressWarnings(.predict(model,
                                                         data=no_censoring_data))
@@ -571,7 +577,7 @@ test_all_learners_train_predict_vimp <- function(learners,
         
         
         # Test that models can be used to predict survival probabilities.
-        test_fun(paste0("Sample survival predictions for ", outcome_type, " can be made using ", learner, " for a data set without censoring."), {
+        test_fun(paste0("Sample survival predictions for ", outcome_type, " can be made using ", learner, " for a dataset without censoring."), {
           # Expect predictions to be made.
           prediction_table <- suppressWarnings(.predict(model,
                                                         data=no_censoring_data,
@@ -613,25 +619,25 @@ test_all_learners_train_predict_vimp <- function(learners,
         })
       }
       
-      #####Data set with one censored instance#####################################
+      #####Dataset with one censored instance###################################
       if(outcome_type %in% c("survival", "competing_risk")){
         
         # Set up non-censoring dataset.
         one_censoring_data <- test.create_good_data_one_censored_set(outcome_type)
         
         # Train the model.
-        model <- suppressWarnings(train(data=one_censoring_data,
-                                        cluster_method="none",
-                                        imputation_method="simple",
-                                        hyperparameter_list=hyperparameters,
-                                        learner=learner,
-                                        time_max=1832))
+        model <- suppressWarnings(test_train(data=one_censoring_data,
+                                             cluster_method="none",
+                                             imputation_method="simple",
+                                             hyperparameter_list=hyperparameters,
+                                             learner=learner,
+                                             time_max=1832))
         
         # Create a trimmed model.
         trimmed_model <- trim_model(model)
         
         # Test that models can be created.
-        test_fun(paste0("Model for ", outcome_type, " can be created using ", learner, " using a data set with one censored sample."), {
+        test_fun(paste0("Model for ", outcome_type, " can be created using ", learner, " using a dataset with one censored sample."), {
           
           # Test that the model was successfully created.
           testthat::expect_equal(model_is_trained(model),
@@ -644,7 +650,7 @@ test_all_learners_train_predict_vimp <- function(learners,
         })
         
         # Test that models can be used to predict the outcome.
-        test_fun(paste0("Sample predictions for ", outcome_type, " can be made using ", learner, " for a data set with one censored sample."), {
+        test_fun(paste0("Sample predictions for ", outcome_type, " can be made using ", learner, " for a dataset with one censored sample."), {
           # Expect predictions to be made.
           prediction_table <- suppressWarnings(.predict(model,
                                                         data=one_censoring_data))
@@ -664,7 +670,7 @@ test_all_learners_train_predict_vimp <- function(learners,
         
         
         # Test that models can be used to predict survival probabilities.
-        test_fun(paste0("Sample survival predictions for ", outcome_type, " can be made using ", learner, " for a data set with one censored sample."), {
+        test_fun(paste0("Sample survival predictions for ", outcome_type, " can be made using ", learner, " for a dataset with one censored sample."), {
           # Expect predictions to be made.
           prediction_table <- suppressWarnings(.predict(model,
                                                         data=one_censoring_data,
@@ -706,25 +712,25 @@ test_all_learners_train_predict_vimp <- function(learners,
         })
       }
       
-      #####Data set with few censored instances#####################################
+      #####Dataset with few censored instances##################################
       if(outcome_type %in% c("survival", "competing_risk")){
         
         # Set up non-censoring dataset.
         few_censoring_data <- test.create_good_data_few_censored_set(outcome_type)
         
         # Train the model.
-        model <- suppressWarnings(train(data=few_censoring_data,
-                                        cluster_method="none",
-                                        imputation_method="simple",
-                                        hyperparameter_list=hyperparameters,
-                                        learner=learner,
-                                        time_max=1832))
+        model <- suppressWarnings(test_train(data=few_censoring_data,
+                                             cluster_method="none",
+                                             imputation_method="simple",
+                                             hyperparameter_list=hyperparameters,
+                                             learner=learner,
+                                             time_max=1832))
         
         # Create a trimmed model.
         trimmed_model <- trim_model(model)
         
         # Test that models can be created.
-        test_fun(paste0("Model for ", outcome_type, " can be created using ", learner, " using a data set with few censored samples."), {
+        test_fun(paste0("Model for ", outcome_type, " can be created using ", learner, " using a dataset with few censored samples."), {
           
           # Test that the model was successfully created.
           testthat::expect_equal(model_is_trained(model),
@@ -737,7 +743,7 @@ test_all_learners_train_predict_vimp <- function(learners,
         })
         
         # Test that models can be used to predict the outcome.
-        test_fun(paste0("Sample predictions for ", outcome_type, " can be made using ", learner, " for a data set with few censored samples."), {
+        test_fun(paste0("Sample predictions for ", outcome_type, " can be made using ", learner, " for a dataset with few censored samples."), {
           # Expect predictions to be made.
           prediction_table <- suppressWarnings(.predict(model,
                                                         data=few_censoring_data))
@@ -757,7 +763,7 @@ test_all_learners_train_predict_vimp <- function(learners,
         
         
         # Test that models can be used to predict survival probabilities.
-        test_fun(paste0("Sample survival predictions for ", outcome_type, " can be made using ", learner, " for a data set with few censored samples."), {
+        test_fun(paste0("Sample survival predictions for ", outcome_type, " can be made using ", learner, " for a dataset with few censored samples."), {
           # Expect predictions to be made.
           prediction_table <- suppressWarnings(.predict(model,
                                                         data=few_censoring_data,
@@ -798,6 +804,58 @@ test_all_learners_train_predict_vimp <- function(learners,
           testthat::expect_equal(any_predictions_valid(prediction_table, outcome_type), !learner %in% c(except_train, except_predict))
         })
       }
+      
+      #####Fully prospective dataset############################################
+      
+      # Train the model.
+      model <- suppressWarnings(test_train(data=fully_prospective_data,
+                                           cluster_method="none",
+                                           imputation_method="simple",
+                                           hyperparameter_list=hyperparameters,
+                                           learner=learner,
+                                           time_max=1832))
+      
+      # Test that models can be created.
+      test_fun(paste0("Model for ", outcome_type, " cannot be created using ", learner, " for a fully prospective dataset."), {
+        
+        # Test that the model was not created.
+        testthat::expect_equal(model_is_trained(model), FALSE)
+      })
+      
+      #####Mostly prospective dataset############################################
+      
+      # Train the model.
+      model <- suppressWarnings(test_train(data=mostly_prospective_data,
+                                           cluster_method="none",
+                                           imputation_method="simple",
+                                           hyperparameter_list=hyperparameters,
+                                           learner=learner,
+                                           time_max=1832))
+      
+      # Test that models can be created.
+      test_fun(paste0("Model for ", outcome_type, " cannot be created using ", learner, " for an almost fully prospective dataset, where outcome is known for just a single sample."), {
+        
+        # Test that the model was not created.
+        testthat::expect_equal(model_is_trained(model), FALSE)
+      })
+      
+      #####Partially prospective dataset########################################
+      # Train the model.
+      model <- suppressWarnings(test_train(data=partially_prospective_data,
+                                           cluster_method="none",
+                                           imputation_method="simple",
+                                           hyperparameter_list=hyperparameters,
+                                           learner=learner,
+                                           time_max=1832))
+      
+      # Test that models can be created.
+      test_fun(paste0("Model for ", outcome_type, " can be created using ", learner, " for a partially prospective dataset, where outcome is known for most samples."), {
+        
+        # Test that the model was successfully created.
+        testthat::expect_equal(model_is_trained(model),
+                               ifelse(learner %in% except_train, FALSE, TRUE))
+      })
+      
     }
   }
 }
