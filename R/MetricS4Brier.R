@@ -39,6 +39,10 @@ setMethod("compute_metric_score", signature(metric="familiarMetricBrier"),
             data <- remove_nonvalid_predictions(prediction_table=data,
                                                 outcome_type=metric@outcome_type)
             
+            # Remove any entries that lack observed values.
+            data <- remove_missing_outcomes(prediction_table=data,
+                                            outcome_type=metric@outcome_type)
+            
             # Check that there is any data left.
             if(is_empty(data)) return(callNextMethod())
             

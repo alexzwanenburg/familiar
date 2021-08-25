@@ -528,122 +528,73 @@ applyContrastReference <- function(dt, dt_ref, method){
 }
 
 
-any_predictions_valid <- function(prediction_table, outcome_type){
-  
-  if(is_empty(prediction_table)){
-    return(FALSE)
-  }
-  
-  if(outcome_type %in% c("continuous", "count")){
-    return(any(is.finite(prediction_table$predicted_outcome)))
-    
-  } else if(outcome_type %in% c("survival", "competing_risk")){
-    if("predicted_outcome" %in% colnames(prediction_table)){
-      return(any(is.finite(prediction_table$predicted_outcome)))
-      
-    } else if("survival_probability" %in% colnames(prediction_table)){
-      return(any(is.finite(prediction_table$survival_probability)))
-    
-    } else if("risk_group" %in% colnames(prediction_table)){
-      return(any(!is.na(prediction_table$risk_group)))
-      
-    } else {
-      return(FALSE)
-    }
-    
-  } else if(outcome_type %in% c("binomial", "multinomial")){
-    return(!all(is.na(prediction_table$predicted_class)))
-    
-  } else {
-    ..error_no_known_outcome_type(outcome_type)
-  }
-}
 
-remove_nonvalid_predictions <- function(prediction_table, outcome_type){
-  
-  # Suppress NOTES due to non-standard evaluation in data.table
-  predicted_outcome <- predicted_class <- NULL
-  
-  if(is_empty(prediction_table)) return(prediction_table)
-  
-  if(outcome_type %in% c("survival", "continuous", "count", "competing_risk")){
-    return(prediction_table[is.finite(predicted_outcome), ])
-    
-  } else if(outcome_type %in% c("binomial", "multinomial")){
-    return(prediction_table[!is.na(predicted_class), ])
-    
-  } else {
-    ..error_no_known_outcome_type(outcome_type)
-  }
-}
-
-
-create_empty_calibration_table <- function(outcome_type){
-  if(outcome_type == "survival"){
-    calibration_table <- data.table::data.table("evaluation_time"=numeric(0),
-                                                "expected"=numeric(0),
-                                                "observed"=numeric(0),
-                                                "km_var"=numeric(0),
-                                                "n_g"=integer(0),
-                                                "rep_id"=integer(0))
-    
-  } else if(outcome_type %in% c("binomial", "multinomial")){
-    
-    calibration_table <- data.table::data.table("pos_class"=character(0),
-                                                "expected"=numeric(0),
-                                                "observed"=numeric(0),
-                                                "n_g"=integer(0),
-                                                "n_pos"=integer(0),
-                                                "n_neg"=integer(0),
-                                                "rep_id"=integer(0))
-    
-  } else if(outcome_type %in% c("count", "continuous")){
-    
-    calibration_table <- data.table::data.table("expected"=numeric(0),
-                                                "observed"=numeric(0),
-                                                "n_g"=integer(0),
-                                                "rep_id"=integer(0))
-    
-  } else {
-    ..error_outcome_type_not_implemented(outcome_type=outcome_type)
-  }
-
-  return(calibration_table)
-}
-
-
-
-strip_calibration_table <- function(calibration_data, outcome_type){
-  if(outcome_type == "survival"){
-    calibration_data <- calibration_data[, c("evaluation_time",
-                                             "expected",
-                                             "observed",
-                                             "km_var",
-                                             "n_g",
-                                             "rep_id"), with=FALSE]
-    
-  } else if(outcome_type %in% c("binomial", "multinomial")){
-    calibration_data <- calibration_data[, c("pos_class",
-                                             "expected",
-                                             "observed",
-                                             "n_g",
-                                             "n_pos",
-                                             "n_neg",
-                                             "rep_id"), with=FALSE]
-    
-  } else if(outcome_type %in% c("count", "continuous")){
-    calibration_data <- calibration_data[, c("expected",
-                                             "observed",
-                                             "n_g",
-                                             "rep_id"), with=FALSE]
-    
-  } else {
-    ..error_outcome_type_not_implemented(outcome_type=outcome_type)
-  }
-  
-  return(calibration_data)
-  
-}
+# create_empty_calibration_table <- function(outcome_type){
+#   if(outcome_type == "survival"){
+#     calibration_table <- data.table::data.table("evaluation_time"=numeric(0),
+#                                                 "expected"=numeric(0),
+#                                                 "observed"=numeric(0),
+#                                                 "km_var"=numeric(0),
+#                                                 "n_g"=integer(0),
+#                                                 "rep_id"=integer(0))
+#     
+#   } else if(outcome_type %in% c("binomial", "multinomial")){
+#     
+#     calibration_table <- data.table::data.table("pos_class"=character(0),
+#                                                 "expected"=numeric(0),
+#                                                 "observed"=numeric(0),
+#                                                 "n_g"=integer(0),
+#                                                 "n_pos"=integer(0),
+#                                                 "n_neg"=integer(0),
+#                                                 "rep_id"=integer(0))
+#     
+#   } else if(outcome_type %in% c("count", "continuous")){
+#     
+#     calibration_table <- data.table::data.table("expected"=numeric(0),
+#                                                 "observed"=numeric(0),
+#                                                 "n_g"=integer(0),
+#                                                 "rep_id"=integer(0))
+#     
+#   } else {
+#     ..error_outcome_type_not_implemented(outcome_type=outcome_type)
+#   }
+# 
+#   return(calibration_table)
+# }
+# 
+# 
+# 
+# strip_calibration_table <- function(calibration_data, outcome_type){
+#   if(outcome_type == "survival"){
+#     calibration_data <- calibration_data[, c("evaluation_time",
+#                                              "expected",
+#                                              "observed",
+#                                              "km_var",
+#                                              "n_g",
+#                                              "rep_id"), with=FALSE]
+#     
+#   } else if(outcome_type %in% c("binomial", "multinomial")){
+#     calibration_data <- calibration_data[, c("pos_class",
+#                                              "expected",
+#                                              "observed",
+#                                              "n_g",
+#                                              "n_pos",
+#                                              "n_neg",
+#                                              "rep_id"), with=FALSE]
+#     
+#   } else if(outcome_type %in% c("count", "continuous")){
+#     calibration_data <- calibration_data[, c("expected",
+#                                              "observed",
+#                                              "n_g",
+#                                              "rep_id"), with=FALSE]
+#     
+#   } else {
+#     ..error_outcome_type_not_implemented(outcome_type=outcome_type)
+#   }
+#   
+#   return(calibration_data)
+#   
+# }
 
 
 harmonic_p_value <- function(x){

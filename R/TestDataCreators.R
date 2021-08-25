@@ -11,9 +11,15 @@ test.create_good_data_set <- function(outcome_type){
     data <- data[etype == 1]
     data$adhere <- factor(data$adhere, levels=c(0, 1), labels=c(FALSE, TRUE))
     
-    # Keep only first 100 samples for speed and only id, nodes, rx, extent,
+    # Limit to 150 samples
+    data <- data[1:150, ]
+    
+    # update sample identifier.
+    data[, ":="("id"=.I)]
+    
+    # Keep only first 150 samples for speed and only id, nodes, rx, extent,
     # adhere and outcome.
-    data <- as_data_object(data=data[1:100, ],
+    data <- as_data_object(data=data,
                            sample_id_column="id",
                            outcome_column=c("time", "status"),
                            outcome_type=outcome_type,
@@ -50,6 +56,9 @@ test.create_good_data_set <- function(outcome_type){
     # Limit to 150 samples
     data <- data[1:150, ]
     
+    # update sample identifier.
+    data[, ":="("id"=.I)]
+    
     # Convert to a data object. Exclude cell_size_uniformity, as these are
     # correlated and make it difficult to stable establish variable importance.
     data <- as_data_object(data=data,
@@ -65,12 +74,12 @@ test.create_good_data_set <- function(outcome_type){
     
     # Drop distcod, district, county, readscr, mathscr
     data[, ":="("distcod"=NULL, "district"=NULL, "county"=NULL, "readscr"=NULL, "mathscr"=NULL)]
+
+    # Limit to 150 samples
+    data <- data[271:420, ]
     
     # Add sample identifier.
     data[, ":="("sample_id"=.I)]
-    
-    # Limit to 150 samples
-    data <- data[271:420, ]
     
     # Convert to a data object. Exclude mealpct, as this feature is correlated
     # to avginc.
@@ -98,11 +107,11 @@ test.create_good_data_set <- function(outcome_type){
     # Convert the median_house_value to the actual value.
     data[, "median_house_value":=median_house_value * 1000.0]
     
-    # Add sample identifier.
-    data[, ":="("sample_id"=.I)]
-    
     # Limit to 150 samples
     data <- data[1:150, ]
+    
+    # Add sample identifier.
+    data[, ":="("sample_id"=.I)]
     
     # Convert to a data object.
     data <- as_data_object(data=data,
@@ -269,8 +278,15 @@ test.create_one_feature_data_set <- function(outcome_type){
     # Recurrence
     data <- data[etype == 1]
     
-    # Keep only first 100 samples for speed and only id, nodes, rx, extent and outcome.
-    data <- as_data_object(data=data[1:100, ],
+    # Limit to 150 samples
+    data <- data[1:150, ]
+    
+    # update sample identifier.
+    data[, ":="("id"=.I)]
+    
+    # Keep only first 150 samples for speed and only id, nodes, rx, extent,
+    # adhere and outcome.
+    data <- as_data_object(data=data,
                            sample_id_column="id",
                            outcome_column=c("time", "status"),
                            outcome_type=outcome_type,
@@ -304,9 +320,12 @@ test.create_one_feature_data_set <- function(outcome_type){
     # Keep unique samples. Some samples have the same id, but a different
     # outcome.
     data <- unique(data, by="id")
-    
+
     # Limit to 150 samples
     data <- data[1:150, ]
+    
+    # update sample identifier.
+    data[, ":="("id"=.I)]
     
     # Convert to a data object.
     data <- as_data_object(data=data,
@@ -322,12 +341,12 @@ test.create_one_feature_data_set <- function(outcome_type){
     
     # Drop distcod, district, county, readscr, mathscr
     data[, ":="("distcod"=NULL, "district"=NULL, "county"=NULL, "readscr"=NULL, "mathscr"=NULL)]
+
+    # Limit to 150 samples
+    data <- data[271:420, ]
     
     # Add sample identifier.
     data[, ":="("sample_id"=.I)]
-    
-    # Limit to 150 samples
-    data <- data[271:420, ]
     
     # Convert to a data object.
     data <- as_data_object(data=data,
@@ -354,11 +373,11 @@ test.create_one_feature_data_set <- function(outcome_type){
     # Convert the median_house_value to the actual value.
     data[, "median_house_value":=median_house_value * 1000.0]
     
-    # Add sample identifier.
-    data[, ":="("sample_id"=.I)]
-    
     # Limit to 150 samples
     data <- data[1:150, ]
+    
+    # Add sample identifier.
+    data[, ":="("sample_id"=.I)]
     
     # Convert to a data object.
     data <- as_data_object(data=data,
@@ -437,6 +456,9 @@ test.create_wide_data_set <- function(outcome_type){
     data <- data[1:5, ]
     data$status <- 1
     
+    # update sample identifier.
+    data[, ":="("id"=.I)]
+    
     # Add twenty random features
     random_data <- lapply(seq_len(20), function(ii, n) stats::rnorm(n=n), n=nrow(data))
     names(random_data) <- paste0("random_", seq_len(20))
@@ -498,6 +520,9 @@ test.create_wide_data_set <- function(outcome_type){
     # Limit to 10 samples
     data <- data[11:20, ]
     
+    # update sample identifier.
+    data[, ":="("id"=.I)]
+    
     # Add twenty random features
     random_data <- lapply(seq_len(20), function(ii, n) stats::rnorm(n=n), n=nrow(data))
     names(random_data) <- paste0("random_", seq_len(20))
@@ -526,11 +551,11 @@ test.create_wide_data_set <- function(outcome_type){
     # Drop distcod, district, county, readscr, mathscr
     data[, ":="("distcod"=NULL, "district"=NULL, "county"=NULL, "readscr"=NULL, "mathscr"=NULL)]
     
-    # Add sample identifier.
-    data[, ":="("sample_id"=.I)]
-    
     # Limit to 10 samples
     data <- data[411:420, ]
+    
+    # Add sample identifier.
+    data[, ":="("sample_id"=.I)]
     
     # Add twenty random features
     random_data <- lapply(seq_len(20), function(ii, n) stats::rnorm(n=n), n=nrow(data))
@@ -563,11 +588,11 @@ test.create_wide_data_set <- function(outcome_type){
     # Convert the median_house_value to the actual value.
     data[, "median_house_value":=median_house_value * 1000.0]
     
-    # Add sample identifier.
-    data[, ":="("sample_id"=.I)]
-    
     # Limit to 10 samples
     data <- data[1:10, ]
+    
+    # Add sample identifier.
+    data[, ":="("sample_id"=.I)]
     
     # Add twenty random features
     random_data <- lapply(seq_len(20), function(ii, n) stats::rnorm(n=n), n=nrow(data))

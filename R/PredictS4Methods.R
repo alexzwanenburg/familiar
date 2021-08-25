@@ -367,3 +367,82 @@ setMethod(".predict_risk_stratification", signature(object="character"),
 .get_available_ensemble_prediction_methods <- function(){
   return(c("median", "mean"))
 }
+
+
+
+any_predictions_valid <- function(prediction_table, outcome_type){
+  
+  if(is_empty(prediction_table)) return(FALSE)
+  
+  if(outcome_type %in% c("continuous", "count")){
+    return(any(is.finite(prediction_table$predicted_outcome)))
+    
+  } else if(outcome_type %in% c("survival", "competing_risk")){
+    if("predicted_outcome" %in% colnames(prediction_table)){
+      return(any(is.finite(prediction_table$predicted_outcome)))
+      
+    } else if("survival_probability" %in% colnames(prediction_table)){
+      return(any(is.finite(prediction_table$survival_probability)))
+      
+    } else if("risk_group" %in% colnames(prediction_table)){
+      return(any(!is.na(prediction_table$risk_group)))
+      
+    } else {
+      return(FALSE)
+    }
+    
+  } else if(outcome_type %in% c("binomial", "multinomial")){
+    return(!all(is.na(prediction_table$predicted_class)))
+    
+  } else {
+    ..error_no_known_outcome_type(outcome_type)
+  }
+}
+
+
+remove_nonvalid_predictions <- function(prediction_table, outcome_type){
+  
+  # Suppress NOTES due to non-standard evaluation in data.table
+  predicted_outcome <- predicted_class <- NULL
+  
+  if(is_empty(prediction_table)) return(prediction_table)
+  
+  # Check predicted outcome columns.
+  if(outcome_type %in% c("survival", "continuous", "count", "competing_risk")){
+    prediction_table <- prediction_table[is.finite(predicted_outcome), ]
+    
+  } else if(outcome_type %in% c("binomial", "multinomial")){
+    prediction_table <- prediction_table[!is.na(predicted_class), ]
+    
+  } else {
+    ..error_no_known_outcome_type(outcome_type)
+  }
+  
+  return(prediction_table)
+}
+
+
+
+remove_missing_outcomes <- function(prediction_table, outcome_type){
+  
+  # Suppress NOTES due to non-standard evaluation in data.table
+  outcome <- outcome_time <- outcome_event <- NULL
+  
+  if(is_empty(prediction_table)) return(prediction_table)
+  
+  # Check predicted outcome columns.
+  if(outcome_type %in% c("survival", "competing_risk")){
+    prediction_table <- prediction_table[is.finite(outcome_time) & !is.na(outcome_event), ]
+    
+  } else if(outcome_type %in% c("count", "continuous")){
+    prediction_table <- prediction_table[is.finite(outcome), ]
+    
+  } else if(outcome_type %in% c("binomial", "multinomial")){
+    prediction_table <- prediction_table[!is.na(outcome), ]
+    
+  } else {
+    ..error_no_known_outcome_type(outcome_type)
+  }
+  
+  return(prediction_table)
+}

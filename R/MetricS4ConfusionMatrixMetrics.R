@@ -595,6 +595,10 @@ setMethod("compute_metric_score", signature(metric="familiarMetricYouden"),
   data <- remove_nonvalid_predictions(prediction_table=data,
                                       outcome_type=outcome_type)
   
+  # Remove any entries that lack observed values.
+  data <- remove_missing_outcomes(prediction_table=data,
+                                  outcome_type=outcome_type)
+  
   if(is_empty(data)) return(NULL)
   
   # Create empty scalars
