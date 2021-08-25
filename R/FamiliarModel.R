@@ -56,7 +56,7 @@ setMethod(".train", signature(object="familiarModel", data="dataObject"),
               # types require calibration info. Currently calibration
               # information is only retrieved for survival outcomes, in the form
               # of baseline survival curves.
-              object <- ..set_calibration_info(object=object, data=data)
+              if(can_train) object <- ..set_calibration_info(object=object, data=data)
               
               # Set stratification thresholds. This is currently only done for
               # survival outcomes.
