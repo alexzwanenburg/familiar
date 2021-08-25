@@ -715,6 +715,17 @@ get_estimate <- function(x, na.rm=TRUE){
 }
 
 
+strict.do.call <- function(what, args, quote = FALSE, envir = parent.frame()){
+  # Only pass fully matching arguments. Side effect is that ... is always empty.
+  # Use with care in case arguments need to be passed to another function.
+  
+  # Get arguments that can be passed.
+  passable_argument_names <- intersect(names(formals(what)),
+                                       names(args))
+  
+  return(do.call(what, args=args[passable_argument_names], quote=quote, envir=envir))
+}
+
 
 get_contrasts <- function(data, encoding_method="effect", drop_levels=TRUE, outcome_type=NULL, feature_columns=NULL){
   # Converts categorical data in to contrasts and return data table including contrast

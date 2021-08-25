@@ -321,59 +321,59 @@
   dots$vimp_aggregation_rank_threshold <- NULL
   
   # Pre-processing settings
-  settings$prep <- do.call(.parse_preprocessing_settings,
-                           args=append(list("config"=config$preprocessing,
+  settings$prep <- strict.do.call(.parse_preprocessing_settings,
+                                  args=c(list("config"=config$preprocessing,
+                                              "data"=data,
+                                              "parallel"=settings$run$parallel,
+                                              "outcome_type"=settings$data$outcome_type),
+                                         dots))
+  
+  # Feature selection settings
+  settings$fs <- strict.do.call(.parse_feature_selection_settings,
+                                args=c(list("config"=config$feature_selection,
                                             "data"=data,
                                             "parallel"=settings$run$parallel,
                                             "outcome_type"=settings$data$outcome_type),
                                        dots))
   
-  # Feature selection settings
-  settings$fs <- do.call(.parse_feature_selection_settings,
-                         args=append(list("config"=config$feature_selection,
-                                          "data"=data,
-                                          "parallel"=settings$run$parallel,
-                                          "outcome_type"=settings$data$outcome_type),
-                                     dots))
-  
   # Model development settings
-  settings$mb <- do.call(.parse_model_development_settings,
-                         args=append(list("config"=config$model_development,
-                                          "data"=data,
-                                          "parallel"=settings$run$parallel,
-                                          "outcome_type"=settings$data$outcome_type),
-                                     dots))
+  settings$mb <- strict.do.call(.parse_model_development_settings,
+                                args=c(list("config"=config$model_development,
+                                            "data"=data,
+                                            "parallel"=settings$run$parallel,
+                                            "outcome_type"=settings$data$outcome_type),
+                                       dots))
   
   # Hyperparameter optimisation settings
-  settings$hpo <- do.call(.parse_hyperparameter_optimisation_settings,
-                          args=append(list("config"=config$hyperparameter_optimisation,
-                                           "parallel"=settings$run$parallel,
-                                           "outcome_type"=settings$data$outcome_type),
-                                      dots))
-
+  settings$hpo <- strict.do.call(.parse_hyperparameter_optimisation_settings,
+                                 args=c(list("config"=config$hyperparameter_optimisation,
+                                             "parallel"=settings$run$parallel,
+                                             "outcome_type"=settings$data$outcome_type),
+                                        dots))
+  
   # Evaluation settings
-  settings$eval <- do.call(.parse_evaluation_settings,
-                           args=append(list("config"=config$evaluation,
-                                            "data"=data, "parallel"=settings$run$parallel,
-                                            "outcome_type"=settings$data$outcome_type,
-                                            "hpo_metric"=settings$hpo$hpo_metric,
-                                            "development_batch_id"=settings$data$train_cohorts,
-                                            "vimp_aggregation_method"=settings$fs$aggregation,
-                                            "vimp_aggregation_rank_threshold"=settings$fs$aggr_rank_threshold,
-                                            "prep_cluster_method"=settings$prep$cluster_method,
-                                            "prep_cluster_linkage_method"=settings$prep$cluster_linkage,
-                                            "prep_cluster_cut_method"=settings$prep$cluster_cut_method,
-                                            "prep_cluster_similarity_threshold"=settings$prep$cluster_sim_thresh,
-                                            "prep_cluster_similarity_metric"=settings$prep$cluster_similarity_metric),
-                                       dots))
-
+  settings$eval <- strict.do.call(.parse_evaluation_settings,
+                                  args=c(list("config"=config$evaluation,
+                                              "data"=data, "parallel"=settings$run$parallel,
+                                              "outcome_type"=settings$data$outcome_type,
+                                              "hpo_metric"=settings$hpo$hpo_metric,
+                                              "development_batch_id"=settings$data$train_cohorts,
+                                              "vimp_aggregation_method"=settings$fs$aggregation,
+                                              "vimp_aggregation_rank_threshold"=settings$fs$aggr_rank_threshold,
+                                              "prep_cluster_method"=settings$prep$cluster_method,
+                                              "prep_cluster_linkage_method"=settings$prep$cluster_linkage,
+                                              "prep_cluster_cut_method"=settings$prep$cluster_cut_method,
+                                              "prep_cluster_similarity_threshold"=settings$prep$cluster_sim_thresh,
+                                              "prep_cluster_similarity_metric"=settings$prep$cluster_similarity_metric),
+                                         dots))
+  
   # Set the general parallel switch to FALSE if all workflow steps disabled parallel processing.
   settings$run$parallel <- (settings$prep$do_parallel |
                               settings$fs$do_parallel |
                               settings$mb$do_parallel |
                               settings$hpo$do_parallel %in% c("TRUE", "inner", "outer") |
                               settings$eval$do_parallel %in% c("TRUE", "inner", "outer"))
-    
+  
   return(settings)
 }
 
@@ -2011,7 +2011,9 @@
 #'   The BART R Package. Journal of Statistical Software 97, 1–66 (2021)
 #' @md
 #' @keywords internal
-.parse_hyperparameter_optimisation_settings <- function(config=NULL, parallel, outcome_type,
+.parse_hyperparameter_optimisation_settings <- function(config=NULL,
+                                                        parallel,
+                                                        outcome_type,
                                                         optimisation_bootstraps=waiver(),
                                                         optimisation_determine_vimp=waiver(),
                                                         smbo_random_initialisation=waiver(),
