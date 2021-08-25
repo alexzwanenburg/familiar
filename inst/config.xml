@@ -157,7 +157,7 @@
       <!-- Maximum number of intensify steps within each SMBO iteration (optional, default: 3) -->
       <smbo_intensify_steps></smbo_intensify_steps>
       <!-- p-value for early stopping of intensify iterations (optional, default: 0.05) -->
-      <smbo_intensify_stop_p_value></smbo_intensify_stop_p_value>
+      <smbo_stochastic_reject_p_value></smbo_stochastic_reject_p_value>
       <!-- Number of additional SMBO iterations to perform after convergence has been reached (optional, default: 3) -->
       <smbo_stop_convergent_iterations></smbo_stop_convergent_iterations>
       <!-- Tolerance level for convergence (optional, default: 1E-2) -->

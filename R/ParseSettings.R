@@ -1774,7 +1774,7 @@
 #'   combinations of hyperparameters. The effect of the hyperparameters is then
 #'   assessed by comparing in-bag and out-of-bag model performance.
 #'
-#'   The default number of bootstraps is `200`. Hyperparameter optimisation may
+#'   The default number of bootstraps is `50`. Hyperparameter optimisation may
 #'   finish before exhausting the set of bootstraps.
 #' @param optimisation_determine_vimp (*optional*) Logical value that indicates
 #'   whether variable importance is determined separately for each of the
@@ -1820,7 +1820,7 @@
 #'   data than the incumbent *best* set of hyperparameters, it replaces the
 #'   incumbent set at the end of the intensify iteration.
 #'
-#'   The default number of intensify iteration is `30`. Iterations may be
+#'   The default number of intensify iteration is `20`. Iterations may be
 #'   stopped early if the incumbent set of hyperparameters remains the same for
 #'   `smbo_stop_convergent_iterations` iterations, or performance improvement is
 #'   minimal. This behaviour is suppressed during the first 4 iterations to
@@ -1840,16 +1840,14 @@
 #'   the set of `optimisation_bootstraps` bootstraps as data for the initial
 #'   SMBO step and the steps in each intensify iteration.
 #'
-#'   The default value is `5`. The value cannot be larger than
-#'   `optimisation_bootstraps`. Values of `1` or `2` may hinder exploration by
-#'   optimistically or pessimistically biasing parameter sets on a single or two
-#'   bootstraps.
+#'   The default value is `3`. The value cannot be larger than
+#'   `optimisation_bootstraps`.
 #' @param smbo_intensify_steps (*optional*) The number of steps in each SMBO
 #'   intensify iteration. Each step a new set of `smbo_step_bootstraps`
 #'   bootstraps is drawn and used in the run-off between the incumbent *best*
 #'   hyperparameter combination and its challengers.
 #'
-#'   The default value is `3`. Higher numbers allow for a more detailed
+#'   The default value is `5`. Higher numbers allow for a more detailed
 #'   comparison, but this comes with added computational cost.
 #'
 #' @param optimisation_metric (*optional*) One or more metrics used to compute
@@ -1962,11 +1960,11 @@
 #'   comparing the performance of each parameter set with that of the incumbent
 #'   **best** parameter set using a paired Wilcoxon test based on shared
 #'   bootstraps. Parameter sets that perform significantly worse, at an alpha
-#'   level indicated by `smbo_intensify_stop_p_value`, are pruned.
+#'   level indicated by `smbo_stochastic_reject_p_value`, are pruned.
 #'
 #'   * `none`: The set of alternative parameter sets is not pruned.
 #'
-#' @param smbo_intensify_stop_p_value (*optional*) The p-value threshold used
+#' @param smbo_stochastic_reject_p_value (*optional*) The p-value threshold used
 #'   for the `stochastic_reject` exploration method.
 #'
 #'   The default value is `0.05`.
@@ -2023,7 +2021,7 @@
                                                         smbo_stop_tolerance=waiver(),
                                                         smbo_step_bootstraps=waiver(),
                                                         smbo_intensify_steps=waiver(),
-                                                        smbo_intensify_stop_p_value=waiver(),
+                                                        smbo_stochastic_reject_p_value=waiver(),
                                                         optimisation_function=waiver(),
                                                         optimisation_metric=waiver(),
                                                         acquisition_function=waiver(),
@@ -2053,7 +2051,7 @@
   
   # Maximum number of bootstraps for hyperparameter evaluation
   settings$hpo_max_bootstraps <- .parse_arg(x_config=config$optimisation_bootstraps, x_var=optimisation_bootstraps,
-                                            var_name="optimisation_bootstraps", type="integer", optional=TRUE, default=200)
+                                            var_name="optimisation_bootstraps", type="integer", optional=TRUE, default=50)
   
   .check_number_in_valid_range(x=settings$hpo_max_bootstraps, var_name="optimisation_bootstraps", range=c(20, Inf))
   
@@ -2067,23 +2065,23 @@
   
   # Maximum number of bootstrap evaluated initially and during each intensify step of each SMBO iteration
   settings$hpo_bootstraps <- .parse_arg(x_config=config$smbo_step_bootstraps, x_var=smbo_step_bootstraps,
-                                        var_name="smbo_step_bootstraps", type="integer", optional=TRUE, default=5)
+                                        var_name="smbo_step_bootstraps", type="integer", optional=TRUE, default=3)
   
   .check_number_in_valid_range(x=settings$hpo_bootstraps, var_name="smbo_step_bootstraps", range=c(1, settings$hpo_max_bootstraps))
   
   
   # Maximum number of intensify iterations during each SMBO iteration
   settings$hpo_intensify_max_iter <- .parse_arg(x_config=config$smbo_intensify_steps, x_var=smbo_intensify_steps,
-                                                var_name="smbo_intensify_steps", type="integer", optional=TRUE, default=3)
+                                                var_name="smbo_intensify_steps", type="integer", optional=TRUE, default=5)
   
   .check_number_in_valid_range(x=settings$hpo_intensify_max_iter, var_name="smbo_intensify_steps", range=c(1, Inf))
   
 
   # Significance level for early stopping of intensity iterations
-  settings$hpo_alpha <- .parse_arg(x_config=config$smbo_intensify_stop_p_value, x_var=smbo_intensify_stop_p_value,
-                                   var_name="smbo_intensify_stop_p_value", type="numeric", optional=TRUE, default=0.05)
+  settings$hpo_alpha <- .parse_arg(x_config=config$smbo_stochastic_reject_p_value, x_var=smbo_stochastic_reject_p_value,
+                                   var_name="smbo_stochastic_reject_p_value", type="numeric", optional=TRUE, default=0.05)
   
-  .check_number_in_valid_range(x=settings$hpo_alpha, var_name="smbo_intensify_stop_p_value", range=c(0.0, 1.0), closed=c(FALSE, TRUE))
+  .check_number_in_valid_range(x=settings$hpo_alpha, var_name="smbo_stochastic_reject_p_value", range=c(0.0, 1.0), closed=c(FALSE, TRUE))
   
   
   # Number of converging iterations before stopping SMBO

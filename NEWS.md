@@ -40,6 +40,8 @@
 
 -   The hyperparameter optimisation algorithm performs an improved search of the local neighbourhood of good hyperparameter sets. Previously large parts of local neighbourhoods were ignored as their utility may not have exceeded that of the seed set. The algorithm is now no longer myopic. Instead, the seed set is used as starting point for exploration, and a random path through hyperparameter space is charted. The most promising hyperparameter sets are chosen after repeating this procedure several times and for several seed points.
 
+-   The `smbo_intensify_stop_p_value` parameter was renamed to `smbo_stochastic_reject_p_value`.
+
 ## Bug fixes
 
 -   `detail_level`, `sample_limit`, `estimation_type` and `aggregate_results` arguments used during evaluation and explanation are now propagated from `familiarModel` and `familiarEnsemble` objects instead of reverting to default values.

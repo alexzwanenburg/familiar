@@ -750,7 +750,7 @@ procedure one or more of these bootstraps (indicated by
 combinations of hyperparameters. The effect of the hyperparameters is then
 assessed by comparing in-bag and out-of-bag model performance.
 
-The default number of bootstraps is \code{200}. Hyperparameter optimisation may
+The default number of bootstraps is \code{50}. Hyperparameter optimisation may
 finish before exhausting the set of bootstraps.}
     \item{\code{optimisation_determine_vimp}}{(\emph{optional}) Logical value that indicates
 whether variable importance is determined separately for each of the
@@ -795,7 +795,7 @@ If a combination of hyperparameters leads to better performance on the same
 data than the incumbent \emph{best} set of hyperparameters, it replaces the
 incumbent set at the end of the intensify iteration.
 
-The default number of intensify iteration is \code{30}. Iterations may be
+The default number of intensify iteration is \code{20}. Iterations may be
 stopped early if the incumbent set of hyperparameters remains the same for
 \code{smbo_stop_convergent_iterations} iterations, or performance improvement is
 minimal. This behaviour is suppressed during the first 4 iterations to
@@ -815,16 +815,14 @@ The default value is \code{0.01}.}
 the set of \code{optimisation_bootstraps} bootstraps as data for the initial
 SMBO step and the steps in each intensify iteration.
 
-The default value is \code{5}. The value cannot be larger than
-\code{optimisation_bootstraps}. Values of \code{1} or \code{2} may hinder exploration by
-optimistically or pessimistically biasing parameter sets on a single or two
-bootstraps.}
+The default value is \code{3}. The value cannot be larger than
+\code{optimisation_bootstraps}.}
     \item{\code{smbo_intensify_steps}}{(\emph{optional}) The number of steps in each SMBO
 intensify iteration. Each step a new set of \code{smbo_step_bootstraps}
 bootstraps is drawn and used in the run-off between the incumbent \emph{best}
 hyperparameter combination and its challengers.
 
-The default value is \code{3}. Higher numbers allow for a more detailed
+The default value is \code{5}. Higher numbers allow for a more detailed
 comparison, but this comes with added computational cost.}
     \item{\code{optimisation_metric}}{(\emph{optional}) One or more metrics used to compute
 performance scores. See the vignette on performance metrics for the
@@ -924,10 +922,10 @@ pruned by removing the worst performing half of the sets after each step
 comparing the performance of each parameter set with that of the incumbent
 \strong{best} parameter set using a paired Wilcoxon test based on shared
 bootstraps. Parameter sets that perform significantly worse, at an alpha
-level indicated by \code{smbo_intensify_stop_p_value}, are pruned.
+level indicated by \code{smbo_stochastic_reject_p_value}, are pruned.
 \item \code{none}: The set of alternative parameter sets is not pruned.
 }}
-    \item{\code{smbo_intensify_stop_p_value}}{(\emph{optional}) The p-value threshold used
+    \item{\code{smbo_stochastic_reject_p_value}}{(\emph{optional}) The p-value threshold used
 for the \code{stochastic_reject} exploration method.
 
 The default value is \code{0.05}.}
