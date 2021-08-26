@@ -102,7 +102,7 @@
                     envir){
   # Remove a variable from a specific environment.
   
-  dots <- list(...)
+  dots <- unlist(list(...))
   
   for(current_object in dots){
     
