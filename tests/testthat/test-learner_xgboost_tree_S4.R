@@ -66,7 +66,7 @@ good_model <- familiar:::test_train(data=good_data,
                                                              "tree_depth" = 3,
                                                              "sample_size" = 1.0,
                                                              "gamma" = -6.0),
-                                    learner="xgboost_tree_poisson")
+                                    learner="xgboost_tree_gaussian")
 
 # Train the model using wide data.
 wide_model <- familiar:::test_train(data=wide_data,
@@ -81,7 +81,7 @@ wide_model <- familiar:::test_train(data=wide_data,
                                                              "tree_depth" = 3,
                                                              "sample_size" = 1.0,
                                                              "gamma" = -6.0),
-                                    learner="xgboost_tree_poisson")
+                                    learner="xgboost_tree_gaussian")
 
 
 testthat::test_that("Extreme gradient boosting tree model trained correctly", {

@@ -6,7 +6,7 @@ testthat::skip_on_cran()
 
 familiar:::test_all_learners_train_predict_vimp(learners=familiar:::.get_available_xgboost_lm_learners(show_general=FALSE),
                                                 hyperparameter_list=list("count"=list("n_boost" = 2,
-                                                                                      "learning_rate" = -1,
+                                                                                      "learning_rate" = -5,
                                                                                       "lambda" = 0.0,
                                                                                       "alpha" =-6.0),
                                                                          "continuous"=list("n_boost" = 2,
@@ -42,7 +42,7 @@ good_model <- familiar:::test_train(data=good_data,
                                                              "learning_rate" = -1,
                                                              "lambda" = 0.0,
                                                              "alpha" =-6.0),
-                                    learner="xgboost_lm_poisson")
+                                    learner="xgboost_lm_gaussian")
 
 # Train the model using wide data.
 wide_model <- familiar:::test_train(data=wide_data,
@@ -53,7 +53,7 @@ wide_model <- familiar:::test_train(data=wide_data,
                                                              "learning_rate" = -1,
                                                              "lambda" = 0.0,
                                                              "alpha" =-6.0),
-                                    learner="xgboost_lm_poisson")
+                                    learner="xgboost_lm_gaussian")
 
 
 testthat::test_that("Extreme gradient boosting regression model trained correctly", {
@@ -140,8 +140,8 @@ testthat::test_that("Extreme gradient boosting regression model has variable imp
   testthat::expect_equal(all(vimp_table$name %in% familiar:::get_feature_columns(good_data)), TRUE)
   
   # Expect that avginc and calwpct have rank 1 and 2.
-  testthat::expect_equal(vimp_table[rank == 1, ]$name %in% c("calwpct", "avginc"), TRUE)
-  testthat::expect_equal(vimp_table[rank == 2, ]$name %in% c("calwpct", "avginc"), TRUE)
+  testthat::expect_equal(vimp_table[rank == 1, ]$name %in% c("calwpct", "avginc", "grspan"), TRUE)
+  testthat::expect_equal(vimp_table[rank == 2, ]$name %in% c("calwpct", "avginc", "grspan"), TRUE)
 })
 
 

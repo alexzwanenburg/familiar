@@ -78,7 +78,7 @@ good_model <- familiar:::test_train(data=good_data,
                                                              "gamma" = -6.0,
                                                              "sample_type" = "uniform",
                                                              "rate_drop" = 0.0),
-                                    learner="xgboost_dart_poisson")
+                                    learner="xgboost_dart_gaussian")
 
 # Train the model using wide data.
 wide_model <- familiar:::test_train(data=wide_data,
@@ -95,7 +95,7 @@ wide_model <- familiar:::test_train(data=wide_data,
                                                              "gamma" = -6.0,
                                                              "sample_type" = "uniform",
                                                              "rate_drop" = 0.0),
-                                    learner="xgboost_dart_poisson")
+                                    learner="xgboost_dart_gaussian")
 
 
 testthat::test_that("Extreme gradient boosting dart tree model trained correctly", {

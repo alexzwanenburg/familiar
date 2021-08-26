@@ -90,7 +90,7 @@ setMethod("is_available", signature(object="familiarXGBoost"),
             } else if(outcome_type == "survival" & learner %in% c("", "cox")){
               return(TRUE)
               
-            } else if(outcome_type == "count" & learner %in% c("", "poisson")) {
+            } else if(outcome_type == "count" & learner %in% c("", "poisson", "gaussian")) {
               return(TRUE)
               
             } else {
@@ -159,7 +159,7 @@ setMethod("get_default_hyperparameters", signature(object="familiarXGBoost"),
                 learn_objective_default <- c("gaussian", "continuous_logistic", "gamma")
                 
               } else if(outcome_type=="count"){
-                learn_objective_default <- "poisson"
+                learn_objective_default <- c("gaussian", "poisson")
                 
               } else if(outcome_type=="binomial"){
                 learn_objective_default <- "binomial_logistic"
