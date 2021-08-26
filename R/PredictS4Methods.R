@@ -403,12 +403,25 @@ any_predictions_valid <- function(prediction_table, outcome_type){
 remove_nonvalid_predictions <- function(prediction_table, outcome_type){
   
   # Suppress NOTES due to non-standard evaluation in data.table
-  predicted_outcome <- predicted_class <- NULL
+  predicted_outcome <- predicted_class <- survival_probability <- risk_group <- NULL
   
   if(is_empty(prediction_table)) return(prediction_table)
   
   # Check predicted outcome columns.
-  if(outcome_type %in% c("survival", "continuous", "count", "competing_risk")){
+  if(outcome_type %in% c("survival", "competing_risk")){
+    if("predicted_outcome" %in% colnames(prediction_table)){
+      prediction_table <- prediction_table[is.finite(predicted_outcome), ]
+    }
+    
+    if("survival_probability" %in% colnames(prediction_table)){
+      prediction_table <- prediction_table[is.finite(survival_probability), ]
+    }
+    
+    if("risk_group" %in% colnames(prediction_table)){
+      prediction_table <- prediction_table[!is.na(risk_group), ]
+    }
+    
+  } else if(outcome_type %in% c("continuous", "count")){
     prediction_table <- prediction_table[is.finite(predicted_outcome), ]
     
   } else if(outcome_type %in% c("binomial", "multinomial")){
