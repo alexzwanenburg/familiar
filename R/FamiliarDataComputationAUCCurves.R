@@ -155,6 +155,17 @@ setMethod("extract_auc_data", signature(object="familiarEnsemble"),
     # Check if any predictions are valid.
     if(!any_predictions_valid(prediction_data, outcome_type=object@outcome_type)) return(NULL)
     
+    # Remove data with missing predictions.
+    prediction_data <- remove_nonvalid_predictions(prediction_data,
+                                                   outcome_type=object@outcome_type)
+    
+    # Remove data with missing outcomes.
+    prediction_data <- remove_missing_outcomes(prediction_data,
+                                               outcome_type=object@outcome_type)
+    
+    # Check that any prediction data remain.
+    if(is_empty(prediction_data)) return(NULL)
+    
     # Determine class levels
     outcome_class_levels <- get_outcome_class_levels(object)
     
