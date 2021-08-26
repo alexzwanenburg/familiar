@@ -78,7 +78,7 @@ setMethod("is_available", signature(object="familiarXGBoost"),
             learner <- stringi::stri_replace_first_regex(str=object@learner, pattern="xgboost_lm|xgboost_tree|xgboost_dart", replace="")
             learner <- stringi::stri_replace_first_fixed(str=learner, pattern="_", replace="")
 
-            if(outcome_type == "continuous" & learner %in% c("", "logistic", "gaussian", "poisson", "gamma")){
+            if(outcome_type == "continuous" & learner %in% c("", "logistic", "gaussian", "gamma")){
               return(TRUE)
               
             } else if(outcome_type == "multinomial" & learner %in% c("", "logistic")){
@@ -156,7 +156,7 @@ setMethod("get_default_hyperparameters", signature(object="familiarXGBoost"),
             if(fam == ""){
               # No specific objective is provided.
               if(outcome_type == "continuous"){
-                learn_objective_default <- c("gaussian", "continuous_logistic", "poisson", "gamma")
+                learn_objective_default <- c("gaussian", "continuous_logistic", "gamma")
                 
               } else if(outcome_type=="count"){
                 learn_objective_default <- "poisson"
