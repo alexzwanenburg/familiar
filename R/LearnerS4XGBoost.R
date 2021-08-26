@@ -644,7 +644,7 @@ setMethod("..predict_survival_probability", signature(object="familiarXGBoost", 
             if(!object@outcome_type %in% c("survival")) return(callNextMethod())
             
             # We can only predict probability for Cox.
-            if(!as.character(object@hyperparameters$learn_objective %in% c("cox"))) return(callNextMethod())
+            if(!as.character(object@hyperparameters$learn_objective) %in% c("cox")) return(callNextMethod())
             
             # If time is unset, read the max time stored by the model.
             if(is.null(time)) time <- object@settings$time_max
