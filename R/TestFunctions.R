@@ -2581,6 +2581,7 @@ test_plots <- function(plot_function,
                        except_one_feature=FALSE,
                        except_failed_survival_prediction=TRUE,
                        except_prospective=FALSE,
+                       except_one_sample=FALSE,
                        ...,
                        plot_args=list(),
                        test_specific_config=FALSE,
@@ -2630,10 +2631,16 @@ test_plots <- function(plot_function,
     one_feature_invariant_data <- test.create_one_feature_invariant_data_set(outcome_type)
     empty_data <- test.create_empty_data_set(outcome_type)
     multi_data <- test_create_multiple_synthetic_series(outcome_type=outcome_type)
-    no_censoring_data <- test.create_good_data_no_censoring_set(outcome_type)
+    
+    # Data with different degrees of censoring.
     one_censored_data <- test.create_good_data_one_censored_set(outcome_type)
     few_censored_data <- test.create_good_data_few_censored_set(outcome_type)
-    prospective_data <- test.create_prospective_data_set(outcome_type)
+    no_censoring_data <- test.create_good_data_no_censoring_set(outcome_type)
+    
+    # Prospective datasets with (partially) missing outcomes
+    fully_prospective_data <- test.create_prospective_data_set(outcome_type)
+    mostly_prospective_data <- test.create_mostly_prospective_data_set(outcome_type)
+    partially_prospective_data <- test.create_partially_prospective_data_set(outcome_type)
     
     # Set exceptions per outcome type.
     .always_available <- always_available
@@ -2647,6 +2654,9 @@ test_plots <- function(plot_function,
     
     .except_prospective <- except_prospective
     if(is.character(.except_prospective)) .except_prospective <- any(.except_prospective == outcome_type)
+    
+    .except_one_sample <- except_one_sample
+    if(is.character(.except_one_sample)) .except_one_sample <- any(.except_one_sample == outcome_type)
     
     if(.always_available){
       .except_one_feature <- .except_prospective <- .except_failed_survival_prediction <- FALSE
@@ -2715,15 +2725,15 @@ test_plots <- function(plot_function,
     # tested.
     if(test_specific_config) next()
     
-    # Create familiar data objects.
+    # Create familiar data objects without known outcome data.
     data_prospective_full_1 <- as_familiar_data(object=model_full_1,
-                                                data=prospective_data,
+                                                data=fully_prospective_data,
                                                 data_element=data_element,
                                                 cl=cl,
                                                 ...)
     
-    # Create a completely intact dataset.
-    test_fun(paste0("2. Plots for ", outcome_type, " outcomes ",
+    # Create plots.
+    test_fun(paste0("2A. Plots for ", outcome_type, " outcomes ",
                     ifelse(outcome_type %in% outcome_type_available & !.except_prospective, "can", "cannot"),
                     " be created for a prospective data set without known outcome."), {
                       
@@ -2747,9 +2757,98 @@ test_plots <- function(plot_function,
                     })
     
     
+    # Create familiar data objects with mostly unknown outcome data.
+    data_prospective_most_1 <- as_familiar_data(object=model_full_1,
+                                                data=mostly_prospective_data,
+                                                data_element=data_element,
+                                                cl=cl,
+                                                ...)
+    
+    # Create plots.
+    test_fun(paste0("2B. Plots for ", outcome_type, " outcomes ",
+                    ifelse(outcome_type %in% outcome_type_available & (!.except_prospective | !.except_one_sample), "can", "cannot"),
+                    " be created for a prospective data set with one instance with known outcome."), {
+                      
+                      object <- list(data_prospective_most_1)
+                      object <- mapply(set_object_name, object, c("prospective"))
+                      
+                      collection <- suppressWarnings(as_familiar_collection(object, familiar_data_names=c("prospective")))
+                      
+                      plot_list <- do.call(plot_function, args=c(list("object"=collection), plot_args))
+                      which_present <- .test_which_plot_present(plot_list)
+                      
+                      if(outcome_type %in% outcome_type_available & (!.except_prospective | !.except_one_sample)){
+                        testthat::expect_equal(all(which_present), TRUE) 
+                        
+                      } else if(!outcome_type %in% outcome_type_available){
+                        testthat::expect_equal(all(!which_present), TRUE)
+                        
+                      } else {
+                        testthat::expect_equal(any(!which_present), TRUE)
+                      }
+                    })
+    
+    # Create familiar data objects where most outcomes are known.
+    data_prospective_partial_1 <- as_familiar_data(object=model_full_1,
+                                                   data=partially_prospective_data,
+                                                   data_element=data_element,
+                                                   cl=cl,
+                                                   ...)
+    
+    # Create a completely intact dataset.
+    test_fun(paste0("2C. Plots for ", outcome_type, " outcomes ",
+                    ifelse(outcome_type %in% outcome_type_available, "can", "cannot"),
+                    " be created for a prospective data set where most instances are known."), {
+                      
+                      object <- list(data_prospective_partial_1)
+                      object <- mapply(set_object_name, object, c("prospective"))
+                      
+                      collection <- suppressWarnings(as_familiar_collection(object, familiar_data_names=c("prospective")))
+                      
+                      plot_list <- do.call(plot_function, args=c(list("object"=collection), plot_args))
+                      which_present <- .test_which_plot_present(plot_list)
+                      
+                      if(outcome_type %in% outcome_type_available){
+                        testthat::expect_equal(all(which_present), TRUE)
+                        
+                      } else {
+                        testthat::expect_equal(all(!which_present), TRUE)
+                      }
+                    })
+    
+    # Create data object with one sample.
+    data_one_sample_full_1 <- as_familiar_data(object=model_full_1,
+                                               data=full_one_sample_data,
+                                               data_element=data_element,
+                                               cl=cl,
+                                               ...)
+    
+    test_fun(paste0("2D. Plots for ", outcome_type, " outcomes ",
+                    ifelse(outcome_type %in% outcome_type_available & !.except_one_sample, "can", "cannot"),
+                    " be created for a prospective data set with one instance."), {
+                      
+                      object <- list(data_one_sample_full_1)
+                      object <- mapply(set_object_name, object, c("one_sample"))
+                      
+                      collection <- suppressWarnings(as_familiar_collection(object, familiar_data_names=c("one_sample")))
+                      
+                      plot_list <- do.call(plot_function, args=c(list("object"=collection), plot_args))
+                      which_present <- .test_which_plot_present(plot_list)
+                      
+                      if(outcome_type %in% outcome_type_available & (!.except_prospective | !.except_one_sample)){
+                        testthat::expect_equal(all(which_present), TRUE) 
+                        
+                      } else if(!outcome_type %in% outcome_type_available){
+                        testthat::expect_equal(all(!which_present), TRUE)
+                        
+                      } else {
+                        testthat::expect_equal(any(!which_present), TRUE)
+                      }
+                    })
+    
     # Ensemble from multiple datasets.
     multi_model_set <- suppressWarnings(lapply(multi_data,
-                                               train,
+                                               test_train,
                                                cluster_method="hclust",
                                                imputation_method="simple",
                                                fs_method="mim",
