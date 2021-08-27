@@ -6,6 +6,8 @@ debug_flag <- FALSE
 # Generic test.
 familiar:::test_plots(plot_function=familiar:::plot_model_performance,
                       data_element="model_performance",
+                      except_prospective = TRUE,
+                      except_one_sample = TRUE,
                       outcome_type_available=c("count", "continuous", "binomial", "multinomial", "survival"),
                       debug=debug_flag)
 
