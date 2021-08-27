@@ -2659,7 +2659,7 @@ test_plots <- function(plot_function,
     if(is.character(.except_one_sample)) .except_one_sample <- any(.except_one_sample == outcome_type)
     
     if(.always_available){
-      .except_one_feature <- .except_prospective <- .except_failed_survival_prediction <- FALSE
+      .except_one_feature <- .except_prospective <- .except_failed_survival_prediction <- .except_one_sample <- FALSE
     }
     
     # Parse hyperparameter list
@@ -2835,7 +2835,7 @@ test_plots <- function(plot_function,
                       plot_list <- do.call(plot_function, args=c(list("object"=collection), plot_args))
                       which_present <- .test_which_plot_present(plot_list)
                       
-                      if(outcome_type %in% outcome_type_available & (!.except_prospective | !.except_one_sample)){
+                      if(outcome_type %in% outcome_type_available & !.except_one_sample){
                         testthat::expect_equal(all(which_present), TRUE) 
                         
                       } else if(!outcome_type %in% outcome_type_available){
@@ -3172,7 +3172,7 @@ test_plots <- function(plot_function,
       failed_prediction_data <- as_familiar_data(object=model_failed_predictions, data=full_data, data_element=data_element, cl=cl, ...)
       
       test_fun(paste0("12. Plots for ", outcome_type, " outcomes ",
-                      ifelse(outcome_type %in% outcome_type_available && .except_failed_survival_prediction, "can", "cannot"),
+                      ifelse(outcome_type %in% outcome_type_available && !.except_failed_survival_prediction, "can", "cannot"),
                       " be created for models that do not allow for predicting survival probabilitiies."), {
                         
                         collection <- suppressWarnings(as_familiar_collection(failed_prediction_data, familiar_data_names=c("no_survival_predictions")))
