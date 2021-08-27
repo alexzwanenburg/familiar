@@ -62,6 +62,8 @@
 
 -   Fixed an issue that could cause main panels in composite plots that consist of one row of facets and have a legend guide to be have the same height as the guide.
 
+-   Fixed two issues that could cause errors when plotting a single survival curve.
+
 # Version 0.0.0.54 (Pre-release)
 
 ## Major changes:

@@ -224,8 +224,15 @@ setMethod("extract_risk_stratification_data", signature(object="familiarEnsemble
   # Copy the data element.
   data <- data.table::copy(x@data)
   
-  # Remove NA
-  data <- data[!is.na(risk_group)]
+  # Remove data with missing predictions.
+  data <- remove_nonvalid_predictions(data,
+                                      outcome_type="survival")
+  
+  # Remove data with missing outcomes.
+  data <- remove_missing_outcomes(data,
+                                  outcome_type="survival")
+  
+  # Check that any prediction data remain.
   if(is_empty(data)) return(NULL)
   
   # Create new element with strata based on x.
@@ -338,6 +345,11 @@ setMethod("extract_risk_stratification_data", signature(object="familiarEnsemble
   # Copy the data element.
   data <- data.table::copy(x@data)
   
+  # Remove data without known outcome time, or failed risk-group predictions.
+  data <- remove_nonvalid_predictions(data, outcome_type="survival")
+  data <- remove_missing_outcomes(data, outcome_type="survival")
+  if(is_empty(data)) return(NULL)
+  
   # Right-censor the data to the desired time window.
   if(!is.null(time_range)){
     # Right censor data past the time range.
@@ -351,7 +363,8 @@ setMethod("extract_risk_stratification_data", signature(object="familiarEnsemble
   if(n_groups < 2) return(NULL)
   
   # Get data from logrank tests.
-  logrank_data <- .compute_risk_stratification_logrank_test(x=x)
+  logrank_data <- .compute_risk_stratification_logrank_test(x=x,
+                                                            time_range=time_range)
   
   # Get data from hazard ratio tests.
   hr_data <- .compute_risk_stratification_hazard_ratio_test(x=x,
@@ -521,9 +534,9 @@ setMethod("extract_risk_stratification_data", signature(object="familiarEnsemble
   }
   
   # Create Cox proportional hazards model.
-  model <- tryCatch(survival::coxph(survival::Surv(time=outcome_time, event=outcome_event) ~ risk_group,
-                                    data=x),
-                    error=identity)
+  model <- suppressWarnings(tryCatch(survival::coxph(survival::Surv(time=outcome_time, event=outcome_event) ~ risk_group,
+                                                     data=x),
+                                     error=identity))
   
   # Check if the Cox PH model could not be computed. Causes could be lack
   # of events, no events beyond the first time point, etc.
