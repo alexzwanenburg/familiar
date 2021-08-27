@@ -112,8 +112,19 @@ setMethod("extract_confusion_matrix", signature(object="familiarEnsemble"),
     
     if(!any_predictions_valid(prediction_table=prediction_data, outcome_type=object@outcome_type)) return(NULL)
     
+    # Remove data with missing predictions.
+    prediction_data <- remove_nonvalid_predictions(prediction_data,
+                                                   outcome_type=object@outcome_type)
+    
+    # Remove data with missing outcomes.
+    prediction_data <- remove_missing_outcomes(prediction_data,
+                                               outcome_type=object@outcome_type)
+    
+    # Check that any prediction data remain.
+    if(is_empty(prediction_data)) return(NULL)
+    
     # Make a local copy with only the required data
-    data <- prediction_data[!is.na(outcome), c("outcome", "predicted_class")]
+    data <- prediction_data[, c("outcome", "predicted_class")]
     
     # Rename outcome columns
     data.table::setnames(data,

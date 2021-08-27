@@ -3,9 +3,12 @@ testthat::skip_on_cran()
 
 debug_flag <- FALSE
 
-# Generic test.
+# Generic test. Note that confusion matrices can be created if only one sample
+# is present.
 familiar:::test_plots(plot_function=familiar:::plot_confusion_matrix,
                       data_element="confusion_matrix",
+                      except_prospective = TRUE,
+                      except_one_sample = FALSE,
                       outcome_type_available=c("binomial", "multinomial"),
                       debug=debug_flag)
 
