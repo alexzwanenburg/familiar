@@ -75,20 +75,13 @@ setMethod("extract_univariate_analysis", signature(object="familiarEnsemble", da
             # Get and process the input data
             data <- process_input_data(object=object, data=data, stop_at="normalisation")
             
-            # Check if the data object is empty -- return an empty table if this
-            # is the case.
+            # Check if the data object is empty.
             if(is_empty(data)) return(NULL)
-            
-            # Check if the number of samples is sufficient (>5), and return an
-            # empty table if not.
-            if(data.table::uniqueN(data@data, by=get_id_columns(id_depth="sample")) <= 5) return(NULL)
             
             # Maintain only important features. The current set is based on the
             # required features.
             data <- filter_features(data=data,
                                     available_features=object@model_features)
-            
-            ##### Univariate p-values ------------------------------------------
             
             # Determine feature columns
             feature_columns <- get_feature_columns(x=data)
@@ -96,41 +89,56 @@ setMethod("extract_univariate_analysis", signature(object="familiarEnsemble", da
             # Check if there are any features in the model.
             if(length(feature_columns) == 0) return(NULL)
             
-            # Check that the qvalue package is installed.
-            has_qvalue_package <- is_package_installed(name="qvalue", verbose=FALSE)
-            
-            # Calculate univariate P values, based on aggregated data
-            regression_p_values <- compute_univariable_p_values(cl=cl,
-                                                                data_obj=aggregate_data(data=data),
-                                                                feature_columns=feature_columns)
-            
-            # Find and replace non-finite values
-            regression_p_values[!is.finite(regression_p_values)] <- 1.0
-            
-            # Collect to table
-            univariate_data <- data.table::data.table("feature"=names(regression_p_values),
-                                                      "p_value"=regression_p_values)[order(p_value)]
-          
-            # Only introduce q-values if the qvalue package is installed
-            if(has_qvalue_package){
+            ##### Univariate p-values ------------------------------------------
+            # Remove data with missing outcomes.
+            feature_data <- remove_missing_outcomes(data=data,
+                                                    outcome_type=object@outcome_type)
+
+            if(is_empty(feature_data)){
+              # Check that data are not empty
+              univariate_data <- NULL
               
-              # q-values can only be computed for larger numbers of features
-              computed_q_value <- tryCatch({qvalue::qvalue(p=univariate_data$p_value)$qvalues},
-                                           error=function(err)(return(NA_real_)))
+            } else if(data.table::uniqueN(feature_data@data, by=get_id_columns(id_depth="sample")) <= 5){
+              # Check if the number of samples is sufficient (>5), and return an
+              # empty table if not.
+              univariate_data <- NULL
               
-              # Set q-value
-              univariate_data[, "q_value":=computed_q_value]
+            } else {
+              # Check that the qvalue package is installed.
+              has_qvalue_package <- is_package_installed(name="qvalue", verbose=FALSE)
+              
+              # Calculate univariate P values, based on aggregated data
+              regression_p_values <- compute_univariable_p_values(cl=cl,
+                                                                  data_obj=aggregate_data(data=feature_data),
+                                                                  feature_columns=feature_columns)
+              
+              # Find and replace non-finite values
+              regression_p_values[!is.finite(regression_p_values)] <- NA_real_
+              
+              # Collect to table
+              univariate_data <- data.table::data.table("feature"=names(regression_p_values),
+                                                        "p_value"=regression_p_values)[order(p_value)]
+              
+              # Only introduce q-values if the qvalue package is installed
+              if(has_qvalue_package){
+                
+                # q-values can only be computed for larger numbers of features
+                computed_q_value <- tryCatch({qvalue::qvalue(p=univariate_data$p_value)$qvalues},
+                                             error=function(err)(return(NA_real_)))
+                
+                # Set q-value
+                univariate_data[, "q_value":=computed_q_value]
+              }
+              
+              # Set univariate data.
+              univariate_data <- methods::new("familiarDataElementUnivariateAnalysis",
+                                              data=univariate_data,
+                                              value_column=ifelse(has_qvalue_package, c("p_value", "q_value"), "p_value"),
+                                              grouping_column="feature")
+              
+              # Add model name.
+              univariate_data <- add_model_name(univariate_data, object)
             }
-            
-            # Set univariate data.
-            univariate_data <- methods::new("familiarDataElementUnivariateAnalysis",
-                                            data=univariate_data,
-                                            value_column=ifelse(has_qvalue_package, c("p_value", "q_value"), "p_value"),
-                                            grouping_column="feature")
-            
-            # Add model name.
-            univariate_data <- add_model_name(univariate_data, object)
-            
             
             ##### Feature robustness -------------------------------------------
             
