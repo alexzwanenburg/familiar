@@ -362,9 +362,6 @@ setMethod("plot_kaplan_meier", signature(object="familiarCollection"),
             facet_by <- split_var_list$facet_by
             color_by <- split_var_list$color_by
             linetype_by <- split_var_list$linetype_by
-#             if(!is.null)) color_by <- split_var_list$color_by
-# 
-#             if(!is.null(split_var_list$linetype_by)) linetype_by <- split_var_list$linetype_by
             
             # Create a legend label
             legend_label <- plotting.create_legend_label(user_label=legend_label,
@@ -656,77 +653,6 @@ setMethod("plot_kaplan_meier", signature(object="familiarCollection"),
   
   return(g)
 }
-
-
-# .prepare_km_plot_data <- function(x, conf_int, x_range){
-# 
-#   # Suppress NOTES due to non-standard evaluation in data.table
-#   surv <- surv_lower <- surv_upper <- time <- NULL
-#   
-#   if(is_empty(x)) return(NULL)
-#   
-#   # Use survfit to get kaplan-meier curves for each group
-#   if(conf_int > 0){
-#     km_fit <- survival::survfit(Surv(outcome_time, outcome_event) ~ 1, data=x, conf.int=conf_int)
-#   } else {
-#     km_fit <- survival::survfit(Surv(outcome_time, outcome_event) ~ 1, data=x)
-#   }
-#   
-#   # Extract plotting information
-#   km_data <- data.table::data.table("time"=km_fit$time, "group_size"=km_fit$n.risk, "n_event"=km_fit$n.event, "n_censor"=km_fit$n.censor,
-#                                     "surv"=km_fit$surv, "surv_lower"=km_fit$lower,  "surv_upper"=km_fit$upper)
-#   
-#   # Add in time = 0 if necessary
-#   if(min(km_data$time) > 0){
-#     km_data <- rbind(data.table::data.table("time"=0, "group_size"=km_fit$n, "n_event"=0, "n_censor"=0,
-#                                             "surv"=1.00, "surv_lower"=km_fit$lower[1], "surv_upper"=1.0),
-#                      km_data)
-#   }
-#   
-#   # Update absent censoring (notably when surv==0)
-#   km_data[surv==0 & is.na(surv_lower), "surv_lower":=0.0]
-#   km_data[surv==0 & is.na(surv_upper), "surv_upper":=0.0]
-#   
-#   # In rare circumstances (i.e. single-sample risk groups), surv_lower may be
-#   # missing at the initial time point.
-#   km_data[time==0 & is.na(surv_lower), "surv_lower":=0.0]
-#   
-#   # Add an entry at the proximal and distal range edges. This prevents the curve
-#   # from being cut off prematurely, or starting too late.
-#   if(is_empty(km_data[time==x_range[1]]) & x_range[1] > min(km_data$time) & x_range[1] < max(km_data$time)){
-#     # Select the closest entry prior to the proximal edge, make changes and
-#     # introduce it back into the data.
-#     proximal_data <- tail(km_data[time < x_range[1]][order(time)], n=1)[, ":="("time"=x_range[1], "n_event"=0, "n_censor"=0)]
-#     km_data <- rbind(km_data, proximal_data)[order(time)]
-#   }
-#   
-#   if(is_empty(km_data[time==x_range[2]]) & x_range[2] > min(km_data$time) & x_range[2] < max(km_data$time)){
-#     # Do the same for the distal edge.
-#     distal_data <- tail(km_data[time < x_range[2]][order(time)], n=1)[, ":="("time"=x_range[2], "n_event"=0, "n_censor"=0)]
-#     km_data <- rbind(km_data, distal_data)[order(time)]
-#   }
-# 
-#   # Add in data_set, fs_method, learner and risk_group and maintain factor
-#   # levels If one of these variables has more than one category present, this
-#   # indicates that this level is ignored.
-#   if(data.table::uniqueN(x, by="data_set") == 1){
-#     km_data$data_set   <- factor(x$data_set[1], levels=levels(x$data_set))
-#   }
-#   
-#   if(data.table::uniqueN(x, by="fs_method") == 1){
-#     km_data$fs_method  <- factor(x$fs_method[1], levels=levels(x$fs_method))
-#   }
-# 
-#   if(data.table::uniqueN(x, by="learner") == 1){
-#     km_data$learner    <- factor(x$learner[1], levels=levels(x$learner))
-#   }
-#   
-#   if(data.table::uniqueN(x, by="risk_group") == 1){
-#     km_data$risk_group <- factor(x$risk_group[1], levels=levels(x$risk_group))
-#   }
-#   
-#   return(km_data)
-# }
 
 
 
