@@ -7,6 +7,8 @@ debug_flag <- FALSE
 familiar:::test_plots(plot_function=familiar:::plot_decision_curve,
                       outcome_type_available=c("binomial", "multinomial", "survival"),
                       data_element="decision_curve_analyis",
+                      except_prospective = TRUE,
+                      except_one_sample = TRUE,
                       debug=debug_flag)
 
 # Test with step-wise confidence interval

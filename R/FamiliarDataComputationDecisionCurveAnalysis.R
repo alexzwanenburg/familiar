@@ -75,7 +75,7 @@ setMethod("extract_decision_curve_data", signature(object="familiarEnsemble"),
             
             # Obtain ensemble method from stored settings, if required.
             if(is.waive(ensemble_method)) ensemble_method <- object@settings$ensemble_method
-
+            
             # Check ensemble_method argument
             .check_parameter_value_is_valid(x=ensemble_method, var_name="ensemble_method",
                                             values=.get_available_ensemble_prediction_methods())
@@ -83,7 +83,7 @@ setMethod("extract_decision_curve_data", signature(object="familiarEnsemble"),
             # Load confidence alpha from object settings attribute if not
             # provided externally.
             if(is.waive(confidence_level)) confidence_level <- object@settings$confidence_level
-
+            
             # Check confidence_level input argument
             .check_number_in_valid_range(x=confidence_level, var_name="confidence_level",
                                          range=c(0.0, 1.0), closed=c(FALSE, FALSE))
@@ -113,7 +113,7 @@ setMethod("extract_decision_curve_data", signature(object="familiarEnsemble"),
                                                           object = object,
                                                           default = TRUE,
                                                           data_element = "decision_curve_analyis")
-
+            
             # Test if models are properly loaded
             if(!is_model_loaded(object=object)) ..error_ensemble_models_not_loaded()
             
@@ -173,6 +173,17 @@ setMethod("extract_decision_curve_data", signature(object="familiarEnsemble"),
     # Check if any predictions are valid.
     if(!any_predictions_valid(prediction_data, outcome_type=object@outcome_type)) return(NULL)
     
+    # Remove data with missing predictions.
+    prediction_data <- remove_nonvalid_predictions(prediction_data,
+                                                   outcome_type=object@outcome_type)
+    
+    # Remove data with missing outcomes.
+    prediction_data <- remove_missing_outcomes(prediction_data,
+                                               outcome_type=object@outcome_type)
+    
+    # Check that any prediction data remain.
+    if(is_empty(prediction_data)) return(NULL)
+    
     # Determine class levels
     outcome_class_levels <- get_outcome_class_levels(object)
     
@@ -195,7 +206,7 @@ setMethod("extract_decision_curve_data", signature(object="familiarEnsemble"),
                        data=prediction_data,
                        cl=cl,
                        ...)
-   
+    
   } else if(object@outcome_type %in% c("survival")){
     # Iterate over evaluation times.
     dca_data <- lapply(data_elements,
@@ -359,6 +370,17 @@ setMethod("extract_decision_curve_data", signature(object="familiarEnsemble"),
   # Check if any predictions are valid.
   if(!any_predictions_valid(data, outcome_type=object@outcome_type)) return(NULL)
   
+  # Remove data with missing predictions.
+  data <- remove_nonvalid_predictions(data,
+                                      outcome_type=object@outcome_type)
+  
+  # Remove data with missing outcomes.
+  data <- remove_missing_outcomes(data,
+                                  outcome_type=object@outcome_type)
+  
+  # Check that any prediction data remain.
+  if(is_empty(data)) return(NULL)
+  
   # Check if the data has more than 1 row.
   if(nrow(data) <= 1) return(NULL)
   
@@ -453,8 +475,8 @@ setMethod("extract_decision_curve_data", signature(object="familiarEnsemble"),
   
   # Determine maximum number of true and false positives.
   n_max_true_positive <- max(data$n_true_positive)
-
-    # Determine the number of samples.
+  
+  # Determine the number of samples.
   n <- nrow(data)
   
   # Determine net benefit
