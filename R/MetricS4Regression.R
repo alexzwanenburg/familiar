@@ -46,7 +46,7 @@ setMethod("compute_metric_score", signature(metric="familiarMetricMAE"),
                                                 outcome_type=metric@outcome_type)
             
             # Remove any entries that lack observed values.
-            data <- remove_missing_outcomes(prediction_table=data,
+            data <- remove_missing_outcomes(data=data,
                                             outcome_type=metric@outcome_type)
             
             if(is_empty(data)) return(callNextMethod())
@@ -80,7 +80,7 @@ setMethod("compute_metric_score", signature(metric="familiarMetricMLAE"),
                                                 outcome_type=metric@outcome_type)
             
             # Remove any entries that lack observed values.
-            data <- remove_missing_outcomes(prediction_table=data,
+            data <- remove_missing_outcomes(data=data,
                                             outcome_type=metric@outcome_type)
             
             if(is_empty(data)) return(callNextMethod())
@@ -114,7 +114,7 @@ setMethod("compute_metric_score", signature(metric="familiarMetricMSE"),
                                                 outcome_type=metric@outcome_type)
             
             # Remove any entries that lack observed values.
-            data <- remove_missing_outcomes(prediction_table=data,
+            data <- remove_missing_outcomes(data=data,
                                             outcome_type=metric@outcome_type)
             
             if(is_empty(data)) return(callNextMethod())
@@ -147,7 +147,7 @@ setMethod("compute_metric_score", signature(metric="familiarMetricMSLE"),
                                                 outcome_type=metric@outcome_type)
             
             # Remove any entries that lack observed values.
-            data <- remove_missing_outcomes(prediction_table=data,
+            data <- remove_missing_outcomes(data=data,
                                             outcome_type=metric@outcome_type)
             
             if(is_empty(data)) return(callNextMethod())
@@ -183,7 +183,7 @@ setMethod("compute_metric_score", signature(metric="familiarMetricMedianAE"),
                                                 outcome_type=metric@outcome_type)
             
             # Remove any entries that lack observed values.
-            data <- remove_missing_outcomes(prediction_table=data,
+            data <- remove_missing_outcomes(data=data,
                                             outcome_type=metric@outcome_type)
             
             if(is_empty(data)) return(callNextMethod())
@@ -217,7 +217,7 @@ setMethod("compute_metric_score", signature(metric="familiarMetricRMSE"),
                                                 outcome_type=metric@outcome_type)
             
             # Remove any entries that lack observed values.
-            data <- remove_missing_outcomes(prediction_table=data,
+            data <- remove_missing_outcomes(data=data,
                                             outcome_type=metric@outcome_type)
             
             if(is_empty(data)) return(callNextMethod())
@@ -251,7 +251,7 @@ setMethod("compute_metric_score", signature(metric="familiarMetricRMSLE"),
                                                 outcome_type=metric@outcome_type)
             
             # Remove any entries that lack observed values.
-            data <- remove_missing_outcomes(prediction_table=data,
+            data <- remove_missing_outcomes(data=data,
                                             outcome_type=metric@outcome_type)
             
             if(is_empty(data)) return(callNextMethod())
@@ -286,7 +286,7 @@ setMethod("compute_metric_score", signature(metric="familiarMetricR2"),
                                                 outcome_type=metric@outcome_type)
             
             # Remove any entries that lack observed values.
-            data <- remove_missing_outcomes(prediction_table=data,
+            data <- remove_missing_outcomes(data=data,
                                             outcome_type=metric@outcome_type)
             
             if(is_empty(data)) return(callNextMethod())
@@ -335,7 +335,7 @@ setMethod("compute_metric_score", signature(metric="familiarMetricExplainedVaria
                                                 outcome_type=metric@outcome_type)
             
             # Remove any entries that lack observed values.
-            data <- remove_missing_outcomes(prediction_table=data,
+            data <- remove_missing_outcomes(data=data,
                                             outcome_type=metric@outcome_type)
             
             if(is_empty(data)) return(callNextMethod())

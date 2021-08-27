@@ -44,7 +44,7 @@ setMethod("compute_metric_score", signature(metric="familiarMetricAUCROC"),
                                                 outcome_type=metric@outcome_type)
             
             # Remove any entries that lack observed values.
-            data <- remove_missing_outcomes(prediction_table=data,
+            data <- remove_missing_outcomes(data=data,
                                             outcome_type=metric@outcome_type)
             
             if(is_empty(data)) return(callNextMethod())

@@ -296,7 +296,7 @@ setMethod("extract_permutation_vimp", signature(object="familiarEnsemble"),
                                                  outcome_type=object@outcome_type)
   
   # Remove data with missing outcomes.
-  prediction_data <- remove_missing_outcomes(prediction_data,
+  prediction_data <- remove_missing_outcomes(data=prediction_data,
                                              outcome_type=object@outcome_type)
   
   # Check that any prediction data remain.
@@ -310,6 +310,10 @@ setMethod("extract_permutation_vimp", signature(object="familiarEnsemble"),
                              data=data,
                              is_pre_processed=is_pre_processed,
                              stop_at="signature")
+  
+  # Remove instances with missing outcomes.
+  data <- remove_missing_outcomes(data=data,
+                                  outcome_type=object@outcome_type)
   
   # Perform some checks to see if there is sufficient data to perform a half-way
   # meaningful analysis.

@@ -436,26 +436,53 @@ remove_nonvalid_predictions <- function(prediction_table, outcome_type){
 
 
 
-remove_missing_outcomes <- function(prediction_table, outcome_type){
-  
-  # Suppress NOTES due to non-standard evaluation in data.table
-  outcome <- outcome_time <- outcome_event <- NULL
-  
-  if(is_empty(prediction_table)) return(prediction_table)
-  
-  # Check predicted outcome columns.
-  if(outcome_type %in% c("survival", "competing_risk")){
-    prediction_table <- prediction_table[is.finite(outcome_time) & !is.na(outcome_event), ]
-    
-  } else if(outcome_type %in% c("count", "continuous")){
-    prediction_table <- prediction_table[is.finite(outcome), ]
-    
-  } else if(outcome_type %in% c("binomial", "multinomial")){
-    prediction_table <- prediction_table[!is.na(outcome), ]
-    
-  } else {
-    ..error_no_known_outcome_type(outcome_type)
-  }
-  
-  return(prediction_table)
-}
+#####remove_missing_outcomes (data.table)#####
+setMethod("remove_missing_outcomes", signature(data="data.table"),
+          function(data, outcome_type){
+            # Suppress NOTES due to non-standard evaluation in data.table
+            outcome <- outcome_time <- outcome_event <- NULL
+            
+            if(is_empty(data)) return(data)
+            
+            # Check predicted outcome columns.
+            if(outcome_type %in% c("survival", "competing_risk")){
+              data <- data[is.finite(outcome_time) & !is.na(outcome_event), ]
+              
+            } else if(outcome_type %in% c("count", "continuous")){
+              data <- data[is.finite(outcome), ]
+              
+            } else if(outcome_type %in% c("binomial", "multinomial")){
+              data <- data[!is.na(outcome), ]
+              
+            } else {
+              ..error_no_known_outcome_type(outcome_type)
+            }
+            
+            return(data)
+          })
+
+
+#####remove_missing_outcomes (dataObject)#####
+setMethod("remove_missing_outcomes", signature(data="dataObject"),
+          function(data, outcome_type=NULL){
+            
+            if(is_empty(data)) return(data)
+            
+            if(is.null(outcome_type)) outcome_type <- data@outcome_type
+            
+            # Update data attribute
+            data@data <- remove_missing_outcomes(data=data@data,
+                                                 outcome_type=outcome_type)
+            
+            return(data)
+          })
+
+
+#####remove_missing_outcomes (ANY)#####
+setMethod("remove_missing_outcomes", signature(data="ANY"),
+          function(data, outcome_type=NULL){
+            
+            if(is_empty(data)) return(data)
+            
+            ..error_reached_unreachable_code("remove_missing_outcomes,ANY: data does not have a known object class, nor is empty.")
+          })

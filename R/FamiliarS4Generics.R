@@ -59,6 +59,8 @@ setGeneric("normalise_features", function(data, ...) standardGeneric("normalise_
 
 setGeneric("batch_normalise_features", function(data, ...) standardGeneric("batch_normalise_features"))
 
+setGeneric("remove_missing_outcomes", function(data, ...) standardGeneric("remove_missing_outcomes"))
+
 setGeneric("impute_features", function(data, ...) standardGeneric("impute_features"))
 
 setGeneric("cluster_features", function(data, ...) standardGeneric("cluster_features"))

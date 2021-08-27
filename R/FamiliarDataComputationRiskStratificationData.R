@@ -229,7 +229,7 @@ setMethod("extract_risk_stratification_data", signature(object="familiarEnsemble
                                       outcome_type="survival")
   
   # Remove data with missing outcomes.
-  data <- remove_missing_outcomes(data,
+  data <- remove_missing_outcomes(data=data,
                                   outcome_type="survival")
   
   # Check that any prediction data remain.
@@ -347,7 +347,7 @@ setMethod("extract_risk_stratification_data", signature(object="familiarEnsemble
   
   # Remove data without known outcome time, or failed risk-group predictions.
   data <- remove_nonvalid_predictions(data, outcome_type="survival")
-  data <- remove_missing_outcomes(data, outcome_type="survival")
+  data <- remove_missing_outcomes(data=data, outcome_type="survival")
   if(is_empty(data)) return(NULL)
   
   # Right-censor the data to the desired time window.

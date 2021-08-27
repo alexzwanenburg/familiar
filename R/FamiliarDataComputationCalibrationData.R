@@ -233,7 +233,7 @@ setMethod("extract_calibration_data", signature(object="familiarEnsemble"),
                                                  outcome_type=object@outcome_type)
   
   # Remove data with missing outcomes.
-  prediction_data <- remove_missing_outcomes(prediction_data,
+  prediction_data <- remove_missing_outcomes(data=prediction_data,
                                              outcome_type=object@outcome_type)
   
   # Check that any prediction data remain.
