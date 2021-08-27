@@ -7,7 +7,7 @@ debug_flag <- FALSE
 familiar:::test_plots(plot_function=familiar:::plot_model_performance,
                       data_element="model_performance",
                       except_prospective = TRUE,
-                      except_one_sample = TRUE,
+                      except_one_sample = c("binomial", "multinomial", "survival"),
                       outcome_type_available=c("count", "continuous", "binomial", "multinomial", "survival"),
                       debug=debug_flag)
 
