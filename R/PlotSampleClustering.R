@@ -1862,6 +1862,9 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
     # Mark all as no event initially.
     y[, "value":="no"]
     
+    # Mark all data with missing outcome_time or outcome_event as missing.
+    y[!is.finite(outcome_time) | is.na(outcome_event), "value":=NA_character_]
+    
     # All samples that have an event before or at the evaluation time.
     y[outcome_time <= eval_time & outcome_event == 1, "value":="yes"]
     
