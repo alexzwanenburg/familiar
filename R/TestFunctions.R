@@ -2620,7 +2620,7 @@ test_plots <- function(plot_function,
   }
   
   # Iterate over the outcome type.
-  for(outcome_type in c("survival", "binomial", "multinomial", "count", "continuous")){
+  for(outcome_type in c("count", "continuous", "survival", "binomial", "multinomial")){
     
     # Obtain data.
     full_data <- test.create_good_data_set(outcome_type)
