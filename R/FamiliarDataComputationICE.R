@@ -78,13 +78,11 @@ setMethod("extract_ice", signature(object="familiarEnsemble"),
             
             # Message extraction start
             if(verbose & is.null(features)){
-              logger.message(paste0("Computing individual conditional expectation 
-                                    and partial dependence data for features in the dataset."),
+              logger.message(paste0("Computing individual conditional expectation and partial dependence data for features in the dataset."),
                              indent=message_indent)
               
             } else if(verbose){
-              logger.message(paste0("Computing individual conditional expectation 
-                                    and partial dependence data for the selected features."),
+              logger.message(paste0("Computing individual conditional expectation and partial dependence data for the selected features."),
                              indent=message_indent)
             }
             
