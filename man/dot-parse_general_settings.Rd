@@ -711,6 +711,7 @@ if any, should be skipped as part of the evaluation process. Defaults to
 have one or more of the following values:
 \itemize{
 \item \code{none}, \code{false}: no steps are skipped.
+\item \code{all}, \code{true}: all steps are skipped.
 \item \code{auc_data}: data for assessing and plotting the area under the receiver
 operating characteristic curve are not computed.
 \item \code{calibration_data}: data for assessing and plotting model calibration are

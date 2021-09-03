@@ -2211,6 +2211,8 @@
 #'
 #'  * `none`, `false`: no steps are skipped.
 #'
+#'  * `all`, `true`: all steps are skipped.
+#'
 #'  * `auc_data`: data for assessing and plotting the area under the receiver
 #'  operating characteristic curve are not computed.
 #'
@@ -2663,7 +2665,11 @@
   
   settings$evaluation_data_elements <- tolower(settings$evaluation_data_elements)
   .check_parameter_value_is_valid(x=settings$evaluation_data_elements, var_name="skip_evaluation_elements",
-                                  values=c(.get_available_data_elements(), "none", "false"))
+                                  values=c(.get_available_data_elements(), "none", "false", "all", "true"))
+  
+  if(any(settings$evaluation_data_elements %in% c("all", "true"))){
+    settings$evaluation_data_elements <- .get_available_data_elements()
+  }
   
   if(any(settings$evaluation_data_elements %in% c("none", "false"))){
     settings$evaluation_data_elements <- NULL
@@ -2673,6 +2679,7 @@
   settings$evaluation_data_elements <- setdiff(.get_available_data_elements(),
                                                settings$evaluation_data_elements)
   
+  if(length(settings$evaluation_data_elements) == 0) settings$evaluation_data_elements <- NULL
   
   # Method for ensemble predictions
   settings$ensemble_method <- .parse_arg(x_config=config$ensemble_method, x_var=ensemble_method,
