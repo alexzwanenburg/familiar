@@ -142,7 +142,7 @@
       <exploration_method></exploration_method>
       <!-- The model used to infer utility of hyperparameter sets and select them for exploration (optional, default: gaussian_process) -->
       <hyperparameter_learner></hyperparameter_learner>
-      <!-- Maximum number of bootstraps to evaluate hyperparameters on (optional, default: 200) -->
+      <!-- Maximum number of bootstraps to evaluate hyperparameters on (optional, default: 50) -->
       <optimisation_bootstraps></optimisation_bootstraps>
       <!-- Whether variable importance should be computed seperately for each bootstrap (true) when optimising learner hyperparameters or the feature selection results should be used (false). (optional, default: true) -->
       <optimisation_determine_vimp></optimisation_determine_vimp>
