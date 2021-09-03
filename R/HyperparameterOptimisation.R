@@ -164,11 +164,13 @@ run_hyperparameter_optimisation <- function(cl=NULL,
   
   # Message completion of hyperparameter optimisation.
   if(is_vimp){
+    logger.message("")
     logger.message(paste("Hyperparameter optimisation: Completed parameter optimisation for the", vimp_method,
                          "variable importance method."),
                    indent=message_indent)
     
   } else {
+    logger.message("")
     logger.message(paste("Hyperparameter optimisation: Completed parameter optimisation for the", learner,
                          "learner, based on variable importances from the", vimp_method, "variable importance method."),
                    indent=message_indent)
@@ -304,7 +306,8 @@ setMethod("optimise_hyperparameters", signature(object="familiarModel", data="da
             param_id <- .NATURAL <- NULL
             
             if(!is.null(experiment_info) & verbose){
-              logger.message(paste0("\nStarting hyperparameter optimisation for data subsample ",
+              logger.message("")
+              logger.message(paste0("Starting hyperparameter optimisation for data subsample ",
                                     experiment_info$experiment_id, " of ",
                                     experiment_info$n_experiment_total, "."),
                              indent=message_indent)
@@ -340,6 +343,10 @@ setMethod("optimise_hyperparameters", signature(object="familiarModel", data="da
                                                  "balanced"="maximising out-of-bag performance while constraining performance differences between in-bag and out-of-bag data",
                                                  "stronger_balance"="maximum out-of-bag performance while strongly constraining performance differences between in-bag and out-of-bag data")
               
+              logger.message(paste0("Hyperparameter optimisation is conducted using the ", paste_s(metric), ifelse(length(metric) > 1, " metrics", " metric"),
+                                    " by ", optimisation_description, "."),
+                             indent=message_indent+1L)
+              
               inference_description <- switch(hyperparameter_learner,
                                               "random_forest"="selected after inferring utility using a Random Forest",
                                               "gaussian_process"="selected after inferring utility using a localised approximate Gaussian Process",
@@ -347,6 +354,9 @@ setMethod("optimise_hyperparameters", signature(object="familiarModel", data="da
                                               "bart"="selected after inferring utility using Bayesian Additive Regression Trees",
                                               "random"="drawn randomly",
                                               "random_search"="drawn randomly")
+              
+              logger.message(paste0("Candidate hyperparameter sets after the initial run are ", inference_description, "."),
+                             indent=message_indent+1L)
               
               if(!hyperparameter_learner %in% c("random", "random_search")){
                 utility_description <- switch(acquisition_function,
@@ -356,16 +366,9 @@ setMethod("optimise_hyperparameters", signature(object="familiarModel", data="da
                                               "upper_confidence_bound"="the upper regret bound",
                                               "bayes_upper_confidence_bound"="the Bayesian upper confidence bound")
                 
-                utility_description <- paste0("\nUtility is measured as ", utility_description, ".")
-              } else {
-                utility_description <- ""
+                logger.message(paste0("Utility is measured as ", utility_description, "."),
+                               indent=message_indent+1L)
               }
-              
-              logger.message(paste0("Hyperparameter optimisation is conducted using the ", paste_s(metric), ifelse(length(metric) > 1, " metrics", " metric"),
-                                    " by ", optimisation_description, ".",
-                                    "\nCandidate hyperparameter sets after the initial run are ", inference_description, ". ",
-                                    utility_description),
-                             indent=message_indent)
             }
             
             ##### Create and update hyperparameter sets ------------------------
@@ -422,7 +425,8 @@ setMethod("optimise_hyperparameters", signature(object="familiarModel", data="da
             
             # Check that any parameters can be randomised.
             if(!.any_randomised_hyperparameters(parameter_list=parameter_list)){
-              if(verbose) logger.message("Hyperparameter optimisation: All hyperparameters are fixed. No optimisation is required.")
+              if(verbose) logger.message("Hyperparameter optimisation: All hyperparameters are fixed. No optimisation is required.",
+                                         indent=message_indent)
               
               return(object)
             }
@@ -459,7 +463,8 @@ setMethod("optimise_hyperparameters", signature(object="familiarModel", data="da
             
             # Check that the parameter table is not empty.
             if(is_empty(parameter_table)){
-              if(verbose) logger.message("Hyperparameter optimisation: No hyperparameters were found to initialise the optimisation process.")
+              if(verbose) logger.message("Hyperparameter optimisation: No hyperparameters were found to initialise the optimisation process.",
+                                         indent=message_indent)
               
               # Remove any fixed hyperparameters.
               object@hyperparameters <- NULL
@@ -476,7 +481,8 @@ setMethod("optimise_hyperparameters", signature(object="familiarModel", data="da
             # Check that bootstraps could be created. This may fail if the data
             # set is too small.
             if(inherits(bootstraps, "error")){
-              if(verbose) logger.message("Hyperparameter optimisation: Failed to create bootstraps. The dataset may be too small.")
+              if(verbose) logger.message("Hyperparameter optimisation: Failed to create bootstraps. The dataset may be too small.",
+                                         indent=message_indent)
               
               # Remove any fixed hyperparameters.
               object@hyperparameters <- NULL
@@ -517,7 +523,7 @@ setMethod("optimise_hyperparameters", signature(object="familiarModel", data="da
               if(verbose){
                 logger.message(paste("Compute initial model performance based on",
                                      nrow(run_table), "hyperparameter sets."),
-                               indent=message_indent)
+                               indent=message_indent+1L)
               }
               
               # Build and evaluate models. This creates a table with metric
@@ -550,7 +556,7 @@ setMethod("optimise_hyperparameters", signature(object="familiarModel", data="da
               if(verbose){
                 logger.message(paste("Compute initial model performance based on the second batch of",
                                      nrow(run_table), "hyperparameter sets."),
-                               indent=message_indent)
+                               indent=message_indent+1L)
               }
               
               # Create a model to predict the time a process takes to complete
@@ -597,7 +603,7 @@ setMethod("optimise_hyperparameters", signature(object="familiarModel", data="da
               if(verbose){
                 logger.message(paste("Compute initial model performance based on",
                                      nrow(run_table), "hyperparameter sets."),
-                               indent=message_indent)
+                               indent=message_indent+1L)
               }
               
               # Build and evaluate models. This creates a table with metric
@@ -634,7 +640,7 @@ setMethod("optimise_hyperparameters", signature(object="familiarModel", data="da
                                     ..parse_hyperparameters_to_string(id=incumbent_set_data$param_id,
                                                                       parameter_table=parameter_table,
                                                                       parameter_list=parameter_list)),
-                             indent=message_indent)
+                             indent=message_indent+1L)
             }
             
             # Initialise vector to track old config scores and parameter ids.
@@ -713,7 +719,7 @@ setMethod("optimise_hyperparameters", signature(object="familiarModel", data="da
                 if(verbose){
                   logger.message(paste("Intensify step", n_intensify_steps + 1L, "using", length(parameter_id_challenger),
                                        "challenger hyperparameter sets."),
-                                 indent=message_indent)
+                                 indent=message_indent+1L)
                 }
                 
                 # Compute metric values for the bootstraps of the incumbent and
@@ -804,7 +810,7 @@ setMethod("optimise_hyperparameters", signature(object="familiarModel", data="da
                                       ..parse_hyperparameters_to_string(id=incumbent_set_data$param_id,
                                                                         parameter_table=parameter_table,
                                                                         parameter_list=parameter_list)),
-                               indent=message_indent)
+                               indent=message_indent+1L)
               }
               
               # Break if the convergence counter reaches a certain number
