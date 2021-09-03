@@ -516,17 +516,22 @@
 #'   * `mb`: (required) model building step.
 #'
 #'   * `ev`: (optional) external validation. Note that internal validation due
-#'   to subsampling will always be conducted if the subsamplers create any
-#'   validation data sets.
+#'   to subsampling will always be conducted if the subsampling methods create
+#'   any validation data sets.
 #'
 #'   The different components are linked using `+`.
 #'
-#'   Different subsampling algorithms can be used in conjuction with the basic
+#'   Different subsampling methods can be used in conjunction with the basic
 #'   workflow components:
 #'
+#'   * `bs(x,n)`: (stratified) .632 bootstrap, with `n` the number of
+#'   bootstraps. In contrast to `bt`, feature pre-processing parameters and
+#'   hyperparameter optimisation are conducted on individual bootstraps.
+#'
 #'   * `bt(x,n)`: (stratified) .632 bootstrap, with `n` the number of
-#'   bootstraps. Unlike other subsamplers, no separate pre-processing parameters
-#'   are determined for each bootstrap.
+#'   bootstraps. Unlike `bs` and other subsampling methods, no separate
+#'   pre-processing parameters or optimised hyperparameters will be determined
+#'   for each bootstrap.
 #'
 #'   * `cv(x,n,p)`: (stratified) `n`-fold cross-validation, repeated `p` times.
 #'   Pre-processing parameters are determined for each iteration.

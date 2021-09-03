@@ -22,6 +22,16 @@ familiar:::integrated_test(experimental_design="bt(fs+mb, 5)",
                            outcome_type_available="binomial",
                            debug=debug_flag)
 
+# Bootstrap (with pre-processing and optimisation within bootstraps)
+familiar:::integrated_test(experimental_design="bs(fs+mb, 5)",
+                           fs_method="none",
+                           cluster_method="none",
+                           imputation_method="simple",
+                           parallel=FALSE,
+                           skip_evaluation_elements="all",
+                           outcome_type_available="binomial",
+                           debug=debug_flag)
+
 # Cross-validation
 familiar:::integrated_test(experimental_design="cv(fs+mb, 3)",
                            fs_method="none",

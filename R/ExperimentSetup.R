@@ -82,11 +82,21 @@ extract_experimental_setup <- function(experimental_design, file_dir, verbose=TR
   data.table::setnames(section_table, c("values", "end", "start"), c("exp_level_id", "sect_end", "sect_start"))
   
   # Set up columns to be filled
-  section_table[, ":="("ref_data_id"=0, "main_data_id"=0, "feat_sel"=FALSE, "model_building"=FALSE,
-                     "external_validation"=FALSE, "perturb_method"="none", "perturb_n_rep"=0,
-                     "perturb_n_folds"=0)]
+  section_table[, ":="("ref_data_id"=0,
+                       "main_data_id"=0,
+                       "feat_sel"=FALSE,
+                       "model_building"=FALSE,
+                       "external_validation"=FALSE,
+                       "perturb_method"="none",
+                       "perturb_n_rep"=0,
+                       "perturb_n_folds"=0)]
   
   return(section_table)
+}
+
+.get_available_subsample_methods <- function(){
+  return(c("main", "limited_bootstrap", "full_bootstrap",
+           "cross_val", "loocv", "imbalance_partition"))
 }
 
 
@@ -104,24 +114,35 @@ extract_experimental_setup <- function(experimental_design, file_dir, verbose=TR
     
     # Check if ip, bt, lv or cv preceeds the current section
     if(section_table$sect_start[ii] > 2){
-      sampler_str <- stringi::stri_sub(str=experimental_design, from=section_table$sect_start[ii]-2,
+      sampler_str <- stringi::stri_sub(str=experimental_design,
+                                       from=section_table$sect_start[ii]-2,
                                        to=section_table$sect_start[ii]-1)
       
-      # Check for imbalance partition (ip), bootstrap (bt), cross-validation (cv) and leave-one-out-cross-validation (lv)
+      # Check for imbalance partition (ip), limited bootstrap (bt), full
+      # bootstrap (bs), cross-validation (cv) and leave-one-out-cross-validation
+      # (lv)
       if(sampler_str=="bt"){
-        section_table$perturb_method[ii] <- "bootstrap"
+        section_table$perturb_method[ii] <- "limited_ "
         section_table$main_data_id[ii]   <- main_data_id_iter
         main_data_id_iter                <- main_data_id_iter + 1
+      
+      } else if(sampler_str=="bs"){
+        section_table$perturb_method[ii] <- "full_bootstrap"
+        section_table$main_data_id[ii]   <- main_data_id_iter
+        main_data_id_iter                <- main_data_id_iter + 1
+        
       } else if(sampler_str=="cv"){
         section_table$perturb_method[ii] <- "cross_val"
         section_table$main_data_id[ii]   <- main_data_id_iter
         main_data_id_iter                <- main_data_id_iter + 1
+        
       } else if(sampler_str=="lv"){
         section_table$perturb_method[ii] <- "loocv"
         section_table$main_data_id[ii]   <- main_data_id_iter
         main_data_id_iter                <- main_data_id_iter + 1
+        
       } else if(sampler_str=="ip"){
-        section_table$perturb_method[ii] <- "imbalance_part"
+        section_table$perturb_method[ii] <- "imbalance_partition"
         section_table$main_data_id[ii]   <- main_data_id_iter
         main_data_id_iter                <- main_data_id_iter + 1
       }
@@ -171,7 +192,7 @@ extract_experimental_setup <- function(experimental_design, file_dir, verbose=TR
   # Add details for perturbations and other sections
   for(ii in 1:nrow(section_table)){
     
-    if(section_table$perturb_method[ii] %in% c("main", "bootstrap", "cross_val", "loocv", "imbalance_part")){
+    if(section_table$perturb_method[ii] %in% .get_available_subsample_methods()){
       
       # Create readable string for current data id
       curr_data_id_str <- NULL
@@ -200,7 +221,7 @@ extract_experimental_setup <- function(experimental_design, file_dir, verbose=TR
       }
       
       # Read bootstrap data
-      if(section_table$perturb_method[ii]=="bootstrap"){
+      if(section_table$perturb_method[ii] %in% c("limited_bootstrap", "full_bootstrap")){
         if(length(curr_data_id_str) < 2){
           stop(paste("The number of bootstraps should be indicated when using the bt (bootstrap) subsampler.",
                      "None was found."))
@@ -289,11 +310,22 @@ extract_experimental_setup <- function(experimental_design, file_dir, verbose=TR
     curr_ref_data_id <- dt_sub$main_data_id[1]
     while(curr_ref_data_id > 0){
       dt_sub <- section_table[main_data_id==curr_ref_data_id, ]
-      if(dt_sub$perturb_method[1]=="main")           { main_message <- c(main_message, "the training data.") }
-      if(dt_sub$perturb_method[1]=="bootstrap")      { main_message <- c(main_message, paste0(dt_sub$perturb_n_rep[1], " bootstraps of")) }
-      if(dt_sub$perturb_method[1]=="cross_val")      { main_message <- c(main_message, paste0(dt_sub$perturb_n_rep[1], " repetitions of ", dt_sub$perturb_n_folds, "-fold cross validation of")) }
-      if(dt_sub$perturb_method[1]=="loocv")          { main_message <- c(main_message, "folds of leave-one-out-cross-validation of") }
-      if(dt_sub$perturb_method[1]=="imbalance_part") { main_message <- c(main_message, "class-balanced partitions of")}
+      
+      if(dt_sub$perturb_method[1]=="main"){
+        main_message <- c(main_message, "the training data.")
+        
+      } else if(dt_sub$perturb_method[1] %in% c("limited_bootstrap", "full_bootstrap")){
+        main_message <- c(main_message, paste0(dt_sub$perturb_n_rep[1], " bootstraps of"))
+        
+      } else if(dt_sub$perturb_method[1]=="cross_val"){
+        main_message <- c(main_message, paste0(dt_sub$perturb_n_rep[1], " repetitions of ", dt_sub$perturb_n_folds, "-fold cross validation of"))
+      
+      } else if(dt_sub$perturb_method[1]=="loocv"){
+        main_message <- c(main_message, "folds of leave-one-out-cross-validation of")
+        
+      } else if(dt_sub$perturb_method[1]=="imbalance_partition"){
+        main_message <- c(main_message, "class-balanced partitions of")
+      } 
       
       curr_ref_data_id <- dt_sub$ref_data_id[1]
     }
@@ -307,13 +339,26 @@ extract_experimental_setup <- function(experimental_design, file_dir, verbose=TR
     # Iteratively append message
     dt_sub <- section_table[feat_sel==TRUE, ]
     curr_ref_data_id <- dt_sub$main_data_id[1]
+    
     while(curr_ref_data_id > 0){
+      
       dt_sub <- section_table[main_data_id==curr_ref_data_id, ]
-      if(dt_sub$perturb_method[1]=="main")     { main_message <- c(main_message, "the training data.") }
-      if(dt_sub$perturb_method[1]=="bootstrap"){ main_message <- c(main_message, paste0(dt_sub$perturb_n_rep[1], " bootstraps of")) }
-      if(dt_sub$perturb_method[1]=="cross_val"){ main_message <- c(main_message, paste0(dt_sub$perturb_n_rep[1], " repetitions of ", dt_sub$perturb_n_folds, "-fold cross validation of")) }
-      if(dt_sub$perturb_method[1]=="loocv")    { main_message <- c(main_message, "folds of leave-one-out-cross-validation of") }
-      if(dt_sub$perturb_method[1]=="imbalance_part") { main_message <- c(main_message, "class-balanced partitions of")}
+      
+      if(dt_sub$perturb_method[1]=="main"){
+        main_message <- c(main_message, "the training data.")
+        
+      } else if(dt_sub$perturb_method[1] %in% c("limited_bootstrap", "full_bootstrap")){
+        main_message <- c(main_message, paste0(dt_sub$perturb_n_rep[1], " bootstraps of"))
+        
+      } else if(dt_sub$perturb_method[1]=="cross_val"){
+        main_message <- c(main_message, paste0(dt_sub$perturb_n_rep[1], " repetitions of ", dt_sub$perturb_n_folds, "-fold cross validation of"))
+        
+      } else if(dt_sub$perturb_method[1]=="loocv"){
+        main_message <- c(main_message, "folds of leave-one-out-cross-validation of")
+        
+      } else if(dt_sub$perturb_method[1]=="imbalance_partition"){
+        main_message <- c(main_message, "class-balanced partitions of")
+      }
       
       curr_ref_data_id <- dt_sub$ref_data_id[1]
     }
@@ -326,13 +371,26 @@ extract_experimental_setup <- function(experimental_design, file_dir, verbose=TR
     # Iteratively append message
     dt_sub <- section_table[model_building==TRUE, ]
     curr_ref_data_id <- dt_sub$main_data_id[1]
+    
     while(curr_ref_data_id > 0){
+      
       dt_sub <- section_table[main_data_id==curr_ref_data_id, ]
-      if(dt_sub$perturb_method[1]=="main")     { main_message <- c(main_message, "the training data.") }
-      if(dt_sub$perturb_method[1]=="bootstrap"){ main_message <- c(main_message, paste0(dt_sub$perturb_n_rep[1], " bootstraps of")) }
-      if(dt_sub$perturb_method[1]=="cross_val"){ main_message <- c(main_message, paste0(dt_sub$perturb_n_rep[1], " repetitions of ", dt_sub$perturb_n_folds, "-fold cross validation of")) }
-      if(dt_sub$perturb_method[1]=="loocv")    { main_message <- c(main_message, "folds of leave-one-out-cross-validation of") }
-      if(dt_sub$perturb_method[1]=="imbalance_part") { main_message <- c(main_message, "class-balanced partitions of")}
+      
+      if(dt_sub$perturb_method[1]=="main"){
+        main_message <- c(main_message, "the training data.")
+        
+      } else if(dt_sub$perturb_method[1] %in% c("limited_bootstrap", "full_bootstrap")){
+        main_message <- c(main_message, paste0(dt_sub$perturb_n_rep[1], " bootstraps of"))
+        
+      } else if(dt_sub$perturb_method[1]=="cross_val"){
+        main_message <- c(main_message, paste0(dt_sub$perturb_n_rep[1], " repetitions of ", dt_sub$perturb_n_folds, "-fold cross validation of"))
+        
+      } else if(dt_sub$perturb_method[1]=="loocv"){
+        main_message <- c(main_message, "folds of leave-one-out-cross-validation of")
+        
+      } else if(dt_sub$perturb_method[1]=="imbalance_partition") {
+        main_message <- c(main_message, "class-balanced partitions of")
+      }
       
       curr_ref_data_id <- dt_sub$ref_data_id[1]
     }

@@ -285,7 +285,7 @@
         }
         
         # Check if the current perturbation method is "imbalance part"
-        if(curr_pert_method=="imbalance_part"){
+        if(curr_pert_method=="imbalance_partition"){
           ##### New imbalance partitions #######################################
           
           # Iterate over runs of the reference data
@@ -312,8 +312,9 @@
         }
         
         
-        # Check if the current perturbation method is "bootstrap"
-        if(curr_pert_method=="bootstrap"){
+        # Check if the current perturbation method is "limited_bootstrap" or
+        # "full_bootstrap".
+        if(curr_pert_method %in% c("limited_bootstrap", "full_bootstrap")){
           ##### New bootstrap data ###########################################
           
           # Determine number of bootstrap iterations
@@ -335,7 +336,7 @@
                                                      run_id_offset=length(run_list),
                                                      train_samples=bt_iter_list$train_list,
                                                      valid_samples=bt_iter_list$valid_list,
-                                                     can_pre_process=FALSE,
+                                                     can_pre_process=curr_pert_method == "full_bootstrap",
                                                      perturbation=curr_pert_method))
           }
           
