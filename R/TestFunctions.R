@@ -4117,7 +4117,9 @@ test_export_specific <- function(export_function,
 
 
 
-integrated_test <- function(..., debug=FALSE){
+integrated_test <- function(...,
+                            outcome_type_available=c("count", "continuous", "binomial", "multinomial", "survival"),
+                            debug=FALSE){
   
   if(debug){
     test_fun <- debug_test_that
@@ -4128,7 +4130,7 @@ integrated_test <- function(..., debug=FALSE){
     suppress_fun <- suppressMessages
   }
   
-  for(outcome_type in c("count", "continuous", "binomial", "multinomial", "survival")){
+  for(outcome_type in outcome_type_available){
     
     test_fun(paste0("Experiment for a good dataset with ", outcome_type, " outcome functions correctly."), {
       
@@ -4147,6 +4149,7 @@ integrated_test <- function(..., debug=FALSE){
       output <- suppress_fun(summon_familiar(data=full_data,
                                              learner="lasso",
                                              hyperparameter=list("lasso"=hyperparameters),
+                                             time_max=1832,
                                              ...))
       
       testthat::expect_equal(is.null(output), FALSE)
@@ -4155,7 +4158,7 @@ integrated_test <- function(..., debug=FALSE){
     
     test_fun(paste0("Experiment for a bad dataset with ", outcome_type, " outcome functions correctly."), {
       
-      # Create datasets. We explicitly insert NA data to pass an initial
+      # Create datasets. We explicitly insert NA data to circumvent an initial
       # plausibility check.
       bad_data <- test.create_bad_data_set(outcome_type=outcome_type,
                                            add_na_data=TRUE)
