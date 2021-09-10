@@ -63,7 +63,8 @@ setMethod(".train", signature(object="familiarModel", data="dataObject"),
               if(can_train) object <- ..set_risk_stratification_thresholds(object=object, data=data)
               
               # Add column data
-              object <- add_data_column_info(object=object)
+              object <- add_data_column_info(object=object,
+                                             data=data)
             }
             
             if(trim_model) object <- trim_model(object=object)
@@ -356,21 +357,27 @@ setMethod("add_package_version", signature(object="familiarModel"),
 
 #####add_data_column_info (familiarModel)#####
 setMethod("add_data_column_info", signature(object="familiarModel"),
-          function(object, sample_id_column=NULL, batch_id_column=NULL, series_id_column=NULL){
+          function(object, data=NULL, sample_id_column=NULL, batch_id_column=NULL, series_id_column=NULL){
             
             # Don't determine new column information if this information is
             # already present.
             if(!is.null(object@data_column_info)) return(object)
             
-            if(is.null(sample_id_column) & is.null(batch_id_column) & is.null(series_id_column)){
-              # Load settings to find identifier columns
-              settings <- get_settings()
-              
-              # Read from settings. If not set, these will be NULL.
-              sample_id_column <- settings$data$sample_col
-              batch_id_column <- settings$data$batch_col
-              series_id_column <- settings$data$series_col
+            # Don't determine new column information if this information can be
+            # inherited from a dataObject.
+            if(is(data, "dataObject")){
+              if(!is_empty(data@data_column_info)){
+                object@data_column_info <- data@data_column_info
+              }
             }
+            
+            # Load settings to find identifier columns
+            settings <- get_settings()
+            
+            # Read from settings. If not set, these will be NULL.
+            if(is.null(sample_id_column)) sample_id_column <- settings$data$sample_col
+            if(is.null(batch_id_column)) batch_id_column <- settings$data$batch_col
+            if(is.null(series_id_column)) series_id_column <- settings$data$series_col
             
             # Replace any missing.
             if(is.null(sample_id_column)) sample_id_column <- NA_character_

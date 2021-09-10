@@ -273,12 +273,25 @@ setMethod("as_data_object", signature(data="data.table"),
               outcome_info <- create_outcome_info(settings=settings)
             }
             
+            if(has_model_object){
+              if(!is_empty(object@data_column_info)){
+                data_info <- object@data_column_info
+                
+              } else {
+                data_info <- create_data_column_info(settings=settings)
+              }
+              
+            } else {
+              data_info <- create_data_column_info(settings=settings)
+            }
+            
             # Convert to dataObject
             data <- methods::new("dataObject",
                                  data = data,
                                  preprocessing_level="none",
                                  outcome_type = settings$data$outcome_type,
-                                 outcome_info = outcome_info)
+                                 outcome_info = outcome_info,
+                                 data_column_info = data_info)
             
             return(data)
           })
@@ -382,15 +395,57 @@ setMethod("as_data_object", signature(data="ANY"),
 setMethod("extract_settings_from_data", signature(data="dataObject"),
           function(data, settings=NULL, signature=NULL){
             
-            if(is.null(settings)){
-              settings <- list("data"=list())
+            # Suppress NOTES due to non-standard evaluation in data.table
+            type <- NULL
+            
+            if(is.null(settings)) settings <- list("data"=list())
+            
+            # Placeholders
+            sample_id_column <- batch_id_column <- series_id_column <- outcome_columns <- NULL
+            
+            if(!is_empty(data@data_column_info)){
+              # Find the sample id column stored with the data.
+              temp_sample_id_column <- data@data_column_info[type == "sample_id_column"]$external
+              
+              # Check that the data object actually has a column name (not
+              # character(0)) that is not NA, and set this column name.
+              if(length(temp_sample_id_column) > 0){
+                if(!is.na(temp_sample_id_column)) sample_id_column <- temp_sample_id_column
+              }
+              
+              # Find the batch id column stored with the data
+              temp_batch_id_column <- data@data_column_info[type == "batch_id_column"]$external
+              
+              # Check that the data object actually has a column name (not
+              # character(0)) that is not NA, and set this column name.
+              if(length(temp_batch_id_column) > 0){
+                if(!is.na(temp_batch_id_column)) batch_id_column <- temp_batch_id_column
+              }
+              
+              # Find the series id column stored with the data.
+              temp_series_id_column <- data@data_column_info[type == "series_id_column"]$external
+              
+              # Check that the model data object has a column name (not
+              # character(0)) that is not NA, and set this column name.
+              if(length(temp_series_id_column) > 0){
+                if(!is.na(temp_series_id_column)) series_id_column <- temp_series_id_column
+              }
+              
+              # Find the outcome columns stored with the data.
+              temp_outcome_columns <- data@data_column_info[type == "outcome_column"]$external
+              
+              if(all(sapply(temp_outcome_columns, length) > 0)){
+                if(!any(is.na(temp_outcome_columns))) outcome_columns <- temp_outcome_columns
+              }
             }
             
+            if(is.null(outcome_columns)) get_outcome_columns(data)
+            
             # Sample identifier column
-            settings$data$sample_col <- get_id_columns(single_column="sample")
-            settings$data$batch_col <- get_id_columns(single_column="batch")
-            settings$data$series_col <- get_id_columns(single_column="series")
-            settings$data$outcome_col <- get_outcome_columns(data)
+            settings$data$sample_col <- sample_id_column
+            settings$data$batch_col <- batch_id_column
+            settings$data$series_col <- series_id_column
+            settings$data$outcome_col <- outcome_columns
             settings$data$outcome_type <- data@outcome_type
             settings$data$outcome_name <- get_outcome_name(data@outcome_info)
             settings$data$class_levels <- get_outcome_class_levels(data@outcome_info)
@@ -1375,3 +1430,59 @@ setMethod("select_features", signature(data="dataObject"),
             
             return(data)
           })
+
+
+
+create_data_column_info <- function(settings){
+  
+  # Read from settings. If not set, these will be NULL.
+  sample_id_column <- settings$data$sample_col
+  batch_id_column <- settings$data$batch_col
+  series_id_column <- settings$data$series_col
+  
+  # Replace any missing.
+  if(is.null(sample_id_column)) sample_id_column <- NA_character_
+  if(is.null(batch_id_column)) batch_id_column <- NA_character_
+  if(is.null(series_id_column)) series_id_column <- NA_character_
+  
+  # Repetition column ids are only internal.
+  repetition_id_column <- NA_character_
+  
+  # Create table
+  data_info_table <- data.table::data.table("type"=c("batch_id_column", "sample_id_column", "series_id_column", "repetition_id_column"),
+                                            "internal"=get_id_columns(),
+                                            "external"=c(batch_id_column, sample_id_column, series_id_column, repetition_id_column))
+  
+  if(settings$data$outcome_type %in% c("survival", "competing_risk")){
+    
+    # Find internal and external outcome column names.
+    internal_outcome_columns <- get_outcome_columns(settings$data$outcome_type)
+    external_outcome_columns <- settings$data$outcome_col
+    
+    if(is.null(external_outcome_columns)) external_outcome_columns <- c(NA_character_, NA_character_)
+    
+    # Add to table
+    outcome_info_table <- data.table::data.table("type"=c("outcome_column", "outcome_column"),
+                                                 "internal"=internal_outcome_columns,
+                                                 "external"=external_outcome_columns)
+    
+  } else if(settings$data$outcome_type %in% c("binomial", "multinomial", "continuous", "count")){
+    
+    # Find internal and external outcome column names.
+    internal_outcome_columns <- get_outcome_columns(settings$data$outcome_type)
+    external_outcome_columns <- settings$data$outcome_col
+    
+    if(is.null(external_outcome_columns)) external_outcome_columns <- c(NA_character_)
+    
+    # Add to table
+    outcome_info_table <- data.table::data.table("type"="outcome_column",
+                                                 "internal"=internal_outcome_columns,
+                                                 "external"=external_outcome_columns)
+    
+  } else {
+    ..error_no_known_outcome_type(outcome_type=settings$data$outcome_type)
+  }
+  
+  # Combine into one table and add to object
+  return(rbind(data_info_table, outcome_info_table))
+}
