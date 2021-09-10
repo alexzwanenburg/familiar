@@ -20,6 +20,8 @@ already conducted.}
 
 \item{\code{outcome_type}}{character, determines the outcome type.}
 
+\item{\code{data_column_info}}{Object containing column information.}
+
 \item{\code{delay_loading}}{logical. Allows delayed loading data, which enables data
 parsing downstream without additional workflow complexity or memory
 utilisation.}

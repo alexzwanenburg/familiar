@@ -428,6 +428,7 @@ setClass("familiarCollection",
 #' @slot preprocessing_level character indicating the level of pre-processing
 #'   already conducted.
 #' @slot outcome_type character, determines the outcome type.
+#' @slot data_column_info Object containing column information.
 #' @slot delay_loading logical. Allows delayed loading data, which enables data
 #'   parsing downstream without additional workflow complexity or memory
 #'   utilisation.
@@ -451,6 +452,8 @@ setClass("dataObject",
            outcome_type = "character",
            # Outcome info, such as class levels, mean values etc.
            outcome_info = "ANY",
+           # Info related to the columns in the dataset.
+           data_column_info = "ANY",
            # Flag for delayed loading. This can only be meaningfully set using internal data.
            delay_loading = "logical",
            # Perturbation level for data which has not been loaded. Used for data retrieval in combination with the run table of the accompanying model.
