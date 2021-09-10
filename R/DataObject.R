@@ -20,6 +20,18 @@ NULL
 #'@param object A `familiarEnsemble` or `familiarModel` object that is used to
 #'  check consistency of these objects.
 #'
+#'@param check_stringency Specifies stringency of various checks. This is mostly:
+#'
+#'  * `strict`: default value used for `summon_familiar`. Thoroughly checks
+#'  input data.
+#'  
+#'  * `external_warn`: value used for `extract_data` and related methods. Less
+#'  stringent checks, but will warn for possible issues.
+#'  
+#'  * `external`: value used for external methods such as `predict`. Less
+#'  stringent checks, particularly for identifier and outcome columns, which may
+#'  be completely absent.
+#'
 #'@inheritParams .parse_experiment_settings
 #'
 #'@details You can specify settings for your data manually, e.g. the column for
@@ -61,6 +73,7 @@ setMethod("as_data_object", signature(data="data.table"),
                    class_levels=waiver(),
                    exclude_features=waiver(),
                    include_features=waiver(),
+                   check_stringency="strict",
                    ...){
 
             # Suppress NOTES due to non-standard evaluation in data.table
@@ -69,6 +82,10 @@ setMethod("as_data_object", signature(data="data.table"),
             # Determine whether the object contains data concerning columns, and
             # outcome. Note that user-provided names always take precedence.
             has_model_object <- is(object, "familiarModel") | is(object, "familiarEnsemble")
+            
+            if(check_stringency != "strict"){
+              if(!has_model_object) stop("Dummy columns cannot be set without a model or ensemble object.")
+            } 
             
             # Attempt to identify a sample identifier column.
             if(is.waive(sample_id_column)){
@@ -131,7 +148,7 @@ setMethod("as_data_object", signature(data="data.table"),
                 if(is(object@outcome_info, "outcomeInfo")){
                   
                   # Check that the outcome name is not empty.
-                  if(length(object@outcome_info@name) > 1) outcome_name <- object@outcome_info@name
+                  if(length(object@outcome_info@name) >= 1) outcome_name <- object@outcome_info@name
                 }
               }
             }
@@ -201,22 +218,23 @@ setMethod("as_data_object", signature(data="data.table"),
             }
             
             # Load settings from input.
-            settings <- do.call(.parse_initial_settings, args=c(list("experimental_design"="fs+mb",
-                                                                     "sample_id_column"=sample_id_column,
-                                                                     "batch_id_column"=batch_id_column,
-                                                                     "series_id_column"=series_id_column,
-                                                                     "development_batch_id"=development_batch_id,
-                                                                     "validation_batch_id"=validation_batch_id,
-                                                                     "outcome_name"=outcome_name,
-                                                                     "outcome_column"=outcome_column,
-                                                                     "outcome_type"=outcome_type,
-                                                                     "event_indicator"=event_indicator,
-                                                                     "censoring_indicator"=censoring_indicator,
-                                                                     "competing_risk_indicator"=competing_risk_indicator,
-                                                                     "class_levels"=class_levels,
-                                                                     "exclude_features"=exclude_features,
-                                                                     "include_features"=include_features),
-                                                                list(...)))
+            settings <- do.call(.parse_initial_settings,
+                                args=c(list("experimental_design"="fs+mb",
+                                            "sample_id_column"=sample_id_column,
+                                            "batch_id_column"=batch_id_column,
+                                            "series_id_column"=series_id_column,
+                                            "development_batch_id"=development_batch_id,
+                                            "validation_batch_id"=validation_batch_id,
+                                            "outcome_name"=outcome_name,
+                                            "outcome_column"=outcome_column,
+                                            "outcome_type"=outcome_type,
+                                            "event_indicator"=event_indicator,
+                                            "censoring_indicator"=censoring_indicator,
+                                            "competing_risk_indicator"=competing_risk_indicator,
+                                            "class_levels"=class_levels,
+                                            "exclude_features"=exclude_features,
+                                            "include_features"=include_features),
+                                       list(...)))
             
             # Prepare data.table.
             data <- .load_data(data=data,
@@ -225,7 +243,9 @@ setMethod("as_data_object", signature(data="data.table"),
                                series_id_column=settings$data$series_col)
             
             # Update settings
-            settings <- .update_initial_settings(data=data, settings=settings)
+            settings <- .update_initial_settings(data=data,
+                                                 settings=settings,
+                                                 check_stringency=check_stringency)
             
             # Parse data
             data <- .finish_data_preparation(data = data,
@@ -236,9 +256,10 @@ setMethod("as_data_object", signature(data="data.table"),
                                              outcome_type = settings$data$outcome_type,
                                              include_features = settings$data$include_features,
                                              class_levels = settings$data$class_levels,
-                                             censoring_indicator=settings$data$censoring_indicator,
-                                             event_indicator=settings$data$event_indicator,
-                                             competing_risk_indicator=settings$data$competing_risk_indicator)
+                                             censoring_indicator = settings$data$censoring_indicator,
+                                             event_indicator = settings$data$event_indicator,
+                                             competing_risk_indicator = settings$data$competing_risk_indicator,
+                                             check_stringency = check_stringency)
             
             # Update the dataset according to the feature info list.
             if(has_model_object) data <- update_data_set(data=data, object=object)
