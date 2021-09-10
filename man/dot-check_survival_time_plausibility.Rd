@@ -4,7 +4,12 @@
 \alias{.check_survival_time_plausibility}
 \title{Internal function to test plausibility of provided survival times.}
 \usage{
-.check_survival_time_plausibility(data, outcome_type, outcome_column)
+.check_survival_time_plausibility(
+  data,
+  outcome_type,
+  outcome_column,
+  check_stringency = "strict"
+)
 }
 \arguments{
 \item{data}{Data set as loaded using the \code{.load_data} function.}

@@ -8,7 +8,8 @@
   data,
   outcome_type,
   outcome_column,
-  class_levels
+  class_levels,
+  check_stringency = "strict"
 )
 }
 \arguments{
@@ -45,6 +46,17 @@ status.}
 outcomes. This argument can be used to specify the ordering of levels for
 categorical outcomes. These class levels must exactly match the levels
 present in the outcome column.}
+
+\item{check_stringency}{Specifies stringency of various checks. This is mostly:
+\itemize{
+\item \code{strict}: default value used for \code{summon_familiar}. Thoroughly checks
+input data.
+\item \code{external_warn}: value used for \code{extract_data} and related methods. Less
+stringent checks, but will warn for possible issues.
+\item \code{external}: value used for external methods such as \code{predict}. Less
+stringent checks, particularly for identifier and outcome columns, which may
+be completely absent.
+}}
 }
 \description{
 This function checks whether categorical levels are present in the data that
