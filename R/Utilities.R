@@ -23,6 +23,23 @@ check_column_name <- function(column_name){
 }
 
 
+
+stop_or_warn <- function(message, as_error=TRUE){
+  # Find the name of the calling environment.
+  calling_function <- environmentName(parent.env)
+  
+  if(length(calling_function) > 0) message <- paste0(calling_function, ": ", message)
+  
+  if(as_error){
+    stop(message, call.=FALSE)
+    
+  } else {
+    warning(message, call.=FALSE)
+  }
+}
+
+
+
 compute_univariable_p_values <- function(cl=NULL, data_obj, feature_columns){
   
   outcome_type <- data_obj@outcome_type
