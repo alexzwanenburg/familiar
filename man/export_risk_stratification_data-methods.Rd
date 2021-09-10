@@ -48,7 +48,7 @@ the full time range is used.}
   Arguments passed on to \code{\link[=extract_risk_stratification_data]{extract_risk_stratification_data}}, \code{\link[=as_familiar_collection]{as_familiar_collection}}
   \describe{
     \item{\code{data}}{A \code{dataObject} object, \code{data.table} or \code{data.frame} that
-constitutes the data that are used to compute}
+constitutes the data that are assessed.}
     \item{\code{cl}}{Cluster created using the \code{parallel} package. This cluster is then
 used to speed up computation through parallellisation.}
     \item{\code{is_pre_processed}}{Flag that indicates whether the data was already
@@ -57,6 +57,8 @@ pre-processed externally, e.g. normalised and clustered. Only used if the
     \item{\code{ensemble_method}}{Method for ensembling predictions from models for the
 same sample. Available methods are:
 \itemize{
+\item \code{median} (default): Use the median of the predicted values as the ensemble
+value for a sample.
 \item \code{mean}: Use the mean of the predicted values as the ensemble value for a
 sample.
 }}

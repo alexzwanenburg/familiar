@@ -146,7 +146,7 @@ NULL
 #'@param object A `familiarEnsemble` object, which is an ensemble of one or more
 #'  `familiarModel` objects.
 #'@param data A `dataObject` object, `data.table` or `data.frame` that
-#'  constitutes the data that are used to compute
+#'  constitutes the data that are assessed.
 #'@param is_pre_processed Flag that indicates whether the data was already
 #'  pre-processed externally, e.g. normalised and clustered. Only used if the
 #'  `data` argument is a `data.table` or `data.frame`.
@@ -184,8 +184,12 @@ NULL
 #'@param ensemble_method Method for ensembling predictions from models for the
 #'  same sample. Available methods are:
 #'
+#'  * `median` (default): Use the median of the predicted values as the ensemble
+#'  value for a sample.
+#'
 #'  * `mean`: Use the mean of the predicted values as the ensemble value for a
 #'  sample.
+#'  
 #'@param metric One or more metrics for assessing model performance. See the
 #'  vignette on performance metrics for the available metrics. If not provided
 #'  explicitly, this parameter is read from settings used at creation of the
@@ -379,7 +383,8 @@ setMethod("extract_data", signature(object="familiarEnsemble"),
             # Check whether data is a dataObject, and create one otherwise.
             if(!is(data, "dataObject")){
               data <- as_data_object(data=data,
-                                     object=object)
+                                     object=object,
+                                     check_stringency="external_warn")
               
               # Set pre-processing level.
               data@preprocessing_level=ifelse(is_pre_processed, "clustering", "none")

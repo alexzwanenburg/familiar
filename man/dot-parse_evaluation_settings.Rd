@@ -457,29 +457,6 @@ learners, data subsamples, etc.
 \code{parallel_evaluation} is ignored if \code{parallel=FALSE}.}
 
 \item{...}{Unused arguments.}
-
-\item{stratification_ensemble_method}{(\emph{optional}) Method for ensembling the
-risk group assignments from different models for the same sample.
-
-The following methods are available:
-\itemize{
-\item \code{ensemble_mean}: Risk groups are determined for each sample using the
-threshold values of the different models in the ensemble. The risk groups
-are treated as ordinal and encoded using integer values. The mean of the
-encoded values is computed. The risk group bin containing the mean value is
-then used as the ensemble-based risk group.
-\item \code{ensemble_mode} (default): Risk groups are determined for each sample
-using the threshold values of the different models in the ensemble. The most
-commonly assigned risk group is then used as the ensemble-based risk group.
-\item \code{median_threshold}: The median threshold value for each risk group is
-determined from the threshold values of the different models in the
-ensemble. The resulting threshold(s) are then applied to the ensemble
-prediction of a sample to identify the ensemble-based risk group.
-\item \code{mean_threshold}: Similar to \code{median_threshold}, but uses the mean
-threshold value for each risk group.
-}
-
-This parameter is only relevant for \code{survival} outcomes.}
 }
 \value{
 List of parameters related to model evaluation.

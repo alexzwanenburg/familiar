@@ -25,7 +25,7 @@ extract_univariate_analysis(
 \code{familiarModel} objects.}
 
 \item{data}{A \code{dataObject} object, \code{data.table} or \code{data.frame} that
-constitutes the data that are used to compute}
+constitutes the data that are assessed.}
 
 \item{cl}{Cluster created using the \code{parallel} package. This cluster is then
 used to speed up computation through parallellisation.}

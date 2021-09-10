@@ -47,7 +47,7 @@ sample. This is used to determine cluster information, and indicate which
 samples are similar. The table is created by the
 \code{extract_sample_similarity} method.}
     \item{\code{data}}{A \code{dataObject} object, \code{data.table} or \code{data.frame} that
-constitutes the data that are used to compute}
+constitutes the data that are assessed.}
     \item{\code{feature_cluster_method}}{The method used to perform clustering. These are
 the same methods as for the \code{cluster_method} configuration parameter:
 \code{none}, \code{hclust}, \code{agnes}, \code{diana} and \code{pam}.

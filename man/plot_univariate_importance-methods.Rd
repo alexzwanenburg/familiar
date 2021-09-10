@@ -256,7 +256,7 @@ specifying dimensions in pixels.}
     \item{\code{bg}}{Background colour. If \code{NULL}, uses the \code{plot.background} fill value
 from the plot theme.}
     \item{\code{data}}{A \code{dataObject} object, \code{data.table} or \code{data.frame} that
-constitutes the data that are used to compute}
+constitutes the data that are assessed.}
     \item{\code{cl}}{Cluster created using the \code{parallel} package. This cluster is then
 used to speed up computation through parallellisation.}
     \item{\code{icc_type}}{String indicating the type of intraclass correlation

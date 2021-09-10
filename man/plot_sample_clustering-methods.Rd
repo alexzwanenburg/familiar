@@ -425,7 +425,7 @@ sample. This is used to determine cluster information, and indicate which
 samples are similar. The table is created by the
 \code{extract_sample_similarity} method.}
     \item{\code{data}}{A \code{dataObject} object, \code{data.table} or \code{data.frame} that
-constitutes the data that are used to compute}
+constitutes the data that are assessed.}
     \item{\code{feature_similarity_metric}}{Metric to determine pairwise similarity
 between features. Similarity is computed in the same manner as for
 clustering, and \code{feature_similarity_metric} therefore has the same options

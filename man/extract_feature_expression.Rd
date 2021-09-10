@@ -26,7 +26,7 @@ extract_feature_expression(
 \code{familiarModel} objects.}
 
 \item{data}{A \code{dataObject} object, \code{data.table} or \code{data.frame} that
-constitutes the data that are used to compute}
+constitutes the data that are assessed.}
 
 \item{feature_similarity}{Table containing pairwise distance between
 sample. This is used to determine cluster information, and indicate which

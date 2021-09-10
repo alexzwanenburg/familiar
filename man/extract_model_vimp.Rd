@@ -19,7 +19,7 @@ extract_model_vimp(
 \code{familiarModel} objects.}
 
 \item{data}{A \code{dataObject} object, \code{data.table} or \code{data.frame} that
-constitutes the data that are used to compute}
+constitutes the data that are assessed.}
 
 \item{aggregation_method}{Method for aggregating variable importances for the
 purpose of evaluation. Variable importances are determined during feature

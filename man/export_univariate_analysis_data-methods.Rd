@@ -43,7 +43,7 @@ and q-values. q-values may not be available.}
   Arguments passed on to \code{\link[=extract_univariate_analysis]{extract_univariate_analysis}}, \code{\link[=as_familiar_collection]{as_familiar_collection}}
   \describe{
     \item{\code{data}}{A \code{dataObject} object, \code{data.table} or \code{data.frame} that
-constitutes the data that are used to compute}
+constitutes the data that are assessed.}
     \item{\code{cl}}{Cluster created using the \code{parallel} package. This cluster is then
 used to speed up computation through parallellisation.}
     \item{\code{icc_type}}{String indicating the type of intraclass correlation
