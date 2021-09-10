@@ -193,7 +193,7 @@
       
       if(check_stringency %in% c("strict", "external_warn")){
         stop_or_warn(paste0("The outcome column ", paste_s(missing_col),
-                            "does not appear in the provided data set."),
+                            " does not appear in the provided data set."),
                      check_stringency == "strict")
       }
       
