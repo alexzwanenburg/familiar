@@ -11,6 +11,11 @@
   logger.warning(paste0("Cannot create plots to compare directly between models. Please use the hybrid or ensemble detail levels."))
 }
 
+..error_no_predictions_possible <- function(outcome_type, prediction_type){
+  stop(paste0("Predictions of the ", prediction_type, " type are not possible ",
+              "using models for ", outcome_type, " outcomes."))
+}
+
 
 ..error_no_known_outcome_type <- function(outcome_type){
   stop(paste0("Outcome type was not recognised. Found: ", outcome_type,

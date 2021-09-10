@@ -641,7 +641,7 @@ setMethod("get_placeholder_prediction_table", signature(object="outcomeInfo", da
                 prediction_table[, "survival_probability":=as.double(NA)]
                 
               } else {
-                ..error_no_known_outcome_type(object@outcome_type)
+                ..error_no_predictions_possible(object@outcome_type, "survival_probability")
               }
                 
             } 
@@ -653,7 +653,7 @@ setMethod("get_placeholder_prediction_table", signature(object="outcomeInfo", da
                 prediction_table[, "risk_group":=as.character(NA)]
                 
               } else {
-                ..error_no_known_outcome_type(object@outcome_type)
+                ..error_no_predictions_possible(object@outcome_type, "risk_stratification")
               }
             }
             
