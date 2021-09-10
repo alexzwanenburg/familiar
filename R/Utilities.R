@@ -28,8 +28,12 @@ stop_or_warn <- function(message, as_error=TRUE){
   # Find the name of the calling environment.
   calling_function <- environmentName(parent.env)
   
-  if(length(calling_function) > 0) message <- paste0(calling_function, ": ", message)
-  
+  if(length(calling_function) > 0){
+    if(calling_function != ""){
+      message <- paste0(calling_function, ": ", message)
+    }
+  }
+
   if(as_error){
     stop(message, call.=FALSE)
     
