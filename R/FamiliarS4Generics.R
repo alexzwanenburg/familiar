@@ -2,7 +2,6 @@
 # explicity imported.
 setGeneric("save")
 
-
 setGeneric(".predict", function(object, data, ...) standardGeneric(".predict"))
 
 setGeneric(".predict_novelty", function(object, data, ...) standardGeneric(".predict_novelty"))

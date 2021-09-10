@@ -7,6 +7,212 @@ NULL
 }
 
 
+
+#'@title Model predictions for familiar models and model ensembles
+#'
+#'@description Fits the model or ensemble of models to the data and shows the
+#'  result.
+#'
+#'@param object A familiar model or ensemble of models that should be used for
+#'  prediction. This can also be a path to the ensemble model, one or more paths
+#'  to models, or a list of models.
+#'@param newdata Data to which the models are fitted. `familiar` performs checks
+#'  on the data to ensure that all features required for fitting the model are
+#'  present, and no additional levels are present in categorical features.
+#'  Unlike other `predict` methods, `newdata` cannot be missing in `familiar`,
+#'  as training data are not stored with the models.
+#'@param type Type of prediction made. The following values are directly
+#'  supported:
+#'
+#'  * `default`: Default prediction, i.e. value estimates for `count` and
+#'  `continuous` outcomes, predicted class probabilities and class for
+#'  `binomial` and `multinomial` and the model response for `survival` outcomes.
+#'
+#'  * `survival_probability`: Predicts survival probabilities at the time
+#'  specified by `time`. Only applicable to `survival` outcomes. Some models may
+#'  not allow for predicting survival probabilities based on their response.
+#'
+#'  * `novelty`: Predicts novelty of each sample, which can be used for
+#'  out-of-distribution detection.
+#'
+#'  * `risk_stratification`: Predicts the strata to which the data belongs. Only
+#'  for `survival` outcomes.
+#'
+#'  Other values for type are passed to the fitting method of the actual
+#'  underlying model. For example for generalised linear models (`glm`) `type`
+#'  can be `link`, `response` or `terms` as well. Some of these model-specific
+#'  prediction types may fail to return results if the model has been trimmed.
+#'
+#'@param time Time at which the response (`default`) or survival probability
+#'  (`survival_probability`) should be predicted for `survival` outcomes. Some
+#'  models have a response that does not depend on `time`, e.g. `cox`, whereas
+#'  others do, e.g. `random_forest`.
+#'@param dir_path Path to the folder containing the models. Ensemble objects are
+#'  stored with the models detached. In case the models were moved since
+#'  creation, `dir_path` can be used to specify the current folder.
+#'  Alternatively the `update_model_dir_path` method can be used to update the
+#'  path.
+#'@param percentiles Currently unused.
+#'@param ... to be documented.
+#'
+#'@inheritParams extract_data
+#'
+#'@details This method is used to predict values for instances specified by the
+#'  `newdata` using the model or ensemble of models specified by the `object`
+#'  argument.
+#'
+#'@return A `data.table` with predicted values.
+#'@exportMethod predict
+#'@md
+#'@rdname predict-methods
+setGeneric("predict")
+
+#####predict (familiarModel)#####
+#'@rdname predict-methods
+setMethod("predict", signature(object="familiarModel"),
+          function(object,
+                   newdata,
+                   type="default",
+                   time=NULL,
+                   dir_path=NULL,
+                   ensemble_method="median",
+                   stratification_threshold=NULL,
+                   stratification_method=NULL,
+                   percentiles=NULL,
+                   ...){
+            # Create ensemble.
+            object <- as_familiar_ensemble(object=object)
+            
+            # Create predictions.
+            predictions <- predict(object=object,
+                                   newdata=newdata,
+                                   type=type,
+                                   time=time,
+                                   dir_path=NULL,
+                                   ensemble_method=ensemble_method,
+                                   stratification_threshold=NULL,
+                                   stratification_method=NULL,
+                                   percentiles=NULL,
+                                   ...)
+            
+            return(predictions)
+          })
+
+
+
+#####predict (familiarEnsemble)#####
+#'@rdname predict-methods
+setMethod("predict", signature(object="familiarEnsemble"),
+          function(object,
+                   newdata,
+                   type="default",
+                   time=NULL,
+                   dir_path=NULL,
+                   ensemble_method="median",
+                   stratification_threshold=NULL,
+                   stratification_method=NULL,
+                   percentiles=NULL,
+                   ...){
+            
+            if(missing(newdata)) stop("newdata must be provided.")
+            if(is_empty(newdata)) ..error_data_set_is_empty()
+            
+            # Parse newdata to data object
+            data <- as_data_object(data=newdata,
+                                   object=object,
+                                   check_stringency="external")
+            
+            # Propagate to .predict
+            predictions <- .predict(object=object,
+                                    data=data,
+                                    type=type,
+                                    time=time,
+                                    dir_path=dir_path,
+                                    ensemble_method=ensemble_method,
+                                    stratification_threshold=stratification_threshold,
+                                    stratification_method=stratification_method,
+                                    percentiles=percentiles)
+            
+            if(type %in% .get_available_prediction_type_arguments()){
+              # Find non-feature columns.
+              non_feature_columns <- get_non_feature_columns(object)
+              prediction_columns <- setdiff(colnames(predictions), non_feature_columns)
+              
+              # Update the table with predictions by removing the non-feature
+              # columns.
+              predictions <- data.table::copy(predictions[, mget(prediction_columns)])
+            }
+            
+            return(predictions)
+          })
+
+
+
+#####predict (list)#####
+#'@rdname predict-methods
+setMethod("predict", signature(object="list"),
+          function(object,
+                   newdata,
+                   type="default",
+                   time=NULL,
+                   dir_path=NULL,
+                   ensemble_method="median",
+                   stratification_threshold=NULL,
+                   stratification_method=NULL,
+                   percentiles=NULL,
+                   ...){
+            # Create ensemble.
+            object <- as_familiar_ensemble(object=object)
+            
+            # Create predictions.
+            predictions <- predict(object=object,
+                                   newdata=newdata,
+                                   type=type,
+                                   time=time,
+                                   dir_path=dir_path,
+                                   ensemble_method=ensemble_method,
+                                   stratification_threshold=NULL,
+                                   stratification_method=NULL,
+                                   percentiles=NULL,
+                                   ...)
+            
+            return(predictions)
+          })
+
+
+
+#####predict (character)#####
+#'@rdname predict-methods
+setMethod("predict", signature(object="character"),
+          function(object,
+                   newdata,
+                   type="default",
+                   time=NULL,
+                   dir_path=NULL,
+                   ensemble_method="median",
+                   stratification_threshold=NULL,
+                   stratification_method=NULL,
+                   percentiles=NULL,
+                   ...){
+            # Create ensemble.
+            object <- as_familiar_ensemble(object=object)
+            
+            # Create predictions.
+            predictions <- predict(object=object,
+                                   newdata=newdata,
+                                   type=type,
+                                   time=time,
+                                   dir_path=dir_path,
+                                   ensemble_method=ensemble_method,
+                                   stratification_threshold=NULL,
+                                   stratification_method=NULL,
+                                   percentiles=NULL,
+                                   ...)
+            
+            return(predictions)
+          })
+
+
 #####.predict (familiarEnsemble)#####
 setMethod(".predict", signature(object="familiarEnsemble"),
           function(object,
@@ -380,7 +586,7 @@ any_predictions_valid <- function(prediction_table, outcome_type){
   } else if(outcome_type %in% c("survival", "competing_risk")){
     if("predicted_outcome" %in% colnames(prediction_table)){
       return(any(is.finite(prediction_table$predicted_outcome)))
-      
+    
     } else if("survival_probability" %in% colnames(prediction_table)){
       return(any(is.finite(prediction_table$survival_probability)))
       
