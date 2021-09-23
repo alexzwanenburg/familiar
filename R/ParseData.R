@@ -489,7 +489,8 @@
       .check_class_level_plausibility(data=data,
                                       outcome_type=outcome_type,
                                       outcome_column="outcome",
-                                      class_levels=class_levels)
+                                      class_levels=class_levels,
+                                      check_stringency=check_stringency)
       
       # Set class levels. This may involve reordering class levels in case the
       # outcome already was a factor.
@@ -512,6 +513,21 @@
                                       outcome_column=time_column,
                                       outcome_type=outcome_type,
                                       check_stringency=check_stringency)
+    
+    # Convert outcome_event to 0s and 1s.
+    replacement_outcome_event <- numeric(length(data$outcome_event))
+    replacement_outcome_event[data$outcome_event %in% censoring_indicator] <- 0
+    replacement_outcome_event[data$outcome_event %in% event_indicator] <- 1
+    
+    # Update competing risk indicators.
+    if(length(competing_risk_indicator) > 0){
+      for(ii in seq_along(competing_risk_indicator)){
+        replacement_outcome_event[data$outcome_event %in% competing_risk_indicator[ii]] <- ii + 1
+      }
+    }
+    
+    # Update outcome event column.
+    data$outcome_event <- replacement_outcome_event
   }
   
   # Find outcome columns.

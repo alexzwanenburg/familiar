@@ -791,14 +791,17 @@
         # Make event_values empty.
         event_values <- setdiff(event_values, event_values)
         
-        # Throw a warning, because the assumption may be false.
-        warning(paste0("The event indicator for survival/competing risk outcomes was neither a standard value, nor provided. ",
-                       "Based on the values found in ", event_column, ", ", present_event_indicator, " was selected as an event indicator."))
+        if(check_stringency %in% c("strict", "external_warn")){
+          # Throw a warning, because the assumption may be false.
+          warning(paste0("The event indicator for survival/competing risk outcomes was neither a standard value, nor provided. ",
+                         "Based on the values found in ", event_column, ", ", present_event_indicator, " was selected as an event indicator."))
+        }
         
-      } else {
-        stop(paste0("The event indicator for survival/competing risk outcomes was neither a standard value, nor provided. ",
-                    "More than one unassigned value was found in ", event_column, ", preventing automatic assignment: ",
-                    paste_s(event_values)))
+      } else if(check_stringency %in% c("strict", "external_warn")){
+        stop_or_warn(paste0("The event indicator for survival/competing risk outcomes was neither a standard value, nor provided. ",
+                            "More than one unassigned value was found in ", event_column, ", preventing automatic assignment: ",
+                            paste_s(event_values)),
+                     as_error=check_stringency == "strict")
       }
     }
   }
@@ -812,24 +815,30 @@
       # Make event_values empty.
       event_values <- setdiff(event_values, event_values)
       
-      # Throw a warning, because the assumption may be false.
-      warning(paste0("The censoring indicator for the survival outcome was neither a standard value, nor provided. ",
-                     "Based on the values found in ", event_column, ", ", paste0(present_censoring_indicator, collapse=", "),
-                      ifelse(length(present_censoring_indicator) == 1, " was", " were"),
-                      " selected as censoring indicator."))
+      if(check_stringency %in% c("strict", "external_warn")){
+        # Throw a warning, because the assumption may be false.
+        warning(paste0("The censoring indicator for the survival outcome was neither a standard value, nor provided. ",
+                       "Based on the values found in ", event_column, ", ", paste0(present_censoring_indicator, collapse=", "),
+                       ifelse(length(present_censoring_indicator) == 1, " was", " were"),
+                       " selected as censoring indicator."))
+      }
       
-    } else {
-      stop(paste0("One or more unassigned values for the survival outcome were found in ",event_column, ": ",
-                  paste0(event_values, collapse=", "), ". Please assign manually."))
+    } else if(check_stringency %in% c("strict", "external_warn")){
+      stop_or_warn(paste0("One or more unassigned values for the survival outcome were found in ",event_column, ": ",
+                          paste0(event_values, collapse=", "), ". Please assign manually."),
+                   as_error=check_stringency == "strict")
     }
   }
   
   if(length(event_values) > 0 & outcome_type == "competing_risk"){
     
     if(length(present_censoring_indicator) == 0 & length(present_competing_risk_indicator) == 0){
-      stop(paste0("One or more unassigned values for the survival outcome were found in ",event_column, ": ",
-                  paste0(event_values, collapse=", "), ". These could not be assigned automatically as indicators for ",
-                  "censoring and competing risks were both missing. Please assign manually."))
+      if(check_stringency %in% c("strict", "external_warn")){
+        stop_or_warn(paste0("One or more unassigned values for the survival outcome were found in ", event_column, ": ",
+                            paste0(event_values, collapse=", "), ". These could not be assigned automatically as indicators for ",
+                            "censoring and competing risks were both missing. Please assign manually."),
+                     as_error=check_stringency == "strict")
+      }
       
     } else if(length(present_censoring_indicator) == 0){
       
@@ -839,11 +848,13 @@
       # Make event_values empty.
       event_values <- setdiff(event_values, event_values)
       
-      # Throw a warning, because the assumption may be false.
-      warning(paste0("The censoring indicator for the competing risk outcome was neither a standard value, nor provided. ",
-                     "Based on the values found in ", event_column, ", ", paste0(present_censoring_indicator, collapse=", "),
-                     ifelse(length(present_censoring_indicator) == 1, " was", " were"),
-                     " selected as censoring indicator."))
+      if(check_stringency %in% c("strict", "external_warn")){
+        # Throw a warning, because the assumption may be false.
+        warning(paste0("The censoring indicator for the competing risk outcome was neither a standard value, nor provided. ",
+                       "Based on the values found in ", event_column, ", ", paste0(present_censoring_indicator, collapse=", "),
+                       ifelse(length(present_censoring_indicator) == 1, " was", " were"),
+                       " selected as censoring indicator."))
+      }
       
     } else if(length(present_competing_risk_indicator) == 0){
       
@@ -853,15 +864,20 @@
       # Make event_values empty.
       event_values <- setdiff(event_values, event_values)
       
-      # Throw a warning, because the assumption may be false.
-      warning(paste0("The competing risk indicator for the competing risk outcome was not provided. ",
-                     "Based on the values found in ", event_column, ", ", paste0(present_competing_risk_indicator, collapse=", "),
-                     ifelse(length(present_competing_risk_indicator) == 1, " was", " were"),
-                     " selected as competing risk indicator."))
+      if(check_stringency %in% c("strict", "external_warn")){
+        # Throw a warning, because the assumption may be false.
+        warning(paste0("The competing risk indicator for the competing risk outcome was not provided. ",
+                       "Based on the values found in ", event_column, ", ", paste0(present_competing_risk_indicator, collapse=", "),
+                       ifelse(length(present_competing_risk_indicator) == 1, " was", " were"),
+                       " selected as competing risk indicator."))
+      }
       
     } else {
-      stop(paste0("One or more unassigned values for the competing risk outcome were found in ", event_column, ": ",
-                  paste0(event_values, collapse=", "), ". Please assign manually to the indicators."))
+      if(check_stringency %in% c("strict", "external_warn")){
+        stop_or_warn(paste0("One or more unassigned values for the competing risk outcome were found in ", event_column, ": ",
+                            paste0(event_values, collapse=", "), ". Please assign manually to the indicators."),
+                     as_error=check_stringency == "strict")
+      }
     }
   }
   
@@ -1014,7 +1030,7 @@
                    ". Exactly two classes are expected for the binomial outcome type."))
       }
       
-    } else {
+    } else if(check_stringency == "external_warn"){
       if(length(classes_present) > 2){
         stop(paste0("More than two classes (", paste_s(classes_present) ,") were found in the outcome column: ", outcome_column,
                     ". Exactly two classes are expected for the binomial outcome type."))

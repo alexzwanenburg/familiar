@@ -9,7 +9,7 @@ test.create_good_data_set <- function(outcome_type, to_data_object=TRUE){
     
     # Focus on recurrence.
     data <- data[etype == 1]
-    data$adhere <- factor(data$adhere, levels=c(0, 1), labels=c(FALSE, TRUE))
+    data$adhere <- factor(data$adhere, levels=c(0, 1), labels=c(FALSE, TRUE), ordered=TRUE)
     
     # Limit to 150 samples
     data <- data[1:150, ]
