@@ -23,14 +23,15 @@ NULL
 #'@param check_stringency Specifies stringency of various checks. This is mostly:
 #'
 #'  * `strict`: default value used for `summon_familiar`. Thoroughly checks
-#'  input data.
+#'  input data. Used internally for checking development data.
 #'  
 #'  * `external_warn`: value used for `extract_data` and related methods. Less
-#'  stringent checks, but will warn for possible issues.
+#'  stringent checks, but will warn for possible issues. Used internally for
+#'  checking data for evaluation and explanation.
 #'  
 #'  * `external`: value used for external methods such as `predict`. Less
 #'  stringent checks, particularly for identifier and outcome columns, which may
-#'  be completely absent.
+#'  be completely absent. Used internally for `predict`.
 #'
 #'@inheritParams .parse_experiment_settings
 #'
