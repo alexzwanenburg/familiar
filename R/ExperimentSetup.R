@@ -122,7 +122,7 @@ extract_experimental_setup <- function(experimental_design, file_dir, verbose=TR
       # bootstrap (bs), cross-validation (cv) and leave-one-out-cross-validation
       # (lv)
       if(sampler_str=="bt"){
-        section_table$perturb_method[ii] <- "limited_ "
+        section_table$perturb_method[ii] <- "limited_bootstrap"
         section_table$main_data_id[ii]   <- main_data_id_iter
         main_data_id_iter                <- main_data_id_iter + 1
       
