@@ -91,10 +91,24 @@ model <- readRDS(model_path)
 model
 ```
 
-This model can then be used to predict values for a given dataset, among other things:
+This model can then be used to predict values for a given dataset, among other things. Note that unlike many `predict` methods, familiar requires the `newdata` argument to be set. Familiar does not store development data with its models to limit model size and prevent leaking sensitive information. Predictions can be made as follows:
 
 ```{r}
-# To be implemented.
+predict(object=model, newdata=data)
+```
+
+In addition to default predictions, familiar allows for several different types of prediction by setting the `type` argument. These are:
+
+-   `"novelty"`: Infers the novelty of an instance using the novelty detector trained with each model. This can be used to detect out-of-distribution samples for which the model has to extrapolate.
+
+-   `"survival_probability"`: Predict the probability of surviving until the time specified by `time`. This is only possible for some survival models where the predicted values can be transformed to survival probabilities.
+
+-   `"risk_stratification"`: Predict the risk group to which an instance is to be assigned. This is only possible for survival models.
+
+For example, we can predict novelty of the samples as follows:
+
+```{r}
+predict(object=model, newdata=data, type="novelty")
 ```
 
 More powerful however, is the ability to perform any of the evaluation and explanation steps for a new dataset, including new settings. By default all evaluation and explanation steps are conducted using the settings defined when running `summon_familiar`. In this case that means that point estimates will be computed.
@@ -152,6 +166,12 @@ ensemble_path <- file.path(model_directory_path, list.files(model_directory_path
 # Load the model.
 ensemble <- readRDS(ensemble_path)
 ensemble
+```
+
+One can use ensembles of models for prediction:
+
+```{r}
+predict(object=ensemble, newdata=data)
 ```
 
 Ensembles behave similarly to models during evaluation and explanation steps:
