@@ -420,9 +420,9 @@ selection. To make sure that only the provided features enter a model, the
 
 In case of feature selection or modelling in the presence of resampling (e.g.
 bootstraps), the ranks of features may need to be aggregated across the
-different instances. The rank aggregation methods shown in the table below can
-be used for this purpose. Several methods require a threshold to indicate the
-size of the set of most highly ranked features.
+different instances [@Wald2012-zk]. The rank aggregation methods shown in the
+table below can be used for this purpose. Several methods require a threshold to
+indicate the size of the set of most highly ranked features.
 
 | **aggregatiom methodr** | **tag** | **comments** |
 |:--------------|:--------|:----------:|
@@ -437,59 +437,154 @@ size of the set of most highly ranked features.
 | truncated borda ranking | `truncated_borda` | uses threshold |
 | enhanced truncated borda ranking | `enhanced_truncated_borda` | uses threshold |
 
-### Mean rank aggregation
+## Notation
+
+Let $N$ be the number of ranking experiments that should be aggregated. Feature
+$i$ for experiment $j$ of $N$ then has rank $r_{ij}$. A lower rank indicates a
+more important feature. Some features may not receive a score during a ranking
+experiment, for example for multivariate variable importance methods such as
+lasso regression, or by use of a threshold $\tau$. This is identified by
+$\delta_{ij}$, which is $0$ if the feature is absent, and $1$ if it is present.
+
+In case a threshold is used, $\delta_{ij} = 1$ if $r_{ij} \leq \tau$, and $0$
+otherwise.
+
+Thus, for each experiment $m_j = \sum^M_{i=1} \delta_{ij}$ features are ranked,
+out of $M$ features. $m_j$ is then also the maximum rank found in experiment
+$j$.
+
+Aggregating ranks for each feature results in an aggregate rank score $s_i$.
+Features are subsequently ranked according to this method-specific score to
+arrive at an aggregate feature rank $r_i$.
+
+## Mean rank aggregation
 
 The mean rank aggregation method ranks features by computing the mean rank of a
-feature across all instances that contain it.
+feature across all experiments that contain it.
 
-### Median rank aggregation
+$$s_i = \frac{\sum^{N}_{j=1} \delta_{ij} r_{ij}}{\sum^{N}_{j=1} \delta_{ij}}$$
+
+The aggregate rank of features is then determined by sorting aggregate scores
+$s_i$ in ascending order.
+
+## Median rank aggregation
 
 The median rank aggregation method ranks features by computing the median rank
-of a feature across all instances that contain it.
+of a feature across all experiments that contain it.
 
-### Best rank aggregation
+$$s_i = \underset{j \in N, \, \delta_{ij}=1}{\textrm{median}}(r_{ij})$$
+
+The aggregate rank of features is then determined by sorting aggregate scores
+$s_i$ in ascending order.
+
+## Best rank aggregation
 
 The best rank aggregation method ranks features by the best rank that a feature
-has across all instances that contain it.
+has across all experiments that contain it.
 
-### Worst rank aggregation
+$$s_i =  \underset{j \in N, \, \delta_{ij}=1}{\textrm{min}} (r_{ij})$$
+
+The aggregate rank of features is then determined by sorting aggregate scores
+$s_i$ in ascending order.
+
+## Worst rank aggregation
 
 The worst rank aggregation method ranks features by the worst rank that a
 feature has across all instances that contain it.
 
-### Stability rank aggregation
+$$s_i =  \underset{j \in N, \, \delta_{ij}=1}{\textrm{max}} (r_{ij})$$
+
+The aggregate rank of features is then determined by sorting aggregate scores
+$s_i$ in ascending order.
+
+## Stability rank aggregation
 
 The stability aggregation method ranks features by their occurrence within the
-set of highly ranked features across all instances *reference missing*.
+set of highly ranked features across all experiments. Our implementation
+generalises the method originally proposed by Meinshausen and Bühlmann
+[@Meinshausen2010-do].
 
-### Exponential rank aggregation
+This method uses threshold $\tau$ to designate the highly ranked features. Thus
+$\delta_{ij} = 1$ if $r_{ij} \leq \tau$, and $0$ otherwise.
+
+The aggregate rank score is computed as:
+
+$$s_i = \frac{1}{N} \sum^N_{j=1} \delta_{ij}$$
+
+The aggregate rank of features is then determined by sorting aggregate scores
+$s_i$ in descending order, as more commonly occurring features are considered
+more important.
+
+## Exponential rank aggregation
 
 The exponential aggregation method ranks features by the sum of the negative
 exponentials of their normalised ranks in instances where they occur within the
-set of highly ranked features *reference missing*.
+set of highly ranked features. This method was originally suggested by Haury et
+al. [@Haury2011-zd].
 
-### Borda rank aggregation
+This method uses threshold $\tau$ to designate the highly ranked features. Thus
+$\delta_{ij} = 1$ if $r_{ij} \leq \tau$, and $0$ otherwise.
+
+$$s_i = \sum^N_{j=1} \delta_{ij} \exp({-r_{ij} / \tau)}$$
+
+The aggregate rank of features is then determined by sorting aggregate scores
+$s_i$ in descending order.
+
+## Borda rank aggregation
 
 Borda rank aggregation ranks a feature by the sum of normalised ranks (the borda
-score) across all instances that contain it. In case all instances contain all
-features, the result is equivalent to the mean aggregation method *reference
-missing*.
+score) across all experiments that contain it. In case every experiment contains all
+features, the result is equivalent to the mean aggregation method [@Wald2012-zk].
 
-### Enhanced borda rank aggregation
+$$s_i = \sum^N_{j=1} \frac{m_j - r_{ij} + 1}{m_j}$$
+
+The aggregate rank of features is then determined by sorting aggregate scores
+$s_i$ in descending order.
+
+## Enhanced borda rank aggregation
 
 Enhanced borda rank aggregation combines borda rank aggregation with stability
 rank aggregation. The borda score is multiplied by the occurrence of the feature
-within the set of highly ranked features across all instances *reference
-missin*.
+within the set of highly ranked features across all experiments [@Wald2012-zk].
 
-### Truncated borda rank aggregation
+This method uses threshold $\tau$ to designate the highly ranked features for
+the purpose of computing the occurrence. Thus $\delta_{ij} = 1$ if
+$r_{ij} \leq \tau$, and $0$ otherwise.
+
+$$s_i = \left( \frac{1}{N} \sum^N_{j=1} \delta_{ij} \right) \left( \sum^N_{j=1}
+\frac{m_j - r_{ij} + 1}{m_j} \right)$$
+
+The aggregate rank of features is then determined by sorting aggregate scores
+$s_i$ in descending order.
+
+## Truncated borda rank aggregation
 
 Truncated borda rank aggregation is borda rank aggregation performed with only
 the set of most highly ranked features in each instance.
 
-### Truncated enhanced borda rank aggregation
+This method uses threshold $\tau$ to designate the highly ranked features. Thus
+$\delta_{ij} = 1$ if $r_{ij} \leq \tau$, and $0$ otherwise.
+
+$$s_i = \sum^N_{j=1} \delta_{ij} \frac{\tau - r_{ij} + 1}{\tau}$$
+
+Note that compared to the borda method, the number of ranked features in an
+experiment $m_j$ is replaced by threshold $\tau$.
+
+The aggregate rank of features is then determined by sorting aggregate scores
+$s_i$ in descending order.
+
+## Truncated enhanced borda rank aggregation
 
 Truncated enhanced borda rank aggregation is enhanced borda aggregation
-performed with only the set of most highly ranked features in each instance.
+performed with only the set of most highly ranked features in each experiment.
+
+This method uses threshold $\tau$ to designate the highly ranked features. Thus
+$\delta_{ij} = 1$ if $r_{ij} \leq \tau$, and $0$ otherwise.
+
+$$s_i = \left( \frac{1}{N} \sum^N_{j=1} \delta_{ij} \right) \left( \sum^N_{j=1}
+\delta_{ij} \frac{\tau - r_{ij} + 1}{\tau} \right)$$
+
+The aggregate rank of features is then determined by sorting aggregate scores
+$s_i$ in descending order.
 
 # References

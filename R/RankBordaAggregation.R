@@ -56,7 +56,7 @@ rank.borda_aggregation <- function(dt, rank_threshold, truncated=FALSE, enhanced
     rank_table[!is.finite(aggr_score), "aggr_score":=0.0]
    
     # Compute the aggregated rank.
-    rank_table[, "aggr_rank":=frank(-aggr_score, ties.method="min")]
+    rank_table[, "aggr_rank":=data.table::frank(-aggr_score, ties.method="min")]
     
     # Drop superfluous columns
     rank_table <- rank_table[, ":="("occurrence"=NULL, "sum_score"=NULL)]
@@ -67,7 +67,7 @@ rank.borda_aggregation <- function(dt, rank_threshold, truncated=FALSE, enhanced
     data.table::setnames(rank_table, old="sum_score", new="aggr_score")
     
     # Compute the aggregated rank.
-    rank_table[, "aggr_rank":=frank(-aggr_score, ties.method="min")]
+    rank_table[, "aggr_rank":=data.table::frank(-aggr_score, ties.method="min")]
   }
   
   return(rank_table)

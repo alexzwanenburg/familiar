@@ -1,5 +1,7 @@
-# Simple ensemble aggregation, as in Wald R, Khoshgoftaar TM, Dittman D, Awada W, Napolitano A. An extensive comparison of feature ranking
-# aggregation techniques in bioinformatics. 2012 IEEE 13th Int. Conf. Inf. Reuse Integr., IEEE; 2012, p. 377-84.
+# Simple ensemble aggregation, as in Wald R, Khoshgoftaar TM, Dittman D, Awada
+# W, Napolitano A. An extensive comparison of feature ranking aggregation
+# techniques in bioinformatics. 2012 IEEE 13th Int. Conf. Inf. Reuse Integr.,
+# IEEE; 2012, p. 377-84.
 
 rank.mean <- function(dt){
   # Aggregate using mean rank
@@ -8,7 +10,7 @@ rank.mean <- function(dt){
   aggr_score <- NULL
 
   # Calculate mean rank
-  dt_rank <- dt[, list(aggr_score=mean(rank)), by=c("name")][, "aggr_rank":=frank(aggr_score, ties.method="min")]
+  dt_rank <- dt[, list(aggr_score=mean(rank)), by=c("name")][, "aggr_rank":=data.table::frank(aggr_score, ties.method="min")]
 
   # # Drop aggr_score column
   # dt_rank <- dt_rank[, "aggr_score":=NULL]
