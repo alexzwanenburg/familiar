@@ -275,7 +275,7 @@ The experimental design defines how data analysis is performed. Familiar allows 
 
 -   `ev`: positions the external validation step. This should be used in conjunction with the `validation_batch_id` parameter to specify which batches/cohorts should be used for external validation. Unlike `fs` and `mb` components, `ev` is optional.
 
-It is possible to form an experiment using just the basic workflow components, i.e. `fs+mb` or `fs+mb+ev`. In these experiments, feature selection is directly followed by modelling, with external validation of the model on or more validation cohorts for `fs+mb+ev`. These options are
+It is possible to form an experiment using just the basic workflow components, i.e. `fs+mb` or `fs+mb+ev`. In these experiments, feature selection is directly followed by modelling, with external validation of the model on or more validation cohorts for `fs+mb+ev`. These options correspond to TRIPOD type 1a and 3, respectivily. TRIPOD analysis types 1b and 2 require more complicated experimental designs, which are facilitated by subsampling.
 
 Subsampling methods are used to (randomly) sample the data, and divide data into internal development and validation sets:
 
@@ -283,7 +283,7 @@ Subsampling methods are used to (randomly) sample the data, and divide data into
 
 -   `bt(x,n)`: (stratified) .632 bootstrap, with `n` the number of bootstraps. Functions like `bs`, but pre-processing parameters and hyperparameters (if any) are inherited from the enveloping layer. That is, for `bt(fs+mb,20)+ev` twenty bootstraps are created from the development dataset, and feature selection and modelling are performed on the in-bag data. However, pre-processing parameters and hyperparameters are determined on the **main development** dataset. The most practical application of `bt` is for repeating feature selection multiple times (e.g. `bt(fs,50)+mb+ev`), as this allows for aggregating variable importance versus randomisation.
 
--   `cv(x,n,p)`: (stratified) `n`-fold cross-validation, repeated `p` times. `p` equals 1 by default. Cross-validation randomly assigns samples to `n` folds. Cross-validation thus forms `n` experiments by assigning 1 fold as a validation fold, and using the remaining `n-1` folds as
+-   `cv(x,n,p)`: (stratified) `n`-fold cross-validation, repeated `p` times. `p` equals 1 by default. Cross-validation randomly assigns samples to `n` folds. Cross-validation forms `n` experiments where 1 fold is assigned as a validation fold, and the remainder as training folds. All pre-processing parameters
 
 -   `lv(x)`: leave-one-out-cross-validation. Pre-processing parameters are determined for each iteration.
 
