@@ -283,10 +283,78 @@ Subsampling methods are used to (randomly) sample the data, and divide data into
 
 -   `bt(x,n)`: (stratified) .632 bootstrap, with `n` the number of bootstraps. Functions like `bs`, but pre-processing parameters and hyperparameters (if any) are inherited from the enveloping layer. That is, for `bt(fs+mb,20)+ev` twenty bootstraps are created from the development dataset, and feature selection and modelling are performed on the in-bag data. However, pre-processing parameters and hyperparameters are determined on the **main development** dataset. The most practical application of `bt` is for repeating feature selection multiple times (e.g. `bt(fs,50)+mb+ev`), as this allows for aggregating variable importance versus randomisation.
 
--   `cv(x,n,p)`: (stratified) `n`-fold cross-validation, repeated `p` times. `p` equals 1 by default. Cross-validation randomly assigns samples to `n` folds. Cross-validation forms `n` experiments where 1 fold is assigned as a validation fold, and the remainder as training folds. All pre-processing parameters
+-   `cv(x,n,p)`: (stratified) `n`-fold cross-validation, repeated `p` times. `p` equals 1 by default. Cross-validation randomly assigns samples to `n` folds. Cross-validation forms `n` experiments where 1 fold is assigned as a validation fold, and the remainder as training folds. All pre-processing steps and hyperparameter optimisation (if any) are performed using data in the training folds.
 
--   `lv(x)`: leave-one-out-cross-validation. Pre-processing parameters are determined for each iteration.
+-   `lv(x)`: leave-one-out-cross-validation. This is the same as `n`-fold cross-validations with `n` the number of samples.
 
--   `ip(x)`: imbalance partitioning for addressing class imbalances on the data set. Pre-processing parameters are determined for each partition. The number of partitions generated depends on the imbalance correction method (see the \`imbalance_correction_method\` parameter). Imbalance partitioning does not generate validation sets.
+-   `ip(x)`: imbalance partitioning for addressing class imbalances in the dataset. This creates subsets of the data with balanced classes, and can be used in conjunction with `binomial` and `multinomial` outcomes. All pre-processing steps and hyperparameter optimisation are determined within the partitions. The number of partitions generated depends on the imbalance correction method (specified using the `imbalance_correction_method` parameter). Imbalance partitioning does not generate validation sets.
+
+The `x` argument of subsample methods can contain one or more of the workflow components. Moreover, it is possible to nest subsample methods. For example, `experiment_design="cv(bt(fs,50)+mb,5)+ev"` would create a 5-fold cross-validation of the development dataset, with each set of training folds again subsampled for feature selection. After aggregating variable importance obtained over 50 bootstraps, a model is trained within each set of training folds, resulting in 5 models overall. The ensemble of these models is then evaluated on an external dataset.
+
+Other designs, such as `experiment_design="bs(fs+mb,400)+ev"` allow for building large ensembles, and capturing the posterior distribution of the model predictions.
+
+As a final remark: Though it is possible to encapsulate the external validation (`ev`) workflow component in a subsampler, this is completely unnecessary. Unlike the feature selection (`fs`) and modelling (`mb`) components, `ev` is passive, and only indicates whether external validation should be performed.
 
 # Evaluation and explanation
+
+Familiar will automatically evaluate created models, and export corresponding tables and plots.
+
+Several
+
++------------------------------------------+---------------+-----------------+-----------------+--------------+--------------+
+| Name                                     | Plot function | Export function | Estimation type | Detail level | Sample limit |
++==========================================+===============+=================+:===============:+:============:+:============:+
+| AUC-PR^a^                                |               |                 | ×               | ×            |              |
++------------------------------------------+---------------+-----------------+-----------------+--------------+--------------+
+| AUC-ROC^a^                               |               |                 | ×               | ×            |              |
++------------------------------------------+---------------+-----------------+-----------------+--------------+--------------+
+| Calibration data^c^                      |               |                 | ×               | ×            |              |
++------------------------------------------+---------------+-----------------+-----------------+--------------+--------------+
+| Calibration info^c^                      |               |                 |                 | ×            |              |
++------------------------------------------+---------------+-----------------+-----------------+--------------+--------------+
+| Confusion matrix^a^                      |               |                 |                 | ×            |              |
++------------------------------------------+---------------+-----------------+-----------------+--------------+--------------+
+| Decision curve analysis^ab^              |               |                 | ×               | ×            |              |
++------------------------------------------+---------------+-----------------+-----------------+--------------+--------------+
+| Feature expression^c^                    |               |                 |                 |              |              |
++------------------------------------------+---------------+-----------------+-----------------+--------------+--------------+
+| Feature selection variable importance^c^ |               |                 |                 |              |              |
++------------------------------------------+---------------+-----------------+-----------------+--------------+--------------+
+| Feature similarity^c^                    |               |                 | ×               |              |              |
++------------------------------------------+---------------+-----------------+-----------------+--------------+--------------+
+| Hyperparameters^c^                       |               |                 |                 |              |              |
++------------------------------------------+---------------+-----------------+-----------------+--------------+--------------+
+| Individual conditional expectation^c^    |               |                 | ×^d^            | ×            | ×            |
++------------------------------------------+---------------+-----------------+-----------------+--------------+--------------+
+| Model calibration^c^                     |               |                 | ×               | ×            |              |
++------------------------------------------+---------------+-----------------+-----------------+--------------+--------------+
+| Model performance^c^                     |               |                 | ×               | ×            |              |
++------------------------------------------+---------------+-----------------+-----------------+--------------+--------------+
+| Model predictions^c^                     |               |                 | ×^d^            | ×            |              |
++------------------------------------------+---------------+-----------------+-----------------+--------------+--------------+
+| Partial dependence^c^                    |               |                 | ×^d^            | ×            | ×            |
++------------------------------------------+---------------+-----------------+-----------------+--------------+--------------+
+| Permutation variable importance^c^       |               |                 | ×               | ×            |              |
++------------------------------------------+---------------+-----------------+-----------------+--------------+--------------+
+| Risk stratification info^b^              |               |                 |                 | ×            |              |
++------------------------------------------+---------------+-----------------+-----------------+--------------+--------------+
+| Risk stratification data^b^              |               |                 |                 | ×            |              |
++------------------------------------------+---------------+-----------------+-----------------+--------------+--------------+
+| Sample similarity^c^                     |               |                 | ×               |              | ×            |
++------------------------------------------+---------------+-----------------+-----------------+--------------+--------------+
+| Univariate analysis^c^                   |               |                 |                 |              |              |
++------------------------------------------+---------------+-----------------+-----------------+--------------+--------------+
+
+: Evaluation and explanation steps.\
+a Available for binomial and multinomial outcomes.\
+b Available for survival outcomes.\
+c Available for all outcomes.\
+d Estimation types other than *`point` require sufficient models.*
+
+## Model performance
+
+## Model calibration
+
+## Decision curve analysis
+
+## Partial dependence and individual conditional expectation plots
