@@ -55,10 +55,16 @@ setMethod("plot_all", signature(object="familiarCollection"),
                                                              "dir_path"=dir_path),
                                                         list(...)))
             
-            # AUC curve
+            # AUC-ROC curve
             do.call(plot_auc_roc_curve, args=append(list("object"=object,
                                                          "dir_path"=dir_path),
                                                     list(...)))
+            
+            # AUC-PR curve
+            do.call(plot_auc_precision_recall_curve,
+                    args=c(list("object"=object,
+                                "dir_path"=dir_path),
+                           list(...)))
             
             # Decision curve
             do.call(plot_decision_curve, args=append(list("object"=object,
@@ -80,6 +86,17 @@ setMethod("plot_all", signature(object="familiarCollection"),
                                                             "dir_path"=dir_path),
                                                        list(...)))
             
+            # Individual conditional expectation
+            do.call(plot_ice,
+                    args=c(list("object"=object,
+                                "dir_path"=dir_path),
+                           list(...)))
+            
+            # Partial dependence
+            do.call(plot_pd,
+                    args=c(list("object"=object,
+                                "dir_path"=dir_path),
+                           list(...)))
           })
 
 #####plot_all (list)#####
