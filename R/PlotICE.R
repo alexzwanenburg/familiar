@@ -2,7 +2,6 @@
 #' @include FamiliarS4Classes.R
 NULL
 
-
 #'@title Plot individual conditional expectation plots.
 #'
 #'@description This method creates individual conditional expectation plots
@@ -176,6 +175,8 @@ setGeneric("plot_ice",
                     units=waiver(),
                     ...) standardGeneric("plot_ice"))
 
+
+
 #####plot_ice (generic)#####
 
 #'@rdname plot_ice-methods
@@ -263,6 +264,188 @@ setMethod("plot_ice", signature(object="ANY"),
                                      "height"=height,
                                      "units"=units)))
           })
+
+
+
+#'@title Plot partial dependence.
+#'
+#'@description This method creates partial dependence plots
+#'  based on data in a familiarCollection object.
+#'
+#'@inheritParams plot_ice
+#'@inheritDotParams export_ice_data -object
+#'@inheritDotParams ggplot2::ggsave -height -width -units
+#'@inheritDotParams extract_ice -object
+#'
+#'@details This function generates partial dependence plots.
+#'  These plots come in two varieties, namely 1D and 2D. 1D plots show the
+#'  predicted value as function of a single feature, whereas 2D plots show the
+#'  predicted value as a function of two features.
+#'
+#'  Available splitting variables are: `feature_x`, `feature_y` (2D only),
+#'  `fs_method`, `learner`, `data_set` and `positive_class` (categorical
+#'  outcomes) or `evaluation_time` (survival outcomes). By default, for 1D ICE
+#'  plots the data are split by `feature_x`, `fs_method` and `learner`, with
+#'  faceting by `data_set`, `positive_class` or `evaluation_time`. If only
+#'  partial dependence is shown, `positive_class` and `evaluation_time` are used
+#'  to set colours instead. For 2D plots, by default the data are split by
+#'  `feature_x`, `fs_method` and `learner`, with faceting by `data_set`,
+#'  `positive_class` or `evaluation_time`. The `color_by` argument cannot be
+#'  used with 2D plots, and attempting to do so causes an error. Attempting to
+#'  specify `feature_x` or `feature_y` for `color_by` will likewise result in an
+#'  error, as multiple features cannot be shown in the same facet.
+#'
+#'  The splitting variables indicated by `color_by` are coloured according to
+#'  the `discrete_palette` parameter. This parameter is therefore only used for
+#'  1D plots. Available palettes for `discrete_palette` and `gradient_palette`
+#'  are those listed by `grDevices::palette.pals()` (requires R >= 4.0.0),
+#'  `grDevices::hcl.pals()` (requires R >= 3.6.0) and `rainbow`, `heat.colors`,
+#'  `terrain.colors`, `topo.colors` and `cm.colors`, which correspond to the
+#'  palettes of the same name in `grDevices`. If not specified, a default
+#'  palette based on palettes in Tableau are used. You may also specify your own
+#'  palette by using colour names listed by `grDevices::colors()` or through
+#'  hexadecimal RGB strings.
+#'
+#'  Bootstrap confidence intervals of the partial dependence plots can be shown
+#'  using various styles set by `conf_int_style`:
+#'
+#'  * `ribbon` (default): confidence intervals are shown as a ribbon with an
+#'  opacity of `conf_int_alpha` around the point estimate of the partial
+#'  dependence.
+#'
+#'  * `step` (default): confidence intervals are shown as a step function around
+#'  the point estimate of the partial dependence.
+#'
+#'  * `none`: confidence intervals are not shown. The point estimate of the
+#'  partial dependence is shown as usual.
+#'
+#'  Labelling methods such as `set_fs_method_names` or `set_data_set_names` can
+#'  be applied to the `familiarCollection` object to update labels, and order
+#'  the output in the figure.
+#'
+#'@return `NULL` or list of plot objects, if `dir_path` is `NULL`.
+#'@exportMethod plot_ice
+#'@md
+#'@rdname plot_pd-methods
+setGeneric("plot_pd",
+           function(object,
+                    draw=FALSE,
+                    dir_path=NULL,
+                    split_by=NULL,
+                    color_by=NULL,
+                    facet_by=NULL,
+                    facet_wrap_cols=NULL,
+                    ggtheme=NULL,
+                    discrete_palette=NULL,
+                    gradient_palette=NULL,
+                    gradient_palette_range=NULL,
+                    x_label=waiver(),
+                    y_label=waiver(),
+                    legend_label=waiver(),
+                    plot_title=NULL,
+                    plot_sub_title=NULL,
+                    caption=NULL,
+                    x_range=NULL,
+                    x_n_breaks=5,
+                    x_breaks=NULL,
+                    y_range=NULL,
+                    y_n_breaks=5,
+                    y_breaks=NULL,
+                    novelty_range=NULL,
+                    value_scales=waiver(),
+                    novelty_scales=waiver(),
+                    conf_int_style=c("ribbon", "step", "none"),
+                    conf_int_alpha=0.4,
+                    show_novelty=TRUE,
+                    anchor_values=NULL,
+                    width=waiver(),
+                    height=waiver(),
+                    units=waiver(),
+                    ...) standardGeneric("plot_pd"))
+
+
+#####plot_pd (generic)#####
+
+#'@rdname plot_pd-methods
+setMethod("plot_pd", signature(object="ANY"),
+          function(object,
+                   draw=FALSE,
+                   dir_path=NULL,
+                   split_by=NULL,
+                   color_by=NULL,
+                   facet_by=NULL,
+                   facet_wrap_cols=NULL,
+                   ggtheme=NULL,
+                   discrete_palette=NULL,
+                   gradient_palette=NULL,
+                   gradient_palette_range=NULL,
+                   x_label=waiver(),
+                   y_label=waiver(),
+                   legend_label=waiver(),
+                   plot_title=NULL,
+                   plot_sub_title=NULL,
+                   caption=NULL,
+                   x_range=NULL,
+                   x_n_breaks=5,
+                   x_breaks=NULL,
+                   y_range=NULL,
+                   y_n_breaks=5,
+                   y_breaks=NULL,
+                   novelty_range=NULL,
+                   value_scales=waiver(),
+                   novelty_scales=waiver(),
+                   conf_int_style=c("ribbon", "step", "none"),
+                   conf_int_alpha=0.4,
+                   show_novelty=TRUE,
+                   anchor_values=NULL,
+                   width=waiver(),
+                   height=waiver(),
+                   units=waiver(),
+                   ...){
+            
+            # Attempt conversion to familiarCollection object.
+            object <- do.call(as_familiar_collection,
+                              args=c(list("object"=object, "data_element"="ice_data"),
+                                     list(...)))
+            
+            return(do.call(plot_ice,
+                           args=list("object"=object,
+                                     "draw"=draw,
+                                     "dir_path"=dir_path,
+                                     "split_by"=split_by,
+                                     "color_by"=color_by,
+                                     "facet_by"=facet_by,
+                                     "facet_wrap_cols"=facet_wrap_cols,
+                                     "ggtheme"=ggtheme,
+                                     "discrete_palette"=discrete_palette,
+                                     "gradient_palette"=gradient_palette,
+                                     "gradient_palette_range"=gradient_palette_range,
+                                     "x_label"=x_label,
+                                     "y_label"=y_label,
+                                     "legend_label"=legend_label,
+                                     "plot_title"=plot_title,
+                                     "plot_sub_title"=plot_sub_title,
+                                     "caption"=caption,
+                                     "x_range"=x_range,
+                                     "x_n_breaks"=x_n_breaks,
+                                     "x_breaks"=x_breaks,
+                                     "y_range"=y_range,
+                                     "y_n_breaks"=y_n_breaks,
+                                     "y_breaks"=y_breaks,
+                                     "novelty_range"=novelty_range,
+                                     "value_scales"=value_scales,
+                                     "novelty_scales"=novelty_scales,
+                                     "conf_int_style"=conf_int_style,
+                                     "conf_int_alpha"=conf_int_alpha,
+                                     "show_ice"=FALSE,
+                                     "show_pd"=TRUE,
+                                     "show_novelty"=show_novelty,
+                                     "anchor_values"=anchor_values,
+                                     "width"=width,
+                                     "height"=height,
+                                     "units"=units)))
+          })
+
 
 
 #####plot_ice (collection)#####
