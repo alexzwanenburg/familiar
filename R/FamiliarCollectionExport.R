@@ -45,16 +45,22 @@ setMethod("export_all", signature(object="familiarCollection"),
           function(object, dir_path=NULL, aggregate_results=waiver(), ...){
             
             # Export feature selection variable importance
-            fs_vimp <- export_fs_vimp(object=object, dir_path=dir_path)
+            fs_vimp <- export_fs_vimp(object=object,
+                                      dir_path=dir_path)
             
             # Export feature selection variable importance using stability.
-            fs_vimp_occurrence <- export_fs_vimp(object=object, dir_path=dir_path, aggregation_method="stability")
+            fs_vimp_occurrence <- export_fs_vimp(object=object,
+                                                 dir_path=dir_path,
+                                                 aggregation_method="stability")
             
             # Export model variable importance
-            model_vimp <- export_model_vimp(object=object, dir_path=dir_path)
+            model_vimp <- export_model_vimp(object=object,
+                                            dir_path=dir_path)
             
             # Export model variable importance using stability.
-            model_vimp_occurrence <- export_model_vimp(object=object, dir_path=dir_path, aggregation_method="stability")
+            model_vimp_occurrence <- export_model_vimp(object=object,
+                                                       dir_path=dir_path,
+                                                       aggregation_method="stability")
             
             # Export permutation variable importance.
             permutation_vimp <- export_permutation_vimp(object=object,
@@ -76,7 +82,8 @@ setMethod("export_all", signature(object="familiarCollection"),
                                                             aggregate_results=ifelse(is.waive(aggregate_results), TRUE, aggregate_results))
             
             # Export calibration information
-            calibration_info <- export_calibration_info(object=object, dir_path=dir_path)
+            calibration_info <- export_calibration_info(object=object,
+                                                        dir_path=dir_path)
             
             # Export calibration data
             calibration_data <- export_calibration_data(object=object,
@@ -93,7 +100,8 @@ setMethod("export_all", signature(object="familiarCollection"),
                                                              dir_path=dir_path)
             
             # Export kaplan-meier info
-            km_info <- export_risk_stratification_info(object=object, dir_path=dir_path)
+            km_info <- export_risk_stratification_info(object=object,
+                                                       dir_path=dir_path)
             
             # Export stratification data
             km_data <- export_risk_stratification_data(object=object,
@@ -105,13 +113,16 @@ setMethod("export_all", signature(object="familiarCollection"),
                                         aggregate_results=ifelse(is.waive(aggregate_results), TRUE, aggregate_results))
             
             # Export data from the univariate analysis
-            univariate_analysis <- export_univariate_analysis_data(object=object, dir_path=dir_path)
+            univariate_analysis <- export_univariate_analysis_data(object=object,
+                                                                   dir_path=dir_path)
             
             # Export data from feature expressions
-            feature_expressions <- export_feature_expressions(object=object, dir_path=dir_path)
+            feature_expressions <- export_feature_expressions(object=object,
+                                                              dir_path=dir_path)
             
             # Export mutual-correlation data
-            feature_similarity <- export_feature_similarity(object=object, dir_path=dir_path)
+            feature_similarity <- export_feature_similarity(object=object,
+                                                            dir_path=dir_path)
             
             # Export partial dependence data
             pd_data <- export_partial_dependence_data(object=object,
@@ -125,8 +136,10 @@ setMethod("export_all", signature(object="familiarCollection"),
             
             
             if(is.null(dir_path)){
-              return(list("fs_vimp" = list("default"=fs_vimp, "occurrence"=fs_vimp_occurrence),
-                          "model_vimp" = list("default"=model_vimp, "occurrence"=model_vimp_occurrence),
+              return(list("fs_vimp" = list("default"=fs_vimp,
+                                           "occurrence"=fs_vimp_occurrence),
+                          "model_vimp" = list("default"=model_vimp,
+                                              "occurrence"=model_vimp_occurrence),
                           "permutation_vimp" = permutation_vimp,
                           "hyperparameters" = hyperparameters,
                           "prediction_data" = prediction_data,
