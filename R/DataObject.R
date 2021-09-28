@@ -405,39 +405,29 @@ setMethod("extract_settings_from_data", signature(data="dataObject"),
             sample_id_column <- batch_id_column <- series_id_column <- outcome_columns <- NULL
             
             if(!is_empty(data@data_column_info)){
-              # Find the sample id column stored with the data.
-              temp_sample_id_column <- data@data_column_info[type == "sample_id_column"]$external
+              # Sample identifier
+              sample_id_column <- ..set_identifier_column(current=sample_id_column,
+                                                          data=data@data,
+                                                          internal=data@data_column_info[type == "sample_id_column"]$internal,
+                                                          external=data@data_column_info[type == "sample_id_column"]$external)
               
-              # Check that the data object actually has a column name (not
-              # character(0)) that is not NA, and set this column name.
-              if(length(temp_sample_id_column) > 0){
-                if(!is.na(temp_sample_id_column)) sample_id_column <- temp_sample_id_column
-              }
+              # Batch identifier
+              batch_id_column <- ..set_identifier_column(current=batch_id_column,
+                                                         data=data@data,
+                                                         internal=data@data_column_info[type == "batch_id_column"]$internal,
+                                                         external=data@data_column_info[type == "batch_id_column"]$external)
               
-              # Find the batch id column stored with the data
-              temp_batch_id_column <- data@data_column_info[type == "batch_id_column"]$external
+              # Series identifier
+              series_id_column <- ..set_identifier_column(current=series_id_column,
+                                                          data=data@data,
+                                                          internal=data@data_column_info[type == "series_id_column"]$internal,
+                                                          external=data@data_column_info[type == "series_id_column"]$external)
               
-              # Check that the data object actually has a column name (not
-              # character(0)) that is not NA, and set this column name.
-              if(length(temp_batch_id_column) > 0){
-                if(!is.na(temp_batch_id_column)) batch_id_column <- temp_batch_id_column
-              }
-              
-              # Find the series id column stored with the data.
-              temp_series_id_column <- data@data_column_info[type == "series_id_column"]$external
-              
-              # Check that the model data object has a column name (not
-              # character(0)) that is not NA, and set this column name.
-              if(length(temp_series_id_column) > 0){
-                if(!is.na(temp_series_id_column)) series_id_column <- temp_series_id_column
-              }
-              
-              # Find the outcome columns stored with the data.
-              temp_outcome_columns <- data@data_column_info[type == "outcome_column"]$external
-              
-              if(all(sapply(temp_outcome_columns, length) > 0)){
-                if(!any(is.na(temp_outcome_columns))) outcome_columns <- temp_outcome_columns
-              }
+              # Outcome columns
+              outcome_columns <- ..set_identifier_column(current=outcome_columns,
+                                                         data=data@data,
+                                                         internal=data@data_column_info[type == "outcome_column"]$internal,
+                                                         external=data@data_column_info[type == "outcome_column"]$external)
             }
             
             if(is.null(outcome_columns)) get_outcome_columns(data)
@@ -458,6 +448,45 @@ setMethod("extract_settings_from_data", signature(data="dataObject"),
             
             return(settings)
           })
+
+
+
+..set_identifier_column <- function(current=NULL,
+                                    data=NULL,
+                                    internal,
+                                    external){
+  
+  if(!(is.waive(current) | is.null(current))){
+    return(current)
+  }
+  
+  temporary <- NULL
+  
+  # Prefer external before internal, as long as it is present in data.
+  if(all(sapply(external, length) > 0)){
+    if(!any(sapply(external, is.na))){
+      if(data.table::is.data.table(data)){
+        if(all(external %in% colnames(data))) temporary <- external
+      }
+    }
+  }
+  
+  # Prefer internal if it is present in data.
+  if(data.table::is.data.table(data) & is.null(temporary)){
+    if(all(internal %in% colnames(data))) temporary <- internal
+  }
+  
+  # Use external if internal is not present in data.
+  if(all(sapply(external, length) > 0) & is.null(temporary)){
+    if(!any(sapply(external, is.na))) temporary <- internal
+  }
+  
+  if(is.null(temporary)){
+    return(current)
+  } else {
+    return(temporary)
+  }
+}
 
 
 
