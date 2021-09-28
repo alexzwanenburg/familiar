@@ -2317,10 +2317,10 @@
 #'  ensemble, bootstraps are created so that at least 20 point estimates can be
 #'  made.
 #'
-#'  * `model` (to be implemented): Results are computed at the model level. This
-#'  means that, for example, bias-corrected estimates of model performance are
-#'  assessed by creating (at least) 20 bootstraps and computing the performance
-#'  of the model for each bootstrap.
+#'  * `model`: Results are computed at the model level. This means that, for
+#'  example, bias-corrected estimates of model performance are assessed by
+#'  creating (at least) 20 bootstraps and computing the performance of the model
+#'  for each bootstrap.
 #'
 #'  Note that each level of detail has a different interpretation for bootstrap
 #'  confidence intervals. For `ensemble` and `model` these are the confidence
