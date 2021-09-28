@@ -297,53 +297,69 @@ As a final remark: Though it is possible to encapsulate the external validation 
 
 # Evaluation and explanation
 
-Familiar will automatically evaluate created models, and export corresponding tables and plots.
+Familiar will automatically evaluate created models, and export corresponding tables and plots. The different analyses are shown in the table below. Several analyses allow for determining distributions and confidence intervals to provide an indication of the value spread for a given dataset and models (if applicable). What kind of estimates are computed is defined by the `estimation_type` argument:
 
-Several
+-   `point`: Point estimates, i.e. single values.
 
-+------------------------------------------+-----------------------------------------------------------------------------------+-----------------+-----------------+--------------+--------------+
-| Name                                     | Plot function                                                                     | Export function | Estimation type | Detail level | Sample limit |
-+==========================================+===================================================================================+=================+:===============:+:============:+:============:+
-| AUC-PR^a^                                | `plot_auc_precision_recall_curve`                                                 |                 | ×               | ×            |              |
-+------------------------------------------+-----------------------------------------------------------------------------------+-----------------+-----------------+--------------+--------------+
-| AUC-ROC^a^                               | `plot_auc_roc_curve`                                                              |                 | ×               | ×            |              |
-+------------------------------------------+-----------------------------------------------------------------------------------+-----------------+-----------------+--------------+--------------+
-| Calibration info^c^                      |                                                                                   |                 |                 | ×            |              |
-+------------------------------------------+-----------------------------------------------------------------------------------+-----------------+-----------------+--------------+--------------+
-| Confusion matrix^a^                      | `plot_confusion_matrix`                                                           |                 |                 | ×            |              |
-+------------------------------------------+-----------------------------------------------------------------------------------+-----------------+-----------------+--------------+--------------+
-| Decision curve analysis^ab^              | `plot_decision_curve`                                                             |                 | ×               | ×            |              |
-+------------------------------------------+-----------------------------------------------------------------------------------+-----------------+-----------------+--------------+--------------+
-| Feature expression^c^                    | `plot_sample_clustering`                                                          |                 |                 |              |              |
-+------------------------------------------+-----------------------------------------------------------------------------------+-----------------+-----------------+--------------+--------------+
-| Feature selection variable importance^c^ | `plot_feature_selection_occurrence`; `plot_feature_selection_variable_importance` |                 |                 |              |              |
-+------------------------------------------+-----------------------------------------------------------------------------------+-----------------+-----------------+--------------+--------------+
-| Feature similarity^c^                    | `plot_feature_similarity`                                                         |                 | ×               |              |              |
-+------------------------------------------+-----------------------------------------------------------------------------------+-----------------+-----------------+--------------+--------------+
-| Hyperparameters^c^                       |                                                                                   |                 |                 |              |              |
-+------------------------------------------+-----------------------------------------------------------------------------------+-----------------+-----------------+--------------+--------------+
-| Individual conditional expectation^c^    | `plot_ice`                                                                        |                 | ×^d^            | ×            | ×            |
-+------------------------------------------+-----------------------------------------------------------------------------------+-----------------+-----------------+--------------+--------------+
-| Model calibration^ce^                    | `plot_calibration_data`                                                           |                 | ×               | ×            |              |
-+------------------------------------------+-----------------------------------------------------------------------------------+-----------------+-----------------+--------------+--------------+
-| Model performance^c^                     | `plot_model_performance`                                                          |                 | ×               | ×            |              |
-+------------------------------------------+-----------------------------------------------------------------------------------+-----------------+-----------------+--------------+--------------+
-| Model predictions^c^                     |                                                                                   |                 | ×^d^            | ×            |              |
-+------------------------------------------+-----------------------------------------------------------------------------------+-----------------+-----------------+--------------+--------------+
-| Model variable importance^ce^            | `plot_model_signature_occurrence`; `plot_model_signature_variable_importance`     |                 |                 |              |              |
-+------------------------------------------+-----------------------------------------------------------------------------------+-----------------+-----------------+--------------+--------------+
-| Partial dependence^c^                    | `plot_pd`                                                                         |                 | ×^d^            | ×            | ×            |
-+------------------------------------------+-----------------------------------------------------------------------------------+-----------------+-----------------+--------------+--------------+
-| Permutation variable importance^c^       | `plot_permutation_variable_importance`                                            |                 | ×               | ×            |              |
-+------------------------------------------+-----------------------------------------------------------------------------------+-----------------+-----------------+--------------+--------------+
-| Risk stratification info^b^              |                                                                                   |                 |                 | ×            |              |
-+------------------------------------------+-----------------------------------------------------------------------------------+-----------------+-----------------+--------------+--------------+
-| Risk stratification data^b^              | `plot_kaplan_meier`                                                               |                 |                 | ×            |              |
-+------------------------------------------+-----------------------------------------------------------------------------------+-----------------+-----------------+--------------+--------------+
-| Sample similarity^c^                     |                                                                                   |                 | ×               |              | ×            |
-+------------------------------------------+-----------------------------------------------------------------------------------+-----------------+-----------------+--------------+--------------+
-| Univariate analysis^c^                   | `plot_univariate_importance`                                                      |                 |                 |              |              |
-+------------------------------------------+-----------------------------------------------------------------------------------+-----------------+-----------------+--------------+--------------+
+-   `bias_correction` or `bc`: Bias-corrected estimates. A bias-corrected estimate is computed from (at least) 20 point estimates.
+
+-   `bootstrap_confidence_interval` or `bci`: Bias-corrected estimates with bootstrap confidence intervals [@Efron2016-ws]. The number of point estimates required depends on the `confidence_level` parameter. Familiar uses a rule of thumb of $n=20/(1-\textrm{confidence_level})$, i.e. at least 400 points for `confidence_level=0.95`.
+
+Another argument, `detail_level` determines how the required point estimates are formed:
+
+-   `ensemble`: Point estimates are computed at the ensemble level, i.e. over all models in the ensemble. This means that, for example, bias-corrected estimates of model performance are assessed by creating (at least) 20 bootstraps and computing the model performance of the ensemble model for each bootstrap.
+
+-   `hybrid`: Point estimated are computed at from the models in an ensemble. This means that, for example, bias-corrected estimates of model performance are directly computed using the models in the ensemble. If there are at least 20 trained models in the ensemble, performance is computed for each model, in contrast to `ensemble` where performance is computed for the ensemble of models. If there are less than 20 trained models in the ensemble, bootstraps are created so that at least 20 point estimates can be made.
+
+-   `model`: Point estimates are computed at the model level. This means that, for example, bias-corrected estimates of model performance are assessed by creating (at least) 20 bootstraps and computing the performance of the model for each bootstrap. Plots will not be automatically created in this case.
+
+Generally, the more point estimates are required, the more computationally intensive the analysis is. Some analyses also become computationally more expensive with more samples. The `sample_limit` argument can be used to specify the maximum number of samples that should be used.
+
+Some analyses, such as model predictions and individual conditional expectation plots, do not benefit from bootstraps as they are directly based on values predicted by the models. To compute bias-corrected estimates or bootstrap confidence intervals for these analyses requires that sufficient models are created. Experimental designs such as `experiment_design="bs(fs+mb,400)+ev"` allow for this, but are computationally expensive.
+
++------------------------------------------+-----------------------------------------------------------------------------------+---------------------------------------+-----------------+--------------+--------------+
+| Name                                     | Plot function                                                                     | Export function                       | Estimation type | Detail level | Sample limit |
++==========================================+===================================================================================+=======================================+:===============:+:============:+:============:+
+| AUC-PR^a^                                | `plot_auc_precision_recall_curve`                                                 | `export_auc_data`                     | ×               | ×            |              |
++------------------------------------------+-----------------------------------------------------------------------------------+---------------------------------------+-----------------+--------------+--------------+
+| AUC-ROC^a^                               | `plot_auc_roc_curve`                                                              | `export_auc_data`                     | ×               | ×            |              |
++------------------------------------------+-----------------------------------------------------------------------------------+---------------------------------------+-----------------+--------------+--------------+
+| Calibration info^c^                      |                                                                                   | `export_calibration_info`             |                 | ×            |              |
++------------------------------------------+-----------------------------------------------------------------------------------+---------------------------------------+-----------------+--------------+--------------+
+| Confusion matrix^a^                      | `plot_confusion_matrix`                                                           | `export_confusion_matrix_data`        |                 | ×            |              |
++------------------------------------------+-----------------------------------------------------------------------------------+---------------------------------------+-----------------+--------------+--------------+
+| Decision curve analysis^ab^              | `plot_decision_curve`                                                             | `export_decision_curve_analysis_data` | ×               | ×            |              |
++------------------------------------------+-----------------------------------------------------------------------------------+---------------------------------------+-----------------+--------------+--------------+
+| Feature expression^c^                    | `plot_sample_clustering`                                                          | `export_feature_expressions`          |                 |              |              |
++------------------------------------------+-----------------------------------------------------------------------------------+---------------------------------------+-----------------+--------------+--------------+
+| Feature selection variable importance^c^ | `plot_feature_selection_occurrence`; `plot_feature_selection_variable_importance` | `export_fs_vimp`                      |                 |              |              |
++------------------------------------------+-----------------------------------------------------------------------------------+---------------------------------------+-----------------+--------------+--------------+
+| Feature similarity^c^                    | `plot_feature_similarity`                                                         | `export_feature_similarity`           | ×               |              |              |
++------------------------------------------+-----------------------------------------------------------------------------------+---------------------------------------+-----------------+--------------+--------------+
+| Hyperparameters^c^                       |                                                                                   | `export_hyperparameters`              |                 |              |              |
++------------------------------------------+-----------------------------------------------------------------------------------+---------------------------------------+-----------------+--------------+--------------+
+| Individual conditional expectation^c^    | `plot_ice`                                                                        | `export_ice_data`                     | ×^d^            | ×            | ×            |
++------------------------------------------+-----------------------------------------------------------------------------------+---------------------------------------+-----------------+--------------+--------------+
+| Model calibration^ce^                    | `plot_calibration_data`                                                           | `export_calibration_data`             | ×               | ×            |              |
++------------------------------------------+-----------------------------------------------------------------------------------+---------------------------------------+-----------------+--------------+--------------+
+| Model performance^c^                     | `plot_model_performance`                                                          | `export_model_performance`            | ×               | ×            |              |
++------------------------------------------+-----------------------------------------------------------------------------------+---------------------------------------+-----------------+--------------+--------------+
+| Model predictions^c^                     |                                                                                   | `export_prediction_data`              | ×^d^            | ×            |              |
++------------------------------------------+-----------------------------------------------------------------------------------+---------------------------------------+-----------------+--------------+--------------+
+| Model variable importance^ce^            | `plot_model_signature_occurrence`; `plot_model_signature_variable_importance`     | `export_model_vimp`                   |                 |              |              |
++------------------------------------------+-----------------------------------------------------------------------------------+---------------------------------------+-----------------+--------------+--------------+
+| Partial dependence^c^                    | `plot_pd`                                                                         | `export_partial_dependence_data`      | ×^d^            | ×            | ×            |
++------------------------------------------+-----------------------------------------------------------------------------------+---------------------------------------+-----------------+--------------+--------------+
+| Permutation variable importance^c^       | `plot_permutation_variable_importance`                                            | `export_permutation_vimp`             | ×               | ×            |              |
++------------------------------------------+-----------------------------------------------------------------------------------+---------------------------------------+-----------------+--------------+--------------+
+| Risk stratification info^b^              |                                                                                   | `export_risk_stratification_info`     |                 | ×            |              |
++------------------------------------------+-----------------------------------------------------------------------------------+---------------------------------------+-----------------+--------------+--------------+
+| Risk stratification data^b^              | `plot_kaplan_meier`                                                               | `export_risk_stratification_data`     |                 | ×            |              |
++------------------------------------------+-----------------------------------------------------------------------------------+---------------------------------------+-----------------+--------------+--------------+
+| Sample similarity^c^                     |                                                                                   | `export_sample_similarity`            | ×               |              | ×            |
++------------------------------------------+-----------------------------------------------------------------------------------+---------------------------------------+-----------------+--------------+--------------+
+| Univariate analysis^c^                   | `plot_univariate_importance`                                                      | `export_univariate_analysis_data`     |                 |              |              |
++------------------------------------------+-----------------------------------------------------------------------------------+---------------------------------------+-----------------+--------------+--------------+
 
 : Evaluation and explanation steps.\
 a Available for binomial and multinomial outcomes.\
@@ -352,10 +368,90 @@ c Available for all outcomes.\
 d Estimation types other than *`point` require sufficient models.\
 e May not be available for all models.*
 
+Plots and tables are exported when familiar is run with `summon_familiar`. The plot and export functions can all be used externally as well, which is described in the *Using familiar prospectively* vignette.
+
 ## Model performance
 
+Model performance is usually assessed to quantify how accurate the predictions of a model are using performance metrics. These metrics are document in the *Performance metrics* vignette, and can be set using the `evaluation_metric` argument.
+
+```{r, results=FALSE, echo=FALSE, eval=TRUE}
+
+binomial_data <- familiar:::test.create_good_data_set(outcome_type="binomial")
+
+familiar::summon_familiar(data=binomial_data,
+                          project_dir=file.path(tempdir()),
+                          experiment_dir="binomial",
+                          experimental_design="fs+mb",
+                          cluster_method="none",
+                          fs_method="none",
+                          learner="random_forest_ranger",
+                          parallel=FALSE,
+                          skip_evaluation_elements="all")
+
+# Create path to the directory containing the models.
+model_directory_path <- file.path(tempdir(), "binomial", "trained_models", "random_forest_ranger", "none")
+
+model_path <- file.path(model_directory_path, list.files(model_directory_path, pattern="model")[1])
+
+# Load the model.
+binomial_model <- readRDS(model_path)
+```
+
+```{r, fig.align='center', fig.width=7}
+plots <- familiar::plot_model_performance(object=binomial_model,
+                                          data=binomial_data,
+                                          metric = c("auc", "brier", "f1_score"),
+                                          x_axis_by="metric")
+
+plots[[1]]
+```
+
+### Area under the receiver-operating characteristic curve
+
+```{r, fig.align='center', fig.width=7}
+plots <- familiar::plot_auc_roc_curve(object=binomial_model,
+                                      data=binomial_data)
+
+plots[[1]]
+
+```
+
+### Area under the precision-recall curve
+
+```{r, fig.align='center', fig.width=7}
+plots <- familiar::plot_auc_precision_recall_curve(object=binomial_model,
+                                                   data=binomial_data)
+
+plots[[1]]
+```
+
+### Confusion matrix
+
+```{r, fig.align='center', fig.width=7}
+plots <- familiar::plot_confusion_matrix(object=binomial_model,
+                                         data=binomial_data)
+
+plots[[1]]
+```
+
+### Kaplan-Meier survival curves
+
 ## Model calibration
+
+```{r, fig.align='center', fig.width=7}
+plots <- familiar::plot_calibration_data(object=binomial_model,
+                                         data=binomial_data)
+
+grid::grid.newpage()
+grid::grid.draw(plots[[1]])
+```
 
 ## Decision curve analysis
 
 ## Partial dependence and individual conditional expectation plots
+
+## Variable importance
+
+### Permutation variable importance
+
+## Feature and sample similarity
