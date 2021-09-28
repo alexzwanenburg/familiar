@@ -142,7 +142,7 @@ setMethod("export_all", signature(object="familiarCollection"),
                           "feature_expressions" = feature_expressions,
                           "feature_similarity" = feature_similarity,
                           "pd_data" = pd_data,
-                          "ice_data" = pd_data))
+                          "ice_data" = ice_data))
             }
           })
 
