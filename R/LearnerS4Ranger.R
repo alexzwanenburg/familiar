@@ -136,9 +136,19 @@ setMethod("get_default_hyperparameters", signature(object="familiarRanger"),
             # variable. It is only used with maxstat.
             alpha_randomise <- split_rule_default == "maxstat"
             
+            if(alpha_randomise){
+              default_values <- c(0.05, 0.1, 0.5, 1.0)
+              
+            } else {
+              default_values <- c(0.05)
+            }
+            
             # Set the alpha parameter
-            param$alpha <- .set_hyperparameter(default=c(0.5, 0.05, 0.1, 1.0), type="numeric", range=c(10^-6, 1.0),
-                                               valid_range=c(0.0, 1.0), randomise=alpha_randomise,
+            param$alpha <- .set_hyperparameter(default=default_values,
+                                               type="numeric",
+                                               range=c(10^-6, 1.0),
+                                               valid_range=c(0.0, 1.0),
+                                               randomise=alpha_randomise,
                                                distribution="log")
             
             ##### Feature selection forest type ################################
