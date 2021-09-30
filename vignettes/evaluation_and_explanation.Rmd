@@ -239,7 +239,7 @@ plots[[1]]
 
 ## Confusion matrix
 
-A confusion matrix schematically represents the
+A confusion matrix schematically represents the number of predicted (expected) class instances and their actual (observed) values. This may help identify potential weaknesses of classifiers, i.e. false positives or negatives.
 
 ```{r, fig.align='center', fig.width=7}
 plots <- familiar::plot_confusion_matrix(object=binomial_model,
@@ -248,7 +248,11 @@ plots <- familiar::plot_confusion_matrix(object=binomial_model,
 plots[[1]]
 ```
 
+Familiar selects the class with the highest predicted class probability as the expected class. It is currently not possible to obtain confusion matrices for set probability thresholds, such as the threshold that maximises the Matthews correlation coefficient.
+
 ## Kaplan-Meier survival curves
+
+Kaplan-Meier survival curves are a standard plot to assess survival over time in a population, or survival differences between groups. Familiar uses the development dataset to determine the thresholds
 
 # Model calibration
 
