@@ -1,0 +1,234 @@
+---
+title: "Evaluation and explanation"
+author: "Alex Zwanenburg"
+date: "`r Sys.Date()`"
+output:
+  rmarkdown::html_vignette:
+    includes:
+      after_body: license.html
+    toc: TRUE
+bibliography: "refs.bib"
+vignette: >
+  %\VignetteIndexEntry{Introducing familiar}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+library(familiar)
+library(data.table)
+```
+
+Familiar will automatically evaluate created models, and export corresponding tables and plots. The different analyses are shown in the table below. Several analyses allow for determining distributions and confidence intervals to provide an indication of the value spread for a given dataset and models (if applicable). What kind of estimates are computed is defined by the `estimation_type` argument:
+
+-   `point`: Point estimates, i.e. single values.
+
+-   `bias_correction` or `bc`: Bias-corrected estimates. A bias-corrected estimate is computed from (at least) 20 point estimates.
+
+-   `bootstrap_confidence_interval` or `bci`: Bias-corrected estimates with bootstrap confidence intervals [@Efron2016-ws]. This estimation type allows for plotting confidence intervals in plots. The number of point estimates required depends on the `confidence_level` parameter. Familiar uses a rule of thumb of $n=20/(1-\textrm{confidence_level})$, i.e. at least 400 points for `confidence_level=0.95`.
+
+Another argument, `detail_level` determines how the required point estimates are formed:
+
+-   `ensemble`: Point estimates are computed at the ensemble level, i.e. over all models in the ensemble. This means that, for example, bias-corrected estimates of model performance are assessed by creating (at least) 20 bootstraps and computing the model performance of the ensemble model for each bootstrap.
+
+-   `hybrid`: Point estimated are computed at from the models in an ensemble. This means that, for example, bias-corrected estimates of model performance are directly computed using the models in the ensemble. If there are at least 20 trained models in the ensemble, performance is computed for each model, in contrast to `ensemble` where performance is computed for the ensemble of models. If there are less than 20 trained models in the ensemble, bootstraps are created so that at least 20 point estimates can be made.
+
+-   `model`: Point estimates are computed at the model level. This means that, for example, bias-corrected estimates of model performance are assessed by creating (at least) 20 bootstraps and computing the performance of the model for each bootstrap. Plots will not be automatically created in this case.
+
+Generally, the more point estimates are required, the more computationally intensive the analysis is. Some analyses also become computationally more expensive with more samples. The `sample_limit` argument can be used to specify the maximum number of samples that should be used.
+
+Some analyses, such as model predictions and individual conditional expectation plots, do not benefit from bootstraps as they are directly based on values predicted by the models. To compute bias-corrected estimates or bootstrap confidence intervals for these analyses requires that sufficient models are created. Experimental designs such as `experiment_design="bs(fs+mb,400)+ev"` allow for this, but are computationally expensive.
+
+| Name                                     | Plot function                                                                     | Export function                       | Estimation type | Detail level | Sample limit |
+|------------------------------------------|-----------------------------------------------------------------------------------|---------------------------------------|:---------------:|:------------:|:------------:|
+| AUC-PR^a^                                | `plot_auc_precision_recall_curve`                                                 | `export_auc_data`                     |        ×        |      ×       |              |
+| AUC-ROC^a^                               | `plot_auc_roc_curve`                                                              | `export_auc_data`                     |        ×        |      ×       |              |
+| Calibration info^c^                      |                                                                                   | `export_calibration_info`             |                 |      ×       |              |
+| Confusion matrix^a^                      | `plot_confusion_matrix`                                                           | `export_confusion_matrix_data`        |                 |      ×       |              |
+| Decision curve analysis^ab^              | `plot_decision_curve`                                                             | `export_decision_curve_analysis_data` |        ×        |      ×       |              |
+| Feature expression^c^                    | `plot_sample_clustering`                                                          | `export_feature_expressions`          |                 |              |              |
+| Feature selection variable importance^c^ | `plot_feature_selection_occurrence`; `plot_feature_selection_variable_importance` | `export_fs_vimp`                      |                 |              |              |
+| Feature similarity^c^                    | `plot_feature_similarity`                                                         | `export_feature_similarity`           |        ×        |              |              |
+| Hyperparameters^c^                       |                                                                                   | `export_hyperparameters`              |                 |              |              |
+| Individual conditional expectation^c^    | `plot_ice`                                                                        | `export_ice_data`                     |      ×^d^       |      ×       |      ×       |
+| Model calibration^ce^                    | `plot_calibration_data`                                                           | `export_calibration_data`             |        ×        |      ×       |              |
+| Model performance^c^                     | `plot_model_performance`                                                          | `export_model_performance`            |        ×        |      ×       |              |
+| Model predictions^c^                     |                                                                                   | `export_prediction_data`              |      ×^d^       |      ×       |              |
+| Model variable importance^ce^            | `plot_model_signature_occurrence`; `plot_model_signature_variable_importance`     | `export_model_vimp`                   |                 |              |              |
+| Partial dependence^c^                    | `plot_pd`                                                                         | `export_partial_dependence_data`      |      ×^d^       |      ×       |      ×       |
+| Permutation variable importance^c^       | `plot_permutation_variable_importance`                                            | `export_permutation_vimp`             |        ×        |      ×       |              |
+| Risk stratification info^b^              |                                                                                   | `export_risk_stratification_info`     |                 |      ×       |              |
+| Risk stratification data^b^              | `plot_kaplan_meier`                                                               | `export_risk_stratification_data`     |                 |      ×       |              |
+| Sample similarity^c^                     |                                                                                   | `export_sample_similarity`            |        ×        |              |      ×       |
+| Univariate analysis^c^                   | `plot_univariate_importance`                                                      | `export_univariate_analysis_data`     |                 |              |              |
+
+: Evaluation and explanation steps.\
+^a^ Available for binomial and multinomial outcomes.\
+^b^ Available for survival outcomes.\
+^c^ Available for all outcomes.\
+^d^ Estimation types other than `point` require sufficient models.\
+^e^ May not be available for all models.
+
+Plots and tables are exported when familiar is run with `summon_familiar`. The plot and export functions can all be used externally as well, which is described in the *Using familiar prospectively* vignette. Indeed, to showcase some of the functionality we will use the techniques discussed there. In practical use, the
+
+We will first create two models. One is trained on (a subset of) the Wisconsin breast cancer dataset [@Wolberg1990-gn] to predict cell malignancy from biopsies, which constitutes a classification problem.
+
+```{r, results=FALSE, eval=TRUE, message=FALSE, warning=FALSE}
+
+# Get a dataset.
+binomial_data <- familiar:::test.create_good_data_set(outcome_type="binomial")
+
+# Call familiar to create models. Note that we skip hyperparameter optimisation by manually defining the hyperparameters, and that we skip evaluation steps. This is to save time when creating the vignette.
+familiar::summon_familiar(data=binomial_data,
+                          project_dir=file.path(tempdir()),
+                          experiment_dir="binomial",
+                          experimental_design="fs+mb",
+                          cluster_method="none",
+                          fs_method="none",
+                          hyperparameter=list("random_forest_ranger"=
+                                                list("n_tree"=4,
+                                                     "sample_size"=0.7,
+                                                     "m_try"=0.5,
+                                                     "node_size"=20,
+                                                     "tree_depth"=3)),
+                          learner="random_forest_ranger",
+                          parallel=FALSE,
+                          skip_evaluation_elements="all")
+
+# Create path to the directory containing the models.
+model_directory_path <- file.path(tempdir(), "binomial", "trained_models", "random_forest_ranger", "none")
+model_path <- file.path(model_directory_path, list.files(model_directory_path, pattern="model")[1])
+
+# Load the model.
+binomial_model <- readRDS(model_path)
+```
+
+The second model is a survival model, which is trained on (a subset of) a colon chemotherapy clinical trial dataset [@Moertel1995-bh].
+
+```{r, results=FALSE, eval=TRUE, message=FALSE, warning=FALSE}
+
+# Get a dataset.
+survival_data <- familiar:::test.create_good_data_set(outcome_type="survival")
+
+# Call familiar to create models. Note that we skip hyperparameter optimisation by manually defining the hyperparameters, and that we skip evaluation steps. This is to save time when creating the vignette.
+familiar::summon_familiar(data=survival_data,
+                          project_dir=file.path(tempdir()),
+                          experiment_dir="survival",
+                          experimental_design="fs+mb",
+                          cluster_method="none",
+                          fs_method="none",
+                          hyperparameter=list("random_forest_ranger"=
+                                                list("n_tree"=9,
+                                                     "sample_size"=0.95,
+                                                     "m_try"=0.68,
+                                                     "node_size"=30,
+                                                     "tree_depth"=2,
+                                                     "alpha"=0.25)),
+                          learner="random_forest_ranger",
+                          parallel=FALSE,
+                          skip_evaluation_elements="all")
+
+# Create path to the directory containing the models.
+model_directory_path <- file.path(tempdir(), "survival", "trained_models", "random_forest_ranger", "none")
+model_path <- file.path(model_directory_path, list.files(model_directory_path, pattern="model")[1])
+
+# Load the model.
+survival_model <- readRDS(model_path)
+```
+
+# Model performance
+
+Model performance is usually assessed to evaluate accuracy of a model.
+
+The main assessment uses metrics to quantify model performance. These metrics are documented in the *Performance metrics* vignette, and can be set using the `evaluation_metric` argument of the `summon_familiar` function or `metric` for plot and export functions. For example, this results in the following plot for the breast cancer dataset:
+
+```{r, fig.align='center', fig.width=7}
+plots <- familiar::plot_model_performance(object=binomial_model,
+                                          data=binomial_data,
+                                          metric = c("auc", "brier", "f1_score"),
+                                          x_axis_by="metric")
+
+plots[[1]]
+```
+
+The plot shows distributions of the area under the receiver operating characteristic curve, the brier score and the f1-score. The plot indicates that the model predicts accurately for the given dataset. This is to be expected, as the classification problem is quite easy, and we are evaluating the development dataset.
+
+To compute model performance metric scores for a dataset, familiar first predicts response values for instances in a dataset. These response values are then compared against the observed outcome using the specified metric.
+
+## Receiver-operating characteristic curve
+
+The receiver-operating characteristic (ROC) curve visualises concordance between predicted class probabilities and the observed classes [@Hand2001-il]. It shows the trade-off between sensitivity and specificity of the model. For the breast cancer dataset the receiver-operating characteristic curve is as follows:
+
+```{r, fig.align='center', fig.width=7}
+plots <- familiar::plot_auc_roc_curve(object=binomial_model,
+                                      data=binomial_data)
+
+plots[[1]]
+```
+
+Under ideal circumstances, the curve would lie in the top-left corner of the plot. If a model does not predict better than at random, the curve would lie along the diagonal, which corresponds to an AUC-ROC value of 0.5. The plot above indicates that the model is able to differentiate between benign and malignant cells in breast cancer biopsy.
+
+An ROC-curve is created by sorting instances by the predicted probability of the positive class ascendingly, and computing the number of true positive, true negative, false positive, false negative cases observed at each instance. These are then used to compute sensitivity and specificity.
+
+The above plot shows the average of 400 single curves, with 95% confidence intervals. To achieve this, familiar interrogates each curve over the complete range of potential specificity values $[0.000, 1.000]$ with step sizes of $0.005$. This allows for assessing the distribution of sensitivity at fixed specificity values. However, since only the maximum sensitivity value at each specificity is kept, the curve can no longer be represented as a step function.
+
+The above approach is the general approach used by familiar. An exact ROC curve can only be plotted when only the point estimate (`estimation_type="point"`) of a single model or the complete ensemble of models is evaluated (`detail_level="ensemble"`):
+
+```{r, fig.align='center', fig.width=7}
+plots <- familiar::plot_auc_roc_curve(object=binomial_model,
+                                      data=binomial_data,
+                                      estimation_type="point")
+
+plots[[1]]
+```
+
+## Precision-recall curve
+
+The precision-recall (PR) curve shows the trade-off between precision (positive predictive value) and recall (sensitivity). An important distinction between the PR curve and the ROC curve described above is that precision does not assess true negatives but false positives. In case the number of negative instances greatly exceeds the number of positive instances , a large change in the number of false positives reduces the ROC curve somewhat, but this change is far easier observed in the PR curve [@Davis2006-xb]. For the breast cancer dataset the precision-recall curve is as follows:
+
+```{r, fig.align='center', fig.width=7}
+plots <- familiar::plot_auc_precision_recall_curve(object=binomial_model,
+                                                   data=binomial_data)
+
+plots[[1]]
+```
+
+Under ideal circumstances, the curve would lie in the top-right part of the plot. A random classifier would yield a curve that is mostly horizontal and position at the fraction of positive instances. This would equal a precision of 45% for the current dataset.
+
+## Confusion matrix
+
+```{r, fig.align='center', fig.width=7}
+plots <- familiar::plot_confusion_matrix(object=binomial_model,
+                                         data=binomial_data)
+
+plots[[1]]
+```
+
+## Kaplan-Meier survival curves
+
+# Model calibration
+
+```{r, fig.align='center', fig.width=7}
+plots <- familiar::plot_calibration_data(object=binomial_model,
+                                         data=binomial_data)
+
+grid::grid.newpage()
+grid::grid.draw(plots[[1]])
+```
+
+# Decision curve analysis
+
+# Partial dependence and individual conditional expectation plots
+
+# Variable importance
+
+## Permutation variable importance
+
+# Feature and sample similarity
