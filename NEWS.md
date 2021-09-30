@@ -42,6 +42,8 @@
 
 -   The `smbo_intensify_stop_p_value` parameter was renamed to `smbo_stochastic_reject_p_value`.
 
+-   Receiver operating characteristic and precision-recall curves are now plotted exactly in circumstances that allow for it. Previously an interpolated version of the curves was always shown.
+
 ## Bug fixes
 
 -   `detail_level`, `sample_limit`, `estimation_type` and `aggregate_results` arguments used during evaluation and explanation are now propagated from `familiarModel` and `familiarEnsemble` objects instead of reverting to default values.
@@ -63,6 +65,8 @@
 -   Fixed an issue that could cause main panels in composite plots that consist of one row of facets and have a legend guide to be have the same height as the guide.
 
 -   Fixed two issues that could cause errors when plotting a single survival curve.
+
+-   Points on receiver operating characteristic and precision-recall curves are now always correctly ordered.
 
 # Version 0.0.0.54 (Pre-release)
 

@@ -257,7 +257,7 @@ setMethod("extract_auc_data", signature(object="familiarEnsemble"),
   
   # Suppress NOTES due to non-standard evaluation in data.table
   outcome <- probability <- ppv <- tpr <- fpr <- is_positive <- NULL
-  n_true_positive <- n_false_positive <- NULL
+  n_true_positive <- n_false_positive <- sorting_index <- NULL
   
   # Get the positive class.
   positive_class <- data_element@identifiers$positive_class
@@ -291,6 +291,18 @@ setMethod("extract_auc_data", signature(object="familiarEnsemble"),
               "n_true_negative"=n_negative - cumsum(!is_positive),
               "n_false_negative"=n_positive - cumsum(is_positive))]
   
+  # Insert initial values.
+  data <- data.table::rbindlist(list(data.table::data.table("n_true_positive"=0,
+                                                            "n_false_positive"=0,
+                                                            "n_true_negative"=n_negative,
+                                                            "n_false_negative"=n_positive),
+                                     data),
+                                use.names=TRUE,
+                                fill=TRUE)
+  
+  # Select unique data.
+  data <- unique(data, by=c("n_true_positive", "n_false_positive", "n_true_negative", "n_false_negative"))
+  
   # Compute TPR / recall (sensitivity)
   if(n_positive > 0){
     data[, "tpr":=n_true_positive / n_positive]
@@ -311,9 +323,14 @@ setMethod("extract_auc_data", signature(object="familiarEnsemble"),
   if(max(data$n_true_positive + data$n_false_positive) > 0){
     data[, "ppv":=n_true_positive / (n_true_positive + n_false_positive)]
     
+    # By convention, the initial value is 1.0.
+    data[n_true_positive + n_false_positive == 0, "ppv":=1.0]
   } else {
     data[, "ppv":=0.0]
   }
+  
+  # Insert a sorting index.
+  data[, "sorting_index":=.I]
   
   # Copy the data element as prototype for ROC curve data.
   data_element_roc <- data_element
@@ -334,6 +351,18 @@ setMethod("extract_auc_data", signature(object="familiarEnsemble"),
     # Select minimum and maximum fpr at each sensitivity.
     data_auc_roc <- unique(data_auc_roc[, list("fpr"=c(min(fpr), max(fpr))), by="tpr"])
     
+    # Merge fpr and tpr with data to get the sorting index.
+    data_auc_roc <- merge(x=data_auc_roc,
+                          y=data[, mget(c("tpr", "fpr", "sorting_index"))],
+                          by=c("tpr", "fpr"))
+    
+    # Fill out potentially missing sorting indices.
+    data_auc_roc[tpr==0.0 & fpr==0.0 & is.na(sorting_index), "sorting_index":=0L]
+    data_auc_roc[tpr==1.0 & fpr==1.0 & is.na(sorting_index), "sorting_index":=n_positive + n_negative + 1L]
+    
+    # Order data by sorting index.
+    data_auc_roc <- data_auc_roc[order(sorting_index)]
+    
     # Extract data.
     x <- data_auc_roc$fpr
     y_auc_roc <- data_auc_roc$tpr
@@ -345,13 +374,16 @@ setMethod("extract_auc_data", signature(object="familiarEnsemble"),
     # Prepare AUC-ROC (TPR as function of FPR)
     data_auc_roc <- data_auc_roc[, list("tpr"=max(tpr)), by="fpr"]
     
-    # Interpolate at the values in x.
+    # Interpolate at the values in x. This follows Davis J, Goadrich M. The
+    # relationship between Precision-Recall and ROC curves. Proceedings of the
+    # 23rd international conference on Machine learning. New York, NY, USA:
+    # Association for Computing Machinery; 2006. pp. 233–240.
     y_auc_roc <- suppressWarnings(stats::approx(x=data_auc_roc$fpr,
                                                 y=data_auc_roc$tpr,
                                                 xout=x,
                                                 yleft=0.0,
                                                 yright=1.0,
-                                                method="constant")$y)
+                                                method="linear")$y)
   }
   
   # Set ROC curve data.
@@ -368,11 +400,20 @@ setMethod("extract_auc_data", signature(object="familiarEnsemble"),
   # Get relevant columns
   data_auc_pr <- data[, mget(c("tpr", "ppv"))]
   
+  # Find edge values.
+  data_auc_pr <- unique(data_auc_pr[, list("ppv"=c(min(ppv), max(ppv))), by="tpr"])
+  data_auc_pr <- unique(data_auc_pr[, list("tpr"=c(min(tpr), max(tpr))), by="ppv"])
+  
+  # Merge ppv and tpr with data to get the sorting index.
+  data_auc_pr <- merge(x=data_auc_pr,
+                       y=data[, mget(c("tpr", "ppv", "sorting_index"))],
+                       by=c("tpr", "ppv"))
+  
+  # Order data by sorting index.
+  data_auc_pr <- data_auc_pr[order(sorting_index)]
+  
   if(is_single_curve){
-    # Prepare AUC-PC (precision as a function of TPR (recall))
-    data_auc_pr <- unique(data_auc_pr[, list("ppv"=c(min(ppv), max(ppv))), by="tpr"])
-    data_auc_pr <- unique(data_auc_pr[, list("tpr"=c(min(tpr), max(tpr))), by="ppv"])
-    
+    # Extract required values.
     x <- data_auc_pr$tpr
     y_auc_pr <- data_auc_pr$ppv
     
@@ -380,16 +421,15 @@ setMethod("extract_auc_data", signature(object="familiarEnsemble"),
     data_element_pr@is_aggregated <- TRUE
     
   } else {
-    # Prepare AUC-PC (precision as a function of TPR (recall))
-    data_auc_pr <- data_auc_pr[, list("ppv"=max(ppv)), by="tpr"]
     
     # Interpolate at the values in x.
     y_auc_pr <- suppressWarnings(stats::approx(x=data_auc_pr$tpr,
                                                y=data_auc_pr$ppv,
                                                xout=x,
                                                yleft=1.0,
-                                               yright=0.0,
-                                               method="constant")$y)
+                                               yright=n_positive / (n_positive + n_negative),
+                                               method="linear",
+                                               ties="ordered")$y)
   }
   
   # Set PR curve data.
