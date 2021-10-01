@@ -198,7 +198,7 @@ Under ideal circumstances, the curve would lie in the top-left corner of the plo
 
 An ROC curve is created by ascendingly sorting instances by the predicted probability of the positive class, and computing the number of true positive, true negative, false positive, false negative cases observed at each instance. These are then used to compute sensitivity and specificity.
 
-The above plot shows the average of 400 single curves, with 95% confidence intervals. To achieve this, familiar interrogates each curve over the complete range of potential specificity values ($[0.000, 1.000]$) with a step size of $0.005$. Linear interpolation is used for this purpose \[@Davis2006-xb\]. This allows for assessing the distribution of sensitivity at fixed specificity values.
+The above plot shows the average of 400 single curves, with 95% confidence intervals. To achieve this, familiar interrogates each curve over the complete range of potential specificity values ($[0.000, 1.000]$) with a step size of $0.005$. Linear interpolation is used for this purpose [@Davis2006-xb]. This allows for assessing the distribution of sensitivity at fixed specificity values.
 
 The above approach is the general approach used by familiar. An exact ROC curve can only be plotted when only the point estimate (`estimation_type="point"`) of a single model or the complete ensemble of models is evaluated (`detail_level="ensemble"`):
 
@@ -248,17 +248,52 @@ plots <- familiar::plot_confusion_matrix(object=binomial_model,
 plots[[1]]
 ```
 
-Familiar selects the class with the highest predicted class probability as the expected class. It is currently not possible to obtain confusion matrices for set probability thresholds, such as the threshold that maximises the Matthews correlation coefficient.
+Familiar selects the class with the highest predicted class probability as the expected class. It is currently not possible in familiar to obtain confusion matrices for set probability thresholds, such as the threshold that maximises the Matthews correlation coefficient.
 
 ## Kaplan-Meier survival curves
 
-Kaplan-Meier survival curves are a standard plot to assess survival over time in a population, or survival differences between groups. Familiar uses the development dataset to determine the thresholds
+Kaplan-Meier survival curves are a standard plot to assess survival over time in a population, or survival differences between groups. In familiar, instances are stratified to risk groups by applying one or more thresholds. These thresholds are created during model development to avoid bias. The number and value of these thresholds is determined by two parameters: `stratification_method` and `stratification_threshold`. Both parameters are set when calling `summon_familiar`. `stratification_method` has three options:
+
+-   `median`: The median predicted value in the development cohort is used to stratify instances into two risk groups.
+
+-   `fixed`: Instances are stratified based on the sample quantiles of the predicted values. These quantiles are defined using the `stratification_threshold` parameter.
+
+-   `optimised`: Use maximally selected rank statistics to determine the optimal threshold [@Lausen1992-qh; @Hothorn2003-qn] to stratify instances into two optimally separated risk groups.
+
+The `stratification_threshold` parameter is only used when `stratification_method="fixed"`. It allows for specifying the sample quantiles that are used to determine the thresholds. For example `stratification_threshold=c(0.25,0.75)` creates two thresholds that stratifies the development dataset into three groups: one with 25% of the instances with the highest risk, a group with 50% of the instances with medium risk, and a third group with 25% of instances with lowest risk.
+
+Applying the survival model to the colon cancer dataset yields the following Kaplan-Meier plot:
+
+```{r, fig.align='center', fig.width=7}
+plots <- familiar::plot_kaplan_meier(object=survival_model,
+                                     data=survival_data)
+
+grid::grid.newpage()
+grid::grid.draw(plots[[1]])
+```
+
+In the plot above, instances are divided into two groups by the median threshold. The risk groups are shown with 95% confidence intervals. Familiar uses the `survival::survfit` function to create both the survival curves and the confidence intervals. The low risk group has significantly better survival than the high risk group. This is also indicated in the bottom-left of the main plot, which shows the result of a logrank test between the two groups. Censored patients are indicated by crosses. The number of surviving patients in both groups at the time points along the x-axis are shown below the main plot.
+
+Note that `predict` method does allow for manually specifying stratification thresholds for existing models.
 
 # Model calibration
+
+Model performance is an import aspect to evaluate because it tells us how accurate it is. However, it often does not tell us how well we can rely on predictions for individual instances, e.g. how accurate an instance class probability is. Model calibration is assessed for this purpose.
 
 ```{r, fig.align='center', fig.width=7}
 plots <- familiar::plot_calibration_data(object=binomial_model,
                                          data=binomial_data)
+
+grid::grid.newpage()
+grid::grid.draw(plots[[1]])
+```
+
+In
+
+```{r, fig.align='center', fig.width=7}
+plots <- familiar::plot_calibration_data(object=binomial_model,
+                                         data=binomial_data,
+                                         estimation_type="point")
 
 grid::grid.newpage()
 grid::grid.draw(plots[[1]])
