@@ -52,6 +52,14 @@ NULL
 #'  creation, `dir_path` can be used to specify the current folder.
 #'  Alternatively the `update_model_dir_path` method can be used to update the
 #'  path.
+#'@param stratification_method Selects the stratification method from which the
+#'  threshold values should be selected. If the model or ensemble of models does
+#'  not contain thresholds for the indicated method, an error is returned. In
+#'  addition this argument is ignored if a `stratification_threshold` is set.
+#'@param stratification_threshold Threshold value(s) used for stratifying
+#'  instances into risk groups. If this parameter is specified,
+#'  `stratification_method` and any threshold values that come with the model
+#'  are ignored, and `stratification_threshold` is used instead.
 #'@param percentiles Currently unused.
 #'@param ... to be documented.
 #'

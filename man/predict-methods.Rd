@@ -115,26 +115,15 @@ value for a sample.
 sample.
 }}
 
-\item{stratification_method}{(\emph{optional}) Method for determining the
-stratification threshold for creating survival groups. The actual,
-model-dependent, threshold value is obtained from the development data, and
-can afterwards be used to perform stratification on validation data.
+\item{stratification_threshold}{Threshold value(s) used for stratifying
+instances into risk groups. If this parameter is specified,
+\code{stratification_method} and any threshold values that come with the model
+are ignored, and \code{stratification_threshold} is used instead.}
 
-The following stratification methods are available:
-\itemize{
-\item \code{median} (default): The median predicted value in the development cohort
-is used to stratify the samples into two risk groups.
-\item \code{fixed}: Samples are stratified based on the sample quantiles of the
-predicted values. These quantiles are defined using the
-\code{stratification_threshold} parameter.
-\item \code{optimised}: Use maximally selected rank statistics to determine the
-optimal threshold (Lausen and Schumacher, 1992; Hothorn et al., 2003) to
-stratify samples into two optimally separated risk groups.
-}
-
-One or more stratification methods can be selected simultaneously.
-
-This parameter is only relevant for \code{survival} outcomes.}
+\item{stratification_method}{Selects the stratification method from which the
+threshold values should be selected. If the model or ensemble of models does
+not contain thresholds for the indicated method, an error is returned. In
+addition this argument is ignored if a \code{stratification_threshold} is set.}
 
 \item{percentiles}{Currently unused.}
 }
