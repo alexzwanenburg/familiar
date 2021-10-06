@@ -271,6 +271,14 @@ NULL
              var_name=parameter_name,
              values=parameter_list[[parameter_name]]$valid_range)
     }
+    
+    # 
+    if(!parameter_list[[parameter_name]]$randomise){
+      if(length(parameter_list[[parameter_name]]$init_config) > 1){
+        ..error_reached_unreachable_code(paste0(".update_hyperparameters: non-randomised hyperparameter (",
+                                                parameter_name, ") contains more than one initial value."))
+      }
+    }
   }
   
   return(parameter_list)
