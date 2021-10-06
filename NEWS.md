@@ -26,7 +26,9 @@
 
     -   `random` or `random_search`: Forgoes the use of models to steer optimisation. Instead, a random search is performed. This means the hyperparameter space is sampled at random.
 
--   A new vignette was added to describe how familiar can be used prospectively.
+-   Three new vignettes have been added. The first vignette is an introductory vignette on how to get started with familiar. The second vignette describes how familiar can be used prospectively. The third vignette describes evaluation and explanation steps in familiar and how they are implemented. All other vignettes have been reviewed and updated.
+
+-   A `predict` method was added to allow for direct inference of estimated values for one or more instances. Functionality is the same as other `predict` methods, but data (`newdata`) should always be provided. Familiar does not store development data with the model.
 
 ## Minor changes
 
