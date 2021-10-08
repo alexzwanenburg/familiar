@@ -897,29 +897,31 @@ setMethod("plot_calibration_data", signature(object="familiarCollection"),
       # Add calibration-in-the-large.
       if(all(c("ci_low", "ci_up") %in% colnames(linear_test))){
         label <- append(label, paste0("intercept: ",
-                                      round(linear_test[type=="offset"]$value, 2),
+                                      format(round(linear_test[type=="offset"]$value, 2), nsmall=2),
                                       " (",
-                                      round(linear_test[type=="offset"]$ci_low, 2),
+                                      format(round(linear_test[type=="offset"]$ci_low, 2), nsmall=2),
                                       "\u2013",
-                                      round(linear_test[type=="offset"]$ci_up, 2),
+                                      ifelse(round(linear_test[type=="offset"]$ci_up, 2) < 0, " ", ""),
+                                      format(round(linear_test[type=="offset"]$ci_up, 2), nsmall=2),
                                       ")"))
         
         # Add calibration slope.
         label <- append(label, paste0("slope: ",
-                                      round(linear_test[type=="slope"]$value, 2),
+                                      format(round(linear_test[type=="slope"]$value, 2), nsmall=2),
                                       " (",
-                                      round(linear_test[type=="slope"]$ci_low, 2),
+                                      format(round(linear_test[type=="slope"]$ci_low, 2), nsmall=2),
                                       "\u2013",
-                                      round(linear_test[type=="slope"]$ci_up, 2),
+                                      ifelse(round(linear_test[type=="slope"]$ci_up, 2) < 0, " ", ""),
+                                      format(round(linear_test[type=="slope"]$ci_up, 2), nsmall=2),
                                       ")"))
         
       } else {
         label <- append(label, paste0("intercept: ",
-                                      round(linear_test[type=="offset"]$value, 2)))
+                                      format(round(linear_test[type=="offset"]$value, 2), nsmall=2)))
         
         # Add calibration slope.
         label <- append(label, paste0("slope: ",
-                                      round(linear_test[type=="slope"]$value, 2)))
+                                      format(round(linear_test[type=="slope"]$value, 2), nsmall=2)))
       }
     }
     
@@ -927,17 +929,20 @@ setMethod("plot_calibration_data", signature(object="familiarCollection"),
       
       # Hosmer-Lemeshow test
       if("hosmer_lemeshow" %in% c(gof_test$type)){
-        label <- append(label, paste0("HL-test p: ", signif(gof_test[type=="hosmer_lemeshow"]$p_value, 2)))
+        label <- append(label, paste0("HL-test p: ",
+                                      format(signif(gof_test[type=="hosmer_lemeshow"]$p_value, 2), nsmall=2)))
       }
       
       # Nam-D'Agostino test
       if("nam_dagostino" %in% c(gof_test$type)){
-        label <- append(label, paste0("ND-test p: ", signif(gof_test[type=="nam_dagostino"]$p_value, 2)))
+        label <- append(label, paste0("ND-test p: ",
+                                      format(signif(gof_test[type=="nam_dagostino"]$p_value, 2), nsmall=2)))
       }
       
       # Greenwood-Nam-D'Agostino test
       if("greenwood_nam_dagostino" %in% c(gof_test$type)){
-        label <- append(label, paste0("GND-test p: ", signif(gof_test[type=="greenwood_nam_dagostino"]$p_value, 2)))
+        label <- append(label, paste0("GND-test p: ",
+                                      format(signif(gof_test[type=="greenwood_nam_dagostino"]$p_value, 2), nsmall=2)))
       }
     }
     
