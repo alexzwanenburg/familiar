@@ -15,7 +15,7 @@ extract_data(
   rank_threshold = waiver(),
   ensemble_method = waiver(),
   stratification_method = waiver(),
-  eval_times = waiver(),
+  evaluation_times = waiver(),
   metric = waiver(),
   feature_cluster_method = waiver(),
   feature_cluster_cut_method = waiver(),
@@ -114,7 +114,7 @@ One or more stratification methods can be selected simultaneously.
 
 This parameter is only relevant for \code{survival} outcomes.}
 
-\item{eval_times}{One or more time points that are used for in analysis of
+\item{evaluation_times}{One or more time points that are used for in analysis of
 survival problems when data has to be assessed at a set time, e.g.
 calibration. If not provided explicitly, this parameter is read from
 settings used at creation of the underlying \code{familiarModel} objects. Only

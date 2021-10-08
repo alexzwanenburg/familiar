@@ -36,7 +36,7 @@ setGeneric("extract_feature_expression",
                     sample_cluster_method=waiver(),
                     sample_linkage_method=waiver(),
                     sample_similarity_metric=waiver(),
-                    eval_times=waiver(),
+                    evaluation_times=waiver(),
                     message_indent=0L,
                     verbose=FALSE,
                     ...) standardGeneric("extract_feature_expression"))
@@ -53,7 +53,7 @@ setMethod("extract_feature_expression", signature(object="familiarEnsemble", dat
                    sample_cluster_method=waiver(),
                    sample_linkage_method=waiver(),
                    sample_similarity_metric=waiver(),
-                   eval_times=waiver(),
+                   evaluation_times=waiver(),
                    message_indent=0L,
                    verbose=FALSE){
             
@@ -64,16 +64,16 @@ setMethod("extract_feature_expression", signature(object="familiarEnsemble", dat
             }
             
             # Obtain evaluation times from the data.
-            if(is.waive(eval_times) & object@outcome_type %in% c("survival", "competing_risk")){
-              eval_times <- object@settings$eval_times
+            if(is.waive(evaluation_times) & object@outcome_type %in% c("survival", "competing_risk")){
+              evaluation_times <- object@settings$eval_times
               
-            } else if(is.waive(eval_times)){
-              eval_times <- NULL
+            } else if(is.waive(evaluation_times)){
+              evaluation_times <- NULL
             }
             
-            # Check if eval_times is correct.
+            # Check if evaluation_times is correct.
             if(object@outcome_type %in% c("survival", "competing_risk")){
-              sapply(eval_times, .check_number_in_valid_range, var_name="eval_times", range=c(0.0, Inf), closed=c(FALSE, TRUE))
+              sapply(evaluation_times, .check_number_in_valid_range, var_name="evaluation_times", range=c(0.0, Inf), closed=c(FALSE, TRUE))
             }
             
             # Aggregate data
@@ -119,7 +119,7 @@ setMethod("extract_feature_expression", signature(object="familiarEnsemble", dat
             expression_data <- methods::new("familiarDataElementFeatureExpression",
                                             data=expression_data@data,
                                             feature_info=object@feature_info[model_features],
-                                            evaluation_time=eval_times,
+                                            evaluation_time=evaluation_times,
                                             value_column=model_features)
             
             # Add model name.
@@ -223,7 +223,7 @@ setMethod("export_feature_expressions", signature(object="ANY"),
             object <- do.call(as_familiar_collection,
                               args=c(list("object"=object,
                                           "data_element"="feature_expressions",
-                                          "eval_times"=evaluation_time),
+                                          "evaluation_times"=evaluation_time),
                                      list(...)))
             
             return(do.call(export_feature_expressions,

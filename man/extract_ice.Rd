@@ -14,7 +14,7 @@ extract_ice(
   feature_y_range = NULL,
   n_sample_points = 50L,
   ensemble_method = waiver(),
-  eval_times = waiver(),
+  evaluation_times = waiver(),
   sample_limit = waiver(),
   detail_level = waiver(),
   estimation_type = waiver(),
@@ -62,7 +62,7 @@ value for a sample.
 sample.
 }}
 
-\item{eval_times}{One or more time points that are used for in analysis of
+\item{evaluation_times}{One or more time points that are used for in analysis of
 survival problems when data has to be assessed at a set time, e.g.
 calibration. If not provided explicitly, this parameter is read from
 settings used at creation of the underlying \code{familiarModel} objects. Only

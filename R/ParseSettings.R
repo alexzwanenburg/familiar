@@ -2958,7 +2958,7 @@
       settings$eval_times <- settings$time_max
     }
     
-    sapply(settings$eval_times, .check_number_in_valid_range, var_name="evaluation_time", range=c(0.0, Inf), closed=c(FALSE, TRUE))
+    sapply(settings$eval_times, .check_number_in_valid_range, var_name="evaluation_times", range=c(0.0, Inf), closed=c(FALSE, TRUE))
   }
   
   # Dynamic loading of models during evaluation.

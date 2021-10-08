@@ -44,6 +44,8 @@
 
 -   The `smbo_intensify_stop_p_value` parameter was renamed to `smbo_stochastic_reject_p_value`.
 
+-   The `eval_times` argument used in plot and export methods was renamed to `evaluation_times` to match that of the synonymous configuration parameter.
+
 -   Receiver operating characteristic and precision-recall curves are now plotted exactly in circumstances that allow for it. Previously an interpolated version of the curves was always shown.
 
 ## Bug fixes

@@ -427,7 +427,7 @@ run_evaluation <- function(cl, proj_list, settings, file_paths){
                            cl=cl,
                            data_element = settings$eval$evaluation_data_elements,
                            time_max = settings$eval$time_max,
-                           eval_times = settings$eval$eval_times,
+                           evaluation_times = settings$eval$eval_times,
                            sample_limit = settings$eval$sample_limit,
                            detail_level = settings$eval$detail_level,
                            estimation_type = settings$eval$estimation_type,

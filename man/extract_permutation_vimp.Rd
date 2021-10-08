@@ -16,7 +16,7 @@ extract_permutation_vimp(
   feature_similarity_metric = waiver(),
   feature_similarity_threshold = waiver(),
   metric = waiver(),
-  eval_times = waiver(),
+  evaluation_times = waiver(),
   detail_level = waiver(),
   estimation_type = waiver(),
   aggregate_results = waiver(),
@@ -99,7 +99,7 @@ vignette on performance metrics for the available metrics. If not provided
 explicitly, this parameter is read from settings used at creation of the
 underlying \code{familiarModel} objects.}
 
-\item{eval_times}{One or more time points that are used for in analysis of
+\item{evaluation_times}{One or more time points that are used for in analysis of
 survival problems when data has to be assessed at a set time, e.g.
 calibration. If not provided explicitly, this parameter is read from
 settings used at creation of the underlying \code{familiarModel} objects. Only

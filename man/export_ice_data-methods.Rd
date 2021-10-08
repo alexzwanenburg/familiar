@@ -49,7 +49,7 @@ value for a sample.
 \item \code{mean}: Use the mean of the predicted values as the ensemble value for a
 sample.
 }}
-    \item{\code{eval_times}}{One or more time points that are used for in analysis of
+    \item{\code{evaluation_times}}{One or more time points that are used for in analysis of
 survival problems when data has to be assessed at a set time, e.g.
 calibration. If not provided explicitly, this parameter is read from
 settings used at creation of the underlying \code{familiarModel} objects. Only

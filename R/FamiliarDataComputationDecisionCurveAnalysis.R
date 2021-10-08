@@ -28,7 +28,7 @@ setGeneric("extract_decision_curve_data",
                     data,
                     cl=NULL,
                     ensemble_method=waiver(),
-                    eval_times=waiver(),
+                    evaluation_times=waiver(),
                     detail_level=waiver(),
                     estimation_type=waiver(),
                     aggregate_results=waiver(),
@@ -44,7 +44,7 @@ setMethod("extract_decision_curve_data", signature(object="familiarEnsemble"),
                    data,
                    cl=NULL,
                    ensemble_method=waiver(),
-                   eval_times=waiver(),
+                   evaluation_times=waiver(),
                    detail_level=waiver(),
                    estimation_type=waiver(),
                    aggregate_results=waiver(),
@@ -65,12 +65,12 @@ setMethod("extract_decision_curve_data", signature(object="familiarEnsemble"),
                              indent=message_indent)
             }
             
-            # Load eval_times from the object settings attribute, if it is not provided.
-            if(is.waive(eval_times)) eval_times <- object@settings$eval_times
+            # Load evaluation_times from the object settings attribute, if it is not provided.
+            if(is.waive(evaluation_times)) evaluation_times <- object@settings$eval_times
             
-            # Check eval_times argument
+            # Check evaluation_times argument
             if(object@outcome_type %in% c("survival")){
-              sapply(eval_times, .check_number_in_valid_range, var_name="eval_times", range=c(0.0, Inf), closed=c(FALSE, TRUE))
+              sapply(evaluation_times, .check_number_in_valid_range, var_name="evaluation_times", range=c(0.0, Inf), closed=c(FALSE, TRUE))
             }
             
             # Obtain ensemble method from stored settings, if required.
@@ -133,7 +133,7 @@ setMethod("extract_decision_curve_data", signature(object="familiarEnsemble"),
                                            proto_data_element=proto_data_element,
                                            is_pre_processed=is_pre_processed,
                                            ensemble_method=ensemble_method,
-                                           eval_times=eval_times,
+                                           evaluation_times=evaluation_times,
                                            aggregate_results=aggregate_results,
                                            message_indent=message_indent + 1L,
                                            verbose=verbose)
@@ -145,7 +145,7 @@ setMethod("extract_decision_curve_data", signature(object="familiarEnsemble"),
 .extract_decision_curve_data <- function(object,
                                          data,
                                          proto_data_element,
-                                         eval_times=NULL,
+                                         evaluation_times=NULL,
                                          cl,
                                          ensemble_method,
                                          is_pre_processed,
@@ -158,9 +158,9 @@ setMethod("extract_decision_curve_data", signature(object="familiarEnsemble"),
   proto_data_element <- add_model_name(proto_data_element, object=object)
   
   # Add evaluation time as a identifier to the data element.
-  if(length(eval_times) > 0 & object@outcome_type == "survival"){
+  if(length(evaluation_times) > 0 & object@outcome_type == "survival"){
     data_elements <- add_data_element_identifier(x=proto_data_element,
-                                                 evaluation_time=eval_times)
+                                                 evaluation_time=evaluation_times)
     
   } else if(object@outcome_type %in% c("binomial", "multinomial")){
     

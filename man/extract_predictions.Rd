@@ -10,7 +10,7 @@ extract_predictions(
   cl = NULL,
   is_pre_processed = FALSE,
   ensemble_method = waiver(),
-  eval_times = waiver(),
+  evaluation_times = waiver(),
   detail_level = waiver(),
   estimation_type = waiver(),
   aggregate_results = waiver(),
@@ -43,7 +43,7 @@ value for a sample.
 sample.
 }}
 
-\item{eval_times}{One or more time points that are used for in analysis of
+\item{evaluation_times}{One or more time points that are used for in analysis of
 survival problems when data has to be assessed at a set time, e.g.
 calibration. If not provided explicitly, this parameter is read from
 settings used at creation of the underlying \code{familiarModel} objects. Only

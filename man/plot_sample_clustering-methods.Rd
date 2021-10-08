@@ -449,11 +449,6 @@ the metric name. This reduces the effect of outliers somewhat.
 
 If not provided explicitly, this parameter is read from settings used at
 creation of the underlying \code{familiarModel} objects.}
-    \item{\code{eval_times}}{One or more time points that are used for in analysis of
-survival problems when data has to be assessed at a set time, e.g.
-calibration. If not provided explicitly, this parameter is read from
-settings used at creation of the underlying \code{familiarModel} objects. Only
-used for \code{survival} outcomes.}
     \item{\code{message_indent}}{Number of indentation steps for messages shown during
 computation and extraction of various data elements.}
   }}
