@@ -251,13 +251,25 @@ grid::grid.newpage()
 grid::grid.draw(plots[[1]])
 ```
 
-In the plot above, instances are divided into two groups by the median threshold. The risk groups are shown with 95% confidence intervals. Familiar uses the `survival::survfit` function to create both the survival curves and the confidence intervals. The low risk group has significantly better survival than the high risk group. This is also indicated in the bottom-left of the main plot, which shows the result of a logrank test between the two groups. Censored patients are indicated by crosses. The number of surviving patients in both groups at the time points along the x-axis are shown below the main plot.
+In the plot above, instances are divided into two groups by the median
+threshold. The risk groups are shown with 95% confidence intervals. Familiar
+uses the `survival::survfit` function to create both the survival curves and the
+confidence intervals. The low risk group has significantly better survival than
+the high risk group. This is also indicated in the bottom-left of the main plot,
+which shows the result of a logrank test between the two groups. Censored
+patients are indicated by crosses. The number of surviving patients in both
+groups at the time points along the x-axis are shown below the main plot.
 
-Note that `predict` method does allow for manually specifying stratification thresholds for existing models.
+Note that `predict` method does allow for manually specifying stratification
+thresholds for existing models.
 
 # Model calibration
 
-Model performance is an import aspect to evaluate because it tells us how accurate it is. However, it often does not tell us how well we can rely on predictions for individual instances, e.g. how accurate an instance class probability is. Model calibration is assessed for this purpose. The model for the breast cancer dataset produces the following calibration plot:
+Model performance is an import aspect to evaluate because it tells us how
+accurate it is. However, it often does not tell us how well we can rely on
+predictions for individual instances, e.g. how accurate an instance class
+probability is. Model calibration is assessed for this purpose. The model for
+the breast cancer dataset produces the following calibration plot:
 
 ```{r, fig.align='center', fig.width=7}
 plots <- familiar::plot_calibration_data(object=binomial_model,
@@ -267,9 +279,56 @@ grid::grid.newpage()
 grid::grid.draw(plots[[1]])
 ```
 
-The calibration curve shows the expected (predicted) probability of malignant cells versus the observed proportion of malignant cells, together with a 95% confidence interval. In an ideal calibration plot the calibration curve should lie on the diagonal (dashed) line. Here the upper part of the curve (expected probability \> 0.50) follows the diagonal nicely. The lower part of the curve dips below the diagonal, indicating that predicted probabilities in this range tend to overestimate malignancy. However, the density plot in the top panel indicates that predicted probabilities were generally close to 0.0 or 1.0, with very few instances in between.
+The calibration curve shows the expected (predicted) probability of malignant
+cells versus the observed proportion of malignant cells, together with a 95%
+confidence interval. In an ideal calibration plot the calibration curve should
+lie on the diagonal (dashed) line. Here the upper part of the curve (expected
+probability \> 0.50) follows the diagonal nicely. The lower part of the curve
+dips below the diagonal, indicating that predicted probabilities in this range
+tend to overestimate malignancy. However, the density plot in the top panel
+indicates that predicted probabilities were generally close to 0.0 or 1.0, with
+very few instances in between.
 
-Familiar also performs several calibration tests to assess different levels of calibration [@Van_Calster2016-ok]. First of all, we assess two aspects of the linear fit (solid line), the intercept (calibration-in-the-large) and slope. These are show in the top-left of the main plot. The intercept ideally is 0.0, but
+Familiar also performs several calibration tests to assess different levels of
+calibration [@Van_Calster2016-ok]. First of all, we assess two aspects of the
+linear fit (solid line), the intercept (calibration-in-the-large) and slope.
+These are show in the top-left of the main plot.
+
+The intercept ideally is 0.00. In our example, it lies below this point, and is
+not contained in the 95% confidence interval. We therefore conclude that the
+intercept is significantly different at the $\alpha=0.05$ level. That being
+said, this difference may not be relevant in practice, as it is quite small.
+
+In an ideal case, the slope of the linear fit is 1.00. In our example, the slope
+of the linear fit lies above this value. This indicates that, overall, the model
+tends to overestimate the probability of malignant cells, but not to a large
+degree.
+
+One issue with assessing calibration through a linear fit, is that the
+calibration curve can be decidedly non-linear and still produce good values for
+the intercept and slope. Therefore, calibration is also assessed using
+statistical tests: the Hosmer-Lemeshow (HL) test for categorical and regression
+outcomes [@Hosmer1997-ov], and the Nam-D'Agostino (ND) [@DAgostino2003-ot] and
+Greenwood-Nam-D'Agostino (GND) [@Demler2015-yx] tests for survival outcomes.
+
+These statistical tests, as well as the linear fit, rely on grouping instances.
+First the instances in the dataset are ordered by their expected (predicted)
+values. Within each group, the expected values and observed values are compared:
+
+* Categorical outcomes: The fraction instances with the (positive) observed class in the group is
+compared against the mean expected probability for that same class.
+
+* Regression outcomes: Both expected and observed values are first normalised to
+a $[0, 1]$ range using the value range observed in the development dataset. Then
+the mean observed value in the group is compared against the mean expected
+value.
+
+* Survival outcomes: Survival probabilities are predicted at time points indicated by 
+`evaluation_times`. The mean expected survival probability in the group is then
+compared against the observed probability (Kaplan-Meier estimator) at the same
+time points.
+
+The points thus created can be observed in a calibration plot when `estimation_type="point"`:
 
 ```{r, fig.align='center', fig.width=7}
 plots <- familiar::plot_calibration_data(object=binomial_model,
@@ -279,6 +338,18 @@ plots <- familiar::plot_calibration_data(object=binomial_model,
 grid::grid.newpage()
 grid::grid.draw(plots[[1]])
 ```
+The plot with point estimates and the earlier calibration plot with bootstrap
+confidence intervals lead to the same assessment. However, you may have observed
+that the number of points, and thus the number of groups, is certainly larger
+than the 10 groups commonly formed for assessing calibration. This is correct.
+
+Familiar introduces more randomness into the assessment of calibration. First,
+familiar randomises the number of groups drawn due to the ambiguity of using 10
+fixed groups. Second, the actual group sizes are randomised by drawing group
+identifiers with replacement for all instances. The set of drawn identifiers are
+then sorted, and the instances, ordered by ascending expected value are then
+assigned to their respective groups. Then, familiar 
+
 
 # Decision curve analysis
 
