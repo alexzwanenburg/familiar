@@ -471,7 +471,7 @@ setMethod("extract_decision_curve_data", signature(object="familiarEnsemble"),
   # Compute net benefit for models.
   
   # Suppress NOTES due to non-standard evaluation in data.table
-  n_true_positive <- n_false_positive <- probability <- NULL
+  n_true_positive <- n_false_positive <- probability <- net_benefit <- NULL
   
   # Determine maximum number of true and false positives.
   n_max_true_positive <- max(data$n_true_positive)
@@ -479,16 +479,20 @@ setMethod("extract_decision_curve_data", signature(object="familiarEnsemble"),
   # Determine the number of samples.
   n <- nrow(data)
   
-  # Determine net benefit
+  # Determine net benefit.
   data[, ":="("net_benefit"=n_true_positive / n - n_false_positive / n * (probability / (1.0 - probability)))]
+  
+  # If the predicted probability occurs more than once, select the lowest net
+  # benefit.
+  data <- data[, list("net_benefit"=min(net_benefit)), by="probability"]
   
   # Compute net benefit at the test probabilities.
   net_benefit <- suppressWarnings(stats::approx(x=data$probability,
                                                 y=data$net_benefit,
                                                 xout=x,
                                                 yleft=n_max_true_positive / n,
-                                                yright=0.0,
-                                                method="constant")$y)
+                                                yright=-Inf,
+                                                method="linear")$y)
   
   return(net_benefit)
 }
