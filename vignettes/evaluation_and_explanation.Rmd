@@ -311,7 +311,9 @@ statistical tests: the Hosmer-Lemeshow (HL) test for categorical and regression
 outcomes [@Hosmer1997-ov], and the Nam-D'Agostino (ND) [@DAgostino2003-ot] and
 Greenwood-Nam-D'Agostino (GND) [@Demler2015-yx] tests for survival outcomes.
 
-These statistical tests, as well as the linear fit, rely on grouping instances.
+## Implementation details
+
+The statistical tests mentioned above, as well as the linear fit, rely on grouping instances.
 First the instances in the dataset are ordered by their expected (predicted)
 values. Within each group, the expected values and observed values are compared:
 
@@ -343,13 +345,23 @@ confidence intervals lead to the same assessment. However, you may have observed
 that the number of points, and thus the number of groups, is certainly larger
 than the 10 groups commonly formed for assessing calibration. This is correct.
 
-Familiar introduces more randomness into the assessment of calibration. First,
-familiar randomises the number of groups drawn due to the ambiguity of using 10
-fixed groups. Second, the actual group sizes are randomised by drawing group
-identifiers with replacement for all instances. The set of drawn identifiers are
-then sorted, and the instances, ordered by ascending expected value are then
-assigned to their respective groups. Then, familiar 
+Familiar introduces randomness into the assessment of calibration. First,
+familiar randomises the number of groups drawn because using a fixed number of
+10 groups is arbitrary. Second, the actual group sizes are randomised by drawing
+group identifiers with replacement for all instances. The set of drawn
+identifiers are then sorted, and the instances, ordered by increasing expected
+value, are then assigned to their respective group. Thirdly, this process is
+repeated multiple times, i.e. 20 times for point estimates, again 20 times (on
+bootstraps) for bias-corrected estimates and more for bootstraps confidence
+intervals.
 
+Linear fit intercept and slope as well as the goodness-of-fit test p-value are
+determined for each single set of groups. Intercept and slopes are then averaged (`point`
+and `bias_correction`) or assessed as a distribution
+(`bootstrap_confidence_interval`). p-values from goodness-of-fit tests need to
+be combined. These tests are not fully independent because they derive
+from the same dataset. We therefore compute a harmonic mean p-value
+[@Wilson2019-bi] from the individual p-values.
 
 # Decision curve analysis
 
