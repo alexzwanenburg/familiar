@@ -66,7 +66,7 @@ rank.get_feature_ranks <- function(run=NULL,
                                    aggregation_method=NULL,
                                    translation_table=NULL,
                                    vimp_table=NULL){
-
+  
   if(is.null(settings)) settings <- get_settings()
   if(is.null(proj_list)) proj_list <- get_project_list()
   if(is.null(file_paths)) file_paths <- get_file_paths()
@@ -101,7 +101,7 @@ rank.get_feature_ranks <- function(run=NULL,
     # Create an empty translation table
     translation_table <- rank.consensus_clustering(vimp_table=NULL)
   }
-
+  
   if(is_empty(vimp_table)){
     # Create an empty ranking table
     empty_ranking_table <- data.table::data.table("name"=character(0),
@@ -123,7 +123,7 @@ rank.get_feature_ranks <- function(run=NULL,
     }
     
     # Compute aggregated ranks.
-    ranking_table <- rank.aggregate_feature_ranks(dt_vimp=vimp_table,
+    ranking_table <- rank.aggregate_feature_ranks(vimp_table=vimp_table,
                                                   rank_threshold=rank_threshold,
                                                   aggregation_method=aggregation_method)
     
@@ -141,7 +141,8 @@ rank.get_feature_ranks <- function(run=NULL,
 
 rank.check_aggregation_method <- function(method){
   .check_parameter_value_is_valid(x=method, var_name="aggregation method",
-                                  values=c("mean",
+                                  values=c("none",
+                                           "mean",
                                            "median",
                                            "best",
                                            "worst",
@@ -151,29 +152,29 @@ rank.check_aggregation_method <- function(method){
                                            "enhanced_borda",
                                            "truncated_borda",
                                            "enhanced_truncated_borda")
-                                  )
+  )
 }
 
 
 
-rank.optimise_occurrence_threshold <- function(dt_vimp){
-
+rank.optimise_occurrence_threshold <- function(vimp_table){
+  
   # Determine number of features, runs and the maximum rank
-  n_features <- data.table::uniqueN(dt_vimp, by="name")
-  n_runs     <- data.table::uniqueN(dt_vimp, by="run_id")
-  max_rank   <- max(dt_vimp$rank)
-
+  n_features <- data.table::uniqueN(vimp_table, by="name")
+  n_runs     <- data.table::uniqueN(vimp_table, by="run_id")
+  max_rank   <- max(vimp_table$rank)
+  
   # Check if there is only one feature or only one run
   if(n_features==1){ return(1) }
   if(n_runs==1){ return(max_rank) }
-
+  
   # Set max threshold to either 50 or max_rank, if lower.
   max_threshold <- min(c(max_rank, 50))
-
+  
   # We need to calculate for all possible cut-off thresholds which threshold maximises variance in occurrence
-  threshold_var <- sapply(seq_len(max_threshold), function(threshold, n_runs, dt) (stats::var(rank.get_feature_occurrence(dt=dt, n_runs=n_runs, threshold=threshold)$occurrence)),
-                          dt=dt_vimp, n_runs=n_runs)
-
+  threshold_var <- sapply(seq_len(max_threshold), function(threshold, n_runs, vimp_table) (stats::var(rank.get_feature_occurrence(vimp_table=vimp_table, n_runs=n_runs, threshold=threshold)$occurrence)),
+                          vimp_table=vimp_table, n_runs=n_runs)
+  
   # Return optimal threshold
   return(which.max(threshold_var))
 }
@@ -181,79 +182,105 @@ rank.optimise_occurrence_threshold <- function(dt_vimp){
 
 
 
-rank.get_feature_occurrence <- function(dt, n_runs, threshold){
-
+rank.get_feature_occurrence <- function(vimp_table, n_runs, threshold){
+  
   # Suppress NOTES due to non-standard evaluation in data.table
   name <- NULL
-
+  
   # Make a local copy
-  dt <- data.table::copy(dt)
-
+  vimp_table <- data.table::copy(vimp_table)
+  
   # Determine the occurrence for features with rank less or equal to the given threshold.
-  dt <- dt[, list(occurrence=sum(rank <= threshold)/n_runs), by=name]
-
-  return(dt)
+  vimp_table <- vimp_table[, list(occurrence=sum(rank <= threshold)/n_runs), by=name]
+  
+  return(vimp_table)
 }
 
 
 
-rank.aggregate_feature_ranks <- function(dt_vimp, rank_threshold=NULL, aggregation_method=NULL){
-
-  # Make a local copy of dt_vimp
-  dt_vimp <- data.table::copy(dt_vimp)
+rank.aggregate_feature_ranks <- function(vimp_table, rank_threshold=NULL, aggregation_method=NULL){
+  
+  # Make a local copy of vimp_table
+  vimp_table <- data.table::copy(vimp_table)
   
   # Convert the rank column to double
-  dt_vimp$rank <- as.numeric(dt_vimp$rank)
+  vimp_table$rank <- as.numeric(vimp_table$rank)
+  
+  if(aggregation_method == "none"){
+    rank_table <- rank.none(vimp_table=vimp_table)
+  }
   
   # Perform aggregation using simple ensemble methods
   if(aggregation_method %in% c("mean", "median", "best", "worst")){
-
-    if(aggregation_method == "mean")   { dt_rank <- rank.mean(dt=dt_vimp) }
-    if(aggregation_method == "median") { dt_rank <- rank.median(dt=dt_vimp) }
-    if(aggregation_method == "best")   { dt_rank <- rank.best_rank(dt=dt_vimp) }
-    if(aggregation_method == "worst")  { dt_rank <- rank.worst_rank(dt=dt_vimp) }
+    
+    if(aggregation_method == "mean"){
+      rank_table <- rank.mean(vimp_table=vimp_table)
+      
+    } else if(aggregation_method == "median"){
+      rank_table <- rank.median(vimp_table=vimp_table)
+      
+    } else if(aggregation_method == "best"){
+      rank_table <- rank.best_rank(vimp_table=vimp_table)
+      
+    } else if(aggregation_method == "worst"){
+      rank_table <- rank.worst_rank(vimp_table=vimp_table)
+    } 
   }
-
+  
   # Perform aggregation using stability-based methods
   if(aggregation_method %in% c("stability", "exponential")){
-
+    
     if(is.null(rank_threshold)) {
-      rank_threshold <- rank.optimise_occurrence_threshold(dt_vimp=dt_vimp)
+      rank_threshold <- rank.optimise_occurrence_threshold(vimp_table=vimp_table)
     }
-
-    if(aggregation_method == "stability")   { dt_rank <- rank.stability(dt=dt_vimp, rank_threshold=rank_threshold) }
-    if(aggregation_method == "exponential") { dt_rank <- rank.exponential(dt=dt_vimp, rank_threshold=rank_threshold) }
+    
+    if(aggregation_method == "stability"){
+      rank_table <- rank.stability(vimp_table=vimp_table,
+                                   rank_threshold=rank_threshold)
+      
+    } else if(aggregation_method == "exponential"){
+      rank_table <- rank.exponential(vimp_table=vimp_table,
+                                     rank_threshold=rank_threshold)
+    } 
   }
-
+  
   # Perform aggregation using Borda-count based methods
   if(aggregation_method %in% c("borda", "enhanced_borda", "truncated_borda", "enhanced_truncated_borda")){
-
+    
     if(is.null(rank_threshold)) {
-      rank_threshold <- rank.optimise_occurrence_threshold(dt_vimp=dt_vimp)
+      rank_threshold <- rank.optimise_occurrence_threshold(vimp_table=vimp_table)
     }
-
+    
     if(aggregation_method == "borda") {
-      dt_rank <- rank.borda_aggregation(dt=dt_vimp, rank_threshold=rank_threshold,
-                                        truncated=FALSE, enhanced=FALSE)
+      rank_table <- rank.borda_aggregation(vimp_table=vimp_table,
+                                           rank_threshold=rank_threshold,
+                                           truncated=FALSE,
+                                           enhanced=FALSE)
       
     } else if(aggregation_method == "enhanced_borda") {
-      dt_rank <- rank.borda_aggregation(dt=dt_vimp, rank_threshold=rank_threshold,
-                                        truncated=FALSE, enhanced=TRUE)
+      rank_table <- rank.borda_aggregation(vimp_table=vimp_table,
+                                           rank_threshold=rank_threshold,
+                                           truncated=FALSE,
+                                           enhanced=TRUE)
       
     } else if(aggregation_method == "truncated_borda") {
-      dt_rank <- rank.borda_aggregation(dt=dt_vimp, rank_threshold=rank_threshold,
-                                        truncated=TRUE, enhanced=FALSE)
+      rank_table <- rank.borda_aggregation(vimp_table=vimp_table,
+                                           rank_threshold=rank_threshold,
+                                           truncated=TRUE,
+                                           enhanced=FALSE)
       
     } else if(aggregation_method == "enhanced_truncated_borda") {
-      dt_rank <- rank.borda_aggregation(dt=dt_vimp, rank_threshold=rank_threshold,
-                                        truncated=TRUE, enhanced=TRUE)
+      rank_table <- rank.borda_aggregation(vimp_table=vimp_table,
+                                           rank_threshold=rank_threshold,
+                                           truncated=TRUE,
+                                           enhanced=TRUE)
       
     } else {
       ..error_reached_unreachable_code("rank.aggregate_feature_ranks_unknown_borda_aggregation_method")
     }
   }
-
-  return(dt_rank)
+  
+  return(rank_table)
 }
 
 
@@ -290,7 +317,7 @@ rank.decluster_vimp_table <- function(vimp_table, feature_info_list=NULL, transl
   
   # Merge with the vimp table
   vimp_table <- merge(x=vimp_table, y=translation_table, by.x="name", by.y="cluster_name")
-
+  
   # Drop "name" column and rename the "feature_name" column to "name"
   vimp_table[, "name":=NULL]
   data.table::setnames(vimp_table, "feature_name", "name")
@@ -326,7 +353,10 @@ rank.recluster_vimp_table <- function(vimp_table, translation_table=NULL){
   translation_table <- data.table::copy(translation_table)
   
   # Merge with the vimp table
-  vimp_table <- merge(x=vimp_table, y=translation_table, by.x="name", by.y="feature_name")
+  vimp_table <- merge(x=vimp_table,
+                      y=translation_table,
+                      by.x="name",
+                      by.y="feature_name")
   
   # Concatenate by cluster_name, 
   vimp_table <- vimp_table[, list("score"=mean(score),
@@ -363,7 +393,7 @@ rank.get_decluster_translation_table <- function(features, feature_info_list){
     
     return(translation_table)
   }, cluster_table=cluster_table))
-
+  
   return(translation_table)
 }
 
@@ -412,7 +442,7 @@ rank.consensus_clustering <- function(vimp_table){
   
   # Construct list of tables with co-clustered pairs.
   co_cluster_list <- lapply(split(vimp_table, by=c(grouping_columns)), function(vimp_table){
-
+    
     # Find features in the current table
     features <- vimp_table$name
     
@@ -438,7 +468,7 @@ rank.consensus_clustering <- function(vimp_table){
     
     return(co_cluster_table)
   })
-
+  
   # Combine list of tables into a single table.
   co_cluster_table <- data.table::rbindlist(co_cluster_list, use.names=TRUE)
   

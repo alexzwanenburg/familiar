@@ -57,7 +57,15 @@ setMethod("extract_model_vimp", signature(object="familiarEnsemble"),
             if(!is_model_loaded(object=object)) ..error_ensemble_models_not_loaded()
             
             # Obtain aggregation method from stored settings, if required.
-            if(is.waive(aggregation_method)) aggregation_method <- object@settings$aggregation
+            if(is.waive(aggregation_method)){
+              if(length(object@model_list) > 1){
+                aggregation_method <- object@settings$aggregation
+                
+              } else {
+                # If only one model is evaluated, do not aggregate data.
+                aggregation_method <- "none" 
+              }
+            } 
             
             # Check aggregation method
             rank.check_aggregation_method(method=aggregation_method)
@@ -230,7 +238,7 @@ setMethod("..compute_data_element_estimates", signature(x="familiarDataElementVi
             translation_table <- rank.consensus_clustering(vimp_table=data)
             
             # Determine aggregate ranks.
-            data <- rank.aggregate_feature_ranks(dt_vimp=data,
+            data <- rank.aggregate_feature_ranks(vimp_table=data,
                                                  aggregation_method=x[[1]]@rank_aggregation_method,
                                                  rank_threshold=x[[1]]@rank_threshold)
             
