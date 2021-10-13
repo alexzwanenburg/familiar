@@ -3,7 +3,29 @@
 # techniques in bioinformatics. 2012 IEEE 13th Int. Conf. Inf. Reuse Integr.,
 # IEEE; 2012, p. 377-84.
 
-rank.mean <- function(dt){
+rank.none <- function(vimp_table){
+  # Aggregate using mean rank
+  
+  # Suppress NOTES due to non-standard evaluation in data.table
+  aggr_score <- score <- NULL
+  
+  # Determine if higher scores are better
+  higher_better <- max(vimp_table[score==min(score), ]$rank) > 1
+  
+  # Compute mean score
+  rank_table <- vimp_table[, list(aggr_score=mean(score)), by=c("name")]
+  
+  if(higher_better){
+    rank_table[, "aggr_rank":=data.table::frank(-aggr_score, ties.method="min")]
+    
+  } else {
+    rank_table[, "aggr_rank":=data.table::frank(aggr_score, ties.method="min")]
+  }
+  
+  return(rank_table)
+}
+
+rank.mean <- function(vimp_table){
   # Aggregate using mean rank
 
   # Suppress NOTES due to non-standard evaluation in data.table
