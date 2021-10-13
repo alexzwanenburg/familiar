@@ -288,6 +288,13 @@ setMethod("plot_decision_curve", signature(object="familiarCollection"),
               y_range <- c(head(y_breaks, n=1),
                            tail(y_breaks, n=1))
             }
+            
+            # Adapt the confidence intervals so that they fit in the y-range.
+            if(conf_int_style != "none"){
+              x@data[curve_type == "model" & is.finite(ci_low) & ci_low < y_range[1] & ci_up > y_range[1], "ci_low":=y_range[1]]
+              x@data[curve_type == "model" & is.finite(ci_up) & ci_up > y_range[2] & ci_low < y_range[2], "ci_up":=y_range[2]]
+            }
+            
 
             if(object@outcome_type %in% c("binomial", "multinomial")){
               split_variable <- "positive_class"
