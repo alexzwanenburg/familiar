@@ -365,10 +365,67 @@ from the same dataset. We therefore compute a harmonic mean p-value
 
 # Decision curve analysis
 
-# Partial dependence and individual conditional expectation plots
+Decision curve analysis is a method to assess the net (clinical) benefit of
+models, introduced by Vickers and Elkin [@Vickers2006-be]. The decision curve
+compares the model benefit for different threshold probabilities against two or
+more options. The two standard options are that all instances receive an
+intervention, and none receive an intervention. What constitutes an intervention
+is model-dependent [@Vickers2019-ar]. For our breast cancer cohort, intervention
+might constitute treatment of all patients, versus no treatment and treatment for
+patients with malignancy predicted by the model. This produces the following
+figure:
+
+```{r, fig.align='center', fig.width=7}
+plots <- familiar::plot_decision_curve(object=binomial_model,
+                                       data=binomial_data,
+                                       y_range=c(-0.2, 0.5))
+
+plots[[1]]
+```
+The shaded curve is the decision curve produced by the model, with 95% confidence
+intervals. The declining curve represents the intervention for all, which offers
+no benefit for a malignancy probability of 45%. The horizontal line at a net
+benefit of 0.0 represent the no intervention option. As may be observed, the
+model offers a net benefit over the entire range of threshold probabilities.
+
+Decision curves are not defined for regression problems. Familiar can perform
+decision curve analysis for survival outcomes, based on Vickers et al.
+[@Vickers2008-uu].
 
 # Variable importance
 
+Not all features are related to the outcome. One of the most critical points in
+machine learning is selecting those features that are important enough to
+incorporate into a model. Variable importance is assessed prospectively during
+feature selection step. For the purpose of explaining which features are
+considered important for the model itself, familiar employs both model-specific
+and model-agnostic methods.
+
+## Model-specific methods
+
+Model-specific methods rely on aspects of the models themselves to determine
+variable importance. For instance, the coefficients of regression models are a
+measure of variable importance when features are normalised. In the case of the
+random forest model for the breast cancer dataset, permutation variable
+importance is determined.This produces the following plot:
+
+```{r, fig.align='center', fig.width=7}
+plots <- familiar::plot_model_signature_variable_importance(object=binomial_model,
+                                                            data=binomial_data)
+
+plots[[1]]
+```
+Features are always ordered with the most important features on the left, and
+least important features on the right.
+
+In case an ensemble of models is assessed, scores are aggregated using an
+aggregation method (see the *feature selection methods* vignette). This method
+can be set using the `aggregation_method` argument.
+
 ## Permutation variable importance
+
+# Partial dependence and individual conditional expectation plots
+
+Variable importance does not explain how features influence the model.
 
 # Feature and sample similarity
