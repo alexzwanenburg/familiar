@@ -621,17 +621,10 @@ applyContrastReference <- function(dt, dt_ref, method){
 harmonic_p_value <- function(x){
   
   if(data.table::is.data.table(x)){
-   
-    # Compute harmonic mean p-value.
-    y <- 1.0 / sum(1.0 / nrow(x) * 1.0 / x$p_value)
-    
-    return(list("p_value"=y)) 
+    return(list("p_value"=harmonicmeanp::p.hmp(x$p_value, L=nrow(x))))
     
   } else {
-    # Compute harmonic mean p-value.
-    y <- 1.0 / sum(1.0 / length(x) * 1.0 / x)
-    
-    return(y)
+    return(harmonicmeanp::p.hmp(x, L=length(x)))
   }
 }
 

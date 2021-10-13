@@ -58,7 +58,8 @@ Imports: methods,
     xml2,
     maxstat,
     proxy,
-    laGP
+    laGP,
+    harmonicmeanp
 Suggests:
     dynamicTreeCut,
     rmarkdown,
