@@ -72,6 +72,8 @@
 
 -   Points on receiver operating characteristic and precision-recall curves are now always correctly ordered.
 
+-   Fixed a bug that would prevent `hpo_metric`, `vimp_aggregation_method` and `vimp_aggregation_rank_threshold` arguments from being set as a function argument.
+
 # Version 0.0.0.54 (Pre-release)
 
 ## Major changes:

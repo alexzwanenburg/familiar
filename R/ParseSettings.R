@@ -310,15 +310,11 @@
   # Computational setup settings
   settings$run <- do.call(.parse_setup_settings, args=append(list("config"=config$run), list(...)))
   
-  # Remove outcome_type, development_batch_id and parallel from ... This prevents an error caused by
-  # multiple matching arguments.
+  # Remove outcome_type, development_batch_id and parallel from ... This
+  # prevents an error caused by multiple matching arguments.
   dots <- list(...)
   dots$parallel <- NULL
   dots$outcome_type <- NULL
-  dots$development_batch_id <- NULL
-  dots$hpo_metric <- NULL
-  dots$vimp_aggregation_method <- NULL
-  dots$vimp_aggregation_rank_threshold <- NULL
   
   # Pre-processing settings
   settings$prep <- strict.do.call(.parse_preprocessing_settings,
@@ -351,10 +347,19 @@
                                              "outcome_type"=settings$data$outcome_type),
                                         dots))
   
+  # Remove development_batch_id, hpo_metric, vimp_aggregation_method and
+  # vimp_aggregation_rank_threshold from ... This prevents an error caused by
+  # multiple matching arguments.
+  dots$development_batch_id <- NULL
+  dots$hpo_metric <- NULL
+  dots$vimp_aggregation_method <- NULL
+  dots$vimp_aggregation_rank_threshold <- NULL
+  
   # Evaluation settings
   settings$eval <- strict.do.call(.parse_evaluation_settings,
                                   args=c(list("config"=config$evaluation,
-                                              "data"=data, "parallel"=settings$run$parallel,
+                                              "data"=data,
+                                              "parallel"=settings$run$parallel,
                                               "outcome_type"=settings$data$outcome_type,
                                               "hpo_metric"=settings$hpo$hpo_metric,
                                               "development_batch_id"=settings$data$train_cohorts,
