@@ -10,7 +10,13 @@ rank.none <- function(vimp_table){
   aggr_score <- score <- NULL
   
   # Determine if higher scores are better
-  higher_better <- max(vimp_table[score==min(score), ]$rank) > 1
+  higher_better <- sapply(split(vimp_table, by=c("data_id", "run_id")), function(x) (stats::cor(x=x$score, y=x$rank, method="spearman") < 0.0))
+  if(all(is.na(higher_better))){
+    higher_better <- FALSE
+    
+  } else {
+    higher_better <- any(higher_better)
+  }
   
   # Compute mean score
   rank_table <- vimp_table[, list(aggr_score=mean(score)), by=c("name")]
@@ -25,6 +31,8 @@ rank.none <- function(vimp_table){
   return(rank_table)
 }
 
+
+
 rank.mean <- function(vimp_table){
   # Aggregate using mean rank
 
@@ -36,6 +44,7 @@ rank.mean <- function(vimp_table){
 
   return(rank_table)
 }
+
 
 
 rank.median <- function(vimp_table){
