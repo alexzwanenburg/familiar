@@ -122,6 +122,11 @@ rank.get_feature_ranks <- function(run=NULL,
       rank_threshold <- settings$fs$aggr_rank_threshold
     }
     
+    # Do not aggregate data in case only one dataset is assessed.
+    if(data.table::uniqueN(vimp_table, by=c("data_id", "run_id")) == 1){
+      aggregation_method <- "none"
+    }
+    
     # Compute aggregated ranks.
     ranking_table <- rank.aggregate_feature_ranks(vimp_table=vimp_table,
                                                   rank_threshold=rank_threshold,
