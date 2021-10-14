@@ -75,9 +75,9 @@ build_model <- function(run, hpo_list){
   # Function for model building and data extraction
   
   # Load from the familiar or global environment
-  proj_list         <- get_project_list()
-  settings          <- get_settings()
-  file_paths        <- get_file_paths()
+  project_list <- get_project_list()
+  settings <- get_settings()
+  file_paths <- get_file_paths()
 
   # Data will be loaded at run time in .train
   data <- methods::new("dataObject",
@@ -93,12 +93,16 @@ build_model <- function(run, hpo_list){
   ############### Initialisation ##################################################################
 
   # Get hyper-parameters
-  param_list        <- .find_hyperparameters_for_run(run=run,
-                                                     hpo_list=hpo_list,
-                                                     as_list=TRUE)
-
+  param_list <- .find_hyperparameters_for_run(run=run,
+                                              hpo_list=hpo_list,
+                                              as_list=TRUE)
+  
   # Get feature ranks
-  dt_ranks          <- rank.get_feature_ranks(run=run, fs_method=run$fs_method, settings=settings, proj_list=proj_list, file_paths=file_paths)
+  rank_table <- rank.get_feature_ranks(run=run,
+                                       fs_method=run$fs_method,
+                                       settings=settings,
+                                       proj_list=project_list,
+                                       file_paths=file_paths)
 
 
   ############### Data preparation ################################################################
@@ -116,12 +120,12 @@ build_model <- function(run, hpo_list){
                             hyperparameter_data = NULL,
                             feature_info = feature_info_list,
                             outcome_info = .get_outcome_info(),
-                            project_id = proj_list$project_id,
+                            project_id = project_list$project_id,
                             settings = settings$eval)
   
   # Select features
   fam_model <- set_signature(object=fam_model,
-                             rank_table=dt_ranks,
+                             rank_table=rank_table,
                              minimise_footprint=TRUE)
   
   ############### Model building ################################################################
@@ -144,6 +148,7 @@ build_model <- function(run, hpo_list){
   # Save model
   save(list=fam_model, file=file_paths$mb_dir)
 }
+
 
 
 add_model_data_to_run_list <- function(methods, run_list, proj_list, settings, file_paths, filter_existing){
