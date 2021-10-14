@@ -424,8 +424,9 @@ different instances [@Wald2012-zk]. The rank aggregation methods shown in the
 table below can be used for this purpose. Several methods require a threshold to
 indicate the size of the set of most highly ranked features.
 
-| **aggregatiom methodr** | **tag** | **comments** |
+| **aggregation method** | **tag** | **comments** |
 |:--------------|:--------|:----------:|
+| none | `none` | |
 | mean rank | `mean` | |
 | median rank | `median` | |
 | best rank | `best` | |
@@ -456,6 +457,12 @@ $j$.
 Aggregating ranks for each feature results in an aggregate rank score $s_i$.
 Features are subsequently ranked according to this method-specific score to
 arrive at an aggregate feature rank $r_i$.
+
+## No rank aggregation
+
+The `none` option does not aggregate ranks. Rather, scores are aggregated by
+computing the average score of a feature over all experiments that contain it.
+Ranks are then computed from the aggregated scores.
 
 ## Mean rank aggregation
 
