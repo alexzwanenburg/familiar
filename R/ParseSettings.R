@@ -1590,7 +1590,10 @@
 #'   variable importances over different data subsets, e.g. bootstraps. The
 #'   following methods can be selected:
 #'
-#'   * `mean` (default): Use the mean rank of a feature over the subsets to
+#'   * `none`: Don't aggregate ranks, but rather aggregate the variable
+#'   importance scores themselves.
+#'
+#'   * `mean`: Use the mean rank of a feature over the subsets to
 #'   determine the aggregated feature rank.
 #'
 #'   * `median`: Use the median rank of a feature over the subsets to determine
@@ -1610,8 +1613,8 @@
 #'   of highly ranked features as measure for the aggregated feature rank (Haury
 #'   et al., 2011).
 #'
-#'   * `borda`: Use the borda count as measure for the aggregated feature rank
-#'   (Wald et al., 2012).
+#'   * `borda` (default): Use the borda count as measure for the aggregated
+#'   feature rank (Wald et al., 2012).
 #'
 #'   * `enhanced_borda`: Use an occurrence frequency-weighted borda count as
 #'   measure for the aggregated feature rank (Wald et al., 2012).
@@ -1622,6 +1625,8 @@
 #'   * `enhanced_truncated_borda`: Apply both the enhanced borda method and the
 #'   truncated borda method and use the resulting borda count as the aggregated
 #'   feature rank.
+#'
+#'   The *feature selection methods* vignette provides additional information.
 #'
 #' @param vimp_aggregation_rank_threshold (*optional*) The threshold used to
 #'   define the subset of highly important features. If not set, this threshold
@@ -1667,17 +1672,16 @@
   
   sapply(settings$fs_methods, vimp.check_outcome_type, outcome_type=outcome_type)
   
-  
   # Feature selection parameters
   settings$param <- .parse_arg(x_config=config$fs_method_parameter, x_var=fs_method_parameter,
                                var_name="fs_method_parameter", type="list", optional=TRUE, default=list())
   
   settings$param <- .parse_hyperparameters(data=data, parameter_list=settings$param,
                                            outcome_type=outcome_type, fs_method=settings$fs_methods)
-
+  
   # Variable importance aggregation methods
   settings$aggregation <- .parse_arg(x_config=config$vimp_aggregation_method, x_var=vimp_aggregation_method,
-                                     var_name="vimp_aggregation_method", type="character", optional=TRUE, default="mean")
+                                     var_name="vimp_aggregation_method", type="character", optional=TRUE, default="borda")
   
   rank.check_aggregation_method(method=settings$aggregation)
   
@@ -1752,8 +1756,6 @@
   settings$hyper_param <- .parse_arg(x_config=config$hyperparameter, x_var=hyperparameter,
                                      var_name="hyperparameter", type="list", optional=TRUE, default=list())
   
-  
-  # sapply(settings$learners, learner.check_model_hyperparameters, user_param=settings$hyper_param, outcome_type=outcome_type)
   settings$hyper_param <- .parse_hyperparameters(data=data, parameter_list=settings$hyper_param,
                                                  outcome_type=outcome_type, learner=settings$learners)
   
