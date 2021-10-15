@@ -420,9 +420,70 @@ least important features on the right.
 
 In case an ensemble of models is assessed, scores are aggregated using an
 aggregation method (see the *feature selection methods* vignette). This method
-can be set using the `aggregation_method` argument.
+can be set using the `aggregation_method` argument, or the
+`eval_aggregation_method` configuration parameter (`summon_familiar`).
+
+The `plot_model_signature_occurrence` method plots the occurrence of features
+among the first 5 ranks across an ensemble of models (if available). The rank
+threshold can be specified using the `rank_threshold` argument or the
+`eval_aggregation_rank_threshold` parameter (`summon_familiar`).
 
 ## Permutation variable importance
+
+Permutation variable importance is a model-agnostic variable importance method.
+It assesses importance by measuring the decrease in model performance caused by
+shuffling values of a feature across the instances in a dataset.
+
+For the breast cancer dataset, this results in the following figure:
+
+```{r, fig.align='center', fig.width=7}
+plots <- familiar::plot_permutation_variable_importance(object=binomial_model,
+                                                        data=binomial_data,
+                                                        estimation_type="bias_correction")
+
+plots[[1]]
+```
+The figure shows the features along the y-axis, and the loss in AUC-ROC caused
+by permuting the feature values along the x-axis. Accordingly,
+`cell_shape_uniformity` is considered to be the most important feature in the
+model.
+
+The figure shows two bars for each feature. A well-known issue with permutation
+variable importance is that the presence of highly correlated features causes
+permutation variable importance to become unreliable. If two features are both
+important and highly correlated, shuffling one of them does not decrease model
+performance as much. For this reason, familiar will permute features together
+depending on their mutual correlation, and the threshold values.
+
+By default, similarity between features is assessed using McFadden's pseudo-R^2.
+This metric can assess similarity between different types of features, i.e.
+numeric and categorical. The default thresholds are 0.3 and 1.0 that
+respectively cluster highly similar features and permute all features
+individually.
+
+The breast cancer dataset doesn't contain features that exceed the relatively
+stringent threshold of 0.3. Since the breast cancer dataset only contains
+numeric values, we can also measure similarity differently. For example, if we
+measure similarity using the Spearman`s rank correlation coefficient, we arrive
+at the following:
+
+```{r, fig.align='center', fig.width=7}
+plots <- familiar::plot_permutation_variable_importance(object=binomial_model,
+                                                        data=binomial_data,
+                                                        estimation_type="bias_correction",
+                                                        feature_similarity_metric="spearman",
+                                                        feature_similarity_threshold=c(0.6, 1.0))
+
+plots[[1]]
+```
+This figure paints a different picture: `cell_shape_uniformity`, `bare_nuclei`,
+`normal_nucleoli` and `epithelial_cell_size` are moderately to strongly
+correlated. When permuted together, this has a major effect on model
+performance. This can also be observed in the performance decrease caused by
+shuffling `cell_shape_uniformity` alone, which only partially matches the
+performance decrease caused by shuffling the 4 features. The other 3 features
+have little individual impact on performance decrease, but shuffling them
+together directly shows that these features are important as well.
 
 # Partial dependence and individual conditional expectation plots
 
