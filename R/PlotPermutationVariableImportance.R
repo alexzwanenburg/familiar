@@ -608,7 +608,8 @@ setMethod("plot_permutation_variable_importance", signature(object="familiarColl
                                                   x_breaks){
   
   # Suppress NOTES due to non-standard evaluation in data.table
-  value <- NULL
+  value <- metric <- similarity_threshold <- order_id <- i.order_id <- NULL
+  data_set <- learner <- fs_method <- NULL
   
   # Create local copy
   x <- data.table::copy(x)
@@ -635,10 +636,56 @@ setMethod("plot_permutation_variable_importance", signature(object="familiarColl
     available_metric <- as.character(x$metric[1])
   }
   
-  # Drop levels and reorder table so that features are sorted by values
-  x$feature <- droplevels(x$feature)
-  x <- x[order(-value)]
-  x$feature <- factor(x$feature, levels=rev(unique(x$feature)))
+  # Sort features. In the outer loop iterate over metrics. In the inner loop
+  # iterate over threshold values (in reverse). Resolve until order_id is unique
+  # for all features.
+  x[, "order_id":=1L]
+  for(current_data_set in levels(x$data_set)){
+    # Break in case all features have an unique order id.
+    if(data.table::uniqueN(x$order_id) == data.table::uniqueN(x$feature)) break()
+    
+    for(current_fs_method in levels(x$fs_method)){
+      # Break in case all features have an unique order id.
+      if(data.table::uniqueN(x$order_id) == data.table::uniqueN(x$feature)) break()
+      
+      for(current_learner in levels(x$learner)){
+        # Break in case all features have an unique order id.
+        if(data.table::uniqueN(x$order_id) == data.table::uniqueN(x$feature)) break()
+        
+        for(current_metric in levels(x$metric)){
+          
+          # Break in case all features have an unique order id.
+          if(data.table::uniqueN(x$order_id) == data.table::uniqueN(x$feature)) break()
+          
+          for(current_threshold in rev(levels(x$similarity_threshold))){
+            
+            for(id_table in split(x[data_set == current_data_set &
+                                    fs_method == current_fs_method &
+                                    learner == current_learner &
+                                    metric == current_metric &
+                                    similarity_threshold == current_threshold], by="order_id")){
+              if(nrow(id_table) < 2) next()
+              
+              # Local copy
+              id_table <- data.table::copy(id_table)
+              
+              # Rank by descending value.
+              id_table[, "order_id":=order_id + data.table::frank(-value, ties.method="min") - 1L][, mget(c("feature", "order_id"))]
+              
+              # Update order id in x.
+              x[id_table, "order_id":=i.order_id, on="feature"]
+            }
+            
+            # Break in case all features have an unique order id.
+            if(data.table::uniqueN(x$order_id) == data.table::uniqueN(x$feature)) break()
+          }
+        }
+      }
+    }
+  }
+  
+  # Order features by order_id
+  x$feature <- factor(x$feature, levels=rev(unique(x[, mget(c("feature", "order_id"))])[order(order_id)][["feature"]]))
   
   # Generate a guide table
   guide_list <- plotting.create_guide_table(x=x, 
@@ -647,7 +694,7 @@ setMethod("plot_permutation_variable_importance", signature(object="familiarColl
   
   # Extract data
   x <- guide_list$data
-
+  
   # Create basic plot.
   if(!is.null(color_by)){
     
