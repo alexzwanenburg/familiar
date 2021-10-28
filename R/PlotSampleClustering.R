@@ -1294,7 +1294,8 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
   
   # Colors
   gradient_colours <- plotting.get_palette(x=gradient_palette,
-                                           palette_type=palette_type)
+                                           palette_type=palette_type,
+                                           diverge_to_white=TRUE)
   
   # Add gradient palette. If the legend is not shown, legend_label equals NULL.
   p <- p + ggplot2::scale_fill_gradientn(name=legend_label,
