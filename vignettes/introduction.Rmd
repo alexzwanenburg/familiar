@@ -69,21 +69,21 @@ The pipeline implemented in familiar follows a standard machine learning process
 
     -   Redundancy clustering: Which features are similar and should be clustered together?
 
--   **Feature selection**: Which features are important with regard to the endpoint of interest? Familiar supports various univariate and multivariate feature selection methods (see the *Feature selection methods* vignette). Note that feature selection, at least in familiar, is a misnomer. Instead of selecting features, in the sense of selecting the features to be included in a model by a learner, features in the data are ranked according to their importance. Actual feature selection is conducted during hyperparameter optimisation.
+-   **Feature selection**: Which features are important for the endpoint of interest? Familiar supports various univariate and multivariate feature selection methods (see the *Feature selection methods* vignette). Note that feature selection, at least in familiar, is a misnomer. Instead of selecting features, in the sense of selecting the features to be included in a model by a learner, features in the data are ranked according to their importance. Actual feature selection is conducted during hyperparameter optimisation.
 
 -   **Hyperparameter optimisation**: Most learners have hyperparameters, which are parameters that determine a specific aspect of the model created by the learner. Examples are the number of trees in a random forest, the width of the radial kernel in support vector machines, and the number of features in the signature of a model. Such parameters may significantly influence model performance. During hyperparameter optimisation, the aim is to find the set of hyperparameters that leads to a generalisable model. Since hyperparameter spaces can be high-dimensional, familiar uses Bayesian optimisation for efficiently exploring hyperparameter space. The *Learning algorithms* vignette describes model-specific hyperparameters and hyperparameter optimisation in more detail.
 
 -   **Model training**: During the final model training step, the development data are fitted using the previously determined set of hyperparameters. By default, the models are trimmed after creation to remove extraneous information such as copies of the development data. The model objects that are created in this step contain more than just the model. Notably, the following information is included to allow for prospective use and evaluation:
 
-    -   Feature information, as generated during the data processing step, is stored to allow for preparing datasets in the same manner as the development dataset, and checking if new datasets are formatted as expected. It is also used to create default ranges for individual conditional expectation and partial dependence plots.
+    -   Feature information, as generated during the data processing step, is stored to allow for preparing datasets in the same manner as the development dataset and for checking if new datasets are formatted as expected. It is also used to create default ranges for individual conditional expectation and partial dependence plots.
 
     -   Outcome information is stored. This is primarily used to check whether outcome data in new datasets are formatted in accordance with the development data. It is also used in computing several performance metrics.
 
-    -   An novelty detector is trained to detect out-of-distribution samples and assess when a model starts extrapolating. The novelty detector is currently based on extended isolation forests in the `isotree` package @Cortes2021-aa .
+    -   A novelty detector is trained to detect out-of-distribution samples and assess when a model starts extrapolating. The novelty detector is currently based on extended isolation forests in the `isotree` package @Cortes2021-aa.
 
     -   Models used to recalibrate the output of specific models (see *Learning algorithm* vignette) are stored.
 
-    -   Calibration information is added. This currently is only done for survival analysis, for which we store baseline survival curves @Royston2013-ch .
+    -   Calibration information is added. This currently is only done for survival analysis, for which we store baseline survival curves @Royston2013-ch.
 
     -   Risk stratification thresholds used for assigning risk strata are stored.
 
@@ -93,9 +93,9 @@ After training the models, the models are assessed using the development and any
 
 Familiar supports modelling and evaluation of several types of endpoints:
 
--   Categorical endpoints, where the outcome consists of two or more classes. In particular, familiar distinguishes between two-class (`binomial`) and multi-class (`multinomial`) outcomes. These differ in that fewer feature selection methods and learners are available for multi-class outcomes. Additionally some evaluation and explanation steps will assess all classes separately in a one-against-all fashion for multi-class outcomes, whereas for two-class outcomes only the *positive* class is assessed.
+-   Categorical endpoints, where the outcome consists of two or more classes. Familiar distinguishes between two-class (`binomial`) and multi-class (`multinomial`) outcomes. These differ in that fewer feature selection methods and learners are available for multi-class outcomes. Additionally some evaluation and explanation steps will assess all classes separately in a one-against-all fashion for multi-class outcomes, whereas for two-class outcomes only the *positive* class is assessed.
 
--   Numerical endpoints, where the outcome consists of numeric values. Count-like `count` outcomes that follow and generic numerical `continuous` outcomes are supported. If you are unsure that your outcome is generated through some counting or event mechanism, it may be safer to use the more generic option.
+-   Numerical endpoints, where the outcome consists of numeric values. Count-like `count` outcomes that follow and generic numerical `continuous` outcomes are supported. If you are unsure that your outcome is generated through some counting or event mechanism, it may be safer to use the more generic `continuous` option.
 
 -   Survival endpoints, where the outcome consists of a pair of time and event status variables. Familiar supports right-censored time-to-event data (`survival`).
 
@@ -141,7 +141,7 @@ familiar::summon_familiar(Species ~ Sepal.Length + Sepal.Width + Petal.Length + 
                           parallel=FALSE)
 ```
 
-Data does not need to be loaded prior to calling `summon_familiar`. A patch to a *csv* file can also be provided. The data can also be a `data.frame` or `data.table` contained in an *RDS* or *RData* file. Other data formats are currently not supported. If categorical features are encoded using integer values, it is recommended to load the data and manually encode them, as is explained in the [Preparing your data] section.
+Data does not need to be loaded prior to calling `summon_familiar`. A path to a *csv* file can also be provided. The data can also be a `data.frame` or `data.table` contained in an *RDS* or *RData* file. Other data formats are currently not supported. If categorical features are encoded using integer values, it is recommended to load the data and manually encode them, as is explained in the [Preparing your data] section.
 
 ```{r eval=FALSE, include=TRUE}
 
@@ -160,7 +160,7 @@ familiar::summon_familiar(data="path_to_data/iris.csv",
                           parallel=FALSE)
 ```
 
-For reproducibility purposes, it may be useful to configure `summon_familiar` using the configuration *xml* file. In this case, we will point to a data file using the `data_file` parameter.
+For reproducibility purposes, it may be useful to configure `summon_familiar` using the configuration *xml* file. In that case, we will point to a data file using the `data_file` parameter.
 
 ```{r eval=FALSE, include=TRUE}
 
@@ -170,7 +170,7 @@ For reproducibility purposes, it may be useful to configure `summon_familiar` us
 familiar::summon_familiar(config="path_to_configuration_file/config.xml")
 ```
 
-Configuration parameters may also be mixed between parameters specified in the *xml* file and function arguments. Function arguments supersede parameters specified in the *xml* files in this case:
+Configuration parameters may also be mixed between parameters specified in the *xml* file and function arguments. Function arguments supersede parameters specified in the *xml* file:
 
 ```{r eval=FALSE, include=TRUE}
 
@@ -188,9 +188,9 @@ Familiar is highly configurable. Parameters can be specified in two ways:
 
 1.  Using a configuration file. An empty copy of the configuration file can be obtained using the `familiar::get_xml_config` function. The `familiar::summon_familiar` function should subsequently be called by specifying the `config` argument.
 
-2.  By specifying function arguments for the `familiar::summon_familiar` function, as for any function.
+2.  By specifying function arguments for the `familiar::summon_familiar` function.
 
-All configuration parameters are documented in the help file of the `familiar::summon_familiar` function. In many cases, the default settings suffice. Some parameters should always be specified:
+All configuration parameters are documented in the help file of the `familiar::summon_familiar` function. Often, the default settings suffice. The parameters below should always be specified:
 
 -   `experimental_design`: Specifies the design of the experiment. This is described more extensively further in the vignette, in the [Experimental designs] section.
 
@@ -198,13 +198,13 @@ All configuration parameters are documented in the help file of the `familiar::s
 
 -   `learner`: Specify one or more learners used to create models. See the *Learning algorithms* vignette for available learners.
 
-Though not always required, specifying the following parameters are recommended, or required situationally:
+Though not always required, specifying the following parameters is recommended or situationally required:
 
 -   `experiment_dir`: This specifies the drive location where files generated during the experiment are written to. This includes files containing the trained models, which we usually want to preserve. If this location is not specified, such files are temporarily written to the temporary R directory, and subsequently removed.
 
--   `outcome_column`: Specifies the name of the column that contains the outcome values. In case of survival outcomes two columns should be specified that contain that indicate time and event status, respectively. The column name does not need to be required in case the formula interface is used.
+-   `outcome_column`: Specifies the name of the column that contains the outcome values. In case of survival outcomes two columns should be specified that contain that indicate time and event status, respectively. The `outcome_column` parameter is not required in case the formula interface is used.
 
--   `outcome_type`: Specifies the type of outcome being modeled. Should be one of the outcome types mentioned above in the [Supported outcomes] section. If not specified, it can potentially be inferred from the data contained in the column(s) specified by the `outcome_column` parameter.
+-   `outcome_type`: Specifies the type of outcome being modelled. Should be one of the outcome types mentioned above in the [Supported outcomes] section. If not specified, it can potentially be inferred from the data contained in the column(s) specified by the `outcome_column` parameter.
 
 -   `class_levels`: Specify the class levels of two-class (`binomial`) and multi-class (`multinomial`) outcomes. For two-class outcomes, the second level specifies the class regarded as the positive class. The values should match values present in the outcome column Specifying this argument is not necessary in case the outcome column is encoded as a factor. If left unspecified, the unique values in the outcome column are used as values.
 
@@ -214,7 +214,7 @@ Though not always required, specifying the following parameters are recommended,
 
 ## Preparing your data
 
-Familiar is used to assessed tabular data. In this case, a table consists of rows that represent instances, and columns that represent features and additional information. This is a very common representation for tabular data. Let us look at the *colon* dataset found in the survival package, which contains data from a clinical trial to assess a new anti-cancer drug in patients with colon cancer:
+Familiar processes tabular data. In this case, a table consists of rows that represent instances, and columns that represent features and additional information. This is a very common representation for tabular data. Let us look at the *colon* dataset found in the survival package, which contains data from a clinical trial to assess a new anti-cancer drug in patients with colon cancer:
 
 ```{r}
 # Get the colon dataset.
@@ -230,15 +230,15 @@ Here we see that each row contains a separate instance.
 
 ### Identifier columns
 
-The `id` and `study` columns represent identifier columns. Familiar distinguishes four different types of identifiers:
+The `id` and `study` columns are identifier columns. Familiar distinguishes four different types of identifiers:
 
 -   Batch identifiers are used to identify data belonging to a batch, cohort or specific dataset. This is typically used for specifying external validation datasets (using the `validation_batch_id` parameter). It also used to define the batches for batch normalisation. The name of the column containing batch identifiers (if any) can be specified using the `batch_id_column` parameter. If no column with batch identifiers is specified, all instances are assumed to belong to the same batch.
 
--   Sample identifiers are used to identify data belonging to a single sample, such as a patient, subject, customer, etc. Sample identifiers are used to ensure that instances from the same sample are not inadvertently spread across development and validation data subsets created for cross-validation or bootstrapping. This prevents information leakage, as instances from the same sample are often related -- knowing one instance would make it easy to predict another, thus increasing the risk of overfitting. The name of the column containing sample identifiers can be specified using the `sample_id_column` parameter. If not specified, it is assumed that each instance represents a separate sample.
+-   Sample identifiers are used to identify data belonging to a single sample, such as a patient, subject, customer, etc. Sample identifiers are used to ensure that instances from the same sample are not inadvertently spread across development and validation data subsets created for cross-validation or bootstrapping. This prevents information leakage, as instances from the same sample are often related -- knowing one instance of a sample would make it easy to predict another, thus increasing the risk of overfitting. The name of the column containing sample identifiers can be specified using the `sample_id_column` parameter. If not specified, it is assumed that each instance forms a separate sample.
 
--   Within a sample, it is possible to have multiple series, for example due to measurements at different positions in the same sample. A series differs from repeated measurements while for series the outcome value may change, whereas this is not allowed for repeated measurements. The column containing series identifiers may be specified by providing the column name as the `series_id_column` parameter. If not set, all instances of a sample with a different outcome value will be assigned a unique identifier.
+-   Within a sample, it is possible to have multiple series, for example due to measurements at different locations in the same sample. A series differs from repeated measurements. While for series the outcome value may change, this is not allowed for repeated measurements. The column containing series identifiers may be specified by providing the column name as the `series_id_column` parameter. If not set, all instances of a sample with a different outcome value will be assigned a unique identifier.
 
--   Within a sample, or series, it is possible to have repeated measurements, where one or more feature values may change but the outcome value does not. Such instances can for example used to determine feature robustness. Repeated measurement identifiers are automatically assigned for instances that have the same batch, sample and series identifiers.
+-   Within a sample, or series, it is possible to have repeated measurements, where one or more feature values may change but the outcome value does not. Such instances can for example used to assess feature robustness. Repeated measurement identifiers are automatically assigned for instances that have the same batch, sample and series identifiers.
 
 ### Outcome columns
 
@@ -246,7 +246,7 @@ The *colon* dataset also contains two outcome columns: `time` and `status` that 
 
 ### Feature columns
 
-The remaining columns in the *colon* dataset represent features. There are two numeric features, `age` and `nodes`, a categorical feature `rx` and several categorical and ordinal features encoded with integer values. Familiar will automatically detect and encode features that consist of `character`, `logical` or `factor` type. However it will not automatically convert the features encoded with integer values. This is by design -- familiar cannot determine whether a feature with integer values is intended to be categorical feature or not. Should categorical features that are encoded with integers be present in your dataset, you should manually encode such values in the data prior to passing the data to familiar. For the *colon* dataset, this could be done as follows:
+The remaining columns in the *colon* dataset represent features. There are two numeric features, `age` and `nodes`, a categorical feature `rx` and several categorical and ordinal features encoded with integer values. Familiar will automatically detect and encode features that consist of `character`, `logical` or `factor` type. However, it will not automatically convert the features encoded with integer values. This is by design -- familiar cannot determine whether a feature with integer values is intended to be categorical feature or not. Should categorical features that are encoded with integers be present in your dataset, you should manually encode such values in the data prior to passing the data to familiar. For the *colon* dataset, this could be done as follows:
 
 ```{r}
 # Categorical features
@@ -263,13 +263,13 @@ data$extent <- factor(data$extent, levels=c(1, 2, 3, 4), labels=c("submucosa", "
 knitr::kable(data[1:5])
 ```
 
-Manual encoding also has the advantage that ordinal features can be specified. Familiar cannot determine whether features with `character` type values have an associated order and will encode these as regular categorical variables. Another advantage is that manual encoding allows for specifying the reference level, i.e. the first level. Otherwise, the reference level is taken as the first level occurring after sorting the levels.
+Manual encoding also has the advantage that ordinal features can be specified. Familiar cannot determine whether features with `character` type values have an associated order and will encode these as regular categorical variables. Another advantage is that manual encoding allows for specifying the reference level, i.e. the level to which other levels of a feature are compared in regression models. Otherwise, the reference level is taken as the first level after sorting the levels.
 
 ## Experimental designs
 
-The experimental design defines how data analysis is performed. Familiar allows for various designs, from very straightforward training on a single dataset, to complex nested cross-validation with external validation. Experimental design is defined using the `experimental_design` parameter, and consists of basic workflow components and subsampling methods. The basic workflow components are:
+The experimental design defines how data analysis is performed. Familiar allows for various designs, from very straightforward training on a single dataset, to complex nested cross-validation with external validation. Experimental design is defined using the `experimental_design` parameter and consists of basic workflow components and subsampling methods. The basic workflow components are:
 
--   `fs`: positions the feature selection step. This component should always be present, even if `fs_method="none"`. Moreover note that the feature selection step only determines variable importance. Actual feature selection takes place after hyperparameter optimisation determines the optimal number of features.
+-   `fs`: positions the feature selection step. This component should always be present, even if `fs_method="none"`. Moreover, note that the feature selection step only determines variable importance. Actual feature selection takes place after hyperparameter optimisation determines the optimal number of features.
 
 -   `mb`: positions the model building step. This component should always be present.
 
@@ -281,16 +281,18 @@ Subsampling methods are used to (randomly) sample the data, and divide data into
 
 -   `bs(x,n)`: (stratified) .632 bootstrap, with `n` the number of bootstraps. Bootstrapping randomly samples the data with replacement, and on average assigns 63.2% of the samples to the new subsampled subset to form the in-bag dataset with the same size as the original dataset. Remaining, unselected samples form the out-of-bag dataset. All pre-processing steps and hyperparameter optimisation (if any) are performed using the in-bag data.
 
--   `bt(x,n)`: (stratified) .632 bootstrap, with `n` the number of bootstraps. Functions like `bs`, but pre-processing parameters and hyperparameters (if any) are inherited from the enveloping layer. That is, for `bt(fs+mb,20)+ev` twenty bootstraps are created from the development dataset, and feature selection and modelling are performed on the in-bag data. However, pre-processing parameters and hyperparameters are determined on the **main development** dataset. The most practical application of `bt` is for repeating feature selection multiple times (e.g. `bt(fs,50)+mb+ev`), as this allows for aggregating variable importance versus randomisation.
+-   `bt(x,n)`: (stratified) .632 bootstrap, with `n` the number of bootstraps. Functions like `bs`, but pre-processing parameters and hyperparameters (if any) are inherited from the enveloping layer. That is, for `bt(fs+mb,20)+ev` twenty bootstraps are created from the development dataset, and feature selection and modelling are performed on the in-bag data. However, pre-processing parameters and hyperparameters are determined on the **main development** dataset. The most practical application of `bt` is for repeating feature selection multiple times (e.g. `bt(fs,50)+mb+ev`), as this allows for aggregating variable importance and reducing the effect of random selection.
 
--   `cv(x,n,p)`: (stratified) `n`-fold cross-validation, repeated `p` times. `p` equals 1 by default. Cross-validation randomly assigns samples to `n` folds. Cross-validation forms `n` experiments where 1 fold is assigned as a validation fold, and the remainder as training folds. All pre-processing steps and hyperparameter optimisation (if any) are performed using data in the training folds.
+-   `cv(x,n,p)`: (stratified) `n`-fold cross-validation, repeated `p` times. `p` equals 1 by default. Cross-validation randomly assigns samples to `n` folds. Cross-validation forms `n` experiments where one fold is assigned as a validation fold, and the remainder as training folds. All pre-processing steps and hyperparameter optimisation (if any) are performed using data in the training folds.
 
 -   `lv(x)`: leave-one-out-cross-validation. This is the same as `n`-fold cross-validations with `n` the number of samples.
 
--   `ip(x)`: imbalance partitioning for addressing class imbalances in the dataset. This creates subsets of the data with balanced classes, and can be used in conjunction with `binomial` and `multinomial` outcomes. All pre-processing steps and hyperparameter optimisation are determined within the partitions. The number of partitions generated depends on the imbalance correction method (specified using the `imbalance_correction_method` parameter). Imbalance partitioning does not generate validation sets.
+-   `ip(x)`: imbalance partitioning for addressing class imbalances in the dataset. This creates subsets of the data with balanced classes and can be used in conjunction with `binomial` and `multinomial` outcomes. All pre-processing steps and hyperparameter optimisation are determined within the partitions. The number of partitions generated depends on the imbalance correction method (specified using the `imbalance_correction_method` parameter). Imbalance partitioning does not generate validation sets.
 
 The `x` argument of subsample methods can contain one or more of the workflow components. Moreover, it is possible to nest subsample methods. For example, `experiment_design="cv(bt(fs,50)+mb,5)+ev"` would create a 5-fold cross-validation of the development dataset, with each set of training folds again subsampled for feature selection. After aggregating variable importance obtained over 50 bootstraps, a model is trained within each set of training folds, resulting in 5 models overall. The ensemble of these models is then evaluated on an external dataset.
 
 Other designs, such as `experiment_design="bs(fs+mb,400)+ev"` allow for building large ensembles, and capturing the posterior distribution of the model predictions.
 
 As a final remark: Though it is possible to encapsulate the external validation (`ev`) workflow component in a subsampler, this is completely unnecessary. Unlike the feature selection (`fs`) and modelling (`mb`) components, `ev` is passive, and only indicates whether external validation should be performed.
+
+# References
