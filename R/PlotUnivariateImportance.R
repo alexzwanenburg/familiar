@@ -47,6 +47,10 @@ NULL
 #'  bars corresponding to the 10-logarithm of the (multiple-testing corrected)
 #'  p-value or q-value.
 #'
+#'  Features are assessed univariately using one-sample location t-tests after
+#'  fitting a suitable regression model. The fitted model coefficient and the
+#'  covariance matrix are then used to compute a p-value.
+#'
 #'  The following splitting variables are available for `split_by`, `color_by`
 #'  and `facet_by`:
 #'
