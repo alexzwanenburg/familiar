@@ -289,6 +289,10 @@ This function generates a horizontal barplot with the length of the
 bars corresponding to the 10-logarithm of the (multiple-testing corrected)
 p-value or q-value.
 
+Features are assessed univariately using one-sample location t-tests after
+fitting a suitable regression model. The fitted model coefficient and the
+covariance matrix are then used to compute a p-value.
+
 The following splitting variables are available for \code{split_by}, \code{color_by}
 and \code{facet_by}:
 \itemize{

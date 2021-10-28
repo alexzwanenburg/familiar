@@ -132,11 +132,21 @@ setMethod(".train_novelty_detector", signature(object="familiarModel", data="dat
             # tree, missing_action is set to "fail" -- this decreases model
             # footprint and is not necessary as familiar has its own imputation
             # routines.
-            detector <- isotree::isolation.forest(data=data@data[, mget(get_feature_columns(data))],
-                                                  sample_size=sample_size,
-                                                  ntrees=ntrees,
-                                                  nthreads=1L,
-                                                  missing_action="fail")
+            if(utils::packageVersion("isotree")>="0.3.9"){
+              detector <- isotree::isolation.forest(data=data@data[, mget(get_feature_columns(data))],
+                                                    sample_size=sample_size,
+                                                    ntrees=ntrees,
+                                                    nthreads=1L,
+                                                    missing_action="fail")
+              
+            } else {
+              detector <- isotree::isolation.forest(df=data@data[, mget(get_feature_columns(data))],
+                                                    sample_size=sample_size,
+                                                    ntrees=ntrees,
+                                                    nthreads=1L,
+                                                    missing_action="fail")
+            }
+            
             
             # Add the detector to the familiarModel object.
             object@novelty_detector <- detector
