@@ -48,6 +48,8 @@
 
 -   Receiver operating characteristic and precision-recall curves are now plotted exactly in circumstances that allow for it. Previously an interpolated version of the curves was always shown.
 
+-   The default divergent palettes used for feature cluster and sample cluster heatmaps now diverge to white instead of black.
+
 ## Bug fixes
 
 -   `detail_level`, `sample_limit`, `estimation_type` and `aggregate_results` arguments used during evaluation and explanation are now propagated from `familiarModel` and `familiarEnsemble` objects instead of reverting to default values.
