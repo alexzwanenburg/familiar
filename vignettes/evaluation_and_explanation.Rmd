@@ -487,6 +487,161 @@ together directly shows that these features are important as well.
 
 # Partial dependence and individual conditional expectation plots
 
-Variable importance does not explain how features influence the model.
+Variable importance does not explain how features influence the model. Partial
+dependence (PD) [@Friedman2001-jf] and individual conditional expectation (ICE)
+[@Goldstein2015-rv] plots can be used to visualise this behaviour. As an
+example, we can create an ICE plot for the `cell_shape_uniformity` feature that
+was found to be important for predicting cell malignancy in the breast cancer.
+
+```{r, fig.align='center', fig.width=7}
+plots <- familiar::plot_ice(object=binomial_model,
+                            data=binomial_data,
+                            features="cell_shape_uniformity")
+
+grid::grid.newpage()
+grid::grid.draw(plots[[1]])
+```
+The ICE plot shows multiple curves for individual samples, as well as their
+average, the partial dependence plot as a somewhat thicker curve. The ICE plot
+indicates that an increase in cell shape uniformity is associated by the model
+with a rise in malignancy.
+
+It also shows novelty, which is a measure of how out-of-distribution the value
+is. Novelty is computed using extended isolation forests [@Hariri2019], and is
+the average normalised height at which a sample is found in a terminal leaf node
+of the trees in the isolation forest [@Liu2008-kw]. Novelty values range between
+`0.00` and `1.00`. Some care in interpretation is needed. While increasing
+novelty values represents instances that lie further from the distribution, the
+values that represent in-distribution instances may vary. In the ICE plot above,
+novelty values range between `0.40` and `0.60`. In fact, the median novelty
+value for the training instances are `0.47` with an interquartile range of
+`0.07`. None of the points in ICE plot can therefore be considered
+out-of-distribution.
+
+It is possible to anchor the curves in the ICE plot to a specific feature value.
+This allows for assessing the model response for individual instances versus a
+fixed value. In effect this can reduce some of the offset caused by other
+features for instance, and may help to elucidate the observed behaviour:
+
+```{r, fig.align='center', fig.width=7}
+plots <- familiar::plot_ice(object=binomial_model,
+                            data=binomial_data,
+                            features="cell_shape_uniformity",
+                            anchor_values=list("cell_shape_uniformity"=10.0))
+
+grid::grid.newpage()
+grid::grid.draw(plots[[1]])
+```
+
+In the plot above, we have anchored the values at `cell_shape_uniformity=10`,
+which is the maximum value that this feature can take. All curves are then drawn
+relative to the predicted probability found for this particular value. 
+
+It is also possible to show the partial dependence of two features at the same
+time:
+
+```{r, fig.align='center', fig.width=7}
+plots <- familiar::plot_ice(object=binomial_model,
+                            data=binomial_data,
+                            features=c("cell_shape_uniformity", "bare_nuclei"))
+
+grid::grid.newpage()
+grid::grid.draw(plots[[1]])
+```
+The partial dependence plot above shows the `cell_shape_uniformity` along the
+x-axis and `bare_nuclei` along the y-axis.  Higher intensities indicate higher
+expected probability of malignancy. This indicates that higher values of
+`cell_shape_uniformity` clearly affect the predicted malignancy probability.
+Higher values of `bare_nuclei` also lead to higher malignancy probabilities, but
+the effect is less pronounced. The size of the points is indicated by the
+novelty scores.
+
+It also possible to anchor 2D partial dependence plots. 
+
+```{r, fig.align='center', fig.width=7}
+plots <- familiar::plot_ice(object=binomial_model,
+                            data=binomial_data,
+                            features=c("cell_shape_uniformity", "bare_nuclei"),
+                            anchor_values=list("cell_shape_uniformity"=10.0,
+                                               "bare_nuclei"=10.0),
+                            show_novelty=FALSE)
+
+grid::grid.newpage()
+grid::grid.draw(plots[[1]])
+```
+We disabled novelty (`show_novelty=FALSE`) for plotting the 2D anchored plot.
+This changes the appearance of the plot, which now consists of coloured
+rectangles. The white dots indicate the sampled values.
+
+Familiar automatically determines the values at which numerical features are
+sampled based on their distribution in the development dataset. Such values can
+also be manually set using the `feature_x_range` and `feature_y_range`
+arguments. Whereas for the breast cancer dataset the features are linearly
+sampled, for the `nodes` feature in the colon cancer dataset this is not the
+case:
+
+```{r, fig.align='center', fig.width=7}
+plots <- familiar::plot_ice(object=survival_model,
+                            data=survival_data,
+                            features=c("nodes", "rx"),
+                            evaluation_times=1000,
+                            show_novelty=FALSE)
+
+grid::grid.newpage()
+grid::grid.draw(plots[[1]])
+```
+Here we observe that the number of nodes was not sampled linearly. Survival
+probability at 1000 days drops with an increase in nodes. Moreover, the model
+predicts that patients in the Levamisole `Lev` and observation `Obs` arms
+have lower survival probabilities overall.
 
 # Feature and sample similarity
+
+Highly similar features can carry redundant information for a model. This can be
+visualised using similarity heatmaps:
+
+```{r, fig.align='center', fig.width=7}
+plots <- familiar::plot_feature_similarity(object=binomial_model,
+                                           data=binomial_data,
+                                           feature_similarity_metric="spearman")
+
+grid::grid.newpage()
+grid::grid.draw(plots[[1]])
+```
+The heatmap displays the spearman correlation coefficient between the different
+features. The features are also ordered by similarity, so that clusters of
+similar features can be identified. Note that the dendrograms depict cluster
+distance, i.e. $1-|\rho|$ for the spearman correlation coefficient.
+
+It is also possible to view the sample clustering. This can be used to identify
+if samples are readily stratified into clusters, that may or may not correlate
+to the endpoint of interest. For the breast cancer dataset, this yields the
+following heatmap:
+```{r, fig.align='center', fig.width=7}
+plots <- familiar::plot_sample_clustering(object=binomial_model,
+                                          data=binomial_data,
+                                          feature_similarity_metric="spearman")
+
+grid::grid.newpage()
+grid::grid.draw(plots[[1]])
+```
+As may be observed, samples in the breast cancer dataset form two main clusters
+that correspond closely to cell malignancy. The top dendrogram is the same as
+for feature clustering, as it should be. The right dendrogram is formed after
+computing Gower's distance between samples (by default). The heatmap itself
+shows normalised values for the features, based on normalisation and
+transformation parameters obtained during model development.
+
+Normalisation options can be altered by changing the `show_normalised_data`
+argument. In the breast cancer dataset all features have the same range, so we
+can also show the data directly:
+
+```{r, fig.align='center', fig.width=7}
+plots <- familiar::plot_sample_clustering(object=binomial_model,
+                                          data=binomial_data,
+                                          feature_similarity_metric="spearman",
+                                          show_normalised_data="none")
+
+grid::grid.newpage()
+grid::grid.draw(plots[[1]])
+```
