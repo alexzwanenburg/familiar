@@ -17,10 +17,10 @@ vignette: >
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-When we train a model we usually want to know how good the model is. Model
+When we train a model, we usually want to know how good the model is. Model
 performance is assessed using different metrics that quantify how well a model
 discriminates cases, stratifies groups or predicts values. `familiar` implements
-many metrics that typically used to assess the performance of categorical,
+metrics that are typically used to assess the performance of categorical,
 regression and survival models.
 
 # Categorical outcomes
@@ -47,7 +47,7 @@ Performance metrics for models with categorical outcomes, i.e. `binomial` and
 | specificity                             | `specificity`, `tnr`, `true_negative_rate`           |       ×       |
 | Youden's J                              | `youden_j`, `youden_index`                           |       ×       |
 
-: Overview of performance metrics for categorical outcomes. Some contingency
+Table: Overview of performance metrics for categorical outcomes. Some contingency
 table-based metrics require averaging for `multinomial` outcomes as their
 original definition only covers `binomial` problems with two classes.
 
@@ -58,11 +58,11 @@ area under the curve created by plotting the true positive rate (sensitivity)
 against the false positive rate (1-specificity). TPR and FPR are derived from a
 contingency table, which is created by comparing predicted class probabilities
 against a threshold. The receiver-operating curve is created by iterating over1
-threshold values. The AUC of a model that predicts perfectly is $1.0$, whereas
+threshold values. The AUC of a model that predicts perfectly is $1.0$, while
 $0.5$ indicates predictions that are no better than random.
 
 The implementation in `familiar` does not use the ROC curve to compute the AUC.
-Instead an algebraic equation by @Hand2001-ij is used. For `multinomial`
+Instead, an algebraic equation by @Hand2001-ij is used. For `multinomial`
 outcomes the AUC is computed for each pairwise comparison of outcome classes,
 and averaged [@Hand2001-ij].
 
@@ -98,13 +98,13 @@ Metrics based on the contingency table use two or more of the four categories to
 characterise model performance. The extension from two classes (`binomial`) to
 more (`multinomial`) is often not trivial. For many metrics, `familiar` uses a
 one-versus-all approach. Here, all classes are iteratively used as the
-'positive' class, with the remainder grouped as 'negative'. Three options can be
+'positive' class, with the rest grouped as 'negative'. Three options can be
 used to obtain performance values for `multinomial` problems, with an
 implementation similar to that of `scikit.learn`:
 
 -   `micro`: The number of true positives, true negatives, false positives and
     false negatives are computed for each class iteration, and then summed over
-    all classes. The score is subsequently calculated.
+    all classes. The score is calculated afterwards.
 
 -   `macro`: A score is computed for each class iteration, and then averaged.
 
@@ -215,7 +215,7 @@ observed positive classes that were also predicted to be positive:
 $s_{recall} = TP / (TP + FN)$.
 
 Recall is not invariant to class permutations and averaging is performed for
-`multinomial` outcomes. Both `micro` and `weighted`-averaging effectively
+`multinomial` outcomes. Both `micro` and `weighted` averaging effectively
 compute the accuracy.
 
 ### Specificity
@@ -232,7 +232,7 @@ for `multinomial` outcomes.
 Youden's J statistic [@Youden1950-no] is the sum of recall and specificity minus
 1: $s_{youden} = TP / (TP + FN) + TN / (TN + FP) - 1$.
 
-Youden's J statistic is not invariant to class permutatiosn and averaging is
+Youden's J statistic is not invariant to class permutations and averaging is
 performed for `multinomial` outcomes.
 
 For `binomial` problems, informedness and the Youden J statistic are the same.
@@ -325,7 +325,7 @@ listed below.
 The concordance index assesses ordering between observed and predicted values.
 Let $T$ be observed times, $c$ the censoring status ($0$: no observed event;
 $1$: event observed) and $\hat{T}$ predicted times. Concordance between all
-pairs of values is determined as follows *reference missing*:
+pairs of values is determined as follows [@Pencina2004-ii]:
 
 -   Concordant: a pair is concordant if $T_i < T_j$ and $\hat{T}_i < \hat{T}_j$
     (provided $c_i=1$), or if $T_i > T_j$ and $\hat{T}_i > \hat{T}_j$ (provided
