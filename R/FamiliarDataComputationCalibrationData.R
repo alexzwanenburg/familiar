@@ -896,7 +896,7 @@ setMethod("extract_calibration_data", signature(object="familiarEnsemble"),
 .compute_calibration_hosmer_lemeshow <- function(calibration_data){
   
   # Suppress NOTES due to non-standard evaluation in data.table
-  observed <- expected <- n_g <- hm_group <- statistic <- n_groups <- p_value <- NULL
+  observed <- expected <- n_g <- hm_group <- statistic <- n_groups <- NULL
   
   # Check for empty calibration tables
   if(is_empty(calibration_data)) return(NULL)
@@ -905,7 +905,9 @@ setMethod("extract_calibration_data", signature(object="familiarEnsemble"),
   calibration_data <- data.table::copy(calibration_data)
   
   # Compute test statistic for each group
-  calibration_data[, "hm_group":=(observed-expected)^2*n_g / (expected * (1-expected))]
+  # calibration_data[, "hm_group":=(observed-expected)^2*n_g / (expected * (1-expected))]
+  calibration_data[, "hm_group":=..compute_calibration_test_statistic(observed, expected, n_g),
+                   by=seq_len(nrow(calibration_data))]
   
   # Compute test statistic for each time point
   gof_table <- calibration_data[, list(statistic=sum(hm_group, na.rm=TRUE), n_groups=.N),
@@ -931,6 +933,51 @@ setMethod("extract_calibration_data", signature(object="familiarEnsemble"),
 }
 
 
+..compute_calibration_test_statistic <- function(observed, expected, n_g, method="approximate"){
+  
+  if(!method %in% c("exact", "approximate")){
+    ..error_reached_unreachable_code("..compute_hm_test_statistic: method should be exact or approximate")
+  }
+  
+  if(method == "exact"){
+    # Use exact computation for comparison. Note that this has asymptotic
+    # behaviour for expected -> 0 and expected -> 1.
+    value <- (observed-expected)^2*n_g / (expected * (1-expected))
+    
+    return(value)
+    
+  } else if(method=="approximate"){
+    # Use exact computation for comparison.
+    exact_value <- (observed-expected)^2*n_g / (expected * (1-expected))
+    if(!is.finite(exact_value)) exact_value <- Inf
+    
+    if(expected <= 0.05){
+      
+      # Use Taylor series for 1/(x * (1-x)) to second order at 0.05.
+      value <- n_g * (expected-observed)^2 * 400 *
+               (1/19 - 360/361 * (expected - 1/20))
+      
+      if(exact_value < value) value <- exact_value
+      if(value < 0.0) value <- 0.0
+      
+    } else if(expected >= 0.95){
+      
+      # Use Taylor series for 1/(x * (1-x)) to first order at 0.95.
+      value <- n_g * (expected-observed)^2 * 400 *
+               (1/19 + 360/361 * (expected - 19/20))
+      
+      if(exact_value < value) value <- exact_value
+      if(value < 0.0) value <- 0.0
+      
+    } else {
+      # Use exact computation in between.
+      value <- exact_value
+    }
+    
+    return(value)
+  }
+}
+
 
 .compute_calibration_nam_dagostino <- function(calibration_data){
   # Nam-D'Agostino and Greenwood-Nam-D'Agostino tests. See Demler et al. 2015.
@@ -947,8 +994,9 @@ setMethod("extract_calibration_data", signature(object="familiarEnsemble"),
   if(is_empty(calibration_data)) return(NULL)
   
   # Compute test statistic for each group.
-  calibration_data[, ":="("nd_group"=(observed-expected)^2*n_g / (expected * (1-expected)),
-                          "gnd_group"=(observed-expected)^2 / km_var)]
+  calibration_data[, ":="("nd_group"=..compute_calibration_test_statistic(observed, expected, n_g),
+                          "gnd_group"=(observed-expected)^2 / km_var),
+                   by=seq_len(nrow(calibration_data))]
   
   # Remove gnd_group that are infinite (which occurs when observed==0.000)
   calibration_data[!is.finite(gnd_group), "gnd_group":=0]
