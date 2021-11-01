@@ -121,7 +121,7 @@
     socket_server_process <- .get_socket_server_process_handle()
     
     # Assign the data to socket server process so that its available later.
-    socket_server_process$run(function(data) { assign(x="master_data", value=data, envir="familiar_global_env") },
+    socket_server_process$run(function(data) { assign(x="master_data", value=data, envir=.GlobalEnv) },
                               args=list("data"=data))
     
     # Finally, activate the server subroutine.
@@ -262,7 +262,7 @@ get_data_from_backend <- function(backend_type=NULL, server_port=NULL, sample_id
     # that its accessible later.
     socket_server_process$run(function(feature_info_list) {
       # Assign locally.
-      assign(x="master_feature_info_list", value=feature_info_list, envir=familiar_global_env)
+      assign(x="master_feature_info_list", value=feature_info_list, envir=.GlobalEnv)
        
     }, args=list("feature_info_list"=feature_info_list))
     
@@ -469,7 +469,7 @@ start_socket_server_process <- function(server_port=NULL){
       library(familiar)
       
       # Assign the socket server port to the familiar global environment.
-      assign(x="server_port", value=server_port, envir=familiar_global_env)
+      assign(x="server_port", value=server_port, envir=.GlobalEnv)
 
     }, args=list("server_port"=server_port))
     
@@ -531,8 +531,8 @@ start_socket_server_process <- function(server_port=NULL){
   # Ensure that server functions are present on the server process. It is not
   # able to read them from familiar directly.
   socket_server_process$run(function(FUN) {
-    assign(x="socket_server_execution_loop", value=FUN[[1]])
-    assign(x="socket_server_handshake", value=FUN[[2]])
+    assign(x="socket_server_execution_loop", value=FUN[[1]], envir=.GlobalEnv)
+    assign(x="socket_server_handshake", value=FUN[[2]], envir=.GlobalEnv)
   }, args=list("FUN"=list(socket_server_execution_loop,
                           socket_server_handshake)))
   
