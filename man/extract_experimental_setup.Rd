@@ -4,7 +4,12 @@
 \alias{extract_experimental_setup}
 \title{Parse experimental design}
 \usage{
-extract_experimental_setup(experimental_design, file_dir, verbose = TRUE)
+extract_experimental_setup(
+  experimental_design,
+  file_dir,
+  message_indent = 0L,
+  verbose = TRUE
+)
 }
 \arguments{
 \item{experimental_design}{(\strong{required}) Defines what the experiment looks
@@ -58,6 +63,10 @@ path to a file containing iterations, which is named \verb{####_iterations.RDS}
 by convention. This path can be relative to the directory of the current
 experiment (\code{experiment_dir}), or an absolute path. The absolute path may
 thus also point to a file from a different experiment.}
+
+\item{message_indent}{Spacing inserted before messages.}
+
+\item{verbose}{Sets verbosity.}
 }
 \value{
 data.table with subsampler information at different levels of the

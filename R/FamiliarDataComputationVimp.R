@@ -48,10 +48,9 @@ setMethod("extract_model_vimp", signature(object="familiarEnsemble"),
                    ...){
             
             # Message extraction start
-            if(verbose){
-              logger.message(paste0("Extracting variable importance obtained from the models."),
-                             indent=message_indent)
-            }
+            logger.message(paste0("Extracting variable importance obtained from the models."),
+                           indent=message_indent,
+                           verbose=verbose)
             
             # Test if models are properly loaded
             if(!is_model_loaded(object=object)) ..error_ensemble_models_not_loaded()
@@ -187,10 +186,9 @@ setMethod("extract_fs_vimp", signature(object="familiarEnsemble"),
             if(inherits(file_paths, "error") | inherits(project_list, "error")) return(NULL)
             
             # Message extraction start
-            if(verbose){
-              logger.message(paste0("Extracting variable importance obtained during feature selection."),
-                             indent=message_indent)
-            }
+            logger.message(paste0("Extracting variable importance obtained during feature selection."),
+                           indent=message_indent,
+                           verbose=verbose)
             
             # Define the run table -> at the pooling level
             run <- .get_run_list(iteration_list=project_list$iter_list,

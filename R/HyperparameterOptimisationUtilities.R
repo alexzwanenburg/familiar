@@ -302,10 +302,9 @@
                                               ...)
     }
     
-    if(verbose){
-      logger.message(paste0("Computing variable importance for ", length(bootstraps), " bootstraps."),
-                     indent=message_indent)
-    }
+    logger.message(paste0("Computing variable importance for ", length(bootstraps), " bootstraps."),
+                   indent=message_indent,
+                   verbose=verbose)
     
     # Iterate over data.
     vimp_list <- fam_lapply(cl=cl,

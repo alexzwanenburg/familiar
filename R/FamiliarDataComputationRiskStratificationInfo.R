@@ -33,10 +33,9 @@ setMethod("extract_risk_stratification_info", signature(object="familiarEnsemble
             if(!object@outcome_type %in% c("survival")) return(NULL)
             
             # Message extraction start
-            if(verbose){
-              logger.message(paste0("Extracting stratification information."),
-                             indent=message_indent)
-            }
+            logger.message(paste0("Extracting stratification information."),
+                           indent=message_indent,
+                           verbose=verbose)
             
             # Check the level detail.
             detail_level <- .parse_detail_level(x = detail_level,

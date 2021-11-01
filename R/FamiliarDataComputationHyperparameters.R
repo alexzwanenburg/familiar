@@ -29,10 +29,9 @@ setMethod("extract_hyperparameters", signature(object="familiarEnsemble"),
             # Extracts hyper-parameters from each model and collects them.
             
             # Message extraction start
-            if(verbose){
-              logger.message(paste0("Extracting hyperparameters from the models in the ensemble."),
-                             indent=message_indent)
-            }
+            logger.message(paste0("Extracting hyperparameters from the models in the ensemble."),
+                           indent=message_indent,
+                           verbose=verbose)
             
             # Test if models are properly loaded
             if(!is_model_loaded(object=object)) ..error_ensemble_models_not_loaded()

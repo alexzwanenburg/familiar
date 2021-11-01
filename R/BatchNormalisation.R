@@ -1,4 +1,4 @@
-add_batch_normalisation_parameters <- function(cl=NULL, feature_info_list, data_obj, settings=NULL, batch_normalisation_method=NULL){
+add_batch_normalisation_parameters <- function(cl=NULL, feature_info_list, data_obj, settings=NULL, batch_normalisation_method=NULL, progress_bar=FALSE){
   # Find batch normalisation parameters and add them to the feature_info_list
 
   # Check if the feature_info_list is empty. This may occur for empty models.
@@ -64,7 +64,7 @@ add_batch_normalisation_parameters <- function(cl=NULL, feature_info_list, data_
                                                                                     data=data_obj@data,
                                                                                     batches=unknown_batches,
                                                                                     batch_normalisation_method=batch_normalisation_method,
-                                                                                    progress_bar=FALSE)
+                                                                                    progress_bar=progress_bar)
     
   } else if(batch_normalisation_method %in% .get_available_batch_normalisation_methods("combat")){
     updated_feature_info_list <- batch_normalise.set_combat_normalisation_parameters(cl=cl,
@@ -73,7 +73,7 @@ add_batch_normalisation_parameters <- function(cl=NULL, feature_info_list, data_
                                                                                      data=data_obj@data,
                                                                                      batches=unknown_batches,
                                                                                      batch_normalisation_method=batch_normalisation_method,
-                                                                                     progress_bar=FALSE)
+                                                                                     progress_bar=progress_bar)
     
   } else{
     ..error_reached_unreachable_code("add_batch_normalisation_parameters_unknown_batch_normalisation_method")
@@ -88,7 +88,7 @@ add_batch_normalisation_parameters <- function(cl=NULL, feature_info_list, data_
                                                                                          data=data_obj@data,
                                                                                          batches=unknown_batches,
                                                                                          batch_normalisation_method="none",
-                                                                                         progress_bar=FALSE))
+                                                                                         progress_bar=progress_bar))
   
   # Iterate over features to resolve any unset batch-normalisation parameters,
   # e.g. due to low sample counts. Check if any normalisation parameters could

@@ -67,9 +67,9 @@ setMethod("extract_sample_similarity", signature(object="familiarEnsemble", data
                    ...){
             
             # Message extraction start
-            if(verbose){
-              logger.message(paste0("Computing pairwise similarity between samples."), indent=message_indent)
-            }
+            logger.message(paste0("Computing pairwise similarity between samples."),
+                           indent=message_indent,
+                           verbose=verbose)
             
             # Obtain sample cluster method from stored settings, if required.
             if(is.waive(sample_cluster_method)) sample_cluster_method <- object@settings$sample_cluster_method

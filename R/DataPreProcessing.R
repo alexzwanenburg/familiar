@@ -22,7 +22,12 @@ get_feature_info_list <- function(run){
 }
 
 
-check_pre_processing <- function(cl, data_id, file_paths, project_id){
+check_pre_processing <- function(cl,
+                                 data_id,
+                                 file_paths,
+                                 project_id,
+                                 message_indent=0L,
+                                 verbose=FALSE){
 
   # Get the feature info list from the backend
   feature_info_list <- get_feature_info_from_backend(data_id=waiver(),
@@ -52,12 +57,16 @@ check_pre_processing <- function(cl, data_id, file_paths, project_id){
     # Determine if the pre-processing data has already been stored
     if(!is.null(feature_info_list[[list_name]])) next()
     
-    logger.message(paste0("\nPre-processing: Starting preprocessing for run ", run_id, " of ", length(all_runs), "."))
+    logger.message(paste0("\nPre-processing: Starting preprocessing for run ", run_id, " of ", length(all_runs), "."),
+                   indent=message_indent,
+                   verbose=verbose)
     
     # Find pre-processing parameters
     feature_info_list[[list_name]] <- determine_pre_processing_parameters(cl=cl,
                                                                           data_id=pre_process_data_id,
-                                                                          run_id=run_id)
+                                                                          run_id=run_id,
+                                                                          message_indent=message_indent+1L,
+                                                                          verbose=verbose)
 
     # Write to file
     saveRDS(feature_info_list, file=feature_info_file)
@@ -69,7 +78,7 @@ check_pre_processing <- function(cl, data_id, file_paths, project_id){
 
 
 
-determine_pre_processing_parameters <- function(cl, data_id, run_id){
+determine_pre_processing_parameters <- function(cl, data_id, run_id, message_indent=0L, verbose=TRUE){
 
   # Get settings file
   settings <- get_settings()
@@ -117,13 +126,15 @@ determine_pre_processing_parameters <- function(cl, data_id, run_id){
                                              data=data,
                                              feature_info_list=feature_info_list,
                                              settings=settings,
-                                             verbose=TRUE))
+                                             message_indent=message_indent,
+                                             verbose=verbose))
 }
 
 .determine_preprocessing_parameters <- function(cl=NULL,
                                                 data,
                                                 feature_info_list,
                                                 settings,
+                                                message_indent=0L,
                                                 verbose=FALSE){
 
   if(!is(data, "dataObject")) ..error_reached_unreachable_code(".determine_preprocessing_parameters: data is not a dataObject.")
@@ -132,30 +143,30 @@ determine_pre_processing_parameters <- function(cl, data_id, run_id){
   
   
   ##### Remove samples with missing outcome data #####
-  if(verbose){
-    n_samples_current <- data.table::uniqueN(data@data, by=get_id_columns(id_depth="sample"))
-    logger.message(paste0("Pre-processing: ", n_samples_current, " samples were initially available."))
-  }
+  n_samples_current <- data.table::uniqueN(data@data, by=get_id_columns(id_depth="sample"))
+  logger.message(paste0("Pre-processing: ", n_samples_current, " samples were initially available."),
+                 indent=message_indent,
+                 verbose=verbose)
   
   # Remove all samples with missing outcome data
   data <- filter_missing_outcome(data=data, is_validation=FALSE)
   if(is_empty(data)) stop("The provided training dataset lacks outcome data.")
   
-  if(verbose){
-    n_samples_remain <- data.table::uniqueN(data@data, by=get_id_columns(id_depth="sample"))
-    
-    n_samples_removed <- n_samples_current - n_samples_remain
-    logger.message(paste0("Pre-processing: ", n_samples_removed,
-                          " samples were removed because of missing outcome data. ",
-                          n_samples_remain, " samples remain."))
-  }
+  n_samples_remain <- data.table::uniqueN(data@data, by=get_id_columns(id_depth="sample"))
+  n_samples_removed <- n_samples_current - n_samples_remain
+  
+  logger.message(paste0("Pre-processing: ", n_samples_removed,
+                        " samples were removed because of missing outcome data. ",
+                        n_samples_remain, " samples remain."),
+                 indent=message_indent,
+                 verbose=verbose)
   
   
   ##### Remove features with a large fraction of missing values #####
-  if(verbose){
-    n_features_current <- get_n_features(data)
-    logger.message(paste0("Pre-processing: ", n_features_current, " features were initially available."))
-  }
+  n_features_current <- get_n_features(data)
+  logger.message(paste0("Pre-processing: ", n_features_current, " features were initially available."),
+                 indent=message_indent,
+                 verbose=verbose)
   
   # Determine the fraction of missing values
   feature_info_list <- add_missing_value_fractions(cl=cl,
@@ -172,14 +183,14 @@ determine_pre_processing_parameters <- function(cl, data_id, run_id){
                                           "Please investigate missing values in the dataset or increase the missingness ",
                                           "threshold by increasing the feature_max_fraction_missing configuration parameter."))
   
-  if(verbose){
-    # Message how many features were removed
-    logger.message(paste0("Pre-processing: ", n_features_current-length(available_features),
-                          " features were removed because of a high fraction of missing values. ",
-                          length(available_features), " features remain."))
-    
-    n_samples_current <- n_samples_remain
-  }
+  # Message how many features were removed
+  logger.message(paste0("Pre-processing: ", n_features_current-length(available_features),
+                        " features were removed because of a high fraction of missing values. ",
+                        length(available_features), " features remain."),
+                 indent=message_indent,
+                 verbose=verbose)
+  
+  n_samples_current <- n_samples_remain
   
   
   ##### Remove training samples with a large fraction of missing values #####
@@ -191,14 +202,14 @@ determine_pre_processing_parameters <- function(cl, data_id, run_id){
                                  "threshold by increasing the sample_max_fraction_missing configuration parameter."))
   
   # Message how many subjects were removed
-  if(verbose){
-    n_samples_remain <- data.table::uniqueN(data@data, by=get_id_columns(id_depth="sample"))
-    logger.message(paste0("Pre-processing: ", n_samples_current-n_samples_remain,
-                          " samples were removed because of missing feature data. ",
-                          n_samples_remain, " samples remain."))
-    
-    n_features_current <- length(available_features)
-  }
+  n_samples_remain <- data.table::uniqueN(data@data, by=get_id_columns(id_depth="sample"))
+  logger.message(paste0("Pre-processing: ", n_samples_current-n_samples_remain,
+                        " samples were removed because of missing feature data. ",
+                        n_samples_remain, " samples remain."),
+                 indent=message_indent,
+                 verbose=verbose)
+  
+  n_features_current <- length(available_features)
   
   
   ##### Remove invariant features #####
@@ -211,18 +222,18 @@ determine_pre_processing_parameters <- function(cl, data_id, run_id){
   data <- filter_features(data=data, available_features=available_features)
   if(!has_feature_data(data)) stop(paste0("Remaining features in the dataset only have a single value for all samples and cannot be used for training."))
   
-  if(verbose){
-    # Message number of features removed by the no-variance filter.
-    logger.message(paste0("Pre-processing: ", n_features_current - length(available_features),
-                          " features were removed due to invariance. ",
-                          length(available_features), " features remain."))
-  }
+  # Message number of features removed by the no-variance filter.
+  logger.message(paste0("Pre-processing: ", n_features_current - length(available_features),
+                        " features were removed due to invariance. ",
+                        length(available_features), " features remain."),
+                 indent=message_indent,
+                 verbose=verbose)
   
   
   ##### Add feature distribution data ------------------------------------------
-  if(verbose){
-    logger.message(paste0("Pre-processing: Adding value distribution statistics to features."))
-  }
+  logger.message(paste0("Pre-processing: Adding value distribution statistics to features."),
+                 indent=message_indent,
+                 verbose=verbose)
     
   # Add feature distribution data
   feature_info_list <- compute_feature_distribution_data(cl=cl, feature_info_list=feature_info_list, data_obj=data)
@@ -230,8 +241,10 @@ determine_pre_processing_parameters <- function(cl, data_id, run_id){
   
   
   ##### Transform features #####
-  if(settings$prep$transform_method!="none" & verbose){
-    logger.message("Pre-processing: Performing transformations to normalise feature value distributions.")
+  if(settings$prep$transform_method!="none"){
+    logger.message("Pre-processing: Performing transformations to normalise feature value distributions.",
+                   indent=message_indent,
+                   verbose=verbose)
   }
   
   # Add transformation parameters to the feature information list
@@ -240,8 +253,10 @@ determine_pre_processing_parameters <- function(cl, data_id, run_id){
   # Apply transformation before normalisation
   data <- transform_features(data=data, feature_info_list=feature_info_list)
   
-  if(settings$prep$transform_method!="none" & verbose){
-    logger.message("Pre-processing: Feature distributions have been transformed for normalisation.")
+  if(settings$prep$transform_method!="none"){
+    logger.message("Pre-processing: Feature distributions have been transformed for normalisation.",
+                   indent=message_indent,
+                   verbose=verbose)
   }
   
   
@@ -263,19 +278,21 @@ determine_pre_processing_parameters <- function(cl, data_id, run_id){
                                             "and were therefore all removed. Please investigate your data, or increase the threshold ",
                                             "through the low_var_minimum_variance_threshold configuration parameter."))
     
-    if(verbose){
-      # Message number of features removed by the low-variance filter.
-      logger.message(paste0("Pre-processing: ", n_features_current - length(available_features),
-                            " features were removed due to low variance. ",
-                            length(available_features), " features remain."))
-    }
+    # Message number of features removed by the low-variance filter.
+    logger.message(paste0("Pre-processing: ", n_features_current - length(available_features),
+                          " features were removed due to low variance. ",
+                          length(available_features), " features remain."),
+                   indent=message_indent,
+                   verbose=verbose)
   }
   
   
   
   ##### Normalise features #####
-  if(settings$prep$normalisation_method!="none" & verbose){
-    logger.message("Pre-processing: Extracting normalisation parameters from feature data.")
+  if(settings$prep$normalisation_method!="none"){
+    logger.message("Pre-processing: Extracting normalisation parameters from feature data.",
+                   indent=message_indent,
+                   verbose=verbose)
   }
   
   # Add normalisation parameters to the feature information list
@@ -285,31 +302,38 @@ determine_pre_processing_parameters <- function(cl, data_id, run_id){
                                                     settings=settings)
 
   # Apply normalisation to data before clustering
-  data          <- normalise_features(data=data,
-                                      feature_info_list=feature_info_list)
+  data <- normalise_features(data=data,
+                             feature_info_list=feature_info_list)
   
-  if(settings$prep$normalisation_method!="none" & verbose){
-    logger.message("Pre-processing: Feature data were normalised.")
+  if(settings$prep$normalisation_method!="none"){
+    logger.message("Pre-processing: Feature data were normalised.",
+                   indent=message_indent,
+                   verbose=verbose)
   }
   
   
   ##### Batch normalise features #####
-  if(settings$prep$batch_normalisation_method!="none" & verbose){
-    logger.message("Pre-processing: Extracting batch normalisation parameters from feature data.")
+  if(settings$prep$batch_normalisation_method!="none"){
+    logger.message("Pre-processing: Extracting batch normalisation parameters from feature data.",
+                   indent=message_indent,
+                   verbose=verbose)
   }
   
   # Add batch normalisation parameters to the feature information list.
   feature_info_list <- add_batch_normalisation_parameters(cl=cl, 
                                                           feature_info_list=feature_info_list,
                                                           data_obj=data,
-                                                          settings=settings)
+                                                          settings=settings,
+                                                          progress_bar=verbose)
   
   # Batch-normalise feature values
   data <- batch_normalise_features(data=data,
                                    feature_info_list=feature_info_list)
   
-  if(settings$prep$batch_normalisation_method!="none" & verbose){
-    logger.message("Pre-processing: Feature data were batch-normalised.")
+  if(settings$prep$batch_normalisation_method!="none"){
+    logger.message("Pre-processing: Feature data were batch-normalised.",
+                   indent=message_indent,
+                   verbose=verbose)
   }
   
   
@@ -332,12 +356,12 @@ determine_pre_processing_parameters <- function(cl, data_id, run_id){
                                             "and were therefore all removed. Please investigate your data, or decrease the threshold ",
                                             "through the robustness_threshold_value configuration parameter."))
     
-    if(verbose){
     # Message number of features removed by the robustness filter.
-      logger.message(paste0("Pre-processing: ", n_features_current - length(available_features),
-                            " features were removed due to low robustness. ",
-                            length(available_features), " features remain."))
-    }
+    logger.message(paste0("Pre-processing: ", n_features_current - length(available_features),
+                          " features were removed due to low robustness. ",
+                          length(available_features), " features remain."),
+                   indent=message_indent,
+                   verbose=verbose)
   }
   
   
@@ -359,17 +383,19 @@ determine_pre_processing_parameters <- function(cl, data_id, run_id){
                                             "and were therefore all removed. Please investigate your data, or increase the threshold ",
                                             "through the univariate_test_threshold configuration parameter."))
     
-    if(verbose){
-      # Message number of features removed by the importance filter.
-      logger.message(paste0("Pre-processing: ", n_features_current - length(available_features),
-                            " features were removed due to low importance. ",
-                            length(available_features), " features remain."))
-    }
+    # Message number of features removed by the importance filter.
+    logger.message(paste0("Pre-processing: ", n_features_current - length(available_features),
+                          " features were removed due to low importance. ",
+                          length(available_features), " features remain."),
+                   indent=message_indent,
+                   verbose=verbose)
   }
   
   
   ##### Impute missing values #####
-  if(verbose) logger.message("Pre-processing: Adding imputation information to features.")
+  logger.message("Pre-processing: Adding imputation information to features.",
+                 indent=message_indent,
+                 verbose=verbose)
   
   # Add imputation info
   feature_info_list <- add_imputation_info(cl=cl,
@@ -384,13 +410,16 @@ determine_pre_processing_parameters <- function(cl, data_id, run_id){
   
   
   ##### Cluster features #####
-  if(verbose & settings$prep$cluster_method != "none") logger.message("Pre-processing: Starting clustering of redundant clusters.")
+  if(settings$prep$cluster_method != "none") logger.message("Pre-processing: Starting clustering of redundant clusters.",
+                                                            indent=message_indent,
+                                                            verbose=verbose)
   
   # Extract clustering information
   feature_info_list  <- add_cluster_info(cl=cl,
                                          feature_info_list=feature_info_list,
                                          data_obj=data,
                                          settings=settings,
+                                         message_indent=message_indent,
                                          verbose=verbose)
 
   # Add required features

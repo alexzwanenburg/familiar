@@ -1,5 +1,7 @@
 #' Parse experimental design
 #'
+#' @param message_indent Spacing inserted before messages.
+#' @param verbose Sets verbosity.
 #' @inheritParams .parse_experiment_settings
 #'
 #' @details This function converts the experimental_design string
@@ -9,7 +11,10 @@
 #'
 #' @md
 #' @keywords internal
-extract_experimental_setup <- function(experimental_design, file_dir, verbose=TRUE){
+extract_experimental_setup <- function(experimental_design,
+                                       file_dir,
+                                       message_indent=0L,
+                                       verbose=TRUE){
   
   if(.experimental_design_is_file(file_dir=file_dir, experimental_design=experimental_design)){
     return(waiver())
@@ -28,7 +33,9 @@ extract_experimental_setup <- function(experimental_design, file_dir, verbose=TR
   .check_experimental_design_section_table(section_table=section_table)
   
   # Report experimental design to the user.
-  if(verbose) .report_experimental_design(section_table=section_table)
+  .report_experimental_design(section_table=section_table,
+                              message_indent=message_indent,
+                              verbose=verbose)
   
   return(section_table)
 }
@@ -290,15 +297,20 @@ extract_experimental_setup <- function(experimental_design, file_dir, verbose=TR
 }
 
 
-.report_experimental_design <- function(section_table){
+.report_experimental_design <- function(section_table, message_indent=0L, verbose=TRUE){
   # Suppress NOTES due to non-standard evaluation in data.table
   feat_sel <- model_building <- main_data_id <- NULL
   
   # Report on validation data:
   if(any(section_table$external_validation)){
-    logger.message("Setup report: Validation is external.")
+    logger.message("Setup report: Validation is external.",
+                   indent=message_indent,
+                   verbose=verbose)
+    
   } else{
-    logger.message("Setup report: Validation is internal only.")
+    logger.message("Setup report: Validation is internal only.",
+                   indent=message_indent,
+                   verbose=verbose)
   }
   
   # Report on model building and feature selection
@@ -330,7 +342,9 @@ extract_experimental_setup <- function(experimental_design, file_dir, verbose=TR
       curr_ref_data_id <- dt_sub$ref_data_id[1]
     }
     
-    logger.message(paste0(main_message, collapse=" "))
+    logger.message(paste0(main_message, collapse=" "),
+                   indent=message_indent,
+                   verbose=verbose)
     
   } else {
     # Feature selection first
@@ -363,7 +377,9 @@ extract_experimental_setup <- function(experimental_design, file_dir, verbose=TR
       curr_ref_data_id <- dt_sub$ref_data_id[1]
     }
     
-    logger.message(paste0(main_message, collapse=" "))
+    logger.message(paste0(main_message, collapse=" "),
+                   indent=message_indent,
+                   verbose=verbose)
     
     # Model building second
     main_message <- "Setup report: Model building on"
@@ -395,7 +411,9 @@ extract_experimental_setup <- function(experimental_design, file_dir, verbose=TR
       curr_ref_data_id <- dt_sub$ref_data_id[1]
     }
     
-    logger.message(paste0(main_message, collapse=" "))
+    logger.message(paste0(main_message, collapse=" "),
+                   indent=message_indent,
+                   verbose=verbose)
   }
 }
 

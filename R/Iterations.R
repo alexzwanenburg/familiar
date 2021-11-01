@@ -6,6 +6,8 @@
 #'   levels of the experimental design.
 #' @param settings List of parameter settings. Some of these parameters are
 #'   relevant to creating iterations.
+#' @param message_indent Indenting of messages.
+#' @param verbose Sets verbosity.
 #'
 #' @return A list with the following elements:
 #' * `iter_list`: A list containing iteration data at the different levels of
@@ -16,7 +18,12 @@
 #' 
 #' @md
 #' @keywords internal
-.get_iteration_data <- function(file_dir, data, experiment_setup, settings){
+.get_iteration_data <- function(file_dir,
+                                data,
+                                experiment_setup,
+                                settings,
+                                message_indent=0L,
+                                verbose=TRUE){
   # Get project iterations and project id
 
   if(.experimental_design_is_file(file_dir=file_dir, experimental_design=settings$data$exp_design)){
@@ -41,24 +48,32 @@
                                                experiment_setup=experiment_setup,
                                                settings=settings,
                                                override_external_validation=TRUE,
-                                               iteration_list=iteration_list$iteration_list)
+                                               iteration_list=iteration_list$iteration_list,
+                                               message_indent=message_indent,
+                                               verbose=verbose)
       
       # Save to file and without generating new project id
       project_id <- .save_iterations(file_dir=file_dir,
                                      iteration_list=new_iteration_list,
                                      project_id=iteration_list$project_id,
-                                     experiment_setup=experiment_setup)
+                                     experiment_setup=experiment_setup,
+                                     message_indent=message_indent,
+                                     verbose=verbose)
       
     } else {
       # Create training and validation data iterations
       new_iteration_list <- .create_iterations(data=data,
                                                experiment_setup=experiment_setup,
-                                               settings=settings)
+                                               settings=settings,
+                                               message_indent=message_indent,
+                                               verbose=verbose)
       
       # Save to file and generate project id
       project_id <- .save_iterations(file_dir=file_dir,
                                      iteration_list=new_iteration_list,
-                                     experiment_setup=experiment_setup)
+                                     experiment_setup=experiment_setup,
+                                     message_indent=message_indent,
+                                     verbose=verbose)
     }
   }
   
@@ -171,7 +186,13 @@
 }
 
 
-.create_iterations <- function(data, experiment_setup, settings, override_external_validation=FALSE, iteration_list=NULL){
+.create_iterations <- function(data,
+                               experiment_setup,
+                               settings,
+                               override_external_validation=FALSE,
+                               iteration_list=NULL,
+                               message_indent=0L,
+                               verbose=TRUE){
 
   # Suppress NOTES due to non-standard evaluation in data.table
   main_data_id <- batch_id <- NULL
@@ -189,7 +210,9 @@
   if(is.null(iteration_list)){
     iteration_list     <- list()
     
-    logger.message("Creating iterations: Starting creation of iterations.")
+    logger.message("Creating iterations: Starting creation of iterations.",
+                   indent=message_indent,
+                   verbose=verbose)
     
     while(length(iteration_list) < length(main_data_ids)){
       
@@ -417,7 +440,9 @@
       }
     }
     
-    logger.message("Creating iterations: Finished creation of iterations.")
+    logger.message("Creating iterations: Finished creation of iterations.",
+                   indent=message_indent,
+                   verbose=verbose)
     
   } else if(override_external_validation) {
     
@@ -473,7 +498,13 @@
 
 
 
-.save_iterations <- function(file_dir, iteration_list, project_id=NULL, experiment_setup) {
+.save_iterations <- function(file_dir,
+                             iteration_list,
+                             project_id=NULL,
+                             experiment_setup,
+                             message_indent=0L,
+                             verbose=TRUE) {
+  
   # Check if an existing project identifier is provided, otherwise generate a
   # new one.
   if(is.null(project_id)){
@@ -481,7 +512,9 @@
     project_id <- as.numeric(format(Sys.time(),"%Y%m%d%H%M%S"))
     
     # Message project identifier
-    logger.message(paste0("Creating iterations: New project id is: \'", project_id, "\'."))
+    logger.message(paste0("Creating iterations: New project id is: \'", project_id, "\'."),
+                   indent=message_indent,
+                   verbose=verbose)
   }
   
   # Set file name
@@ -496,7 +529,6 @@
   
   return(project_id)
 }
-
 
 
 

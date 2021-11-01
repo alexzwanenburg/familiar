@@ -60,10 +60,9 @@ setMethod("extract_auc_data", signature(object="familiarEnsemble"),
             if(!object@outcome_type %in% c("binomial", "multinomial")) return(NULL)
             
             # Message start of auc computations
-            if(verbose){
-              logger.message(paste0("Computing receiver-operating characteristic curves."),
-                             indent=message_indent)
-            }
+            logger.message(paste0("Computing receiver-operating characteristic curves."),
+                           indent=message_indent,
+                           verbose=verbose)
             
             # Obtain ensemble method from stored settings, if required.
             if(is.waive(ensemble_method)) ensemble_method <- object@settings$ensemble_method
@@ -215,9 +214,10 @@ setMethod("extract_auc_data", signature(object="familiarEnsemble"),
   # Check if the data has more than 1 row.
   if(nrow(data) <= 1) return(NULL)
   
-  if(length(data_element@identifiers$positive_class) > 1 & progress_bar){
+  if(length(data_element@identifiers$positive_class) > 0){
     logger.message(paste0("Computing ROC and Precision-Recall curves for the \"", data_element@identifiers$positive_class, "\" class."),
-                   indent=message_indent)
+                   indent=message_indent,
+                   verbose=verbose)
   }
   
   # Set test probabilities

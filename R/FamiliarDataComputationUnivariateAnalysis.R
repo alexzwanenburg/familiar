@@ -60,11 +60,10 @@ setMethod("extract_univariate_analysis", signature(object="familiarEnsemble", da
             p_value <- NULL
             
             # Message extraction start
-            if(verbose){
-              logger.message(paste0("Extracting univariate analysis information."),
-                             indent=message_indent)
-            }
-           
+            logger.message(paste0("Extracting univariate analysis information."),
+                           indent=message_indent,
+                           verbose=verbose)
+            
             # Obtain from settings, if unset.
             if(is.waive(icc_type)) icc_type <- object@settings$icc_type
 

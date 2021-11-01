@@ -57,6 +57,9 @@
 #'
 #' @param config_id Identifier for the configuration in case the list or `xml`
 #'   table indicated by `config` contains more than one set of configurations.
+#' @param verbose Indicates verbosity of the results. Default is TRUE, and all
+#'   messages and warnings are returned.
+#'
 #' @inheritDotParams .parse_file_paths -config
 #' @inheritDotParams .parse_experiment_settings -config
 #' @inheritDotParams .parse_setup_settings -config
@@ -75,7 +78,13 @@
 #'
 #' @export
 #' @md
-summon_familiar <- function(formula=NULL, data=NULL, cl=NULL, config=NULL, config_id=1,  ...){
+summon_familiar <- function(formula=NULL,
+                            data=NULL,
+                            cl=NULL,
+                            config=NULL,
+                            config_id=1,
+                            verbose=TRUE,
+                            ...){
   
   # Set options.
   # Disable randomForestSRC OpenMP core use.
@@ -129,7 +138,9 @@ summon_familiar <- function(formula=NULL, data=NULL, cl=NULL, config=NULL, confi
     data <- do.call(.load_data, args=append(list("data"=data), settings$data))
     
     # Update settings
-    settings <- .update_initial_settings(formula=formula, data=data, settings=settings)
+    settings <- .update_initial_settings(formula=formula,
+                                         data=data,
+                                         settings=settings)
   }
   
   # Parse data
@@ -147,7 +158,8 @@ summon_familiar <- function(formula=NULL, data=NULL, cl=NULL, config=NULL, confi
 
   # Derive experimental design
   experiment_setup <- extract_experimental_setup(experimental_design=settings$data$exp_design,
-                                                 file_dir=file_paths$iterations_dir)
+                                                 file_dir=file_paths$iterations_dir,
+                                                 verbose=verbose)
   
   # Check experiment settings
   settings <- .update_experimental_design_settings(section_table=experiment_setup,
@@ -167,7 +179,8 @@ summon_familiar <- function(formula=NULL, data=NULL, cl=NULL, config=NULL, confi
   project_info <- .get_iteration_data(file_dir=file_paths$iterations_dir,
                                       data=data,
                                       experiment_setup=experiment_setup,
-                                      settings=settings)
+                                      settings=settings,
+                                      verbose=verbose)
   
   # In case the iterations are loaded from a iterations file provided by the
   # user, perform some checks on the experimental design given the current data
@@ -238,13 +251,25 @@ summon_familiar <- function(formula=NULL, data=NULL, cl=NULL, config=NULL, confi
   
   
   # Start feature selection
-  run_feature_selection(cl=cl, project_list=project_info, settings=settings, file_paths=file_paths)
+  run_feature_selection(cl=cl,
+                        project_list=project_info,
+                        settings=settings,
+                        file_paths=file_paths,
+                        verbose=verbose)
   
   # Start model building
-  run_model_development(cl=cl, project_list=project_info, settings=settings, file_paths=file_paths)
+  run_model_development(cl=cl,
+                        project_list=project_info,
+                        settings=settings,
+                        file_paths=file_paths,
+                        verbose=verbose)
   
   # Start evaluation
-  run_evaluation(cl=cl, proj_list=project_info, settings=settings, file_paths=file_paths)
+  run_evaluation(cl=cl,
+                 proj_list=project_info,
+                 settings=settings,
+                 file_paths=file_paths,
+                 verbose=verbose)
   
   if(file_paths$is_temporary){
     # Collect all familiarModels, familiarEnsemble, familiarData and

@@ -1,4 +1,9 @@
-run_model_development <- function(cl, project_list, settings, file_paths, message_indent=0L){
+run_model_development <- function(cl,
+                                  project_list,
+                                  settings,
+                                  file_paths,
+                                  message_indent=0L,
+                                  verbose=TRUE){
   # Model building
 
   # Check which data object is required for performing model building
@@ -9,7 +14,9 @@ run_model_development <- function(cl, project_list, settings, file_paths, messag
   check_pre_processing(cl=cl,
                        data_id=mb_data_id,
                        file_paths=file_paths,
-                       project_id=project_list$project_id)
+                       project_id=project_list$project_id,
+                       message_indent=message_indent,
+                       verbose=verbose)
 
   # Get runs
   run_list <- .get_run_list(iteration_list=project_list$iter_list,
@@ -43,7 +50,8 @@ run_model_development <- function(cl, project_list, settings, file_paths, messag
     logger.message(paste0("\nModel building: starting model building using \"",
                           iter_methods$learner, "\" learner, based on \"",
                           iter_methods$fs_method, "\" feature selection."),
-                   indent=message_indent)
+                   indent=message_indent,
+                   verbose=verbose)
     
     # Optimise hyperparameters of models used for model building
     hpo_list <- run_hyperparameter_optimisation(cl=cl,
@@ -53,14 +61,15 @@ run_model_development <- function(cl, project_list, settings, file_paths, messag
                                                 file_paths=file_paths,
                                                 vimp_method=iter_methods$fs_method,
                                                 learner=iter_methods$learner,
-                                                message_indent=message_indent + 1L)
+                                                message_indent=message_indent + 1L,
+                                                verbose=verbose)
     
     # Build models
     fam_lapply_lb(cl=cl_mb,
                   assign="all",
                   X=iter_run_list,
                   FUN=build_model,
-                  progress_bar=TRUE,
+                  progress_bar=verbose,
                   hpo_list=hpo_list)
 
     logger.message(paste0("Model building: model building using \"",

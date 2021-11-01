@@ -58,10 +58,9 @@ setMethod("extract_feature_expression", signature(object="familiarEnsemble", dat
                    verbose=FALSE){
             
             # Message extraction start
-            if(verbose){
-              logger.message(paste0("Compute feature expression."),
-                             indent=message_indent)
-            }
+            logger.message(paste0("Compute feature expression."),
+                           indent=message_indent,
+                           verbose=verbose)
             
             # Obtain evaluation times from the data.
             if(is.waive(evaluation_times) & object@outcome_type %in% c("survival", "competing_risk")){

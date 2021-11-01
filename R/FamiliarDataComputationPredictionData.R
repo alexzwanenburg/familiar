@@ -63,10 +63,9 @@ setMethod("extract_predictions", signature(object="familiarEnsemble"),
             # ensemble predictions.
             
             # Message extraction start
-            if(verbose){
-              logger.message(paste0("Computing ensemble predictions for the dataset."),
-                             indent=message_indent)
-            }
+            logger.message(paste0("Computing ensemble predictions for the dataset."),
+                           indent=message_indent,
+                           verbose=verbose)
             
             # Load evaluation_times from the object settings attribute, if it is not provided.
             if(is.waive(evaluation_times)) evaluation_times <- object@settings$eval_times

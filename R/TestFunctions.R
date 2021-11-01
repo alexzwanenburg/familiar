@@ -4150,6 +4150,7 @@ integrated_test <- function(...,
                                              learner="lasso",
                                              hyperparameter=list("lasso"=hyperparameters),
                                              time_max=1832,
+                                             verbose=debug,
                                              ...))
       
       testthat::expect_equal(is.null(output), FALSE)
@@ -4179,6 +4180,7 @@ integrated_test <- function(...,
                                              hyperparameter=list("lasso"=hyperparameters),
                                              feature_max_fraction_missing=0.95,
                                              time_max=1832,
+                                             verbose=debug,
                                              ...))
       
       testthat::expect_equal(is.null(output), FALSE) 

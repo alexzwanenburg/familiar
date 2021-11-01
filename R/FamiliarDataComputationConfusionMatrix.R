@@ -45,11 +45,9 @@ setMethod("extract_confusion_matrix", signature(object="familiarEnsemble"),
             if(!object@outcome_type %in% c("binomial", "multinomial")) return(NULL)
        
             # Message extraction start
-            if(verbose){
-              logger.message(paste0("Computing confusion matrix."),
-                             indent=message_indent)
-            }
-            
+            logger.message(paste0("Computing confusion matrix."),
+                           indent=message_indent,
+                           verbose=verbose)
             
             # Obtain ensemble method from stored settings, if required.
             if(is.waive(ensemble_method)) ensemble_method <- object@settings$ensemble_method

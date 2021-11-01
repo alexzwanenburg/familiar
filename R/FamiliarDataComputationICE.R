@@ -77,13 +77,15 @@ setMethod("extract_ice", signature(object="familiarEnsemble"),
                    ...){
             
             # Message extraction start
-            if(verbose & is.null(features)){
+            if(is.null(features)){
               logger.message(paste0("Computing individual conditional expectation and partial dependence data for features in the dataset."),
-                             indent=message_indent)
+                             indent=message_indent,
+                             verbose=verbose)
               
-            } else if(verbose){
+            } else {
               logger.message(paste0("Computing individual conditional expectation and partial dependence data for the selected features."),
-                             indent=message_indent)
+                             indent=message_indent,
+                             verbose=verbose)
             }
             
             # Load evaluation_times from the object settings attribute, if it is not provided.
@@ -191,6 +193,7 @@ setMethod("extract_ice", signature(object="familiarEnsemble"),
                          aggregate_results,
                          is_pre_processed=FALSE,
                          cl,
+                         message_indent=0L,
                          verbose=FALSE,
                          ...){
   
@@ -273,7 +276,8 @@ setMethod("extract_ice", signature(object="familiarEnsemble"),
                               data_element=data_elements,
                               MoreArgs=c(list("data"=data,
                                               "object"=object,
-                                              "verbose"=verbose),
+                                              "verbose"=verbose,
+                                              "message_indent"=message_indent),
                                          list(...)),
                               progress_bar=verbose,
                               chopchop=TRUE)
@@ -315,6 +319,8 @@ setMethod("extract_ice", signature(object="familiarEnsemble"),
   # Add feature values.
   data_elements <- add_data_element_identifier(x=data_element,
                                                feature_x_value=feature_x_range)
+  # Mention feature.
+  message_str <- paste0("Computing ICE / PD curves for \"", data_element@identifiers$feature_x, "\"")
   
   if(!is.null(data_element@identifiers$feature_y)){
     feature_y_range <- .create_feature_range(feature_info=object@feature_info,
@@ -326,7 +332,22 @@ setMethod("extract_ice", signature(object="familiarEnsemble"),
     # Add feature values.
     data_elements <- add_data_element_identifier(x=data_elements,
                                                  feature_y_value=feature_y_range)
+    
+    # Mention feature.
+    message_str <- c(message_str, paste0(" and \"", data_element@identifiers$feature_y, "\""))
   }
+  
+  # Add evaluation time.
+  if(length(data_element@identifiers$evaluation_time) > 0){
+    message_str <- c(message_str, paste0(" at time", data_element@identifiers$evaluation_time, "."))
+    
+  } else {
+    message_str <- c(message_str, ".")
+  }
+  
+  logger.message(paste0(message_str, collapse=""),
+                 indent=message_indent,
+                 verbose=verbose)
   
   # Iterate over elements.
   data_elements <- lapply(data_elements,

@@ -4,7 +4,14 @@
 \alias{.get_iteration_data}
 \title{Internal function for creating or retrieving iteration data}
 \usage{
-.get_iteration_data(file_dir, data, experiment_setup, settings)
+.get_iteration_data(
+  file_dir,
+  data,
+  experiment_setup,
+  settings,
+  message_indent = 0L,
+  verbose = TRUE
+)
 }
 \arguments{
 \item{file_dir}{Path to directory where iteration files are stored.}
@@ -16,6 +23,10 @@ levels of the experimental design.}
 
 \item{settings}{List of parameter settings. Some of these parameters are
 relevant to creating iterations.}
+
+\item{message_indent}{Indenting of messages.}
+
+\item{verbose}{Sets verbosity.}
 }
 \value{
 A list with the following elements:

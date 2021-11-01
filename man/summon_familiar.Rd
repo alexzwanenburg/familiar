@@ -10,6 +10,7 @@ summon_familiar(
   cl = NULL,
   config = NULL,
   config_id = 1,
+  verbose = TRUE,
   ...
 )
 }
@@ -50,6 +51,9 @@ arguments derived from the configuration list.}
 
 \item{config_id}{Identifier for the configuration in case the list or \code{xml}
 table indicated by \code{config} contains more than one set of configurations.}
+
+\item{verbose}{Indicates verbosity of the results. Default is TRUE, and all
+messages and warnings are returned.}
 
 \item{...}{
   Arguments passed on to \code{\link[=.parse_file_paths]{.parse_file_paths}}, \code{\link[=.parse_experiment_settings]{.parse_experiment_settings}}, \code{\link[=.parse_setup_settings]{.parse_setup_settings}}, \code{\link[=.parse_preprocessing_settings]{.parse_preprocessing_settings}}, \code{\link[=.parse_feature_selection_settings]{.parse_feature_selection_settings}}, \code{\link[=.parse_model_development_settings]{.parse_model_development_settings}}, \code{\link[=.parse_hyperparameter_optimisation_settings]{.parse_hyperparameter_optimisation_settings}}, \code{\link[=.parse_evaluation_settings]{.parse_evaluation_settings}}

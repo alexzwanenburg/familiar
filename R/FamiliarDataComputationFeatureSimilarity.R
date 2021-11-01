@@ -73,9 +73,9 @@ setMethod("extract_feature_similarity", signature(object="familiarEnsemble", dat
             
             
             # Message extraction start
-            if(verbose){
-              logger.message(paste0("Computing pairwise similarity between features."), indent=message_indent)
-            }
+            logger.message(paste0("Computing pairwise similarity between features."),
+                           indent=message_indent,
+                           verbose=verbose)
             
             # Obtain cluster method from stored settings, if required.
             if(is.waive(feature_cluster_method)) feature_cluster_method <- object@settings$feature_cluster_method
@@ -174,6 +174,7 @@ setMethod("extract_feature_similarity", signature(object="familiarEnsemble", dat
                                         progress_bar=FALSE,
                                         aggregate_results,
                                         n_bootstraps,
+                                        message_indent=0L,
                                         verbose=FALSE,
                                         ...){
   
@@ -231,7 +232,8 @@ setMethod("extract_feature_similarity", signature(object="familiarEnsemble", dat
                                 bootstrap_seed = bootstrap_data$seed,
                                 MoreArgs=list("data"=data,
                                               "cl"=cl,
-                                              "verbose"=verbose),
+                                              "verbose"=verbose,
+                                              "message_indent"=message_indent),
                                 progress_bar=FALSE)
     
   }
@@ -251,6 +253,7 @@ setMethod("extract_feature_similarity", signature(object="familiarEnsemble", dat
                                          data,
                                          bootstrap,
                                          bootstrap_seed,
+                                         message_indent=0L,
                                          verbose=FALSE){
   
   # Bootstrap the data.
@@ -269,6 +272,7 @@ setMethod("extract_feature_similarity", signature(object="familiarEnsemble", dat
                                                                 data_obj=data,
                                                                 feature_columns=feature_columns,
                                                                 similarity_metric=data_element@similarity_metric,
+                                                                message_indent=message_indent + 1L,
                                                                 verbose=verbose)
   
   return(data_element)

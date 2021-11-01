@@ -1436,5 +1436,6 @@ setMethod("..compute_data_element_estimates", signature(x="NULL"),
                         detail_level_str,
                         bootstrap_str,
                         parallel_str),
-                 indent=message_indent)
+                 indent=message_indent,
+                 verbose=verbose)
 }

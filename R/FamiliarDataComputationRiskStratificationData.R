@@ -69,10 +69,9 @@ setMethod("extract_risk_stratification_data", signature(object="familiarEnsemble
             if(!object@outcome_type %in% c("survival")) return(NULL)
             
             # Message extraction start
-            if(verbose){
-              logger.message(paste0("Assessing stratification into risk groups."),
-                             indent=message_indent)
-            }
+            logger.message(paste0("Assessing stratification into risk groups."),
+                           indent=message_indent,
+                           verbose=verbose)
             
             # Load confidence alpha from object settings attribute if not
             # provided externally.

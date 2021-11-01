@@ -20,14 +20,16 @@ learner.find_survival_grouping_thresholds <- function(object, data){
 
     if(cut_off_method == "median"){
       # Identify threshold
-      cutoff <- stats::median(pred_table$predicted_outcome, na.rm=TRUE)
+      # cutoff <- stats::median(pred_table$predicted_outcome, na.rm=TRUE)
+      cutoff <- learner.find_quantile_threshold(object=object,
+                                                pred_table=pred_table,
+                                                quantiles=0.5)
       
     } else if(cut_off_method == "fixed"){
       # Identify thresholds
       cutoff <- learner.find_quantile_threshold(object=object,
                                                 pred_table=pred_table,
-                                                quantiles=settings$eval$strat_quant_threshold,
-                                                learner=object@learner)
+                                                quantiles=settings$eval$strat_quant_threshold)
 
     } else if(cut_off_method == "optimised"){
       # Identify threshold
@@ -57,11 +59,12 @@ learner.find_survival_grouping_thresholds <- function(object, data){
 
 
 
-learner.find_quantile_threshold <- function(object, pred_table, quantiles, learner){
+learner.find_quantile_threshold <- function(object, pred_table, quantiles){
   
   if(get_prediction_type(object=object) %in% c("expected_survival_time")){
     
-    # For time-like predictions, we should use the complements of the provided quantiles.
+    # For time-like predictions, we should use the complements of the provided
+    # quantiles.
     quantiles <- abs(1-quantiles)
     
   }
