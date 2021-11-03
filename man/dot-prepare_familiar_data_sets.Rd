@@ -17,6 +17,8 @@
 \item{only_pooling}{Flag that, if set, forces evaluation of only the
 top-level data, and not e.g. ensembles.}
 
+\item{message_indent}{indent that messages should have.}
+
 \item{verbose}{Sets verbosity}
 }
 \value{
@@ -33,3 +35,4 @@ This function generates the names of familiarData object files, and
 their corresponding generating ensemble, which allows the familiarData
 objects to be created.
 }
+\keyword{internal}

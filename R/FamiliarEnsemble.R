@@ -461,6 +461,7 @@ setMethod("..can_detach_models", signature(ii="missing", object="familiarEnsembl
 #'@param object A `familiarEnsemble` object, or one or more `familiarModel`
 #'  objects that will be internally converted to a `familiarEnsemble` object.
 #'  Paths to such objects can also be provided.
+#'@param dir_path Path to the directory where models are stored.
 #'@param ... Unused arguments.
 #'
 #'@details Ensemble models created by familiar are often written to a directory
@@ -474,7 +475,7 @@ setMethod("..can_detach_models", signature(ii="missing", object="familiarEnsembl
 #'@exportMethod update_model_dir_path
 #'@md
 #'@rdname update_model_dir_path-methods
-setGeneric("update_model_dir_path", function(object, ...) standardGeneric("update_model_dir_path"))
+setGeneric("update_model_dir_path", function(object, dir_path, ...) standardGeneric("update_model_dir_path"))
 
 
 #####update_model_dir_path (familiarEnsemble)#####
