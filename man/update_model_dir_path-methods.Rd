@@ -6,7 +6,7 @@
 \alias{update_model_dir_path,ANY-method}
 \title{Updates model directory path for ensemble objects.}
 \usage{
-update_model_dir_path(object, ...)
+update_model_dir_path(object, dir_path, ...)
 
 \S4method{update_model_dir_path}{familiarEnsemble}(object, dir_path)
 
@@ -16,6 +16,8 @@ update_model_dir_path(object, ...)
 \item{object}{A \code{familiarEnsemble} object, or one or more \code{familiarModel}
 objects that will be internally converted to a \code{familiarEnsemble} object.
 Paths to such objects can also be provided.}
+
+\item{dir_path}{Path to the directory where models are stored.}
 
 \item{...}{Unused arguments.}
 }

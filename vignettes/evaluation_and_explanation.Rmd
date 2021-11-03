@@ -9,7 +9,7 @@ output:
     toc: TRUE
 bibliography: "refs.bib"
 vignette: >
-  %\VignetteIndexEntry{Introducing familiar}
+  %\VignetteIndexEntry{Evaluation and explanation}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
