@@ -810,7 +810,7 @@ setMethod("plot_ice", signature(object="familiarCollection"),
             
             # Check the transparency value,
             .check_number_in_valid_range(x=ice_default_alpha,
-                                         var="ice_default_alpha",
+                                         var_name="ice_default_alpha",
                                          range=c(0.0, 1.0))
             
             # Set plot function.
