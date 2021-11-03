@@ -42,10 +42,12 @@ run_evaluation <- function(cl,
 #' @param cl Cluster for parallel processing.
 #' @param only_pooling Flag that, if set, forces evaluation of only the
 #'   top-level data, and not e.g. ensembles.
+#' @param message_indent indent that messages should have.
 #' @param verbose Sets verbosity
 #'
 #' @return A data.table with created links to created data objects.
-#'
+#' 
+#' @keywords internal
 #' @md
 .prepare_familiar_data_sets <- function(cl=NULL,
                                         only_pooling=FALSE,
