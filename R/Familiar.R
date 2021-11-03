@@ -1,6 +1,19 @@
-#' familiar: Fully Automated MachIne Learning In Accessible R
+#' familiar: Fully Automated Machine Learning with Interpretable Analysis of Results
 #'
-#' Familiar processes data for diagnostic and prognostic purposes.
+#' End-to-end, automated machine learning package for creating 
+#' trustworthy and interpretable machine learning models. Familiar supports
+#' modelling of regression, categorical and time-to-event (survival) outcomes.
+#' Models created using familiar are self-containing, and their use does not
+#' require additional information such as baseline survival, feature
+#' clustering, or feature transformation and normalisation parameters. In
+#' addition, an novelty or out-of-distribution detector is trained
+#' simultaneously and contained with every model. Model performance,
+#' calibration, risk group stratification, (permutation) variable importance,
+#' individual conditional expectation, partial dependence, and more, are
+#' assessed automatically as part of the evaluation process and exported in
+#' tabular format and plotted, and may also be computed manually using export
+#' and plot functions. Where possible, metrics and values obtained during the
+#' evaluation process come with confidence intervals.
 #'
 #' @docType package
 #' @name familiar
