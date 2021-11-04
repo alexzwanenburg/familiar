@@ -222,5 +222,5 @@ testthat::test_that("k-nearest neighbour model can train on wide data", {
 testthat::skip("Skip hyperparameter optimisation, unless manual.")
 
 familiar:::test_hyperparameter_optimisation(learners=familiar:::.get_available_knn_learners(show_general=TRUE, show_default=TRUE),
-                                            debug=TRUE,
+                                            debug=FALSE,
                                             parallel=FALSE)
