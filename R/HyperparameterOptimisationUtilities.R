@@ -1011,8 +1011,9 @@
   if(x$type != "factor") return(x)
   
   if(x$randomise){
-    # Assign valid range as levels, in case the hyperparameter is randomised.
-    x$init_config <- factor(x$init_config, levels=x$valid_range)
+    # Assign default range + initial value as levels, in case the hyperparameter
+    # is randomised.
+    x$init_config <- factor(x$init_config, levels=c(union(x$range, x$init_config)))
     
   } else {
     # Assign only the selected level as factor.
