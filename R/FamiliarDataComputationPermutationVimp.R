@@ -321,7 +321,7 @@ setMethod("extract_permutation_vimp", signature(object="familiarEnsemble"),
   
   # Message the user concerning the time at which metrics are computed. This is
   # only relevant for survival analysis.
-  if(length(data_element@identifiers$evaluation_time) > 0){
+  if(length(data_element@identifiers$evaluation_time) > 0 & progress_bar){
     logger.message(paste0("Computing permutation variable importance at time ", data_element@identifiers$evaluation_time, "."),
                    indent=message_indent,
                    verbose=verbose)

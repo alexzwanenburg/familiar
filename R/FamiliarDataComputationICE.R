@@ -191,10 +191,12 @@ setMethod("extract_ice", signature(object="familiarEnsemble"),
                          features=NULL,
                          sample_limit,
                          aggregate_results,
+                         n_models,
                          is_pre_processed=FALSE,
                          cl,
                          message_indent=0L,
                          verbose=FALSE,
+                         progress_bar=FALSE,
                          ...){
   
   # Ensure that the object is loaded
@@ -276,10 +278,10 @@ setMethod("extract_ice", signature(object="familiarEnsemble"),
                               data_element=data_elements,
                               MoreArgs=c(list("data"=data,
                                               "object"=object,
-                                              "verbose"=verbose,
+                                              "verbose"=verbose & !progress_bar & n_models == 1,
                                               "message_indent"=message_indent),
                                          list(...)),
-                              progress_bar=verbose,
+                              progress_bar=progress_bar,
                               chopchop=TRUE)
   
   # Flatten list of data elements.
@@ -296,7 +298,8 @@ setMethod("extract_ice", signature(object="familiarEnsemble"),
 
 
 
-..extract_ice_data <- function(data_element,
+..extract_ice_data <- function(cl=NULL,
+                               data_element,
                                data,
                                object,
                                aggregate_results,
@@ -344,6 +347,7 @@ setMethod("extract_ice", signature(object="familiarEnsemble"),
   } else {
     message_str <- c(message_str, ".")
   }
+  
   
   logger.message(paste0(message_str, collapse=""),
                  indent=message_indent,

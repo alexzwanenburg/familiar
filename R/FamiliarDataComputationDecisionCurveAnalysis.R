@@ -237,7 +237,7 @@ setMethod("extract_decision_curve_data", signature(object="familiarEnsemble"),
   # Check if the data has more than 1 row.
   if(nrow(data) <= 1) return(NULL)
   
-  if(length(data_element@identifiers$positive_class) > 0){
+  if(length(data_element@identifiers$positive_class) > 0 & progress_bar){
     logger.message(paste0("Computing decision curves for the \"", data_element@identifiers$positive_class, "\" class."),
                    indent=message_indent,
                    verbose=verbose)
@@ -387,7 +387,7 @@ setMethod("extract_decision_curve_data", signature(object="familiarEnsemble"),
   # Message the user concerning the time at which the decision curves are
   # computed. This is only relevant for survival analysis, where survival
   # probability is time depend.
-  if(length(data_element@identifiers$evaluation_time) > 0){
+  if(length(data_element@identifiers$evaluation_time) > 0 & progress_bar){
     logger.message(paste0("Computing decision curves at time ", data_element@identifiers$evaluation_time, "."),
                    indent=message_indent,
                    verbose=verbose)
