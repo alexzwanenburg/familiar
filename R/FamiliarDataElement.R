@@ -681,6 +681,7 @@ setMethod("extract_dispatcher", signature(object="familiarEnsemble", proto_data_
                                                 aggregate_results=aggregate_results,
                                                 n_instances=n_instances,
                                                 n_bootstraps=n_bootstraps,
+                                                n_models=n_models,
                                                 parallel_external=parallel_external,
                                                 message_indent = message_indent,
                                                 verbose=verbose,
@@ -695,6 +696,7 @@ setMethod("extract_dispatcher", signature(object="familiarEnsemble", proto_data_
                                               aggregate_results=aggregate_results,
                                               n_instances=n_instances,
                                               n_bootstraps=n_bootstraps,
+                                              n_models=n_models,
                                               parallel_external=parallel_external,
                                               message_indent = message_indent,
                                               verbose=verbose,
@@ -709,6 +711,7 @@ setMethod("extract_dispatcher", signature(object="familiarEnsemble", proto_data_
                                              aggregate_results=aggregate_results,
                                              n_instances=n_instances,
                                              n_bootstraps=n_bootstraps,
+                                             n_models=n_models,
                                              parallel_external=parallel_external,
                                              message_indent = message_indent,
                                              verbose=verbose,
@@ -730,6 +733,7 @@ setMethod("extract_dispatcher", signature(object="familiarEnsemble", proto_data_
                                          aggregate_results,
                                          n_instances,
                                          n_bootstraps,
+                                         n_models,
                                          parallel_external,
                                          ...,
                                          verbose=FALSE){
@@ -750,8 +754,9 @@ setMethod("extract_dispatcher", signature(object="familiarEnsemble", proto_data_
            aggregate_results = aggregate_internal,
            n_instances = n_instances,
            n_bootstraps = n_bootstraps,
+           n_models = n_models,
            verbose = verbose,
-           progress_bar = verbose,
+           progress_bar = verbose & n_bootstraps > 1,
            ...)
   
   # Pack to list.
@@ -777,6 +782,7 @@ setMethod("extract_dispatcher", signature(object="familiarEnsemble", proto_data_
                                        aggregate_results,
                                        n_instances,
                                        n_bootstraps,
+                                       n_models,
                                        parallel_external,
                                        ...,
                                        verbose=FALSE){
@@ -788,14 +794,15 @@ setMethod("extract_dispatcher", signature(object="familiarEnsemble", proto_data_
     x <- fam_mapply(cl=cl,
                     FUN=FUN,
                     object=object@model_list,
-                    bootstrap_seed_offset = seq(from=0, by=n_bootstraps, length.out=length(object@model_list)),
+                    bootstrap_seed_offset = seq(from=0, by=n_bootstraps, length.out=n_models),
                     MoreArgs=c(list("cl"=NULL,
                                     "proto_data_element"=proto_data_element,
                                     "aggregate_results"=FALSE,
                                     "n_instances"=n_instances,
                                     "n_bootstraps"=n_bootstraps,
+                                    "n_models"=n_models,
                                     "verbose"=verbose,
-                                    "progress_bar"= verbose & length(object@model_list) == 1),
+                                    "progress_bar"= verbose & length(object@model_list) == 1 & n_bootstraps > 1),
                                list(...)),
                     progress_bar = verbose & length(object@model_list) > 1,
                     chopchop=TRUE)
@@ -804,16 +811,17 @@ setMethod("extract_dispatcher", signature(object="familiarEnsemble", proto_data_
     x <- fam_mapply(cl=NULL,
                     FUN=FUN,
                     object=object@model_list,
-                    bootstrap_seed_offset = seq(from=0, by=n_bootstraps, length.out=length(object@model_list)),
+                    bootstrap_seed_offset = seq(from=0, by=n_bootstraps, length.out=n_models),
                     MoreArgs=c(list("cl"=cl,
                                     "proto_data_element"=proto_data_element,
                                     "aggregate_results"=FALSE,
                                     "n_instances"=n_instances,
                                     "n_bootstraps"=n_bootstraps,
+                                    "n_models"=n_models,
                                     "verbose"=verbose,
-                                    "progress_bar"= verbose & length(object@model_list) == 1),
+                                    "progress_bar"= verbose & n_models == 1 & n_bootstraps > 1),
                                list(...)),
-                    progress_bar = verbose & length(object@model_list) > 1)
+                    progress_bar = verbose & n_models > 1)
   }
   
   # Merge data elements together. The model_name identifier gets added as data
@@ -842,6 +850,7 @@ setMethod("extract_dispatcher", signature(object="familiarEnsemble", proto_data_
                                       aggregate_results,
                                       n_instances,
                                       n_bootstraps,
+                                      n_models,
                                       parallel_external,
                                       ...,
                                       verbose=FALSE){
@@ -862,13 +871,14 @@ setMethod("extract_dispatcher", signature(object="familiarEnsemble", proto_data_
     x <- fam_mapply(cl=cl,
                     FUN=FUN,
                     object=object@model_list,
-                    bootstrap_seed_offset = seq(from=0, by=n_bootstraps, length.out=length(object@model_list)),
+                    bootstrap_seed_offset = seq(from=0, by=n_bootstraps, length.out=n_models),
                     proto_data_element=proto_data_element,
                     MoreArgs=c(list("aggregate_results" = aggregate_internal,
                                     "n_instances"=n_instances,
                                     "n_bootstraps"=n_bootstraps,
+                                    "n_models"=n_models,
                                     "verbose"=verbose,
-                                    "progress_bar"= verbose & length(object@model_list) == 1),
+                                    "progress_bar"= verbose & n_models == 1 & n_bootstraps > 1),
                                list(...)),
                     progress_bar = verbose & length(object@model_list) > 1,
                     chopchop=TRUE)
@@ -877,14 +887,15 @@ setMethod("extract_dispatcher", signature(object="familiarEnsemble", proto_data_
     x <- fam_mapply(cl=NULL,
                     FUN=FUN,
                     object=object@model_list,
-                    bootstrap_seed_offset = seq(from=0, by=n_bootstraps, length.out=length(object@model_list)),
+                    bootstrap_seed_offset = seq(from=0, by=n_bootstraps, length.out=n_models),
                     proto_data_element=proto_data_element,
                     MoreArgs=c(list("cl"=cl,
                                     "aggregate_results" = aggregate_internal,
                                     "n_instances"=n_instances,
                                     "n_bootstraps"=n_bootstraps,
+                                    "n_models"=n_models,
                                     "verbose"=verbose,
-                                    "progress_bar"= verbose & length(object@model_list) == 1),
+                                    "progress_bar"= verbose & n_models == 1 & n_bootstraps > 1),
                                list(...)),
                     progress_bar = verbose & length(object@model_list) > 1)
   }
