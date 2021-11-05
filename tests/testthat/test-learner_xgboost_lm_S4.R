@@ -367,6 +367,5 @@ testthat::test_that("Extreme gradient boosting regression model can train and pr
 testthat::skip("Skip hyperparameter optimisation, unless manual.")
 
 familiar:::test_hyperparameter_optimisation(learners=familiar:::.get_available_xgboost_lm_learners(show_general=TRUE),
-                                            n_random_sets=100L,
-                                            debug=TRUE,
+                                            debug=FALSE,
                                             parallel=FALSE)
