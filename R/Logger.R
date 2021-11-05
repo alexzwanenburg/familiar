@@ -16,7 +16,7 @@ logger.message <- function(mess_str, file_name=NULL, indent=0L, verbose=TRUE){
 
   # Write message to log file
   if(!is.null(file_name)){
-    write(x=log_str, file=file_name, append=TRUE)
+    tryCatch(write(x=log_str, file=file_name, append=TRUE))
   }
   
   if(verbose){
@@ -42,7 +42,7 @@ logger.warning <- function(warn_str, file_name=NULL){
 
   # Write warning to log file
   if(!is.null(file_name)){
-    write(x=log_str, file=file_name, append=TRUE)
+    tryCatch(write(x=log_str, file=file_name, append=TRUE))
   }
 
   # Write warning to console
@@ -66,7 +66,7 @@ logger.stop <- function(err_str, file_name=NULL){
 
   # Write error to log file
   if(!is.null(file_name)){
-    write(x=log_str, file=file_name, append=TRUE)
+    tryCatch(write(x=log_str, file=file_name, append=TRUE))
   }
 
   # Write error to console
