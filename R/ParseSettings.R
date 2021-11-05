@@ -68,7 +68,8 @@
     project_dir <- normalizePath(project_dir, mustWork=TRUE)
     file_paths$is_temporary <- FALSE
   } else {
-    project_dir <- normalizePath(file.path(tempdir(), "familiar"), mustWork=FALSE)
+    temporary_directory <- file.path(tempdir(), "familiar", stringi::stri_rand_strings(1, 8))
+    project_dir <- normalizePath(temporary_directory, mustWork=FALSE)
     file_paths$is_temporary <- TRUE
   }
   
@@ -93,7 +94,9 @@
   if(!dir.exists(file_paths$experiment_dir)){ dir.create(file_paths$experiment_dir, recursive=TRUE) }
   
   # Log file - set as global variable as well
-  file_paths$log_file          <- normalizePath(file.path(experiment_dir, "log.txt"), mustWork=FALSE)
+  if(!file_paths$is_temporary){
+    file_paths$log_file <- normalizePath(file.path(experiment_dir, "log.txt"), mustWork=FALSE)
+  }
   assign("log_file", file_paths$log_file, envir=familiar_global_env)
   
   # Directory for iterations
@@ -145,7 +148,7 @@
   }
   
   if(file_paths$is_temporary){
-    logger.message(paste0("Configuration: A temporary R directory is created for the analysis: ", tempdir()))
+    logger.message(paste0("Configuration: A temporary R directory is created for the analysis: ", temporary_directory))
   }
   
   return(file_paths)
