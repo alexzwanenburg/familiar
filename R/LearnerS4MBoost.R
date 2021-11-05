@@ -735,7 +735,7 @@ setMethod(".trim_model", signature(object="familiarMBoost"),
             object@model$call <- call("trimmed")
             
             # Add show.
-            object <- .capture_show(object)
+            quiet(object <- .capture_show(object))
             
             # Remove unused elements
             object@model$ustart <- NULL
