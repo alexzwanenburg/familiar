@@ -76,7 +76,7 @@ setMethod("as_data_object", signature(data="data.table"),
                    include_features=waiver(),
                    check_stringency="strict",
                    ...){
-
+            
             # Suppress NOTES due to non-standard evaluation in data.table
             type <- NULL
             

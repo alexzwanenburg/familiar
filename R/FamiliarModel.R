@@ -378,6 +378,8 @@ setMethod("add_data_column_info", signature(object="familiarModel"),
             if(is(data, "dataObject")){
               if(!is_empty(data@data_column_info)){
                 object@data_column_info <- data@data_column_info
+                
+                return(object)
               }
             }
             
