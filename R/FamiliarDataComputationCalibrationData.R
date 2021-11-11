@@ -904,10 +904,18 @@ setMethod("extract_calibration_data", signature(object="familiarEnsemble"),
   # Make local copy of the calibration data.
   calibration_data <- data.table::copy(calibration_data)
   
+  # Remove NA predictions.
+  calibration_data <- calibration_data[is.finite(expected)]
+  if(is_empty(calibration_data)) return(NULL)
+  
   # Compute test statistic for each group
   # calibration_data[, "hm_group":=(observed-expected)^2*n_g / (expected * (1-expected))]
   calibration_data[, "hm_group":=..compute_calibration_test_statistic(observed, expected, n_g),
                    by=seq_len(nrow(calibration_data))]
+  
+  # Remove NA values in hm_group
+  calibration_data <- calibration_data[is.finite(hm_group)]
+  if(is_empty(calibration_data)) return(NULL)
   
   # Compute test statistic for each time point
   gof_table <- calibration_data[, list(statistic=sum(hm_group, na.rm=TRUE), n_groups=.N),
@@ -938,6 +946,9 @@ setMethod("extract_calibration_data", signature(object="familiarEnsemble"),
   if(!method %in% c("exact", "approximate")){
     ..error_reached_unreachable_code("..compute_hm_test_statistic: method should be exact or approximate")
   }
+  
+  # Check for infinite or NA values.
+  if(!is.finite(expected) | !is.finite(observed)) return(NA_real_)
   
   if(method == "exact"){
     # Use exact computation for comparison. Note that this has asymptotic
@@ -986,11 +997,16 @@ setMethod("extract_calibration_data", signature(object="familiarEnsemble"),
   observed <- expected <- n_g <- km_var <- nd_group <- gnd_group <- n_groups <- NULL
   nam_dagostino <- greenwood_nam_dagostino <- p_value <- NULL
   
+  
+  # Check for empty calibration tables
+  if(is_empty(calibration_data)) return(NULL)
+  
   # Make local copy of calibration_data to avoid updating the main copy by
   # reference.
   calibration_data <- data.table::copy(calibration_data)
   
-  # Check for empty calibration tables
+  # Remove NA predictions.
+  calibration_data <- calibration_data[is.finite(expected)]
   if(is_empty(calibration_data)) return(NULL)
   
   # Compute test statistic for each group.
@@ -998,8 +1014,9 @@ setMethod("extract_calibration_data", signature(object="familiarEnsemble"),
                           "gnd_group"=(observed-expected)^2 / km_var),
                    by=seq_len(nrow(calibration_data))]
   
-  # Remove gnd_group that are infinite (which occurs when observed==0.000)
-  calibration_data[!is.finite(gnd_group), "gnd_group":=0]
+  # Remove NA values in hm_group
+  calibration_data <- calibration_data[is.finite(nd_group) & is.finite(gnd_group)]
+  if(is_empty(calibration_data)) return(NULL)
   
   # Compute test statistic for each time point
   gof_table <- calibration_data[, list("nam_dagostino"=sum(nd_group, na.rm=TRUE),
