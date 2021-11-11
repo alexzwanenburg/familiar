@@ -812,7 +812,7 @@ setMethod("extract_calibration_data", signature(object="familiarEnsemble"),
   # Tests calibration-at-the-large and calibration slope
   
   # Suppress NOTES due to non-standard evaluation in data.table.
-  expected <- observed <- NULL
+  expected <- observed <- p_value <- NULL
   
   # Check that calibration data are not empty.
   if(is_empty(calibration_data)) return(NULL)
@@ -830,6 +830,11 @@ setMethod("extract_calibration_data", signature(object="familiarEnsemble"),
   
   # Concatenate to a single table.
   fit_data <- data.table::rbindlist(fit_data, use.names=TRUE)
+  
+  # Remove NaNs
+  fit_data <- fit_data[is.finite(p_value)]
+  
+  if(is_empty(fit_data)) return(NULL)
   
   return(fit_data)
 }
