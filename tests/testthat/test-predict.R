@@ -20,7 +20,7 @@ predictions_1 <- familiar::predict(object=fam_model,
 
 # Default predictions using data.table.
 predictions_2 <- familiar::predict(object=fam_model,
-                                   newdata=data@data)
+                                   newdata=familiar:::test.create_good_data_set("survival", to_data_object=FALSE))
 
 # Survival probability.
 predictions_surv <- familiar::predict(object=fam_model,
@@ -68,7 +68,7 @@ predictions_1 <- familiar::predict(object=fam_model,
 
 # Default predictions using data.table.
 predictions_2 <- familiar::predict(object=fam_model,
-                                   newdata=data@data)
+                                   newdata=familiar:::test.create_one_sample_data_set("survival", to_data_object=FALSE))
 
 # Survival probability.
 predictions_surv <- familiar::predict(object=fam_model,
@@ -124,7 +124,7 @@ predictions_1 <- familiar::predict(object=fam_model,
 
 # Default predictions using data.table.
 predictions_2 <- familiar::predict(object=fam_model,
-                                   newdata=data@data)
+                                   newdata=familiar:::test.create_good_data_set("binomial", to_data_object=FALSE))
 
 # Novelty.
 predictions_novelty <- familiar::predict(object=fam_model,
@@ -158,7 +158,7 @@ predictions_1 <- familiar::predict(object=fam_model,
 
 # Default predictions using data.table.
 predictions_2 <- familiar::predict(object=fam_model,
-                                   newdata=data@data)
+                                   newdata=familiar:::test.create_one_sample_data_set("binomial", to_data_object=FALSE))
 
 # Novelty.
 predictions_novelty <- familiar::predict(object=fam_model,
@@ -200,7 +200,7 @@ predictions_1 <- familiar::predict(object=fam_model,
 
 # Default predictions using data.table.
 predictions_2 <- familiar::predict(object=fam_model,
-                                   newdata=data@data)
+                                   newdata=familiar:::test.create_good_data_set("multinomial", to_data_object=FALSE))
 
 # Novelty.
 predictions_novelty <- familiar::predict(object=fam_model,
@@ -234,7 +234,7 @@ predictions_1 <- familiar::predict(object=fam_model,
 
 # Default predictions using data.table.
 predictions_2 <- familiar::predict(object=fam_model,
-                                   newdata=data@data)
+                                   newdata=familiar:::test.create_one_sample_data_set("multinomial", to_data_object=FALSE))
 
 # Novelty.
 predictions_novelty <- familiar::predict(object=fam_model,
@@ -277,7 +277,7 @@ predictions_1 <- familiar::predict(object=fam_model,
 
 # Default predictions using data.table.
 predictions_2 <- familiar::predict(object=fam_model,
-                                   newdata=data@data)
+                                   newdata=familiar:::test.create_good_data_set("count", to_data_object=FALSE))
 
 # Novelty.
 predictions_novelty <- familiar::predict(object=fam_model,
@@ -311,7 +311,7 @@ predictions_1 <- familiar::predict(object=fam_model,
 
 # Default predictions using data.table.
 predictions_2 <- familiar::predict(object=fam_model,
-                                   newdata=data@data)
+                                   newdata=familiar:::test.create_one_sample_data_set("count", to_data_object=FALSE))
 
 # Novelty.
 predictions_novelty <- familiar::predict(object=fam_model,
@@ -354,7 +354,7 @@ predictions_1 <- familiar::predict(object=fam_model,
 
 # Default predictions using data.table.
 predictions_2 <- familiar::predict(object=fam_model,
-                                   newdata=data@data)
+                                   newdata=familiar:::test.create_good_data_set("continuous", to_data_object=FALSE))
 
 # Novelty.
 predictions_novelty <- familiar::predict(object=fam_model,
@@ -388,7 +388,7 @@ predictions_1 <- familiar::predict(object=fam_model,
 
 # Default predictions using data.table.
 predictions_2 <- familiar::predict(object=fam_model,
-                                   newdata=data@data)
+                                   newdata=familiar:::test.create_one_sample_data_set("continuous", to_data_object=FALSE))
 
 # Novelty.
 predictions_novelty <- familiar::predict(object=fam_model,
