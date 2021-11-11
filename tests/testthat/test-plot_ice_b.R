@@ -7,7 +7,6 @@ familiar:::test_plots(plot_function=familiar:::plot_ice,
                       data_element="ice_data",
                       debug=debug_flag)
 
-
 # Test alignment of different plots, with missing data.
 familiar:::test_plot_ordering(plot_function=familiar:::plot_ice,
                               data_element="ice_data",
