@@ -333,6 +333,8 @@ setMethod("extract_decision_curve_data", signature(object="familiarEnsemble"),
   # Compute benefit for the model.
   model_net_benefit <- ..compute_dca_data_net_benefit(data, threshold_probabilities)
   
+  if(is.null(model_net_benefit)) return(NULL)
+  
   # Set the data attribute
   data_element@data <- data.table::data.table("threshold_probability"=threshold_probabilities,
                                               "net_benefit"=model_net_benefit)
@@ -454,6 +456,8 @@ setMethod("extract_decision_curve_data", signature(object="familiarEnsemble"),
                                                                evaluation_time=data_element@identifiers$evaluation_time,
                                                                intervention=FALSE)
   
+  if(is.null(model_net_benefit)) return(NULL)
+  
   # Set the data attribute
   data_element@data <- data.table::data.table("threshold_probability"=threshold_probabilities,
                                               "net_benefit"=model_net_benefit)
@@ -486,6 +490,10 @@ setMethod("extract_decision_curve_data", signature(object="familiarEnsemble"),
   # If the predicted probability occurs more than once, select the lowest net
   # benefit.
   data <- data[, list("net_benefit"=min(net_benefit)), by="probability"]
+
+  
+  # Check if the data has more than 1 row.
+  if(nrow(data) <= 1) return(NULL)
   
   # Compute net benefit at the test probabilities.
   net_benefit <- suppressWarnings(stats::approx(x=data$probability,
