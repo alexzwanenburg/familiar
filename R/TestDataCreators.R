@@ -243,13 +243,19 @@ test.create_empty_data_set <- function(outcome_type){
 
 
 
-test.create_one_sample_data_set <- function(outcome_type){
+test.create_one_sample_data_set <- function(outcome_type, to_data_object=TRUE){
   
   # Create good dataset first and work from there.
-  data <- test.create_good_data_set(outcome_type=outcome_type)
+  data <- test.create_good_data_set(outcome_type=outcome_type,
+                                    to_data_object=to_data_object)
   
   # Now keep only the first sample.
-  data@data <- head(data@data, n=1)
+  if(to_data_object){
+    data@data <- head(data@data, n=1)
+    
+  } else {
+    data <- head(data, n=1)
+  }
   
   return(data)
 }
