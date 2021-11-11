@@ -91,7 +91,7 @@ testthat::test_that(paste0("Multivariate regression correctly ranks multinomial 
   
   vimp_table <- suppressWarnings(familiar:::.vimp(vimp_object, data))
   
-  testthat::expect_equal(all(vimp_table[rank <= 2]$name %in% c("Petal_Length", "Petal_Width")), TRUE)
+  testthat::expect_equal(all(vimp_table[rank <= 2]$name %in% c("Petal_Length", "Petal_Width", "Sepal_Length")), TRUE)
 })
 
 
