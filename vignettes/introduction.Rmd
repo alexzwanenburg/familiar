@@ -95,7 +95,7 @@ Familiar supports modelling and evaluation of several types of endpoints:
 
 -   Categorical endpoints, where the outcome consists of two or more classes. Familiar distinguishes between two-class (`binomial`) and multi-class (`multinomial`) outcomes. These differ in that fewer feature selection methods and learners are available for multi-class outcomes. Additionally some evaluation and explanation steps will assess all classes separately in a one-against-all fashion for multi-class outcomes, whereas for two-class outcomes only the *positive* class is assessed.
 
--   Numerical endpoints, where the outcome consists of numeric values. Count-like `count` outcomes that follow and generic numerical `continuous` outcomes are supported. If you are unsure that your outcome is generated through some counting or event mechanism, it may be safer to use the more generic `continuous` option.
+-   Numerical endpoints, where the outcome consists of numeric values. Count-like `count` outcomes and generic numerical `continuous` outcomes are supported. If you are unsure that your outcome is generated through some counting or event mechanism, it may be safer to use the more generic `continuous` option.
 
 -   Survival endpoints, where the outcome consists of a pair of time and event status variables. Familiar supports right-censored time-to-event data (`survival`).
 
@@ -202,15 +202,15 @@ Though not always required, specifying the following parameters is recommended o
 
 -   `experiment_dir`: This specifies the drive location where files generated during the experiment are written to. This includes files containing the trained models, which we usually want to preserve. If this location is not specified, such files are temporarily written to the temporary R directory, and subsequently removed.
 
--   `outcome_column`: Specifies the name of the column that contains the outcome values. In case of survival outcomes two columns should be specified that contain that indicate time and event status, respectively. The `outcome_column` parameter is not required in case the formula interface is used.
+-   `outcome_column`: Specifies the name of the column that contains the outcome values. In case of survival outcomes two columns should be specified that indicate time and event status, respectively. For survival outcomes familiar determines which columns contain time and event data. The `outcome_column` parameter is not required in case the formula interface is used.
 
 -   `outcome_type`: Specifies the type of outcome being modelled. Should be one of the outcome types mentioned above in the [Supported outcomes] section. If not specified, it can potentially be inferred from the data contained in the column(s) specified by the `outcome_column` parameter.
 
 -   `class_levels`: Specify the class levels of two-class (`binomial`) and multi-class (`multinomial`) outcomes. For two-class outcomes, the second level specifies the class regarded as the positive class. The values should match values present in the outcome column Specifying this argument is not necessary in case the outcome column is encoded as a factor. If left unspecified, the unique values in the outcome column are used as values.
 
--   `event_indicator`, `censoring_indicator`, `competing_risk_indicator`: Specifies the values that should be used as event, censoring and competing risk indicators for survival analysis, respectively. Familiar uses default values for censoring (e.g. `0`, `FALSE`, `no`) and event (e.g. `1`, `TRUE`, `yes`) status otherwise. Note that the `competing_risk` outcome type will be fully implemented in a future release.
+-   `event_indicator`, `censoring_indicator`, `competing_risk_indicator`: Specifies the values that should be used as event, censoring, and competing risk indicators for survival analysis, respectively. Familiar uses default values for censoring (e.g. `0`, `FALSE`, `no`) and event (e.g. `1`, `TRUE`, `yes`) status otherwise. Note that the `competing_risk` outcome type will be fully implemented in a future release.
 
--   `batch_id_column`, `sample_id_column`, `series_id_column`: Specifies the names of the columns containing batch, sample and series identifiers respectively. These are described in more detail in the [Preparing your data] section.
+-   `batch_id_column`, `sample_id_column`, `series_id_column`: Specifies the names of the columns containing batch, sample, and series identifiers respectively. These are described in more detail in the [Preparing your data] section.
 
 ## Preparing your data
 
@@ -232,9 +232,9 @@ Here we see that each row contains a separate instance.
 
 The `id` and `study` columns are identifier columns. Familiar distinguishes four different types of identifiers:
 
--   Batch identifiers are used to identify data belonging to a batch, cohort or specific dataset. This is typically used for specifying external validation datasets (using the `validation_batch_id` parameter). It also used to define the batches for batch normalisation. The name of the column containing batch identifiers (if any) can be specified using the `batch_id_column` parameter. If no column with batch identifiers is specified, all instances are assumed to belong to the same batch.
+-   Batch identifiers are used to identify data belonging to a batch, cohort or specific dataset. This is typically used for specifying external validation datasets (using the `validation_batch_id` parameter). It also used to define the batches for batch normalisation. The name of the column containing batch identifiers (if any) can be specified using the `batch_id_column` parameter. If no column with batch identifiers is specified, all instances are assumed to belong to the same batch. In the *colon* dataset, the `study` column is a batch identifier column.
 
--   Sample identifiers are used to identify data belonging to a single sample, such as a patient, subject, customer, etc. Sample identifiers are used to ensure that instances from the same sample are not inadvertently spread across development and validation data subsets created for cross-validation or bootstrapping. This prevents information leakage, as instances from the same sample are often related -- knowing one instance of a sample would make it easy to predict another, thus increasing the risk of overfitting. The name of the column containing sample identifiers can be specified using the `sample_id_column` parameter. If not specified, it is assumed that each instance forms a separate sample.
+-   Sample identifiers are used to identify data belonging to a single sample, such as a patient, subject, customer, etc. Sample identifiers are used to ensure that instances from the same sample are not inadvertently spread across development and validation data subsets created for cross-validation or bootstrapping. This prevents information leakage, as instances from the same sample are often related -- knowing one instance of a sample would make it easy to predict another, thus increasing the risk of overfitting. The name of the column containing sample identifiers can be specified using the `sample_id_column` parameter. If not specified, it is assumed that each instance forms a separate sample. In the *colon* dataset, the `id` column contains sample identifiers.
 
 -   Within a sample, it is possible to have multiple series, for example due to measurements at different locations in the same sample. A series differs from repeated measurements. While for series the outcome value may change, this is not allowed for repeated measurements. The column containing series identifiers may be specified by providing the column name as the `series_id_column` parameter. If not set, all instances of a sample with a different outcome value will be assigned a unique identifier.
 
@@ -246,7 +246,7 @@ The *colon* dataset also contains two outcome columns: `time` and `status` that 
 
 ### Feature columns
 
-The remaining columns in the *colon* dataset represent features. There are two numeric features, `age` and `nodes`, a categorical feature `rx` and several categorical and ordinal features encoded with integer values. Familiar will automatically detect and encode features that consist of `character`, `logical` or `factor` type. However, it will not automatically convert the features encoded with integer values. This is by design -- familiar cannot determine whether a feature with integer values is intended to be categorical feature or not. Should categorical features that are encoded with integers be present in your dataset, you should manually encode such values in the data prior to passing the data to familiar. For the *colon* dataset, this could be done as follows:
+The remaining columns in the *colon* dataset represent features. There are two numeric features, `age` and `nodes`, a categorical feature `rx` and several categorical and ordinal features encoded with integer values. Familiar will automatically detect and encode features that consist of `character`, `logical` or `factor` type. However, it will not automatically convert the features encoded with integer values. This is by design -- familiar cannot determine whether a feature with integer values is intended to be a categorical feature or not. Should categorical features that are encoded with integers be present in your dataset, you should manually encode such values in the data prior to passing the data to familiar. For the *colon* dataset, this could be done as follows:
 
 ```{r}
 # Categorical features
@@ -269,15 +269,17 @@ Manual encoding also has the advantage that ordinal features can be specified. F
 
 The experimental design defines how data analysis is performed. Familiar allows for various designs, from very straightforward training on a single dataset, to complex nested cross-validation with external validation. Experimental design is defined using the `experimental_design` parameter and consists of basic workflow components and subsampling methods. The basic workflow components are:
 
--   `fs`: positions the feature selection step. This component should always be present, even if `fs_method="none"`. Moreover, note that the feature selection step only determines variable importance. Actual feature selection takes place after hyperparameter optimisation determines the optimal number of features.
+-   `fs`: positions the feature selection step. This component should always be present, even if `fs_method="none"`. Moreover, note that the feature selection step only determines variable importance. Actual feature selection takes place after optimisation for model hyperparameters determines the optimal number of features.
 
 -   `mb`: positions the model building step. This component should always be present.
 
 -   `ev`: positions the external validation step. This should be used in conjunction with the `validation_batch_id` parameter to specify which batches/cohorts should be used for external validation. Unlike `fs` and `mb` components, `ev` is optional.
 
-It is possible to form an experiment using just the basic workflow components, i.e. `fs+mb` or `fs+mb+ev`. In these experiments, feature selection is directly followed by modelling, with external validation of the model on or more validation cohorts for `fs+mb+ev`. These options correspond to TRIPOD type 1a and 3, respectivily. TRIPOD analysis types 1b and 2 require more complicated experimental designs, which are facilitated by subsampling.
+Each basic workflow component can only appear once in the experimental design. It is possible to form an experiment using just the basic workflow components, i.e. `fs+mb` or `fs+mb+ev`. In these experiments, feature selection is directly followed by modelling, with external validation of the model on one or more validation cohorts for `fs+mb+ev`. These options correspond to TRIPOD type 1a and 3, respectively. TRIPOD analysis types 1b and 2 require more complicated experimental designs, which are facilitated by subsampling.
 
-Subsampling methods are used to (randomly) sample the data, and divide data into internal development and validation sets:
+Hyperparameter optimisation does not require explicit specification. Hyperparameter optimisation is conducted when required to determine variable importance and prior to building a model.
+
+Subsampling methods are used to (randomly) sample the data that are not used for external validation, and divide these data into internal development and validation sets. Thus the dataset as a whole is at most divided into three parts: internal development, internal validation and external validation. Familiar implements the following subsampling methods:
 
 -   `bs(x,n)`: (stratified) .632 bootstrap, with `n` the number of bootstraps. Bootstrapping randomly samples the data with replacement, and on average assigns 63.2% of the samples to the new subsampled subset to form the in-bag dataset with the same size as the original dataset. Remaining, unselected samples form the out-of-bag dataset. All pre-processing steps and hyperparameter optimisation (if any) are performed using the in-bag data.
 
