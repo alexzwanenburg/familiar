@@ -97,11 +97,11 @@ Feature selection methods and related options can be provided within the
 ## Providing parameters for feature selection
 
 Some of the feature selection methods, notably those based on random forests and
-(penalised) regression, have parameters that can be set. These
-parameters are mentioned under the respective entries in the [Overview of feature selection methods] section. Moreover, some of these
-parameters are model parameters. In this case, these parameters are optimised
-using hyperparameter optimisation, which is the described in the *learning
-algorithms* vignette.
+(penalised) regression, have parameters that can be set. These parameters are
+mentioned under the respective entries in the [Overview of feature selection
+methods] section. Moreover, some of these parameters are model parameters. In
+this case, these parameters are optimised using hyperparameter optimisation,
+which is described in the *learning algorithms and hyperparameter optimisation* vignette.
 
 The syntax for such parameters is the same as for hyperparameter optimisation.
 For the `multivariate_regression` feature selection method the `alpha` parameter
@@ -170,7 +170,7 @@ $y$ are known. In practice we don't know either one. For categorical $x$ and $y$
 we can use the sample estimates instead. For continuous or mixed data, the
 situation is more complex.
 
-In familiar we therefore use to following three approaches to compute mutual
+In familiar we therefore use the following three approaches to compute mutual
 information:
 
 1. For binomial and multinomial outcomes mutual information is computed using
@@ -253,7 +253,7 @@ below.
 
 | **parameter** | **tag** | **values** | **optimised** | **comments** |
 |:--------------|:--------|:----------:|:----------:|:-------------|
-| regression learner | `learner` | dependent on outcome | no | Any generalised linear regression model from the *learning algorithms* vignette can be selected. Default values are `glm_logistic` for binomial, `glm_multinomial` for multinomial, `glm_gaussian` for continuous, `glm_poisson` for count, and `cox` for survival outcomes. |
+| regression learner | `learner` | dependent on outcome | no | Any generalised linear regression model from the *learning algorithms and hyperparameter optimisation* vignette can be selected. Default values are `glm_logistic` for binomial, `glm_multinomial` for multinomial, `glm_gaussian` for continuous, `glm_poisson` for count, and `cox` for survival outcomes. |
 | performance metric | `metric` | dependent on outcome | no | Any metric from the *performance metrics* vignette can be selected. Default values are `auc_roc` for binomial and multinomial, `mse` for continuous, `msle` for count and `concordance_index` for survival outcomes |
 | number of bootstraps | `n_bootstrap` | $\mathbb{Z} \in \left[1, \infty\right)$ | no | The default value is $10$. |
 | drop-out alpha level | `alpha` | $\mathbb{R} \in \left[0, 1\right]$ | no | The default value is $0.05$. Only used in multivariate regression. |
@@ -263,7 +263,7 @@ below.
 In the univariate regression method, a regression model is built with each
 feature separately using the in-bag data of the bootstrap. Then this model is
 evaluated using the metric, expressed using an objective representation (see
-*computing the objective score* in the *learning algorithms* vignette). The
+*computing the objective score* in the *learning algorithms and hyperparameter optimisation* vignette). The
 objective representation $s^*$ is computed on both in-bag (IB) and out-of-bag
 (OOB) data. Subsequently the `balanced` objective score $f$ is computed:
 $f=s^*_{OOB} - \left|s^*_{OOB}-s^*_{IB}\right|$.
@@ -284,7 +284,7 @@ increases.
 
 To limit mostly redundant computation, features that are unlikely to be selected
 are actively removed. To do so, the standard deviation of the objective score
-over the boostraps is computed for each feature. The (one-sided, upper-tail)
+over the bootstraps is computed for each feature. The (one-sided, upper-tail)
 quantile $q$ corresponding to the alpha-level indicated by parameter `alpha` is
 subsequently computed. If the obtained mean objective score is $q$ standard
 deviations or more below the best objective score, the feature is removed.
@@ -379,8 +379,9 @@ The variable hunting selection method has several parameters which can be set.
 ### Impurity importance
 
 At each node, the data is split into (two) subsets, which connects to two
-branches. After splitting, each single subset is purer than the parent dataset. As a concrete example, in regression problems the variance of each of
-the subsets is lower than that of the data prior to splitting. The decrease in
+branches. After splitting, each single subset is purer than the parent dataset.
+As a concrete example, in regression problems the variance of each of the
+subsets is lower than that of the data prior to splitting. The decrease in
 variance specifically, or the decrease of impurity generally, is then used to
 assess feature importance.
 
@@ -404,7 +405,7 @@ building a model to avoid influence of the provided feature order.
 
 The `random` method randomly draws features prior to model building. It does not
 assign a random variable importance to a feature. New features are drawn each
-time a model is build. All features are available for the draw, but only $m$
+time a model is built. All features are available for the draw, but only $m$
 features are drawn. Here $m$ is the signature size that is usually optimised by
 hyperparameter optimisation.
 
