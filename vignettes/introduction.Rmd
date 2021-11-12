@@ -71,15 +71,38 @@ The pipeline implemented in familiar follows a standard machine learning process
 
 -   **Feature selection**: Which features are important for the endpoint of interest? Familiar supports various univariate and multivariate feature selection methods (see the *Feature selection methods* vignette). Note that feature selection, at least in familiar, is a misnomer. Instead of selecting features, in the sense of selecting the features to be included in a model by a learner, features in the data are ranked according to their importance. Actual feature selection is conducted during hyperparameter optimisation.
 
--   **Hyperparameter optimisation**: Most learners have hyperparameters, which are parameters that determine a specific aspect of the model created by the learner. Examples are the number of trees in a random forest, the width of the radial kernel in support vector machines, and the number of features in the signature of a model. Such parameters may significantly influence model performance. During hyperparameter optimisation, the aim is to find the set of hyperparameters that leads to a generalisable model. Since hyperparameter spaces can be high-dimensional, familiar uses Bayesian optimisation for efficiently exploring hyperparameter space. The *Learning algorithms* vignette describes model-specific hyperparameters and hyperparameter optimisation in more detail.
+-   **Hyperparameter optimisation**: Most learners have hyperparameters, which
+are parameters that determine a specific aspect of the model created by the
+learner. Examples are the number of trees in a random forest, the width of the
+radial kernel in support vector machines, and the number of features in the
+signature of a model. Such parameters may significantly influence model
+performance. During hyperparameter optimisation, the aim is to find the set of
+hyperparameters that leads to a generalisable model. Since hyperparameter spaces
+can be high-dimensional, familiar uses Bayesian optimisation for efficiently
+exploring hyperparameter space. The *learning algorithms and hyperparameter
+optimisation* vignette describes model-specific hyperparameters and
+hyperparameter optimisation in more detail.
 
--   **Model training**: During the final model training step, the development data are fitted using the previously determined set of hyperparameters. By default, the models are trimmed after creation to remove extraneous information such as copies of the development data. The model objects that are created in this step contain more than just the model. Notably, the following information is included to allow for prospective use and evaluation:
+-   **Model training**: During the final model training step, the development
+data are fitted using the previously determined set of hyperparameters. By
+default, the models are trimmed after creation to remove extraneous information
+such as copies of the development data. The model objects that are created in
+this step contain more than just the model. Notably, the following information
+is included to allow for prospective use and evaluation:
 
-    -   Feature information, as generated during the data processing step, is stored to allow for preparing datasets in the same manner as the development dataset and for checking if new datasets are formatted as expected. It is also used to create default ranges for individual conditional expectation and partial dependence plots.
+    -   Feature information, as generated during the data processing step, is
+    stored to allow for preparing datasets in the same manner as the development
+    dataset and for checking if new datasets are formatted as expected. It is
+    also used to create default ranges for individual conditional expectation
+    and partial dependence plots.
 
-    -   Outcome information is stored. This is primarily used to check whether outcome data in new datasets are formatted in accordance with the development data. It is also used in computing several performance metrics.
+    -   Outcome information is stored. This is primarily used to check whether
+    outcome data in new datasets are formatted in accordance with the
+    development data. It is also used in computing several performance metrics.
 
-    -   A novelty detector is trained to detect out-of-distribution samples and assess when a model starts extrapolating. The novelty detector is currently based on extended isolation forests in the `isotree` package @Cortes2021-aa.
+    -   A novelty detector is trained to detect out-of-distribution samples and
+    assess when a model starts extrapolating. The novelty detector is currently
+    based on extended isolation forests in the `isotree` package @Cortes2021-aa.
 
     -   Models used to recalibrate the output of specific models (see *Learning algorithm* vignette) are stored.
 
@@ -196,7 +219,7 @@ All configuration parameters are documented in the help file of the `familiar::s
 
 -   `fs_method`: Specify one or more feature selection methods. See the *Feature selection methods* vignette for available methods.
 
--   `learner`: Specify one or more learners used to create models. See the *Learning algorithms* vignette for available learners.
+-   `learner`: Specify one or more learners used to create models. See the *learning algorithms and hyperparameter optimisation* vignette for available learners.
 
 Though not always required, specifying the following parameters is recommended or situationally required:
 

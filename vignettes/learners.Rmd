@@ -1,5 +1,5 @@
 ---
-title: "Learning algorithms"
+title: "Learning algorithms and hyperparameter optimisation"
 author: "Alex Zwanenburg"
 date: "`r Sys.Date()`"
 output:
@@ -8,7 +8,7 @@ output:
       after_body: license.html
 bibliography: "refs.bib"
 vignette: >
-  %\VignetteIndexEntry{Learning algorithms}
+  %\VignetteIndexEntry{Learning algorithms and hyperparameter optimisation}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
