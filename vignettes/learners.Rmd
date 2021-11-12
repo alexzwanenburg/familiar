@@ -174,15 +174,15 @@ Here, $\beta_0$ and $\beta_1$ are both model coefficients. $\beta_0$ is also
 called the model intercept. $\epsilon_j$ is an error term that describes the
 difference between the predicted and the actual response for sample $j$. When a
 linear model is developed, the $\beta$-coefficients are set in such manner that
-the error over the sample population is minimised.
+the mean-squared error over the sample population is minimised.
 
 The above model is a univariate model as it includes only a single predictor. A
-multivariate linear model includes multiple predictors $\mathbf{X}$ and is
+multivariate linear model includes multiple predictors $\mathbf{X_j}$ and is
 denoted as:
 
-$$y_j= \mathbf{\beta}\mathbf{X} +  \epsilon_j$$
+$$y_j= \mathbf{\beta}\mathbf{X_j} +  \epsilon_j$$
 
-$\mathbf{\beta}\mathbf{X}$ is the linear predictor. The GLM generalises this
+$\mathbf{\beta}\mathbf{X_j}$ is the linear predictor. The GLM generalises this
 linear predictor through a linking function $g$ [@Nelder1972-rs]:
 
 $$y_j=g\left(\mathbf{\beta}\mathbf{X}\right) + \epsilon_j$$
@@ -252,7 +252,7 @@ shrinkage, methods address this issue by penalising model complexity.
 Three shrinkage methods are implemented in `familiar`, namely ridge regression,
 lasso and elastic net, which are all implemented using the `glmnet` package
 [@Hastie2009-ed; @Simon2011-ih]. The set of hyperparameters is shown in the
-table low. The optimal `lambda` parameter is determined by cross-validation as
+table below. The optimal `lambda` parameter is determined by cross-validation as
 part of the `glmnet::cv.glmnet` function, and is not directly determined using
 hyperparameter optimisation.
 
@@ -350,7 +350,7 @@ Hence hyperparameter optimisation may be sped up by limiting the range of the
 
 The second implementation of random forests comes from the `ranger` package
 [@Wright2017-wc]. It is generally faster than the implementation in
-`randomForestSRC`, and also allows different splitting rules, such as maximally
+`randomForestSRC` and allows for different splitting rules, such as maximally
 selected rank statistics [@Lausen1992-qh; @Wright2017-sj] and concordance
 index-based splitting [@Schmid2016-ie]. Hyperparameters for the random forest
 are shown in the table below.
@@ -366,10 +366,10 @@ are shown in the table below.
 | splitting rule | `split_rule` | `gini`, `extratrees`, `variance`, `logrank`, `C`, `maxstat`| no | Default splitting rules are `gini` for `binomial` and `multinomial` outcomes and `maxstat` for `continuous`, `count` and `survival` outcomes.|
 | significance split threshold | `alpha` | $\mathbb{R} \in \left(0.0, 1.0\right]$ | `maxstat` | Minimum significance level for further splitting. The default range is $\left[10^{-6}, 1.0\right]$ |
 
-Note that optimising that optimising the number of trees can be slow, as big
-forests take longer to construct and perform more computations for predictions.
-Hence hyperparameter optimisation may be sped up by limiting the range of the
-`n_tree` parameter or setting a single value.
+Note that optimising the number of trees can be slow, as big forests take longer
+to construct and perform more computations for predictions. Hence hyperparameter
+optimisation may be sped up by limiting the range of the `n_tree` parameter or
+setting a single value.
 
 ## Naive Bayes
 
@@ -450,7 +450,10 @@ given learner and dataset:
 
 - A set of bootstraps of the development dataset is made. This allows for
 training the models using the in-bag data and assessing performance using
-out-of-bag data.
+out-of-bag data. This is independent of any bootstraps that may have been
+defined as part of the experimental design. In case a subsampling method is
+specified in the experimental design, the corresponding internal development
+dataset is bootstrapped.
 
 - Variable importance is determined for each of the in-bag datasets to avoid
 positively biasing the optimisation process through information leakage.
@@ -610,7 +613,8 @@ round $m$):
 
   $$\alpha(\mathbf{x}) = P(\nu > \tau) = \frac{1}{N} \sum_{i=1}^N \left[\nu_i > \tau\right]$$
 
-  with $\left[\ldots\right]$ denoting an Iverson bracket.
+  with $\left[\ldots\right]$ denoting an Iverson bracket, which takes the value
+  1 if the condition specified by $\ldots$ is true, and 0 otherwise.
 
 * `expected_improvement` (default): Expected improvement is based on an improvement
   function, and is be computed as follows:
