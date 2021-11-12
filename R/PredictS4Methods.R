@@ -387,7 +387,7 @@ setMethod(".predict", signature(object="familiarModel"),
                 
               } else if(!is_empty(temp_prediction_table)){
                 prediction_table <- merge(x=prediction_table,
-                                          y=temp_prediction_table,
+                                          y=unique(temp_prediction_table),
                                           by=get_non_feature_columns(x=object))
               }
             }
@@ -407,7 +407,7 @@ setMethod(".predict", signature(object="familiarModel"),
               } else if(!is_empty(temp_prediction_table)){
                 # Merge with the prediction table
                 prediction_table <- merge(x=prediction_table,
-                                          y=temp_prediction_table,
+                                          y=unique(temp_prediction_table),
                                           by=get_non_feature_columns(x=object))
               }
             }
@@ -428,7 +428,7 @@ setMethod(".predict", signature(object="familiarModel"),
                 
               } else if(!is_empty(temp_prediction_table)){
                 prediction_table <- merge(x=prediction_table,
-                                          y=temp_prediction_table,
+                                          y=unique(temp_prediction_table),
                                           by=get_non_feature_columns(x=object))
               }
             }
