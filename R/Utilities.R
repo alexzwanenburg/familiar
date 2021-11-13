@@ -1298,21 +1298,6 @@ winsor <- function(x, fraction=0.1){
 }
 
 
-rbind_list_list <- function(l, list_elem, ...){
-
-  # Get a list of the required list elements
-  elem_list <- lapply(l, function(sub_list) (sub_list[[list_elem]]))
-  
-  # Remove empty list elements
-  elem_list[sapply(elem_list, is.null)] <- NULL
-  
-  if(length(elem_list) > 0){
-    return(data.table::rbindlist(elem_list, ...))
-    
-  } else {
-    return(NULL)
-  }
-}
 
 unique_na <- function(...){
   values <- do.call(unique, args=list(...))
