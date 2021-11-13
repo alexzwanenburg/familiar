@@ -1230,22 +1230,21 @@ is_package_installed <- function(name){
   return(!inherits(installed_version, "error"))
 }
 
-      if(installed_version < version & verbose){
-        logger.warning(paste0("Package check: Please update the ", name, " package to version ", version, " or later."))
-      }
-    }
 
-    is_installed <- TRUE
-  } else {
-    is_installed <- FALSE
+
+is_package_outdated <- function(name, version){
+  
+  if(length(name) == 0) return(TRUE)
+  
+  installed_version <- tryCatch(utils::packageVersion(name),
+                                error=identity)
+  
+  if(inherits(installed_version, "error")){
+    ..error_package_not_installed(name)
   }
-
-  if(!is_installed & verbose){
-    logger.warning(paste0("Package check: Please install the ", name, " package."))
-  }
-
-  return(is_installed)
-}
+  
+  return(version > installed_version)
+} 
 
 
 
