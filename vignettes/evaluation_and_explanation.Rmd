@@ -24,6 +24,8 @@ knitr::opts_chunk$set(
 ```{r setup}
 library(familiar)
 library(data.table)
+
+set.seed(19)
 ```
 
 Familiar will automatically evaluate created models, and export corresponding
