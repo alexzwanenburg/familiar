@@ -1375,7 +1375,7 @@
   .check_parameter_value_is_valid(x=settings$univar_metric, var_name="univariate_test_threshold_metric", values=c("p_value", "q_value"))
   
   # If the qvalue package is not available, switch to p_value if necessary
-  if(!is_package_installed(name="qvalue", verbose=FALSE) & settings$univar_metric == "q_value" &
+  if(!is_package_installed(name="qvalue") & settings$univar_metric == "q_value" &
      "univar_test" %in% settings$filter_method){
     stop(paste("The qvalue package is not installed. Please install qvalue from Bioconductor",
                "to be able to use q_value as the univariate test threshold metric during",

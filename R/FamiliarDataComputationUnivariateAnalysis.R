@@ -104,7 +104,7 @@ setMethod("extract_univariate_analysis", signature(object="familiarEnsemble", da
               
             } else {
               # Check that the qvalue package is installed.
-              has_qvalue_package <- is_package_installed(name="qvalue", verbose=FALSE)
+              has_qvalue_package <- is_package_installed(name="qvalue")
               
               # Calculate univariate P values, based on aggregated data
               regression_p_values <- compute_univariable_p_values(cl=cl,
