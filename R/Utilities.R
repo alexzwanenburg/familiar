@@ -1216,14 +1216,19 @@ is_valid_data <- function(x){
 
 
 
-is_package_installed <- function(name, version=NULL, verbose=FALSE){
+is_package_installed <- function(name){
 
-  # Get all installed packages
-  installed_packages <- utils::installed.packages()[,1]
-
-  if(name %in% installed_packages){
-    if(!is.null(version)){
-      installed_version <- utils::packageVersion(name)
+  if(length(name) == 0) return(TRUE)
+  
+  # Try to obtain the package version. This perhaps the cleanest way to check
+  # whether a package exists. require and requireNameSpace attach and load
+  # packages, which is not required here. The find.package documentation
+  # actively discourages its use to identify whether a package is installed.
+  installed_version <- tryCatch(utils::packageVersion(name),
+                                error=identity)
+  
+  return(!inherits(installed_version, "error"))
+}
 
       if(installed_version < version & verbose){
         logger.warning(paste0("Package check: Please update the ", name, " package to version ", version, " or later."))
