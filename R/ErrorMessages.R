@@ -190,3 +190,38 @@
        " shared between ", var_name_x, " and ", var_name_y, ": ", paste0(overlap, collapse=", "),
        ". No overlap is allowed.")
 }
+
+
+
+..error_package_not_installed <- function(x, purpose=NULL){
+  
+  # Only unique packages.
+  x <- unique(x)
+  
+  bioconductor_packages <- "qvalue"
+  
+  err_message <- paste0("The following package",
+                        ifelse(length(x) > 1, "s have", " has"),
+                        " to be installed",
+                        ifelse(is.null(purpose), ": ", paste0(" ", purpose, ": ")),
+                        paste_s(x), ".")
+  
+  x_cran <- setdiff(x, bioconductor_packages)
+  if(length(x_cran) > 0){
+    err_message <- c(err_message,
+                     paste0("\n\nInstall from CRAN: ",
+                            "\n\n\tinstall.packages(c(",
+                            paste0("\"", x_cran, "\"", collapse=", "), "))"))
+  }
+  
+  x_bioc <- intersect(x, bioconductor_packages)
+  if(length(x_bioc) > 0){
+    err_message <- c(err_message,
+                     paste0("\n\nInstall from Bioconductor: ",
+                            ifelse(is_package_installed("BiocManager"), "", "\n\n\tinstall.packages(\"BiocManager\")"),
+                            "\n\tBiocManager::install(c(",
+                            paste0("\"", x_bioc, "\"", collapse=", "), "))"))
+  }
+  
+  stop(paste0(err_message, collapse=""))
+}
