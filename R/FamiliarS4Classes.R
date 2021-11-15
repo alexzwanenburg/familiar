@@ -50,10 +50,10 @@ setClass("familiarModel",
            project_id = "ANY",
            # Package version for backward compatibility
            familiar_version = "ANY",
-           # Name of the package used to train the learner.
-           learner_package = "character",
+           # Name of the package required to train the learner.
+           package = "ANY",
            # Version of the learner for reproducibility.
-           learner_version = "ANY"
+           package_version = "ANY"
          ),
          prototype = list(
            name = character(0),
@@ -79,8 +79,8 @@ setClass("familiarModel",
            trimmed_function = list(),
            project_id = NULL,
            familiar_version = NULL,
-           learner_package = NA_character_,
-           learner_version = as.package_version("0.0.0")
+           package = NULL,
+           package_version = NULL
          )
 )
 
