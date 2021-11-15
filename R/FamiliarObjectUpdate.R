@@ -66,6 +66,20 @@ setMethod("update_object", signature(object="familiarModel"),
               attr(object, "is_anonymised") <- NULL
             }
             
+            if(object@familiar_version < "1.0.0"){
+              # Rename learner_package to package
+              attr(object, "package") <- attr(object, "learner_package")
+              if(is.na(object@package)) methods::slot(object, "package", check=FALSE) <- NULL
+              
+              # Rename learner_version to package_version
+              attr(object, "package_version") <- attr(object, "learner_version")
+              if(object@learner_version == as.package_version("0.0.0")) methods::slot(object, "package_version", check=FALSE) <- NULL
+              
+              # Remove learner_package and learner_version attributes.
+              attr(object, "learner_package") <- NULL
+              attr(object, "learner_version") <- NULL
+            }
+            
             if(!methods::validObject(object)) stop("Could not update the familiarModel object to the most recent definition.")
             
             # Update package version.
