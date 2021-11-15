@@ -51,6 +51,7 @@ is_package_outdated <- function(name, version){
 }
 
 
+
 ..message_install_from_cran <- function(x){
   
   # Select unique packages.
@@ -65,6 +66,7 @@ is_package_outdated <- function(name, version){
     message_str <- NULL
   }
 }
+
 
 
 ..message_install_from_bioconductor <- function(x){
@@ -83,4 +85,10 @@ is_package_outdated <- function(name, version){
   }
   
   return(message_str)
+}
+
+
+
+..message_package_version <- function(x, version){
+  return(paste0(x, " (v", as.character(version), ")"))
 }
