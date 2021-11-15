@@ -1216,38 +1216,6 @@ is_valid_data <- function(x){
 
 
 
-is_package_installed <- function(name){
-
-  if(length(name) == 0) return(TRUE)
-  
-  # Try to obtain the package version. This perhaps the cleanest way to check
-  # whether a package exists. require and requireNameSpace attach and load
-  # packages, which is not required here. The find.package documentation
-  # actively discourages its use to identify whether a package is installed.
-  installed_version <- tryCatch(utils::packageVersion(name),
-                                error=identity)
-  
-  return(!inherits(installed_version, "error"))
-}
-
-
-
-is_package_outdated <- function(name, version){
-  
-  if(length(name) == 0) return(TRUE)
-  
-  installed_version <- tryCatch(utils::packageVersion(name),
-                                error=identity)
-  
-  if(inherits(installed_version, "error")){
-    ..error_package_not_installed(name)
-  }
-  
-  return(version > installed_version)
-} 
-
-
-
 is_any <- function(object, class2){
   # Tests whether the object is any of the classes in class2.
   return(any(sapply(class2, function(class, object) is(object, class2=class), object=object)))
