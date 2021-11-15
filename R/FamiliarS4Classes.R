@@ -643,6 +643,8 @@ setClass("familiarVimpMethod",
            feature_info = "ANY",
            # Required features for complete reconstruction, including imputation
            required_features = "ANY",
+           # Name of the package required to perform variable importance.
+           package = "ANY",
            # Run table for the current vimp method
            run_table = "ANY",
            # Project identifier for consistency tracking
@@ -655,6 +657,7 @@ setClass("familiarVimpMethod",
            outcome_info = NULL,
            feature_info = NULL,
            required_features = NULL,
+           package = NULL,
            run_table = NULL,
            project_id = NULL
          )
