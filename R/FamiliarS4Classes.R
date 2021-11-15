@@ -262,42 +262,76 @@ setClass("familiarData",
 ####familiarCollection#####
 #' Collection of familiar data.
 #'
-#' A familiarCollection object aggregates data from one or more familiarData objects.
-#' @slot name character 
-#' @slot data_sets character. 
-#' @slot outcome_type character. 
-#' @slot outcome_info ANY. 
-#' @slot fs_vimp ANY. 
-#' @slot model_vimp ANY.
-#' @slot permutation_vimp ANY.
-#' @slot hyperparameters ANY.
-#' @slot hyperparameter_data ANY.
-#' @slot required_features ANY.
-#' @slot model_features ANY. 
-#' @slot learner character. 
-#' @slot fs_method character. 
-#' @slot prediction_data ANY.
-#' @slot confusion_matrix ANY.
-#' @slot decision_curve_data ANY.
-#' @slot calibration_info ANY. 
-#' @slot calibration_data ANY. 
-#' @slot model_performance ANY. 
-#' @slot km_info ANY. 
-#' @slot km_data ANY. 
-#' @slot auc_data ANY. 
-#' @slot univariate_analysis ANY. 
-#' @slot feature_expressions ANY. 
-#' @slot feature_similarity ANY.
-#' @slot sample_similarity ANY.
-#' @slot data_set_labels ANY.
-#' @slot ice_data ANY,
-#' @slot learner_labels ANY. 
-#' @slot fs_method_labels ANY. 
-#' @slot feature_labels ANY. 
-#' @slot km_group_labels ANY.
-#' @slot class_labels ANY. 
-#' @slot project_id ANY. 
-#' @slot familiar_version ANY. 
+#' A familiarCollection object aggregates data from one or more familiarData
+#' objects.
+#' 
+#' @slot name Name of the collection. 
+#' @slot data_sets Name of the individual underlying datasets.
+#' @slot outcome_type Outcome type for which the collection was created.
+#' @slot outcome_info Outcome information object, which contains information
+#'   concerning the outcome, such as class levels.
+#' @slot fs_vimp Variable importance data collected by feature selection
+#'   methods.
+#' @slot model_vimp Variable importance data collected from model-specific
+#'   algorithms implemented by models created by familiar.
+#' @slot permutation_vimp Data collected for permutation variable importance.
+#' @slot hyperparameters Hyperparameters collected from created models.
+#' @slot hyperparameter_data Additional data concerning hyperparameters. This is
+#'   currently not used yet.
+#' @slot required_features The set of features required for complete
+#'   reproduction, i.e. with imputation.
+#' @slot model_features The set of features that are required for using the
+#'   model, but without imputation.
+#' @slot learner Learning algorithm(s) used for data in the collection.
+#' @slot fs_method Feature selection method(s) used for data in the collection.
+#' @slot prediction_data Model predictions for the data in the collection.
+#' @slot confusion_matrix Confusion matrix information for the data in the
+#'   collection.
+#' @slot decision_curve_data Decision curve analysis data for the data in the
+#'   collection.
+#' @slot calibration_info Calibration information, e.g. baseline survival in the
+#'   development cohort.
+#' @slot calibration_data Model calibration data collected from data in the
+#'   collection.
+#' @slot model_performance Collection of model performance data for data in the
+#'   collection.
+#' @slot km_info Information concerning risk-stratification cut-off values for
+#'   data in the collection.
+#' @slot km_data Kaplan-Meier survival data for data in the collection.
+#' @slot auc_data AUC-ROC and AUC-PR data for data in the collection.
+#' @slot ice_data Individual conditional expectation data for data in the
+#'   collection. Partial dependence data are computed on the fly from these
+#'   data.
+#' @slot univariate_analysis Univariate analysis results of data in the
+#'   collection.
+#' @slot feature_expressions Feature expression values for data in the
+#'   collection.
+#' @slot feature_similarity Feature similarity information for data in the
+#'   collection.
+#' @slot sample_similarity Sample similarity information for data in the
+#'   collection.
+#' @slot data_set_labels Labels for the different datasets in the collection.
+#'   See `get_data_set_names` and `set_data_set_names`.
+#' @slot learner_labels Labels for the different learning algorithms used to
+#'   create the collection. See `get_learner_names` and `set_learner_names`.
+#' @slot fs_method_labels Labels for the different feature selection methods
+#'   used to create the collection. See `get_fs_method_names` and
+#'   `set_fs_method_names`.
+#' @slot feature_labels Labels for the features in this collection. See
+#'   `get_feature_names` and `set_feature_names`.
+#' @slot km_group_labels Labels for the risk strata in this collection. See
+#'   `get_risk_group_names` and `set_risk_group_names`.
+#' @slot class_labels Labels of the response variable. See `get_class_names` and
+#'   `set_class_names`.
+#' @slot project_id Identifier of the project that generated this collection.
+#' @slot familiar_version Version of the familiar package.
+#'
+#' familiarCollection objects collect data from one or more familiarData
+#' objects. This objects are important, as all plotting and export functions use
+#' it. The fact that one can supply familiarModel, familiarEnsemble and
+#' familiarData objects as arguments for these methods, is because familiar
+#' internally converts these into familiarCollection objects prior to executing
+#' the method.
 #'
 #' @export
 

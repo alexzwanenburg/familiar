@@ -84,6 +84,7 @@ Collate:
     'FamiliarS4Classes.R'
     'FamiliarS4Generics.R'
     'CheckHyperparameters.R'
+    'CheckPackages.R'
     'Clustering.R'
     'CombatNormalisation.R'
     'DataObject.R'
