@@ -163,10 +163,21 @@ setMethod("show", signature(object="familiarModel"),
                          ") that was not successfully trained (v", object@familiar_version, ").\n"))
               
             } else {
-              cat(paste0("A ", object@learner, " model (class: ", class(object)[1],
-                         "; v", object@familiar_version, ")",
-                         " trained using ", object@learner_package, " (",
-                         as.character(object@learner_version), ") package.\n"))
+              # Describe the learner and the version of familiar.
+              message_str <- paste0("A ", object@learner, " model (class: ", class(object)[1],
+                                    "; v", object@familiar_version, ")")
+              
+              # Describe the package(s), if any
+              if(!is.null(object@package)){
+                message_str <- c(message_str,
+                                 paste0(" trained using "),
+                                 paste_s(mapply(..message_package_version, x=object@package, version=object@package_version)),
+                                 ifelse(length(object@package) > 1, " packages", " package"))
+              }
+              
+              # Complete message and write.
+              message_str <- paste0(c(message_str, ".\n"), collapse="")
+              cat(message_str)
               
               cat(paste0("\n--------------- Model details ---------------"))
               
