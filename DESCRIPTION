@@ -1,6 +1,6 @@
 Package: familiar
 Title: A Package for End-to-End Automated Machine Learning
-Version: 0.0.0.55
+Version: 1.0.0
 Authors@R: c(
     person("Alex", "Zwanenburg",
            email = "alexander.zwanenburg@nct-dresden.de",
