@@ -318,6 +318,9 @@ summon_familiar <- function(formula=NULL,
       # Normalise file paths
       config <- normalizePath(config)
       
+      # Check that the xml2 package is installed
+      require_package("xml2", "to configure familiar using a configuration file")
+      
       # Read xml file, parse to list and remove comments
       config <- xml2::as_list(xml2::read_xml(config))[[1]][[config_id]]
       config <- .clean_configuration_comments(config=config)
@@ -328,7 +331,7 @@ summon_familiar <- function(formula=NULL,
       }
     }
   } else {
-    config    <- NULL
+    config <- NULL
   }
   
   return(config)

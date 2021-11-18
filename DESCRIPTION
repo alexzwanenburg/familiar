@@ -58,7 +58,6 @@ Imports: methods,
     labeling,
     scales,
     stringi,
-    xml2,
     maxstat,
     proxy,
     laGP,
@@ -76,6 +75,7 @@ Suggests:
     testthat (>= 3.0.0),
     Ecdat,
     MASS
+    xml2,
 Collate: 
     'BatchNormalisation.R'
     'BootstrapConfidenceInterval.R'
