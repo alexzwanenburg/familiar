@@ -152,6 +152,10 @@ learner.check_outcome_type <- function(learner, outcome_type, as_flag=FALSE){
   if(!learner_available){
     stop(paste0(learner, " is not available for \"", outcome_type, "\" outcomes."))
   }
+  
+  require_package(x=fam_model,
+                  purpose=paste0("to train models using the ", learner, " learner"),
+                  message_type="backend_error")
 }
 
 
