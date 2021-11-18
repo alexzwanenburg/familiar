@@ -255,7 +255,7 @@ setMethod("require_package", signature(x="familiarModel"),
             } else {
               # Check whether packages are installed, without loading the
               # packages.
-              package_loaded <- sapply(x, is_package_installed)
+              package_loaded <- sapply(x@package, is_package_installed)
             }
             
             # Skip further analysis if all packages could be loaded.
