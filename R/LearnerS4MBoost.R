@@ -20,6 +20,34 @@ setClass("familiarMBoostTree",
                         "feature_order"=character()))
 
 
+#####initialize (familiarMBoostLM) #############################################
+setMethod("initialize", signature(.Object="familiarMBoostLM"),
+          function(.Object, ...){
+            
+            # Update with parent class first.
+            .Object <- callNextMethod()
+            
+            # Set package
+            .Object@package <- "mboost"
+            
+            return(.Object)
+          })
+
+
+#####initialize (familiarMBoostTree) ###########################################
+setMethod("initialize", signature(.Object="familiarMBoostTree"),
+          function(.Object, ...){
+            
+            # Update with parent class first.
+            .Object <- callNextMethod()
+            
+            # Set package
+            .Object@package <- c("mboost", "partykit")
+            
+            return(.Object)
+          })
+
+
 .get_available_mboost_lm_learners <- function(show_general=TRUE){
   
   # Learners
@@ -295,6 +323,9 @@ setMethod("..train", signature(object="familiarMBoost", data="dataObject"),
             # Check if hyperparameters are set.
             if(is.null(object@hyperparameters)) return(callNextMethod())
             
+            # Check that required packages are loaded and installed.
+            require_package(object, "train")
+            
             # Use effect coding to convert categorical data into encoded data -
             # this is required to deal with factors with missing/new levels
             # between training and test data sets.
@@ -375,8 +406,7 @@ setMethod("..train", signature(object="familiarMBoost", data="dataObject"),
             object@feature_order <- feature_columns
             
             # Set learner version
-            object@learner_package <- "mboost"
-            object@learner_version <- utils::packageVersion("mboost")
+            object <- set_package_version(object)
             
             return(object)
           })
@@ -385,6 +415,9 @@ setMethod("..train", signature(object="familiarMBoost", data="dataObject"),
 #####..predict#####
 setMethod("..predict", signature(object="familiarMBoost", data="dataObject"),
           function(object, data, type="default", ...){
+            
+            # Check that required packages are loaded and installed.
+            require_package(object, "predict")
             
             if(type == "default"){
               ##### Default method #############################################
@@ -536,6 +569,9 @@ setMethod("..predict_survival_probability", signature(object="familiarMBoost", d
             # If time is unset, read the max time stored by the model.
             if(is.null(time)) time <- object@settings$time_max
             
+            # Check that required packages are loaded and installed.
+            require_package(object, "predict")
+            
             return(learner.survival_probability_relative_risk(object=object, data=data, time=time))
           })
 
@@ -550,6 +586,9 @@ setMethod("..vimp", signature(object="familiarMBoostLM"),
             
             # Check if the model has been trained upon retry.
             if(!model_is_trained(object)) return(callNextMethod())
+            
+            # Check that required packages are loaded and installed.
+            require_package(object, "vimp")
             
             if(object@is_trimmed){
               # Use stored data.
@@ -614,6 +653,9 @@ setMethod("..get_distribution_family", signature(object="familiarMBoost"),
             if(!is.character(family) & !is.factor(family)){
               ..error_reached_unreachable_code("..get_distribution_family,familiarMBoost: family hyperparameter was not set.")
             }
+            
+            # Check that required packages are loaded and installed.
+            require_package(object, "distribution")
             
             # Load families for boosted gradients
             if(family == "logistic"){
