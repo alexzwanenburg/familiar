@@ -1778,33 +1778,50 @@
 #' @return List of parameters related to model development.
 #' @md
 #' @keywords internal
-.parse_model_development_settings <- function(config=NULL, data, parallel, outcome_type,
+.parse_model_development_settings <- function(config=NULL,
+                                              data,
+                                              parallel,
+                                              outcome_type,
                                               learner=waiver(),
                                               hyperparameter=waiver(),
                                               parallel_model_development=waiver(),
                                               ...){
   settings <- list()
   
+  ##### learner ################################################################
   # Learners for model development
   settings$learners <- .parse_arg(x_config=config$learner, x_var=learner,
-                                  var_name="learner", type="character_list", optional=FALSE)
+                                  var_name="learner",
+                                  type="character_list",
+                                  optional=FALSE)
   
   sapply(settings$learners, learner.check_outcome_type, outcome_type=outcome_type)
   
-  
+  ##### hyperparameters ########################################################
   # Model hyperparameters
-  settings$hyper_param <- .parse_arg(x_config=config$hyperparameter, x_var=hyperparameter,
-                                     var_name="hyperparameter", type="list", optional=TRUE, default=list())
+  settings$hyper_param <- .parse_arg(x_config=config$hyperparameter,
+                                     x_var=hyperparameter,
+                                     var_name="hyperparameter",
+                                     type="list",
+                                     optional=TRUE,
+                                     default=list())
   
-  settings$hyper_param <- .parse_hyperparameters(data=data, parameter_list=settings$hyper_param,
-                                                 outcome_type=outcome_type, learner=settings$learners)
+  settings$hyper_param <- .parse_hyperparameters(data=data,
+                                                 parameter_list=settings$hyper_param,
+                                                 outcome_type=outcome_type,
+                                                 learner=settings$learners)
   
+  ##### parallel_model_development #############################################
   # Parallelisation switch for model building
-  settings$do_parallel <- .parse_arg(x_config=config$parallel_model_development, x_var=parallel_model_development,
-                                     var_name="parallel_model_development", type="logical", optional=TRUE, default=TRUE)
+  settings$do_parallel <- .parse_arg(x_config=config$parallel_model_development,
+                                     x_var=parallel_model_development,
+                                     var_name="parallel_model_development",
+                                     type="logical",
+                                     optional=TRUE,
+                                     default=TRUE)
   
   # Disable if parallel is FALSE
-  if(!parallel) { settings$do_parallel <- FALSE }
+  if(!parallel) settings$do_parallel <- FALSE
   
   return(settings)
 }
