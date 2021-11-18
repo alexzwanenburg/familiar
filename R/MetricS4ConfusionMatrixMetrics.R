@@ -10,7 +10,7 @@ setClass("familiarMetricCMAveraging",
          slots=list("averaging"="character"),
          prototype=list("averaging"="macro"))
 
-setMethod("initialize", signature="familiarMetricCMAveraging",
+setMethod("initialize", signature(.Object="familiarMetricCMAveraging"),
           function(.Object, metric, ...){
             
             # Update with parent class first.

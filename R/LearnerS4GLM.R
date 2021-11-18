@@ -8,7 +8,7 @@ setClass("familiarGLM",
          prototype=list("encoding_reference_table" = NULL))
 
 #####initialize#################################################################
-setMethod("initialize", signature="familiarGLM",
+setMethod("initialize", signature(.Object="familiarGLM"),
           function(.Object, ...){
             
             # Update with parent class first.

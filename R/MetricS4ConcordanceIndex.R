@@ -9,7 +9,7 @@ setClass("familiarMetricConcordanceIndex",
          prototype=list("time"=Inf,
                         "prediction_type"="hazard_ratio"))
 
-setMethod("initialize", signature="familiarMetricConcordanceIndex",
+setMethod("initialize", signature(.Object="familiarMetricConcordanceIndex"),
           function(.Object, time=NULL, object=NULL, prediction_type=NULL, ...){
             
             # Update with parent class first.
