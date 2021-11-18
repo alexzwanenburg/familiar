@@ -94,6 +94,9 @@ similarity.pseudo_r2 <- function(x, y, x_categorical, y_categorical, similarity_
     null_loglik <- stats::logLik(null_obj)[1]
     
   } else if(analysis_info$type == "multinomial") {
+    require_package(x="VGAM",
+                    purpose=paste0("to compute log-likelihood pseudo R2 similarity using the ", similarity_metric, " metric"))
+    
     # Categorical y variable with over two levels
     model_obj <- VGAM::vglm(model_formula, family=VGAM::multinomial, data=data)
     null_obj  <- VGAM::vglm(null_formula, family=VGAM::multinomial, data=data)

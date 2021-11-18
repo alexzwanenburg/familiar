@@ -324,7 +324,11 @@ compute_univariable_p_values <- function(cl=NULL, data_obj, feature_columns){
   if(is.factor(data$value)){
     data$value <- droplevels(data$value)
   }
-
+  
+  # Check if the package is installed and attached.
+  require_package(x="VGAM",
+                  purpose="to determine univariate p-values for multinomial outcomes")
+  
   # Construct model
   model <- suppressWarnings(tryCatch(VGAM::vglm(outcome ~ .,
                                                 data=data,
@@ -1129,6 +1133,10 @@ is_valid_data <- function(x){
   }
   
   if(is(model, "vglm")){
+    # Check if the package is installed and attached.
+    require_package(x="VGAM",
+                    purpose="to determine z-scores for multinomial regression models")
+    
     if(is.null(mu)) mu <- VGAM::coefvlm(model)
     if(is.null(cov_matrix)) cov_matrix <- VGAM::vcovvlm(model)
     

@@ -43,7 +43,6 @@ Imports: methods,
     survival,
     CORElearn,
     cluster,
-    VGAM,
     randomForestSRC,
     mboost (>= 2.9.0),
     partykit,
@@ -76,6 +75,7 @@ Suggests:
     Ecdat,
     MASS
     xml2,
+    VGAM
 Collate: 
     'BatchNormalisation.R'
     'BootstrapConfidenceInterval.R'
