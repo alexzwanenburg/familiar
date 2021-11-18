@@ -29,6 +29,14 @@ setMethod("require_package", signature(x="character"),
           })
 
 
+#####require_package (NULL)#####
+setMethod("require_package", signature(x="NULL"),
+          function(x, purpose=NULL, as_error=TRUE){
+            
+            return(invisible(TRUE))
+          })
+
+
 
 is_package_installed <- function(name){
   
