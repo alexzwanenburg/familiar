@@ -36,7 +36,6 @@ LazyData: true
 RoxygenNote: 7.1.2
 VignetteBuilder: knitr
 Imports: methods,
-    microbenchmark,
     callr (>= 3.4.3),
     rlang (>= 0.3.4),
     data.table,
@@ -66,6 +65,7 @@ Suggests:
     rmarkdown,
     fastcluster,
     Rservecoop,
+    microbenchmark,
     RSclient,
     Rserve,
     qvalue,
