@@ -7,6 +7,26 @@ setClass("familiarGLM",
          slots=list("encoding_reference_table" = "ANY"),
          prototype=list("encoding_reference_table" = NULL))
 
+#####initialize#################################################################
+setMethod("initialize", signature="familiarGLM",
+          function(.Object, ...){
+            
+            # Update with parent class first.
+            .Object <- callNextMethod()
+            
+            if(.Object@outcome_type == "multinomial"){
+              .Object@package <- "VGAM"
+              
+            } else if(.Object@outcome == "survival"){
+              .Object@package <- "survival"
+              
+            } else {
+              .Object@package <- "stats"
+            }
+            
+            return(.Object)
+          })
+
 
 .get_available_glm_learners <- function(show_general=TRUE){
   
@@ -170,6 +190,9 @@ setMethod("..train", signature(object="familiarGLM", data="dataObject"),
             # Check if hyperparameters are set.
             if(is.null(object@hyperparameters)) return(callNextMethod())
             
+            # Check that required packages are loaded and installed.
+            require_package(object, "train")
+            
             # Use effect coding to convert categorical data into encoded data -
             # this is required to deal with factors with missing/new levels
             # between training and test data sets.
@@ -222,8 +245,7 @@ setMethod("..train", signature(object="familiarGLM", data="dataObject"),
             object@encoding_reference_table <- encoded_data$reference_table
             
             # Set learner version
-            object@learner_package <- ifelse(object@outcome_type == "multinomial", "VGAM", "stats")
-            object@learner_version <- if(object@outcome_type == "multinomial") utils::packageVersion("VGAM") else utils::packageVersion("stats")
+            object <- set_package_version(object)
             
             return(object)
           })
@@ -233,6 +255,9 @@ setMethod("..train", signature(object="familiarGLM", data="dataObject"),
 #####..predict#####
 setMethod("..predict", signature(object="familiarGLM", data="dataObject"),
           function(object, data, type="default", ...){
+            
+            # Check that required packages are loaded and installed.
+            require_package(object, "predict")
             
             if(type == "default"){
               ##### Default method #############################################
@@ -365,6 +390,9 @@ setMethod("..vimp", signature(object="familiarGLM"),
             
             if(!model_is_trained(object)) return(callNextMethod())
             
+            # Check that required packages are loaded and installed.
+            require_package(object, "vimp")
+            
             # Compute z-values
             coefficient_z_values <- .compute_z_statistic(object)
             
@@ -408,6 +436,9 @@ setMethod("..get_distribution_family", signature(object="familiarGLM"),
           function(object){
             # Obtain family from the hyperparameters.
             family <- object@hyperparameters$family
+            
+            # Check that required packages are loaded and installed.
+            require_package(object, "distribution")
             
             # Check that the family hyperparameter exists.
             if(!is.character(family) & !is.factor(family)){
