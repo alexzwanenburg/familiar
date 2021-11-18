@@ -32,10 +32,17 @@ setMethod("require_package", signature(x="character"),
               ..warning_package_not_installed(x=missing_packages,
                                               purpose=purpose)
               
-            } else if(message_type=="backend"){
+            } else if(message_type=="backend_error"){
               # Add message to backend.
               ..message_package_not_installed_to_backend(x=missing_packages,
-                                                         purpose=purpose)
+                                                         purpose=purpose,
+                                                         message_type="error")
+              
+            } else if(message_type=="backend_warning"){
+              # Add message to backend.
+              ..message_package_not_installed_to_backend(x=missing_packages,
+                                                         purpose=purpose,
+                                                         message_type="warning")
             }
             
             return(invisible(FALSE))
