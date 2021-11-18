@@ -783,56 +783,95 @@
   
   settings <- list()
 
+  ##### parallel ###############################################################
   # Parallelisation master switch
-  settings$parallel <- .parse_arg(x_config=config$parallel, x_var=parallel, var_name="parallel",
-                                  type="logical", optional=TRUE, default=TRUE)
+  settings$parallel <- .parse_arg(x_config=config$parallel,
+                                  x_var=parallel,
+                                  var_name="parallel",
+                                  type="logical",
+                                  optional=TRUE,
+                                  default=TRUE)
   
+  ##### parallel_nr_cores ######################################################
   # Maximum number of cores that a R may use
-  settings$parallel_nr_cores <- .parse_arg(x_config=config$parallel_nr_cores, x_var=parallel_nr_cores,
-                                           var_name="parallel_nr_cores", type="integer", optional=TRUE, default=NULL)
+  settings$parallel_nr_cores <- .parse_arg(x_config=config$parallel_nr_cores,
+                                           x_var=parallel_nr_cores,
+                                           var_name="parallel_nr_cores",
+                                           type="integer",
+                                           optional=TRUE,
+                                           default=NULL)
   
   if(!is.null(settings$parallel_nr_cores)){
-    .check_number_in_valid_range(x=settings$parallel_nr_cores, var_name="parallel_nr_cores", range=c(1, parallel::detectCores()))
+    .check_number_in_valid_range(x=settings$parallel_nr_cores,
+                                 var_name="parallel_nr_cores",
+                                 range=c(1, parallel::detectCores()))
   }
   
   # Set cores to 1 in case parallel processing is disabled.
-  if(!settings$parallel){
-    settings$parallel_nr_cores <- 1L
-  }
+  if(!settings$parallel) settings$parallel_nr_cores <- 1L
   
+  ##### restart_cluster ########################################################
   # Restart clusters
-  settings$restart_cluster <- .parse_arg(x_config=config$restart_cluster, x_var=restart_cluster,
-                                         var_name="restart_cluster", type="logical", optional=TRUE, default=FALSE)
+  settings$restart_cluster <- .parse_arg(x_config=config$restart_cluster,
+                                         x_var=restart_cluster,
+                                         var_name="restart_cluster",
+                                         type="logical",
+                                         optional=TRUE,
+                                         default=FALSE)
   
-  if(!settings$parallel){
-    settings$restart_cluster <- FALSE
-  }
+  if(!settings$parallel) settings$restart_cluster <- FALSE
   
+  ##### cluster_type ###########################################################
   # Define the cluster type
-  settings$cluster_type <- .parse_arg(x_config=config$cluster_type, x_var=cluster_type,
-                                      var_name="cluster_type", type="character", optional=TRUE, default="psock")
+  settings$cluster_type <- .parse_arg(x_config=config$cluster_type,
+                                      x_var=cluster_type,
+                                      var_name="cluster_type",
+                                      type="character",
+                                      optional=TRUE,
+                                      default="psock")
   
-  .check_parameter_value_is_valid(settings$cluster_type, var_name="cluster_type",
+  .check_parameter_value_is_valid(settings$cluster_type,
+                                  var_name="cluster_type",
                                   values=c("psock", "fork", "mpi", "nws", "sock", "none"))
   
-  if(!settings$parallel){
-    settings$cluster_type <- "none"
-  }
+  if(!settings$parallel) settings$cluster_type <- "none"
   
   .check_cluster_type_availability(cluster_type=settings$cluster_type)
+    
+  if(settings$cluster_type != "none"){
+    require_package(x="microbenchmark",
+                    purpose="to make use of optimised parallel processing",
+                    message_type="backend_warning")
+  }
   
+  ##### backend_type ###########################################################
   # Data server backend - this is os- and package-dependent
-  settings$backend_type <- .parse_arg(x_config=config$backend_type, x_var=backend_type, var_name="backend_type",
-                                      type="character", optional=TRUE, default="none")
+  settings$backend_type <- .parse_arg(x_config=config$backend_type,
+                                      x_var=backend_type,
+                                      var_name="backend_type",
+                                      type="character",
+                                      optional=TRUE,
+                                      default="none")
   
   .check_parameter_value_is_valid(settings$backend_type, var_name="backend_type",
                                   values=.get_available_backend_types())
   
-  # RServe communications port
-  settings$server_port <- .parse_arg(x_config=config$server_port, x_var=server_port, var_name="server_port",
-                                     type="integer", optional=TRUE, default=6311L)
+  require_package(x=.required_packages_backend(settings$backend_type),
+                  purpose="to use the requested backend (", settings$backend_type, ")",
+                  message_type="backend_error")
   
-  .check_number_in_valid_range(x=settings$server_port, var_name="server_port", range=c(1025, 49151))
+  ##### server_port ############################################################
+  # RServe communications port
+  settings$server_port <- .parse_arg(x_config=config$server_port,
+                                     x_var=server_port,
+                                     var_name="server_port",
+                                     type="integer",
+                                     optional=TRUE,
+                                     default=6311L)
+  
+  .check_number_in_valid_range(x=settings$server_port,
+                               var_name="server_port",
+                               range=c(1025, 49151))
   
   return(settings)
 }
