@@ -65,7 +65,6 @@ Suggests:
     dynamicTreeCut,
     Ecdat,
     fastcluster,
-    Rservecoop,
     knitr,
     MASS,
     microbenchmark,

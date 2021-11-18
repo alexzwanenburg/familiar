@@ -756,16 +756,12 @@
 #'   copies of the data. This backend ensures that only a single master copy is
 #'   kept in memory. This limits memory usage during parallel processing.
 #'
-#'   Several backend options are available, notably `socket_server`, `rserve`,
-#'   `rserve_coop` and `none` (default). Availability of the backend depends on
-#'   the operating system and package installation. `socket_server` is based on
-#'   the callr package and R sockets, comes with `familiar` and is available for
-#'   any OS. Note the callr currently has an issue that can prevent familiar
-#'   from working correctly (https://github.com/r-lib/callr/issues/151).
+#'   Several backend options are available, notably `socket_server`, `rserve`
+#'   and `none` (default). Availability of the backend depends on the operating
+#'   system and package installation. `socket_server` is based on the callr
+#'   package and R sockets, comes with `familiar` and is available for any OS.
 #'   `rserve` requires the RServe package, and only functions correctly under
-#'   Windows. `rserve_coop` requires the RServe_coop package (installable from
-#'   https://github.com/alexzwanenburg/Rserve_coop), but can be compiled against
-#'   any OS. `none` uses the global environment of familiar to store data, and
+#'   Windows. `none` uses the package environment of familiar to store data, and
 #'   is available for any OS. However, `none` requires copying of data to any
 #'   parallel process, and has a larger memory footprint.
 #' @param server_port (*optional*) Integer indicating the port on which the
@@ -829,13 +825,15 @@
   settings$backend_type <- .parse_arg(x_config=config$backend_type, x_var=backend_type, var_name="backend_type",
                                       type="character", optional=TRUE, default="none")
   
-  .check_backend_type_availability(backend_type=settings$backend_type)
+  .check_parameter_value_is_valid(settings$backend_type, var_name="backend_type",
+                                  values=.get_available_backend_types())
   
   # RServe communications port
   settings$server_port <- .parse_arg(x_config=config$server_port, x_var=server_port, var_name="server_port",
                                      type="integer", optional=TRUE, default=6311L)
   
   .check_number_in_valid_range(x=settings$server_port, var_name="server_port", range=c(1025, 49151))
+  
   return(settings)
 }
 

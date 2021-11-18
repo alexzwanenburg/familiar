@@ -1,33 +1,29 @@
-.check_backend_type_availability <- function(backend_type){
-  # Checks backend configuration
-
-  # Get all installed packages
-  installed_libs <- utils::installed.packages()[,1]
-
-  if(backend_type=="rserve_coop"){
-    # Rservecoop is not CRAN, and may require installation
-    if(!"Rservecoop" %in% installed_libs){
-      # Stop and have the package installed by the user
-      stop(paste("rserve_coop is not a valid type of backend as the Rservecoop package is missing. Please install this package manually from:",
-                 "\tdevtools::install_github(\"alexzwanenburg/Rserve_coop\", ref=\"1.7\")",
-                 sep="\n"))
-    }
-  } else if(backend_type=="rserve"){
-    # Check for RServe and windows OS
-    if(get_os() != "windows"){
-      stop(paste("rserve is not a valid type of backend as the Rserve package",
-                 "cannot be used in cooperative mode for non-windows systems."))
-    }
-
-    if(!"Rserve" %in% installed_libs){
-      stop(paste("rserve is not a valid type of backend as the Rserve package is missing. Please install this package from CRAN:",
-                 "\tinstall.packages(\"RServe\")", sep="\n"))
-    }
-  } else {
-    .check_parameter_value_is_valid(x=backend_type, var_name="backend_type",
-                                    values=c("none", "socket_server", "rserve", "rserve_coop"))
+.required_packages_backend <- function(backend_type){
+  
+  backend_packages <- NULL
+  if(backend_type == "socket_server"){
+    backend_packages <- "callr"
+    
+  } else if(backend_type == "rserve"){
+    backend_packages <- c("Rserve", "RSclient")
   }
+  
+  return(backend_packages)
 }
+
+
+.get_available_backend_types <- function(){
+  
+  # All types of backend.
+  all_backend_types <- c("none", "socket_server", "rserve")
+  
+  # rserve is not available for non-windows systems due to lack of cooperative
+  # setting.
+  if(get_os() != "windows") all_backend_types <- setdiff(all_backend_types, "rserve")
+  
+  return(all_backend_types)
+}
+
 
 
 .get_selected_backend_type <- function(){
@@ -102,7 +98,7 @@
     # Put master_data in global environment
     assign(x="master_data", value=data, envir=familiar_global_env)
     
-  } else if(backend_type %in% c("rserve", "rserve_coop")){
+  } else if(backend_type %in% c("rserve")){
     # Start server
     start_rserve_server(backend_type=backend_type, server_port=server_port)
 
@@ -155,7 +151,7 @@ get_data_from_backend <- function(backend_type=NULL, server_port=NULL, sample_id
     x <- socket_client_do_call(con, .get_data_from_backend, args=list("sample_identifiers"=sample_identifiers,
                                                                       "column_names"=column_names))
     
-  } else if(backend_type %in% c("rserve", "rserve_coop")) {
+  } else if(backend_type %in% c("rserve")) {
     # RServe backend
     
     # Attempt to establish connection.
@@ -241,7 +237,7 @@ get_data_from_backend <- function(backend_type=NULL, server_port=NULL, sample_id
     # Put master_feature_info_list in the familiar global environment.
     assign(x="master_feature_info_list", value=feature_info_list, envir=familiar_global_env)
     
-  } else if(backend_type %in% c("rserve", "rserve_coop")){
+  } else if(backend_type %in% c("rserve")){
     # Open connection
     rcon <- RSclient::RS.connect(port=server_port)
     on.exit(RSclient::RS.close(rcon))
@@ -299,7 +295,7 @@ get_feature_info_from_backend <- function(backend_type=NULL, server_port=NULL, d
                                args=list("data_id"=data_id,
                                          "run_id"=run_id))
     
-  } else if(backend_type %in% c("rserve", "rserve_coop")) {
+  } else if(backend_type %in% c("rserve")) {
     # RServe backend.
     
     # Attempt to establish connection.
@@ -405,10 +401,7 @@ start_rserve_server <- function(backend_type, server_port){
   # Start Rserve server that listens to the server port, if one is not available.
   if(!.is_rserve_server_started(server_port=server_port)) {
     
-    if(backend_type == "rserve_coop"){
-      Rservecoop::Rserve(debug=FALSE, port=server_port, args=paste0("--no-save ","--RS-enable-control"))
-      
-    } else if(backend_type == "rserve") {
+   if(backend_type == "rserve") {
       Rserve::Rserve(debug=FALSE, port=server_port, args=paste0("--no-save ","--RS-enable-control"))
       
     } else {
@@ -590,7 +583,7 @@ shutdown_backend_server <- function(backend_type=NULL, server_port=NULL){
   if(is.null(server_port)) server_port <- .get_backend_server_port()
   if(is.null(backend_type)) backend_type <- .get_selected_backend_type()
   
-  if(backend_type %in% c("rserve", "rserve_coop")){
+  if(backend_type %in% c("rserve")){
     
     # Check if the server is active prior to shutting it down.
     if(.is_rserve_server_started(server_port=server_port)){

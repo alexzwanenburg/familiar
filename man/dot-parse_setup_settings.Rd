@@ -45,16 +45,12 @@ parallel processing.}
 copies of the data. This backend ensures that only a single master copy is
 kept in memory. This limits memory usage during parallel processing.
 
-Several backend options are available, notably \code{socket_server}, \code{rserve},
-\code{rserve_coop} and \code{none} (default). Availability of the backend depends on
-the operating system and package installation. \code{socket_server} is based on
-the callr package and R sockets, comes with \code{familiar} and is available for
-any OS. Note the callr currently has an issue that can prevent familiar
-from working correctly (https://github.com/r-lib/callr/issues/151).
+Several backend options are available, notably \code{socket_server}, \code{rserve}
+and \code{none} (default). Availability of the backend depends on the operating
+system and package installation. \code{socket_server} is based on the callr
+package and R sockets, comes with \code{familiar} and is available for any OS.
 \code{rserve} requires the RServe package, and only functions correctly under
-Windows. \code{rserve_coop} requires the RServe_coop package (installable from
-https://github.com/alexzwanenburg/Rserve_coop), but can be compiled against
-any OS. \code{none} uses the global environment of familiar to store data, and
+Windows. \code{none} uses the package environment of familiar to store data, and
 is available for any OS. However, \code{none} requires copying of data to any
 parallel process, and has a larger memory footprint.}
 
