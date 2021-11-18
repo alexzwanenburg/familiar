@@ -10,6 +10,9 @@
 
 .capture_show <- function(object){
   
+  # Check that required packages are loaded and installed.
+  require_package(object, "show")
+  
   # Capture message
   captured_message <- suppressWarnings(tryCatch(utils::capture.output(show(object@model), file=NULL),
                                                 error=identity))
