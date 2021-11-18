@@ -193,6 +193,27 @@
 
 
 
+..warning_package_not_installed <- function(x, purpose=NULL){
+  
+  # Only unique packages.
+  x <- unique(x)
+  
+  # Basic error message.
+  err_message <- ..message_missing_package(x=x, purpose=purpose)
+  
+  # Instructions for CRAN packages.
+  err_message <- c(err_message,
+                   ..message_install_from_cran(x=x))
+  
+  # Instructions for Bioconductor packages.
+  err_message <- c(err_message,
+                   ..message_install_from_bioconductor(x=x))
+  
+  warning(paste0(err_message, collapse=""))
+}
+
+
+
 ..error_package_not_installed <- function(x, purpose=NULL){
   
   # Only unique packages.
