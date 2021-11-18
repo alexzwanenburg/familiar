@@ -4,7 +4,7 @@ NULL
 
 #####require_package (character)#####
 setMethod("require_package", signature(x="character"),
-          function(x, purpose=NULL, message_type="error"){
+          function(x, purpose=NULL, message_type="error", ...){
             
             if(message_type %in% c("error", "warning")){
               # Attempt to load required packages.
@@ -51,7 +51,7 @@ setMethod("require_package", signature(x="character"),
 
 #####require_package (NULL)#####
 setMethod("require_package", signature(x="NULL"),
-          function(x, purpose=NULL, as_error=TRUE){
+          function(x, purpose=NULL, ...){
             
             return(invisible(TRUE))
           })
