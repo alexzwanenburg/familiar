@@ -12,6 +12,12 @@ setGeneric(".train", function(object, data, ...) standardGeneric(".train"))
 
 setGeneric(".train_novelty_detector", function(object, data, ...) standardGeneric(".train_novelty_detector"))
 
+setGeneric("require_package", function(x, ...) standardGeneric("require_package"))
+
+setGeneric("set_package_version", function(object, ...) standardGeneric("set_package_version"))
+
+setGeneric("check_package_version", function(object, ...) standardGeneric("check_package_version"))
+
 setGeneric("get_signature", function(object, ...) standardGeneric("get_signature"))
 
 setGeneric("set_signature", function(object, ...) standardGeneric("set_signature"))

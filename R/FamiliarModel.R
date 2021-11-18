@@ -229,6 +229,114 @@ setMethod("show", signature(object="familiarModel"),
 
 
 
+#####require_package (model)#####
+setMethod("require_package", signature(x="familiarModel"),
+          function(x, purpose=NULL, as_error=TRUE, ...){
+            
+            # Skip if no package is required.
+            if(is_empty(x@package)) return(invisible(TRUE))
+            
+            # Set standard purposes for common uses.
+            if(!is.null(purpose)){
+              purpose <- switch(purpose,
+                                "train"="to train a model",
+                                "vimp"="to determine variable importance",
+                                "predict"="to create model predictions",
+                                "show"="to capture output",
+                                "distribution"="to set the model distribution")
+            }
+            
+            # Attempt to load required packages.
+            package_loaded <- sapply(x@package, requireNamespace, quietly=TRUE)
+            
+            # Skip further analysis if all packages could be loaded.
+            if(all(package_loaded)) return(invisible(TRUE))
+            
+            # Find all packages that are missing.
+            missing_packages <- x@package[!package_loaded]
+            
+            if(as_error){
+              # Throw an error.
+              ..error_package_not_installed(x=missing_packages,
+                                            purpose=purpose)
+            } else {
+              # Raise a warning.
+              ..warning_package_not_installed(x=missing_packages,
+                                              purpose=purpose)
+            }
+            
+            return(invisible(FALSE))
+          })
+
+
+
+#####set_package_version (model)#####
+setMethod("set_package_version", signature(object="familiarModel"),
+          function(object){
+            # Do not add package versions if there are no packages.
+            if(is_empty(object@package)) return(object)
+            
+            # Obtain package versions.
+            object@package_version <- sapply(object@package, function(x) (as.character(utils::packageVersion(x))))
+            
+            return(object)
+          })
+
+
+
+#####check_package_version (model)#####
+setMethod("check_package_version", signature(object="familiarModel"),
+          function(object){
+            # Check whether installed packages are outdated or newer.
+            
+            # Do not check if package versions are missing completely.
+            if(is_empty(object@package_version)) return(invisible(NULL))
+            
+            # Check for outdated packages.
+            package_outdated <- mapply(is_package_outdated,
+                                       name=object@package,
+                                       version=object@package_version)
+            
+            # Check for newer packages.
+            package_newer <- mapply(is_package_newer,
+                                    name=object@package,
+                                    version=object@package_version)
+            
+            # Skip if no packages are outdated.
+            if(!any(package_outdated) & !any(package_newer)) return(invisible(NULL))
+            
+            # Check whether one or more packages do not have the correct
+            # version.
+            multiple_packages <- sum(package_outdated + package_newer)
+            
+            # Initial string.
+            message_str <- paste0("The following installed package",
+                                  ifelse(multiple_packages,
+                                         "s have versions that differ from those at model creation:",
+                                         " has a version that differs from that at model creation:"))
+            
+            
+            for(ii in seq_along(object@package)){
+              
+              # Skip if package is not newer or outdated.
+              if(!package_outdated[ii] & !package_newer[ii]) next()
+              
+              # Parse package information.
+              message_str <- c(message_str,
+                               paste0(object@package[ii],
+                                     ": ",
+                                     as.character(utils::packageVersion(object@package[ii])),
+                                     ifelse(package_outdated[ii], " < ", " > "),
+                                     as.character(object@package_version[ii]),
+                                     ifelse(package_outdated[ii], " (outdated)", " (newer)")))
+            }
+            
+            # Show as warning.
+            warning(paste(message_str, sep="\n"))
+          })
+
+
+
 #####save (model)#####
 setMethod("save", signature(list="familiarModel", file="character"),
           function(list, file) {
