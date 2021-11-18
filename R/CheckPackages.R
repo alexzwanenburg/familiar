@@ -1,3 +1,35 @@
+#' @include FamiliarS4Generics.R
+NULL
+
+
+#####require_package (character)#####
+setMethod("require_package", signature(x="character"),
+          function(x, purpose=NULL, as_error=TRUE){
+            
+            # Attempt to load required packages.
+            package_loaded <- sapply(x, requireNamespace, quietly=TRUE)
+            
+            # Skip further analysis if all packages could be loaded.
+            if(all(package_loaded)) return(invisible(TRUE))
+            
+            # Find all packages that are missing.
+            missing_packages <- x[!package_loaded]
+            
+            if(as_error){
+              # Throw an error.
+              ..error_package_not_installed(x=missing_packages,
+                                            purpose=purpose)
+            } else {
+              # Raise a warning
+              ..warning_package_not_installed(x=missing_packages,
+                                              purpose=purpose)
+            }
+            
+            return(invisible(FALSE))
+          })
+
+
+
 is_package_installed <- function(name){
   
   if(length(name) == 0) return(TRUE)
@@ -18,6 +50,7 @@ is_package_outdated <- function(name, version){
   
   if(length(name) == 0) return(TRUE)
   
+  # Obtain the installed version of the package.
   installed_version <- tryCatch(utils::packageVersion(name),
                                 error=identity)
   
@@ -25,8 +58,31 @@ is_package_outdated <- function(name, version){
     ..error_package_not_installed(name)
   }
   
+  # Make sure version is a package version.
+  version <- as.package_version(version)
+  
   return(version > installed_version)
 } 
+
+
+
+is_package_newer <- function(name, version){
+  
+  if(length(name) == 0) return(TRUE)
+  
+  # Obtain the installed version of the package.
+  installed_version <- tryCatch(utils::packageVersion(name),
+                                error=identity)
+  
+  if(inherits(installed_version, "error")){
+    ..error_package_not_installed(name)
+  }
+  
+  # Make sure version is a package version.
+  version <- as.package_version(version)
+  
+  return(version < installed_version)
+}
 
 
 
