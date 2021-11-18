@@ -35,10 +35,11 @@ Encoding: UTF-8
 LazyData: true
 RoxygenNote: 7.1.2
 VignetteBuilder: knitr
-Imports: methods,
-    callr (>= 3.4.3),
+Imports: data.table,
+    methods,
     rlang (>= 0.3.4),
-    data.table,
+    stringi,
+    callr (>= 3.4.3),
     survival,
     CORElearn,
     cluster,
@@ -55,25 +56,24 @@ Imports: methods,
     ranger,
     labeling,
     scales,
-    stringi,
     maxstat,
     proxy,
     laGP,
     harmonicmeanp
 Suggests:
+    cowplot,
     dynamicTreeCut,
-    rmarkdown,
+    Ecdat,
     fastcluster,
     Rservecoop,
+    knitr,
+    MASS,
     microbenchmark,
+    qvalue,
+    rmarkdown,
     RSclient,
     Rserve,
-    qvalue,
-    cowplot,
-    knitr,
     testthat (>= 3.0.0),
-    Ecdat,
-    MASS
     xml2,
     VGAM
 Collate: 
