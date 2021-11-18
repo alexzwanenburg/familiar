@@ -39,7 +39,7 @@
     }
     
     # Load data based on file extension
-    file_extension <- tolower(tools::file_ext(data))
+    file_extension <- tolower(.file_extension(data))
     
     if(file_extension == "csv"){
       data <- .load_csv(data)

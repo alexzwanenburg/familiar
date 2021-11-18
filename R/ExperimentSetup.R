@@ -52,7 +52,7 @@ extract_experimental_setup <- function(experimental_design,
   }
   
   # Check whether the file is an RDS file.
-  if(tolower(tools::file_ext(basename(experimental_design))) == "rds"){
+  if(tolower(.file_extension(basename(experimental_design))) == "rds"){
     return(TRUE)
     
   } else {
