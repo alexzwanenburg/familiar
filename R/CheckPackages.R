@@ -100,6 +100,62 @@ is_package_newer <- function(name, version){
 
 
 
+..message_package_not_installed_to_backend <- function(x, purpose, message_type){
+  
+  # Generate message string.
+  message_str <- ..message_missing_package(x=x,
+                                           purpose=purpose)
+  
+  missing_packages <- NULL
+  if(exists("missing_packages", where=familiar_global_env)){
+    # Get existing missing packages.
+    missing_packages <- get("missing_packages",
+                            envir=familiar_global_env)
+  }
+  
+  # Append missing packages.
+  missing_packages <- c(missing_packages, x)
+  
+  # Assign to backend.
+  assign("missing_packages",
+         value=missing_packages,
+         envir=familiar_global_env)
+  
+  
+  missing_package_messages <- NULL
+  if(exists("missing_package_messages", where=familiar_global_env)){
+    # Get existing package messages.
+    missing_package_messages <- get("missing_package_messages",
+                                    envir=familiar_global_env)
+  }
+  
+  # Append package messages.
+  missing_package_messages <- c(missing_package_messages, message_str)
+  
+  # Assign to backend.
+  assign("missing_package_messages",
+         value=missing_package_messages,
+         envir=familiar_global_env)
+  
+  
+  missing_package_message_type <- NULL
+  if(exists("missing_package_message_type", where=familiar_global_env)){
+    # Get existing missing packages.
+    missing_package_message_type <- get("missing_package_message_type",
+                                        envir=familiar_global_env)
+  }
+  
+  # Append missing packages.
+  missing_package_message_type <- c(missing_package_message_type, message_type)
+  
+  # Assign to backend.
+  assign("missing_package_message_type",
+         value=missing_package_message_type,
+         envir=familiar_global_env)
+}
+
+
+
 ..message_missing_package <- function(x, purpose=NULL){
   
   # Select unique packages.
