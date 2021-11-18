@@ -549,6 +549,17 @@ applyContrastReference <- function(dt, dt_ref, method){
 }
 
 
+.file_extension <- function(x){
+  
+  # Find the file extension by extracting the substring to the right of the
+  # final period.
+  extension <- stringi::stri_sub(x, from=stringi::stri_locate_last_fixed(x, '.')[1,2] + 1L)
+  
+  # Check for NA values in case an extension is missing.
+  if(is.na(extension)) return("")
+  
+  return(extension)
+}
 
 # create_empty_calibration_table <- function(outcome_type){
 #   if(outcome_type == "survival"){
