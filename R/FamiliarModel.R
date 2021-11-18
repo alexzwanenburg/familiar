@@ -231,7 +231,7 @@ setMethod("show", signature(object="familiarModel"),
 
 #####require_package (model)#####
 setMethod("require_package", signature(x="familiarModel"),
-          function(x, purpose=NULL, as_error=TRUE, ...){
+          function(x, purpose=NULL, message_type="error", ...){
             
             # Skip if no package is required.
             if(is_empty(x@package)) return(invisible(TRUE))
@@ -246,8 +246,15 @@ setMethod("require_package", signature(x="familiarModel"),
                                 "distribution"="to set the model distribution")
             }
             
-            # Attempt to load required packages.
-            package_loaded <- sapply(x@package, requireNamespace, quietly=TRUE)
+            if(message_type %in% c("error", "warning")){
+              # Attempt to load required packages.
+              package_loaded <- sapply(x@package, requireNamespace, quietly=TRUE)
+              
+            } else {
+              # Check whether packages are installed, without loading the
+              # packages.
+              package_loaded <- sapply(x, is_package_installed)
+            }
             
             # Skip further analysis if all packages could be loaded.
             if(all(package_loaded)) return(invisible(TRUE))
@@ -255,15 +262,29 @@ setMethod("require_package", signature(x="familiarModel"),
             # Find all packages that are missing.
             missing_packages <- x@package[!package_loaded]
             
-            if(as_error){
+            if(message_type=="error"){
               # Throw an error.
               ..error_package_not_installed(x=missing_packages,
                                             purpose=purpose)
-            } else {
+              
+            } else if(message_type=="warning"){
               # Raise a warning.
               ..warning_package_not_installed(x=missing_packages,
                                               purpose=purpose)
+              
+            } else if(message_type=="backend_error"){
+              # Add message to backend.
+              ..message_package_not_installed_to_backend(x=missing_packages,
+                                                         purpose=purpose,
+                                                         message_type="error")
+              
+            } else if(message_type=="backend_warning"){
+              # Add message to backend.
+              ..message_package_not_installed_to_backend(x=missing_packages,
+                                                         purpose=purpose,
+                                                         message_type="warning")
             }
+            
             
             return(invisible(FALSE))
           })

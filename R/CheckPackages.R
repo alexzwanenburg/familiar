@@ -4,10 +4,17 @@ NULL
 
 #####require_package (character)#####
 setMethod("require_package", signature(x="character"),
-          function(x, purpose=NULL, as_error=TRUE){
+          function(x, purpose=NULL, message_type="error"){
             
-            # Attempt to load required packages.
-            package_loaded <- sapply(x, requireNamespace, quietly=TRUE)
+            if(message_type %in% c("error", "warning")){
+              # Attempt to load required packages.
+              package_loaded <- sapply(x, requireNamespace, quietly=TRUE)
+              
+            } else {
+              # Check whether packages are installed, without loading the
+              # packages.
+              package_loaded <- sapply(x, is_package_installed)
+            }
             
             # Skip further analysis if all packages could be loaded.
             if(all(package_loaded)) return(invisible(TRUE))
@@ -15,14 +22,20 @@ setMethod("require_package", signature(x="character"),
             # Find all packages that are missing.
             missing_packages <- x[!package_loaded]
             
-            if(as_error){
+            if(message_type=="error"){
               # Throw an error.
               ..error_package_not_installed(x=missing_packages,
                                             purpose=purpose)
-            } else {
+              
+            } else if(message_type=="warning"){
               # Raise a warning
               ..warning_package_not_installed(x=missing_packages,
                                               purpose=purpose)
+              
+            } else if(message_type=="backend"){
+              # Add message to backend.
+              ..message_package_not_installed_to_backend(x=missing_packages,
+                                                         purpose=purpose)
             }
             
             return(invisible(FALSE))
