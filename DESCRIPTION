@@ -35,11 +35,11 @@ Encoding: UTF-8
 LazyData: true
 RoxygenNote: 7.1.2
 VignetteBuilder: knitr
-Imports: data.table,
+Imports:
+    data.table,
     methods,
     rlang (>= 0.3.4),
     stringi,
-    callr (>= 3.4.3),
     survival,
     CORElearn,
     cluster,
@@ -61,6 +61,7 @@ Imports: data.table,
     laGP,
     harmonicmeanp
 Suggests:
+    callr (>= 3.4.3),
     cowplot,
     dynamicTreeCut,
     Ecdat,

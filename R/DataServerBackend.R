@@ -94,6 +94,10 @@
   if(is.null(server_port)) server_port <- .get_backend_server_port()
   if(is.null(backend_type)) backend_type <- .get_selected_backend_type()
   
+  # Check if required packages are installed.
+  require_package(x=.required_packages_backend(backend_type=backend_type),
+                  purpose=paste0("to use the requested backend (", backend_type, ")"))
+  
   if(backend_type %in% c("none")){
     # Put master_data in global environment
     assign(x="master_data", value=data, envir=familiar_global_env)
@@ -135,6 +139,10 @@ get_data_from_backend <- function(backend_type=NULL, server_port=NULL, sample_id
   # Find the server port and backend_type variables if not directly provided.
   if(is.null(server_port)) server_port <- .get_backend_server_port()
   if(is.null(backend_type)) backend_type <- .get_selected_backend_type()
+  
+  # Check if required packages are installed.
+  require_package(x=.required_packages_backend(backend_type=backend_type),
+                  purpose=paste0("to use the requested backend (", backend_type, ")"))
   
   if(backend_type == "none"){
     # Absence of backend.
@@ -233,6 +241,10 @@ get_data_from_backend <- function(backend_type=NULL, server_port=NULL, sample_id
   if(is.null(server_port)) server_port <- .get_backend_server_port()
   if(is.null(backend_type)) backend_type <- .get_selected_backend_type()
   
+  # Check if required packages are installed.
+  require_package(x=.required_packages_backend(backend_type=backend_type),
+                  purpose=paste0("to use the requested backend (", backend_type, ")"))
+  
   if(backend_type %in% c("none")){
     # Put master_feature_info_list in the familiar global environment.
     assign(x="master_feature_info_list", value=feature_info_list, envir=familiar_global_env)
@@ -276,6 +288,10 @@ get_feature_info_from_backend <- function(backend_type=NULL, server_port=NULL, d
   # Find the server port and backend_type variables if not directly provided.
   if(is.null(server_port)) server_port <- .get_backend_server_port()
   if(is.null(backend_type)) backend_type <- .get_selected_backend_type()
+  
+  # Check if required packages are installed.
+  require_package(x=.required_packages_backend(backend_type=backend_type),
+                  purpose=paste0("to use the requested backend (", backend_type, ")"))
   
   if(backend_type == "none"){
     # Absence of backend.
@@ -395,9 +411,14 @@ get_os <- function(){
 
 
 start_rserve_server <- function(backend_type, server_port){
-  # Starts an Rserve server daemon process. This server will hold the main data table.
-  # The function checks whether a server is already running at the specified port and starts a new server if it isn't
+  # Starts an Rserve server daemon process. This server will hold the main data
+  # table. The function checks whether a server is already running at the
+  # specified port and starts a new server if it isn't
 
+  # Check if required packages are installed.
+  require_package(x=.required_packages_backend(backend_type=backend_type),
+                  purpose=paste0("to use the requested backend (", backend_type, ")"))
+  
   # Start Rserve server that listens to the server port, if one is not available.
   if(!.is_rserve_server_started(server_port=server_port)) {
     
@@ -448,6 +469,10 @@ start_socket_server_process <- function(server_port=NULL){
   
   # Find the server port if not directly provided.
   if(is.null(server_port)) server_port <- .get_backend_server_port()
+  
+  # Check if required packages are installed.
+  require_package(x=.required_packages_backend(backend_type="socket_server"),
+                  purpose=paste0("to use the requested backend (socket_server)"))
   
   # Check if the process is already running.
   if(!.is_socket_server_process_started()){
@@ -583,6 +608,10 @@ shutdown_backend_server <- function(backend_type=NULL, server_port=NULL){
   if(is.null(server_port)) server_port <- .get_backend_server_port()
   if(is.null(backend_type)) backend_type <- .get_selected_backend_type()
   
+  # Check if required packages are installed.
+  require_package(x=.required_packages_backend(backend_type=backend_type),
+                  purpose=paste0("to use the requested backend (", backend_type, ")"))
+  
   if(backend_type %in% c("rserve")){
     
     # Check if the server is active prior to shutting it down.
@@ -613,5 +642,3 @@ shutdown_backend_server <- function(backend_type=NULL, server_port=NULL){
   
   return()
 }
-
-
