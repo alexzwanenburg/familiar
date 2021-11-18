@@ -238,12 +238,14 @@ setMethod("require_package", signature(x="familiarModel"),
             
             # Set standard purposes for common uses.
             if(!is.null(purpose)){
-              purpose <- switch(purpose,
-                                "train"="to train a model",
-                                "vimp"="to determine variable importance",
-                                "predict"="to create model predictions",
-                                "show"="to capture output",
-                                "distribution"="to set the model distribution")
+              if(purpose %in% c("train", "vimp", "predict", "show", "distribution")){
+                purpose <- switch(purpose,
+                                  "train"="to train a model",
+                                  "vimp"="to determine variable importance",
+                                  "predict"="to create model predictions",
+                                  "show"="to capture output",
+                                  "distribution"="to set the model distribution")
+              }
             }
             
             if(message_type %in% c("error", "warning")){
@@ -284,7 +286,6 @@ setMethod("require_package", signature(x="familiarModel"),
                                                          purpose=purpose,
                                                          message_type="warning")
             }
-            
             
             return(invisible(FALSE))
           })
