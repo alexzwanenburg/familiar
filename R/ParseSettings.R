@@ -1344,7 +1344,10 @@
 #'
 #' @md
 #' @keywords internal
-.parse_preprocessing_settings <- function(config=NULL, data, parallel, outcome_type,
+.parse_preprocessing_settings <- function(config=NULL,
+                                          data,
+                                          parallel,
+                                          outcome_type,
                                           feature_max_fraction_missing=waiver(),
                                           sample_max_fraction_missing=waiver(),
                                           filter_method=waiver(),
@@ -1371,114 +1374,205 @@
   
   settings <- list()
   
+  ##### feature_max_fraction_missing ###########################################
   # Maximum fraction of data points missing for inclusion of a feature
   settings$feature_max_fraction_missing <- .parse_arg(x_config=config$feature_max_fraction_missing,
-                                                      x_var=feature_max_fraction_missing, var_name="feature_max_fraction_missing",
-                                                      type="numeric", optional=TRUE, default=0.30)
+                                                      x_var=feature_max_fraction_missing,
+                                                      var_name="feature_max_fraction_missing",
+                                                      type="numeric",
+                                                      optional=TRUE,
+                                                      default=0.30)
   
   .check_number_in_valid_range(x=settings$feature_max_fraction_missing,
-                               var_name="feature_max_fraction_missing", range=c(0.0, 0.95))
+                               var_name="feature_max_fraction_missing",
+                               range=c(0.0, 0.95))
   
-
-    # Maximum fraction of features missing for inclusion of a subject
+  
+  ##### sample_max_fraction_missing ############################################
+  # Maximum fraction of features missing for inclusion of a subject
   settings$sample_max_fraction_missing <- .parse_arg(x_config=config$sample_max_fraction_missing,
-                                                     x_var=sample_max_fraction_missing, var_name="sample_max_fraction_missing",
-                                                     type="numeric", optional=TRUE, default=0.30)
+                                                     x_var=sample_max_fraction_missing,
+                                                     var_name="sample_max_fraction_missing",
+                                                     type="numeric",
+                                                     optional=TRUE,
+                                                     default=0.30)
   
   .check_number_in_valid_range(x=settings$sample_max_fraction_missing,
-                               var_name="sample_max_fraction_missing", range=c(0.0, 0.95))
+                               var_name="sample_max_fraction_missing",
+                               range=c(0.0, 0.95))
   
-  
+  ##### filter_method ##########################################################
   # Univariate filter methods
-  settings$filter_method <- .parse_arg(x_config=config$filter_method, x_var=filter_method, var_name="filter_method",
-                                       type="character_list", optional=TRUE, default="none")
+  settings$filter_method <- .parse_arg(x_config=config$filter_method,
+                                       x_var=filter_method,
+                                       var_name="filter_method",
+                                       type="character_list",
+                                       optional=TRUE,
+                                       default="none")
   
-  .check_parameter_value_is_valid(x=settings$filter_method, var_name="filter_method",
+  .check_parameter_value_is_valid(x=settings$filter_method,
+                                  var_name="filter_method",
                                   values=c("none", "low_variance", "univariate_test", "robustness"))
   
+  if(outcome_type == "multinomial" & "univariate_test" %in% settings$filter_method){
+    # The VGAM package is required for univariate tests with multinomial
+    # endpoints.
+    if(!require_package(x="VGAM",
+                        purpose="to filter features using univariate tests",
+                        message_type="backend_warning")){
+      
+      # If the VGAM package is not present, avoid the univariate test.
+      settings$filter_method <- setdiff(settings$filter_method, "univariate_test")
+      if(length(settings$filter_method) == 0) settings$filter_method <- "none"
+    }
+  }
   
+  ##### univariate_test_threshold ##############################################
   # Univariate model filter threshold value
-  settings$univar_threshold <- .parse_arg(x_config=config$univariate_test_threshold, x_var=univariate_test_threshold,
-                                          var_name="univariate_test_threshold", type="numeric", optional=TRUE, default=0.20)
+  settings$univar_threshold <- .parse_arg(x_config=config$univariate_test_threshold,
+                                          x_var=univariate_test_threshold,
+                                          var_name="univariate_test_threshold",
+                                          type="numeric",
+                                          optional=TRUE,
+                                          default=0.20)
   
-  .check_number_in_valid_range(x=settings$univar_threshold, var_name="univariate_test_threshold", range=c(0.0, 1.0), closed=c(FALSE, TRUE))
+  .check_number_in_valid_range(x=settings$univar_threshold,
+                               var_name="univariate_test_threshold",
+                               range=c(0.0, 1.0),
+                               closed=c(FALSE, TRUE))
   
-  
+  ##### univariate_test_threshold_metric #######################################
   # Univariate model threshold metric
-  settings$univar_metric <- .parse_arg(x_config=config$univariate_test_threshold_metric, x_var=univariate_test_threshold_metric,
-                                       var_name="univariate_test_threshold_metric", type="character", optional=TRUE,
+  settings$univar_metric <- .parse_arg(x_config=config$univariate_test_threshold_metric,
+                                       x_var=univariate_test_threshold_metric,
+                                       var_name="univariate_test_threshold_metric",
+                                       type="character",
+                                       optional=TRUE,
                                        default="p_value")
   
-  .check_parameter_value_is_valid(x=settings$univar_metric, var_name="univariate_test_threshold_metric", values=c("p_value", "q_value"))
+  .check_parameter_value_is_valid(x=settings$univar_metric,
+                                  var_name="univariate_test_threshold_metric",
+                                  values=c("p_value", "q_value"))
   
-  # If the qvalue package is not available, switch to p_value if necessary
-  if(!is_package_installed(name="qvalue") & settings$univar_metric == "q_value" &
-     "univar_test" %in% settings$filter_method){
-    stop(paste("The qvalue package is not installed. Please install qvalue from Bioconductor",
-               "to be able to use q_value as the univariate test threshold metric during",
-               "preprocessing."))
+  # If the qvalue package is not installed, use p-values instead.
+  if(settings$univar_metric == "q_value"){
+    if(!require_package(x="qvalue",
+                        purpose="to use q-values as a metric for univariate feature tests",
+                        message_type="backend_warning")){
+      settings$univar_metric <- "p_value"
+    }
   }
   
-  
-  # Maximum feature set size after univariate regression models
-  settings$univar_feat_set_size <- .parse_arg(x_config=config$univariate_test_max_feature_set_size, x_var=univariate_test_max_feature_set_size,
-                                              var_name="univariate_test_max_feature_set_size", type="integer", optional=TRUE, default=NULL)
+  ##### univariate_test_max_feature_set_size ###################################
+  # Maximum feature set size after univariate regression models.
+  settings$univar_feat_set_size <- .parse_arg(x_config=config$univariate_test_max_feature_set_size,
+                                              x_var=univariate_test_max_feature_set_size,
+                                              var_name="univariate_test_max_feature_set_size",
+                                              type="integer",
+                                              optional=TRUE,
+                                              default=NULL)
   
   if(!is.null(settings$univar_feat_set_size)){
-    .check_number_in_valid_range(x=settings$univar_feat_set_size, var_name="univariate_test_max_feature_set_size", range=c(1, Inf))
+    .check_number_in_valid_range(x=settings$univar_feat_set_size,
+                                 var_name="univariate_test_max_feature_set_size",
+                                 range=c(1, Inf))
   }
   
-  
-  # Minimum amount of variance for inclusion of feature
+  ##### low_var_minimum_variance_threshold #####################################
+  # Minimum amount of variance for inclusion of feature.
   if("low_variance" %in% settings$filter_method){
-    settings$low_var_threshold <- .parse_arg(x_config=config$low_var_minimum_variance_threshold, x_var=low_var_minimum_variance_threshold,
-                                             var_name="low_var_minimum_variance_threshold", type="numeric", optional=FALSE)
+    settings$low_var_threshold <- .parse_arg(x_config=config$low_var_minimum_variance_threshold,
+                                             x_var=low_var_minimum_variance_threshold,
+                                             var_name="low_var_minimum_variance_threshold",
+                                             type="numeric",
+                                             optional=FALSE)
     
-    .check_number_in_valid_range(x=settings$low_var_threshold, var_name="low_var_minimum_variance_threshold", range=c(0.0, Inf))
+    .check_number_in_valid_range(x=settings$low_var_threshold,
+                                 var_name="low_var_minimum_variance_threshold",
+                                 range=c(0.0, Inf))
   }
   
-  
+  ##### low_var_max_feature_set_size ###########################################
   # Maximum feature set size after variance thresholding
-  settings$low_var_max_feature_set_size <- .parse_arg(x_config=config$low_var_max_feature_set_size, x_var=low_var_max_feature_set_size,
-                                                      var_name="low_var_max_feature_set_size", type="integer", optional=TRUE, default=NULL)
+  settings$low_var_max_feature_set_size <- .parse_arg(x_config=config$low_var_max_feature_set_size,
+                                                      x_var=low_var_max_feature_set_size,
+                                                      var_name="low_var_max_feature_set_size",
+                                                      type="integer",
+                                                      optional=TRUE,
+                                                      default=NULL)
   
   if(!is.null(settings$low_var_max_feature_set_size)){
-    .check_number_in_valid_range(x=settings$low_var_max_feature_set_size, var_name="low_var_max_feature_set_size", range=c(1, Inf))
+    .check_number_in_valid_range(x=settings$low_var_max_feature_set_size,
+                                 var_name="low_var_max_feature_set_size",
+                                 range=c(1, Inf))
   }
   
+  ##### robustness_icc_type ####################################################
   # Intraclass correlation coefficient (ICC) type for robustness analysis
-  settings$robustness_icc_type <- .parse_arg(x_config=config$robustness_icc_type, x_var=robustness_icc_type, var_name="robustness_icc_type",
-                                             type="character", optional=TRUE, default="1")
+  settings$robustness_icc_type <- .parse_arg(x_config=config$robustness_icc_type,
+                                             x_var=robustness_icc_type,
+                                             var_name="robustness_icc_type",
+                                             type="character",
+                                             optional=TRUE,
+                                             default="1")
   
-  .check_parameter_value_is_valid(x=settings$robustness_icc_type, var_name="robustness_icc_type",
+  .check_parameter_value_is_valid(x=settings$robustness_icc_type,
+                                  var_name="robustness_icc_type",
                                   values=.get_available_icc_types())
   
-  
-  # ICC parameter to use for thresholding. Can be icc (estimated icc), icc_low (lower edge of the icc confidence interval), icc_panel (estimated panel icc), icc_panel_low (lower edge of the panel icc confidence interval)
-  settings$robustness_threshold_param <- .parse_arg(x_config=config$robustness_threshold_metric, x_var=robustness_threshold_metric,
-                                                    var_name="robustness_threshold_metric", type="character", optional=TRUE,
+  ##### robustness_threshold_metric ############################################
+  # ICC parameter to use for thresholding. Can be icc (estimated icc), icc_low
+  # (lower edge of the icc confidence interval), icc_panel (estimated panel
+  # icc), icc_panel_low (lower edge of the panel icc confidence interval)
+  settings$robustness_threshold_param <- .parse_arg(x_config=config$robustness_threshold_metric,
+                                                    x_var=robustness_threshold_metric,
+                                                    var_name="robustness_threshold_metric",
+                                                    type="character",
+                                                    optional=TRUE,
                                                     default="icc_low")
   
-  .check_parameter_value_is_valid(x=settings$robustness_threshold_param, var_name="robustness_threshold_metric",
+  .check_parameter_value_is_valid(x=settings$robustness_threshold_param,
+                                  var_name="robustness_threshold_metric",
                                   values=c("icc", "icc_low", "icc_panel", "icc_panel_low"))
   
   
+  ##### robustness_threshold_value #############################################
   # ICC value for thresholding.
-  settings$robustness_threshold_value <- .parse_arg(x_config=config$robustness_threshold_value, x_var=robustness_threshold_value,
-                                                    var_name="robustness_threshold_value", type="numeric", optional=TRUE, default=0.70)
+  settings$robustness_threshold_value <- .parse_arg(x_config=config$robustness_threshold_value,
+                                                    x_var=robustness_threshold_value,
+                                                    var_name="robustness_threshold_value",
+                                                    type="numeric",
+                                                    optional=TRUE,
+                                                    default=0.70)
   
-  .check_number_in_valid_range(x=settings$robustness_threshold_value, var_name="robustness_threshold_value", range=c(-Inf, 1.0))
+  .check_number_in_valid_range(x=settings$robustness_threshold_value,
+                               var_name="robustness_threshold_value",
+                               range=c(-Inf, 1.0))
   
   
+  ##### imputation_method ######################################################
   # Data imputation method. For datasets smaller than 100 features we use lasso,
   # and simple imputation is used otherwise.
   default_imputation_method <- ifelse(get_n_features(data, outcome_type=outcome_type) < 100, "lasso", "simple")
   
-  settings$imputation_method <- .parse_arg(x_config=config$imputation_method, x_var=imputation_method,
-                                           var_name="imputation_method", type="character", optional=TRUE, default=default_imputation_method)
+  settings$imputation_method <- .parse_arg(x_config=config$imputation_method,
+                                           x_var=imputation_method,
+                                           var_name="imputation_method",
+                                           type="character", optional=TRUE,
+                                           default=default_imputation_method)
   
-  .check_parameter_value_is_valid(x=settings$imputation_method, var_name="imputation_method", values=c("simple", "lasso"))
-
+  .check_parameter_value_is_valid(x=settings$imputation_method,
+                                  var_name="imputation_method",
+                                  values=c("simple", "lasso"))
+  
+  if(settings$imputation_method == "lasso"){
+    # If glmnet is not installed, use simple imputation.
+    if(!require_package(x="glmnet",
+                        purpose="to impute data using lasso regression",
+                        message_type="backend_warning")){
+      settings$imputation_method <- "simple"
+    }
+  }
   
   # Transformation method
   settings$transform_method <- .parse_arg(x_config=config$transformation_method, x_var=transformation_method,

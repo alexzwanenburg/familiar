@@ -22,10 +22,9 @@
 #' @importFrom isotree isolation.forest
 #' @importFrom stats predict coef
 #' @importFrom survival Surv coxph survreg
-#' @importFrom utils head tail getFromNamespace
+#' @importFrom utils head tail
 #' @importFrom ranger ranger
 #' @importFrom rlang quo quos enquo enquos sym syms ensym ensyms parse_expr parse_exprs
-#' @importFrom glmnet glmnet cv.glmnet
 #' @importFrom BART wbart
 "_PACKAGE"
 
