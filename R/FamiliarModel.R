@@ -248,46 +248,7 @@ setMethod("require_package", signature(x="familiarModel"),
               }
             }
             
-            if(message_type %in% c("error", "warning")){
-              # Attempt to load required packages.
-              package_loaded <- sapply(x@package, requireNamespace, quietly=TRUE)
-              
-            } else {
-              # Check whether packages are installed, without loading the
-              # packages.
-              package_loaded <- sapply(x@package, is_package_installed)
-            }
-            
-            # Skip further analysis if all packages could be loaded.
-            if(all(package_loaded)) return(invisible(TRUE))
-            
-            # Find all packages that are missing.
-            missing_packages <- x@package[!package_loaded]
-            
-            if(message_type=="error"){
-              # Throw an error.
-              ..error_package_not_installed(x=missing_packages,
-                                            purpose=purpose)
-              
-            } else if(message_type=="warning"){
-              # Raise a warning.
-              ..warning_package_not_installed(x=missing_packages,
-                                              purpose=purpose)
-              
-            } else if(message_type=="backend_error"){
-              # Add message to backend.
-              ..message_package_not_installed_to_backend(x=missing_packages,
-                                                         purpose=purpose,
-                                                         message_type="error")
-              
-            } else if(message_type=="backend_warning"){
-              # Add message to backend.
-              ..message_package_not_installed_to_backend(x=missing_packages,
-                                                         purpose=purpose,
-                                                         message_type="warning")
-            }
-            
-            return(invisible(FALSE))
+            return(invisible(.require_package(x=x@package, purpose=purpose, message_type=message_type)))
           })
 
 

@@ -7,6 +7,25 @@ setMethod("is_available", signature(object="familiarVimpMethod"),
           function(object, ...) return(FALSE))
 
 
+#####require_package (vimp method)#####
+setMethod("require_package", signature(x="familiarVimpMethod"),
+          function(x, purpose="vimp", message_type="error", ...){
+            
+            # Skip if no package is required.
+            if(is_empty(x@package)) return(invisible(TRUE))
+            
+            # Set standard purposes for common uses.
+            if(!is.null(purpose)){
+              if(purpose %in% c("vimp")){
+                purpose <- switch(purpose,
+                                  "vimp"="to determine variable importance")
+              }
+            }
+            
+            return(invisible(.require_package(x=x@package, purpose=purpose, message_type=message_type)))
+          })
+
+
 #####get_default_hyperparameters#####
 setMethod("get_default_hyperparameters", signature(object="familiarVimpMethod"),
           function(object, ...) return(list()))
