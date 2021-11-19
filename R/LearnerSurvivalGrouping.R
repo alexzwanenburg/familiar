@@ -80,9 +80,10 @@ learner.find_quantile_threshold <- function(object, pred_table, quantiles){
 learner.find_maxstat_threshold <- function(pred_table){
   
   # Check whether the model always predicted the same value
-  if(stats::var(pred_table$predicted_outcome) == 0){
-    return(pred_table$predicted_outcome[1])
-  }
+  if(stats::var(pred_table$predicted_outcome) == 0) return(pred_table$predicted_outcome[1])
+  
+  require_package(x="maxstat",
+                  purpose="to determine an optimal risk threshold")
   
   # Perform maxstat test
   h <- maxstat::maxstat.test(survival::Surv(outcome_time, outcome_event) ~ predicted_outcome,
@@ -92,9 +93,7 @@ learner.find_maxstat_threshold <- function(pred_table){
                              maxprop=0.90)
   
   # Check if at least 4 unique values are present for the smoothing spline
-  if(length(h$cuts) < 4){
-    return(unname(h$estimate))
-  }
+  if(length(h$cuts) < 4) return(unname(h$estimate))
   
   # Smoothed scores
   spline_fit <- stats::smooth.spline(x=h$cuts, y=h$stats)$fit

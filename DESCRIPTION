@@ -48,7 +48,6 @@ Imports:
     ranger,
     labeling,
     scales,
-    maxstat,
     laGP
 Suggests:
     callr (>= 3.4.3),
@@ -63,6 +62,7 @@ Suggests:
     harmonicmeanp,
     knitr,
     MASS,
+    maxstat,
     mboost (>= 2.9.0),
     microbenchmark,
     partykit,

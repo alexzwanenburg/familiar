@@ -3470,6 +3470,16 @@
                                   var_name="stratification_method",
                                   values=c("median", "fixed", "optimised"))
   
+  if("optimised" %in% settings$strat_method){
+    if(!require_package(x="maxstat",
+                        purpose="to determine an optimal risk threshold",
+                        message_type="backend_warning")){
+      
+      settings$strat_method <- setdiff(settings$strat_method, "optimised")
+      if(length(settings$strat_method) == 0) settings$strat_method <- "median"
+    }
+  }
+  
   ##### stratification_threshold ###############################################
   # Quantile stratification thresholds for the "fixed" stratification method.
   # Note that c(0.333, 0.667) means that 3 groups are created: a low risk group
