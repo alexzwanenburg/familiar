@@ -652,7 +652,7 @@ cluster.get_silhouette <- function(n_clusters, tree=NULL, dist_mat, cluster_meth
   if(cluster_method == "pam"){
     # Generate partioning around medoids cluster
     clust_obj <- cluster.pam(dist_mat=dist_mat, n_clusters=n_clusters)
-
+    
     # Extract silhoutte table
     silhouette_table <- data.table::as.data.table(clust_obj$silinfo$widths, keep.rownames=FALSE)
     
@@ -671,7 +671,10 @@ cluster.get_silhouette <- function(n_clusters, tree=NULL, dist_mat, cluster_meth
     }
     
   } else if(cluster_method %in% c("agnes", "diana", "hclust")){
-
+    
+    require_package(x="cluster",
+                    purpose="to cluster similar features together")
+    
     # Compute silhouette.
     silhouette_matrix <- cluster::silhouette(x=stats::cutree(tree=tree, k=n_clusters), dist=dist_mat)
     
@@ -806,6 +809,10 @@ cluster.pam <- function(dist_mat, n_clusters){
     return(h)
      
   } else {
+    
+    require_package(x="cluster",
+                    purpose="to cluster similar features together")
+    
     return(cluster::pam(x=dist_mat, k=n_clusters, keep.diss=FALSE, keep.data=FALSE))
   }
 }
@@ -813,6 +820,10 @@ cluster.pam <- function(dist_mat, n_clusters){
 
 
 cluster.agnes <- function(dist_mat, linkage){
+  
+  require_package(x="cluster",
+                  purpose="to cluster similar features together")
+  
   # Compute agglomerative hierarchical clustering of the data set
   return(cluster::agnes(x=dist_mat, method=linkage, keep.diss=FALSE, keep.data=FALSE))
 }
@@ -820,6 +831,10 @@ cluster.agnes <- function(dist_mat, linkage){
 
 
 cluster.diana <- function(dist_mat){
+  
+  require_package(x="cluster",
+                  purpose="to cluster similar features together")
+  
   # Compute DIvisive ANAlysis hierarchical clustering of the data set
   return(cluster::diana(x=dist_mat, keep.diss=FALSE, keep.data=FALSE))
 }
@@ -832,12 +847,14 @@ cluster.hclust <- function(dist_mat, linkage){
   # Convert general linkage names to stats::hclust linkage names.
   if(linkage == "ward")          {
     linkage <- "ward.D2"
+    
   } else if(linkage == "weighted") {
     linkage <- "mcquitty"
   }
   
   if(is_package_installed("fastcluster")){
     return(fastcluster::hclust(d=dist_mat, method=linkage))
+    
   } else {
     return(stats::hclust(d=dist_mat, method=linkage))
   }
@@ -1097,15 +1114,23 @@ cluster.compute_cluster <- function(cluster_table, data_obj){
                                       cluster_similarity_threshold=waiver(),
                                       cluster_similarity_metric=waiver(),
                                       cluster_representation_method=waiver(),
-                                      var_type="cluster"){
+                                      var_type="cluster",
+                                      test_required_packages=TRUE){
   
   # Check cluster method
   if(!is.waive(cluster_method)){
     # Adapt variable name.
     var_name <- ifelse(var_type=="cluster", "cluster_method", paste0(var_type, "_cluster_method"))
     
-    .check_parameter_value_is_valid(x=cluster_method, var_name=var_name,
+    .check_parameter_value_is_valid(x=cluster_method,
+                                    var_name=var_name,
                                     values=c("none", "pam", "agnes", "diana", "hclust"))
+    
+    # Test the cluster package is installed.
+    if(test_required_packages & cluster_method != "none"){
+      require_package(x="cluster",
+                      purpose="to cluster similar features together")
+    }
   }
   
   # Check cluster linkage method
@@ -1114,7 +1139,8 @@ cluster.compute_cluster <- function(cluster_table, data_obj){
     if(is.waive(cluster_method)) ..error_reached_unreachable_code(".check_cluster_parameters: check requires cluster_method argument.")
     
     if(cluster_method %in% c("agnes", "hclust")){
-      .check_parameter_value_is_valid(x=cluster_linkage, var_name=paste0(var_type, "_linkage_method"),
+      .check_parameter_value_is_valid(x=cluster_linkage,
+                                      var_name=paste0(var_type, "_linkage_method"),
                                       values=c("average", "single", "complete", "weighted", "ward"))
     }
   }
@@ -1128,39 +1154,53 @@ cluster.compute_cluster <- function(cluster_table, data_obj){
     var_name <- ifelse(var_type=="cluster", "cluster_cut_method", paste0(var_type, "_cluster_cut_method"))
     
     if(cluster_method %in% c("pam")){
-      .check_parameter_value_is_valid(x=cluster_cut_method, var_name=var_name,
+      .check_parameter_value_is_valid(x=cluster_cut_method,
+                                      var_name=var_name,
                                       values="silhouette")
       
     } else if(cluster_method %in% c("agnes", "diana")){
-      .check_parameter_value_is_valid(x=cluster_cut_method, var_name=var_name,
+      .check_parameter_value_is_valid(x=cluster_cut_method,
+                                      var_name=var_name,
                                       values=c("fixed_cut", "silhouette"))
       
     } else if(cluster_method %in% c("hclust")){
-      .check_parameter_value_is_valid(x=cluster_cut_method, var_name=var_name,
+      .check_parameter_value_is_valid(x=cluster_cut_method,
+                                      var_name=var_name,
                                       values=c("fixed_cut", "silhouette", "dynamic_cut"))
     }
     
-    if(!is_package_installed("dynamicTreeCut") & cluster_cut_method == "dynamic_cut"){
-      stop(paste("dynamic_cut cannot be used as the cluster cut method because the",
-                 "dynamicTreeCut package has not been installed. Please install this package or",
-                 "use a different option."))
+    # Ensure that dynamicTreeCut is present.
+    if(test_required_packages & cluster_cut_method == "dynamic_cut"){
+        require_package(x="dynamicTreeCut",
+                        purpose="to cut dendrograms dynamically")
     }
   }
   
   # Check cluster similarity metric
   if(!is.waive(cluster_similarity_metric)){
-    .check_parameter_value_is_valid(x=cluster_similarity_metric, var_name=paste0(var_type, "_similarity_metric"),
+    .check_parameter_value_is_valid(x=cluster_similarity_metric,
+                                    var_name=paste0(var_type, "_similarity_metric"),
                                     values=.get_available_similarity_metrics(data_type=var_type))
+    
+    # VGAM should be present for computing pseudo-R2 metrics.
+    if(test_required_packages & cluster_similarity_metric %in% c("mcfadden_r2", "cox_snell_r2", "nagelkerke_r2")){
+      require_package(x="VGAM",
+                      purpose=paste0("to compute log-likelihood pseudo R2 similarity using the ",cluster_similarity_metric, " metric"))
+    }
   }
   
   # Check cluster similarity threshold value
   if(!is.waive(cluster_similarity_threshold)){
     if(var_type == "feature"){
       # During evaluation 
-      sapply(cluster_similarity_threshold, .check_number_in_valid_range, var_name=paste0(var_type, "_similarity_threshold"),
+      sapply(cluster_similarity_threshold,
+             .check_number_in_valid_range,
+             var_name=paste0(var_type, "_similarity_threshold"),
              range=c(0.0, 1.0))
+      
     } else {
-      .check_number_in_valid_range(x=cluster_similarity_threshold, var_name=paste0(var_type, "_similarity_threshold"),
+      .check_number_in_valid_range(x=cluster_similarity_threshold,
+                                   var_name=paste0(var_type, "_similarity_threshold"),
                                    range=c(0.0, 1.0))
     }
   }
@@ -1175,10 +1215,12 @@ cluster.compute_cluster <- function(cluster_table, data_obj){
     if(is.waive(cluster_method)) ..error_reached_unreachable_code(".check_cluster_parameters: check requires cluster_method argument.")
     
     if(cluster_method %in% c("pam")){
-      .check_parameter_value_is_valid(x=cluster_representation_method, var_name=var_name,
+      .check_parameter_value_is_valid(x=cluster_representation_method,
+                                      var_name=var_name,
                                       values=c("medioid"))
     } else {
-      .check_parameter_value_is_valid(x=cluster_representation_method, var_name=var_name,
+      .check_parameter_value_is_valid(x=cluster_representation_method,
+                                      var_name=var_name,
                                       values=c("best_predictor", "medioid", "mean"))
     }
   }

@@ -41,7 +41,6 @@ Imports:
     rlang (>= 0.3.4),
     stringi,
     survival,
-    cluster,
     ggplot2 (>= 3.0.0),
     gtable,
     isotree (>= 0.3.0),
@@ -54,6 +53,7 @@ Imports:
     harmonicmeanp
 Suggests:
     callr (>= 3.4.3),
+    cluster,
     CORElearn,
     cowplot,
     dynamicTreeCut,
