@@ -216,6 +216,11 @@ vimp.check_outcome_type <- function(method, outcome_type, as_flag=FALSE){
   if(!vimp_method_available) {
     stop(paste0(method, " is not available for \"", outcome_type, "\" outcomes."))
   }
+  
+  # Check that the required package can be loaded.
+  require_package(x=vimp_method_object,
+                  purpose=paste0("to assess variable importance using the ", method, " method"),
+                  message_type="backend_error")
 }
 
 
