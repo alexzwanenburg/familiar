@@ -494,11 +494,6 @@ setMethod("..predict", signature(object="familiarGLMnet", data="dataObject"),
 
 
 
-
-
-
-
-
 #####..predict_survival_probability#####
 setMethod("..predict_survival_probability", signature(object="familiarGLMnet", data="dataObject"),
           function(object, data, time){

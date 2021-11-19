@@ -8,6 +8,20 @@ setClass("familiarCoxPH",
          prototype=list("encoding_reference_table" = NULL))
 
 
+#####initialize#################################################################
+setMethod("initialize", signature(.Object="familiarCoxPH"),
+          function(.Object, ...){
+            
+            # Update with parent class first.
+            .Object <- callNextMethod()
+            
+            # Set the required package
+            .Object@package <- "survival"
+            
+            return(.Object)
+          })
+
+
 .get_available_cox_learners <- function(show_general=TRUE){
   
   # Learners
@@ -74,6 +88,9 @@ setMethod("..train", signature(object="familiarCoxPH", data="dataObject"),
             # Check if hyperparameters are set.
             if(is.null(object@hyperparameters)) return(callNextMethod())
             
+            # Check that required packages are loaded and installed.
+            require_package(object, "train")
+            
             # Use effect coding to convert categorical data into encoded data -
             # this is required to deal with factors with missing/new levels
             # between training and test data sets.
@@ -115,8 +132,7 @@ setMethod("..train", signature(object="familiarCoxPH", data="dataObject"),
             object@encoding_reference_table <- encoded_data$reference_table
             
             # Set learner version
-            object@learner_package <- "survival"
-            object@learner_version <- utils::packageVersion("survival")
+            object <- set_package_version(object)
             
             return(object)
           })
@@ -126,6 +142,9 @@ setMethod("..train", signature(object="familiarCoxPH", data="dataObject"),
 #####..predict#####
 setMethod("..predict", signature(object="familiarCoxPH", data="dataObject"),
           function(object, data, type="default", ...){
+            
+            # Check that required packages are loaded and installed.
+            require_package(object, "predict")
             
             if(type == "default"){
               ##### Default method #############################################
@@ -190,6 +209,9 @@ setMethod("..predict_survival_probability", signature(object="familiarCoxPH", da
             # If time is unset, read the max time stored by the model.
             if(is.null(time)) time <- object@settings$time_max
             
+            # Check that required packages are loaded and installed.
+            require_package(object, "predict")
+            
             return(learner.survival_probability_relative_risk(object=object, data=data, time=time))
           })
 
@@ -203,6 +225,9 @@ setMethod("..vimp", signature(object="familiarCoxPH"),
             score <- NULL
             
             if(!model_is_trained(object)) return(callNextMethod())
+            
+            # Check that required packages are loaded and installed.
+            require_package(object, "vimp")
             
             # Define p-values
             coefficient_z_values <- .compute_z_statistic(object)
