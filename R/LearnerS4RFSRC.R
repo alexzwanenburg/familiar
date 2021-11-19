@@ -7,6 +7,20 @@ setClass("familiarRFSRC",
          slots=list("seed"="ANY"),
          prototype=list("seed"=NULL))
 
+#####initialize (familiarRFSRC) ################################################
+setMethod("initialize", signature(.Object="familiarRFSRC"),
+          function(.Object, ...){
+            
+            # Update with parent class first.
+            .Object <- callNextMethod()
+            
+            # Set package
+            .Object@package <- "randomForestSRC"
+            
+            return(.Object)
+          })
+
+
 .get_available_rfsrc_learners <- function(show_general=TRUE) return(c("random_forest", "random_forest_rfsrc"))
 
 .get_available_rfsrc_vimp_methods <- function(show_general=TRUE){
@@ -210,6 +224,9 @@ setMethod("..train", signature(object="familiarRFSRC", data="dataObject"),
             # Check if hyperparameters are set.
             if(is.null(object@hyperparameters)) return(callNextMethod())
             
+            # Check that required packages are loaded and installed.
+            require_package(object, "train")
+            
             # Find feature columns in data table
             feature_columns <- get_feature_columns(x=data)
             
@@ -266,8 +283,7 @@ setMethod("..train", signature(object="familiarRFSRC", data="dataObject"),
             object@seed <- forest_seed
             
             # Set learner version
-            object@learner_package <- "randomForestSRC"
-            object@learner_version <- utils::packageVersion("randomForestSRC")
+            object <- set_package_version(object)
             
             return(object)
           })
@@ -277,6 +293,9 @@ setMethod("..train", signature(object="familiarRFSRC", data="dataObject"),
 #####..predict#####
 setMethod("..predict", signature(object="familiarRFSRC", data="dataObject"),
           function(object, data, type="default", time=NULL, ...){
+            
+            # Check that required packages are loaded and installed.
+            require_package(object, "predict")
             
             if(type %in% c("default", "survival_probability")){
               ##### Default method #############################################
@@ -375,6 +394,9 @@ setMethod("..predict_survival_probability", signature(object="familiarRFSRC", da
             
             if(!object@outcome_type %in% c("survival")) return(callNextMethod())
             
+            # Check that required packages are loaded and installed.
+            require_package(object, "predict")
+            
             return(..predict(object=object, data=data, time=time, type="survival_probability"))
           })
 
@@ -394,6 +416,9 @@ setMethod("..vimp", signature(object="familiarRFSRC"),
             
             # Check if the model has been trained upon retry.
             if(!model_is_trained(object)) return(callNextMethod())
+            
+            # Check that required packages are loaded and installed.
+            require_package(object, "vimp")
             
             # Find the vimp_method specified.
             vimp_method <- object@hyperparameters$fs_vimp_method
