@@ -1697,7 +1697,10 @@
 #'   signatures. PLoS One 6, e28210 (2011).
 #' @md
 #' @keywords internal
-.parse_feature_selection_settings <- function(config=NULL, data, parallel, outcome_type,
+.parse_feature_selection_settings <- function(config=NULL,
+                                              data,
+                                              parallel,
+                                              outcome_type,
                                               fs_method=waiver(),
                                               fs_method_parameter=waiver(),
                                               vimp_aggregation_method=waiver(),
@@ -1706,39 +1709,67 @@
                                               ...){
   settings <- list()
   
+  ##### fs_method ##############################################################
   # Feature selection methods
-  settings$fs_methods <- .parse_arg(x_config=config$fs_method, x_var=fs_method,
-                                    var_name="fs_method", type="character_list", optional=FALSE)
+  settings$fs_methods <- .parse_arg(x_config=config$fs_method,
+                                    x_var=fs_method,
+                                    var_name="fs_method",
+                                    type="character_list",
+                                    optional=FALSE)
   
   sapply(settings$fs_methods, vimp.check_outcome_type, outcome_type=outcome_type)
   
+  ##### fs_method_parameter ####################################################
   # Feature selection parameters
-  settings$param <- .parse_arg(x_config=config$fs_method_parameter, x_var=fs_method_parameter,
-                               var_name="fs_method_parameter", type="list", optional=TRUE, default=list())
+  settings$param <- .parse_arg(x_config=config$fs_method_parameter,
+                               x_var=fs_method_parameter,
+                               var_name="fs_method_parameter",
+                               type="list",
+                               optional=TRUE,
+                               default=list())
   
-  settings$param <- .parse_hyperparameters(data=data, parameter_list=settings$param,
-                                           outcome_type=outcome_type, fs_method=settings$fs_methods)
+  settings$param <- .parse_hyperparameters(data=data,
+                                           parameter_list=settings$param,
+                                           outcome_type=outcome_type,
+                                           fs_method=settings$fs_methods)
   
+  ##### vimp_aggregation_method ################################################
   # Variable importance aggregation methods
-  settings$aggregation <- .parse_arg(x_config=config$vimp_aggregation_method, x_var=vimp_aggregation_method,
-                                     var_name="vimp_aggregation_method", type="character", optional=TRUE, default="borda")
+  settings$aggregation <- .parse_arg(x_config=config$vimp_aggregation_method,
+                                     x_var=vimp_aggregation_method,
+                                     var_name="vimp_aggregation_method",
+                                     type="character",
+                                     optional=TRUE,
+                                     default="borda")
   
   rank.check_aggregation_method(method=settings$aggregation)
   
+  ##### vimp_aggregation_rank_threshold ########################################
   # Variable importance rank threshold (used by some aggregation methods)
-  settings$aggr_rank_threshold <- .parse_arg(x_config=config$vimp_aggregation_rank_threshold, x_var=vimp_aggregation_rank_threshold,
-                                             var_name="vimp_aggregation_rank_threshold", type="integer", optional=TRUE, default=5L)
+  settings$aggr_rank_threshold <- .parse_arg(x_config=config$vimp_aggregation_rank_threshold,
+                                             x_var=vimp_aggregation_rank_threshold,
+                                             var_name="vimp_aggregation_rank_threshold",
+                                             type="integer",
+                                             optional=TRUE,
+                                             default=5L)
   
   if(!is.null(settings$aggr_rank_threshold)){
-    .check_number_in_valid_range(x=settings$aggr_rank_threshold, var_name="vimp_aggregation_rank_threshold", range=c(1, Inf))
+    .check_number_in_valid_range(x=settings$aggr_rank_threshold,
+                                 var_name="vimp_aggregation_rank_threshold",
+                                 range=c(1, Inf))
   }
   
+  ##### parallel_feature_selection #############################################
   # Parallelisation switch for feature selection
-  settings$do_parallel <- .parse_arg(x_config=config$parallel_feature_selection, x_var=parallel_feature_selection,
-                                     var_name="parallel_feature_selection", type="logical", optional=TRUE, default=TRUE)
+  settings$do_parallel <- .parse_arg(x_config=config$parallel_feature_selection,
+                                     x_var=parallel_feature_selection,
+                                     var_name="parallel_feature_selection",
+                                     type="logical",
+                                     optional=TRUE,
+                                     default=TRUE)
   
   # Disable if parallel is FALSE.
-  if(!parallel){ settings$do_parallel <- FALSE }
+  if(!parallel) settings$do_parallel <- FALSE
   
   return(settings)
 }
