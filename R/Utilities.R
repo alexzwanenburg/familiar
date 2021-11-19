@@ -525,6 +525,8 @@ compute_icc <- function(x, feature, id_data, type="1"){
 
 harmonic_p_value <- function(x){
   
+  if(!is_package_installed("harmonicmeanp")) return(NA_real_)
+  
   if(data.table::is.data.table(x)){
     x <- x$p_value
     

@@ -49,8 +49,7 @@ Imports:
     labeling,
     scales,
     maxstat,
-    laGP,
-    harmonicmeanp
+    laGP
 Suggests:
     callr (>= 3.4.3),
     cluster,
@@ -61,6 +60,7 @@ Suggests:
     Ecdat,
     fastcluster,
     glmnet,
+    harmonicmeanp,
     knitr,
     MASS,
     mboost (>= 2.9.0),

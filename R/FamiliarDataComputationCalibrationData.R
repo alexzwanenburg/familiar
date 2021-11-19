@@ -68,20 +68,25 @@ setMethod("extract_calibration_data", signature(object="familiarEnsemble"),
             logger.message(paste0("Assessing model calibration."),
                            indent=message_indent,
                            verbose=verbose)
-
+            
             # Load evaluation_times from the object settings attribute, if it is not provided.
             if(is.waive(evaluation_times)) evaluation_times <- object@settings$eval_times
             
             # Check evaluation_times argument
             if(object@outcome_type %in% c("survival")){
-              sapply(evaluation_times, .check_number_in_valid_range, var_name="evaluation_times", range=c(0.0, Inf), closed=c(FALSE, TRUE))
+              sapply(evaluation_times,
+                     .check_number_in_valid_range,
+                     var_name="evaluation_times",
+                     range=c(0.0, Inf),
+                     closed=c(FALSE, TRUE))
             }
             
             # Obtain ensemble method from stored settings, if required.
             if(is.waive(ensemble_method)) ensemble_method <- object@settings$ensemble_method
             
             # Check ensemble_method argument
-            .check_parameter_value_is_valid(x=ensemble_method, var_name="ensemble_method",
+            .check_parameter_value_is_valid(x=ensemble_method,
+                                            var_name="ensemble_method",
                                             values=.get_available_ensemble_prediction_methods())
             
             # Load confidence alpha from object settings attribute if not
@@ -89,13 +94,15 @@ setMethod("extract_calibration_data", signature(object="familiarEnsemble"),
             if(is.waive(confidence_level)) confidence_level <- object@settings$confidence_level
             
             # Check confidence_level input argument
-            .check_number_in_valid_range(x=confidence_level, var_name="confidence_level",
+            .check_number_in_valid_range(x=confidence_level,
+                                         var_name="confidence_level",
                                          range=c(0.0, 1.0), closed=c(FALSE, FALSE))
             
             # Load the bootstrap method
             if(is.waive(bootstrap_ci_method)) bootstrap_ci_method <- object@settings$bootstrap_ci_method
             
-            .check_parameter_value_is_valid(x=bootstrap_ci_method, var_name="bootstrap_ci_method",
+            .check_parameter_value_is_valid(x=bootstrap_ci_method,
+                                            var_name="bootstrap_ci_method",
                                             values=.get_available_bootstrap_confidence_interval_methods())
             
             # Check the level detail.
@@ -123,6 +130,10 @@ setMethod("extract_calibration_data", signature(object="familiarEnsemble"),
             
             # Test if any model in the ensemble was successfully trained.
             if(!model_is_trained(object=object)) return(NULL)
+            
+            require_package(x="harmonicmeanp",
+                            purpose="to compute p-values for model calibration tests",
+                            message_type="warning")
             
             # Generate a prototype data element.
             proto_data_element <- new("familiarDataElementCalibrationData",
