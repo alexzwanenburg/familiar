@@ -25,6 +25,20 @@ setClass("familiarXGBoostDart",
          contains="familiarXGBoost")
 
 
+#####initialize#################################################################
+setMethod("initialize", signature(.Object="familiarXGBoost"),
+          function(.Object, ...){
+            
+            # Update with parent class first.
+            .Object <- callNextMethod()
+            
+            # Set required package
+            .Object@package <- "xgboost"
+            
+            return(.Object)
+          })
+
+
 .get_available_xgboost_lm_learners <- function(show_general=TRUE){
   
   # Learners
@@ -343,6 +357,9 @@ setMethod("..train", signature(object="familiarXGBoost", data="dataObject"),
             # Check if hyperparameters are set.
             if(is.null(object@hyperparameters)) return(callNextMethod())
             
+            # Check that required packages are loaded and installed.
+            require_package(object, "train")
+            
             # Use effect coding to convert categorical data into encoded data -
             # this is required to deal with factors with missing/new levels
             # between training and test data sets.
@@ -436,59 +453,59 @@ setMethod("..train", signature(object="familiarXGBoost", data="dataObject"),
             
             # Train the model
             if(is(object, "familiarXGBoostLM")){
-              model <- tryCatch(xgb.train(params=list("booster" = booster,
-                                                      "nthread" = 1,
-                                                      "eta" = 10^object@hyperparameters$learning_rate,
-                                                      "lambda" = 10^object@hyperparameters$lambda - 10^-6,
-                                                      "alpha" = 10^object@hyperparameters$alpha - 10^-6,
-                                                      "objective" = ..get_distribution_family(object),
-                                                      "num_class" = n_classes),
-                                          data=data_matrix,
-                                          nrounds=round(10^object@hyperparameters$n_boost),
-                                          verbose=0),
+              model <- tryCatch(xgboost::xgb.train(params=list("booster" = booster,
+                                                               "nthread" = 1,
+                                                               "eta" = 10^object@hyperparameters$learning_rate,
+                                                               "lambda" = 10^object@hyperparameters$lambda - 10^-6,
+                                                               "alpha" = 10^object@hyperparameters$alpha - 10^-6,
+                                                               "objective" = ..get_distribution_family(object),
+                                                               "num_class" = n_classes),
+                                                   data=data_matrix,
+                                                   nrounds=round(10^object@hyperparameters$n_boost),
+                                                   verbose=0),
                                 error=identity)
               
             } else if(is(object, "familiarXGBoostTree")){
-              model <- tryCatch(xgb.train(params=list("booster" = booster,
-                                                      "nthread" = 1,
-                                                      "eta" = 10^object@hyperparameters$learning_rate,
-                                                      "max_depth" = object@hyperparameters$tree_depth,
-                                                      "subsample" = object@hyperparameters$sample_size,
-                                                      "min_child_weight" = 10^object@hyperparameters$min_child_weight - 1.0,
-                                                      "gamma" = 10^object@hyperparameters$gamma - 10^-6,
-                                                      "lambda" = 10^object@hyperparameters$lambda - 10^-6,
-                                                      "alpha" = 10^object@hyperparameters$alpha - 10^-6,
-                                                      "objective" = ..get_distribution_family(object),
-                                                      "num_class" = n_classes),
-                                          data=data_matrix,
-                                          nrounds=round(10^object@hyperparameters$n_boost),
-                                          verbose=0),
+              model <- tryCatch(xgboost::xgb.train(params=list("booster" = booster,
+                                                               "nthread" = 1,
+                                                               "eta" = 10^object@hyperparameters$learning_rate,
+                                                               "max_depth" = object@hyperparameters$tree_depth,
+                                                               "subsample" = object@hyperparameters$sample_size,
+                                                               "min_child_weight" = 10^object@hyperparameters$min_child_weight - 1.0,
+                                                               "gamma" = 10^object@hyperparameters$gamma - 10^-6,
+                                                               "lambda" = 10^object@hyperparameters$lambda - 10^-6,
+                                                               "alpha" = 10^object@hyperparameters$alpha - 10^-6,
+                                                               "objective" = ..get_distribution_family(object),
+                                                               "num_class" = n_classes),
+                                                   data=data_matrix,
+                                                   nrounds=round(10^object@hyperparameters$n_boost),
+                                                   verbose=0),
                                 error=identity)
               
             } else if(is(object, "familiarXGBoostDart")){
-              model <- tryCatch(xgb.train(params=list("booster" = booster,
-                                                      "nthread" = 1,
-                                                      "eta" = 10^object@hyperparameters$learning_rate,
-                                                      "max_depth" = object@hyperparameters$tree_depth,
-                                                      "subsample" = object@hyperparameters$sample_size,
-                                                      "min_child_weight" = 10^object@hyperparameters$min_child_weight - 1.0,
-                                                      "gamma" = 10^object@hyperparameters$gamma - 10^-6,
-                                                      "lambda" = 10^object@hyperparameters$lambda - 10^-6,
-                                                      "alpha" = 10^object@hyperparameters$alpha - 10^-6,
-                                                      "sample_type" = as.character(object@hyperparameters$sample_type),
-                                                      "rate_drop" = object@hyperparameters$rate_drop,
-                                                      "objective" = ..get_distribution_family(object),
-                                                      "num_class" = n_classes),
-                                          data=data_matrix,
-                                          nrounds=round(10^object@hyperparameters$n_boost),
-                                          verbose=0),
+              model <- tryCatch(xgboost::xgb.train(params=list("booster" = booster,
+                                                               "nthread" = 1,
+                                                               "eta" = 10^object@hyperparameters$learning_rate,
+                                                               "max_depth" = object@hyperparameters$tree_depth,
+                                                               "subsample" = object@hyperparameters$sample_size,
+                                                               "min_child_weight" = 10^object@hyperparameters$min_child_weight - 1.0,
+                                                               "gamma" = 10^object@hyperparameters$gamma - 10^-6,
+                                                               "lambda" = 10^object@hyperparameters$lambda - 10^-6,
+                                                               "alpha" = 10^object@hyperparameters$alpha - 10^-6,
+                                                               "sample_type" = as.character(object@hyperparameters$sample_type),
+                                                               "rate_drop" = object@hyperparameters$rate_drop,
+                                                               "objective" = ..get_distribution_family(object),
+                                                               "num_class" = n_classes),
+                                                   data=data_matrix,
+                                                   nrounds=round(10^object@hyperparameters$n_boost),
+                                                   verbose=0),
                                 error=identity)
               
             } else {
               ..error_reached_unreachable_code(paste0("..train,familiarXGBoost: could not train model for object of unknown class: ",
                                                       paste0(class(object), collapse=", ")))
             }
-              
+            
             # Check if the model trained at all.
             if(inherits(model, "error")) return(callNextMethod())
             
@@ -502,8 +519,7 @@ setMethod("..train", signature(object="familiarXGBoost", data="dataObject"),
             object@feature_order <- feature_columns
             
             # Set learner version
-            object@learner_package <- "xgboost"
-            object@learner_version <- utils::packageVersion("xgboost")
+            object <- set_package_version(object)
             
             return(object)
           })
@@ -512,6 +528,9 @@ setMethod("..train", signature(object="familiarXGBoost", data="dataObject"),
 #####..predict#####
 setMethod("..predict", signature(object="familiarXGBoost", data="dataObject"),
           function(object, data, type="default", ...){
+            
+            # Check that required packages are loaded and installed.
+            require_package(object, "predict")
             
             if(type == "default"){
               ##### Default method #############################################
@@ -649,6 +668,9 @@ setMethod("..predict_survival_probability", signature(object="familiarXGBoost", 
             # If time is unset, read the max time stored by the model.
             if(is.null(time)) time <- object@settings$time_max
             
+            # Check that required packages are loaded and installed.
+            require_package(object, "predict")
+            
             return(learner.survival_probability_relative_risk(object=object, data=data, time=time))
           })
 
@@ -663,6 +685,9 @@ setMethod("..vimp", signature(object="familiarXGBoost"),
             
             # Check if the model has been trained upon retry.
             if(!model_is_trained(object)) return(callNextMethod())
+            
+            # Check that required packages are loaded and installed.
+            require_package(object, "vimp")
             
             # Use xgboost::xgb.importance function from xgboost to extract a
             # data.table.

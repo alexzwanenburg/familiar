@@ -46,7 +46,6 @@ Imports:
     gtable,
     isotree (>= 0.3.0),
     e1071 (>= 1.7.5),
-    xgboost,
     BART,
     glmnet,
     ranger,
@@ -75,7 +74,8 @@ Suggests:
     Rserve,
     testthat (>= 3.0.0),
     xml2,
-    VGAM
+    VGAM,
+    xgboost
 Collate: 
     'BatchNormalisation.R'
     'BootstrapConfidenceInterval.R'
