@@ -6,6 +6,20 @@ setClass("familiarNaiveBayes",
          contains="familiarModel")
 
 
+#####initialize#################################################################
+setMethod("initialize", signature(.Object="familiarNaiveBayes"),
+          function(.Object, ...){
+            
+            # Update with parent class first.
+            .Object <- callNextMethod()
+            
+            # Set required package
+            .Object@package <- "e1071"
+            
+            return(.Object)
+          })
+
+
 .get_available_naive_bayes_learners <- function(show_general=TRUE) return("naive_bayes")
 
 #####is_available#####
@@ -62,6 +76,9 @@ setMethod("..train", signature(object="familiarNaiveBayes", data="dataObject"),
             # Check if hyperparameters are set.
             if(is.null(object@hyperparameters)) return(callNextMethod())
             
+            # Check that required packages are loaded and installed.
+            require_package(object, "train")
+            
             # Find feature columns in the data.
             feature_columns <- get_feature_columns(x=data)
             
@@ -82,8 +99,7 @@ setMethod("..train", signature(object="familiarNaiveBayes", data="dataObject"),
             object@model <- model
             
             # Set learner version
-            object@learner_package <- "e1071"
-            object@learner_version <- utils::packageVersion("e1071")
+            object <- set_package_version(object)
             
             return(object)
           })
@@ -93,6 +109,9 @@ setMethod("..train", signature(object="familiarNaiveBayes", data="dataObject"),
 #####..predict#####
 setMethod("..predict", signature(object="familiarNaiveBayes", data="dataObject"),
           function(object, data, type="default", ...){
+            
+            # Check that required packages are loaded and installed.
+            require_package(object, "predict")
             
             if(type == "default"){
               ##### Default method #############################################

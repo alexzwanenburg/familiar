@@ -6,10 +6,27 @@ setClass("familiarKNN",
          contains="familiarModel")
 
 
+#####initialize#################################################################
+setMethod("initialize", signature(.Object="familiarKNN"),
+          function(.Object, ...){
+            
+            # Update with parent class first.
+            .Object <- callNextMethod()
+            
+            # Set required package
+            .Object@package <- c("e1071", "proxy")
+            
+            return(.Object)
+          })
+
+
 .get_available_knn_learners <- function(show_general=TRUE, show_default=FALSE){
   
   # General names without pre-specified distance metrics.
   general_learners <- c("k_nearest_neighbours", "knn")
+  
+  # Do not generate additional learners if proxy is not available.
+  if(!requireNamespace("proxy", quietly=TRUE)) return(general_learners)
   
   # Define all distance metrics and the smaller default set.
   distance_metrics <- tolower(unname(unlist(lapply(proxy::pr_DB$get_entries(), function(list_elem) (list_elem$names)))))
@@ -108,7 +125,13 @@ setMethod("get_default_hyperparameters", signature(object="familiarKNN"),
             
             # Set default and valid ranges.
             distance_metric_default_range <- c("euclidean", "manhattan", "gower")
-            distance_metric_valid_range <- tolower(unname(unlist(lapply(proxy::pr_DB$get_entries(), function(list_elem) (list_elem$names)))))
+            # Do not generate additional distance metrics if proxy is not available.
+            if(requireNamespace("proxy", quietly=TRUE)){
+              distance_metric_valid_range <- tolower(unname(unlist(lapply(proxy::pr_DB$get_entries(), function(list_elem) (list_elem$names)))))
+              
+            } else {
+              distance_metric_valid_range <- distance_metric_default_range
+            }
             
             # Set distance metric. If 
             param$distance_metric <- .set_hyperparameter(default=distance_metric_default,
@@ -131,6 +154,9 @@ setMethod("..train", signature(object="familiarKNN", data="dataObject"),
             # Check if hyperparameters are set.
             if(is.null(object@hyperparameters)) return(callNextMethod())
             
+            # Check that required packages are loaded and installed.
+            require_package(object, "train")
+            
             # Find feature columns in the data.
             feature_columns <- get_feature_columns(x=data)
 
@@ -152,8 +178,7 @@ setMethod("..train", signature(object="familiarKNN", data="dataObject"),
             object@model <- model
             
             # Set learner version
-            object@learner_package <- "e1071"
-            object@learner_version <- utils::packageVersion("e1071")
+            object <- set_package_version(object)
 
             return(object)
           })
@@ -163,6 +188,9 @@ setMethod("..train", signature(object="familiarKNN", data="dataObject"),
 #####..predict#####
 setMethod("..predict", signature(object="familiarKNN", data="dataObject"),
           function(object, data, type="default", ...){
+            
+            # Check that required packages are loaded and installed.
+            require_package(object, "predict")
             
             if(type == "default"){
               ##### Default method #############################################

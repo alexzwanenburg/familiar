@@ -26,7 +26,6 @@
 #' @importFrom ranger ranger
 #' @importFrom rlang quo quos enquo enquos sym syms ensym ensyms parse_expr parse_exprs
 #' @importFrom glmnet glmnet cv.glmnet
-#' @importFrom e1071 svm naiveBayes gknn
 #' @importFrom BART wbart
 "_PACKAGE"
 
