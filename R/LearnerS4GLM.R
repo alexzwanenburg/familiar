@@ -17,7 +17,7 @@ setMethod("initialize", signature(.Object="familiarGLM"),
             if(.Object@outcome_type == "multinomial"){
               .Object@package <- "VGAM"
               
-            } else if(.Object@outcome == "survival"){
+            } else if(.Object@outcome_type == "survival"){
               .Object@package <- "survival"
               
             } else {
