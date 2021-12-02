@@ -650,7 +650,7 @@ setMethod("export_risk_stratification_data", signature(object="familiarCollectio
                                       aggregate_results=TRUE,
                                       object_class="familiarDataElementRiskLogrank",
                                       type="stratification",
-                                      subtype="strata")
+                                      subtype="logrank")
               
               # Export hazard ratio data.
               hazard_ratio_data <- .export(x=object,
@@ -659,7 +659,7 @@ setMethod("export_risk_stratification_data", signature(object="familiarCollectio
                                            aggregate_results=TRUE,
                                            object_class="familiarDataElementRiskHazardRatio",
                                            type="stratification",
-                                           subtype="strata")
+                                           subtype="hazard_ratio")
               
               return(list("data"=raw_data,
                           "strata"=strata_data,
