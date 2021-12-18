@@ -6,6 +6,20 @@ setClass("familiarRanger",
          contains="familiarModel")
 
 
+#####initialize#################################################################
+setMethod("initialize", signature(.Object="familiarRanger"),
+          function(.Object, ...){
+            
+            # Update with parent class first.
+            .Object <- callNextMethod()
+            
+            # Set required package
+            .Object@package <- "ranger"
+            
+            return(.Object)
+          })
+
+
 .get_available_ranger_learners <- function(show_general=TRUE) return("random_forest_ranger")
 
 .get_available_ranger_vimp_methods <- function(show_general=TRUE){
@@ -213,6 +227,9 @@ setMethod("..train", signature(object="familiarRanger", data="dataObject"),
             # Check if hyperparameters are set.
             if(is.null(object@hyperparameters)) return(callNextMethod())
             
+            # Check that required packages are loaded and installed.
+            require_package(object, "train")
+            
             # Find feature columns in data table
             feature_columns <- get_feature_columns(x=data)
             
@@ -274,8 +291,7 @@ setMethod("..train", signature(object="familiarRanger", data="dataObject"),
             object@model <- model
             
             # Set learner version
-            object@learner_package <- "ranger"
-            object@learner_version <- utils::packageVersion("ranger")
+            object <- set_package_version(object)
             
             return(object)
           })
@@ -285,6 +301,9 @@ setMethod("..train", signature(object="familiarRanger", data="dataObject"),
 #####..predict#####
 setMethod("..predict", signature(object="familiarRanger", data="dataObject"),
           function(object, data, type="default", time=NULL, ...){
+            
+            # Check that required packages are loaded and installed.
+            require_package(object, "predict")
             
             if(type %in% c("default", "survival_probability")){
               ##### Default method #############################################
@@ -416,6 +435,9 @@ setMethod("..predict_survival_probability", signature(object="familiarRanger", d
             
             if(!object@outcome_type %in% c("survival")) return(callNextMethod())
             
+            # Check that required packages are loaded and installed.
+            require_package(object, "predict")
+            
             # If time is unset, read the max time stored by the model.
             if(is.null(time)) time <- object@settings$time_max
             
@@ -436,6 +458,9 @@ setMethod("..vimp", signature(object="familiarRanger"),
             
             # Check if the model has been trained upon retry.
             if(!model_is_trained(object)) return(callNextMethod())
+            
+            # Check that required packages are loaded and installed.
+            require_package(object, "vimp")
             
             # Extract the variable importance score
             if(object@hyperparameters$fs_forest_type == "standard"){
