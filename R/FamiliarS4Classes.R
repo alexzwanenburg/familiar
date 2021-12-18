@@ -84,6 +84,7 @@ setClass("familiarModel",
          )
 )
 
+
 ####familiarEnsemble#####
 setClass("familiarEnsemble",
          slots = list(
@@ -662,6 +663,42 @@ setClass("familiarVimpMethod",
            project_id = NULL
          )
 )
+
+
+
+#### familiarNoveltyModel ######################################################
+setClass("familiarNoveltyModel",
+         slots = list(
+           # Model name.
+           name = "character",
+           # Model container
+           model = "ANY",
+           # Parameters needed to convert raw novelty scores into p-values.
+           conversion_parameters = "ANY",
+           # Hyperparameters used to create the novelty detector.
+           hyperparameters = "ANY",
+           # Features that are required for novelty detection.
+           novelty_features = "ANY",
+           # Package version for backward compatibility.
+           familiar_version = "ANY",
+           # Name of the package required to train the learner.
+           package = "ANY",
+           # Version of the learner for reproducibility.
+           package_version = "ANY"
+         ),
+         prototype = list(
+           name = character(0),
+           model = NULL,
+           conversion_parameters = NULL,
+           hyperparameters = NULL,
+           novelty_features = NULL,
+           familiar_version = NULL,
+           package = NULL,
+           package_version = NULL
+         )
+)
+
+
 
 
 ####familiarMetric#####
