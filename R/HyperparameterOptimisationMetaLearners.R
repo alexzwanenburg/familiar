@@ -613,6 +613,9 @@
                             n_parameters=ncol(parameter_set))
     
   } else if(hyperparameter_learner == "gaussian_process") {
+    # Check if package is installed
+    require_package(x="laGP", purpose="to perform model-based hyperparameter optimisation")
+    
     # Encode categorical variables.
     x_encoded <- encode_categorical_variables(data=parameter_set,
                                               object=NULL,
