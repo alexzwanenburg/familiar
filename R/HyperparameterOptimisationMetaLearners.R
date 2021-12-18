@@ -416,7 +416,10 @@
   
   # Suppress NOTES due to non-standard evaluation in data.table
   optimisation_score <- NULL
-
+  
+  # Check if package is installed
+  require_package(x="ranger", purpose="to perform model-based hyperparameter optimisation")
+  
   # Merge score and parameter data tables on param id.
   joint_table <- merge(x=score_table,
                        y=parameter_table,
@@ -457,6 +460,9 @@
   # Suppress NOTES due to non-standard evaluation in data.table
   time_taken <- NULL
   
+  # Check if package is installed
+  require_package(x="ranger", purpose="to predict process time of hyperparameter sets")
+  
   # Fill NA values with large, but finite values. Determine the maximum time.
   if(!all(is.na(score_table$time_taken))){
     max_time_taken <- max(score_table$time_taken, na.rm=TRUE)
@@ -489,7 +495,7 @@
   formula <- stats::reformulate(termlabels=parameter_names,
                                 response="time_taken")
   
-  # Train random forest. Note that ranger is imported through the NAMESPACE.
+  # Train random forest.
   rf_model <- ranger::ranger(formula,
                              data=joint_table,
                              num.trees=n_tree,
@@ -585,6 +591,9 @@
                                    acquisition_function){
   # Predict score and compute .
   if(hyperparameter_learner == "random_forest"){
+    # Check if package is installed
+    require_package(x="ranger", purpose="to perform model-based hyperparameter optimisation")
+    
     # Compute score per decision tree in the random forest.
     predicted_scores <- predict(score_model,
                                 data=parameter_set,
@@ -760,6 +769,9 @@
   if(is.null(time_model)) return(NA_real_)
   
   if(!data.table::is.data.table(parameter_set)) parameter_set <- data.table::as.data.table(parameter_set)
+  
+  # Check if package is installed
+  require_package(x="ranger", purpose="to predict process time of hyperparameter sets")
   
   predictions <- predict(time_model,
                          data=parameter_set,
