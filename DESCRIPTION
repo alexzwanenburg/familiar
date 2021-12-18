@@ -44,12 +44,10 @@ Imports:
     ggplot2 (>= 3.0.0),
     gtable,
     isotree (>= 0.3.0),
-    BART,
-    ranger,
     labeling,
-    scales,
-    laGP
+    scales
 Suggests:
+    BART,
     callr (>= 3.4.3),
     cluster,
     CORElearn,
@@ -61,6 +59,7 @@ Suggests:
     glmnet,
     harmonicmeanp,
     knitr,
+    laGP,
     MASS,
     maxstat,
     mboost (>= 2.9.0),
@@ -69,6 +68,7 @@ Suggests:
     proxy,
     qvalue,
     randomForestSRC,
+    ranger,
     rmarkdown,
     RSclient,
     Rserve,

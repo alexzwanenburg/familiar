@@ -23,9 +23,7 @@
 #' @importFrom stats predict coef
 #' @importFrom survival Surv coxph survreg
 #' @importFrom utils head tail
-#' @importFrom ranger ranger
 #' @importFrom rlang quo quos enquo enquos sym syms ensym ensyms parse_expr parse_exprs
-#' @importFrom BART wbart
 "_PACKAGE"
 
 
