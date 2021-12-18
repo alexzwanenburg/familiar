@@ -879,6 +879,8 @@ setMethod("extract_ice", signature(object="familiarEnsemble"),
                                   xout=x_anchor)$y
     
   } else {
+    require_package(x="ranger", purpose="to anchor ICE/PD plot curves")
+    
     # Interpolation using random forest.
     model <- ranger::ranger(value ~ x + y,
                             data=data.table::data.table("x"=x, "y"=y, "value"=value_offset),
