@@ -547,6 +547,9 @@
   # Suppress NOTES due to non-standard evaluation in data.table
   optimisation_score <- NULL
   
+  # Check if package is installed
+  require_package(x="BART", purpose="to predict process time of hyperparameter sets")
+  
   # Merge score and parameter data tables on param id.
   joint_table <- merge(x=score_table,
                        y=parameter_table,
@@ -636,6 +639,10 @@
                                            "n_parameters"=ncol(parameter_set)))
     
   } else if(hyperparameter_learner %in% c("bayesian_additive_regression_trees", "bart")){
+    
+    # Check if package is installed
+    require_package(x="BART", purpose="to perform model-based hyperparameter optimisation")
+    
     # Drop columns not in the model object.
     modelled_parameters <- colnames(score_model$varcount)
     
