@@ -7,6 +7,19 @@ setClass("familiarSurvRegr",
          slots=list("encoding_reference_table" = "ANY"),
          prototype=list("encoding_reference_table" = NULL))
 
+#####initialize#################################################################
+setMethod("initialize", signature(.Object="familiarSurvRegr"),
+          function(.Object, ...){
+            
+            # Update with parent class first.
+            .Object <- callNextMethod()
+            
+            # Set the required package
+            .Object@package <- "survival"
+            
+            return(.Object)
+          })
+
 
 .get_available_survival_regression_learners <- function(show_general=TRUE){
   
@@ -21,6 +34,7 @@ setClass("familiarSurvRegr",
   
   return(learners)
 }
+
 
 
 #####is_available#####
@@ -103,6 +117,9 @@ setMethod("..train", signature(object="familiarSurvRegr", data="dataObject"),
             # Check if hyperparameters are set.
             if(is.null(object@hyperparameters)) return(callNextMethod())
             
+            # Check that required packages are loaded and installed.
+            require_package(object, "train")
+            
             # Use effect coding to convert categorical data into encoded data -
             # this is required to deal with factors with missing/new levels
             # between training and test data sets.
@@ -148,8 +165,7 @@ setMethod("..train", signature(object="familiarSurvRegr", data="dataObject"),
             object@encoding_reference_table <- encoded_data$reference_table
             
             # Set learner version
-            object@learner_package <- "survival"
-            object@learner_version <- utils::packageVersion("survival")
+            object <- set_package_version(object)
             
             return(object)
           })
@@ -159,6 +175,9 @@ setMethod("..train", signature(object="familiarSurvRegr", data="dataObject"),
 #####..predict#####
 setMethod("..predict", signature(object="familiarSurvRegr", data="dataObject"),
           function(object, data, type="default", time=NULL, ...){
+            
+            # Check that required packages are loaded and installed.
+            require_package(object, "predict")
             
             if(type %in% c("default", "survival_probability")){
               ##### Default method #############################################
@@ -301,6 +320,9 @@ setMethod("..predict_survival_probability", signature(object="familiarSurvRegr",
             
             if(!object@outcome_type %in% c("survival")) return(callNextMethod())
             
+            # Check that required packages are loaded and installed.
+            require_package(object, "predict")
+            
             # If time is unset, read the max time stored by the model.
             if(is.null(time)) time <- object@settings$time_max
             
@@ -317,6 +339,9 @@ setMethod("..vimp", signature(object="familiarSurvRegr"),
             score <- NULL
             
             if(!model_is_trained(object)) return(callNextMethod())
+            
+            # Check that required packages are loaded and installed.
+            require_package(object, "vimp")
             
             # Define p-values
             coefficient_z_values <- .compute_z_statistic(object)
