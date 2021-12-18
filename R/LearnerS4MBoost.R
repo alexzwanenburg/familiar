@@ -313,7 +313,7 @@ setMethod("get_prediction_type", signature(object="familiarMBoost"),
 setMethod("..train", signature(object="familiarMBoost", data="dataObject"),
           function(object, data){
             
-            # Aggregate repeated measurement data - ranger does not facilitate
+            # Aggregate repeated measurement data - mboost does not facilitate
             # repeated measurements.
             data <- aggregate_data(data=data)
             

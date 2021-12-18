@@ -442,7 +442,7 @@
   formula <- stats::reformulate(termlabels=parameter_names,
                                 response="optimisation_score")
   
-  # Train random forest. Note that ranger is imported through the NAMESPACE.
+  # Train random forest.
   rf_model <- ranger::ranger(formula,
                              data=joint_table,
                              num.trees=n_tree,
