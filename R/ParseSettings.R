@@ -2426,87 +2426,164 @@
                                                         ...){
   settings <- list()
   
+  ##### smbo_random_initialisation #############################################
   # Randomisation of initial parameter grid
-  settings$hpo_grid_initialisation_method <- .parse_arg(x_config=config$smbo_random_initialisation, x_var=smbo_random_initialisation,
-                                                        var_name="smbo_random_initialisation", type="character", optional=TRUE, default="fixed_subsample")
+  settings$hpo_grid_initialisation_method <- .parse_arg(x_config=config$smbo_random_initialisation,
+                                                        x_var=smbo_random_initialisation,
+                                                        var_name="smbo_random_initialisation",
+                                                        type="character",
+                                                        optional=TRUE,
+                                                        default="fixed_subsample")
   
-  .check_parameter_value_is_valid(x=settings$hpo_grid_initialisation_method, var_name="smbo_random_initialisation",
+  .check_parameter_value_is_valid(x=settings$hpo_grid_initialisation_method,
+                                  var_name="smbo_random_initialisation",
                                   values=c("fixed_subsample", "fixed", "random"))
   
+  ##### smbo_n_random_sets #####################################################
   # Number of samples in the initial parameter grid.
-  settings$hpo_n_grid_initialisation_samples <- .parse_arg(x_config=config$smbo_n_random_sets, x_var=smbo_n_random_sets,
-                                                           var_name="smbo_n_random_sets", type="integer", optional=TRUE, default=100)
+  settings$hpo_n_grid_initialisation_samples <- .parse_arg(x_config=config$smbo_n_random_sets,
+                                                           x_var=smbo_n_random_sets,
+                                                           var_name="smbo_n_random_sets",
+                                                           type="integer",
+                                                           optional=TRUE,
+                                                           default=100)
   
-  .check_number_in_valid_range(x=settings$hpo_n_grid_initialisation_samples, var_name="smbo_n_random_sets", range=c(10, Inf))
+  .check_number_in_valid_range(x=settings$hpo_n_grid_initialisation_samples,
+                               var_name="smbo_n_random_sets",
+                               range=c(10, Inf))
   
+  ##### optimisation_determine_vimp ############################################
   # Variable importance for the bootstraps
-  settings$hpo_determine_vimp <- .parse_arg(x_config=config$optimisation_determine_vimp, x_var=optimisation_determine_vimp,
-                                            var_name="optimisation_determine_vimp", type="logical", optional=TRUE, default=TRUE)
+  settings$hpo_determine_vimp <- .parse_arg(x_config=config$optimisation_determine_vimp,
+                                            x_var=optimisation_determine_vimp,
+                                            var_name="optimisation_determine_vimp",
+                                            type="logical",
+                                            optional=TRUE,
+                                            default=TRUE)
   
-  
+  ##### optimisation_bootstraps ################################################
   # Maximum number of bootstraps for hyperparameter evaluation
-  settings$hpo_max_bootstraps <- .parse_arg(x_config=config$optimisation_bootstraps, x_var=optimisation_bootstraps,
-                                            var_name="optimisation_bootstraps", type="integer", optional=TRUE, default=50)
+  settings$hpo_max_bootstraps <- .parse_arg(x_config=config$optimisation_bootstraps,
+                                            x_var=optimisation_bootstraps,
+                                            var_name="optimisation_bootstraps",
+                                            type="integer",
+                                            optional=TRUE,
+                                            default=50)
   
-  .check_number_in_valid_range(x=settings$hpo_max_bootstraps, var_name="optimisation_bootstraps", range=c(20, Inf))
+  .check_number_in_valid_range(x=settings$hpo_max_bootstraps,
+                               var_name="optimisation_bootstraps",
+                               range=c(20, Inf))
   
-  
+  ##### max_smbo_iterations ####################################################
   # Maximum number of SMBO iterations before stopping
-  settings$hpo_smbo_iter_max <- .parse_arg(x_config=config$max_smbo_iterations, x_var=max_smbo_iterations,
-                                           var_name="max_smbo_iterations", type="integer", optional=TRUE, default=20)
+  settings$hpo_smbo_iter_max <- .parse_arg(x_config=config$max_smbo_iterations,
+                                           x_var=max_smbo_iterations,
+                                           var_name="max_smbo_iterations",
+                                           type="integer",
+                                           optional=TRUE,
+                                           default=20)
   
-  .check_number_in_valid_range(x=settings$hpo_smbo_iter_max, var_name="max_smbo_iterations", range=c(1, Inf))
+  .check_number_in_valid_range(x=settings$hpo_smbo_iter_max,
+                               var_name="max_smbo_iterations",
+                               range=c(1, Inf))
   
+  ##### smbo_step_bootstraps ###################################################
+  # Maximum number of bootstrap evaluated initially and during each intensify
+  # step of each SMBO iteration.
+  settings$hpo_bootstraps <- .parse_arg(x_config=config$smbo_step_bootstraps,
+                                        x_var=smbo_step_bootstraps,
+                                        var_name="smbo_step_bootstraps",
+                                        type="integer",
+                                        optional=TRUE,
+                                        default=3)
   
-  # Maximum number of bootstrap evaluated initially and during each intensify step of each SMBO iteration
-  settings$hpo_bootstraps <- .parse_arg(x_config=config$smbo_step_bootstraps, x_var=smbo_step_bootstraps,
-                                        var_name="smbo_step_bootstraps", type="integer", optional=TRUE, default=3)
+  .check_number_in_valid_range(x=settings$hpo_bootstraps,
+                               var_name="smbo_step_bootstraps",
+                               range=c(1, settings$hpo_max_bootstraps))
   
-  .check_number_in_valid_range(x=settings$hpo_bootstraps, var_name="smbo_step_bootstraps", range=c(1, settings$hpo_max_bootstraps))
+  ##### smbo_intensify_steps ###################################################
+  # Maximum number of intensify iterations during each SMBO iteration.
+  settings$hpo_intensify_max_iter <- .parse_arg(x_config=config$smbo_intensify_steps,
+                                                x_var=smbo_intensify_steps,
+                                                var_name="smbo_intensify_steps",
+                                                type="integer",
+                                                optional=TRUE,
+                                                default=5)
   
+  .check_number_in_valid_range(x=settings$hpo_intensify_max_iter,
+                               var_name="smbo_intensify_steps",
+                               range=c(1, Inf))
   
-  # Maximum number of intensify iterations during each SMBO iteration
-  settings$hpo_intensify_max_iter <- .parse_arg(x_config=config$smbo_intensify_steps, x_var=smbo_intensify_steps,
-                                                var_name="smbo_intensify_steps", type="integer", optional=TRUE, default=5)
+  ##### smbo_stochastic_reject_p_value #########################################
+  # Significance level for early stopping of intensity iterations. Only used for
+  # stochastic rejection as an exploration method.
+  settings$hpo_alpha <- .parse_arg(x_config=config$smbo_stochastic_reject_p_value,
+                                   x_var=smbo_stochastic_reject_p_value,
+                                   var_name="smbo_stochastic_reject_p_value",
+                                   type="numeric",
+                                   optional=TRUE,
+                                   default=0.05)
   
-  .check_number_in_valid_range(x=settings$hpo_intensify_max_iter, var_name="smbo_intensify_steps", range=c(1, Inf))
+  .check_number_in_valid_range(x=settings$hpo_alpha,
+                               var_name="smbo_stochastic_reject_p_value",
+                               range=c(0.0, 1.0),
+                               closed=c(FALSE, TRUE))
   
+  ##### smbo_stop_convergent_iterations ########################################
+  # Number of converging iterations before stopping SMBO.
+  settings$hpo_conv_stop <- .parse_arg(x_config=config$smbo_stop_convergent_iterations,
+                                       x_var=smbo_stop_convergent_iterations,
+                                       var_name="smbo_stop_convergent_iterations",
+                                       type="integer",
+                                       optional=TRUE,
+                                       default=3)
 
-  # Significance level for early stopping of intensity iterations
-  settings$hpo_alpha <- .parse_arg(x_config=config$smbo_stochastic_reject_p_value, x_var=smbo_stochastic_reject_p_value,
-                                   var_name="smbo_stochastic_reject_p_value", type="numeric", optional=TRUE, default=0.05)
+  .check_number_in_valid_range(x=settings$hpo_conv_stop,
+                               var_name="smbo_stop_convergent_iterations",
+                               range=c(1, Inf))
   
-  .check_number_in_valid_range(x=settings$hpo_alpha, var_name="smbo_stochastic_reject_p_value", range=c(0.0, 1.0), closed=c(FALSE, TRUE))
-  
-  
-  # Number of converging iterations before stopping SMBO
-  settings$hpo_conv_stop <- .parse_arg(x_config=config$smbo_stop_convergent_iterations, x_var=smbo_stop_convergent_iterations,
-                                       var_name="smbo_stop_convergent_iterations", type="integer", optional=TRUE, default=3)
-
-  .check_number_in_valid_range(x=settings$hpo_conv_stop, var_name="smbo_stop_convergent_iterations", range=c(1, Inf))
-  
-  
+  ##### smbo_stop_tolerance ####################################################
   # Convergence tolerance
-  settings$hpo_convergence_tolerance <- .parse_arg(x_config=config$smbo_stop_tolerance, x_var=smbo_stop_tolerance,
-                                                   var_name="smbo_stop_tolerance", type="numeric", optional=TRUE, default=1E-2)
+  settings$hpo_convergence_tolerance <- .parse_arg(x_config=config$smbo_stop_tolerance,
+                                                   x_var=smbo_stop_tolerance,
+                                                   var_name="smbo_stop_tolerance",
+                                                   type="numeric",
+                                                   optional=TRUE,
+                                                   default=1E-2)
   
-  .check_number_in_valid_range(x=settings$hpo_convergence_tolerance, var_name="smbo_stop_tolerance", range=c(0.0, 2.0), closed=c(FALSE, TRUE))
+  .check_number_in_valid_range(x=settings$hpo_convergence_tolerance,
+                               var_name="smbo_stop_tolerance",
+                               range=c(0.0, 2.0),
+                               closed=c(FALSE, TRUE))
   
   
+  ##### optimisation_function ##################################################
   # Objective function
-  settings$hpo_optimisation_function <- .parse_arg(x_config=config$optimisation_function, x_var=optimisation_function,
-                                       var_name="optimisation_function", type="character", optional=TRUE, default="balanced")
+  settings$hpo_optimisation_function <- .parse_arg(x_config=config$optimisation_function,
+                                                   x_var=optimisation_function,
+                                                   var_name="optimisation_function",
+                                                   type="character",
+                                                   optional=TRUE,
+                                                   default="balanced")
   
-  .check_parameter_value_is_valid(x=settings$hpo_optimisation_function, var_name="optimisation_function",
+  .check_parameter_value_is_valid(x=settings$hpo_optimisation_function,
+                                  var_name="optimisation_function",
                                   values=.get_available_optimisation_functions())
   
+  ##### acquisition_function ###################################################
   # Acquisition function
-  settings$hpo_acquisition_function <- .parse_arg(x_config=config$acquisition_function, x_var=acquisition_function,
-                                                  var_name="acquisition_function", type="character", optional=TRUE, default="expected_improvement")
+  settings$hpo_acquisition_function <- .parse_arg(x_config=config$acquisition_function,
+                                                  x_var=acquisition_function,
+                                                  var_name="acquisition_function",
+                                                  type="character",
+                                                  optional=TRUE,
+                                                  default="expected_improvement")
   
-  .check_parameter_value_is_valid(x=settings$hpo_acquisition_function, var_name="acquisition_function",
+  .check_parameter_value_is_valid(x=settings$hpo_acquisition_function,
+                                  var_name="acquisition_function",
                                   values=.get_available_acquisition_functions())
   
+  ##### exploration_method #####################################################
   # Exploration method
   settings$hpo_exploration_method <- .parse_arg(x_config=config$exploration_method,
                                                 x_var=exploration_method,
@@ -2519,17 +2596,24 @@
                                   var_name="exploration_method",
                                   values=.get_available_hyperparameter_exploration_methods())
   
+  ##### optimisation_metric ####################################################
   # Performance metric for hyperparameter optimisation
-  settings$hpo_metric <- .parse_arg(x_config=config$optimisation_metric, x_var=optimisation_metric,
-                                    var_name="optimisation_metric", type="character_list", optional=TRUE, default=NULL)
+  settings$hpo_metric <- .parse_arg(x_config=config$optimisation_metric,
+                                    x_var=optimisation_metric,
+                                    var_name="optimisation_metric",
+                                    type="character_list",
+                                    optional=TRUE,
+                                    default=NULL)
   
   # Set default metric
   if(is.null(settings$hpo_metric)) settings$hpo_metric <- .get_default_metric(outcome_type=outcome_type)
   
   # Check if the metric is ok. Packed into a for loop to enable multi-metric optimisation in the future
-  sapply(settings$hpo_metric, metric.check_outcome_type, outcome_type=outcome_type)
+  sapply(settings$hpo_metric,
+         metric.check_outcome_type,
+         outcome_type=outcome_type)
   
-  
+  ##### hyperparameter_learner #################################################
   # Hyperparameter learner
   settings$hpo_hyperparameter_learner <- .parse_arg(x_config=config$hyperparameter_learner,
                                                     x_var=hyperparameter_learner,
@@ -2542,11 +2626,21 @@
                                   var_name="hyperparameter_learner",
                                   values=.get_available_hyperparameter_learners())
   
-  # Parallelisation switch for parallel processing
-  settings$do_parallel <- .parse_arg(x_config=config$parallel_hyperparameter_optimisation, x_var=parallel_hyperparameter_optimisation,
-                                     var_name="parallel_hyperparameter_optimisation", type="character", optional=TRUE, default="TRUE")
+  require_package(x=.required_packages_hyperparameter_learner(settings$hpo_hyperparameter_learner),
+                  purpose="to use the requested learner (", settings$hpo_hyperparameter_learner, ") for model-based hyperparameter optimisation",
+                  message_type="backend_error")
   
-  .check_parameter_value_is_valid(x=settings$do_parallel, var_name="parallel_hyperparameter_optimisation",
+  ##### parallel_hyperparameter_optimisation ###################################
+  # Parallelisation switch for parallel processing
+  settings$do_parallel <- .parse_arg(x_config=config$parallel_hyperparameter_optimisation,
+                                     x_var=parallel_hyperparameter_optimisation,
+                                     var_name="parallel_hyperparameter_optimisation",
+                                     type="character",
+                                     optional=TRUE,
+                                     default="TRUE")
+  
+  .check_parameter_value_is_valid(x=settings$do_parallel,
+                                  var_name="parallel_hyperparameter_optimisation",
                                   values=c("TRUE", "FALSE", "inner", "outer"))
   
   # Disable if parallel is FALSE

@@ -815,6 +815,24 @@
 
 
 
+.required_packages_hyperparameter_learner <- function(x){
+  
+  learner_packages <- NULL
+  if(x == "random_forest"){
+    learner_packages <- "ranger"
+    
+  } else if(x == "gaussian_process"){
+    learner_packages <- "laGP"
+    
+  } else if(x %in% c("bayesian_additive_regression_trees", "bart")){
+    learner_packages <- "BART"
+  }
+  
+  return(learner_packages)
+}
+
+
+
 .get_available_hyperparameter_exploration_methods <- function(){
   return(c("successive_halving",
            "stochastic_reject",
