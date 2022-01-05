@@ -552,7 +552,7 @@ setMethod("get_default_hyperparameters", signature(object="familiarModel"),
 
 #####..train (familiarModel, dataObject)#####
 setMethod("..train", signature(object="familiarModel", data="dataObject"),
-          function(object, data){
+          function(object, data, ...){
             
             # Set a NULL model
             object@model <- NULL
@@ -562,7 +562,7 @@ setMethod("..train", signature(object="familiarModel", data="dataObject"),
 
 #####..train (familiarModel, NULL)#####
 setMethod("..train", signature(object="familiarModel", data="NULL"),
-          function(object, data){
+          function(object, data, ...){
             
             # Set a NULL model
             object@model <- NULL

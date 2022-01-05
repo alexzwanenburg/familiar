@@ -76,6 +76,8 @@
 
 -   Fixed a bug that would prevent `hpo_metric`, `vimp_aggregation_method` and `vimp_aggregation_rank_threshold` arguments from being set as a function argument.
 
+-   Fixed an error when trying to pass undeclared arguments to the `..train` method of `familiarModel` objects using `callNextMethod()`.
+
 # Version 0.0.0.54 (Pre-release)
 
 ## Major changes:
