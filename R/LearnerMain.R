@@ -161,49 +161,49 @@ setMethod("promote_learner", signature(object="familiarModel"),
 
 
 
-learner.check_model_hyperparameters <- function(learner, user_param, outcome_type){
-  
-  # Check if current learner is defined in the user parameter list
-  if(is.null(user_param[[learner]])) return()
-  
-  # Get parameters defined by the model
-  defined_param <- .get_learner_hyperparameters(data=NULL,
-                                                learner=learner,
-                                                outcome_type=outcome_type,
-                                                names_only=TRUE)
-  
-  if(is.null(defined_param)){ return() }
-  
-  # Parse names of the user-defined parameters
-  user_param    <- names(user_param[[learner]])
-  
-  # Determine if parameters are incorrectly set
-  if(!all(user_param %in% defined_param)){
-    
-    # Determine incorrectly defined user parameters
-    undefined_user_param <- user_param[!user_param %in% defined_param]
-    
-    # Notify the user
-    logger.stop(paste0("Configuration: \"", paste(undefined_user_param, collapse="\", \""), "\" are invalid parameters. Valid parameters are: \"",
-                       paste(defined_param, collapse="\", \"")), "\".")
-  }
-}
+# learner.check_model_hyperparameters <- function(learner, user_param, outcome_type){
+#   
+#   # Check if current learner is defined in the user parameter list
+#   if(is.null(user_param[[learner]])) return()
+#   
+#   # Get parameters defined by the model
+#   defined_param <- .get_learner_hyperparameters(data=NULL,
+#                                                 learner=learner,
+#                                                 outcome_type=outcome_type,
+#                                                 names_only=TRUE)
+#   
+#   if(is.null(defined_param)){ return() }
+#   
+#   # Parse names of the user-defined parameters
+#   user_param    <- names(user_param[[learner]])
+#   
+#   # Determine if parameters are incorrectly set
+#   if(!all(user_param %in% defined_param)){
+#     
+#     # Determine incorrectly defined user parameters
+#     undefined_user_param <- user_param[!user_param %in% defined_param]
+#     
+#     # Notify the user
+#     logger.stop(paste0("Configuration: \"", paste(undefined_user_param, collapse="\", \""), "\" are invalid parameters. Valid parameters are: \"",
+#                        paste(defined_param, collapse="\", \"")), "\".")
+#   }
+# }
 
 
 
-learner.check_model_prediction_type <- function(learner, outcome_type){
-  # Prediction types are specified by the S4 familiarModel objects.
-  
-  # Create placeholder familiar model and promote it to the right subclass.
-  fam_model <- methods::new("familiarModel",
-                            outcome_type=outcome_type,
-                            learner=learner)
-  
-  fam_model <- promote_learner(fam_model)
-  
-  # Return the predicted outcome type.
-  return(get_prediction_type(fam_model))
-}
+# learner.check_model_prediction_type <- function(learner, outcome_type){
+#   # Prediction types are specified by the S4 familiarModel objects.
+#   
+#   # Create placeholder familiar model and promote it to the right subclass.
+#   fam_model <- methods::new("familiarModel",
+#                             outcome_type=outcome_type,
+#                             learner=learner)
+#   
+#   fam_model <- promote_learner(fam_model)
+#   
+#   # Return the predicted outcome type.
+#   return(get_prediction_type(fam_model))
+# }
 
 
 #' Internal function for obtaining a default signature size parameter

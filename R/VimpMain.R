@@ -225,71 +225,71 @@ setMethod("promote_vimp_method", signature(object="familiarVimpMethod"),
 
 
 
-vimp.check_fs_parameters <- function(method, user_param, outcome_type){
+# vimp.check_fs_parameters <- function(method, user_param, outcome_type){
+# 
+#   # Check if current method is defined in the user parameter list
+#   if(is.null(user_param[[method]])) { return(NULL) }
+# 
+#   # Get parameters defined by the model
+#   defined_param <- .get_vimp_hyperparameters(data=NULL, method=method, outcome_type=outcome_type, names_only=TRUE)
+# 
+#   if(is.null(defined_param)){ return(NULL) }
+# 
+#   # Parse names of the user-defined parameters
+#   user_param    <- names(user_param[[method]])
+# 
+#   # Determine if parameters are incorrectly set
+#   if(!all(user_param %in% defined_param)){
+# 
+#     # Determine incorrectly defined user parameters
+#     undefined_user_param <- user_param[!user_param %in% defined_param]
+# 
+#     # Notify the user
+#     logger.stop(paste0("Configuration: \"", paste(undefined_user_param, collapse="\", \""), "\" are invalid parameters. Valid parameters are: \"",
+#                        paste(defined_param, collapse="\", \"")), "\".")
+#   }
+# }
 
-  # Check if current method is defined in the user parameter list
-  if(is.null(user_param[[method]])) { return(NULL) }
-
-  # Get parameters defined by the model
-  defined_param <- .get_vimp_hyperparameters(data=NULL, method=method, outcome_type=outcome_type, names_only=TRUE)
-
-  if(is.null(defined_param)){ return(NULL) }
-
-  # Parse names of the user-defined parameters
-  user_param    <- names(user_param[[method]])
-
-  # Determine if parameters are incorrectly set
-  if(!all(user_param %in% defined_param)){
-
-    # Determine incorrectly defined user parameters
-    undefined_user_param <- user_param[!user_param %in% defined_param]
-
-    # Notify the user
-    logger.stop(paste0("Configuration: \"", paste(undefined_user_param, collapse="\", \""), "\" are invalid parameters. Valid parameters are: \"",
-                       paste(defined_param, collapse="\", \"")), "\".")
-  }
-}
 
 
-
-vimp.update_fs_parameters <- function(param_list, param_preset_list=NULL){
-  # Check parameters in param_list and update with param_preset_list, which is user-provided
-
-  # Check if there are any parameters which can be updated; otherwise return
-  if(is.null(param_list)){ return(NULL) }
-
-  # Initiate empty list for feature selection parameters
-  parsed_param_list <- list()
-
-  # Iterate over the parameters in the list
-  for(ii in seq_len(length(param_list))){
-
-    # Get the name of the current parameter
-    param_name <- names(param_list)[ii]
-
-    # If the parameter is present in the preset list, we replace the current value with the value in the preset list
-    if(!is.null(param_preset_list[[param_name]])){
-
-      # Determine the parameter type
-      param_type <- param_list[[param_name]]$type
-
-      # Read from the user-provided list and convert type
-      if(param_type %in% c("numeric", "integer")){
-        parsed_param_list[[param_name]] <- as.numeric(param_preset_list[[param_name]])
-      } else if(param_type == "logical"){
-        parsed_param_list[[param_name]] <- as.logical(param_preset_list[[param_name]])
-      } else if(param_type %in% c("factor", "character")){
-        parsed_param_list[[param_name]] <- as.character(param_preset_list[[param_name]])
-      }
-
-    } else {
-      parsed_param_list[[param_name]] <- param_list[[param_name]]$default
-    }
-  }
-
-  # Return the update parameter list
-  return(parsed_param_list)
-}
+# vimp.update_fs_parameters <- function(param_list, param_preset_list=NULL){
+#   # Check parameters in param_list and update with param_preset_list, which is user-provided
+# 
+#   # Check if there are any parameters which can be updated; otherwise return
+#   if(is.null(param_list)){ return(NULL) }
+# 
+#   # Initiate empty list for feature selection parameters
+#   parsed_param_list <- list()
+# 
+#   # Iterate over the parameters in the list
+#   for(ii in seq_len(length(param_list))){
+# 
+#     # Get the name of the current parameter
+#     param_name <- names(param_list)[ii]
+# 
+#     # If the parameter is present in the preset list, we replace the current value with the value in the preset list
+#     if(!is.null(param_preset_list[[param_name]])){
+# 
+#       # Determine the parameter type
+#       param_type <- param_list[[param_name]]$type
+# 
+#       # Read from the user-provided list and convert type
+#       if(param_type %in% c("numeric", "integer")){
+#         parsed_param_list[[param_name]] <- as.numeric(param_preset_list[[param_name]])
+#       } else if(param_type == "logical"){
+#         parsed_param_list[[param_name]] <- as.logical(param_preset_list[[param_name]])
+#       } else if(param_type %in% c("factor", "character")){
+#         parsed_param_list[[param_name]] <- as.character(param_preset_list[[param_name]])
+#       }
+# 
+#     } else {
+#       parsed_param_list[[param_name]] <- param_list[[param_name]]$default
+#     }
+#   }
+# 
+#   # Return the update parameter list
+#   return(parsed_param_list)
+# }
 
 
 
