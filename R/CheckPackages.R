@@ -64,6 +64,68 @@ setMethod("require_package", signature(x="NULL"),
 }
 
 
+
+# Check whether installed packages are outdated or newer.
+.check_package_version <- function(name, version, when=NULL){
+  # Do not check if package versions are missing completely.
+  if(is_empty(version)) return(invisible(NULL))
+  
+  # Check for outdated packages.
+  package_outdated <- mapply(is_package_outdated,
+                             name=name,
+                             version=version)
+  
+  # Check for newer packages.
+  package_newer <- mapply(is_package_newer,
+                          name=name,
+                          version=version)
+  
+  # Skip if no packages are outdated.
+  if(!any(package_outdated) & !any(package_newer)) return(invisible(NULL))
+  
+  # Check whether one or more packages do not have the correct
+  # version.
+  multiple_packages <- sum(package_outdated + package_newer)
+  
+  # Form "when" string to describe when and for what the packages were initially
+  # used.
+  if(!is.null(when)){
+    when_str <- ifelse(multiple_packages,
+                       paste0(" from those ", when),
+                       paste0(" from that ", when))
+    
+  } else {
+    when_str <- NULL
+  }
+  
+  # Initial string.
+  message_str <- paste0("The following installed package",
+                        ifelse(multiple_packages,
+                               paste0("s have versions that differ", when_str, ":"),
+                               paste0(" has a version that differs", when_str, ":")))
+  
+  
+  for(ii in seq_along(name)){
+    
+    # Skip if package is not newer or outdated.
+    if(!package_outdated[ii] & !package_newer[ii]) next()
+    
+    # Parse package information.
+    message_str <- c(message_str,
+                     paste0(name[ii],
+                            ": ",
+                            as.character(utils::packageVersion(name[ii])),
+                            ifelse(package_outdated[ii], " < ", " > "),
+                            as.character(version[ii]),
+                            ifelse(package_outdated[ii], " (outdated)", " (newer)")))
+  }
+  
+  # Show as warning.
+  warning(paste(message_str, sep="\n"))
+}
+
+
+
 is_package_installed <- function(name){
   
   if(length(name) == 0) return(TRUE)

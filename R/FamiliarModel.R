@@ -270,52 +270,9 @@ setMethod("set_package_version", signature(object="familiarModel"),
 #####check_package_version (model)#####
 setMethod("check_package_version", signature(object="familiarModel"),
           function(object){
-            # Check whether installed packages are outdated or newer.
-            
-            # Do not check if package versions are missing completely.
-            if(is_empty(object@package_version)) return(invisible(NULL))
-            
-            # Check for outdated packages.
-            package_outdated <- mapply(is_package_outdated,
-                                       name=object@package,
-                                       version=object@package_version)
-            
-            # Check for newer packages.
-            package_newer <- mapply(is_package_newer,
-                                    name=object@package,
-                                    version=object@package_version)
-            
-            # Skip if no packages are outdated.
-            if(!any(package_outdated) & !any(package_newer)) return(invisible(NULL))
-            
-            # Check whether one or more packages do not have the correct
-            # version.
-            multiple_packages <- sum(package_outdated + package_newer)
-            
-            # Initial string.
-            message_str <- paste0("The following installed package",
-                                  ifelse(multiple_packages,
-                                         "s have versions that differ from those at model creation:",
-                                         " has a version that differs from that at model creation:"))
-            
-            
-            for(ii in seq_along(object@package)){
-              
-              # Skip if package is not newer or outdated.
-              if(!package_outdated[ii] & !package_newer[ii]) next()
-              
-              # Parse package information.
-              message_str <- c(message_str,
-                               paste0(object@package[ii],
-                                     ": ",
-                                     as.character(utils::packageVersion(object@package[ii])),
-                                     ifelse(package_outdated[ii], " < ", " > "),
-                                     as.character(object@package_version[ii]),
-                                     ifelse(package_outdated[ii], " (outdated)", " (newer)")))
-            }
-            
-            # Show as warning.
-            warning(paste(message_str, sep="\n"))
+            .check_package_version(name=object@package,
+                                   version=object@package_version,
+                                   when="at model creation")
           })
 
 
