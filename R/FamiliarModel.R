@@ -224,6 +224,9 @@ setMethod("show", signature(object="familiarModel"),
                 
                 lapply(novelty_features, function(x, object) show(object@feature_info[[x]]), object=object)
               }
+              
+              # Check package version.
+              check_package_version(object)
             }
           })
 
