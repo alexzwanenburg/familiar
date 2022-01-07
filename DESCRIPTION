@@ -41,11 +41,7 @@ Imports:
     rlang (>= 0.3.4),
     stringi,
     survival,
-    ggplot2 (>= 3.0.0),
-    gtable,
-    isotree (>= 0.3.0),
-    labeling,
-    scales
+    isotree (>= 0.3.0)
 Suggests:
     BART,
     callr (>= 3.4.3),
@@ -56,9 +52,12 @@ Suggests:
     e1071 (>= 1.7.5),
     Ecdat,
     fastcluster,
+    ggplot2 (>= 3.0.0),
     glmnet,
+    gtable,
     harmonicmeanp,
     knitr,
+    labeling,
     laGP,
     MASS,
     maxstat,
@@ -72,6 +71,7 @@ Suggests:
     rmarkdown,
     RSclient,
     Rserve,
+    scales,
     testthat (>= 3.0.0),
     xml2,
     VGAM,
@@ -119,6 +119,7 @@ Collate:
     'FamiliarDataElement.R'
     'FamiliarEnsemble.R'
     'FamiliarModel.R'
+    'FamiliarNoveltyDetector.R'
     'FamiliarObjectConversion.R'
     'FamiliarObjectUpdate.R'
     'FamiliarSharedS4Methods.R'
