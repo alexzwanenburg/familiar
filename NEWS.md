@@ -50,6 +50,8 @@
 
 -   The default divergent palettes used for feature cluster and sample cluster heatmaps now diverge to white instead of black.
 
+-   Familiar will now actively check whether packages are installed.
+
 ## Bug fixes
 
 -   `detail_level`, `sample_limit`, `estimation_type` and `aggregate_results` arguments used during evaluation and explanation are now propagated from `familiarModel` and `familiarEnsemble` objects instead of reverting to default values.
