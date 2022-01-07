@@ -40,8 +40,7 @@ Imports:
     methods,
     rlang (>= 0.3.4),
     stringi,
-    survival,
-    isotree (>= 0.3.0)
+    survival
 Suggests:
     BART,
     callr (>= 3.4.3),
@@ -56,6 +55,7 @@ Suggests:
     glmnet,
     gtable,
     harmonicmeanp,
+    isotree (>= 0.3.0),
     knitr,
     labeling,
     laGP,
@@ -155,6 +155,8 @@ Collate:
     'MetricS4ConcordanceIndex.R'
     'ModelBuilding.R'
     'Normalisation.R'
+    'NoveltyDetectorS4IsolationTree.R'
+    'NoveltyDetectorMain.R'
     'OutcomeInfo.R'
     'PairwiseSimilarity.R'
     'ParallelFunctions.R'
