@@ -666,19 +666,25 @@ setClass("familiarVimpMethod",
 
 
 
-#### familiarNoveltyModel ######################################################
-setClass("familiarNoveltyModel",
+#### familiarNoveltyDetector ###################################################
+setClass("familiarNoveltyDetector",
          slots = list(
            # Model name.
            name = "character",
+           # Detector
+           learner = "character",
            # Model container
            model = "ANY",
            # Parameters needed to convert raw novelty scores into p-values.
            conversion_parameters = "ANY",
            # Hyperparameters used to create the novelty detector.
            hyperparameters = "ANY",
+           # Data required for feature pre-processing
+           feature_info = "ANY",
            # Features that are required for novelty detection.
-           novelty_features = "ANY",
+           model_features = "ANY",
+           # Flags trimming of the novelty detector.
+           is_trimmed = "logical",
            # Package version for backward compatibility.
            familiar_version = "ANY",
            # Name of the package required to train the learner.
@@ -688,10 +694,13 @@ setClass("familiarNoveltyModel",
          ),
          prototype = list(
            name = character(0),
+           learner = NA_character_,
            model = NULL,
            conversion_parameters = NULL,
            hyperparameters = NULL,
-           novelty_features = NULL,
+           feature_info = NULL,
+           model_features = NULL,
+           is_trimmed = FALSE,
            familiar_version = NULL,
            package = NULL,
            package_version = NULL
