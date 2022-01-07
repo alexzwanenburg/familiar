@@ -577,6 +577,13 @@ setMethod("plot_ice", signature(object="familiarCollection"),
               return(NULL)
             }
             
+            # Check package requirements for plotting.
+            if(!require_package(x=..required_plotting_packages(extended=TRUE),
+                                purpose="to create ICE/PD plots",
+                                message_type="warning")){
+              return(NULL)
+            }
+            
             ##### Check input arguments ------------------------------------------------
             
             # ggtheme

@@ -187,6 +187,13 @@ setMethod("plot_confusion_matrix", signature(object="familiarCollection"),
             # Check that the data are not empty.
             if(is_empty(x)) return(NULL)
             
+            # Check package requirements for plotting.
+            if(!require_package(x=..required_plotting_packages(extended=FALSE),
+                                purpose="to plot confusion matrices",
+                                message_type="warning")){
+              return(NULL)
+            }
+            
             ##### Check input arguments ------------------------------------------------
             
             # ggtheme

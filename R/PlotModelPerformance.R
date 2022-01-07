@@ -298,6 +298,13 @@ setMethod("plot_model_performance", signature(object="familiarCollection"),
             # Check that the data are not empty.
             if(is_empty(x)) return(NULL)
             
+            # Check package requirements for plotting.
+            if(!require_package(x=..required_plotting_packages(extended=FALSE),
+                                purpose="to plot model performance",
+                                message_type="warning")){
+              return(NULL)
+            }
+            
             # Add evaluation time as a splitting variable.
             if(object@outcome_type %in% c("survival")){
               split_variable <- "evaluation_time"

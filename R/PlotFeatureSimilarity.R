@@ -228,7 +228,7 @@ setMethod("plot_feature_similarity", signature(object="familiarCollection"),
             # Obtain data element from list.
             if(is.list(x)){
 
-              if(length(x) > 1) ..error_reached_unreachable_code(".plot_variable_importance: list of data elements contains unmerged elements.")
+              if(length(x) > 1) ..error_reached_unreachable_code("plot_feature_similarity: list of data elements contains unmerged elements.")
               
               # Get x directly.
               x <- x[[1]]
@@ -236,6 +236,13 @@ setMethod("plot_feature_similarity", signature(object="familiarCollection"),
             
             # Check that the data are not empty.
             if(is_empty(x)) return(NULL)
+            
+            # Check package requirements for plotting.
+            if(!require_package(x=..required_plotting_packages(extended=TRUE),
+                                purpose="to plot feature similarity heatmaps",
+                                message_type="warning")){
+              return(NULL)
+            }
             
             
             ##### Check input arguments ----------------------------------------

@@ -279,6 +279,12 @@ setMethod("plot_kaplan_meier", signature(object="familiarCollection"),
             # Remove non-valid risk groups
             x@data <- x@data[!is.na(risk_group)]
             
+            # Check package requirements for plotting.
+            if(!require_package(x=..required_plotting_packages(extended=TRUE),
+                                purpose="to create kaplan-meier survival curves",
+                                message_type="warning")){
+              return(NULL)
+            }
             
             ##### Check input arguments ########################################
             

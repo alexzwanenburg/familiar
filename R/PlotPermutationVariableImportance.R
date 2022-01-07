@@ -234,6 +234,13 @@ setMethod("plot_permutation_variable_importance", signature(object="familiarColl
             
             # Check that the data are not empty.
             if(is_empty(x)) return(NULL)
+            
+            # Check package requirements for plotting.
+            if(!require_package(x=..required_plotting_packages(extended=FALSE),
+                                purpose="to create permutation variable importance plots",
+                                message_type="warning")){
+              return(NULL)
+            }
 
             # ggtheme
             if(!is(ggtheme, "theme")) ggtheme <- plotting.get_theme(use_theme=ggtheme)

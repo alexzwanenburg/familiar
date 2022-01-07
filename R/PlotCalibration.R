@@ -280,6 +280,13 @@ setMethod("plot_calibration_data", signature(object="familiarCollection"),
             # Check that the calibration data are not empty.
             if(is_empty(calibration_data)) return(NULL)
             
+            # Check package requirements for plotting.
+            if(!require_package(x=..required_plotting_packages(extended=TRUE),
+                                purpose="to create calibration plots",
+                                message_type="warning")){
+              return(NULL)
+            }
+            
             ##### Check input arguments ########################################
             
             # ggtheme

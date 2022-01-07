@@ -381,6 +381,12 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
             # for feature expression.
             identifier_table[, "list_id":=.I]
             
+            # Check package requirements for plotting.
+            if(!require_package(x=..required_plotting_packages(extended=TRUE),
+                                purpose="to create sample clustering heatmaps",
+                                message_type="warning")){
+              return(NULL)
+            }
             
             ##### Check input arguments ----------------------------------------
             

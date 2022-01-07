@@ -288,6 +288,13 @@ setMethod("plot_univariate_importance", signature(object="familiarCollection"),
                                                                       verbose=verbose)
             if(is.null(column_data)) return(NULL)
             
+            # Check package requirements for plotting.
+            if(!require_package(x=..required_plotting_packages(extended=FALSE),
+                                purpose="to plot univariate variable importance",
+                                message_type="warning")){
+              return(NULL)
+            }
+            
             data.table::setnames(x@data, old=column_data$value_column, new="value")
             
             # Update p-values below the machine precision (i.e. p=0.0). 

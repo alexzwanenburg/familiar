@@ -473,6 +473,16 @@ setMethod("plot_auc_precision_recall_curve", signature(object="familiarCollectio
   # Check that the data are not empty after selecting the subset.
   if(is_empty(x)) return(NULL)
   
+  # Check package requirements for plotting.
+  if(!require_package(x=..required_plotting_packages(extended=FALSE),
+                      purpose=ifelse(curve_type=="roc",
+                                     "to create AUC-ROC plots",
+                                     "to create AUC-PR plots"),
+                      message_type="warning")){
+    return(NULL)
+  }
+  
+  
   ##### Check input arguments ------------------------------------------------
   
   # ggtheme
