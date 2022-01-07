@@ -1,3 +1,13 @@
+..required_plotting_packages <- function(extended=FALSE){
+  plot_packages <- c("ggplot2", "labeling", "scales", "rlang")
+  
+  if(extended){
+    plot_packages <- c(plot_packages, "gtable")
+  }
+  
+  return(plot_packages)
+}
+
 
 plotting.get_theme <- function(use_theme=NULL){
 
