@@ -255,21 +255,20 @@ setMethod("..train", signature(object="familiarRanger", data="dataObject"),
             # Create random forest using ranger.
             if(param$fs_forest_type == "standard"){
               # Conventional random forest (used for model building and variable
-              # importance estimations) NOTE: ranger is imported through
-              # NAMESPACE to allow access to the predict generic.
-              model <- ranger(formula,
-                              data = data@data,
-                              num.trees = 2^param$n_tree,
-                              sample.fraction = param$sample_size,
-                              mtry = max(c(1, ceiling(param$m_try * length(feature_columns)))),
-                              min.node.size = param$node_size,
-                              max.depth = param$tree_depth,
-                              alpha = param$alpha,
-                              splitrule = as.character(param$split_rule),
-                              importance = as.character(param$fs_vimp_method),
-                              probability = fit_probability,
-                              num.threads = 1,
-                              verbose = FALSE)
+              # importance estimations)
+              model <- ranger::ranger(formula,
+                                      data = data@data,
+                                      num.trees = 2^param$n_tree,
+                                      sample.fraction = param$sample_size,
+                                      mtry = max(c(1, ceiling(param$m_try * length(feature_columns)))),
+                                      min.node.size = param$node_size,
+                                      max.depth = param$tree_depth,
+                                      alpha = param$alpha,
+                                      splitrule = as.character(param$split_rule),
+                                      importance = as.character(param$fs_vimp_method),
+                                      probability = fit_probability,
+                                      num.threads = 1,
+                                      verbose = FALSE)
               
             } else if(param$fs_forest_type == "holdout") {
               # Hold-out random forest (used only for variable importance
