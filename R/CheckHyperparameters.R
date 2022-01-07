@@ -180,10 +180,10 @@ NULL
                                           names_only=names_only)
     
   } else {
-    preset_list <- learner.get_model_hyperparameters(data=data,
-                                                     learner=learner,
-                                                     outcome_type=outcome_type,
-                                                     names_only=names_only)
+    preset_list <- .get_learner_hyperparameters(data=data,
+                                                learner=learner,
+                                                outcome_type=outcome_type,
+                                                names_only=names_only)
   }
   
   return(preset_list)
