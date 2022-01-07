@@ -181,6 +181,60 @@ is_package_newer <- function(name, version){
 }
 
 
+.report_missing_package_messages <- function(){
+  
+  # Do not report if either messages or message types are missing.
+  if(!exists("missing_packages", where=familiar_global_env)) return()
+  if(!exists("missing_package_message_type", where=familiar_global_env)) return()
+  if(!exists("missing_package_messages", where=familiar_global_env)) return()
+  
+  # Get all missing packages.
+  x <- get("missing_packages",
+           envir=familiar_global_env)
+  
+  # Only unique packages.
+  x <- unique(x)
+  
+  # Retrieve package messages.
+  err_message <- get("missing_package_messages",
+                     envir=familiar_global_env)
+  
+  # Determine number of messages.
+  n_messages <- length(err_message)
+  
+  # Combine error messages.
+  if(n_messages > 1) err_message <- paste0(err_message, collapse="\n")
+  
+  # Add basic message to install packages.
+  if(n_messages > 1) err_message <- c(err_message,
+                                      "\n",
+                                      ..message_missing_package(x=x))
+  
+  # Instructions for CRAN packages.
+  err_message <- c(err_message,
+                   ..message_install_from_cran(x=x))
+  
+  # Instructions for Bioconductor packages.
+  err_message <- c(err_message,
+                   ..message_install_from_bioconductor(x=x))
+  
+  # Obtain message types.
+  message_type <- get("missing_package_message_type",
+                      envir=familiar_global_env)
+  
+  # Throw error or warning.
+  if(any(message_type == "error")){
+    stop(paste0(err_message, collapse=""))
+    
+  } else {
+    warning(paste0(err_message, collapse=""))
+  }
+  
+  # Clean up
+  rm("missing_packages", "missing_package_message_type", "missing_package_messages", envir=familiar_global_env)
+}
+
+
 
 ..message_missing_package <- function(x, purpose=NULL){
   

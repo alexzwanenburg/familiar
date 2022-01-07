@@ -327,7 +327,9 @@
 .parse_general_settings <- function(settings, config=NULL, data, ...){
   
   # Computational setup settings
-  settings$run <- do.call(.parse_setup_settings, args=append(list("config"=config$run), list(...)))
+  settings$run <- do.call(.parse_setup_settings,
+                          args=c(list("config"=config$run),
+                                 list(...)))
   
   # Remove outcome_type, development_batch_id and parallel from ... This
   # prevents an error caused by multiple matching arguments.
@@ -397,6 +399,10 @@
                               settings$mb$do_parallel |
                               settings$hpo$do_parallel %in% c("TRUE", "inner", "outer") |
                               settings$eval$do_parallel %in% c("TRUE", "inner", "outer"))
+  
+  # Report any issues with missing packages that have been written to the
+  # backend.
+  .report_missing_package_messages()
   
   return(settings)
 }
