@@ -166,7 +166,7 @@ setMethod("promote_vimp_method", signature(object="familiarVimpMethod"),
 
 
 
-vimp.get_fs_parameters <- function(data, method, outcome_type, names_only=FALSE){
+.get_vimp_hyperparameters <- function(data, method, outcome_type, names_only=FALSE){
 
   # Get the outcome type from the data object, if available
   if(!is.null(data)) outcome_type <- data@outcome_type
@@ -231,7 +231,7 @@ vimp.check_fs_parameters <- function(method, user_param, outcome_type){
   if(is.null(user_param[[method]])) { return(NULL) }
 
   # Get parameters defined by the model
-  defined_param <- vimp.get_fs_parameters(data=NULL, method=method, outcome_type=outcome_type, names_only=TRUE)
+  defined_param <- .get_vimp_hyperparameters(data=NULL, method=method, outcome_type=outcome_type, names_only=TRUE)
 
   if(is.null(defined_param)){ return(NULL) }
 

@@ -147,42 +147,50 @@ NULL
 
 
 
-.get_preset_hyperparameters <- function(data=NULL, fs_method=NULL, learner=NULL, outcome_type=NULL, names_only=FALSE){
+.get_preset_hyperparameters <- function(data=NULL,
+                                        fs_method=NULL,
+                                        learner=NULL,
+                                        detector=NULL,
+                                        outcome_type=NULL,
+                                        names_only=FALSE){
 
-  if(!is.null(fs_method)){
-    is_vimp <- TRUE
-  } else if(!is.null(learner)){
-    is_vimp <- FALSE
-  } else {
-    ..error_reached_unreachable_code("get_preset_hyperparameters_fs_method_and_learner_both_null")
+  if(is.null(fs_method) & is.null(learner) & is.null(detector)){
+    ..error_reached_unreachable_code(".get_preset_hyperparameters: one of fs_method, learner, detector should not be NULL")
   }
   
-  if(is_empty(data)){
-    names_only <- TRUE
-  }
+  if(is_empty(data)) names_only <- TRUE
   
   # Internal error checks. We should be able to obtain the outcome_type.
-  if(is.null(data) & is.null(outcome_type)){
-    ..error_reached_unreachable_code("get_preset_hyperparameters_outcome_type_missing")
-  } else if(!is(data, "dataObject") & is.null(outcome_type)){
-    ..error_reached_unreachable_code("get_preset_hyperparameters_outcome_type_missing")
+  if(is.null(detector)){
+    if(is.null(data) & is.null(outcome_type) ){
+      ..error_reached_unreachable_code(".get_preset_hyperparameters: outcome_type is missing.")
+      
+    } else if(!is(data, "dataObject") & is.null(outcome_type)){
+      ..error_reached_unreachable_code(".get_preset_hyperparameters: outcome_type is missing.")
+    }
+    
+    if(is.null(outcome_type)){
+      outcome_type <- data@outcome_type
+    }
   }
   
-  if(is.null(outcome_type)){
-    outcome_type <- data@outcome_type
-  }
   
   # Find the parameter list
-  if(is_vimp){
-    preset_list <- vimp.get_fs_parameters(data=data,
-                                          method=fs_method,
-                                          outcome_type=outcome_type, 
-                                          names_only=names_only)
+  if(!is.null(fs_method)){
+    preset_list <- .get_vimp_hyperparameters(data=data,
+                                             method=fs_method,
+                                             outcome_type=outcome_type, 
+                                             names_only=names_only)
     
-  } else {
+  } else if(!is.null(learner)){
     preset_list <- .get_learner_hyperparameters(data=data,
                                                 learner=learner,
                                                 outcome_type=outcome_type,
+                                                names_only=names_only)
+    
+  } else if(!is.null(detector)){
+    preset_list <- .get_detector_hyperparameters(data=data,
+                                                detector=detector,
                                                 names_only=names_only)
   }
   

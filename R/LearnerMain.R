@@ -101,7 +101,7 @@ setMethod("promote_learner", signature(object="familiarModel"),
 
 
 
-learner.get_model_hyperparameters <- function(data, learner, outcome_type, names_only=FALSE){
+.get_learner_hyperparameters <- function(data, learner, outcome_type, names_only=FALSE){
   
   # Get the outcome type from the data object, if available
   if(!is.null(data)) outcome_type <- data@outcome_type
@@ -167,10 +167,10 @@ learner.check_model_hyperparameters <- function(learner, user_param, outcome_typ
   if(is.null(user_param[[learner]])) return()
   
   # Get parameters defined by the model
-  defined_param <- learner.get_model_hyperparameters(data=NULL,
-                                                     learner=learner,
-                                                     outcome_type=outcome_type,
-                                                     names_only=TRUE)
+  defined_param <- .get_learner_hyperparameters(data=NULL,
+                                                learner=learner,
+                                                outcome_type=outcome_type,
+                                                names_only=TRUE)
   
   if(is.null(defined_param)){ return() }
   
