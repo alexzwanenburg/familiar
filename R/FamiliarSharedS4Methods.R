@@ -65,9 +65,17 @@
 setMethod("has_bad_training_data", signature(object="ANY", data="dataObject"),
           function(object, data, ...){
             
-            if(!(is(object, "familiarModel") | is(object, "familiarVimpMethod"))){
-              ..error_reached_unreachable_code("has_bad_training_data: object is not a familiarModel or familiarVimpMethod.")
+            if(!(is(object, "familiarModel") | is(object, "familiarVimpMethod") | is(object, "familiarNoveltyDetector"))){
+              ..error_reached_unreachable_code("has_bad_training_data: object is not a familiarModel, familiarVimpMethod or familiarNoveltyDetector.")
             }
+            
+            # One cannot train without data or on a single sample.
+            if(is_empty(data)) return(TRUE)
+            if(data.table::uniqueN(data@data, by=get_id_columns(id_depth="sample")) < 2) return(TRUE)
+            
+            # For familiarNoveltyDetector objects outcome is not important.
+            if(is(object, "familiarNoveltyDetector")) return(FALSE)
+            
             
             # Retrieve outcomeInfo object.
             if(!is.null(object@outcome_info)){
@@ -79,11 +87,6 @@ setMethod("has_bad_training_data", signature(object="ANY", data="dataObject"),
             } else {
               ..error_reached_unreachable_code("has_bad_training_data: could not find outcomeInfo object attached to familiarModel/familiarVimpMethod or dataObject.")
             }
-            
-            # One cannot train without data or on a single sample.
-            if(is_empty(data)) return(TRUE)
-            
-            if(data.table::uniqueN(data@data, by=get_id_columns(id_depth="sample")) < 2) return(TRUE)
             
             if(object@outcome_type == "survival"){
               
