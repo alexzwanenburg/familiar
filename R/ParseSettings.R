@@ -3173,6 +3173,14 @@
   
   if(length(settings$evaluation_data_elements) == 0) settings$evaluation_data_elements <- NULL
   
+  # Check whether plotting packages are available if any data elements are
+  # computed.
+  if(!is.null(settings$evaluation_data_element)){
+    require_package(x=..required_plotting_packages(extended=TRUE),
+                    purpose="to create plots",
+                    message_type="backend_warning")
+  }
+  
   ##### ensemble_method ########################################################
   # Method for ensemble predictions
   settings$ensemble_method <- .parse_arg(x_config=config$ensemble_method,
