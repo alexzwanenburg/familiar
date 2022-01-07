@@ -56,7 +56,7 @@ setMethod("get_default_hyperparameters", signature(object="familiarRegressionVim
             
             # Determine which learners are available for the outcome_type
             learner_is_available <- sapply(learner_range,
-                                           learner.check_outcome_type,
+                                           .check_learner_outcome_type,
                                            outcome_type=object@outcome_type,
                                            as_flag=TRUE)
             

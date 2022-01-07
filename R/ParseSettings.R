@@ -2125,7 +2125,7 @@
                                   type="character_list",
                                   optional=FALSE)
   
-  sapply(settings$learners, learner.check_outcome_type, outcome_type=outcome_type)
+  sapply(settings$learners, .check_learner_outcome_type, outcome_type=outcome_type)
   
   ##### hyperparameters ########################################################
   # Model hyperparameters

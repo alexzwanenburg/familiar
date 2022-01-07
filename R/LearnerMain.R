@@ -128,7 +128,7 @@ setMethod("promote_learner", signature(object="familiarModel"),
 
 
 
-learner.check_outcome_type <- function(learner, outcome_type, as_flag=FALSE){
+.check_learner_outcome_type <- function(learner, outcome_type, as_flag=FALSE){
   
   # Create familiarModel
   fam_model <- methods::new("familiarModel",
