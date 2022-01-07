@@ -2119,7 +2119,7 @@ test_hyperparameter_optimisation <- function(vimp_methods=NULL,
       
       
       if(!.check_learner_outcome_type(learner=learner, outcome_type=outcome_type, as_flag=TRUE)) next()
-      if(!vimp.check_outcome_type(method=vimp_method, outcome_type=outcome_type, as_flag=TRUE)) next()
+      if(!.check_vimp_outcome_type(method=vimp_method, outcome_type=outcome_type, as_flag=TRUE)) next()
       
       #####Full data set--------------------------------------------------------
       

@@ -2016,7 +2016,7 @@
                                     type="character_list",
                                     optional=FALSE)
   
-  sapply(settings$fs_methods, vimp.check_outcome_type, outcome_type=outcome_type)
+  sapply(settings$fs_methods, .check_vimp_outcome_type, outcome_type=outcome_type)
   
   ##### fs_method_parameter ####################################################
   # Feature selection parameters

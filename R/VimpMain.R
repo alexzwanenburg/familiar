@@ -193,7 +193,7 @@ setMethod("promote_vimp_method", signature(object="familiarVimpMethod"),
 
 
 
-vimp.check_outcome_type <- function(method, outcome_type, as_flag=FALSE){
+.check_vimp_outcome_type <- function(method, outcome_type, as_flag=FALSE){
 
   # Create familiarModel
   vimp_method_object <- methods::new("familiarVimpMethod",
