@@ -230,6 +230,10 @@ setGeneric("trim_model", function(object, ...) standardGeneric("trim_model"))
 setGeneric(".trim_model", function(object, ...) standardGeneric(".trim_model"))
 
 
+##### familiarNoveltyDetector methods #####
+setGeneric("promote_detector", function(object, ...) standardGeneric("promote_detector"))
+
+
 #####familiarVimpMethod variable importance methods #####
 setGeneric(".vimp", function(object, ...) standardGeneric(".vimp"))
 
