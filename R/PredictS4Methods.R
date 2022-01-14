@@ -155,6 +155,32 @@ setMethod("predict", signature(object="familiarEnsemble"),
           })
 
 
+#####predict (familiarNoveltyDetector)------------------------------------------
+#'@rdname predict-methods
+setMethod("predict", signature(object="familiarNoveltyDetector"),
+          function(object,
+                   newdata,
+                   type="novelty",
+                   ...){
+            
+            # Propagate to .predict
+            predictions <- .predict(object=object,
+                                    data=data,
+                                    type=type)
+            
+            if(type %in% .get_available_prediction_type_arguments()){
+              # Find non-feature columns.
+              non_feature_columns <- get_non_feature_columns(object)
+              prediction_columns <- setdiff(colnames(predictions), non_feature_columns)
+              
+              # Update the table with predictions by removing the non-feature
+              # columns.
+              predictions <- data.table::copy(predictions[, mget(prediction_columns)])
+            }
+            
+            return(predictions)
+          })
+
 
 #####predict (list)#####
 #'@rdname predict-methods
@@ -441,6 +467,33 @@ setMethod(".predict", signature(object="familiarModel"),
             
             return(prediction_table)  
           })
+
+
+
+#####.predict (familiarNoveltyDetector)-----------------------------------------
+setMethod(".predict", signature(object="familiarNoveltyDetector"),
+          function(object, data, type="novelty", is_pre_processed=FALSE, ...){
+            
+            # Prepare input data.
+            data <- process_input_data(object=object,
+                                       data=data,
+                                       is_pre_processed=is_pre_processed,
+                                       stop_at="clustering")
+            
+            # Predict novelty.
+            prediction_table <- ..predict(object=object,
+                                          data=data,
+                                          type=type)
+            
+            if(!is_empty(prediction_table)){
+              # Order output columns.
+              data.table::setcolorder(prediction_table,
+                                      neworder=colnames(get_placeholder_prediction_table(object=object, data=data, type=type)))
+            }
+            
+            return(prediction_table)
+          })
+
 
 
 #####.predict (character)#####
