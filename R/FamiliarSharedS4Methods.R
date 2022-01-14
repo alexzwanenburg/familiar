@@ -61,7 +61,7 @@
 
 
 
-#####has_bad_training_data#####
+#####has_bad_training_data######################################################
 setMethod("has_bad_training_data", signature(object="ANY", data="dataObject"),
           function(object, data, ...){
             
