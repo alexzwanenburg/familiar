@@ -237,6 +237,46 @@ setMethod("optimise_hyperparameters", signature(object="ANY", data="NULL"),
           })
 
 
+
+#####optimise_hyperparameters (familiarNoveltyDetector, dataObject)-------------
+setMethod("optimise_hyperparameters", signature(object="familiarNoveltyDetector", data="dataObject"),
+          function(object,
+                   data,
+                   user_list=NULL,
+                   ...){
+            
+            # Obtain standard parameters.
+            parameter_list <- get_default_hyperparameters(object=object,
+                                                          data=data)
+            
+            # Check that any parameters are present.
+            if(is_empty(parameter_list)) return(object)
+            
+            # Set the user_list if it is not present, or set through
+            # hyperparameter attribute.
+            if(is.null(user_list) & is.null(object@hyperparameters)){
+              user_list <- list()
+              
+            } else if(is.null(user_list) & !is.null(object@hyperparameters)){
+              user_list <- object@hyperparameters
+            }
+            
+            # Update the parameter list With user-defined variables.
+            parameter_list <- .update_hyperparameters(parameter_list=parameter_list,
+                                                      user_list=user_list)
+            
+            if(.any_randomised_hyperparameters(parameter_list=parameter_list)){
+              ..error_reached_unreachable_code("optimise_hyperparameters,familiarNoveltyDetector,dataObject: unset hyperparameters are present, but not expected.")
+            }
+            
+            # Update hyperparameters to set any fixed parameters.
+            object@hyperparameters <- lapply(parameter_list, function(list_entry) list_entry$init_config)
+            
+            return(object)
+          })
+
+
+
 #####optimise_hyperparameters (familiarVimpMethod, dataObject)------------------
 setMethod("optimise_hyperparameters", signature(object="familiarVimpMethod", data="dataObject"),
           function(object,
