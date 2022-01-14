@@ -385,7 +385,8 @@ setMethod(".predict", signature(object="familiarModel"),
               
               # Predict instance novelty.
               prediction_table <- .predict_novelty(object=object,
-                                                   data=data)
+                                                   data=data,
+                                                   type=type)
               
               # Keep only model features in data for the remaining analysis.
               data <- select_features(data=data,
@@ -512,43 +513,14 @@ setMethod(".predict", signature(object="character"),
 
 #####.predict_novelty (familiarModel)#####
 setMethod(".predict_novelty", signature(object="familiarModel"),
-          function(object, data, is_pre_processed=FALSE){
+          function(object, data, type="novelty", is_pre_processed=FALSE, ...){
             
-            # Prepare input data
-            data <- process_input_data(object=object,
-                                       data=data,
-                                       is_pre_processed=is_pre_processed,
-                                       stop_at="clustering",
-                                       keep_novelty=TRUE)
-            
-            # Get a placeholder prediction table.
-            prediction_table <- get_placeholder_prediction_table(object=object,
-                                                                 data=data,
-                                                                 type="novelty")
-            
-            # Return NA if there is no novelty detector.
-            if(is.null(object@novelty_detector)) return(prediction_table)
-            
-            # Return empty if there is no data.
-            if(is_empty(data)) return(prediction_table)
-            
-            # Find and replace ordered features.
-            ordered_features <- colnames(data@data)[sapply(data@data, is.ordered)]
-            for(current_feature in ordered_features){
-              data@data[[current_feature]] <- factor(x=data@data[[current_feature]],
-                                                     levels=levels(data@data[[current_feature]]),
-                                                     ordered=FALSE)
-            }
-            
-            # Find novelty values.
-            novelty_values <- predict(object=object@novelty_detector,
-                                      newdata=data@data)
-            
-            # Store the novelty values in the table.
-            prediction_table[, "novelty":=novelty_values]
-            
-            return(prediction_table)
+            return(.predict(object=object@novelty_detector,
+                            data=data,
+                            type=type,
+                            is_pre_processed=is_pre_processed))
           })
+          
 
 
 #####.predict_novelty (character)#####
@@ -561,6 +533,7 @@ setMethod(".predict_novelty", signature(object="character"),
             return(do.call(.predict_novelty, args=c(list("object"=object),
                                                     list(...))))
           })
+
 
 
 #####.predict_risk_stratification (familiarModel)#####
