@@ -39,3 +39,30 @@ setMethod("promote_detector", signature(object="familiarNoveltyDetector"),
   
   return(detector_hyperparameters)
 }
+
+
+
+.check_novelty_detector_available <- function(detector, as_flag=FALSE){
+  
+  # Create familiarNoveltyDetector
+  fam_detector <- methods::new("familiarNoveltyDetector",
+                               learner=detector)
+  
+  # Set up the specific novelty detector
+  fam_detector <- promote_detector(fam_detector)
+  
+  # Check validity.
+  detector_available <- is_available(fam_detector)
+  
+  if(as_flag) return(detector_available)
+  
+  # Check if the familiar model has been successfully promoted.
+  if(!is_subclass(class(fam_detector)[1], "familiarModel")){
+    stop(paste0(detector, " is not a valid learner. Please check the vignette for available learners."))
+  }
+  
+  # Check that the required package can be loaded.
+  require_package(x=fam_detector,
+                  purpose=paste0("to train a novelty detector using the ", detector, " algorithm"),
+                  message_type="backend_error")
+}
