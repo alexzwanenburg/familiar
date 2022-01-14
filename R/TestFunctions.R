@@ -870,6 +870,38 @@ test_all_learners_train_predict_vimp <- function(learners,
 
 
 
+test_all_novelty_detectors_available <- function(detectors){
+  
+  # Create placeholder flags.
+  detector_available <- logical(length(detectors))
+  names(detector_available) <- detectors
+  
+  # Iterate over learners.
+  for(detector in detectors){
+    
+    # Create a familiarModel object.
+    object <- methods::new("familiarNoveltyDetector",
+                           learner=detector)
+    
+    # Promote the learner to the right class.
+    object <- promote_detector(object=object)
+    
+    # Check if the learner is available for the outcome.
+    if(is_available(object)){
+      detector_available[detector] <- TRUE
+      break()
+    }
+  }
+  
+  # Iterate over learners
+  for(detector in detectors){
+    testthat::test_that(paste0(detector, " is available."), {
+      testthat::expect_equal(unname(detector_available[detector]), TRUE)
+    })
+  }
+}
+
+
 test_all_vimp_methods_available <- function(vimp_methods){
   
   # Create placeholder flags.
