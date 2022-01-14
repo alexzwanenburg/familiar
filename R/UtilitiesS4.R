@@ -979,3 +979,55 @@ setMethod("fam_sample", signature(x="data.table"),
             
             return(y)
           })
+
+
+#####has_optimised_hyperparameters##############################################
+setMethod("has_optimised_hyperparameters", signature(object="familiarModel"), function(object){
+            return(.has_optimised_hyperparameters(object=object))
+          })
+
+
+setMethod("has_optimised_hyperparameters", signature(object="familiarVimpMethod"), function(object){
+            return(.has_optimised_hyperparameters(object=object))
+          })
+
+#####has_optimised_hyperparameters (novelty detector)###########################
+setMethod("has_optimised_hyperparameters", signature(object="familiarNoveltyDetector"), function(object){
+            return(.has_optimised_hyperparameters(object=object))
+          })
+
+
+.has_optimised_hyperparameters <- function(object){
+  
+  # Check if the object has any default parameters.
+  default_parameters <- get_default_hyperparameters(object)
+  
+  # If there are no default hyperparameters, return TRUE.
+  if(length(default_parameters) == 0) return(TRUE)
+  
+  # Check if any hyperparameters are present in the object.
+  if(is_empty(object@hyperparameters)) return(FALSE)
+  
+  # Check if any hyperparameters need to be optimised.
+  unoptimised_hyperparameter <- sapply(object@hyperparameters, function(x){
+    # If element x is not a list itself, return false.
+    if(!is.list(x)) return(FALSE)
+    
+    # If element x is a list, but does not have a "randomise" element return
+    # false.
+    if(is.null(x$randomise)) return(FALSE)
+    
+    # Else, the hyperparameter requires optimisation.
+    return(TRUE)
+  })
+  
+  # If any hyperparameter was unoptimised return false.
+  if(any(unoptimised_hyperparameter)) return(FALSE)
+  
+  # If any hyperparameter is missing, return false.
+  if(!all(names(default_parameters) %in% names(object@hyperparameters))) return(FALSE)
+  
+  # If none of the above cases apply, the hyperparameters can be assumed to be
+  # optimised.
+  return(TRUE)
+}

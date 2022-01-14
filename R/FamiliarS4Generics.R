@@ -189,6 +189,8 @@ setGeneric("get_placeholder_prediction_table", function(object, data, ...) stand
 
 setGeneric("has_bad_training_data", function(object, data, ...) standardGeneric("has_bad_training_data"))
 
+setGeneric("has_optimised_hyperparameters", function(object, ...) standardGeneric("has_optimised_hyperparameters"))
+
 setGeneric("fam_sample", function(x, ...) standardGeneric("fam_sample"))
 
 setGeneric("get_bootstrap_sample", function(data, ...) standardGeneric("get_bootstrap_sample"))
