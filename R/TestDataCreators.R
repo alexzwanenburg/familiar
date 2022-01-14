@@ -243,6 +243,26 @@ test.create_empty_data_set <- function(outcome_type){
 
 
 
+test.create_bootstrapped_data_set <- function(outcome_type, to_data_object=TRUE){
+  
+  # Create good dataset first and work from there.
+  data <- test.create_good_data_set(outcome_type=outcome_type,
+                                    to_data_object=to_data_object)
+  
+  # Now keep only the first sample.
+  if(to_data_object){
+    data@data <- fam_sample(data@data)
+    
+  } else {
+    data <- fam_sample(data)
+  }
+  
+  return(data)
+  
+}
+
+
+
 test.create_one_sample_data_set <- function(outcome_type, to_data_object=TRUE){
   
   # Create good dataset first and work from there.
