@@ -82,7 +82,15 @@ setMethod("as_data_object", signature(data="data.table"),
             
             # Determine whether the object contains data concerning columns, and
             # outcome. Note that user-provided names always take precedence.
-            has_model_object <- is(object, "familiarModel") | is(object, "familiarEnsemble")
+            has_model_object <- is(object, "familiarModel") | is(object, "familiarEnsemble") | is(object, "familiarNoveltyDetector")
+            
+            # Check whether a model potentially has outcome information.
+            if(has_model_object){
+              has_outcome_info_slot <- methods::.hasSlot(object, "outcome_info")
+              
+            } else {
+              has_outcome_info_slot <- FALSE
+            }
             
             if(check_stringency != "strict"){
               if(!has_model_object) stop("Dummy columns cannot be set without a model or ensemble object.")
@@ -145,7 +153,7 @@ setMethod("as_data_object", signature(data="data.table"),
             # Attempt to identify the name of the outcome.
             if(is.waive(outcome_name)){
               
-              if(has_model_object){
+              if(has_model_object & has_outcome_info_slot){
                 if(is(object@outcome_info, "outcomeInfo")){
                   
                   # Check that the outcome name is not empty.
@@ -157,7 +165,7 @@ setMethod("as_data_object", signature(data="data.table"),
             # Attempt to identify the outcome columns.
             if(is.waive(outcome_column)){
               
-              if(has_model_object){
+              if(has_model_object & has_outcome_info_slot){
                 if(!is_empty(object@data_column_info)){
                   # Find the model columns.
                   outcome_column <- object@data_column_info[type == "outcome_column"]$external
@@ -175,7 +183,7 @@ setMethod("as_data_object", signature(data="data.table"),
             # Attempt to identify the event indicator.
             if(is.waive(event_indicator)){
               
-              if(has_model_object){
+              if(has_model_object & has_outcome_info_slot){
                 if(is(object@outcome_info, "outcomeInfo")){
                   if(length(object@outcome_info@event) > 0){
                     if(!is.na(object@outcome_info@event)) event_indicator <- object@outcome_info@event
@@ -187,7 +195,7 @@ setMethod("as_data_object", signature(data="data.table"),
             # Attempt to identify the censoring indicator.
             if(is.waive(censoring_indicator)){
               
-              if(has_model_object){
+              if(has_model_object & has_outcome_info_slot){
                 if(is(object@outcome_info, "outcomeInfo")){
                   if(length(object@outcome_info@censored) > 0){
                     if(!is.na(object@outcome_info@censored)) censoring_indicator <- object@outcome_info@censored
@@ -199,7 +207,7 @@ setMethod("as_data_object", signature(data="data.table"),
             # Attempt to identify the competing risk indicator.
             if(is.waive(competing_risk_indicator)){
               
-              if(has_model_object){
+              if(has_model_object & has_outcome_info_slot){
                 if(is(object@outcome_info, "outcomeInfo")){
                   if(length(object@outcome_info@competing_risk) > 0){
                     if(!is.na(object@outcome_info@competing_risk)) competing_risk_indicator <- object@outcome_info@competing_risk
@@ -211,7 +219,7 @@ setMethod("as_data_object", signature(data="data.table"),
             # Attempt to identify class levels of the outcome.
             if(is.waive(class_levels)){
               
-              if(has_model_object){
+              if(has_model_object & has_outcome_info_slot){
                 if(is(object@outcome_info, "outcomeInfo")){
                   if(length(object@outcome_info@levels) > 0) class_levels <- object@outcome_info@levels
                 }
@@ -267,7 +275,7 @@ setMethod("as_data_object", signature(data="data.table"),
             
             # Add outcome information, preferentially from the familiarModel or
             # familiarEnsemble, as it is more complete.
-            if(has_model_object){
+            if(has_model_object & has_outcome_info_slot){
               outcome_info <- object@outcome_info
               
             } else {
@@ -495,8 +503,9 @@ setMethod("load_delayed_data", signature(data="dataObject", object="ANY"),
           function(data, object, stop_at, keep_novelty=FALSE){
             # Loads data from internal memory
 
-            if(!(is(object, "familiarModel") | is(object, "familiarVimpMethod"))){
-              ..error_reached_unreachable_code("load_delayed_data: object is expected to be a familiarModel or familiarVimpMethod.")
+            if(!(is(object, "familiarModel") | is(object, "familiarVimpMethod") | is(object, "familiarNoveltyDetector"))){
+              ..error_reached_unreachable_code(paste0("load_delayed_data: object is expected to be a familiarModel, ",
+                                                      "familiarVimpMethod or familiarNoveltyDetector."))
             }
             
             # Check if loading was actually delayed
