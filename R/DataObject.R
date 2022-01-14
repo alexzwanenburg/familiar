@@ -831,6 +831,14 @@ setMethod("process_input_data", signature(object="familiarVimpMethod", data="ANY
                                                                                                                        stop_at=stop_at,
                                                                                                                        keep_novelty=keep_novelty))
 
+#####process_input_data (novelty detector)#####
+setMethod("process_input_data", signature(object="familiarNoveltyDetector", data="ANY"),
+          function(object, data, is_pre_processed=FALSE, stop_at="clustering", ...) .process_input_data(object=object,
+                                                                                                        data=data,
+                                                                                                        is_pre_processed=is_pre_processed,
+                                                                                                        stop_at=stop_at,
+                                                                                                        keep_novelty=FALSE))
+
 #####process_input_data (model)#####
 setMethod("process_input_data", signature(object="familiarModel", data="ANY"),
           function(object, data, is_pre_processed=FALSE, stop_at="clustering", keep_novelty=FALSE) .process_input_data(object=object,
@@ -874,6 +882,7 @@ setMethod("process_input_data", signature(object="familiarEnsemble", data="ANY")
   # Return data
   return(data)
 }
+
 
 
 #####select_data_from_samples#####
