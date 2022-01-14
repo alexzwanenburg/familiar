@@ -157,6 +157,7 @@ Collate:
     'Normalisation.R'
     'NoveltyDetectorS4IsolationTree.R'
     'NoveltyDetectorMain.R'
+    'NoveltyDetectorS4NoneNoveltyDetector.R'
     'OutcomeInfo.R'
     'PairwiseSimilarity.R'
     'ParallelFunctions.R'

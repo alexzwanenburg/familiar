@@ -11,9 +11,12 @@ setMethod("promote_detector", signature(object="familiarNoveltyDetector"),
             if(learner %in% .get_available_isolation_forest_detectors()){
               # Isolation forest
               object <- methods::new("familiarIsolationForest", object)
+              
+            } else if(learner %in% .get_available_none_detectors()){
+              object <- methods::new("familiarNoneNoveltyDetector", object)
             }
             
-            # Returned object can be a standard familiarIsolationForest.
+            # Returned object can be a standard familiarNoveltyDetector.
             return(object)
           })
 
