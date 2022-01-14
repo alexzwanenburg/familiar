@@ -770,8 +770,8 @@ setMethod("get_subsample", signature(data="dataObject"),
               
               # Bootstrap the data element.
               data@data <- get_subsample(data=data@data,
-                                          size=size,
-                                          outcome_type=outcome_type)
+                                         size=size,
+                                         outcome_type=outcome_type)
               
             } else if(length(data@sample_set_on_load) > 0){
               
