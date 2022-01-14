@@ -675,12 +675,17 @@ setClass("familiarNoveltyDetector",
            learner = "character",
            # Model container
            model = "ANY",
+           # Info related to the columns in the dataset.
+           data_column_info = "ANY",
            # Parameters needed to convert raw novelty scores into p-values.
            conversion_parameters = "ANY",
            # Hyperparameters used to create the novelty detector.
            hyperparameters = "ANY",
            # Data required for feature pre-processing
            feature_info = "ANY",
+           # Required features for complete reconstruction, including
+           # imputation.
+           required_features = "ANY",
            # Features that are required for novelty detection.
            model_features = "ANY",
            # Flags trimming of the novelty detector.
@@ -696,9 +701,11 @@ setClass("familiarNoveltyDetector",
            name = character(0),
            learner = NA_character_,
            model = NULL,
+           data_column_info = NULL,
            conversion_parameters = NULL,
            hyperparameters = NULL,
            feature_info = NULL,
+           required_features = NULL,
            model_features = NULL,
            is_trimmed = FALSE,
            familiar_version = NULL,
