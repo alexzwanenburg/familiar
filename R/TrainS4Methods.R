@@ -182,11 +182,10 @@ setMethod("test_train", signature(data="dataObject"),
                              get_additional_info=TRUE,
                              trim_model=trim_model)
             
-            # Add novelty detector
-            if(create_novelty_detector){
-              object <- .train_novelty_detector(object=object,
-                                                data=data)
-            }
+            # Train novelty detector.
+            object <- .train_novelty_detector(object=object,
+                                              data=data,
+                                              detector=ifelse(create_novelty_detector, "isolation_forest", "none"))
             
             # Generate a placeholder name for the familiarModel object
             object <- set_object_name(x=object)

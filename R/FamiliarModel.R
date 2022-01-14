@@ -5,7 +5,12 @@ NULL
 
 #####.train#####
 setMethod(".train", signature(object="familiarModel", data="dataObject"),
-          function(object, data, get_additional_info=FALSE, is_pre_processed=FALSE, trim_model=TRUE) {
+          function(object, 
+                   data,
+                   get_additional_info=FALSE,
+                   is_pre_processed=FALSE,
+                   trim_model=TRUE,
+                   ...) {
             # Train method for model training
             
             # Check if the class of object is a subclass of familiarModel.
@@ -32,10 +37,7 @@ setMethod(".train", signature(object="familiarModel", data="dataObject"),
             if(!has_feature_data(x=data)) can_train <- FALSE
             
             # Check if the hyperparameters are plausible.
-            required_hyperparameters <- names(get_default_hyperparameters(object))
-            if(length(required_hyperparameters) > 0){
-              if(setequal(object@hyperparameters, required_hyperparameters)) can_train <- FALSE
-            }
+            if(!has_optimised_hyperparameters(object=object)) can_train <- FALSE
             
             # Train a new model based on data.
             if(can_train) object <- ..train(object=object, data=data)
@@ -85,71 +87,39 @@ setMethod(".train", signature(object="familiarModel", data="dataObject"),
 
 #####.train_novelty_detector#####
 setMethod(".train_novelty_detector", signature(object="familiarModel", data="dataObject"),
-          function(object, data, is_pre_processed=FALSE) {
+          function(object,
+                   data,
+                   detector,
+                   get_additional_info=FALSE,
+                   is_pre_processed=FALSE,
+                   trim_model=TRUE,
+                   ...) {
             # Train method for model training
             
             # Check if the class of object is a subclass of familiarModel.
             if(!is_subclass(class(object)[1], "familiarModel")) object <- promote_learner(object)
             
-            # Process data, if required.
-            data <- process_input_data(object=object,
-                                       data=data,
-                                       is_pre_processed = is_pre_processed,
-                                       stop_at="clustering",
-                                       keep_novelty=TRUE)
+            # Create detector object.
+            fam_detector <- methods::new("familiarNoveltyDetector",
+                                         learner=detector,
+                                         feature_info=object@feature_info,
+                                         required_features=object@required_features,
+                                         model_features=object@novelty_features)
             
-            # Check if there are any data entries. The familiar model cannot be
-            # trained otherwise
-            if(is_empty(x=data)) return(object)
-            
-            # Check the number of features in data; if it has no features, the
-            # familiar model can not be trained
-            if(!has_feature_data(x=data)) return(object)
-            
-            # Replace any ordered variables by factors. We do this because
-            # ordered features can not be handled using isotree.
-            ordered_features <- colnames(data@data)[sapply(data@data, is.ordered)]
-            for(current_feature in ordered_features){
-              data@data[[current_feature]] <- factor(x=data@data[[current_feature]],
-                                                     levels=levels(data@data[[current_feature]]),
-                                                     ordered=FALSE)
+            # Optimise hyperparameters if they were not previously set.
+            if(!has_optimised_hyperparameters(object=object)){
+              browser()
+              fam_detector <- optimise_hyperparameters(object=fam_detector,
+                                                       data=data,
+                                                       ...)
             }
             
-            # Vary the number of samples to limit memory footprint for large
-            # sample sizes.
-            sample_size <- max(c(128,
-                                 2^ceiling(log2(sqrt(nrow(data@data))))))
-            if(nrow(data@data) < sample_size) sample_size <- nrow(data@data)
-            
-            # Vary the number of trees to limit memory footprint for large
-            # sample sizes.
-            ntrees <- max(c(64,
-                            ceiling((sqrt(nrow(data@data))))))
-            
-            
-            # Create an isolation forest. Note that in addition to specifying
-            # the number of trees and the number of samples assessed for each
-            # tree, missing_action is set to "fail" -- this decreases model
-            # footprint and is not necessary as familiar has its own imputation
-            # routines.
-            if(utils::packageVersion("isotree")>="0.3.9"){
-              detector <- isotree::isolation.forest(data=data@data[, mget(get_feature_columns(data))],
-                                                    sample_size=sample_size,
-                                                    ntrees=ntrees,
-                                                    nthreads=1L,
-                                                    missing_action="fail")
-              
-            } else {
-              detector <- isotree::isolation.forest(df=data@data[, mget(get_feature_columns(data))],
-                                                    sample_size=sample_size,
-                                                    ntrees=ntrees,
-                                                    nthreads=1L,
-                                                    missing_action="fail")
-            }
-            
+            # Train the novelty detector.
+            fam_detector <- .train(object=fam_detector,
+                                   data=data)
             
             # Add the detector to the familiarModel object.
-            object@novelty_detector <- detector
+            object@novelty_detector <- fam_detector
             
             return(object)
           })
