@@ -704,6 +704,16 @@ setMethod("preprocess_data", signature(data="dataObject", object="familiarModel"
                                                                                              stop_at=stop_at,
                                                                                              keep_novelty=keep_novelty))
 
+#####preprocess_data (novelty detector)#########################################
+# Note that keep_novelty is always false to prevent reading novelty_features
+# slot. Novelty features are stored in the model_features slot of
+# familiarNoveltyDetector objects.
+setMethod("preprocess_data", signature(data="dataObject", object="familiarNoveltyDetector"),
+          function(data, object, stop_at="clustering", ...) .pre_process_data(data=data,
+                                                                              object=object,
+                                                                              stop_at=stop_at,
+                                                                              keep_novelty=FALSE))
+
 
 #####preprocess_data (ensemble)#####
 setMethod("preprocess_data", signature(data="dataObject", object="familiarEnsemble"),
