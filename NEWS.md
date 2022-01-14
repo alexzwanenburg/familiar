@@ -36,6 +36,10 @@
 
 -   Class levels for categorical outcomes, if not explicitly specified using the `class_levels` parameter, are now sorted before being set based on the data. Previously class levels would be set based on order of appearance.
 
+-   Novelty detector algorithms are now implemented as S4 classes. This was primarily done to make it easier to add additional methods.
+
+-   `novelty_detector` and `detector_parameters` configuration parameters were added.
+
 -   Isolation forests are now grown with a decreased memory footprint.
 
 -   Presence of instances with a survival time of 0 or lower will produce a warning. Though familiar itself will handle such instances just fine, other packages will produce errors. Since familiar captures such errors and handles them internally, a warning is provided to indicate potential issues.
