@@ -4,6 +4,7 @@
 \alias{predict}
 \alias{predict,familiarModel-method}
 \alias{predict,familiarEnsemble-method}
+\alias{predict,familiarNoveltyDetector-method}
 \alias{predict,list-method}
 \alias{predict,character-method}
 \title{Model predictions for familiar models and model ensembles}
@@ -35,6 +36,8 @@ predict(object, ...)
   percentiles = NULL,
   ...
 )
+
+\S4method{predict}{familiarNoveltyDetector}(object, newdata, type = "novelty", ...)
 
 \S4method{predict}{list}(
   object,

@@ -149,7 +149,9 @@ build_model <- function(run, hpo_list){
   
   # Add novelty detector
   fam_model <- .train_novelty_detector(object=fam_model,
-                                       data=data)
+                                       data=data,
+                                       detector=settings$mb$novelty_detector,
+                                       user_list=settings$mb$novelty_detector[[settings$mb$novelty_detector]])
   
   # Add model name
   fam_model <- set_object_name(fam_model)

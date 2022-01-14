@@ -491,6 +491,11 @@ optimisation is used to determine optimal hyperparameters.
 Hyperparameters provided by the user are never optimised. However, if more
 than one value is provided for a single hyperparameter, optimisation will
 be conducted using these values.}
+    \item{\code{novelty_detector}}{(\emph{optional}) Specify the algorithm used for training
+a novelty detector. This detector can be used to identify
+out-of-distribution data prospectively.}
+    \item{\code{detector_parameters}}{(\emph{optional}) List lists containing hyperparameters
+for novelty detectors. Currently not used.}
     \item{\code{parallel_model_development}}{(\emph{optional}) Enable parallel processing for
 the model development workflow. Defaults to \code{TRUE}. When set to \code{FALSE},
 this will disable the use of parallel processing while developing models,

@@ -11,6 +11,8 @@
   outcome_type,
   learner = waiver(),
   hyperparameter = waiver(),
+  novelty_detector = waiver(),
+  detector_parameters = waiver(),
   parallel_model_development = waiver(),
   ...
 )
@@ -42,6 +44,13 @@ optimisation is used to determine optimal hyperparameters.
 Hyperparameters provided by the user are never optimised. However, if more
 than one value is provided for a single hyperparameter, optimisation will
 be conducted using these values.}
+
+\item{novelty_detector}{(\emph{optional}) Specify the algorithm used for training
+a novelty detector. This detector can be used to identify
+out-of-distribution data prospectively.}
+
+\item{detector_parameters}{(\emph{optional}) List lists containing hyperparameters
+for novelty detectors. Currently not used.}
 
 \item{parallel_model_development}{(\emph{optional}) Enable parallel processing for
 the model development workflow. Defaults to \code{TRUE}. When set to \code{FALSE},

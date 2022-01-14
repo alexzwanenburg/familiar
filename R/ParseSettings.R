@@ -2098,6 +2098,11 @@
 #'   Hyperparameters provided by the user are never optimised. However, if more
 #'   than one value is provided for a single hyperparameter, optimisation will
 #'   be conducted using these values.
+#' @param novelty_detector (*optional*) Specify the algorithm used for training
+#'   a novelty detector. This detector can be used to identify
+#'   out-of-distribution data prospectively.
+#' @param detector_parameters (*optional*) List lists containing hyperparameters
+#'   for novelty detectors. Currently not used.
 #' @param parallel_model_development (*optional*) Enable parallel processing for
 #'   the model development workflow. Defaults to `TRUE`. When set to `FALSE`,
 #'   this will disable the use of parallel processing while developing models,
@@ -2114,6 +2119,8 @@
                                               outcome_type,
                                               learner=waiver(),
                                               hyperparameter=waiver(),
+                                              novelty_detector=waiver(),
+                                              detector_parameters=waiver(),
                                               parallel_model_development=waiver(),
                                               ...){
   settings <- list()
@@ -2140,6 +2147,28 @@
                                                  parameter_list=settings$hyper_param,
                                                  outcome_type=outcome_type,
                                                  learner=settings$learners)
+  
+  ##### novelty_detector #######################################################
+  settings$novelty_detector <- .parse_arg(x_config=config$novelty_detector,
+                                          x_var=novelty_detector,
+                                          var_name="novelty_detector",
+                                          type="character",
+                                          optional=TRUE,
+                                          default="isolation_forest")
+  
+  .check_novelty_detector_available(detector=settings$novelty_detector)
+  
+  ##### detector_parameters ####################################################
+  settings$detector_parameters <- .parse_arg(x_config=config$detector_parameters,
+                                             x_var=detector_parameters,
+                                             var_name="detector_parameters",
+                                             type="list",
+                                             optional=TRUE,
+                                             default=list())
+  
+  settings$detector_parameters <- .parse_hyperparameters(data=data,
+                                                         parameter_list=settings$detector_parameters,
+                                                         detector=settings$novelty_detector)
   
   ##### parallel_model_development #############################################
   # Parallelisation switch for model building

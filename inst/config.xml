@@ -128,6 +128,10 @@
       <learner>required</learner>
       <!-- Hyperparameter list for user-provided hyperparameters (optional; not recommended as user-provided hyperparameters are usually sub-optimal or biased) -->
       <hyperparameter></hyperparameter>
+      <!-- Algorithm used for novelty, or out-of-distribution, detection (optional; isolation_forest by default, can be none as well) -->
+      <novelty_detector></novelty_detector>
+      <!-- Detector parameters for novelty detector algorithms (optional) -->
+      <detector_parameters></detector_parameters>
       <!-- Parallel processing for model building (optional, default: true) -->
       <parallel_model_development></parallel_model_development>
     </model_development>
