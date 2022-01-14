@@ -2658,6 +2658,7 @@ test_plots <- function(plot_function,
     full_data <- test.create_good_data_set(outcome_type)
     identical_sample_data <- test.create_all_identical_data_set(outcome_type)
     full_one_sample_data <- test.create_one_sample_data_set(outcome_type)
+    bootstrapped_data <- test.create_bootstrapped_data_set(outcome_type)
     one_feature_data <- test.create_one_feature_data_set(outcome_type)
     one_feature_one_sample_data <- test.create_one_feature_one_sample_data_set(outcome_type)
     one_feature_invariant_data <- test.create_one_feature_invariant_data_set(outcome_type)
@@ -2863,6 +2864,38 @@ test_plots <- function(plot_function,
                       object <- mapply(set_object_name, object, c("one_sample"))
                       
                       collection <- suppressWarnings(as_familiar_collection(object, familiar_data_names=c("one_sample")))
+                      
+                      plot_list <- do.call(plot_function, args=c(list("object"=collection), plot_args))
+                      which_present <- .test_which_plot_present(plot_list)
+                      
+                      if(outcome_type %in% outcome_type_available & !.except_one_sample){
+                        testthat::expect_equal(all(which_present), TRUE) 
+                        
+                      } else if(!outcome_type %in% outcome_type_available){
+                        testthat::expect_equal(all(!which_present), TRUE)
+                        
+                      } else {
+                        testthat::expect_equal(any(!which_present), TRUE)
+                      }
+                    })
+    
+    
+    # Create data object with bootstrapped data.
+    data_bootstrapped_full_1 <- as_familiar_data(object=model_full_1,
+                                                 data=bootstrapped_data,
+                                                 data_element=data_element,
+                                                 cl=cl,
+                                                 ...)
+    
+    test_fun(paste0("2E. Plots for ", outcome_type, " outcomes ",
+                    ifelse(outcome_type %in% outcome_type_available & !.except_one_sample, "can", "cannot"),
+                    " be created for a prospective, bootstrapped, data set."), {
+                      
+                      object <- list(data_bootstrapped_full_1)
+                      object <- mapply(set_object_name, object, c("bootstrapped"))
+                      
+                      collection <- suppressWarnings(as_familiar_collection(object,
+                                                                            familiar_data_names=c("bootstrapped")))
                       
                       plot_list <- do.call(plot_function, args=c(list("object"=collection), plot_args))
                       which_present <- .test_which_plot_present(plot_list)
@@ -3409,6 +3442,7 @@ test_export <- function(export_function,
     full_data <- test.create_good_data_set(outcome_type)
     identical_sample_data <- test.create_all_identical_data_set(outcome_type)
     full_one_sample_data <- test.create_one_sample_data_set(outcome_type)
+    bootstrapped_data <- test.create_bootstrapped_data_set(outcome_type)
     one_feature_data <- test.create_one_feature_data_set(outcome_type)
     one_feature_one_sample_data <- test.create_one_feature_one_sample_data_set(outcome_type)
     one_feature_invariant_data <- test.create_one_feature_invariant_data_set(outcome_type)
@@ -3664,6 +3698,37 @@ test_export <- function(export_function,
                       }
                     })
     
+    
+    # Create data object with bootstrapped data.
+    data_bootstrapped_full_1 <- as_familiar_data(object=model_full_1,
+                                                 data=bootstrapped_data,
+                                                 data_element=data_element,
+                                                 cl=cl,
+                                                 ...)
+    
+    test_fun(paste0("2E. Plots for ", outcome_type, " outcomes ",
+                    ifelse(outcome_type %in% outcome_type_available & !.except_one_sample, "can", "cannot"),
+                    " be created for a prospective, bootstrapped, data set."), {
+                      
+                      object <- list(data_bootstrapped_full_1)
+                      object <- mapply(set_object_name, object, c("bootstrapped"))
+                      
+                      collection <- suppressWarnings(as_familiar_collection(object,
+                                                                            familiar_data_names=c("bootstrapped")))
+                      
+                      data_elements <- do.call(export_function, args=c(list("object"=collection), export_args))
+                      which_present <- .test_which_data_element_present(data_elements, outcome_type=outcome_type)
+                      
+                      if(outcome_type %in% outcome_type_available & !.except_one_sample){
+                        testthat::expect_equal(all(which_present), TRUE) 
+                        
+                      } else if(!outcome_type %in% outcome_type_available){
+                        testthat::expect_equal(all(!which_present), TRUE)
+                        
+                      } else {
+                        testthat::expect_equal(any(!which_present), TRUE)
+                      }
+                    })
     
     
     # Ensemble from multiple datasets.
