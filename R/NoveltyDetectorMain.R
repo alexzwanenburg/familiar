@@ -60,7 +60,7 @@ setMethod("promote_detector", signature(object="familiarNoveltyDetector"),
   if(as_flag) return(detector_available)
   
   # Check if the familiar model has been successfully promoted.
-  if(!is_subclass(class(fam_detector)[1], "familiarModel")){
+  if(!is_subclass(class(fam_detector)[1], "familiarNoveltyDetector")){
     stop(paste0(detector, " is not a valid learner. Please check the vignette for available learners."))
   }
   
