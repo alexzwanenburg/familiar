@@ -227,6 +227,9 @@ setMethod("get_outcome_columns", signature(x="familiarEnsemble"), function(x){
     
   } else if(outcome_type %in% c("binomial", "multinomial", "continuous", "count")){
     outcome_cols <- c("outcome")
+  
+  } else if(outcome_type == "unsupervised"){
+    outcome_cols <- NULL
     
   } else if(outcome_type == "competing_risk"){
     ..error_outcome_type_not_implemented(outcome_type)
@@ -255,6 +258,10 @@ setMethod("get_non_feature_columns", signature(x="dataObject"), function(x, id_d
 
 setMethod("get_non_feature_columns", signature(x="familiarVimpMethod"), function(x, id_depth="repetition"){
   return(.get_non_feature_columns(outcome_type=x@outcome_type, id_depth=id_depth))
+})
+
+setMethod("get_non_feature_columns", signature(x="familiarNoveltyDetector"), function(x, id_depth="repetition"){
+  return(.get_non_feature_columns(outcome_type="unsupervised", id_depth=id_depth))
 })
 
 setMethod("get_non_feature_columns", signature(x="familiarModel"), function(x, id_depth="repetition"){
