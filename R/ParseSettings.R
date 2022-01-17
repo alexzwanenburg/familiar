@@ -2168,7 +2168,8 @@
   
   settings$detector_parameters <- .parse_hyperparameters(data=data,
                                                          parameter_list=settings$detector_parameters,
-                                                         detector=settings$novelty_detector)
+                                                         detector=settings$novelty_detector,
+                                                         outcome_type="unsupervised")
   
   ##### parallel_model_development #############################################
   # Parallelisation switch for model building
