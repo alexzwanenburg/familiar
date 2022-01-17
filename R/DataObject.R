@@ -833,11 +833,19 @@ setMethod("process_input_data", signature(object="familiarVimpMethod", data="ANY
 
 #####process_input_data (novelty detector)#####
 setMethod("process_input_data", signature(object="familiarNoveltyDetector", data="ANY"),
-          function(object, data, is_pre_processed=FALSE, stop_at="clustering", ...) .process_input_data(object=object,
-                                                                                                        data=data,
-                                                                                                        is_pre_processed=is_pre_processed,
-                                                                                                        stop_at=stop_at,
-                                                                                                        keep_novelty=FALSE))
+          function(object, data, is_pre_processed=FALSE, stop_at="clustering", ...){
+            
+            # Ensure that the outcome_type of data is changed to "unsupervised".
+            # We don't need any outcome columns.
+            data@outcome_type <- "unsupervised"
+            
+            # Process data.
+            data <- .process_input_data(object=object,
+                                        data=data,
+                                        is_pre_processed=is_pre_processed,
+                                        stop_at=stop_at,
+                                        keep_novelty=FALSE)
+          })
 
 #####process_input_data (model)#####
 setMethod("process_input_data", signature(object="familiarModel", data="ANY"),
