@@ -692,6 +692,8 @@ setClass("familiarNoveltyDetector",
            run_table = "ANY",
            # Flags trimming of the novelty detector.
            is_trimmed = "logical",
+           # Project identifier for consistency tracking
+           project_id = "ANY",
            # Package version for backward compatibility.
            familiar_version = "ANY",
            # Name of the package required to train the learner.
@@ -711,6 +713,7 @@ setClass("familiarNoveltyDetector",
            model_features = NULL,
            run_table = NULL,
            is_trimmed = FALSE,
+           project_id = NULL,
            familiar_version = NULL,
            package = NULL,
            package_version = NULL
