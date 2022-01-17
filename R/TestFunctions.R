@@ -889,7 +889,6 @@ test_all_novelty_detectors_available <- function(detectors){
     # Check if the learner is available for the outcome.
     if(is_available(object)){
       detector_available[detector] <- TRUE
-      break()
     }
   }
   
