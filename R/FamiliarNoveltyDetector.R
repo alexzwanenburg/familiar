@@ -249,6 +249,14 @@ setMethod(".trim_model", signature(object="familiarNoveltyDetector"),
           })
 
 
+#####add_package_version (familiarModel)#####
+setMethod("add_package_version", signature(object="familiarNoveltyDetector"),
+          function(object){
+            
+            # Set version of familiar
+            return(.add_package_version(object=object))
+          })
+
 
 #####add_data_column_info (familiarNoveltyDetector)-----------------------------
 setMethod("add_data_column_info", signature(object="familiarNoveltyDetector"),
