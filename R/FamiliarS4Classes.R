@@ -688,6 +688,8 @@ setClass("familiarNoveltyDetector",
            required_features = "ANY",
            # Features that are required for novelty detection.
            model_features = "ANY",
+           # Run table for the current model
+           run_table = "ANY",
            # Flags trimming of the novelty detector.
            is_trimmed = "logical",
            # Package version for backward compatibility.
@@ -707,6 +709,7 @@ setClass("familiarNoveltyDetector",
            feature_info = NULL,
            required_features = NULL,
            model_features = NULL,
+           run_table = NULL,
            is_trimmed = FALSE,
            familiar_version = NULL,
            package = NULL,

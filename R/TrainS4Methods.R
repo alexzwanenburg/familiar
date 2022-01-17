@@ -354,6 +354,7 @@ setMethod("test_train_novelty_detector", signature(data="dataObject"),
                                    required_features =  required_features,
                                    model_features = model_features,
                                    feature_info = feature_info_list,
+                                   run_table=get_placeholder_run_table(),
                                    project_id = 0)
             
             # Add package version/
