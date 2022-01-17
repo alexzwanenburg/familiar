@@ -105,7 +105,8 @@ setMethod(".train_novelty_detector", signature(object="familiarModel", data="dat
                                          feature_info=object@feature_info,
                                          required_features=object@required_features,
                                          model_features=object@novelty_features,
-                                         run_table=object@run_table)
+                                         run_table=object@run_table,
+                                         project_id=object@project_id)
             
             # Optimise hyperparameters if they were not previously set.
             if(!has_optimised_hyperparameters(object=object)){
