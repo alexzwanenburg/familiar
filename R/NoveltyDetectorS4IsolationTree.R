@@ -229,19 +229,12 @@ setMethod("..predict", signature(object="familiarIsolationForest", data="dataObj
 ##### .trim_model---------------------------------------------------------------
 setMethod(".trim_model", signature(object="familiarIsolationForest"),
           function(object, ...){
-            browser()
             
-            # # Update model by removing the call.
-            # object@model$call <- call("trimmed")
-            # 
-            # # Add show.
-            # object <- .capture_show(object)
-            # 
-            # # Remove the predictions.
-            # object@model$predictions <- NULL
-            # 
-            # # Set is_trimmed to TRUE.
-            # object@is_trimmed <- TRUE
+            # Add show.
+            object <- .capture_show(object)
+            
+            # Set is_trimmed to TRUE.
+            object@is_trimmed <- TRUE
             
             return(object)
           })
