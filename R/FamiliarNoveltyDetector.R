@@ -126,7 +126,8 @@ setMethod("require_package", signature(x="familiarNoveltyDetector"),
               if(purpose %in% c("train", "predict")){
                 purpose <- switch(purpose,
                                   "train"="to train a novelty detector",
-                                  "predict"="to assess novelty")
+                                  "predict"="to assess novelty",
+                                  "show"="to capture output")
               }
             }
             
