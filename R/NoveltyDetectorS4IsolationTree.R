@@ -141,7 +141,6 @@ setMethod("get_default_hyperparameters", signature(object="familiarIsolationFore
 #####..train####
 setMethod("..train", signature(object="familiarIsolationForest", data="dataObject"),
           function(object, data, ...){
-            browser()
 
             # Check if the training data is ok.
             if(has_bad_training_data(object=object, data=data)) return(callNextMethod())
@@ -173,7 +172,7 @@ setMethod("..train", signature(object="familiarIsolationForest", data="dataObjec
                                                   sample_size=ceiling(param$sample_size * nrow(data@data)),
                                                   ntrees=ceiling(2^(param$n_tree)),
                                                   ndim=param$n_dim,
-                                                  ntry=max(c(1, ceiling(param$m_try * length(get_n_features(x=data))))),
+                                                  ntry=max(c(1, ceiling(param$m_try * get_n_features(x=data)))),
                                                   max_depth=param$tree_depth,
                                                   nthreads=1L,
                                                   missing_action="fail")
