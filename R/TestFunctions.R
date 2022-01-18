@@ -978,7 +978,7 @@ test_all_novelty_detectors <- function(detectors,
         prediction_table <- suppressWarnings(.predict(model, data=full_data))
         
         # Test that the predictions were successfully made.
-        testthat::expect_equal(any_predictions_valid(prediction_table, outcome_type),
+        testthat::expect_equal(any_predictions_valid(prediction_table, type="novelty"),
                                ifelse(detector %in% c(except_train, except_predict), FALSE, TRUE))
         
         # Expect that the trimmed novelty detector produces the same predictions.
@@ -996,7 +996,7 @@ test_all_novelty_detectors <- function(detectors,
         prediction_table <- suppressWarnings(.predict(model, data=full_one_sample_data))
         
         # Test that the predictions were successfully made.
-        testthat::expect_equal(any_predictions_valid(prediction_table, outcome_type),
+        testthat::expect_equal(any_predictions_valid(prediction_table, type="novelty"),
                                ifelse(detector %in% c(except_train, except_predict), FALSE, TRUE))
 
         # Expect that the trimmed novelty detector produces the same predictions.
@@ -1014,7 +1014,7 @@ test_all_novelty_detectors <- function(detectors,
         prediction_table <- suppressWarnings(.predict(model, data=empty_data))
         
         # Test that the predictions were successfully made.
-        testthat::expect_equal(any_predictions_valid(prediction_table, outcome_type), FALSE)
+        testthat::expect_equal(any_predictions_valid(prediction_table, type="novelty"), FALSE)
       })
       
       
@@ -1044,7 +1044,7 @@ test_all_novelty_detectors <- function(detectors,
                                                       data=one_feature_data))
         
         # Test that the predictions were successfully made.
-        testthat::expect_equal(any_predictions_valid(prediction_table, outcome_type),
+        testthat::expect_equal(any_predictions_valid(prediction_table, type="novelty"),
                                ifelse(detector %in% c(except_train, except_predict), FALSE, TRUE))
         
         # Expect that the trimmed novelty detector produces the same predictions.
@@ -1063,7 +1063,7 @@ test_all_novelty_detectors <- function(detectors,
                                                       data=one_feature_one_sample_data))
         
         # Test that the predictions were successfully made.
-        testthat::expect_equal(any_predictions_valid(prediction_table, outcome_type),
+        testthat::expect_equal(any_predictions_valid(prediction_table, type="novelty"),
                                ifelse(detector %in% c(except_train, except_predict), FALSE, TRUE))
         
         # Expect that the trimmed novelty detector produces the same predictions.
@@ -1076,9 +1076,10 @@ test_all_novelty_detectors <- function(detectors,
       })
       
      
-      #####Bad dataset##########################################################
+      #####Bad dataset with one sample##########################################
       # Train the novelty detector.
-      model <- suppressWarnings(test_train_novelty_detector(data=bad_data,
+      model <- suppressWarnings(test_train_novelty_detector(data=full_one_sample_data,
+                                                            data_bypass=full_data,
                                                             cluster_method="none",
                                                             imputation_method="simple",
                                                             hyperparameter_list=hyperparameter_list,
