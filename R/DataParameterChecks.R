@@ -150,19 +150,40 @@
   }
   
   #####outcome_col------------------------------------------------------
+  if(!is.null(settings$data$outcome_type)){
+    outcome_type <- settings$data$outcome_type
+    
+  } else {
+    outcome_type <- "unset"
+  }
   
-  if(!is.null(settings$data$outcome_type) & check_stringency != "strict"){
+  
+  if(outcome_type != "unset" & check_stringency != "strict"){
     # Check if outcome columns are present, or internal defaults are present.
-    if(!any(settings$data$outcome_col %in% colnames(data)) & all(get_outcome_columns(settings$data$outcome_type) %in% colnames(data))){
+    if(!any(settings$data$outcome_col %in% colnames(data)) & all(get_outcome_columns(outcome_type) %in% colnames(data))){
       settings$data$outcome_col <- get_outcome_columns(settings$data$outcome_type)
+    }
+    
+    # Set outcome column to NULL for unsupervised data, and assign to
+    # exclude_features.
+    if(outcome_type == "unsupervised"){
+      if(!is.null(settings$data$outcome_col)){
+        warning(paste0(paste_s(settings$data$outcome_col), " was selected as an outcome column, but ",
+                       "unsupervised learners and novelty detectors do not require ",
+                       "outcome columns."))
+        
+        settings$data$exclude_features <- c(settings$data$exclude_features, settings$data$outcome_col)
+        settings$data$outcome_col <- NULL
+      }
     }
   }
   
   # Check for presence of outcome column
-  if(is.null(settings$data$outcome_col) &  check_stringency == "strict"){
+  if(is.null(settings$data$outcome_col) & outcome_type != "unsupervised" & check_stringency == "strict"){
     
-    # Attempt to determine the outcome_col from the set difference of all features and the union
-    # of signature, include_features and exclude_features.
+    # Attempt to determine the outcome_col from the set difference of all
+    # features and the union of signature, include_features and
+    # exclude_features.
     outcome_col <- setdiff(predictor_vars, c(settings$data$exclude_features,
                                              settings$data$include_features,
                                              settings$data$signature,
@@ -210,7 +231,7 @@
   
   
   #####outcome_type--------------------------------
-  if(is.null(settings$data$outcome_type)){
+  if(outcome_type == "unset"){
     
     # Attempt to impute outcome settings
     settings$data$outcome_type <- .impute_outcome_type(data=data,
@@ -950,7 +971,8 @@
   }
   
   # Check if the provided outcome_type is a valid choice.
-  if(!outcome_type %in% c("binomial", "multinomial", "count", "continuous", "survival")){
+  if(!outcome_type %in% c("binomial", "multinomial", "count", "continuous",
+                          "survival", "competing_risk", "unsupervised")){
     ..error_no_known_outcome_type(outcome_type)
   }
   
@@ -995,6 +1017,17 @@
     }
   }
   
+  # Check that no outcome columns are provided for unsupervised outcome types.
+  if(outcome_type %in% "unsupervised"){
+    
+    if(check_stringency == "strict"){
+      # For strict checks always check if outcome columns are present.
+      if(length(outcome_column) > 0){
+        stop(paste0("No outcome columns are expected for unsupervised analysis. Found: ", paste_s(outcome_column)))
+      }
+    }
+  }
+  
   # Check for outcome columns with NA values.
   if(!is.null(outcome_column)){
     outcome_na <- any(sapply(outcome_column, function(ii, data) (!any(is_valid_data(data[[ii]]))), data=data))
@@ -1003,11 +1036,11 @@
     outcome_na <- TRUE
   }
   
-  if(check_stringency == "strict" & outcome_na){
+  if(check_stringency == "strict" & outcome_na & outcome_type != "unsupervised"){
     # Under strict conditions, outcome data should be present.
     stop(paste0("Outcome column(s) do not contain any data."))
     
-  } else if(check_stringency == "external_warn" & outcome_na){
+  } else if(check_stringency == "external_warn" & outcome_na & outcome_type != "unsupervised"){
     # Under less strict conditions, outcome data may be absent, but the user
     # should be warned.
     warning(paste0("Outcome column(s) do not contain any data. Some evaluation steps may fail to produce results."))
