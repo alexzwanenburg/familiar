@@ -221,7 +221,7 @@ setMethod("..predict", signature(object="familiarIsolationForest", data="dataObj
             }
             
             # Find novelty values.
-            novelty_values <- predict(object=object@novelty_detector,
+            novelty_values <- predict(object=object@model,
                                       newdata=data@data)
             
             # Store the novelty values in the table.
