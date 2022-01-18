@@ -698,7 +698,17 @@ update_data_set <- function(data, object){
   
   # Check if the classes of the input is correct.
   if(!data.table::is.data.table(data)) stop("update_data_set: data is not a data.table")
-  if(!(is(object, "familiarModel") | is(object, "familiarEnsemble"))) stop("update_data_set: object is not a familiarModel or a familiarEnsemble.")
+  if(!(is(object, "familiarModel") | is(object, "familiarEnsemble") | is(object, "familiarNoveltyDetector"))){
+    stop("update_data_set: object is not a familiarModel, familiarNoveltyDetector or a familiarEnsemble.")
+  } 
+  
+  # Find the outcome type.
+  if(is(object, "familiarNoveltyDetector")){
+    outcome_type <- "unsupervised"
+    
+  } else {
+    outcome_type <- object@outcome_type
+  }
   
   # Find the outcome column
   outcome_column <- get_outcome_columns(object@outcome_type)
@@ -709,7 +719,7 @@ update_data_set <- function(data, object){
   ##### Check outcome ##########################################################
   
   # Checks for categorical / ordinal outcomes.
-  if(object@outcome_type %in% c("binomial", "multinomial")){
+  if(outcome_type %in% c("binomial", "multinomial")){
     if(is(object@outcome_info, "outcomeInfo")){
       # Update the outcome column if the outcome data is ordinal.
       if(object@outcome_info@ordered & !is.ordered(data[[outcome_column]])){
@@ -740,7 +750,7 @@ update_data_set <- function(data, object){
   
   # TODO: When we start supporting transformation and normalisation
   # parameters for outcome, process the data here.
-  if(object@outcome_type %in% c("count", "continuous")){
+  if(outcome_type %in% c("count", "continuous")){
     if(is(object@outcome_info, "outcomeInfo")){
       if(!is.null(object@outcome_info@transformation_parameters) | !is.null(object@outcome_info@normalisation_parameters)){
         browser()
@@ -771,8 +781,16 @@ update_data_set <- function(data, object){
   # Check that the feature columns for required_features, and if not, for the
   # union of model_features and novelty_features are present.
   required_features <- object@required_features
-  model_and_novelty_features <- union(object@model_features, object@novelty_features)
   
+  # Novelty detectors do not have separate novelty feature attributes.
+  if(is(object, "familiarNoveltyDetector")){
+    model_and_novelty_features <- object@model_features
+    
+  } else {
+    model_and_novelty_features <- union(object@model_features, object@novelty_features)
+  }
+  
+  # Check presence of features.
   if(length(required_features) > 0 & length(model_and_novelty_features) > 0){
     if(all(required_features %in% all_columns)){
       available_features <- required_features
