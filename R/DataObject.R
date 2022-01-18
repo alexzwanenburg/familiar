@@ -175,7 +175,10 @@ setMethod("as_data_object", signature(data="data.table"),
             
             # Attempt to identify the type of outcome.
             if(is.waive(outcome_type)){
-              if(has_model_object){
+              if(is(object, "familiarNoveltyDetector")){
+                outcome_type <- "unsupervised"
+                
+              } else if(has_model_object){
                 outcome_type <- object@outcome_type
               }
             }
