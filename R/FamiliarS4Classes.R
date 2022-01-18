@@ -692,6 +692,9 @@ setClass("familiarNoveltyDetector",
            run_table = "ANY",
            # Flags trimming of the novelty detector.
            is_trimmed = "logical",
+           # Restores functions lost due to model trimming, such as coef or
+           # vcov.
+           trimmed_function = "list",
            # Project identifier for consistency tracking
            project_id = "ANY",
            # Package version for backward compatibility.
@@ -713,6 +716,7 @@ setClass("familiarNoveltyDetector",
            model_features = NULL,
            run_table = NULL,
            is_trimmed = FALSE,
+           trimmed_function = list(),
            project_id = NULL,
            familiar_version = NULL,
            package = NULL,
