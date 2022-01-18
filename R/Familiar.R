@@ -19,7 +19,6 @@
 #' @name familiar
 #' @import data.table
 #' @import methods
-#' @importFrom isotree isolation.forest
 #' @importFrom stats predict coef
 #' @importFrom survival Surv coxph survreg
 #' @importFrom utils head tail
