@@ -610,33 +610,45 @@ setMethod(".predict_risk_stratification", signature(object="character"),
 
 
 
-any_predictions_valid <- function(prediction_table, outcome_type){
+any_predictions_valid <- function(prediction_table, outcome_type=NULL, type="default"){
   
   if(is_empty(prediction_table)) return(FALSE)
   
-  if(outcome_type %in% c("continuous", "count")){
-    return(any(is.finite(prediction_table$predicted_outcome)))
-    
-  } else if(outcome_type %in% c("survival", "competing_risk")){
-    if("predicted_outcome" %in% colnames(prediction_table)){
-      return(any(is.finite(prediction_table$predicted_outcome)))
-    
-    } else if("survival_probability" %in% colnames(prediction_table)){
-      return(any(is.finite(prediction_table$survival_probability)))
-      
-    } else if("risk_group" %in% colnames(prediction_table)){
-      return(any(!is.na(prediction_table$risk_group)))
-      
-    } else {
-      return(FALSE)
+  if(type %in% c("default", "survival_probability", "risk_stratification")){
+    if(is.null(outcome_type)){
+      ..error_reached_unreachable_code("any_predictions_valid: outcome_type was not provided.")
     }
     
-  } else if(outcome_type %in% c("binomial", "multinomial")){
-    return(!all(is.na(prediction_table$predicted_class)))
+    if(outcome_type %in% c("continuous", "count")){
+      return(any(is.finite(prediction_table$predicted_outcome)))
+      
+    } else if(outcome_type %in% c("survival", "competing_risk")){
+      if("predicted_outcome" %in% colnames(prediction_table)){
+        return(any(is.finite(prediction_table$predicted_outcome)))
+        
+      } else if("survival_probability" %in% colnames(prediction_table)){
+        return(any(is.finite(prediction_table$survival_probability)))
+        
+      } else if("risk_group" %in% colnames(prediction_table)){
+        return(any(!is.na(prediction_table$risk_group)))
+        
+      } else {
+        return(FALSE)
+      }
+      
+    } else if(outcome_type %in% c("binomial", "multinomial")){
+      return(!all(is.na(prediction_table$predicted_class)))
+      
+    } else {
+      ..error_no_known_outcome_type(outcome_type)
+    }
+  } else if(type %in% c("novelty")) {
+    return(any(is.finite(prediction_table$novelty)))
     
   } else {
-    ..error_no_known_outcome_type(outcome_type)
+    ..error_reached_unreachable_code("any_predictions_valid: unknown type encountered")
   }
+  
 }
 
 
