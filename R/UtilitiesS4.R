@@ -598,6 +598,31 @@ setMethod("get_placeholder_prediction_table", signature(object="familiarEnsemble
 setMethod("get_placeholder_prediction_table", signature(object="familiarEnsemble", data="data.table"),
           function(object, data, type="default") return(get_placeholder_prediction_table(object=object@outcome_info, data=data, type=type)))
 
+setMethod("get_placeholder_prediction_table", signature(object="familiarNoveltyDetector", data="dataObject"),
+          function(object, data, type="default") return(get_placeholder_prediction_table(object=object, data=data@data, type=type)))
+
+setMethod("get_placeholder_prediction_table", signature(object="familiarNoveltyDetector", data="data.table"),
+          function(object, data, type="default"){
+            # Check that the type parameter is valid,
+            .check_parameter_value_is_valid(x=type, var_name="type", values=.get_available_prediction_type_arguments())
+            
+            # Find non-feature columns.
+            non_feature_columns <- get_non_feature_columns(object)
+            
+            # Create the prediction table.
+            prediction_table <- data.table::copy(data[, mget(non_feature_columns)])
+            
+            if("novelty" %in% type){
+              # Add novelty column.
+              prediction_table[, "novelty":=as.double(NA)]
+              
+            } else {
+              stop("Only novelty predictions can be made.")
+            }
+            
+            return(prediction_table)
+          })
+
 setMethod("get_placeholder_prediction_table", signature(object="outcomeInfo", data="dataObject"),
           function(object, data, type="default") return(get_placeholder_prediction_table(object=object, data=data@data, type=type)))
 
@@ -672,6 +697,10 @@ setMethod("get_placeholder_prediction_table", signature(object="outcomeInfo", da
             
             return(prediction_table)
           })
+
+
+
+
 
 
 
