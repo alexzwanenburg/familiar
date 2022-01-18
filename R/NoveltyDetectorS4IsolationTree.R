@@ -93,10 +93,13 @@ setMethod("get_default_hyperparameters", signature(object="familiarIsolationFore
             
             ##### Number of candidate features selected at node ################
             
+            default_m_try <- 3 / n_features
+            if(default_m_try > 1.0) default_m_try <- 1.0
+            
             # Note that the number of features is here noted as a fraction, but
             # is used in the isolation forest as an integer. Familiar ensures
             # that always at least 1 feature is available as a candidate.
-            param$m_try <- .set_hyperparameter(default=3 / n_features,
+            param$m_try <- .set_hyperparameter(default=default_m_try,
                                                type="numeric",
                                                range=c(0.0, 1.0),
                                                randomise=FALSE)
@@ -104,9 +107,12 @@ setMethod("get_default_hyperparameters", signature(object="familiarIsolationFore
             
             ##### Maximum tree depth ###########################################
 
+            default_tree_depth <- ceiling(log2(default_sample_size * n_samples))
+            if(default_tree_depth < 1) default_tree_depth <- 1
+            
             # Determines the depth trees are allowed to grow to. Larger depths
             # increase the risk of overfitting.
-            param$tree_depth <- .set_hyperparameter(default=ceiling(log2(default_sample_size * n_samples)),
+            param$tree_depth <- .set_hyperparameter(default=default_tree_depth,
                                                     type="integer",
                                                     range=c(1, 10),
                                                     valid_range=c(1, Inf),
