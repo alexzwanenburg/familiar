@@ -278,34 +278,54 @@ plotting.parse_facet_by <- function(x, facet_by, facet_wrap_cols){
 }
 
 
-plotting.create_subtitle <- function(x, split_by=NULL){
+plotting.create_subtitle <- function(x, split_by=NULL, additional=NULL){
   
   # Do not create a subtitle if there is no subtitle to be created.
-  if(is.null(split_by)) return(NULL)
+  subtitle <- NULL
   
   # Generate subtitle from splitting variables and data.
-  subtitle <- sapply(split_by, function(jj, x){
-    split_variable_name <- jj
-    
-    if(split_variable_name == "fs_method"){
-      split_variable_name <- "VIMP method"
-      
-    } else if(split_variable_name == "data_set"){
-      split_variable_name <- "data set"
-      
-    } else if(split_variable_name == "evaluation_time"){
-      split_variable_name <- "time point"
-    }
-    
-    # Remove all underscores.
-    split_variable_name <- stringi::stri_replace_all_fixed(split_variable_name, pattern="_", replacement=" ")
-    
-    # Parse to an elementary string.
-    split_variable_name <- paste0(split_variable_name, ": ", x[[jj]][1])
-    
-    return(split_variable_name)
-  },
-  x=x)
+  if(!is.null(split_by)){
+    subtitle <- c(subtitle,
+                  sapply(split_by, function(name, x){
+                    split_variable_name <- name
+                    
+                    if(split_variable_name == "fs_method"){
+                      split_variable_name <- "VIMP method"
+                      
+                    } else if(split_variable_name == "data_set"){
+                      split_variable_name <- "data set"
+                      
+                    } else if(split_variable_name == "evaluation_time"){
+                      split_variable_name <- "time point"
+                    }
+                    
+                    # Remove all underscores.
+                    split_variable_name <- stringi::stri_replace_all_fixed(split_variable_name, pattern="_", replacement=" ")
+                    
+                    # Parse to an elementary string.
+                    split_variable_name <- paste0(split_variable_name, ": ", x[[name]][1])
+                    
+                    return(split_variable_name)
+                  },
+                  x=x))
+  }
+  
+  # Generate additional strings from additional.
+  if(!is.null(additional)){
+    subtitle <- c(subtitle,
+                  mapply(function(name, value){
+                    # Remove all underscores.
+                    split_variable_name <- stringi::stri_replace_all_fixed(name, pattern="_", replacement=" ")
+                    
+                    # Parse to an elementary string.
+                    split_variable_name <- paste0(split_variable_name, ": ", value)
+                  },
+                  name=names(additional),
+                  value=additional))
+  }
+  
+  # Check if any subtitle was generated.
+  if(is.null(subtitle)) return(NULL)
   
   # Combine into single string.
   subtitle <- paste_s(subtitle)
@@ -314,16 +334,20 @@ plotting.create_subtitle <- function(x, split_by=NULL){
 }
 
 
-plotting.create_subtype <- function(x, subtype=NULL, split_by=NULL){
+plotting.create_subtype <- function(x, subtype=NULL, split_by=NULL, additional=NULL){
   
-  # Do not specify additional subtype terms if there is no subtype to be
-  # created.
-  if(is.null(split_by)) return(subtype)
+  # Generate additional terms for the subtype, based on splits.
+  if(!is.null(split_by)){
+    subtype <- c(subtype,
+                 as.character(sapply(split_by, function(jj, x) (x[[jj]][1]), x=x)))
+  }
   
-  # Generate additional terms for the subtype.
-  subtype <- c(subtype,
-               as.character(sapply(split_by, function(jj, x) (x[[jj]][1]), x=x)))
+  if(!is.null(additional)){
+    subtype <- c(subtype,
+                 sapply(additional, function(jj) as.character(jj[1])))
+  }
   
+  if(is.null(subtype)) return(NULL)
   
   # Combine into a single string.
   subtype <- paste0(subtype, collapse="_")
