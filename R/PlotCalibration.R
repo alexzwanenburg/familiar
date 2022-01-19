@@ -498,6 +498,13 @@ setMethod("plot_calibration_data", signature(object="familiarCollection"),
               
               if(is_empty(calibration_data_split)) next()
               
+              if(is.waive(plot_title)) plot_title <- "Calibration plot"
+              
+              if(is.waive(plot_sub_title)){
+                plot_sub_title <- plotting.create_subtitle(split_by=split_by,
+                                                           x=current_split)
+              }
+              
               # Generate plot
               p <- .plot_calibration_plot(x=calibration_data_split,
                                           color_by=color_by,
@@ -539,12 +546,9 @@ setMethod("plot_calibration_data", signature(object="familiarCollection"),
               # Save and export
               if(!is.null(dir_path)){
                 
-                # Determine the subtype
-                if(!is.null(split_by)){
-                  subtype <- paste0(sapply(split_by, function(jj, x) (x[[jj]][1]), x=current_split), collapse="_")
-                } else {
-                  subtype <- NULL
-                }
+                # Set subtype.
+                subtype <- plotting.create_subtype(x=current_split,
+                                                   split_by=split_by)
                 
                 # Obtain decent default values for the plot.
                 def_plot_dims <- .determine_calibration_plot_dimensions(x=calibration_data_split,
