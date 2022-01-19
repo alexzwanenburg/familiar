@@ -844,6 +844,9 @@ setMethod("plot_auc_precision_recall_curve", signature(object="familiarCollectio
     }
   }
   
+  # Prevent removal of data outside or on plot limits.
+  p <- p + ggplot2::coord_cartesian()
+  
   return(p)
 }
 
