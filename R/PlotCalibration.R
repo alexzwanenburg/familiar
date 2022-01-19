@@ -691,7 +691,8 @@ setMethod("plot_calibration_data", signature(object="familiarCollection"),
                                       g_new=g_margin,
                                       where="top",
                                       ref_element="panel-main",
-                                      partial_match=TRUE)
+                                      partial_match=TRUE,
+                                      spacer=TRUE)
     }
     
     # Add combined grob to list
@@ -994,6 +995,9 @@ setMethod("plot_calibration_data", signature(object="familiarCollection"),
                          title=plot_title,
                          subtitle=plot_sub_title,
                          caption=caption)
+  
+  # Prevent clipping of confidence intervals.
+  p <- p + ggplot2::coord_cartesian()
   
   return(p)
 }
