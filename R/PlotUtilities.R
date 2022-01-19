@@ -925,7 +925,12 @@ plotting.add_global_plot_elements <- function(grobs,
   if(all(plot_layout_table$has_axis_label_y == FALSE)){
     figure_list$axis_label_l <- element_grobs[[present_figure_id]]$axis_label_l
     figure_list$axis_label_r <- element_grobs[[present_figure_id]]$axis_label_r
-  } 
+  }
+  
+  # Add title, subtitle and caption.
+  figure_list$title <- element_grobs[[present_figure_id]]$title
+  figure_list$subtitle <- element_grobs[[present_figure_id]]$subtitle
+  figure_list$caption <- element_grobs[[present_figure_id]]$caption
   
   # Insert global elements.
   g <- plotting.reinsert_plot_elements(grob_list=figure_list,
@@ -1092,9 +1097,17 @@ plotting.extract_plot_elements <- function(p){
   element_list$axis_text_l <- .gtable_extract(g=g, element="axis-l-main", partial_match=TRUE, drop_empty=TRUE)
   element_list$axis_text_r <- .gtable_extract(g=g, element="axis-r-main", partial_match=TRUE, drop_empty=TRUE)
   
-  # Update plot by removing the axis text.
+  # Title, subtitle and caption
+  element_list$title <- .gtable_extract(g=g, element="title", partial_match=FALSE, drop_empty=TRUE)
+  element_list$subtitle <- .gtable_extract(g=g, element="subtitle", partial_match=FALSE, drop_empty=TRUE)
+  element_list$caption <- .gtable_extract(g=g, element="caption", partial_match=FALSE, drop_empty=TRUE)
+  
+  # Update plot by removing the axis text, title, subtitle and captions.
   p <- p + ggplot2::theme(axis.text.x=ggplot2::element_blank(),
-                          axis.text.y=ggplot2::element_blank())
+                          axis.text.y=ggplot2::element_blank(),
+                          plot.title=ggplot2::element_blank(),
+                          plot.subtitle=ggplot2::element_blank(),
+                          plot.caption=ggplot2::element_blank())
   
   # Convert to grobs
   g <- plotting.to_grob(p)
@@ -1109,6 +1122,11 @@ plotting.extract_plot_elements <- function(p){
   
   element_list$axis_text_l_nt <- .gtable_extract(g=g, element="axis-l-main", partial_match=TRUE, drop_empty=TRUE)
   element_list$axis_text_r_nt <- .gtable_extract(g=g, element="axis-r-main", partial_match=TRUE, drop_empty=TRUE)
+  
+  # Title, subtitle, caption (without text)
+  element_list$title_nt <- .gtable_extract(g=g, element="title", partial_match=FALSE, drop_empty=TRUE)
+  element_list$subtitle_nt <- .gtable_extract(g=g, element="subtitle", partial_match=FALSE, drop_empty=TRUE)
+  element_list$caption_nt <- .gtable_extract(g=g, element="caption", partial_match=FALSE, drop_empty=TRUE)
   
   return(element_list)
 }
@@ -1133,7 +1151,10 @@ plotting.remove_plot_elements <- function(p){
                           axis.title.y=ggplot2::element_blank(),
                           axis.text.y=ggplot2::element_blank(),
                           axis.ticks.y=ggplot2::element_blank(),
-                          axis.line.y=ggplot2::element_blank())
+                          axis.line.y=ggplot2::element_blank(),
+                          plot.title=ggplot2::element_blank(),
+                          plot.subtitle=ggplot2::element_blank(),
+                          plot.caption=ggplot2::element_blank())
   
   return(p)
 }
@@ -1307,6 +1328,7 @@ plotting.reinsert_plot_elements <- function(g=NULL, elements=NULL, grob_list, gg
     }
   }
   
+  
   # Insert top x-axis text
   if("axis_text_t" %in% elements & !is.null(grob_list$axis_text_t)){
     
@@ -1377,7 +1399,6 @@ plotting.reinsert_plot_elements <- function(g=NULL, elements=NULL, grob_list, gg
       }
     }
   }
-  
   
   
   # Insert y-axis label to the left.
@@ -1469,6 +1490,41 @@ plotting.reinsert_plot_elements <- function(g=NULL, elements=NULL, grob_list, gg
         break()
       }
     }
+  }
+  
+  if("subtitle" %in% elements & !is.null(grob_list$subtitle)){
+    # Insert subtitle label to the top.
+    g <- .gtable_insert_along(g=g,
+                              g_new=grob_list$subtitle,
+                              ref_element="subtitle",
+                              where="top",
+                              attempt_replace=TRUE,
+                              partial_match_ref=FALSE,
+                              partial_match_along=FALSE)
+  }
+  
+  
+  # Insert title label to the top.
+  if("title" %in% elements & !is.null(grob_list$title)){
+    g <- .gtable_insert_along(g=g,
+                              g_new=grob_list$title,
+                              ref_element="title",
+                              where="top",
+                              attempt_replace=TRUE,
+                              partial_match_ref=FALSE,
+                              partial_match_along=FALSE)
+  }
+  
+  
+  # Insert caption to the bottom.
+  if("caption" %in% elements & !is.null(grob_list$caption)){
+    g <- .gtable_insert_along(g=g,
+                              g_new=grob_list$caption,
+                              ref_element="caption",
+                              where="bottom",
+                              attempt_replace=TRUE,
+                              partial_match_ref=FALSE,
+                              partial_match_along=FALSE)
   }
   
   return(g)
