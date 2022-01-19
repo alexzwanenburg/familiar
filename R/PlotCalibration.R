@@ -554,15 +554,15 @@ setMethod("plot_calibration_data", signature(object="familiarCollection"),
                 
                 # Save to file.
                 do.call(plotting.save_plot_to_file,
-                        args=append(list("plot_obj"=p,
-                                         "object"=object,
-                                         "dir_path"=dir_path,
-                                         "type"="calibration",
-                                         "subtype"=subtype,
-                                         "height"=ifelse(is.waive(height), def_plot_dims[1], height),
-                                         "width"=ifelse(is.waive(width), def_plot_dims[2], width),
-                                         "units"=ifelse(is.waive(units), "cm", units)),
-                                    list(...)))
+                        args=c(list("plot_obj"=p,
+                                    "object"=object,
+                                    "dir_path"=dir_path,
+                                    "type"="calibration",
+                                    "subtype"=subtype,
+                                    "height"=ifelse(is.waive(height), def_plot_dims[1], height),
+                                    "width"=ifelse(is.waive(width), def_plot_dims[2], width),
+                                    "units"=ifelse(is.waive(units), "cm", units)),
+                               list(...)))
                 
               } else {
                 # Store as list and export
@@ -695,10 +695,12 @@ setMethod("plot_calibration_data", signature(object="familiarCollection"),
     }
     
     # Add combined grob to list
-    figure_list <- c(figure_list, list(g_calibration))
+    figure_list <- c(figure_list, 
+                     list(g_calibration))
     
     # Add extract elements to the grob_element_list
-    extracted_element_list <- c(extracted_element_list, list(extracted_elements))
+    extracted_element_list <- c(extracted_element_list,
+                                list(extracted_elements))
   }
   
   # Update the layout table.
@@ -882,14 +884,19 @@ setMethod("plot_calibration_data", signature(object="familiarCollection"),
   p <- p + ggplot2::scale_y_continuous(breaks=y_breaks, limits=y_range)
   
   # Determine how things are facetted
-  facet_by_list <- plotting.parse_facet_by(x=x, facet_by=facet_by, facet_wrap_cols=facet_wrap_cols)
+  facet_by_list <- plotting.parse_facet_by(x=x,
+                                           facet_by=facet_by,
+                                           facet_wrap_cols=facet_wrap_cols)
   
   if(!is.null(facet_by)){
     if(is.null(facet_wrap_cols)){
       # Use a grid
-      p <- p + ggplot2::facet_grid(rows=facet_by_list$facet_rows, cols=facet_by_list$facet_cols, labeller="label_context")
+      p <- p + ggplot2::facet_grid(rows=facet_by_list$facet_rows,
+                                   cols=facet_by_list$facet_cols,
+                                   labeller="label_context")
     } else {
-      p <- p + ggplot2::facet_wrap(facets=facet_by_list$facet_by, labeller="label_context")
+      p <- p + ggplot2::facet_wrap(facets=facet_by_list$facet_by,
+                                   labeller="label_context")
     }
   }
   
@@ -903,32 +910,36 @@ setMethod("plot_calibration_data", signature(object="familiarCollection"),
       
       # Add calibration-in-the-large.
       if(all(c("ci_low", "ci_up") %in% colnames(linear_test))){
-        label <- append(label, paste0("intercept: ",
-                                      format(round(linear_test[type=="offset"]$value, 2), nsmall=2),
-                                      " (",
-                                      format(round(linear_test[type=="offset"]$ci_low, 2), nsmall=2),
-                                      "\u2013",
-                                      ifelse(round(linear_test[type=="offset"]$ci_up, 2) < 0, " ", ""),
-                                      format(round(linear_test[type=="offset"]$ci_up, 2), nsmall=2),
-                                      ")"))
+        label <- c(label,
+                   paste0("intercept: ",
+                          format(round(linear_test[type=="offset"]$value, 2), nsmall=2),
+                          " (",
+                          format(round(linear_test[type=="offset"]$ci_low, 2), nsmall=2),
+                          "\u2013",
+                          ifelse(round(linear_test[type=="offset"]$ci_up, 2) < 0, " ", ""),
+                          format(round(linear_test[type=="offset"]$ci_up, 2), nsmall=2),
+                          ")"))
         
         # Add calibration slope.
-        label <- append(label, paste0("slope: ",
-                                      format(round(linear_test[type=="slope"]$value, 2), nsmall=2),
-                                      " (",
-                                      format(round(linear_test[type=="slope"]$ci_low, 2), nsmall=2),
-                                      "\u2013",
-                                      ifelse(round(linear_test[type=="slope"]$ci_up, 2) < 0, " ", ""),
-                                      format(round(linear_test[type=="slope"]$ci_up, 2), nsmall=2),
-                                      ")"))
+        label <- c(label,
+                   paste0("slope: ",
+                          format(round(linear_test[type=="slope"]$value, 2), nsmall=2),
+                          " (",
+                          format(round(linear_test[type=="slope"]$ci_low, 2), nsmall=2),
+                          "\u2013",
+                          ifelse(round(linear_test[type=="slope"]$ci_up, 2) < 0, " ", ""),
+                          format(round(linear_test[type=="slope"]$ci_up, 2), nsmall=2),
+                          ")"))
         
       } else {
-        label <- append(label, paste0("intercept: ",
-                                      format(round(linear_test[type=="offset"]$value, 2), nsmall=2)))
+        label <- c(label,
+                   paste0("intercept: ",
+                          format(round(linear_test[type=="offset"]$value, 2), nsmall=2)))
         
         # Add calibration slope.
-        label <- append(label, paste0("slope: ",
-                                      format(round(linear_test[type=="slope"]$value, 2), nsmall=2)))
+        label <- c(label,
+                   paste0("slope: ",
+                          format(round(linear_test[type=="slope"]$value, 2), nsmall=2)))
       }
     }
     
@@ -936,20 +947,23 @@ setMethod("plot_calibration_data", signature(object="familiarCollection"),
       
       # Hosmer-Lemeshow test
       if("hosmer_lemeshow" %in% c(gof_test$type)){
-        label <- append(label, paste0("HL-test p: ",
-                                      format(signif(gof_test[type=="hosmer_lemeshow"]$p_value, 2), nsmall=2)))
+        label <- c(label,
+                   paste0("HL-test p: ",
+                          format(signif(gof_test[type=="hosmer_lemeshow"]$p_value, 2), nsmall=2)))
       }
       
       # Nam-D'Agostino test
       if("nam_dagostino" %in% c(gof_test$type)){
-        label <- append(label, paste0("ND-test p: ",
-                                      format(signif(gof_test[type=="nam_dagostino"]$p_value, 2), nsmall=2)))
+        label <- c(label,
+                   paste0("ND-test p: ",
+                          format(signif(gof_test[type=="nam_dagostino"]$p_value, 2), nsmall=2)))
       }
       
       # Greenwood-Nam-D'Agostino test
       if("greenwood_nam_dagostino" %in% c(gof_test$type)){
-        label <- append(label, paste0("GND-test p: ",
-                                      format(signif(gof_test[type=="greenwood_nam_dagostino"]$p_value, 2), nsmall=2)))
+        label <- c(label,
+                   paste0("GND-test p: ",
+                          format(signif(gof_test[type=="greenwood_nam_dagostino"]$p_value, 2), nsmall=2)))
       }
     }
     
@@ -975,7 +989,11 @@ setMethod("plot_calibration_data", signature(object="familiarCollection"),
   }
   
   # Update labels.
-  p <- p + ggplot2::labs(x=x_label, y=y_label, title=plot_title, subtitle=plot_sub_title, caption=caption)
+  p <- p + ggplot2::labs(x=x_label,
+                         y=y_label,
+                         title=plot_title,
+                         subtitle=plot_sub_title,
+                         caption=caption)
   
   return(p)
 }
