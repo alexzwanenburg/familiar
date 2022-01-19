@@ -92,24 +92,24 @@ plotting.check_input_args <- function(x_range=waiver(),
                                       caption=waiver()){
   
   # x and y ranges
-  if(!is.waive(x_range)){ plotting.check_input_range(range_var=x_range, var_name="x_range") }
-  if(!is.waive(y_range)){ plotting.check_input_range(range_var=y_range, var_name="y_range") }
+  if(!is.waive(x_range)) plotting.check_input_range(range_var=x_range, var_name="x_range")
+  if(!is.waive(y_range)) plotting.check_input_range(range_var=y_range, var_name="y_range")
   
   # x and y number of breaks
-  if(!is.waive(x_n_breaks)){ plotting.check_input_n_breaks(n_break_var=x_n_breaks, var_name="x_n_breaks") }
-  if(!is.waive(y_n_breaks)){ plotting.check_input_n_breaks(n_break_var=y_n_breaks, var_name="y_n_breaks") }
+  if(!is.waive(x_n_breaks)) plotting.check_input_n_breaks(n_break_var=x_n_breaks, var_name="x_n_breaks")
+  if(!is.waive(y_n_breaks)) plotting.check_input_n_breaks(n_break_var=y_n_breaks, var_name="y_n_breaks")
   
   # x and y breaks
-  if(!is.waive(x_breaks)){ plotting.check_input_break(break_var=x_breaks, var_name="x_breaks") }
-  if(!is.waive(y_breaks)){ plotting.check_input_break(break_var=y_breaks, var_name="y_breaks") }
+  if(!is.waive(x_breaks)) plotting.check_input_break(break_var=x_breaks, var_name="x_breaks")
+  if(!is.waive(y_breaks)) plotting.check_input_break(break_var=y_breaks, var_name="y_breaks")
   
   # labels
-  if(!is.waive(x_label)){ plotting.check_input_label(label_var=x_label, var_name="x_label") }
-  if(!is.waive(y_label)){ plotting.check_input_label(label_var=y_label, var_name="y_label") }
-  if(!is.waive(legend_label)){ plotting.check_input_legend(label_var=legend_label, var_name="legend_label") }
-  if(!is.waive(plot_title)){ plotting.check_input_label(label_var=plot_title, var_name="plot_title") }
-  if(!is.waive(plot_sub_title)){ plotting.check_input_label(label_var=plot_sub_title, var_name="plot_sub_title") }
-  if(!is.waive(caption)){ plotting.check_input_label(label_var=caption, var_name="caption") }
+  if(!is.waive(x_label)) plotting.check_input_label(label_var=x_label, var_name="x_label")
+  if(!is.waive(y_label)) plotting.check_input_label(label_var=y_label, var_name="y_label")
+  if(!is.waive(legend_label)) plotting.check_input_legend(label_var=legend_label, var_name="legend_label")
+  if(!is.waive(plot_title)) plotting.check_input_label(label_var=plot_title, var_name="plot_title")
+  if(!is.waive(plot_sub_title)) plotting.check_input_label(label_var=plot_sub_title, var_name="plot_sub_title")
+  if(!is.waive(caption)) plotting.check_input_label(label_var=caption, var_name="caption")
 
   # Legend combination flag
   if(!is.waive(combine_legend)) {
@@ -205,7 +205,7 @@ plotting.check_input_n_breaks <- function(n_break_var, var_name){
 
 plotting.check_input_break <- function(break_var, var_name){
   # Generic break check
-  if(is.null(break_var)){ return() }
+  if(is.null(break_var)) return()
   
   if(is.numeric(break_var) & !all(is.finite(break_var))){
     stop(paste("The", var_name, "argument contains NA or infite values.", sep=" "))
@@ -222,7 +222,7 @@ plotting.check_input_break <- function(break_var, var_name){
 
 plotting.check_input_label <- function(label_var, var_name){
   # Generic label check
-  if(is.null(label_var) | is.call(label_var) | is.expression(label_var)) { return() }
+  if(is.null(label_var) | is.call(label_var) | is.expression(label_var)) return()
   
   if(!(is.numeric(label_var) | is.character(label_var))){
     stop(paste("The", var_name, "argument should be NULL, a single number, a single string,",
@@ -237,7 +237,7 @@ plotting.check_input_label <- function(label_var, var_name){
 
 plotting.check_input_legend <- function(label_var, var_name){
   # Generic label check
-  if(is.null(label_var) | is.call(label_var) | is.expression(label_var)) { return() }
+  if(is.null(label_var) | is.call(label_var) | is.expression(label_var)) return()
   
   # Legend labels can be a list
   if(is.list(label_var)) {
