@@ -83,8 +83,8 @@ setGeneric("plot_decision_curve",
                     x_label=waiver(),
                     y_label=waiver(),
                     legend_label=waiver(),
-                    plot_title=NULL,
-                    plot_sub_title=NULL,
+                    plot_title=waiver(),
+                    plot_sub_title=waiver(),
                     caption=NULL,
                     x_range=NULL,
                     x_n_breaks=5,
@@ -115,8 +115,8 @@ setMethod("plot_decision_curve", signature(object="ANY"),
                    x_label=waiver(),
                    y_label=waiver(),
                    legend_label=waiver(),
-                   plot_title=NULL,
-                   plot_sub_title=NULL,
+                   plot_title=waiver(),
+                   plot_sub_title=waiver(),
                    caption=NULL,
                    x_range=NULL,
                    x_n_breaks=5,
@@ -183,8 +183,8 @@ setMethod("plot_decision_curve", signature(object="familiarCollection"),
                    x_label=waiver(),
                    y_label=waiver(),
                    legend_label=waiver(),
-                   plot_title=NULL,
-                   plot_sub_title=NULL,
+                   plot_title=waiver(),
+                   plot_sub_title=waiver(),
                    caption=NULL,
                    x_range=NULL,
                    x_n_breaks=5,
@@ -295,11 +295,11 @@ setMethod("plot_decision_curve", signature(object="familiarCollection"),
                            tail(y_breaks, n=1))
             }
             
-            # Adapt the confidence intervals so that they fit in the y-range.
-            if(conf_int_style != "none"){
-              x@data[curve_type == "model" & is.finite(ci_low) & ci_low < y_range[1] & ci_up > y_range[1], "ci_low":=y_range[1]]
-              x@data[curve_type == "model" & is.finite(ci_up) & ci_up > y_range[2] & ci_low < y_range[2], "ci_up":=y_range[2]]
-            }
+            # # Adapt the confidence intervals so that they fit in the y-range.
+            # if(conf_int_style != "none"){
+            #   x@data[curve_type == "model" & is.finite(ci_low) & ci_low < y_range[1] & ci_up > y_range[1], "ci_low":=y_range[1]]
+            #   x@data[curve_type == "model" & is.finite(ci_up) & ci_up > y_range[2] & ci_low < y_range[2], "ci_up":=y_range[2]]
+            # }
             
 
             if(object@outcome_type %in% c("binomial", "multinomial")){
@@ -435,6 +435,13 @@ setMethod("plot_decision_curve", signature(object="familiarCollection"),
               # Skip empty datasets
               if(is_empty(x_split[[ii]])) next()
               
+              if(is.waive(plot_title)) plot_title <- "Decision curve"
+              
+              if(is.waive(plot_sub_title)){
+                plot_sub_title <- plotting.create_subtitle(split_by=split_by,
+                                                           x=x_split[[ii]])
+              }
+              
               # Generate plot
               p <- .plot_decision_curve_plot(x=x_split[[ii]],
                                              color_by=color_by,
@@ -464,13 +471,10 @@ setMethod("plot_decision_curve", signature(object="familiarCollection"),
               # Save and export
               if(!is.null(dir_path)){
                 
-                subtype <- "decision_curve"
-                
-                # Determine the subtype
-                if(!is.null(split_by)){
-                  subtype <- c(subtype, as.character(sapply(split_by, function(jj, x) (x[[jj]][1]), x=x_split[[ii]])))
-                  subtype <- paste0(subtype, collapse="_")
-                }
+                # Set subtype.
+                subtype <- plotting.create_subtype(x=x_split[[ii]],
+                                                   subtype="decision_curve",
+                                                   split_by=split_by)
                 
                 # Obtain decent default values for the plot.
                 def_plot_dims <- .determine_decision_curve_plot_dimensions(x=x_split[[ii]],
@@ -626,8 +630,8 @@ setMethod("plot_decision_curve", signature(object="familiarCollection"),
   }
   
   # Update x and y scales
-  p <- p + ggplot2::scale_x_continuous(breaks=x_breaks, limits=x_range)
-  p <- p + ggplot2::scale_y_continuous(breaks=y_breaks, limits=y_range)
+  p <- p + ggplot2::scale_x_continuous(breaks=x_breaks)
+  p <- p + ggplot2::scale_y_continuous(breaks=y_breaks)
   
   # Labels
   p <- p + ggplot2::labs(x=x_label,
@@ -655,6 +659,9 @@ setMethod("plot_decision_curve", signature(object="familiarCollection"),
                                    drop=TRUE)
     }
   }
+  
+  # Prevent clipping of confidence intervals.
+  p <- p + ggplot2::coord_cartesian(xlim=x_range, ylim=y_range)
   
   return(p)
 }
