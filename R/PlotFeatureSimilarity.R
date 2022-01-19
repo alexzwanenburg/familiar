@@ -87,8 +87,8 @@ setGeneric("plot_feature_similarity",
                     y_label=waiver(),
                     y_label_shared="row",
                     legend_label=waiver(),
-                    plot_title=NULL,
-                    plot_sub_title=NULL,
+                    plot_title=waiver(),
+                    plot_sub_title=waiver(),
                     caption=NULL,
                     y_range=NULL,
                     y_n_breaks=3,
@@ -123,8 +123,8 @@ setMethod("plot_feature_similarity", signature(object="ANY"),
                    y_label=waiver(),
                    y_label_shared="row",
                    legend_label=waiver(),
-                   plot_title=NULL,
-                   plot_sub_title=NULL,
+                   plot_title=waiver(),
+                   plot_sub_title=waiver(),
                    caption=NULL,
                    y_range=NULL,
                    y_n_breaks=3,
@@ -199,8 +199,8 @@ setMethod("plot_feature_similarity", signature(object="familiarCollection"),
                    y_label=waiver(),
                    y_label_shared="row",
                    legend_label=waiver(),
-                   plot_title=NULL,
-                   plot_sub_title=NULL,
+                   plot_title=waiver(),
+                   plot_sub_title=waiver(),
                    caption=NULL,
                    y_range=NULL,
                    y_n_breaks=3,
@@ -357,6 +357,14 @@ setMethod("plot_feature_similarity", signature(object="familiarCollection"),
               
               if(is_empty(x_sub)) next()
               
+              if(is.waive(plot_title)) plot_title <- "Feature similarity" 
+              
+              if(is.waive(plot_sub_title)){
+                plot_sub_title <- plotting.create_subtitle(split_by=split_by,
+                                                           additional=list("metric"=x@similarity_metric),
+                                                           x=x_sub)
+              }
+              
               # Generate plot
               p <- .plot_feature_similarity_plot(x=x_sub,
                                                  data=x,
@@ -389,14 +397,10 @@ setMethod("plot_feature_similarity", signature(object="familiarCollection"),
               # Save and export
               if(!is.null(dir_path)){
                 
-                # Add plot type as a subtype.
-                subtype <- "similarity"
-                
-                # Determine the subtype
-                if(!is.null(split_by)){        
-                  subtype <- c(subtype, as.character(sapply(split_by, function(jj, x) (x[[jj]][1]), x=x_sub)))
-                  subtype <- paste0(subtype, collapse="_")
-                }
+                # Set subtype.
+                subtype <- plotting.create_subtype(x=x_sub,
+                                                   subtype="similarity",
+                                                   split_by=split_by)
                 
                 # Identify unique features:
                 features <- unique(c(x_sub$feature_name_1, x_sub$feature_name_2))
