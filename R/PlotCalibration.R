@@ -696,7 +696,7 @@ setMethod("plot_calibration_data", signature(object="familiarCollection"),
                                       where="top",
                                       ref_element="panel-main",
                                       partial_match=TRUE,
-                                      spacer=TRUE)
+                                      spacer=list("b"=plotting.get_panel_spacing(ggtheme=ggtheme, axis="x")))
     }
     
     # Add combined grob to list
