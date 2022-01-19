@@ -298,7 +298,7 @@ plotting.create_subtitle <- function(x, split_by=NULL){
     }
     
     # Remove all underscores.
-    split_variable_name <- stringi::stri_replace_all_fixed("split_variable_name", pattern="_", replacement=" ")
+    split_variable_name <- stringi::stri_replace_all_fixed(split_variable_name, pattern="_", replacement=" ")
     
     # Parse to an elementary string.
     split_variable_name <- paste0(split_variable_name, ": ", x[[jj]][1])
