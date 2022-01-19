@@ -84,8 +84,8 @@ setGeneric("plot_variable_importance",
                     rotate_x_tick_labels=waiver(),
                     y_label=waiver(),
                     legend_label=waiver(),
-                    plot_title=NULL,
-                    plot_sub_title=NULL,
+                    plot_title=waiver(),
+                    plot_sub_title=waiver(),
                     caption=NULL,
                     y_range=NULL,
                     y_n_breaks=5,
@@ -117,8 +117,8 @@ setMethod("plot_variable_importance", signature(object="ANY"),
                     rotate_x_tick_labels=waiver(),
                     y_label=waiver(),
                     legend_label=waiver(),
-                    plot_title=NULL,
-                    plot_sub_title=NULL,
+                    plot_title=waiver(),
+                    plot_sub_title=waiver(),
                     caption=NULL,
                     y_range=NULL,
                     y_n_breaks=5,
@@ -195,8 +195,8 @@ setMethod("plot_variable_importance", signature(object="familiarCollection"),
                    rotate_x_tick_labels=waiver(),
                    y_label=waiver(),
                    legend_label=waiver(),
-                   plot_title=NULL,
-                   plot_sub_title=NULL,
+                   plot_title=waiver(),
+                   plot_sub_title=waiver(),
                    caption=NULL,
                    y_range=NULL,
                    y_n_breaks=5,
@@ -438,6 +438,18 @@ plot_model_signature_variable_importance <- function(...){
     
     if(is_empty(x_sub)) next()
     
+    if(is.waive(plot_title)){
+      plot_title <- ifelse(type == "feature_selection",
+                           "Feature selection-based variable importance",
+                           "Model-based variable importance")
+    } 
+    
+    if(is.waive(plot_sub_title)){
+      plot_sub_title <- plotting.create_subtitle(split_by=split_by,
+                                                 additional=list("aggregation_method"=x@rank_aggregation_method),
+                                                 x=x_sub)
+    }
+    
     # Generate plot
     p <- .create_feature_rank_plot(x=x_sub,
                                    type=type,
@@ -467,21 +479,13 @@ plot_model_signature_variable_importance <- function(...){
     
     # Save and export
     if(!is.null(dir_path)){
-      subtype_basis <- ifelse(type == "feature_selection",
-                              "feature_selection",
-                              "learner")
-      
-      # Save to file
-      if(!is.null(split_by)){
-        subtype <- c(subtype_basis,
-                     paste0(sapply(split_by, function(ii, x) (x[[ii]][1]), x=x_sub), collapse="_"))
-        
-      } else {
-        subtype <- subtype_basis
-      }
-      
-      # Add aggregation method to subtype.
-      subtype <- paste(c(subtype, x@rank_aggregation_method), collapse="_")
+      # Set subtype.
+      subtype <- plotting.create_subtype(x=x_sub,
+                                         subtype=ifelse(type == "feature_selection",
+                                                        "feature_selection",
+                                                        "learner"),
+                                         additional=list("aggregation_method"=x@rank_aggregation_method),
+                                         split_by=split_by)
       
       # Obtain decent default values for the plot.
       def_plot_dims <- .determine_feature_ranking_plot_dimensions(x=x_sub,
