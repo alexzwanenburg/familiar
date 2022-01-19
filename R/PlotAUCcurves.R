@@ -639,6 +639,15 @@ setMethod("plot_auc_precision_recall_curve", signature(object="familiarCollectio
     # Skip empty datasets
     if(is_empty(x_split[[ii]])) next()
     
+    if(is.waive(plot_title)) plot_title <- ifelse(curve_type == "roc",
+                                                  "Receiver operating characteristic curve",
+                                                  "Precision-recall curve")
+    
+    if(is.waive(plot_sub_title)){
+      plot_sub_title <- plotting.create_subtitle(split_by=split_by,
+                                                 x=x_split[[ii]])
+    }
+    
     # Generate plot
     p <- ..plot_auc_curve(x=x_split[[ii]],
                           color_by=color_by,
@@ -669,13 +678,9 @@ setMethod("plot_auc_precision_recall_curve", signature(object="familiarCollectio
     if(!is.null(dir_path)){
       
       # Set subtype.
-      subtype <- paste0("auc_", curve_type)
-      
-      # Determine the subtype
-      if(!is.null(split_by)){
-        subtype <- c(subtype, as.character(sapply(split_by, function(jj, x) (x[[jj]][1]), x=x_split[[ii]])))
-        subtype <- paste0(subtype, collapse="_")
-      }
+      subtype <- plotting.create_subtype(x=x_split[[ii]],
+                                         subtype=paste0("auc_", curve_type),
+                                         split_by=split_by)
       
       # Obtain decent default values for the plot.
       def_plot_dims <- .determine_auc_roc_plot_dimensions(x=x_split[[ii]],
@@ -684,19 +689,19 @@ setMethod("plot_auc_precision_recall_curve", signature(object="familiarCollectio
       
       # Save to file.
       do.call(plotting.save_plot_to_file,
-              args=append(list("plot_obj"=p,
-                               "object"=object,
-                               "dir_path"=dir_path,
-                               "type"="performance",
-                               "subtype"=subtype,
-                               "height"=ifelse(is.waive(height), def_plot_dims[1], height),
-                               "width"=ifelse(is.waive(width), def_plot_dims[2], width),
-                               "units"=ifelse(is.waive(units), "cm", units)),
-                          list(...)))
+              args=c(list("plot_obj"=p,
+                          "object"=object,
+                          "dir_path"=dir_path,
+                          "type"="performance",
+                          "subtype"=subtype,
+                          "height"=ifelse(is.waive(height), def_plot_dims[1], height),
+                          "width"=ifelse(is.waive(width), def_plot_dims[2], width),
+                          "units"=ifelse(is.waive(units), "cm", units)),
+                     list(...)))
       
     } else {
       # Store as list for export.
-      plot_list <- append(plot_list, list(p))
+      plot_list <- c(plot_list, list(p))
     }
   }
   
