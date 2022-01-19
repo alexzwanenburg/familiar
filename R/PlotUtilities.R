@@ -278,6 +278,60 @@ plotting.parse_facet_by <- function(x, facet_by, facet_wrap_cols){
 }
 
 
+plotting.create_subtitle <- function(x, split_by=NULL){
+  
+  # Do not create a subtitle if there is no subtitle to be created.
+  if(is.null(split_by)) return(NULL)
+  
+  # Generate subtitle from splitting variables and data.
+  subtitle <- sapply(split_by, function(jj, x){
+    split_variable_name <- jj
+    
+    if(split_variable_name == "fs_method"){
+      split_variable_name <- "VIMP method"
+      
+    } else if(split_variable_name == "data_set"){
+      split_variable_name <- "data set"
+      
+    } else if(split_variable_name == "evaluation_time"){
+      split_variable_name <- "time point"
+    }
+    
+    # Remove all underscores.
+    split_variable_name <- stringi::stri_replace_all_fixed("split_variable_name", pattern="_", replacement=" ")
+    
+    # Parse to an elementary string.
+    split_variable_name <- paste0(split_variable_name, ": ", x[[jj]][1])
+    
+    return(split_variable_name)
+  },
+  x=x)
+  
+  # Combine into single string.
+  subtitle <- paste_s(subtitle)
+  
+  return(subtitle)
+}
+
+
+plotting.create_subtype <- function(x, subtype=NULL, split_by=NULL){
+  
+  # Do not specify additional subtype terms if there is no subtype to be
+  # created.
+  if(is.null(split_by)) return(subtype)
+  
+  # Generate additional terms for the subtype.
+  subtype <- c(subtype,
+               as.character(sapply(split_by, function(jj, x) (x[[jj]][1]), x=x)))
+  
+  
+  # Combine into a single string.
+  subtype <- paste0(subtype, collapse="_")
+  
+  return(subtype)
+}
+
+
 plotting.add_cluster_name <- function(x, color_by=NULL, facet_by=NULL, singular_cluster_character="\u2014"){
   
   # Suppress NOTES due to non-standard evaluation in data.table
