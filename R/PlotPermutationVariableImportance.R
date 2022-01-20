@@ -103,8 +103,8 @@ setGeneric("plot_permutation_variable_importance",
                     x_label=waiver(),
                     y_label="feature",
                     legend_label=waiver(),
-                    plot_title=NULL,
-                    plot_sub_title=NULL,
+                    plot_title=waiver(),
+                    plot_sub_title=waiver(),
                     caption=NULL,
                     x_range=NULL,
                     x_n_breaks=5,
@@ -132,8 +132,8 @@ setMethod("plot_permutation_variable_importance", signature(object="ANY"),
                    x_label=waiver(),
                    y_label="feature",
                    legend_label=waiver(),
-                   plot_title=NULL,
-                   plot_sub_title=NULL,
+                   plot_title=waiver(),
+                   plot_sub_title=waiver(),
                    caption=NULL,
                    x_range=NULL,
                    x_n_breaks=5,
@@ -192,8 +192,8 @@ setMethod("plot_permutation_variable_importance", signature(object="familiarColl
                    x_label=waiver(),
                    y_label="feature",
                    legend_label=waiver(),
-                   plot_title=NULL,
-                   plot_sub_title=NULL,
+                   plot_title=waiver(),
+                   plot_sub_title=waiver(),
                    caption=NULL,
                    x_range=NULL,
                    x_n_breaks=5,
@@ -326,7 +326,7 @@ setMethod("plot_permutation_variable_importance", signature(object="familiarColl
                     
                   } else {
                     legend_label$guide_color <- sub(pattern="similarity threshold",
-                                                    replacement=paste0(x@similarity_metric, " threshold"),
+                                                    replacement="threshold",
                                                     x=legend_label$guide_color,
                                                     fixed=TRUE)
                   }
@@ -504,6 +504,9 @@ setMethod("plot_permutation_variable_importance", signature(object="familiarColl
             
             ##### Create plots #################################################
             
+            # Determine if subtitle should be generated.
+            autogenerate_plot_subtitle <- is.waive(plot_sub_title)
+            
             # Split data
             if(!is.null(split_by)){
               x_split <- split(x@data, by=split_by)
@@ -522,6 +525,14 @@ setMethod("plot_permutation_variable_importance", signature(object="familiarColl
               
               # Check that the table contains finite values.
               if(all(is.na(x_sub$value))) next()
+              
+              if(is.waive(plot_title)) plot_title <- "Permutation variable importance"
+              
+              if(autogenerate_plot_subtitle){
+                plot_sub_title <- plotting.create_subtitle(split_by=split_by,
+                                                           additional=list("similarity metric"=x@similarity_metric),
+                                                           x=x_sub)
+              }
               
               # Generate plot
               p <- .plot_permutation_variable_importance(x=x_sub,
@@ -549,12 +560,10 @@ setMethod("plot_permutation_variable_importance", signature(object="familiarColl
               
               # Save and export
               if(!is.null(dir_path)){
-                # Save to file
-                if(!is.null(split_by)){
-                  subtype <- paste0("permutation_", paste0(sapply(split_by, function(ii, x) (x[[ii]][1]), x=x_sub), collapse="_"))
-                } else {
-                  subtype <- "permutation"
-                }
+                # Set subtype.
+                subtype <- plotting.create_subtype(x=x_sub,
+                                                   subtype="permutation",
+                                                   split_by=split_by)
                 
                 # Obtain decent default values for the plot.
                 def_plot_dims <- .determine_permutation_importance_plot_dimensions(x=x_sub,
@@ -575,7 +584,7 @@ setMethod("plot_permutation_variable_importance", signature(object="familiarColl
                 
               } else {
                 # Store as list and export
-                plot_list <- append(plot_list, list(p))
+                plot_list <- c(plot_list, list(p))
               }
             }
             
@@ -755,20 +764,15 @@ setMethod("plot_permutation_variable_importance", signature(object="familiarColl
       ..error_reached_unreachable_code(".plot_permutation_variable_importance: unknown confidence interval style.")
     }
     
-    # Flip coordinates and add theme.
-    p <- p + ggplot2::coord_flip()
-    p <- p + ggtheme
-    
   } else {
     
     # Basic plot.
     p <- ggplot2::ggplot(data=x, mapping=ggplot2::aes(x=!!sym("feature"),
                                                       y=!!sym("value")))
-    
-    p <- p + ggplot2::coord_flip()
-    p <- p + ggtheme
   }
   
+  # Add theme.
+  p <- p + ggtheme
   
   # Add main plotting elements.
   if(conf_int_style %in% c("bar_line")){
@@ -805,9 +809,9 @@ setMethod("plot_permutation_variable_importance", signature(object="familiarColl
   x_range <- c(x_range[[available_metric]]$min_value,
                x_range[[available_metric]]$max_value)
   
-  p <- p + ggplot2::scale_y_continuous(breaks=x_breaks[[available_metric]],
-                                       limits=x_range)
-  
+  p <- p + ggplot2::scale_y_continuous(breaks=x_breaks[[available_metric]])
+  p <- p + ggplot2::coord_flip(ylim=x_range)
+
   # Determine how things are faceted.
   facet_by_list <- plotting.parse_facet_by(x=x,
                                            facet_by=facet_by,
