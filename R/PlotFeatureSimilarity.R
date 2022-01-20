@@ -364,7 +364,7 @@ setMethod("plot_feature_similarity", signature(object="familiarCollection"),
               
               if(autogenerate_plot_subtitle){
                 plot_sub_title <- plotting.create_subtitle(split_by=split_by,
-                                                           additional=list("similarity metric"=x@similarity_metric),
+                                                           additional=list("metric"=x@similarity_metric),
                                                            x=x_sub)
               }
               

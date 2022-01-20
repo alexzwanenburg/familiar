@@ -159,8 +159,8 @@ setGeneric("plot_sample_clustering",
                     y_label_shared="row",
                     legend_label=waiver(),
                     outcome_legend_label=waiver(),
-                    plot_title=NULL,
-                    plot_sub_title=NULL,
+                    plot_title=waiver(),
+                    plot_sub_title=waiver(),
                     caption=NULL,
                     x_range=NULL,
                     x_n_breaks=3,
@@ -210,8 +210,8 @@ setMethod("plot_sample_clustering", signature(object="ANY"),
                    y_label_shared="row",
                    legend_label=waiver(),
                    outcome_legend_label=waiver(),
-                   plot_title=NULL,
-                   plot_sub_title=NULL,
+                   plot_title=waiver(),
+                   plot_sub_title=waiver(),
                    caption=NULL,
                    x_range=NULL,
                    x_n_breaks=3,
@@ -320,8 +320,8 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
                    y_label_shared="row",
                    legend_label=waiver(),
                    outcome_legend_label=waiver(),
-                   plot_title=NULL,
-                   plot_sub_title=NULL,
+                   plot_title=waiver(),
+                   plot_sub_title=waiver(),
                    caption=NULL,
                    x_range=NULL,
                    x_n_breaks=3,
@@ -612,6 +612,9 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
             
             ##### Create plots -------------------------------------------------
             
+            # Determine if subtitle should be generated.
+            autogenerate_plot_subtitle <- is.waive(plot_sub_title)
+            
             # Split data.
             if(!is.null(split_by)){
               x_split <- split(identifier_table, by=split_by, drop=FALSE)
@@ -646,7 +649,16 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
                                                          sample_similarity,
                                                          data=sample_similarity@data[x_sub, on=.NATURAL, nomatch=NULL])
               } 
-
+              
+              if(is.waive(plot_title)) plot_title <- "Sample clustering"
+              
+              if(autogenerate_plot_subtitle){
+                plot_sub_title <- plotting.create_subtitle(split_by=split_by,
+                                                           additional=list("metric (features)"=feature_similarity_split@similarity_metric,
+                                                                           "metric (samples)"=sample_similarity_split@similarity_metric),
+                                                           x=x_sub)
+              }
+              
               # Generate plot
               p <- .plot_sample_clustering_plot(x=x_sub,
                                                 data=feature_expression_split,
@@ -694,14 +706,9 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
               # Save and export
               if(!is.null(dir_path)){
                 
-                # Add plot type as a subtype.
-                subtype <- NULL
-                
-                # Determine the subtype
-                if(!is.null(split_by)){
-                  subtype <- paste0(as.character(sapply(split_by, function(jj, x) (x[[jj]][1]), x=x_sub)),
-                                    collapse="_")
-                }
+                # Set subtype.
+                subtype <- plotting.create_subtype(x=x_sub,
+                                                   split_by=split_by)
                 
                 # Find unique features
                 features <- lapply(feature_expression_split, function(x) (x@value_column))
@@ -728,7 +735,7 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
                         args=c(list("plot_obj"=p,
                                     "object"=object,
                                     "dir_path"=dir_path,
-                                    "type"="feature_expression",
+                                    "type"="sample_clustering",
                                     "subtype"=subtype,
                                     "height"=ifelse(is.waive(height), def_plot_dims[1], height),
                                     "width"=ifelse(is.waive(width), def_plot_dims[2], width),
