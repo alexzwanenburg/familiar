@@ -349,6 +349,9 @@ setMethod(".predict", signature(object="familiarModel"),
                    stratification_method=NULL,
                    ...) {
             
+            # Suppress NOTES due to non-standard evaluation in data.table
+            .NATURAL <- NULL
+            
             # Prepare input data
             data <- process_input_data(object=object,
                                        data=data,
@@ -385,8 +388,7 @@ setMethod(".predict", signature(object="familiarModel"),
               
               # Predict instance novelty.
               prediction_table <- .predict_novelty(object=object,
-                                                   data=data,
-                                                   type=type)
+                                                   data=data)
               
               # Keep only model features in data for the remaining analysis.
               data <- select_features(data=data,
@@ -413,9 +415,7 @@ setMethod(".predict", signature(object="familiarModel"),
                 prediction_table <- temp_prediction_table
                 
               } else if(!is_empty(temp_prediction_table)){
-                prediction_table <- merge(x=prediction_table,
-                                          y=unique(temp_prediction_table),
-                                          by=get_non_feature_columns(x=object))
+                prediction_table <- prediction_table[unique(temp_prediction_table), on=.NATURAL]
               }
             }
             
@@ -433,9 +433,7 @@ setMethod(".predict", signature(object="familiarModel"),
                 
               } else if(!is_empty(temp_prediction_table)){
                 # Merge with the prediction table
-                prediction_table <- merge(x=prediction_table,
-                                          y=unique(temp_prediction_table),
-                                          by=get_non_feature_columns(x=object))
+                prediction_table <- prediction_table[unique(temp_prediction_table), on=.NATURAL]
               }
             }
             
@@ -454,9 +452,7 @@ setMethod(".predict", signature(object="familiarModel"),
                 prediction_table <- temp_prediction_table
                 
               } else if(!is_empty(temp_prediction_table)){
-                prediction_table <- merge(x=prediction_table,
-                                          y=unique(temp_prediction_table),
-                                          by=get_non_feature_columns(x=object))
+                prediction_table <- prediction_table[unique(temp_prediction_table), on=.NATURAL]
               }
             }
             
@@ -514,7 +510,6 @@ setMethod(".predict", signature(object="character"),
 #####.predict_novelty (familiarModel)#####
 setMethod(".predict_novelty", signature(object="familiarModel"),
           function(object, data, type="novelty", is_pre_processed=FALSE, ...){
-            
             return(.predict(object=object@novelty_detector,
                             data=data,
                             type=type,
