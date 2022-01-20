@@ -3082,7 +3082,7 @@ test_plots <- function(plot_function,
                                                  ...)
     
     test_fun(paste0("2E. Plots for ", outcome_type, " outcomes ",
-                    ifelse(outcome_type %in% outcome_type_available & !.except_one_sample, "can", "cannot"),
+                    ifelse(outcome_type %in% outcome_type_available, "can", "cannot"),
                     " be created for a prospective, bootstrapped, data set."), {
                       
                       object <- list(data_bootstrapped_full_1)
@@ -3094,14 +3094,11 @@ test_plots <- function(plot_function,
                       plot_list <- do.call(plot_function, args=c(list("object"=collection), plot_args))
                       which_present <- .test_which_plot_present(plot_list)
                       
-                      if(outcome_type %in% outcome_type_available & !.except_one_sample){
-                        testthat::expect_equal(all(which_present), TRUE) 
-                        
-                      } else if(!outcome_type %in% outcome_type_available){
-                        testthat::expect_equal(all(!which_present), TRUE)
+                      if(outcome_type %in% outcome_type_available){
+                        testthat::expect_equal(all(which_present), TRUE)
                         
                       } else {
-                        testthat::expect_equal(any(!which_present), TRUE)
+                        testthat::expect_equal(all(!which_present), TRUE)
                       }
                     })
     
