@@ -453,6 +453,9 @@ setMethod("plot_calibration_data", signature(object="familiarCollection"),
             
             ##### Create plots ###############################################
             
+            # Determine if subtitle should be generated.
+            autogenerate_plot_subtitle <- is.waive(plot_sub_title)
+            
             # Split data and supporting data.
             if(!is.null(split_by)){
               data_split <- split(unique(calibration_data[, mget(split_by)]), by=split_by, drop=TRUE)
@@ -500,7 +503,7 @@ setMethod("plot_calibration_data", signature(object="familiarCollection"),
               
               if(is.waive(plot_title)) plot_title <- "Calibration plot"
               
-              if(is.waive(plot_sub_title)){
+              if(autogenerate_plot_subtitle){
                 plot_sub_title <- plotting.create_subtitle(split_by=split_by,
                                                            x=current_split)
               }

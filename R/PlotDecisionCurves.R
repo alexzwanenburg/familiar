@@ -418,6 +418,9 @@ setMethod("plot_decision_curve", signature(object="familiarCollection"),
             
             ##### Create plots ---------------------------------------------------------
             
+            # Determine if subtitle should be generated.
+            autogenerate_plot_subtitle <- is.waive(plot_sub_title)
+            
             # Split data
             if(!is.null(split_by)){
               x_split <- split(x@data, by=split_by)
@@ -437,7 +440,7 @@ setMethod("plot_decision_curve", signature(object="familiarCollection"),
               
               if(is.waive(plot_title)) plot_title <- "Decision curve"
               
-              if(is.waive(plot_sub_title)){
+              if(autogenerate_plot_subtitle){
                 plot_sub_title <- plotting.create_subtitle(split_by=split_by,
                                                            x=x_split[[ii]])
               }

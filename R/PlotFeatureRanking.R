@@ -423,6 +423,11 @@ plot_model_signature_variable_importance <- function(...){
                             y_range=y_range,
                             y_breaks=y_breaks)
   
+  ##### Create plots -----------------------------------------------------------
+  
+  # Determine if subtitle should be generated.
+  autogenerate_plot_subtitle <- is.waive(plot_sub_title)
+  
   # Split data
   if(!is.null(split_by)){
     x_split <- split(x@data, by=split_by)
@@ -444,7 +449,7 @@ plot_model_signature_variable_importance <- function(...){
                            "Model-based variable importance")
     } 
     
-    if(is.waive(plot_sub_title)){
+    if(autogenerate_plot_subtitle){
       plot_sub_title <- plotting.create_subtitle(split_by=split_by,
                                                  additional=list("aggregation_method"=x@rank_aggregation_method),
                                                  x=x_sub)
