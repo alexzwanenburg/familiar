@@ -84,7 +84,7 @@ setMethod("show", signature(object="familiarNoveltyDetector"),
               message_str <- paste0(c(message_str, ".\n"), collapse="")
               cat(message_str)
               
-              cat(paste0("\n--------------- Detector details ---------------"))
+              cat(paste0("\n--------------- Detector details ---------------\n"))
               
               # Model details
               if(object@is_trimmed){
