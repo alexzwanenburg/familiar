@@ -94,7 +94,7 @@ setMethod(".train_novelty_detector", signature(object="familiarModel", data="dat
                    is_pre_processed=FALSE,
                    trim_model=TRUE,
                    ...) {
-            # Train method for model training
+            # Train method for novelty detectors.
             
             # Check if the class of object is a subclass of familiarModel.
             if(!is_subclass(class(object)[1], "familiarModel")) object <- promote_learner(object)
@@ -108,9 +108,11 @@ setMethod(".train_novelty_detector", signature(object="familiarModel", data="dat
                                          run_table=object@run_table,
                                          project_id=object@project_id)
             
+            # Promote to the correct type of detector.
+            fam_detector <- promote_detector(object=fam_detector)
+            
             # Optimise hyperparameters if they were not previously set.
-            if(!has_optimised_hyperparameters(object=object)){
-              browser()
+            if(!has_optimised_hyperparameters(object=fam_detector)){
               fam_detector <- optimise_hyperparameters(object=fam_detector,
                                                        data=data,
                                                        ...)
@@ -151,7 +153,7 @@ setMethod("show", signature(object="familiarModel"),
               message_str <- paste0(c(message_str, ".\n"), collapse="")
               cat(message_str)
               
-              cat(paste0("\n--------------- Model details ---------------"))
+              cat(paste0("\n--------------- Model details ---------------\n"))
               
               # Model details
               if(object@is_trimmed){
