@@ -885,8 +885,8 @@ setMethod("plot_calibration_data", signature(object="familiarCollection"),
   }
   
   # Set breaks and  limits on the x and y-axis
-  p <- p + ggplot2::scale_x_continuous(breaks=x_breaks, limits=x_range)
-  p <- p + ggplot2::scale_y_continuous(breaks=y_breaks, limits=y_range)
+  p <- p + ggplot2::scale_x_continuous(breaks=x_breaks)
+  p <- p + ggplot2::scale_y_continuous(breaks=y_breaks)
   
   # Determine how things are facetted
   facet_by_list <- plotting.parse_facet_by(x=x,
@@ -1001,7 +1001,8 @@ setMethod("plot_calibration_data", signature(object="familiarCollection"),
                          caption=caption)
   
   # Prevent clipping of confidence intervals.
-  p <- p + ggplot2::coord_cartesian()
+  p <- p + ggplot2::coord_cartesian(xlim=x_range,
+                                    ylim=y_range)
   
   return(p)
 }

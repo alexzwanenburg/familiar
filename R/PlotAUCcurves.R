@@ -814,8 +814,8 @@ setMethod("plot_auc_precision_recall_curve", signature(object="familiarCollectio
   }
   
   # Update x and y scales
-  p <- p + ggplot2::scale_x_continuous(breaks=x_breaks, limits=x_range)
-  p <- p + ggplot2::scale_y_continuous(breaks=y_breaks, limits=y_range)
+  p <- p + ggplot2::scale_x_continuous(breaks=x_breaks)
+  p <- p + ggplot2::scale_y_continuous(breaks=y_breaks)
   
   # Labels
   p <- p + ggplot2::labs(x=x_label,
@@ -845,7 +845,7 @@ setMethod("plot_auc_precision_recall_curve", signature(object="familiarCollectio
   }
   
   # Prevent removal of data outside or on plot limits.
-  p <- p + ggplot2::coord_cartesian()
+  p <- p + ggplot2::coord_cartesian(xlim=x_range, ylim=y_range)
   
   return(p)
 }
