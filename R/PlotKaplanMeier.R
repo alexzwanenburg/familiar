@@ -98,8 +98,8 @@ setGeneric("plot_kaplan_meier",
                     y_label="survival probability",
                     y_label_shared="row",
                     legend_label=waiver(),
-                    plot_title=NULL,
-                    plot_sub_title=NULL,
+                    plot_title=waiver(),
+                    plot_sub_title=waiver(),
                     caption=NULL,
                     x_range=NULL,
                     x_n_breaks=5,
@@ -140,8 +140,8 @@ setMethod("plot_kaplan_meier", signature(object="ANY"),
                    y_label="survival probability",
                    y_label_shared="row",
                    legend_label=waiver(),
-                   plot_title=NULL,
-                   plot_sub_title=NULL,
+                   plot_title=waiver(),
+                   plot_sub_title=waiver(),
                    caption=NULL,
                    x_range=NULL,
                    x_n_breaks=5,
@@ -225,8 +225,8 @@ setMethod("plot_kaplan_meier", signature(object="familiarCollection"),
                    y_label="survival probability",
                    y_label_shared="row",
                    legend_label=waiver(),
-                   plot_title=NULL,
-                   plot_sub_title=NULL,
+                   plot_title=waiver(),
+                   plot_sub_title=waiver(),
                    caption=NULL,
                    x_range=NULL,
                    x_n_breaks=5,
@@ -400,6 +400,9 @@ setMethod("plot_kaplan_meier", signature(object="familiarCollection"),
             
             ##### Create plots ###############################################
             
+            # Determine if subtitle should be generated.
+            autogenerate_plot_subtitle <- is.waive(plot_sub_title)
+            
             # Split data and supporting data.
             if(!is.null(split_by)){
               data_split <- split(unique(x@data[, mget(split_by)]), by=split_by, drop=TRUE)
@@ -425,6 +428,15 @@ setMethod("plot_kaplan_meier", signature(object="familiarCollection"),
               
               if(is_empty(x_split)) next()
               if(!any_predictions_valid(x_split@data, outcome_type="survival")) return(NULL)
+              
+              if(is.waive(plot_title)){
+                plot_title <- "Kaplan-Meier survival curve"
+              }
+              
+              if(autogenerate_plot_subtitle){
+                plot_sub_title <- plotting.create_subtitle(split_by=split_by,
+                                                           x=current_split)
+              }
               
               # Create plot
               p <- .plot_kaplan_meier(x=x_split,
@@ -463,13 +475,9 @@ setMethod("plot_kaplan_meier", signature(object="familiarCollection"),
               # Save and export
               if(!is.null(dir_path)){
                 
-                # Determine the subtype
-                if(!is.null(split_by)){
-                  subtype <- paste0(sapply(split_by, function(jj, x) (x[[jj]][1]), x=current_split), collapse="_")
-                } else {
-                  subtype <- NULL
-                }
-                
+                # Set subtype.
+                subtype <- plotting.create_subtype(x=current_split,
+                                                   split_by=split_by)
                 # Obtain default plot dimensions
                 def_plot_dims <- .determine_km_plot_default_dimensions(x=x_split@data,
                                                                        facet_by=facet_by,
@@ -829,8 +837,8 @@ setMethod("plot_kaplan_meier", signature(object="familiarCollection"),
   }
   
   # Update x and y scales
-  p <- p + ggplot2::scale_x_continuous(breaks=x_breaks, limits=x_range)
-  p <- p + ggplot2::scale_y_continuous(breaks=y_breaks, limits=y_range)
+  p <- p + ggplot2::scale_x_continuous(breaks=x_breaks)
+  p <- p + ggplot2::scale_y_continuous(breaks=y_breaks)
   
   # Labels
   p <- p + ggplot2::labs(x=x_label,
@@ -839,7 +847,7 @@ setMethod("plot_kaplan_meier", signature(object="familiarCollection"),
                          subtitle=plot_sub_title,
                          caption=caption)
   
-  # Determine how things are facetted
+  # Determine how things are facetted.
   facet_by_list <- plotting.parse_facet_by(x=x,
                                            facet_by=facet_by,
                                            facet_wrap_cols=facet_wrap_cols)
@@ -857,6 +865,9 @@ setMethod("plot_kaplan_meier", signature(object="familiarCollection"),
                                    drop=TRUE)
     }
   }
+  
+  # Plot to Cartesian coordinates.
+  p <- p + ggplot2::coord_cartesian(xlim=x_range, ylim=y_range)
   
   return(p)
 }
