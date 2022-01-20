@@ -342,8 +342,8 @@ setGeneric("plot_pd",
                     x_label=waiver(),
                     y_label=waiver(),
                     legend_label=waiver(),
-                    plot_title=NULL,
-                    plot_sub_title=NULL,
+                    plot_title=waiver(),
+                    plot_sub_title=waiver(),
                     caption=NULL,
                     x_range=NULL,
                     x_n_breaks=5,
@@ -382,8 +382,8 @@ setMethod("plot_pd", signature(object="ANY"),
                    x_label=waiver(),
                    y_label=waiver(),
                    legend_label=waiver(),
-                   plot_title=NULL,
-                   plot_sub_title=NULL,
+                   plot_title=waiver(),
+                   plot_sub_title=waiver(),
                    caption=NULL,
                    x_range=NULL,
                    x_n_breaks=5,
@@ -466,8 +466,8 @@ setMethod("plot_ice", signature(object="familiarCollection"),
                    x_label=waiver(),
                    y_label=waiver(),
                    legend_label=waiver(),
-                   plot_title=NULL,
-                   plot_sub_title=NULL,
+                   plot_title=waiver(),
+                   plot_sub_title=waiver(),
                    caption=NULL,
                    x_range=NULL,
                    x_n_breaks=5,
@@ -828,7 +828,10 @@ setMethod("plot_ice", signature(object="familiarCollection"),
             }
 
             
-            ##### Create plots ---------------------------------------------------------
+            ##### Create plots -------------------------------------------------
+            
+            # Determine if subtitle should be generated.
+            autogenerate_plot_subtitle <- is.waive(plot_sub_title)
             
             # Split data
             if(!is.null(split_by)){
@@ -846,6 +849,17 @@ setMethod("plot_ice", signature(object="familiarCollection"),
               
               # Skip empty datasets
               if(is_empty(x_split[[ii]])) next()
+              
+              if(is.waive(plot_title)){
+                plot_title <- ifelse(show_ice,
+                                     "Individual conditional expectation",
+                                     "Partial dependence")
+              }
+              
+              if(autogenerate_plot_subtitle){
+                plot_sub_title <- plotting.create_subtitle(split_by=split_by,
+                                                           x=x_split[[ii]])
+              }
               
               # Generate plot
               p <- .plot_ice(x=x_split[[ii]],
@@ -893,14 +907,14 @@ setMethod("plot_ice", signature(object="familiarCollection"),
               # Save and export
               if(!is.null(dir_path)){
                 
+                # Set initial subtype.
                 subtype <- ifelse(show_ice, "ice", "pd")
                 if(show_2d) subtype <- c(subtype, "2d")
                 
-                # Determine the subtype
-                if(!is.null(split_by)){
-                  subtype <- c(subtype, as.character(sapply(split_by, function(jj, x) (x[[jj]][1]), x=x_split[[ii]])))
-                }
-                subtype <- paste0(subtype, collapse="_")
+                # Set subtype.
+                subtype <- plotting.create_subtype(x=x_split[[ii]],
+                                                   subtype=subtype,
+                                                   split_by=split_by)
                 
                 # Obtain decent default values for the plot.
                 def_plot_dims <- .determine_ice_plot_dimensions(x=x_split[[ii]],
@@ -1465,8 +1479,8 @@ setMethod("plot_ice", signature(object="familiarCollection"),
   }
   
   # Update x and y scales
-  if(!is.null(x_range)) p <- p + ggplot2::scale_x_continuous(breaks=x_breaks, limits=x_range)
-  if(!is.null(y_range)) p <- p + ggplot2::scale_y_continuous(breaks=y_breaks, limits=y_range)
+  if(!is.null(x_range)) p <- p + ggplot2::scale_x_continuous(breaks=x_breaks)
+  if(!is.null(y_range)) p <- p + ggplot2::scale_y_continuous(breaks=y_breaks)
   
   # Plot confidence intervals.
   if(conf_int_style[1]!="none"){
@@ -1546,6 +1560,9 @@ setMethod("plot_ice", signature(object="familiarCollection"),
                          title=plot_title,
                          subtitle=plot_sub_title,
                          caption=caption)
+  
+  # Plot to Cartesian coordinates.
+  p <- p + ggplot2::coord_cartesian(xlim=x_range, ylim=y_range)
   
   # Rotate x-axis ticks
   # if(rotate_x_tick_labels){
@@ -1775,8 +1792,8 @@ setMethod("plot_ice", signature(object="familiarCollection"),
                                          limits=value_range)
   
   # Update x and y scales
-  if(!is.null(x_range)) p <- p + ggplot2::scale_x_continuous(breaks=x_breaks, limits=x_range)
-  if(!is.null(y_range)) p <- p + ggplot2::scale_y_continuous(breaks=y_breaks, limits=y_range)
+  if(!is.null(x_range)) p <- p + ggplot2::scale_x_continuous(breaks=x_breaks)
+  if(!is.null(y_range)) p <- p + ggplot2::scale_y_continuous(breaks=y_breaks)
   
   # Determine how things are facetted.
   facet_by_list <- plotting.parse_facet_by(x=plot_data, 
@@ -1802,6 +1819,9 @@ setMethod("plot_ice", signature(object="familiarCollection"),
                          title=plot_title,
                          subtitle=plot_sub_title,
                          caption=caption)
+  
+  # Plot to Cartesian coordinates.
+  p <- p + ggplot2::coord_cartesian(xlim=x_range, ylim=y_range)
   
   # Rotate x-axis ticks
   # if(rotate_x_tick_labels){
