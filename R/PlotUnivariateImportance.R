@@ -104,8 +104,8 @@ setGeneric("plot_univariate_importance",
                     x_label=waiver(),
                     y_label="feature",
                     legend_label=waiver(),
-                    plot_title=NULL,
-                    plot_sub_title=NULL,
+                    plot_title=waiver(),
+                    plot_sub_title=waiver(),
                     caption=NULL,
                     x_range=NULL,
                     x_n_breaks=5,
@@ -140,8 +140,8 @@ setMethod("plot_univariate_importance", signature(object="ANY"),
                    x_label=waiver(),
                    y_label="feature",
                    legend_label=waiver(),
-                   plot_title=NULL,
-                   plot_sub_title=NULL,
+                   plot_title=waiver(),
+                   plot_sub_title=waiver(),
                    caption=NULL,
                    x_range=NULL,
                    x_n_breaks=5,
@@ -220,8 +220,8 @@ setMethod("plot_univariate_importance", signature(object="familiarCollection"),
                    x_label=waiver(),
                    y_label="feature",
                    legend_label=waiver(),
-                   plot_title=NULL,
-                   plot_sub_title=NULL,
+                   plot_title=waiver(),
+                   plot_sub_title=waiver(),
                    caption=NULL,
                    x_range=NULL,
                    x_n_breaks=5,
@@ -384,6 +384,9 @@ setMethod("plot_univariate_importance", signature(object="familiarCollection"),
             
             ##### Create plots #################################################
             
+            # Determine if subtitle should be generated.
+            autogenerate_plot_subtitle <- is.waive(plot_sub_title)
+            
             # Split data
             if(!is.null(split_by)){
               x_split <- split(x@data, by=split_by)
@@ -417,6 +420,13 @@ setMethod("plot_univariate_importance", signature(object="familiarCollection"),
                 x_sub <- x_temporary
               }
               
+              if(is.waive(plot_title)) plot_title <- "Univariate variable importance"
+              
+              if(autogenerate_plot_subtitle){
+                plot_sub_title <- plotting.create_subtitle(split_by=split_by,
+                                                           x=x_sub)
+              }
+              
               # Generate plot
               p <- .plot_univariate_importance(x=x_sub,
                                                color_by=color_by,
@@ -444,12 +454,11 @@ setMethod("plot_univariate_importance", signature(object="familiarCollection"),
               
               # Save and export
               if(!is.null(dir_path)){
-                # Save to file
-                if(!is.null(split_by)){
-                  subtype <- paste0("univariate_", paste0(sapply(split_by, function(ii, x) (x[[ii]][1]), x=x_sub), collapse="_"))
-                } else {
-                  subtype <- "univariate"
-                }
+                
+                # Set subtype.
+                subtype <- plotting.create_subtype(x=x_sub,
+                                                   subtype="univariate",
+                                                   split_by=split_by)
                 
                 # Obtain decent default values for the plot.
                 def_plot_dims <- .determine_univariate_importance_plot_dimensions(x=x_sub,
@@ -539,7 +548,6 @@ setMethod("plot_univariate_importance", signature(object="familiarCollection"),
   # Create basic plot
   p <- ggplot2::ggplot(data=x,
                        mapping=ggplot2::aes(x=!!sym("feature"), y=!!sym("log_value")))
-  p <- p + ggplot2::coord_flip()
   p <- p + ggtheme
   
   # Add fill colors
@@ -572,10 +580,10 @@ setMethod("plot_univariate_importance", signature(object="familiarCollection"),
   }
 
   # Set breaks and limits
-  p <- p + ggplot2::scale_y_continuous(breaks=x_breaks,
-                                       limits=x_range)
+  p <- p + ggplot2::scale_y_continuous(breaks=x_breaks)
+  p <- p + ggplot2::coord_flip(ylim=x_range)
   
-  # Determine how things are facetted
+  # Determine how things are faceted.
   facet_by_list <- plotting.parse_facet_by(x=x,
                                            facet_by=facet_by,
                                            facet_wrap_cols=facet_wrap_cols)
