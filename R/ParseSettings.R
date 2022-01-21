@@ -2875,8 +2875,7 @@
 #'  * `bootstrap_confidence_interval` or `bci` (default): Bias-corrected
 #'  estimates with bootstrap confidence intervals (Efron and Hastie, 2016). The
 #'  number of point estimates required depends on the `confidence_level`
-#'  parameter, and `familiar` may bootstrap the data to create them. In some
-#'  cases no bootstrap data
+#'  parameter, and `familiar` may bootstrap the data to create them.
 #'
 #'  As with `detail_level`, a non-default `estimation_type` parameter can be
 #'  specified for separate evaluation steps by providing a parameter value in a

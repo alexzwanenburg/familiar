@@ -243,8 +243,7 @@ bootstrap the data to create them.
 \item \code{bootstrap_confidence_interval} or \code{bci} (default): Bias-corrected
 estimates with bootstrap confidence intervals (Efron and Hastie, 2016). The
 number of point estimates required depends on the \code{confidence_level}
-parameter, and \code{familiar} may bootstrap the data to create them. In some
-cases no bootstrap data
+parameter, and \code{familiar} may bootstrap the data to create them.
 }
 
 As with \code{detail_level}, a non-default \code{estimation_type} parameter can be
