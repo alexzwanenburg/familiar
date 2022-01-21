@@ -1,4 +1,59 @@
-####familiarModel####
+#### familiarModel -------------------------------------------------------------
+
+#' Familiar model.
+#'
+#' A familiarModel object is a self-contained model that can be applied to
+#' generate predictions for a dataset. familiarModel objects form the parent
+#' class of learner-specific child classes.
+#'
+#' @slot name Name of the familiarModel object.
+#' @slot model The actual model trained using a specific algorithm, e.g. a
+#'   random forest from the `ranger` package, or a LASSO model from `glmnet`.
+#' @slot outcome_type Outcome type of the data used to create the object.
+#' @slot outcome_info Outcome information object, which contains additional
+#'   information concerning the outcome, such as class levels.
+#' @slot feature_info List of objects containing feature information, e.g.,
+#'   name, class levels, transformation, normalisation and clustering
+#'   parameters.
+#' @slot data_column_info Data information object containing information
+#'   regarding identifier column names and outcome column names.
+#' @slot hyperparameters Set of hyperparameters used to train the model.
+#' @slot hyperparameter_data Information generated during hyperparameter
+#'   optimisation.
+#' @slot calibration_model One or more models used to recalibrate the model
+#'   output. Currently only used by some models.
+#' @slot novelty_detector A familiarNoveltyDetector object that can be used to
+#'   detect out-of-distribution samples.
+#' @slot learner Learning algorithm used to create the model.
+#' @slot fs_method Feature selection method used to determine variable
+#'   importance for the model.
+#' @slot required_features The set of features required for complete
+#'   reproduction, i.e. with imputation.
+#' @slot model_features The set of features that is used to train the model,
+#' @slot novelty_features The set of features that is used to train all novelty
+#'   detectors in the ensemble.
+#' @slot calibration_info Calibration information, e.g. baseline survival in the
+#'   development cohort.
+#' @slot km_info Data concerning stratification into risk groups.
+#' @slot run_table Run table for the data used to train the model. Used
+#'   internally.
+#' @slot settings A copy of the evaluation configuration parameters used at
+#'   model creation. These are used as default parameters when evaluating the
+#'   model (technically, familiarEnsemble) to create a familiarData object.
+#' @slot is_trimmed Flag that indicates whether the model, stored in the `model`
+#'   slot, has been trimmed.
+#' @slot trimmed_function List of functions whose output has been captured prior
+#'   to trimming the model.
+#' @slot project_id Identifier of the project that generated the familiarModel
+#'   object.
+#' @slot familiar_version Version of the familiar package.
+#' @slot package Name of package(s) required to executed the model itself, e.g.
+#'   `ranger` or `glmnet`.
+#' @slot package_version Version of the packages mentioned in the `package`
+#'   attribute.
+#'
+#' @export
+
 setClass("familiarModel",
          slots = list(
            # Model name.
@@ -85,7 +140,49 @@ setClass("familiarModel",
 )
 
 
-####familiarEnsemble#####
+#### familiarEnsemble ----------------------------------------------------------
+
+#' Ensemble of familiar models.
+#'
+#' A familiarEnsemble object contains one or more familiarModel objects.
+#'
+#' @slot name Name of the familiarEnsemble object.
+#' @slot model_list List of attached familiarModel objects, or paths to these
+#'   objects. Familiar attaches familiarModel objects when required.
+#' @slot outcome_type Outcome type of the data used to create the object.
+#' @slot outcome_info Outcome information object, which contains additional
+#'   information concerning the outcome, such as class levels.
+#' @slot data_column_info Data information object containing information
+#'   regarding identifier column names and outcome column names.
+#' @slot learner Learning algorithm used to create the models in the ensemble.
+#' @slot fs_method Feature selection method used to determine variable
+#'   importance for the models in the ensemble.
+#' @slot feature_info List of objects containing feature information, e.g.,
+#'   name, class levels, transformation, normalisation and clustering
+#'   parameters.
+#' @slot required_features The set of features required for complete
+#'   reproduction, i.e. with imputation.
+#' @slot model_features The combined set of features that is used to train the
+#'   models in the ensemble,
+#' @slot novelty_features The combined set of features that is used to train
+#'   all novelty detectors in the ensemble.
+#' @slot run_table Run table for the data used to train the ensemble. Used
+#'   internally.
+#' @slot calibration_info Calibration information, e.g. baseline survival in the
+#'   development cohort.
+#' @slot model_dir_path Path to folder containing the familiarModel objects. Can
+#'   be updated using the `update_model_dir_path` method.
+#' @slot auto_detach Flag used to determine whether models should be detached
+#'   from the model after use, or not. Used internally.
+#' @slot settings A copy of the evaluation configuration parameters used at
+#'   model creation. These are used as default parameters when evaluating the
+#'   ensemble to create a familiarData object.
+#' @slot project_id Identifier of the project that generated the
+#'   underlying familiarModel object(s).
+#' @slot familiar_version Version of the familiar package.
+#'
+#' @export
+
 setClass("familiarEnsemble",
          slots = list(
            # Ensemble name
@@ -156,7 +253,77 @@ setClass("familiarEnsemble",
          )
 )
 
-####familiarData#####
+
+#### familiarData --------------------------------------------------------------
+
+#' Dataset obtained after evaluating models on a dataset.
+#'
+#' A familiarData object is created by evaluating familiarEnsemble or
+#' familiarModel objects on a dataset. Multiple familiarData objects are
+#' aggregated in a familiarCollection object.
+#'
+#' @slot name Name of the dataset, e.g. training or internal validation.
+#' @slot outcome_type Outcome type of the data used to create the object.
+#' @slot outcome_info Outcome information object, which contains additional
+#'   information concerning the outcome, such as class levels.
+#' @slot fs_vimp Variable importance data collected from feature selection
+#'   methods.
+#' @slot model_vimp Variable importance data collected from model-specific
+#'   algorithms implemented by models created by familiar.
+#' @slot permutation_vimp Data collected for permutation variable importance.
+#' @slot hyperparameters Hyperparameters collected from created models.
+#' @slot hyperparameter_data Additional data concerning hyperparameters. This is
+#'   currently not used yet.
+#' @slot required_features The set of features required for complete
+#'   reproduction, i.e. with imputation.
+#' @slot model_features The set of features that are required for using the
+#'   model or ensemble of models, but without imputation.
+#' @slot learner Learning algorithm used to create the model or ensemble of
+#'   models.
+#' @slot fs_method Feature selection method used to determine variable
+#'   importance for the model or ensemble of models.
+#' @slot pooling_table Run table for the data underlying the familiarData
+#'   object. Used internally.
+#' @slot prediction_data Model predictions for a model or ensemble of models for
+#'   the underlying dataset.
+#' @slot confusion_matrix Confusion matrix for a model or ensemble of models,
+#'   based on the underlying dataset.
+#' @slot decision_curve_data Decision curve analysis data for a model or
+#'   ensemble of models, based on the underlying dataset.
+#' @slot calibration_info Calibration information, e.g. baseline survival in the
+#'   development cohort.
+#' @slot calibration_data Calibration data for a model or ensemble of models,
+#'   based on the underlying dataset.
+#' @slot model_performance Model performance data for a model or ensemble of
+#'   models, based on the underlying dataset.
+#' @slot km_info Information concerning risk-stratification cut-off values..
+#' @slot km_data Kaplan-Meier survival data for a model or ensemble of models,
+#'   based on the underlying dataset.
+#' @slot auc_data AUC-ROC and AUC-PR data for a model or ensemble of models,
+#'   based on the underlying dataset.
+#' @slot ice_data Individual conditional expectation data for features included
+#'   in a model or ensemble of models, based on the underlying dataset. Partial
+#'   dependence data are computed on the fly from these data.
+#' @slot univariate_analysis Univariate analysis of the underlying dataset.
+#' @slot feature_expressions Feature expression values of the underlying
+#'   dataset.
+#' @slot feature_similarity Feature similarity information of the underlying
+#'   dataset.
+#' @slot sample_similarity Sample similarity information of the underlying
+#'   dataset.
+#' @slot is_validation Signifies whether the underlying data forms a validation
+#'   dataset. Used internally.
+#' @slot generating_ensemble Name of the ensemble that was used to generate the
+#'   familiarData object.
+#' @slot project_id Identifier of the project that generated the familiarData
+#'   object.
+#' @slot familiar_version Version of the familiar package.
+#' 
+#' familiarData objects contain information obtained by evaluating a single
+#' model or single ensemble of models on a dataset.
+#'
+#' @export
+
 setClass("familiarData",
          slots = list(
            # Name of the familiar data set
@@ -260,7 +427,8 @@ setClass("familiarData",
          )
 )
 
-####familiarCollection#####
+#### familiarCollection --------------------------------------------------------
+
 #' Collection of familiar data.
 #'
 #' A familiarCollection object aggregates data from one or more familiarData
@@ -513,7 +681,63 @@ setClass("dataObject",
          )
 )
 
-####featureInfo#####
+#### featureInfo ---------------------------------------------------------------
+
+#' Feature information object.
+#'
+#' A featureInfo object contains information for a single feature. This
+#' information is used to check data prospectively for consistency and for data
+#' preparation. These objects are, for instance, attached to a familiarModel
+#' object so that data can be pre-processed in the same way as the development
+#' data.
+#'
+#' @slot name Name of the feature, which by default is the column name of the
+#'   feature.
+#' @slot set_descriptor Character string describing the set to which the feature
+#'   belongs. Currently not used.
+#' @slot feature_type Describes the feature type, i.e. `factor` or `numeric`.
+#' @slot levels The class levels of categorical features. This is used to check
+#'   prospective datasets.
+#' @slot ordered Specifies whether the
+#' @slot distribution Five-number summary (numeric) or class frequency
+#'   (categorical).
+#' @slot data_id Internal identifier for the dataset used to derive the feature
+#'   information.
+#' @slot run_id Internal identifier for the specific subset of the dataset used
+#'   to derive the feature information.
+#' @slot in_signature Specifies whether the feature is included in the model
+#'   signature.
+#' @slot in_novelty Specifies whether the feature is included in the novelty
+#'   detector.
+#' @slot removed Specifies whether the feature was removed during
+#'   pre-processing.
+#' @slot removed_unknown_type Specifies whether the feature was removed during
+#'   pre-processing because the type was neither factor nor numeric..
+#' @slot removed_missing_values Specifies whether the feature was removed during
+#'   pre-processing because it contained too many missing values.
+#' @slot removed_no_variance Specifies whether the feature was removed during
+#'   pre-processing because it did not contain more than 1 unique value.
+#' @slot removed_low_variance Specifies whether the feature was removed during
+#'   pre-processing because the variance was too low. Requires applying
+#'   `low_variance` as a `filter_method`.
+#' @slot removed_low_robustness Specifies whether the feature was removed during
+#'   pre-processing because it lacks robustness. Requires applying
+#'   `robustness` as a `filter_method`, as well as repeated measurement.
+#' @slot removed_low_importance Specifies whether the feature was removed during
+#'   pre-processing because it lacks relevance. Requires applying
+#'   `univariate_test` as a `filter_method`.
+#' @slot fraction_missing Specifies the fraction of missing values.
+#' @slot robustness Specifies robustness of the feature, if measured.
+#' @slot univariate_importance Specifies the univariate p-value of the feature, if measured.
+#' @slot transformation_parameters Details parameters for power transformation of numeric features.
+#' @slot normalisation_parameters Details parameters for (global) normalisation of numeric features.
+#' @slot batch_normalisation_parameters Details parameters for batch normalisation of numeric features.
+#' @slot imputation_parameters Details parameters or models for imputation of missing values.
+#' @slot cluster_parameters Details parameters for forming clusters with other features.
+#' @slot required_features Details features required for clustering or imputation.
+#'
+#' @export
+
 setClass("featureInfo",
          slots = list(
            name = "character",
@@ -539,7 +763,6 @@ setClass("featureInfo",
            transformation_parameters = "ANY",
            normalisation_parameters = "ANY",
            batch_normalisation_parameters = "ANY",
-           expression_parameters = "ANY",
            imputation_parameters = "ANY",
            cluster_parameters = "ANY",
            required_features = "ANY"
@@ -568,14 +791,43 @@ setClass("featureInfo",
            transformation_parameters = NULL,
            normalisation_parameters = NULL,
            batch_normalisation_parameters = NULL,
-           expression_parameters = NULL,
            imputation_parameters = NULL,
            cluster_parameters = NULL,
            required_features = NULL
          )
 )
 
-####outcomeInfo#####
+#### outcomeInfo ---------------------------------------------------------------
+
+#' Outcome information object.
+#'
+#' An outcome information object stores data concerning an outcome. This is used
+#' to prospectively check data.
+#'
+#' @slot name Name of the outcome, inherited from the original column name by
+#'   default.
+#' @slot outcome_type Type of outcome.
+#' @slot outcome_column Name of the outcome column in data.
+#' @slot levels Specifies class levels of categorical outcomes.
+#' @slot ordered Specifies whether categorical outcomes are ordered.
+#' @slot reference Class level used as reference.
+#' @slot time Maximum time, as set by the `time_max` configuration parameter.
+#' @slot censored Censoring indicators for survival outcomes.
+#' @slot event Event indicators for survival outcomes.
+#' @slot competing_risk Indicators for competing risks in survival outcomes.
+#' @slot distribution Five-number summary (numeric outcomes), class frequency
+#'   (categorical outcomes), or survival distributions.
+#' @slot data_id Internal identifier for the dataset used to derive the outcome
+#'   information.
+#' @slot run_id Internal identifier for the specific subset of the dataset used
+#'   to derive the outcome information.
+#' @slot transformation_parameters Parameters used for transforming a numeric
+#'   outcomes. Currently unused.
+#' @slot normalisation_parameters Parameters used for normalising numeric
+#'   outcomes. Currently unused.
+#'
+#' @export
+
 setClass("outcomeInfo",
          slots = list(
            # Name of the outcome
@@ -629,7 +881,33 @@ setClass("outcomeInfo",
 )
 
 
-####familiarVimpMethod####
+#### familiarVimpMethod --------------------------------------------------------
+
+#' Variable importance method object.
+#'
+#' The familiarVimpMethod class is the parent class for all variable importance
+#' methods in familiar.
+#'
+#' @slot outcome_type Outcome type of the data to be evaluated using the object.
+#' @slot hyperparameters Set of hyperparameters for the variable importance
+#'   method.
+#' @slot vimp_method The character string indicating the variable importance
+#'   method.
+#' @slot outcome_info Outcome information object, which contains additional
+#'   information concerning the outcome, such as class levels.
+#' @slot feature_info List of objects containing feature information, e.g.,
+#'   name, class levels, transformation, normalisation and clustering
+#'   parameters.
+#' @slot required_features The set of features to be assessed by the variable
+#'   importance method.
+#' @slot package Name of the package(s) required to execute the variable
+#'   importance method.
+#' @slot run_table Run table for the data to be assessed by the variable
+#'   importance method. Used internally.
+#' @slot project_id Identifier of the project that generated the
+#'   familiarVimpMethod object.
+#'
+#' @export
 setClass("familiarVimpMethod",
          slots = list(
            # Outcome type
@@ -666,7 +944,48 @@ setClass("familiarVimpMethod",
 
 
 
-#### familiarNoveltyDetector ###################################################
+#### familiarNoveltyDetector ---------------------------------------------------
+
+#' Novelty detector.
+#'
+#' A familiarNoveltyDetector object is a self-contained model that can be
+#' applied to generate out-of-distribution predictions for instances in a
+#' dataset.
+#'
+#' @slot name Name of the familiarNoveltyDetector object.
+#' @slot learner Learning algorithm used to create the novelty detector.
+#' @slot model The actual novelty detector trained using a specific algorithm,
+#'   e.g. a isolation forest from the `isotree` package.
+#' @slot feature_info List of objects containing feature information, e.g.,
+#'   name, class levels, transformation, normalisation and clustering
+#'   parameters.
+#' @slot data_column_info Data information object containing information
+#'   regarding identifier column names.
+#' @slot conversion_parameters Parameters used to convert raw output to
+#'   statistical probability of being out-of-distribution. Currently unused.
+#' @slot hyperparameters Set of hyperparameters used to train the detector.
+#' @slot required_features The set of features required for complete
+#'   reproduction, i.e. with imputation.
+#' @slot model_features The set of features that is used to train the detector.
+#' @slot run_table Run table for the data used to train the detector. Used
+#'   internally.
+#' @slot is_trimmed Flag that indicates whether the detector, stored in the
+#'   `model` slot, has been trimmed.
+#' @slot trimmed_function List of functions whose output has been captured prior
+#'   to trimming the model.
+#' @slot project_id Identifier of the project that generated the
+#'   familiarNoveltyDetector object.
+#' @slot familiar_version Version of the familiar package.
+#' @slot package Name of package(s) required to executed the detector itself,
+#'   e.g. `isotree`.
+#' @slot package_version Version of the packages mentioned in the `package`
+#'   attribute.
+#'
+#' Note that these objects do not contain any data concerning outcome, as this
+#' not relevant for (prospective) out-of-distribution detection.
+#'
+#' @export
+
 setClass("familiarNoveltyDetector",
          slots = list(
            # Model name.
@@ -727,7 +1046,25 @@ setClass("familiarNoveltyDetector",
 
 
 
-####familiarMetric#####
+#### familiarMetric ------------------------------------------------------------
+
+#' Model performance metric.
+#'
+#' Superclass for model performance objects.
+#'
+#' @slot metric Performance metric.
+#' @slot outcome_type Type of outcome being predicted.
+#' @slot name Name of the performance metric.
+#' @slot value_range Range of the performance metric. Can be half-open.
+#' @slot baseline_value Value of the metric for trivial models, e.g. models that
+#'   always predict the median value, the majority class, or the mean hazard,
+#'   etc.
+#' @slot higher_better States whether higher metric values correspond to better
+#'   predictive model performance (e.g. accuracy) or not (e.g. root mean squared
+#'   error).
+#'
+#' @export
+
 setClass("familiarMetric",
          slots = list(
            # The metric itself.
@@ -755,7 +1092,99 @@ setClass("familiarMetric",
 
 
 
-####familiarDataElement#####
+#### familiarDataElement -------------------------------------------------------
+
+#'  Data container for evaluation data.
+#'
+#'  Most attributes of the familiarData object are objects of the
+#'  familiarDataElement class. This (super-)class is used to allow for
+#'  standardised aggregation and processing of evaluation data.
+#'
+#'@slot data Evaluation data, typically a data.table or list.
+#'@slot identifiers Identifiers of the data, e.g. the generating model name,
+#'  learner, etc.
+#'@slot detail_level Sets the level at which results are computed and
+#'  aggregated.
+#'
+#'  * `ensemble`: Results are computed at the ensemble level, i.e. over all
+#'  models in the ensemble. This means that, for example, bias-corrected
+#'  estimates of model performance are assessed by creating (at least) 20
+#'  bootstraps and computing the model performance of the ensemble model for
+#'  each bootstrap.
+#'
+#'  * `hybrid` (default): Results are computed at the level of models in an
+#'  ensemble. This means that, for example, bias-corrected estimates of model
+#'  performance are directly computed using the models in the ensemble. If there
+#'  are at least 20 trained models in the ensemble, performance is computed for
+#'  each model, in contrast to `ensemble` where performance is computed for the
+#'  ensemble of models. If there are less than 20 trained models in the
+#'  ensemble, bootstraps are created so that at least 20 point estimates can be
+#'  made.
+#'
+#'  * `model`: Results are computed at the model level. This means that, for
+#'  example, bias-corrected estimates of model performance are assessed by
+#'  creating (at least) 20 bootstraps and computing the performance of the model
+#'  for each bootstrap.
+#'
+#'  Note that each level of detail has a different interpretation for bootstrap
+#'  confidence intervals. For `ensemble` and `model` these are the confidence
+#'  intervals for the ensemble and an individual model, respectively. That is,
+#'  the confidence interval describes the range where an estimate produced by a
+#'  respective ensemble or model trained on a repeat of the experiment may be
+#'  found with the probability of the confidence level. For `hybrid`, it
+#'  represents the range where any single model trained on a repeat of the
+#'  experiment may be found with the probability of the confidence level. By
+#'  definition, confidence intervals obtained using `hybrid` are at least as
+#'  wide as those for `ensemble`. `hybrid` offers the correct interpretation if
+#'  the goal of the analysis is to assess the result of a single, unspecified,
+#'  model.
+#'
+#'  Some child classes do not use this parameter.
+#'@slot estimation_type Sets the type of estimation that should be possible.
+#'  This has the following options:
+#'
+#'  * `point`: Point estimates.
+#'
+#'  * `bias_correction` or `bc`: Bias-corrected estimates. A bias-corrected
+#'  estimate is computed from (at least) 20 point estimates, and `familiar` may
+#'  bootstrap the data to create them.
+#'
+#'  * `bootstrap_confidence_interval` or `bci` (default): Bias-corrected
+#'  estimates with bootstrap confidence intervals (Efron and Hastie, 2016). The
+#'  number of point estimates required depends on the `confidence_level`
+#'  parameter, and `familiar` may bootstrap the data to create them.
+#'
+#'  Some child classes do not use this parameter.
+#'@slot confidence_level (*optional*) Numeric value for the level at which
+#'  confidence intervals are determined. In the case bootstraps are used to
+#'  determine the confidence intervals bootstrap estimation, `familiar` uses the
+#'  rule of thumb \eqn{n = 20 / ci.level} to determine the number of required
+#'  bootstraps.
+#'@slot bootstrap_ci_method Method used to determine bootstrap confidence
+#'  intervals (Efron and Hastie, 2016). The following methods are implemented:
+#'
+#'  * `percentile` (default): Confidence intervals obtained using the percentile
+#'  method.
+#'
+#'  * `bc`: Bias-corrected confidence intervals.
+#'
+#'  Note that the standard method is not implemented because this method is
+#'  often not suitable due to non-normal distributions. The bias-corrected and
+#'  accelerated (BCa) method is not implemented yet.
+#'@slot value_column Identifies column(s) in the `data` attribute presenting
+#'  values.
+#'@slot grouping_column Identifies column(s) in the `data` attribute presenting
+#'  identifier columns for grouping during aggregation. Familiar will
+#'  automatically assign items from the `identifiers` attribute to the data and
+#'  this attribute when combining multiple familiarDataElements of the same
+#'  (child) class.
+#'@slot is_aggregated Defines whether the object was aggregated.
+#'
+#'@references 1. Efron, B. & Hastie, T. Computer Age Statistical Inference.
+#'  (Cambridge University Press, 2016).
+#'
+#'@export
+
 setClass("familiarDataElement",
          slots = list(
            # The primary results.
