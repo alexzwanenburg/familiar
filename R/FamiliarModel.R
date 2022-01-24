@@ -99,6 +99,12 @@ setMethod(".train_novelty_detector", signature(object="familiarModel", data="dat
             # Check if the class of object is a subclass of familiarModel.
             if(!is_subclass(class(object)[1], "familiarModel")) object <- promote_learner(object)
             
+            # Process data, if required.
+            data <- process_input_data(object=object,
+                                       data=data,
+                                       is_pre_processed = is_pre_processed,
+                                       stop_at="clustering")
+            
             # Create detector object.
             fam_detector <- methods::new("familiarNoveltyDetector",
                                          learner=detector,
