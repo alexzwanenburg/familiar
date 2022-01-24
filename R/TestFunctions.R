@@ -1648,6 +1648,96 @@ test_all_vimp_methods <- function(vimp_methods,
 
 
 
+test_all_vimp_methods_parallel <- function(vimp_methods,
+                                           hyperparameter_list=NULL){
+  # This function serves to test whether packages are loaded correctly for
+  # assessing variable importance.
+  
+  # Disable randomForestSRC OpenMP core use.
+  options(rf.cores=as.integer(1))
+  on.exit(options(rf.cores=-1L), add=TRUE)
+  
+  # Disable multithreading on data.table to prevent reduced performance due to
+  # resource collisions with familiar parallelisation.
+  data.table::setDTthreads(1L)
+  on.exit(data.table::setDTthreads(0L), add=TRUE)
+  
+  # Iterate over the outcome type.
+  for(outcome_type in c("count", "continuous", "binomial", "multinomial", "survival")){
+    
+    # Obtain data.
+    full_data <- test.create_good_data_set(outcome_type)
+    
+    for(vimp_method in vimp_methods){
+      
+      if(!.check_vimp_outcome_type(method=vimp_method,
+                                   outcome_type=outcome_type,
+                                   as_flag=TRUE)){
+        next()
+      }
+      
+      # Parse hyperparameter list
+      hyperparameters <- c(hyperparameter_list[[outcome_type]])
+      
+      # Find required hyperparameters
+      vimp_method_hyperparameters <- .get_preset_hyperparameters(fs_method = vimp_method,
+                                                                 outcome_type=outcome_type,
+                                                                 names_only=TRUE)
+      
+      # Select hyperparameters that are being used, and are present in the input
+      # list of hyperparameters.
+      hyperparameters <- hyperparameters[intersect(vimp_method_hyperparameters, names(hyperparameters))]
+      
+      #### Prepare vimp object -------------------------------------------------
+      cl_train <- .test_start_cluster(n_cores=2L)
+      
+      # Prepare the variable importance objects.
+      vimp_object_list <- parallel::parLapply(cl=cl_train,
+                                              list("1"=full_data, "2"=full_data),
+                                              prepare_vimp_object,
+                                              vimp_method=vimp_method,
+                                              vimp_method_parameter_list=hyperparameters,
+                                              outcome_type=outcome_type,
+                                              cluster_method="none",
+                                              imputation_method="simple")
+      
+      # Terminate cluster.
+      cl_train <- .terminate_cluster(cl_train)
+      
+      ##### Variable importance ------------------------------------------------
+      cl_vimp <- .test_start_cluster(n_cores=2L)
+      
+      # Extract variable importance data.
+      vimp_table_list <- parallel::parLapply(cl=cl_vimp,
+                                             vimp_object_list,
+                                             .vimp,
+                                             data=full_data)
+      
+      # Test that the model has variable importance.
+      testthat::test_that(paste0("Variable importance method produces variable importance for ",
+                                 outcome_type, " and ", vimp_method, " for the complete dataset."), {
+        
+        # Get the number of features
+        n_features <- get_n_features(full_data)
+        
+        # Expect that the vimp table has two rows.
+        testthat::expect_equal(nrow(vimp_table_list[[1]]) > 0 & nrow(vimp_table_list[[1]]) <= n_features, TRUE)
+        testthat::expect_equal(nrow(vimp_table_list[[2]]) > 0 & nrow(vimp_table_list[[2]]) <= n_features, TRUE)
+        
+        # Expect that the names in the vimp table correspond to those of the
+        # features.
+        testthat::expect_equal(all(vimp_table_list[[1]]$name %in% get_feature_columns(full_data)), TRUE)
+        testthat::expect_equal(all(vimp_table_list[[2]]$name %in% get_feature_columns(full_data)), TRUE)
+      })
+      
+      # Terminate cluster.
+      cl_vimp <- .terminate_cluster(cl_vimp)
+    }
+  }
+}
+
+
+
 test_all_metrics_available <- function(metrics){
   
   # Create placeholder flags.
