@@ -487,9 +487,9 @@ start_socket_server_process <- function(server_port=NULL){
       library(familiar)
       
       # Assign the socket server port to the familiar global environment.
-      assign(x="server_port", value=server_port, envir=.GlobalEnv)
+      assign(x="server_port", value=server_port, envir=familiar_global_env)
 
-    }, args=list("server_port"=server_port))
+    }, args=list("server_port"=server_port), package=TRUE)
     
     # Export socket_server_process to the familiar global environment.
     assign("socket_server_process", socket_server_process, envir=familiar_global_env)
@@ -548,14 +548,14 @@ start_socket_server_process <- function(server_port=NULL){
   
   # Ensure that server functions are present on the server process. It is not
   # able to read them from familiar directly.
-  socket_server_process$run(function(FUN) {
-    assign(x="socket_server_execution_loop", value=FUN[[1]], envir=.GlobalEnv)
-    assign(x="socket_server_handshake", value=FUN[[2]], envir=.GlobalEnv)
-  }, args=list("FUN"=list(socket_server_execution_loop,
-                          socket_server_handshake)))
+  # socket_server_process$run(function(FUN) {
+  #   assign(x="socket_server_execution_loop", value=FUN[[1]], envir=.GlobalEnv)
+  #   assign(x="socket_server_handshake", value=FUN[[2]], envir=.GlobalEnv)
+  # }, args=list("FUN"=list(socket_server_execution_loop,
+  #                         socket_server_handshake)))
   
   # Start subroutine.
-  socket_server_process$call(socket_server, args=list("port"=server_port))
+  socket_server_process$call(socket_server, args=list("port"=server_port), package=TRUE)
   
   return()
 }
