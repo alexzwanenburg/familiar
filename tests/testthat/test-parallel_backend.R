@@ -21,7 +21,7 @@ familiar:::integrated_test(backend_type="socket_server",
                            skip_evaluation_elements="all")
 
 # Perform an integrated test using the RServe backend.
-familiar:::integrated_test(backend_type="socket_server",
+familiar:::integrated_test(backend_type="rserve",
                            experimental_design="bt(fs+mb,20)",
                            parallel_nr_cores=2,
                            fs_method="none",
