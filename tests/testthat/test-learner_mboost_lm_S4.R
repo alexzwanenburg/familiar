@@ -17,6 +17,16 @@ familiar:::test_all_learners_train_predict_vimp(learners=familiar:::.get_availab
                                                                           "boosted_glm_lognormal",
                                                                           "boosted_glm_weibull"))
 
+familiar:::test_all_learners_parallel_train_predict_vimp(learners=familiar:::.get_available_mboost_lm_learners(show_general=FALSE),
+                                                         hyperparameter_list=list("count"=list("n_boost"=2,
+                                                                                               "learning_rate"=-5),
+                                                                                  "continuous"=list("n_boost"=2,
+                                                                                                    "learning_rate"=-3),
+                                                                                  "binomial"=list("n_boost"=2,
+                                                                                                  "learning_rate"=-3),
+                                                                                  "survival"=list("n_boost"=2,
+                                                                                                  "learning_rate"=-3)))
+
 #####Count outcome tests-------------------------------------------------------------
 
 # Create test data sets.

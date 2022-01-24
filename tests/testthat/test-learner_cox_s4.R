@@ -7,6 +7,7 @@ testthat::skip_on_cran()
 # Generic test
 familiar:::test_all_learners_train_predict_vimp(learners=familiar:::.get_available_cox_learners(show_general=TRUE))
 
+familiar:::test_all_learners_parallel_train_predict_vimp(learners=familiar:::.get_available_cox_learners(show_general=TRUE))
 
 # Create test data sets.
 good_data <- familiar:::test.create_good_data_set("survival")

@@ -15,6 +15,15 @@ familiar:::test_all_learners_train_predict_vimp(learners=familiar:::.get_availab
                                                                          "multinomial"=list("alpha"=0.50),
                                                                          "survival"=list("alpha"=0.50)))
 
+familiar:::test_all_learners_parallel_train_predict_vimp(learners=familiar:::.get_available_glmnet_ridge_learners(show_general=FALSE))
+familiar:::test_all_learners_parallel_train_predict_vimp(learners=familiar:::.get_available_glmnet_lasso_learners(show_general=FALSE))
+familiar:::test_all_learners_parallel_train_predict_vimp(learners=familiar:::.get_available_glmnet_elastic_net_learners(show_general=FALSE),
+                                                         hyperparameter_list=list("count"=list("alpha"=0.50),
+                                                                                  "continuous"=list("alpha"=0.50),
+                                                                                  "binomial"=list("alpha"=0.50),
+                                                                                  "multinomial"=list("alpha"=0.50),
+                                                                                  "survival"=list("alpha"=0.50)))
+
 #####Count outcome tests-------------------------------------------------------------
 
 # Create test data sets.

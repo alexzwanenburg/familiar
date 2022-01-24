@@ -26,6 +26,28 @@ familiar:::test_all_learners_train_predict_vimp(learners=familiar:::.get_availab
                                                                                          "lambda" = 0.0,
                                                                                          "alpha" =-6.0)))
 
+familiar:::test_all_learners_parallel_train_predict_vimp(learners=familiar:::.get_available_xgboost_lm_learners(show_general=FALSE),
+                                                         hyperparameter_list=list("count"=list("n_boost" = 2,
+                                                                                               "learning_rate" = -5,
+                                                                                               "lambda" = 0.0,
+                                                                                               "alpha" =-6.0),
+                                                                                  "continuous"=list("n_boost" = 2,
+                                                                                                    "learning_rate" = -1,
+                                                                                                    "lambda" = 0.0,
+                                                                                                    "alpha" =-6.0),
+                                                                                  "binomial"=list("n_boost" = 2,
+                                                                                                  "learning_rate" = -1,
+                                                                                                  "lambda" = 0.0,
+                                                                                                  "alpha" =-6.0),
+                                                                                  "multinomial"=list("n_boost" = 2,
+                                                                                                     "learning_rate" = -1,
+                                                                                                     "lambda" = 0.0,
+                                                                                                     "alpha" =-6.0),
+                                                                                  "survival"=list("n_boost" = 2,
+                                                                                                  "learning_rate" = -1,
+                                                                                                  "lambda" = 0.0,
+                                                                                                  "alpha" =-6.0)))
+
 
 #####Count outcome tests-------------------------------------------------------------
 

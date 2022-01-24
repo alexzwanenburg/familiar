@@ -6,6 +6,8 @@ testthat::skip_on_cran()
 
 familiar:::test_all_learners_train_predict_vimp(learners=familiar:::.get_available_glm_learners(show_general=FALSE))
 
+familiar:::test_all_learners_parallel_train_predict_vimp(learners=familiar:::.get_available_glm_learners(show_general=FALSE))
+
 #####Count outcome tests-------------------------------------------------------------
 
 # Create test data sets.

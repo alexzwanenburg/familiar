@@ -31,6 +31,33 @@ familiar:::test_all_learners_train_predict_vimp(learners=familiar:::.get_availab
                                                                                          "node_size"=5,
                                                                                          "tree_depth"=5)))
 
+familiar:::test_all_learners_parallel_train_predict_vimp(learners=familiar:::.get_available_rfsrc_learners(show_general=FALSE),
+                                                         hyperparameter_list=list("count"=list("n_tree"=4,
+                                                                                               "sample_size"=0.50,
+                                                                                               "m_try"=0.3,
+                                                                                               "node_size"=5,
+                                                                                               "tree_depth"=5),
+                                                                                  "continuous"=list("n_tree"=4,
+                                                                                                    "sample_size"=0.50,
+                                                                                                    "m_try"=0.3,
+                                                                                                    "node_size"=5,
+                                                                                                    "tree_depth"=5),
+                                                                                  "binomial"=list("n_tree"=4,
+                                                                                                  "sample_size"=0.50,
+                                                                                                  "m_try"=0.3,
+                                                                                                  "node_size"=5,
+                                                                                                  "tree_depth"=5),
+                                                                                  "multinomial"=list("n_tree"=4,
+                                                                                                     "sample_size"=0.50,
+                                                                                                     "m_try"=0.3,
+                                                                                                     "node_size"=5,
+                                                                                                     "tree_depth"=5),
+                                                                                  "survival"=list("n_tree"=4,
+                                                                                                  "sample_size"=0.50,
+                                                                                                  "m_try"=0.3,
+                                                                                                  "node_size"=5,
+                                                                                                  "tree_depth"=5)))
+
 #####Count outcome tests-------------------------------------------------------------
 
 # Create test data sets.

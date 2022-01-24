@@ -59,6 +59,60 @@ familiar:::test_all_learners_train_predict_vimp(learners=familiar:::.get_availab
                                                                                            "offset"=0.0)),
                                                 has_vimp=FALSE)
 
+# Parallel tests.
+familiar:::test_all_learners_parallel_train_predict_vimp(learners=familiar:::.get_available_svm_c_learners(show_general=FALSE),
+                                                         hyperparameter_list=list("binomial"=list("c"=-1.0,
+                                                                                                  "gamma"=0.1,
+                                                                                                  "degree"=2.0,
+                                                                                                  "offset"=0.0),
+                                                                                  "multinomial"=list("c"=-1.0,
+                                                                                                     "gamma"=0.1,
+                                                                                                     "degree"=2.0,
+                                                                                                     "offset"=0.0)),
+                                                         has_vimp=FALSE)
+
+
+familiar:::test_all_learners_parallel_train_predict_vimp(learners=familiar:::.get_available_svm_nu_learners(show_general=FALSE),
+                                                         hyperparameter_list=list("count"=list("c"=-1.0,
+                                                                                               "epsilon"=0.0,
+                                                                                               "nu"=-4.0,
+                                                                                               "gamma"=0.1,
+                                                                                               "degree"=2.0,
+                                                                                               "offset"=0.0),
+                                                                                  "continuous"=list("c"=-1.0,
+                                                                                                    "epsilon"=0.0,
+                                                                                                    "nu"=-4.0,
+                                                                                                    "gamma"=0.1,
+                                                                                                    "degree"=2.0,
+                                                                                                    "offset"=0.0),
+                                                                                  "binomial"=list("c"=-1.0,
+                                                                                                  "epsilon"=0.0,
+                                                                                                  "nu"=-4.0,
+                                                                                                  "gamma"=0.1,
+                                                                                                  "degree"=2.0,
+                                                                                                  "offset"=0.0),
+                                                                                  "multinomial"=list("c"=-1.0,
+                                                                                                     "epsilon"=0.0,
+                                                                                                     "nu"=-4.0,
+                                                                                                     "gamma"=0.1,
+                                                                                                     "degree"=2.0,
+                                                                                                     "offset"=0.0)),
+                                                         has_vimp=FALSE)
+
+
+familiar:::test_all_learners_parallel_train_predict_vimp(learners=familiar:::.get_available_svm_eps_learners(show_general=FALSE),
+                                                         hyperparameter_list=list("count"=list("c"=-1.0,
+                                                                                               "epsilon"=0.0,
+                                                                                               "gamma"=0.1,
+                                                                                               "degree"=2.0,
+                                                                                               "offset"=0.0),
+                                                                                  "continuous"=list("c"=-1.0,
+                                                                                                    "epsilon"=0.0,
+                                                                                                    "gamma"=0.1,
+                                                                                                    "degree"=2.0,
+                                                                                                    "offset"=0.0)),
+                                                         has_vimp=FALSE)
+
 
 #####Count outcome tests-------------------------------------------------------------
 

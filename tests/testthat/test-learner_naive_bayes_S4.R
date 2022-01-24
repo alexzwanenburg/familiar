@@ -13,6 +13,11 @@ familiar:::test_all_learners_train_predict_vimp(learners=familiar:::.get_availab
                                                                          "multinomial"=list("laplace"=0.0)),
                                                 has_vimp=FALSE)
 
+familiar:::test_all_learners_parallel_train_predict_vimp(learners=familiar:::.get_available_naive_bayes_learners(show_general=FALSE),
+                                                         hyperparameter_list=list("binomial"=list("laplace"=0.0),
+                                                                                  "multinomial"=list("laplace"=0.0)),
+                                                         has_vimp=FALSE)
+
 #####Binomial tests-------------------------------------------------------------
 
 # Create test data sets.

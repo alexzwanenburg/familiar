@@ -11,6 +11,12 @@ familiar:::test_all_learners_train_predict_vimp(learners=familiar:::.get_availab
                                                                          "multinomial"=list("k"=3)),
                                                 has_vimp=FALSE)
 
+familiar:::test_all_learners_parallel_train_predict_vimp(learners=familiar:::.get_available_knn_learners(show_general=FALSE, show_default=TRUE),
+                                                         hyperparameter_list=list("count"=list("k"=3),
+                                                                                  "continuous"=list("k"=3),
+                                                                                  "binomial"=list("k"=3),
+                                                                                  "multinomial"=list("k"=3)),
+                                                         has_vimp=FALSE)
 
 #####Count outcome tests-------------------------------------------------------------
 

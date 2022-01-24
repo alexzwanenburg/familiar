@@ -6,6 +6,8 @@ testthat::skip_on_cran()
 
 familiar:::test_all_learners_train_predict_vimp(learners=familiar:::.get_available_survival_regression_learners(show_general=FALSE))
 
+familiar:::test_all_learners_parallel_train_predict_vimp(learners=familiar:::.get_available_survival_regression_learners(show_general=FALSE))
+
 
 # Create test data sets.
 good_data <- familiar:::test.create_good_data_set("survival")

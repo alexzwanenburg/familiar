@@ -30,6 +30,29 @@ familiar:::test_all_learners_train_predict_vimp(learners=familiar:::.get_availab
                                                                           "boosted_tree_weibull"),
                                                 has_vimp=FALSE)
 
+familiar:::test_all_learners_parallel_train_predict_vimp(learners=familiar:::.get_available_mboost_tree_learners(show_general=FALSE),
+                                                         hyperparameter_list=list("count"=list("n_boost"=2,
+                                                                                               "learning_rate"=-5,
+                                                                                               "tree_depth"=3,
+                                                                                               "min_child_weight"=0.5,
+                                                                                               "alpha"=0.10),
+                                                                                  "continuous"=list("n_boost"=2,
+                                                                                                    "learning_rate"=-3,
+                                                                                                    "tree_depth"=3,
+                                                                                                    "min_child_weight"=0.5,
+                                                                                                    "alpha"=0.10),
+                                                                                  "binomial"=list("n_boost"=2,
+                                                                                                  "learning_rate"=-3,
+                                                                                                  "tree_depth"=3,
+                                                                                                  "min_child_weight"=0.5,
+                                                                                                  "alpha"=0.10),
+                                                                                  "survival"=list("n_boost"=2,
+                                                                                                  "learning_rate"=-3,
+                                                                                                  "tree_depth"=3,
+                                                                                                  "min_child_weight"=0.5,
+                                                                                                  "alpha"=0.10)),
+                                                         has_vimp=FALSE)
+
 #####Count outcome tests-------------------------------------------------------------
 
 # Create test data sets.
