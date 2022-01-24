@@ -979,7 +979,7 @@ test_all_learners_parallel_train_predict_vimp <- function(learners,
       # Extract predictions.
       prediction_list <- parallel::parLapply(cl=cl_predict,
                                              model_list,
-                                             ..predict,
+                                             .predict,
                                              data=full_data)
       
       # Test that models can be used to predict the outcome.
