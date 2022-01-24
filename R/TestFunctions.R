@@ -285,10 +285,10 @@ test_all_learners_train_predict_vimp <- function(learners,
       # Test that the model has variable importance.
       test_fun(paste0("Model has variable importance for ", outcome_type, " and ", learner, " for the complete dataset."), {
         # Extract the variable importance table.
-        vimp_table <- suppressWarnings(..vimp(model, data=full_data))
+        vimp_table <- suppressWarnings(.vimp(model, data=full_data))
         
         # Extract the variable importanct table for the trimmed model.
-        vimp_table_trim <- suppressWarnings(..vimp(trimmed_model,
+        vimp_table_trim <- suppressWarnings(.vimp(trimmed_model,
                                                    data=full_data))
         
         if(has_vimp){
@@ -944,7 +944,7 @@ test_all_learners_parallel_train_predict_vimp <- function(learners,
       # Extract variable importance data.
       vimp_table_list <- parallel::parLapply(cl=cl_vimp,
                                              model_list,
-                                             ..vimp,
+                                             .vimp,
                                              data=full_data)
       
       # Test that the model has variable importance.
