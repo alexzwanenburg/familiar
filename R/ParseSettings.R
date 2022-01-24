@@ -327,9 +327,9 @@
 .parse_general_settings <- function(settings, config=NULL, data, ...){
   
   # Computational setup settings
-  settings$run <- do.call(.parse_setup_settings,
-                          args=c(list("config"=config$run),
-                                 list(...)))
+  settings$run <- strict.do.call(.parse_setup_settings,
+                                 args=c(list("config"=config$run),
+                                        list(...)))
   
   # Remove outcome_type, development_batch_id and parallel from ... This
   # prevents an error caused by multiple matching arguments.
