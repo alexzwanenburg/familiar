@@ -2047,9 +2047,29 @@ plotting.save_plot_to_file <- function(plot_obj, object, dir_path, type, subtype
     })
     
   }
-  invisible()
+  invisible(NULL)
 }
 
+
+
+plotting.get_output <- function(dir_path=NULL,
+                                plot_list=NULL,
+                                export_collection=FALSE,
+                                object=NULL){
+  
+  # Do not return plot information.
+  if(!is.null(dir_path)){
+    plot_list <- NULL
+  }
+  
+  if(export_collection){
+    return(list("collection"=object,
+                "plot_list"=plot_list))
+    
+  } else {
+    return(plot_list) 
+  }
+}
 
 
 plotting.format_number <- function(x, digits=3){
