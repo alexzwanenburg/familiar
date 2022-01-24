@@ -1224,6 +1224,82 @@ test_all_novelty_detectors <- function(detectors,
 
 
 
+test_all_novelty_detectors_parallel <- function(detectors,
+                                                except_train=NULL,
+                                                except_predict=NULL,
+                                                hyperparameter_list=NULL){
+  # This function serves to test whether packages are loaded correctly for
+  # novelty detection.
+  
+  # Disable multithreading on data.table to prevent reduced performance due to
+  # resource collisions with familiar parallelisation.
+  data.table::setDTthreads(1L)
+  on.exit(data.table::setDTthreads(0L), add=TRUE)
+  
+  # Outcome type is not important, but set to get suitable datasets.
+  outcome_type <- "continuous"
+  
+  # Obtain data.
+  full_data <- test.create_good_data_set(outcome_type)
+  
+  # Iterate over detectors.
+  for(detector in detectors){
+    
+    if(!.check_novelty_detector_available(detector=detector,
+                                          as_flag=TRUE)){
+      next()
+    }
+    
+    ##### Train models ---------------------------------------------------------
+    cl_train <- .test_start_cluster(n_cores=2L)
+    
+    # Train the models.
+    model_list <- parallel::parLapply(cl=cl_train,
+                                      list("1"=full_data, "2"=full_data),
+                                      test_train_novelty_detector,
+                                      cluster_method="none",
+                                      imputation_method="simple",
+                                      detector=detector,
+                                      hyperparameter_list=hyperparameter_list)
+    
+    # Test that models can be created.
+    testthat::test_that(paste0("Novelty detector can be created using ", detector, " and a complete dataset."), {
+      
+      # Test that the model was successfully created.
+      testthat::expect_equal(model_is_trained(model_list[[1]]), ifelse(detector %in% except_train, FALSE, TRUE))
+      testthat::expect_equal(model_is_trained(model_list[[2]]), ifelse(detector %in% except_train, FALSE, TRUE))
+    })
+    
+    # Terminate cluster.
+    cl_train <- .terminate_cluster(cl_train)
+    
+    ##### Predictions ----------------------------------------------------------
+    cl_predict <- .test_start_cluster(n_cores=2L)
+    
+    # Extract predictions.
+    prediction_list <- parallel::parLapply(cl=cl_predict,
+                                           model_list,
+                                           .predict,
+                                           data=full_data)
+    
+    # Test that models can be used to assess novelty.
+    testthat::test_that(paste0("Sample predictions can be made using ", detector, " for a complete dataset."), {
+      
+      # Test that the predictions were successfully made.
+      testthat::expect_equal(any_predictions_valid(prediction_list[[1]], type="novelty"),
+                             ifelse(detector %in% c(except_train, except_predict), FALSE, TRUE))
+      testthat::expect_equal(any_predictions_valid(prediction_list[[2]], type="novelty"), 
+                             ifelse(detector %in% c(except_train, except_predict), FALSE, TRUE))
+    })
+    
+    # Terminate cluster.
+    cl_predict <- .terminate_cluster(cl_predict)
+  }
+}
+
+
+
+
 test_all_vimp_methods_available <- function(vimp_methods){
   
   # Create placeholder flags.
