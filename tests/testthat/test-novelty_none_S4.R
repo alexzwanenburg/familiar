@@ -7,3 +7,6 @@ testthat::skip_on_cran()
 familiar:::test_all_novelty_detectors(detectors=familiar:::.get_available_none_detectors(),
                                       except_train=familiar:::.get_available_none_detectors(),
                                       can_trim=FALSE)
+
+familiar:::test_all_novelty_detectors_parallel(detectors=familiar:::.get_available_none_detectors(),
+                                               except_train=familiar:::.get_available_none_detectors())
