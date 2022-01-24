@@ -24,8 +24,9 @@ familiar:::test_hyperparameter_optimisation(vimp_methods=familiar:::.get_availab
                                             debug=FALSE,
                                             parallel=FALSE,
                                             no_hyperparameters=TRUE)
-familiar:::test_all_vimp_methods(familiar:::.get_available_corelearn_gain_ratio_vimp_method(show_general=FALSE))
 
+familiar:::test_all_vimp_methods(familiar:::.get_available_corelearn_gain_ratio_vimp_method(show_general=FALSE))
+familiar:::test_all_vimp_methods_parallel(familiar:::.get_available_corelearn_gain_ratio_vimp_method(show_general=FALSE))
 
 ##### Count outcome #####
 data <- familiar:::test.create_good_data_set("count")

@@ -7,6 +7,7 @@ familiar:::test_hyperparameter_optimisation(vimp_methods=familiar:::.get_availab
 
 familiar:::test_all_vimp_methods(familiar:::.get_available_concordance_vimp_method(show_general=FALSE))
 
+familiar:::test_all_vimp_methods_parallel(familiar:::.get_available_concordance_vimp_method(show_general=FALSE))
 
 ##### Count outcome #####
 data <- familiar:::test.create_good_data_set("count")

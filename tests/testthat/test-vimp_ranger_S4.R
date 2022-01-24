@@ -35,6 +35,38 @@ familiar:::test_all_vimp_methods(familiar:::.get_available_ranger_vimp_methods(s
                                                                           "tree_depth"=5,
                                                                           "alpha"=0.1)))
 
+# Parallel test.
+familiar:::test_all_vimp_methods_parallel(familiar:::.get_available_ranger_vimp_methods(show_general=FALSE),
+                                          hyperparameter_list=list("count"=list("n_tree"=4,
+                                                                                "sample_size"=1.00,
+                                                                                "m_try"=0.3,
+                                                                                "node_size"=5,
+                                                                                "tree_depth"=5,
+                                                                                "alpha"=0.1),
+                                                                   "continuous"=list("n_tree"=4,
+                                                                                     "sample_size"=1.00,
+                                                                                     "m_try"=0.3,
+                                                                                     "node_size"=5,
+                                                                                     "tree_depth"=5,
+                                                                                     "alpha"=0.1),
+                                                                   "binomial"=list("n_tree"=4,
+                                                                                   "sample_size"=1.00,
+                                                                                   "m_try"=0.3,
+                                                                                   "node_size"=5,
+                                                                                   "tree_depth"=5,
+                                                                                   "alpha"=0.1),
+                                                                   "multinomial"=list("n_tree"=4,
+                                                                                      "sample_size"=1.00,
+                                                                                      "m_try"=0.3,
+                                                                                      "node_size"=5,
+                                                                                      "tree_depth"=5,
+                                                                                      "alpha"=0.1),
+                                                                   "survival"=list("n_tree"=4,
+                                                                                   "sample_size"=1.00,
+                                                                                   "m_try"=0.3,
+                                                                                   "node_size"=5,
+                                                                                   "tree_depth"=5,
+                                                                                   "alpha"=0.1)))
 
 ##### Count outcome #####
 data <- familiar:::test.create_good_data_set("count")
