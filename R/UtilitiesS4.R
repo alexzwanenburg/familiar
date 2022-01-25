@@ -211,6 +211,10 @@ setMethod("get_outcome_columns", signature(x="dataObject"), function(x){
   return(.get_outcome_columns(outcome_type=x@outcome_type))
 })
 
+setMethod("get_outcome_columns", signature(x="outcomeInfo"), function(x){
+  return(.get_outcome_columns(outcome_type=x@outcome_type))
+})
+
 setMethod("get_outcome_columns", signature(x="familiarModel"), function(x){
   return(.get_outcome_columns(outcome_type=x@outcome_type))
 })
@@ -634,6 +638,9 @@ setMethod("get_placeholder_prediction_table", signature(object="outcomeInfo", da
             
             # Find non-feature columns.
             non_feature_columns <- get_non_feature_columns(object)
+            if(all(type %in% .get_available_novelty_prediction_type_arguments())){
+              non_feature_columns <- setdiff(non_feature_columns, get_outcome_columns(object))
+            } 
             
             # Create the prediction table.
             prediction_table <- data.table::copy(data[, mget(non_feature_columns)])

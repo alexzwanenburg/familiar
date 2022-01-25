@@ -305,6 +305,13 @@ setMethod(".predict", signature(object="familiarEnsemble"),
                   class_levels <- NULL
                 }
                 
+                # Set grouping columns. Remove outcome columns for novelty-only
+                # predictions.
+                grouping_column <- get_non_feature_columns(object)
+                if(all(type %in% .get_available_novelty_prediction_type_arguments())){
+                  grouping_column <- setdiff(grouping_column, get_outcome_columns(object))
+                } 
+                
                 # Ensemble predictions are done using the
                 # .compute_data_element_estimates method.
                 data_element <- methods::new("familiarDataElementPredictionTable",
@@ -316,7 +323,7 @@ setMethod(".predict", signature(object="familiarEnsemble"),
                                              estimation_type = ifelse(is.null(percentiles), "point", "bootstrap_confidence_interval"),
                                              outcome_type = object@outcome_type,
                                              class_levels = class_levels,
-                                             grouping_column = get_non_feature_columns(object))
+                                             grouping_column = grouping_column)
                 
                 # Compute ensemble values.
                 data_element <- .compute_data_element_estimates(x=data_element,
@@ -462,8 +469,11 @@ setMethod(".predict", signature(object="familiarModel"),
             
             if(!is_empty(prediction_table)){
               # Order output columns.
+              ordered_columns <- intersect(colnames(get_placeholder_prediction_table(object=object, data=data, type=type)),
+                                           colnames(prediction_table))
+              
               data.table::setcolorder(prediction_table,
-                                      neworder=colnames(get_placeholder_prediction_table(object=object, data=data, type=type)))
+                                      neworder=ordered_columns)
             }  
             
             return(prediction_table)  

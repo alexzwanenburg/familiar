@@ -432,7 +432,7 @@ setMethod("..compute_data_element_estimates", signature(x="familiarDataElementPr
                                                  grouping_column,
                                                  ...){
   
-  # Compute ensemble estimates for the 
+  # Compute ensemble estimates for the novelty score.
   prediction_data <- data[,
                           ...compute_ensemble_estimates(x=.SD,
                                                         prediction_columns="novelty",
