@@ -1312,6 +1312,7 @@ setMethod("..compute_data_element_estimates", signature(x="familiarDataElementCa
 #'  in a familiarCollection.
 #'
 #'@inheritParams export_all
+#'@inheritParams export_univariate_analysis_data
 #'
 #'@inheritDotParams extract_calibration_data
 #'@inheritDotParams as_familiar_collection
@@ -1338,13 +1339,22 @@ setMethod("..compute_data_element_estimates", signature(x="familiarDataElementCa
 #'@exportMethod export_calibration_data
 #'@md
 #'@rdname export_calibration_data-methods
-setGeneric("export_calibration_data", function(object, dir_path=NULL, aggregate_results=TRUE, ...) standardGeneric("export_calibration_data"))
+setGeneric("export_calibration_data",
+           function(object,
+                    dir_path=NULL,
+                    aggregate_results=TRUE,
+                    export_collection=FALSE,
+                    ...) standardGeneric("export_calibration_data"))
 
 #####export_calibration_data (collection)#####
 
 #'@rdname export_calibration_data-methods
 setMethod("export_calibration_data", signature(object="familiarCollection"),
-          function(object, dir_path=NULL, aggregate_results=TRUE, ...){
+          function(object,
+                   dir_path=NULL,
+                   aggregate_results=TRUE,
+                   export_collection=FALSE,
+                   ...){
             
             # Obtain calibration data.
             calibration_data <- .export(x=object,
@@ -1382,23 +1392,27 @@ setMethod("export_calibration_data", signature(object="familiarCollection"),
                                     subtype="density",
                                     object_class="familiarDataElementCalibrationDensity")
             
+            # Set data list.
+            data_list <- list("data"=calibration_data,
+                              "density"=density_data,
+                              "linear_test"=linear_fit_data,
+                              "gof_test"=gof_data)
             
-            if(is.null(dir_path)){
-              return(list("data"=calibration_data,
-                          "density"=density_data,
-                          "linear_test"=linear_fit_data,
-                          "gof_test"=gof_data))
-              
-            } else {
-              return(NULL)
-            }
+            if(!is.null(dir_path)) data_list <- NULL
+            if(export_collection) data_list <- c(data_list, list("collection"=object))
+            
+            return(data_list)
           })
 
 #####export_calibration_data (generic)#####
 
 #'@rdname export_calibration_data-methods
 setMethod("export_calibration_data", signature(object="ANY"),
-          function(object, dir_path=NULL, aggregate_results=TRUE, ...){
+          function(object,
+                   dir_path=NULL,
+                   aggregate_results=TRUE,
+                   export_collection=FALSE,
+                   ...){
             
             # Attempt conversion to familiarCollection object.
             object <- do.call(as_familiar_collection,
@@ -1410,6 +1424,7 @@ setMethod("export_calibration_data", signature(object="ANY"),
             return(do.call(export_calibration_data,
                            args=c(list("object"=object,
                                        "dir_path"=dir_path,
-                                       "aggregate_results"=aggregate_results),
+                                       "aggregate_results"=aggregate_results,
+                                       "export_collection"=export_collection),
                                   list(...))))
           })
