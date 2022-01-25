@@ -26,6 +26,7 @@ plot_confusion_matrix(
   width = waiver(),
   height = waiver(),
   units = waiver(),
+  export_collection = FALSE,
   ...
 )
 
@@ -49,6 +50,7 @@ plot_confusion_matrix(
   width = waiver(),
   height = waiver(),
   units = waiver(),
+  export_collection = FALSE,
   ...
 )
 
@@ -72,6 +74,7 @@ plot_confusion_matrix(
   width = waiver(),
   height = waiver(),
   units = waiver(),
+  export_collection = FALSE,
   ...
 )
 }
@@ -156,6 +159,8 @@ the number of facets.}
 the number of features and the number of facets.}
 
 \item{units}{(\emph{optional}) Plot size unit. Either \code{cm} (default), \code{mm} or \verb{in}.}
+
+\item{export_collection}{(\emph{optional}) Exports the collection if TRUE.}
 
 \item{...}{
   Arguments passed on to \code{\link[=as_familiar_collection]{as_familiar_collection}}, \code{\link[ggplot2:ggsave]{ggplot2::ggsave}}, \code{\link[=extract_confusion_matrix]{extract_confusion_matrix}}
