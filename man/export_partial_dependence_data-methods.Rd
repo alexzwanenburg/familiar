@@ -10,6 +10,7 @@ export_partial_dependence_data(
   object,
   dir_path = NULL,
   aggregate_results = TRUE,
+  export_collection = FALSE,
   ...
 )
 
@@ -17,6 +18,7 @@ export_partial_dependence_data(
   object,
   dir_path = NULL,
   aggregate_results = TRUE,
+  export_collection = FALSE,
   ...
 )
 
@@ -24,6 +26,7 @@ export_partial_dependence_data(
   object,
   dir_path = NULL,
   aggregate_results = TRUE,
+  export_collection = FALSE,
   ...
 )
 }

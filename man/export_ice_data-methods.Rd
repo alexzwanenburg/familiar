@@ -6,11 +6,29 @@
 \alias{export_ice_data,ANY-method}
 \title{Extract and export individual conditional expectation data.}
 \usage{
-export_ice_data(object, dir_path = NULL, aggregate_results = TRUE, ...)
+export_ice_data(
+  object,
+  dir_path = NULL,
+  aggregate_results = TRUE,
+  export_collection = FALSE,
+  ...
+)
 
-\S4method{export_ice_data}{familiarCollection}(object, dir_path = NULL, aggregate_results = TRUE, ...)
+\S4method{export_ice_data}{familiarCollection}(
+  object,
+  dir_path = NULL,
+  aggregate_results = TRUE,
+  export_collection = FALSE,
+  ...
+)
 
-\S4method{export_ice_data}{ANY}(object, dir_path = NULL, aggregate_results = TRUE, ...)
+\S4method{export_ice_data}{ANY}(
+  object,
+  dir_path = NULL,
+  aggregate_results = TRUE,
+  export_collection = FALSE,
+  ...
+)
 }
 \arguments{
 \item{object}{A \code{familiarCollection} object, or other other objects from which
