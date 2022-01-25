@@ -283,6 +283,7 @@ setMethod("extract_performance", signature(object="familiarEnsemble"),
 #'  familiarCollection.
 #'
 #'@inheritParams export_all
+#'@inheritParams export_univariate_analysis_data
 #'
 #'@inheritDotParams extract_performance
 #'@inheritDotParams as_familiar_collection
@@ -307,27 +308,40 @@ setMethod("extract_performance", signature(object="familiarEnsemble"),
 #'@md
 #'@rdname export_model_performance-methods
 setGeneric("export_model_performance",
-           function(object, dir_path=NULL, aggregate_results=FALSE, ...) standardGeneric("export_model_performance"))
+           function(object,
+                    dir_path=NULL,
+                    aggregate_results=FALSE,
+                    export_collection=FALSE,
+                    ...) standardGeneric("export_model_performance"))
 
 #####export_model_performance (collection)#####
 
 #'@rdname export_model_performance-methods
 setMethod("export_model_performance", signature(object="familiarCollection"),
-          function(object, dir_path=NULL, aggregate_results=FALSE, ...){
+          function(object, 
+                   dir_path=NULL,
+                   aggregate_results=FALSE,
+                   export_collection=FALSE,
+                   ...){
             
             return(.export(x=object,
                            data_slot="model_performance",
                            dir_path=dir_path,
                            aggregate_results=aggregate_results,
                            type="performance",
-                           subtype="metric"))
+                           subtype="metric",
+                           export_collection=export_collection))
           })
 
 #####export_model_performance (generic)#####
 
 #'@rdname export_model_performance-methods
 setMethod("export_model_performance", signature(object="ANY"),
-          function(object, dir_path=NULL, aggregate_results=FALSE, ...){
+          function(object,
+                   dir_path=NULL,
+                   aggregate_results=FALSE,
+                   export_collection=FALSE,
+                   ...){
             
             # Attempt conversion to familiarCollection object.
             object <- do.call(as_familiar_collection,
@@ -339,6 +353,7 @@ setMethod("export_model_performance", signature(object="ANY"),
             return(do.call(export_model_performance,
                            args=c(list("object"=object,
                                        "dir_path"=dir_path,
-                                       "aggregate_results"=aggregate_results),
+                                       "aggregate_results"=aggregate_results,
+                                       "export_collection"=export_collection),
                                   list(...))))
           })

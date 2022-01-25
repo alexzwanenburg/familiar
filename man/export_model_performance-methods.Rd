@@ -10,6 +10,7 @@ export_model_performance(
   object,
   dir_path = NULL,
   aggregate_results = FALSE,
+  export_collection = FALSE,
   ...
 )
 
@@ -17,6 +18,7 @@ export_model_performance(
   object,
   dir_path = NULL,
   aggregate_results = FALSE,
+  export_collection = FALSE,
   ...
 )
 
@@ -24,6 +26,7 @@ export_model_performance(
   object,
   dir_path = NULL,
   aggregate_results = FALSE,
+  export_collection = FALSE,
   ...
 )
 }
@@ -36,6 +39,8 @@ will allow export as a structured list of data.tables.}
 
 \item{aggregate_results}{Flag that signifies whether results should be
 aggregated for export.}
+
+\item{export_collection}{(\emph{optional}) Exports the collection if TRUE.}
 
 \item{...}{
   Arguments passed on to \code{\link[=extract_performance]{extract_performance}}, \code{\link[=as_familiar_collection]{as_familiar_collection}}
