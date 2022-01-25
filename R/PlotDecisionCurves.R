@@ -97,6 +97,7 @@ setGeneric("plot_decision_curve",
                     width=waiver(),
                     height=waiver(),
                     units=waiver(),
+                    export_collection=FALSE,
                     ...) standardGeneric("plot_decision_curve"))
 
 #####plot_decision_curve (generic)#####
@@ -129,6 +130,7 @@ setMethod("plot_decision_curve", signature(object="ANY"),
                    width=waiver(),
                    height=waiver(),
                    units=waiver(),
+                   export_collection=FALSE,
                    ...){
             
             # Attempt conversion to familiarCollection object.
@@ -163,7 +165,8 @@ setMethod("plot_decision_curve", signature(object="ANY"),
                                      "conf_int_alpha"=conf_int_alpha,
                                      "width"=width,
                                      "height"=height,
-                                     "units"=units)))
+                                     "units"=units,
+                                     "export_collection"=export_collection)))
           })
 
 
@@ -197,6 +200,7 @@ setMethod("plot_decision_curve", signature(object="familiarCollection"),
                    width=waiver(),
                    height=waiver(),
                    units=waiver(),
+                   export_collection=FALSE,
                    ...){
 
             # Suppress NOTES due to non-standard evaluation in data.table
@@ -502,13 +506,11 @@ setMethod("plot_decision_curve", signature(object="familiarCollection"),
               }
             }
             
-            # Output
-            if(is.null(dir_path)){
-              return(plot_list)
-              
-            } else {
-              return(NULL)
-            }
+            # Generate output
+            return(plotting.get_output(dir_path=dir_path,
+                                       plot_list=plot_list,
+                                       export_collection=export_collection,
+                                       object=object))
           })
 
 
