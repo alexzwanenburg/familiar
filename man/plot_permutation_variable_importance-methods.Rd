@@ -30,6 +30,7 @@ plot_permutation_variable_importance(
   width = waiver(),
   height = waiver(),
   units = waiver(),
+  export_collection = FALSE,
   ...
 )
 
@@ -57,6 +58,7 @@ plot_permutation_variable_importance(
   width = waiver(),
   height = waiver(),
   units = waiver(),
+  export_collection = FALSE,
   ...
 )
 
@@ -84,6 +86,7 @@ plot_permutation_variable_importance(
   width = waiver(),
   height = waiver(),
   units = waiver(),
+  export_collection = FALSE,
   ...
 )
 }

@@ -114,6 +114,7 @@ setGeneric("plot_permutation_variable_importance",
                     width=waiver(),
                     height=waiver(),
                     units=waiver(),
+                    export_collection=FALSE,
                     ...) standardGeneric("plot_permutation_variable_importance"))
 
 #####plot_permutation_variable_importance (generic)#####
@@ -143,11 +144,13 @@ setMethod("plot_permutation_variable_importance", signature(object="ANY"),
                    width=waiver(),
                    height=waiver(),
                    units=waiver(),
+                   export_collection=FALSE,
                    ...){
             
             # Attempt conversion to familiarCollection object.
             object <- do.call(as_familiar_collection,
-                              args=c(list("object"=object, "data_element"="permutation_vimp"),
+                              args=c(list("object"=object,
+                                          "data_element"="permutation_vimp"),
                                      list(...)))
             
             return(do.call(plot_permutation_variable_importance,
@@ -173,7 +176,8 @@ setMethod("plot_permutation_variable_importance", signature(object="ANY"),
                                      "conf_int_style"=conf_int_style,
                                      "width"=width,
                                      "height"=height,
-                                     "units"=units)))
+                                     "units"=units,
+                                     "export_collection"=export_collection)))
           })
 
 #####plot_permutation_variable_importance (collection)#####
@@ -203,6 +207,7 @@ setMethod("plot_permutation_variable_importance", signature(object="familiarColl
                    width=waiver(),
                    height=waiver(),
                    units=waiver(),
+                   export_collection=FALSE,
                    ...){
             
             # Suppress NOTES due to non-standard evaluation in data.table
@@ -589,11 +594,10 @@ setMethod("plot_permutation_variable_importance", signature(object="familiarColl
             }
             
             # Generate output
-            if(is.null(dir_path)){
-              return(plot_list)
-            } else {
-              return(NULL)
-            }
+            return(plotting.get_output(dir_path=dir_path,
+                                       plot_list=plot_list,
+                                       export_collection=export_collection,
+                                       object=object))
           })
 
 
