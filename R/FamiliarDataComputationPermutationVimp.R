@@ -675,6 +675,7 @@ setMethod("extract_permutation_vimp", signature(object="familiarEnsemble"),
 #'  familiarCollection.
 #'
 #'@inheritParams export_all
+#'@inheritParams export_univariate_analysis_data
 #'
 #'@inheritDotParams extract_permutation_vimp
 #'@inheritDotParams as_familiar_collection
@@ -719,27 +720,40 @@ setMethod("extract_permutation_vimp", signature(object="familiarEnsemble"),
 #'@md
 #'@rdname export_permutation_vimp-methods
 setGeneric("export_permutation_vimp",
-           function(object, dir_path=NULL, aggregate_results=TRUE, ...) standardGeneric("export_permutation_vimp"))
+           function(object,
+                    dir_path=NULL,
+                    aggregate_results=TRUE,
+                    export_collection=FALSE,
+                    ...) standardGeneric("export_permutation_vimp"))
 
 #####export_permutation_vimp (collection)#####
 
 #'@rdname export_permutation_vimp-methods
 setMethod("export_permutation_vimp", signature(object="familiarCollection"),
-          function(object, dir_path=NULL, aggregate_results=TRUE, ...){
+          function(object,
+                   dir_path=NULL,
+                   aggregate_results=TRUE,
+                   export_collection=FALSE,
+                   ...){
             
             return(.export(x=object,
                            data_slot="permutation_vimp",
                            dir_path=dir_path,
                            aggregate_results=aggregate_results,
                            type="variable_importance",
-                           subtype="permutation"))
+                           subtype="permutation",
+                           export_collection=export_collection))
           })
 
 #####export_permutation_vimp (generic)#####
 
 #'@rdname export_permutation_vimp-methods
 setMethod("export_permutation_vimp", signature(object="ANY"),
-          function(object, dir_path=NULL,  aggregate_results=TRUE, ...){
+          function(object,
+                   dir_path=NULL,
+                   aggregate_results=TRUE,
+                   export_collection=FALSE,
+                   ...){
             
             # Attempt conversion to familiarCollection object.
             object <- do.call(as_familiar_collection,
@@ -751,6 +765,7 @@ setMethod("export_permutation_vimp", signature(object="ANY"),
             return(do.call(export_permutation_vimp,
                            args=c(list("object"=object,
                                        "dir_path"=dir_path,
-                                       "aggregate_results"=aggregate_results),
+                                       "aggregate_results"=aggregate_results,
+                                       "export_collection"=export_collection),
                                   list(...))))
           })
