@@ -6,11 +6,29 @@
 \alias{export_hyperparameters,ANY-method}
 \title{Extract and export model hyperparameters.}
 \usage{
-export_hyperparameters(object, dir_path = NULL, aggregate_results = TRUE, ...)
+export_hyperparameters(
+  object,
+  dir_path = NULL,
+  aggregate_results = TRUE,
+  export_collection = FALSE,
+  ...
+)
 
-\S4method{export_hyperparameters}{familiarCollection}(object, dir_path = NULL, aggregate_results = TRUE, ...)
+\S4method{export_hyperparameters}{familiarCollection}(
+  object,
+  dir_path = NULL,
+  aggregate_results = TRUE,
+  export_collection = FALSE,
+  ...
+)
 
-\S4method{export_hyperparameters}{ANY}(object, dir_path = NULL, aggregate_results = TRUE, ...)
+\S4method{export_hyperparameters}{ANY}(
+  object,
+  dir_path = NULL,
+  aggregate_results = TRUE,
+  export_collection = FALSE,
+  ...
+)
 }
 \arguments{
 \item{object}{A \code{familiarCollection} object, or other other objects from which
