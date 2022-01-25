@@ -939,7 +939,7 @@ setMethod("extract_ice", signature(object="familiarEnsemble"),
 #'@description Extract and export individual conditional expectation data.
 #'
 #'@inheritParams export_all
-#'@inheritParams extract_univariate_analysis
+#'@inheritParams export_univariate_analysis_data
 #'
 #'@inheritDotParams extract_ice
 #'@inheritDotParams as_familiar_collection
@@ -1044,7 +1044,7 @@ setMethod(".export", signature(x="familiarDataElementIndividualConditionalExpect
 #'@description Extract and export partial dependence data.
 #'
 #'@inheritParams export_all
-#'@inheritParams extract_univariate_analysis
+#'@inheritParams export_univariate_analysis_data
 #'
 #'@inheritDotParams extract_ice
 #'@inheritDotParams as_familiar_collection

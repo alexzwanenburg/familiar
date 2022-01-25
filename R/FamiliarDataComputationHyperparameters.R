@@ -214,7 +214,7 @@ setMethod(".export", signature(x="familiarDataElementHyperparameters"),
 #'  familiarCollection.
 #'
 #'@inheritParams export_all
-#'@inheritParams extract_univariate_analysis
+#'@inheritParams export_univariate_analysis_data
 #'
 #'@inheritDotParams as_familiar_collection
 #'
