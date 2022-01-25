@@ -17,6 +17,7 @@ export_feature_similarity(
   export_dendrogram = FALSE,
   export_ordered_data = FALSE,
   export_clustering = FALSE,
+  export_collection = FALSE,
   ...
 )
 
@@ -31,6 +32,7 @@ export_feature_similarity(
   export_dendrogram = FALSE,
   export_ordered_data = FALSE,
   export_clustering = FALSE,
+  export_collection = FALSE,
   ...
 )
 
@@ -45,6 +47,7 @@ export_feature_similarity(
   export_dendrogram = FALSE,
   export_ordered_data = FALSE,
   export_clustering = FALSE,
+  export_collection = FALSE,
   ...
 )
 }
@@ -102,6 +105,8 @@ creation of the underlying \code{familiarModel} objects.}
 element objects.}
 
 \item{export_clustering}{Add clustering information to data.}
+
+\item{export_collection}{(\emph{optional}) Exports the collection if TRUE.}
 
 \item{...}{
   Arguments passed on to \code{\link[=as_familiar_collection]{as_familiar_collection}}

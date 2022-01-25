@@ -400,6 +400,7 @@ setMethod("extract_feature_similarity", signature(object="familiarEnsemble", dat
 #'
 #'@inheritParams export_all
 #'@inheritParams extract_data
+#'@inheritParams plot_univariate_importance
 #'
 #'@inheritDotParams as_familiar_collection
 #'
@@ -429,6 +430,7 @@ setGeneric("export_feature_similarity",
                     export_dendrogram=FALSE,
                     export_ordered_data=FALSE,
                     export_clustering=FALSE,
+                    export_collection=FALSE,
                     ...) standardGeneric("export_feature_similarity"))
 
 #####export_feature_similarity (collection)#####
@@ -445,6 +447,7 @@ setMethod("export_feature_similarity", signature(object="familiarCollection"),
                    export_dendrogram=FALSE,
                    export_ordered_data=FALSE,
                    export_clustering=FALSE,
+                   export_collection=FALSE,
                    ...){
             
             # Extract data.
@@ -519,7 +522,6 @@ setMethod("export_feature_similarity", signature(object="familiarCollection"),
                 # Add clustering information.
                 x <- lapply(x, ..compute_feature_similarity_clustering)
               }
-              
             }
             
             return(.export(x=object,
@@ -529,7 +531,8 @@ setMethod("export_feature_similarity", signature(object="familiarCollection"),
                            type="feature_similarity",
                            subtype=x[[1]]@similarity_metric,
                            export_dendrogram=export_dendrogram,
-                           export_ordered_data=export_ordered_data))
+                           export_ordered_data=export_ordered_data,
+                           export_collection=export_collection))
           })
 
 
@@ -544,6 +547,7 @@ setMethod("export_feature_similarity", signature(object="ANY"),
                    feature_linkage_method=waiver(),
                    feature_cluster_cut_method=waiver(),
                    feature_similarity_threshold=waiver(),
+                   export_collection=FALSE,
                    ...){
             
             # Attempt conversion to familiarCollection object.
@@ -564,7 +568,8 @@ setMethod("export_feature_similarity", signature(object="ANY"),
                                        "feature_cluster_method"=feature_cluster_method,
                                        "feature_linkage_method"=feature_linkage_method,
                                        "feature_cluster_cut_method"=feature_cluster_cut_method,
-                                       "feature_similarity_threshold"=feature_similarity_threshold),
+                                       "feature_similarity_threshold"=feature_similarity_threshold,
+                                       "export_collection"=export_collection),
                                   list(...))))
           })
 
