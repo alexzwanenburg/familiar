@@ -14,6 +14,7 @@ export_sample_similarity(
   sample_cluster_method = waiver(),
   sample_linkage_method = waiver(),
   export_dendrogram = FALSE,
+  export_collection = FALSE,
   ...
 )
 
@@ -25,6 +26,7 @@ export_sample_similarity(
   sample_cluster_method = waiver(),
   sample_linkage_method = waiver(),
   export_dendrogram = FALSE,
+  export_collection = FALSE,
   ...
 )
 
@@ -36,6 +38,7 @@ export_sample_similarity(
   sample_cluster_method = waiver(),
   sample_linkage_method = waiver(),
   export_dendrogram = FALSE,
+  export_collection = FALSE,
   ...
 )
 }
@@ -78,6 +81,8 @@ If not provided explicitly, this parameter is read from settings used at
 creation of the underlying \code{familiarModel} objects.}
 
 \item{export_dendrogram}{Add dendrogram in the data element objects.}
+
+\item{export_collection}{(\emph{optional}) Exports the collection if TRUE.}
 
 \item{...}{
   Arguments passed on to \code{\link[=as_familiar_collection]{as_familiar_collection}}

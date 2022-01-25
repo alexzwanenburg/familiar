@@ -238,6 +238,7 @@ setMethod("extract_sample_similarity", signature(object="familiarEnsemble", data
 #'
 #'@inheritParams export_all
 #'@inheritParams extract_data
+#'@inheritParams export_univariate_analysis_data
 #'
 #'@inheritDotParams as_familiar_collection
 #'
@@ -264,6 +265,7 @@ setGeneric("export_sample_similarity",
                     sample_cluster_method=waiver(),
                     sample_linkage_method=waiver(),
                     export_dendrogram=FALSE,
+                    export_collection=FALSE,
                     ...) standardGeneric("export_sample_similarity"))
 
 #####export_sample_similarity (collection)#####
@@ -277,6 +279,7 @@ setMethod("export_sample_similarity", signature(object="familiarCollection"),
                    sample_cluster_method=waiver(),
                    sample_linkage_method=waiver(),
                    export_dendrogram=FALSE,
+                   export_collection=FALSE,
                    ...){
             
             # Extract data.
@@ -340,7 +343,8 @@ setMethod("export_sample_similarity", signature(object="familiarCollection"),
                            aggregate_results=aggregate_results,
                            type="sample_similarity",
                            subtype=x[[1]]@similarity_metric,
-                           export_dendrogram=export_dendrogram))
+                           export_dendrogram=export_dendrogram,
+                           export_collection=export_collection))
           })
 
 
@@ -354,6 +358,7 @@ setMethod("export_sample_similarity", signature(object="ANY"),
                    sample_limit=waiver(),
                    sample_cluster_method=waiver(),
                    sample_linkage_method=waiver(),
+                   export_collection=FALSE,
                    ...){
             
             # Attempt conversion to familiarCollection object.
@@ -371,7 +376,8 @@ setMethod("export_sample_similarity", signature(object="ANY"),
                                        "dir_path"=dir_path,
                                        "aggregate_results"=aggregate_results,
                                        "sample_cluster_method"=sample_cluster_method,
-                                       "sample_linkage_method"=sample_linkage_method),
+                                       "sample_linkage_method"=sample_linkage_method,
+                                       "export_collection"=export_collection),
                                   list(...))))
           })
 
