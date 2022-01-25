@@ -3231,13 +3231,23 @@ test_plots <- function(plot_function,
                       
                       collection <- suppressWarnings(as_familiar_collection(object, familiar_data_names=c("development", "development", "validation", "validation")))
                       
-                      plot_list <- do.call(plot_function, args=c(list("object"=collection), plot_args))
-                      which_present <- .test_which_plot_present(plot_list)
+                      plot_list <- do.call(plot_function, args=c(list("object"=collection),
+                                                                 plot_args,
+                                                                 export_collection=TRUE))
                       
                       if(outcome_type %in% outcome_type_available){
+                        # Test which plot elements are present.
+                        which_present <- .test_which_plot_present(plot_list$plot_list)
+                        
                         testthat::expect_equal(all(which_present), TRUE)
                         
+                        # Test that a collection is exported.
+                        testthat::expect_s4_class(plot_list$collection, "familiarCollection")
+                        
                       } else {
+                        # Test which plot elements are present.
+                        which_present <- .test_which_plot_present(plot_list)
+                        
                         testthat::expect_equal(all(!which_present), TRUE)
                       }
                     })
