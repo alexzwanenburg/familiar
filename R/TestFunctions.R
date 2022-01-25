@@ -3231,9 +3231,9 @@ test_plots <- function(plot_function,
                       
                       collection <- suppressWarnings(as_familiar_collection(object, familiar_data_names=c("development", "development", "validation", "validation")))
                       
-                      plot_list <- do.call(plot_function, args=c(list("object"=collection),
-                                                                 plot_args,
-                                                                 export_collection=TRUE))
+                      plot_list <- do.call(plot_function, args=c(list("object"=collection,
+                                                                      "export_collection"=TRUE),
+                                                                 plot_args))
                       
                       if(outcome_type %in% outcome_type_available){
                         # Test which plot elements are present.
@@ -4049,13 +4049,24 @@ test_export <- function(export_function,
                       
                       collection <- suppressWarnings(as_familiar_collection(object, familiar_data_names=c("development", "development", "validation", "validation")))
                       
-                      data_elements <- do.call(export_function, args=c(list("object"=collection), export_args))
+                      data_elements <- do.call(export_function,
+                                               args=c(list("object"=collection,
+                                                           "export_collection"=TRUE),
+                                                      export_args))
+                      
+                      # Extract collection.
+                      exported_collection <- data_elements$collection
+                      data_elements$collection <- NULL
+                      
+                      # Determine which elements are present.
                       which_present <- .test_which_data_element_present(data_elements, outcome_type=outcome_type)
                       
                       if(outcome_type %in% outcome_type_available){
                         testthat::expect_equal(all(which_present), TRUE) 
                         
                         if(debug) show(data_elements)
+                        
+                        testthat::expect_s4_class(exported_collection, "familiarCollection")
                         
                       } else {
                         testthat::expect_equal(all(!which_present), TRUE)
