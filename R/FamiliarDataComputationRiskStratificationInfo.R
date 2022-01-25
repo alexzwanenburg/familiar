@@ -126,6 +126,7 @@ setMethod("extract_risk_stratification_info", signature(object="familiarEnsemble
 #'  by models in a familiarCollection.
 #'
 #'@inheritParams export_all
+#'@inheritParams export_univariate_analysis_data
 #'
 #'@inheritDotParams as_familiar_collection
 #'
@@ -166,26 +167,39 @@ setMethod("extract_risk_stratification_info", signature(object="familiarEnsemble
 #'@md
 #'@rdname export_risk_stratification_info-methods
 setGeneric("export_risk_stratification_info",
-           function(object, dir_path=NULL, aggregate_results=TRUE, ...) standardGeneric("export_risk_stratification_info"))
+           function(object,
+                    dir_path=NULL,
+                    aggregate_results=TRUE,
+                    export_collection=FALSE,
+                    ...) standardGeneric("export_risk_stratification_info"))
 
 #####export_risk_stratification_info (collection)#####
 
 #'@rdname export_risk_stratification_info-methods
 setMethod("export_risk_stratification_info", signature(object="familiarCollection"),
-          function(object, dir_path=NULL, aggregate_results=TRUE, ...){
+          function(object,
+                   dir_path=NULL,
+                   aggregate_results=TRUE,
+                   export_collection=FALSE,
+                   ...){
             
             return(.export(x=object,
                            data_slot="km_info",
                            dir_path=dir_path,
                            aggregate_results=aggregate_results,
-                           type="stratification"))
+                           type="stratification",
+                           export_collection=export_collection))
           })
 
 #####export_risk_stratification_info (generic)#####
 
 #'@rdname export_risk_stratification_info-methods
 setMethod("export_risk_stratification_info", signature(object="ANY"),
-          function(object, dir_path=NULL, aggregate_results=TRUE, ...){
+          function(object,
+                   dir_path=NULL,
+                   aggregate_results=TRUE,
+                   export_collection=FALSE,
+                   ...){
             
             # Attempt conversion to familiarCollection object.
             object <- do.call(as_familiar_collection,
@@ -196,6 +210,7 @@ setMethod("export_risk_stratification_info", signature(object="ANY"),
             return(do.call(export_risk_stratification_info,
                            args=c(list("object"=object,
                                        "dir_path"=dir_path,
-                                       "aggregate_resuls"=aggregate_results),
+                                       "aggregate_resuls"=aggregate_results,
+                                       "export_collection"=export_collection),
                                   list(...))))
           })
