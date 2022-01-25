@@ -168,6 +168,7 @@ setMethod("extract_confusion_matrix", signature(object="familiarEnsemble"),
 #'  familiarCollection.
 #'
 #'@inheritParams export_all
+#'@inheritParams plot_univariate_importance
 #'
 #'@inheritDotParams extract_confusion_matrix
 #'@inheritDotParams as_familiar_collection
@@ -190,27 +191,37 @@ setMethod("extract_confusion_matrix", signature(object="familiarEnsemble"),
 #'@md
 #'@rdname export_confusion_matrix_data-methods
 setGeneric("export_confusion_matrix_data",
-           function(object, dir_path=NULL, ...) standardGeneric("export_confusion_matrix_data"))
+           function(object,
+                    dir_path=NULL,
+                    export_collection=FALSE,
+                    ...) standardGeneric("export_confusion_matrix_data"))
 
 #####export_confusion_matrix_data (collection)#####
 
 #'@rdname export_confusion_matrix_data-methods
 setMethod("export_confusion_matrix_data", signature(object="familiarCollection"),
-          function(object, dir_path=NULL, ...){
+          function(object,
+                   dir_path=NULL,
+                   export_collection=FALSE,
+                   ...){
             
             return(.export(x=object,
                            data_slot="confusion_matrix",
                            dir_path=dir_path,
                            aggregate_results=TRUE,
                            type="performance",
-                           subtype="confusion_matrix"))
+                           subtype="confusion_matrix",
+                           export_collection=export_collection))
           })
 
 #####export_confusion_matrix_data (generic)#####
 
 #'@rdname export_confusion_matrix_data-methods
 setMethod("export_confusion_matrix_data", signature(object="ANY"),
-          function(object, dir_path=NULL, ...){
+          function(object,
+                   dir_path=NULL,
+                   export_collection=FALSE,
+                   ...){
             
             # Attempt conversion to familiarCollection object.
             object <- do.call(as_familiar_collection,
@@ -220,6 +231,7 @@ setMethod("export_confusion_matrix_data", signature(object="ANY"),
             
             return(do.call(export_confusion_matrix_data,
                            args=c(list("object"=object,
-                                       "dir_path"=dir_path),
+                                       "dir_path"=dir_path,
+                                       "export_collection"=export_collection),
                                   list(...))))
           })
