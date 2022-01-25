@@ -485,7 +485,7 @@ setMethod(".export", signature(x="familiarCollection"),
             if(is.null(dir_path)){
               # Export data.
               if(export_collection){
-                return(list("collection"=object,
+                return(list("collection"=x,
                             "data"=data_element))
                 
               } else {
