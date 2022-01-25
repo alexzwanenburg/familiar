@@ -3,9 +3,13 @@
 NULL
 
 .get_available_prediction_type_arguments <- function(){
-  return(c("novelty", "default", "survival_probability", "risk_stratification"))
+  return(c(.get_available_novelty_prediction_type_arguments(),
+           "default", "survival_probability", "risk_stratification"))
 }
 
+.get_available_novelty_prediction_type_arguments <- function(){
+  return(c("novelty"))
+}
 
 
 #'@title Model predictions for familiar models and model ensembles
