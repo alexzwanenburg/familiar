@@ -6,11 +6,11 @@
 \alias{export_prediction_data,ANY-method}
 \title{Extract and export predicted values.}
 \usage{
-export_prediction_data(object, dir_path = NULL, ...)
+export_prediction_data(object, dir_path = NULL, export_collection = FALSE, ...)
 
-\S4method{export_prediction_data}{familiarCollection}(object, dir_path = NULL, ...)
+\S4method{export_prediction_data}{familiarCollection}(object, dir_path = NULL, export_collection = FALSE, ...)
 
-\S4method{export_prediction_data}{ANY}(object, dir_path = NULL, ...)
+\S4method{export_prediction_data}{ANY}(object, dir_path = NULL, export_collection = FALSE, ...)
 }
 \arguments{
 \item{object}{A \code{familiarCollection} object, or other other objects from which
@@ -18,6 +18,8 @@ a \code{familiarCollection} can be extracted. See details for more information.}
 
 \item{dir_path}{Path to folder where extracted data should be saved. \code{NULL}
 will allow export as a structured list of data.tables.}
+
+\item{export_collection}{(\emph{optional}) Exports the collection if TRUE.}
 
 \item{...}{
   Arguments passed on to \code{\link[=extract_predictions]{extract_predictions}}, \code{\link[=as_familiar_collection]{as_familiar_collection}}

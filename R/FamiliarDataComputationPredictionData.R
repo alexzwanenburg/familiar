@@ -563,6 +563,7 @@ setMethod("..compute_data_element_estimates", signature(x="familiarDataElementPr
 #'  models in a familiarCollection.
 #'
 #'@inheritParams export_all
+#'@inheritParams export_univariate_analysis_data
 #'
 #'@inheritDotParams extract_predictions
 #'@inheritDotParams as_familiar_collection
@@ -586,26 +587,36 @@ setMethod("..compute_data_element_estimates", signature(x="familiarDataElementPr
 #'@md
 #'@rdname export_prediction_data-methods
 setGeneric("export_prediction_data",
-           function(object, dir_path=NULL, ...) standardGeneric("export_prediction_data"))
+           function(object,
+                    dir_path=NULL,
+                    export_collection=FALSE,
+                    ...) standardGeneric("export_prediction_data"))
 
 #####export_prediction_data (collection)#####
 
 #'@rdname export_prediction_data-methods
 setMethod("export_prediction_data", signature(object="familiarCollection"),
-          function(object, dir_path=NULL, ...){
+          function(object,
+                   dir_path=NULL,
+                   export_collection=FALSE,
+                   ...){
             
             return(.export(x=object,
                            data_slot="prediction_data",
                            dir_path=dir_path,
                            type="prediction",
-                           subtype=NULL))
+                           subtype=NULL,
+                           export_collection=export_collection))
           })
 
 #####export_prediction_data (generic)#####
 
 #'@rdname export_prediction_data-methods
 setMethod("export_prediction_data", signature(object="ANY"),
-          function(object, dir_path=NULL, ...){
+          function(object,
+                   dir_path=NULL,
+                   export_collection=FALSE,
+                   ...){
             
             # Attempt conversion to familiarCollection object.
             object <- do.call(as_familiar_collection,
@@ -615,7 +626,8 @@ setMethod("export_prediction_data", signature(object="ANY"),
             
             return(do.call(export_prediction_data,
                            args=c(list("object"=object,
-                                       "dir_path"=dir_path),
+                                       "dir_path"=dir_path,
+                                       "export_collection"=export_collection),
                                   list(...))))
           })
 
