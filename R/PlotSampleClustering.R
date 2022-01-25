@@ -179,6 +179,7 @@ setGeneric("plot_sample_clustering",
                     width=waiver(),
                     height=waiver(),
                     units=waiver(),
+                    export_collection=FALSE,
                     verbose=TRUE,
                     ...) standardGeneric("plot_sample_clustering"))
 
@@ -230,6 +231,7 @@ setMethod("plot_sample_clustering", signature(object="ANY"),
                    width=waiver(),
                    height=waiver(),
                    units=waiver(),
+                   export_collection=FALSE,
                    verbose=TRUE,
                    ...){
             
@@ -288,6 +290,7 @@ setMethod("plot_sample_clustering", signature(object="ANY"),
                                      "width"=width,
                                      "height"=height,
                                      "units"=units,
+                                     "export_collection"=export_collection,
                                      "verbose"=verbose)))
           })
 
@@ -340,6 +343,7 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
                    width=waiver(),
                    height=waiver(),
                    units=waiver(),
+                   export_collection=FALSE,
                    verbose=TRUE,
                    ...){
             
@@ -749,13 +753,11 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
               }
             }
             
-            # Output
-            if(is.null(dir_path)){
-              return(plot_list)
-              
-            } else {
-              return(NULL)
-            }
+            # Generate output
+            return(plotting.get_output(dir_path=dir_path,
+                                       plot_list=plot_list,
+                                       export_collection=export_collection,
+                                       object=object))
           })
 
 

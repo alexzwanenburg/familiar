@@ -51,6 +51,7 @@ plot_sample_clustering(
   width = waiver(),
   height = waiver(),
   units = waiver(),
+  export_collection = FALSE,
   verbose = TRUE,
   ...
 )
@@ -100,6 +101,7 @@ plot_sample_clustering(
   width = waiver(),
   height = waiver(),
   units = waiver(),
+  export_collection = FALSE,
   verbose = TRUE,
   ...
 )
@@ -149,6 +151,7 @@ plot_sample_clustering(
   width = waiver(),
   height = waiver(),
   units = waiver(),
+  export_collection = FALSE,
   verbose = TRUE,
   ...
 )
@@ -394,6 +397,8 @@ the number of facets.}
 the number of features and the number of facets.}
 
 \item{units}{(\emph{optional}) Plot size unit. Either \code{cm} (default), \code{mm} or \verb{in}.}
+
+\item{export_collection}{(\emph{optional}) Exports the collection if TRUE.}
 
 \item{verbose}{Flag to indicate whether feedback should be provided for the
 plotting.}
