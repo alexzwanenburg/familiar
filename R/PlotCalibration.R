@@ -137,6 +137,7 @@ setGeneric("plot_calibration_data",
                     width=waiver(),
                     height=waiver(),
                     units=waiver(),
+                    export_collection=FALSE,
                     ...) standardGeneric("plot_calibration_data"))
 
 
@@ -176,11 +177,13 @@ setMethod("plot_calibration_data", signature(object="ANY"),
                    width=waiver(),
                    height=waiver(),
                    units=waiver(),
+                   export_collection=FALSE,
                    ...){
             
             # Attempt conversion to familiarCollection object.
             object <- do.call(as_familiar_collection,
-                              args=append(list("object"=object, "data_element"="calibration_data"), list(...)))
+                              args=c(list("object"=object, "data_element"="calibration_data"),
+                                     list(...)))
             
             return(do.call(plot_calibration_data,
                            args=list("object"=object,
@@ -214,7 +217,8 @@ setMethod("plot_calibration_data", signature(object="ANY"),
                                      "density_plot_height"=density_plot_height,
                                      "width"=width,
                                      "height"=height,
-                                     "units"=units)))
+                                     "units"=units,
+                                     "export_collection"=export_collection)))
           })
 
 #####plot_calibration_data (collection)#####
@@ -253,6 +257,7 @@ setMethod("plot_calibration_data", signature(object="familiarCollection"),
                    width=waiver(),
                    height=waiver(),
                    units=waiver(),
+                   export_collection=FALSE,
                    ...){
             
             # Suppress NOTES due to non-standard evaluation in data.table
@@ -578,11 +583,10 @@ setMethod("plot_calibration_data", signature(object="familiarCollection"),
             }
             
             # Generate output
-            if(is.null(dir_path)){
-              return(plot_list)
-            } else {
-              return(NULL)
-            }
+            return(plotting.get_output(dir_path=dir_path,
+                                       plot_list=plot_list,
+                                       export_collection=export_collection,
+                                       object=object))
           })
 
 
