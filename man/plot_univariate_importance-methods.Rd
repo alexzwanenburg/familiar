@@ -37,6 +37,7 @@ plot_univariate_importance(
   height = waiver(),
   units = waiver(),
   verbose = TRUE,
+  export_collection = FALSE,
   ...
 )
 
@@ -71,6 +72,7 @@ plot_univariate_importance(
   height = waiver(),
   units = waiver(),
   verbose = TRUE,
+  export_collection = FALSE,
   ...
 )
 
@@ -105,6 +107,7 @@ plot_univariate_importance(
   height = waiver(),
   units = waiver(),
   verbose = TRUE,
+  export_collection = FALSE,
   ...
 )
 }
@@ -232,6 +235,8 @@ the number of features and the number of facets.}
 
 \item{verbose}{Flag to indicate whether feedback should be provided for the
 plotting.}
+
+\item{export_collection}{(\emph{optional}) Exports the collection if TRUE.}
 
 \item{...}{
   Arguments passed on to \code{\link[=as_familiar_collection]{as_familiar_collection}}, \code{\link[ggplot2:ggsave]{ggplot2::ggsave}}, \code{\link[=extract_univariate_analysis]{extract_univariate_analysis}}

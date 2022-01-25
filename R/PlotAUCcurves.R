@@ -83,6 +83,7 @@ setGeneric("plot_auc_roc_curve",
                     width=waiver(),
                     height=waiver(),
                     units=waiver(),
+                    export_collection=FALSE,
                     ...) standardGeneric("plot_auc_roc_curve"))
 
 #####plot_auc_roc_curve (generic)#####
@@ -113,6 +114,7 @@ setMethod("plot_auc_roc_curve", signature(object="ANY"),
                    width=waiver(),
                    height=waiver(),
                    units=waiver(),
+                   export_collection=FALSE,
                    ...){
             
             # Attempt conversion to familiarCollection object.
@@ -145,7 +147,8 @@ setMethod("plot_auc_roc_curve", signature(object="ANY"),
                                      "conf_int_alpha"=conf_int_alpha,
                                      "width"=width,
                                      "height"=height,
-                                     "units"=units)))
+                                     "units"=units,
+                                     "export_collection"=export_collection)))
           })
 
 
@@ -177,6 +180,7 @@ setMethod("plot_auc_roc_curve", signature(object="familiarCollection"),
                    width=waiver(),
                    height=waiver(),
                    units=waiver(),
+                   export_collection=FALSE,
                    ...){
             
             return(do.call(.plot_auc_curve,
@@ -204,7 +208,8 @@ setMethod("plot_auc_roc_curve", signature(object="familiarCollection"),
                                      "conf_int_alpha"=conf_int_alpha,
                                      "width"=width,
                                      "height"=height,
-                                     "units"=units)))
+                                     "units"=units,
+                                     "export_collection"=export_collection)))
             
           })
 
@@ -278,6 +283,7 @@ setGeneric("plot_auc_precision_recall_curve",
                     width=waiver(),
                     height=waiver(),
                     units=waiver(),
+                    export_collection=FALSE,
                     ...) standardGeneric("plot_auc_precision_recall_curve"))
 
 #####plot_auc_precision_recall_curve (generic)#####
@@ -308,6 +314,7 @@ setMethod("plot_auc_precision_recall_curve", signature(object="ANY"),
                    width=waiver(),
                    height=waiver(),
                    units=waiver(),
+                   export_collection=FALSE,
                    ...){
             
             # Attempt conversion to familiarCollection object.
@@ -340,7 +347,8 @@ setMethod("plot_auc_precision_recall_curve", signature(object="ANY"),
                                      "conf_int_alpha"=conf_int_alpha,
                                      "width"=width,
                                      "height"=height,
-                                     "units"=units)))
+                                     "units"=units,
+                                     "export_collection"=export_collection)))
           })
 
 
@@ -372,6 +380,7 @@ setMethod("plot_auc_precision_recall_curve", signature(object="familiarCollectio
                    width=waiver(),
                    height=waiver(),
                    units=waiver(),
+                   export_collection=FALSE,
                    ...){
             
             return(do.call(.plot_auc_curve,
@@ -399,7 +408,8 @@ setMethod("plot_auc_precision_recall_curve", signature(object="familiarCollectio
                                      "conf_int_alpha"=conf_int_alpha,
                                      "width"=width,
                                      "height"=height,
-                                     "units"=units)))
+                                     "units"=units,
+                                     "export_collection"=export_collection)))
             
           })
 
@@ -430,6 +440,7 @@ setMethod("plot_auc_precision_recall_curve", signature(object="familiarCollectio
                             width=waiver(),
                             height=waiver(),
                             units=waiver(),
+                            export_collection=FALSE,
                             ...){
   # Get input data.
   x <- export_auc_data(object=object,
@@ -708,13 +719,11 @@ setMethod("plot_auc_precision_recall_curve", signature(object="familiarCollectio
     }
   }
   
-  # Output
-  if(is.null(dir_path)){
-    return(plot_list)
-    
-  } else {
-    return(NULL)
-  }
+  # Generate output
+  return(plotting.get_output(dir_path=dir_path,
+                             plot_list=plot_list,
+                             export_collection=export_collection,
+                             object=object))
 }
 
 

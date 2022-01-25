@@ -34,6 +34,7 @@ NULL
 #'@param units (*optional*) Plot size unit. Either `cm` (default), `mm` or `in`.
 #'@param verbose Flag to indicate whether feedback should be provided for the
 #'  plotting.
+#'@param export_collection (*optional*) Exports the collection if TRUE.
 #'@inheritParams export_univariate_analysis_data
 #'@inheritParams export_feature_similarity
 #'@inheritParams as_familiar_collection
@@ -115,6 +116,7 @@ setGeneric("plot_univariate_importance",
                     height=waiver(),
                     units=waiver(),
                     verbose=TRUE,
+                    export_collection=FALSE,
                     ...) standardGeneric("plot_univariate_importance"))
 
 #####plot_univariate_importance (generic)#####
@@ -151,6 +153,7 @@ setMethod("plot_univariate_importance", signature(object="ANY"),
                    height=waiver(),
                    units=waiver(),
                    verbose=TRUE,
+                   export_collection=FALSE,
                    ...){
             
             # Attempt conversion to familiarCollection object.
@@ -194,7 +197,8 @@ setMethod("plot_univariate_importance", signature(object="ANY"),
                                      "width"=width,
                                      "height"=height,
                                      "units"=units,
-                                     "verbose"=verbose)))
+                                     "verbose"=verbose,
+                                     "export_collection"=export_collection)))
           })
 
 #####plot_univariate_importance (collection)#####
@@ -231,6 +235,7 @@ setMethod("plot_univariate_importance", signature(object="familiarCollection"),
                    height=waiver(),
                    units=waiver(),
                    verbose=TRUE,
+                   export_collection=FALSE,
                    ...){
             
             # Suppress NOTES due to non-standard evaluation in data.table
@@ -484,11 +489,10 @@ setMethod("plot_univariate_importance", signature(object="familiarCollection"),
             }
             
             # Generate output
-            if(is.null(dir_path)){
-              return(plot_list)
-            } else {
-              return(NULL)
-            }
+            return(plotting.get_output(dir_path=dir_path,
+                                       plot_list=plot_list,
+                                       export_collection=export_collection,
+                                       object=object))
           })
 
 
