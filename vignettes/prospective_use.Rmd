@@ -336,3 +336,32 @@ plots <- plot_auc_roc_curve(object=collection,
                             discrete_palette="R4",
                             draw=TRUE)
 ```
+
+## Exporting collections
+
+Generating plot data can take a non-trivial amount of time. Hence it may be
+preferable to have the collection object available so that plots can be altered
+and created more quickly. To do so, we can call an export or plot method with 
+`export_collection=TRUE`.
+
+```{r}
+# Generate paths to the model objects.
+model_paths <- sapply(list.files(model_directory_path, pattern="model"), function(x) (file.path(model_directory_path, x)))
+
+# Generate plot data (plots + collection) using an ad-hoc ensemble.
+plot_data <- familiar::plot_auc_roc_curve(object=model_paths,
+                                          draw=FALSE,
+                                          data=data[batch_id=="validation"],
+                                          export_collection=TRUE)
+```
+
+The `plot_data` variable is a list that contains (here) two items: `collection`
+and `plot_list`. The collection object can be used to alter plot elements, such
+as the theme and palette.
+
+```{r}
+plots <- familiar::plot_auc_roc_curve(object=plot_data$collection,
+                                      ggtheme=ggplot2::theme_dark(),
+                                      discrete_palette="R4",
+                                      draw=TRUE)
+```
