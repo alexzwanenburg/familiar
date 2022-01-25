@@ -93,6 +93,7 @@ setGeneric("plot_variable_importance",
                     width=waiver(),
                     height=waiver(),
                     units=waiver(),
+                    export_collection=FALSE,
                     ...) standardGeneric("plot_variable_importance"))
 
 ##### plot_variable_importance (generic) ---------------------------------------
@@ -126,6 +127,7 @@ setMethod("plot_variable_importance", signature(object="ANY"),
                     width=waiver(),
                     height=waiver(),
                     units=waiver(),
+                    export_collection=FALSE,
                     ...){
              
              # Set the data element.
@@ -168,7 +170,8 @@ setMethod("plot_variable_importance", signature(object="ANY"),
                                         "y_breaks"=y_breaks,
                                         "width"=width,
                                         "height"=height,
-                                        "units"=units),
+                                        "units"=units,
+                                        "export_collection"=export_collection),
                                    list(...))))
              
            })
@@ -204,6 +207,7 @@ setMethod("plot_variable_importance", signature(object="familiarCollection"),
                    width=waiver(),
                    height=waiver(),
                    units=waiver(),
+                   export_collection=FALSE,
                    ...){
             
             return(.plot_variable_importance(object=object,
@@ -233,6 +237,7 @@ setMethod("plot_variable_importance", signature(object="familiarCollection"),
                                              width=width,
                                              height=height,
                                              units=units,
+                                             export_collection=export_collection,
                                              ...))
             
           })
@@ -304,6 +309,7 @@ plot_model_signature_variable_importance <- function(...){
                                       width,
                                       height,
                                       units,
+                                      export_collection=FALSE,
                                       ...){ 
   
   # Get input data.
@@ -517,11 +523,10 @@ plot_model_signature_variable_importance <- function(...){
   }
   
   # Generate output
-  if(is.null(dir_path)){
-    return(plot_list)
-  } else {
-    return(NULL)
-  }
+  return(plotting.get_output(dir_path=dir_path,
+                             plot_list=plot_list,
+                             export_collection=export_collection,
+                             object=object))
 }
 
 
