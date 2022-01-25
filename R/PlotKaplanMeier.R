@@ -117,6 +117,7 @@ setGeneric("plot_kaplan_meier",
                     width=waiver(),
                     height=waiver(),
                     units=waiver(),
+                    export_collection=FALSE,
                     ...) standardGeneric("plot_kaplan_meier"))
 
 
@@ -159,6 +160,7 @@ setMethod("plot_kaplan_meier", signature(object="ANY"),
                    width=waiver(),
                    height=waiver(),
                    units=waiver(),
+                   export_collection=FALSE,
                    ...){
             
             # Attempt conversion to familiarCollection object.
@@ -202,7 +204,8 @@ setMethod("plot_kaplan_meier", signature(object="ANY"),
                                      "show_survival_table"=show_survival_table,
                                      "width"=width,
                                      "height"=height,
-                                     "units"=units)))
+                                     "units"=units,
+                                     "export_collection"=export_collection)))
           })
 
 #####plot_kaplan_meier (collection)#####
@@ -244,6 +247,7 @@ setMethod("plot_kaplan_meier", signature(object="familiarCollection"),
                    width=waiver(),
                    height=waiver(),
                    units=waiver(),
+                   export_collection=FALSE,
                    ...){
             
             # Suppress NOTES due to non-standard evaluation in data.table
@@ -502,12 +506,11 @@ setMethod("plot_kaplan_meier", signature(object="familiarCollection"),
               }
             }
             
-            # Return
-            if(is.null(dir_path)){
-              return(plot_list)
-            } else {
-              return(NULL)
-            }
+            # Generate output
+            return(plotting.get_output(dir_path=dir_path,
+                                       plot_list=plot_list,
+                                       export_collection=export_collection,
+                                       object=object))
           })
 
 
