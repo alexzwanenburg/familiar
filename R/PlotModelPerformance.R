@@ -117,6 +117,7 @@ setGeneric("plot_model_performance",
                     height=waiver(),
                     units=waiver(),
                     annotate_performance=NULL,
+                    export_collection=FALSE,
                     ...) standardGeneric("plot_model_performance"))
 
 #####plot_model_performance (generic)#####
@@ -151,11 +152,14 @@ setMethod("plot_model_performance", signature(object="ANY"),
                    height=waiver(),
                    units=waiver(),
                    annotate_performance=NULL,
+                   export_collection=FALSE,
                    ...){
             
             # Attempt conversion to familiarCollection object.
             object <- do.call(as_familiar_collection,
-                              args=c(list("object"=object, "data_element"="model_performance"), list(...)))
+                              args=c(list("object"=object,
+                                          "data_element"="model_performance"),
+                                     list(...)))
             
             return(do.call(plot_model_performance,
                            args=list("object"=object,
@@ -185,7 +189,8 @@ setMethod("plot_model_performance", signature(object="ANY"),
                                      "width"=width,
                                      "height"=height,
                                      "units"=units,
-                                     "annotate_performance"=annotate_performance)))
+                                     "annotate_performance"=annotate_performance,
+                                     "export_collection"=export_collection)))
           })
 
 #####plot_model_performance (collection)#####
@@ -220,6 +225,7 @@ setMethod("plot_model_performance", signature(object="familiarCollection"),
                    height=waiver(),
                    units=waiver(),
                    annotate_performance=NULL,
+                   export_collection=FALSE,
                    ...){
            
             ##### Check input arguments ----------------------------------------
@@ -536,13 +542,11 @@ setMethod("plot_model_performance", signature(object="familiarCollection"),
               }
             }
             
-            # Output
-            if(is.null(dir_path)){
-              return(plot_list)
-              
-            } else {
-              return(NULL)
-            }
+            # Generate output
+            return(plotting.get_output(dir_path=dir_path,
+                                       plot_list=plot_list,
+                                       export_collection=export_collection,
+                                       object=object))
           })
 
 

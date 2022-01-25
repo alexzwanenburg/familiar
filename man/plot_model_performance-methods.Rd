@@ -35,6 +35,7 @@ plot_model_performance(
   height = waiver(),
   units = waiver(),
   annotate_performance = NULL,
+  export_collection = FALSE,
   ...
 )
 
@@ -67,6 +68,7 @@ plot_model_performance(
   height = waiver(),
   units = waiver(),
   annotate_performance = NULL,
+  export_collection = FALSE,
   ...
 )
 
@@ -99,6 +101,7 @@ plot_model_performance(
   height = waiver(),
   units = waiver(),
   annotate_performance = NULL,
+  export_collection = FALSE,
   ...
 )
 }
@@ -211,6 +214,8 @@ the number of features and the number of facets.}
 \item{annotate_performance}{(\emph{optional}) Indicates whether performance in
 heatmaps should be annotated with text. Can be \code{none}, \code{value} (default), or
 \code{value_ci} (median value plus 95\% credibility intervals).}
+
+\item{export_collection}{(\emph{optional}) Exports the collection if TRUE.}
 
 \item{...}{
   Arguments passed on to \code{\link[=extract_performance]{extract_performance}}, \code{\link[=as_familiar_collection]{as_familiar_collection}}, \code{\link[ggplot2:ggsave]{ggplot2::ggsave}}
