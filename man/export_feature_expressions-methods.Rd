@@ -10,6 +10,7 @@ export_feature_expressions(
   object,
   dir_path = NULL,
   evaluation_time = waiver(),
+  export_collection = FALSE,
   ...
 )
 
@@ -17,6 +18,7 @@ export_feature_expressions(
   object,
   dir_path = NULL,
   evaluation_time = waiver(),
+  export_collection = FALSE,
   ...
 )
 
@@ -24,6 +26,7 @@ export_feature_expressions(
   object,
   dir_path = NULL,
   evaluation_time = waiver(),
+  export_collection = FALSE,
   ...
 )
 }
@@ -38,6 +41,8 @@ will allow export as a structured list of data.tables.}
 outcome columns in expression plots. If not provided explicitly, this
 parameter is read from settings used at creation of the underlying
 \code{familiarData} objects. Only used for \code{survival} outcomes.}
+
+\item{export_collection}{(\emph{optional}) Exports the collection if TRUE.}
 
 \item{...}{
   Arguments passed on to \code{\link[=extract_feature_expression]{extract_feature_expression}}, \code{\link[=as_familiar_collection]{as_familiar_collection}}

@@ -142,6 +142,7 @@ setMethod("extract_feature_expression", signature(object="familiarEnsemble", dat
 #'  `familiarData` objects. Only used for `survival` outcomes.
 #'
 #'@inheritParams export_all
+#'@inheritParams plot_univariate_importance
 #'
 #'@inheritDotParams extract_feature_expression
 #'@inheritDotParams as_familiar_collection
@@ -168,6 +169,7 @@ setGeneric("export_feature_expressions",
            function(object,
                     dir_path=NULL,
                     evaluation_time=waiver(),
+                    export_collection=FALSE,
                     ...) standardGeneric("export_feature_expressions"))
 
 #####export_feature_expressions (collection)#####
@@ -176,7 +178,9 @@ setGeneric("export_feature_expressions",
 setMethod("export_feature_expressions", signature(object="familiarCollection"),
           function(object,
                    dir_path=NULL,
-                   evaluation_time=waiver(), ...){
+                   evaluation_time=waiver(),
+                   export_collection=FALSE,
+                   ...){
             
             # Extract data.
             x <- object@feature_expressions
@@ -205,7 +209,8 @@ setMethod("export_feature_expressions", signature(object="familiarCollection"),
                            dir_path=dir_path,
                            aggregate_results=FALSE,
                            type="feature_expression",
-                           subtype=NULL))
+                           subtype=NULL,
+                           export_collection=export_collection))
           })
 
 
@@ -216,6 +221,7 @@ setMethod("export_feature_expressions", signature(object="ANY"),
           function(object,
                    dir_path=NULL,
                    evaluation_time=waiver(),
+                   export_collection=FALSE,
                    ...){
             
             # Attempt conversion to familiarCollection object.
@@ -228,14 +234,18 @@ setMethod("export_feature_expressions", signature(object="ANY"),
             return(do.call(export_feature_expressions,
                            args=c(list("object"=object,
                                        "dir_path"=dir_path,
-                                       "evaluation_time"=evaluation_time),
+                                       "evaluation_time"=evaluation_time,
+                                       "export_collection"=export_collection),
                                   list(...))))
           })
 
 
 #####.export (familiarDataElementFeatureExpression)-----------------------------
 setMethod(".export", signature(x="familiarDataElementFeatureExpression"),
-          function(x, x_list, aggregate_results=FALSE, ...){
+          function(x,
+                   x_list,
+                   aggregate_results=FALSE,
+                   ...){
             
             # Add grouping columns to data. Note that we do not merge the data
             # elements.
