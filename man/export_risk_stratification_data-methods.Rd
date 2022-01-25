@@ -12,6 +12,7 @@ export_risk_stratification_data(
   dir_path = NULL,
   export_strata = TRUE,
   time_range = NULL,
+  export_collection = FALSE,
   ...
 )
 
@@ -20,6 +21,7 @@ export_risk_stratification_data(
   dir_path = NULL,
   export_strata = TRUE,
   time_range = NULL,
+  export_collection = FALSE,
   ...
 )
 
@@ -28,6 +30,7 @@ export_risk_stratification_data(
   dir_path = NULL,
   export_strata = TRUE,
   time_range = NULL,
+  export_collection = FALSE,
   ...
 )
 }
@@ -43,6 +46,8 @@ exported.}
 
 \item{time_range}{Time range for which strata should be created. If \code{NULL},
 the full time range is used.}
+
+\item{export_collection}{(\emph{optional}) Exports the collection if TRUE.}
 
 \item{...}{
   Arguments passed on to \code{\link[=extract_risk_stratification_data]{extract_risk_stratification_data}}, \code{\link[=as_familiar_collection]{as_familiar_collection}}

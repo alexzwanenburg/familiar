@@ -571,6 +571,7 @@ setMethod("extract_risk_stratification_data", signature(object="familiarEnsemble
 #'@param time_range Time range for which strata should be created. If `NULL`,
 #'  the full time range is used.
 #'@inheritParams export_all
+#'@inheritParams export_univariate_analysis_data
 #'
 #'@inheritDotParams extract_risk_stratification_data
 #'@inheritDotParams as_familiar_collection
@@ -601,13 +602,23 @@ setMethod("extract_risk_stratification_data", signature(object="familiarEnsemble
 #'@md
 #'@rdname export_risk_stratification_data-methods
 setGeneric("export_risk_stratification_data",
-           function(object, dir_path=NULL, export_strata=TRUE, time_range=NULL, ...) standardGeneric("export_risk_stratification_data"))
+           function(object,
+                    dir_path=NULL,
+                    export_strata=TRUE,
+                    time_range=NULL,
+                    export_collection=FALSE,
+                    ...) standardGeneric("export_risk_stratification_data"))
 
 #####export_risk_stratification_data (collection)#####
 
 #'@rdname export_risk_stratification_data-methods
 setMethod("export_risk_stratification_data", signature(object="familiarCollection"),
-          function(object, dir_path=NULL, export_strata=TRUE, time_range=NULL, ...){
+          function(object,
+                   dir_path=NULL,
+                   export_strata=TRUE,
+                   time_range=NULL,
+                   export_collection=FALSE,
+                   ...){
             
             if(!is.null(time_range)){
               # Check that time_range is valid.
@@ -661,10 +672,15 @@ setMethod("export_risk_stratification_data", signature(object="familiarCollectio
                                            type="stratification",
                                            subtype="hazard_ratio")
               
-              return(list("data"=raw_data,
-                          "strata"=strata_data,
-                          "logrank"=logrank_data,
-                          "hazard_ratio_data"=hazard_ratio_data))
+              data_list <- list("data"=raw_data,
+                                "strata"=strata_data,
+                                "logrank"=logrank_data,
+                                "hazard_ratio_data"=hazard_ratio_data)
+              
+              if(export_collection) data_list <- c(data_list,
+                                                   list("collection"=object))
+              
+              return(data_list)
               
             } else {
               return(.export(x=object,
@@ -672,7 +688,8 @@ setMethod("export_risk_stratification_data", signature(object="familiarCollectio
                              dir_path=dir_path,
                              aggregate_results=TRUE,
                              type="stratification",
-                             subtype="data"))
+                             subtype="data",
+                             export_collection=export_collection))
             }
           })
 
@@ -680,7 +697,12 @@ setMethod("export_risk_stratification_data", signature(object="familiarCollectio
 
 #'@rdname export_risk_stratification_data-methods
 setMethod("export_risk_stratification_data", signature(object="ANY"),
-          function(object, dir_path=NULL, export_strata=TRUE, time_range=NULL, ...){
+          function(object,
+                   dir_path=NULL,
+                   export_strata=TRUE,
+                   time_range=NULL,
+                   export_collection=FALSE,
+                   ...){
             
             # Attempt conversion to familiarCollection object.
             object <- do.call(as_familiar_collection,
@@ -691,6 +713,7 @@ setMethod("export_risk_stratification_data", signature(object="ANY"),
             return(do.call(export_risk_stratification_data,
                            args=c(list("object"=object,
                                        "dir_path"=dir_path,
-                                       "export_strata"=export_strata),
+                                       "export_strata"=export_strata,
+                                       "export_collection"=export_collection),
                                   list(...))))
           })
