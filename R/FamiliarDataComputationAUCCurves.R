@@ -452,6 +452,7 @@ setMethod("extract_auc_data", signature(object="familiarEnsemble"),
 #'  a familiarCollection.
 #'
 #'@inheritParams export_all
+#'@inheritParams export_univariate_analysis_data
 #'
 #'@inheritDotParams extract_auc_data
 #'@inheritDotParams as_familiar_collection
@@ -476,27 +477,41 @@ setMethod("extract_auc_data", signature(object="familiarEnsemble"),
 #'@exportMethod export_auc_data
 #'@md
 #'@rdname export_auc_data-methods
-setGeneric("export_auc_data", function(object, dir_path=NULL, aggregate_results=TRUE, ...) standardGeneric("export_auc_data"))
+setGeneric("export_auc_data",
+           function(object,
+                    dir_path=NULL,
+                    aggregate_results=TRUE,
+                    export_collection=FALSE,
+                    ...) standardGeneric("export_auc_data"))
 
 #####export_auc_data (collection)#####
 
 #'@rdname export_auc_data-methods
 setMethod("export_auc_data", signature(object="familiarCollection"),
-          function(object, dir_path=NULL, aggregate_results=TRUE, ...){
+          function(object,
+                   dir_path=NULL,
+                   aggregate_results=TRUE,
+                   export_collection=FALSE,
+                   ...){
             
             return(.export(x=object,
                            data_slot="auc_data",
                            dir_path=dir_path,
                            aggregate_results=aggregate_results,
                            type="performance",
-                           subtype="auc_curves"))
+                           subtype="auc_curves",
+                           export_collection=export_collection))
           })
 
 #####export_auc_data (generic)#####
 
 #'@rdname export_auc_data-methods
 setMethod("export_auc_data", signature(object="ANY"),
-          function(object, dir_path=NULL, aggregate_results=TRUE, ...){
+          function(object,
+                   dir_path=NULL,
+                   aggregate_results=TRUE,
+                   export_collection=FALSE,
+                   ...){
             
             # Attempt conversion to familiarCollection object.
             object <- do.call(as_familiar_collection,
@@ -508,6 +523,7 @@ setMethod("export_auc_data", signature(object="ANY"),
             return(do.call(export_auc_data,
                            args=c(list("object"=object,
                                        "dir_path"=dir_path,
-                                       "aggregate_results"=aggregate_results),
+                                       "aggregate_results"=aggregate_results,
+                                       "export_collection"=export_collection),
                                   list(...))))
           })

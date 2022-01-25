@@ -428,7 +428,15 @@ setMethod("collect", signature(x="familiarData"),
 
 #####.export (familiarCollection)------------------------------------------------
 setMethod(".export", signature(x="familiarCollection"),
-          function(x, data_elements=NULL, data_slot=NULL, dir_path=NULL, type, subtype=NULL, object_class=NULL, ...){
+          function(x,
+                   data_elements=NULL,
+                   data_slot=NULL,
+                   dir_path=NULL,
+                   type,
+                   subtype=NULL,
+                   object_class=NULL,
+                   export_collection=FALSE,
+                   ...){
             
             # Obtain the data elements from the attribute slot indicated by
             # data_slot.
@@ -476,7 +484,13 @@ setMethod(".export", signature(x="familiarCollection"),
             
             if(is.null(dir_path)){
               # Export data.
-              return(data_element)
+              if(export_collection){
+                return(list("collection"=object,
+                            "data"=data_element))
+                
+              } else {
+                return(data_element)
+              }
               
             } else {
               # Export to file
@@ -486,7 +500,12 @@ setMethod(".export", signature(x="familiarCollection"),
                               type=type,
                               subtype=subtype)
               
-              return(NULL)
+              if(export_collection){
+                return(list("collection"=object))
+                
+              } else {
+                return(NULL)
+              }
             }
           })
 
