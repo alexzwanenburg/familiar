@@ -10,6 +10,7 @@ export_univariate_analysis_data(
   object,
   dir_path = NULL,
   p_adjustment_method = waiver(),
+  export_collection = FALSE,
   ...
 )
 
@@ -17,6 +18,7 @@ export_univariate_analysis_data(
   object,
   dir_path = NULL,
   p_adjustment_method = waiver(),
+  export_collection = FALSE,
   ...
 )
 
@@ -24,6 +26,7 @@ export_univariate_analysis_data(
   object,
   dir_path = NULL,
   p_adjustment_method = waiver(),
+  export_collection = FALSE,
   ...
 )
 }
@@ -38,6 +41,8 @@ will allow export as a structured list of data.tables.}
 shown. One of \code{holm}, \code{hochberg}, \code{hommel}, \code{bonferroni}, \code{BH}, \code{BY}, \code{fdr},
 \code{none}, \code{p_value} or \code{q_value} for adjusted p-values, uncorrected p-values
 and q-values. q-values may not be available.}
+
+\item{export_collection}{(\emph{optional}) Exports the collection if TRUE.}
 
 \item{...}{
   Arguments passed on to \code{\link[=extract_univariate_analysis]{extract_univariate_analysis}}, \code{\link[=as_familiar_collection]{as_familiar_collection}}

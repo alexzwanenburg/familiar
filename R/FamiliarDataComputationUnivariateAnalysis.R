@@ -218,6 +218,7 @@ setGeneric("export_univariate_analysis_data",
            function(object,
                     dir_path=NULL,
                     p_adjustment_method=waiver(),
+                    export_collection=FALSE,
                     ...) standardGeneric("export_univariate_analysis_data"))
 
 #####export_univariate_analysis_data (collection)#####
@@ -227,6 +228,7 @@ setMethod("export_univariate_analysis_data", signature(object="familiarCollectio
           function(object,
                    dir_path=NULL,
                    p_adjustment_method=waiver(),
+                   export_collection=FALSE,
                    ...){
             
             # Set default adjust method.
@@ -256,13 +258,14 @@ setMethod("export_univariate_analysis_data", signature(object="familiarCollectio
                                 subtype="robustness",
                                 object_class="familiarDataElementRobustness")
 
-            if(is.null(dir_path)){
-              return(list("univariate"=univariate_data,
-                          "icc"=icc_data))
-              
-            } else {
-              return(NULL)
-            }
+            # Set data list.
+            data_list <- list("univariate"=univariate_data,
+                              "icc"=icc_data)
+            
+            if(!is.null(dir_path)) data_list <- NULL
+            if(export_collection) data_list <- c(data_list, list("collection"=object))
+            
+            return(data_list)
           })
 
 #####export_univariate_analysis_data (generic)#####
@@ -272,6 +275,7 @@ setMethod("export_univariate_analysis_data", signature(object="ANY"),
           function(object,
                    dir_path=NULL,
                    p_adjustment_method=waiver(),
+                   export_collection=FALSE,
                    ...){
             
             # Attempt conversion to familiarCollection object.
@@ -283,7 +287,8 @@ setMethod("export_univariate_analysis_data", signature(object="ANY"),
             return(do.call(export_univariate_analysis_data,
                            args=c(list("object"=object,
                                        "dir_path"=dir_path,
-                                       "p_adjustment_method"=p_adjustment_method),
+                                       "p_adjustment_method"=p_adjustment_method,
+                                       "export_collection"=export_collection),
                                   list(...))))
           })
 
