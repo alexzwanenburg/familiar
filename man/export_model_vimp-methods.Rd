@@ -12,6 +12,7 @@ export_model_vimp(
   aggregate_results = TRUE,
   aggregation_method = waiver(),
   rank_threshold = waiver(),
+  export_collection = FALSE,
   ...
 )
 
@@ -21,6 +22,7 @@ export_model_vimp(
   aggregate_results = TRUE,
   aggregation_method = waiver(),
   rank_threshold = waiver(),
+  export_collection = FALSE,
   ...
 )
 
@@ -30,6 +32,7 @@ export_model_vimp(
   aggregate_results = TRUE,
   aggregation_method = waiver(),
   rank_threshold = waiver(),
+  export_collection = FALSE,
   ...
 )
 }
@@ -79,6 +82,8 @@ subset size.
 
 This parameter is only relevant for \code{stability}, \code{exponential},
 \code{enhanced_borda}, \code{truncated_borda} and \code{enhanced_truncated_borda} methods.}
+
+\item{export_collection}{(\emph{optional}) Exports the collection if TRUE.}
 
 \item{...}{
   Arguments passed on to \code{\link[=as_familiar_collection]{as_familiar_collection}}

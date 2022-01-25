@@ -322,6 +322,7 @@ setMethod("..compute_data_element_estimates", signature(x="familiarDataElementVi
 #'  `enhanced_borda`, `truncated_borda` and `enhanced_truncated_borda` methods.
 #'
 #'@inheritParams export_all
+#'@inheritParams export_univariate_analysis_data
 #'
 #'@inheritDotParams as_familiar_collection
 #'
@@ -362,6 +363,7 @@ setGeneric("export_model_vimp",
                     aggregate_results=TRUE,
                     aggregation_method=waiver(),
                     rank_threshold=waiver(),
+                    export_collection=FALSE,
                     ...) standardGeneric("export_model_vimp"))
 
 #####export_model_vimp (collection)#####
@@ -373,6 +375,7 @@ setMethod("export_model_vimp", signature(object="familiarCollection"),
                    aggregate_results=TRUE,
                    aggregation_method=waiver(),
                    rank_threshold=waiver(),
+                   export_collection=FALSE,
                    ...){
             
             # Extract data.
@@ -412,7 +415,8 @@ setMethod("export_model_vimp", signature(object="familiarCollection"),
                            dir_path=dir_path,
                            aggregate_results=aggregate_results,
                            type="variable_importance",
-                           subtype=subtype))
+                           subtype=subtype,
+                           export_collection=export_collection))
           })
 
 #####export_model_vimp (generic)#####
@@ -424,6 +428,7 @@ setMethod("export_model_vimp", signature(object="ANY"),
                    aggregate_results=TRUE,
                    aggregation_method=waiver(),
                    rank_threshold=waiver(),
+                   export_collection=FALSE,
                    ...){
             
             # Attempt conversion to familiarCollection object. Note that we pass
@@ -440,7 +445,8 @@ setMethod("export_model_vimp", signature(object="ANY"),
                                        "dir_path"=dir_path,
                                        "aggregate_results"=aggregate_results,
                                        "aggregation_method"=aggregation_method,
-                                       "rank_threshold"=rank_threshold),
+                                       "rank_threshold"=rank_threshold,
+                                       "export_collection"=export_collection),
                                   list(...))))
           })
 
@@ -499,6 +505,7 @@ setMethod("export_model_vimp", signature(object="ANY"),
 #'  `enhanced_borda`, `truncated_borda` and `enhanced_truncated_borda` methods.
 #'
 #'@inheritParams export_all
+#'@inheritParams export_univariate_analysis_data
 #'
 #'@inheritDotParams as_familiar_collection
 #'
@@ -537,6 +544,7 @@ setGeneric("export_fs_vimp",
                     aggregate_results=TRUE,
                     aggregation_method=waiver(),
                     rank_threshold=waiver(),
+                    export_collection=FALSE,
                     ...) standardGeneric("export_fs_vimp"))
 
 #####export_fs_vimp (collection)#####
@@ -548,6 +556,7 @@ setMethod("export_fs_vimp", signature(object="familiarCollection"),
                    aggregate_results=TRUE,
                    aggregation_method=waiver(),
                    rank_threshold=waiver(),
+                   export_collection=FALSE,
                    ...){
             
             # Extract data.
@@ -588,7 +597,8 @@ setMethod("export_fs_vimp", signature(object="familiarCollection"),
                            dir_path=dir_path,
                            aggregate_results=aggregate_results,
                            type="variable_importance",
-                           subtype=subtype))
+                           subtype=subtype,
+                           export_collection=export_collection))
           })
 
 #####export_fs_vimp (generic)#####
@@ -600,6 +610,7 @@ setMethod("export_fs_vimp", signature(object="ANY"),
                    aggregate_results=TRUE,
                    aggregation_method=waiver(),
                    rank_threshold=waiver(),
+                   export_collection=FALSE,
                    ...){
             
             # Attempt conversion to familiarCollection object. Note that we pass
@@ -616,6 +627,7 @@ setMethod("export_fs_vimp", signature(object="ANY"),
                                        "dir_path"=dir_path,
                                        "aggregate_results"=aggregate_results,
                                        "aggregation_method"=aggregation_method,
-                                       "rank_threshold"=rank_threshold),
+                                       "rank_threshold"=rank_threshold,
+                                       "export_collection"=export_collection),
                                   list(...))))
           })
