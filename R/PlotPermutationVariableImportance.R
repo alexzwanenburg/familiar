@@ -24,6 +24,7 @@ NULL
 #'@inheritParams as_familiar_collection
 #'@inheritParams plotting.check_input_args
 #'@inheritParams plotting.check_data_handling
+#'@inheritParams plot_univariate_importance
 #'@inheritDotParams as_familiar_collection -object
 #'@inheritDotParams ggplot2::ggsave -height -width -units
 #'@inheritDotParams extract_permutation_vimp -object
