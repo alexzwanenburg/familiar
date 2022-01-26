@@ -635,6 +635,9 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
               
               if(is_empty(x_sub)) next()
               
+              # Declare subtitle components.
+              additional_subtitle <- NULL
+              
               # Select relevant feature expressions from list.
               feature_expression_split <- feature_expression[x_sub$list_id]
               
@@ -644,6 +647,10 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
                 feature_similarity_split <- methods::new("familiarDataElementFeatureSimilarity",
                                                          feature_similarity,
                                                          data=feature_similarity@data[x_sub, on=.NATURAL, nomatch=NULL])
+                
+                # Add similarity metric.
+                additional_subtitle <- c(additional_subtitle,
+                                         list("metric (features)"=feature_similarity_split@similarity_metric))
               } 
               
               # Select data for sample similarity
@@ -652,14 +659,17 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
                 sample_similarity_split <- methods::new("familiarDataElementSampleSimilarity",
                                                          sample_similarity,
                                                          data=sample_similarity@data[x_sub, on=.NATURAL, nomatch=NULL])
+                
+                # Add similarity metric.
+                additional_subtitle <- c(additional_subtitle,
+                                         list("metric (samples)"=sample_similarity_split@similarity_metric))
               } 
               
               if(is.waive(plot_title)) plot_title <- "Sample clustering"
               
               if(autogenerate_plot_subtitle){
                 plot_sub_title <- plotting.create_subtitle(split_by=split_by,
-                                                           additional=list("metric (features)"=feature_similarity_split@similarity_metric,
-                                                                           "metric (samples)"=sample_similarity_split@similarity_metric),
+                                                           additional=additional_subtitle,
                                                            x=x_sub)
               }
               
