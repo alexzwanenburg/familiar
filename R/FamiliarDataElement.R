@@ -501,7 +501,7 @@ setMethod(".export", signature(x="familiarCollection"),
                               subtype=subtype)
               
               if(export_collection){
-                return(list("collection"=object))
+                return(list("collection"=x))
                 
               } else {
                 return(NULL)
