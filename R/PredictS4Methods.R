@@ -100,11 +100,11 @@ setMethod("predict", signature(object="familiarModel"),
                                    newdata=newdata,
                                    type=type,
                                    time=time,
-                                   dir_path=NULL,
+                                   dir_path=dir_path,
                                    ensemble_method=ensemble_method,
-                                   stratification_threshold=NULL,
-                                   stratification_method=NULL,
-                                   percentiles=NULL,
+                                   stratification_threshold=stratification_threshold,
+                                   stratification_method=stratification_method,
+                                   percentiles=percentiles,
                                    ...)
             
             return(predictions)
@@ -209,9 +209,9 @@ setMethod("predict", signature(object="list"),
                                    time=time,
                                    dir_path=dir_path,
                                    ensemble_method=ensemble_method,
-                                   stratification_threshold=NULL,
-                                   stratification_method=NULL,
-                                   percentiles=NULL,
+                                   stratification_threshold=stratification_threshold,
+                                   stratification_method=stratification_method,
+                                   percentiles=percentiles,
                                    ...)
             
             return(predictions)
@@ -242,9 +242,9 @@ setMethod("predict", signature(object="character"),
                                    time=time,
                                    dir_path=dir_path,
                                    ensemble_method=ensemble_method,
-                                   stratification_threshold=NULL,
-                                   stratification_method=NULL,
-                                   percentiles=NULL,
+                                   stratification_threshold=stratification_threshold,
+                                   stratification_method=stratification_method,
+                                   percentiles=percentiles,
                                    ...)
             
             return(predictions)
