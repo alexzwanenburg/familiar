@@ -1113,7 +1113,7 @@ setMethod("export_partial_dependence_data", signature(object="ANY"),
                            args=c(list("object"=object,
                                        "dir_path"=dir_path,
                                        "aggregate_results"=aggregate_results,
-                                       "export_collection"=export_collection,),
+                                       "export_collection"=export_collection),
                                   list(...))))
           })
 
