@@ -168,7 +168,17 @@ can afterwards be used to perform stratification on validation data.
 The following stratification methods are available:
 \itemize{
 \item \code{median} (default): The median predicted value in the development cohort
-is used to stratify the samples into two risk groups.
+is used to stratify the samples into two risk groups. For predicted outcome
+values that build a continuous spectrum, the two risk groups in the
+development cohort will be roughly equal in size.
+\item \code{mean}: The mean predicted value in the development cohort is used to
+stratify the samples into two risk groups.
+\item \code{mean_trim}: As \code{mean}, but based on the set of predicted values
+where the 5\% lowest and 5\% highest values are discarded. This reduces the
+effect of outliers.
+\item \code{mean_winsor}: As \code{mean}, but based on the set of predicted values where
+the 5\% lowest and 5\% highest values are winsorised. This reduces the effect
+of outliers.
 \item \code{fixed}: Samples are stratified based on the sample quantiles of the
 predicted values. These quantiles are defined using the
 \code{stratification_threshold} parameter.

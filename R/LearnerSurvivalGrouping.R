@@ -1,3 +1,7 @@
+.get_available_stratification_methods <- function(){
+  return(c("median", "fixed", "optimised", "mean", "mean_trim", "mean_winsor"))
+}
+
 learner.find_survival_grouping_thresholds <- function(object, data){
   
   if(!object@outcome_type %in% c("survival")){
@@ -11,7 +15,10 @@ learner.find_survival_grouping_thresholds <- function(object, data){
   time_max <- settings$eval$time_max
   
   # Generate prediction table
-  pred_table <- .predict(object=object, data=data, allow_recalibration=TRUE, time=time_max)
+  pred_table <- .predict(object=object,
+                         data=data,
+                         allow_recalibration=TRUE,
+                         time=time_max)
 
   km_info_list <- list()
   
@@ -34,6 +41,15 @@ learner.find_survival_grouping_thresholds <- function(object, data){
     } else if(cut_off_method == "optimised"){
       # Identify threshold
       cutoff <- learner.find_maxstat_threshold(pred_table=pred_table)
+      
+    } else if(cut_off_method %in% c("mean", "mean_winsor", "mean_trim")){
+      # Identify threshold
+      cutoff <- learner.find_mean_threshold(object=object,
+                                            pred_table=pred_table,
+                                            method=cut_off_method)
+      
+    } else {
+      ..error_reached_unreachable_code(paste0("learner.find_survival_grouping_thresholds: encountered an unknown threshold type:", cut_off_method))
     }
     
     # Find corresponding sizes of the generated groups
@@ -52,9 +68,24 @@ learner.find_survival_grouping_thresholds <- function(object, data){
   }
 
   # Add stratification methods
-  out_list <- list("stratification_method"=settings$eval$strat_method, "parameters"=km_info_list, "time_max"=time_max)
+  out_list <- list("stratification_method"=settings$eval$strat_method,
+                   "parameters"=km_info_list,
+                   "time_max"=time_max)
   
   return(out_list)
+}
+
+
+
+learner.find_mean_threshold <- function(object, pred_table, method){
+  
+  # Select finite values.
+  x <- pred_table$predicted_outcome[is.finite(pred_table$predicted_outcome)]
+  
+  if(method == "mean_trim") x <- trim(x)
+  if(method == "mean_winsor") x <- winsor(x)
+  
+  return(mean(x))
 }
 
 

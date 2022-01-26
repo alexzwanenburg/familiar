@@ -36,6 +36,8 @@
 
 -   Class levels for categorical outcomes, if not explicitly specified using the `class_levels` parameter, are now sorted before being set based on the data. Previously class levels would be set based on order of appearance.
 
+-   Added `mean`, `mean_trim` and `mean_winsor` as methods to set risk-group stratification thresholds.
+
 -   Novelty detector algorithms are now implemented as S4 classes. This was primarily done to make it easier to add additional methods.
 
 -   `novelty_detector` and `detector_parameters` configuration parameters were added.

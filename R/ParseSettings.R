@@ -3037,9 +3037,22 @@
 #'  can afterwards be used to perform stratification on validation data.
 #'
 #'  The following stratification methods are available:
-#'
+#'  
 #'  * `median` (default): The median predicted value in the development cohort
-#'  is used to stratify the samples into two risk groups.
+#'  is used to stratify the samples into two risk groups. For predicted outcome
+#'  values that build a continuous spectrum, the two risk groups in the
+#'  development cohort will be roughly equal in size.
+#'  
+#'  * `mean`: The mean predicted value in the development cohort is used to
+#'  stratify the samples into two risk groups.
+#'  
+#'  * `mean_trim`: As `mean`, but based on the set of predicted values
+#'  where the 5% lowest and 5% highest values are discarded. This reduces the
+#'  effect of outliers.
+#'
+#'  * `mean_winsor`: As `mean`, but based on the set of predicted values where
+#'  the 5% lowest and 5% highest values are winsorised. This reduces the effect
+#'  of outliers.
 #'
 #'  * `fixed`: Samples are stratified based on the sample quantiles of the
 #'  predicted values. These quantiles are defined using the
@@ -3605,7 +3618,7 @@
   
   .check_parameter_value_is_valid(x=settings$strat_method,
                                   var_name="stratification_method",
-                                  values=c("median", "fixed", "optimised"))
+                                  values=.get_available_stratification_methods())
   
   if("optimised" %in% settings$strat_method){
     if(!require_package(x="maxstat",
