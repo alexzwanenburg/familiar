@@ -865,14 +865,12 @@
 #'   copies of the data. This backend ensures that only a single master copy is
 #'   kept in memory. This limits memory usage during parallel processing.
 #'
-#'   Several backend options are available, notably `socket_server`, `rserve`
-#'   and `none` (default). Availability of the backend depends on the operating
-#'   system and package installation. `socket_server` is based on the callr
-#'   package and R sockets, comes with `familiar` and is available for any OS.
-#'   `rserve` requires the RServe package, and only functions correctly under
-#'   Windows. `none` uses the package environment of familiar to store data, and
-#'   is available for any OS. However, `none` requires copying of data to any
-#'   parallel process, and has a larger memory footprint.
+#'   Several backend options are available, notably `socket_server`, and `none`
+#'   (default). `socket_server` is based on the callr package and R sockets,
+#'   comes with `familiar` and is available for any OS. `none` uses the package
+#'   environment of familiar to store data, and is available for any OS.
+#'   However, `none` requires copying of data to any parallel process, and has a
+#'   larger memory footprint.
 #' @param server_port (*optional*) Integer indicating the port on which the
 #'   socket server or RServe process should communicate. Defaults to port 6311.
 #'   Note that ports 0 to 1024 and 49152 to 65535 cannot be used.

@@ -1,4 +1,4 @@
-# Development
+# Version 1.0.0 (Boisterous Bullfrog)
 
 ## Major changes
 
@@ -29,6 +29,8 @@
 -   Three new vignettes have been added. The first vignette is an introductory vignette on how to get started with familiar. The second vignette describes how familiar can be used prospectively. The third vignette describes evaluation and explanation steps in familiar and how they are implemented. All other vignettes have been reviewed and updated.
 
 -   A `predict` method was added to allow for direct inference of estimated values for one or more instances. Functionality is the same as other `predict` methods, but data (`newdata`) should always be provided. Familiar does not store development data with the model.
+
+-   The RServe backend was retired, as recent versions of the RServe and RSclient packages produced errors that could not be resolved.
 
 ## Minor changes
 

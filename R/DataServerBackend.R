@@ -3,10 +3,10 @@
   backend_packages <- NULL
   if(backend_type == "socket_server"){
     backend_packages <- "callr"
-    
-  } else if(backend_type == "rserve"){
-    backend_packages <- c("Rserve", "RSclient")
   }
+  # } else if(backend_type == "rserve"){
+  #   backend_packages <- c("Rserve", "RSclient")
+  # }
   
   return(backend_packages)
 }
@@ -15,11 +15,12 @@
 .get_available_backend_types <- function(){
   
   # All types of backend.
-  all_backend_types <- c("none", "socket_server", "rserve")
+  # all_backend_types <- c("none", "socket_server", "rserve")
+  all_backend_types <- c("none", "socket_server")
   
   # rserve is not available for non-windows systems due to lack of cooperative
   # setting.
-  if(get_os() != "windows") all_backend_types <- setdiff(all_backend_types, "rserve")
+  # if(get_os() != "windows") all_backend_types <- setdiff(all_backend_types, "rserve")
   
   return(all_backend_types)
 }
@@ -102,17 +103,17 @@
     # Put master_data in global environment
     assign(x="master_data", value=data, envir=familiar_global_env)
     
-  } else if(backend_type %in% c("rserve")){
-    # Start server
-    start_rserve_server(backend_type=backend_type, server_port=server_port)
-
-    # Open connection
-    rcon <- RSclient::RS.connect(port=server_port)
-    on.exit(RSclient::RS.close(rcon))
-    
-    # Send data.table to server
-    RSclient::RS.assign(rsc=rcon, name="master_data", value=data, wait=TRUE)
-    
+  # } else if(backend_type %in% c("rserve")){
+  #   # Start server
+  #   start_rserve_server(backend_type=backend_type, server_port=server_port)
+  # 
+  #   # Open connection
+  #   rcon <- RSclient::RS.connect(port=server_port)
+  #   on.exit(RSclient::RS.close(rcon))
+  #   
+  #   # Send data.table to server
+  #   RSclient::RS.assign(rsc=rcon, name="master_data", value=data, wait=TRUE)
+  #   
   } else if(backend_type %in% c("socket_server")){
     # Start the separate r session thread that will run the socket server.
     start_socket_server_process(server_port=server_port)
@@ -159,31 +160,32 @@ get_data_from_backend <- function(backend_type=NULL, server_port=NULL, sample_id
     on.exit(socket_client_close_connection(con))
     
     # Execute .get_data_back_end on the server side, and obtain the data view.
-    x <- socket_client_do_call(con, .get_data_from_backend, args=list("sample_identifiers"=sample_identifiers,
-                                                                      "column_names"=column_names))
+    x <- socket_client_do_call(con, .get_data_from_backend,
+                               args=list("sample_identifiers"=sample_identifiers,
+                                         "column_names"=column_names))
     
-  } else if(backend_type %in% c("rserve")) {
-    # RServe backend
-    
-    # Attempt to establish connection.
-    repeat{
-      rcon <- tryCatch(RSclient::RS.connect(port=server_port),
-                       error=identity)
-      
-      # Break from loop if connection can be established.
-      if(!inherits(rcon, "error")) break()
-      
-      # If not, sleep the system, and try again.
-      Sys.sleep(0.01)
-    }
-    on.exit(RSclient::RS.close(rsc=rcon))
-    
-    # Obtain the data
-    x <- RSclient::RS.eval(rsc=rcon,
-                           x=.get_data_from_backend(sample_identifiers=sample_identifiers,
-                                                    column_names=column_names),
-                           lazy=FALSE)
-    
+  # } else if(backend_type %in% c("rserve")) {
+  #   # RServe backend
+  #   
+  #   # Attempt to establish connection.
+  #   repeat{
+  #     rcon <- tryCatch(RSclient::RS.connect(port=server_port),
+  #                      error=identity)
+  #     
+  #     # Break from loop if connection can be established.
+  #     if(!inherits(rcon, "error")) break()
+  #     
+  #     # If not, sleep the system, and try again.
+  #     Sys.sleep(0.01)
+  #   }
+  #   on.exit(RSclient::RS.close(rsc=rcon))
+  #   
+  #   # Obtain the data
+  #   x <- RSclient::RS.eval(rsc=rcon,
+  #                          x=.get_data_from_backend(sample_identifiers=sample_identifiers,
+  #                                                   column_names=column_names),
+  #                          lazy=FALSE)
+  #   
   } else {
     ..error_reached_unreachable_code(paste0("get_data_from_backend: encountered unknown type of backend: ", backend_type))
   }
@@ -248,20 +250,21 @@ get_data_from_backend <- function(backend_type=NULL, server_port=NULL, sample_id
   require_package(x=.required_packages_backend(backend_type=backend_type),
                   purpose=paste0("to use the requested backend (", backend_type, ")"))
   
-  if(backend_type %in% c("none")){
-    # Put master_feature_info_list in the familiar global environment.
-    assign(x="master_feature_info_list", value=feature_info_list, envir=familiar_global_env)
-    
-  } else if(backend_type %in% c("rserve")){
-    # Open connection
-    rcon <- RSclient::RS.connect(port=server_port)
-    on.exit(RSclient::RS.close(rcon))
-    
-    # Send list of feature information to server
-    RSclient::RS.assign(rsc=rcon, name="master_feature_info_list", value=feature_info_list, wait=TRUE)
-    
-    
-  } else if(backend_type %in% c("socket_server")){
+  # Put master_feature_info_list in the familiar global environment.
+  assign(x="master_feature_info_list",
+         value=feature_info_list,
+         envir=familiar_global_env)
+  
+  # if(backend_type %in% c("rserve")){
+  #   # Open connection
+  #   rcon <- RSclient::RS.connect(port=server_port)
+  #   on.exit(RSclient::RS.close(rcon))
+  #   
+  #   # Send list of feature information to server
+  #   RSclient::RS.assign(rsc=rcon, name="master_feature_info_list", value=feature_info_list, wait=TRUE)
+  #   
+  # } else
+  if(backend_type %in% c("socket_server")){
     # Stop the socket_server subroutine so that we can add or update the list of
     # feature information.
     .shutdown_active_socket_server_routine(server_port=server_port)
@@ -316,28 +319,28 @@ get_feature_info_from_backend <- function(backend_type=NULL, server_port=NULL, d
                                args=list("data_id"=data_id,
                                          "run_id"=run_id))
     
-  } else if(backend_type %in% c("rserve")) {
-    # RServe backend.
-    
-    # Attempt to establish connection.
-    repeat{
-      rcon <- tryCatch(RSclient::RS.connect(port=server_port),
-                       error=identity)
-      
-      # Break from loop if connection can be established.
-      if(!inherits(rcon, "error")) break()
-      
-      # If not, sleep the system, and try again.
-      Sys.sleep(0.01)
-    }
-    
-    # Obtain the feature info list.
-    x <- RSclient::RS.eval(rsc=rcon,
-                           x=.get_feature_info_from_backend(data_id=data_id,
-                                                            run_id=run_id),
-                           lazy=FALSE)
-    on.exit(RSclient::RS.close(rsc=rcon))
-    
+  # } else if(backend_type %in% c("rserve")) {
+  #   # RServe backend.
+  #   
+  #   # Attempt to establish connection.
+  #   repeat{
+  #     rcon <- tryCatch(RSclient::RS.connect(port=server_port),
+  #                      error=identity)
+  #     
+  #     # Break from loop if connection can be established.
+  #     if(!inherits(rcon, "error")) break()
+  #     
+  #     # If not, sleep the system, and try again.
+  #     Sys.sleep(0.01)
+  #   }
+  #   
+  #   # Obtain the feature info list.
+  #   x <- RSclient::RS.eval(rsc=rcon,
+  #                          x=.get_feature_info_from_backend(data_id=data_id,
+  #                                                           run_id=run_id),
+  #                          lazy=FALSE)
+  #   on.exit(RSclient::RS.close(rsc=rcon))
+  #   
   } else {
     ..error_reached_unreachable_code(paste0("get_feature_info_from_backend: encountered unknown type of backend: ", backend_type))
   }
@@ -415,58 +418,58 @@ get_os <- function(){
 }
 
 
-start_rserve_server <- function(backend_type, server_port){
-  # Starts an Rserve server daemon process. This server will hold the main data
-  # table. The function checks whether a server is already running at the
-  # specified port and starts a new server if it isn't
+# start_rserve_server <- function(backend_type, server_port){
+#   # Starts an Rserve server daemon process. This server will hold the main data
+#   # table. The function checks whether a server is already running at the
+#   # specified port and starts a new server if it isn't
+# 
+#   # Check if required packages are installed.
+#   require_package(x=.required_packages_backend(backend_type=backend_type),
+#                   purpose=paste0("to use the requested backend (", backend_type, ")"))
+#   
+#   # Start Rserve server that listens to the server port, if one is not available.
+#   if(!.is_rserve_server_started(server_port=server_port)) {
+#     
+#    if(backend_type == "rserve") {
+#       Rserve::Rserve(debug=FALSE, port=server_port, args=paste0("--no-save ","--RS-enable-control"))
+#       
+#     } else {
+#       ..error_reached_unreachable_code(paste0("start_rserve_server: encountered unknown type of backend ",
+#                                               "when starting Rserve server: ", backend_type))
+#     }
+#   }
+#   
+#   # Open connection to server to load packages.
+#   rcon <- RSclient::RS.connect(port=server_port)
+#   on.exit(RSclient::RS.close(rcon))
+#   
+#   # Load familiar packages on the server.
+#   RSclient::RS.eval(rsc=rcon, library(familiar))
+# 
+#   return()
+# }
 
-  # Check if required packages are installed.
-  require_package(x=.required_packages_backend(backend_type=backend_type),
-                  purpose=paste0("to use the requested backend (", backend_type, ")"))
-  
-  # Start Rserve server that listens to the server port, if one is not available.
-  if(!.is_rserve_server_started(server_port=server_port)) {
-    
-   if(backend_type == "rserve") {
-      Rserve::Rserve(debug=FALSE, port=server_port, args=paste0("--no-save ","--RS-enable-control"))
-      
-    } else {
-      ..error_reached_unreachable_code(paste0("start_rserve_server: encountered unknown type of backend ",
-                                              "when starting Rserve server: ", backend_type))
-    }
-  }
-  
-  # Open connection to server to load packages.
-  rcon <- RSclient::RS.connect(port=server_port)
-  on.exit(RSclient::RS.close(rcon))
-  
-  # Load familiar packages on the server.
-  RSclient::RS.eval(rsc=rcon, library(familiar))
-
-  return()
-}
 
 
-
-.is_rserve_server_started <- function(server_port=NULL){
-  
-  # Find the server port if not directly provided.
-  if(is.null(server_port)) server_port <- .get_backend_server_port()
-  
-  # Check if RServe is already running and set up the server otherwise.
-  r_serve_started <- tryCatch({
-    
-    # Attempt to connect to the RServe server.
-    rcon <- RSclient::RS.connect(port=server_port)
-    
-    # If success close connection and return TRUE
-    RSclient::RS.close(rcon)
-    return(TRUE)
-    
-  }, error = function(err) return(FALSE))
-  
-  return(r_serve_started)
-}
+# .is_rserve_server_started <- function(server_port=NULL){
+#   
+#   # Find the server port if not directly provided.
+#   if(is.null(server_port)) server_port <- .get_backend_server_port()
+#   
+#   # Check if RServe is already running and set up the server otherwise.
+#   r_serve_started <- tryCatch({
+#     
+#     # Attempt to connect to the RServe server.
+#     rcon <- RSclient::RS.connect(port=server_port)
+#     
+#     # If success close connection and return TRUE
+#     RSclient::RS.close(rcon)
+#     return(TRUE)
+#     
+#   }, error = function(err) return(FALSE))
+#   
+#   return(r_serve_started)
+# }
 
 
 
@@ -617,18 +620,19 @@ shutdown_backend_server <- function(backend_type=NULL, server_port=NULL){
   require_package(x=.required_packages_backend(backend_type=backend_type),
                   purpose=paste0("to use the requested backend (", backend_type, ")"))
   
-  if(backend_type %in% c("rserve")){
-    
-    # Check if the server is active prior to shutting it down.
-    if(.is_rserve_server_started(server_port=server_port)){
-      # Open a connection to the server.
-      rcon <- RSclient::RS.connect(port=server_port)
-
-      # Perform a server shutdown.
-      RSclient::RS.server.shutdown(rsc=rcon)
-    }
-    
-  } else if(backend_type %in% c("socket_server")){
+  # if(backend_type %in% c("rserve")){
+  #   
+  #   # Check if the server is active prior to shutting it down.
+  #   if(.is_rserve_server_started(server_port=server_port)){
+  #     # Open a connection to the server.
+  #     rcon <- RSclient::RS.connect(port=server_port)
+  # 
+  #     # Perform a server shutdown.
+  #     RSclient::RS.server.shutdown(rsc=rcon)
+  #   }
+  #   
+  # } else 
+  if(backend_type %in% c("socket_server")){
     
     # Check if the server thread is active prior to shutting it down.
     if(.is_socket_server_process_started()){

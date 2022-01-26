@@ -69,8 +69,6 @@ Suggests:
     randomForestSRC,
     ranger,
     rmarkdown,
-    RSclient,
-    Rserve,
     scales,
     testthat (>= 3.0.0),
     xml2,

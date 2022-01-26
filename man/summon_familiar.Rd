@@ -296,14 +296,12 @@ parallel processing.}
 copies of the data. This backend ensures that only a single master copy is
 kept in memory. This limits memory usage during parallel processing.
 
-Several backend options are available, notably \code{socket_server}, \code{rserve}
-and \code{none} (default). Availability of the backend depends on the operating
-system and package installation. \code{socket_server} is based on the callr
-package and R sockets, comes with \code{familiar} and is available for any OS.
-\code{rserve} requires the RServe package, and only functions correctly under
-Windows. \code{none} uses the package environment of familiar to store data, and
-is available for any OS. However, \code{none} requires copying of data to any
-parallel process, and has a larger memory footprint.}
+Several backend options are available, notably \code{socket_server}, and \code{none}
+(default). \code{socket_server} is based on the callr package and R sockets,
+comes with \code{familiar} and is available for any OS. \code{none} uses the package
+environment of familiar to store data, and is available for any OS.
+However, \code{none} requires copying of data to any parallel process, and has a
+larger memory footprint.}
     \item{\code{server_port}}{(\emph{optional}) Integer indicating the port on which the
 socket server or RServe process should communicate. Defaults to port 6311.
 Note that ports 0 to 1024 and 49152 to 65535 cannot be used.}
