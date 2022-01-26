@@ -167,12 +167,20 @@ setMethod("predict", signature(object="familiarNoveltyDetector"),
                    type="novelty",
                    ...){
             
+            if(missing(newdata)) stop("newdata must be provided.")
+            if(is_empty(newdata)) ..error_data_set_is_empty()
+            
+            # Parse newdata to data object
+            data <- as_data_object(data=newdata,
+                                   object=object,
+                                   check_stringency="external")
+            
             # Propagate to .predict
             predictions <- .predict(object=object,
                                     data=data,
                                     type=type)
             
-            if(type %in% .get_available_prediction_type_arguments()){
+            if(type %in% .get_available_novelty_prediction_type_arguments()){
               # Find non-feature columns.
               non_feature_columns <- get_non_feature_columns(object)
               prediction_columns <- setdiff(colnames(predictions), non_feature_columns)
