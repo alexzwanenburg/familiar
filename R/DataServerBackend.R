@@ -285,7 +285,7 @@ get_data_from_backend <- function(backend_type=NULL, server_port=NULL, sample_id
     # Reactivate the server subroutine.
     .activate_socket_server_routine(server_port=server_port)
     
-  } else {
+  } else if(backend_type != "none"){
     ..error_reached_unreachable_code(".assign_feature_info_to_backend: unknown backend encountered")
   }
 }
