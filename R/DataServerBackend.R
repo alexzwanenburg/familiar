@@ -121,8 +121,11 @@
     socket_server_process <- .get_socket_server_process_handle()
     
     # Assign the data to socket server process so that its available later.
-    socket_server_process$run(function(data) { assign(x="master_data", value=data, envir=.GlobalEnv) },
-                              args=list("data"=data))
+    socket_server_process$run(function(data){
+      assign(x="master_data", value=data, envir=familiar_global_env)
+    },
+    args=list("data"=data),
+    package=TRUE)
     
     # Finally, activate the server subroutine.
     .activate_socket_server_routine(server_port=server_port)
@@ -270,9 +273,11 @@ get_data_from_backend <- function(backend_type=NULL, server_port=NULL, sample_id
     # that its accessible later.
     socket_server_process$run(function(feature_info_list) {
       # Assign locally.
-      assign(x="master_feature_info_list", value=feature_info_list, envir=.GlobalEnv)
+      assign(x="master_feature_info_list", value=feature_info_list, envir=familiar_global_env)
        
-    }, args=list("feature_info_list"=feature_info_list))
+    },
+    args=list("feature_info_list"=feature_info_list),
+    package=TRUE)
     
     # Reactivate the server subroutine.
     .activate_socket_server_routine(server_port=server_port)
