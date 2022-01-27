@@ -20,4 +20,14 @@ Familiar can also be installed directly from the GitHub repository:
 
 The package vignettes contain additional information concerning familiar:
 
-* [Introducing familiar](docs_github/introduction.md)
+* [Introducing familiar](docs_github/github_introduction.md)
+
+* [Feature selection methods](docs_github/github_feature_selection.md)
+
+* [Learners and hyperparameter optimisation](docs_github/github_learners.md)
+
+* [Model performance metrics](docs_github/github_performance_metrics.md)
+
+* [Using familiar to evaluate and explain models](docs_github/github_evaluation_and_explanation.md)
+
+* [Using familiar prospectively](docs_github/github_prospective_use.md)
