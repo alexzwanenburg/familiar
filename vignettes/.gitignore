@@ -2,3 +2,4 @@
 *.R
 !license.html
 !familiar_logo.html
+!compile.R
