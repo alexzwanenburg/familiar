@@ -76,6 +76,8 @@ setGeneric("select_features", function(data, ...) standardGeneric("select_featur
 
 setGeneric("preprocess_data", function(data, object, ...) standardGeneric("preprocess_data"))
 
+setGeneric("postprocess_data", function(data, object, ...) standardGeneric("postprocess_data"))
+
 setGeneric("update_with_replacement", function(data, ...) standardGeneric("update_with_replacement"))
 
 setGeneric("add_package_version", function(object, ...) standardGeneric("add_package_version"))

@@ -477,6 +477,10 @@
     
     # Generate outcome column with NA values
     data[, (outcome_column):=NA_real_]
+  
+  } else if(outcome_type %in% c("unsupervised")){
+    # Outcome column is NULL, as unsupervised data do not have outcome.
+    outcome_column <- NULL
     
   } else {
     ..error_no_known_outcome_type(outcome_type)
@@ -711,7 +715,7 @@ update_data_set <- function(data, object){
   }
   
   # Find the outcome column
-  outcome_column <- get_outcome_columns(object@outcome_type)
+  outcome_column <- get_outcome_columns(outcome_type)
   
   # Start warning list.
   warning_list <- NULL
@@ -764,7 +768,7 @@ update_data_set <- function(data, object){
   all_columns <- colnames(data)
   
   # Check that the non-feature columns are present.
-  non_feature_columns <- get_non_feature_columns(object@outcome_type)
+  non_feature_columns <- get_non_feature_columns(outcome_type)
   missing_non_feature_columns <- setdiff(non_feature_columns, all_columns)
   
   if(length(missing_non_feature_columns) > 0){

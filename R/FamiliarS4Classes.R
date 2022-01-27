@@ -835,7 +835,7 @@ setClass("outcomeInfo",
            # Outcome type
            outcome_type = "character",
            # Outcome column
-           outcome_column = "character",
+           outcome_column = "ANY",
            # Class levels of categorical outcomes.
            levels = "ANY",
            # Flag for ordinal categorical outcomes.
@@ -864,7 +864,7 @@ setClass("outcomeInfo",
          prototype = list(
            name = NA_character_,
            outcome_type = NA_character_,
-           outcome_column = NA_character_,
+           outcome_column = NULL,
            levels = NULL,
            ordered = FALSE,
            reference = NA_character_,

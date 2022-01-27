@@ -694,7 +694,7 @@ setMethod("load_delayed_data", signature(data="dataObject", object="familiarEnse
 
 #####preprocess_data (vimp method)#####
 setMethod("preprocess_data", signature(data="dataObject", object="familiarVimpMethod"),
-          function(data, object, stop_at="clustering", keep_novelty=FALSE) .pre_process_data(data=data,
+          function(data, object, stop_at="clustering", keep_novelty=FALSE) .preprocess_data(data=data,
                                                                                              object=object,
                                                                                              stop_at=stop_at,
                                                                                              keep_novelty=keep_novelty))
@@ -702,31 +702,60 @@ setMethod("preprocess_data", signature(data="dataObject", object="familiarVimpMe
 
 #####preprocess_data (model)#####
 setMethod("preprocess_data", signature(data="dataObject", object="familiarModel"),
-          function(data, object, stop_at="clustering", keep_novelty=FALSE) .pre_process_data(data=data,
-                                                                                             object=object,
-                                                                                             stop_at=stop_at,
-                                                                                             keep_novelty=keep_novelty))
+          function(data, object, stop_at="clustering", keep_novelty=FALSE){
+            
+            # Pre-process the data.
+            data <- .preprocess_data(data=data,
+                                     object=object,
+                                     stop_at=stop_at,
+                                     keep_novelty=keep_novelty)
+            
+            # Post-process the data to select the correct feature and identifier
+            # set.
+            data <- postprocess_data(data=data,
+                                     object=object,
+                                     stop_at=stop_at,
+                                     keep_novelty=keep_novelty)
+            
+            return(data)
+          })
 
 #####preprocess_data (novelty detector)#########################################
 # Note that keep_novelty is always false to prevent reading novelty_features
 # slot. Novelty features are stored in the model_features slot of
 # familiarNoveltyDetector objects.
 setMethod("preprocess_data", signature(data="dataObject", object="familiarNoveltyDetector"),
-          function(data, object, stop_at="clustering", ...) .pre_process_data(data=data,
-                                                                              object=object,
-                                                                              stop_at=stop_at,
-                                                                              keep_novelty=FALSE))
+          function(data, object, stop_at="clustering", ...){
+            
+            # Assign "unsupervised" outcome type to the data to prevent outcome
+            # columns being selected.
+            data@outcome_type <- "unsupervised"
+            
+            # Pre-process the data.
+            data <- .preprocess_data(data=data,
+                                     object=object,
+                                     stop_at=stop_at,
+                                     keep_novelty=FALSE)
+            
+            # Post-process the data to select the correct feature and identifier
+            # set.
+            data <- postprocess_data(data=data,
+                                     object=object,
+                                     stop_at=stop_at)
+            
+            return(data)
+          })
 
 
 #####preprocess_data (ensemble)#####
 setMethod("preprocess_data", signature(data="dataObject", object="familiarEnsemble"),
-          function(data, object, stop_at="clustering", keep_novelty=FALSE) .pre_process_data(data=data,
+          function(data, object, stop_at="clustering", keep_novelty=FALSE).preprocess_data(data=data,
                                                                                              object=object,
                                                                                              stop_at=stop_at,
                                                                                              keep_novelty=keep_novelty))
 
 
-.pre_process_data <- function(data, object, stop_at, keep_novelty=FALSE){
+.preprocess_data <- function(data, object, stop_at, keep_novelty=FALSE){
   
   # Convert the preprocessing_level attained and the requested
   # stopping level to ordinals.
@@ -735,6 +764,7 @@ setMethod("preprocess_data", signature(data="dataObject", object="familiarEnsemb
   
   # Check whether pre-processing is required
   if(preprocessing_level_attained == stop_at){
+    
     return(data)
     
   } else if(preprocessing_level_attained > stop_at) {
@@ -768,7 +798,7 @@ setMethod("preprocess_data", signature(data="dataObject", object="familiarEnsemb
                                 features=selected_features)
         
       } else {
-        ..error_reached_unreachable_code(".pre_process_data: could not identify overlapping features")
+        ..error_reached_unreachable_code(".preprocess_data: could not identify overlapping features")
       }
     }
   }
@@ -802,29 +832,102 @@ setMethod("preprocess_data", signature(data="dataObject", object="familiarEnsemb
     data <- cluster_features(data=data,
                              feature_info_list=object@feature_info)
   }
-  
-  if(is(object, "familiarModel") & stop_at >= "clustering"){
-    
-    # Select features.
-    features <- object@model_features
-    if(keep_novelty) features <- union(features, object@novelty_features)
-    
-    # Return data if there are no features.
-    if(length(features) == 0) return(data)
-    
-    # Determine the features after clustering.
-    features <- features_after_clustering(features=features,
-                                          feature_info_list=object@feature_info)
-    
-    # Create a slice of the data for the feature set.
-    data <- select_features(data=data,
-                            features=features)
-  }
+  # 
+  # if(is(object, "familiarModel") & stop_at >= "clustering"){
+  #   
+  #   # Select features.
+  #   features <- object@model_features
+  #   if(keep_novelty) features <- union(features, object@novelty_features)
+  #   
+  #   # Return data if there are no features.
+  #   if(length(features) == 0) return(data)
+  #   
+  #   # Determine the features after clustering.
+  #   features <- features_after_clustering(features=features,
+  #                                         feature_info_list=object@feature_info)
+  #   
+  #   # Create a slice of the data for the feature set.
+  #   data <- select_features(data=data,
+  #                           features=features)
+  #   
+  # } else if(is(object, "familiarNoveltyDetector") & stop_at >= "clustering"){
+  #   # Select features.
+  #   features <- object@model_features
+  #   
+  #   # Return data if there are no features.
+  #   if(length(features) == 0) return(data)
+  #   
+  #   # Determine the features after clustering.
+  #   features <- features_after_clustering(features=features,
+  #                                         feature_info_list=object@feature_info)
+  #   
+  #   # Create a slice of the data for the feature set.
+  #   data <- select_features(data=data,
+  #                           features=features)
+  # }
   
   return(data)
 }
 
 
+##### postprocess_data (model)--------------------------------------------
+setMethod("postprocess_data", signature(data="dataObject", object="familiarModel"),
+          function(data, object, stop_at="clustering", keep_novelty=FALSE){
+            
+            # Convert the preprocessing_level attained and the requested
+            # stopping level to ordinals.
+            preprocessing_level_attained <- .as_preprocessing_level(data@preprocessing_level)
+            stop_at <- .as_preprocessing_level(stop_at)
+            
+            if(stop_at < "clustering" | preprocessing_level_attained < "clustering") return(data)
+            
+            # Select features.
+            features <- object@model_features
+            if(keep_novelty) features <- union(features, object@novelty_features)
+            
+            # Return data if there are no features.
+            if(length(features) == 0) return(data)
+            
+            # Determine the features after clustering.
+            features <- features_after_clustering(features=features,
+                                                  feature_info_list=object@feature_info)
+            
+            # Create a slice of the data for the feature set.
+            data <- select_features(data=data,
+                                    features=features)
+            
+            return(data)
+          })
+
+##### postprocess_data (novelty detector)---------------------------------
+setMethod("postprocess_data", signature(data="dataObject", object="familiarNoveltyDetector"),
+          function(data, object, stop_at="clustering"){
+            
+            # Convert the preprocessing_level attained and the requested
+            # stopping level to ordinals.
+            preprocessing_level_attained <- .as_preprocessing_level(data@preprocessing_level)
+            stop_at <- .as_preprocessing_level(stop_at)
+            
+            if(stop_at < "clustering" | preprocessing_level_attained < "clustering") return(data)
+            
+            # Select features.
+            features <- object@model_features
+            
+            # Return data if there are no features.
+            if(length(features) == 0) return(data)
+            
+            # Determine the features after clustering.
+            features <- features_after_clustering(features=features,
+                                                  feature_info_list=object@feature_info)
+            
+            # Create a slice of the data for the feature set.
+            data <- select_features(data=data,
+                                    features=features)
+            
+            return(data)
+          })
+
+          
 
 #####process_input_data (vimp method)#####
 setMethod("process_input_data", signature(object="familiarVimpMethod", data="ANY"),
@@ -1494,8 +1597,12 @@ setMethod("select_features", signature(data="dataObject"),
             # Define the selected columns
             selected_columns <- unique(c(non_feature_columns, features))
             
-            # Select features
-            data@data <- data.table::copy(data@data[, mget(selected_columns)])
+            # Check if all columns are already present in the data. In that case
+            # we do not need to copy the dataset.
+            if(!setequal(selected_columns, colnames(data@data))){
+              # Select features
+              data@data <- data.table::copy(data@data[, mget(selected_columns)])
+            }
             
             return(data)
           })
@@ -1547,6 +1654,11 @@ create_data_column_info <- function(settings){
     outcome_info_table <- data.table::data.table("type"="outcome_column",
                                                  "internal"=internal_outcome_columns,
                                                  "external"=external_outcome_columns)
+    
+  } else if(settings$data$outcome_type %in% c("unsupervised")){
+    
+    # There is no outcome for unsupervised learners.
+    outcome_info_table <- NULL
     
   } else {
     ..error_no_known_outcome_type(outcome_type=settings$data$outcome_type)
