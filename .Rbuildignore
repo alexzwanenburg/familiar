@@ -10,3 +10,4 @@
 ^\.data$
 ^icon$
 ^docs_github$
+vignettes/compile.R
