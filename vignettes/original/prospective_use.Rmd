@@ -26,7 +26,7 @@ knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>",
   fig.align = "center",
-  fig.width = 7
+  fig.width = 7,
 )
 ```
 
@@ -53,7 +53,7 @@ predict the low birth weight indicator using these risk factors.
 We will first randomly split the data into development and validation
 datasets:
 
-```{r, results=FALSE}
+```{r, results=FALSE, label="birthweight-data-preparation"}
 # Load the birth weight data set
 data <- data.table::as.data.table(MASS::birthwt)
 
@@ -73,7 +73,7 @@ Next we will prepare the dataset further. We drop the `bwt` column as this
 directly contains the indicator we are trying to predict. Other columns are
 encoded as categorical variables.
 
-```{r, results=FALSE}
+```{r, results=FALSE, label="birthweight-data-preparation-part-2"}
 # Drop the bwt column.
 data[, "bwt":=NULL]
 
@@ -105,7 +105,7 @@ temporary R directory will be deleted once your R session closes. For speed, we
 will also only compute point estimates during evaluation (see the
 *evaluation and explanation* vignette for other options).
 
-```{r, results="hide", message=FALSE, warning=FALSE}
+```{r, results="hide", message=FALSE, warning=FALSE, label="birthweight-data-experiment-run"}
 familiar::summon_familiar(data=data,
                           project_dir=tempdir(),
                           sample_id_column="sample_id",
@@ -194,7 +194,7 @@ You may notice that no plot is produced. This is because the type of plot
 incompatible. However, nothing prevents us from changing the estimation type to
 bootstrap confidence intervals `bci`.
 
-```{r}
+```{r, label="prospective-model-performance-plot"}
 # Draw model performance plots with bootstrap confidence intervals.
 # familiar_data_names argument specifies the name that appears below the plot.
 # The default is rather long.
@@ -210,7 +210,7 @@ plots <- familiar::plot_model_performance(object=model,
 Note that we can achieve the same result without explicitly importing the model.
 Providing the path to the model as the `object` argument suffices:
 
-```{r}
+```{r, label="prospective-model-performance-plot-implicit"}
 plots <- familiar::plot_model_performance(object=model_path,
                                           draw=TRUE,
                                           facet_by="metric",
@@ -254,7 +254,7 @@ predict(object=ensemble, newdata=data)
 
 Ensembles behave similarly to models during evaluation and explanation steps:
 
-```{r}
+```{r, label="prospective-model-performance-plot-ensemble"}
 plots <- familiar::plot_model_performance(object=ensemble,
                                           draw=TRUE,
                                           facet_by="metric",
@@ -276,7 +276,7 @@ ensemble on the fly from the underlying models. To do so, we supply a list of
 models, or paths to these models as the `object` argument for plot methods and
 tabular export methods.
 
-```{r}
+```{r, label="prospective-model-performance-plot-new-directory"}
 # Generate paths to the model objects.
 model_paths <- sapply(list.files(model_directory_path, pattern="model"), function(x) (file.path(model_directory_path, x)))
 
@@ -335,7 +335,7 @@ palette in familiar, and a custom theme based on `cowplot::theme_cowplot`. We
 can re-create the plot using the standard R palette, and a different theme to
 alter its appearance.
 
-```{r}
+```{r, label="prospective-auc_roc-plot"}
 collection <- file.path(tempdir(), "familiar_collections", "pooled_data.RDS")
 
 plots <- plot_auc_roc_curve(object=collection,
@@ -366,7 +366,7 @@ The `plot_data` variable is a list that contains (here) two items: `collection`
 and `plot_list`. The collection object can be used to alter plot elements, such
 as the theme and palette.
 
-```{r}
+```{r, label="prospective-auc_roc-plot-from-exported-collection"}
 plots <- familiar::plot_auc_roc_curve(object=plot_data$collection,
                                       ggtheme=ggplot2::theme_dark(),
                                       discrete_palette="R4",

@@ -6,4 +6,5 @@ doc
 Meta
 tests/testthat/Rplots.pdf
 inst/doc
-figure
+/doc/
+/Meta/
