@@ -118,12 +118,22 @@ setMethod("extract_univariate_analysis", signature(object="familiarEnsemble", da
               univariate_data <- data.table::data.table("feature"=names(regression_p_values),
                                                         "p_value"=regression_p_values)[order(p_value)]
               
-              # Only introduce q-values if the qvalue package is installed
+              # Only introduce q-values if the qvalue package is installed.
               if(has_qvalue_package){
-                
-                # q-values can only be computed for larger numbers of features
-                computed_q_value <- tryCatch({qvalue::qvalue(p=univariate_data$p_value)$qvalues},
-                                             error=function(err)(return(NA_real_)))
+
+                if(all(!is.finite(regression_p_values))){
+                  # q-values can only be computed if any p-values are not NA.
+                  computed_q_value <- NA_real_
+                  
+                } else {
+                  # q-values can only be computed for larger numbers of features
+                  computed_q_value <- tryCatch(qvalue::qvalue(p=univariate_data$p_value)$qvalues,
+                                               warning=identity,
+                                               error=identity)
+                  
+                  if(inherits(computed_q_value, "error")) computed_q_value <- NA_real_
+                  if(inherits(computed_q_value, "warning")) computed_q_value <- NA_real_
+                }
                 
                 # Set q-value
                 univariate_data[, "q_value":=computed_q_value]
