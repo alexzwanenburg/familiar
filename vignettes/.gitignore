@@ -1,5 +1,7 @@
 *.html
 *.R
+evaluation_and_explanation_precompiled.Rmd
+vignettes/prospective_use_precompiled.Rmd
 !license.html
 !familiar_logo.html
 !compile.R
