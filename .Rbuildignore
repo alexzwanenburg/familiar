@@ -11,3 +11,6 @@
 ^icon$
 ^docs_github$
 vignettes/compile.R
+vignettes/evaluation_and_explanation.Rmd.orig
+vignettes/prospective_use.Rmd.orig
+^figure$

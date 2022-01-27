@@ -5,7 +5,15 @@ date: "`r Sys.Date()`"
 output:
   rmarkdown::html_vignette:
     includes:
+      in_header: familiar_logo.html
       after_body: license.html
+    toc: TRUE
+  rmarkdown::github_document:
+    html_preview: FALSE
+    includes:
+      in_header: familiar_logo.html
+      after_body: license.html
+    toc: TRUE
 bibliography: "refs.bib"
 vignette: >
   %\VignetteIndexEntry{Performance metrics}
