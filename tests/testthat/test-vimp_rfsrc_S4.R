@@ -197,7 +197,7 @@ testthat::test_that(paste0("The RFSRC random forest minimum depth method correct
 # Process dataset.
 vimp_object <- familiar:::prepare_vimp_object(data=data,
                                               vimp_method="random_forest_rfsrc_permutation",
-                                              vimp_method_parameter_list=list("n_tree"=4,
+                                              vimp_method_parameter_list=list("n_tree"=8,
                                                                               "sample_size"=0.50,
                                                                               "m_try"=0.3,
                                                                               "node_size"=5,
@@ -284,7 +284,7 @@ testthat::test_that(paste0("The RFSRC random forest minimum depth method correct
 # Process dataset.
 vimp_object <- familiar:::prepare_vimp_object(data=data,
                                               vimp_method="random_forest_rfsrc_permutation",
-                                              vimp_method_parameter_list=list("n_tree"=4,
+                                              vimp_method_parameter_list=list("n_tree"=8,
                                                                               "sample_size"=0.50,
                                                                               "m_try"=0.3,
                                                                               "node_size"=5,
@@ -375,7 +375,7 @@ testthat::test_that(paste0("The RFSRC random forest minimum depth method correct
 # Process dataset.
 vimp_object <- familiar:::prepare_vimp_object(data=data,
                                               vimp_method="random_forest_rfsrc_permutation",
-                                              vimp_method_parameter_list=list("n_tree"=4,
+                                              vimp_method_parameter_list=list("n_tree"=8,
                                                                               "sample_size"=0.50,
                                                                               "m_try"=0.3,
                                                                               "node_size"=5,
@@ -464,7 +464,7 @@ testthat::test_that(paste0("The RFSRC random forest minimum depth method correct
 # Process dataset.
 vimp_object <- familiar:::prepare_vimp_object(data=data,
                                               vimp_method="random_forest_rfsrc_permutation",
-                                              vimp_method_parameter_list=list("n_tree"=4,
+                                              vimp_method_parameter_list=list("n_tree"=8,
                                                                               "sample_size"=0.50,
                                                                               "m_try"=0.3,
                                                                               "node_size"=5,
