@@ -1,3 +1,6 @@
+# Don't perform any further tests on CRAN due to running time.
+testthat::skip_on_cran()
+
 # Default
 results <- familiar:::test_export_specific(export_function=familiar:::export_ice_data,
                                            data_element="ice_data",

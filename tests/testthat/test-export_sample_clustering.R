@@ -1,3 +1,6 @@
+# Don't perform any further tests on CRAN due to running time.
+testthat::skip_on_cran()
+
 # Default
 results <- familiar:::test_export_specific(export_function=familiar:::export_sample_similarity,
                                            data_element="sample_similarity",
