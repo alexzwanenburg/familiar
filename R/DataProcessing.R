@@ -1,5 +1,8 @@
 .get_run_list <- function(iteration_list, data_id, run_id=NULL){
   
+  # Check if data_id has any length.
+  if(length(data_id) == 0) return(list())
+  
   # Return an empty list if data_id equals 0.
   if(data_id == 0) return(list())
   
