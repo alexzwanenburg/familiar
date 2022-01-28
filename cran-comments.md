@@ -12,40 +12,28 @@ R CMD check was run on Rhub using rhub::check_for_cran().
 
 ## R CMD check results
 
-Windows Server 2022, R-devel, 64 bit: 0 errors | 0 warnings | 3 notes
+Windows Server 2022, R-devel, 64 bit: 0 errors | 0 warnings | 2 notes
 Ubuntu Linux 20.04.1 LTS, R-release, GCC: 0 errors | 0 warnings | 2 notes
 Fedora Linux, R-devel, clang, gfortran: 0 errors | 0 warnings | 2 notes
 
-* NOTE: Found the following (possibly) invalid URLs:
-  URL: https://doi.org/10.1177/001316446002000104
-    From: inst/doc/performance_metrics_precompiled.html
-    Status: 503
-    Message: Service Unavailable
-  URL: https://doi.org/10.1177/0272989X06295361
-    From: inst/doc/evaluation_and_explanation_precompiled.html
-    Status: 503
-    Message: Service Unavailable
-  URL: https://doi.org/10.7326/0003-4819-122-5-199503010-00001
-    From: inst/doc/evaluation_and_explanation_precompiled.html
-    Status: 503
-    Message: Service Unavailable
+* NOTE: checking CRAN incoming feasibility ... NOTE
+  Maintainer: ‘Alex Zwanenburg ’
+  New submission
 
-  **Maintainer**: I manually checked the flagged URL. These DOI refer to the
-  proper papers, and can be accessed.
+  **Maintainer**: Yes, this my first package.
 
 * NOTE: checking installed package size ... NOTE
-  installed size is  5.0Mb
+  installed size is  5.1Mb
   sub-directories of 1Mb or more:
     R     2.9Mb
-    doc   1.0Mb
-    
+
   **Maintainer**: I checked for spurious data, but could not find any. The
   size of the R-directory is due to source code. Addressing the size of the R
   directory would require creating a set of mutually dependent packages. This
   would likely result in a larger footprint across the packages.
   
-  The (six) HTML vignettes contain images and math.
-
+  Also, this note only appeared on the Ubuntu and Fedora builds.
+  
 * NOTE: checking for detritus in the temp directory ... NOTE
   Found the following files/directories:
     'lastMiKTeXException'
