@@ -52,3 +52,7 @@ Fedora Linux, R-devel, clang, gfortran: 0 errors | 0 warnings | 2 notes
     
   **Maintainer**: This note only appeared on the Windows server test. It didn't
   appear locally (Windows 10) or the Ubunu Linux and Fedora Linux tests.
+
+## Downstream dependencies
+
+There are currently no downstream dependencies for this package.
