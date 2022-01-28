@@ -681,7 +681,7 @@ scores *s*<sub>*i*</sub> in descending order.
 
 Battiti, R. 1994. “Using Mutual Information for Selecting Features in
 Supervised Neural Net Learning.” *IEEE Trans. Neural Netw.* 5 (4):
-537–50. <https://doi.org/10.1109/72.298224>.
+537–50.
 
 </div>
 
@@ -691,7 +691,7 @@ De Jay, Nicolas, Simon Papillon-Cavanagh, Catharina Olsen, Nehme
 El-Hachem, Gianluca Bontempi, and Benjamin Haibe-Kains. 2013. “<span
 class="nocase">mRMRe</span>: An R Package for Parallelized <span
 class="nocase">mRMR</span> Ensemble Feature Selection.” *Bioinformatics*
-29 (18): 2365–68. <https://doi.org/10.1093/bioinformatics/btt383>.
+29 (18): 2365–68.
 
 </div>
 
@@ -703,7 +703,6 @@ In *Eleven Papers on Analysis, Probability and Topology*, edited by E B
 Dynkin, I M Gel’fand, A O Gel’fond, and M A Krasnosel’skii, 12:199–246.
 American Mathematical Society Translations: Series 2. Providence, Rhode
 Island: American Mathematical Society.
-<https://doi.org/10.1090/trans2/012/09>.
 
 </div>
 
@@ -713,7 +712,6 @@ Hastie, Trevor, Robert Tibshirani, and Jerome Friedman. 2009. *The
 Elements of Statistical Learning: Data Mining, Inference, and
 Prediction*. Second Edition. Springer Series in Statistics. New York,
 NY, United States: Springer Science+Business Media, LLC.
-<https://doi.org/10.1007/978-0-387-84858-7>.
 
 </div>
 
@@ -722,7 +720,6 @@ NY, United States: Springer Science+Business Media, LLC.
 Haury, Anne-Claire, Pierre Gestraud, and Jean-Philippe Vert. 2011. “The
 Influence of Feature Selection Methods on Accuracy, Stability and
 Interpretability of Molecular Signatures.” *PLoS One* 6 (12): e28210.
-<https://doi.org/10.1371/journal.pone.0028210>.
 
 </div>
 
@@ -731,7 +728,6 @@ Interpretability of Molecular Signatures.” *PLoS One* 6 (12): e28210.
 Ishwaran, Hemant, Udaya B Kogalur, Eiran Z Gorodeski, Andy J Minn, and
 Michael S Lauer. 2010. “High-Dimensional Variable Selection for Survival
 Data.” *J. Am. Stat. Assoc.* 105 (489): 205–17.
-<https://doi.org/10.1198/jasa.2009.tm08622>.
 
 </div>
 
@@ -740,7 +736,6 @@ Data.” *J. Am. Stat. Assoc.* 105 (489): 205–17.
 Janitza, Silke, Ender Celik, and Anne-Laure Boulesteix. 2018. “A
 Computationally Fast Variable Importance Test for Random Forests for
 High-Dimensional Data.” *Adv. Data Anal. Classif.* 12 (4): 885–915.
-<https://doi.org/10.1007/s11634-016-0276-4>.
 
 </div>
 
@@ -748,7 +743,6 @@ High-Dimensional Data.” *Adv. Data Anal. Classif.* 12 (4): 885–915.
 
 Meinshausen, Nicolai, and Peter Bühlmann. 2010. “Stability Selection.”
 *J. R. Stat. Soc. Series B Stat. Methodol.* 72 (4): 417–73.
-<https://doi.org/10.1111/j.1467-9868.2010.00740.x>.
 
 </div>
 
@@ -756,7 +750,6 @@ Meinshausen, Nicolai, and Peter Bühlmann. 2010. “Stability Selection.”
 
 Nembrini, Stefano, Inke R König, and Marvin N Wright. 2018. “The Revival
 of the Gini Importance?” *Bioinformatics* 34 (21): 3711–18.
-<https://doi.org/10.1093/bioinformatics/bty373>.
 
 </div>
 
@@ -765,7 +758,6 @@ of the Gini Importance?” *Bioinformatics* 34 (21): 3711–18.
 Oshiro, Thais Mayumi, Pedro Santoro Perez, and José Augusto Baranauskas.
 2012. “How Many Trees in a Random Forest?” In *Machine Learning and Data
 Mining in Pattern Recognition*, 154–68. Springer Berlin Heidelberg.
-<https://doi.org/10.1007/978-3-642-31537-4_13>.
 
 </div>
 
@@ -774,7 +766,7 @@ Mining in Pattern Recognition*, 154–68. Springer Berlin Heidelberg.
 Peng, Hanchuan, Fuhui Long, and Chris Ding. 2005. “Feature Selection
 Based on Mutual Information: Criteria of Max-Dependency, Max-Relevance,
 and Min-Redundancy.” *IEEE Trans. Pattern Anal. Mach. Intell.* 27 (8):
-1226–38. <https://doi.org/10.1109/TPAMI.2005.159>.
+1226–38.
 
 </div>
 
@@ -791,7 +783,6 @@ Computing*. Vienna, Austria: R Foundation for Statistical Computing.
 Simon, Noah, Jerome Friedman, Trevor Hastie, and Rob Tibshirani. 2011.
 “Regularization Paths for Cox’s Proportional Hazards Model via
 Coordinate Descent.” *J. Stat. Softw.* 39 (5): 1–13.
-<https://doi.org/10.18637/jss.v039.i05>.
 
 </div>
 
@@ -801,7 +792,6 @@ Wald, R, T M Khoshgoftaar, D Dittman, W Awada, and A Napolitano. 2012.
 “An Extensive Comparison of Feature Ranking Aggregation Techniques in
 Bioinformatics.” In *2012 IEEE 13th International Conference on
 Information Reuse Integration (IRI)*, 377–84.
-<https://doi.org/10.1109/IRI.2012.6303034>.
 
 </div>
 

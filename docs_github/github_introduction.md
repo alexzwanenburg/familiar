@@ -587,7 +587,7 @@ Cortes, David. 2021. *Isotree: Isolation-Based Outlier Detection*.
 
 Royston, Patrick, and Douglas G Altman. 2013. “External Validation of a
 Cox Prognostic Model: Principles and Methods.” *BMC Med. Res. Methodol.*
-13 (March): 33. <https://doi.org/10.1186/1471-2288-13-33>.
+13 (March): 33.
 
 </div>
 

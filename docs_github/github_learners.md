@@ -839,14 +839,13 @@ calibration curves, but may do so in the future.
 Boser, Bernhard E, Isabelle M Guyon, and Vladimir N Vapnik. 1992. “A
 Training Algorithm for Optimal Margin Classifiers.” In *Proceedings of
 the Fifth Annual Workshop on Computational Learning Theory*, 144–52.
-ACM. <https://doi.org/10.1145/130385.130401>.
+ACM.
 
 </div>
 
 <div id="ref-Breiman2001-ao" class="csl-entry">
 
 Breiman, Leo. 2001. “Random Forests.” *Mach. Learn.* 45 (1): 5–32.
-<https://doi.org/10.1023/A:1010933404324>.
 
 </div>
 
@@ -854,7 +853,7 @@ Breiman, Leo. 2001. “Random Forests.” *Mach. Learn.* 45 (1): 5–32.
 
 Bühlmann, Peter, and Torsten Hothorn. 2007. “Boosting Algorithms:
 Regularization, Prediction and Model Fitting.” *Stat. Sci.* 22 (4):
-477–505. <https://doi.org/10.1214/07-STS242>.
+477–505.
 
 </div>
 
@@ -862,7 +861,7 @@ Regularization, Prediction and Model Fitting.” *Stat. Sci.* 22 (4):
 
 Chang, Chih-Chung, and Chih-Jen Lin. 2011. “LIBSVM: A Library for
 Support Vector Machines.” *ACM Trans. Intell. Syst. Technol.* 2 (3):
-27:1–27. <https://doi.org/10.1145/1961189.1961199>.
+27:1–27.
 
 </div>
 
@@ -871,7 +870,6 @@ Support Vector Machines.” *ACM Trans. Intell. Syst. Technol.* 2 (3):
 Chen, Tianqi, and Carlos Guestrin. 2016. “XGBoost: A Scalable Tree
 Boosting System.” In *Proceedings of the 22nd ACM SIGKDD International
 Conference on Knowledge Discovery and Data Mining*, 785–94.
-<https://doi.org/10.1145/2939672.2939785>.
 
 </div>
 
@@ -879,7 +877,6 @@ Conference on Knowledge Discovery and Data Mining*, 785–94.
 
 Cox, D R. 1972. “Regression Models and Life-Tables.” *J. R. Stat. Soc.
 Series B Stat. Methodol.* 34 (2): 187–202.
-<https://doi.org/10.1111/j.2517-6161.1972.tb00899.x>.
 
 </div>
 
@@ -887,7 +884,6 @@ Series B Stat. Methodol.* 34 (2): 187–202.
 
 Efron, Bradley. 1977. “The Efficiency of Cox’s Likelihood Function for
 Censored Data.” *J. Am. Stat. Assoc.* 72 (359): 557–65.
-<https://doi.org/10.1080/01621459.1977.10480613>.
 
 </div>
 
@@ -896,7 +892,6 @@ Censored Data.” *J. Am. Stat. Assoc.* 72 (359): 557–65.
 Gramacy, Robert B. 2016. “<span class="nocase">laGP</span>: Large-Scale
 Spatial Modeling via Local Approximate Gaussian Processes in R.”
 *Journal of Statistical Software* 72 (1): 1–46.
-<https://doi.org/10.18637/jss.v072.i01>.
 
 </div>
 
@@ -906,7 +901,6 @@ Hastie, Trevor, Robert Tibshirani, and Jerome Friedman. 2009. *The
 Elements of Statistical Learning: Data Mining, Inference, and
 Prediction*. Second Edition. Springer Series in Statistics. New York,
 NY, United States: Springer Science+Business Media, LLC.
-<https://doi.org/10.1007/978-0-387-84858-7>.
 
 </div>
 
@@ -915,7 +909,6 @@ NY, United States: Springer Science+Business Media, LLC.
 Hofner, Benjamin, Luigi Boccuto, and Markus Göker. 2015. “Controlling
 False Discoveries in High-Dimensional Situations: Boosting with
 Stability Selection.” *BMC Bioinformatics* 16 (May): 144.
-<https://doi.org/10.1186/s12859-015-0575-3>.
 
 </div>
 
@@ -934,7 +927,6 @@ Model-Based Optimization for General Algorithm Configuration.” In
 *Learning and Intelligent Optimization*, edited by Carlos A Coello
 Coello, 6683:507–23. Lecture Notes in Computer Science. Berlin,
 Heidelberg: Springer Berlin Heidelberg.
-<https://doi.org/10.1007/978-3-642-25566-3_40>.
 
 </div>
 
@@ -942,7 +934,7 @@ Heidelberg: Springer Berlin Heidelberg.
 
 Ishwaran, Hemant, Udaya B Kogalur, Eugene H Blackstone, and Michael S
 Lauer. 2008. “Random Survival Forests.” *Ann. Appl. Stat.* 2 (3):
-841–60. <https://doi.org/10.1214/08-AOAS169>.
+841–60.
 
 </div>
 
@@ -950,7 +942,7 @@ Lauer. 2008. “Random Survival Forests.” *Ann. Appl. Stat.* 2 (3):
 
 Ishwaran, Hemant, Udaya B Kogalur, Xi Chen, and Andy J Minn. 2011.
 “Random Survival Forests for High-Dimensional Data.” *Stat. Anal. Data
-Min.* 4 (1): 115–32. <https://doi.org/10.1002/sam.10103>.
+Min.* 4 (1): 115–32.
 
 </div>
 
@@ -975,7 +967,7 @@ Intelligence and Statistics*, 592–600.
 <div id="ref-Lausen1992-qh" class="csl-entry">
 
 Lausen, Berthold, and Martin Schumacher. 1992. “Maximally Selected Rank
-Statistics.” *Biometrics* 48 (1): 73. <https://doi.org/10.2307/2532740>.
+Statistics.” *Biometrics* 48 (1): 73.
 
 </div>
 
@@ -992,7 +984,6 @@ Statistics, Probability Theory Group (Formerly: E1071), TU Wien*.
 
 Nelder, J A, and R W M Wedderburn. 1972. “Generalized Linear Models.”
 *J. R. Stat. Soc. Ser. A* 135 (3): 370–84.
-<https://doi.org/10.2307/2344614>.
 
 </div>
 
@@ -1001,7 +992,6 @@ Nelder, J A, and R W M Wedderburn. 1972. “Generalized Linear Models.”
 Niculescu-Mizil, Alexandru, and Rich Caruana. 2005. “Predicting Good
 Probabilities with Supervised Learning.” In *Proceedings of the 22nd
 International Conference on Machine Learning*, 625–32. ACM.
-<https://doi.org/10.1145/1102351.1102430>.
 
 </div>
 
@@ -1010,7 +1000,6 @@ International Conference on Machine Learning*, 625–32. ACM.
 Oshiro, Thais Mayumi, Pedro Santoro Perez, and José Augusto Baranauskas.
 2012. “How Many Trees in a Random Forest?” In *Machine Learning and Data
 Mining in Pattern Recognition*, 154–68. Springer Berlin Heidelberg.
-<https://doi.org/10.1007/978-3-642-31537-4_13>.
 
 </div>
 
@@ -1025,7 +1014,7 @@ Computing*. Vienna, Austria: R Foundation for Statistical Computing.
 <div id="ref-Schapire1990-vn" class="csl-entry">
 
 Schapire, Robert E. 1990. “The Strength of Weak Learnability.” *Mach.
-Learn.* 5 (2): 197–227. <https://doi.org/10.1007/BF00116037>.
+Learn.* 5 (2): 197–227.
 
 </div>
 
@@ -1034,7 +1023,6 @@ Learn.* 5 (2): 197–227. <https://doi.org/10.1007/BF00116037>.
 Schmid, Matthias, Marvin N Wright, and Andreas Ziegler. 2016. “On the
 Use of Harrell’s C for Clinical Risk Prediction via Random Survival
 Forests.” *Expert Syst. Appl.* 63 (November): 450–59.
-<https://doi.org/10.1016/j.eswa.2016.07.018>.
 
 </div>
 
@@ -1043,7 +1031,6 @@ Forests.” *Expert Syst. Appl.* 63 (November): 450–59.
 Shahriari, B, K Swersky, Z Wang, R P Adams, and N de Freitas. 2016.
 “Taking the Human Out of the Loop: A Review of Bayesian Optimization.”
 *Proc. IEEE* 104 (1): 148–75.
-<https://doi.org/10.1109/JPROC.2015.2494218>.
 
 </div>
 
@@ -1052,7 +1039,6 @@ Shahriari, B, K Swersky, Z Wang, R P Adams, and N de Freitas. 2016.
 Simon, Noah, Jerome Friedman, Trevor Hastie, and Rob Tibshirani. 2011.
 “Regularization Paths for Cox’s Proportional Hazards Model via
 Coordinate Descent.” *J. Stat. Softw.* 39 (5): 1–13.
-<https://doi.org/10.18637/jss.v039.i05>.
 
 </div>
 
@@ -1061,7 +1047,7 @@ Coordinate Descent.” *J. Stat. Softw.* 39 (5): 1–13.
 Sparapani, Rodney, Charles Spanbauer, and Robert McCulloch. 2021.
 “Nonparametric Machine Learning and Efficient Computation with Bayesian
 Additive Regression Trees: The BART R Package.” *Journal of Statistical
-Software* 97 (1): 1–66. <https://doi.org/10.18637/jss.v097.i01>.
+Software* 97 (1): 1–66.
 
 </div>
 
@@ -1070,7 +1056,6 @@ Software* 97 (1): 1–66. <https://doi.org/10.18637/jss.v097.i01>.
 Srinivas, N, A Krause, S M Kakade, and M W Seeger. 2012.
 “Information-Theoretic Regret Bounds for Gaussian Process Optimization
 in the Bandit Setting.” *IEEE Trans. Inf. Theory* 58 (5): 3250–65.
-<https://doi.org/10.1109/TIT.2011.2182033>.
 
 </div>
 
@@ -1079,7 +1064,6 @@ in the Bandit Setting.” *IEEE Trans. Inf. Theory* 58 (5): 3250–65.
 Therneau, Terry M, and Patricia M Grambsch. 2000. *Modeling Survival
 Data: Extending the Cox Model*. Statistics for Biology and Health. New
 York: Springer Science & Business Media.
-<https://doi.org/10.1007/978-1-4757-3294-8>.
 
 </div>
 
@@ -1088,7 +1072,6 @@ York: Springer Science & Business Media.
 Wright, Marvin N, Theresa Dankowski, and Andreas Ziegler. 2017.
 “Unbiased Split Variable Selection for Random Survival Forests Using
 Maximally Selected Rank Statistics.” *Stat. Med.* 36 (8): 1272–84.
-<https://doi.org/10.1002/sim.7212>.
 
 </div>
 
@@ -1096,7 +1079,7 @@ Maximally Selected Rank Statistics.” *Stat. Med.* 36 (8): 1272–84.
 
 Wright, Marvin N, and Andreas Ziegler. 2017. “Ranger : A Fast
 Implementation of Random Forests for High Dimensional Data in c++ and
-R.” *J. Stat. Softw.* 77 (1). <https://doi.org/10.18637/jss.v077.i01>.
+R.” *J. Stat. Softw.* 77 (1).
 
 </div>
 
@@ -1104,7 +1087,6 @@ R.” *J. Stat. Softw.* 77 (1). <https://doi.org/10.18637/jss.v077.i01>.
 
 Yee, T W, and C J Wild. 1996. “Vector Generalized Additive Models.” *J.
 R. Stat. Soc. Series B Stat. Methodol.* 58 (3): 481–93.
-<https://doi.org/10.1111/j.2517-6161.1996.tb02095.x>.
 
 </div>
 
@@ -1112,7 +1094,6 @@ R. Stat. Soc. Series B Stat. Methodol.* 58 (3): 481–93.
 
 Yee, Thomas. 2010. “The VGAM Package for Categorical Data Analysis.”
 *Journal of Statistical Software* 32 (10): 1–34.
-<https://doi.org/10.18637/jss.v032.i10>.
 
 </div>
 

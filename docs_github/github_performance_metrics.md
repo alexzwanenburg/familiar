@@ -398,7 +398,6 @@ $$ci = \\frac{n\_{concord} + 0.5 n\_{tied}}{n\_{concord} + n\_{discord} + n\_{ti
 
 Brier, Glenn W. 1950. “Verification of Forecasts Expressed in Terms of
 Probability.” *Mon. Weather Rev.* 78 (1): 1–3.
-[https://doi.org/10.1175/1520-0493(1950)078\<0001:VOFEIT>2.0.CO;2](https://doi.org/10.1175/1520-0493(1950)078<0001:VOFEIT>2.0.CO;2).
 
 </div>
 
@@ -407,7 +406,6 @@ Probability.” *Mon. Weather Rev.* 78 (1): 1–3.
 Brodersen, K H, C S Ong, K E Stephan, and J M Buhmann. 2010. “The
 Balanced Accuracy and Its Posterior Distribution.” In *2010 20th
 International Conference on Pattern Recognition*, 3121–24.
-<https://doi.org/10.1109/ICPR.2010.764>.
 
 </div>
 
@@ -415,7 +413,6 @@ International Conference on Pattern Recognition*, 3121–24.
 
 Cohen, Jacob. 1960. “A Coefficient of Agreement for Nominal Scales.”
 *Educ. Psychol. Meas.* 20 (1): 37–46.
-<https://doi.org/10.1177/001316446002000104>.
 
 </div>
 
@@ -423,7 +420,6 @@ Cohen, Jacob. 1960. “A Coefficient of Agreement for Nominal Scales.”
 
 Gorodkin, J. 2004. “Comparing Two k-Category Assignments by a k-Category
 Correlation Coefficient.” *Comput. Biol. Chem.* 28 (5-6): 367–74.
-<https://doi.org/10.1016/j.compbiolchem.2004.09.006>.
 
 </div>
 
@@ -432,7 +428,6 @@ Correlation Coefficient.” *Comput. Biol. Chem.* 28 (5-6): 367–74.
 Hand, David J, and Robert J Till. 2001. “A Simple Generalisation of the
 Area Under the ROC Curve for Multiple Class Classification Problems.”
 *Mach. Learn.* 45 (2): 171–86.
-<https://doi.org/10.1023/A:1010920819831>.
 
 </div>
 
@@ -441,7 +436,7 @@ Area Under the ROC Curve for Multiple Class Classification Problems.”
 Pencina, Michael J, and Ralph B D’Agostino. 2004. “Overall C as a
 Measure of Discrimination in Survival Analysis: Model Specific
 Population Value and Confidence Interval Estimation.” *Stat. Med.* 23
-(13): 2109–23. <https://doi.org/10.1002/sim.1802>.
+(13): 2109–23.
 
 </div>
 
@@ -457,7 +452,6 @@ f-Measure to ROC, Informedness, Markedness and Correlation.”
 
 Youden, W J. 1950. “Index for Rating Diagnostic Tests.” *Cancer* 3 (1):
 32–35.
-[https://doi.org/10.1002/1097-0142(1950)3:1\<32::aid-cncr2820030106>3.0.co;2-3](https://doi.org/10.1002/1097-0142(1950)3:1<32::aid-cncr2820030106>3.0.co;2-3).
 
 </div>
 

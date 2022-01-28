@@ -886,7 +886,6 @@ grid::grid.draw(plots[[1]])
 D’Agostino, R B, and Byung-Ho Nam. 2003. “Evaluation of the Performance
 of Survival Analysis Models: Discrimination and Calibration Measures.”
 In *Handbook of Statistics*, 23:1–25. Elsevier.
-<https://doi.org/10.1016/S0169-7161(03)23001-7>.
 
 </div>
 
@@ -896,7 +895,6 @@ Davis, Jesse, and Mark Goadrich. 2006. “The Relationship Between
 Precision-Recall and ROC Curves.” In *Proceedings of the 23rd
 International Conference on Machine Learning*, 233–40. ICML ’06. New
 York, NY, USA: Association for Computing Machinery.
-<https://doi.org/10.1145/1143844.1143874>.
 
 </div>
 
@@ -904,7 +902,7 @@ York, NY, USA: Association for Computing Machinery.
 
 Demler, Olga V, Nina P Paynter, and Nancy R Cook. 2015. “Tests of
 Calibration and Goodness-of-Fit in the Survival Setting.” *Stat. Med.*
-34 (10): 1659–80. <https://doi.org/10.1002/sim.6428>.
+34 (10): 1659–80.
 
 </div>
 
@@ -927,7 +925,7 @@ Boosting Machine.” *Ann. Stat.* 29 (5): 1189–1232.
 Goldstein, Alex, Adam Kapelner, Justin Bleich, and Emil Pitkin. 2015.
 “Peeking Inside the Black Box: Visualizing Statistical Learning with
 Plots of Individual Conditional Expectation.” *J. Comput. Graph. Stat.*
-24 (1): 44–65. <https://doi.org/10.1080/10618600.2014.907095>.
+24 (1): 44–65.
 
 </div>
 
@@ -936,7 +934,6 @@ Plots of Individual Conditional Expectation.” *J. Comput. Graph. Stat.*
 Hand, David J, and Robert J Till. 2001. “A Simple Generalisation of the
 Area Under the ROC Curve for Multiple Class Classification Problems.”
 *Mach. Learn.* 45 (2): 171–86.
-<https://doi.org/10.1023/A:1010920819831>.
 
 </div>
 
@@ -944,7 +941,6 @@ Area Under the ROC Curve for Multiple Class Classification Problems.”
 
 Hariri, S, M Carrasco Kind, and R J Brunner. 2019. “Extended Isolation
 Forest.” *IEEE Trans. Knowl. Data Eng.*, 1–1.
-<https://doi.org/10.1109/TKDE.2019.2947676>.
 
 </div>
 
@@ -962,7 +958,6 @@ One More Model, or There Is No Free Variable Importance,” May.
 Hosmer, D W, T Hosmer, S Le Cessie, and S Lemeshow. 1997. “A Comparison
 of Goodness-of-Fit Tests for the Logistic Regression Model.” *Stat.
 Med.* 16 (9): 965–80.
-[https://doi.org/10.1002/(sici)1097-0258(19970515)16:9\<965::aid-sim509>3.0.co;2-o](https://doi.org/10.1002/(sici)1097-0258(19970515)16:9<965::aid-sim509>3.0.co;2-o).
 
 </div>
 
@@ -970,14 +965,14 @@ Med.* 16 (9): 965–80.
 
 Hothorn, Torsten, and Berthold Lausen. 2003. “On the Exact Distribution
 of Maximally Selected Rank Statistics.” *Comput. Stat. Data Anal.* 43
-(2): 121–37. <https://doi.org/10.1016/S0167-9473(02)00225-6>.
+(2): 121–37.
 
 </div>
 
 <div id="ref-Lausen1992-qh" class="csl-entry">
 
 Lausen, Berthold, and Martin Schumacher. 1992. “Maximally Selected Rank
-Statistics.” *Biometrics* 48 (1): 73. <https://doi.org/10.2307/2532740>.
+Statistics.” *Biometrics* 48 (1): 73.
 
 </div>
 
@@ -985,7 +980,6 @@ Statistics.” *Biometrics* 48 (1): 73. <https://doi.org/10.2307/2532740>.
 
 Liu, F T, K M Ting, and Z Zhou. 2008. “Isolation Forest.” In *2008
 Eighth IEEE International Conference on Data Mining*, 413–22.
-<https://doi.org/10.1109/ICDM.2008.17>.
 
 </div>
 
@@ -995,7 +989,6 @@ Moertel, C G, T R Fleming, J S Macdonald, D G Haller, J A Laurie, C M
 Tangen, J S Ungerleider, et al. 1995. “Fluorouracil Plus Levamisole as
 Effective Adjuvant Therapy After Resection of Stage III Colon Carcinoma:
 A Final Report.” *Ann. Intern. Med.* 122 (5): 321–26.
-<https://doi.org/10.7326/0003-4819-122-5-199503010-00001>.
 
 </div>
 
@@ -1005,7 +998,6 @@ Van Calster, Ben, Daan Nieboer, Yvonne Vergouwe, Bavo De Cock, Michael J
 Pencina, and Ewout W Steyerberg. 2016. “A Calibration Hierarchy for Risk
 Models Was Defined: From Utopia to Empirical Data.” *J. Clin.
 Epidemiol.* 74 (June): 167–76.
-<https://doi.org/10.1016/j.jclinepi.2015.12.005>.
 
 </div>
 
@@ -1014,7 +1006,6 @@ Epidemiol.* 74 (June): 167–76.
 Vickers, Andrew J, Ben van Calster, and Ewout W Steyerberg. 2019. “A
 Simple, Step-by-Step Guide to Interpreting Decision Curve Analysis.”
 *Diagn Progn Res* 3 (1): 18.
-<https://doi.org/10.1186/s41512-019-0064-7>.
 
 </div>
 
@@ -1024,7 +1015,6 @@ Vickers, Andrew J, Angel M Cronin, Elena B Elkin, and Mithat Gonen.
 2008. “Extensions to Decision Curve Analysis, a Novel Method for
 Evaluating Diagnostic Tests, Prediction Models and Molecular Markers.”
 *BMC Med. Inform. Decis. Mak.* 8 (November): 53.
-<https://doi.org/10.1186/1472-6947-8-53>.
 
 </div>
 
@@ -1032,7 +1022,7 @@ Evaluating Diagnostic Tests, Prediction Models and Molecular Markers.”
 
 Vickers, Andrew J, and Elena B Elkin. 2006. “Decision Curve Analysis: A
 Novel Method for Evaluating Prediction Models.” *Med. Decis. Making* 26
-(6): 565–74. <https://doi.org/10.1177/0272989X06295361>.
+(6): 565–74.
 
 </div>
 
@@ -1040,7 +1030,6 @@ Novel Method for Evaluating Prediction Models.” *Med. Decis. Making* 26
 
 Wilson, Daniel J. 2019. “The Harmonic Mean p-Value for Combining
 Dependent Tests.” *Proc. Natl. Acad. Sci. U. S. A.* 116 (4): 1195–1200.
-<https://doi.org/10.1073/pnas.1814092116>.
 
 </div>
 
@@ -1049,7 +1038,6 @@ Dependent Tests.” *Proc. Natl. Acad. Sci. U. S. A.* 116 (4): 1195–1200.
 Wolberg, W H, and O L Mangasarian. 1990. “Multisurface Method of Pattern
 Separation for Medical Diagnosis Applied to Breast Cytology.” *Proc.
 Natl. Acad. Sci. U. S. A.* 87 (23): 9193–96.
-<https://doi.org/10.1073/pnas.87.23.9193>.
 
 </div>
 
