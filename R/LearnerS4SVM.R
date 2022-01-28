@@ -254,7 +254,7 @@ setMethod("..train", signature(object="familiarSVM", data="dataObject"),
             # Fit the SVM model using e1071::svm. The quiet wrapper suppresses C
             # output from the underlying libsvm library, notably iteration
             # warnings.
-            quiet(model <- suppressWarnings(tryCatch(do.call(e1071::svm,
+            quiet(model <- suppressWarnings(tryCatch(do.call(svm,
                                                              args=c(list(formula,
                                                                          "data"=data@data,
                                                                          "type"=svm_type,
