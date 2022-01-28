@@ -37,6 +37,7 @@ NULL
 #'@inheritParams plot_univariate_importance
 #'@inheritParams plotting.check_input_args
 #'@inheritParams plotting.check_data_handling
+#'@inheritDotParams extract_performance -object
 #'@inheritDotParams as_familiar_collection -object
 #'@inheritDotParams ggplot2::ggsave -height -width -units
 #'
@@ -105,8 +106,8 @@ setGeneric("plot_model_performance",
                     x_label=waiver(),
                     y_label=waiver(),
                     legend_label=waiver(),
-                    plot_title=NULL,
-                    plot_sub_title=NULL,
+                    plot_title=waiver(),
+                    plot_sub_title=waiver(),
                     caption=NULL,
                     rotate_x_tick_labels=waiver(),
                     y_range=NULL,
@@ -116,6 +117,7 @@ setGeneric("plot_model_performance",
                     height=waiver(),
                     units=waiver(),
                     annotate_performance=NULL,
+                    export_collection=FALSE,
                     ...) standardGeneric("plot_model_performance"))
 
 #####plot_model_performance (generic)#####
@@ -139,8 +141,8 @@ setMethod("plot_model_performance", signature(object="ANY"),
                    x_label=waiver(),
                    y_label=waiver(),
                    legend_label=waiver(),
-                   plot_title=NULL,
-                   plot_sub_title=NULL,
+                   plot_title=waiver(),
+                   plot_sub_title=waiver(),
                    caption=NULL,
                    rotate_x_tick_labels=waiver(),
                    y_range=NULL,
@@ -150,11 +152,14 @@ setMethod("plot_model_performance", signature(object="ANY"),
                    height=waiver(),
                    units=waiver(),
                    annotate_performance=NULL,
+                   export_collection=FALSE,
                    ...){
             
             # Attempt conversion to familiarCollection object.
             object <- do.call(as_familiar_collection,
-                              args=append(list("object"=object, "data_element"="model_performance"), list(...)))
+                              args=c(list("object"=object,
+                                          "data_element"="model_performance"),
+                                     list(...)))
             
             return(do.call(plot_model_performance,
                            args=list("object"=object,
@@ -184,7 +189,8 @@ setMethod("plot_model_performance", signature(object="ANY"),
                                      "width"=width,
                                      "height"=height,
                                      "units"=units,
-                                     "annotate_performance"=annotate_performance)))
+                                     "annotate_performance"=annotate_performance,
+                                     "export_collection"=export_collection)))
           })
 
 #####plot_model_performance (collection)#####
@@ -208,8 +214,8 @@ setMethod("plot_model_performance", signature(object="familiarCollection"),
                    x_label=waiver(),
                    y_label=waiver(),
                    legend_label=waiver(),
-                   plot_title=NULL,
-                   plot_sub_title=NULL,
+                   plot_title=waiver(),
+                   plot_sub_title=waiver(),
                    caption=NULL,
                    rotate_x_tick_labels=waiver(),
                    y_range=NULL,
@@ -219,6 +225,7 @@ setMethod("plot_model_performance", signature(object="familiarCollection"),
                    height=waiver(),
                    units=waiver(),
                    annotate_performance=NULL,
+                   export_collection=FALSE,
                    ...){
            
             ##### Check input arguments ----------------------------------------
@@ -296,6 +303,13 @@ setMethod("plot_model_performance", signature(object="familiarCollection"),
             
             # Check that the data are not empty.
             if(is_empty(x)) return(NULL)
+            
+            # Check package requirements for plotting.
+            if(!require_package(x=..required_plotting_packages(extended=FALSE),
+                                purpose="to plot model performance",
+                                message_type="warning")){
+              return(NULL)
+            }
             
             # Add evaluation time as a splitting variable.
             if(object@outcome_type %in% c("survival")){
@@ -435,6 +449,9 @@ setMethod("plot_model_performance", signature(object="familiarCollection"),
             
             ##### Create plots -------------------------------------------------
             
+            # Determine if subtitle should be generated.
+            autogenerate_plot_subtitle <- is.waive(plot_sub_title)
+            
             # Split data.
             if(!is.null(split_by)){
               x_split <- split(x@data, by=split_by, drop=FALSE)
@@ -451,6 +468,13 @@ setMethod("plot_model_performance", signature(object="familiarCollection"),
               
               # Skip empty datasets.
               if(is_empty(x_split[[ii]])) next()
+              
+              if(is.waive(plot_title)) plot_title <- "Model performance"
+              
+              if(autogenerate_plot_subtitle){
+                plot_sub_title <- plotting.create_subtitle(split_by=split_by,
+                                                           x=x_split[[ii]])
+              }
               
               # Generate plot
               p <- .plot_model_performance_plot(x=x_split[[ii]],
@@ -486,14 +510,10 @@ setMethod("plot_model_performance", signature(object="familiarCollection"),
               # Save and export
               if(!is.null(dir_path)){
                 
-                # Add plot type as a subtype.
-                subtype <- plot_type
-                
-                # Determine the subtype
-                if(!is.null(split_by)){
-                  subtype <- c(subtype, as.character(sapply(split_by, function(jj, x) (x[[jj]][1]), x=x_split[[ii]])))
-                  subtype <- paste0(subtype, collapse="_")
-                }
+                # Set subtype.
+                subtype <- plotting.create_subtype(x=x_split[[ii]],
+                                                   subtype=plot_type,
+                                                   split_by=split_by)
                 
                 # Obtain decent default values for the plot.
                 def_plot_dims <- .determine_model_performance_plot_dimensions(x=x_split[[ii]],
@@ -506,15 +526,15 @@ setMethod("plot_model_performance", signature(object="familiarCollection"),
                 
                 # Save to file.
                 do.call(plotting.save_plot_to_file,
-                        args=append(list("plot_obj"=p,
-                                         "object"=object,
-                                         "dir_path"=dir_path,
-                                         "type"="performance",
-                                         "subtype"=subtype,
-                                         "height"=ifelse(is.waive(height), def_plot_dims[1], height),
-                                         "width"=ifelse(is.waive(width), def_plot_dims[2], width),
-                                         "units"=ifelse(is.waive(units), "cm", units)),
-                                    list(...)))
+                        args=c(list("plot_obj"=p,
+                                    "object"=object,
+                                    "dir_path"=dir_path,
+                                    "type"="performance",
+                                    "subtype"=subtype,
+                                    "height"=ifelse(is.waive(height), def_plot_dims[1], height),
+                                    "width"=ifelse(is.waive(width), def_plot_dims[2], width),
+                                    "units"=ifelse(is.waive(units), "cm", units)),
+                               list(...)))
                 
               } else {
                 # Store as list for export.
@@ -522,13 +542,11 @@ setMethod("plot_model_performance", signature(object="familiarCollection"),
               }
             }
             
-            # Output
-            if(is.null(dir_path)){
-              return(plot_list)
-              
-            } else {
-              return(NULL)
-            }
+            # Generate output
+            return(plotting.get_output(dir_path=dir_path,
+                                       plot_list=plot_list,
+                                       export_collection=export_collection,
+                                       object=object))
           })
 
 
@@ -774,13 +792,15 @@ setMethod("plot_model_performance", signature(object="familiarCollection"),
                by=c("metric", "data_set", "fs_method", "learner")]
     
     # Generate a guide table
-    guide_list <- plotting.create_guide_table(x=x_bar, color_by=color_by, discrete_palette=discrete_palette)
+    guide_list <- plotting.create_guide_table(x=x_bar,
+                                              color_by=color_by,
+                                              discrete_palette=discrete_palette)
     
     # Extract data
     x_bar <- guide_list$data
     
-    # Set breaks and limits
-    p <- p + ggplot2::scale_y_continuous(breaks=y_breaks, limits=y_range)
+    # Set breaks.
+    p <- p + ggplot2::scale_y_continuous(breaks=y_breaks)
     
     if(is.null(color_by)){
       # Add barplot
@@ -827,18 +847,23 @@ setMethod("plot_model_performance", signature(object="familiarCollection"),
                                           drop=FALSE)
     }
     
+    # Plot to Cartesian coordinates.
+    p <- p + ggplot2::coord_cartesian(ylim=y_range)
+    
   } else if(plot_type == "boxplot"){
     
     ##### boxplot --------------------------------------------------------------
     
     # Generate a guide table
-    guide_list <- plotting.create_guide_table(x=x, color_by=color_by, discrete_palette=discrete_palette)
+    guide_list <- plotting.create_guide_table(x=x,
+                                              color_by=color_by,
+                                              discrete_palette=discrete_palette)
     
     # Extract data
     x <- guide_list$data
     
-    # Set breaks and limits
-    p <- p + ggplot2::scale_y_continuous(breaks=y_breaks, limits=y_range)
+    # Set breaks.
+    p <- p + ggplot2::scale_y_continuous(breaks=y_breaks)
     
     if(is.null(color_by)){
       
@@ -866,18 +891,23 @@ setMethod("plot_model_performance", signature(object="familiarCollection"),
                                             drop=FALSE)
     }
     
+    # Plot to Cartesian coordinates.
+    p <- p + ggplot2::coord_cartesian(ylim=y_range)
+    
   } else if(plot_type == "violinplot"){
     
     ##### violinplot -----------------------------------------------------------
     
     # Generate a guide table
-    guide_list <- plotting.create_guide_table(x=x, color_by=color_by, discrete_palette=discrete_palette)
+    guide_list <- plotting.create_guide_table(x=x,
+                                              color_by=color_by,
+                                              discrete_palette=discrete_palette)
     
     # Extract data
     x <- guide_list$data
     
-    # Set breaks and limits
-    p <- p + ggplot2::scale_y_continuous(breaks=y_breaks, limits=y_range)
+    # Set breaks.
+    p <- p + ggplot2::scale_y_continuous(breaks=y_breaks)
     
     if(is.null(color_by)){
       
@@ -908,6 +938,9 @@ setMethod("plot_model_performance", signature(object="familiarCollection"),
                                           breaks=g_color$color_breaks,
                                           drop=FALSE)
     }
+    
+    # Plot to Cartesian coordinates.
+    p <- p + ggplot2::coord_cartesian(ylim=y_range)
   }
   
   # Determine how things are facetted

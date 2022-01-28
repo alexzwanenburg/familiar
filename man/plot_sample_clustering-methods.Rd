@@ -12,6 +12,7 @@ plot_sample_clustering(
   feature_linkage_method = waiver(),
   sample_cluster_method = waiver(),
   sample_linkage_method = waiver(),
+  sample_limit = waiver(),
   draw = FALSE,
   dir_path = NULL,
   split_by = NULL,
@@ -30,8 +31,8 @@ plot_sample_clustering(
   y_label_shared = "row",
   legend_label = waiver(),
   outcome_legend_label = waiver(),
-  plot_title = NULL,
-  plot_sub_title = NULL,
+  plot_title = waiver(),
+  plot_sub_title = waiver(),
   caption = NULL,
   x_range = NULL,
   x_n_breaks = 3,
@@ -50,6 +51,7 @@ plot_sample_clustering(
   width = waiver(),
   height = waiver(),
   units = waiver(),
+  export_collection = FALSE,
   verbose = TRUE,
   ...
 )
@@ -60,6 +62,7 @@ plot_sample_clustering(
   feature_linkage_method = waiver(),
   sample_cluster_method = waiver(),
   sample_linkage_method = waiver(),
+  sample_limit = waiver(),
   draw = FALSE,
   dir_path = NULL,
   split_by = NULL,
@@ -78,8 +81,8 @@ plot_sample_clustering(
   y_label_shared = "row",
   legend_label = waiver(),
   outcome_legend_label = waiver(),
-  plot_title = NULL,
-  plot_sub_title = NULL,
+  plot_title = waiver(),
+  plot_sub_title = waiver(),
   caption = NULL,
   x_range = NULL,
   x_n_breaks = 3,
@@ -98,6 +101,7 @@ plot_sample_clustering(
   width = waiver(),
   height = waiver(),
   units = waiver(),
+  export_collection = FALSE,
   verbose = TRUE,
   ...
 )
@@ -108,6 +112,7 @@ plot_sample_clustering(
   feature_linkage_method = waiver(),
   sample_cluster_method = waiver(),
   sample_linkage_method = waiver(),
+  sample_limit = waiver(),
   draw = FALSE,
   dir_path = NULL,
   split_by = NULL,
@@ -126,8 +131,8 @@ plot_sample_clustering(
   y_label_shared = "row",
   legend_label = waiver(),
   outcome_legend_label = waiver(),
-  plot_title = NULL,
-  plot_sub_title = NULL,
+  plot_title = waiver(),
+  plot_sub_title = waiver(),
   caption = NULL,
   x_range = NULL,
   x_n_breaks = 3,
@@ -146,6 +151,7 @@ plot_sample_clustering(
   width = waiver(),
   height = waiver(),
   units = waiver(),
+  export_collection = FALSE,
   verbose = TRUE,
   ...
 )
@@ -189,6 +195,16 @@ creation of the underlying \code{familiarModel} objects.}
 
 If not provided explicitly, this parameter is read from settings used at
 creation of the underlying \code{familiarModel} objects.}
+
+\item{sample_limit}{(\emph{optional}) Set the upper limit of the number of samples
+that are used during evaluation steps. Cannot be less than 20.
+
+This setting can be specified per data element by providing a parameter
+value in a named list with data elements, e.g.
+\code{list("sample_similarity"=100, "permutation_vimp"=1000)}.
+
+This parameter can be set for the following data elements:
+\code{sample_similarity} and \code{ice_data}.}
 
 \item{draw}{(\emph{optional}) Draws the plot if TRUE.}
 
@@ -382,11 +398,13 @@ the number of features and the number of facets.}
 
 \item{units}{(\emph{optional}) Plot size unit. Either \code{cm} (default), \code{mm} or \verb{in}.}
 
+\item{export_collection}{(\emph{optional}) Exports the collection if TRUE.}
+
 \item{verbose}{Flag to indicate whether feedback should be provided for the
 plotting.}
 
 \item{...}{
-  Arguments passed on to \code{\link[=as_familiar_collection]{as_familiar_collection}}, \code{\link[ggplot2:ggsave]{ggplot2::ggsave}}
+  Arguments passed on to \code{\link[=as_familiar_collection]{as_familiar_collection}}, \code{\link[ggplot2:ggsave]{ggplot2::ggsave}}, \code{\link[=extract_feature_expression]{extract_feature_expression}}
   \describe{
     \item{\code{familiar_data_names}}{Names of the dataset(s). Only used if the \code{object} parameter
 is one or more \code{familiarData} objects.}
@@ -394,7 +412,7 @@ is one or more \code{familiarData} objects.}
     \item{\code{filename}}{File name to create on disk.}
     \item{\code{plot}}{Plot to save, defaults to last plot displayed.}
     \item{\code{device}}{Device to use. Can either be a device function
-(e.g. \code{\link[=png]{png()}}), or one of "eps", "ps", "tex" (pictex),
+(e.g. \link{png}), or one of "eps", "ps", "tex" (pictex),
 "pdf", "jpeg", "tiff", "png", "bmp", "svg" or "wmf" (windows only).}
     \item{\code{path}}{Path of the directory to save plot to: \code{path} and \code{filename}
 are combined to create the fully qualified file name. Defaults to the
@@ -402,9 +420,42 @@ working directory.}
     \item{\code{scale}}{Multiplicative scaling factor.}
     \item{\code{dpi}}{Plot resolution. Also accepts a string input: "retina" (320),
 "print" (300), or "screen" (72). Applies only to raster output types.}
-    \item{\code{limitsize}}{When \code{TRUE} (the default), \code{ggsave} will not
+    \item{\code{limitsize}}{When \code{TRUE} (the default), \code{ggsave()} will not
 save images larger than 50x50 inches, to prevent the common error of
 specifying dimensions in pixels.}
+    \item{\code{bg}}{Background colour. If \code{NULL}, uses the \code{plot.background} fill value
+from the plot theme.}
+    \item{\code{feature_similarity}}{Table containing pairwise distance between
+sample. This is used to determine cluster information, and indicate which
+samples are similar. The table is created by the
+\code{extract_sample_similarity} method.}
+    \item{\code{data}}{A \code{dataObject} object, \code{data.table} or \code{data.frame} that
+constitutes the data that are assessed.}
+    \item{\code{feature_similarity_metric}}{Metric to determine pairwise similarity
+between features. Similarity is computed in the same manner as for
+clustering, and \code{feature_similarity_metric} therefore has the same options
+as \code{cluster_similarity_metric}: \code{mcfadden_r2}, \code{cox_snell_r2},
+\code{nagelkerke_r2}, \code{spearman}, \code{kendall} and \code{pearson}.
+
+If not provided explicitly, this parameter is read from settings used at
+creation of the underlying \code{familiarModel} objects.}
+    \item{\code{sample_similarity_metric}}{Metric to determine pairwise similarity
+between samples. Similarity is computed in the same manner as for
+clustering, but \code{sample_similarity_metric} has different options that are
+better suited to computing distance between samples instead of between
+features: \code{gower}, \code{euclidean}.
+
+The underlying feature data is scaled to the \eqn{[0, 1]} range (for
+numerical features) using the feature values across the samples. The
+normalisation parameters required can optionally be computed from feature
+data with the outer 5\% (on both sides) of feature values trimmed or
+winsorised. To do so append \verb{_trim} (trimming) or \verb{_winsor} (winsorising) to
+the metric name. This reduces the effect of outliers somewhat.
+
+If not provided explicitly, this parameter is read from settings used at
+creation of the underlying \code{familiarModel} objects.}
+    \item{\code{message_indent}}{Number of indentation steps for messages shown during
+computation and extraction of various data elements.}
   }}
 }
 \value{

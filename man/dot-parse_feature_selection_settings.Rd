@@ -53,7 +53,9 @@ assessing variable importance.}
 variable importances over different data subsets, e.g. bootstraps. The
 following methods can be selected:
 \itemize{
-\item \code{mean} (default): Use the mean rank of a feature over the subsets to
+\item \code{none}: Don't aggregate ranks, but rather aggregate the variable
+importance scores themselves.
+\item \code{mean}: Use the mean rank of a feature over the subsets to
 determine the aggregated feature rank.
 \item \code{median}: Use the median rank of a feature over the subsets to determine
 the aggregated feature rank.
@@ -67,8 +69,8 @@ highly ranked features as measure for the aggregated feature rank
 \item \code{exponential}: Use a rank-weighted frequence of occurrence in the subset
 of highly ranked features as measure for the aggregated feature rank (Haury
 et al., 2011).
-\item \code{borda}: Use the borda count as measure for the aggregated feature rank
-(Wald et al., 2012).
+\item \code{borda} (default): Use the borda count as measure for the aggregated
+feature rank (Wald et al., 2012).
 \item \code{enhanced_borda}: Use an occurrence frequency-weighted borda count as
 measure for the aggregated feature rank (Wald et al., 2012).
 \item \code{truncated_borda}: Use borda count computed only on features within the
@@ -76,7 +78,9 @@ subset of highly ranked features.
 \item \code{enhanced_truncated_borda}: Apply both the enhanced borda method and the
 truncated borda method and use the resulting borda count as the aggregated
 feature rank.
-}}
+}
+
+The \emph{feature selection methods} vignette provides additional information.}
 
 \item{vimp_aggregation_rank_threshold}{(\emph{optional}) The threshold used to
 define the subset of highly important features. If not set, this threshold

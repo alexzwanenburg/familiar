@@ -28,7 +28,7 @@ setGeneric("extract_decision_curve_data",
                     data,
                     cl=NULL,
                     ensemble_method=waiver(),
-                    eval_times=waiver(),
+                    evaluation_times=waiver(),
                     detail_level=waiver(),
                     estimation_type=waiver(),
                     aggregate_results=waiver(),
@@ -44,7 +44,7 @@ setMethod("extract_decision_curve_data", signature(object="familiarEnsemble"),
                    data,
                    cl=NULL,
                    ensemble_method=waiver(),
-                   eval_times=waiver(),
+                   evaluation_times=waiver(),
                    detail_level=waiver(),
                    estimation_type=waiver(),
                    aggregate_results=waiver(),
@@ -60,22 +60,21 @@ setMethod("extract_decision_curve_data", signature(object="familiarEnsemble"),
             if(object@outcome_type %in% c("count", "continuous")) return(NULL)
             
             # Message extraction start
-            if(verbose){
-              logger.message(paste0("Computing data for decision curve analysis."),
-                             indent=message_indent)
-            }
+            logger.message(paste0("Computing data for decision curve analysis."),
+                           indent=message_indent,
+                           verbose=verbose)
             
-            # Load eval_times from the object settings attribute, if it is not provided.
-            if(is.waive(eval_times)) eval_times <- object@settings$eval_times
+            # Load evaluation_times from the object settings attribute, if it is not provided.
+            if(is.waive(evaluation_times)) evaluation_times <- object@settings$eval_times
             
-            # Check eval_times argument
+            # Check evaluation_times argument
             if(object@outcome_type %in% c("survival")){
-              sapply(eval_times, .check_number_in_valid_range, var_name="eval_times", range=c(0.0, Inf), closed=c(FALSE, TRUE))
+              sapply(evaluation_times, .check_number_in_valid_range, var_name="evaluation_times", range=c(0.0, Inf), closed=c(FALSE, TRUE))
             }
             
             # Obtain ensemble method from stored settings, if required.
             if(is.waive(ensemble_method)) ensemble_method <- object@settings$ensemble_method
-
+            
             # Check ensemble_method argument
             .check_parameter_value_is_valid(x=ensemble_method, var_name="ensemble_method",
                                             values=.get_available_ensemble_prediction_methods())
@@ -83,7 +82,7 @@ setMethod("extract_decision_curve_data", signature(object="familiarEnsemble"),
             # Load confidence alpha from object settings attribute if not
             # provided externally.
             if(is.waive(confidence_level)) confidence_level <- object@settings$confidence_level
-
+            
             # Check confidence_level input argument
             .check_number_in_valid_range(x=confidence_level, var_name="confidence_level",
                                          range=c(0.0, 1.0), closed=c(FALSE, FALSE))
@@ -96,11 +95,13 @@ setMethod("extract_decision_curve_data", signature(object="familiarEnsemble"),
             
             # Check the level detail.
             detail_level <- .parse_detail_level(x = detail_level,
+                                                object = object,
                                                 default = "hybrid",
                                                 data_element = "decision_curve_analyis")
             
             # Check the estimation type.
             estimation_type <- .parse_estimation_type(x = estimation_type,
+                                                      object = object,
                                                       default = "bootstrap_confidence_interval",
                                                       data_element = "decision_curve_analyis",
                                                       detail_level = detail_level,
@@ -108,9 +109,10 @@ setMethod("extract_decision_curve_data", signature(object="familiarEnsemble"),
             
             # Check whether results should be aggregated.
             aggregate_results <- .parse_aggregate_results(x = aggregate_results,
+                                                          object = object,
                                                           default = TRUE,
                                                           data_element = "decision_curve_analyis")
-
+            
             # Test if models are properly loaded
             if(!is_model_loaded(object=object)) ..error_ensemble_models_not_loaded()
             
@@ -130,7 +132,7 @@ setMethod("extract_decision_curve_data", signature(object="familiarEnsemble"),
                                            proto_data_element=proto_data_element,
                                            is_pre_processed=is_pre_processed,
                                            ensemble_method=ensemble_method,
-                                           eval_times=eval_times,
+                                           evaluation_times=evaluation_times,
                                            aggregate_results=aggregate_results,
                                            message_indent=message_indent + 1L,
                                            verbose=verbose)
@@ -142,7 +144,7 @@ setMethod("extract_decision_curve_data", signature(object="familiarEnsemble"),
 .extract_decision_curve_data <- function(object,
                                          data,
                                          proto_data_element,
-                                         eval_times=NULL,
+                                         evaluation_times=NULL,
                                          cl,
                                          ensemble_method,
                                          is_pre_processed,
@@ -155,9 +157,9 @@ setMethod("extract_decision_curve_data", signature(object="familiarEnsemble"),
   proto_data_element <- add_model_name(proto_data_element, object=object)
   
   # Add evaluation time as a identifier to the data element.
-  if(length(eval_times) > 0 & object@outcome_type == "survival"){
+  if(length(evaluation_times) > 0 & object@outcome_type == "survival"){
     data_elements <- add_data_element_identifier(x=proto_data_element,
-                                                 evaluation_time=eval_times)
+                                                 evaluation_time=evaluation_times)
     
   } else if(object@outcome_type %in% c("binomial", "multinomial")){
     
@@ -169,6 +171,17 @@ setMethod("extract_decision_curve_data", signature(object="familiarEnsemble"),
     
     # Check if any predictions are valid.
     if(!any_predictions_valid(prediction_data, outcome_type=object@outcome_type)) return(NULL)
+    
+    # Remove data with missing predictions.
+    prediction_data <- remove_nonvalid_predictions(prediction_data,
+                                                   outcome_type=object@outcome_type)
+    
+    # Remove data with missing outcomes.
+    prediction_data <- remove_missing_outcomes(data=prediction_data,
+                                               outcome_type=object@outcome_type)
+    
+    # Check that any prediction data remain.
+    if(is_empty(prediction_data)) return(NULL)
     
     # Determine class levels
     outcome_class_levels <- get_outcome_class_levels(object)
@@ -192,7 +205,7 @@ setMethod("extract_decision_curve_data", signature(object="familiarEnsemble"),
                        data=prediction_data,
                        cl=cl,
                        ...)
-   
+    
   } else if(object@outcome_type %in% c("survival")){
     # Iterate over evaluation times.
     dca_data <- lapply(data_elements,
@@ -224,9 +237,10 @@ setMethod("extract_decision_curve_data", signature(object="familiarEnsemble"),
   # Check if the data has more than 1 row.
   if(nrow(data) <= 1) return(NULL)
   
-  if(length(data_element@identifiers$positive_class) > 1 & progress_bar){
+  if(length(data_element@identifiers$positive_class) > 0 & progress_bar){
     logger.message(paste0("Computing decision curves for the \"", data_element@identifiers$positive_class, "\" class."),
-                   indent=message_indent)
+                   indent=message_indent,
+                   verbose=verbose)
   }
   
   # Set test probabilities
@@ -319,6 +333,8 @@ setMethod("extract_decision_curve_data", signature(object="familiarEnsemble"),
   # Compute benefit for the model.
   model_net_benefit <- ..compute_dca_data_net_benefit(data, threshold_probabilities)
   
+  if(is.null(model_net_benefit)) return(NULL)
+  
   # Set the data attribute
   data_element@data <- data.table::data.table("threshold_probability"=threshold_probabilities,
                                               "net_benefit"=model_net_benefit)
@@ -356,6 +372,17 @@ setMethod("extract_decision_curve_data", signature(object="familiarEnsemble"),
   # Check if any predictions are valid.
   if(!any_predictions_valid(data, outcome_type=object@outcome_type)) return(NULL)
   
+  # Remove data with missing predictions.
+  data <- remove_nonvalid_predictions(data,
+                                      outcome_type=object@outcome_type)
+  
+  # Remove data with missing outcomes.
+  data <- remove_missing_outcomes(data=data,
+                                  outcome_type=object@outcome_type)
+  
+  # Check that any prediction data remain.
+  if(is_empty(data)) return(NULL)
+  
   # Check if the data has more than 1 row.
   if(nrow(data) <= 1) return(NULL)
   
@@ -364,7 +391,8 @@ setMethod("extract_decision_curve_data", signature(object="familiarEnsemble"),
   # probability is time depend.
   if(length(data_element@identifiers$evaluation_time) > 0 & progress_bar){
     logger.message(paste0("Computing decision curves at time ", data_element@identifiers$evaluation_time, "."),
-                   indent=message_indent)
+                   indent=message_indent,
+                   verbose=verbose)
   }
   
   # Set test probabilities
@@ -428,6 +456,8 @@ setMethod("extract_decision_curve_data", signature(object="familiarEnsemble"),
                                                                evaluation_time=data_element@identifiers$evaluation_time,
                                                                intervention=FALSE)
   
+  if(is.null(model_net_benefit)) return(NULL)
+  
   # Set the data attribute
   data_element@data <- data.table::data.table("threshold_probability"=threshold_probabilities,
                                               "net_benefit"=model_net_benefit)
@@ -446,24 +476,32 @@ setMethod("extract_decision_curve_data", signature(object="familiarEnsemble"),
   # Compute net benefit for models.
   
   # Suppress NOTES due to non-standard evaluation in data.table
-  n_true_positive <- n_false_positive <- probability <- NULL
+  n_true_positive <- n_false_positive <- probability <- net_benefit <- NULL
   
   # Determine maximum number of true and false positives.
   n_max_true_positive <- max(data$n_true_positive)
-
-    # Determine the number of samples.
+  
+  # Determine the number of samples.
   n <- nrow(data)
   
-  # Determine net benefit
+  # Determine net benefit.
   data[, ":="("net_benefit"=n_true_positive / n - n_false_positive / n * (probability / (1.0 - probability)))]
+  
+  # If the predicted probability occurs more than once, select the lowest net
+  # benefit.
+  data <- data[, list("net_benefit"=min(net_benefit)), by="probability"]
+
+  
+  # Check if the data has more than 1 row.
+  if(nrow(data) <= 1) return(NULL)
   
   # Compute net benefit at the test probabilities.
   net_benefit <- suppressWarnings(stats::approx(x=data$probability,
                                                 y=data$net_benefit,
                                                 xout=x,
                                                 yleft=n_max_true_positive / n,
-                                                yright=0.0,
-                                                method="constant")$y)
+                                                yright=-Inf,
+                                                method="linear")$y)
   
   return(net_benefit)
 }

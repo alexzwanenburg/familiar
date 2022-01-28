@@ -5,7 +5,12 @@ NULL
 
 #####.train#####
 setMethod(".train", signature(object="familiarModel", data="dataObject"),
-          function(object, data, get_additional_info=FALSE, is_pre_processed=FALSE) {
+          function(object, 
+                   data,
+                   get_additional_info=FALSE,
+                   is_pre_processed=FALSE,
+                   trim_model=TRUE,
+                   ...) {
             # Train method for model training
             
             # Check if the class of object is a subclass of familiarModel.
@@ -16,6 +21,9 @@ setMethod(".train", signature(object="familiarModel", data="dataObject"),
                                        data=data,
                                        is_pre_processed = is_pre_processed,
                                        stop_at="clustering")
+            
+            # Work only with data that has known outcomes when training.
+            data <- filter_missing_outcome(data=data)
             
             # Set the training flag
             can_train <- TRUE
@@ -29,10 +37,7 @@ setMethod(".train", signature(object="familiarModel", data="dataObject"),
             if(!has_feature_data(x=data)) can_train <- FALSE
             
             # Check if the hyperparameters are plausible.
-            required_hyperparameters <- names(get_default_hyperparameters(object))
-            if(length(required_hyperparameters) > 0){
-              if(setequal(object@hyperparameters, required_hyperparameters)) can_train <- FALSE
-            }
+            if(!has_optimised_hyperparameters(object=object)) can_train <- FALSE
             
             # Train a new model based on data.
             if(can_train) object <- ..train(object=object, data=data)
@@ -53,15 +58,18 @@ setMethod(".train", signature(object="familiarModel", data="dataObject"),
               # types require calibration info. Currently calibration
               # information is only retrieved for survival outcomes, in the form
               # of baseline survival curves.
-              object <- ..set_calibration_info(object=object, data=data)
+              if(can_train) object <- ..set_calibration_info(object=object, data=data)
               
               # Set stratification thresholds. This is currently only done for
               # survival outcomes.
               if(can_train) object <- ..set_risk_stratification_thresholds(object=object, data=data)
               
               # Add column data
-              object <- add_data_column_info(object=object)
+              object <- add_data_column_info(object=object,
+                                             data=data)
             }
+            
+            if(trim_model) object <- trim_model(object=object)
             
             # Add outcome distribution data
             object@outcome_info <- .compute_outcome_distribution_data(object=object@outcome_info, data=data)
@@ -79,8 +87,14 @@ setMethod(".train", signature(object="familiarModel", data="dataObject"),
 
 #####.train_novelty_detector#####
 setMethod(".train_novelty_detector", signature(object="familiarModel", data="dataObject"),
-          function(object, data, is_pre_processed=FALSE) {
-            # Train method for model training
+          function(object,
+                   data,
+                   detector,
+                   get_additional_info=FALSE,
+                   is_pre_processed=FALSE,
+                   trim_model=TRUE,
+                   ...) {
+            # Train method for novelty detectors.
             
             # Check if the class of object is a subclass of familiarModel.
             if(!is_subclass(class(object)[1], "familiarModel")) object <- promote_learner(object)
@@ -89,32 +103,33 @@ setMethod(".train_novelty_detector", signature(object="familiarModel", data="dat
             data <- process_input_data(object=object,
                                        data=data,
                                        is_pre_processed = is_pre_processed,
-                                       stop_at="clustering",
-                                       keep_novelty=TRUE)
+                                       stop_at="clustering")
             
-            # Check if there are any data entries. The familiar model cannot be
-            # trained otherwise
-            if(is_empty(x=data)) return(object)
+            # Create detector object.
+            fam_detector <- methods::new("familiarNoveltyDetector",
+                                         learner=detector,
+                                         feature_info=object@feature_info,
+                                         required_features=object@required_features,
+                                         model_features=object@novelty_features,
+                                         run_table=object@run_table,
+                                         project_id=object@project_id)
             
-            # Check the number of features in data; if it has no features, the
-            # familiar model can not be trained
-            if(!has_feature_data(x=data)) return(object)
+            # Promote to the correct type of detector.
+            fam_detector <- promote_detector(object=fam_detector)
             
-            # Replace any ordered variables by factors. We do this because
-            # ordered features can not be handled using isotree.
-            ordered_features <- colnames(data@data)[sapply(data@data, is.ordered)]
-            for(current_feature in ordered_features){
-              data@data[[current_feature]] <- factor(x=data@data[[current_feature]],
-                                                     levels=levels(data@data[[current_feature]]),
-                                                     ordered=FALSE)
+            # Optimise hyperparameters if they were not previously set.
+            if(!has_optimised_hyperparameters(object=fam_detector)){
+              fam_detector <- optimise_hyperparameters(object=fam_detector,
+                                                       data=data,
+                                                       ...)
             }
             
-            # Create a isolation forest.
-            detector <- isotree::isolation.forest(df=data@data[, mget(get_feature_columns(data))],
-                                                  nthreads=1L)
+            # Train the novelty detector.
+            fam_detector <- .train(object=fam_detector,
+                                   data=data)
             
             # Add the detector to the familiarModel object.
-            object@novelty_detector <- detector
+            object@novelty_detector <- fam_detector
             
             return(object)
           })
@@ -128,14 +143,32 @@ setMethod("show", signature(object="familiarModel"),
                          ") that was not successfully trained (v", object@familiar_version, ").\n"))
               
             } else {
-              cat(paste0("A ", object@learner, " model (class: ", class(object)[1],
-                         "; v", object@familiar_version, ").\n"))
+              # Describe the learner and the version of familiar.
+              message_str <- paste0("A ", object@learner, " model (class: ", class(object)[1],
+                                    "; v", object@familiar_version, ")")
               
-              cat(paste0("\n--------------- Model details ---------------"))
+              # Describe the package(s), if any
+              if(!is.null(object@package)){
+                message_str <- c(message_str,
+                                 paste0(" trained using "),
+                                 paste_s(mapply(..message_package_version, x=object@package, version=object@package_version)),
+                                 ifelse(length(object@package) > 1, " packages", " package"))
+              }
+              
+              # Complete message and write.
+              message_str <- paste0(c(message_str, ".\n"), collapse="")
+              cat(message_str)
+              
+              cat(paste0("\n--------------- Model details ---------------\n"))
               
               # Model details
-              show(object@model)
-              
+              if(object@is_trimmed){
+                cat(object@trimmed_function$show, sep="\n")
+                
+              } else {
+                show(object@model)
+              }
+
               cat(paste0("---------------------------------------------\n"))
               
               # Outcome details
@@ -171,7 +204,58 @@ setMethod("show", signature(object="familiarModel"),
                 
                 lapply(novelty_features, function(x, object) show(object@feature_info[[x]]), object=object)
               }
+              
+              # Check package version.
+              check_package_version(object)
             }
+          })
+
+
+
+#####require_package (model)#####
+setMethod("require_package", signature(x="familiarModel"),
+          function(x, purpose=NULL, message_type="error", ...){
+            
+            # Skip if no package is required.
+            if(is_empty(x@package)) return(invisible(TRUE))
+            
+            # Set standard purposes for common uses.
+            if(!is.null(purpose)){
+              if(purpose %in% c("train", "vimp", "predict", "show", "distribution")){
+                purpose <- switch(purpose,
+                                  "train"="to train a model",
+                                  "vimp"="to determine variable importance",
+                                  "predict"="to create model predictions",
+                                  "show"="to capture output",
+                                  "distribution"="to set the model distribution")
+              }
+            }
+            
+            return(invisible(.require_package(x=x@package, purpose=purpose, message_type=message_type)))
+          })
+
+
+
+#####set_package_version (model)#####
+setMethod("set_package_version", signature(object="familiarModel"),
+          function(object){
+            # Do not add package versions if there are no packages.
+            if(is_empty(object@package)) return(object)
+            
+            # Obtain package versions.
+            object@package_version <- sapply(object@package, function(x) (as.character(utils::packageVersion(x))))
+            
+            return(object)
+          })
+
+
+
+#####check_package_version (model)#####
+setMethod("check_package_version", signature(object="familiarModel"),
+          function(object){
+            .check_package_version(name=object@package,
+                                   version=object@package_version,
+                                   when="at model creation")
           })
 
 
@@ -325,21 +409,29 @@ setMethod("add_package_version", signature(object="familiarModel"),
 
 #####add_data_column_info (familiarModel)#####
 setMethod("add_data_column_info", signature(object="familiarModel"),
-          function(object, sample_id_column=NULL, batch_id_column=NULL, series_id_column=NULL){
+          function(object, data=NULL, sample_id_column=NULL, batch_id_column=NULL, series_id_column=NULL){
             
             # Don't determine new column information if this information is
             # already present.
             if(!is.null(object@data_column_info)) return(object)
             
-            if(is.null(sample_id_column) & is.null(batch_id_column) & is.null(series_id_column)){
-              # Load settings to find identifier columns
-              settings <- get_settings()
-              
-              # Read from settings. If not set, these will be NULL.
-              sample_id_column <- settings$data$sample_col
-              batch_id_column <- settings$data$batch_col
-              series_id_column <- settings$data$series_col
+            # Don't determine new column information if this information can be
+            # inherited from a dataObject.
+            if(is(data, "dataObject")){
+              if(!is_empty(data@data_column_info)){
+                object@data_column_info <- data@data_column_info
+                
+                return(object)
+              }
             }
+            
+            # Load settings to find identifier columns
+            settings <- get_settings()
+            
+            # Read from settings. If not set, these will be NULL.
+            if(is.null(sample_id_column)) sample_id_column <- settings$data$sample_col
+            if(is.null(batch_id_column)) batch_id_column <- settings$data$batch_col
+            if(is.null(series_id_column)) series_id_column <- settings$data$series_col
             
             # Replace any missing.
             if(is.null(sample_id_column)) sample_id_column <- NA_character_
@@ -400,7 +492,7 @@ setMethod("get_default_hyperparameters", signature(object="familiarModel"),
 
 #####..train (familiarModel, dataObject)#####
 setMethod("..train", signature(object="familiarModel", data="dataObject"),
-          function(object, data){
+          function(object, data, ...){
             
             # Set a NULL model
             object@model <- NULL
@@ -410,7 +502,7 @@ setMethod("..train", signature(object="familiarModel", data="dataObject"),
 
 #####..train (familiarModel, NULL)#####
 setMethod("..train", signature(object="familiarModel", data="NULL"),
-          function(object, data){
+          function(object, data, ...){
             
             # Set a NULL model
             object@model <- NULL
@@ -492,6 +584,35 @@ setMethod("..set_vimp_parameters", signature(object="familiarModel"),
 #####..vimp######
 setMethod("..vimp", signature(object="familiarModel"),
           function(object, ...) return(get_placeholder_vimp_table()))
+
+#####trim_model (familiarModel)-------------------------------------------------
+setMethod("trim_model", signature(object="familiarModel"),
+          function(object, ...){
+            
+            # Do not trim the model if there is nothing to trim.
+            if(!model_is_trained(object)) return(object)
+            
+            # Trim the model.
+            trimmed_object <- .trim_model(object=object)
+            
+            # Skip further processing if the model object was not trimmed.
+            if(!trimmed_object@is_trimmed) return(object)
+            
+            # Go over different functions.
+            trimmed_object <- .replace_broken_functions(object=object,
+                                                        trimmed_object=trimmed_object)
+            
+            return(trimmed_object)
+          })
+
+
+#####.trim_model (familiarModel)------------------------------------------------
+setMethod(".trim_model", signature(object="familiarModel"),
+          function(object, ...){
+            # Default method for models that lack a more specific method.
+            return(object)
+          })
+
 
 ####has_calibration_info####
 setMethod("has_calibration_info", signature(object="familiarModel"),

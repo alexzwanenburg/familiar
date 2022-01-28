@@ -1,18 +1,22 @@
-# Save method for model saving. The save function appears in base and is always explicity imported.
+# Save method for model saving. The save function appears in base and is always
+# explicity imported.
 setGeneric("save")
 
-# Predict method. This is a standard method converted to S4.
 setGeneric(".predict", function(object, data, ...) standardGeneric(".predict"))
 
 setGeneric(".predict_novelty", function(object, data, ...) standardGeneric(".predict_novelty"))
 
 setGeneric(".predict_risk_stratification", function(object, data, ...) standardGeneric(".predict_risk_stratification"))
 
-setGeneric("train", function(data, ...) standardGeneric("train"))
-
 setGeneric(".train", function(object, data, ...) standardGeneric(".train"))
 
 setGeneric(".train_novelty_detector", function(object, data, ...) standardGeneric(".train_novelty_detector"))
+
+setGeneric("require_package", function(x, ...) standardGeneric("require_package"))
+
+setGeneric("set_package_version", function(object, ...) standardGeneric("set_package_version"))
+
+setGeneric("check_package_version", function(object, ...) standardGeneric("check_package_version"))
 
 setGeneric("get_signature", function(object, ...) standardGeneric("get_signature"))
 
@@ -60,6 +64,8 @@ setGeneric("normalise_features", function(data, ...) standardGeneric("normalise_
 
 setGeneric("batch_normalise_features", function(data, ...) standardGeneric("batch_normalise_features"))
 
+setGeneric("remove_missing_outcomes", function(data, ...) standardGeneric("remove_missing_outcomes"))
+
 setGeneric("impute_features", function(data, ...) standardGeneric("impute_features"))
 
 setGeneric("cluster_features", function(data, ...) standardGeneric("cluster_features"))
@@ -69,6 +75,8 @@ setGeneric("aggregate_data", function(data, ...) standardGeneric("aggregate_data
 setGeneric("select_features", function(data, ...) standardGeneric("select_features"))
 
 setGeneric("preprocess_data", function(data, object, ...) standardGeneric("preprocess_data"))
+
+setGeneric("postprocess_data", function(data, object, ...) standardGeneric("postprocess_data"))
 
 setGeneric("update_with_replacement", function(data, ...) standardGeneric("update_with_replacement"))
 
@@ -183,9 +191,13 @@ setGeneric("get_placeholder_prediction_table", function(object, data, ...) stand
 
 setGeneric("has_bad_training_data", function(object, data, ...) standardGeneric("has_bad_training_data"))
 
+setGeneric("has_optimised_hyperparameters", function(object, ...) standardGeneric("has_optimised_hyperparameters"))
+
 setGeneric("fam_sample", function(x, ...) standardGeneric("fam_sample"))
 
 setGeneric("get_bootstrap_sample", function(data, ...) standardGeneric("get_bootstrap_sample"))
+
+setGeneric("get_subsample", function(data, ...) standardGeneric("get_subsample"))
 
 
 ##### familiarModel learner methods #####
@@ -216,6 +228,15 @@ setGeneric("..get_distribution_family", function(object, ...) standardGeneric(".
 setGeneric("..update_outcome", function(object, data, ...) standardGeneric("..update_outcome"))
 
 setGeneric("optimise_hyperparameters", function(object, data, ...) standardGeneric("optimise_hyperparameters"))
+
+setGeneric("trim_model", function(object, ...) standardGeneric("trim_model"))
+
+setGeneric(".trim_model", function(object, ...) standardGeneric(".trim_model"))
+
+
+##### familiarNoveltyDetector methods #####
+setGeneric("promote_detector", function(object, ...) standardGeneric("promote_detector"))
+
 
 #####familiarVimpMethod variable importance methods #####
 setGeneric(".vimp", function(object, ...) standardGeneric(".vimp"))

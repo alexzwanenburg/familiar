@@ -1,4 +1,9 @@
-run_model_development <- function(cl, project_list, settings, file_paths, message_indent=0L){
+run_model_development <- function(cl,
+                                  project_list,
+                                  settings,
+                                  file_paths,
+                                  message_indent=0L,
+                                  verbose=TRUE){
   # Model building
 
   # Check which data object is required for performing model building
@@ -9,7 +14,9 @@ run_model_development <- function(cl, project_list, settings, file_paths, messag
   check_pre_processing(cl=cl,
                        data_id=mb_data_id,
                        file_paths=file_paths,
-                       project_id=project_list$project_id)
+                       project_id=project_list$project_id,
+                       message_indent=message_indent,
+                       verbose=verbose)
 
   # Get runs
   run_list <- .get_run_list(iteration_list=project_list$iter_list,
@@ -43,7 +50,8 @@ run_model_development <- function(cl, project_list, settings, file_paths, messag
     logger.message(paste0("\nModel building: starting model building using \"",
                           iter_methods$learner, "\" learner, based on \"",
                           iter_methods$fs_method, "\" feature selection."),
-                   indent=message_indent)
+                   indent=message_indent,
+                   verbose=verbose)
     
     # Optimise hyperparameters of models used for model building
     hpo_list <- run_hyperparameter_optimisation(cl=cl,
@@ -53,14 +61,15 @@ run_model_development <- function(cl, project_list, settings, file_paths, messag
                                                 file_paths=file_paths,
                                                 vimp_method=iter_methods$fs_method,
                                                 learner=iter_methods$learner,
-                                                message_indent=message_indent + 1L)
+                                                message_indent=message_indent + 1L,
+                                                verbose=verbose)
     
     # Build models
     fam_lapply_lb(cl=cl_mb,
                   assign="all",
                   X=iter_run_list,
                   FUN=build_model,
-                  progress_bar=TRUE,
+                  progress_bar=verbose,
                   hpo_list=hpo_list)
 
     logger.message(paste0("Model building: model building using \"",
@@ -75,9 +84,9 @@ build_model <- function(run, hpo_list){
   # Function for model building and data extraction
   
   # Load from the familiar or global environment
-  proj_list         <- get_project_list()
-  settings          <- get_settings()
-  file_paths        <- get_file_paths()
+  project_list <- get_project_list()
+  settings <- get_settings()
+  file_paths <- get_file_paths()
 
   # Data will be loaded at run time in .train
   data <- methods::new("dataObject",
@@ -93,12 +102,16 @@ build_model <- function(run, hpo_list){
   ############### Initialisation ##################################################################
 
   # Get hyper-parameters
-  param_list        <- .find_hyperparameters_for_run(run=run,
-                                                     hpo_list=hpo_list,
-                                                     as_list=TRUE)
-
+  param_list <- .find_hyperparameters_for_run(run=run,
+                                              hpo_list=hpo_list,
+                                              as_list=TRUE)
+  
   # Get feature ranks
-  dt_ranks          <- rank.get_feature_ranks(run=run, fs_method=run$fs_method, settings=settings, proj_list=proj_list, file_paths=file_paths)
+  rank_table <- rank.get_feature_ranks(run=run,
+                                       fs_method=run$fs_method,
+                                       settings=settings,
+                                       proj_list=project_list,
+                                       file_paths=file_paths)
 
 
   ############### Data preparation ################################################################
@@ -116,12 +129,12 @@ build_model <- function(run, hpo_list){
                             hyperparameter_data = NULL,
                             feature_info = feature_info_list,
                             outcome_info = .get_outcome_info(),
-                            project_id = proj_list$project_id,
+                            project_id = project_list$project_id,
                             settings = settings$eval)
   
   # Select features
   fam_model <- set_signature(object=fam_model,
-                             rank_table=dt_ranks,
+                             rank_table=rank_table,
                              minimise_footprint=TRUE)
   
   ############### Model building ################################################################
@@ -136,7 +149,9 @@ build_model <- function(run, hpo_list){
   
   # Add novelty detector
   fam_model <- .train_novelty_detector(object=fam_model,
-                                       data=data)
+                                       data=data,
+                                       detector=settings$mb$novelty_detector,
+                                       user_list=settings$mb$detector_parameters[[settings$mb$novelty_detector]])
   
   # Add model name
   fam_model <- set_object_name(fam_model)
@@ -144,6 +159,7 @@ build_model <- function(run, hpo_list){
   # Save model
   save(list=fam_model, file=file_paths$mb_dir)
 }
+
 
 
 add_model_data_to_run_list <- function(methods, run_list, proj_list, settings, file_paths, filter_existing){

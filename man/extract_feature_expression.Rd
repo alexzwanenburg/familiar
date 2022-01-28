@@ -15,7 +15,7 @@ extract_feature_expression(
   sample_cluster_method = waiver(),
   sample_linkage_method = waiver(),
   sample_similarity_metric = waiver(),
-  eval_times = waiver(),
+  evaluation_times = waiver(),
   message_indent = 0L,
   verbose = FALSE,
   ...
@@ -26,7 +26,7 @@ extract_feature_expression(
 \code{familiarModel} objects.}
 
 \item{data}{A \code{dataObject} object, \code{data.table} or \code{data.frame} that
-constitutes the data that are used to compute}
+constitutes the data that are assessed.}
 
 \item{feature_similarity}{Table containing pairwise distance between
 sample. This is used to determine cluster information, and indicate which
@@ -94,7 +94,7 @@ the metric name. This reduces the effect of outliers somewhat.
 If not provided explicitly, this parameter is read from settings used at
 creation of the underlying \code{familiarModel} objects.}
 
-\item{eval_times}{One or more time points that are used for in analysis of
+\item{evaluation_times}{One or more time points that are used for in analysis of
 survival problems when data has to be assessed at a set time, e.g.
 calibration. If not provided explicitly, this parameter is read from
 settings used at creation of the underlying \code{familiarModel} objects. Only

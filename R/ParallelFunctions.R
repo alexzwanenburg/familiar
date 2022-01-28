@@ -518,10 +518,20 @@ fam_mapply_lb <- function(cl=NULL,
     if(length(cl) == 1) cl <- NULL
   }
   
+  if((chopchop | measure_time) & inherits(cl, "cluster")){
+    if(!require_package(x="microbenchmark",
+                        purpose="to make use of optimised parallel processing",
+                        as_error=FALSE)){
+      
+      # If package is not installed, do not do anything fancy.
+      chopchop <- measure_time <- FALSE
+    }
+  }
+  
   # Check whether optimisation of the apply distribution is required and useful.
   require_optimisation <- chopchop & inherits(cl, "cluster") & (is.null(overhead_time) | is.null(process_time))
   require_process_stacking <- chopchop & inherits(cl, "cluster") & length(process_time) == n_x & !is.null(overhead_time)
-  
+
   # Set initial values.
   y_initial <- NULL
   skip_element <- NULL

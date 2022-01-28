@@ -46,6 +46,47 @@ familiar:::test_all_learners_train_predict_vimp(learners=familiar:::.get_availab
                                                                                          "sample_size" = 1.0,
                                                                                          "gamma" = -6.0)))
 
+familiar:::test_all_learners_parallel_train_predict_vimp(learners=familiar:::.get_available_xgboost_tree_learners(show_general=FALSE),
+                                                         hyperparameter_list=list("count"=list("n_boost" = 2,
+                                                                                               "learning_rate" = -1,
+                                                                                               "lambda" = 0.0,
+                                                                                               "alpha" =-6.0,
+                                                                                               "min_child_weight" = 1.04,
+                                                                                               "tree_depth" = 3,
+                                                                                               "sample_size" = 1.0,
+                                                                                               "gamma" = -6.0),
+                                                                                  "continuous"=list("n_boost" = 2,
+                                                                                                    "learning_rate" = -1,
+                                                                                                    "lambda" = 0.0,
+                                                                                                    "alpha" =-6.0,
+                                                                                                    "min_child_weight" = 1.04,
+                                                                                                    "tree_depth" = 3,
+                                                                                                    "sample_size" = 1.0,
+                                                                                                    "gamma" = -6.0),
+                                                                                  "binomial"=list("n_boost" = 2,
+                                                                                                  "learning_rate" = -1,
+                                                                                                  "lambda" = 0.0,
+                                                                                                  "alpha" =-6.0,
+                                                                                                  "min_child_weight" = 1.04,
+                                                                                                  "tree_depth" = 3,
+                                                                                                  "sample_size" = 1.0,
+                                                                                                  "gamma" = -6.0),
+                                                                                  "multinomial"=list("n_boost" = 2,
+                                                                                                     "learning_rate" = -1,
+                                                                                                     "lambda" = 0.0,
+                                                                                                     "alpha" =-6.0,
+                                                                                                     "min_child_weight" = 1.04,
+                                                                                                     "tree_depth" = 3,
+                                                                                                     "sample_size" = 1.0,
+                                                                                                     "gamma" = -6.0),
+                                                                                  "survival"=list("n_boost" = 2,
+                                                                                                  "learning_rate" = -1,
+                                                                                                  "lambda" = 0.0,
+                                                                                                  "alpha" =-6.0,
+                                                                                                  "min_child_weight" = 1.04,
+                                                                                                  "tree_depth" = 3,
+                                                                                                  "sample_size" = 1.0,
+                                                                                                  "gamma" = -6.0)))
 
 #####Count outcome tests-------------------------------------------------------------
 
@@ -54,34 +95,34 @@ good_data <- familiar:::test.create_good_data_set("count")
 wide_data <- familiar:::test.create_wide_data_set("count")
 
 # Train the model using the good dataset.
-good_model <- familiar:::train(data=good_data,
-                               cluster_method="none",
-                               imputation_method="simple",
-                               hyperparameter_list=list("sign_size"=familiar:::get_n_features(good_data),
-                                                        "n_boost" = 2,
-                                                        "learning_rate" = -1,
-                                                        "lambda" = 0.0,
-                                                        "alpha" =-6.0,
-                                                        "min_child_weight" = 1.04,
-                                                        "tree_depth" = 3,
-                                                        "sample_size" = 1.0,
-                                                        "gamma" = -6.0),
-                               learner="xgboost_tree_poisson")
+good_model <- familiar:::test_train(data=good_data,
+                                    cluster_method="none",
+                                    imputation_method="simple",
+                                    hyperparameter_list=list("sign_size"=familiar:::get_n_features(good_data),
+                                                             "n_boost" = 2,
+                                                             "learning_rate" = -1,
+                                                             "lambda" = 0.0,
+                                                             "alpha" =-6.0,
+                                                             "min_child_weight" = 1.04,
+                                                             "tree_depth" = 3,
+                                                             "sample_size" = 1.0,
+                                                             "gamma" = -6.0),
+                                    learner="xgboost_tree_gaussian")
 
 # Train the model using wide data.
-wide_model <- familiar:::train(data=wide_data,
-                               cluster_method="none",
-                               imputation_method="simple",
-                               hyperparameter_list=list("sign_size"=familiar:::get_n_features(wide_data),
-                                                        "n_boost" = 2,
-                                                        "learning_rate" = -1,
-                                                        "lambda" = 0.0,
-                                                        "alpha" =-6.0,
-                                                        "min_child_weight" = 1.04,
-                                                        "tree_depth" = 3,
-                                                        "sample_size" = 1.0,
-                                                        "gamma" = -6.0),
-                               learner="xgboost_tree_poisson")
+wide_model <- familiar:::test_train(data=wide_data,
+                                    cluster_method="none",
+                                    imputation_method="simple",
+                                    hyperparameter_list=list("sign_size"=familiar:::get_n_features(wide_data),
+                                                             "n_boost" = 2,
+                                                             "learning_rate" = -1,
+                                                             "lambda" = 0.0,
+                                                             "alpha" =-6.0,
+                                                             "min_child_weight" = 1.04,
+                                                             "tree_depth" = 3,
+                                                             "sample_size" = 1.0,
+                                                             "gamma" = -6.0),
+                                    learner="xgboost_tree_gaussian")
 
 
 testthat::test_that("Extreme gradient boosting tree model trained correctly", {
@@ -128,34 +169,34 @@ good_data <- familiar:::test.create_good_data_set("continuous")
 wide_data <- familiar:::test.create_wide_data_set("continuous")
 
 # Train the model using the good dataset.
-good_model <- familiar:::train(data=good_data,
-                               cluster_method="none",
-                               imputation_method="simple",
-                               hyperparameter_list=list("sign_size"=familiar:::get_n_features(good_data),
-                                                        "n_boost" = 2,
-                                                        "learning_rate" = -1,
-                                                        "lambda" = 0.0,
-                                                        "alpha" =-6.0,
-                                                        "min_child_weight" = 1.04,
-                                                        "tree_depth" = 3,
-                                                        "sample_size" = 1.0,
-                                                        "gamma" = -6.0),
-                               learner="xgboost_tree_gaussian")
+good_model <- familiar:::test_train(data=good_data,
+                                    cluster_method="none",
+                                    imputation_method="simple",
+                                    hyperparameter_list=list("sign_size"=familiar:::get_n_features(good_data),
+                                                             "n_boost" = 2,
+                                                             "learning_rate" = -1,
+                                                             "lambda" = 0.0,
+                                                             "alpha" =-6.0,
+                                                             "min_child_weight" = 1.04,
+                                                             "tree_depth" = 3,
+                                                             "sample_size" = 1.0,
+                                                             "gamma" = -6.0),
+                                    learner="xgboost_tree_gaussian")
 
 # Train the model using wide data.
-wide_model <- familiar:::train(data=wide_data,
-                               cluster_method="none",
-                               imputation_method="simple",
-                               hyperparameter_list=list("sign_size"=familiar:::get_n_features(wide_data),
-                                                        "n_boost" = 2,
-                                                        "learning_rate" = -1,
-                                                        "lambda" = 0.0,
-                                                        "alpha" =-6.0,
-                                                        "min_child_weight" = 1.04,
-                                                        "tree_depth" = 3,
-                                                        "sample_size" = 1.0,
-                                                        "gamma" = -6.0),
-                               learner="xgboost_tree_gaussian")
+wide_model <- familiar:::test_train(data=wide_data,
+                                    cluster_method="none",
+                                    imputation_method="simple",
+                                    hyperparameter_list=list("sign_size"=familiar:::get_n_features(wide_data),
+                                                             "n_boost" = 2,
+                                                             "learning_rate" = -1,
+                                                             "lambda" = 0.0,
+                                                             "alpha" =-6.0,
+                                                             "min_child_weight" = 1.04,
+                                                             "tree_depth" = 3,
+                                                             "sample_size" = 1.0,
+                                                             "gamma" = -6.0),
+                                    learner="xgboost_tree_gaussian")
 
 
 testthat::test_that("Extreme gradient boosting tree model trained correctly", {
@@ -201,34 +242,34 @@ good_data <- familiar:::test.create_good_data_set("binomial")
 wide_data <- familiar:::test.create_wide_data_set("binomial")
 
 # Train the model using the good dataset.
-good_model <- familiar:::train(data=good_data,
-                               cluster_method="none",
-                               imputation_method="simple",
-                               hyperparameter_list=list("sign_size"=familiar:::get_n_features(good_data),
-                                                        "n_boost" = 2,
-                                                        "learning_rate" = -1,
-                                                        "lambda" = 0.0,
-                                                        "alpha" =-6.0,
-                                                        "min_child_weight" = 1.04,
-                                                        "tree_depth" = 3,
-                                                        "sample_size" = 1.0,
-                                                        "gamma" = -6.0),
-                               learner="xgboost_tree_logistic")
+good_model <- familiar:::test_train(data=good_data,
+                                    cluster_method="none",
+                                    imputation_method="simple",
+                                    hyperparameter_list=list("sign_size"=familiar:::get_n_features(good_data),
+                                                             "n_boost" = 2,
+                                                             "learning_rate" = -1,
+                                                             "lambda" = 0.0,
+                                                             "alpha" =-6.0,
+                                                             "min_child_weight" = 1.04,
+                                                             "tree_depth" = 3,
+                                                             "sample_size" = 1.0,
+                                                             "gamma" = -6.0),
+                                    learner="xgboost_tree_logistic")
 
 # Train the model using wide data.
-wide_model <- familiar:::train(data=wide_data,
-                               cluster_method="none",
-                               imputation_method="simple",
-                               hyperparameter_list=list("sign_size"=familiar:::get_n_features(wide_data),
-                                                        "n_boost" = 2,
-                                                        "learning_rate" = -1,
-                                                        "lambda" = 0.0,
-                                                        "alpha" =-6.0,
-                                                        "min_child_weight" = 1.04,
-                                                        "tree_depth" = 3,
-                                                        "sample_size" = 1.0,
-                                                        "gamma" = -6.0),
-                               learner="xgboost_tree_logistic")
+wide_model <- familiar:::test_train(data=wide_data,
+                                    cluster_method="none",
+                                    imputation_method="simple",
+                                    hyperparameter_list=list("sign_size"=familiar:::get_n_features(wide_data),
+                                                             "n_boost" = 2,
+                                                             "learning_rate" = -1,
+                                                             "lambda" = 0.0,
+                                                             "alpha" =-6.0,
+                                                             "min_child_weight" = 1.04,
+                                                             "tree_depth" = 3,
+                                                             "sample_size" = 1.0,
+                                                             "gamma" = -6.0),
+                                    learner="xgboost_tree_logistic")
 
 testthat::test_that("Extreme gradient boosting tree model trained correctly", {
   # Model trained
@@ -274,34 +315,34 @@ good_data <- familiar:::test.create_good_data_set("multinomial")
 wide_data <- familiar:::test.create_wide_data_set("multinomial")
 
 # Train the model using the good dataset.
-good_model <- familiar:::train(data=good_data,
-                               cluster_method="none",
-                               imputation_method="simple",
-                               hyperparameter_list=list("sign_size"=familiar:::get_n_features(good_data),
-                                                        "n_boost" = 2,
-                                                        "learning_rate" = -1,
-                                                        "lambda" = 0.0,
-                                                        "alpha" =-6.0,
-                                                        "min_child_weight" = 1.04,
-                                                        "tree_depth" = 3,
-                                                        "sample_size" = 1.0,
-                                                        "gamma" = -6.0),
-                               learner="xgboost_tree_logistic")
+good_model <- familiar:::test_train(data=good_data,
+                                    cluster_method="none",
+                                    imputation_method="simple",
+                                    hyperparameter_list=list("sign_size"=familiar:::get_n_features(good_data),
+                                                             "n_boost" = 2,
+                                                             "learning_rate" = -1,
+                                                             "lambda" = 0.0,
+                                                             "alpha" =-6.0,
+                                                             "min_child_weight" = 1.04,
+                                                             "tree_depth" = 3,
+                                                             "sample_size" = 1.0,
+                                                             "gamma" = -6.0),
+                                    learner="xgboost_tree_logistic")
 
 # Train the model using wide data.
-wide_model <- familiar:::train(data=wide_data,
-                               cluster_method="none",
-                               imputation_method="simple",
-                               hyperparameter_list=list("sign_size"=familiar:::get_n_features(wide_data),
-                                                        "n_boost" = 2,
-                                                        "learning_rate" = -1,
-                                                        "lambda" = 0.0,
-                                                        "alpha" =-6.0,
-                                                        "min_child_weight" = 1.04,
-                                                        "tree_depth" = 3,
-                                                        "sample_size" = 1.0,
-                                                        "gamma" = -6.0),
-                               learner="xgboost_tree_logistic")
+wide_model <- familiar:::test_train(data=wide_data,
+                                    cluster_method="none",
+                                    imputation_method="simple",
+                                    hyperparameter_list=list("sign_size"=familiar:::get_n_features(wide_data),
+                                                             "n_boost" = 2,
+                                                             "learning_rate" = -1,
+                                                             "lambda" = 0.0,
+                                                             "alpha" =-6.0,
+                                                             "min_child_weight" = 1.04,
+                                                             "tree_depth" = 3,
+                                                             "sample_size" = 1.0,
+                                                             "gamma" = -6.0),
+                                    learner="xgboost_tree_logistic")
 
 testthat::test_that("Extreme gradient boosting tree model trained correctly", {
   # Model trained
@@ -347,36 +388,36 @@ good_data <- familiar:::test.create_good_data_set("survival")
 wide_data <- familiar:::test.create_wide_data_set("survival")
 
 # Train the model using the good dataset.
-good_model <- familiar:::train(data=good_data,
-                               cluster_method="none",
-                               imputation_method="simple",
-                               hyperparameter_list=list("sign_size"=familiar:::get_n_features(good_data),
-                                                        "n_boost" = 2,
-                                                        "learning_rate" = -1,
-                                                        "lambda" = 0.0,
-                                                        "alpha" =-6.0,
-                                                        "min_child_weight" = 1.04,
-                                                        "tree_depth" = 3,
-                                                        "sample_size" = 1.0,
-                                                        "gamma" = -6.0),
-                               time_max=1832,
-                               learner="xgboost_tree_cox")
+good_model <- familiar:::test_train(data=good_data,
+                                    cluster_method="none",
+                                    imputation_method="simple",
+                                    hyperparameter_list=list("sign_size"=familiar:::get_n_features(good_data),
+                                                             "n_boost" = 2,
+                                                             "learning_rate" = -1,
+                                                             "lambda" = 0.0,
+                                                             "alpha" =-6.0,
+                                                             "min_child_weight" = 1.04,
+                                                             "tree_depth" = 3,
+                                                             "sample_size" = 1.0,
+                                                             "gamma" = -6.0),
+                                    time_max=1832,
+                                    learner="xgboost_tree_cox")
 
 # Train the model using wide data.
-wide_model <- familiar:::train(data=wide_data,
-                               cluster_method="none",
-                               imputation_method="simple",
-                               hyperparameter_list=list("sign_size"=familiar:::get_n_features(wide_data),
-                                                        "n_boost" = 2,
-                                                        "learning_rate" = -1,
-                                                        "lambda" = 0.0,
-                                                        "alpha" =-6.0,
-                                                        "min_child_weight" = 1.04,
-                                                        "tree_depth" = 3,
-                                                        "sample_size" = 1.0,
-                                                        "gamma" = -6.0),
-                               time_max=1832,
-                               learner="xgboost_tree_cox")
+wide_model <- familiar:::test_train(data=wide_data,
+                                    cluster_method="none",
+                                    imputation_method="simple",
+                                    hyperparameter_list=list("sign_size"=familiar:::get_n_features(wide_data),
+                                                             "n_boost" = 2,
+                                                             "learning_rate" = -1,
+                                                             "lambda" = 0.0,
+                                                             "alpha" =-6.0,
+                                                             "min_child_weight" = 1.04,
+                                                             "tree_depth" = 3,
+                                                             "sample_size" = 1.0,
+                                                             "gamma" = -6.0),
+                                    time_max=1832,
+                                    learner="xgboost_tree_cox")
 
 
 testthat::test_that("Extreme gradient boosting tree model trained correctly", {

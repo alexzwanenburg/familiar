@@ -29,10 +29,9 @@ setMethod("extract_hyperparameters", signature(object="familiarEnsemble"),
             # Extracts hyper-parameters from each model and collects them.
             
             # Message extraction start
-            if(verbose){
-              logger.message(paste0("Extracting hyperparameters from the models in the ensemble."),
-                             indent=message_indent)
-            }
+            logger.message(paste0("Extracting hyperparameters from the models in the ensemble."),
+                           indent=message_indent,
+                           verbose=verbose)
             
             # Test if models are properly loaded
             if(!is_model_loaded(object=object)) ..error_ensemble_models_not_loaded()
@@ -215,6 +214,7 @@ setMethod(".export", signature(x="familiarDataElementHyperparameters"),
 #'  familiarCollection.
 #'
 #'@inheritParams export_all
+#'@inheritParams export_univariate_analysis_data
 #'
 #'@inheritDotParams as_familiar_collection
 #'
@@ -240,13 +240,21 @@ setMethod(".export", signature(x="familiarDataElementHyperparameters"),
 #'@md
 #'@rdname export_hyperparameters-methods
 setGeneric("export_hyperparameters",
-           function(object, dir_path=NULL, aggregate_results=TRUE, ...) standardGeneric("export_hyperparameters"))
+           function(object,
+                    dir_path=NULL,
+                    aggregate_results=TRUE,
+                    export_collection=FALSE,
+                    ...) standardGeneric("export_hyperparameters"))
 
 #####export_hyperparameters (collection)#####
 
 #'@rdname export_hyperparameters-methods
 setMethod("export_hyperparameters", signature(object="familiarCollection"),
-          function(object, dir_path=NULL, aggregate_results=TRUE, ...){
+          function(object,
+                   dir_path=NULL,
+                   aggregate_results=TRUE,
+                   export_collection=FALSE,
+                   ...){
             
             if(aggregate_results){
               subtype <- "summary"
@@ -260,14 +268,19 @@ setMethod("export_hyperparameters", signature(object="familiarCollection"),
                            dir_path=dir_path,
                            aggregate_results=aggregate_results,
                            type="hyperparameter",
-                           subtype=subtype))
+                           subtype=subtype,
+                           export_collection=export_collection))
           })
 
 #####export_hyperparameters (generic)#####
 
 #'@rdname export_hyperparameters-methods
 setMethod("export_hyperparameters", signature(object="ANY"),
-          function(object, dir_path=NULL, aggregate_results=TRUE, ...){
+          function(object,
+                   dir_path=NULL,
+                   aggregate_results=TRUE,
+                   export_collection=FALSE,
+                   ...){
             
             # Attempt conversion to familiarCollection object.
             object <- do.call(as_familiar_collection,
@@ -278,6 +291,7 @@ setMethod("export_hyperparameters", signature(object="ANY"),
             return(do.call(export_hyperparameters,
                            args=c(list("object"=object,
                                        "dir_path"=dir_path,
-                                       "aggregate_results"=aggregate_results),
+                                       "aggregate_results"=aggregate_results,
+                                       "export_collection"=export_collection),
                                   list(...))))
           })

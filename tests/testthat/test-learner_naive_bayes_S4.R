@@ -9,7 +9,14 @@ familiar:::test_hyperparameter_optimisation(learners=familiar:::.get_available_n
                                             parallel=FALSE)
 
 familiar:::test_all_learners_train_predict_vimp(learners=familiar:::.get_available_naive_bayes_learners(show_general=FALSE),
+                                                hyperparameter_list=list("binomial"=list("laplace"=0.0),
+                                                                         "multinomial"=list("laplace"=0.0)),
                                                 has_vimp=FALSE)
+
+familiar:::test_all_learners_parallel_train_predict_vimp(learners=familiar:::.get_available_naive_bayes_learners(show_general=FALSE),
+                                                         hyperparameter_list=list("binomial"=list("laplace"=0.0),
+                                                                                  "multinomial"=list("laplace"=0.0)),
+                                                         has_vimp=FALSE)
 
 #####Binomial tests-------------------------------------------------------------
 
@@ -18,18 +25,20 @@ good_data <- familiar:::test.create_good_data_set("binomial")
 wide_data <- familiar:::test.create_wide_data_set("binomial")
 
 # Train the model using the good dataset.
-good_model <- familiar:::train(data=good_data,
-                               cluster_method="none",
-                               imputation_method="simple",
-                               hyperparameter_list=list("sign_size"=familiar:::get_n_features(good_data)),
-                               learner="naive_bayes")
+good_model <- familiar:::test_train(data=good_data,
+                                    cluster_method="none",
+                                    imputation_method="simple",
+                                    hyperparameter_list=list("sign_size"=familiar:::get_n_features(good_data),
+                                                             "laplace"=0.0),
+                                    learner="naive_bayes")
 
 # Train the model using wide data.
-wide_model <- familiar:::train(data=wide_data,
-                               cluster_method="none",
-                               imputation_method="simple",
-                               hyperparameter_list=list("sign_size"=familiar:::get_n_features(wide_data)),
-                               learner="naive_bayes")
+wide_model <- familiar:::test_train(data=wide_data,
+                                    cluster_method="none",
+                                    imputation_method="simple",
+                                    hyperparameter_list=list("sign_size"=familiar:::get_n_features(wide_data),
+                                                             "laplace"=0.0),
+                                    learner="naive_bayes")
 
 testthat::test_that("Naive Bayes model trained correctly", {
   # Model trained
@@ -47,16 +56,16 @@ testthat::test_that("Naive Bayes model has no variable importance", {
 })
 
 
-testthat::test_that("Naive Bayes model can not train on wide data", {
+testthat::test_that("Naive Bayes model can train on wide data", {
   
   # Model trained
-  testthat::expect_equal(familiar:::model_is_trained(wide_model), FALSE)
+  testthat::expect_equal(familiar:::model_is_trained(wide_model), TRUE)
   
   # Variable importance table is absent.
   testthat::expect_equal(familiar:::is_empty(familiar:::..vimp(wide_model)), TRUE)
   
   # Valid predictions.
-  testthat::expect_equal(familiar:::any_predictions_valid(familiar:::.predict(wide_model, wide_data), outcome_type=wide_data@outcome_type), FALSE)
+  testthat::expect_equal(familiar:::any_predictions_valid(familiar:::.predict(wide_model, wide_data), outcome_type=wide_data@outcome_type), TRUE)
 })
 
 
@@ -67,18 +76,20 @@ good_data <- familiar:::test.create_good_data_set("multinomial")
 wide_data <- familiar:::test.create_wide_data_set("multinomial")
 
 # Train the model using the good dataset.
-good_model <- suppressWarnings(familiar:::train(data=good_data,
-                                                cluster_method="none",
-                                                imputation_method="simple",
-                                                hyperparameter_list=list("sign_size"=familiar:::get_n_features(good_data)),
-                                                learner="naive_bayes"))
+good_model <- suppressWarnings(familiar:::test_train(data=good_data,
+                                                     cluster_method="none",
+                                                     imputation_method="simple",
+                                                     hyperparameter_list=list("sign_size"=familiar:::get_n_features(good_data),
+                                                                              "laplace"=0.0),
+                                                     learner="naive_bayes"))
 
 # Train the model using wide data.
-wide_model <- familiar:::train(data=wide_data,
-                               cluster_method="none",
-                               imputation_method="simple",
-                               hyperparameter_list=list("sign_size"=familiar:::get_n_features(wide_data)),
-                               learner="naive_bayes")
+wide_model <- familiar:::test_train(data=wide_data,
+                                    cluster_method="none",
+                                    imputation_method="simple",
+                                    hyperparameter_list=list("sign_size"=familiar:::get_n_features(wide_data),
+                                                             "laplace"=0.0),
+                                    learner="naive_bayes")
 
 testthat::test_that("Naive Bayes model trained correctly", {
   # Model trained
@@ -96,14 +107,14 @@ testthat::test_that("Naive Bayes model has no variable importance", {
 })
 
 
-testthat::test_that("Naive Bayes model can not train on wide data", {
+testthat::test_that("Naive Bayes model can train on wide data", {
   
   # Model cannot be trained.
-  testthat::expect_equal(familiar:::model_is_trained(wide_model), FALSE)
+  testthat::expect_equal(familiar:::model_is_trained(wide_model), TRUE)
   
   # Variable importance table is empty.
   testthat::expect_equal(familiar:::is_empty(familiar:::..vimp(wide_model)), TRUE)
   
   # Valid predictions cannot be made.
-  testthat::expect_equal(familiar:::any_predictions_valid(familiar:::.predict(wide_model, wide_data), outcome_type=wide_data@outcome_type), FALSE)
+  testthat::expect_equal(familiar:::any_predictions_valid(familiar:::.predict(wide_model, wide_data), outcome_type=wide_data@outcome_type), TRUE)
 })

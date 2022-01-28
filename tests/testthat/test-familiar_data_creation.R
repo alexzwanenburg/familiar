@@ -27,12 +27,12 @@ familiar_data_creation_unit_test <- function(outcome_type){
   data <- familiar:::test.create_good_data_set(outcome_type)
   
   # Train a simple linear GLM using the good dataset.
-  fam_model <- suppressWarnings(familiar:::train(data=data,
-                                                 cluster_method="none",
-                                                 imputation_method="simple",
-                                                 hyperparameter_list=list("sign_size"=familiar:::get_n_features(data)),
-                                                 learner=learner,
-                                                 time_max=1832))
+  fam_model <- suppressWarnings(familiar:::test_train(data=data,
+                                                      cluster_method="none",
+                                                      imputation_method="simple",
+                                                      hyperparameter_list=list("sign_size"=familiar:::get_n_features(data)),
+                                                      learner=learner,
+                                                      time_max=1832))
   
   testthat::test_that(paste0("1. familiarData for the ", outcome_type, " outcome can be created from good data and the model created using the complete data set."), {
     # Test with small, but good dataset.
@@ -86,12 +86,12 @@ familiar_data_creation_unit_test <- function(outcome_type){
   data <- familiar:::test.create_one_feature_data_set(outcome_type=outcome_type)
   
   # Train a simple linear GLM using the one feature dataset.
-  fam_model <- suppressWarnings(familiar:::train(data=data,
-                                                 cluster_method="none",
-                                                 imputation_method="simple",
-                                                 hyperparameter_list=list("sign_size"=familiar:::get_n_features(data)),
-                                                 learner=learner,
-                                                 time_max=1832))
+  fam_model <- suppressWarnings(familiar:::test_train(data=data,
+                                                      cluster_method="none",
+                                                      imputation_method="simple",
+                                                      hyperparameter_list=list("sign_size"=familiar:::get_n_features(data)),
+                                                      learner=learner,
+                                                      time_max=1832))
   
   testthat::test_that(paste0("5. familiarData for the ", outcome_type, " outcome can be created from the one-feature dataset and the model created using the same data set."), {
     # Test with one-feature dataset.
@@ -121,12 +121,12 @@ familiar_data_creation_unit_test <- function(outcome_type){
   data <- familiar:::test.create_bad_data_set(outcome_type=outcome_type)
   
   # Train a simple linear GLM using the bad dataset. The model will fail to build
-  fam_model <- suppressWarnings(familiar:::train(data=data,
-                                                 cluster_method="none",
-                                                 imputation_method="simple",
-                                                 hyperparameter_list=list("sign_size"=familiar:::get_n_features(data)),
-                                                 learner=learner,
-                                                 time_max=1832))
+  fam_model <- suppressWarnings(familiar:::test_train(data=data,
+                                                      cluster_method="none",
+                                                      imputation_method="simple",
+                                                      hyperparameter_list=list("sign_size"=familiar:::get_n_features(data)),
+                                                      learner=learner,
+                                                      time_max=1832))
   
   testthat::test_that(paste0("7. familiarData for the ", outcome_type, " outcome can be created from good data and the NULL model created using the bad data set."), {
     # Test with small, but good dataset.

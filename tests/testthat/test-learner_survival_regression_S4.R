@@ -6,24 +6,26 @@ testthat::skip_on_cran()
 
 familiar:::test_all_learners_train_predict_vimp(learners=familiar:::.get_available_survival_regression_learners(show_general=FALSE))
 
+familiar:::test_all_learners_parallel_train_predict_vimp(learners=familiar:::.get_available_survival_regression_learners(show_general=FALSE))
+
 
 # Create test data sets.
 good_data <- familiar:::test.create_good_data_set("survival")
 wide_data <- familiar:::test.create_wide_data_set("survival")
 
 # Train the model using the good dataset.
-good_model <- familiar:::train(data=good_data,
-                               cluster_method="none",
-                               imputation_method="simple",
-                               hyperparameter_list=list("sign_size"=familiar:::get_n_features(good_data)),
-                               learner="survival_regr_weibull")
+good_model <- familiar:::test_train(data=good_data,
+                                    cluster_method="none",
+                                    imputation_method="simple",
+                                    hyperparameter_list=list("sign_size"=familiar:::get_n_features(good_data)),
+                                    learner="survival_regr_weibull")
 
 # Train the model using wide data.
-wide_model <- suppressWarnings(familiar:::train(data=wide_data,
-                                                cluster_method="none",
-                                                imputation_method="simple",
-                                                hyperparameter_list=list("sign_size"=familiar:::get_n_features(wide_data)),
-                                                learner="survival_regr_weibull"))
+wide_model <- suppressWarnings(familiar:::test_train(data=wide_data,
+                                                     cluster_method="none",
+                                                     imputation_method="simple",
+                                                     hyperparameter_list=list("sign_size"=familiar:::get_n_features(wide_data)),
+                                                     learner="survival_regr_weibull"))
 
 
 testthat::test_that("Survival regression model trained correctly", {

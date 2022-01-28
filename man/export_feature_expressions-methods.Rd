@@ -10,6 +10,7 @@ export_feature_expressions(
   object,
   dir_path = NULL,
   evaluation_time = waiver(),
+  export_collection = FALSE,
   ...
 )
 
@@ -17,6 +18,7 @@ export_feature_expressions(
   object,
   dir_path = NULL,
   evaluation_time = waiver(),
+  export_collection = FALSE,
   ...
 )
 
@@ -24,6 +26,7 @@ export_feature_expressions(
   object,
   dir_path = NULL,
   evaluation_time = waiver(),
+  export_collection = FALSE,
   ...
 )
 }
@@ -39,6 +42,8 @@ outcome columns in expression plots. If not provided explicitly, this
 parameter is read from settings used at creation of the underlying
 \code{familiarData} objects. Only used for \code{survival} outcomes.}
 
+\item{export_collection}{(\emph{optional}) Exports the collection if TRUE.}
+
 \item{...}{
   Arguments passed on to \code{\link[=extract_feature_expression]{extract_feature_expression}}, \code{\link[=as_familiar_collection]{as_familiar_collection}}
   \describe{
@@ -47,7 +52,7 @@ sample. This is used to determine cluster information, and indicate which
 samples are similar. The table is created by the
 \code{extract_sample_similarity} method.}
     \item{\code{data}}{A \code{dataObject} object, \code{data.table} or \code{data.frame} that
-constitutes the data that are used to compute}
+constitutes the data that are assessed.}
     \item{\code{feature_cluster_method}}{The method used to perform clustering. These are
 the same methods as for the \code{cluster_method} configuration parameter:
 \code{none}, \code{hclust}, \code{agnes}, \code{diana} and \code{pam}.
@@ -103,7 +108,7 @@ the metric name. This reduces the effect of outliers somewhat.
 
 If not provided explicitly, this parameter is read from settings used at
 creation of the underlying \code{familiarModel} objects.}
-    \item{\code{eval_times}}{One or more time points that are used for in analysis of
+    \item{\code{evaluation_times}}{One or more time points that are used for in analysis of
 survival problems when data has to be assessed at a set time, e.g.
 calibration. If not provided explicitly, this parameter is read from
 settings used at creation of the underlying \code{familiarModel} objects. Only

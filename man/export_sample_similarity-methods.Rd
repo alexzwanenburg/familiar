@@ -10,9 +10,11 @@ export_sample_similarity(
   object,
   dir_path = NULL,
   aggregate_results = TRUE,
+  sample_limit = waiver(),
   sample_cluster_method = waiver(),
   sample_linkage_method = waiver(),
   export_dendrogram = FALSE,
+  export_collection = FALSE,
   ...
 )
 
@@ -20,9 +22,11 @@ export_sample_similarity(
   object,
   dir_path = NULL,
   aggregate_results = TRUE,
+  sample_limit = waiver(),
   sample_cluster_method = waiver(),
   sample_linkage_method = waiver(),
   export_dendrogram = FALSE,
+  export_collection = FALSE,
   ...
 )
 
@@ -30,9 +34,11 @@ export_sample_similarity(
   object,
   dir_path = NULL,
   aggregate_results = TRUE,
+  sample_limit = waiver(),
   sample_cluster_method = waiver(),
   sample_linkage_method = waiver(),
   export_dendrogram = FALSE,
+  export_collection = FALSE,
   ...
 )
 }
@@ -45,6 +51,16 @@ will allow export as a structured list of data.tables.}
 
 \item{aggregate_results}{Flag that signifies whether results should be
 aggregated for export.}
+
+\item{sample_limit}{(\emph{optional}) Set the upper limit of the number of samples
+that are used during evaluation steps. Cannot be less than 20.
+
+This setting can be specified per data element by providing a parameter
+value in a named list with data elements, e.g.
+\code{list("sample_similarity"=100, "permutation_vimp"=1000)}.
+
+This parameter can be set for the following data elements:
+\code{sample_similarity} and \code{ice_data}.}
 
 \item{sample_cluster_method}{The method used to perform clustering based on
 distance between samples. These are the same methods as for the
@@ -65,6 +81,8 @@ If not provided explicitly, this parameter is read from settings used at
 creation of the underlying \code{familiarModel} objects.}
 
 \item{export_dendrogram}{Add dendrogram in the data element objects.}
+
+\item{export_collection}{(\emph{optional}) Exports the collection if TRUE.}
 
 \item{...}{
   Arguments passed on to \code{\link[=as_familiar_collection]{as_familiar_collection}}

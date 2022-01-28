@@ -7,6 +7,19 @@ setClass("familiarSurvRegr",
          slots=list("encoding_reference_table" = "ANY"),
          prototype=list("encoding_reference_table" = NULL))
 
+#####initialize#################################################################
+setMethod("initialize", signature(.Object="familiarSurvRegr"),
+          function(.Object, ...){
+            
+            # Update with parent class first.
+            .Object <- callNextMethod()
+            
+            # Set the required package
+            .Object@package <- "survival"
+            
+            return(.Object)
+          })
+
 
 .get_available_survival_regression_learners <- function(show_general=TRUE){
   
@@ -21,6 +34,7 @@ setClass("familiarSurvRegr",
   
   return(learners)
 }
+
 
 
 #####is_available#####
@@ -63,7 +77,9 @@ setMethod("get_default_hyperparameters", signature(object="familiarSurvRegr"),
             }
             
             # Set the distribution parameter
-            param$distribution <- .set_hyperparameter(default=distribution_default, type="factor", range=distribution_default,
+            param$distribution <- .set_hyperparameter(default=distribution_default,
+                                                      type="factor",
+                                                      range=distribution_default,
                                                       randomise=ifelse(length(distribution_default) > 1, TRUE, FALSE))
             
             # Return hyper-parameters
@@ -101,6 +117,9 @@ setMethod("..train", signature(object="familiarSurvRegr", data="dataObject"),
             # Check if hyperparameters are set.
             if(is.null(object@hyperparameters)) return(callNextMethod())
             
+            # Check that required packages are loaded and installed.
+            require_package(object, "train")
+            
             # Use effect coding to convert categorical data into encoded data -
             # this is required to deal with factors with missing/new levels
             # between training and test data sets.
@@ -127,7 +146,7 @@ setMethod("..train", signature(object="familiarSurvRegr", data="dataObject"),
                                             data=encoded_data$encoded_data@data,
                                             control=model_control,
                                             y=FALSE,
-                                            dist=object@hyperparameters$distribution),
+                                            dist=as.character(object@hyperparameters$distribution)),
                                     error=identity))
             
             # Check if the model trained at all.
@@ -145,6 +164,9 @@ setMethod("..train", signature(object="familiarSurvRegr", data="dataObject"),
             # Add the contrast references to model_list
             object@encoding_reference_table <- encoded_data$reference_table
             
+            # Set learner version
+            object <- set_package_version(object)
+            
             return(object)
           })
 
@@ -153,6 +175,9 @@ setMethod("..train", signature(object="familiarSurvRegr", data="dataObject"),
 #####..predict#####
 setMethod("..predict", signature(object="familiarSurvRegr", data="dataObject"),
           function(object, data, type="default", time=NULL, ...){
+            
+            # Check that required packages are loaded and installed.
+            require_package(object, "predict")
             
             if(type %in% c("default", "survival_probability")){
               ##### Default method #############################################
@@ -295,6 +320,9 @@ setMethod("..predict_survival_probability", signature(object="familiarSurvRegr",
             
             if(!object@outcome_type %in% c("survival")) return(callNextMethod())
             
+            # Check that required packages are loaded and installed.
+            require_package(object, "predict")
+            
             # If time is unset, read the max time stored by the model.
             if(is.null(time)) time <- object@settings$time_max
             
@@ -312,8 +340,11 @@ setMethod("..vimp", signature(object="familiarSurvRegr"),
             
             if(!model_is_trained(object)) return(callNextMethod())
             
+            # Check that required packages are loaded and installed.
+            require_package(object, "vimp")
+            
             # Define p-values
-            coefficient_z_values <- coefficient_one_sample_z_test(model=object@model)
+            coefficient_z_values <- .compute_z_statistic(object)
             coefficient_z_values <- coefficient_z_values[names(coefficient_z_values) != "(Intercept)"]
             
             if(length(coefficient_z_values) == 0) return(callNextMethod())
@@ -375,5 +406,30 @@ setMethod("..set_vimp_parameters", signature(object="familiarSurvRegr"),
             # Set the distribution parameter
             object@hyperparameters$distribution <- distribution_default
             
+            return(object)
+          })
+
+
+
+#####.trim_model----------------------------------------------------------------
+setMethod(".trim_model", signature(object="familiarSurvRegr"),
+          function(object, ...){
+            
+            # Update model by removing the call.
+            object@model$call <- call("trimmed")
+            
+            # Add show.
+            object <- .capture_show(object)
+            
+            # Remove .Environment.
+            object@model$terms <- .replace_environment(object@model$terms)
+
+            # Remove elements that contain sample-specific values.
+            object@model$linear.predictors <- NULL
+            
+            # Set is_trimmed to TRUE.
+            object@is_trimmed <- TRUE
+            
+            # Default method for models that lack a more specific method.
             return(object)
           })

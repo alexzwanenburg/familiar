@@ -12,10 +12,10 @@ NULL
 #'@param dir_path (*optional*) Path to the directory where created figures are
 #'  saved to. Output is saved in the `variable_importance` subdirectory. If NULL
 #'  no figures are saved, but are returned instead.
-#'@param p_adjustment_method (*optional*) Indicates type of p-value that is shown.
-#'  One of `holm`, `hochberg`, `hommel`, `bonferroni`, `BH`, `BY`,
-#' `fdr`, `none`, `p_value` or `q_value` for adjusted p-values, uncorrected
-#'  p-values and q-values. q-values may not be available.
+#'@param p_adjustment_method (*optional*) Indicates type of p-value that is
+#'  shown. One of `holm`, `hochberg`, `hommel`, `bonferroni`, `BH`, `BY`, `fdr`,
+#'  `none`, `p_value` or `q_value` for adjusted p-values, uncorrected p-values
+#'  and q-values. q-values may not be available.
 #'@param show_cluster (*optional*) Show which features were clustered together.
 #'@param ggtheme (*optional*) `ggplot` theme to use for plotting.
 #'@param discrete_palette (*optional*) Palette used to fill the bars in case a
@@ -34,6 +34,7 @@ NULL
 #'@param units (*optional*) Plot size unit. Either `cm` (default), `mm` or `in`.
 #'@param verbose Flag to indicate whether feedback should be provided for the
 #'  plotting.
+#'@param export_collection (*optional*) Exports the collection if TRUE.
 #'@inheritParams export_univariate_analysis_data
 #'@inheritParams export_feature_similarity
 #'@inheritParams as_familiar_collection
@@ -41,10 +42,15 @@ NULL
 #'@inheritParams plotting.check_data_handling
 #'@inheritDotParams as_familiar_collection -object
 #'@inheritDotParams ggplot2::ggsave -height -width -units
+#'@inheritDotParams extract_univariate_analysis -object -feature_cluster_method -feature_linkage_method -feature_cluster_cut_method -verbose
 #'
 #'@details This function generates a horizontal barplot with the length of the
 #'  bars corresponding to the 10-logarithm of the (multiple-testing corrected)
 #'  p-value or q-value.
+#'
+#'  Features are assessed univariately using one-sample location t-tests after
+#'  fitting a suitable regression model. The fitted model coefficient and the
+#'  covariance matrix are then used to compute a p-value.
 #'
 #'  The following splitting variables are available for `split_by`, `color_by`
 #'  and `facet_by`:
@@ -99,8 +105,8 @@ setGeneric("plot_univariate_importance",
                     x_label=waiver(),
                     y_label="feature",
                     legend_label=waiver(),
-                    plot_title=NULL,
-                    plot_sub_title=NULL,
+                    plot_title=waiver(),
+                    plot_sub_title=waiver(),
                     caption=NULL,
                     x_range=NULL,
                     x_n_breaks=5,
@@ -110,6 +116,7 @@ setGeneric("plot_univariate_importance",
                     height=waiver(),
                     units=waiver(),
                     verbose=TRUE,
+                    export_collection=FALSE,
                     ...) standardGeneric("plot_univariate_importance"))
 
 #####plot_univariate_importance (generic)#####
@@ -135,8 +142,8 @@ setMethod("plot_univariate_importance", signature(object="ANY"),
                    x_label=waiver(),
                    y_label="feature",
                    legend_label=waiver(),
-                   plot_title=NULL,
-                   plot_sub_title=NULL,
+                   plot_title=waiver(),
+                   plot_sub_title=waiver(),
                    caption=NULL,
                    x_range=NULL,
                    x_n_breaks=5,
@@ -146,6 +153,7 @@ setMethod("plot_univariate_importance", signature(object="ANY"),
                    height=waiver(),
                    units=waiver(),
                    verbose=TRUE,
+                   export_collection=FALSE,
                    ...){
             
             # Attempt conversion to familiarCollection object.
@@ -155,7 +163,8 @@ setMethod("plot_univariate_importance", signature(object="ANY"),
                                           "feature_cluster_method"=feature_cluster_method,
                                           "feature_linkage_method"=feature_linkage_method,
                                           "feature_cluster_cut_method"=feature_cluster_cut_method,
-                                          "feature_similarity_threshold"=feature_similarity_threshold),
+                                          "feature_similarity_threshold"=feature_similarity_threshold,
+                                          "verbose"=verbose),
                                      list(...)))
             
             return(do.call(plot_univariate_importance,
@@ -188,7 +197,8 @@ setMethod("plot_univariate_importance", signature(object="ANY"),
                                      "width"=width,
                                      "height"=height,
                                      "units"=units,
-                                     "verbose"=verbose)))
+                                     "verbose"=verbose,
+                                     "export_collection"=export_collection)))
           })
 
 #####plot_univariate_importance (collection)#####
@@ -214,8 +224,8 @@ setMethod("plot_univariate_importance", signature(object="familiarCollection"),
                    x_label=waiver(),
                    y_label="feature",
                    legend_label=waiver(),
-                   plot_title=NULL,
-                   plot_sub_title=NULL,
+                   plot_title=waiver(),
+                   plot_sub_title=waiver(),
                    caption=NULL,
                    x_range=NULL,
                    x_n_breaks=5,
@@ -225,6 +235,7 @@ setMethod("plot_univariate_importance", signature(object="familiarCollection"),
                    height=waiver(),
                    units=waiver(),
                    verbose=TRUE,
+                   export_collection=FALSE,
                    ...){
             
             # Suppress NOTES due to non-standard evaluation in data.table
@@ -281,6 +292,13 @@ setMethod("plot_univariate_importance", signature(object="familiarCollection"),
                                                                       x=x@data,
                                                                       verbose=verbose)
             if(is.null(column_data)) return(NULL)
+            
+            # Check package requirements for plotting.
+            if(!require_package(x=..required_plotting_packages(extended=FALSE),
+                                purpose="to plot univariate variable importance",
+                                message_type="warning")){
+              return(NULL)
+            }
             
             data.table::setnames(x@data, old=column_data$value_column, new="value")
             
@@ -371,6 +389,9 @@ setMethod("plot_univariate_importance", signature(object="familiarCollection"),
             
             ##### Create plots #################################################
             
+            # Determine if subtitle should be generated.
+            autogenerate_plot_subtitle <- is.waive(plot_sub_title)
+            
             # Split data
             if(!is.null(split_by)){
               x_split <- split(x@data, by=split_by)
@@ -404,6 +425,13 @@ setMethod("plot_univariate_importance", signature(object="familiarCollection"),
                 x_sub <- x_temporary
               }
               
+              if(is.waive(plot_title)) plot_title <- "Univariate variable importance"
+              
+              if(autogenerate_plot_subtitle){
+                plot_sub_title <- plotting.create_subtitle(split_by=split_by,
+                                                           x=x_sub)
+              }
+              
               # Generate plot
               p <- .plot_univariate_importance(x=x_sub,
                                                color_by=color_by,
@@ -431,12 +459,11 @@ setMethod("plot_univariate_importance", signature(object="familiarCollection"),
               
               # Save and export
               if(!is.null(dir_path)){
-                # Save to file
-                if(!is.null(split_by)){
-                  subtype <- paste0("univariate_", paste0(sapply(split_by, function(ii, x) (x[[ii]][1]), x=x_sub), collapse="_"))
-                } else {
-                  subtype <- "univariate"
-                }
+                
+                # Set subtype.
+                subtype <- plotting.create_subtype(x=x_sub,
+                                                   subtype="univariate",
+                                                   split_by=split_by)
                 
                 # Obtain decent default values for the plot.
                 def_plot_dims <- .determine_univariate_importance_plot_dimensions(x=x_sub,
@@ -462,11 +489,10 @@ setMethod("plot_univariate_importance", signature(object="familiarCollection"),
             }
             
             # Generate output
-            if(is.null(dir_path)){
-              return(plot_list)
-            } else {
-              return(NULL)
-            }
+            return(plotting.get_output(dir_path=dir_path,
+                                       plot_list=plot_list,
+                                       export_collection=export_collection,
+                                       object=object))
           })
 
 
@@ -526,7 +552,6 @@ setMethod("plot_univariate_importance", signature(object="familiarCollection"),
   # Create basic plot
   p <- ggplot2::ggplot(data=x,
                        mapping=ggplot2::aes(x=!!sym("feature"), y=!!sym("log_value")))
-  p <- p + ggplot2::coord_flip()
   p <- p + ggtheme
   
   # Add fill colors
@@ -559,10 +584,10 @@ setMethod("plot_univariate_importance", signature(object="familiarCollection"),
   }
 
   # Set breaks and limits
-  p <- p + ggplot2::scale_y_continuous(breaks=x_breaks,
-                                       limits=x_range)
+  p <- p + ggplot2::scale_y_continuous(breaks=x_breaks)
+  p <- p + ggplot2::coord_flip(ylim=x_range)
   
-  # Determine how things are facetted
+  # Determine how things are faceted.
   facet_by_list <- plotting.parse_facet_by(x=x,
                                            facet_by=facet_by,
                                            facet_wrap_cols=facet_wrap_cols)

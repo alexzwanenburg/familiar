@@ -1,0 +1,9 @@
+*.html
+*.R
+*.Rmd
+!license.html
+!familiar_logo.html
+!compile.R
+/figure/
+/eval_and_explain/
+/prospective_use/

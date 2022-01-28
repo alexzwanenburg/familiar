@@ -41,18 +41,12 @@ parallel processing.}
 copies of the data. This backend ensures that only a single master copy is
 kept in memory. This limits memory usage during parallel processing.
 
-Several backend options are available, notably \code{socket_server}, \code{rserve},
-\code{rserve_coop} and \code{none} (default). Availability of the backend depends on
-the operating system and package installation. \code{socket_server} is based on
-the callr package and R sockets, comes with \code{familiar} and is available for
-any OS. Note the callr currently has an issue that can prevent familiar
-from working correctly (https://github.com/r-lib/callr/issues/151).
-\code{rserve} requires the RServe package, and only functions correctly under
-Windows. \code{rserve_coop} requires the RServe_coop package (installable from
-https://github.com/alexzwanenburg/Rserve_coop), but can be compiled against
-any OS. \code{none} uses the global environment of familiar to store data, and
-is available for any OS. However, \code{none} requires copying of data to any
-parallel process, and has a larger memory footprint.}
+Several backend options are available, notably \code{socket_server}, and \code{none}
+(default). \code{socket_server} is based on the callr package and R sockets,
+comes with \code{familiar} and is available for any OS. \code{none} uses the package
+environment of familiar to store data, and is available for any OS.
+However, \code{none} requires copying of data to any parallel process, and has a
+larger memory footprint.}
     \item{\code{server_port}}{(\emph{optional}) Integer indicating the port on which the
 socket server or RServe process should communicate. Defaults to port 6311.
 Note that ports 0 to 1024 and 49152 to 65535 cannot be used.}
@@ -439,7 +433,9 @@ assessing variable importance.}
 variable importances over different data subsets, e.g. bootstraps. The
 following methods can be selected:
 \itemize{
-\item \code{mean} (default): Use the mean rank of a feature over the subsets to
+\item \code{none}: Don't aggregate ranks, but rather aggregate the variable
+importance scores themselves.
+\item \code{mean}: Use the mean rank of a feature over the subsets to
 determine the aggregated feature rank.
 \item \code{median}: Use the median rank of a feature over the subsets to determine
 the aggregated feature rank.
@@ -453,8 +449,8 @@ highly ranked features as measure for the aggregated feature rank
 \item \code{exponential}: Use a rank-weighted frequence of occurrence in the subset
 of highly ranked features as measure for the aggregated feature rank (Haury
 et al., 2011).
-\item \code{borda}: Use the borda count as measure for the aggregated feature rank
-(Wald et al., 2012).
+\item \code{borda} (default): Use the borda count as measure for the aggregated
+feature rank (Wald et al., 2012).
 \item \code{enhanced_borda}: Use an occurrence frequency-weighted borda count as
 measure for the aggregated feature rank (Wald et al., 2012).
 \item \code{truncated_borda}: Use borda count computed only on features within the
@@ -462,7 +458,9 @@ subset of highly ranked features.
 \item \code{enhanced_truncated_borda}: Apply both the enhanced borda method and the
 truncated borda method and use the resulting borda count as the aggregated
 feature rank.
-}}
+}
+
+The \emph{feature selection methods} vignette provides additional information.}
     \item{\code{vimp_aggregation_rank_threshold}}{(\emph{optional}) The threshold used to
 define the subset of highly important features. If not set, this threshold
 is determined by maximising the variance in the occurrence value over all
@@ -491,6 +489,11 @@ optimisation is used to determine optimal hyperparameters.
 Hyperparameters provided by the user are never optimised. However, if more
 than one value is provided for a single hyperparameter, optimisation will
 be conducted using these values.}
+    \item{\code{novelty_detector}}{(\emph{optional}) Specify the algorithm used for training
+a novelty detector. This detector can be used to identify
+out-of-distribution data prospectively.}
+    \item{\code{detector_parameters}}{(\emph{optional}) List lists containing hyperparameters
+for novelty detectors. Currently not used.}
     \item{\code{parallel_model_development}}{(\emph{optional}) Enable parallel processing for
 the model development workflow. Defaults to \code{TRUE}. When set to \code{FALSE},
 this will disable the use of parallel processing while developing models,
@@ -503,7 +506,7 @@ procedure one or more of these bootstraps (indicated by
 combinations of hyperparameters. The effect of the hyperparameters is then
 assessed by comparing in-bag and out-of-bag model performance.
 
-The default number of bootstraps is \code{200}. Hyperparameter optimisation may
+The default number of bootstraps is \code{50}. Hyperparameter optimisation may
 finish before exhausting the set of bootstraps.}
     \item{\code{optimisation_determine_vimp}}{(\emph{optional}) Logical value that indicates
 whether variable importance is determined separately for each of the
@@ -548,7 +551,7 @@ If a combination of hyperparameters leads to better performance on the same
 data than the incumbent \emph{best} set of hyperparameters, it replaces the
 incumbent set at the end of the intensify iteration.
 
-The default number of intensify iteration is \code{30}. Iterations may be
+The default number of intensify iteration is \code{20}. Iterations may be
 stopped early if the incumbent set of hyperparameters remains the same for
 \code{smbo_stop_convergent_iterations} iterations, or performance improvement is
 minimal. This behaviour is suppressed during the first 4 iterations to
@@ -568,30 +571,15 @@ The default value is \code{0.01}.}
 the set of \code{optimisation_bootstraps} bootstraps as data for the initial
 SMBO step and the steps in each intensify iteration.
 
-The default value is \code{5}. The value cannot be larger than
-\code{optimisation_bootstraps}. Values of \code{1} or \code{2} may hinder exploration by
-optimistically or pessimistically biasing parameter sets on a single or two
-bootstraps.}
+The default value is \code{3}. The value cannot be larger than
+\code{optimisation_bootstraps}.}
     \item{\code{smbo_intensify_steps}}{(\emph{optional}) The number of steps in each SMBO
 intensify iteration. Each step a new set of \code{smbo_step_bootstraps}
 bootstraps is drawn and used in the run-off between the incumbent \emph{best}
 hyperparameter combination and its challengers.
 
-The default value is \code{3}. Higher numbers allow for a more detailed
+The default value is \code{5}. Higher numbers allow for a more detailed
 comparison, but this comes with added computational cost.}
-    \item{\code{smbo_intensify_stop_p_value}}{(\emph{optional}) The p-value threshold which
-is used to test the hypothesis that a challenger hyperparameter set and the
-incumbent set have the same performance. A paired Wilcoxon test is
-performed, with the alternative hypothesis that the challenger set is less
-performant.
-
-The p-value from the test is compared to \code{smbo_intensify_stop_p_value} and
-if it is found lower, the challenger set is eliminated and not used in any
-further intensify steps during the current iteration. Elimination of sets
-of hyperparameters that are unlikely to lead to better models improves
-computational efficiency.
-
-The default value is \code{0.05}.}
     \item{\code{optimisation_metric}}{(\emph{optional}) One or more metrics used to compute
 performance scores. See the vignette on performance metrics for the
 available metrics.
@@ -627,26 +615,39 @@ perform well on both development and validation data.
 \item \code{stronger_balance}: Computes \eqn{s'_{oob} - 2.0 |s'_{oob} - s'_{ib}|}.
 Stronger penalty than in the \code{balanced} objective.
 }}
+    \item{\code{hyperparameter_learner}}{(\emph{optional}) Any point in the hyperparameter
+space has a single, scalar, optimisation score value that is \emph{a priori}
+unknown. During the optimisation process, the algorithm samples from the
+hyperparameter space by selecting hyperparameter sets and computing the
+optimisation score value for one or more bootstraps. For each
+hyperparameter set the resulting values are distributed around the actual
+value. The learner indicated by \code{hyperparameter_learner} is then used to
+infer optimisation score estimates for unsampled parts of the
+hyperparameter space.
+
+The following models are available:
+\itemize{
+\item \code{bayesian_additive_regression_trees} or \code{bart}: Uses Bayesian Additive
+Regression Trees (Sparapani et al., 2021) for inference. Unlike standard
+random forests, BART allows for estimating posterior distributions directly
+and can extrapolate.
+\item \code{gaussian_process} (default): Creates a localised approximate Gaussian
+process for inference (Gramacy, 2016). This allows for better scaling than
+deterministic Gaussian Processes.
+\item \code{random_forest}: Creates a random forest for inference. Originally
+suggested by Hutter et al. (2011). A weakness of random forests is their
+lack of extrapolation beyond observed values, which limits their usefulness
+in exploiting promising areas of hyperparameter space.
+\item \code{random} or \code{random_search}: Forgoes the use of models to steer
+optimisation. Instead, a random search is performed.
+}}
     \item{\code{acquisition_function}}{(\emph{optional}) The acquisition function influences
-how new hyperparameter sets are selected.
-
-Any point in the hyperparameter space has a single, scalar, optimisation
-score value that is \emph{a priori} unknown. During the optimisation process,
-the algorithm samples from the hyperparameter space by selecting
-hyperparameter sets and computing the optimisation score value for one or
-more bootstraps. For each hyperparameter set the resulting values are
-distributed around the actual value. A random forest is then trained using
-all the resulting values.
-
-The random forest maps positions in the hyperparameter space to the 1D real
-space of optimisation values. The distribution of optimisation values at
-each point is captured by individual decision trees.
-
-The algorithm uses the random forest to search the hyperparameter space for
-hyperparameter sets that are either likely better than the best known set
-(\emph{exploitation}) or where there is considerable uncertainty
-(\emph{exploration}). The acquisition function quantifies this (Shahriari et
-al., 2016).
+how new hyperparameter sets are selected. The algorithm uses the model
+learned by the learner indicated by \code{hyperparameter_learner} to search the
+hyperparameter space for hyperparameter sets that are either likely better
+than the best known set (\emph{exploitation}) or where there is considerable
+uncertainty (\emph{exploration}). The acquisition function quantifies this
+(Shahriari et al., 2016).
 
 The following acquisition functions are available, and are described in
 more detail in the \emph{learner algorithms} vignette:
@@ -660,9 +661,30 @@ predicted by the individual decision trees.
 \item \code{expected_improvement} (default): Computes expected improvement.
 \item \code{upper_confidence_bound}: This acquisition function is based on the upper
 confidence bound of the distribution (Srinivas et al., 2012).
-\item \code{bayes_upper_confidence_bound}:This acquisition function is based on the
+\item \code{bayes_upper_confidence_bound}: This acquisition function is based on the
 upper confidence bound of the distribution (Kaufmann et al., 2012).
 }}
+    \item{\code{exploration_method}}{(\emph{optional}) Method used to steer exploration in
+post-initialisation intensive searching steps. As stated earlier, each SMBO
+iteration step compares suggested alternative parameter sets with an
+incumbent \strong{best} set in a series of steps. The exploration method
+controls how the set of alternative parameter sets is pruned after each
+step in an iteration. Can be one of the following:
+\itemize{
+\item \code{successive_halving} (default): The set of alternative parameter sets is
+pruned by removing the worst performing half of the sets after each step
+(Jamieson and Talwalkar, 2016).
+\item \code{stochastic_reject}: The set of alternative parameter sets is pruned by
+comparing the performance of each parameter set with that of the incumbent
+\strong{best} parameter set using a paired Wilcoxon test based on shared
+bootstraps. Parameter sets that perform significantly worse, at an alpha
+level indicated by \code{smbo_stochastic_reject_p_value}, are pruned.
+\item \code{none}: The set of alternative parameter sets is not pruned.
+}}
+    \item{\code{smbo_stochastic_reject_p_value}}{(\emph{optional}) The p-value threshold used
+for the \code{stochastic_reject} exploration method.
+
+The default value is \code{0.05}.}
     \item{\code{parallel_hyperparameter_optimisation}}{(\emph{optional}) Enable parallel
 processing for hyperparameter optimisation. Defaults to \code{TRUE}. When set to
 \code{FALSE}, this will disable the use of parallel processing while performing
@@ -692,11 +714,14 @@ if any, should be skipped as part of the evaluation process. Defaults to
 have one or more of the following values:
 \itemize{
 \item \code{none}, \code{false}: no steps are skipped.
+\item \code{all}, \code{true}: all steps are skipped.
 \item \code{auc_data}: data for assessing and plotting the area under the receiver
 operating characteristic curve are not computed.
 \item \code{calibration_data}: data for assessing and plotting model calibration are
 not computed.
-\item \code{calibration_info}
+\item \code{calibration_info}: data required to assess calibration, such as baseline
+survival curves, are not collected. These data will still be present in the
+models.
 \item \code{confusion_matrix}: data for assessing and plotting a confusion matrix are
 not collected.
 \item \code{decision_curve_analyis}: data for performing a decision curve analysis
@@ -708,7 +733,9 @@ not computed.
 \item \code{fs_vimp}: data for assessing and plotting feature selection-based
 variable importance are not collected.
 \item \code{hyperparameters}: data for assessing model hyperparameters are not
-collected.
+collected. These data will still be present in the models.
+\item \code{ice_data}: data for individual conditional expectation and partial
+dependence plots are not created.
 \item \code{model_performance}: data for assessing and visualising model performance
 are not created.
 \item \code{model_vimp}: data for assessing and plotting model-based variable
@@ -716,10 +743,10 @@ importance are not collected.
 \item \code{permutation_vimp}: data for assessing and plotting model-agnostic
 permutation variable importance are not computed.
 \item \code{prediction_data}: predictions for each sample are not made and exported.
-\item \code{risk_stratification_data}: data for assessing and plotting Kaplan-Meier survival
-curves are not collected.
-\item \code{risk_stratification_info}: data for assessing stratification into risk groups
-are not computed.
+\item \code{risk_stratification_data}: data for assessing and plotting Kaplan-Meier
+survival curves are not collected.
+\item \code{risk_stratification_info}: data for assessing stratification into risk
+groups are not computed.
 \item \code{univariate_analysis}: data for assessing and plotting univariate feature
 importance are not computed.
 }}
@@ -742,6 +769,15 @@ metric during evaluation. This is done using bootstraps, the number of which
 depends on the value of \code{confidence_level} (Davison and Hinkley, 1997).
 
 If unset, the metric in the \code{optimisation_metric} variable is used.}
+    \item{\code{sample_limit}}{(\emph{optional}) Set the upper limit of the number of samples
+that are used during evaluation steps. Cannot be less than 20.
+
+This setting can be specified per data element by providing a parameter
+value in a named list with data elements, e.g.
+\code{list("sample_similarity"=100, "permutation_vimp"=1000)}.
+
+This parameter can be set for the following data elements:
+\code{sample_similarity} and \code{ice_data}.}
     \item{\code{detail_level}}{(\emph{optional}) Sets the level at which results are computed
 and aggregated.
 \itemize{
@@ -758,10 +794,10 @@ each model, in contrast to \code{ensemble} where performance is computed for the
 ensemble of models. If there are less than 20 trained models in the
 ensemble, bootstraps are created so that at least 20 point estimates can be
 made.
-\item \code{model} (to be implemented): Results are computed at the model level. This
-means that, for example, bias-corrected estimates of model performance are
-assessed by creating (at least) 20 bootstraps and computing the performance
-of the model for each bootstrap.
+\item \code{model}: Results are computed at the model level. This means that, for
+example, bias-corrected estimates of model performance are assessed by
+creating (at least) 20 bootstraps and computing the performance of the model
+for each bootstrap.
 }
 
 Note that each level of detail has a different interpretation for bootstrap
@@ -780,11 +816,12 @@ model.
 \code{hybrid} is generally computationally less expensive then \code{ensemble}, which
 in turn is somewhat less expensive than \code{model}.
 
-A non-default \code{detail_level} parameter can be
-specified for separate evaluation steps by providing a parameter value in a
-named list with data elements, e.g. \code{list("auc_data"="ensemble", "model_performance"="hybrid")}. This parameter can be set for the following
-data elements: \code{auc_data}, \code{decision_curve_analyis}, \code{model_performance},
-\code{permutation_vimp}, \code{prediction_data} and \code{confusion_matrix}.}
+A non-default \code{detail_level} parameter can be specified for separate
+evaluation steps by providing a parameter value in a named list with data
+elements, e.g. \code{list("auc_data"="ensemble", "model_performance"="hybrid")}.
+This parameter can be set for the following data elements: \code{auc_data},
+\code{decision_curve_analyis}, \code{model_performance}, \code{permutation_vimp},
+\code{ice_data}, \code{prediction_data} and \code{confusion_matrix}.}
     \item{\code{estimation_type}}{(\emph{optional}) Sets the type of estimation that should be
 possible. This has the following options:
 \itemize{
@@ -795,15 +832,14 @@ bootstrap the data to create them.
 \item \code{bootstrap_confidence_interval} or \code{bci} (default): Bias-corrected
 estimates with bootstrap confidence intervals (Efron and Hastie, 2016). The
 number of point estimates required depends on the \code{confidence_level}
-parameter, and \code{familiar} may bootstrap the data to create them. In some
-cases no bootstrap data
+parameter, and \code{familiar} may bootstrap the data to create them.
 }
 
 As with \code{detail_level}, a non-default \code{estimation_type} parameter can be
 specified for separate evaluation steps by providing a parameter value in a
 named list with data elements, e.g. \code{list("auc_data"="bci", "model_performance"="point")}. This parameter can be set for the following
 data elements: \code{auc_data}, \code{decision_curve_analyis}, \code{model_performance},
-\code{permutation_vimp}, and \code{prediction_data}.}
+\code{permutation_vimp}, \code{ice_data}, and \code{prediction_data}.}
     \item{\code{aggregate_results}}{(\emph{optional}) Flag that signifies whether results
 should be aggregated during evaluation. If \code{estimation_type} is
 \code{bias_correction} or \code{bc}, aggregation leads to a single bias-corrected
@@ -948,7 +984,17 @@ can afterwards be used to perform stratification on validation data.
 The following stratification methods are available:
 \itemize{
 \item \code{median} (default): The median predicted value in the development cohort
-is used to stratify the samples into two risk groups.
+is used to stratify the samples into two risk groups. For predicted outcome
+values that build a continuous spectrum, the two risk groups in the
+development cohort will be roughly equal in size.
+\item \code{mean}: The mean predicted value in the development cohort is used to
+stratify the samples into two risk groups.
+\item \code{mean_trim}: As \code{mean}, but based on the set of predicted values
+where the 5\% lowest and 5\% highest values are discarded. This reduces the
+effect of outliers.
+\item \code{mean_winsor}: As \code{mean}, but based on the set of predicted values where
+the 5\% lowest and 5\% highest values are winsorised. This reduces the effect
+of outliers.
 \item \code{fixed}: Samples are stratified based on the sample quantiles of the
 predicted values. These quantiles are defined using the
 \code{stratification_threshold} parameter.
@@ -1070,6 +1116,15 @@ the Bandit Setting. IEEE Trans. Inf. Theory 58, 3250–3265 (2012)
 \item Kaufmann, E., Cappé, O. & Garivier, A. On Bayesian upper confidence
 bounds for bandit problems. in Artificial intelligence and statistics
 592–600 (2012).
+\item Jamieson, K. & Talwalkar, A. Non-stochastic Best Arm Identification and
+Hyperparameter Optimization. in Proceedings of the 19th International
+Conference on Artificial Intelligence and Statistics (eds. Gretton, A. &
+Robert, C. C.) vol. 51 240–248 (PMLR, 2016).
+\item Gramacy, R. B. laGP: Large-Scale Spatial Modeling via Local Approximate
+Gaussian Processes in R. Journal of Statistical Software 72, 1–46 (2016)
+\item Sparapani, R., Spanbauer, C. & McCulloch, R. Nonparametric Machine
+Learning and Efficient Computation with Bayesian Additive Regression Trees:
+The BART R Package. Journal of Statistical Software 97, 1–66 (2021)
 \item Davison, A. C. & Hinkley, D. V. Bootstrap methods and their application.
 (Cambridge University Press, 1997).
 \item Efron, B. & Hastie, T. Computer Age Statistical Inference. (Cambridge

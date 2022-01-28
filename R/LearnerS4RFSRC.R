@@ -7,6 +7,20 @@ setClass("familiarRFSRC",
          slots=list("seed"="ANY"),
          prototype=list("seed"=NULL))
 
+#####initialize (familiarRFSRC) ################################################
+setMethod("initialize", signature(.Object="familiarRFSRC"),
+          function(.Object, ...){
+            
+            # Update with parent class first.
+            .Object <- callNextMethod()
+            
+            # Set package
+            .Object@package <- "randomForestSRC"
+            
+            return(.Object)
+          })
+
+
 .get_available_rfsrc_learners <- function(show_general=TRUE) return(c("random_forest", "random_forest_rfsrc"))
 
 .get_available_rfsrc_vimp_methods <- function(show_general=TRUE){
@@ -210,6 +224,9 @@ setMethod("..train", signature(object="familiarRFSRC", data="dataObject"),
             # Check if hyperparameters are set.
             if(is.null(object@hyperparameters)) return(callNextMethod())
             
+            # Check that required packages are loaded and installed.
+            require_package(object, "train")
+            
             # Find feature columns in data table
             feature_columns <- get_feature_columns(x=data)
             
@@ -255,7 +272,7 @@ setMethod("..train", signature(object="familiarRFSRC", data="dataObject"),
                                      nodesize = param$node_size,
                                      nodedepth = param$tree_depth,
                                      nsplit = param$n_split,
-                                     splitrule = param$split_rule,
+                                     splitrule = as.character(param$split_rule),
                                      seed = forest_seed)
             
             # Add model to the object.
@@ -265,6 +282,9 @@ setMethod("..train", signature(object="familiarRFSRC", data="dataObject"),
             # object in case the model is an anonymous forest.
             object@seed <- forest_seed
             
+            # Set learner version
+            object <- set_package_version(object)
+            
             return(object)
           })
 
@@ -273,6 +293,9 @@ setMethod("..train", signature(object="familiarRFSRC", data="dataObject"),
 #####..predict#####
 setMethod("..predict", signature(object="familiarRFSRC", data="dataObject"),
           function(object, data, type="default", time=NULL, ...){
+            
+            # Check that required packages are loaded and installed.
+            require_package(object, "predict")
             
             if(type %in% c("default", "survival_probability")){
               ##### Default method #############################################
@@ -371,6 +394,9 @@ setMethod("..predict_survival_probability", signature(object="familiarRFSRC", da
             
             if(!object@outcome_type %in% c("survival")) return(callNextMethod())
             
+            # Check that required packages are loaded and installed.
+            require_package(object, "predict")
+            
             return(..predict(object=object, data=data, time=time, type="survival_probability"))
           })
 
@@ -391,9 +417,13 @@ setMethod("..vimp", signature(object="familiarRFSRC"),
             # Check if the model has been trained upon retry.
             if(!model_is_trained(object)) return(callNextMethod())
             
+            # Check that required packages are loaded and installed.
+            require_package(object, "vimp")
+            
             # Find the vimp_method specified.
             vimp_method <- object@hyperparameters$fs_vimp_method
             if(is.null(vimp_method)) ..error_reached_unreachable_code("..vimp,familiarRFSRC: vimp method was not specified as a hyperparameter (fs_vimp_method)")
+            vimp_method <- as.character(vimp_method)
             
             # Extract the variable importance score
             if(vimp_method == "permutation"){
@@ -538,7 +568,7 @@ setMethod("..vimp", signature(object="familiarRFSRC"),
                                                          nodesize = object@hyperparameters$node_size,
                                                          nodedepth = object@hyperparameters$tree_depth,
                                                          nsplit = object@hyperparameters$n_split,
-                                                         splitrule = object@hyperparameters$split_rule,
+                                                         splitrule = as.character(object@hyperparameters$split_rule),
                                                          verbose=FALSE)$importance
               
               # Check that the variable importance score is not empty.
@@ -621,6 +651,31 @@ setMethod("..set_vimp_parameters", signature(object="familiarRFSRC"),
 
             # Store in the object
             object@hyperparameters <- hyperparameters
+            
+            return(object)
+          })
+
+
+
+##### .trim_model---------------------------------------------------------------
+setMethod(".trim_model", signature(object="familiarRFSRC"),
+          function(object, ...){
+            
+            # Update model by removing the call.
+            object@model$call <- call("trimmed")
+            
+            # Add show.
+            object <- .capture_show(object)
+            
+            # Remove the predictions.
+            object@model$predicted <- NULL
+            object@model$predicted.oob <- NULL
+            
+            # Remove yvar due to redundancy.
+            object@model$yvar <- NULL
+            
+            # Set is_trimmed to TRUE.
+            object@is_trimmed <- TRUE
             
             return(object)
           })

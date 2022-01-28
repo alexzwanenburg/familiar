@@ -5,15 +5,48 @@ NULL
 setClass("familiarKNN",
          contains="familiarModel")
 
-setClass("familiarKNNlinear",
-         contains="familiarKNN")
 
-setClass("familiarKNNradial",
-         contains="familiarKNN")
+#####initialize#################################################################
+setMethod("initialize", signature(.Object="familiarKNN"),
+          function(.Object, ...){
+            
+            # Update with parent class first.
+            .Object <- callNextMethod()
+            
+            # Set required package
+            .Object@package <- c("e1071", "proxy")
+            
+            return(.Object)
+          })
 
-.get_available_radial_knn_learners <- function(show_general=TRUE) return(c("k_nearest_neighbours_radial"))
 
-.get_available_linear_knn_learners <- function(show_general=TRUE) return(c("k_nearest_neighbours"))
+.get_available_knn_learners <- function(show_general=TRUE, show_default=FALSE){
+  
+  # General names without pre-specified distance metrics.
+  general_learners <- c("k_nearest_neighbours", "knn")
+  
+  # Do not generate additional learners if proxy is not available.
+  if(!requireNamespace("proxy", quietly=TRUE)) return(general_learners)
+  
+  # Define all distance metrics and the smaller default set.
+  distance_metrics <- tolower(unname(unlist(lapply(proxy::pr_DB$get_entries(), function(list_elem) (list_elem$names)))))
+  distance_metrics_default <- c("euclidean", "manhattan", "gower")
+  
+  # Append distance metrics.
+  all_learners <- c(sapply(general_learners, paste, distance_metrics, sep="_"))
+  default_learners <- c(sapply(general_learners, paste, distance_metrics_default, sep="_"))
+  
+  # Add general learners, if needed.
+  if(show_general){
+    all_learners <- c(general_learners, all_learners)
+    default_learners <- c(general_learners, default_learners)
+  }
+  
+  # Return only default learners -- this is for unit testing.
+  if(show_default) return(default_learners)
+  
+  return(all_learners)
+} 
 
 
 #####is_available#####
@@ -21,7 +54,7 @@ setMethod("is_available", signature(object="familiarKNN"),
           function(object, ...){
            
             #k-nearest neighbours is only available for categorical outcomes.
-            if(object@outcome_type %in% c("binomial", "multinomial")){
+            if(object@outcome_type %in% c("binomial", "multinomial", "count", "continuous")){
               return(TRUE)
               
             } else {
@@ -39,10 +72,7 @@ setMethod("get_default_hyperparameters", signature(object="familiarKNN"),
             param <- list()
             param$sign_size <- list()
             param$k <- list()
-            
-            if(is(object, "familiarKNNradial")){
-              param$gamma <- list()
-            }
+            param$distance_metric <- list()
            
             # If data is explicitly NULL, return the list with hyperparameter
             # names only.
@@ -68,15 +98,47 @@ setMethod("get_default_hyperparameters", signature(object="familiarKNN"),
             param$k <- .set_hyperparameter(default=k_default, type="integer", range=k_range,
                                            valid_range=c(1L, Inf), randomise=TRUE)
             
-            if(is(object, "familiarKNNradial")){
-              ##### Radial basis function kernel gamma #########################
+            ##### Distance metric ----------------------------------------------
+            
+            # Read distance_metric string by parsing the learner.
+            distance_metric <- stringi::stri_replace_first_regex(str=object@learner, pattern="knn|k_nearest_neighbours", replacement="")
+            if(distance_metric != "") distance_metric <- stringi::stri_replace_first_regex(str=distance_metric, pattern="_", replacement="")
+            
+            if(distance_metric == ""){
               
-              # Gamma is based on the log10 scale with a 10^-5 offset, so that
-              # gamma=-5 leads to no distance weighting.
-              # Set the gamma parameter.
-              param$gamma <- .set_hyperparameter(default=c(-5, -3, -1, 0, 1, 3, 5), type="numeric", range=c(-5, 5),
-                                                 valid_range=c(-5, Inf), randomise=TRUE)
+              # Detect feature columns present in the data.
+              feature_columns <- get_feature_columns(x=data)
+              
+              # Set default values based on the data. For fully numeric data,
+              # use euclidean by default, and gower otherwise.
+              if(all(sapply(feature_columns, function(ii, data) (is.numeric(data@data[[ii]])), data=data))){
+                distance_metric_default <- "euclidean"
+                
+              } else {
+                distance_metric_default <- "gower"
+              }
+              
+            } else {
+              # A distance metric was unambiguously defined.
+              distance_metric_default <- distance_metric
             }
+            
+            # Set default and valid ranges.
+            distance_metric_default_range <- c("euclidean", "manhattan", "gower")
+            # Do not generate additional distance metrics if proxy is not available.
+            if(requireNamespace("proxy", quietly=TRUE)){
+              distance_metric_valid_range <- tolower(unname(unlist(lapply(proxy::pr_DB$get_entries(), function(list_elem) (list_elem$names)))))
+              
+            } else {
+              distance_metric_valid_range <- distance_metric_default_range
+            }
+            
+            # Set distance metric. If 
+            param$distance_metric <- .set_hyperparameter(default=distance_metric_default,
+                                                         type="factor",
+                                                         range=distance_metric_default_range,
+                                                         valid_range=distance_metric_valid_range,
+                                                         randomise=distance_metric == "")
             
             return(param)
           })
@@ -92,37 +154,31 @@ setMethod("..train", signature(object="familiarKNN", data="dataObject"),
             # Check if hyperparameters are set.
             if(is.null(object@hyperparameters)) return(callNextMethod())
             
+            # Check that required packages are loaded and installed.
+            require_package(object, "train")
+            
             # Find feature columns in the data.
             feature_columns <- get_feature_columns(x=data)
 
             # Parse formula
             formula <- stats::reformulate(termlabels=feature_columns, response=quote(outcome))
             
-            # Generate model. NOTE: sknn is directly imported through NAMESPACE
-            # as predict is not exported by klaR.
-            if(is(object, "familiarKNNlinear")){
-              model <- tryCatch(sknn(formula,
-                                     data=data@data,
-                                     kn=object@hyperparameters$k),
-                                error=identity)
-              
-            } else if(is(object, "familiarKNNradial")){
-              model <- tryCatch(sknn(formula,
-                                     data=data@data,
-                                     kn=object@hyperparameters$k,
-                                     gamma=10^object@hyperparameters$gamma - 10^-5),
-                                error=identity)
-              
-            } else {
-              ..error_reached_unreachable_code(paste0("..train,familiarKNN: encountered unknown learner of unknown class: ", paste0(class(object), collapse=", ")))
-            }
-            
+            # Train model. Disable scaling because of bad interaction with
+            # predicting single instances.
+            model <- tryCatch(e1071::gknn(formula,
+                                          data=data@data,
+                                          k=object@hyperparameters$k,
+                                          method=as.character(object@hyperparameters$distance_metric),
+                                          scale=FALSE))
             
             # Check if the model trained at all.
             if(inherits(model, "error")) return(callNextMethod())
             
             # Add model to the familiarModel object.
             object@model <- model
+            
+            # Set learner version
+            object <- set_package_version(object)
 
             return(object)
           })
@@ -132,6 +188,9 @@ setMethod("..train", signature(object="familiarKNN", data="dataObject"),
 #####..predict#####
 setMethod("..predict", signature(object="familiarKNN", data="dataObject"),
           function(object, data, type="default", ...){
+            
+            # Check that required packages are loaded and installed.
+            require_package(object, "predict")
             
             if(type == "default"){
               ##### Default method #############################################
@@ -147,28 +206,48 @@ setMethod("..predict", signature(object="familiarKNN", data="dataObject"),
                                                                    data=data,
                                                                    type=type)
               
-              # Use the model for prediction.
-              model_predictions <- predict(object=object@model,
-                                           newdata=data@data)
-              
-              # Obtain class levels.
-              class_levels <- get_outcome_class_levels(x=object)
-              
-              # Add class probabilities.
-              class_probability_columns <- get_class_probability_name(x=object)
-              for(ii in seq_along(class_probability_columns)){
-                prediction_table[, (class_probability_columns[ii]):=model_predictions$posterior[, class_levels[ii]]]
+              if(object@outcome_type %in% c("binomial", "multinomial")){
+                #####Binomial and multinomial outcomes--------------------------
+                
+                # Use the model to predict class probabilities.
+                model_predictions <- predict(object=object@model,
+                                             newdata=data@data,
+                                             type="prob")
+                
+                # Obtain class levels.
+                class_levels <- get_outcome_class_levels(x=object)
+                
+                # Add class probabilities.
+                class_probability_columns <- get_class_probability_name(x=object)
+                for(ii in seq_along(class_probability_columns)){
+                  prediction_table[, (class_probability_columns[ii]):=model_predictions[, class_levels[ii]]]
+                }
+                
+                # Update predicted class based on provided probabilities.
+                class_predictions <- class_levels[apply(prediction_table[, mget(class_probability_columns)], 1, which.max)]
+                class_predictions <- factor(class_predictions, levels=class_levels)
+                prediction_table[, "predicted_class":=class_predictions]
+                
+              } else if(object@outcome_type %in% c("continuous", "count")){
+                #####Count and continuous outcomes------------------------------
+                
+                # Use the model for prediction.
+                model_predictions <- predict(object=object@model,
+                                             newdata=data@data)
+                
+                # Set outcome.
+                prediction_table[, "predicted_outcome":=model_predictions]
+                
+              } else {
+                ..error_outcome_type_not_implemented(object@outcome_type)
               }
-              
-              # Add the predicted class.
-              prediction_table[, "predicted_class":=model_predictions$class]
               
               return(prediction_table)
               
             } else {
               ##### User-specified method ######################################
-              # Note: the predict method for klaR::sknn does not actually have a
-              # type argument at the moment.
+              # Note: the predict method for e1071::sknn specifies class, prob
+              # and votes.
               
               # Check if the model was trained.
               if(!model_is_trained(object)) return(NULL)
@@ -188,3 +267,26 @@ setMethod("..predict", signature(object="familiarKNN", data="dataObject"),
 
 #####..vimp#####
 # KNN does not have an associated variable importance method.
+
+
+#####.trim_model----------------------------------------------------------------
+setMethod(".trim_model", signature(object="familiarKNN"),
+          function(object, ...){
+            # Note that knn by design always contains a copy of the dataset: it
+            # cannot identify nearest neighbours otherwise.
+            
+            # Update model by removing the call.
+            object@model$call <- call("trimmed")
+            
+            # Add show.
+            object <- .capture_show(object)
+            
+            # Remove .Environment.
+            object@model$terms <- .replace_environment(object@model$terms)
+            
+            # Set is_trimmed to TRUE.
+            object@is_trimmed <- TRUE
+            
+            # Default method for models that lack a more specific method.
+            return(object)
+          })

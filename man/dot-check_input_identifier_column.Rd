@@ -12,7 +12,8 @@
   include_features = NULL,
   other_id_column = NULL,
   outcome_column = NULL,
-  col_type
+  col_type,
+  check_stringency = "strict"
 )
 }
 \arguments{
@@ -43,6 +44,18 @@ takes precedence, provided that there is no overlap between the two.}
 
 \item{col_type}{Character string indicating the type of column, i.e. \code{sample}
 or \code{batch}.}
+
+\item{check_stringency}{Specifies stringency of various checks. This is mostly:
+\itemize{
+\item \code{strict}: default value used for \code{summon_familiar}. Thoroughly checks
+input data. Used internally for checking development data.
+\item \code{external_warn}: value used for \code{extract_data} and related methods. Less
+stringent checks, but will warn for possible issues. Used internally for
+checking data for evaluation and explanation.
+\item \code{external}: value used for external methods such as \code{predict}. Less
+stringent checks, particularly for identifier and outcome columns, which may
+be completely absent. Used internally for \code{predict}.
+}}
 }
 \description{
 This function checks whether an identifier column is consistent, i.e. appears

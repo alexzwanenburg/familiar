@@ -56,25 +56,34 @@
                               ...){
 
   # Initialise list of file paths
-  file_paths      <- list()
+  file_paths <- list()
   
   # Read project directory; if none is provided through the configuration file
   # or the function input, defer to the R temp directory
-  project_dir <- .parse_arg(x_config=config$paths$project_dir, x_var=project_dir,
-                            var_name="project_dir", type="character",
-                            optional=TRUE, default=NULL)
+  project_dir <- .parse_arg(x_config=config$paths$project_dir,
+                            x_var=project_dir,
+                            var_name="project_dir",
+                            type="character",
+                            optional=TRUE,
+                            default=NULL)
   
   if(!is.null(project_dir)) {
     project_dir <- normalizePath(project_dir, mustWork=TRUE)
     file_paths$is_temporary <- FALSE
+    
   } else {
-    project_dir <- normalizePath(file.path(tempdir(), "familiar"), mustWork=FALSE)
+    temporary_directory <- file.path(tempdir(), "familiar", stringi::stri_rand_strings(1, 8))
+    project_dir <- normalizePath(temporary_directory, mustWork=FALSE)
     file_paths$is_temporary <- TRUE
   }
   
   # Read experiment directory path and create the directory if required
-  experiment_dir <- .parse_arg(x_config=config$paths$experiment_dir, x_var=experiment_dir, var_name="experiment_dir",
-                               type="character", optional=TRUE, default="")
+  experiment_dir <- .parse_arg(x_config=config$paths$experiment_dir,
+                               x_var=experiment_dir,
+                               var_name="experiment_dir",
+                               type="character",
+                               optional=TRUE,
+                               default="")
   
   # Determine if the experiment directory is relative to the project directory,
   # or if it is its own path.
@@ -89,42 +98,50 @@
     experiment_dir <- normalizePath(file.path(project_dir, experiment_dir), mustWork=FALSE)
   }
   
-  file_paths$experiment_dir    <- experiment_dir
-  if(!dir.exists(file_paths$experiment_dir)){ dir.create(file_paths$experiment_dir, recursive=TRUE) }
+  file_paths$experiment_dir <- experiment_dir
+  if(!dir.exists(file_paths$experiment_dir)) dir.create(file_paths$experiment_dir, recursive=TRUE)
   
   # Log file - set as global variable as well
-  file_paths$log_file          <- normalizePath(file.path(experiment_dir, "log.txt"), mustWork=FALSE)
+  if(!file_paths$is_temporary) file_paths$log_file <- normalizePath(file.path(experiment_dir, "log.txt"), mustWork=FALSE)
+  
+  # Assign to global environment.
   assign("log_file", file_paths$log_file, envir=familiar_global_env)
   
   # Directory for iterations
-  file_paths$iterations_dir    <- normalizePath(experiment_dir, mustWork=FALSE)
-  if(!dir.exists(file_paths$iterations_dir)){ dir.create(file_paths$iterations_dir) }
+  file_paths$iterations_dir <- normalizePath(experiment_dir, mustWork=FALSE)
+  if(!dir.exists(file_paths$iterations_dir)) dir.create(file_paths$iterations_dir)
   
   # Directory for pre-processing
-  file_paths$process_data_dir  <- normalizePath(experiment_dir, mustWork=FALSE)
-  if(!dir.exists(file_paths$process_data_dir)){ dir.create(file_paths$process_data_dir) }
+  file_paths$process_data_dir <- normalizePath(experiment_dir, mustWork=FALSE)
+  if(!dir.exists(file_paths$process_data_dir)) dir.create(file_paths$process_data_dir)
   
   # Directory for feature selection
-  file_paths$fs_dir            <- normalizePath(file.path(experiment_dir, "variable_importance"),mustWork=FALSE)
-  if(!dir.exists(file_paths$fs_dir)){ dir.create(file_paths$fs_dir) }
+  file_paths$fs_dir <- normalizePath(file.path(experiment_dir, "variable_importance"),mustWork=FALSE)
+  if(!dir.exists(file_paths$fs_dir)) dir.create(file_paths$fs_dir)
   
   # Directory and files for model building
-  file_paths$mb_dir            <- normalizePath(file.path(experiment_dir, "trained_models"), mustWork=FALSE)
-  if(!dir.exists(file_paths$mb_dir)){ dir.create(file_paths$mb_dir) }
+  file_paths$mb_dir <- normalizePath(file.path(experiment_dir, "trained_models"), mustWork=FALSE)
+  if(!dir.exists(file_paths$mb_dir)) dir.create(file_paths$mb_dir)
   
-  # Directory for familiarData and familiarDataCollection objects
-  file_paths$fam_data_dir    <- normalizePath(file.path(experiment_dir, "familiar_data"), mustWork=FALSE)
-  if(!dir.exists(file_paths$fam_data_dir)) { dir.create(file_paths$fam_data_dir) }
-  file_paths$fam_coll_dir    <- normalizePath(file.path(experiment_dir, "familiar_collections"), mustWork=FALSE)
-  if(!dir.exists(file_paths$fam_coll_dir)) { dir.create(file_paths$fam_coll_dir) }
+  # Directory for familiarData objects
+  file_paths$fam_data_dir <- normalizePath(file.path(experiment_dir, "familiar_data"), mustWork=FALSE)
+  if(!dir.exists(file_paths$fam_data_dir)) dir.create(file_paths$fam_data_dir)
+  
+  # Directory for familiarDataCollection objects
+  file_paths$fam_coll_dir <- normalizePath(file.path(experiment_dir, "familiar_collections"), mustWork=FALSE)
+  if(!dir.exists(file_paths$fam_coll_dir)) dir.create(file_paths$fam_coll_dir)
   
   # Create results directory
-  file_paths$results_dir     <- normalizePath(file.path(experiment_dir, "results"), mustWork=FALSE)
-  if(!dir.exists(file_paths$results_dir)) { dir.create(file_paths$results_dir) }
+  file_paths$results_dir <- normalizePath(file.path(experiment_dir, "results"), mustWork=FALSE)
+  if(!dir.exists(file_paths$results_dir)) dir.create(file_paths$results_dir)
   
   # Data file location
-  data_file <- .parse_arg(x_config=config$paths$data_file, x_var=data_file, var_name="data_file",
-                          type="character_list", optional=TRUE, default=NULL)
+  data_file <- .parse_arg(x_config=config$paths$data_file,
+                          x_var=data_file,
+                          var_name="data_file",
+                          type="character_list",
+                          optional=TRUE,
+                          default=NULL)
   
   if(!is.null(data_file)) {
     # Iterate over data file(s) to determine the full path
@@ -145,7 +162,7 @@
   }
   
   if(file_paths$is_temporary){
-    logger.message(paste0("Configuration: A temporary R directory is created for the analysis: ", tempdir()))
+    logger.message(paste0("Configuration: A temporary R directory is created for the analysis: ", temporary_directory))
   }
   
   return(file_paths)
@@ -179,7 +196,9 @@
   settings <- list()
   
   # Experiment and data settings
-  settings$data <- do.call(.parse_experiment_settings, args=append(list("config"=config$data), list(...)))
+  settings$data <- do.call(.parse_experiment_settings,
+                           args=c(list("config"=config$data),
+                                  list(...)))
 
   return(settings)
 }
@@ -280,6 +299,18 @@
 #'   bounds for bandit problems. in Artificial intelligence and statistics
 #'   592–600 (2012).
 #'
+#'   1. Jamieson, K. & Talwalkar, A. Non-stochastic Best Arm Identification and
+#'   Hyperparameter Optimization. in Proceedings of the 19th International
+#'   Conference on Artificial Intelligence and Statistics (eds. Gretton, A. &
+#'   Robert, C. C.) vol. 51 240–248 (PMLR, 2016).
+#'
+#'   1. Gramacy, R. B. laGP: Large-Scale Spatial Modeling via Local Approximate
+#'   Gaussian Processes in R. Journal of Statistical Software 72, 1–46 (2016)
+#'
+#'   1. Sparapani, R., Spanbauer, C. & McCulloch, R. Nonparametric Machine
+#'   Learning and Efficient Computation with Bayesian Additive Regression Trees:
+#'   The BART R Package. Journal of Statistical Software 97, 1–66 (2021)
+#'
 #'   1. Davison, A. C. & Hinkley, D. V. Bootstrap methods and their application.
 #'   (Cambridge University Press, 1997).
 #'
@@ -296,72 +327,83 @@
 .parse_general_settings <- function(settings, config=NULL, data, ...){
   
   # Computational setup settings
-  settings$run <- do.call(.parse_setup_settings, args=append(list("config"=config$run), list(...)))
+  settings$run <- strict.do.call(.parse_setup_settings,
+                                 args=c(list("config"=config$run),
+                                        list(...)))
   
-  # Remove outcome_type, development_batch_id and parallel from ... This prevents an error caused by
-  # multiple matching arguments.
+  # Remove outcome_type, development_batch_id and parallel from ... This
+  # prevents an error caused by multiple matching arguments.
   dots <- list(...)
   dots$parallel <- NULL
   dots$outcome_type <- NULL
-  dots$development_batch_id <- NULL
-  dots$hpo_metric <- NULL
-  dots$vimp_aggregation_method <- NULL
-  dots$vimp_aggregation_rank_threshold <- NULL
   
   # Pre-processing settings
-  settings$prep <- do.call(.parse_preprocessing_settings,
-                           args=append(list("config"=config$preprocessing,
+  settings$prep <- strict.do.call(.parse_preprocessing_settings,
+                                  args=c(list("config"=config$preprocessing,
+                                              "data"=data,
+                                              "parallel"=settings$run$parallel,
+                                              "outcome_type"=settings$data$outcome_type),
+                                         dots))
+  
+  # Feature selection settings
+  settings$fs <- strict.do.call(.parse_feature_selection_settings,
+                                args=c(list("config"=config$feature_selection,
                                             "data"=data,
                                             "parallel"=settings$run$parallel,
                                             "outcome_type"=settings$data$outcome_type),
                                        dots))
   
-  # Feature selection settings
-  settings$fs <- do.call(.parse_feature_selection_settings,
-                         args=append(list("config"=config$feature_selection,
-                                          "data"=data,
-                                          "parallel"=settings$run$parallel,
-                                          "outcome_type"=settings$data$outcome_type),
-                                     dots))
-  
   # Model development settings
-  settings$mb <- do.call(.parse_model_development_settings,
-                         args=append(list("config"=config$model_development,
-                                          "data"=data,
-                                          "parallel"=settings$run$parallel,
-                                          "outcome_type"=settings$data$outcome_type),
-                                     dots))
+  settings$mb <- strict.do.call(.parse_model_development_settings,
+                                args=c(list("config"=config$model_development,
+                                            "data"=data,
+                                            "parallel"=settings$run$parallel,
+                                            "outcome_type"=settings$data$outcome_type),
+                                       dots))
   
   # Hyperparameter optimisation settings
-  settings$hpo <- do.call(.parse_hyperparameter_optimisation_settings,
-                          args=append(list("config"=config$hyperparameter_optimisation,
-                                           "parallel"=settings$run$parallel,
-                                           "outcome_type"=settings$data$outcome_type),
-                                      dots))
-
+  settings$hpo <- strict.do.call(.parse_hyperparameter_optimisation_settings,
+                                 args=c(list("config"=config$hyperparameter_optimisation,
+                                             "parallel"=settings$run$parallel,
+                                             "outcome_type"=settings$data$outcome_type),
+                                        dots))
+  
+  # Remove development_batch_id, hpo_metric, vimp_aggregation_method and
+  # vimp_aggregation_rank_threshold from ... This prevents an error caused by
+  # multiple matching arguments.
+  dots$development_batch_id <- NULL
+  dots$hpo_metric <- NULL
+  dots$vimp_aggregation_method <- NULL
+  dots$vimp_aggregation_rank_threshold <- NULL
+  
   # Evaluation settings
-  settings$eval <- do.call(.parse_evaluation_settings,
-                           args=append(list("config"=config$evaluation,
-                                            "data"=data, "parallel"=settings$run$parallel,
-                                            "outcome_type"=settings$data$outcome_type,
-                                            "hpo_metric"=settings$hpo$hpo_metric,
-                                            "development_batch_id"=settings$data$train_cohorts,
-                                            "vimp_aggregation_method"=settings$fs$aggregation,
-                                            "vimp_aggregation_rank_threshold"=settings$fs$aggr_rank_threshold,
-                                            "prep_cluster_method"=settings$prep$cluster_method,
-                                            "prep_cluster_linkage_method"=settings$prep$cluster_linkage,
-                                            "prep_cluster_cut_method"=settings$prep$cluster_cut_method,
-                                            "prep_cluster_similarity_threshold"=settings$prep$cluster_sim_thresh,
-                                            "prep_cluster_similarity_metric"=settings$prep$cluster_similarity_metric),
-                                       dots))
-
+  settings$eval <- strict.do.call(.parse_evaluation_settings,
+                                  args=c(list("config"=config$evaluation,
+                                              "data"=data,
+                                              "parallel"=settings$run$parallel,
+                                              "outcome_type"=settings$data$outcome_type,
+                                              "hpo_metric"=settings$hpo$hpo_metric,
+                                              "development_batch_id"=settings$data$train_cohorts,
+                                              "vimp_aggregation_method"=settings$fs$aggregation,
+                                              "vimp_aggregation_rank_threshold"=settings$fs$aggr_rank_threshold,
+                                              "prep_cluster_method"=settings$prep$cluster_method,
+                                              "prep_cluster_linkage_method"=settings$prep$cluster_linkage,
+                                              "prep_cluster_cut_method"=settings$prep$cluster_cut_method,
+                                              "prep_cluster_similarity_threshold"=settings$prep$cluster_sim_thresh,
+                                              "prep_cluster_similarity_metric"=settings$prep$cluster_similarity_metric),
+                                         dots))
+  
   # Set the general parallel switch to FALSE if all workflow steps disabled parallel processing.
   settings$run$parallel <- (settings$prep$do_parallel |
                               settings$fs$do_parallel |
                               settings$mb$do_parallel |
                               settings$hpo$do_parallel %in% c("TRUE", "inner", "outer") |
                               settings$eval$do_parallel %in% c("TRUE", "inner", "outer"))
-    
+  
+  # Report any issues with missing packages that have been written to the
+  # backend.
+  .report_missing_package_messages()
+  
   return(settings)
 }
 
@@ -504,17 +546,22 @@
 #'   * `mb`: (required) model building step.
 #'
 #'   * `ev`: (optional) external validation. Note that internal validation due
-#'   to subsampling will always be conducted if the subsamplers create any
-#'   validation data sets.
+#'   to subsampling will always be conducted if the subsampling methods create
+#'   any validation data sets.
 #'
 #'   The different components are linked using `+`.
 #'
-#'   Different subsampling algorithms can be used in conjuction with the basic
+#'   Different subsampling methods can be used in conjunction with the basic
 #'   workflow components:
 #'
+#'   * `bs(x,n)`: (stratified) .632 bootstrap, with `n` the number of
+#'   bootstraps. In contrast to `bt`, feature pre-processing parameters and
+#'   hyperparameter optimisation are conducted on individual bootstraps.
+#'
 #'   * `bt(x,n)`: (stratified) .632 bootstrap, with `n` the number of
-#'   bootstraps. Unlike other subsamplers, no separate pre-processing parameters
-#'   are determined for each bootstrap.
+#'   bootstraps. Unlike `bs` and other subsampling methods, no separate
+#'   pre-processing parameters or optimised hyperparameters will be determined
+#'   for each bootstrap.
 #'
 #'   * `cv(x,n,p)`: (stratified) `n`-fold cross-validation, repeated `p` times.
 #'   Pre-processing parameters are determined for each iteration.
@@ -590,113 +637,200 @@
                                        ...){
   
   settings <- list()
-
-  # Experimental design
-  settings$exp_design <- .parse_arg(x_config=config$experimental_design, x_var=experimental_design,
-                                    var_name="experimental_design", optional=FALSE, type="character")
   
+  ##### experimental_design ####################################################
+  # Experimental design
+  settings$exp_design <- .parse_arg(x_config=config$experimental_design,
+                                    x_var=experimental_design,
+                                    var_name="experimental_design",
+                                    optional=FALSE,
+                                    type="character")
+  
+  ##### imbalance_method #######################################################
   # Class imbalance correction method
   settings$imbalance_method <- .parse_arg(x_config=config$imbalance_correction_method,
-                                          x_var=imbalance_correction_method, var_name="imbalance_correction_method",
-                                          type="character", optional=TRUE, default="full_undersampling")
+                                          x_var=imbalance_correction_method,
+                                          var_name="imbalance_correction_method",
+                                          type="character",
+                                          optional=TRUE,
+                                          default="full_undersampling")
   
-  .check_parameter_value_is_valid(x=settings$imbalance_method, var_name="imbalance_correction_method",
+  .check_parameter_value_is_valid(x=settings$imbalance_method,
+                                  var_name="imbalance_correction_method",
                                   values=c("full_undersampling", "random_undersampling"))
   
+  ##### imbalance_n_partitions #################################################
   # Number of imbalance partitions for random undersampling
   settings$imbalance_n_partitions <- .parse_arg(x_config=config$imbalance_n_partitions,
-                                                x_var=imbalance_n_partitions, var_name="imbalance_n_partitions",
-                                                type="integer", optional=TRUE, default=10)
+                                                x_var=imbalance_n_partitions,
+                                                var_name="imbalance_n_partitions",
+                                                type="integer",
+                                                optional=TRUE,
+                                                default=10)
   
-  .check_number_in_valid_range(x=settings$imbalance_n_partitions, var_name="imbalance_n_partitions", range=c(1, Inf))
+  .check_number_in_valid_range(x=settings$imbalance_n_partitions,
+                               var_name="imbalance_n_partitions",
+                               range=c(1, Inf))
   
+  ##### sample_id_column #######################################################
   # Sample identifier column
-  settings$sample_col <- .parse_arg(x_config=config$sample_id_column, x_var=sample_id_column,
-                                    var_name="sample_id_colum", type="character", optional=TRUE, default=NULL)
+  settings$sample_col <- .parse_arg(x_config=config$sample_id_column,
+                                    x_var=sample_id_column,
+                                    var_name="sample_id_colum",
+                                    type="character",
+                                    optional=TRUE,
+                                    default=NULL)
   
   # Update column name
-  if(!is.null(settings$sample_col)){
-    settings$sample_col <- check_column_name(settings$sample_col)
-  }
+  if(!is.null(settings$sample_col)) settings$sample_col <- check_column_name(settings$sample_col)
   
+  ##### batch_id_column ########################################################
   # Batch identifier column
-  settings$batch_col  <- .parse_arg(x_config=config$batch_id_column, x_var=batch_id_column,
-                                    var_name="batch_id_column", type="character", optional=TRUE, default=NULL)
+  settings$batch_col <- .parse_arg(x_config=config$batch_id_column,
+                                   x_var=batch_id_column,
+                                   var_name="batch_id_column",
+                                   type="character",
+                                   optional=TRUE,
+                                   default=NULL)
   
   # Update column name
-  if(!is.null(settings$batch_col)){
-    settings$batch_col <- check_column_name(settings$batch_col)
-  }
+  if(!is.null(settings$batch_col)) settings$batch_col <- check_column_name(settings$batch_col)
   
+  ##### series_id_column #######################################################
   # Series identifier column
-  settings$series_col <- .parse_arg(x_config=config$series_id_column, x_var=series_id_column,
-                                    var_name="series_id_column", type="character", optional=TRUE, default=NULL)
+  settings$series_col <- .parse_arg(x_config=config$series_id_column,
+                                    x_var=series_id_column,
+                                    var_name="series_id_column",
+                                    type="character",
+                                    optional=TRUE,
+                                    default=NULL)
   
-  if(!is.null(settings$series_col)){
-    settings$series_col <- check_column_name(settings$series_col)
-  }
+  if(!is.null(settings$series_col)) settings$series_col <- check_column_name(settings$series_col)
   
+  ##### development_batch_id ###################################################
   # Development cohort identifier
-  settings$train_cohorts <- .parse_arg(x_config=config$development_batch_id, x_var=development_batch_id,
-                                       var_name="development_batch_id", type="character_list", optional=TRUE, default=NULL)
+  settings$train_cohorts <- .parse_arg(x_config=config$development_batch_id,
+                                       x_var=development_batch_id,
+                                       var_name="development_batch_id",
+                                       type="character_list",
+                                       optional=TRUE,
+                                       default=NULL)
   
+  ##### validation_batch_id ####################################################
   # Validation cohort identifier
-  settings$valid_cohorts <- .parse_arg(x_config=config$validation_batch_id, x_var=validation_batch_id,
-                                       var_name="validation_batch_id", type="character_list", optional=TRUE, default=NULL)
+  settings$valid_cohorts <- .parse_arg(x_config=config$validation_batch_id,
+                                       x_var=validation_batch_id,
+                                       var_name="validation_batch_id",
+                                       type="character_list",
+                                       optional=TRUE,
+                                       default=NULL)
   
+  ##### outcome_column #########################################################
   # Outcome column(s)
-  settings$outcome_col <- .parse_arg(x_config=config$outcome_column, x_var=outcome_column,
-                                     var_name="outcome_column", type="character_list", optional=TRUE, default=NULL)
+  settings$outcome_col <- .parse_arg(x_config=config$outcome_column,
+                                     x_var=outcome_column,
+                                     var_name="outcome_column",
+                                     type="character_list",
+                                     optional=TRUE,
+                                     default=NULL)
   
-  if(!is.null(settings$outcome_col)){
-    settings$outcome_col <- check_column_name(settings$outcome_col)
-  }
+  if(!is.null(settings$outcome_col)) settings$outcome_col <- check_column_name(settings$outcome_col)
   
+  ##### outcome_type ###########################################################
   # Outcome type - a check will be done later
-  settings$outcome_type <- .parse_arg(x_config=config$outcome_type, x_var=outcome_type,
-                                      var_name="outcome_type", type="character", optional=TRUE, default=NULL)
+  settings$outcome_type <- .parse_arg(x_config=config$outcome_type,
+                                      x_var=outcome_type,
+                                      var_name="outcome_type",
+                                      type="character",
+                                      optional=TRUE,
+                                      default=NULL)
   
+  ##### outcome_name ###########################################################
   # Outcome name
-  settings$outcome_name <- .parse_arg(x_config=config$outcome_name, x_var=outcome_name,
-                                      var_name="outcome_name", type="character", optional=TRUE, default=NULL)
+  settings$outcome_name <- .parse_arg(x_config=config$outcome_name,
+                                      x_var=outcome_name,
+                                      var_name="outcome_name",
+                                      type="character",
+                                      optional=TRUE,
+                                      default=NULL)
   
+  ##### class_levels ###########################################################
   # Class levels
-  settings$class_levels <- .parse_arg(x_config=config$class_levels, x_var=class_levels,
-                                      var_name="class_levels", type="character_list", optional=TRUE, default=NULL)
+  settings$class_levels <- .parse_arg(x_config=config$class_levels,
+                                      x_var=class_levels,
+                                      var_name="class_levels",
+                                      type="character_list",
+                                      optional=TRUE,
+                                      default=NULL)
   
+  ##### event_indicator ########################################################
   # Event indicator
-  settings$event_indicator <- .parse_arg(x_config=config$event_indicator, x_var=event_indicator,
-                                         var_name="event_indicator", type="character_list", optional=TRUE, default=NULL)
+  settings$event_indicator <- .parse_arg(x_config=config$event_indicator,
+                                         x_var=event_indicator,
+                                         var_name="event_indicator",
+                                         type="character_list",
+                                         optional=TRUE,
+                                         default=NULL)
   
+  ##### censoring_indicator ####################################################
   # Censoring indicator
-  settings$censoring_indicator <- .parse_arg(x_config=config$censoring_indicator, x_var=censoring_indicator,
-                                             var_name="censoring_indicator", type="character_list", optional=TRUE, default=NULL)
+  settings$censoring_indicator <- .parse_arg(x_config=config$censoring_indicator,
+                                             x_var=censoring_indicator,
+                                             var_name="censoring_indicator",
+                                             type="character_list",
+                                             optional=TRUE,
+                                             default=NULL)
   
+  ##### competing_risk_indicator ###############################################
   # Competing risk indicator
-  settings$competing_risk_indicator <- .parse_arg(x_config=config$competing_risk_indicator, x_var=competing_risk_indicator,
-                                                  var_name="competing_risk_indicator", type="character_list", optional=TRUE, default=NULL) 
+  settings$competing_risk_indicator <- .parse_arg(x_config=config$competing_risk_indicator,
+                                                  x_var=competing_risk_indicator,
+                                                  var_name="competing_risk_indicator",
+                                                  type="character_list",
+                                                  optional=TRUE,
+                                                  default=NULL) 
   
+  ##### signature ##############################################################
   # Signature features
-  settings$signature <- .parse_arg(x_config=config$signature, x_var=signature,
-                                   var_name="signature", type="character_list", optional=TRUE, default=NULL)
+  settings$signature <- .parse_arg(x_config=config$signature,
+                                   x_var=signature,
+                                   var_name="signature",
+                                   type="character_list",
+                                   optional=TRUE,
+                                   default=NULL)
   
   if(!is.null(settings$signature)) settings$signature <- check_column_name(settings$signature)
   
+  ##### novelty_features #######################################################
   # Novelty features
-  settings$novelty_features <- .parse_arg(x_config=config$novelty_features, x_var=novelty_features,
-                                          var_name="novelty_features", type="character_list", optional=TRUE, default=NULL)
+  settings$novelty_features <- .parse_arg(x_config=config$novelty_features,
+                                          x_var=novelty_features,
+                                          var_name="novelty_features",
+                                          type="character_list",
+                                          optional=TRUE,
+                                          default=NULL)
   
   if(!is.null(settings$novelty_features)) settings$novelty_features <- check_column_name(settings$novelty_features)
   
+  ##### include_features #######################################################
   # Included features
-  settings$include_features <- .parse_arg(x_config=config$include_features, x_var=include_features,
-                                          var_name="include_features", type="character_list", optional=TRUE, default=NULL)
+  settings$include_features <- .parse_arg(x_config=config$include_features,
+                                          x_var=include_features,
+                                          var_name="include_features",
+                                          type="character_list",
+                                          optional=TRUE,
+                                          default=NULL)
   
   if(!is.null(settings$include_features)) settings$include_features <- check_column_name(settings$include_features)
   
+  ##### exclude_features #######################################################
   # Excluded features
-  settings$exclude_features <- .parse_arg(x_config=config$exclude_features, x_var=exclude_features,
-                                          var_name="exclude_features", type="character_list", optional=TRUE, default=NULL)
+  settings$exclude_features <- .parse_arg(x_config=config$exclude_features,
+                                          x_var=exclude_features,
+                                          var_name="exclude_features",
+                                          type="character_list",
+                                          optional=TRUE,
+                                          default=NULL)
   
   if(!is.null(settings$exclude_features)) settings$exclude_features <- check_column_name(settings$exclude_features)
   
@@ -731,18 +865,12 @@
 #'   copies of the data. This backend ensures that only a single master copy is
 #'   kept in memory. This limits memory usage during parallel processing.
 #'
-#'   Several backend options are available, notably `socket_server`, `rserve`,
-#'   `rserve_coop` and `none` (default). Availability of the backend depends on
-#'   the operating system and package installation. `socket_server` is based on
-#'   the callr package and R sockets, comes with `familiar` and is available for
-#'   any OS. Note the callr currently has an issue that can prevent familiar
-#'   from working correctly (https://github.com/r-lib/callr/issues/151).
-#'   `rserve` requires the RServe package, and only functions correctly under
-#'   Windows. `rserve_coop` requires the RServe_coop package (installable from
-#'   https://github.com/alexzwanenburg/Rserve_coop), but can be compiled against
-#'   any OS. `none` uses the global environment of familiar to store data, and
-#'   is available for any OS. However, `none` requires copying of data to any
-#'   parallel process, and has a larger memory footprint.
+#'   Several backend options are available, notably `socket_server`, and `none`
+#'   (default). `socket_server` is based on the callr package and R sockets,
+#'   comes with `familiar` and is available for any OS. `none` uses the package
+#'   environment of familiar to store data, and is available for any OS.
+#'   However, `none` requires copying of data to any parallel process, and has a
+#'   larger memory footprint.
 #' @param server_port (*optional*) Integer indicating the port on which the
 #'   socket server or RServe process should communicate. Defaults to port 6311.
 #'   Note that ports 0 to 1024 and 49152 to 65535 cannot be used.
@@ -762,55 +890,96 @@
   
   settings <- list()
 
+  ##### parallel ###############################################################
   # Parallelisation master switch
-  settings$parallel <- .parse_arg(x_config=config$parallel, x_var=parallel, var_name="parallel",
-                                  type="logical", optional=TRUE, default=TRUE)
+  settings$parallel <- .parse_arg(x_config=config$parallel,
+                                  x_var=parallel,
+                                  var_name="parallel",
+                                  type="logical",
+                                  optional=TRUE,
+                                  default=TRUE)
   
+  ##### parallel_nr_cores ######################################################
   # Maximum number of cores that a R may use
-  settings$parallel_nr_cores <- .parse_arg(x_config=config$parallel_nr_cores, x_var=parallel_nr_cores,
-                                           var_name="parallel_nr_cores", type="integer", optional=TRUE, default=NULL)
+  settings$parallel_nr_cores <- .parse_arg(x_config=config$parallel_nr_cores,
+                                           x_var=parallel_nr_cores,
+                                           var_name="parallel_nr_cores",
+                                           type="integer",
+                                           optional=TRUE,
+                                           default=NULL)
   
   if(!is.null(settings$parallel_nr_cores)){
-    .check_number_in_valid_range(x=settings$parallel_nr_cores, var_name="parallel_nr_cores", range=c(1, parallel::detectCores()))
+    .check_number_in_valid_range(x=settings$parallel_nr_cores,
+                                 var_name="parallel_nr_cores",
+                                 range=c(1, parallel::detectCores()))
   }
   
   # Set cores to 1 in case parallel processing is disabled.
-  if(!settings$parallel){
-    settings$parallel_nr_cores <- 1L
-  }
+  if(!settings$parallel) settings$parallel_nr_cores <- 1L
   
+  ##### restart_cluster ########################################################
   # Restart clusters
-  settings$restart_cluster <- .parse_arg(x_config=config$restart_cluster, x_var=restart_cluster,
-                                         var_name="restart_cluster", type="logical", optional=TRUE, default=FALSE)
+  settings$restart_cluster <- .parse_arg(x_config=config$restart_cluster,
+                                         x_var=restart_cluster,
+                                         var_name="restart_cluster",
+                                         type="logical",
+                                         optional=TRUE,
+                                         default=FALSE)
   
-  if(!settings$parallel){
-    settings$restart_cluster <- FALSE
-  }
+  if(!settings$parallel) settings$restart_cluster <- FALSE
   
+  ##### cluster_type ###########################################################
   # Define the cluster type
-  settings$cluster_type <- .parse_arg(x_config=config$cluster_type, x_var=cluster_type,
-                                      var_name="cluster_type", type="character", optional=TRUE, default="psock")
+  settings$cluster_type <- .parse_arg(x_config=config$cluster_type,
+                                      x_var=cluster_type,
+                                      var_name="cluster_type",
+                                      type="character",
+                                      optional=TRUE,
+                                      default="psock")
   
-  .check_parameter_value_is_valid(settings$cluster_type, var_name="cluster_type",
+  .check_parameter_value_is_valid(settings$cluster_type,
+                                  var_name="cluster_type",
                                   values=c("psock", "fork", "mpi", "nws", "sock", "none"))
   
-  if(!settings$parallel){
-    settings$cluster_type <- "none"
-  }
+  if(!settings$parallel) settings$cluster_type <- "none"
   
   .check_cluster_type_availability(cluster_type=settings$cluster_type)
+    
+  if(settings$cluster_type != "none"){
+    require_package(x="microbenchmark",
+                    purpose="to make use of optimised parallel processing",
+                    message_type="backend_warning")
+  }
   
+  ##### backend_type ###########################################################
   # Data server backend - this is os- and package-dependent
-  settings$backend_type <- .parse_arg(x_config=config$backend_type, x_var=backend_type, var_name="backend_type",
-                                      type="character", optional=TRUE, default="none")
+  settings$backend_type <- .parse_arg(x_config=config$backend_type,
+                                      x_var=backend_type,
+                                      var_name="backend_type",
+                                      type="character",
+                                      optional=TRUE,
+                                      default="none")
   
-  .check_backend_type_availability(backend_type=settings$backend_type)
+  .check_parameter_value_is_valid(settings$backend_type, var_name="backend_type",
+                                  values=.get_available_backend_types())
   
+  require_package(x=.required_packages_backend(settings$backend_type),
+                  purpose="to use the requested backend (", settings$backend_type, ")",
+                  message_type="backend_error")
+  
+  ##### server_port ############################################################
   # RServe communications port
-  settings$server_port <- .parse_arg(x_config=config$server_port, x_var=server_port, var_name="server_port",
-                                     type="integer", optional=TRUE, default=6311L)
+  settings$server_port <- .parse_arg(x_config=config$server_port,
+                                     x_var=server_port,
+                                     var_name="server_port",
+                                     type="integer",
+                                     optional=TRUE,
+                                     default=6311L)
   
-  .check_number_in_valid_range(x=settings$server_port, var_name="server_port", range=c(1025, 49151))
+  .check_number_in_valid_range(x=settings$server_port,
+                               var_name="server_port",
+                               range=c(1025, 49151))
+  
   return(settings)
 }
 
@@ -1282,7 +1451,10 @@
 #'
 #' @md
 #' @keywords internal
-.parse_preprocessing_settings <- function(config=NULL, data, parallel, outcome_type,
+.parse_preprocessing_settings <- function(config=NULL,
+                                          data,
+                                          parallel,
+                                          outcome_type,
                                           feature_max_fraction_missing=waiver(),
                                           sample_max_fraction_missing=waiver(),
                                           filter_method=waiver(),
@@ -1309,135 +1481,243 @@
   
   settings <- list()
   
+  ##### feature_max_fraction_missing ###########################################
   # Maximum fraction of data points missing for inclusion of a feature
   settings$feature_max_fraction_missing <- .parse_arg(x_config=config$feature_max_fraction_missing,
-                                                      x_var=feature_max_fraction_missing, var_name="feature_max_fraction_missing",
-                                                      type="numeric", optional=TRUE, default=0.30)
+                                                      x_var=feature_max_fraction_missing,
+                                                      var_name="feature_max_fraction_missing",
+                                                      type="numeric",
+                                                      optional=TRUE,
+                                                      default=0.30)
   
   .check_number_in_valid_range(x=settings$feature_max_fraction_missing,
-                               var_name="feature_max_fraction_missing", range=c(0.0, 0.95))
+                               var_name="feature_max_fraction_missing",
+                               range=c(0.0, 0.95))
   
-
-    # Maximum fraction of features missing for inclusion of a subject
+  
+  ##### sample_max_fraction_missing ############################################
+  # Maximum fraction of features missing for inclusion of a subject
   settings$sample_max_fraction_missing <- .parse_arg(x_config=config$sample_max_fraction_missing,
-                                                     x_var=sample_max_fraction_missing, var_name="sample_max_fraction_missing",
-                                                     type="numeric", optional=TRUE, default=0.30)
+                                                     x_var=sample_max_fraction_missing,
+                                                     var_name="sample_max_fraction_missing",
+                                                     type="numeric",
+                                                     optional=TRUE,
+                                                     default=0.30)
   
   .check_number_in_valid_range(x=settings$sample_max_fraction_missing,
-                               var_name="sample_max_fraction_missing", range=c(0.0, 0.95))
+                               var_name="sample_max_fraction_missing",
+                               range=c(0.0, 0.95))
   
-  
+  ##### filter_method ##########################################################
   # Univariate filter methods
-  settings$filter_method <- .parse_arg(x_config=config$filter_method, x_var=filter_method, var_name="filter_method",
-                                       type="character_list", optional=TRUE, default="none")
+  settings$filter_method <- .parse_arg(x_config=config$filter_method,
+                                       x_var=filter_method,
+                                       var_name="filter_method",
+                                       type="character_list",
+                                       optional=TRUE,
+                                       default="none")
   
-  .check_parameter_value_is_valid(x=settings$filter_method, var_name="filter_method",
+  .check_parameter_value_is_valid(x=settings$filter_method,
+                                  var_name="filter_method",
                                   values=c("none", "low_variance", "univariate_test", "robustness"))
   
+  if(outcome_type == "multinomial" & "univariate_test" %in% settings$filter_method){
+    # The VGAM package is required for univariate tests with multinomial
+    # endpoints.
+    if(!require_package(x="VGAM",
+                        purpose="to filter features using univariate tests",
+                        message_type="backend_warning")){
+      
+      # If the VGAM package is not present, avoid the univariate test.
+      settings$filter_method <- setdiff(settings$filter_method, "univariate_test")
+      if(length(settings$filter_method) == 0) settings$filter_method <- "none"
+    }
+  }
   
+  ##### univariate_test_threshold ##############################################
   # Univariate model filter threshold value
-  settings$univar_threshold <- .parse_arg(x_config=config$univariate_test_threshold, x_var=univariate_test_threshold,
-                                          var_name="univariate_test_threshold", type="numeric", optional=TRUE, default=0.20)
+  settings$univar_threshold <- .parse_arg(x_config=config$univariate_test_threshold,
+                                          x_var=univariate_test_threshold,
+                                          var_name="univariate_test_threshold",
+                                          type="numeric",
+                                          optional=TRUE,
+                                          default=0.20)
   
-  .check_number_in_valid_range(x=settings$univar_threshold, var_name="univariate_test_threshold", range=c(0.0, 1.0), closed=c(FALSE, TRUE))
+  .check_number_in_valid_range(x=settings$univar_threshold,
+                               var_name="univariate_test_threshold",
+                               range=c(0.0, 1.0),
+                               closed=c(FALSE, TRUE))
   
-  
+  ##### univariate_test_threshold_metric #######################################
   # Univariate model threshold metric
-  settings$univar_metric <- .parse_arg(x_config=config$univariate_test_threshold_metric, x_var=univariate_test_threshold_metric,
-                                       var_name="univariate_test_threshold_metric", type="character", optional=TRUE,
+  settings$univar_metric <- .parse_arg(x_config=config$univariate_test_threshold_metric,
+                                       x_var=univariate_test_threshold_metric,
+                                       var_name="univariate_test_threshold_metric",
+                                       type="character",
+                                       optional=TRUE,
                                        default="p_value")
   
-  .check_parameter_value_is_valid(x=settings$univar_metric, var_name="univariate_test_threshold_metric", values=c("p_value", "q_value"))
+  .check_parameter_value_is_valid(x=settings$univar_metric,
+                                  var_name="univariate_test_threshold_metric",
+                                  values=c("p_value", "q_value"))
   
-  # If the qvalue package is not available, switch to p_value if necessary
-  if(!is_package_installed(name="qvalue", verbose=FALSE) & settings$univar_metric == "q_value" &
-     "univar_test" %in% settings$filter_method){
-    stop(paste("The qvalue package is not installed. Please install qvalue from Bioconductor",
-               "to be able to use q_value as the univariate test threshold metric during",
-               "preprocessing."))
+  # If the qvalue package is not installed, use p-values instead.
+  if(settings$univar_metric == "q_value"){
+    if(!require_package(x="qvalue",
+                        purpose="to use q-values as a metric for univariate feature tests",
+                        message_type="backend_warning")){
+      settings$univar_metric <- "p_value"
+    }
   }
   
-  
-  # Maximum feature set size after univariate regression models
-  settings$univar_feat_set_size <- .parse_arg(x_config=config$univariate_test_max_feature_set_size, x_var=univariate_test_max_feature_set_size,
-                                              var_name="univariate_test_max_feature_set_size", type="integer", optional=TRUE, default=NULL)
+  ##### univariate_test_max_feature_set_size ###################################
+  # Maximum feature set size after univariate regression models.
+  settings$univar_feat_set_size <- .parse_arg(x_config=config$univariate_test_max_feature_set_size,
+                                              x_var=univariate_test_max_feature_set_size,
+                                              var_name="univariate_test_max_feature_set_size",
+                                              type="integer",
+                                              optional=TRUE,
+                                              default=NULL)
   
   if(!is.null(settings$univar_feat_set_size)){
-    .check_number_in_valid_range(x=settings$univar_feat_set_size, var_name="univariate_test_max_feature_set_size", range=c(1, Inf))
+    .check_number_in_valid_range(x=settings$univar_feat_set_size,
+                                 var_name="univariate_test_max_feature_set_size",
+                                 range=c(1, Inf))
   }
   
-  
-  # Minimum amount of variance for inclusion of feature
+  ##### low_var_minimum_variance_threshold #####################################
+  # Minimum amount of variance for inclusion of feature.
   if("low_variance" %in% settings$filter_method){
-    settings$low_var_threshold <- .parse_arg(x_config=config$low_var_minimum_variance_threshold, x_var=low_var_minimum_variance_threshold,
-                                             var_name="low_var_minimum_variance_threshold", type="numeric", optional=FALSE)
+    settings$low_var_threshold <- .parse_arg(x_config=config$low_var_minimum_variance_threshold,
+                                             x_var=low_var_minimum_variance_threshold,
+                                             var_name="low_var_minimum_variance_threshold",
+                                             type="numeric",
+                                             optional=FALSE)
     
-    .check_number_in_valid_range(x=settings$low_var_threshold, var_name="low_var_minimum_variance_threshold", range=c(0.0, Inf))
+    .check_number_in_valid_range(x=settings$low_var_threshold,
+                                 var_name="low_var_minimum_variance_threshold",
+                                 range=c(0.0, Inf))
   }
   
-  
+  ##### low_var_max_feature_set_size ###########################################
   # Maximum feature set size after variance thresholding
-  settings$low_var_max_feature_set_size <- .parse_arg(x_config=config$low_var_max_feature_set_size, x_var=low_var_max_feature_set_size,
-                                                      var_name="low_var_max_feature_set_size", type="integer", optional=TRUE, default=NULL)
+  settings$low_var_max_feature_set_size <- .parse_arg(x_config=config$low_var_max_feature_set_size,
+                                                      x_var=low_var_max_feature_set_size,
+                                                      var_name="low_var_max_feature_set_size",
+                                                      type="integer",
+                                                      optional=TRUE,
+                                                      default=NULL)
   
   if(!is.null(settings$low_var_max_feature_set_size)){
-    .check_number_in_valid_range(x=settings$low_var_max_feature_set_size, var_name="low_var_max_feature_set_size", range=c(1, Inf))
+    .check_number_in_valid_range(x=settings$low_var_max_feature_set_size,
+                                 var_name="low_var_max_feature_set_size",
+                                 range=c(1, Inf))
   }
   
+  ##### robustness_icc_type ####################################################
   # Intraclass correlation coefficient (ICC) type for robustness analysis
-  settings$robustness_icc_type <- .parse_arg(x_config=config$robustness_icc_type, x_var=robustness_icc_type, var_name="robustness_icc_type",
-                                             type="character", optional=TRUE, default="1")
+  settings$robustness_icc_type <- .parse_arg(x_config=config$robustness_icc_type,
+                                             x_var=robustness_icc_type,
+                                             var_name="robustness_icc_type",
+                                             type="character",
+                                             optional=TRUE,
+                                             default="1")
   
-  .check_parameter_value_is_valid(x=settings$robustness_icc_type, var_name="robustness_icc_type",
+  .check_parameter_value_is_valid(x=settings$robustness_icc_type,
+                                  var_name="robustness_icc_type",
                                   values=.get_available_icc_types())
   
-  
-  # ICC parameter to use for thresholding. Can be icc (estimated icc), icc_low (lower edge of the icc confidence interval), icc_panel (estimated panel icc), icc_panel_low (lower edge of the panel icc confidence interval)
-  settings$robustness_threshold_param <- .parse_arg(x_config=config$robustness_threshold_metric, x_var=robustness_threshold_metric,
-                                                    var_name="robustness_threshold_metric", type="character", optional=TRUE,
+  ##### robustness_threshold_metric ############################################
+  # ICC parameter to use for thresholding. Can be icc (estimated icc), icc_low
+  # (lower edge of the icc confidence interval), icc_panel (estimated panel
+  # icc), icc_panel_low (lower edge of the panel icc confidence interval)
+  settings$robustness_threshold_param <- .parse_arg(x_config=config$robustness_threshold_metric,
+                                                    x_var=robustness_threshold_metric,
+                                                    var_name="robustness_threshold_metric",
+                                                    type="character",
+                                                    optional=TRUE,
                                                     default="icc_low")
   
-  .check_parameter_value_is_valid(x=settings$robustness_threshold_param, var_name="robustness_threshold_metric",
+  .check_parameter_value_is_valid(x=settings$robustness_threshold_param,
+                                  var_name="robustness_threshold_metric",
                                   values=c("icc", "icc_low", "icc_panel", "icc_panel_low"))
   
   
+  ##### robustness_threshold_value #############################################
   # ICC value for thresholding.
-  settings$robustness_threshold_value <- .parse_arg(x_config=config$robustness_threshold_value, x_var=robustness_threshold_value,
-                                                    var_name="robustness_threshold_value", type="numeric", optional=TRUE, default=0.70)
+  settings$robustness_threshold_value <- .parse_arg(x_config=config$robustness_threshold_value,
+                                                    x_var=robustness_threshold_value,
+                                                    var_name="robustness_threshold_value",
+                                                    type="numeric",
+                                                    optional=TRUE,
+                                                    default=0.70)
   
-  .check_number_in_valid_range(x=settings$robustness_threshold_value, var_name="robustness_threshold_value", range=c(-Inf, 1.0))
+  .check_number_in_valid_range(x=settings$robustness_threshold_value,
+                               var_name="robustness_threshold_value",
+                               range=c(-Inf, 1.0))
   
   
+  ##### imputation_method ######################################################
   # Data imputation method. For datasets smaller than 100 features we use lasso,
   # and simple imputation is used otherwise.
   default_imputation_method <- ifelse(get_n_features(data, outcome_type=outcome_type) < 100, "lasso", "simple")
   
-  settings$imputation_method <- .parse_arg(x_config=config$imputation_method, x_var=imputation_method,
-                                           var_name="imputation_method", type="character", optional=TRUE, default=default_imputation_method)
+  settings$imputation_method <- .parse_arg(x_config=config$imputation_method,
+                                           x_var=imputation_method,
+                                           var_name="imputation_method",
+                                           type="character", optional=TRUE,
+                                           default=default_imputation_method)
   
-  .check_parameter_value_is_valid(x=settings$imputation_method, var_name="imputation_method", values=c("simple", "lasso"))
-
+  .check_parameter_value_is_valid(x=settings$imputation_method,
+                                  var_name="imputation_method",
+                                  values=c("simple", "lasso"))
   
+  if(settings$imputation_method == "lasso"){
+    # If glmnet is not installed, use simple imputation.
+    if(!require_package(x="glmnet",
+                        purpose="to impute data using lasso regression",
+                        message_type="backend_warning")){
+      settings$imputation_method <- "simple"
+    }
+  }
+  
+  ##### transformation_method ##################################################
   # Transformation method
-  settings$transform_method <- .parse_arg(x_config=config$transformation_method, x_var=transformation_method,
-                                          var_name="transformation_method", type="character", optional=TRUE, default="yeo_johnson")
+  settings$transform_method <- .parse_arg(x_config=config$transformation_method,
+                                          x_var=transformation_method,
+                                          var_name="transformation_method",
+                                          type="character",
+                                          optional=TRUE,
+                                          default="yeo_johnson")
   
-  .check_parameter_value_is_valid(x=settings$transform_method, var_name="transformation_method",
+  .check_parameter_value_is_valid(x=settings$transform_method,
+                                  var_name="transformation_method",
                                   values=.get_available_transformation_methods())
   
+  ##### normalisation_method ###################################################
   # Normalisation method
-  settings$normalisation_method <- .parse_arg(x_config=config$normalisation_method, x_var=normalisation_method,
-                                              var_name="normalisation_method", type="character", optional=TRUE, default="standardisation")
+  settings$normalisation_method <- .parse_arg(x_config=config$normalisation_method,
+                                              x_var=normalisation_method,
+                                              var_name="normalisation_method",
+                                              type="character",
+                                              optional=TRUE,
+                                              default="standardisation")
   
-  .check_parameter_value_is_valid(x=settings$normalisation_method, var_name="normalisation_method",
+  .check_parameter_value_is_valid(x=settings$normalisation_method,
+                                  var_name="normalisation_method",
                                   values=.get_available_normalisation_methods())
-
+  
+  ##### batch_normalisation_method #############################################
   # Batch normalisation method
-  settings$batch_normalisation_method <- .parse_arg(x_config=config$batch_normalisation_method, x_var=batch_normalisation_method,
-                                                    var_name="batch_normalisation_method", type="character", optional=TRUE,
+  settings$batch_normalisation_method <- .parse_arg(x_config=config$batch_normalisation_method,
+                                                    x_var=batch_normalisation_method,
+                                                    var_name="batch_normalisation_method",
+                                                    type="character",
+                                                    optional=TRUE,
                                                     default="none")
   
-  .check_parameter_value_is_valid(x=settings$batch_normalisation_method, var_name="batch_normalisation_method",
+  .check_parameter_value_is_valid(x=settings$batch_normalisation_method,
+                                  var_name="batch_normalisation_method",
                                   values=.get_available_batch_normalisation_methods())
   
   # If the batch normalisation method is combat, pre-normalisation of the
@@ -1447,62 +1727,136 @@
     settings$normalisation_method <- "standardisation"
   }
   
+  ##### cluster_method #########################################################
   # Feature clustering
-  settings$cluster_method <- .parse_arg(x_config=config$cluster_method, x_var=cluster_method,
-                                        var_name="cluster_method", type="character", optional=TRUE, default="hclust")
+  settings$cluster_method <- .parse_arg(x_config=config$cluster_method,
+                                        x_var=cluster_method,
+                                        var_name="cluster_method",
+                                        type="character",
+                                        optional=TRUE,
+                                        default="hclust")
   
+  # Check that the cluster package is installed, and revert to if none.
+  if(!settings$cluster_method %in% c("none", "hclust")){
+    if(!require_package(x="cluster",
+                        purpose="to cluster similar features together",
+                        message_type="backend_warning")){
+      
+      settings$cluster_method <- "hclust"
+    }
+  }
+  
+  # Advise to install the fastcluster package.
+  if(settings$cluster_method == "hclust"){
+    require_package(x="fastcluster",
+                    purpose="to create clusters faster",
+                    message_type="backend_warning")
+  }
+  
+  ##### cluster_linkage ########################################################
   # Feature cluster linkage method
-  settings$cluster_linkage <- .parse_arg(x_config=config$cluster_linkage_method, x_var=cluster_linkage_method,
-                                         var_name="cluster_linkage_method", type="character", optional=TRUE, default="average")
-
+  settings$cluster_linkage <- .parse_arg(x_config=config$cluster_linkage_method,
+                                         x_var=cluster_linkage_method,
+                                         var_name="cluster_linkage_method",
+                                         type="character",
+                                         optional=TRUE,
+                                         default="average")
+  
+  ##### cluster_cut_method #####################################################
   # Feature cluster cut method
   default_cluster_cut_method <- ifelse(settings$cluster_method == "pam", "silhouette", "fixed_cut")
-  settings$cluster_cut_method <- .parse_arg(x_config=config$cluster_cut_method, x_var=cluster_cut_method,
-                                            var_name="cluster_cut_method", type="character", optional=TRUE, default=default_cluster_cut_method)
+  settings$cluster_cut_method <- .parse_arg(x_config=config$cluster_cut_method,
+                                            x_var=cluster_cut_method,
+                                            var_name="cluster_cut_method",
+                                            type="character",
+                                            optional=TRUE,
+                                            default=default_cluster_cut_method)
   
-  # Feature similarity metric which expresses some sort of correlation between a pair of features
-  settings$cluster_similarity_metric <- .parse_arg(x_config=config$cluster_similarity_metric, x_var=cluster_similarity_metric,
-                                                   var_name="cluster_similarity_metric", type="character", optional=TRUE, default="mcfadden_r2")
+  if(settings$cluster_cut_method == "dynamic_cut"){
+    if(!require_package(x="dynamicTreeCut",
+                        purpose="to cut dendrograms dynamically",
+                        message_type="backend_warning")){
+      
+      settings$cluster_cut_method <- "fixed_cut"
+    }
+  }
   
-  # Feature cluster similarity that determines the similarity threshold for features to be considered part of one cluster.
-  # Should be expressed in terms of the similarity metric, e.g. 0.8 for spearman would consider all features that have a pairwise correlation of 0.8 and over to belong to a cluster.
-  settings$cluster_sim_thresh <- .parse_arg(x_config=config$cluster_similarity_threshold, x_var=cluster_similarity_threshold,
-                                            var_name="cluster_similarity_threshold", type="numeric", optional=TRUE, default=NULL)
+  ##### cluster_similarity_metric ##############################################
+  #Feature similarity metric which expresses some sort of correlation between a
+  #pair of features.
+  settings$cluster_similarity_metric <- .parse_arg(x_config=config$cluster_similarity_metric,
+                                                   x_var=cluster_similarity_metric,
+                                                   var_name="cluster_similarity_metric",
+                                                   type="character",
+                                                   optional=TRUE,
+                                                   default="mcfadden_r2")
+  
+  if(settings$cluster_similarity_metric %in% c("mcfadden_r2", "cox_snell_r2", "nagelkerke_r2")){
+    if(!require_package(x="VGAM",
+                        purpose=paste0("to compute log-likelihood pseudo R2 similarity using the ", settings$cluster_similarity_metric, " metric"),
+                        message_type="backend_warning")){
+      
+      settings$cluster_similarity_metric <- "spearman"
+    }
+  }
+  
+  ##### cluster_similarity_threshold ###########################################
+  #Feature cluster similarity that determines the similarity threshold for
+  #features to be considered part of one cluster. Should be expressed in terms
+  #of the similarity metric, e.g. 0.8 for spearman would consider all features
+  #that have a pairwise correlation of 0.8 and over to belong to a cluster.
+  settings$cluster_sim_thresh <- .parse_arg(x_config=config$cluster_similarity_threshold,
+                                            x_var=cluster_similarity_threshold,
+                                            var_name="cluster_similarity_threshold",
+                                            type="numeric",
+                                            optional=TRUE,
+                                            default=NULL)
   
   if(is.null(settings$cluster_sim_thresh)){
     if(settings$cluster_cut_method %in% c("fixed_cut")){
-      # Fixed cut requires stringent defaults, otherwise non-sense clusters will be produced
+      # Fixed cut requires stringent defaults, otherwise non-sense clusters will
+      # be produced.
       if(settings$cluster_similarity_metric %in% c("mcfadden_r2")){
         settings$cluster_sim_thresh <- 0.30
+        
       } else if(settings$cluster_similarity_metric %in% c("cox_snell_r2", "nagelkerke_r2")){
         settings$cluster_sim_thresh <- 0.75
+        
       } else {
         settings$cluster_sim_thresh <- 0.90
       }
+      
     } else {
-      # The similarity threshold is also used to determine if any clusters could potentially
-      # be found. The threshold is set low so that other cut methods can be explored.
+      # The similarity threshold is also used to determine if any clusters could
+      # potentially be found. The threshold is set low so that other cut methods
+      # can be explored.
       if(settings$cluster_similarity_metric %in% c("mcfadden_r2")){
         settings$cluster_sim_thresh <- 0.05
+        
       } else if(settings$cluster_similarity_metric %in% c("cox_snell_r2", "nagelkerke_r2")) {
         settings$cluster_sim_thresh <- 0.40
+        
       } else {
         settings$cluster_sim_thresh <- 0.50
       }
     }
   }
   
-  
+  ##### cluster_representation_method ##########################################
   # Method to select the feature that represents the cluster
-  settings$cluster_repr_method <- .parse_arg(x_config=config$cluster_representation_method, x_var=cluster_representation_method,
-                                             var_name="cluster_representation_method", type="character", optional=TRUE, default="best_predictor")
+  settings$cluster_repr_method <- .parse_arg(x_config=config$cluster_representation_method,
+                                             x_var=cluster_representation_method,
+                                             var_name="cluster_representation_method",
+                                             type="character",
+                                             optional=TRUE,
+                                             default="best_predictor")
   
-  # Partioning around medioids only allows the use of medioids for representation 
-  if(settings$cluster_method == "pam"){
-    settings$cluster_repr_method <- "medioid"
-  }
+  # Partioning around medioids only allows the use of medioids for
+  # representation.
+  if(settings$cluster_method == "pam") settings$cluster_repr_method <- "medioid"
   
-  # If mean is used, this requires the data to have some kind of standardisation with centering at 0.
+  # If mean is used, this requires the data to have some kind of standardisation
+  # with centering at 0.
   if(settings$cluster_repr_method %in% c("mean")){
     if(!settings$normalisation_method %in% c("standardisation", "standardisation_trim", "standardisation_winsor", "quantile")){
       warning(paste0("When computing the meta-feature for a cluster using the mean value of co-clustered features, ",
@@ -1513,7 +1867,6 @@
       # Replace by standardisation_winsor
       settings$normalisation_method <- "standardisation"
     }
-    
   }
   
   # Perform a check on all methods.
@@ -1523,18 +1876,24 @@
                             cluster_similarity_threshold=settings$cluster_sim_thresh,
                             cluster_similarity_metric=settings$cluster_similarity_metric,
                             cluster_representation_method=settings$cluster_repr_method,
-                            var_type="cluster")
+                            var_type="cluster",
+                            test_required_packages=FALSE)
   
-  
+  ##### parallel_preprocessing #################################################
   # Parallel processing
-  settings$do_parallel <- .parse_arg(x_config=config$parallel_preprocessing, x_var=parallel_preprocessing,
-                                     var_name="parallel_preprocessing", type="logical", optional=TRUE, default=TRUE)
+  settings$do_parallel <- .parse_arg(x_config=config$parallel_preprocessing,
+                                     x_var=parallel_preprocessing,
+                                     var_name="parallel_preprocessing",
+                                     type="logical",
+                                     optional=TRUE,
+                                     default=TRUE)
 
   # Disable if parallel is FALSE.
-  if(!parallel){ settings$do_parallel <- FALSE }
+  if(!parallel) settings$do_parallel <- FALSE
 
   return(settings)
 }
+
 
 
 #' Internal function for parsing settings related to feature selection
@@ -1568,7 +1927,10 @@
 #'   variable importances over different data subsets, e.g. bootstraps. The
 #'   following methods can be selected:
 #'
-#'   * `mean` (default): Use the mean rank of a feature over the subsets to
+#'   * `none`: Don't aggregate ranks, but rather aggregate the variable
+#'   importance scores themselves.
+#'
+#'   * `mean`: Use the mean rank of a feature over the subsets to
 #'   determine the aggregated feature rank.
 #'
 #'   * `median`: Use the median rank of a feature over the subsets to determine
@@ -1588,8 +1950,8 @@
 #'   of highly ranked features as measure for the aggregated feature rank (Haury
 #'   et al., 2011).
 #'
-#'   * `borda`: Use the borda count as measure for the aggregated feature rank
-#'   (Wald et al., 2012).
+#'   * `borda` (default): Use the borda count as measure for the aggregated
+#'   feature rank (Wald et al., 2012).
 #'
 #'   * `enhanced_borda`: Use an occurrence frequency-weighted borda count as
 #'   measure for the aggregated feature rank (Wald et al., 2012).
@@ -1600,6 +1962,8 @@
 #'   * `enhanced_truncated_borda`: Apply both the enhanced borda method and the
 #'   truncated borda method and use the resulting borda count as the aggregated
 #'   feature rank.
+#'
+#'   The *feature selection methods* vignette provides additional information.
 #'
 #' @param vimp_aggregation_rank_threshold (*optional*) The threshold used to
 #'   define the subset of highly important features. If not set, this threshold
@@ -1630,7 +1994,10 @@
 #'   signatures. PLoS One 6, e28210 (2011).
 #' @md
 #' @keywords internal
-.parse_feature_selection_settings <- function(config=NULL, data, parallel, outcome_type,
+.parse_feature_selection_settings <- function(config=NULL,
+                                              data,
+                                              parallel,
+                                              outcome_type,
                                               fs_method=waiver(),
                                               fs_method_parameter=waiver(),
                                               vimp_aggregation_method=waiver(),
@@ -1639,40 +2006,67 @@
                                               ...){
   settings <- list()
   
+  ##### fs_method ##############################################################
   # Feature selection methods
-  settings$fs_methods <- .parse_arg(x_config=config$fs_method, x_var=fs_method,
-                                    var_name="fs_method", type="character_list", optional=FALSE)
+  settings$fs_methods <- .parse_arg(x_config=config$fs_method,
+                                    x_var=fs_method,
+                                    var_name="fs_method",
+                                    type="character_list",
+                                    optional=FALSE)
   
-  sapply(settings$fs_methods, vimp.check_outcome_type, outcome_type=outcome_type)
+  sapply(settings$fs_methods, .check_vimp_outcome_type, outcome_type=outcome_type)
   
-  
+  ##### fs_method_parameter ####################################################
   # Feature selection parameters
-  settings$param <- .parse_arg(x_config=config$fs_method_parameter, x_var=fs_method_parameter,
-                               var_name="fs_method_parameter", type="list", optional=TRUE, default=list())
+  settings$param <- .parse_arg(x_config=config$fs_method_parameter,
+                               x_var=fs_method_parameter,
+                               var_name="fs_method_parameter",
+                               type="list",
+                               optional=TRUE,
+                               default=list())
   
-  settings$param <- .parse_hyperparameters(data=data, parameter_list=settings$param,
-                                           outcome_type=outcome_type, fs_method=settings$fs_methods)
-
+  settings$param <- .parse_hyperparameters(data=data,
+                                           parameter_list=settings$param,
+                                           outcome_type=outcome_type,
+                                           fs_method=settings$fs_methods)
+  
+  ##### vimp_aggregation_method ################################################
   # Variable importance aggregation methods
-  settings$aggregation <- .parse_arg(x_config=config$vimp_aggregation_method, x_var=vimp_aggregation_method,
-                                     var_name="vimp_aggregation_method", type="character", optional=TRUE, default="mean")
+  settings$aggregation <- .parse_arg(x_config=config$vimp_aggregation_method,
+                                     x_var=vimp_aggregation_method,
+                                     var_name="vimp_aggregation_method",
+                                     type="character",
+                                     optional=TRUE,
+                                     default="borda")
   
   rank.check_aggregation_method(method=settings$aggregation)
   
+  ##### vimp_aggregation_rank_threshold ########################################
   # Variable importance rank threshold (used by some aggregation methods)
-  settings$aggr_rank_threshold <- .parse_arg(x_config=config$vimp_aggregation_rank_threshold, x_var=vimp_aggregation_rank_threshold,
-                                             var_name="vimp_aggregation_rank_threshold", type="integer", optional=TRUE, default=5L)
+  settings$aggr_rank_threshold <- .parse_arg(x_config=config$vimp_aggregation_rank_threshold,
+                                             x_var=vimp_aggregation_rank_threshold,
+                                             var_name="vimp_aggregation_rank_threshold",
+                                             type="integer",
+                                             optional=TRUE,
+                                             default=5L)
   
   if(!is.null(settings$aggr_rank_threshold)){
-    .check_number_in_valid_range(x=settings$aggr_rank_threshold, var_name="vimp_aggregation_rank_threshold", range=c(1, Inf))
+    .check_number_in_valid_range(x=settings$aggr_rank_threshold,
+                                 var_name="vimp_aggregation_rank_threshold",
+                                 range=c(1, Inf))
   }
   
+  ##### parallel_feature_selection #############################################
   # Parallelisation switch for feature selection
-  settings$do_parallel <- .parse_arg(x_config=config$parallel_feature_selection, x_var=parallel_feature_selection,
-                                     var_name="parallel_feature_selection", type="logical", optional=TRUE, default=TRUE)
+  settings$do_parallel <- .parse_arg(x_config=config$parallel_feature_selection,
+                                     x_var=parallel_feature_selection,
+                                     var_name="parallel_feature_selection",
+                                     type="logical",
+                                     optional=TRUE,
+                                     default=TRUE)
   
   # Disable if parallel is FALSE.
-  if(!parallel){ settings$do_parallel <- FALSE }
+  if(!parallel) settings$do_parallel <- FALSE
   
   return(settings)
 }
@@ -1702,6 +2096,11 @@
 #'   Hyperparameters provided by the user are never optimised. However, if more
 #'   than one value is provided for a single hyperparameter, optimisation will
 #'   be conducted using these values.
+#' @param novelty_detector (*optional*) Specify the algorithm used for training
+#'   a novelty detector. This detector can be used to identify
+#'   out-of-distribution data prospectively.
+#' @param detector_parameters (*optional*) List lists containing hyperparameters
+#'   for novelty detectors. Currently not used.
 #' @param parallel_model_development (*optional*) Enable parallel processing for
 #'   the model development workflow. Defaults to `TRUE`. When set to `FALSE`,
 #'   this will disable the use of parallel processing while developing models,
@@ -1712,35 +2111,75 @@
 #' @return List of parameters related to model development.
 #' @md
 #' @keywords internal
-.parse_model_development_settings <- function(config=NULL, data, parallel, outcome_type,
+.parse_model_development_settings <- function(config=NULL,
+                                              data,
+                                              parallel,
+                                              outcome_type,
                                               learner=waiver(),
                                               hyperparameter=waiver(),
+                                              novelty_detector=waiver(),
+                                              detector_parameters=waiver(),
                                               parallel_model_development=waiver(),
                                               ...){
   settings <- list()
   
+  ##### learner ################################################################
   # Learners for model development
   settings$learners <- .parse_arg(x_config=config$learner, x_var=learner,
-                                  var_name="learner", type="character_list", optional=FALSE)
+                                  var_name="learner",
+                                  type="character_list",
+                                  optional=FALSE)
   
-  sapply(settings$learners, learner.check_outcome_type, outcome_type=outcome_type)
+  sapply(settings$learners, .check_learner_outcome_type, outcome_type=outcome_type)
   
-  
+  ##### hyperparameters ########################################################
   # Model hyperparameters
-  settings$hyper_param <- .parse_arg(x_config=config$hyperparameter, x_var=hyperparameter,
-                                     var_name="hyperparameter", type="list", optional=TRUE, default=list())
+  settings$hyper_param <- .parse_arg(x_config=config$hyperparameter,
+                                     x_var=hyperparameter,
+                                     var_name="hyperparameter",
+                                     type="list",
+                                     optional=TRUE,
+                                     default=list())
   
+  settings$hyper_param <- .parse_hyperparameters(data=data,
+                                                 parameter_list=settings$hyper_param,
+                                                 outcome_type=outcome_type,
+                                                 learner=settings$learners)
   
-  # sapply(settings$learners, learner.check_model_hyperparameters, user_param=settings$hyper_param, outcome_type=outcome_type)
-  settings$hyper_param <- .parse_hyperparameters(data=data, parameter_list=settings$hyper_param,
-                                                 outcome_type=outcome_type, learner=settings$learners)
+  ##### novelty_detector #######################################################
+  settings$novelty_detector <- .parse_arg(x_config=config$novelty_detector,
+                                          x_var=novelty_detector,
+                                          var_name="novelty_detector",
+                                          type="character",
+                                          optional=TRUE,
+                                          default="isolation_forest")
   
+  .check_novelty_detector_available(detector=settings$novelty_detector)
+  
+  ##### detector_parameters ####################################################
+  settings$detector_parameters <- .parse_arg(x_config=config$detector_parameters,
+                                             x_var=detector_parameters,
+                                             var_name="detector_parameters",
+                                             type="list",
+                                             optional=TRUE,
+                                             default=list())
+  
+  settings$detector_parameters <- .parse_hyperparameters(data=data,
+                                                         parameter_list=settings$detector_parameters,
+                                                         detector=settings$novelty_detector,
+                                                         outcome_type="unsupervised")
+  
+  ##### parallel_model_development #############################################
   # Parallelisation switch for model building
-  settings$do_parallel <- .parse_arg(x_config=config$parallel_model_development, x_var=parallel_model_development,
-                                     var_name="parallel_model_development", type="logical", optional=TRUE, default=TRUE)
+  settings$do_parallel <- .parse_arg(x_config=config$parallel_model_development,
+                                     x_var=parallel_model_development,
+                                     var_name="parallel_model_development",
+                                     type="logical",
+                                     optional=TRUE,
+                                     default=TRUE)
   
   # Disable if parallel is FALSE
-  if(!parallel) { settings$do_parallel <- FALSE }
+  if(!parallel) settings$do_parallel <- FALSE
   
   return(settings)
 }
@@ -1762,7 +2201,7 @@
 #'   combinations of hyperparameters. The effect of the hyperparameters is then
 #'   assessed by comparing in-bag and out-of-bag model performance.
 #'
-#'   The default number of bootstraps is `200`. Hyperparameter optimisation may
+#'   The default number of bootstraps is `50`. Hyperparameter optimisation may
 #'   finish before exhausting the set of bootstraps.
 #' @param optimisation_determine_vimp (*optional*) Logical value that indicates
 #'   whether variable importance is determined separately for each of the
@@ -1808,7 +2247,7 @@
 #'   data than the incumbent *best* set of hyperparameters, it replaces the
 #'   incumbent set at the end of the intensify iteration.
 #'
-#'   The default number of intensify iteration is `30`. Iterations may be
+#'   The default number of intensify iteration is `20`. Iterations may be
 #'   stopped early if the incumbent set of hyperparameters remains the same for
 #'   `smbo_stop_convergent_iterations` iterations, or performance improvement is
 #'   minimal. This behaviour is suppressed during the first 4 iterations to
@@ -1828,30 +2267,15 @@
 #'   the set of `optimisation_bootstraps` bootstraps as data for the initial
 #'   SMBO step and the steps in each intensify iteration.
 #'
-#'   The default value is `5`. The value cannot be larger than
-#'   `optimisation_bootstraps`. Values of `1` or `2` may hinder exploration by
-#'   optimistically or pessimistically biasing parameter sets on a single or two
-#'   bootstraps.
+#'   The default value is `3`. The value cannot be larger than
+#'   `optimisation_bootstraps`.
 #' @param smbo_intensify_steps (*optional*) The number of steps in each SMBO
 #'   intensify iteration. Each step a new set of `smbo_step_bootstraps`
 #'   bootstraps is drawn and used in the run-off between the incumbent *best*
 #'   hyperparameter combination and its challengers.
 #'
-#'   The default value is `3`. Higher numbers allow for a more detailed
+#'   The default value is `5`. Higher numbers allow for a more detailed
 #'   comparison, but this comes with added computational cost.
-#' @param smbo_intensify_stop_p_value (*optional*) The p-value threshold which
-#'   is used to test the hypothesis that a challenger hyperparameter set and the
-#'   incumbent set have the same performance. A paired Wilcoxon test is
-#'   performed, with the alternative hypothesis that the challenger set is less
-#'   performant.
-#'
-#'   The p-value from the test is compared to `smbo_intensify_stop_p_value` and
-#'   if it is found lower, the challenger set is eliminated and not used in any
-#'   further intensify steps during the current iteration. Elimination of sets
-#'   of hyperparameters that are unlikely to lead to better models improves
-#'   computational efficiency.
-#'
-#'   The default value is `0.05`.
 #'
 #' @param optimisation_metric (*optional*) One or more metrics used to compute
 #'   performance scores. See the vignette on performance metrics for the
@@ -1893,26 +2317,42 @@
 #'   * `stronger_balance`: Computes \eqn{s'_{oob} - 2.0 |s'_{oob} - s'_{ib}|}.
 #'   Stronger penalty than in the `balanced` objective.
 #'
+#' @param hyperparameter_learner (*optional*) Any point in the hyperparameter
+#'   space has a single, scalar, optimisation score value that is *a priori*
+#'   unknown. During the optimisation process, the algorithm samples from the
+#'   hyperparameter space by selecting hyperparameter sets and computing the
+#'   optimisation score value for one or more bootstraps. For each
+#'   hyperparameter set the resulting values are distributed around the actual
+#'   value. The learner indicated by `hyperparameter_learner` is then used to
+#'   infer optimisation score estimates for unsampled parts of the
+#'   hyperparameter space.
+#'
+#'   The following models are available:
+#'
+#'   * `bayesian_additive_regression_trees` or `bart`: Uses Bayesian Additive
+#'   Regression Trees (Sparapani et al., 2021) for inference. Unlike standard
+#'   random forests, BART allows for estimating posterior distributions directly
+#'   and can extrapolate.
+#'
+#'   * `gaussian_process` (default): Creates a localised approximate Gaussian
+#'   process for inference (Gramacy, 2016). This allows for better scaling than
+#'   deterministic Gaussian Processes.
+#'
+#'   * `random_forest`: Creates a random forest for inference. Originally
+#'   suggested by Hutter et al. (2011). A weakness of random forests is their
+#'   lack of extrapolation beyond observed values, which limits their usefulness
+#'   in exploiting promising areas of hyperparameter space.
+#'
+#'   * `random` or `random_search`: Forgoes the use of models to steer
+#'   optimisation. Instead, a random search is performed.
+#'
 #' @param acquisition_function (*optional*) The acquisition function influences
-#'   how new hyperparameter sets are selected.
-#'
-#'   Any point in the hyperparameter space has a single, scalar, optimisation
-#'   score value that is *a priori* unknown. During the optimisation process,
-#'   the algorithm samples from the hyperparameter space by selecting
-#'   hyperparameter sets and computing the optimisation score value for one or
-#'   more bootstraps. For each hyperparameter set the resulting values are
-#'   distributed around the actual value. A random forest is then trained using
-#'   all the resulting values.
-#'
-#'   The random forest maps positions in the hyperparameter space to the 1D real
-#'   space of optimisation values. The distribution of optimisation values at
-#'   each point is captured by individual decision trees.
-#'
-#'   The algorithm uses the random forest to search the hyperparameter space for
-#'   hyperparameter sets that are either likely better than the best known set
-#'   (*exploitation*) or where there is considerable uncertainty
-#'   (*exploration*). The acquisition function quantifies this (Shahriari et
-#'   al., 2016).
+#'   how new hyperparameter sets are selected. The algorithm uses the model
+#'   learned by the learner indicated by `hyperparameter_learner` to search the
+#'   hyperparameter space for hyperparameter sets that are either likely better
+#'   than the best known set (*exploitation*) or where there is considerable
+#'   uncertainty (*exploration*). The acquisition function quantifies this
+#'   (Shahriari et al., 2016).
 #'
 #'   The following acquisition functions are available, and are described in
 #'   more detail in the *learner algorithms* vignette:
@@ -1930,9 +2370,31 @@
 #'   * `upper_confidence_bound`: This acquisition function is based on the upper
 #'   confidence bound of the distribution (Srinivas et al., 2012).
 #'
-#'   * `bayes_upper_confidence_bound`:This acquisition function is based on the
+#'   * `bayes_upper_confidence_bound`: This acquisition function is based on the
 #'   upper confidence bound of the distribution (Kaufmann et al., 2012).
+#' @param exploration_method (*optional*) Method used to steer exploration in
+#'   post-initialisation intensive searching steps. As stated earlier, each SMBO
+#'   iteration step compares suggested alternative parameter sets with an
+#'   incumbent **best** set in a series of steps. The exploration method
+#'   controls how the set of alternative parameter sets is pruned after each
+#'   step in an iteration. Can be one of the following:
 #'
+#'   * `successive_halving` (default): The set of alternative parameter sets is
+#'   pruned by removing the worst performing half of the sets after each step
+#'   (Jamieson and Talwalkar, 2016).
+#'
+#'   * `stochastic_reject`: The set of alternative parameter sets is pruned by
+#'   comparing the performance of each parameter set with that of the incumbent
+#'   **best** parameter set using a paired Wilcoxon test based on shared
+#'   bootstraps. Parameter sets that perform significantly worse, at an alpha
+#'   level indicated by `smbo_stochastic_reject_p_value`, are pruned.
+#'
+#'   * `none`: The set of alternative parameter sets is not pruned.
+#'
+#' @param smbo_stochastic_reject_p_value (*optional*) The p-value threshold used
+#'   for the `stochastic_reject` exploration method.
+#'
+#'   The default value is `0.05`.
 #' @param parallel_hyperparameter_optimisation (*optional*) Enable parallel
 #'   processing for hyperparameter optimisation. Defaults to `TRUE`. When set to
 #'   `FALSE`, this will disable the use of parallel processing while performing
@@ -1962,9 +2424,23 @@
 #'   1. Kaufmann, E., Cappé, O. & Garivier, A. On Bayesian upper confidence
 #'   bounds for bandit problems. in Artificial intelligence and statistics
 #'   592–600 (2012).
+#'
+#'   1. Jamieson, K. & Talwalkar, A. Non-stochastic Best Arm Identification and
+#'   Hyperparameter Optimization. in Proceedings of the 19th International
+#'   Conference on Artificial Intelligence and Statistics (eds. Gretton, A. &
+#'   Robert, C. C.) vol. 51 240–248 (PMLR, 2016).
+#'
+#'   1. Gramacy, R. B. laGP: Large-Scale Spatial Modeling via Local Approximate
+#'   Gaussian Processes in R. Journal of Statistical Software 72, 1–46 (2016)
+#'
+#'   1. Sparapani, R., Spanbauer, C. & McCulloch, R. Nonparametric Machine
+#'   Learning and Efficient Computation with Bayesian Additive Regression Trees:
+#'   The BART R Package. Journal of Statistical Software 97, 1–66 (2021)
 #' @md
 #' @keywords internal
-.parse_hyperparameter_optimisation_settings <- function(config=NULL, parallel, outcome_type,
+.parse_hyperparameter_optimisation_settings <- function(config=NULL,
+                                                        parallel,
+                                                        outcome_type,
                                                         optimisation_bootstraps=waiver(),
                                                         optimisation_determine_vimp=waiver(),
                                                         smbo_random_initialisation=waiver(),
@@ -1974,111 +2450,231 @@
                                                         smbo_stop_tolerance=waiver(),
                                                         smbo_step_bootstraps=waiver(),
                                                         smbo_intensify_steps=waiver(),
-                                                        smbo_intensify_stop_p_value=waiver(),
+                                                        smbo_stochastic_reject_p_value=waiver(),
                                                         optimisation_function=waiver(),
                                                         optimisation_metric=waiver(),
                                                         acquisition_function=waiver(),
+                                                        exploration_method=waiver(),
+                                                        hyperparameter_learner=waiver(),
                                                         parallel_hyperparameter_optimisation=waiver(),
                                                         ...){
   settings <- list()
   
+  ##### smbo_random_initialisation #############################################
   # Randomisation of initial parameter grid
-  settings$hpo_grid_initialisation_method <- .parse_arg(x_config=config$smbo_random_initialisation, x_var=smbo_random_initialisation,
-                                                        var_name="smbo_random_initialisation", type="character", optional=TRUE, default="fixed_subsample")
+  settings$hpo_grid_initialisation_method <- .parse_arg(x_config=config$smbo_random_initialisation,
+                                                        x_var=smbo_random_initialisation,
+                                                        var_name="smbo_random_initialisation",
+                                                        type="character",
+                                                        optional=TRUE,
+                                                        default="fixed_subsample")
   
-  .check_parameter_value_is_valid(x=settings$hpo_grid_initialisation_method, var_name="smbo_random_initialisation",
+  .check_parameter_value_is_valid(x=settings$hpo_grid_initialisation_method,
+                                  var_name="smbo_random_initialisation",
                                   values=c("fixed_subsample", "fixed", "random"))
   
+  ##### smbo_n_random_sets #####################################################
   # Number of samples in the initial parameter grid.
-  settings$hpo_n_grid_initialisation_samples <- .parse_arg(x_config=config$smbo_n_random_sets, x_var=smbo_n_random_sets,
-                                                           var_name="smbo_n_random_sets", type="integer", optional=TRUE, default=100)
+  settings$hpo_n_grid_initialisation_samples <- .parse_arg(x_config=config$smbo_n_random_sets,
+                                                           x_var=smbo_n_random_sets,
+                                                           var_name="smbo_n_random_sets",
+                                                           type="integer",
+                                                           optional=TRUE,
+                                                           default=100)
   
-  .check_number_in_valid_range(x=settings$hpo_n_grid_initialisation_samples, var_name="smbo_n_random_sets", range=c(10, Inf))
+  .check_number_in_valid_range(x=settings$hpo_n_grid_initialisation_samples,
+                               var_name="smbo_n_random_sets",
+                               range=c(10, Inf))
   
+  ##### optimisation_determine_vimp ############################################
   # Variable importance for the bootstraps
-  settings$hpo_determine_vimp <- .parse_arg(x_config=config$optimisation_determine_vimp, x_var=optimisation_determine_vimp,
-                                            var_name="optimisation_determine_vimp", type="logical", optional=TRUE, default=TRUE)
+  settings$hpo_determine_vimp <- .parse_arg(x_config=config$optimisation_determine_vimp,
+                                            x_var=optimisation_determine_vimp,
+                                            var_name="optimisation_determine_vimp",
+                                            type="logical",
+                                            optional=TRUE,
+                                            default=TRUE)
   
-  
+  ##### optimisation_bootstraps ################################################
   # Maximum number of bootstraps for hyperparameter evaluation
-  settings$hpo_max_bootstraps <- .parse_arg(x_config=config$optimisation_bootstraps, x_var=optimisation_bootstraps,
-                                            var_name="optimisation_bootstraps", type="integer", optional=TRUE, default=200)
+  settings$hpo_max_bootstraps <- .parse_arg(x_config=config$optimisation_bootstraps,
+                                            x_var=optimisation_bootstraps,
+                                            var_name="optimisation_bootstraps",
+                                            type="integer",
+                                            optional=TRUE,
+                                            default=50)
   
-  .check_number_in_valid_range(x=settings$hpo_max_bootstraps, var_name="optimisation_bootstraps", range=c(20, Inf))
+  .check_number_in_valid_range(x=settings$hpo_max_bootstraps,
+                               var_name="optimisation_bootstraps",
+                               range=c(20, Inf))
   
-  
+  ##### max_smbo_iterations ####################################################
   # Maximum number of SMBO iterations before stopping
-  settings$hpo_smbo_iter_max <- .parse_arg(x_config=config$max_smbo_iterations, x_var=max_smbo_iterations,
-                                           var_name="max_smbo_iterations", type="integer", optional=TRUE, default=20)
+  settings$hpo_smbo_iter_max <- .parse_arg(x_config=config$max_smbo_iterations,
+                                           x_var=max_smbo_iterations,
+                                           var_name="max_smbo_iterations",
+                                           type="integer",
+                                           optional=TRUE,
+                                           default=20)
   
-  .check_number_in_valid_range(x=settings$hpo_smbo_iter_max, var_name="max_smbo_iterations", range=c(1, Inf))
+  .check_number_in_valid_range(x=settings$hpo_smbo_iter_max,
+                               var_name="max_smbo_iterations",
+                               range=c(1, Inf))
   
+  ##### smbo_step_bootstraps ###################################################
+  # Maximum number of bootstrap evaluated initially and during each intensify
+  # step of each SMBO iteration.
+  settings$hpo_bootstraps <- .parse_arg(x_config=config$smbo_step_bootstraps,
+                                        x_var=smbo_step_bootstraps,
+                                        var_name="smbo_step_bootstraps",
+                                        type="integer",
+                                        optional=TRUE,
+                                        default=3)
   
-  # Maximum number of bootstrap evaluated initially and during each intensify step of each SMBO iteration
-  settings$hpo_bootstraps <- .parse_arg(x_config=config$smbo_step_bootstraps, x_var=smbo_step_bootstraps,
-                                        var_name="smbo_step_bootstraps", type="integer", optional=TRUE, default=5)
+  .check_number_in_valid_range(x=settings$hpo_bootstraps,
+                               var_name="smbo_step_bootstraps",
+                               range=c(1, settings$hpo_max_bootstraps))
   
-  .check_number_in_valid_range(x=settings$hpo_bootstraps, var_name="smbo_step_bootstraps", range=c(1, settings$hpo_max_bootstraps))
+  ##### smbo_intensify_steps ###################################################
+  # Maximum number of intensify iterations during each SMBO iteration.
+  settings$hpo_intensify_max_iter <- .parse_arg(x_config=config$smbo_intensify_steps,
+                                                x_var=smbo_intensify_steps,
+                                                var_name="smbo_intensify_steps",
+                                                type="integer",
+                                                optional=TRUE,
+                                                default=5)
   
+  .check_number_in_valid_range(x=settings$hpo_intensify_max_iter,
+                               var_name="smbo_intensify_steps",
+                               range=c(1, Inf))
   
-  # Maximum number of intensify iterations during each SMBO iteration
-  settings$hpo_intensify_max_iter <- .parse_arg(x_config=config$smbo_intensify_steps, x_var=smbo_intensify_steps,
-                                                var_name="smbo_intensify_steps", type="integer", optional=TRUE, default=3)
+  ##### smbo_stochastic_reject_p_value #########################################
+  # Significance level for early stopping of intensity iterations. Only used for
+  # stochastic rejection as an exploration method.
+  settings$hpo_alpha <- .parse_arg(x_config=config$smbo_stochastic_reject_p_value,
+                                   x_var=smbo_stochastic_reject_p_value,
+                                   var_name="smbo_stochastic_reject_p_value",
+                                   type="numeric",
+                                   optional=TRUE,
+                                   default=0.05)
   
-  .check_number_in_valid_range(x=settings$hpo_intensify_max_iter, var_name="smbo_intensify_steps", range=c(1, Inf))
+  .check_number_in_valid_range(x=settings$hpo_alpha,
+                               var_name="smbo_stochastic_reject_p_value",
+                               range=c(0.0, 1.0),
+                               closed=c(FALSE, TRUE))
   
+  ##### smbo_stop_convergent_iterations ########################################
+  # Number of converging iterations before stopping SMBO.
+  settings$hpo_conv_stop <- .parse_arg(x_config=config$smbo_stop_convergent_iterations,
+                                       x_var=smbo_stop_convergent_iterations,
+                                       var_name="smbo_stop_convergent_iterations",
+                                       type="integer",
+                                       optional=TRUE,
+                                       default=3)
 
-  # Significance level for early stopping of intensity iterations
-  settings$hpo_alpha <- .parse_arg(x_config=config$smbo_intensify_stop_p_value, x_var=smbo_intensify_stop_p_value,
-                                   var_name="smbo_intensify_stop_p_value", type="numeric", optional=TRUE, default=0.05)
+  .check_number_in_valid_range(x=settings$hpo_conv_stop,
+                               var_name="smbo_stop_convergent_iterations",
+                               range=c(1, Inf))
   
-  .check_number_in_valid_range(x=settings$hpo_alpha, var_name="smbo_intensify_stop_p_value", range=c(0.0, 1.0), closed=c(FALSE, TRUE))
-  
-  
-  # Number of converging iterations before stopping SMBO
-  settings$hpo_conv_stop <- .parse_arg(x_config=config$smbo_stop_convergent_iterations, x_var=smbo_stop_convergent_iterations,
-                                       var_name="smbo_stop_convergent_iterations", type="integer", optional=TRUE, default=3)
-
-  .check_number_in_valid_range(x=settings$hpo_conv_stop, var_name="smbo_stop_convergent_iterations", range=c(1, Inf))
-  
-  
+  ##### smbo_stop_tolerance ####################################################
   # Convergence tolerance
-  settings$hpo_convergence_tolerance <- .parse_arg(x_config=config$smbo_stop_tolerance, x_var=smbo_stop_tolerance,
-                                                   var_name="smbo_stop_tolerance", type="numeric", optional=TRUE, default=1E-2)
+  settings$hpo_convergence_tolerance <- .parse_arg(x_config=config$smbo_stop_tolerance,
+                                                   x_var=smbo_stop_tolerance,
+                                                   var_name="smbo_stop_tolerance",
+                                                   type="numeric",
+                                                   optional=TRUE,
+                                                   default=1E-2)
   
-  .check_number_in_valid_range(x=settings$hpo_convergence_tolerance, var_name="smbo_stop_tolerance", range=c(0.0, 2.0), closed=c(FALSE, TRUE))
+  .check_number_in_valid_range(x=settings$hpo_convergence_tolerance,
+                               var_name="smbo_stop_tolerance",
+                               range=c(0.0, 2.0),
+                               closed=c(FALSE, TRUE))
   
   
+  ##### optimisation_function ##################################################
   # Objective function
-  settings$hpo_optimisation_function <- .parse_arg(x_config=config$optimisation_function, x_var=optimisation_function,
-                                       var_name="optimisation_function", type="character", optional=TRUE, default="balanced")
+  settings$hpo_optimisation_function <- .parse_arg(x_config=config$optimisation_function,
+                                                   x_var=optimisation_function,
+                                                   var_name="optimisation_function",
+                                                   type="character",
+                                                   optional=TRUE,
+                                                   default="balanced")
   
-  .check_parameter_value_is_valid(x=settings$hpo_optimisation_function, var_name="optimisation_function",
+  .check_parameter_value_is_valid(x=settings$hpo_optimisation_function,
+                                  var_name="optimisation_function",
                                   values=.get_available_optimisation_functions())
   
+  ##### acquisition_function ###################################################
   # Acquisition function
-  settings$hpo_acquisition_function <- .parse_arg(x_config=config$acquisition_function, x_var=acquisition_function,
-                                                  var_name="acquisition_function", type="character", optional=TRUE, default="expected_improvement")
+  settings$hpo_acquisition_function <- .parse_arg(x_config=config$acquisition_function,
+                                                  x_var=acquisition_function,
+                                                  var_name="acquisition_function",
+                                                  type="character",
+                                                  optional=TRUE,
+                                                  default="expected_improvement")
   
-  .check_parameter_value_is_valid(x=settings$hpo_acquisition_function, var_name="acquisition_function",
+  .check_parameter_value_is_valid(x=settings$hpo_acquisition_function,
+                                  var_name="acquisition_function",
                                   values=.get_available_acquisition_functions())
   
+  ##### exploration_method #####################################################
+  # Exploration method
+  settings$hpo_exploration_method <- .parse_arg(x_config=config$exploration_method,
+                                                x_var=exploration_method,
+                                                var_name="exploration_method",
+                                                type="character",
+                                                optional=TRUE,
+                                                default="successive_halving")
+  
+  .check_parameter_value_is_valid(x=settings$hpo_exploration_method,
+                                  var_name="exploration_method",
+                                  values=.get_available_hyperparameter_exploration_methods())
+  
+  ##### optimisation_metric ####################################################
   # Performance metric for hyperparameter optimisation
-  settings$hpo_metric <- .parse_arg(x_config=config$optimisation_metric, x_var=optimisation_metric,
-                                    var_name="optimisation_metric", type="character_list", optional=TRUE, default=NULL)
+  settings$hpo_metric <- .parse_arg(x_config=config$optimisation_metric,
+                                    x_var=optimisation_metric,
+                                    var_name="optimisation_metric",
+                                    type="character_list",
+                                    optional=TRUE,
+                                    default=NULL)
   
   # Set default metric
   if(is.null(settings$hpo_metric)) settings$hpo_metric <- .get_default_metric(outcome_type=outcome_type)
   
   # Check if the metric is ok. Packed into a for loop to enable multi-metric optimisation in the future
-  sapply(settings$hpo_metric, metric.check_outcome_type, outcome_type=outcome_type)
+  sapply(settings$hpo_metric,
+         metric.check_outcome_type,
+         outcome_type=outcome_type)
   
+  ##### hyperparameter_learner #################################################
+  # Hyperparameter learner
+  settings$hpo_hyperparameter_learner <- .parse_arg(x_config=config$hyperparameter_learner,
+                                                    x_var=hyperparameter_learner,
+                                                    var_name="hyperparameter_learner",
+                                                    type="character",
+                                                    optional=TRUE,
+                                                    default="gaussian_process")
   
+  .check_parameter_value_is_valid(x=settings$hpo_hyperparameter_learner,
+                                  var_name="hyperparameter_learner",
+                                  values=.get_available_hyperparameter_learners())
+  
+  require_package(x=.required_packages_hyperparameter_learner(settings$hpo_hyperparameter_learner),
+                  purpose="to use the requested learner (", settings$hpo_hyperparameter_learner, ") for model-based hyperparameter optimisation",
+                  message_type="backend_error")
+  
+  ##### parallel_hyperparameter_optimisation ###################################
   # Parallelisation switch for parallel processing
-  settings$do_parallel <- .parse_arg(x_config=config$parallel_hyperparameter_optimisation, x_var=parallel_hyperparameter_optimisation,
-                                     var_name="parallel_hyperparameter_optimisation", type="character", optional=TRUE, default="TRUE")
+  settings$do_parallel <- .parse_arg(x_config=config$parallel_hyperparameter_optimisation,
+                                     x_var=parallel_hyperparameter_optimisation,
+                                     var_name="parallel_hyperparameter_optimisation",
+                                     type="character",
+                                     optional=TRUE,
+                                     default="TRUE")
   
-  .check_parameter_value_is_valid(x=settings$do_parallel, var_name="parallel_hyperparameter_optimisation",
+  .check_parameter_value_is_valid(x=settings$do_parallel,
+                                  var_name="parallel_hyperparameter_optimisation",
                                   values=c("TRUE", "FALSE", "inner", "outer"))
   
   # Disable if parallel is FALSE
@@ -2136,13 +2732,17 @@
 #'
 #'  * `none`, `false`: no steps are skipped.
 #'
+#'  * `all`, `true`: all steps are skipped.
+#'
 #'  * `auc_data`: data for assessing and plotting the area under the receiver
 #'  operating characteristic curve are not computed.
 #'
 #'  * `calibration_data`: data for assessing and plotting model calibration are
 #'  not computed.
 #'
-#'  * `calibration_info`
+#'  * `calibration_info`: data required to assess calibration, such as baseline
+#'  survival curves, are not collected. These data will still be present in the
+#'  models.
 #'
 #'  * `confusion_matrix`: data for assessing and plotting a confusion matrix are
 #'  not collected.
@@ -2152,7 +2752,7 @@
 #'
 #'  * `feature_expressions`: data for assessing and plotting sample clustering
 #'  are not computed.
-#'  
+#'
 #'  * `feature_similarity`: data for assessing and plotting feature clusters are
 #'  not computed.
 #'
@@ -2160,7 +2760,10 @@
 #'  variable importance are not collected.
 #'
 #'  * `hyperparameters`: data for assessing model hyperparameters are not
-#'  collected.
+#'  collected. These data will still be present in the models.
+#'
+#'  * `ice_data`: data for individual conditional expectation and partial
+#'  dependence plots are not created.
 #'
 #'  * `model_performance`: data for assessing and visualising model performance
 #'  are not created.
@@ -2172,12 +2775,12 @@
 #'  permutation variable importance are not computed.
 #'
 #'  * `prediction_data`: predictions for each sample are not made and exported.
-#'  
-#'  * `risk_stratification_data`: data for assessing and plotting Kaplan-Meier survival
-#'  curves are not collected.
-#'  
-#'  * `risk_stratification_info`: data for assessing stratification into risk groups
-#'  are not computed.
+#'
+#'  * `risk_stratification_data`: data for assessing and plotting Kaplan-Meier
+#'  survival curves are not collected.
+#'
+#'  * `risk_stratification_info`: data for assessing stratification into risk
+#'  groups are not computed.
 #'
 #'  * `univariate_analysis`: data for assessing and plotting univariate feature
 #'  importance are not computed.
@@ -2202,6 +2805,16 @@
 #'
 #'  If unset, the metric in the `optimisation_metric` variable is used.
 #'
+#'@param sample_limit (*optional*) Set the upper limit of the number of samples
+#'  that are used during evaluation steps. Cannot be less than 20.
+#'
+#'  This setting can be specified per data element by providing a parameter
+#'  value in a named list with data elements, e.g.
+#'  `list("sample_similarity"=100, "permutation_vimp"=1000)`.
+#'
+#'  This parameter can be set for the following data elements:
+#'  `sample_similarity` and `ice_data`.
+#'
 #'@param detail_level (*optional*) Sets the level at which results are computed
 #'  and aggregated.
 #'
@@ -2220,10 +2833,10 @@
 #'  ensemble, bootstraps are created so that at least 20 point estimates can be
 #'  made.
 #'
-#'  * `model` (to be implemented): Results are computed at the model level. This
-#'  means that, for example, bias-corrected estimates of model performance are
-#'  assessed by creating (at least) 20 bootstraps and computing the performance
-#'  of the model for each bootstrap.
+#'  * `model`: Results are computed at the model level. This means that, for
+#'  example, bias-corrected estimates of model performance are assessed by
+#'  creating (at least) 20 bootstraps and computing the performance of the model
+#'  for each bootstrap.
 #'
 #'  Note that each level of detail has a different interpretation for bootstrap
 #'  confidence intervals. For `ensemble` and `model` these are the confidence
@@ -2240,13 +2853,13 @@
 #'
 #'  `hybrid` is generally computationally less expensive then `ensemble`, which
 #'  in turn is somewhat less expensive than `model`.
-#'  
-#'  A non-default `detail_level` parameter can be
-#'  specified for separate evaluation steps by providing a parameter value in a
-#'  named list with data elements, e.g. `list("auc_data"="ensemble",
-#'  "model_performance"="hybrid")`. This parameter can be set for the following
-#'  data elements: `auc_data`, `decision_curve_analyis`, `model_performance`,
-#'  `permutation_vimp`, `prediction_data` and `confusion_matrix`.
+#'
+#'  A non-default `detail_level` parameter can be specified for separate
+#'  evaluation steps by providing a parameter value in a named list with data
+#'  elements, e.g. `list("auc_data"="ensemble", "model_performance"="hybrid")`.
+#'  This parameter can be set for the following data elements: `auc_data`,
+#'  `decision_curve_analyis`, `model_performance`, `permutation_vimp`,
+#'  `ice_data`, `prediction_data` and `confusion_matrix`.
 #'
 #'@param estimation_type (*optional*) Sets the type of estimation that should be
 #'  possible. This has the following options:
@@ -2260,15 +2873,14 @@
 #'  * `bootstrap_confidence_interval` or `bci` (default): Bias-corrected
 #'  estimates with bootstrap confidence intervals (Efron and Hastie, 2016). The
 #'  number of point estimates required depends on the `confidence_level`
-#'  parameter, and `familiar` may bootstrap the data to create them. In some
-#'  cases no bootstrap data
+#'  parameter, and `familiar` may bootstrap the data to create them.
 #'
 #'  As with `detail_level`, a non-default `estimation_type` parameter can be
 #'  specified for separate evaluation steps by providing a parameter value in a
 #'  named list with data elements, e.g. `list("auc_data"="bci",
 #'  "model_performance"="point")`. This parameter can be set for the following
 #'  data elements: `auc_data`, `decision_curve_analyis`, `model_performance`,
-#'  `permutation_vimp`, and `prediction_data`.
+#'  `permutation_vimp`, `ice_data`, and `prediction_data`.
 #'
 #'@param aggregate_results (*optional*) Flag that signifies whether results
 #'  should be aggregated during evaluation. If `estimation_type` is
@@ -2423,9 +3035,22 @@
 #'  can afterwards be used to perform stratification on validation data.
 #'
 #'  The following stratification methods are available:
-#'
+#'  
 #'  * `median` (default): The median predicted value in the development cohort
-#'  is used to stratify the samples into two risk groups.
+#'  is used to stratify the samples into two risk groups. For predicted outcome
+#'  values that build a continuous spectrum, the two risk groups in the
+#'  development cohort will be roughly equal in size.
+#'  
+#'  * `mean`: The mean predicted value in the development cohort is used to
+#'  stratify the samples into two risk groups.
+#'  
+#'  * `mean_trim`: As `mean`, but based on the set of predicted values
+#'  where the 5% lowest and 5% highest values are discarded. This reduces the
+#'  effect of outliers.
+#'
+#'  * `mean_winsor`: As `mean`, but based on the set of predicted values where
+#'  the 5% lowest and 5% highest values are winsorised. This reduces the effect
+#'  of outliers.
 #'
 #'  * `fixed`: Samples are stratified based on the sample quantiles of the
 #'  predicted values. These quantiles are defined using the
@@ -2448,30 +3073,6 @@
 #'
 #'  This parameter is only relevant for `survival` outcomes.
 #'
-#'@param stratification_ensemble_method (*optional*) Method for ensembling the
-#'  risk group assignments from different models for the same sample.
-#'
-#'  The following methods are available:
-#'
-#'  * `ensemble_mean`: Risk groups are determined for each sample using the
-#'  threshold values of the different models in the ensemble. The risk groups
-#'  are treated as ordinal and encoded using integer values. The mean of the
-#'  encoded values is computed. The risk group bin containing the mean value is
-#'  then used as the ensemble-based risk group.
-#'
-#'  * `ensemble_mode` (default): Risk groups are determined for each sample
-#'  using the threshold values of the different models in the ensemble. The most
-#'  commonly assigned risk group is then used as the ensemble-based risk group.
-#'
-#'  * `median_threshold`: The median threshold value for each risk group is
-#'  determined from the threshold values of the different models in the
-#'  ensemble. The resulting threshold(s) are then applied to the ensemble
-#'  prediction of a sample to identify the ensemble-based risk group.
-#'
-#'  * `mean_threshold`: Similar to `median_threshold`, but uses the mean
-#'  threshold value for each risk group.
-#'
-#'  This parameter is only relevant for `survival` outcomes.
 #'@param time_max (*optional*) Time point which is used as the benchmark for
 #'  e.g. cumulative risks generated by random forest, or the cutoff for Uno's
 #'  concordance index.
@@ -2522,8 +3123,14 @@
 #'  rank statistics. Comput. Stat. Data Anal. 43, 121–137 (2003).
 #'@md
 #'@keywords internal
-.parse_evaluation_settings <- function(config=NULL, data, parallel, outcome_type, hpo_metric, development_batch_id,
-                                       vimp_aggregation_method, vimp_aggregation_rank_threshold,
+.parse_evaluation_settings <- function(config=NULL,
+                                       data,
+                                       parallel,
+                                       outcome_type,
+                                       hpo_metric,
+                                       development_batch_id,
+                                       vimp_aggregation_method,
+                                       vimp_aggregation_rank_threshold,
                                        prep_cluster_method,
                                        prep_cluster_linkage_method,
                                        prep_cluster_cut_method,
@@ -2533,6 +3140,7 @@
                                        skip_evaluation_elements=waiver(),
                                        ensemble_method=waiver(),
                                        evaluation_metric=waiver(),
+                                       sample_limit=waiver(),
                                        detail_level=waiver(),
                                        estimation_type=waiver(),
                                        aggregate_results=waiver(),
@@ -2562,17 +3170,32 @@
   
   settings <- list()
   
+  ##### pool_only ##############################################################
   # Flag that limits the depth of the evaluation.
-  settings$pool_only <- .parse_arg(x_config=config$evaluate_top_level_only, x_var=evaluate_top_level_only,
-                                   var_name="evaluate_top_level_only", type="logical", optional=TRUE, default=TRUE)
+  settings$pool_only <- .parse_arg(x_config=config$evaluate_top_level_only,
+                                   x_var=evaluate_top_level_only,
+                                   var_name="evaluate_top_level_only",
+                                   type="logical",
+                                   optional=TRUE,
+                                   default=TRUE)
   
+  ##### skip_evaluation_elements ###############################################
   # Specify any specific elements of the evaluation to skip.
-  settings$evaluation_data_elements <- .parse_arg(x_config=config$skip_evaluation_elements, x_var=skip_evaluation_elements,
-                                                  var_name="skip_evaluation_elements", type="character_list", optional=TRUE, default="none")
+  settings$evaluation_data_elements <- .parse_arg(x_config=config$skip_evaluation_elements,
+                                                  x_var=skip_evaluation_elements,
+                                                  var_name="skip_evaluation_elements",
+                                                  type="character_list",
+                                                  optional=TRUE,
+                                                  default="none")
   
   settings$evaluation_data_elements <- tolower(settings$evaluation_data_elements)
-  .check_parameter_value_is_valid(x=settings$evaluation_data_elements, var_name="skip_evaluation_elements",
-                                  values=c(.get_available_data_elements(), "none", "false"))
+  .check_parameter_value_is_valid(x=settings$evaluation_data_elements,
+                                  var_name="skip_evaluation_elements",
+                                  values=c(.get_available_data_elements(), "none", "false", "all", "true"))
+  
+  if(any(settings$evaluation_data_elements %in% c("all", "true"))){
+    settings$evaluation_data_elements <- .get_available_data_elements()
+  }
   
   if(any(settings$evaluation_data_elements %in% c("none", "false"))){
     settings$evaluation_data_elements <- NULL
@@ -2582,24 +3205,100 @@
   settings$evaluation_data_elements <- setdiff(.get_available_data_elements(),
                                                settings$evaluation_data_elements)
   
+  if("calibration_data" %in% settings$evaluation_data_elements){
+    require_package(x="harmonicmeanp",
+                    purpose="to compute p-values for model calibration tests",
+                    message_type="backend_warning")
+  }
   
+  if(length(settings$evaluation_data_elements) == 0) settings$evaluation_data_elements <- NULL
+  
+  # Check whether plotting packages are available if any data elements are
+  # computed.
+  if(!is.null(settings$evaluation_data_element)){
+    require_package(x=..required_plotting_packages(extended=TRUE),
+                    purpose="to create plots",
+                    message_type="backend_warning")
+  }
+  
+  ##### ensemble_method ########################################################
   # Method for ensemble predictions
-  settings$ensemble_method <- .parse_arg(x_config=config$ensemble_method, x_var=ensemble_method,
-                                         var_name="ensemble_method", type="character", optional=TRUE, default="median")
+  settings$ensemble_method <- .parse_arg(x_config=config$ensemble_method,
+                                         x_var=ensemble_method,
+                                         var_name="ensemble_method",
+                                         type="character",
+                                         optional=TRUE,
+                                         default="median")
   
-  .check_parameter_value_is_valid(x=settings$ensemble_method, var_name="ensemble_method",
+  .check_parameter_value_is_valid(x=settings$ensemble_method,
+                                  var_name="ensemble_method",
                                   values=.get_available_ensemble_prediction_methods())
   
-  
+  ##### evaluation_metric ######################################################
   # List of performance metrics for evaluation
-  settings$metric <- .parse_arg(x_config=config$evaluation_metric, x_var=evaluation_metric,
-                                var_name="evaluation_metric", type="character_list", optional=TRUE, default=hpo_metric)
+  settings$metric <- .parse_arg(x_config=config$evaluation_metric,
+                                x_var=evaluation_metric,
+                                var_name="evaluation_metric",
+                                type="character_list",
+                                optional=TRUE,
+                                default=hpo_metric)
   
   sapply(settings$metric, metric.check_outcome_type, outcome_type=outcome_type)
   
+  ##### sample_limit ###########################################################
+  # Number of samples that should be analysed.
+  settings$sample_limit <- .parse_arg(x_config=config$sample_limit,
+                                      x_var=sample_limit,
+                                      var_name="sample_limit",
+                                      type="list",
+                                      optional=TRUE,
+                                      default=list())
+  
+  if(length(settings$sample_limit) == 0){
+    # Default - use method-specific settings.
+    settings$sample_limit <- NULL
+    
+  } else if(length(settings$sample_limit) == 1 & is.null(names(settings$sample_limit))){
+    
+    # Check that the contents are a correctly specified. At least 20 samples
+    # should be present.
+    .check_number_in_valid_range(settings$sample_limit[[1]],
+                                 var_name="sample_limit",
+                                 range=c(20L, Inf))
+    
+    # Add provided detail level to each possible element.
+    settings$sample_limit <- lapply(.get_available_data_elements(check_has_sample_limit=TRUE),
+                                    function(x, sample_limit) (sample_limit),
+                                    sample_limit = settings$sample_limit[[1]])
+    
+    # Add name of respective data elements.
+    names(settings$sample_limit) <- .get_available_data_elements(check_has_sample_limit=TRUE)
+    
+  } else {
+    
+    # Check that the list elements are correctly specified.
+    sapply(names(settings$sample_limit), .check_parameter_value_is_valid,
+           var_name="sample_limit (data element name)",
+           values=.get_available_data_elements(check_has_sample_limit=TRUE))
+    
+    # Check that the list contents are correctly specified.
+    sapply(names(settings$sample_limit), function(element_name, x){
+      
+      .check_number_in_valid_range(x[[element_name]],
+                                   var_name=paste0("sample_limit (", element_name, ")"),
+                                   range=c(20L, Inf))
+      
+    }, x = settings$sample_limit)
+  }
+  
+  ##### detail_level ###########################################################
   # Level at which evaluations are computed.
-  settings$detail_level <- .parse_arg(x_config=config$detail_level, x_var=detail_level,
-                                      var_name="detail_level", type="list", optional=TRUE, default=list())
+  settings$detail_level <- .parse_arg(x_config=config$detail_level,
+                                      x_var=detail_level,
+                                      var_name="detail_level",
+                                      type="list",
+                                      optional=TRUE,
+                                      default=list())
   
   if(length(settings$detail_level) == 0){
     # Default - use method-specific settings.
@@ -2608,7 +3307,8 @@
   } else if(length(settings$detail_level) == 1 & is.null(names(settings$detail_level))){
     
     # Check that the contents are a correctly specified, single string.
-    .check_parameter_value_is_valid(x=settings$detail_level[[1]], var_name="detail_level",
+    .check_parameter_value_is_valid(x=settings$detail_level[[1]],
+                                    var_name="detail_level",
                                     values=c("ensemble", "hybrid", "model"))
     
     # Add provided detail level to each possible element.
@@ -2634,10 +3334,13 @@
     }, x = settings$detail_level)
   }
   
-  
+  ##### estimation_type ########################################################
   # Type of estimation performed.
-  settings$estimation_type <- .parse_arg(x_config=config$estimation_type, x_var=estimation_type,
-                                         var_name="estimation_type", type="list", optional=TRUE, default=list())
+  settings$estimation_type <- .parse_arg(x_config=config$estimation_type,
+                                         x_var=estimation_type,
+                                         var_name="estimation_type",
+                                         type="list", optional=TRUE,
+                                         default=list())
   
   if(length(settings$estimation_type) == 0){
     # Default - use method-specific settings.
@@ -2646,7 +3349,8 @@
   } else if(length(settings$estimation_type) == 1 & is.null(names(settings$estimation_type))){
     
     # Check that the contents are a correctly specified, single string.
-    .check_parameter_value_is_valid(x=settings$estimation_type[[1]], var_name="estimation_type",
+    .check_parameter_value_is_valid(x=settings$estimation_type[[1]],
+                                    var_name="estimation_type",
                                     values=c("point", "bias_correction", "bc", "bootstrap_confidence_interval", "bci"))
     
     # Add provided estimation type to each possible element.
@@ -2672,10 +3376,14 @@
     }, x = settings$estimation_type)
   }
   
-  
+  ##### aggregate_results ######################################################
   # Aggregate results.
-  settings$aggregate_results <- .parse_arg(x_config=config$aggregate_results, x_var=aggregate_results,
-                                           var_name="aggregate_results", type="list", optional=TRUE, default=list())
+  settings$aggregate_results <- .parse_arg(x_config=config$aggregate_results,
+                                           x_var=aggregate_results,
+                                           var_name="aggregate_results",
+                                           type="list",
+                                           optional=TRUE,
+                                           default=list())
   
   if(length(settings$aggregate_results) == 0){
     # Default - use method-specific settings.
@@ -2684,7 +3392,8 @@
   } else if(length(settings$aggregate_results) == 1 & is.null(names(settings$aggregate_results))){
     
     # Check that the contents are a correctly specified, single string.
-    .check_parameter_value_is_valid(x=tolower(settings$aggregate_results[[1]]), var_name="aggregate_results",
+    .check_parameter_value_is_valid(x=tolower(settings$aggregate_results[[1]]),
+                                    var_name="aggregate_results",
                                     values=c("true", "false", "none", "all", "default"))
     
     # Add provided aggregate_results value to each possible element.
@@ -2710,70 +3419,165 @@
     }, x = settings$aggregate_results)
   }
   
+  ##### bootstrap_ci_method ####################################################
   # Bootstrap confidence interval.
-  settings$bootstrap_ci_method <- .parse_arg(x_config=config$bootstrap_ci_method, x_var=bootstrap_ci_method,
-                                             var_name="bootstrap_ci_method", type="character", optional=TRUE, default="percentile")
+  settings$bootstrap_ci_method <- .parse_arg(x_config=config$bootstrap_ci_method,
+                                             x_var=bootstrap_ci_method,
+                                             var_name="bootstrap_ci_method",
+                                             type="character",
+                                             optional=TRUE,
+                                             default="percentile")
   
-  .check_parameter_value_is_valid(x=settings$bootstrap_ci_method, var_name="bootstrap_ci_method",
+  .check_parameter_value_is_valid(x=settings$bootstrap_ci_method,
+                                  var_name="bootstrap_ci_method",
                                   values=.get_available_bootstrap_confidence_interval_methods())
   
+  ##### confidence_level #######################################################
   # Width of the confidence intervals
-  settings$confidence_level <- .parse_arg(x_config=config$confidence_level, x_var=confidence_level,
-                                          var_name="confidence_level", type="numeric", optional=TRUE, default=0.95)
+  settings$confidence_level <- .parse_arg(x_config=config$confidence_level,
+                                          x_var=confidence_level,
+                                          var_name="confidence_level",
+                                          type="numeric",
+                                          optional=TRUE,
+                                          default=0.95)
   
-  .check_number_in_valid_range(x=settings$confidence_level, var_name="confidence_level", range=c(0.0, 1.0), closed=c(FALSE, FALSE))
+  .check_number_in_valid_range(x=settings$confidence_level,
+                               var_name="confidence_level",
+                               range=c(0.0, 1.0),
+                               closed=c(FALSE, FALSE))
   
+  ##### feature_cluster_method #################################################
   # Feature cluster method
-  settings$feature_cluster_method <- .parse_arg(x_config=config$feature_cluster_method, x_var=feature_cluster_method,
-                                                var_name="feature_cluster_method", type="character", optional=TRUE, default=prep_cluster_method)
+  settings$feature_cluster_method <- .parse_arg(x_config=config$feature_cluster_method,
+                                                x_var=feature_cluster_method,
+                                                var_name="feature_cluster_method",
+                                                type="character",
+                                                optional=TRUE,
+                                                default=prep_cluster_method)
   
+  if(any(c("feature_similarity", "univariate_analysis", "feature_expressions", "permutation_vimp") %in% settings$evaluation_data_elements)
+     & !settings$feature_cluster_method %in% c("none", "hclust")){
+    require_package(x="cluster",
+                    purpose="to use feature similarity",
+                    message_type="backend_error")
+  }
+  
+  ##### feature_linkage_method #################################################
   # Feature linkage method
-  settings$feature_linkage_method <- .parse_arg(x_config=config$feature_linkage_method, x_var=feature_linkage_method,
-                                                var_name="feature_linkage_method", type="character", optional=TRUE, default=prep_cluster_linkage_method)
+  settings$feature_linkage_method <- .parse_arg(x_config=config$feature_linkage_method,
+                                                x_var=feature_linkage_method,
+                                                var_name="feature_linkage_method",
+                                                type="character",
+                                                optional=TRUE,
+                                                default=prep_cluster_linkage_method)
   
+  ##### feature_cluster_cut_method #############################################
   # Feature cluster cluster cut method
-  settings$feature_cluster_cut_method <- .parse_arg(x_config=config$feature_cut_method, x_var=feature_cluster_cut_method,
-                                                    var_name="feature_cluster_cut_method", type="character", optional=TRUE, default=prep_cluster_cut_method)
+  settings$feature_cluster_cut_method <- .parse_arg(x_config=config$feature_cut_method,
+                                                    x_var=feature_cluster_cut_method,
+                                                    var_name="feature_cluster_cut_method",
+                                                    type="character",
+                                                    optional=TRUE,
+                                                    default=prep_cluster_cut_method)
   
+  ##### feature_similarity_metric ##############################################
   # Feature similarity metric
-  settings$feature_similarity_metric <- .parse_arg(x_config=config$feature_similarity_metric, x_var=feature_similarity_metric,
-                                                   var_name="feature_similarity_metric", type="character", optional=TRUE, default=prep_cluster_similarity_metric)
+  settings$feature_similarity_metric <- .parse_arg(x_config=config$feature_similarity_metric,
+                                                   x_var=feature_similarity_metric,
+                                                   var_name="feature_similarity_metric",
+                                                   type="character",
+                                                   optional=TRUE,
+                                                   default=prep_cluster_similarity_metric)
   
+  if(any(c("feature_similarity", "univariate_analysis", "feature_expressions", "permutation_vimp") %in% settings$evaluation_data_elements) &
+     settings$feature_similarity_metric %in% c("mcfadden_r2", "cox_snell_r2", "nagelkerke_r2")){
+    if(!require_package(x="VGAM",
+                        purpose=paste0("to compute log-likelihood pseudo R2 similarity using the ", settings$feature_similarity_metric, " metric"),
+                        message_type="backend_warning")){
+      
+      settings$feature_similarity_metric <- "spearman"
+    }
+  }
+  
+  ##### feature_similarity_threshold ###########################################
   # Feature similarity threshold
-  settings$feature_similarity_threshold <- .parse_arg(x_config=config$feature_similarity_threshold, x_var=feature_similarity_threshold,
-                                                      var_name="feature_similarity_threshold", type="numeric_list", optional=TRUE, default=prep_cluster_similarity_threshold)
+  settings$feature_similarity_threshold <- .parse_arg(x_config=config$feature_similarity_threshold,
+                                                      x_var=feature_similarity_threshold,
+                                                      var_name="feature_similarity_threshold",
+                                                      type="numeric_list",
+                                                      optional=TRUE,
+                                                      default=prep_cluster_similarity_threshold)
   
   .check_cluster_parameters(cluster_method=settings$feature_cluster_method,
                             cluster_linkage=settings$feature_linkage_method,
                             cluster_cut_method=settings$feature_cluster_cut_method,
                             cluster_similarity_threshold=settings$feature_similarity_threshold,
                             cluster_similarity_metric=settings$feature_similarity_metric,
-                            var_type="feature")
+                            var_type="feature",
+                            test_required_packages=FALSE)
   
-  
+  ##### sample_cluster_method ##################################################
   # Sample cluster method
-  settings$sample_cluster_method <- .parse_arg(x_config=config$sample_cluster_method, x_var=sample_cluster_method,
-                                               var_name="sample_cluster_method", type="character", optional=TRUE, default=prep_cluster_method)
+  settings$sample_cluster_method <- .parse_arg(x_config=config$sample_cluster_method,
+                                               x_var=sample_cluster_method,
+                                               var_name="sample_cluster_method",
+                                               type="character",
+                                               optional=TRUE,
+                                               default=prep_cluster_method)
   
+  if(any(c("sample_similarity", "feature_expressions") %in% settings$evaluation_data_elements) &
+     !settings$sample_cluster_method %in% c("none", "hclust")){
+    require_package(x="cluster",
+                    purpose="to use sample similarity",
+                    message_type="backend_error")
+  }
+  
+  ##### sample_linkage_method ##################################################
   # Sample cluster linkage method
-  settings$sample_linkage_method <- .parse_arg(x_config=config$sample_linkage_method, x_var=sample_linkage_method,
-                                               var_name="sample_linkage_method", type="character", optional=TRUE, default=prep_cluster_linkage_method)
+  settings$sample_linkage_method <- .parse_arg(x_config=config$sample_linkage_method,
+                                               x_var=sample_linkage_method,
+                                               var_name="sample_linkage_method",
+                                               type="character",
+                                               optional=TRUE,
+                                               default=prep_cluster_linkage_method)
   
+  ##### sample_similarity_metric ##################################################
   # Sample similarity metric
-  settings$sample_similarity_metric <- .parse_arg(x_config=config$sample_similarity_metric, x_var=sample_similarity_metric,
-                                                  var_name="sample_similarity_metric", type="character", optional=TRUE, default="gower_winsor")
+  settings$sample_similarity_metric <- .parse_arg(x_config=config$sample_similarity_metric,
+                                                  x_var=sample_similarity_metric,
+                                                  var_name="sample_similarity_metric",
+                                                  type="character",
+                                                  optional=TRUE,
+                                                  default="gower_winsor")
+  
+  if(any(c("sample_similarity", "feature_expressions") %in% settings$evaluation_data_elements) &
+     settings$sample_similarity_metric %in% c("mcfadden_r2", "cox_snell_r2", "nagelkerke_r2")){
+    if(!require_package(x="VGAM",
+                        purpose=paste0("to compute log-likelihood pseudo R2 similarity using the ", settings$sample_similarity_metric, " metric"),
+                        message_type="backend_warning")){
+      
+      settings$sample_similarity_metric <- "gower_winsor"
+    }
+  }
   
   .check_cluster_parameters(cluster_method=settings$sample_cluster_method,
                             cluster_linkage=settings$sample_linkage_method,
                             cluster_similarity_metric=settings$sample_similarity_metric,
-                            var_type="sample")
+                            var_type="sample",
+                            test_required_packages=FALSE)
   
+  ##### eval_aggregation_method ################################################
   # Variable importance aggregation methods
-  settings$aggregation <- .parse_arg(x_config=config$eval_aggregation_method, x_var=eval_aggregation_method,
-                                     var_name="eval_aggregation_method", type="character", optional=TRUE, default=vimp_aggregation_method)
+  settings$aggregation <- .parse_arg(x_config=config$eval_aggregation_method,
+                                     x_var=eval_aggregation_method,
+                                     var_name="eval_aggregation_method",
+                                     type="character",
+                                     optional=TRUE,
+                                     default=vimp_aggregation_method)
   
   rank.check_aggregation_method(method=settings$aggregation)
   
+  ##### eval_aggregation_rank_threshold ########################################
   # Variable importance rank threshold (used by some aggregation methods)
   settings$aggr_rank_threshold <- .parse_arg(x_config=config$eval_aggregation_rank_threshold,
                                              x_var=eval_aggregation_rank_threshold,
@@ -2783,42 +3587,85 @@
                                              default=vimp_aggregation_rank_threshold)
   
   if(!is.null(settings$aggr_rank_threshold)){
-    .check_number_in_valid_range(x=settings$aggr_rank_threshold, var_name="eval_aggregation_rank_threshold", range=c(1, Inf))
+    .check_number_in_valid_range(x=settings$aggr_rank_threshold,
+                                 var_name="eval_aggregation_rank_threshold",
+                                 range=c(1, Inf))
   }
   
-  
+  ##### eval_icc_type ##########################################################
   # Type of ICC computed for univariate analysis.
-  settings$icc_type <- .parse_arg(x_config=config$eval_icc_type, x_var=eval_icc_type,
-                                  var_name="eval_icc_type", type="character", optional=TRUE, default="1")
+  settings$icc_type <- .parse_arg(x_config=config$eval_icc_type,
+                                  x_var=eval_icc_type,
+                                  var_name="eval_icc_type",
+                                  type="character",
+                                  optional=TRUE,
+                                  default="1")
   
-  .check_parameter_value_is_valid(x=settings$icc_type, var_name="eval_icc_type", values=.get_available_icc_types())
+  .check_parameter_value_is_valid(x=settings$icc_type,
+                                  var_name="eval_icc_type",
+                                  values=.get_available_icc_types())
   
-  
+  ##### stratification_method ##################################################
   # Method used to set stratification thresholds for Kaplan-Meier analysis
-  settings$strat_method <- .parse_arg(x_config=config$stratification_method, x_var=stratification_method,
-                                      var_name="stratification_method", type="character_list", optional=TRUE, default="median")
+  settings$strat_method <- .parse_arg(x_config=config$stratification_method,
+                                      x_var=stratification_method,
+                                      var_name="stratification_method",
+                                      type="character_list",
+                                      optional=TRUE,
+                                      default="median")
   
-  .check_parameter_value_is_valid(x=settings$strat_method, var_name="stratification_method",
-                                  values=c("median", "fixed", "optimised"))
+  .check_parameter_value_is_valid(x=settings$strat_method,
+                                  var_name="stratification_method",
+                                  values=.get_available_stratification_methods())
   
+  if("optimised" %in% settings$strat_method){
+    if(!require_package(x="maxstat",
+                        purpose="to determine an optimal risk threshold",
+                        message_type="backend_warning")){
+      
+      settings$strat_method <- setdiff(settings$strat_method, "optimised")
+      if(length(settings$strat_method) == 0) settings$strat_method <- "median"
+    }
+  }
   
-  # Quantile stratification thresholds for the "fixed" stratification method. Note that c(0.333, 0.667) means
-  # that 3 groups are created: a low risk group (up to 0.333), a moderate risk group (between 0.333 and 0.667),
-  # and a high risk group (0.667)
-  settings$strat_quant_threshold <- .parse_arg(x_config=config$stratification_threshold, x_var=stratification_threshold,
-                                               var_name="stratification_threshold", type="numeric_list", optional=TRUE, default=c(1/3, 2/3))
+  ##### stratification_threshold ###############################################
+  # Quantile stratification thresholds for the "fixed" stratification method.
+  # Note that c(0.333, 0.667) means that 3 groups are created: a low risk group
+  # (up to 0.333), a moderate risk group (between 0.333 and 0.667), and a high
+  # risk group (0.667)
+  settings$strat_quant_threshold <- .parse_arg(x_config=config$stratification_threshold,
+                                               x_var=stratification_threshold,
+                                               var_name="stratification_threshold",
+                                               type="numeric_list",
+                                               optional=TRUE,
+                                               default=c(1/3, 2/3))
   
-  sapply(settings$strat_quant_threshold, .check_number_in_valid_range, var_name="stratification_threshold", range=c(0.0, 1.0), closed=c(FALSE, FALSE))
+  sapply(settings$strat_quant_threshold,
+         .check_number_in_valid_range,
+         var_name="stratification_threshold",
+         range=c(0.0, 1.0),
+         closed=c(FALSE, FALSE))
   
-  # Study end time (this is used for plotting, and Uno's concordance index)
-  settings$time_max <- .parse_arg(x_config=config$time_max, x_var=time_max,
-                                  var_name="time_max", type="numeric", optional=TRUE, default=NULL)
+  ##### time_max ###############################################################
+  # Study end time (this is used for plotting, and Uno's concordance index).
+  settings$time_max <- .parse_arg(x_config=config$time_max,
+                                  x_var=time_max,
+                                  var_name="time_max",
+                                  type="numeric",
+                                  optional=TRUE,
+                                  default=NULL)
   
+  ##### evaluation_times #######################################################
   # Times at which calibration is evaluated for time-to-event (survival) data.
-  settings$eval_times <- .parse_arg(x_config=config$evaluation_times, evaluation_times,
-                                    var_name="evaluation_time", type="numeric_list", optional=TRUE, default=NULL)
+  settings$eval_times <- .parse_arg(x_config=config$evaluation_times,
+                                    evaluation_times,
+                                    var_name="evaluation_time",
+                                    type="numeric_list",
+                                    optional=TRUE,
+                                    default=NULL)
 
-  # Update time_max and eval_times only if we are dealing with survival endpoints.
+  # Update time_max and eval_times only if we are dealing with survival
+  # endpoints.
   if(outcome_type %in% c("survival")){
   
     # Identify values for time_max if it has not been provided.
@@ -2826,35 +3673,48 @@
       if(!is.null(settings$eval_times)){
         # Use maximum evaluation time
         settings$time_max <- max(settings$eval_times)
+        
       } else {
         # 98th percentile of all outcome times.
         settings$time_max <- stats::quantile(data[outcome_event==1 & batch_id %in% development_batch_id]$outcome_time, probs=0.98, names=FALSE)
       }
     }
     
-    .check_number_in_valid_range(settings$time_max, var_name="time_max", range=c(0.0, Inf), closed=c(FALSE, TRUE))
+    .check_number_in_valid_range(settings$time_max,
+                                 var_name="time_max",
+                                 range=c(0.0, Inf),
+                                 closed=c(FALSE, TRUE))
     
     # Identify evaluation times if they were not provided.
-    if(is.null(settings$eval_times)){
-      settings$eval_times <- settings$time_max
-    }
-    
-    sapply(settings$eval_times, .check_number_in_valid_range, var_name="evaluation_time", range=c(0.0, Inf), closed=c(FALSE, TRUE))
+    if(is.null(settings$eval_times)) settings$eval_times <- settings$time_max
+
+    sapply(settings$eval_times,
+           .check_number_in_valid_range, 
+           var_name="evaluation_times",
+           range=c(0.0, Inf),
+           closed=c(FALSE, TRUE))
   }
   
+  ##### dynamic_model_loading ##################################################
   # Dynamic loading of models during evaluation.
-  settings$auto_detach <- .parse_arg(x_config=config$dynamic_model_loading, x_var=dynamic_model_loading,
-                                     var_name="dynamic_model_loading", type="logical", optional=TRUE, default=FALSE)
+  settings$auto_detach <- .parse_arg(x_config=config$dynamic_model_loading,
+                                     x_var=dynamic_model_loading,
+                                     var_name="dynamic_model_loading",
+                                     type="logical",
+                                     optional=TRUE,
+                                     default=FALSE)
   
+  ##### parallel_evaluation ####################################################
   # Parallelisation switch for parallel processing
-  settings$do_parallel <- .parse_arg(x_config=config$parallel_evaluation, x_var=parallel_evaluation,
-                                     var_name="parallel_evaluation", type="logical", optional=TRUE, default=TRUE)
+  settings$do_parallel <- .parse_arg(x_config=config$parallel_evaluation,
+                                     x_var=parallel_evaluation,
+                                     var_name="parallel_evaluation",
+                                     type="character",
+                                     optional=TRUE,
+                                     default="TRUE")
   
-  # Parallelisation switch for parallel processing
-  settings$do_parallel <- .parse_arg(x_config=config$parallel_evaluation, x_var=parallel_evaluation,
-                                     var_name="parallel_evaluation", type="character", optional=TRUE, default="TRUE")
-  
-  .check_parameter_value_is_valid(x=settings$do_parallel, var_name="parallel_evaluation",
+  .check_parameter_value_is_valid(x=settings$do_parallel,
+                                  var_name="parallel_evaluation",
                                   values=c("TRUE", "FALSE", "inner", "outer"))
   
   # Disable if parallel is FALSE

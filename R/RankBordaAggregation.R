@@ -1,4 +1,4 @@
-rank.borda_aggregation <- function(dt, rank_threshold, truncated=FALSE, enhanced=FALSE){
+rank.borda_aggregation <- function(vimp_table, rank_threshold, truncated=FALSE, enhanced=FALSE){
   # Borda selection methods, as in Wald R, Khoshgoftaar TM, Dittman D, Awada W,
   # Napolitano A. An extensive comparison of feature ranking aggregation
   # techniques in bioinformatics. 2012 IEEE 13th Int. Conf. Inf. Reuse Integr.,
@@ -15,10 +15,10 @@ rank.borda_aggregation <- function(dt, rank_threshold, truncated=FALSE, enhanced
   aggr_score <- occurrence <- rank <- max_rank <- borda_score <- sum_score <- NULL
   
   # Determine the number of runs
-  n_runs <- data.table::uniqueN(dt, by="run_id")
+  n_runs <- data.table::uniqueN(vimp_table, by="run_id")
   
   # Make a local copy to avoid changing the concatenated input rank table by reference.
-  borda_count_table <- data.table::copy(dt)
+  borda_count_table <- data.table::copy(vimp_table)
   
   if(truncated){
     # Keep only those features with a rank equal or lower than rank_threshold.
@@ -46,7 +46,7 @@ rank.borda_aggregation <- function(dt, rank_threshold, truncated=FALSE, enhanced
   if(enhanced){
     # Enhanced borda methods use the occurrence (as in stability selection) for
     # weighting the borda score.
-    occurrence_table <- rank.get_feature_occurrence(dt=dt, threshold=rank_threshold, n_runs=n_runs)
+    occurrence_table <- rank.get_feature_occurrence(vimp_table=vimp_table, threshold=rank_threshold, n_runs=n_runs)
     
     # Merge tables by name
     rank_table <- merge(x=borda_count_table, y=occurrence_table, all.x=FALSE, all.y=TRUE, by=c("name"))
@@ -56,7 +56,7 @@ rank.borda_aggregation <- function(dt, rank_threshold, truncated=FALSE, enhanced
     rank_table[!is.finite(aggr_score), "aggr_score":=0.0]
    
     # Compute the aggregated rank.
-    rank_table[, "aggr_rank":=frank(-aggr_score, ties.method="min")]
+    rank_table[, "aggr_rank":=data.table::frank(-aggr_score, ties.method="min")]
     
     # Drop superfluous columns
     rank_table <- rank_table[, ":="("occurrence"=NULL, "sum_score"=NULL)]
@@ -67,7 +67,7 @@ rank.borda_aggregation <- function(dt, rank_threshold, truncated=FALSE, enhanced
     data.table::setnames(rank_table, old="sum_score", new="aggr_score")
     
     # Compute the aggregated rank.
-    rank_table[, "aggr_rank":=frank(-aggr_score, ties.method="min")]
+    rank_table[, "aggr_rank":=data.table::frank(-aggr_score, ties.method="min")]
   }
   
   return(rank_table)

@@ -3,7 +3,9 @@
 NULL
 
 
-.get_available_data_elements <- function(check_has_estimation_type=FALSE, check_has_detail_level=FALSE){
+.get_available_data_elements <- function(check_has_estimation_type=FALSE,
+                                         check_has_detail_level=FALSE, 
+                                         check_has_sample_limit=FALSE){
   
   # All data elements.
   all_data_elements <- c("auc_data", "calibration_data", "calibration_info", "confusion_matrix",
@@ -11,21 +13,29 @@ NULL
                          "fs_vimp", "hyperparameters", "model_performance",
                          "model_vimp", "permutation_vimp", "prediction_data",
                          "risk_stratification_data", "risk_stratification_info",
-                         "univariate_analysis", "feature_similarity", "sample_similarity")
+                         "univariate_analysis", "feature_similarity", "sample_similarity", "ice_data")
   
   # Data elements that allow setting an estimation type.
   can_set_estimation_type <- c("auc_data", "calibration_data", "decision_curve_analyis",
-                               "model_performance", "permutation_vimp",  "prediction_data")
+                               "model_performance", "permutation_vimp",  "prediction_data", "ice_data")
   
   # Data elements that allow setting a detail level.
-  can_set_detail_level <- c(can_set_estimation_type, "calibration_info", "confusion_matrix", "risk_stratification_data", "risk_stratification_info")
+  can_set_detail_level <- c(can_set_estimation_type, "calibration_info", "confusion_matrix",
+                            "risk_stratification_data", "risk_stratification_info")
   
-  # Data elements that allow for setting an estimation type but not detail level.
+  # Data elements that allow for setting an estimation type but not detail
+  # level.
   can_set_estimation_type <- c(can_set_estimation_type, "feature_similarity")
+  
+  # Data elements that allow for setting a sample limit.
+  can_set_sample_limit <- c("sample_similarity", "ice_data")
+  
+  if(check_has_sample_limit){
+    all_data_elements <- intersect(all_data_elements, can_set_sample_limit)
+  }
   
   if(check_has_estimation_type){
     all_data_elements <- intersect(all_data_elements, can_set_estimation_type)
-    
   } 
   
   if(check_has_detail_level){
@@ -37,9 +47,11 @@ NULL
 
 
 
-.parse_detail_level <- function(x, default, data_element){
+.parse_detail_level <- function(x, object, default, data_element){
   
-  if(is.null(x) | is.waive(x)) return(default)
+  if(is.waive(x)) x <- object@settings$detail_level
+  
+  if(is.null(x)) return(default)
   
   # detail level is stored in a list, by data_element.
   if(is.list(x)) x <- x[[data_element]]
@@ -54,7 +66,7 @@ NULL
 
 
 
-.parse_estimation_type <- function(x, default, data_element, detail_level, has_internal_bootstrap){
+.parse_estimation_type <- function(x, object, default, data_element, detail_level, has_internal_bootstrap){
   
   # Change to default to point if the detail_level is model.
   if(detail_level == "model") default <- "point"
@@ -64,7 +76,9 @@ NULL
   # hybrid).
   if(!has_internal_bootstrap & detail_level %in% c("ensemble", "model") & default != "point") default <- "point"
   
-  if(is.null(x) | is.waive(x)) return(default)
+  if(is.waive(x)) x <- object@settings$estimation_type
+  
+  if(is.null(x)) return(default)
   
   # detail level is stored in a list, by data_element.
   if(is.list(x)) x <- x[[data_element]]
@@ -79,9 +93,11 @@ NULL
 
 
 
-.parse_aggregate_results <- function(x, default, data_element){
+.parse_aggregate_results <- function(x, object, default, data_element){
   
-  if(is.null(x) | is.waive(x)) return(default)
+  if(is.waive(x)) x <- object@settings$aggregate_results
+  
+  if(is.null(x)) return(default)
   
   # detail level is stored in a list, by data_element.
   if(is.list(x)) x <- x[[data_element]]
@@ -100,6 +116,26 @@ NULL
 
 
 
+.parse_sample_limit <- function(x, object, default, data_element){
+  
+  if(is.waive(x)) x <- object@settings$sample_limit
+  
+  if(is.null(x)) return(default)
+  
+  # detail level is stored in a list, by data_element.
+  if(is.list(x)) x <- x[[data_element]]
+  
+  if(is.null(x)) return(default)
+  
+  if(x == "default") return(default)
+  
+  .check_number_in_valid_range(x=x, var_name="sample_limit",
+                               range=c(20L, Inf))
+  
+  return(x)
+}
+
+
 
 #'@title Internal function to create a familiarData object.
 #'
@@ -110,7 +146,7 @@ NULL
 #'@param object A `familiarEnsemble` object, which is an ensemble of one or more
 #'  `familiarModel` objects.
 #'@param data A `dataObject` object, `data.table` or `data.frame` that
-#'  constitutes the data that are used to compute
+#'  constitutes the data that are assessed.
 #'@param is_pre_processed Flag that indicates whether the data was already
 #'  pre-processed externally, e.g. normalised and clustered. Only used if the
 #'  `data` argument is a `data.table` or `data.frame`.
@@ -121,7 +157,7 @@ NULL
 #'  index. If not provided explicitly, this parameter is read from settings used
 #'  at creation of the underlying `familiarModel` objects. Only used for
 #'  `survival` outcomes.
-#'@param eval_times One or more time points that are used for in analysis of
+#'@param evaluation_times One or more time points that are used for in analysis of
 #'  survival problems when data has to be assessed at a set time, e.g.
 #'  calibration. If not provided explicitly, this parameter is read from
 #'  settings used at creation of the underlying `familiarModel` objects. Only
@@ -148,8 +184,12 @@ NULL
 #'@param ensemble_method Method for ensembling predictions from models for the
 #'  same sample. Available methods are:
 #'
+#'  * `median` (default): Use the median of the predicted values as the ensemble
+#'  value for a sample.
+#'
 #'  * `mean`: Use the mean of the predicted values as the ensemble value for a
 #'  sample.
+#'  
 #'@param metric One or more metrics for assessing model performance. See the
 #'  vignette on performance metrics for the available metrics. If not provided
 #'  explicitly, this parameter is read from settings used at creation of the
@@ -268,7 +308,7 @@ setGeneric("extract_data", function(object,
                                     rank_threshold=waiver(),
                                     ensemble_method=waiver(),
                                     stratification_method=waiver(),
-                                    eval_times=waiver(),
+                                    evaluation_times=waiver(),
                                     metric=waiver(),
                                     feature_cluster_method=waiver(),
                                     feature_cluster_cut_method=waiver(),
@@ -278,6 +318,7 @@ setGeneric("extract_data", function(object,
                                     sample_cluster_method=waiver(),
                                     sample_linkage_method=waiver(),
                                     sample_similarity_metric=waiver(),
+                                    sample_limit=waiver(),
                                     detail_level=waiver(),
                                     estimation_type=waiver(),
                                     aggregate_results=waiver(),
@@ -300,7 +341,7 @@ setMethod("extract_data", signature(object="familiarEnsemble"),
                    rank_threshold=waiver(),
                    ensemble_method=waiver(),
                    stratification_method=waiver(),
-                   eval_times=waiver(),
+                   evaluation_times=waiver(),
                    metric=waiver(),
                    feature_cluster_method=waiver(),
                    feature_cluster_cut_method=waiver(),
@@ -310,6 +351,7 @@ setMethod("extract_data", signature(object="familiarEnsemble"),
                    sample_cluster_method=waiver(),
                    sample_linkage_method=waiver(),
                    sample_similarity_metric=waiver(),
+                   sample_limit=waiver(),
                    detail_level=waiver(),
                    estimation_type=waiver(),
                    aggregate_results=waiver(),
@@ -341,7 +383,8 @@ setMethod("extract_data", signature(object="familiarEnsemble"),
             # Check whether data is a dataObject, and create one otherwise.
             if(!is(data, "dataObject")){
               data <- as_data_object(data=data,
-                                     object=object)
+                                     object=object,
+                                     check_stringency="external_warn")
               
               # Set pre-processing level.
               data@preprocessing_level=ifelse(is_pre_processed, "clustering", "none")
@@ -349,7 +392,6 @@ setMethod("extract_data", signature(object="familiarEnsemble"),
             
             # Load models, and drop any models that were not trained.
             object <- load_models(object=object, drop_untrained=TRUE)
-            
             
             # Extract feature distance tables,
             if(any(c("feature_similarity", "univariate_analysis", "feature_expressions", "permutation_vimp") %in% data_element)){
@@ -383,6 +425,7 @@ setMethod("extract_data", signature(object="familiarEnsemble"),
                                                              data=data,
                                                              cl=cl,
                                                              is_pre_processed=is_pre_processed,
+                                                             sample_limit=sample_limit,
                                                              sample_similarity_metric=sample_similarity_metric,
                                                              sample_cluster_method=sample_cluster_method,
                                                              sample_linkage_method=sample_linkage_method,
@@ -391,7 +434,8 @@ setMethod("extract_data", signature(object="familiarEnsemble"),
             } else {
               sample_similarity <- NULL
             }
-
+            
+            
             # Extract feature variable importance
             if(any(c("fs_vimp") %in% data_element)){
               fs_vimp_info <- extract_fs_vimp(object=object,
@@ -425,7 +469,7 @@ setMethod("extract_data", signature(object="familiarEnsemble"),
                                                            feature_similarity=feature_similarity,
                                                            metric=metric,
                                                            ensemble_method=ensemble_method,
-                                                           eval_times=eval_times,
+                                                           evaluation_times=evaluation_times,
                                                            detail_level=detail_level,
                                                            estimation_type=estimation_type,
                                                            aggregate_results=aggregate_results,
@@ -443,15 +487,15 @@ setMethod("extract_data", signature(object="familiarEnsemble"),
             if(any(c("feature_expressions") %in% data_element)){
               expression_info <- extract_feature_expression(object=object,
                                                             data=data,
-                                                            feature_similarity,
-                                                            sample_similarity,
+                                                            feature_similarity=feature_similarity,
+                                                            sample_similarity=sample_similarity,
                                                             feature_cluster_method=feature_cluster_method,
                                                             feature_linkage_method=feature_linkage_method,
                                                             feature_similarity_metric=feature_similarity_metric,
                                                             sample_cluster_method=sample_cluster_method,
                                                             sample_linkage_method=sample_linkage_method,
                                                             sample_similarity_metric=sample_similarity_metric,
-                                                            eval_times=eval_times,
+                                                            evaluation_times=evaluation_times,
                                                             message_indent=message_indent,
                                                             verbose=verbose)
             } else {
@@ -498,7 +542,7 @@ setMethod("extract_data", signature(object="familiarEnsemble"),
                                                      estimation_type=estimation_type,
                                                      aggregate_results=aggregate_results,
                                                      confidence_level=confidence_level,
-                                                     eval_times=eval_times,
+                                                     evaluation_times=evaluation_times,
                                                      message_indent=message_indent,
                                                      verbose=verbose)
             } else {
@@ -512,7 +556,7 @@ setMethod("extract_data", signature(object="familiarEnsemble"),
                                                             cl=cl,
                                                             metric=metric,
                                                             ensemble_method=ensemble_method,
-                                                            eval_times=eval_times,
+                                                            evaluation_times=evaluation_times,
                                                             detail_level=detail_level,
                                                             estimation_type=estimation_type,
                                                             aggregate_results=aggregate_results,
@@ -531,7 +575,7 @@ setMethod("extract_data", signature(object="familiarEnsemble"),
                                                                  data=data,
                                                                  cl=cl,
                                                                  ensemble_method=ensemble_method,
-                                                                 eval_times=eval_times,
+                                                                 evaluation_times=evaluation_times,
                                                                  detail_level=detail_level,
                                                                  estimation_type=estimation_type,
                                                                  aggregate_results=aggregate_results,
@@ -587,7 +631,7 @@ setMethod("extract_data", signature(object="familiarEnsemble"),
                                                            data=data,
                                                            cl=cl,
                                                            ensemble_method=ensemble_method,
-                                                           eval_times=eval_times,
+                                                           evaluation_times=evaluation_times,
                                                            detail_level=detail_level,
                                                            estimation_type=estimation_type,
                                                            aggregate_results=aggregate_results,
@@ -628,7 +672,31 @@ setMethod("extract_data", signature(object="familiarEnsemble"),
             } else {
               confusion_matrix_info <- NULL
             }
-
+            
+            
+            # Extract feature individual conditional expectation data
+            if(any(c("ice_data") %in% data_element)){
+              ice_data <- extract_ice(object=object,
+                                      data=data,
+                                      cl=cl,
+                                      ensemble_method=ensemble_method,
+                                      evaluation_times=evaluation_times,
+                                      sample_limit=sample_limit,
+                                      detail_level=detail_level,
+                                      estimation_type=estimation_type,
+                                      aggregate_results=aggregate_results,
+                                      confidence_level=confidence_level,
+                                      bootstrap_ci_method=bootstrap_ci_method,
+                                      is_pre_processed=is_pre_processed,
+                                      message_indent=message_indent,
+                                      verbose=verbose,
+                                      ...)
+              
+            } else {
+              ice_data <- NULL
+            }
+            
+            
             # Set up a placehold pooling table. This may need to be adepted.
             pooling_table <- data.table::data.table("ensemble_data_id"=object@run_table$ensemble_data_id,
                                                     "ensemble_run_id"=object@run_table$ensemble_run_id,
@@ -664,8 +732,7 @@ setMethod("extract_data", signature(object="familiarEnsemble"),
                                      feature_expressions = expression_info,
                                      feature_similarity = feature_similarity,
                                      sample_similarity = sample_similarity,
-                                     ice_data = NULL,
-                                     is_anonymised = FALSE,
+                                     ice_data = ice_data,
                                      is_validation = data@load_validation,
                                      generating_ensemble = get_object_name(object=object, abbreviated=FALSE),
                                      project_id = object@project_id)

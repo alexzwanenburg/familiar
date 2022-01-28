@@ -164,7 +164,7 @@ setMethod(".identifier_as_data_attribute", signature(x="familiarDataElement"),
 
 #####identify_element_sets (list)-----------------------------------------------
 setMethod("identify_element_sets", signature(x="list"),
-          function(x, ...){
+          function(x, drop_identiers=NULL, ...){
             
             # Check that that the list is not empty.
             if(is_empty(x)) return(NULL)
@@ -174,10 +174,30 @@ setMethod("identify_element_sets", signature(x="list"),
             if(all(empty_elements)) return(NULL)
             
             # Iterate over list.
-            id_table <- lapply(x, identify_element_sets, ...)
+            id_table <- mapply(identify_element_sets,
+                               x=x,
+                               ii=seq_along(x),
+                               MoreArgs=list(...),
+                               SIMPLIFY=FALSE)
             
             # Combine to table and add group ids and model ids.
             id_table <- data.table::rbindlist(id_table, use.names=TRUE)
+            
+            # Drop identifiers.
+            if(!is.null(drop_identiers)){
+              
+              # Check that 
+              if(!all(drop_identiers %in% colnames(id_table))){
+                stop(paste0("One or more identifiers to be dropped were not found in the table with identifiers: ",
+                            paste_s(setdiff(drop_identiers, colnames(id_table)))))
+              }
+              
+              # Drop identifiers
+              id_table[, (drop_identiers):=NULL]
+              
+              # Keep unique entries.
+              id_table <- unique(id_table)
+            }
             
             # Add group identifier.
             id_table[, "group_id":=.GRP, by=c(colnames(id_table))] 
@@ -190,7 +210,7 @@ setMethod("identify_element_sets", signature(x="list"),
 
 #####identify_element_sets (familiarDataElement)--------------------------------
 setMethod("identify_element_sets", signature(x="familiarDataElement"),
-          function(x, ignore_estimation_type=FALSE, ...){
+          function(x, ii, ignore_estimation_type=FALSE, ignore_grouping_column=TRUE, ignore_list_identifier=TRUE, ...){
             
             # Get the identifiers and the detail level and combine to a list.
             id_list <- c(x@identifiers,
@@ -199,6 +219,12 @@ setMethod("identify_element_sets", signature(x="familiarDataElement"),
             
             # Add the estimation type if it is not to be ignored.
             if(!ignore_estimation_type) id_list <- c(id_list, list("estimation_type"=x@estimation_type))
+            
+            # Add data from grouping columns, if they are not to be ignored.
+            if(!ignore_grouping_column & !is.null(x@grouping_column)) id_list <- c(id_list, unique(x@data[, mget(x@grouping_column)]))
+            
+            # Add list identifier.
+            if(!ignore_list_identifier) id_list <- c(id_list, "list_id"=ii)
             
             return(data.table::as.data.table(id_list))
           })
@@ -402,7 +428,15 @@ setMethod("collect", signature(x="familiarData"),
 
 #####.export (familiarCollection)------------------------------------------------
 setMethod(".export", signature(x="familiarCollection"),
-          function(x, data_elements=NULL, data_slot=NULL, dir_path=NULL, type, subtype=NULL, object_class=NULL, ...){
+          function(x,
+                   data_elements=NULL,
+                   data_slot=NULL,
+                   dir_path=NULL,
+                   type,
+                   subtype=NULL,
+                   object_class=NULL,
+                   export_collection=FALSE,
+                   ...){
             
             # Obtain the data elements from the attribute slot indicated by
             # data_slot.
@@ -450,7 +484,13 @@ setMethod(".export", signature(x="familiarCollection"),
             
             if(is.null(dir_path)){
               # Export data.
-              return(data_element)
+              if(export_collection){
+                return(list("collection"=x,
+                            "data"=data_element))
+                
+              } else {
+                return(data_element)
+              }
               
             } else {
               # Export to file
@@ -460,7 +500,12 @@ setMethod(".export", signature(x="familiarCollection"),
                               type=type,
                               subtype=subtype)
               
-              return(NULL)
+              if(export_collection){
+                return(list("collection"=x))
+                
+              } else {
+                return(NULL)
+              }
             }
           })
 
@@ -655,6 +700,7 @@ setMethod("extract_dispatcher", signature(object="familiarEnsemble", proto_data_
                                                 aggregate_results=aggregate_results,
                                                 n_instances=n_instances,
                                                 n_bootstraps=n_bootstraps,
+                                                n_models=n_models,
                                                 parallel_external=parallel_external,
                                                 message_indent = message_indent,
                                                 verbose=verbose,
@@ -669,6 +715,7 @@ setMethod("extract_dispatcher", signature(object="familiarEnsemble", proto_data_
                                               aggregate_results=aggregate_results,
                                               n_instances=n_instances,
                                               n_bootstraps=n_bootstraps,
+                                              n_models=n_models,
                                               parallel_external=parallel_external,
                                               message_indent = message_indent,
                                               verbose=verbose,
@@ -683,6 +730,7 @@ setMethod("extract_dispatcher", signature(object="familiarEnsemble", proto_data_
                                              aggregate_results=aggregate_results,
                                              n_instances=n_instances,
                                              n_bootstraps=n_bootstraps,
+                                             n_models=n_models,
                                              parallel_external=parallel_external,
                                              message_indent = message_indent,
                                              verbose=verbose,
@@ -704,6 +752,7 @@ setMethod("extract_dispatcher", signature(object="familiarEnsemble", proto_data_
                                          aggregate_results,
                                          n_instances,
                                          n_bootstraps,
+                                         n_models,
                                          parallel_external,
                                          ...,
                                          verbose=FALSE){
@@ -724,8 +773,9 @@ setMethod("extract_dispatcher", signature(object="familiarEnsemble", proto_data_
            aggregate_results = aggregate_internal,
            n_instances = n_instances,
            n_bootstraps = n_bootstraps,
+           n_models = n_models,
            verbose = verbose,
-           progress_bar = verbose,
+           progress_bar = verbose & n_bootstraps > 1,
            ...)
   
   # Pack to list.
@@ -751,6 +801,7 @@ setMethod("extract_dispatcher", signature(object="familiarEnsemble", proto_data_
                                        aggregate_results,
                                        n_instances,
                                        n_bootstraps,
+                                       n_models,
                                        parallel_external,
                                        ...,
                                        verbose=FALSE){
@@ -762,14 +813,15 @@ setMethod("extract_dispatcher", signature(object="familiarEnsemble", proto_data_
     x <- fam_mapply(cl=cl,
                     FUN=FUN,
                     object=object@model_list,
-                    bootstrap_seed_offset = seq(from=0, by=n_bootstraps, length.out=length(object@model_list)),
+                    bootstrap_seed_offset = seq(from=0, by=n_bootstraps, length.out=n_models),
                     MoreArgs=c(list("cl"=NULL,
                                     "proto_data_element"=proto_data_element,
                                     "aggregate_results"=FALSE,
                                     "n_instances"=n_instances,
                                     "n_bootstraps"=n_bootstraps,
+                                    "n_models"=n_models,
                                     "verbose"=verbose,
-                                    "progress_bar"= verbose & length(object@model_list) == 1),
+                                    "progress_bar"= verbose & length(object@model_list) == 1 & n_bootstraps > 1),
                                list(...)),
                     progress_bar = verbose & length(object@model_list) > 1,
                     chopchop=TRUE)
@@ -778,16 +830,17 @@ setMethod("extract_dispatcher", signature(object="familiarEnsemble", proto_data_
     x <- fam_mapply(cl=NULL,
                     FUN=FUN,
                     object=object@model_list,
-                    bootstrap_seed_offset = seq(from=0, by=n_bootstraps, length.out=length(object@model_list)),
+                    bootstrap_seed_offset = seq(from=0, by=n_bootstraps, length.out=n_models),
                     MoreArgs=c(list("cl"=cl,
                                     "proto_data_element"=proto_data_element,
                                     "aggregate_results"=FALSE,
                                     "n_instances"=n_instances,
                                     "n_bootstraps"=n_bootstraps,
+                                    "n_models"=n_models,
                                     "verbose"=verbose,
-                                    "progress_bar"= verbose & length(object@model_list) == 1),
+                                    "progress_bar"= verbose & n_models == 1 & n_bootstraps > 1),
                                list(...)),
-                    progress_bar = verbose & length(object@model_list) > 1)
+                    progress_bar = verbose & n_models > 1)
   }
   
   # Merge data elements together. The model_name identifier gets added as data
@@ -816,6 +869,7 @@ setMethod("extract_dispatcher", signature(object="familiarEnsemble", proto_data_
                                       aggregate_results,
                                       n_instances,
                                       n_bootstraps,
+                                      n_models,
                                       parallel_external,
                                       ...,
                                       verbose=FALSE){
@@ -836,13 +890,14 @@ setMethod("extract_dispatcher", signature(object="familiarEnsemble", proto_data_
     x <- fam_mapply(cl=cl,
                     FUN=FUN,
                     object=object@model_list,
-                    bootstrap_seed_offset = seq(from=0, by=n_bootstraps, length.out=length(object@model_list)),
+                    bootstrap_seed_offset = seq(from=0, by=n_bootstraps, length.out=n_models),
                     proto_data_element=proto_data_element,
                     MoreArgs=c(list("aggregate_results" = aggregate_internal,
                                     "n_instances"=n_instances,
                                     "n_bootstraps"=n_bootstraps,
+                                    "n_models"=n_models,
                                     "verbose"=verbose,
-                                    "progress_bar"= verbose & length(object@model_list) == 1),
+                                    "progress_bar"= verbose & n_models == 1 & n_bootstraps > 1),
                                list(...)),
                     progress_bar = verbose & length(object@model_list) > 1,
                     chopchop=TRUE)
@@ -851,14 +906,15 @@ setMethod("extract_dispatcher", signature(object="familiarEnsemble", proto_data_
     x <- fam_mapply(cl=NULL,
                     FUN=FUN,
                     object=object@model_list,
-                    bootstrap_seed_offset = seq(from=0, by=n_bootstraps, length.out=length(object@model_list)),
+                    bootstrap_seed_offset = seq(from=0, by=n_bootstraps, length.out=n_models),
                     proto_data_element=proto_data_element,
                     MoreArgs=c(list("cl"=cl,
                                     "aggregate_results" = aggregate_internal,
                                     "n_instances"=n_instances,
                                     "n_bootstraps"=n_bootstraps,
+                                    "n_models"=n_models,
                                     "verbose"=verbose,
-                                    "progress_bar"= verbose & length(object@model_list) == 1),
+                                    "progress_bar"= verbose & n_models == 1 & n_bootstraps > 1),
                                list(...)),
                     progress_bar = verbose & length(object@model_list) > 1)
   }
@@ -1410,5 +1466,6 @@ setMethod("..compute_data_element_estimates", signature(x="NULL"),
                         detail_level_str,
                         bootstrap_str,
                         parallel_str),
-                 indent=message_indent)
+                 indent=message_indent,
+                 verbose=verbose)
 }

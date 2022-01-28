@@ -19,3 +19,5 @@ PackageUseDevtools: Yes
 PackageInstallArgs: --no-multiarch --with-keep.source
 PackageCheckArgs: --no-examples
 PackageRoxygenize: rd,collate,namespace
+
+MarkdownWrap: None

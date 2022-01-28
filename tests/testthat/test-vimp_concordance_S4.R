@@ -1,12 +1,15 @@
 familiar:::test_all_vimp_methods_available(familiar:::.get_available_concordance_vimp_method(show_general=TRUE))
 
+# Don't perform any further tests on CRAN due to running time.
+testthat::skip_on_cran()
+
 familiar:::test_hyperparameter_optimisation(vimp_methods=familiar:::.get_available_concordance_vimp_method(show_general=TRUE),
                                             debug=FALSE,
                                             parallel=FALSE,
                                             no_hyperparameters=TRUE)
 
 familiar:::test_all_vimp_methods(familiar:::.get_available_concordance_vimp_method(show_general=FALSE))
-
+familiar:::test_all_vimp_methods_parallel(familiar:::.get_available_concordance_vimp_method(show_general=FALSE))
 
 ##### Count outcome #####
 data <- familiar:::test.create_good_data_set("count")
@@ -41,7 +44,7 @@ vimp_object <- familiar:::prepare_vimp_object(data=data,
                                               imputation_method="simple")
 
 
-testthat::test_that(paste0("The concordance method correctly ranks continuous data.."), {
+testthat::test_that(paste0("The concordance method correctly ranks continuous data."), {
   
   vimp_table <- suppressWarnings(familiar:::.vimp(vimp_object, data))
   

@@ -10,7 +10,8 @@
   outcome_column,
   censoring_indicator,
   event_indicator,
-  competing_risk_indicator
+  competing_risk_indicator,
+  check_stringency = "strict"
 )
 }
 \arguments{
@@ -26,6 +27,18 @@ assessed.}
 \item{event_indicator}{Name of event indicator.}
 
 \item{competing_risk_indicator}{Name of competing risk indicator.}
+
+\item{check_stringency}{Specifies stringency of various checks. This is mostly:
+\itemize{
+\item \code{strict}: default value used for \code{summon_familiar}. Thoroughly checks
+input data. Used internally for checking development data.
+\item \code{external_warn}: value used for \code{extract_data} and related methods. Less
+stringent checks, but will warn for possible issues. Used internally for
+checking data for evaluation and explanation.
+\item \code{external}: value used for external methods such as \code{predict}. Less
+stringent checks, particularly for identifier and outcome columns, which may
+be completely absent. Used internally for \code{predict}.
+}}
 }
 \description{
 This function may help identify if the outcome type is plausible

@@ -1,4 +1,9 @@
-add_cluster_info <- function(cl=NULL, feature_info_list, data_obj, settings, verbose=TRUE){
+add_cluster_info <- function(cl=NULL,
+                             feature_info_list,
+                             data_obj,
+                             settings,
+                             message_indent=0L,
+                             verbose=TRUE){
 
   # Suppress NOTES due to non-standard evaluation in data.table
   name <- cluster_id <- weight <- cluster_size <-  NULL
@@ -11,7 +16,9 @@ add_cluster_info <- function(cl=NULL, feature_info_list, data_obj, settings, ver
   
   if(length(feature_columns) <= 2 | settings$prep$cluster_method=="none"){
     # Message that no clustering was performed
-    if(verbose) logger.message(paste0("Pre-processing: No feature clustering was performed."))
+    logger.message(paste0("Pre-processing: No feature clustering was performed."),
+                   indent=message_indent,
+                   verbose=verbose)
     
     return(feature_info_list)
   }
@@ -21,6 +28,7 @@ add_cluster_info <- function(cl=NULL, feature_info_list, data_obj, settings, ver
                                           data_obj=data_obj,
                                           feature_columns=feature_columns,
                                           settings=settings,
+                                          message_indent=message_indent,
                                           verbose=verbose)
 
   # Determine if there are any reasonable cluster candidates
@@ -28,7 +36,9 @@ add_cluster_info <- function(cl=NULL, feature_info_list, data_obj, settings, ver
                                            similarity_metric=settings$prep$cluster_similarity_metric))){
     
     # Message that no clustering was performed due to distances
-    if(verbose) logger.message(paste0("Pre-processing: No feature clustering was performed as no feature pairs were within the distance to form a cluster."))
+    logger.message(paste0("Pre-processing: No feature clustering was performed as no feature pairs were within the distance to form a cluster."),
+                   indent=message_indent,
+                   verbose=verbose)
     
     return(feature_info_list)
   }
@@ -40,6 +50,7 @@ add_cluster_info <- function(cl=NULL, feature_info_list, data_obj, settings, ver
                                              data_obj=data_obj,
                                              feature_info_list=feature_info_list,
                                              settings=settings,
+                                             message_indent=message_indent,
                                              verbose=verbose)
 
   # Generate the update list
@@ -72,9 +83,11 @@ add_cluster_info <- function(cl=NULL, feature_info_list, data_obj, settings, ver
   n_clusters          <- data.table::uniqueN(cluster_table[cluster_size > 1]$cluster_id)
   n_singular_clusters <- data.table::uniqueN(cluster_table[cluster_size == 1]$cluster_id)
   
-  if(verbose) logger.message(paste0("Pre-processing: ", n_clusters, " non-singular ",
-                                    ifelse(n_clusters==1, "cluster was", "clusters were"), " formed. ",
-                                    n_clusters + n_singular_clusters, " features remain."))
+  logger.message(paste0("Pre-processing: ", n_clusters, " non-singular ",
+                        ifelse(n_clusters==1, "cluster was", "clusters were"), " formed. ",
+                        n_clusters + n_singular_clusters, " features remain."),
+                 indent=message_indent,
+                 verbose=verbose)
   
   return(feature_info_list)
 }
@@ -85,8 +98,8 @@ cluster.get_featurewise_similarity_table <- function(cl=NULL, data_obj,
                                                      feature_columns=NULL,
                                                      settings=NULL,
                                                      similarity_metric=NULL,
-                                                     verbose=FALSE,
-                                                     message_indent=0L){
+                                                     message_indent=0L,
+                                                     verbose=FALSE){
   # Create a pairwise similarity table
   
   # Internal function for computing pair-wise similarity
@@ -117,12 +130,11 @@ cluster.get_featurewise_similarity_table <- function(cl=NULL, data_obj,
     ..error_reached_unreachable_code("cluster.get_featurewise_similarity_table: settings and similarity_metric arguments are both missing.")
   }
   
-  if(verbose){
-    # Message similarity metric
-    logger.message(paste0("Pair-wise distance between features is quantified by ",
-                          similarity.message_similarity_metric(similarity_metric=similarity_metric), "."),
-                   indent=message_indent)
-  }
+  # Message similarity metric
+  logger.message(paste0("Pair-wise distance between features is quantified by ",
+                        similarity.message_similarity_metric(similarity_metric=similarity_metric), "."),
+                 indent=message_indent,
+                 verbose=verbose)
   
   # Get feature columns if this was not provided
   if(is.null(feature_columns)){
@@ -164,8 +176,8 @@ cluster.get_featurewise_similarity_table <- function(cl=NULL, data_obj,
 cluster.get_samplewise_similarity_table <- function(cl=NULL,
                                                     data_obj,
                                                     similarity_metric,
-                                                    verbose=FALSE,
-                                                    message_indent=0L){
+                                                    message_indent=0L,
+                                                    verbose=FALSE){
   
   # Internal function for computing pair-wise similarity
   ..compute_similarity <- function(ii, combinations, data, similarity_metric, categorical_mask){
@@ -195,12 +207,11 @@ cluster.get_samplewise_similarity_table <- function(cl=NULL,
     ..error_reached_unreachable_code("cluster.get_samplewise_similarity_table: similarity_metric argument is missing.")
   }
   
-  if(verbose){
-    # Message similarity metric
-    logger.message(paste0("Pair-wise distance between samples is quantified by ",
-                          similarity.message_similarity_metric(similarity_metric=similarity_metric), "."),
-                   indent=message_indent)
-  }
+  # Message similarity metric
+  logger.message(paste0("Pair-wise distance between samples is quantified by ",
+                        similarity.message_similarity_metric(similarity_metric=similarity_metric), "."),
+                 indent=message_indent,
+                 verbose=verbose)
   
   # Get feature columns.
   feature_columns <- get_feature_columns(x=data_obj)
@@ -259,7 +270,14 @@ cluster.get_samplewise_similarity_table <- function(cl=NULL,
 }
 
 
-cluster.get_distance_matrix <- function(cl=NULL, data_obj=NULL, similarity_table=NULL, feature_columns=NULL, settings=NULL, similarity_metric=NULL, verbose=FALSE){
+cluster.get_distance_matrix <- function(cl=NULL,
+                                        data_obj=NULL,
+                                        similarity_table=NULL,
+                                        feature_columns=NULL,
+                                        settings=NULL,
+                                        similarity_metric=NULL,
+                                        message_indent=0L,
+                                        verbose=FALSE){
   # Compute distance matrix
 
   # Suppress NOTES due to non-standard evaluation in data.table
@@ -280,8 +298,8 @@ cluster.get_distance_matrix <- function(cl=NULL, data_obj=NULL, similarity_table
                                                                feature_columns=feature_columns,
                                                                settings=settings,
                                                                similarity_metric=similarity_metric,
-                                                               verbose=verbose,
-                                                               message_indent=1L)
+                                                               message_indent=message_indent,
+                                                               verbose=verbose)
     
   } else {
     lower_triangle <- data.table::copy(similarity_table)
@@ -325,8 +343,13 @@ cluster.get_distance_matrix <- function(cl=NULL, data_obj=NULL, similarity_table
 
 
 
-cluster.get_cluster_object <- function(cl=NULL, distance_matrix, settings=NULL, cluster_method=NULL,
-                                       cluster_linkage=NULL, verbose=FALSE){
+cluster.get_cluster_object <- function(cl=NULL,
+                                       distance_matrix,
+                                       settings=NULL,
+                                       cluster_method=NULL,
+                                       cluster_linkage=NULL,
+                                       message_indent=0L,
+                                       verbose=FALSE){
 
   # Read and check settings required to form a cluster object.
   if(!is.null(settings)){
@@ -345,21 +368,25 @@ cluster.get_cluster_object <- function(cl=NULL, distance_matrix, settings=NULL, 
     ##### Partitioning methods #############################################################
     
     # Message the algorithm
-    if(verbose){ logger.message(paste0("Pre-processing: Clustering using partitioning around medioids (PAM).")) }
+    logger.message(paste0("Pre-processing: Clustering using partitioning around medioids (PAM)."),
+                   indent=message_indent,
+                   verbose=verbose)
     
     # Determine optimal numbers of clusters based on silhouette
     n_clusters <- cluster.optimise_silhoutte(n_features=attr(distance_matrix, "Size"),
                                              dist_mat=distance_matrix,
                                              cluster_method=cluster_method)
-      
-    if(verbose){
-      # Message the number of clusters
-      logger.message(paste0("Pre-processing: Best average cluster silhouette was achieved by creating ", n_clusters, " clusters."))
-      
-      # Message representation
-      logger.message(paste0("Pre-processing: A cluster is represented by its medioid feature."))
-    }
-
+    
+    # Message the number of clusters
+    logger.message(paste0("Pre-processing: Best average cluster silhouette was achieved by creating ", n_clusters, " clusters."),
+                   indent=message_indent,
+                   verbose=verbose)
+    
+    # Message representation
+    logger.message(paste0("Pre-processing: A cluster is represented by its medioid feature."),
+                   indent=message_indent,
+                   verbose=verbose)
+    
     # Create clusters
     cluster_object <- cluster.pam(dist_mat=distance_matrix, n_clusters=n_clusters)
     
@@ -370,7 +397,9 @@ cluster.get_cluster_object <- function(cl=NULL, distance_matrix, settings=NULL, 
     # Create clusters
     if(cluster_method=="agnes"){
       # Message the algorithm
-      if(verbose) logger.message(paste0("Pre-processing: Clustering using agglomerative hierarchical clustering (AGNES) with ", cluster_linkage, " linkage."))
+      logger.message(paste0("Pre-processing: Clustering using agglomerative hierarchical clustering (AGNES) with ", cluster_linkage, " linkage."),
+                     indent=message_indent,
+                     verbose=verbose)
       
       # Create dendrogram
       cluster_object <- cluster.agnes(dist_mat=distance_matrix,
@@ -378,7 +407,9 @@ cluster.get_cluster_object <- function(cl=NULL, distance_matrix, settings=NULL, 
       
     } else if(cluster_method=="hclust") {
       # Message the algorithm
-      if(verbose) logger.message(paste0("Pre-processing: Clustering using hierarchical clustering with ", cluster_linkage, " linkage."))
+      logger.message(paste0("Pre-processing: Clustering using hierarchical clustering with ", cluster_linkage, " linkage."),
+                     indent=message_indent,
+                     verbose=verbose)
       
       # Create dendrogram
       cluster_object <- cluster.hclust(dist_mat=distance_matrix,
@@ -386,9 +417,11 @@ cluster.get_cluster_object <- function(cl=NULL, distance_matrix, settings=NULL, 
       
     } else if(cluster_method == "diana") {
       # Message the algorithm
-      if(verbose) logger.message(paste0("Pre-processing: Clustering using divisive analysis hierarchical clustering (DIANA)."))
+      logger.message(paste0("Pre-processing: Clustering using divisive analysis hierarchical clustering (DIANA)."),
+                     indent=message_indent,
+                     verbose=verbose)
       
-      # Create dendogram
+      # Create dendrogram
       cluster_object <- cluster.diana(dist_mat=distance_matrix)
     }
     
@@ -404,10 +437,21 @@ cluster.get_cluster_object <- function(cl=NULL, distance_matrix, settings=NULL, 
 
 
 
-cluster.get_cluster_table <- function(cl=NULL, require_representation=TRUE, cluster_object=NULL, 
-                                      distance_matrix=NULL, data_obj=NULL, feature_info_list=NULL, settings=NULL,
-                                      cluster_method=NULL, cluster_linkage=NULL, cluster_cut_method=NULL, cluster_similarity_threshold=NULL,
-                                      cluster_similarity_metric=NULL, cluster_representation_method=NULL, verbose=FALSE){
+cluster.get_cluster_table <- function(cl=NULL,
+                                      require_representation=TRUE,
+                                      cluster_object=NULL, 
+                                      distance_matrix=NULL,
+                                      data_obj=NULL,
+                                      feature_info_list=NULL,
+                                      settings=NULL,
+                                      cluster_method=NULL, 
+                                      cluster_linkage=NULL,
+                                      cluster_cut_method=NULL,
+                                      cluster_similarity_threshold=NULL,
+                                      cluster_similarity_metric=NULL,
+                                      cluster_representation_method=NULL,
+                                      message_indent=0L,
+                                      verbose=FALSE){
 
   if(is.null(distance_matrix)){
     if(is.null(cluster_object)) ..error_reached_unreachable_code("cluster.get_cluster_table: distance_matrix is required to create a cluster_object.")
@@ -505,11 +549,12 @@ cluster.get_cluster_table <- function(cl=NULL, require_representation=TRUE, clus
       # Define clusters
       cluster_table <- data.table::data.table("name"=names(cluster_id), "cluster_id"=cluster_id)
       
-      if(verbose){
-        # Message the number of clusters
-        logger.message(paste0("Pre-processing: Clusters were created by cutting the dendrogram below ", cut_height, ", which corresponds to ",
-                              similarity.message_similarity_metric(similarity_metric=cluster_similarity_metric)," above ", cluster_similarity_threshold, "."))
-      }
+      # Message the number of clusters
+      logger.message(paste0("Pre-processing: Clusters were created by cutting the dendrogram below ", cut_height, ", which corresponds to ",
+                            similarity.message_similarity_metric(similarity_metric=cluster_similarity_metric)," above ", cluster_similarity_threshold, "."),
+                     indent=message_indent,
+                     verbose=verbose)
+      
       
     } else if(cluster_cut_method=="dynamic_cut"){
       
@@ -523,11 +568,12 @@ cluster.get_cluster_table <- function(cl=NULL, require_representation=TRUE, clus
       # Define clusters
       cluster_table <- data.table::data.table("name"=cluster_object$labels, "cluster_id"=cluster_id)
       
-      if(verbose){
-        # Message the number of clusters
-        logger.message(paste0("Pre-processing: Clusters were determined using the dynamic tree cut algorithm with maximum height of ", cut_height, ", which corresponds to ",
-                              similarity.message_similarity_metric(similarity_metric=cluster_similarity_metric)," above ", cluster_similarity_threshold, "."))
-      }
+      # Message the number of clusters
+      logger.message(paste0("Pre-processing: Clusters were determined using the dynamic tree cut algorithm with maximum height of ", cut_height, ", which corresponds to ",
+                            similarity.message_similarity_metric(similarity_metric=cluster_similarity_metric)," above ", cluster_similarity_threshold, "."),
+                     indent=message_indent,
+                     verbose=verbose)
+      
       
     } else if(cluster_cut_method=="silhouette"){
       
@@ -541,10 +587,10 @@ cluster.get_cluster_table <- function(cl=NULL, require_representation=TRUE, clus
       # Define clusters
       cluster_table <- data.table::data.table("name"=names(cluster_id), "cluster_id"=cluster_id)
       
-      if(verbose){
-        # Message the number of clusters
-        logger.message(paste0("Pre-processing: Best average cluster silhouette was achieved by creating ", n_clusters, " clusters."))
-      }
+      # Message the number of clusters
+      logger.message(paste0("Pre-processing: Best average cluster silhouette was achieved by creating ", n_clusters, " clusters."),
+                     indent=message_indent,
+                     verbose=verbose)
     }
     
     if(require_representation){
@@ -606,7 +652,7 @@ cluster.get_silhouette <- function(n_clusters, tree=NULL, dist_mat, cluster_meth
   if(cluster_method == "pam"){
     # Generate partioning around medoids cluster
     clust_obj <- cluster.pam(dist_mat=dist_mat, n_clusters=n_clusters)
-
+    
     # Extract silhoutte table
     silhouette_table <- data.table::as.data.table(clust_obj$silinfo$widths, keep.rownames=FALSE)
     
@@ -625,7 +671,10 @@ cluster.get_silhouette <- function(n_clusters, tree=NULL, dist_mat, cluster_meth
     }
     
   } else if(cluster_method %in% c("agnes", "diana", "hclust")){
-
+    
+    require_package(x="cluster",
+                    purpose="to cluster similar features together")
+    
     # Compute silhouette.
     silhouette_matrix <- cluster::silhouette(x=stats::cutree(tree=tree, k=n_clusters), dist=dist_mat)
     
@@ -760,6 +809,10 @@ cluster.pam <- function(dist_mat, n_clusters){
     return(h)
      
   } else {
+    
+    require_package(x="cluster",
+                    purpose="to cluster similar features together")
+    
     return(cluster::pam(x=dist_mat, k=n_clusters, keep.diss=FALSE, keep.data=FALSE))
   }
 }
@@ -767,6 +820,10 @@ cluster.pam <- function(dist_mat, n_clusters){
 
 
 cluster.agnes <- function(dist_mat, linkage){
+  
+  require_package(x="cluster",
+                  purpose="to cluster similar features together")
+  
   # Compute agglomerative hierarchical clustering of the data set
   return(cluster::agnes(x=dist_mat, method=linkage, keep.diss=FALSE, keep.data=FALSE))
 }
@@ -774,6 +831,10 @@ cluster.agnes <- function(dist_mat, linkage){
 
 
 cluster.diana <- function(dist_mat){
+  
+  require_package(x="cluster",
+                  purpose="to cluster similar features together")
+  
   # Compute DIvisive ANAlysis hierarchical clustering of the data set
   return(cluster::diana(x=dist_mat, keep.diss=FALSE, keep.data=FALSE))
 }
@@ -786,12 +847,14 @@ cluster.hclust <- function(dist_mat, linkage){
   # Convert general linkage names to stats::hclust linkage names.
   if(linkage == "ward")          {
     linkage <- "ward.D2"
+    
   } else if(linkage == "weighted") {
     linkage <- "mcquitty"
   }
   
   if(is_package_installed("fastcluster")){
     return(fastcluster::hclust(d=dist_mat, method=linkage))
+    
   } else {
     return(stats::hclust(d=dist_mat, method=linkage))
   }
@@ -1051,15 +1114,23 @@ cluster.compute_cluster <- function(cluster_table, data_obj){
                                       cluster_similarity_threshold=waiver(),
                                       cluster_similarity_metric=waiver(),
                                       cluster_representation_method=waiver(),
-                                      var_type="cluster"){
+                                      var_type="cluster",
+                                      test_required_packages=TRUE){
   
   # Check cluster method
   if(!is.waive(cluster_method)){
     # Adapt variable name.
     var_name <- ifelse(var_type=="cluster", "cluster_method", paste0(var_type, "_cluster_method"))
     
-    .check_parameter_value_is_valid(x=cluster_method, var_name=var_name,
+    .check_parameter_value_is_valid(x=cluster_method,
+                                    var_name=var_name,
                                     values=c("none", "pam", "agnes", "diana", "hclust"))
+    
+    # Test the cluster package is installed.
+    if(test_required_packages & cluster_method != "none"){
+      require_package(x="cluster",
+                      purpose="to cluster similar features together")
+    }
   }
   
   # Check cluster linkage method
@@ -1068,7 +1139,8 @@ cluster.compute_cluster <- function(cluster_table, data_obj){
     if(is.waive(cluster_method)) ..error_reached_unreachable_code(".check_cluster_parameters: check requires cluster_method argument.")
     
     if(cluster_method %in% c("agnes", "hclust")){
-      .check_parameter_value_is_valid(x=cluster_linkage, var_name=paste0(var_type, "_linkage_method"),
+      .check_parameter_value_is_valid(x=cluster_linkage,
+                                      var_name=paste0(var_type, "_linkage_method"),
                                       values=c("average", "single", "complete", "weighted", "ward"))
     }
   }
@@ -1082,39 +1154,53 @@ cluster.compute_cluster <- function(cluster_table, data_obj){
     var_name <- ifelse(var_type=="cluster", "cluster_cut_method", paste0(var_type, "_cluster_cut_method"))
     
     if(cluster_method %in% c("pam")){
-      .check_parameter_value_is_valid(x=cluster_cut_method, var_name=var_name,
+      .check_parameter_value_is_valid(x=cluster_cut_method,
+                                      var_name=var_name,
                                       values="silhouette")
       
     } else if(cluster_method %in% c("agnes", "diana")){
-      .check_parameter_value_is_valid(x=cluster_cut_method, var_name=var_name,
+      .check_parameter_value_is_valid(x=cluster_cut_method,
+                                      var_name=var_name,
                                       values=c("fixed_cut", "silhouette"))
       
     } else if(cluster_method %in% c("hclust")){
-      .check_parameter_value_is_valid(x=cluster_cut_method, var_name=var_name,
+      .check_parameter_value_is_valid(x=cluster_cut_method,
+                                      var_name=var_name,
                                       values=c("fixed_cut", "silhouette", "dynamic_cut"))
     }
     
-    if(!is_package_installed("dynamicTreeCut") & cluster_cut_method == "dynamic_cut"){
-      stop(paste("dynamic_cut cannot be used as the cluster cut method because the",
-                 "dynamicTreeCut package has not been installed. Please install this package or",
-                 "use a different option."))
+    # Ensure that dynamicTreeCut is present.
+    if(test_required_packages & cluster_cut_method == "dynamic_cut"){
+        require_package(x="dynamicTreeCut",
+                        purpose="to cut dendrograms dynamically")
     }
   }
   
   # Check cluster similarity metric
   if(!is.waive(cluster_similarity_metric)){
-    .check_parameter_value_is_valid(x=cluster_similarity_metric, var_name=paste0(var_type, "_similarity_metric"),
+    .check_parameter_value_is_valid(x=cluster_similarity_metric,
+                                    var_name=paste0(var_type, "_similarity_metric"),
                                     values=.get_available_similarity_metrics(data_type=var_type))
+    
+    # VGAM should be present for computing pseudo-R2 metrics.
+    if(test_required_packages & cluster_similarity_metric %in% c("mcfadden_r2", "cox_snell_r2", "nagelkerke_r2")){
+      require_package(x="VGAM",
+                      purpose=paste0("to compute log-likelihood pseudo R2 similarity using the ",cluster_similarity_metric, " metric"))
+    }
   }
   
   # Check cluster similarity threshold value
   if(!is.waive(cluster_similarity_threshold)){
     if(var_type == "feature"){
       # During evaluation 
-      sapply(cluster_similarity_threshold, .check_number_in_valid_range, var_name=paste0(var_type, "_similarity_threshold"),
+      sapply(cluster_similarity_threshold,
+             .check_number_in_valid_range,
+             var_name=paste0(var_type, "_similarity_threshold"),
              range=c(0.0, 1.0))
+      
     } else {
-      .check_number_in_valid_range(x=cluster_similarity_threshold, var_name=paste0(var_type, "_similarity_threshold"),
+      .check_number_in_valid_range(x=cluster_similarity_threshold,
+                                   var_name=paste0(var_type, "_similarity_threshold"),
                                    range=c(0.0, 1.0))
     }
   }
@@ -1129,10 +1215,12 @@ cluster.compute_cluster <- function(cluster_table, data_obj){
     if(is.waive(cluster_method)) ..error_reached_unreachable_code(".check_cluster_parameters: check requires cluster_method argument.")
     
     if(cluster_method %in% c("pam")){
-      .check_parameter_value_is_valid(x=cluster_representation_method, var_name=var_name,
+      .check_parameter_value_is_valid(x=cluster_representation_method,
+                                      var_name=var_name,
                                       values=c("medioid"))
     } else {
-      .check_parameter_value_is_valid(x=cluster_representation_method, var_name=var_name,
+      .check_parameter_value_is_valid(x=cluster_representation_method,
+                                      var_name=var_name,
                                       values=c("best_predictor", "medioid", "mean"))
     }
   }

@@ -8,3 +8,5 @@
 ^doc$
 ^Meta$
 ^\.data$
+^icon$
+^docs_github$

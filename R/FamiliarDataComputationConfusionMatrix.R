@@ -19,15 +19,16 @@ setClass("familiarDataElementConfusionMatrix",
 #'  with a co-occurence count.
 #'@md
 #'@keywords internal
-setGeneric("extract_confusion_matrix", function(object,
-                                                data,
-                                                cl=NULL,
-                                                ensemble_method=waiver(),
-                                                detail_level=waiver(),
-                                                is_pre_processed=FALSE,
-                                                message_indent=0L,
-                                                verbose=FALSE,
-                                                ...) standardGeneric("extract_confusion_matrix"))
+setGeneric("extract_confusion_matrix",
+           function(object,
+                    data,
+                    cl=NULL,
+                    ensemble_method=waiver(),
+                    detail_level=waiver(),
+                    is_pre_processed=FALSE,
+                    message_indent=0L,
+                    verbose=FALSE,
+                    ...) standardGeneric("extract_confusion_matrix"))
 
 #####extract_confusion_matrix#####
 setMethod("extract_confusion_matrix", signature(object="familiarEnsemble"),
@@ -44,17 +45,16 @@ setMethod("extract_confusion_matrix", signature(object="familiarEnsemble"),
             if(!object@outcome_type %in% c("binomial", "multinomial")) return(NULL)
        
             # Message extraction start
-            if(verbose){
-              logger.message(paste0("Computing confusion matrix."),
-                             indent=message_indent)
-            }
-            
+            logger.message(paste0("Computing confusion matrix."),
+                           indent=message_indent,
+                           verbose=verbose)
             
             # Obtain ensemble method from stored settings, if required.
             if(is.waive(ensemble_method)) ensemble_method <- object@settings$ensemble_method
             
             # Check the level detail.
             detail_level <- .parse_detail_level(x = detail_level,
+                                                object = object,
                                                 default = "ensemble",
                                                 data_element = "confusion_matrix")
             
@@ -110,8 +110,19 @@ setMethod("extract_confusion_matrix", signature(object="familiarEnsemble"),
     
     if(!any_predictions_valid(prediction_table=prediction_data, outcome_type=object@outcome_type)) return(NULL)
     
+    # Remove data with missing predictions.
+    prediction_data <- remove_nonvalid_predictions(prediction_data,
+                                                   outcome_type=object@outcome_type)
+    
+    # Remove data with missing outcomes.
+    prediction_data <- remove_missing_outcomes(data=prediction_data,
+                                               outcome_type=object@outcome_type)
+    
+    # Check that any prediction data remain.
+    if(is_empty(prediction_data)) return(NULL)
+    
     # Make a local copy with only the required data
-    data <- prediction_data[!is.na(outcome), c("outcome", "predicted_class")]
+    data <- prediction_data[, c("outcome", "predicted_class")]
     
     # Rename outcome columns
     data.table::setnames(data,
@@ -157,6 +168,7 @@ setMethod("extract_confusion_matrix", signature(object="familiarEnsemble"),
 #'  familiarCollection.
 #'
 #'@inheritParams export_all
+#'@inheritParams plot_univariate_importance
 #'
 #'@inheritDotParams extract_confusion_matrix
 #'@inheritDotParams as_familiar_collection
@@ -179,27 +191,37 @@ setMethod("extract_confusion_matrix", signature(object="familiarEnsemble"),
 #'@md
 #'@rdname export_confusion_matrix_data-methods
 setGeneric("export_confusion_matrix_data",
-           function(object, dir_path=NULL, ...) standardGeneric("export_confusion_matrix_data"))
+           function(object,
+                    dir_path=NULL,
+                    export_collection=FALSE,
+                    ...) standardGeneric("export_confusion_matrix_data"))
 
 #####export_confusion_matrix_data (collection)#####
 
 #'@rdname export_confusion_matrix_data-methods
 setMethod("export_confusion_matrix_data", signature(object="familiarCollection"),
-          function(object, dir_path=NULL, ...){
+          function(object,
+                   dir_path=NULL,
+                   export_collection=FALSE,
+                   ...){
             
             return(.export(x=object,
                            data_slot="confusion_matrix",
                            dir_path=dir_path,
                            aggregate_results=TRUE,
                            type="performance",
-                           subtype="confusion_matrix"))
+                           subtype="confusion_matrix",
+                           export_collection=export_collection))
           })
 
 #####export_confusion_matrix_data (generic)#####
 
 #'@rdname export_confusion_matrix_data-methods
 setMethod("export_confusion_matrix_data", signature(object="ANY"),
-          function(object, dir_path=NULL, ...){
+          function(object,
+                   dir_path=NULL,
+                   export_collection=FALSE,
+                   ...){
             
             # Attempt conversion to familiarCollection object.
             object <- do.call(as_familiar_collection,
@@ -209,6 +231,7 @@ setMethod("export_confusion_matrix_data", signature(object="ANY"),
             
             return(do.call(export_confusion_matrix_data,
                            args=c(list("object"=object,
-                                       "dir_path"=dir_path),
+                                       "dir_path"=dir_path,
+                                       "export_collection"=export_collection),
                                   list(...))))
           })

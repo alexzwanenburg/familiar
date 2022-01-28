@@ -1,19 +1,26 @@
-run_feature_selection <- function(cl, project_list, settings, file_paths, message_indent=0L){
+run_feature_selection <- function(cl,
+                                  project_list,
+                                  settings,
+                                  file_paths,
+                                  message_indent=0L,
+                                  verbose=TRUE){
 
-  # Check which data object is required for performing feature selection
+  # Check which data object is required for performing feature selection.
   fs_data_id <- .get_process_step_data_identifier(project_list=project_list,
                                                   process_step="fs")
   
-  # Get feature selection methods that still need to be checked
+  # Get feature selection methods that still need to be checked.
   run_fs_methods <- .find_missing_feature_selection_data(proj_list=project_list,
                                                          settings=settings,
                                                          file_paths=file_paths)
 
-  # Check whether pre-processing has been conducted
+  # Check whether pre-processing has been conducted.
   check_pre_processing(cl=cl,
                        data_id=fs_data_id,
                        file_paths=file_paths,
-                       project_id=project_list$project_id)
+                       project_id=project_list$project_id,
+                       message_indent=message_indent,
+                       verbose=verbose)
 
   # Get runs
   run_list <- .get_run_list(iteration_list=project_list$iter_list,
@@ -28,11 +35,11 @@ run_feature_selection <- function(cl, project_list, settings, file_paths, messag
   
   # Create variable importance matrices by iterating over feature selection methods
   for(curr_fs_method in run_fs_methods){
-
-    # Message
+    
     logger.message(paste0("\nFeature selection: starting feature selection using \"", curr_fs_method, "\" method."),
-                   indent=message_indent)
-
+                   indent=message_indent,
+                   verbose=verbose)
+    
     # Optimise models used for feature selection
     hpo_list <- run_hyperparameter_optimisation(cl=cl,
                                                 project_list=project_list,
@@ -40,14 +47,15 @@ run_feature_selection <- function(cl, project_list, settings, file_paths, messag
                                                 settings=settings,
                                                 file_paths=file_paths,
                                                 vimp_method=curr_fs_method,
-                                                message_indent=message_indent + 1L)
+                                                message_indent=message_indent + 1L,
+                                                verbose=verbose)
     
     # Create variable importance information by iterating over the list of runs.
     vimp_list <- fam_mapply_lb(cl=cl_fs,
                                assign="all",
                                FUN=compute_variable_importance,
                                run=run_list,
-                               progress_bar=TRUE,
+                               progress_bar=verbose,
                                MoreArgs=list("fs_method"=curr_fs_method,
                                              "hpo_list"=hpo_list,
                                              "proj_list"=project_list,
@@ -61,7 +69,8 @@ run_feature_selection <- function(cl, project_list, settings, file_paths, messag
 
     # Message that feature selection has been completed.
     logger.message(paste0("Feature selection: feature selection using \"", curr_fs_method, "\" method has been completed."),
-                   indent=message_indent)
+                   indent=message_indent,
+                   verbose=verbose)
   }
 }
 

@@ -13,6 +13,7 @@
     parameter_table <- data.table::as.data.table(value_list)
     
   } else {
+    
     if(grid_initialisation_method %in% "random"){
       # Create completely random hyperparameter sets.
 
@@ -133,7 +134,14 @@
         updated_list[[selected_parameter]] <- new_hp_val_float
       }
       
-    } else if(parameter_type %in% c("factor", "logical")){
+    } else if(parameter_type %in% c("factor")){
+      # Find range of available options
+      available_parameter_values <- parameter_range[parameter_range != current_parameter_value]
+      
+      # Randomly select one option
+      updated_list[[selected_parameter]] <- factor(fam_sample(available_parameter_values, size=1), levels=parameter_range)
+      
+    } else if(parameter_type %in% c("logical")){
       # Find range of available options
       available_parameter_values <- parameter_range[parameter_range != current_parameter_value]
       
@@ -188,13 +196,16 @@
           updated_list[[selected_parameter]] <- new_hp_val_float
         }
         
-      } else if(parameter_type %in% c("factor", "logical")){
+      } else if(parameter_type %in% c("factor")){
         # Randomly select one option
+        updated_list[[selected_parameter]] <- factor(fam_sample(parameter_range, size=1), levels=parameter_range)
+        
+      } else if(parameter_type %in% c("logical")){
         updated_list[[selected_parameter]] <- fam_sample(parameter_range, size=1)
       }
     }
   }
-  
+
   # Return a randomised configuration as a data.table
   return(data.table::as.data.table(updated_list))
 }
@@ -291,10 +302,9 @@
                                               ...)
     }
     
-    if(verbose){
-      logger.message(paste0("Computing variable importance for ", length(bootstraps), " bootstraps."),
-                     indent=message_indent)
-    }
+    logger.message(paste0("Computing variable importance for ", length(bootstraps), " bootstraps."),
+                   indent=message_indent,
+                   verbose=verbose)
     
     # Iterate over data.
     vimp_list <- fam_lapply(cl=cl,
@@ -886,6 +896,7 @@
                                                         parameter_id_incumbent,
                                                         parameter_id_challenger,
                                                         acquisition_function,
+                                                        exploration_method="successive_halving",
                                                         intensify_stop_p_value){
   
   # Suppress NOTES due to non-standard evaluation in data.table
@@ -895,29 +906,42 @@
   comparison_table <- score_table[param_id %in% parameter_id_challenger,
                                   ..compare_hyperparameter_optimisation_scores(challenger_score_table=.SD, 
                                                                                incumbent_score_table=score_table[param_id==parameter_id_incumbent, ],
+                                                                               exploration_method=exploration_method,
                                                                                acquisition_function=acquisition_function),
                                   by=c("param_id")]
   
-  # Determine if there is a new incumbent score
   if(any(comparison_table$challenger_score > comparison_table$incumbent_score)){
     # If a challenger beats the incumbent, replace the incumbent.
     param_id_incumbent_new  <- head(comparison_table[order(-challenger_score)], n=1L)$param_id
     
+  } else {
+    # Do not replace the incumbent.
+    param_id_incumbent_new <- parameter_id_incumbent
+  }
+  
+  if(exploration_method == "stochastic_reject"){
     # Remove new incumbent from the challengers and determine remaining
     # challengers by against significance threshold alpha
     param_id_challenger_new <- comparison_table[param_id != param_id_incumbent_new &
                                                   p_value > intensify_stop_p_value, ]$param_id
     
-    # Add incumbent to the challengers.
-    param_id_challenger_new <- c(param_id_challenger_new,
-                                 parameter_id_incumbent)
+  } else if(exploration_method == "successive_halving"){
+    # Remove the worst half of performers.
+    n_selectable <- floor(length(parameter_id_challenger + 1) / 2)
     
-  } else {
-    # Challengers and incumbent remain and challengers are compared against the
-    # significance threshold.
-    param_id_incumbent_new <- parameter_id_incumbent
-    param_id_challenger_new <- comparison_table[p_value > intensify_stop_p_value, ]$param_id
+    # Order by decreasing challenger score and keep the best half.
+    param_id_challenger_new <- head(comparison_table[order(-challenger_score)], n=n_selectable)$param_id
+    
+  } else if(exploration_method == "none"){
+    # Do not remove anything.
+    param_id_challenger_new <- parameter_id_challenger
   }
+  
+  # Add incumbent to the challengers.
+  param_id_challenger_new <- union(param_id_challenger_new, parameter_id_incumbent)
+  
+  # Remove the new incumbent from the challengers.
+  param_id_challenger_new <- setdiff(param_id_challenger_new, param_id_incumbent_new)
   
   return(list("parameter_id_incumbent"=param_id_incumbent_new,
               "parameter_id_challenger"=param_id_challenger_new))
@@ -927,6 +951,7 @@
 
 ..compare_hyperparameter_optimisation_scores <- function(challenger_score_table,
                                                          incumbent_score_table,
+                                                         exploration_method,
                                                          acquisition_function){
   # Suppress NOTES due to non-standard evaluation in data.table
   run_id <- optimisation_score <- NULL
@@ -935,9 +960,11 @@
   run_id_match    <- intersect(challenger_score_table$run_id,
                                incumbent_score_table$run_id)
   
-  # Select rows that match.
-  challenger_score_table <- challenger_score_table[run_id %in% run_id_match, ][is.na(optimisation_score), "optimisation_score":=-1.0]
-  incumbent_score_table <- incumbent_score_table[run_id %in% run_id_match, ][is.na(optimisation_score), "optimisation_score":=-1.0]
+  # Select rows that match. Note that optimisation score is updated locally to
+  # avoid update by reference on protected slices of the score table in
+  # .compare_hyperparameter_optimisation_scores.
+  challenger_score_table <- data.table::copy(challenger_score_table[run_id %in% run_id_match, ])[is.na(optimisation_score), "optimisation_score":=-1.0]
+  incumbent_score_table <- data.table::copy(incumbent_score_table[run_id %in% run_id_match, ])[is.na(optimisation_score), "optimisation_score":=-1.0]
   
   # Calculate the aggregate optimisation score for challenger and incumbent for
   # the matching bootstraps.
@@ -946,14 +973,52 @@
   incumbent_score <- metric.summarise_optimisation_score(score_table=incumbent_score_table,
                                                          method=acquisition_function)$optimisation_score
   
-  # Find p-value for matching means using paired wilcoxon rank test
-  p_value <- suppressWarnings(stats::wilcox.test(x=challenger_score_table[order(run_id_match)]$optimisation_score,
-                                                 y=incumbent_score_table[order(run_id_match)]$optimisation_score,
-                                                 paired=TRUE,
-                                                 alternative="less")$p.value)
+  if(exploration_method == "stochastic_reject"){
+    # Find p-value for matching means using paired wilcoxon rank test
+    p_value <- suppressWarnings(stats::wilcox.test(x=challenger_score_table[order(run_id_match)]$optimisation_score,
+                                                   y=incumbent_score_table[order(run_id_match)]$optimisation_score,
+                                                   paired=TRUE,
+                                                   alternative="less")$p.value)
+    # Return list with data
+    return(list("challenger_score"=challenger_score,
+                "incumbent_score"=incumbent_score,
+                "p_value"=p_value))
+    
+  } else {
+    # Return list with data
+    return(list("challenger_score"=challenger_score,
+                "incumbent_score"=incumbent_score))
+  }
+}
+
+
+
+.encode_categorical_hyperparameters <- function(parameter_list){
   
-  # Return list with data
-  return(list("challenger_score"=challenger_score,
-              "incumbent_score"=incumbent_score,
-              "p_value"=p_value))
+  # Iterate over hyperparameters.
+  parameter_list <- lapply(parameter_list, ..encode_categorical_hyperparameters)
+  
+  return(parameter_list)
+}
+
+
+
+..encode_categorical_hyperparameters <- function(x){
+  # Encodes the init_config element of x in case x is a categorical
+  # hyperparameter.
+  
+  # Skip if x is not categorical.
+  if(x$type != "factor") return(x)
+  
+  if(x$randomise){
+    # Assign default range + initial value as levels, in case the hyperparameter
+    # is randomised.
+    x$init_config <- factor(x$init_config, levels=c(union(x$range, x$init_config)))
+    
+  } else {
+    # Assign only the selected level as factor.
+    x$init_config <- factor(x$init_config, levels=x$init_config)
+  }
+  
+  return(x)
 }

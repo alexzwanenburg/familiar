@@ -11,6 +11,11 @@
   logger.warning(paste0("Cannot create plots to compare directly between models. Please use the hybrid or ensemble detail levels."))
 }
 
+..error_no_predictions_possible <- function(outcome_type, prediction_type){
+  stop(paste0("Predictions of the ", prediction_type, " type are not possible ",
+              "using models for ", outcome_type, " outcomes."))
+}
+
 
 ..error_no_known_outcome_type <- function(outcome_type){
   stop(paste0("Outcome type was not recognised. Found: ", outcome_type,
@@ -184,4 +189,46 @@
   stop(paste0(ifelse(length(overlap) > 1, "Multiple values were", "One value was")),
        " shared between ", var_name_x, " and ", var_name_y, ": ", paste0(overlap, collapse=", "),
        ". No overlap is allowed.")
+}
+
+
+
+..warning_package_not_installed <- function(x, purpose=NULL){
+  
+  # Only unique packages.
+  x <- unique(x)
+  
+  # Basic error message.
+  err_message <- ..message_missing_package(x=x, purpose=purpose)
+  
+  # Instructions for CRAN packages.
+  err_message <- c(err_message,
+                   ..message_install_from_cran(x=x))
+  
+  # Instructions for Bioconductor packages.
+  err_message <- c(err_message,
+                   ..message_install_from_bioconductor(x=x))
+  
+  warning(paste0(err_message, collapse=""))
+}
+
+
+
+..error_package_not_installed <- function(x, purpose=NULL){
+  
+  # Only unique packages.
+  x <- unique(x)
+
+  # Basic error message.
+  err_message <- ..message_missing_package(x=x, purpose=purpose)
+  
+  # Instructions for CRAN packages.
+  err_message <- c(err_message,
+                   ..message_install_from_cran(x=x))
+  
+  # Instructions for Bioconductor packages.
+  err_message <- c(err_message,
+                   ..message_install_from_bioconductor(x=x))
+  
+  stop(paste0(err_message, collapse=""))
 }

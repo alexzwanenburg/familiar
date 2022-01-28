@@ -43,6 +43,10 @@ setMethod("compute_metric_score", signature(metric="familiarMetricAUCROC"),
             data <- remove_nonvalid_predictions(prediction_table=data,
                                                 outcome_type=metric@outcome_type)
             
+            # Remove any entries that lack observed values.
+            data <- remove_missing_outcomes(data=data,
+                                            outcome_type=metric@outcome_type)
+            
             if(is_empty(data)) return(callNextMethod())
             if(nrow(data) <= 1) return(callNextMethod())
             

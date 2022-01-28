@@ -32,10 +32,10 @@ each model, in contrast to \code{ensemble} where performance is computed for the
 ensemble of models. If there are less than 20 trained models in the
 ensemble, bootstraps are created so that at least 20 point estimates can be
 made.
-\item \code{model} (to be implemented): Results are computed at the model level. This
-means that, for example, bias-corrected estimates of model performance are
-assessed by creating (at least) 20 bootstraps and computing the performance
-of the model for each bootstrap.
+\item \code{model}: Results are computed at the model level. This means that, for
+example, bias-corrected estimates of model performance are assessed by
+creating (at least) 20 bootstraps and computing the performance of the model
+for each bootstrap.
 }
 
 Note that each level of detail has a different interpretation for bootstrap
@@ -54,11 +54,12 @@ model.
 \code{hybrid} is generally computationally less expensive then \code{ensemble}, which
 in turn is somewhat less expensive than \code{model}.
 
-A non-default \code{detail_level} parameter can be
-specified for separate evaluation steps by providing a parameter value in a
-named list with data elements, e.g. \code{list("auc_data"="ensemble", "model_performance"="hybrid")}. This parameter can be set for the following
-data elements: \code{auc_data}, \code{decision_curve_analyis}, \code{model_performance},
-\code{permutation_vimp}, \code{prediction_data} and \code{confusion_matrix}.}
+A non-default \code{detail_level} parameter can be specified for separate
+evaluation steps by providing a parameter value in a named list with data
+elements, e.g. \code{list("auc_data"="ensemble", "model_performance"="hybrid")}.
+This parameter can be set for the following data elements: \code{auc_data},
+\code{decision_curve_analyis}, \code{model_performance}, \code{permutation_vimp},
+\code{ice_data}, \code{prediction_data} and \code{confusion_matrix}.}
 
 \item{message_indent}{Number of indentation steps for messages shown during
 computation and extraction of various data elements.}

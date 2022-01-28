@@ -7,6 +7,26 @@ setClass("familiarGLM",
          slots=list("encoding_reference_table" = "ANY"),
          prototype=list("encoding_reference_table" = NULL))
 
+#####initialize#################################################################
+setMethod("initialize", signature(.Object="familiarGLM"),
+          function(.Object, ...){
+            
+            # Update with parent class first.
+            .Object <- callNextMethod()
+            
+            if(.Object@outcome_type == "multinomial"){
+              .Object@package <- "VGAM"
+              
+            } else if(.Object@outcome_type == "survival"){
+              .Object@package <- "survival"
+              
+            } else {
+              .Object@package <- "stats"
+            }
+            
+            return(.Object)
+          })
+
 
 .get_available_glm_learners <- function(show_general=TRUE){
   
@@ -170,6 +190,9 @@ setMethod("..train", signature(object="familiarGLM", data="dataObject"),
             # Check if hyperparameters are set.
             if(is.null(object@hyperparameters)) return(callNextMethod())
             
+            # Check that required packages are loaded and installed.
+            require_package(object, "train")
+            
             # Use effect coding to convert categorical data into encoded data -
             # this is required to deal with factors with missing/new levels
             # between training and test data sets.
@@ -193,7 +216,9 @@ setMethod("..train", signature(object="familiarGLM", data="dataObject"),
               model <- tryCatch(suppressWarnings(stats::glm(formula,
                                                             data=encoded_data$encoded_data@data,
                                                             family=family,
-                                                            model=FALSE)),
+                                                            model=FALSE,
+                                                            x=FALSE,
+                                                            y=FALSE)),
                                 error=identity)
               
             } else if(object@outcome_type=="multinomial"){
@@ -219,6 +244,9 @@ setMethod("..train", signature(object="familiarGLM", data="dataObject"),
             # Add the contrast references to model_list
             object@encoding_reference_table <- encoded_data$reference_table
             
+            # Set learner version
+            object <- set_package_version(object)
+            
             return(object)
           })
 
@@ -227,6 +255,9 @@ setMethod("..train", signature(object="familiarGLM", data="dataObject"),
 #####..predict#####
 setMethod("..predict", signature(object="familiarGLM", data="dataObject"),
           function(object, data, type="default", ...){
+            
+            # Check that required packages are loaded and installed.
+            require_package(object, "predict")
             
             if(type == "default"){
               ##### Default method #############################################
@@ -359,8 +390,11 @@ setMethod("..vimp", signature(object="familiarGLM"),
             
             if(!model_is_trained(object)) return(callNextMethod())
             
+            # Check that required packages are loaded and installed.
+            require_package(object, "vimp")
+            
             # Compute z-values
-            coefficient_z_values <- coefficient_one_sample_z_test(model=object@model)
+            coefficient_z_values <- .compute_z_statistic(object)
             
             if(is(object@model, "vglm")){
               
@@ -403,8 +437,11 @@ setMethod("..get_distribution_family", signature(object="familiarGLM"),
             # Obtain family from the hyperparameters.
             family <- object@hyperparameters$family
             
+            # Check that required packages are loaded and installed.
+            require_package(object, "distribution")
+            
             # Check that the family hyperparameter exists.
-            if(!is.character(family)){
+            if(!is.character(family) & !is.factor(family)){
               ..error_reached_unreachable_code("..get_distribution_family,familiarGLM: family hyperparameter was not set.")
             }
             
@@ -496,5 +533,60 @@ setMethod("..set_vimp_parameters", signature(object="familiarGLM"),
             # Update family hyperparameter.
             object@hyperparameters$family <- family_default
             
+            return(object)
+          })
+
+
+#####.trim_model----------------------------------------------------------------
+setMethod(".trim_model", signature(object="familiarGLM"),
+          function(object, ...){
+            
+            if(object@outcome_type == "multinomial"){
+              # Update model by removing the call.
+              object@model@call <- call("trimmed")
+              
+              # Add show.
+              object <- .capture_show(object)
+              
+              # Remove .Environment.
+              object@model@terms$terms <- .replace_environment(object@model@terms$terms)
+              object@model@misc$formula <- .replace_environment(object@model@misc$formula)
+              
+              # Remove elements that contain sample-specific values.
+              object@model@predictors <- matrix(0)
+              object@model@effects <- numeric(0)
+              object@model@qr$qr <- NULL
+              object@model@fitted.values <- matrix(0)
+              object@model@residuals <- matrix(0)
+              object@model@weights <- matrix(0)
+              object@model@x <- matrix(0)
+              object@model@y <- matrix(0)
+              
+            } else {
+              # Update model by removing the call.
+              object@model$call <- call("trimmed")
+              
+              # Add show.
+              object <- .capture_show(object)
+              
+              # Remove .Environment.
+              object@model$terms <- .replace_environment(object@model$terms)
+              object@model$formula <- .replace_environment(object@model$formula)
+              
+              # Remove elements that contain sample-specific values.
+              object@model$fitted.values <- NULL
+              object@model$data <- NULL
+              object@model$linear.predictors <- NULL
+              object@model$prior.weights <- NULL
+              object@model$weights <- NULL
+              object@model$qr$qr <- NULL
+              object@model$residuals <- NULL
+              object@model$effects <- NULL
+            }
+            
+            # Set is_trimmed to TRUE.
+            object@is_trimmed <- TRUE
+            
+            # Default method for models that lack a more specific method.
             return(object)
           })

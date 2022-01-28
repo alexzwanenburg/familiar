@@ -23,6 +23,27 @@ check_column_name <- function(column_name){
 }
 
 
+
+stop_or_warn <- function(message, as_error=TRUE){
+  # Find the name of the calling environment.
+  calling_function <- environmentName(parent.env)
+  
+  if(length(calling_function) > 0){
+    if(calling_function != ""){
+      message <- paste0(calling_function, ": ", message)
+    }
+  }
+
+  if(as_error){
+    stop(message, call.=FALSE)
+    
+  } else {
+    warning(message, call.=FALSE)
+  }
+}
+
+
+
 compute_univariable_p_values <- function(cl=NULL, data_obj, feature_columns){
   
   outcome_type <- data_obj@outcome_type
@@ -102,7 +123,7 @@ compute_univariable_p_values <- function(cl=NULL, data_obj, feature_columns){
   if(inherits(model, "error")) return(NA_real_)
   
   # Compute z-statistic.
-  z <- coefficient_one_sample_z_test(model)
+  z <- .compute_z_statistic(model)
   
   # Remove intercept (if present).
   z <- z[names(z) != "(Intercept)"]
@@ -155,7 +176,7 @@ compute_univariable_p_values <- function(cl=NULL, data_obj, feature_columns){
   if(inherits(model, "error")) return(NA_real_)
   
   # Compute z-statistic.
-  z <- coefficient_one_sample_z_test(model)
+  z <- .compute_z_statistic(model)
   
   # Remove intercept (if present).
   z <- z[names(z) != "(Intercept)"]
@@ -208,7 +229,7 @@ compute_univariable_p_values <- function(cl=NULL, data_obj, feature_columns){
   if(inherits(model, "error")) return(NA_real_)
   
   # Compute z-statistic.
-  z <- coefficient_one_sample_z_test(model)
+  z <- .compute_z_statistic(model)
   
   # Remove intercept (if present).
   z <- z[names(z) != "(Intercept)"]
@@ -261,7 +282,7 @@ compute_univariable_p_values <- function(cl=NULL, data_obj, feature_columns){
   if(inherits(model, "error")) return(NA_real_)
   
   # Compute z-statistic
-  z <- coefficient_one_sample_z_test(model)
+  z <- .compute_z_statistic(model)
   
   # Remove intercept (if present).
   z <- z[names(z) != "(Intercept)"]
@@ -303,7 +324,11 @@ compute_univariable_p_values <- function(cl=NULL, data_obj, feature_columns){
   if(is.factor(data$value)){
     data$value <- droplevels(data$value)
   }
-
+  
+  # Check if the package is installed and attached.
+  require_package(x="VGAM",
+                  purpose="to determine univariate p-values for multinomial outcomes")
+  
   # Construct model
   model <- suppressWarnings(tryCatch(VGAM::vglm(outcome ~ .,
                                                 data=data,
@@ -314,7 +339,7 @@ compute_univariable_p_values <- function(cl=NULL, data_obj, feature_columns){
   if(inherits(model, "error")) return(NA_real_)
   
   # Compute z-statistic
-  z <- coefficient_one_sample_z_test(model)
+  z <- .compute_z_statistic(model)
   
   # Remove intercept (if present).
   z <- z[names(z) != "(Intercept)"]
@@ -484,182 +509,37 @@ compute_icc <- function(x, feature, id_data, type="1"){
 
 
 
-applyContrastReference <- function(dt, dt_ref, method){
-  # Updates data table dt based on score
+.file_extension <- function(x){
   
-  # Suppress NOTES due to non-standard evaluation in data.table
-  name <- orig_name <- score <- NULL
+  # Find the file extension by extracting the substring to the right of the
+  # final period.
+  extension <- stringi::stri_sub(x, from=stringi::stri_locate_last_fixed(x, '.')[1,2] + 1L)
   
-  # Check if any categorical variables are present
-  if(is.null(dt_ref)) { return(dt) }
+  # Check for NA values in case an extension is missing.
+  if(is.na(extension)) return("")
   
-  # Split data table into non-categorical features and categorical features
-  dt_non_cat <- dt[!name %in% dt_ref$ref_name, ]
-  dt_cat     <- dt[name %in% dt_ref$ref_name, ]
-  
-  if(nrow(dt_cat)>0) {
-    # Merge dt_cat with dt_ref
-    dt_cat     <- merge(dt_cat, dt_ref, by.x="name", by.y="ref_name")
-    
-    # Summarise score by single value according to "method"
-    if(method=="max")        { dt_cat <- dt_cat[, list(score=max(score, na.rm=TRUE)), by=orig_name]}
-    if(method=="abs_max")    { dt_cat <- dt_cat[, list(score=max(abs(score), na.rm=TRUE)), by=orig_name]}
-    if(method=="min")        { dt_cat <- dt_cat[, list(score=min(score, na.rm=TRUE)), by=orig_name]}
-    if(method=="abs_min")    { dt_cat <- dt_cat[, list(score=min(abs(score), na.rm=TRUE)), by=orig_name]}
-    if(method=="mean")       { dt_cat <- dt_cat[, list(score=mean(score, na.rm=TRUE)), by=orig_name]}
-    if(method=="abs_mean")   { dt_cat <- dt_cat[, list(score=mean(abs(score), na.rm=TRUE)), by=orig_name]}
-    if(method=="median")     { dt_cat <- dt_cat[, list(score=stats::median(score, na.rm=TRUE)), by=orig_name]}
-    if(method=="abs_median") { dt_cat <- dt_cat[, list(score=stats::median(abs(score), na.rm=TRUE)), by=orig_name]}
-    
-    # Replace infinite/nan/etc values by NA
-    dt_cat[!is.finite(score), "score":=as.double(NA)]
-    
-    # Change name of orig_name column to name
-    data.table::setnames(dt_cat, "orig_name", "name")
-    
-    # Combine to single data table
-    dt <- rbind(dt_non_cat, dt_cat)
-  } else {
-    # If no categorical variables are found, return only dt_non_cat
-    dt <- dt_non_cat
-  }
-
-  return(dt)
+  return(extension)
 }
 
-
-any_predictions_valid <- function(prediction_table, outcome_type){
-  
-  if(is_empty(prediction_table)){
-    return(FALSE)
-  }
-  
-  if(outcome_type %in% c("continuous", "count")){
-    return(any(is.finite(prediction_table$predicted_outcome)))
-    
-  } else if(outcome_type %in% c("survival", "competing_risk")){
-    if("predicted_outcome" %in% colnames(prediction_table)){
-      return(any(is.finite(prediction_table$predicted_outcome)))
-      
-    } else if("survival_probability" %in% colnames(prediction_table)){
-      return(any(is.finite(prediction_table$survival_probability)))
-    
-    } else if("risk_group" %in% colnames(prediction_table)){
-      return(any(!is.na(prediction_table$risk_group)))
-      
-    } else {
-      return(FALSE)
-    }
-    
-  } else if(outcome_type %in% c("binomial", "multinomial")){
-    return(!all(is.na(prediction_table$predicted_class)))
-    
-  } else {
-    ..error_no_known_outcome_type(outcome_type)
-  }
-}
-
-remove_nonvalid_predictions <- function(prediction_table, outcome_type){
-  
-  # Suppress NOTES due to non-standard evaluation in data.table
-  predicted_outcome <- predicted_class <- NULL
-  
-  if(is_empty(prediction_table)) return(prediction_table)
-  
-  if(outcome_type %in% c("survival", "continuous", "count", "competing_risk")){
-    return(prediction_table[is.finite(predicted_outcome), ])
-    
-  } else if(outcome_type %in% c("binomial", "multinomial")){
-    return(prediction_table[!is.na(predicted_class), ])
-    
-  } else {
-    ..error_no_known_outcome_type(outcome_type)
-  }
-}
-
-
-create_empty_calibration_table <- function(outcome_type){
-  if(outcome_type == "survival"){
-    calibration_table <- data.table::data.table("evaluation_time"=numeric(0),
-                                                "expected"=numeric(0),
-                                                "observed"=numeric(0),
-                                                "km_var"=numeric(0),
-                                                "n_g"=integer(0),
-                                                "rep_id"=integer(0))
-    
-  } else if(outcome_type %in% c("binomial", "multinomial")){
-    
-    calibration_table <- data.table::data.table("pos_class"=character(0),
-                                                "expected"=numeric(0),
-                                                "observed"=numeric(0),
-                                                "n_g"=integer(0),
-                                                "n_pos"=integer(0),
-                                                "n_neg"=integer(0),
-                                                "rep_id"=integer(0))
-    
-  } else if(outcome_type %in% c("count", "continuous")){
-    
-    calibration_table <- data.table::data.table("expected"=numeric(0),
-                                                "observed"=numeric(0),
-                                                "n_g"=integer(0),
-                                                "rep_id"=integer(0))
-    
-  } else {
-    ..error_outcome_type_not_implemented(outcome_type=outcome_type)
-  }
-
-  return(calibration_table)
-}
-
-
-
-strip_calibration_table <- function(calibration_data, outcome_type){
-  if(outcome_type == "survival"){
-    calibration_data <- calibration_data[, c("evaluation_time",
-                                             "expected",
-                                             "observed",
-                                             "km_var",
-                                             "n_g",
-                                             "rep_id"), with=FALSE]
-    
-  } else if(outcome_type %in% c("binomial", "multinomial")){
-    calibration_data <- calibration_data[, c("pos_class",
-                                             "expected",
-                                             "observed",
-                                             "n_g",
-                                             "n_pos",
-                                             "n_neg",
-                                             "rep_id"), with=FALSE]
-    
-  } else if(outcome_type %in% c("count", "continuous")){
-    calibration_data <- calibration_data[, c("expected",
-                                             "observed",
-                                             "n_g",
-                                             "rep_id"), with=FALSE]
-    
-  } else {
-    ..error_outcome_type_not_implemented(outcome_type=outcome_type)
-  }
-  
-  return(calibration_data)
-  
-}
 
 
 harmonic_p_value <- function(x){
   
+  if(!is_package_installed("harmonicmeanp")) return(NA_real_)
+  
   if(data.table::is.data.table(x)){
-   
-    # Compute harmonic mean p-value.
-    y <- 1.0 / sum(1.0 / nrow(x) * 1.0 / x$p_value)
+    x <- x$p_value
     
-    return(list("p_value"=y)) 
+    # Fix numeric issues due to very small p-values.
+    x[x < 1E-15] <- 1E-15
+    
+    return(list("p_value"=harmonicmeanp::p.hmp(x, L=length(x))))
     
   } else {
-    # Compute harmonic mean p-value.
-    y <- 1.0 / sum(1.0 / length(x) * 1.0 / x)
+    # Fix numeric issues due to very small p-values.
+    x[x < 1E-15] <- 1E-15
     
-    return(y)
+    return(harmonicmeanp::p.hmp(x, L=length(x)))
   }
 }
 
@@ -715,113 +595,17 @@ get_estimate <- function(x, na.rm=TRUE){
 }
 
 
-
-get_contrasts <- function(data, encoding_method="effect", drop_levels=TRUE, outcome_type=NULL, feature_columns=NULL){
-  # Converts categorical data in to contrasts and return data table including contrast
-  # TODO convert to S4 method.
-  # TODO deprecate getContrasts function.
+strict.do.call <- function(what, args, quote = FALSE, envir = parent.frame()){
+  # Only pass fully matching arguments. Side effect is that ... is always empty.
+  # Use with care in case arguments need to be passed to another function.
   
-  # Determine columns with factors
-  if(is.null(feature_columns) & !is.null(outcome_type)) {
-    feature_columns <- get_feature_columns(x=data, outcome_type=outcome_type)
-    
-  } else if(is.null(feature_columns)){
-    feature_columns <- colnames(data)
-  }
+  # Get arguments that can be passed.
+  passable_argument_names <- intersect(names(formals(what)),
+                                       names(args))
   
-  # Return original if no variables are available.
-  if(length(feature_columns) == 0){
-    return(list("dt_contrast"=data, "dt_ref"=NULL))
-  }
-  
-  # Find column classes
-  column_class <- lapply(feature_columns, function(ii, data) (class(data[[ii]])), data=data)
-  
-  # Identify categorical columns
-  factor_columns <- sapply(column_class, function(selected_column_class) (any(selected_column_class %in% c("logical", "character", "factor"))))
-  factor_columns <- feature_columns[factor_columns]
-  
-  # Return original if no categorical variables are available.
-  if(length(factor_columns)==0){
-    return(list("dt_contrast"=data, "dt_ref"=NULL))
-  }
-  
-  # Initialise contrast list and reference list
-  contrast_list  <- list()
-  reference_list <- list()
-  
-  # Iterate over columns and encode the categorical variables.
-  for(ii in seq_along(factor_columns)){
-    # Extract data from current column.
-    current_col <- factor_columns[ii]
-    x <- data[[current_col]]
-    
-    # Drop missing levels
-    if(drop_levels){
-      x <- droplevels(x)
-    }
-    
-    # Get names of levels and number of levels
-    level_names <- levels(x)
-    level_count <- nlevels(x)
-    
-    # Apply coding scheme
-    if(encoding_method=="effect"){
-      # Effect/one-hot encoding
-      curr_contrast_list  <- lapply(level_names, function(ii, x) (as.numeric(x==ii)), x=x)
-      
-      # Check level_names for inconsistencies (i.e. spaces etc)
-      contrast_names <- check_column_name(column_name=paste0(current_col, "_", level_names))
-      names(curr_contrast_list) <- contrast_names
-      
-    } else if(encoding_method=="dummy"){
-      # Dummy encoding. The first level is used as a reference (0).
-      curr_contrast_list  <- lapply(level_names[2:level_count], function(ii, x) (as.numeric(x==ii)), x=x)
-      
-      # Check level_names for inconsistencies (i.e. spaces etc)
-      contrast_names <- check_column_name(column_name=paste0(current_col, "_", level_names[2:level_count]))
-      names(curr_contrast_list) <- contrast_names
-      
-    } else if(encoding_method=="numeric"){
-      # Numeric encoding
-      browser()
-      curr_contrast_list <- list(as.numeric(x))
-      
-      # Set names
-      contrast_names <- current_col
-      names(curr_contrast_list) <- contrast_names
-      
-    } else {
-      ..error_reached_unreachable_code(".get_contrasts: unknown encoding method encountered.")
-    }
-    
-    # Add list of generated contrast to contrast list
-    contrast_list <- append(contrast_list, curr_contrast_list)
-    
-    # Add data table with reference and contrast names to the reference list
-    reference_list[[ii]] <- data.table::data.table("orig_name"=current_col, "ref_name"=contrast_names)
-  }
-  
-  # Check if the original data set contained any features other than categorical
-  # features. Combine original data and contrasts into data table with added
-  # contrast data, and get a list with reference names.
-  if(length(factor_columns) == ncol(data)){
-    contrast_table = data.table::as.data.table(contrast_list)
-    
-  } else {
-    contrast_table = cbind(data[, !factor_columns, with=FALSE],
-                           data.table::as.data.table(contrast_list))
-  }
-  
-  # Return as list
-  return(list("dt_contrast"=contrast_table, "dt_ref"=rbindlist(reference_list)))
+  return(do.call(what, args=args[passable_argument_names], quote=quote, envir=envir))
 }
 
-
-
-getContrasts <- function(dt, method="effect", drop_levels=TRUE, outcome_type=NULL){
-  return(get_contrasts(data=dt, encoding_method=method, drop_levels=drop_levels, outcome_type=outcome_type))
-}
 
 
 get_placeholder_vimp_table <- function(){
@@ -1180,89 +964,60 @@ is_valid_data <- function(x){
 }
 
 
-coefficient_one_sample_z_test <- function(model, mean=0){
+.compute_z_statistic <- function(model){
   
-  # Provides location test for unrestriced regression models
-  if(inherits(model, "vglm")){
-    # VGAM::vglm-based methods
-    mu    <- VGAM::coefvlm(model)
-    
-    if(is.matrix(mu)){
-      stdevs <- matrix(sqrt(diag(VGAM::vcovvlm(model))), ncol=ncol(mu), byrow=TRUE)
-    } else {
-      stdevs <- sqrt(diag(VGAM::vcovvlm(model)))
-      stdevs <- stdevs[names(stdevs) %in% names(mu)][names(mu)]
+  mu <- cov_matrix <- NULL
+  
+  if(is(model, "familiarModel")){
+    # Attempt to extract the estimates and the covariance matrix from the
+    # familiarModel object.
+    if(!is.null(model@trimmed_function$coef)){
+      mu <- model@trimmed_function$coef
     }
-  } else {
-    # glm-based methods
-    mu    <- stats::coef(model)
     
-    if(is.matrix(mu)){
-      stdevs <- matrix(sqrt(diag(stats::vcov(model))), ncol=ncol(mu), byrow=TRUE)
-    } else {
-      stdevs <- sqrt(diag(stats::vcov(model)))
+    if(!is.null(model@trimmed_function$vcov)){
+      cov_matrix <- model@trimmed_function$vcov
+    }
+    
+    # Extract the model itself.
+    model <- model@model
+  }
+  
+  if(is(model, "vglm")){
+    # Check if the package is installed and attached.
+    require_package(x="VGAM",
+                    purpose="to determine z-scores for multinomial regression models")
+    
+    if(is.null(mu)) mu <- VGAM::coefvlm(model)
+    if(is.null(cov_matrix)) cov_matrix <- VGAM::vcovvlm(model)
+    
+  } else {
+    if(is.null(mu)) mu <- stats::coef(model)
+    if(is.null(cov_matrix)) cov_matrix <- stats::vcov(model)
+  }
+  
+  if(is.matrix(mu)){
+    stdevs <- matrix(sqrt(diag(stats::vcov(model))), ncol=ncol(mu), byrow=TRUE)
+    
+  } else {
+    stdevs <- sqrt(diag(cov_matrix))
+    
+    # Order standard deviations according to the estimates.
+    if(is.null(names(stdevs))){
+      stdevs <- stdevs[seq_along(mu)]
       
-      if(is.null(names(stdevs))){
-        # Case where no names are provided
-        stdevs <- stdevs[seq_len(length(mu))]
-      } else {
-        stdevs <- stdevs[names(stdevs) %in% names(mu)][names(mu)]
-      }
+    } else {
+      stdevs <- stdevs[names(stdevs) %in% names(mu)][names(mu)]
     }
   }
   
   # Compute z-score
-  z  <- (mu-mean)/stdevs
+  z  <- mu / stdevs
   
-  # Return p-value based on z-score
+  # Return z-score, as p-values can become very small.
   return(abs(z))
 }
 
-
-
-
-vectorAsString <- function(ref_names){
-  # Parses a character vector to a string
-  vect_str = ""
-
-  for(ii in 1:length(ref_names)){
-    if(ii==1){
-      vect_str <- c(vect_str, ref_names[ii])
-    } else if(ii==length(ref_names)){
-      vect_str <- c(vect_str, paste0(" and ", ref_names[ii]))
-    } else {
-      vect_str <- c(vect_str, paste0(", ", ref_names[ii]))
-    }
-  }
-
-  vect_str <- paste0(vect_str, collapse="")
-}
-
-is_package_installed <- function(name, version=NULL, verbose=FALSE){
-
-  # Get all installed packages
-  installed_packages <- utils::installed.packages()[,1]
-
-  if(name %in% installed_packages){
-    if(!is.null(version)){
-      installed_version <- utils::packageVersion(name)
-
-      if(installed_version < version & verbose){
-        logger.warning(paste0("Package check: Please update the ", name, " package to version ", version, " or later."))
-      }
-    }
-
-    is_installed <- TRUE
-  } else {
-    is_installed <- FALSE
-  }
-
-  if(!is_installed & verbose){
-    logger.warning(paste0("Package check: Please install the ", name, " package."))
-  }
-
-  return(is_installed)
-}
 
 
 is_any <- function(object, class2){
@@ -1319,21 +1074,6 @@ winsor <- function(x, fraction=0.1){
 }
 
 
-rbind_list_list <- function(l, list_elem, ...){
-
-  # Get a list of the required list elements
-  elem_list <- lapply(l, function(sub_list) (sub_list[[list_elem]]))
-  
-  # Remove empty list elements
-  elem_list[sapply(elem_list, is.null)] <- NULL
-  
-  if(length(elem_list) > 0){
-    return(data.table::rbindlist(elem_list, ...))
-    
-  } else {
-    return(NULL)
-  }
-}
 
 unique_na <- function(...){
   values <- do.call(unique, args=list(...))

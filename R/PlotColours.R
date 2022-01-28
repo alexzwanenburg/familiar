@@ -1,11 +1,12 @@
-plotting.get_palette <- function(x=NULL, palette_type, n=5, invert=FALSE, use_alternative=FALSE){
+plotting.get_palette <- function(x=NULL, palette_type, n=5, invert=FALSE, use_alternative=FALSE, diverge_to_white=FALSE){
                                   
   # Check whether the provided palette is known, a set of colors, or a default.
   if(is.null(x)){
     colours <- plotting.get_default_palette(n=n,
                                             palette_type=palette_type,
                                             invert=invert,
-                                            use_alternative=use_alternative)
+                                            use_alternative=use_alternative,
+                                            diverge_to_white=diverge_to_white)
     
   } else if(all(is.character(x))){
     if(length(x) > 1){
@@ -98,7 +99,7 @@ plotting.palette_to_colour <- function(x, n=5){
 }
 
 
-plotting.get_default_palette <- function(n, palette_type, invert, use_alternative=FALSE){
+plotting.get_default_palette <- function(n, palette_type, invert, use_alternative=FALSE, diverge_to_white=FALSE){
   
   .check_parameter_value_is_valid(x=palette_type, var_name="palette_type",
                                   values=c("qualitative", "sequential", "divergent"))
@@ -238,13 +239,27 @@ plotting.get_default_palette <- function(n, palette_type, invert, use_alternativ
       # 98, Power 1 = 0.8, Power 2 = 1.4, without color correction. Oranges: Hue
       # 1=36, Chroma 1 = 20, Max Chroma = 100, Lumin. 1 = 35, Lumin 2 = 98, Power
       # 1 = 0.8, Power 2 = 1.4, without color correction, in reverse order.
-      colours <- c("#233143", "#243950", "#26415D", "#27496A", "#285177", "#295A85",
-                   "#296393", "#2A6CA2", "#2A76B1", "#297FC0", "#2D89CF", "#4D93D2",
-                   "#649CD6", "#79A7DA", "#8CB1DF", "#9FBDE3", "#B2C9E8", "#C6D6ED", "#DCE5F2",
-                   "#F9F9F9",
-                   "#FAE4DA", "#F9D4C3", "#F8C6AE", "#F5B999", "#F2AD85", "#EFA170",
-                   "#EB965A", "#E78C40", "#E28118", "#D67B1E", "#C87528", "#BC702F",
-                   "#AF6A34", "#A36537", "#96603A", "#8A5B3C", "#7E563E", "#725240", "#664D41")
+      if(!diverge_to_white){
+        # Centre colour is white.
+        colours <- c("#233143", "#243950", "#26415D", "#27496A", "#285177", "#295A85",
+                     "#296393", "#2A6CA2", "#2A76B1", "#297FC0", "#2D89CF", "#4D93D2",
+                     "#649CD6", "#79A7DA", "#8CB1DF", "#9FBDE3", "#B2C9E8", "#C6D6ED", "#DCE5F2",
+                     "#F9F9F9",
+                     "#FAE4DA", "#F9D4C3", "#F8C6AE", "#F5B999", "#F2AD85", "#EFA170",
+                     "#EB965A", "#E78C40", "#E28118", "#D67B1E", "#C87528", "#BC702F",
+                     "#AF6A34", "#A36537", "#96603A", "#8A5B3C", "#7E563E", "#725240", "#664D41")
+        
+      } else {
+        # Centre colour is dark.
+        colours <- c("#FAE4DA", "#F9D4C3", "#F8C6AE", "#F5B999", "#F2AD85", "#EFA170",
+                     "#EB965A", "#E78C40", "#E28118", "#D67B1E", "#C87528", "#BC702F",
+                     "#AF6A34", "#A36537", "#96603A", "#8A5B3C", "#7E563E", "#725240", "#664D41",
+                     "#050505",
+                     "#233143", "#243950", "#26415D", "#27496A", "#285177", "#295A85",
+                     "#296393", "#2A6CA2", "#2A76B1", "#297FC0", "#2D89CF", "#4D93D2",
+                     "#649CD6", "#79A7DA", "#8CB1DF", "#9FBDE3", "#B2C9E8", "#C6D6ED", "#DCE5F2")
+      }
+      
       
     } else {
       # A palette based on the same hues the first two colours of the
@@ -255,13 +270,27 @@ plotting.get_default_palette <- function(n, palette_type, invert, use_alternativ
       # 98, Power 1 = 0.8, Power 2 = 1.4, without color correction. Cyan:
       # Hue=185, Chroma 1 = 0, Max Chroma = 55, Lumin. 1 = 40, Lumin 2 = 98,
       # Power 1 = 1.0, Power 2 = 1.4, without color correction.
-      colours <- c("#581B1C", "#661F1F", "#732323", "#812727", "#8F2B2C", "#9E2F30",
-                   "#AC3434", "#BC3839", "#CC3D3E", "#DC4243", "#E25354", "#E76364",
-                   "#EC7374", "#F18383", "#F59394", "#F8A4A4", "#FBB5B6", "#FCC8C8", "#FCDDDD",
-                   "#F9F9F9",
-                   "#E8F3F2", "#D7ECEA", "#C5E6E3", "#B2DFDC", "#9FD9D4", "#8AD3CD",
-                   "#72CCC6", "#56C6BF", "#2DC0B8", "#16B7B0", "#30ADA6", "#3EA39D",
-                   "#489994", "#4F8F8B", "#548582", "#587B79", "#5B7270", "#5D6867", "#5E5E5E")
+      if(!diverge_to_white){
+        # Centre colour is white.
+        colours <- c("#581B1C", "#661F1F", "#732323", "#812727", "#8F2B2C", "#9E2F30",
+                     "#AC3434", "#BC3839", "#CC3D3E", "#DC4243", "#E25354", "#E76364",
+                     "#EC7374", "#F18383", "#F59394", "#F8A4A4", "#FBB5B6", "#FCC8C8", "#FCDDDD",
+                     "#F9F9F9",
+                     "#E8F3F2", "#D7ECEA", "#C5E6E3", "#B2DFDC", "#9FD9D4", "#8AD3CD",
+                     "#72CCC6", "#56C6BF", "#2DC0B8", "#16B7B0", "#30ADA6", "#3EA39D",
+                     "#489994", "#4F8F8B", "#548582", "#587B79", "#5B7270", "#5D6867", "#5E5E5E")
+        
+      } else {
+        # Centre colour is black.
+        colours <- c(rev(c("#E8F3F2", "#D7ECEA", "#C5E6E3", "#B2DFDC", "#9FD9D4", "#8AD3CD",
+                           "#72CCC6", "#56C6BF", "#2DC0B8", "#16B7B0", "#30ADA6", "#3EA39D",
+                           "#489994", "#4F8F8B", "#548582", "#587B79", "#5B7270", "#5D6867", "#5E5E5E")),
+                     "#050505",
+                     rev(c("#581B1C", "#661F1F", "#732323", "#812727", "#8F2B2C", "#9E2F30",
+                           "#AC3434", "#BC3839", "#CC3D3E", "#DC4243", "#E25354", "#E76364",
+                           "#EC7374", "#F18383", "#F59394", "#F8A4A4", "#FBB5B6", "#FCC8C8", "#FCDDDD")))
+        
+      }
     }
     
     if(invert) colours <- rev(colours)

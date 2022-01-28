@@ -22,13 +22,9 @@ setMethod("promote_learner", signature(object="familiarModel"),
               # Naive bayes model
               object <- methods::new("familiarNaiveBayes", object)
             
-            } else if(learner %in% .get_available_radial_knn_learners()){
+            } else if(learner %in% .get_available_knn_learners()){
               # k-nearest neighbours model with radial kernel
-              object <- methods::new("familiarKNNradial", object)
-              
-            } else if(learner %in% .get_available_linear_knn_learners()){
-              # k-nearest neighbours model with radial kernel
-              object <- methods::new("familiarKNNlinear", object)
+              object <- methods::new("familiarKNN", object)
               
             } else if(learner %in% .get_available_svm_c_learners()){
               # C-classification support vector machines.
@@ -94,6 +90,9 @@ setMethod("promote_learner", signature(object="familiarModel"),
               # Extreme gradient boosted trees
               object <- methods::new("familiarXGBoostDart", object)
 
+            } else if(learner %in% .get_available_glmnet_lasso_learners_test()){
+              # Lasso penalised regression models for testing purposes.
+              object <- methods::new("familiarGLMnetLassoTest", object)
             }
             
             # Returned object can be a standard familiarModel
@@ -102,7 +101,7 @@ setMethod("promote_learner", signature(object="familiarModel"),
 
 
 
-learner.get_model_hyperparameters <- function(data, learner, outcome_type, names_only=FALSE){
+.get_learner_hyperparameters <- function(data, learner, outcome_type, names_only=FALSE){
   
   # Get the outcome type from the data object, if available
   if(!is.null(data)) outcome_type <- data@outcome_type
@@ -129,7 +128,7 @@ learner.get_model_hyperparameters <- function(data, learner, outcome_type, names
 
 
 
-learner.check_outcome_type <- function(learner, outcome_type, as_flag=FALSE){
+.check_learner_outcome_type <- function(learner, outcome_type, as_flag=FALSE){
   
   # Create familiarModel
   fam_model <- methods::new("familiarModel",
@@ -153,53 +152,58 @@ learner.check_outcome_type <- function(learner, outcome_type, as_flag=FALSE){
   if(!learner_available){
     stop(paste0(learner, " is not available for \"", outcome_type, "\" outcomes."))
   }
+  
+  # Check that the required package can be loaded.
+  require_package(x=fam_model,
+                  purpose=paste0("to train models using the ", learner, " learner"),
+                  message_type="backend_error")
 }
 
 
 
-learner.check_model_hyperparameters <- function(learner, user_param, outcome_type){
-  
-  # Check if current learner is defined in the user parameter list
-  if(is.null(user_param[[learner]])) return()
-  
-  # Get parameters defined by the model
-  defined_param <- learner.get_model_hyperparameters(data=NULL,
-                                                     learner=learner,
-                                                     outcome_type=outcome_type,
-                                                     names_only=TRUE)
-  
-  if(is.null(defined_param)){ return() }
-  
-  # Parse names of the user-defined parameters
-  user_param    <- names(user_param[[learner]])
-  
-  # Determine if parameters are incorrectly set
-  if(!all(user_param %in% defined_param)){
-    
-    # Determine incorrectly defined user parameters
-    undefined_user_param <- user_param[!user_param %in% defined_param]
-    
-    # Notify the user
-    logger.stop(paste0("Configuration: \"", paste(undefined_user_param, collapse="\", \""), "\" are invalid parameters. Valid parameters are: \"",
-                       paste(defined_param, collapse="\", \"")), "\".")
-  }
-}
+# learner.check_model_hyperparameters <- function(learner, user_param, outcome_type){
+#   
+#   # Check if current learner is defined in the user parameter list
+#   if(is.null(user_param[[learner]])) return()
+#   
+#   # Get parameters defined by the model
+#   defined_param <- .get_learner_hyperparameters(data=NULL,
+#                                                 learner=learner,
+#                                                 outcome_type=outcome_type,
+#                                                 names_only=TRUE)
+#   
+#   if(is.null(defined_param)){ return() }
+#   
+#   # Parse names of the user-defined parameters
+#   user_param    <- names(user_param[[learner]])
+#   
+#   # Determine if parameters are incorrectly set
+#   if(!all(user_param %in% defined_param)){
+#     
+#     # Determine incorrectly defined user parameters
+#     undefined_user_param <- user_param[!user_param %in% defined_param]
+#     
+#     # Notify the user
+#     logger.stop(paste0("Configuration: \"", paste(undefined_user_param, collapse="\", \""), "\" are invalid parameters. Valid parameters are: \"",
+#                        paste(defined_param, collapse="\", \"")), "\".")
+#   }
+# }
 
 
 
-learner.check_model_prediction_type <- function(learner, outcome_type){
-  # Prediction types are specified by the S4 familiarModel objects.
-  
-  # Create placeholder familiar model and promote it to the right subclass.
-  fam_model <- methods::new("familiarModel",
-                            outcome_type=outcome_type,
-                            learner=learner)
-  
-  fam_model <- promote_learner(fam_model)
-  
-  # Return the predicted outcome type.
-  return(get_prediction_type(fam_model))
-}
+# learner.check_model_prediction_type <- function(learner, outcome_type){
+#   # Prediction types are specified by the S4 familiarModel objects.
+#   
+#   # Create placeholder familiar model and promote it to the right subclass.
+#   fam_model <- methods::new("familiarModel",
+#                             outcome_type=outcome_type,
+#                             learner=learner)
+#   
+#   fam_model <- promote_learner(fam_model)
+#   
+#   # Return the predicted outcome type.
+#   return(get_prediction_type(fam_model))
+# }
 
 
 #' Internal function for obtaining a default signature size parameter

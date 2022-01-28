@@ -2,39 +2,47 @@
 #' @include FamiliarS4Classes.R
 NULL
 
-.parse_hyperparameters <- function(data, parameter_list, outcome_type, fs_method=NULL, learner=NULL){
+.parse_hyperparameters <- function(data,
+                                   parameter_list,
+                                   outcome_type,
+                                   fs_method=NULL,
+                                   learner=NULL,
+                                   detector=NULL){
 
   # Check if any hyperparameters have been set
   if(length(parameter_list) == 0){ return(parameter_list) }
   
-  if(!is.null(fs_method)){
-    is_vimp <- TRUE
-  } else if(!is.null(learner)){
-    is_vimp <- FALSE
-  } else {
-    ..error_reached_unreachable_code("check_hyperparameters_fs_method_and_learner_both_null")
-  } 
-  
-  # Find 
-  if(is_vimp){
-    user_function_names <- names(parameter_list)
-    all_functions <- fs_method
-  } else{
-    user_function_names <- names(parameter_list)
-    all_functions <- learner
+  if(is.null(fs_method) & is.null(learner) & is.null(detector)){
+    ..error_reached_unreachable_code(".parse_hyperparameters: one of fs_method, learner, detector should not be NULL")
   }
   
-  # Check whether all names in the hyperparameter list correspond to a fs_method or learner.
+  if(!is.null(fs_method)){
+    all_functions <- fs_method
+    type <- "feature selection methods"
+    
+  } else if(!is.null(learner)){
+    all_functions <- learner
+    type <- "learners"
+    
+  } else if(!is.null(detector)){
+    all_functions <- detector
+    type <- "novelty detector"
+  }
+  
+  # Find hyperparameter names.
+  user_function_names <- names(parameter_list)
+  
+  # Check whether all names in the hyperparameter list correspond to a
+  # fs_method, learner or detector.
   unknown_function <- setdiff(user_function_names, all_functions)
   if(length(unknown_function) > 0){
-    stop(paste("Could not match all entries in the parameter list to", ifelse(is_vimp, "feature selection methods.", "learners."),
-               "Failed to match:", paste0(unknown_function, collapse=", ")))
+    stop(paste0("Could not match all entries in the parameter list to ", type, ".\n",
+                "Failed to match: ", paste_s(unknown_function)))
   }
   
-  # Check for duplicates
+  # Check for duplicates.
   if(anyDuplicated(user_function_names)){
-    stop(paste("Parameters for one or more of the", ifelse(is_vimp, "feature selection methods", "learners"),
-               "are defined more than once."))
+    stop(paste("Parameters for one or more of the ", type, " are defined more than once."))
   }
   
   # Package data into a data object.
@@ -44,7 +52,13 @@ NULL
                        outcome_type=outcome_type)
   
   # Iterate over the feature selection methods or learners to parse and check the hyperparameters
-  out_list <- lapply(user_function_names, .check_hyperparameters, in_list=parameter_list, data=data, is_vimp=is_vimp)
+  out_list <- lapply(user_function_names,
+                     .check_hyperparameters,
+                     in_list=parameter_list,
+                     data=data,
+                     fs_method=fs_method,
+                     learner=learner,
+                     detector=detector)
   
   # Set names of the input parameters
   names(out_list) <- user_function_names
@@ -54,21 +68,32 @@ NULL
 
 
 
-.check_hyperparameters <- function(user_function_name, in_list, data, is_vimp){
+.check_hyperparameters <- function(user_function_name,
+                                   in_list,
+                                   data,
+                                   fs_method=NULL,
+                                   learner=NULL,
+                                   detector=NULL){
 
   # Select current parameter list
   in_list <- in_list[[user_function_name]]
   
-  # Obtain presets
-  if(is_vimp){
+  # Obtain preset values for hyperparameters.
+  if(!is.null(fs_method)){
     preset_list <- .get_preset_hyperparameters(data=data, fs_method=user_function_name, names_only=FALSE)
-  } else {
+    type <- "feature selection method"
+    
+  } else if(!is.null(learner)){
     preset_list <- .get_preset_hyperparameters(data=data, learner=user_function_name, names_only=FALSE)
+    type <- "learner"
+    
+  } else {
+    preset_list <- .get_preset_hyperparameters(data=data, detector=user_function_name, names_only=FALSE)
+    type <- "novelty detector"
   }
-  
 
   # Update user function name for passing into error messages
-  user_function_name <- paste(user_function_name, ifelse(is_vimp, "feature selection method", "learner"))
+  user_function_name <- paste(user_function_name, type)
   
   # Check if the desired function actually has parameters.
   if(length(preset_list)==0){
@@ -79,7 +104,7 @@ NULL
   unknown_parameter <- setdiff(names(in_list), names(preset_list))
   if(length(unknown_parameter) > 0){
     stop(paste("Could not match all parameters provided for the", user_function_name, "to a valid parameter. Failed to match:",
-               paste0(unknown_parameter, collapse=", ")))
+               paste_s(unknown_parameter)))
   }
   
   # Check if there are any duplicate parameters
@@ -147,43 +172,51 @@ NULL
 
 
 
-.get_preset_hyperparameters <- function(data=NULL, fs_method=NULL, learner=NULL, outcome_type=NULL, names_only=FALSE){
+.get_preset_hyperparameters <- function(data=NULL,
+                                        fs_method=NULL,
+                                        learner=NULL,
+                                        detector=NULL,
+                                        outcome_type=NULL,
+                                        names_only=FALSE){
 
-  if(!is.null(fs_method)){
-    is_vimp <- TRUE
-  } else if(!is.null(learner)){
-    is_vimp <- FALSE
-  } else {
-    ..error_reached_unreachable_code("get_preset_hyperparameters_fs_method_and_learner_both_null")
+  if(is.null(fs_method) & is.null(learner) & is.null(detector)){
+    ..error_reached_unreachable_code(".get_preset_hyperparameters: one of fs_method, learner, detector should not be NULL")
   }
   
-  if(is_empty(data)){
-    names_only <- TRUE
-  }
+  if(is_empty(data)) names_only <- TRUE
   
   # Internal error checks. We should be able to obtain the outcome_type.
-  if(is.null(data) & is.null(outcome_type)){
-    ..error_reached_unreachable_code("get_preset_hyperparameters_outcome_type_missing")
-  } else if(!is(data, "dataObject") & is.null(outcome_type)){
-    ..error_reached_unreachable_code("get_preset_hyperparameters_outcome_type_missing")
+  if(is.null(detector)){
+    if(is.null(data) & is.null(outcome_type) ){
+      ..error_reached_unreachable_code(".get_preset_hyperparameters: outcome_type is missing.")
+      
+    } else if(!is(data, "dataObject") & is.null(outcome_type)){
+      ..error_reached_unreachable_code(".get_preset_hyperparameters: outcome_type is missing.")
+    }
+    
+    if(is.null(outcome_type)){
+      outcome_type <- data@outcome_type
+    }
   }
   
-  if(is.null(outcome_type)){
-    outcome_type <- data@outcome_type
-  }
   
   # Find the parameter list
-  if(is_vimp){
-    preset_list <- vimp.get_fs_parameters(data=data,
-                                          method=fs_method,
-                                          outcome_type=outcome_type, 
-                                          names_only=names_only)
+  if(!is.null(fs_method)){
+    preset_list <- .get_vimp_hyperparameters(data=data,
+                                             method=fs_method,
+                                             outcome_type=outcome_type, 
+                                             names_only=names_only)
     
-  } else {
-    preset_list <- learner.get_model_hyperparameters(data=data,
-                                                     learner=learner,
-                                                     outcome_type=outcome_type,
-                                                     names_only=names_only)
+  } else if(!is.null(learner)){
+    preset_list <- .get_learner_hyperparameters(data=data,
+                                                learner=learner,
+                                                outcome_type=outcome_type,
+                                                names_only=names_only)
+    
+  } else if(!is.null(detector)){
+    preset_list <- .get_detector_hyperparameters(data=data,
+                                                detector=detector,
+                                                names_only=names_only)
   }
   
   return(preset_list)
@@ -270,6 +303,14 @@ NULL
              .check_parameter_value_is_valid,
              var_name=parameter_name,
              values=parameter_list[[parameter_name]]$valid_range)
+    }
+    
+    # 
+    if(!parameter_list[[parameter_name]]$randomise){
+      if(length(parameter_list[[parameter_name]]$init_config) > 1){
+        ..error_reached_unreachable_code(paste0(".update_hyperparameters: non-randomised hyperparameter (",
+                                                parameter_name, ") contains more than one initial value."))
+      }
     }
   }
   

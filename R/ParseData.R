@@ -39,7 +39,7 @@
     }
     
     # Load data based on file extension
-    file_extension <- tolower(tools::file_ext(data))
+    file_extension <- tolower(.file_extension(data))
     
     if(file_extension == "csv"){
       data <- .load_csv(data)
@@ -299,9 +299,7 @@
     
   }
   
-  if(nrow(data) == 0){
-    stop("An empty data set without samples was provided.")
-  }
+  if(is_empty(data)) ..error_data_set_is_empty()
   
   return(data)
 }
@@ -334,11 +332,8 @@
 #' Internal function for finalising generic data processing
 #'
 #' @param data data.table with feature data
-#' @param reference list with class levels (`levels`) and ordering (`ordered`)
-#'   per list entry. Each list entry should have the name of the corresponding
-#'   feature. The intended use is that `featureInfo` objects are parsed to
-#'   generate such a reference.
 #' @inheritParams .parse_experiment_settings
+#' @inheritParams as_data_object
 #'
 #' @details This function is used to update data.table provided by loading the
 #'   data. When part of the main familiar workflow, this function is used after
@@ -363,7 +358,7 @@
                                      censoring_indicator,
                                      event_indicator,
                                      competing_risk_indicator,
-                                     reference=NULL){
+                                     check_stringency = "strict"){
 
   # Suppress NOTES due to non-standard evaluation in data.table
   sample_id <- batch_id <- N <- NULL
@@ -420,23 +415,33 @@
                                      outcome_column=outcome_column,
                                      censoring_indicator=censoring_indicator,
                                      event_indicator=event_indicator,
-                                     competing_risk_indicator=competing_risk_indicator)
+                                     competing_risk_indicator=competing_risk_indicator,
+                                     check_stringency=check_stringency)
     
     if(outcome_type %in% c("survival")){
       # Add survival columns
       
-      # Identify survival status columns
-      event_cols <- sapply(outcome_column, .is_survival_status_col,
-                           data=data,
-                           censoring_indicator=censoring_indicator,
-                           event_indicator=event_indicator,
-                           competing_risk_indicator=competing_risk_indicator)
-      
-      # The plausibility already took care of consistency checking.
-      # This means that there is one and only one event status column and the other
-      # column contains survival time.
-      time_column <- outcome_column[!event_cols]
-      event_column <- outcome_column[event_cols]
+      if(check_stringency == "strict"){
+        # Identify survival status columns
+        event_cols <- sapply(outcome_column, .is_survival_status_col,
+                             data=data,
+                             censoring_indicator=censoring_indicator,
+                             event_indicator=event_indicator,
+                             competing_risk_indicator=competing_risk_indicator)
+        
+        # The plausibility already took care of consistency checking. This means
+        # that there is one and only one event status column and the other
+        # column contains survival time.
+        time_column <- outcome_column[!event_cols]
+        event_column <- outcome_column[event_cols]
+        
+      } else {
+        # For other stringency levels, outcome columns are assumed to be
+        # extracted from familiarModel or familiarEnsemble objects, which
+        # already contain ordered values.
+        time_column <- outcome_column[1]
+        event_column <- outcome_column[2]
+      }
       
       # Rename columns
       data.table::setnames(data, old=c(time_column, event_column),
@@ -448,7 +453,7 @@
                            new=get_outcome_columns(x=outcome_type))
     }
     
-  } else if(outcome_type == "survival"){
+  } else if(outcome_type %in% c("survival", "competing_risk")){
     # Generate outcome columns with NA
     
     # Find outcome column names
@@ -457,13 +462,25 @@
     # Create new columns and set to NA
     for(current_outcome_col in outcome_column) data[, (current_outcome_col):=NA]
 
-  } else if(outcome_type %in% c("binomial", "multinomial", "count", "continuous")){
+  } else if(outcome_type %in% c("binomial", "multinomial")){
     
     # Find outcome column names
     outcome_column <- get_outcome_columns(x=outcome_type)
     
     # Generate outcome column with NA values
-    data[, (outcome_column):=NA]
+    data[, (outcome_column):=NA_character_]
+    
+  } else if(outcome_type %in% c("count", "continuous")){
+    
+    # Find outcome column names
+    outcome_column <- get_outcome_columns(x=outcome_type)
+    
+    # Generate outcome column with NA values
+    data[, (outcome_column):=NA_real_]
+  
+  } else if(outcome_type %in% c("unsupervised")){
+    # Outcome column is NULL, as unsupervised data do not have outcome.
+    outcome_column <- NULL
     
   } else {
     ..error_no_known_outcome_type(outcome_type)
@@ -473,16 +490,48 @@
   if(outcome_type %in% c("binomial", "multinomial")){
     if(!is.null(class_levels)){
       # Perform checks on class levels
-      .check_class_level_plausibility(data=data, outcome_type=outcome_type, outcome_column="outcome", class_levels=class_levels)
+      .check_class_level_plausibility(data=data,
+                                      outcome_type=outcome_type,
+                                      outcome_column="outcome",
+                                      class_levels=class_levels,
+                                      check_stringency=check_stringency)
       
-      # Set class levels. This may involve reordering class levels in case the outcome already was a factor.
-      data$outcome <- factor(data$outcome, levels=class_levels)
+      # Set class levels. This may involve reordering class levels in case the
+      # outcome already was a factor.
+      data$outcome <- factor(data$outcome,
+                             levels=class_levels,
+                             exclude=NA)
     
     } else if(!is.factor(data$outcome)){
       # Convert to factors
       data$outcome <- factor(data$outcome, levels=unique(data$outcome),
                              exclude=c(NA, "NA", "NAN", "na", "nan", "NaN"))
     }
+  }
+  
+  # Check survival time for positivity.
+  if(outcome_type %in% c("survival", "competing_risk")){
+    time_column <- get_outcome_columns(x=outcome_type)[1]
+    
+    .check_survival_time_plausibility(data=data,
+                                      outcome_column=time_column,
+                                      outcome_type=outcome_type,
+                                      check_stringency=check_stringency)
+    
+    # Convert outcome_event to 0s and 1s.
+    replacement_outcome_event <- numeric(length(data$outcome_event))
+    replacement_outcome_event[data$outcome_event %in% censoring_indicator] <- 0
+    replacement_outcome_event[data$outcome_event %in% event_indicator] <- 1
+    
+    # Update competing risk indicators.
+    if(length(competing_risk_indicator) > 0){
+      for(ii in seq_along(competing_risk_indicator)){
+        replacement_outcome_event[data$outcome_event %in% competing_risk_indicator[ii]] <- ii + 1
+      }
+    }
+    
+    # Update outcome event column.
+    data$outcome_event <- replacement_outcome_event
   }
   
   # Find outcome columns.
@@ -542,7 +591,8 @@
   }
   
   # Convert data to categorical features
-  data <- .parse_categorical_features(data=data, outcome_type=outcome_type, reference=reference)
+  data <- .parse_categorical_features(data=data,
+                                      outcome_type=outcome_type)
   
   return(data)
 }
@@ -553,19 +603,21 @@
 #'
 #' @param data data.table with feature data
 #' @param outcome_type character, indicating the type of outcome
-#' @param reference list with class levels (`levels`) and ordering (`ordered`) per list entry. Each list entry
-#'   should have the name of the corresponding feature. The intended use is that `featureInfo` objects
-#'   are parsed to generate such a reference.
+#' @param reference list with class levels (`levels`) and ordering (`ordered`)
+#'   per list entry. Each list entry should have the name of the corresponding
+#'   feature. The intended use is that `featureInfo` objects are parsed to
+#'   generate such a reference.
 #'
-#' @details This function parses columns containing feature data to factors if the data contained therein have
-#'   logical (TRUE, FALSE), character, or factor classes.  Unless passed as feature names with `reference`,
-#'   numerical data, including integers, are not converted to factors.
+#' @details This function parses columns containing feature data to factors if
+#'   the data contained therein have logical (TRUE, FALSE), character, or factor
+#'   classes.  Unless passed as feature names with `reference`, numerical data,
+#'   including integers, are not converted to factors.
 #'
 #' @return data.table with several features converted to factor.
 #'
 #' @md
 #' @keywords internal
-.parse_categorical_features <- function(data, outcome_type, reference=list()){
+.parse_categorical_features <- function(data, outcome_type){
   # Replace columns types so that only numeric and categorical features remain
 
   # Check presence of feature columns
@@ -583,11 +635,11 @@
   categorical_columns <- sapply(column_class, function(selected_column_class) (any(selected_column_class %in% c("logical", "character", "factor"))))
   categorical_columns <- feature_columns[categorical_columns]
   
-  # Add columns that both appear in the reference list and in data.
-  categorical_columns <- union(categorical_columns, intersect(feature_columns, names(reference)))
-  
+  # # Add columns that both appear in the reference list and in data.
+  # categorical_columns <- union(categorical_columns, intersect(feature_columns, names(reference)))
+  # 
   # Do not update data if there are no columns for categorical data
-  if(length(categorical_columns) == 0){ return(data) }
+  if(length(categorical_columns) == 0) return(data)
   
   # Generate a list of warnings.
   warning_list <- list()
@@ -605,33 +657,33 @@
       class_levels <- levels(data[[ii]])
       is_ordered      <- is.ordered(data[[ii]])
     }
-    
-    # Identify levels in the reference
-    reference_levels <- reference[[ii]]$levels
-     
-    # Compare with reference
-    if(!is.null(reference_levels)){
-      browser()
-      # Identify if there are any missing levels
-      missing_levels <- setdiff(class_levels, reference_levels)
-      
-      # Generate an error if new class levels appear. However, we only generate this error at the end to
-      # limit user frustration.
-      if(length(missing_levels) > 0){
-        warning_list <- append(warning_list, paste0("Missing class levels in feature", ii, ". Unmatched levels: ",
-                                                    paste0(missing_levels, collapse=", "), ". Expected: ",
-                                                    paste0(reference_levels, collapse=", "), "."))
-        
-        # Skip conversion for the current data to prevent errors.
-        next()
-      
-      } else {
-        # Use the reference levels for generating the factor, and let this data determine
-        # ordering.
-        class_levels <- reference_levels
-        is_ordered   <- reference[[ii]]$ordered
-      }
-    }
+    # 
+    # # Identify levels in the reference
+    # reference_levels <- reference[[ii]]$levels
+    #  
+    # # Compare with reference
+    # if(!is.null(reference_levels)){
+    #   browser()
+    #   # Identify if there are any missing levels
+    #   missing_levels <- setdiff(class_levels, reference_levels)
+    #   
+    #   # Generate an error if new class levels appear. However, we only generate this error at the end to
+    #   # limit user frustration.
+    #   if(length(missing_levels) > 0){
+    #     warning_list <- append(warning_list, paste0("Missing class levels in feature", ii, ". Unmatched levels: ",
+    #                                                 paste0(missing_levels, collapse=", "), ". Expected: ",
+    #                                                 paste0(reference_levels, collapse=", "), "."))
+    #     
+    #     # Skip conversion for the current data to prevent errors.
+    #     next()
+    #   
+    #   } else {
+    #     # Use the reference levels for generating the factor, and let this data determine
+    #     # ordering.
+    #     class_levels <- reference_levels
+    #     is_ordered   <- reference[[ii]]$ordered
+    #   }
+    # }
     
     # Create a categorical variable for the current column.
     data.table::set(data, j=ii, value=factor(data[[ii]], levels=class_levels, ordered=is_ordered))
@@ -650,10 +702,20 @@ update_data_set <- function(data, object){
   
   # Check if the classes of the input is correct.
   if(!data.table::is.data.table(data)) stop("update_data_set: data is not a data.table")
-  if(!(is(object, "familiarModel") | is(object, "familiarEnsemble"))) stop("update_data_set: object is not a familiarModel or a familiarEnsemble.")
+  if(!(is(object, "familiarModel") | is(object, "familiarEnsemble") | is(object, "familiarNoveltyDetector"))){
+    stop("update_data_set: object is not a familiarModel, familiarNoveltyDetector or a familiarEnsemble.")
+  } 
+  
+  # Find the outcome type.
+  if(is(object, "familiarNoveltyDetector")){
+    outcome_type <- "unsupervised"
+    
+  } else {
+    outcome_type <- object@outcome_type
+  }
   
   # Find the outcome column
-  outcome_column <- get_outcome_columns(object@outcome_type)
+  outcome_column <- get_outcome_columns(outcome_type)
   
   # Start warning list.
   warning_list <- NULL
@@ -661,7 +723,7 @@ update_data_set <- function(data, object){
   ##### Check outcome ##########################################################
   
   # Checks for categorical / ordinal outcomes.
-  if(object@outcome_type %in% c("binomial", "multinomial")){
+  if(outcome_type %in% c("binomial", "multinomial")){
     if(is(object@outcome_info, "outcomeInfo")){
       # Update the outcome column if the outcome data is ordinal.
       if(object@outcome_info@ordered & !is.ordered(data[[outcome_column]])){
@@ -692,9 +754,9 @@ update_data_set <- function(data, object){
   
   # TODO: When we start supporting transformation and normalisation
   # parameters for outcome, process the data here.
-  if(object@outcome_type %in% c("count", "continuous")){
+  if(outcome_type %in% c("count", "continuous")){
     if(is(object@outcome_info, "outcomeInfo")){
-      if(!is.null(object@outcome_info@transformation_parameters | !is.null(object@outcome_info@normalisation_parameters))){
+      if(!is.null(object@outcome_info@transformation_parameters) | !is.null(object@outcome_info@normalisation_parameters)){
         browser()
       }
     }
@@ -706,7 +768,7 @@ update_data_set <- function(data, object){
   all_columns <- colnames(data)
   
   # Check that the non-feature columns are present.
-  non_feature_columns <- get_non_feature_columns(object@outcome_type)
+  non_feature_columns <- get_non_feature_columns(outcome_type)
   missing_non_feature_columns <- setdiff(non_feature_columns, all_columns)
   
   if(length(missing_non_feature_columns) > 0){
@@ -723,8 +785,16 @@ update_data_set <- function(data, object){
   # Check that the feature columns for required_features, and if not, for the
   # union of model_features and novelty_features are present.
   required_features <- object@required_features
-  model_and_novelty_features <- union(object@model_features, object@novelty_features)
   
+  # Novelty detectors do not have separate novelty feature attributes.
+  if(is(object, "familiarNoveltyDetector")){
+    model_and_novelty_features <- object@model_features
+    
+  } else {
+    model_and_novelty_features <- union(object@model_features, object@novelty_features)
+  }
+  
+  # Check presence of features.
   if(length(required_features) > 0 & length(model_and_novelty_features) > 0){
     if(all(required_features %in% all_columns)){
       available_features <- required_features
@@ -803,3 +873,35 @@ update_data_set <- function(data, object){
   return(data)
 }
 
+
+
+.add_data_dummy_columns <- function(data,
+                                    sample_id_column,
+                                    batch_id_column,
+                                    series_id_column,
+                                    outcome_column){
+  
+  # Add dummy sample identifier column if absent.
+  if(!sample_id_column %in% colnames(data)){
+    data[, (sample_id_column):=.I]
+  }
+  
+  # Add dummy batch identifier column if absent.
+  if(!batch_id_column %in% colnames(data)){
+    data[, (batch_id_column):="placeholder"]
+  }
+  
+  # Add dummy series identifier column if absent.
+  if(!series_id_column %in% colnames(data)){
+    data[, (series_id_column):=seq_len(.N), by=c(sample_id_column, batch_id_column)]
+  }
+  
+  # Add dummy outcome columns, if absent.
+  for(current_outcome_column in outcome_column){
+    if(!current_outcome_column %in% colnames(data)){
+      data[, (current_outcome_column) := NA]
+    }
+  }
+  
+  return(data)
+}

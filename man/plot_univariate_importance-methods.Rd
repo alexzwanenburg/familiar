@@ -26,8 +26,8 @@ plot_univariate_importance(
   x_label = waiver(),
   y_label = "feature",
   legend_label = waiver(),
-  plot_title = NULL,
-  plot_sub_title = NULL,
+  plot_title = waiver(),
+  plot_sub_title = waiver(),
   caption = NULL,
   x_range = NULL,
   x_n_breaks = 5,
@@ -37,6 +37,7 @@ plot_univariate_importance(
   height = waiver(),
   units = waiver(),
   verbose = TRUE,
+  export_collection = FALSE,
   ...
 )
 
@@ -60,8 +61,8 @@ plot_univariate_importance(
   x_label = waiver(),
   y_label = "feature",
   legend_label = waiver(),
-  plot_title = NULL,
-  plot_sub_title = NULL,
+  plot_title = waiver(),
+  plot_sub_title = waiver(),
   caption = NULL,
   x_range = NULL,
   x_n_breaks = 5,
@@ -71,6 +72,7 @@ plot_univariate_importance(
   height = waiver(),
   units = waiver(),
   verbose = TRUE,
+  export_collection = FALSE,
   ...
 )
 
@@ -94,8 +96,8 @@ plot_univariate_importance(
   x_label = waiver(),
   y_label = "feature",
   legend_label = waiver(),
-  plot_title = NULL,
-  plot_sub_title = NULL,
+  plot_title = waiver(),
+  plot_sub_title = waiver(),
   caption = NULL,
   x_range = NULL,
   x_n_breaks = 5,
@@ -105,6 +107,7 @@ plot_univariate_importance(
   height = waiver(),
   units = waiver(),
   verbose = TRUE,
+  export_collection = FALSE,
   ...
 )
 }
@@ -156,10 +159,10 @@ creation of the underlying \code{familiarModel} objects.}
 saved to. Output is saved in the \code{variable_importance} subdirectory. If NULL
 no figures are saved, but are returned instead.}
 
-\item{p_adjustment_method}{(\emph{optional}) Indicates type of p-value that is shown.
-One of \code{holm}, \code{hochberg}, \code{hommel}, \code{bonferroni}, \code{BH}, \code{BY},
-\code{fdr}, \code{none}, \code{p_value} or \code{q_value} for adjusted p-values, uncorrected
-p-values and q-values. q-values may not be available.}
+\item{p_adjustment_method}{(\emph{optional}) Indicates type of p-value that is
+shown. One of \code{holm}, \code{hochberg}, \code{hommel}, \code{bonferroni}, \code{BH}, \code{BY}, \code{fdr},
+\code{none}, \code{p_value} or \code{q_value} for adjusted p-values, uncorrected p-values
+and q-values. q-values may not be available.}
 
 \item{split_by}{(\emph{optional}) Splitting variables. This refers to column names
 on which datasets are split. A separate figure is created for each split.
@@ -233,8 +236,10 @@ the number of features and the number of facets.}
 \item{verbose}{Flag to indicate whether feedback should be provided for the
 plotting.}
 
+\item{export_collection}{(\emph{optional}) Exports the collection if TRUE.}
+
 \item{...}{
-  Arguments passed on to \code{\link[=as_familiar_collection]{as_familiar_collection}}, \code{\link[ggplot2:ggsave]{ggplot2::ggsave}}
+  Arguments passed on to \code{\link[=as_familiar_collection]{as_familiar_collection}}, \code{\link[ggplot2:ggsave]{ggplot2::ggsave}}, \code{\link[=extract_univariate_analysis]{extract_univariate_analysis}}
   \describe{
     \item{\code{familiar_data_names}}{Names of the dataset(s). Only used if the \code{object} parameter
 is one or more \code{familiarData} objects.}
@@ -242,7 +247,7 @@ is one or more \code{familiarData} objects.}
     \item{\code{filename}}{File name to create on disk.}
     \item{\code{plot}}{Plot to save, defaults to last plot displayed.}
     \item{\code{device}}{Device to use. Can either be a device function
-(e.g. \code{\link[=png]{png()}}), or one of "eps", "ps", "tex" (pictex),
+(e.g. \link{png}), or one of "eps", "ps", "tex" (pictex),
 "pdf", "jpeg", "tiff", "png", "bmp", "svg" or "wmf" (windows only).}
     \item{\code{path}}{Path of the directory to save plot to: \code{path} and \code{filename}
 are combined to create the fully qualified file name. Defaults to the
@@ -250,9 +255,31 @@ working directory.}
     \item{\code{scale}}{Multiplicative scaling factor.}
     \item{\code{dpi}}{Plot resolution. Also accepts a string input: "retina" (320),
 "print" (300), or "screen" (72). Applies only to raster output types.}
-    \item{\code{limitsize}}{When \code{TRUE} (the default), \code{ggsave} will not
+    \item{\code{limitsize}}{When \code{TRUE} (the default), \code{ggsave()} will not
 save images larger than 50x50 inches, to prevent the common error of
 specifying dimensions in pixels.}
+    \item{\code{bg}}{Background colour. If \code{NULL}, uses the \code{plot.background} fill value
+from the plot theme.}
+    \item{\code{data}}{A \code{dataObject} object, \code{data.table} or \code{data.frame} that
+constitutes the data that are assessed.}
+    \item{\code{cl}}{Cluster created using the \code{parallel} package. This cluster is then
+used to speed up computation through parallellisation.}
+    \item{\code{icc_type}}{String indicating the type of intraclass correlation
+coefficient (\code{1}, \code{2} or \code{3}) that should be used to compute robustness for
+features in repeated measurements during the evaluation of univariate
+importance. These types correspond to the types in Shrout and Fleiss (1979).
+If not provided explicitly, this parameter is read from settings used at
+creation of the underlying \code{familiarModel} objects.}
+    \item{\code{feature_similarity_metric}}{Metric to determine pairwise similarity
+between features. Similarity is computed in the same manner as for
+clustering, and \code{feature_similarity_metric} therefore has the same options
+as \code{cluster_similarity_metric}: \code{mcfadden_r2}, \code{cox_snell_r2},
+\code{nagelkerke_r2}, \code{spearman}, \code{kendall} and \code{pearson}.
+
+If not provided explicitly, this parameter is read from settings used at
+creation of the underlying \code{familiarModel} objects.}
+    \item{\code{message_indent}}{Number of indentation steps for messages shown during
+computation and extraction of various data elements.}
   }}
 }
 \value{
@@ -266,6 +293,10 @@ familiarCollection object.
 This function generates a horizontal barplot with the length of the
 bars corresponding to the 10-logarithm of the (multiple-testing corrected)
 p-value or q-value.
+
+Features are assessed univariately using one-sample location t-tests after
+fitting a suitable regression model. The fitted model coefficient and the
+covariance matrix are then used to compute a p-value.
 
 The following splitting variables are available for \code{split_by}, \code{color_by}
 and \code{facet_by}:

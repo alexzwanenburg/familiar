@@ -39,6 +39,7 @@ NULL
 #'@inheritParams plotting.check_data_handling
 #'@inheritDotParams as_familiar_collection -object
 #'@inheritDotParams ggplot2::ggsave -height -width -units
+#'@inheritDotParams extract_feature_similarity -object -feature_cluster_method -feature_linkage_method -feature_cluster_cut_method -feature_similarity_threshold
 #'
 #'@details This function generates area under the ROC curve plots.
 #'
@@ -86,8 +87,8 @@ setGeneric("plot_feature_similarity",
                     y_label=waiver(),
                     y_label_shared="row",
                     legend_label=waiver(),
-                    plot_title=NULL,
-                    plot_sub_title=NULL,
+                    plot_title=waiver(),
+                    plot_sub_title=waiver(),
                     caption=NULL,
                     y_range=NULL,
                     y_n_breaks=3,
@@ -98,6 +99,7 @@ setGeneric("plot_feature_similarity",
                     width=waiver(),
                     height=waiver(),
                     units=waiver(),
+                    export_collection=FALSE,
                     ...) standardGeneric("plot_feature_similarity"))
 
 #####plot_feature_similarity (generic)#####
@@ -122,8 +124,8 @@ setMethod("plot_feature_similarity", signature(object="ANY"),
                    y_label=waiver(),
                    y_label_shared="row",
                    legend_label=waiver(),
-                   plot_title=NULL,
-                   plot_sub_title=NULL,
+                   plot_title=waiver(),
+                   plot_sub_title=waiver(),
                    caption=NULL,
                    y_range=NULL,
                    y_n_breaks=3,
@@ -134,6 +136,7 @@ setMethod("plot_feature_similarity", signature(object="ANY"),
                    width=waiver(),
                    height=waiver(),
                    units=waiver(),
+                   export_collection=FALSE,
                    ...){
             
             # Attempt conversion to familiarCollection object.
@@ -172,7 +175,8 @@ setMethod("plot_feature_similarity", signature(object="ANY"),
                                      "dendrogram_height"=dendrogram_height,
                                      "width"=width,
                                      "height"=height,
-                                     "units"=units)))
+                                     "units"=units,
+                                     "export_collection"=export_collection)))
           })
 
 
@@ -198,8 +202,8 @@ setMethod("plot_feature_similarity", signature(object="familiarCollection"),
                    y_label=waiver(),
                    y_label_shared="row",
                    legend_label=waiver(),
-                   plot_title=NULL,
-                   plot_sub_title=NULL,
+                   plot_title=waiver(),
+                   plot_sub_title=waiver(),
                    caption=NULL,
                    y_range=NULL,
                    y_n_breaks=3,
@@ -210,6 +214,7 @@ setMethod("plot_feature_similarity", signature(object="familiarCollection"),
                    width=waiver(),
                    height=waiver(),
                    units=waiver(),
+                   export_collection=FALSE,
                    ...){
             
             # Get input data
@@ -227,7 +232,7 @@ setMethod("plot_feature_similarity", signature(object="familiarCollection"),
             # Obtain data element from list.
             if(is.list(x)){
 
-              if(length(x) > 1) ..error_reached_unreachable_code(".plot_variable_importance: list of data elements contains unmerged elements.")
+              if(length(x) > 1) ..error_reached_unreachable_code("plot_feature_similarity: list of data elements contains unmerged elements.")
               
               # Get x directly.
               x <- x[[1]]
@@ -235,6 +240,13 @@ setMethod("plot_feature_similarity", signature(object="familiarCollection"),
             
             # Check that the data are not empty.
             if(is_empty(x)) return(NULL)
+            
+            # Check package requirements for plotting.
+            if(!require_package(x=..required_plotting_packages(extended=TRUE),
+                                purpose="to plot feature similarity heatmaps",
+                                message_type="warning")){
+              return(NULL)
+            }
             
             
             ##### Check input arguments ----------------------------------------
@@ -333,6 +345,9 @@ setMethod("plot_feature_similarity", signature(object="familiarCollection"),
             
             ##### Create plots -------------------------------------------------
             
+            # Determine if subtitle should be generated.
+            autogenerate_plot_subtitle <- is.waive(plot_sub_title)
+            
             # Split data.
             if(!is.null(split_by)){
               x_split <- split(x@data, by=split_by, drop=FALSE)
@@ -348,6 +363,14 @@ setMethod("plot_feature_similarity", signature(object="familiarCollection"),
             for(x_sub in x_split){
               
               if(is_empty(x_sub)) next()
+              
+              if(is.waive(plot_title)) plot_title <- "Feature similarity" 
+              
+              if(autogenerate_plot_subtitle){
+                plot_sub_title <- plotting.create_subtitle(split_by=split_by,
+                                                           additional=list("metric"=x@similarity_metric),
+                                                           x=x_sub)
+              }
               
               # Generate plot
               p <- .plot_feature_similarity_plot(x=x_sub,
@@ -381,14 +404,10 @@ setMethod("plot_feature_similarity", signature(object="familiarCollection"),
               # Save and export
               if(!is.null(dir_path)){
                 
-                # Add plot type as a subtype.
-                subtype <- "similarity"
-                
-                # Determine the subtype
-                if(!is.null(split_by)){        
-                  subtype <- c(subtype, as.character(sapply(split_by, function(jj, x) (x[[jj]][1]), x=x_sub)))
-                  subtype <- paste0(subtype, collapse="_")
-                }
+                # Set subtype.
+                subtype <- plotting.create_subtype(x=x_sub,
+                                                   subtype="similarity",
+                                                   split_by=split_by)
                 
                 # Identify unique features:
                 features <- unique(c(x_sub$feature_name_1, x_sub$feature_name_2))
@@ -419,13 +438,11 @@ setMethod("plot_feature_similarity", signature(object="familiarCollection"),
               }
             }
             
-            # Output
-            if(is.null(dir_path)){
-              return(plot_list)
-              
-            } else {
-              return(NULL)
-            }
+            # Generate output
+            return(plotting.get_output(dir_path=dir_path,
+                                       plot_list=plot_list,
+                                       export_collection=export_collection,
+                                       object=object))
           })
 
 
@@ -633,7 +650,7 @@ setMethod("plot_feature_similarity", signature(object="familiarCollection"),
 
   
   # Colors
-  gradient_colours <- plotting.get_palette(x=gradient_palette, palette_type=palette_type)
+  gradient_colours <- plotting.get_palette(x=gradient_palette, palette_type=palette_type, diverge_to_white=TRUE)
   if(invert_palette) gradient_colours <- rev(gradient_colours)
   
   if(length(gradient_palette_range) > 0){

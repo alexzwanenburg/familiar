@@ -20,6 +20,19 @@ NULL
 #'@param object A `familiarEnsemble` or `familiarModel` object that is used to
 #'  check consistency of these objects.
 #'
+#'@param check_stringency Specifies stringency of various checks. This is mostly:
+#'
+#'  * `strict`: default value used for `summon_familiar`. Thoroughly checks
+#'  input data. Used internally for checking development data.
+#'  
+#'  * `external_warn`: value used for `extract_data` and related methods. Less
+#'  stringent checks, but will warn for possible issues. Used internally for
+#'  checking data for evaluation and explanation.
+#'  
+#'  * `external`: value used for external methods such as `predict`. Less
+#'  stringent checks, particularly for identifier and outcome columns, which may
+#'  be completely absent. Used internally for `predict`.
+#'
 #'@inheritParams .parse_experiment_settings
 #'
 #'@details You can specify settings for your data manually, e.g. the column for
@@ -61,14 +74,27 @@ setMethod("as_data_object", signature(data="data.table"),
                    class_levels=waiver(),
                    exclude_features=waiver(),
                    include_features=waiver(),
+                   check_stringency="strict",
                    ...){
-
+            
             # Suppress NOTES due to non-standard evaluation in data.table
             type <- NULL
             
             # Determine whether the object contains data concerning columns, and
             # outcome. Note that user-provided names always take precedence.
-            has_model_object <- is(object, "familiarModel") | is(object, "familiarEnsemble")
+            has_model_object <- is(object, "familiarModel") | is(object, "familiarEnsemble") | is(object, "familiarNoveltyDetector")
+            
+            # Check whether a model potentially has outcome information.
+            if(has_model_object){
+              has_outcome_info_slot <- methods::.hasSlot(object, "outcome_info")
+              
+            } else {
+              has_outcome_info_slot <- FALSE
+            }
+            
+            if(check_stringency != "strict"){
+              if(!has_model_object) stop("Dummy columns cannot be set without a model or ensemble object.")
+            } 
             
             # Attempt to identify a sample identifier column.
             if(is.waive(sample_id_column)){
@@ -127,11 +153,11 @@ setMethod("as_data_object", signature(data="data.table"),
             # Attempt to identify the name of the outcome.
             if(is.waive(outcome_name)){
               
-              if(has_model_object){
+              if(has_model_object & has_outcome_info_slot){
                 if(is(object@outcome_info, "outcomeInfo")){
                   
                   # Check that the outcome name is not empty.
-                  if(length(object@outcome_info@name) > 1) outcome_name <- object@outcome_info@name
+                  if(length(object@outcome_info@name) >= 1) outcome_name <- object@outcome_info@name
                 }
               }
             }
@@ -139,7 +165,7 @@ setMethod("as_data_object", signature(data="data.table"),
             # Attempt to identify the outcome columns.
             if(is.waive(outcome_column)){
               
-              if(has_model_object){
+              if(has_model_object & has_outcome_info_slot){
                 if(!is_empty(object@data_column_info)){
                   # Find the model columns.
                   outcome_column <- object@data_column_info[type == "outcome_column"]$external
@@ -149,7 +175,10 @@ setMethod("as_data_object", signature(data="data.table"),
             
             # Attempt to identify the type of outcome.
             if(is.waive(outcome_type)){
-              if(has_model_object){
+              if(is(object, "familiarNoveltyDetector")){
+                outcome_type <- "unsupervised"
+                
+              } else if(has_model_object){
                 outcome_type <- object@outcome_type
               }
             }
@@ -157,7 +186,7 @@ setMethod("as_data_object", signature(data="data.table"),
             # Attempt to identify the event indicator.
             if(is.waive(event_indicator)){
               
-              if(has_model_object){
+              if(has_model_object & has_outcome_info_slot){
                 if(is(object@outcome_info, "outcomeInfo")){
                   if(length(object@outcome_info@event) > 0){
                     if(!is.na(object@outcome_info@event)) event_indicator <- object@outcome_info@event
@@ -169,7 +198,7 @@ setMethod("as_data_object", signature(data="data.table"),
             # Attempt to identify the censoring indicator.
             if(is.waive(censoring_indicator)){
               
-              if(has_model_object){
+              if(has_model_object & has_outcome_info_slot){
                 if(is(object@outcome_info, "outcomeInfo")){
                   if(length(object@outcome_info@censored) > 0){
                     if(!is.na(object@outcome_info@censored)) censoring_indicator <- object@outcome_info@censored
@@ -181,7 +210,7 @@ setMethod("as_data_object", signature(data="data.table"),
             # Attempt to identify the competing risk indicator.
             if(is.waive(competing_risk_indicator)){
               
-              if(has_model_object){
+              if(has_model_object & has_outcome_info_slot){
                 if(is(object@outcome_info, "outcomeInfo")){
                   if(length(object@outcome_info@competing_risk) > 0){
                     if(!is.na(object@outcome_info@competing_risk)) competing_risk_indicator <- object@outcome_info@competing_risk
@@ -193,7 +222,7 @@ setMethod("as_data_object", signature(data="data.table"),
             # Attempt to identify class levels of the outcome.
             if(is.waive(class_levels)){
               
-              if(has_model_object){
+              if(has_model_object & has_outcome_info_slot){
                 if(is(object@outcome_info, "outcomeInfo")){
                   if(length(object@outcome_info@levels) > 0) class_levels <- object@outcome_info@levels
                 }
@@ -201,22 +230,23 @@ setMethod("as_data_object", signature(data="data.table"),
             }
             
             # Load settings from input.
-            settings <- do.call(.parse_initial_settings, args=c(list("experimental_design"="fs+mb",
-                                                                     "sample_id_column"=sample_id_column,
-                                                                     "batch_id_column"=batch_id_column,
-                                                                     "series_id_column"=series_id_column,
-                                                                     "development_batch_id"=development_batch_id,
-                                                                     "validation_batch_id"=validation_batch_id,
-                                                                     "outcome_name"=outcome_name,
-                                                                     "outcome_column"=outcome_column,
-                                                                     "outcome_type"=outcome_type,
-                                                                     "event_indicator"=event_indicator,
-                                                                     "censoring_indicator"=censoring_indicator,
-                                                                     "competing_risk_indicator"=competing_risk_indicator,
-                                                                     "class_levels"=class_levels,
-                                                                     "exclude_features"=exclude_features,
-                                                                     "include_features"=include_features),
-                                                                list(...)))
+            settings <- do.call(.parse_initial_settings,
+                                args=c(list("experimental_design"="fs+mb",
+                                            "sample_id_column"=sample_id_column,
+                                            "batch_id_column"=batch_id_column,
+                                            "series_id_column"=series_id_column,
+                                            "development_batch_id"=development_batch_id,
+                                            "validation_batch_id"=validation_batch_id,
+                                            "outcome_name"=outcome_name,
+                                            "outcome_column"=outcome_column,
+                                            "outcome_type"=outcome_type,
+                                            "event_indicator"=event_indicator,
+                                            "censoring_indicator"=censoring_indicator,
+                                            "competing_risk_indicator"=competing_risk_indicator,
+                                            "class_levels"=class_levels,
+                                            "exclude_features"=exclude_features,
+                                            "include_features"=include_features),
+                                       list(...)))
             
             # Prepare data.table.
             data <- .load_data(data=data,
@@ -225,7 +255,9 @@ setMethod("as_data_object", signature(data="data.table"),
                                series_id_column=settings$data$series_col)
             
             # Update settings
-            settings <- .update_initial_settings(data=data, settings=settings)
+            settings <- .update_initial_settings(data=data,
+                                                 settings=settings,
+                                                 check_stringency=check_stringency)
             
             # Parse data
             data <- .finish_data_preparation(data = data,
@@ -236,20 +268,33 @@ setMethod("as_data_object", signature(data="data.table"),
                                              outcome_type = settings$data$outcome_type,
                                              include_features = settings$data$include_features,
                                              class_levels = settings$data$class_levels,
-                                             censoring_indicator=settings$data$censoring_indicator,
-                                             event_indicator=settings$data$event_indicator,
-                                             competing_risk_indicator=settings$data$competing_risk_indicator)
+                                             censoring_indicator = settings$data$censoring_indicator,
+                                             event_indicator = settings$data$event_indicator,
+                                             competing_risk_indicator = settings$data$competing_risk_indicator,
+                                             check_stringency = check_stringency)
             
             # Update the dataset according to the feature info list.
             if(has_model_object) data <- update_data_set(data=data, object=object)
             
             # Add outcome information, preferentially from the familiarModel or
             # familiarEnsemble, as it is more complete.
-            if(has_model_object){
+            if(has_model_object & has_outcome_info_slot){
               outcome_info <- object@outcome_info
               
             } else {
               outcome_info <- create_outcome_info(settings=settings)
+            }
+            
+            if(has_model_object){
+              if(!is_empty(object@data_column_info)){
+                data_info <- object@data_column_info
+                
+              } else {
+                data_info <- create_data_column_info(settings=settings)
+              }
+              
+            } else {
+              data_info <- create_data_column_info(settings=settings)
             }
             
             # Convert to dataObject
@@ -257,7 +302,8 @@ setMethod("as_data_object", signature(data="data.table"),
                                  data = data,
                                  preprocessing_level="none",
                                  outcome_type = settings$data$outcome_type,
-                                 outcome_info = outcome_info)
+                                 outcome_info = outcome_info,
+                                 data_column_info = data_info)
             
             return(data)
           })
@@ -361,15 +407,47 @@ setMethod("as_data_object", signature(data="ANY"),
 setMethod("extract_settings_from_data", signature(data="dataObject"),
           function(data, settings=NULL, signature=NULL){
             
-            if(is.null(settings)){
-              settings <- list("data"=list())
+            # Suppress NOTES due to non-standard evaluation in data.table
+            type <- NULL
+            
+            if(is.null(settings)) settings <- list("data"=list())
+            
+            # Placeholders
+            sample_id_column <- batch_id_column <- series_id_column <- outcome_columns <- NULL
+            
+            if(!is_empty(data@data_column_info)){
+              # Sample identifier
+              sample_id_column <- ..set_identifier_column(current=sample_id_column,
+                                                          data=data@data,
+                                                          internal=data@data_column_info[type == "sample_id_column"]$internal,
+                                                          external=data@data_column_info[type == "sample_id_column"]$external)
+              
+              # Batch identifier
+              batch_id_column <- ..set_identifier_column(current=batch_id_column,
+                                                         data=data@data,
+                                                         internal=data@data_column_info[type == "batch_id_column"]$internal,
+                                                         external=data@data_column_info[type == "batch_id_column"]$external)
+              
+              # Series identifier
+              series_id_column <- ..set_identifier_column(current=series_id_column,
+                                                          data=data@data,
+                                                          internal=data@data_column_info[type == "series_id_column"]$internal,
+                                                          external=data@data_column_info[type == "series_id_column"]$external)
+              
+              # Outcome columns
+              outcome_columns <- ..set_identifier_column(current=outcome_columns,
+                                                         data=data@data,
+                                                         internal=data@data_column_info[type == "outcome_column"]$internal,
+                                                         external=data@data_column_info[type == "outcome_column"]$external)
             }
             
+            if(is.null(outcome_columns)) get_outcome_columns(data)
+            
             # Sample identifier column
-            settings$data$sample_col <- get_id_columns(single_column="sample")
-            settings$data$batch_col <- get_id_columns(single_column="batch")
-            settings$data$series_col <- get_id_columns(single_column="series")
-            settings$data$outcome_col <- get_outcome_columns(data)
+            settings$data$sample_col <- sample_id_column
+            settings$data$batch_col <- batch_id_column
+            settings$data$series_col <- series_id_column
+            settings$data$outcome_col <- outcome_columns
             settings$data$outcome_type <- data@outcome_type
             settings$data$outcome_name <- get_outcome_name(data@outcome_info)
             settings$data$class_levels <- get_outcome_class_levels(data@outcome_info)
@@ -384,13 +462,53 @@ setMethod("extract_settings_from_data", signature(data="dataObject"),
 
 
 
+..set_identifier_column <- function(current=NULL,
+                                    data=NULL,
+                                    internal,
+                                    external){
+  
+  if(!(is.waive(current) | is.null(current))){
+    return(current)
+  }
+  
+  temporary <- NULL
+  
+  # Prefer external before internal, as long as it is present in data.
+  if(all(sapply(external, length) > 0)){
+    if(!any(sapply(external, is.na))){
+      if(data.table::is.data.table(data)){
+        if(all(external %in% colnames(data))) temporary <- external
+      }
+    }
+  }
+  
+  # Prefer internal if it is present in data.
+  if(data.table::is.data.table(data) & is.null(temporary)){
+    if(all(internal %in% colnames(data))) temporary <- internal
+  }
+  
+  # Use external if internal is not present in data.
+  if(all(sapply(external, length) > 0) & is.null(temporary)){
+    if(!any(sapply(external, is.na))) temporary <- internal
+  }
+  
+  if(is.null(temporary)){
+    return(current)
+  } else {
+    return(temporary)
+  }
+}
+
+
+
 #####load_delayed_data (model)#####
 setMethod("load_delayed_data", signature(data="dataObject", object="ANY"),
           function(data, object, stop_at, keep_novelty=FALSE){
             # Loads data from internal memory
 
-            if(!(is(object, "familiarModel") | is(object, "familiarVimpMethod"))){
-              ..error_reached_unreachable_code("load_delayed_data: object is expected to be a familiarModel or familiarVimpMethod.")
+            if(!(is(object, "familiarModel") | is(object, "familiarVimpMethod") | is(object, "familiarNoveltyDetector"))){
+              ..error_reached_unreachable_code(paste0("load_delayed_data: object is expected to be a familiarModel, ",
+                                                      "familiarVimpMethod or familiarNoveltyDetector."))
             }
             
             # Check if loading was actually delayed
@@ -576,7 +694,7 @@ setMethod("load_delayed_data", signature(data="dataObject", object="familiarEnse
 
 #####preprocess_data (vimp method)#####
 setMethod("preprocess_data", signature(data="dataObject", object="familiarVimpMethod"),
-          function(data, object, stop_at="clustering", keep_novelty=FALSE) .pre_process_data(data=data,
+          function(data, object, stop_at="clustering", keep_novelty=FALSE) .preprocess_data(data=data,
                                                                                              object=object,
                                                                                              stop_at=stop_at,
                                                                                              keep_novelty=keep_novelty))
@@ -584,21 +702,60 @@ setMethod("preprocess_data", signature(data="dataObject", object="familiarVimpMe
 
 #####preprocess_data (model)#####
 setMethod("preprocess_data", signature(data="dataObject", object="familiarModel"),
-          function(data, object, stop_at="clustering", keep_novelty=FALSE) .pre_process_data(data=data,
-                                                                                             object=object,
-                                                                                             stop_at=stop_at,
-                                                                                             keep_novelty=keep_novelty))
+          function(data, object, stop_at="clustering", keep_novelty=FALSE){
+            
+            # Pre-process the data.
+            data <- .preprocess_data(data=data,
+                                     object=object,
+                                     stop_at=stop_at,
+                                     keep_novelty=keep_novelty)
+            
+            # Post-process the data to select the correct feature and identifier
+            # set.
+            data <- postprocess_data(data=data,
+                                     object=object,
+                                     stop_at=stop_at,
+                                     keep_novelty=keep_novelty)
+            
+            return(data)
+          })
+
+#####preprocess_data (novelty detector)#########################################
+# Note that keep_novelty is always false to prevent reading novelty_features
+# slot. Novelty features are stored in the model_features slot of
+# familiarNoveltyDetector objects.
+setMethod("preprocess_data", signature(data="dataObject", object="familiarNoveltyDetector"),
+          function(data, object, stop_at="clustering", ...){
+            
+            # Assign "unsupervised" outcome type to the data to prevent outcome
+            # columns being selected.
+            data@outcome_type <- "unsupervised"
+            
+            # Pre-process the data.
+            data <- .preprocess_data(data=data,
+                                     object=object,
+                                     stop_at=stop_at,
+                                     keep_novelty=FALSE)
+            
+            # Post-process the data to select the correct feature and identifier
+            # set.
+            data <- postprocess_data(data=data,
+                                     object=object,
+                                     stop_at=stop_at)
+            
+            return(data)
+          })
 
 
 #####preprocess_data (ensemble)#####
 setMethod("preprocess_data", signature(data="dataObject", object="familiarEnsemble"),
-          function(data, object, stop_at="clustering", keep_novelty=FALSE) .pre_process_data(data=data,
+          function(data, object, stop_at="clustering", keep_novelty=FALSE).preprocess_data(data=data,
                                                                                              object=object,
                                                                                              stop_at=stop_at,
                                                                                              keep_novelty=keep_novelty))
 
 
-.pre_process_data <- function(data, object, stop_at, keep_novelty=FALSE){
+.preprocess_data <- function(data, object, stop_at, keep_novelty=FALSE){
   
   # Convert the preprocessing_level attained and the requested
   # stopping level to ordinals.
@@ -607,6 +764,7 @@ setMethod("preprocess_data", signature(data="dataObject", object="familiarEnsemb
   
   # Check whether pre-processing is required
   if(preprocessing_level_attained == stop_at){
+    
     return(data)
     
   } else if(preprocessing_level_attained > stop_at) {
@@ -640,7 +798,7 @@ setMethod("preprocess_data", signature(data="dataObject", object="familiarEnsemb
                                 features=selected_features)
         
       } else {
-        ..error_reached_unreachable_code(".pre_process_data: could not identify overlapping features")
+        ..error_reached_unreachable_code(".preprocess_data: could not identify overlapping features")
       }
     }
   }
@@ -674,29 +832,102 @@ setMethod("preprocess_data", signature(data="dataObject", object="familiarEnsemb
     data <- cluster_features(data=data,
                              feature_info_list=object@feature_info)
   }
-  
-  if(is(object, "familiarModel") & stop_at >= "clustering"){
-    
-    # Select features.
-    features <- object@model_features
-    if(keep_novelty) features <- union(features, object@novelty_features)
-    
-    # Return data if there are no features.
-    if(length(features) == 0) return(data)
-    
-    # Determine the features after clustering.
-    features <- features_after_clustering(features=features,
-                                          feature_info_list=object@feature_info)
-    
-    # Create a slice of the data for the feature set.
-    data <- select_features(data=data,
-                            features=features)
-  }
+  # 
+  # if(is(object, "familiarModel") & stop_at >= "clustering"){
+  #   
+  #   # Select features.
+  #   features <- object@model_features
+  #   if(keep_novelty) features <- union(features, object@novelty_features)
+  #   
+  #   # Return data if there are no features.
+  #   if(length(features) == 0) return(data)
+  #   
+  #   # Determine the features after clustering.
+  #   features <- features_after_clustering(features=features,
+  #                                         feature_info_list=object@feature_info)
+  #   
+  #   # Create a slice of the data for the feature set.
+  #   data <- select_features(data=data,
+  #                           features=features)
+  #   
+  # } else if(is(object, "familiarNoveltyDetector") & stop_at >= "clustering"){
+  #   # Select features.
+  #   features <- object@model_features
+  #   
+  #   # Return data if there are no features.
+  #   if(length(features) == 0) return(data)
+  #   
+  #   # Determine the features after clustering.
+  #   features <- features_after_clustering(features=features,
+  #                                         feature_info_list=object@feature_info)
+  #   
+  #   # Create a slice of the data for the feature set.
+  #   data <- select_features(data=data,
+  #                           features=features)
+  # }
   
   return(data)
 }
 
 
+##### postprocess_data (model)--------------------------------------------
+setMethod("postprocess_data", signature(data="dataObject", object="familiarModel"),
+          function(data, object, stop_at="clustering", keep_novelty=FALSE){
+            
+            # Convert the preprocessing_level attained and the requested
+            # stopping level to ordinals.
+            preprocessing_level_attained <- .as_preprocessing_level(data@preprocessing_level)
+            stop_at <- .as_preprocessing_level(stop_at)
+            
+            if(stop_at < "clustering" | preprocessing_level_attained < "clustering") return(data)
+            
+            # Select features.
+            features <- object@model_features
+            if(keep_novelty) features <- union(features, object@novelty_features)
+            
+            # Return data if there are no features.
+            if(length(features) == 0) return(data)
+            
+            # Determine the features after clustering.
+            features <- features_after_clustering(features=features,
+                                                  feature_info_list=object@feature_info)
+            
+            # Create a slice of the data for the feature set.
+            data <- select_features(data=data,
+                                    features=features)
+            
+            return(data)
+          })
+
+##### postprocess_data (novelty detector)---------------------------------
+setMethod("postprocess_data", signature(data="dataObject", object="familiarNoveltyDetector"),
+          function(data, object, stop_at="clustering"){
+            
+            # Convert the preprocessing_level attained and the requested
+            # stopping level to ordinals.
+            preprocessing_level_attained <- .as_preprocessing_level(data@preprocessing_level)
+            stop_at <- .as_preprocessing_level(stop_at)
+            
+            if(stop_at < "clustering" | preprocessing_level_attained < "clustering") return(data)
+            
+            # Select features.
+            features <- object@model_features
+            
+            # Return data if there are no features.
+            if(length(features) == 0) return(data)
+            
+            # Determine the features after clustering.
+            features <- features_after_clustering(features=features,
+                                                  feature_info_list=object@feature_info)
+            
+            # Create a slice of the data for the feature set.
+            data <- select_features(data=data,
+                                    features=features)
+            
+            return(data)
+          })
+
+          
 
 #####process_input_data (vimp method)#####
 setMethod("process_input_data", signature(object="familiarVimpMethod", data="ANY"),
@@ -705,6 +936,22 @@ setMethod("process_input_data", signature(object="familiarVimpMethod", data="ANY
                                                                                                                        is_pre_processed=is_pre_processed,
                                                                                                                        stop_at=stop_at,
                                                                                                                        keep_novelty=keep_novelty))
+
+#####process_input_data (novelty detector)#####
+setMethod("process_input_data", signature(object="familiarNoveltyDetector", data="ANY"),
+          function(object, data, is_pre_processed=FALSE, stop_at="clustering", ...){
+            
+            # Ensure that the outcome_type of data is changed to "unsupervised".
+            # We don't need any outcome columns.
+            data@outcome_type <- "unsupervised"
+            
+            # Process data.
+            data <- .process_input_data(object=object,
+                                        data=data,
+                                        is_pre_processed=is_pre_processed,
+                                        stop_at=stop_at,
+                                        keep_novelty=FALSE)
+          })
 
 #####process_input_data (model)#####
 setMethod("process_input_data", signature(object="familiarModel", data="ANY"),
@@ -749,6 +996,7 @@ setMethod("process_input_data", signature(object="familiarEnsemble", data="ANY")
   # Return data
   return(data)
 }
+
 
 
 #####select_data_from_samples#####
@@ -967,25 +1215,23 @@ setMethod("filter_missing_outcome", signature(data="dataObject"),
           function(data, is_validation=FALSE){
             
             # Check if data is empty
-            if(is_empty(data)){
-              return(data)
-            }
+            if(is_empty(data)) return(data)
             
             # Change behaviour by outcome_type
             if(data@outcome_type == "survival"){
               outcome_is_valid <- is_valid_data(data@data[["outcome_time"]]) & is_valid_data(data@data[["outcome_event"]])
+              
             } else if(data@outcome_type %in% c("binomial", "multinomial", "continuous", "count")) {
               outcome_is_valid <- is_valid_data(data@data[["outcome"]])
+              
             } else {
               stop(paste0("Implementation for outcome_type ", data@outcome_type, " is missing."))
             }
             
             if(is_validation){
-              # Check whether all outcome information is missing for validation. It may be a prospective study.
-              # In that case, keep all data.
-              if(all(!outcome_is_valid)){
-                outcome_is_valid <- !outcome_is_valid
-              }
+              # Check whether all outcome information is missing for validation.
+              # It may be a prospective study. In that case, keep all data.
+              if(all(!outcome_is_valid)) outcome_is_valid <- !outcome_is_valid
             }
             
             # Keep only data for which the outcome exists
@@ -1351,8 +1597,73 @@ setMethod("select_features", signature(data="dataObject"),
             # Define the selected columns
             selected_columns <- unique(c(non_feature_columns, features))
             
-            # Select features
-            data@data <- data.table::copy(data@data[, mget(selected_columns)])
+            # Check if all columns are already present in the data. In that case
+            # we do not need to copy the dataset.
+            if(!setequal(selected_columns, colnames(data@data))){
+              # Select features
+              data@data <- data.table::copy(data@data[, mget(selected_columns)])
+            }
             
             return(data)
           })
+
+
+
+create_data_column_info <- function(settings){
+  
+  # Read from settings. If not set, these will be NULL.
+  sample_id_column <- settings$data$sample_col
+  batch_id_column <- settings$data$batch_col
+  series_id_column <- settings$data$series_col
+  
+  # Replace any missing.
+  if(is.null(sample_id_column)) sample_id_column <- NA_character_
+  if(is.null(batch_id_column)) batch_id_column <- NA_character_
+  if(is.null(series_id_column)) series_id_column <- NA_character_
+  
+  # Repetition column ids are only internal.
+  repetition_id_column <- NA_character_
+  
+  # Create table
+  data_info_table <- data.table::data.table("type"=c("batch_id_column", "sample_id_column", "series_id_column", "repetition_id_column"),
+                                            "internal"=get_id_columns(),
+                                            "external"=c(batch_id_column, sample_id_column, series_id_column, repetition_id_column))
+  
+  if(settings$data$outcome_type %in% c("survival", "competing_risk")){
+    
+    # Find internal and external outcome column names.
+    internal_outcome_columns <- get_outcome_columns(settings$data$outcome_type)
+    external_outcome_columns <- settings$data$outcome_col
+    
+    if(is.null(external_outcome_columns)) external_outcome_columns <- c(NA_character_, NA_character_)
+    
+    # Add to table
+    outcome_info_table <- data.table::data.table("type"=c("outcome_column", "outcome_column"),
+                                                 "internal"=internal_outcome_columns,
+                                                 "external"=external_outcome_columns)
+    
+  } else if(settings$data$outcome_type %in% c("binomial", "multinomial", "continuous", "count")){
+    
+    # Find internal and external outcome column names.
+    internal_outcome_columns <- get_outcome_columns(settings$data$outcome_type)
+    external_outcome_columns <- settings$data$outcome_col
+    
+    if(is.null(external_outcome_columns)) external_outcome_columns <- c(NA_character_)
+    
+    # Add to table
+    outcome_info_table <- data.table::data.table("type"="outcome_column",
+                                                 "internal"=internal_outcome_columns,
+                                                 "external"=external_outcome_columns)
+    
+  } else if(settings$data$outcome_type %in% c("unsupervised")){
+    
+    # There is no outcome for unsupervised learners.
+    outcome_info_table <- NULL
+    
+  } else {
+    ..error_no_known_outcome_type(outcome_type=settings$data$outcome_type)
+  }
+  
+  # Combine into one table and add to object
+  return(rbind(data_info_table, outcome_info_table))
+}

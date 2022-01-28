@@ -7,24 +7,25 @@ testthat::skip_on_cran()
 # Generic test
 familiar:::test_all_learners_train_predict_vimp(learners=familiar:::.get_available_cox_learners(show_general=TRUE))
 
+familiar:::test_all_learners_parallel_train_predict_vimp(learners=familiar:::.get_available_cox_learners(show_general=TRUE))
 
 # Create test data sets.
 good_data <- familiar:::test.create_good_data_set("survival")
 wide_data <- familiar:::test.create_wide_data_set("survival")
 
 # Train the model using the good dataset.
-good_model <- familiar:::train(data=good_data,
-                               cluster_method="none",
-                               imputation_method="simple",
-                               hyperparameter_list=list("sign_size"=familiar:::get_n_features(good_data)),
-                               learner="cox")
+good_model <- familiar:::test_train(data=good_data,
+                                    cluster_method="none",
+                                    imputation_method="simple",
+                                    hyperparameter_list=list("sign_size"=familiar:::get_n_features(good_data)),
+                                    learner="cox")
 
 # Train the model using wide data.
-wide_model <- suppressWarnings(familiar:::train(data=wide_data,
-                                                cluster_method="none",
-                                                imputation_method="simple",
-                                                hyperparameter_list=list("sign_size"=familiar:::get_n_features(wide_data)),
-                                                learner="cox"))
+wide_model <- suppressWarnings(familiar:::test_train(data=wide_data,
+                                                     cluster_method="none",
+                                                     imputation_method="simple",
+                                                     hyperparameter_list=list("sign_size"=familiar:::get_n_features(wide_data)),
+                                                     learner="cox"))
 
 
 testthat::test_that("Cox model trained correctly", {

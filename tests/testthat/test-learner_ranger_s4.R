@@ -36,6 +36,38 @@ familiar:::test_all_learners_train_predict_vimp(learners=familiar:::.get_availab
                                                                                          "tree_depth"=5,
                                                                                          "alpha"=0.1)))
 
+familiar:::test_all_learners_parallel_train_predict_vimp(learners=familiar:::.get_available_ranger_learners(show_general=FALSE),
+                                                         hyperparameter_list=list("count"=list("n_tree"=4,
+                                                                                               "sample_size"=1.00,
+                                                                                               "m_try"=0.3,
+                                                                                               "node_size"=5,
+                                                                                               "tree_depth"=5,
+                                                                                               "alpha"=0.1),
+                                                                                  "continuous"=list("n_tree"=4,
+                                                                                                    "sample_size"=1.00,
+                                                                                                    "m_try"=0.3,
+                                                                                                    "node_size"=5,
+                                                                                                    "tree_depth"=5,
+                                                                                                    "alpha"=0.1),
+                                                                                  "binomial"=list("n_tree"=4,
+                                                                                                  "sample_size"=1.00,
+                                                                                                  "m_try"=0.3,
+                                                                                                  "node_size"=5,
+                                                                                                  "tree_depth"=5,
+                                                                                                  "alpha"=0.1),
+                                                                                  "multinomial"=list("n_tree"=4,
+                                                                                                     "sample_size"=1.00,
+                                                                                                     "m_try"=0.3,
+                                                                                                     "node_size"=5,
+                                                                                                     "tree_depth"=5,
+                                                                                                     "alpha"=0.1),
+                                                                                  "survival"=list("n_tree"=4,
+                                                                                                  "sample_size"=1.00,
+                                                                                                  "m_try"=0.3,
+                                                                                                  "node_size"=5,
+                                                                                                  "tree_depth"=5,
+                                                                                                  "alpha"=0.1)))
+
 
 #####Count outcome tests-------------------------------------------------------------
 
@@ -44,30 +76,30 @@ good_data <- familiar:::test.create_good_data_set("count")
 wide_data <- familiar:::test.create_wide_data_set("count")
 
 # Train the model using the good dataset.
-good_model <- familiar:::train(data=good_data,
-                               cluster_method="none",
-                               imputation_method="simple",
-                               hyperparameter_list=list("sign_size"=familiar:::get_n_features(good_data),
-                                                        "n_tree"=4,
-                                                        "sample_size"=1.00,
-                                                        "m_try"=0.3,
-                                                        "node_size"=5,
-                                                        "tree_depth"=5,
-                                                        "alpha"=0.1),
-                               learner="random_forest_ranger")
+good_model <- familiar:::test_train(data=good_data,
+                                    cluster_method="none",
+                                    imputation_method="simple",
+                                    hyperparameter_list=list("sign_size"=familiar:::get_n_features(good_data),
+                                                             "n_tree"=4,
+                                                             "sample_size"=1.00,
+                                                             "m_try"=0.3,
+                                                             "node_size"=5,
+                                                             "tree_depth"=5,
+                                                             "alpha"=0.1),
+                                    learner="random_forest_ranger")
 
 # Train the model using wide data.
-wide_model <- familiar:::train(data=wide_data,
-                               cluster_method="none",
-                               imputation_method="simple",
-                               hyperparameter_list=list("sign_size"=familiar:::get_n_features(wide_data),
-                                                        "n_tree"=4,
-                                                        "sample_size"=1.00,
-                                                        "m_try"=0.3,
-                                                        "node_size"=5,
-                                                        "tree_depth"=5,
-                                                        "alpha"=0.1),
-                               learner="random_forest_ranger")
+wide_model <- familiar:::test_train(data=wide_data,
+                                    cluster_method="none",
+                                    imputation_method="simple",
+                                    hyperparameter_list=list("sign_size"=familiar:::get_n_features(wide_data),
+                                                             "n_tree"=4,
+                                                             "sample_size"=1.00,
+                                                             "m_try"=0.3,
+                                                             "node_size"=5,
+                                                             "tree_depth"=5,
+                                                             "alpha"=0.1),
+                                    learner="random_forest_ranger")
 
 
 testthat::test_that("Ranger random forest model trained correctly", {
@@ -113,30 +145,30 @@ good_data <- familiar:::test.create_good_data_set("continuous")
 wide_data <- familiar:::test.create_wide_data_set("continuous")
 
 # Train the model using the good dataset.
-good_model <- familiar:::train(data=good_data,
-                               cluster_method="none",
-                               imputation_method="simple",
-                               hyperparameter_list=list("sign_size"=familiar:::get_n_features(good_data),
-                                                        "n_tree"=4,
-                                                        "sample_size"=1.00,
-                                                        "m_try"=0.3,
-                                                        "node_size"=5,
-                                                        "tree_depth"=5,
-                                                        "alpha"=0.1),
-                               learner="random_forest_ranger")
+good_model <- familiar:::test_train(data=good_data,
+                                    cluster_method="none",
+                                    imputation_method="simple",
+                                    hyperparameter_list=list("sign_size"=familiar:::get_n_features(good_data),
+                                                             "n_tree"=4,
+                                                             "sample_size"=1.00,
+                                                             "m_try"=0.3,
+                                                             "node_size"=5,
+                                                             "tree_depth"=5,
+                                                             "alpha"=0.1),
+                                    learner="random_forest_ranger")
 
 # Train the model using wide data.
-wide_model <- familiar:::train(data=wide_data,
-                               cluster_method="none",
-                               imputation_method="simple",
-                               hyperparameter_list=list("sign_size"=familiar:::get_n_features(wide_data),
-                                                        "n_tree"=4,
-                                                        "sample_size"=1.00,
-                                                        "m_try"=0.3,
-                                                        "node_size"=5,
-                                                        "tree_depth"=5,
-                                                        "alpha"=0.1),
-                               learner="random_forest_ranger")
+wide_model <- familiar:::test_train(data=wide_data,
+                                    cluster_method="none",
+                                    imputation_method="simple",
+                                    hyperparameter_list=list("sign_size"=familiar:::get_n_features(wide_data),
+                                                             "n_tree"=4,
+                                                             "sample_size"=1.00,
+                                                             "m_try"=0.3,
+                                                             "node_size"=5,
+                                                             "tree_depth"=5,
+                                                             "alpha"=0.1),
+                                    learner="random_forest_ranger")
 
 
 testthat::test_that("Ranger random forest model trained correctly", {
@@ -182,31 +214,31 @@ good_data <- familiar:::test.create_good_data_set("binomial")
 wide_data <- familiar:::test.create_wide_data_set("binomial")
 
 # Train the model using the good dataset.
-good_model <- familiar:::train(data=good_data,
-                               cluster_method="none",
-                               imputation_method="simple",
-                               hyperparameter_list=list("sign_size"=familiar:::get_n_features(good_data),
-                                                        "n_tree"=4,
-                                                        "sample_size"=1.00,
-                                                        "m_try"=0.3,
-                                                        "node_size"=5,
-                                                        "tree_depth"=5,
-                                                        "alpha"=0.1),
-                               learner="random_forest_ranger")
+good_model <- familiar:::test_train(data=good_data,
+                                    cluster_method="none",
+                                    imputation_method="simple",
+                                    hyperparameter_list=list("sign_size"=familiar:::get_n_features(good_data),
+                                                             "n_tree"=4,
+                                                             "sample_size"=1.00,
+                                                             "m_try"=0.3,
+                                                             "node_size"=5,
+                                                             "tree_depth"=5,
+                                                             "alpha"=0.1),
+                                    learner="random_forest_ranger")
 
 
 # Train the model using wide data.
-wide_model <- familiar:::train(data=wide_data,
-                               cluster_method="none",
-                               imputation_method="simple",
-                               hyperparameter_list=list("sign_size"=familiar:::get_n_features(wide_data),
-                                                        "n_tree"=4,
-                                                        "sample_size"=1.00,
-                                                        "m_try"=0.3,
-                                                        "node_size"=5,
-                                                        "tree_depth"=5,
-                                                        "alpha"=0.1),
-                               learner="random_forest_ranger")
+wide_model <- familiar:::test_train(data=wide_data,
+                                    cluster_method="none",
+                                    imputation_method="simple",
+                                    hyperparameter_list=list("sign_size"=familiar:::get_n_features(wide_data),
+                                                             "n_tree"=4,
+                                                             "sample_size"=1.00,
+                                                             "m_try"=0.3,
+                                                             "node_size"=5,
+                                                             "tree_depth"=5,
+                                                             "alpha"=0.1),
+                                    learner="random_forest_ranger")
 
 testthat::test_that("Ranger random forest model trained correctly", {
   # Model trained
@@ -251,31 +283,31 @@ good_data <- familiar:::test.create_good_data_set("multinomial")
 wide_data <- familiar:::test.create_wide_data_set("multinomial")
 
 # Train the model using the good dataset.
-good_model <- familiar:::train(data=good_data,
-                               cluster_method="none",
-                               imputation_method="simple",
-                               hyperparameter_list=list("sign_size"=familiar:::get_n_features(good_data),
-                                                        "n_tree"=4,
-                                                        "sample_size"=1.00,
-                                                        "m_try"=0.3,
-                                                        "node_size"=5,
-                                                        "tree_depth"=5,
-                                                        "alpha"=0.1),
-                               learner="random_forest_ranger")
+good_model <- familiar:::test_train(data=good_data,
+                                    cluster_method="none",
+                                    imputation_method="simple",
+                                    hyperparameter_list=list("sign_size"=familiar:::get_n_features(good_data),
+                                                             "n_tree"=4,
+                                                             "sample_size"=1.00,
+                                                             "m_try"=0.3,
+                                                             "node_size"=5,
+                                                             "tree_depth"=5,
+                                                             "alpha"=0.1),
+                                    learner="random_forest_ranger")
 
 
 # Train the model using wide data.
-wide_model <- familiar:::train(data=wide_data,
-                               cluster_method="none",
-                               imputation_method="simple",
-                               hyperparameter_list=list("sign_size"=familiar:::get_n_features(wide_data),
-                                                        "n_tree"=4,
-                                                        "sample_size"=1.00,
-                                                        "m_try"=0.3,
-                                                        "node_size"=5,
-                                                        "tree_depth"=5,
-                                                        "alpha"=0.1),
-                               learner="random_forest_ranger")
+wide_model <- familiar:::test_train(data=wide_data,
+                                    cluster_method="none",
+                                    imputation_method="simple",
+                                    hyperparameter_list=list("sign_size"=familiar:::get_n_features(wide_data),
+                                                             "n_tree"=4,
+                                                             "sample_size"=1.00,
+                                                             "m_try"=0.3,
+                                                             "node_size"=5,
+                                                             "tree_depth"=5,
+                                                             "alpha"=0.1),
+                                    learner="random_forest_ranger")
 
 testthat::test_that("Ranger random forest model trained correctly", {
   # Model trained
@@ -320,30 +352,30 @@ good_data <- familiar:::test.create_good_data_set("survival")
 wide_data <- familiar:::test.create_wide_data_set("survival")
 
 # Train the model using the good dataset.
-good_model <- familiar:::train(data=good_data,
-                               cluster_method="none",
-                               imputation_method="simple",
-                               hyperparameter_list=list("sign_size"=familiar:::get_n_features(good_data),
-                                                        "n_tree"=4,
-                                                        "sample_size"=1.00,
-                                                        "m_try"=0.3,
-                                                        "node_size"=5,
-                                                        "tree_depth"=5,
-                                                        "alpha"=0.1),
-                               learner="random_forest_ranger")
+good_model <- familiar:::test_train(data=good_data,
+                                    cluster_method="none",
+                                    imputation_method="simple",
+                                    hyperparameter_list=list("sign_size"=familiar:::get_n_features(good_data),
+                                                             "n_tree"=4,
+                                                             "sample_size"=1.00,
+                                                             "m_try"=0.3,
+                                                             "node_size"=5,
+                                                             "tree_depth"=5,
+                                                             "alpha"=0.1),
+                                    learner="random_forest_ranger")
 
 # Train the model using wide data.
-wide_model <- familiar:::train(data=wide_data,
-                               cluster_method="none",
-                               imputation_method="simple",
-                               hyperparameter_list=list("sign_size"=familiar:::get_n_features(wide_data),
-                                                        "n_tree"=4,
-                                                        "sample_size"=1.00,
-                                                        "m_try"=0.3,
-                                                        "node_size"=5,
-                                                        "tree_depth"=5,
-                                                        "alpha"=0.1),
-                               learner="random_forest_ranger")
+wide_model <- familiar:::test_train(data=wide_data,
+                                    cluster_method="none",
+                                    imputation_method="simple",
+                                    hyperparameter_list=list("sign_size"=familiar:::get_n_features(wide_data),
+                                                             "n_tree"=4,
+                                                             "sample_size"=1.00,
+                                                             "m_try"=0.3,
+                                                             "node_size"=5,
+                                                             "tree_depth"=5,
+                                                             "alpha"=0.1),
+                                    learner="random_forest_ranger")
 
 testthat::test_that("Ranger random forest model trained correctly", {
   # Model trained

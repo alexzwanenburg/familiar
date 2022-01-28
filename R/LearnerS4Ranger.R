@@ -6,6 +6,20 @@ setClass("familiarRanger",
          contains="familiarModel")
 
 
+#####initialize#################################################################
+setMethod("initialize", signature(.Object="familiarRanger"),
+          function(.Object, ...){
+            
+            # Update with parent class first.
+            .Object <- callNextMethod()
+            
+            # Set required package
+            .Object@package <- "ranger"
+            
+            return(.Object)
+          })
+
+
 .get_available_ranger_learners <- function(show_general=TRUE) return("random_forest_ranger")
 
 .get_available_ranger_vimp_methods <- function(show_general=TRUE){
@@ -136,9 +150,19 @@ setMethod("get_default_hyperparameters", signature(object="familiarRanger"),
             # variable. It is only used with maxstat.
             alpha_randomise <- split_rule_default == "maxstat"
             
+            if(alpha_randomise){
+              default_values <- c(0.05, 0.1, 0.5, 1.0)
+              
+            } else {
+              default_values <- c(0.05)
+            }
+            
             # Set the alpha parameter
-            param$alpha <- .set_hyperparameter(default=c(0.5, 0.05, 0.1, 1.0), type="numeric", range=c(10^-6, 1.0),
-                                               valid_range=c(0.0, 1.0), randomise=alpha_randomise,
+            param$alpha <- .set_hyperparameter(default=default_values,
+                                               type="numeric",
+                                               range=c(10^-6, 1.0),
+                                               valid_range=c(0.0, 1.0),
+                                               randomise=alpha_randomise,
                                                distribution="log")
             
             ##### Feature selection forest type ################################
@@ -203,6 +227,9 @@ setMethod("..train", signature(object="familiarRanger", data="dataObject"),
             # Check if hyperparameters are set.
             if(is.null(object@hyperparameters)) return(callNextMethod())
             
+            # Check that required packages are loaded and installed.
+            require_package(object, "train")
+            
             # Find feature columns in data table
             feature_columns <- get_feature_columns(x=data)
             
@@ -228,21 +255,20 @@ setMethod("..train", signature(object="familiarRanger", data="dataObject"),
             # Create random forest using ranger.
             if(param$fs_forest_type == "standard"){
               # Conventional random forest (used for model building and variable
-              # importance estimations) NOTE: ranger is imported through
-              # NAMESPACE to allow access to the predict generic.
-              model <- ranger(formula,
-                              data = data@data,
-                              num.trees = 2^param$n_tree,
-                              sample.fraction = param$sample_size,
-                              mtry = max(c(1, ceiling(param$m_try * length(feature_columns)))),
-                              min.node.size = param$node_size,
-                              max.depth = param$tree_depth,
-                              alpha = param$alpha,
-                              splitrule = param$split_rule,
-                              importance = param$fs_vimp_method,
-                              probability = fit_probability,
-                              num.threads = 1,
-                              verbose = FALSE)
+              # importance estimations)
+              model <- ranger::ranger(formula,
+                                      data = data@data,
+                                      num.trees = 2^param$n_tree,
+                                      sample.fraction = param$sample_size,
+                                      mtry = max(c(1, ceiling(param$m_try * length(feature_columns)))),
+                                      min.node.size = param$node_size,
+                                      max.depth = param$tree_depth,
+                                      alpha = param$alpha,
+                                      splitrule = as.character(param$split_rule),
+                                      importance = as.character(param$fs_vimp_method),
+                                      probability = fit_probability,
+                                      num.threads = 1,
+                                      verbose = FALSE)
               
             } else if(param$fs_forest_type == "holdout") {
               # Hold-out random forest (used only for variable importance
@@ -254,7 +280,7 @@ setMethod("..train", signature(object="familiarRanger", data="dataObject"),
                                          min.node.size = param$node_size,
                                          max.depth = param$tree_depth,
                                          alpha = param$alpha,
-                                         splitrule = param$split_rule,
+                                         splitrule = as.character(param$split_rule),
                                          probability = fit_probability,
                                          num.threads = 1,
                                          verbose = FALSE)
@@ -262,6 +288,9 @@ setMethod("..train", signature(object="familiarRanger", data="dataObject"),
             
             # Add model
             object@model <- model
+            
+            # Set learner version
+            object <- set_package_version(object)
             
             return(object)
           })
@@ -271,6 +300,9 @@ setMethod("..train", signature(object="familiarRanger", data="dataObject"),
 #####..predict#####
 setMethod("..predict", signature(object="familiarRanger", data="dataObject"),
           function(object, data, type="default", time=NULL, ...){
+            
+            # Check that required packages are loaded and installed.
+            require_package(object, "predict")
             
             if(type %in% c("default", "survival_probability")){
               ##### Default method #############################################
@@ -402,6 +434,9 @@ setMethod("..predict_survival_probability", signature(object="familiarRanger", d
             
             if(!object@outcome_type %in% c("survival")) return(callNextMethod())
             
+            # Check that required packages are loaded and installed.
+            require_package(object, "predict")
+            
             # If time is unset, read the max time stored by the model.
             if(is.null(time)) time <- object@settings$time_max
             
@@ -422,6 +457,9 @@ setMethod("..vimp", signature(object="familiarRanger"),
             
             # Check if the model has been trained upon retry.
             if(!model_is_trained(object)) return(callNextMethod())
+            
+            # Check that required packages are loaded and installed.
+            require_package(object, "vimp")
             
             # Extract the variable importance score
             if(object@hyperparameters$fs_forest_type == "standard"){
@@ -492,6 +530,26 @@ setMethod("..set_vimp_parameters", signature(object="familiarRanger"),
             
             # Store in the object
             object@hyperparameters <- hyperparameters
+            
+            return(object)
+          })
+
+
+##### .trim_model---------------------------------------------------------------
+setMethod(".trim_model", signature(object="familiarRanger"),
+          function(object, ...){
+            
+            # Update model by removing the call.
+            object@model$call <- call("trimmed")
+            
+            # Add show.
+            object <- .capture_show(object)
+            
+            # Remove the predictions.
+            object@model$predictions <- NULL
+            
+            # Set is_trimmed to TRUE.
+            object@is_trimmed <- TRUE
             
             return(object)
           })

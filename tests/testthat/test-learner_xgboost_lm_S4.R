@@ -6,7 +6,7 @@ testthat::skip_on_cran()
 
 familiar:::test_all_learners_train_predict_vimp(learners=familiar:::.get_available_xgboost_lm_learners(show_general=FALSE),
                                                 hyperparameter_list=list("count"=list("n_boost" = 2,
-                                                                                      "learning_rate" = -1,
+                                                                                      "learning_rate" = -5,
                                                                                       "lambda" = 0.0,
                                                                                       "alpha" =-6.0),
                                                                          "continuous"=list("n_boost" = 2,
@@ -18,13 +18,35 @@ familiar:::test_all_learners_train_predict_vimp(learners=familiar:::.get_availab
                                                                                          "lambda" = 0.0,
                                                                                          "alpha" =-6.0),
                                                                          "multinomial"=list("n_boost" = 2,
-                                                                                         "learning_rate" = -1,
-                                                                                         "lambda" = 0.0,
-                                                                                         "alpha" =-6.0),
+                                                                                            "learning_rate" = -1,
+                                                                                            "lambda" = 0.0,
+                                                                                            "alpha" =-6.0),
                                                                          "survival"=list("n_boost" = 2,
                                                                                          "learning_rate" = -1,
                                                                                          "lambda" = 0.0,
                                                                                          "alpha" =-6.0)))
+
+familiar:::test_all_learners_parallel_train_predict_vimp(learners=familiar:::.get_available_xgboost_lm_learners(show_general=FALSE),
+                                                         hyperparameter_list=list("count"=list("n_boost" = 2,
+                                                                                               "learning_rate" = -5,
+                                                                                               "lambda" = 0.0,
+                                                                                               "alpha" =-6.0),
+                                                                                  "continuous"=list("n_boost" = 2,
+                                                                                                    "learning_rate" = -1,
+                                                                                                    "lambda" = 0.0,
+                                                                                                    "alpha" =-6.0),
+                                                                                  "binomial"=list("n_boost" = 2,
+                                                                                                  "learning_rate" = -1,
+                                                                                                  "lambda" = 0.0,
+                                                                                                  "alpha" =-6.0),
+                                                                                  "multinomial"=list("n_boost" = 2,
+                                                                                                     "learning_rate" = -1,
+                                                                                                     "lambda" = 0.0,
+                                                                                                     "alpha" =-6.0),
+                                                                                  "survival"=list("n_boost" = 2,
+                                                                                                  "learning_rate" = -1,
+                                                                                                  "lambda" = 0.0,
+                                                                                                  "alpha" =-6.0)))
 
 
 #####Count outcome tests-------------------------------------------------------------
@@ -34,26 +56,26 @@ good_data <- familiar:::test.create_good_data_set("count")
 wide_data <- familiar:::test.create_wide_data_set("count")
 
 # Train the model using the good dataset.
-good_model <- familiar:::train(data=good_data,
-                               cluster_method="none",
-                               imputation_method="simple",
-                               hyperparameter_list=list("sign_size"=familiar:::get_n_features(good_data),
-                                                        "n_boost" = 2,
-                                                        "learning_rate" = -1,
-                                                        "lambda" = 0.0,
-                                                        "alpha" =-6.0),
-                               learner="xgboost_lm_poisson")
+good_model <- familiar:::test_train(data=good_data,
+                                    cluster_method="none",
+                                    imputation_method="simple",
+                                    hyperparameter_list=list("sign_size"=familiar:::get_n_features(good_data),
+                                                             "n_boost" = 2,
+                                                             "learning_rate" = -1,
+                                                             "lambda" = 0.0,
+                                                             "alpha" =-6.0),
+                                    learner="xgboost_lm_gaussian")
 
 # Train the model using wide data.
-wide_model <- familiar:::train(data=wide_data,
-                               cluster_method="none",
-                               imputation_method="simple",
-                               hyperparameter_list=list("sign_size"=familiar:::get_n_features(wide_data),
-                                                        "n_boost" = 2,
-                                                        "learning_rate" = -1,
-                                                        "lambda" = 0.0,
-                                                        "alpha" =-6.0),
-                               learner="xgboost_lm_poisson")
+wide_model <- familiar:::test_train(data=wide_data,
+                                    cluster_method="none",
+                                    imputation_method="simple",
+                                    hyperparameter_list=list("sign_size"=familiar:::get_n_features(wide_data),
+                                                             "n_boost" = 2,
+                                                             "learning_rate" = -1,
+                                                             "lambda" = 0.0,
+                                                             "alpha" =-6.0),
+                                    learner="xgboost_lm_gaussian")
 
 
 testthat::test_that("Extreme gradient boosting regression model trained correctly", {
@@ -100,26 +122,26 @@ good_data <- familiar:::test.create_good_data_set("continuous")
 wide_data <- familiar:::test.create_wide_data_set("continuous")
 
 # Train the model using the good dataset.
-good_model <- familiar:::train(data=good_data,
-                               cluster_method="none",
-                               imputation_method="simple",
-                               hyperparameter_list=list("sign_size"=familiar:::get_n_features(good_data),
-                                                        "n_boost" = 2,
-                                                        "learning_rate" = -1,
-                                                        "lambda" = 0.0,
-                                                        "alpha" =-6.0),
-                               learner="xgboost_lm_gaussian")
+good_model <- familiar:::test_train(data=good_data,
+                                    cluster_method="none",
+                                    imputation_method="simple",
+                                    hyperparameter_list=list("sign_size"=familiar:::get_n_features(good_data),
+                                                             "n_boost" = 2,
+                                                             "learning_rate" = -1,
+                                                             "lambda" = 0.0,
+                                                             "alpha" =-6.0),
+                                    learner="xgboost_lm_gaussian")
 
 # Train the model using wide data.
-wide_model <- familiar:::train(data=wide_data,
-                               cluster_method="none",
-                               imputation_method="simple",
-                               hyperparameter_list=list("sign_size"=familiar:::get_n_features(wide_data),
-                                                        "n_boost" = 2,
-                                                        "learning_rate" = -1,
-                                                        "lambda" = 0.0,
-                                                        "alpha" =-6.0),
-                               learner="xgboost_lm_gaussian")
+wide_model <- familiar:::test_train(data=wide_data,
+                                    cluster_method="none",
+                                    imputation_method="simple",
+                                    hyperparameter_list=list("sign_size"=familiar:::get_n_features(wide_data),
+                                                             "n_boost" = 2,
+                                                             "learning_rate" = -1,
+                                                             "lambda" = 0.0,
+                                                             "alpha" =-6.0),
+                                    learner="xgboost_lm_gaussian")
 
 
 testthat::test_that("Extreme gradient boosting regression model trained correctly", {
@@ -140,8 +162,8 @@ testthat::test_that("Extreme gradient boosting regression model has variable imp
   testthat::expect_equal(all(vimp_table$name %in% familiar:::get_feature_columns(good_data)), TRUE)
   
   # Expect that avginc and calwpct have rank 1 and 2.
-  testthat::expect_equal(vimp_table[rank == 1, ]$name %in% c("calwpct", "avginc"), TRUE)
-  testthat::expect_equal(vimp_table[rank == 2, ]$name %in% c("calwpct", "avginc"), TRUE)
+  testthat::expect_equal(vimp_table[rank == 1, ]$name %in% c("calwpct", "avginc", "grspan"), TRUE)
+  testthat::expect_equal(vimp_table[rank == 2, ]$name %in% c("calwpct", "avginc", "grspan"), TRUE)
 })
 
 
@@ -165,26 +187,26 @@ good_data <- familiar:::test.create_good_data_set("binomial")
 wide_data <- familiar:::test.create_wide_data_set("binomial")
 
 # Train the model using the good dataset.
-good_model <- familiar:::train(data=good_data,
-                               cluster_method="none",
-                               imputation_method="simple",
-                               hyperparameter_list=list("sign_size"=familiar:::get_n_features(good_data),
-                                                        "n_boost" = 2,
-                                                        "learning_rate" = -1,
-                                                        "lambda" = 0.0,
-                                                        "alpha" =-6.0),
-                               learner="xgboost_lm_logistic")
+good_model <- familiar:::test_train(data=good_data,
+                                    cluster_method="none",
+                                    imputation_method="simple",
+                                    hyperparameter_list=list("sign_size"=familiar:::get_n_features(good_data),
+                                                             "n_boost" = 2,
+                                                             "learning_rate" = -1,
+                                                             "lambda" = 0.0,
+                                                             "alpha" =-6.0),
+                                    learner="xgboost_lm_logistic")
 
 # Train the model using wide data.
-wide_model <- familiar:::train(data=wide_data,
-                               cluster_method="none",
-                               imputation_method="simple",
-                               hyperparameter_list=list("sign_size"=familiar:::get_n_features(wide_data),
-                                                        "n_boost" = 2,
-                                                        "learning_rate" = -1,
-                                                        "lambda" = 0.0,
-                                                        "alpha" =-6.0),
-                               learner="xgboost_lm_logistic")
+wide_model <- familiar:::test_train(data=wide_data,
+                                    cluster_method="none",
+                                    imputation_method="simple",
+                                    hyperparameter_list=list("sign_size"=familiar:::get_n_features(wide_data),
+                                                             "n_boost" = 2,
+                                                             "learning_rate" = -1,
+                                                             "lambda" = 0.0,
+                                                             "alpha" =-6.0),
+                                    learner="xgboost_lm_logistic")
 
 testthat::test_that("Extreme gradient boosting regression model trained correctly", {
   # Model trained
@@ -230,26 +252,26 @@ good_data <- familiar:::test.create_good_data_set("multinomial")
 wide_data <- familiar:::test.create_wide_data_set("multinomial")
 
 # Train the model using the good dataset.
-good_model <- familiar:::train(data=good_data,
-                               cluster_method="none",
-                               imputation_method="simple",
-                               hyperparameter_list=list("sign_size"=familiar:::get_n_features(good_data),
-                                                        "n_boost" = 2,
-                                                        "learning_rate" = -1,
-                                                        "lambda" = 0.0,
-                                                        "alpha" =-6.0),
-                               learner="xgboost_lm_logistic")
+good_model <- familiar:::test_train(data=good_data,
+                                    cluster_method="none",
+                                    imputation_method="simple",
+                                    hyperparameter_list=list("sign_size"=familiar:::get_n_features(good_data),
+                                                             "n_boost" = 2,
+                                                             "learning_rate" = -1,
+                                                             "lambda" = 0.0,
+                                                             "alpha" =-6.0),
+                                    learner="xgboost_lm_logistic")
 
 # Train the model using wide data.
-wide_model <- familiar:::train(data=wide_data,
-                               cluster_method="none",
-                               imputation_method="simple",
-                               hyperparameter_list=list("sign_size"=familiar:::get_n_features(wide_data),
-                                                        "n_boost" = 2,
-                                                        "learning_rate" = -1,
-                                                        "lambda" = 0.0,
-                                                        "alpha" =-6.0),
-                               learner="xgboost_lm_logistic")
+wide_model <- familiar:::test_train(data=wide_data,
+                                    cluster_method="none",
+                                    imputation_method="simple",
+                                    hyperparameter_list=list("sign_size"=familiar:::get_n_features(wide_data),
+                                                             "n_boost" = 2,
+                                                             "learning_rate" = -1,
+                                                             "lambda" = 0.0,
+                                                             "alpha" =-6.0),
+                                    learner="xgboost_lm_logistic")
 
 testthat::test_that("Extreme gradient boosting regression model trained correctly", {
   # Model trained
@@ -295,28 +317,28 @@ good_data <- familiar:::test.create_good_data_set("survival")
 wide_data <- familiar:::test.create_wide_data_set("survival")
 
 # Train the model using the good dataset.
-good_model <- familiar:::train(data=good_data,
-                               cluster_method="none",
-                               imputation_method="simple",
-                               hyperparameter_list=list("sign_size"=familiar:::get_n_features(good_data),
-                                                        "n_boost" = 2,
-                                                        "learning_rate" = -1,
-                                                        "lambda" = 0.0,
-                                                        "alpha" =-6.0),
-                               time_max=1832,
-                               learner="xgboost_lm_cox")
+good_model <- familiar:::test_train(data=good_data,
+                                    cluster_method="none",
+                                    imputation_method="simple",
+                                    hyperparameter_list=list("sign_size"=familiar:::get_n_features(good_data),
+                                                             "n_boost" = 2,
+                                                             "learning_rate" = -1,
+                                                             "lambda" = 0.0,
+                                                             "alpha" =-6.0),
+                                    time_max=1832,
+                                    learner="xgboost_lm_cox")
 
 # Train the model using wide data.
-wide_model <- suppressWarnings(familiar:::train(data=wide_data,
-                                                cluster_method="none",
-                                                imputation_method="simple",
-                                                hyperparameter_list=list("sign_size"=familiar:::get_n_features(wide_data),
-                                                                         "n_boost" = 2,
-                                                                         "learning_rate" = -1,
-                                                                         "lambda" = 0.0,
-                                                                         "alpha" =-6.0),
-                                                time_max=1832,
-                                                learner="xgboost_lm_cox"))
+wide_model <- suppressWarnings(familiar:::test_train(data=wide_data,
+                                                     cluster_method="none",
+                                                     imputation_method="simple",
+                                                     hyperparameter_list=list("sign_size"=familiar:::get_n_features(wide_data),
+                                                                              "n_boost" = 2,
+                                                                              "learning_rate" = -1,
+                                                                              "lambda" = 0.0,
+                                                                              "alpha" =-6.0),
+                                                     time_max=1832,
+                                                     learner="xgboost_lm_cox"))
 
 
 testthat::test_that("Extreme gradient boosting regression model trained correctly", {
@@ -367,6 +389,5 @@ testthat::test_that("Extreme gradient boosting regression model can train and pr
 testthat::skip("Skip hyperparameter optimisation, unless manual.")
 
 familiar:::test_hyperparameter_optimisation(learners=familiar:::.get_available_xgboost_lm_learners(show_general=TRUE),
-                                            n_random_sets=100L,
-                                            debug=TRUE,
+                                            debug=FALSE,
                                             parallel=FALSE)

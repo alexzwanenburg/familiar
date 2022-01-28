@@ -21,6 +21,7 @@ NULL
 #'@inheritParams plotting.check_data_handling
 #'@inheritDotParams as_familiar_collection -object
 #'@inheritDotParams ggplot2::ggsave -height -width -units
+#'@inheritDotParams extract_auc_data -object
 #'
 #'@details This function generates area under the ROC curve plots.
 #'
@@ -70,8 +71,8 @@ setGeneric("plot_auc_roc_curve",
                     x_label=waiver(),
                     y_label=waiver(),
                     legend_label=waiver(),
-                    plot_title=NULL,
-                    plot_sub_title=NULL,
+                    plot_title=waiver(),
+                    plot_sub_title=waiver(),
                     caption=NULL,
                     x_n_breaks=5,
                     x_breaks=NULL,
@@ -82,6 +83,7 @@ setGeneric("plot_auc_roc_curve",
                     width=waiver(),
                     height=waiver(),
                     units=waiver(),
+                    export_collection=FALSE,
                     ...) standardGeneric("plot_auc_roc_curve"))
 
 #####plot_auc_roc_curve (generic)#####
@@ -100,8 +102,8 @@ setMethod("plot_auc_roc_curve", signature(object="ANY"),
                    x_label=waiver(),
                    y_label=waiver(),
                    legend_label=waiver(),
-                   plot_title=NULL,
-                   plot_sub_title=NULL,
+                   plot_title=waiver(),
+                   plot_sub_title=waiver(),
                    caption=NULL,
                    x_n_breaks=5,
                    x_breaks=NULL,
@@ -112,6 +114,7 @@ setMethod("plot_auc_roc_curve", signature(object="ANY"),
                    width=waiver(),
                    height=waiver(),
                    units=waiver(),
+                   export_collection=FALSE,
                    ...){
             
             # Attempt conversion to familiarCollection object.
@@ -144,7 +147,8 @@ setMethod("plot_auc_roc_curve", signature(object="ANY"),
                                      "conf_int_alpha"=conf_int_alpha,
                                      "width"=width,
                                      "height"=height,
-                                     "units"=units)))
+                                     "units"=units,
+                                     "export_collection"=export_collection)))
           })
 
 
@@ -164,8 +168,8 @@ setMethod("plot_auc_roc_curve", signature(object="familiarCollection"),
                    x_label=waiver(),
                    y_label=waiver(),
                    legend_label=waiver(),
-                   plot_title=NULL,
-                   plot_sub_title=NULL,
+                   plot_title=waiver(),
+                   plot_sub_title=waiver(),
                    caption=NULL,
                    x_n_breaks=5,
                    x_breaks=NULL,
@@ -176,6 +180,7 @@ setMethod("plot_auc_roc_curve", signature(object="familiarCollection"),
                    width=waiver(),
                    height=waiver(),
                    units=waiver(),
+                   export_collection=FALSE,
                    ...){
             
             return(do.call(.plot_auc_curve,
@@ -203,7 +208,8 @@ setMethod("plot_auc_roc_curve", signature(object="familiarCollection"),
                                      "conf_int_alpha"=conf_int_alpha,
                                      "width"=width,
                                      "height"=height,
-                                     "units"=units)))
+                                     "units"=units,
+                                     "export_collection"=export_collection)))
             
           })
 
@@ -265,8 +271,8 @@ setGeneric("plot_auc_precision_recall_curve",
                     x_label=waiver(),
                     y_label=waiver(),
                     legend_label=waiver(),
-                    plot_title=NULL,
-                    plot_sub_title=NULL,
+                    plot_title=waiver(),
+                    plot_sub_title=waiver(),
                     caption=NULL,
                     x_n_breaks=5,
                     x_breaks=NULL,
@@ -277,6 +283,7 @@ setGeneric("plot_auc_precision_recall_curve",
                     width=waiver(),
                     height=waiver(),
                     units=waiver(),
+                    export_collection=FALSE,
                     ...) standardGeneric("plot_auc_precision_recall_curve"))
 
 #####plot_auc_precision_recall_curve (generic)#####
@@ -295,8 +302,8 @@ setMethod("plot_auc_precision_recall_curve", signature(object="ANY"),
                    x_label=waiver(),
                    y_label=waiver(),
                    legend_label=waiver(),
-                   plot_title=NULL,
-                   plot_sub_title=NULL,
+                   plot_title=waiver(),
+                   plot_sub_title=waiver(),
                    caption=NULL,
                    x_n_breaks=5,
                    x_breaks=NULL,
@@ -307,6 +314,7 @@ setMethod("plot_auc_precision_recall_curve", signature(object="ANY"),
                    width=waiver(),
                    height=waiver(),
                    units=waiver(),
+                   export_collection=FALSE,
                    ...){
             
             # Attempt conversion to familiarCollection object.
@@ -339,7 +347,8 @@ setMethod("plot_auc_precision_recall_curve", signature(object="ANY"),
                                      "conf_int_alpha"=conf_int_alpha,
                                      "width"=width,
                                      "height"=height,
-                                     "units"=units)))
+                                     "units"=units,
+                                     "export_collection"=export_collection)))
           })
 
 
@@ -359,8 +368,8 @@ setMethod("plot_auc_precision_recall_curve", signature(object="familiarCollectio
                    x_label=waiver(),
                    y_label=waiver(),
                    legend_label=waiver(),
-                   plot_title=NULL,
-                   plot_sub_title=NULL,
+                   plot_title=waiver(),
+                   plot_sub_title=waiver(),
                    caption=NULL,
                    x_n_breaks=5,
                    x_breaks=NULL,
@@ -371,6 +380,7 @@ setMethod("plot_auc_precision_recall_curve", signature(object="familiarCollectio
                    width=waiver(),
                    height=waiver(),
                    units=waiver(),
+                   export_collection=FALSE,
                    ...){
             
             return(do.call(.plot_auc_curve,
@@ -398,7 +408,8 @@ setMethod("plot_auc_precision_recall_curve", signature(object="familiarCollectio
                                      "conf_int_alpha"=conf_int_alpha,
                                      "width"=width,
                                      "height"=height,
-                                     "units"=units)))
+                                     "units"=units,
+                                     "export_collection"=export_collection)))
             
           })
 
@@ -429,6 +440,7 @@ setMethod("plot_auc_precision_recall_curve", signature(object="familiarCollectio
                             width=waiver(),
                             height=waiver(),
                             units=waiver(),
+                            export_collection=FALSE,
                             ...){
   # Get input data.
   x <- export_auc_data(object=object,
@@ -471,6 +483,16 @@ setMethod("plot_auc_precision_recall_curve", signature(object="familiarCollectio
   
   # Check that the data are not empty after selecting the subset.
   if(is_empty(x)) return(NULL)
+  
+  # Check package requirements for plotting.
+  if(!require_package(x=..required_plotting_packages(extended=FALSE),
+                      purpose=ifelse(curve_type=="roc",
+                                     "to create AUC-ROC plots",
+                                     "to create AUC-PR plots"),
+                      message_type="warning")){
+    return(NULL)
+  }
+  
   
   ##### Check input arguments ------------------------------------------------
   
@@ -611,6 +633,9 @@ setMethod("plot_auc_precision_recall_curve", signature(object="familiarCollectio
   
   ##### Create plots ---------------------------------------------------------
   
+  # Determine if subtitle should be generated.
+  autogenerate_plot_subtitle <- is.waive(plot_sub_title)
+  
   # Split data
   if(!is.null(split_by)){
     x_split <- split(x@data, by=split_by)
@@ -627,6 +652,15 @@ setMethod("plot_auc_precision_recall_curve", signature(object="familiarCollectio
     
     # Skip empty datasets
     if(is_empty(x_split[[ii]])) next()
+    
+    if(is.waive(plot_title)) plot_title <- ifelse(curve_type == "roc",
+                                                  "Receiver operating characteristic curve",
+                                                  "Precision-recall curve")
+    
+    if(autogenerate_plot_subtitle){
+      plot_sub_title <- plotting.create_subtitle(split_by=split_by,
+                                                 x=x_split[[ii]])
+    }
     
     # Generate plot
     p <- ..plot_auc_curve(x=x_split[[ii]],
@@ -658,13 +692,9 @@ setMethod("plot_auc_precision_recall_curve", signature(object="familiarCollectio
     if(!is.null(dir_path)){
       
       # Set subtype.
-      subtype <- paste0("auc_", curve_type)
-      
-      # Determine the subtype
-      if(!is.null(split_by)){
-        subtype <- c(subtype, as.character(sapply(split_by, function(jj, x) (x[[jj]][1]), x=x_split[[ii]])))
-        subtype <- paste0(subtype, collapse="_")
-      }
+      subtype <- plotting.create_subtype(x=x_split[[ii]],
+                                         subtype=paste0("auc_", curve_type),
+                                         split_by=split_by)
       
       # Obtain decent default values for the plot.
       def_plot_dims <- .determine_auc_roc_plot_dimensions(x=x_split[[ii]],
@@ -673,29 +703,27 @@ setMethod("plot_auc_precision_recall_curve", signature(object="familiarCollectio
       
       # Save to file.
       do.call(plotting.save_plot_to_file,
-              args=append(list("plot_obj"=p,
-                               "object"=object,
-                               "dir_path"=dir_path,
-                               "type"="performance",
-                               "subtype"=subtype,
-                               "height"=ifelse(is.waive(height), def_plot_dims[1], height),
-                               "width"=ifelse(is.waive(width), def_plot_dims[2], width),
-                               "units"=ifelse(is.waive(units), "cm", units)),
-                          list(...)))
+              args=c(list("plot_obj"=p,
+                          "object"=object,
+                          "dir_path"=dir_path,
+                          "type"="performance",
+                          "subtype"=subtype,
+                          "height"=ifelse(is.waive(height), def_plot_dims[1], height),
+                          "width"=ifelse(is.waive(width), def_plot_dims[2], width),
+                          "units"=ifelse(is.waive(units), "cm", units)),
+                     list(...)))
       
     } else {
       # Store as list for export.
-      plot_list <- append(plot_list, list(p))
+      plot_list <- c(plot_list, list(p))
     }
   }
   
-  # Output
-  if(is.null(dir_path)){
-    return(plot_list)
-    
-  } else {
-    return(NULL)
-  }
+  # Generate output
+  return(plotting.get_output(dir_path=dir_path,
+                             plot_list=plot_list,
+                             export_collection=export_collection,
+                             object=object))
 }
 
 
@@ -798,8 +826,8 @@ setMethod("plot_auc_precision_recall_curve", signature(object="familiarCollectio
   }
   
   # Update x and y scales
-  p <- p + ggplot2::scale_x_continuous(breaks=x_breaks, limits=x_range)
-  p <- p + ggplot2::scale_y_continuous(breaks=y_breaks, limits=y_range)
+  p <- p + ggplot2::scale_x_continuous(breaks=x_breaks)
+  p <- p + ggplot2::scale_y_continuous(breaks=y_breaks)
   
   # Labels
   p <- p + ggplot2::labs(x=x_label,
@@ -827,6 +855,9 @@ setMethod("plot_auc_precision_recall_curve", signature(object="familiarCollectio
                                    drop=TRUE)
     }
   }
+  
+  # Prevent removal of data outside or on plot limits.
+  p <- p + ggplot2::coord_cartesian(xlim=x_range, ylim=y_range)
   
   return(p)
 }

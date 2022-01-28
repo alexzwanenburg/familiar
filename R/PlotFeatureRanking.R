@@ -34,6 +34,7 @@ NULL
 #'@inheritParams plotting.check_data_handling
 #'@inheritDotParams as_familiar_collection -object
 #'@inheritDotParams ggplot2::ggsave -height -width -units
+#'@inheritDotParams extract_fs_vimp -object -aggregation_method -rank_threshold
 #'
 #'@details This function generates a barplot based on variable importance of
 #'  features.
@@ -83,8 +84,8 @@ setGeneric("plot_variable_importance",
                     rotate_x_tick_labels=waiver(),
                     y_label=waiver(),
                     legend_label=waiver(),
-                    plot_title=NULL,
-                    plot_sub_title=NULL,
+                    plot_title=waiver(),
+                    plot_sub_title=waiver(),
                     caption=NULL,
                     y_range=NULL,
                     y_n_breaks=5,
@@ -92,6 +93,7 @@ setGeneric("plot_variable_importance",
                     width=waiver(),
                     height=waiver(),
                     units=waiver(),
+                    export_collection=FALSE,
                     ...) standardGeneric("plot_variable_importance"))
 
 ##### plot_variable_importance (generic) ---------------------------------------
@@ -116,8 +118,8 @@ setMethod("plot_variable_importance", signature(object="ANY"),
                     rotate_x_tick_labels=waiver(),
                     y_label=waiver(),
                     legend_label=waiver(),
-                    plot_title=NULL,
-                    plot_sub_title=NULL,
+                    plot_title=waiver(),
+                    plot_sub_title=waiver(),
                     caption=NULL,
                     y_range=NULL,
                     y_n_breaks=5,
@@ -125,6 +127,7 @@ setMethod("plot_variable_importance", signature(object="ANY"),
                     width=waiver(),
                     height=waiver(),
                     units=waiver(),
+                    export_collection=FALSE,
                     ...){
              
              # Set the data element.
@@ -167,7 +170,8 @@ setMethod("plot_variable_importance", signature(object="ANY"),
                                         "y_breaks"=y_breaks,
                                         "width"=width,
                                         "height"=height,
-                                        "units"=units),
+                                        "units"=units,
+                                        "export_collection"=export_collection),
                                    list(...))))
              
            })
@@ -194,8 +198,8 @@ setMethod("plot_variable_importance", signature(object="familiarCollection"),
                    rotate_x_tick_labels=waiver(),
                    y_label=waiver(),
                    legend_label=waiver(),
-                   plot_title=NULL,
-                   plot_sub_title=NULL,
+                   plot_title=waiver(),
+                   plot_sub_title=waiver(),
                    caption=NULL,
                    y_range=NULL,
                    y_n_breaks=5,
@@ -203,6 +207,7 @@ setMethod("plot_variable_importance", signature(object="familiarCollection"),
                    width=waiver(),
                    height=waiver(),
                    units=waiver(),
+                   export_collection=FALSE,
                    ...){
             
             return(.plot_variable_importance(object=object,
@@ -232,6 +237,7 @@ setMethod("plot_variable_importance", signature(object="familiarCollection"),
                                              width=width,
                                              height=height,
                                              units=units,
+                                             export_collection=export_collection,
                                              ...))
             
           })
@@ -303,6 +309,7 @@ plot_model_signature_variable_importance <- function(...){
                                       width,
                                       height,
                                       units,
+                                      export_collection=FALSE,
                                       ...){ 
   
   # Get input data.
@@ -341,6 +348,15 @@ plot_model_signature_variable_importance <- function(...){
   
   # Check that the data are not empty.
   if(is_empty(x)) return(NULL)
+  
+  # Check package requirements for plotting.
+  if(!require_package(x=..required_plotting_packages(extended=FALSE),
+                      purpose=ifelse(type == "feature_selection",
+                                     "to plot variable importance determined through feature selection methods",
+                                     "to plot model-based variable importance"),
+                      message_type="warning")){
+    return(NULL)
+  }
   
   ##### Check input arguments ##################################################
   
@@ -413,6 +429,11 @@ plot_model_signature_variable_importance <- function(...){
                             y_range=y_range,
                             y_breaks=y_breaks)
   
+  ##### Create plots -----------------------------------------------------------
+  
+  # Determine if subtitle should be generated.
+  autogenerate_plot_subtitle <- is.waive(plot_sub_title)
+  
   # Split data
   if(!is.null(split_by)){
     x_split <- split(x@data, by=split_by)
@@ -427,6 +448,18 @@ plot_model_signature_variable_importance <- function(...){
   for(x_sub in x_split){
     
     if(is_empty(x_sub)) next()
+    
+    if(is.waive(plot_title)){
+      plot_title <- ifelse(type == "feature_selection",
+                           "Feature selection-based variable importance",
+                           "Model-based variable importance")
+    } 
+    
+    if(autogenerate_plot_subtitle){
+      plot_sub_title <- plotting.create_subtitle(split_by=split_by,
+                                                 additional=list("aggregation_method"=x@rank_aggregation_method),
+                                                 x=x_sub)
+    }
     
     # Generate plot
     p <- .create_feature_rank_plot(x=x_sub,
@@ -457,21 +490,13 @@ plot_model_signature_variable_importance <- function(...){
     
     # Save and export
     if(!is.null(dir_path)){
-      subtype_basis <- ifelse(type == "feature_selection",
-                              "feature_selection",
-                              "learner")
-      
-      # Save to file
-      if(!is.null(split_by)){
-        subtype <- c(subtype_basis,
-                     paste0(sapply(split_by, function(ii, x) (x[[ii]][1]), x=x_sub), collapse="_"))
-        
-      } else {
-        subtype <- subtype_basis
-      }
-      
-      # Add aggregation method to subtype.
-      subtype <- paste(c(subtype, x@rank_aggregation_method), collapse="_")
+      # Set subtype.
+      subtype <- plotting.create_subtype(x=x_sub,
+                                         subtype=ifelse(type == "feature_selection",
+                                                        "feature_selection",
+                                                        "learner"),
+                                         additional=list("aggregation_method"=x@rank_aggregation_method),
+                                         split_by=split_by)
       
       # Obtain decent default values for the plot.
       def_plot_dims <- .determine_feature_ranking_plot_dimensions(x=x_sub,
@@ -498,11 +523,10 @@ plot_model_signature_variable_importance <- function(...){
   }
   
   # Generate output
-  if(is.null(dir_path)){
-    return(plot_list)
-  } else {
-    return(NULL)
-  }
+  return(plotting.get_output(dir_path=dir_path,
+                             plot_list=plot_list,
+                             export_collection=export_collection,
+                             object=object))
 }
 
 

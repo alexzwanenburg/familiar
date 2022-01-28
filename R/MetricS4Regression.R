@@ -45,6 +45,10 @@ setMethod("compute_metric_score", signature(metric="familiarMetricMAE"),
             data <- remove_nonvalid_predictions(prediction_table=data,
                                                 outcome_type=metric@outcome_type)
             
+            # Remove any entries that lack observed values.
+            data <- remove_missing_outcomes(data=data,
+                                            outcome_type=metric@outcome_type)
+            
             if(is_empty(data)) return(callNextMethod())
             
             # Compute the mean absolute error.
@@ -74,6 +78,10 @@ setMethod("compute_metric_score", signature(metric="familiarMetricMLAE"),
             # Remove any entries that lack valid predictions.
             data <- remove_nonvalid_predictions(prediction_table=data,
                                                 outcome_type=metric@outcome_type)
+            
+            # Remove any entries that lack observed values.
+            data <- remove_missing_outcomes(data=data,
+                                            outcome_type=metric@outcome_type)
             
             if(is_empty(data)) return(callNextMethod())
             
@@ -105,6 +113,10 @@ setMethod("compute_metric_score", signature(metric="familiarMetricMSE"),
             data <- remove_nonvalid_predictions(prediction_table=data,
                                                 outcome_type=metric@outcome_type)
             
+            # Remove any entries that lack observed values.
+            data <- remove_missing_outcomes(data=data,
+                                            outcome_type=metric@outcome_type)
+            
             if(is_empty(data)) return(callNextMethod())
             
             # Compute the mean squared error.
@@ -133,6 +145,10 @@ setMethod("compute_metric_score", signature(metric="familiarMetricMSLE"),
             # Remove any entries that lack valid predictions.
             data <- remove_nonvalid_predictions(prediction_table=data,
                                                 outcome_type=metric@outcome_type)
+            
+            # Remove any entries that lack observed values.
+            data <- remove_missing_outcomes(data=data,
+                                            outcome_type=metric@outcome_type)
             
             if(is_empty(data)) return(callNextMethod())
             
@@ -166,6 +182,10 @@ setMethod("compute_metric_score", signature(metric="familiarMetricMedianAE"),
             data <- remove_nonvalid_predictions(prediction_table=data,
                                                 outcome_type=metric@outcome_type)
             
+            # Remove any entries that lack observed values.
+            data <- remove_missing_outcomes(data=data,
+                                            outcome_type=metric@outcome_type)
+            
             if(is_empty(data)) return(callNextMethod())
             
             # Compute the median absolute error.
@@ -195,6 +215,10 @@ setMethod("compute_metric_score", signature(metric="familiarMetricRMSE"),
             # Remove any entries that lack valid predictions.
             data <- remove_nonvalid_predictions(prediction_table=data,
                                                 outcome_type=metric@outcome_type)
+            
+            # Remove any entries that lack observed values.
+            data <- remove_missing_outcomes(data=data,
+                                            outcome_type=metric@outcome_type)
             
             if(is_empty(data)) return(callNextMethod())
             
@@ -226,6 +250,10 @@ setMethod("compute_metric_score", signature(metric="familiarMetricRMSLE"),
             data <- remove_nonvalid_predictions(prediction_table=data,
                                                 outcome_type=metric@outcome_type)
             
+            # Remove any entries that lack observed values.
+            data <- remove_missing_outcomes(data=data,
+                                            outcome_type=metric@outcome_type)
+            
             if(is_empty(data)) return(callNextMethod())
             
             # Compute the root mean square log error.
@@ -256,6 +284,10 @@ setMethod("compute_metric_score", signature(metric="familiarMetricR2"),
             # Remove any entries that lack valid predictions.
             data <- remove_nonvalid_predictions(prediction_table=data,
                                                 outcome_type=metric@outcome_type)
+            
+            # Remove any entries that lack observed values.
+            data <- remove_missing_outcomes(data=data,
+                                            outcome_type=metric@outcome_type)
             
             if(is_empty(data)) return(callNextMethod())
            
@@ -301,6 +333,10 @@ setMethod("compute_metric_score", signature(metric="familiarMetricExplainedVaria
             # Remove any entries that lack valid predictions.
             data <- remove_nonvalid_predictions(prediction_table=data,
                                                 outcome_type=metric@outcome_type)
+            
+            # Remove any entries that lack observed values.
+            data <- remove_missing_outcomes(data=data,
+                                            outcome_type=metric@outcome_type)
             
             if(is_empty(data)) return(callNextMethod())
             

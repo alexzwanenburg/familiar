@@ -27,7 +27,7 @@ setGeneric("extract_performance",
                     cl=NULL,
                     metric=waiver(),
                     ensemble_method=waiver(),
-                    eval_times=waiver(),
+                    evaluation_times=waiver(),
                     detail_level=waiver(),
                     estimation_type=waiver(),
                     aggregate_results=waiver(),
@@ -45,7 +45,7 @@ setMethod("extract_performance", signature(object="familiarEnsemble"),
                    cl=NULL,
                    metric=waiver(),
                    ensemble_method=waiver(),
-                   eval_times=waiver(),
+                   evaluation_times=waiver(),
                    detail_level=waiver(),
                    estimation_type=waiver(),
                    aggregate_results=waiver(),
@@ -57,17 +57,16 @@ setMethod("extract_performance", signature(object="familiarEnsemble"),
                    ...){
             
             # Message extraction start
-            if(verbose){
-              logger.message(paste0("Computing model performance metrics on the dataset."),
-                             indent=message_indent)
-            }
+            logger.message(paste0("Computing model performance metrics on the dataset."),
+                           indent=message_indent,
+                           verbose=verbose)
             
-            # Load eval_times from the object settings attribute, if it is not provided.
-            if(is.waive(eval_times)) eval_times <- object@settings$eval_times
+            # Load evaluation_times from the object settings attribute, if it is not provided.
+            if(is.waive(evaluation_times)) evaluation_times <- object@settings$eval_times
             
-            # Check eval_times argument
+            # Check evaluation_times argument
             if(object@outcome_type %in% c("survival")){
-              sapply(eval_times, .check_number_in_valid_range, var_name="eval_times", range=c(0.0, Inf), closed=c(FALSE, TRUE))
+              sapply(evaluation_times, .check_number_in_valid_range, var_name="evaluation_times", range=c(0.0, Inf), closed=c(FALSE, TRUE))
             }
             
             # Obtain ensemble method from stored settings, if required.
@@ -93,11 +92,13 @@ setMethod("extract_performance", signature(object="familiarEnsemble"),
             
             # Check the level detail.
             detail_level <- .parse_detail_level(x = detail_level,
+                                                object = object,
                                                 default = "hybrid",
                                                 data_element = "model_performance")
             
             # Check the estimation type.
             estimation_type <- .parse_estimation_type(x = estimation_type,
+                                                      object = object,
                                                       default = "bootstrap_confidence_interval",
                                                       data_element = "model_performance",
                                                       detail_level = detail_level,
@@ -105,6 +106,7 @@ setMethod("extract_performance", signature(object="familiarEnsemble"),
             
             # Check whether results should be aggregated.
             aggregate_results <- .parse_aggregate_results(x = aggregate_results,
+                                                          object = object,
                                                           default = FALSE,
                                                           data_element = "model_performance")
             
@@ -135,7 +137,7 @@ setMethod("extract_performance", signature(object="familiarEnsemble"),
                                                    is_pre_processed=is_pre_processed,
                                                    ensemble_method=ensemble_method,
                                                    metric=metric,
-                                                   eval_times=eval_times,
+                                                   evaluation_times=evaluation_times,
                                                    aggregate_results=aggregate_results,
                                                    message_indent=message_indent + 1L,
                                                    verbose=verbose)
@@ -147,7 +149,7 @@ setMethod("extract_performance", signature(object="familiarEnsemble"),
 
 .extract_model_performance_data <- function(object,
                                             proto_data_element,
-                                            eval_times=NULL,
+                                            evaluation_times=NULL,
                                             aggregate_results,
                                             cl,
                                             ...){
@@ -159,8 +161,8 @@ setMethod("extract_performance", signature(object="familiarEnsemble"),
   proto_data_element <- add_model_name(proto_data_element, object=object)
   
   # Add evaluation time as a identifier to the data element.
-  if(length(eval_times) > 0 & object@outcome_type == "survival"){
-    data_elements <- add_data_element_identifier(x=proto_data_element, evaluation_time=eval_times)
+  if(length(evaluation_times) > 0 & object@outcome_type == "survival"){
+    data_elements <- add_data_element_identifier(x=proto_data_element, evaluation_time=evaluation_times)
     
   } else {
     data_elements <- list(proto_data_element)
@@ -199,7 +201,8 @@ setMethod("extract_performance", signature(object="familiarEnsemble"),
   # only relevant for survival analysis.
   if(length(data_element@identifiers$evaluation_time) > 0 & progress_bar){
     logger.message(paste0("Computing metric value at time ", data_element@identifiers$evaluation_time, "."),
-                   indent=message_indent)
+                   indent=message_indent,
+                   verbose=verbose)
   }
   
   # Predict class probabilities.
@@ -211,6 +214,17 @@ setMethod("extract_performance", signature(object="familiarEnsemble"),
   
   # Check if any predictions are valid.
   if(!any_predictions_valid(prediction_data, outcome_type=object@outcome_type)) return(NULL)
+  
+  # Remove data with missing predictions.
+  prediction_data <- remove_nonvalid_predictions(prediction_data,
+                                                 outcome_type=object@outcome_type)
+  
+  # Remove data with missing outcomes.
+  prediction_data <- remove_missing_outcomes(data=prediction_data,
+                                             outcome_type=object@outcome_type)
+  
+  # Check that any prediction data remain.
+  if(is_empty(prediction_data)) return(NULL)
   
   # Add metric as an identifier.
   data_elements <- add_data_element_identifier(x=data_element,
@@ -269,6 +283,7 @@ setMethod("extract_performance", signature(object="familiarEnsemble"),
 #'  familiarCollection.
 #'
 #'@inheritParams export_all
+#'@inheritParams export_univariate_analysis_data
 #'
 #'@inheritDotParams extract_performance
 #'@inheritDotParams as_familiar_collection
@@ -293,27 +308,40 @@ setMethod("extract_performance", signature(object="familiarEnsemble"),
 #'@md
 #'@rdname export_model_performance-methods
 setGeneric("export_model_performance",
-           function(object, dir_path=NULL, aggregate_results=FALSE, ...) standardGeneric("export_model_performance"))
+           function(object,
+                    dir_path=NULL,
+                    aggregate_results=FALSE,
+                    export_collection=FALSE,
+                    ...) standardGeneric("export_model_performance"))
 
 #####export_model_performance (collection)#####
 
 #'@rdname export_model_performance-methods
 setMethod("export_model_performance", signature(object="familiarCollection"),
-          function(object, dir_path=NULL, aggregate_results=FALSE, ...){
+          function(object, 
+                   dir_path=NULL,
+                   aggregate_results=FALSE,
+                   export_collection=FALSE,
+                   ...){
             
             return(.export(x=object,
                            data_slot="model_performance",
                            dir_path=dir_path,
                            aggregate_results=aggregate_results,
                            type="performance",
-                           subtype="metric"))
+                           subtype="metric",
+                           export_collection=export_collection))
           })
 
 #####export_model_performance (generic)#####
 
 #'@rdname export_model_performance-methods
 setMethod("export_model_performance", signature(object="ANY"),
-          function(object, dir_path=NULL, aggregate_results=FALSE, ...){
+          function(object,
+                   dir_path=NULL,
+                   aggregate_results=FALSE,
+                   export_collection=FALSE,
+                   ...){
             
             # Attempt conversion to familiarCollection object.
             object <- do.call(as_familiar_collection,
@@ -325,6 +353,7 @@ setMethod("export_model_performance", signature(object="ANY"),
             return(do.call(export_model_performance,
                            args=c(list("object"=object,
                                        "dir_path"=dir_path,
-                                       "aggregate_results"=aggregate_results),
+                                       "aggregate_results"=aggregate_results,
+                                       "export_collection"=export_collection),
                                   list(...))))
           })

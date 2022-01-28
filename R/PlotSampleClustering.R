@@ -99,6 +99,7 @@ NULL
 #'@inheritParams plotting.check_data_handling
 #'@inheritDotParams as_familiar_collection -object
 #'@inheritDotParams ggplot2::ggsave -height -width -units
+#'@inheritDotParams extract_feature_expression -object -feature_cluster_method -feature_linkage_method -sample_cluster_method -sample_linkage_method
 #'
 #'@details This function generates area under the ROC curve plots.
 #'
@@ -139,6 +140,7 @@ setGeneric("plot_sample_clustering",
                     feature_linkage_method=waiver(),
                     sample_cluster_method=waiver(),
                     sample_linkage_method=waiver(),
+                    sample_limit=waiver(),
                     draw=FALSE,
                     dir_path=NULL,
                     split_by=NULL,
@@ -157,8 +159,8 @@ setGeneric("plot_sample_clustering",
                     y_label_shared="row",
                     legend_label=waiver(),
                     outcome_legend_label=waiver(),
-                    plot_title=NULL,
-                    plot_sub_title=NULL,
+                    plot_title=waiver(),
+                    plot_sub_title=waiver(),
                     caption=NULL,
                     x_range=NULL,
                     x_n_breaks=3,
@@ -177,6 +179,7 @@ setGeneric("plot_sample_clustering",
                     width=waiver(),
                     height=waiver(),
                     units=waiver(),
+                    export_collection=FALSE,
                     verbose=TRUE,
                     ...) standardGeneric("plot_sample_clustering"))
 
@@ -189,6 +192,7 @@ setMethod("plot_sample_clustering", signature(object="ANY"),
                    feature_linkage_method=waiver(),
                    sample_cluster_method=waiver(),
                    sample_linkage_method=waiver(),
+                   sample_limit=waiver(),
                    draw=FALSE,
                    dir_path=NULL,
                    split_by=NULL,
@@ -207,8 +211,8 @@ setMethod("plot_sample_clustering", signature(object="ANY"),
                    y_label_shared="row",
                    legend_label=waiver(),
                    outcome_legend_label=waiver(),
-                   plot_title=NULL,
-                   plot_sub_title=NULL,
+                   plot_title=waiver(),
+                   plot_sub_title=waiver(),
                    caption=NULL,
                    x_range=NULL,
                    x_n_breaks=3,
@@ -227,6 +231,7 @@ setMethod("plot_sample_clustering", signature(object="ANY"),
                    width=waiver(),
                    height=waiver(),
                    units=waiver(),
+                   export_collection=FALSE,
                    verbose=TRUE,
                    ...){
             
@@ -234,6 +239,7 @@ setMethod("plot_sample_clustering", signature(object="ANY"),
             object <- do.call(as_familiar_collection,
                               args=c(list("object"=object,
                                           "data_element"="feature_expressions",
+                                          "sample_limit"=sample_limit,
                                           "feature_cluster_method"=feature_cluster_method,
                                           "feature_linkage_method"=feature_linkage_method,
                                           "sample_cluster_method"=sample_cluster_method,
@@ -284,6 +290,7 @@ setMethod("plot_sample_clustering", signature(object="ANY"),
                                      "width"=width,
                                      "height"=height,
                                      "units"=units,
+                                     "export_collection"=export_collection,
                                      "verbose"=verbose)))
           })
 
@@ -297,6 +304,7 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
                    feature_linkage_method=waiver(),
                    sample_cluster_method=waiver(),
                    sample_linkage_method=waiver(),
+                   sample_limit=waiver(),
                    draw=FALSE,
                    dir_path=NULL,
                    split_by=NULL,
@@ -315,8 +323,8 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
                    y_label_shared="row",
                    legend_label=waiver(),
                    outcome_legend_label=waiver(),
-                   plot_title=NULL,
-                   plot_sub_title=NULL,
+                   plot_title=waiver(),
+                   plot_sub_title=waiver(),
                    caption=NULL,
                    x_range=NULL,
                    x_n_breaks=3,
@@ -335,6 +343,7 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
                    width=waiver(),
                    height=waiver(),
                    units=waiver(),
+                   export_collection=FALSE,
                    verbose=TRUE,
                    ...){
             
@@ -354,6 +363,7 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
             
             # Get feature similarity data.
             sample_similarity <- export_sample_similarity(object=object,
+                                                          sample_limit=sample_limit,
                                                           sample_cluster_method=sample_cluster_method,
                                                           sample_linkage_method=sample_linkage_method)[[1]]
             
@@ -375,6 +385,12 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
             # for feature expression.
             identifier_table[, "list_id":=.I]
             
+            # Check package requirements for plotting.
+            if(!require_package(x=..required_plotting_packages(extended=TRUE),
+                                purpose="to create sample clustering heatmaps",
+                                message_type="warning")){
+              return(NULL)
+            }
             
             ##### Check input arguments ----------------------------------------
             
@@ -600,6 +616,9 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
             
             ##### Create plots -------------------------------------------------
             
+            # Determine if subtitle should be generated.
+            autogenerate_plot_subtitle <- is.waive(plot_sub_title)
+            
             # Split data.
             if(!is.null(split_by)){
               x_split <- split(identifier_table, by=split_by, drop=FALSE)
@@ -616,6 +635,9 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
               
               if(is_empty(x_sub)) next()
               
+              # Declare subtitle components.
+              additional_subtitle <- NULL
+              
               # Select relevant feature expressions from list.
               feature_expression_split <- feature_expression[x_sub$list_id]
               
@@ -625,6 +647,10 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
                 feature_similarity_split <- methods::new("familiarDataElementFeatureSimilarity",
                                                          feature_similarity,
                                                          data=feature_similarity@data[x_sub, on=.NATURAL, nomatch=NULL])
+                
+                # Add similarity metric.
+                additional_subtitle <- c(additional_subtitle,
+                                         list("metric (features)"=feature_similarity_split@similarity_metric))
               } 
               
               # Select data for sample similarity
@@ -633,8 +659,20 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
                 sample_similarity_split <- methods::new("familiarDataElementSampleSimilarity",
                                                          sample_similarity,
                                                          data=sample_similarity@data[x_sub, on=.NATURAL, nomatch=NULL])
+                
+                # Add similarity metric.
+                additional_subtitle <- c(additional_subtitle,
+                                         list("metric (samples)"=sample_similarity_split@similarity_metric))
               } 
-
+              
+              if(is.waive(plot_title)) plot_title <- "Sample clustering"
+              
+              if(autogenerate_plot_subtitle){
+                plot_sub_title <- plotting.create_subtitle(split_by=split_by,
+                                                           additional=additional_subtitle,
+                                                           x=x_sub)
+              }
+              
               # Generate plot
               p <- .plot_sample_clustering_plot(x=x_sub,
                                                 data=feature_expression_split,
@@ -682,14 +720,9 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
               # Save and export
               if(!is.null(dir_path)){
                 
-                # Add plot type as a subtype.
-                subtype <- NULL
-                
-                # Determine the subtype
-                if(!is.null(split_by)){
-                  subtype <- paste0(as.character(sapply(split_by, function(jj, x) (x[[jj]][1]), x=x_sub)),
-                                    collapse="_")
-                }
+                # Set subtype.
+                subtype <- plotting.create_subtype(x=x_sub,
+                                                   split_by=split_by)
                 
                 # Find unique features
                 features <- lapply(feature_expression_split, function(x) (x@value_column))
@@ -716,7 +749,7 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
                         args=c(list("plot_obj"=p,
                                     "object"=object,
                                     "dir_path"=dir_path,
-                                    "type"="feature_expression",
+                                    "type"="sample_clustering",
                                     "subtype"=subtype,
                                     "height"=ifelse(is.waive(height), def_plot_dims[1], height),
                                     "width"=ifelse(is.waive(width), def_plot_dims[2], width),
@@ -730,13 +763,11 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
               }
             }
             
-            # Output
-            if(is.null(dir_path)){
-              return(plot_list)
-              
-            } else {
-              return(NULL)
-            }
+            # Generate output
+            return(plotting.get_output(dir_path=dir_path,
+                                       plot_list=plot_list,
+                                       export_collection=export_collection,
+                                       object=object))
           })
 
 
@@ -942,6 +973,10 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
     outcome_ranges <- lapply(outcome_plot_data, function(x){
       
       if(is_empty(x)){
+        return(data.table::data.table("min_value"=numeric(0),
+                                      "max_value"=numeric(0)))
+        
+      } else if(all(!is.finite(x$value))){
         return(data.table::data.table("min_value"=numeric(0),
                                       "max_value"=numeric(0)))
         
@@ -1284,7 +1319,8 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
   
   # Colors
   gradient_colours <- plotting.get_palette(x=gradient_palette,
-                                           palette_type=palette_type)
+                                           palette_type=palette_type,
+                                           diverge_to_white=TRUE)
   
   # Add gradient palette. If the legend is not shown, legend_label equals NULL.
   p <- p + ggplot2::scale_fill_gradientn(name=legend_label,
@@ -1713,6 +1749,8 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
                                        feature_similarity,
                                        sample_similarity,
                                        gradient_palette_range){
+  # Suppress NOTES due to non-standard evaluation in data.table
+  feature <- sample <- NULL
   
   if(is_empty(x)) return(NULL)
   
@@ -1803,6 +1841,9 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
                                                 cluster_method=sample_similarity@cluster_method)
   }
   
+  # Keep only features and samples that are in feature order and sample order.
+  data <- data[feature %in% feature_order$name & sample %in% sample_order$name]
+  
   # Set feature and sample order
   data$feature <- factor(data$feature,
                          levels=feature_order$name[order(feature_order$label_order)])
@@ -1846,6 +1887,9 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
     
     # Mark all as no event initially.
     y[, "value":="no"]
+    
+    # Mark all data with missing outcome_time or outcome_event as missing.
+    y[!is.finite(outcome_time) | is.na(outcome_event), "value":=NA_character_]
     
     # All samples that have an event before or at the evaluation time.
     y[outcome_time <= eval_time & outcome_event == 1, "value":="yes"]

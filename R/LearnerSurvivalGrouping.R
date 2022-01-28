@@ -1,3 +1,7 @@
+.get_available_stratification_methods <- function(){
+  return(c("median", "fixed", "optimised", "mean", "mean_trim", "mean_winsor"))
+}
+
 learner.find_survival_grouping_thresholds <- function(object, data){
   
   if(!object@outcome_type %in% c("survival")){
@@ -11,7 +15,10 @@ learner.find_survival_grouping_thresholds <- function(object, data){
   time_max <- settings$eval$time_max
   
   # Generate prediction table
-  pred_table <- .predict(object=object, data=data, allow_recalibration=TRUE, time=time_max)
+  pred_table <- .predict(object=object,
+                         data=data,
+                         allow_recalibration=TRUE,
+                         time=time_max)
 
   km_info_list <- list()
   
@@ -20,18 +27,29 @@ learner.find_survival_grouping_thresholds <- function(object, data){
 
     if(cut_off_method == "median"){
       # Identify threshold
-      cutoff <- stats::median(pred_table$predicted_outcome, na.rm=TRUE)
+      # cutoff <- stats::median(pred_table$predicted_outcome, na.rm=TRUE)
+      cutoff <- learner.find_quantile_threshold(object=object,
+                                                pred_table=pred_table,
+                                                quantiles=0.5)
       
     } else if(cut_off_method == "fixed"){
       # Identify thresholds
       cutoff <- learner.find_quantile_threshold(object=object,
                                                 pred_table=pred_table,
-                                                quantiles=settings$eval$strat_quant_threshold,
-                                                learner=object@learner)
+                                                quantiles=settings$eval$strat_quant_threshold)
 
     } else if(cut_off_method == "optimised"){
       # Identify threshold
       cutoff <- learner.find_maxstat_threshold(pred_table=pred_table)
+      
+    } else if(cut_off_method %in% c("mean", "mean_winsor", "mean_trim")){
+      # Identify threshold
+      cutoff <- learner.find_mean_threshold(object=object,
+                                            pred_table=pred_table,
+                                            method=cut_off_method)
+      
+    } else {
+      ..error_reached_unreachable_code(paste0("learner.find_survival_grouping_thresholds: encountered an unknown threshold type:", cut_off_method))
     }
     
     # Find corresponding sizes of the generated groups
@@ -50,18 +68,34 @@ learner.find_survival_grouping_thresholds <- function(object, data){
   }
 
   # Add stratification methods
-  out_list <- list("stratification_method"=settings$eval$strat_method, "parameters"=km_info_list, "time_max"=time_max)
+  out_list <- list("stratification_method"=settings$eval$strat_method,
+                   "parameters"=km_info_list,
+                   "time_max"=time_max)
   
   return(out_list)
 }
 
 
 
-learner.find_quantile_threshold <- function(object, pred_table, quantiles, learner){
+learner.find_mean_threshold <- function(object, pred_table, method){
+  
+  # Select finite values.
+  x <- pred_table$predicted_outcome[is.finite(pred_table$predicted_outcome)]
+  
+  if(method == "mean_trim") x <- trim(x)
+  if(method == "mean_winsor") x <- winsor(x)
+  
+  return(mean(x))
+}
+
+
+
+learner.find_quantile_threshold <- function(object, pred_table, quantiles){
   
   if(get_prediction_type(object=object) %in% c("expected_survival_time")){
     
-    # For time-like predictions, we should use the complements of the provided quantiles.
+    # For time-like predictions, we should use the complements of the provided
+    # quantiles.
     quantiles <- abs(1-quantiles)
     
   }
@@ -77,9 +111,10 @@ learner.find_quantile_threshold <- function(object, pred_table, quantiles, learn
 learner.find_maxstat_threshold <- function(pred_table){
   
   # Check whether the model always predicted the same value
-  if(stats::var(pred_table$predicted_outcome) == 0){
-    return(pred_table$predicted_outcome[1])
-  }
+  if(stats::var(pred_table$predicted_outcome) == 0) return(pred_table$predicted_outcome[1])
+  
+  require_package(x="maxstat",
+                  purpose="to determine an optimal risk threshold")
   
   # Perform maxstat test
   h <- maxstat::maxstat.test(survival::Surv(outcome_time, outcome_event) ~ predicted_outcome,
@@ -89,9 +124,7 @@ learner.find_maxstat_threshold <- function(pred_table){
                              maxprop=0.90)
   
   # Check if at least 4 unique values are present for the smoothing spline
-  if(length(h$cuts) < 4){
-    return(unname(h$estimate))
-  }
+  if(length(h$cuts) < 4) return(unname(h$estimate))
   
   # Smoothed scores
   spline_fit <- stats::smooth.spline(x=h$cuts, y=h$stats)$fit

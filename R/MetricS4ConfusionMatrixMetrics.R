@@ -10,7 +10,7 @@ setClass("familiarMetricCMAveraging",
          slots=list("averaging"="character"),
          prototype=list("averaging"="macro"))
 
-setMethod("initialize", signature="familiarMetricCMAveraging",
+setMethod("initialize", signature(.Object="familiarMetricCMAveraging"),
           function(.Object, metric, ...){
             
             # Update with parent class first.
@@ -594,6 +594,10 @@ setMethod("compute_metric_score", signature(metric="familiarMetricYouden"),
   # Remove any entries that lack valid predictions.
   data <- remove_nonvalid_predictions(prediction_table=data,
                                       outcome_type=outcome_type)
+  
+  # Remove any entries that lack observed values.
+  data <- remove_missing_outcomes(data=data,
+                                  outcome_type=outcome_type)
   
   if(is_empty(data)) return(NULL)
   

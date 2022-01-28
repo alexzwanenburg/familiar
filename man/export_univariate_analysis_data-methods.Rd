@@ -10,6 +10,7 @@ export_univariate_analysis_data(
   object,
   dir_path = NULL,
   p_adjustment_method = waiver(),
+  export_collection = FALSE,
   ...
 )
 
@@ -17,6 +18,7 @@ export_univariate_analysis_data(
   object,
   dir_path = NULL,
   p_adjustment_method = waiver(),
+  export_collection = FALSE,
   ...
 )
 
@@ -24,6 +26,7 @@ export_univariate_analysis_data(
   object,
   dir_path = NULL,
   p_adjustment_method = waiver(),
+  export_collection = FALSE,
   ...
 )
 }
@@ -34,16 +37,18 @@ a \code{familiarCollection} can be extracted. See details for more information.}
 \item{dir_path}{Path to folder where extracted data should be saved. \code{NULL}
 will allow export as a structured list of data.tables.}
 
-\item{p_adjustment_method}{(\emph{optional}) Indicates type of p-value that is shown.
-One of \code{holm}, \code{hochberg}, \code{hommel}, \code{bonferroni}, \code{BH}, \code{BY},
-\code{fdr}, \code{none}, \code{p_value} or \code{q_value} for adjusted p-values, uncorrected
-p-values and q-values. q-values may not be available.}
+\item{p_adjustment_method}{(\emph{optional}) Indicates type of p-value that is
+shown. One of \code{holm}, \code{hochberg}, \code{hommel}, \code{bonferroni}, \code{BH}, \code{BY}, \code{fdr},
+\code{none}, \code{p_value} or \code{q_value} for adjusted p-values, uncorrected p-values
+and q-values. q-values may not be available.}
+
+\item{export_collection}{(\emph{optional}) Exports the collection if TRUE.}
 
 \item{...}{
   Arguments passed on to \code{\link[=extract_univariate_analysis]{extract_univariate_analysis}}, \code{\link[=as_familiar_collection]{as_familiar_collection}}
   \describe{
     \item{\code{data}}{A \code{dataObject} object, \code{data.table} or \code{data.frame} that
-constitutes the data that are used to compute}
+constitutes the data that are assessed.}
     \item{\code{cl}}{Cluster created using the \code{parallel} package. This cluster is then
 used to speed up computation through parallellisation.}
     \item{\code{icc_type}}{String indicating the type of intraclass correlation

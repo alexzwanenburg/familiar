@@ -48,16 +48,23 @@ setMethod("extract_model_vimp", signature(object="familiarEnsemble"),
                    ...){
             
             # Message extraction start
-            if(verbose){
-              logger.message(paste0("Extracting variable importance obtained from the models."),
-                             indent=message_indent)
-            }
+            logger.message(paste0("Extracting variable importance obtained from the models."),
+                           indent=message_indent,
+                           verbose=verbose)
             
             # Test if models are properly loaded
             if(!is_model_loaded(object=object)) ..error_ensemble_models_not_loaded()
             
             # Obtain aggregation method from stored settings, if required.
-            if(is.waive(aggregation_method)) aggregation_method <- object@settings$aggregation
+            if(is.waive(aggregation_method)){
+              if(length(object@model_list) > 1){
+                aggregation_method <- object@settings$aggregation
+                
+              } else {
+                # If only one model is evaluated, do not aggregate data.
+                aggregation_method <- "none" 
+              }
+            } 
             
             # Check aggregation method
             rank.check_aggregation_method(method=aggregation_method)
@@ -179,10 +186,9 @@ setMethod("extract_fs_vimp", signature(object="familiarEnsemble"),
             if(inherits(file_paths, "error") | inherits(project_list, "error")) return(NULL)
             
             # Message extraction start
-            if(verbose){
-              logger.message(paste0("Extracting variable importance obtained during feature selection."),
-                             indent=message_indent)
-            }
+            logger.message(paste0("Extracting variable importance obtained during feature selection."),
+                           indent=message_indent,
+                           verbose=verbose)
             
             # Define the run table -> at the pooling level
             run <- .get_run_list(iteration_list=project_list$iter_list,
@@ -230,18 +236,25 @@ setMethod("..compute_data_element_estimates", signature(x="familiarDataElementVi
             translation_table <- rank.consensus_clustering(vimp_table=data)
             
             # Determine aggregate ranks.
-            data <- rank.aggregate_feature_ranks(dt_vimp=data,
+            data <- rank.aggregate_feature_ranks(vimp_table=data,
                                                  aggregation_method=x[[1]]@rank_aggregation_method,
                                                  rank_threshold=x[[1]]@rank_threshold)
             
-            # Replace clusters by individual features.
-            data <- rank.decluster_vimp_table(vimp_table=data,
-                                              translation_table=translation_table)
+            # Merge the translation table into the data.
+            data <- merge(x=data,
+                          y=translation_table,
+                          by.x="name",
+                          by.y="feature_name")
             
             # Update column names.
             data.table::setnames(data,
                                  old=c("name", "aggr_rank", "aggr_score"),
                                  new=c("feature", "rank", "score"))
+            
+            # Remove cluster_name
+            data[, "cluster_name":=NULL]
+            
+            # Order by rank.
             data <- data[order(rank)]
             
             # Add cluster size.
@@ -309,6 +322,7 @@ setMethod("..compute_data_element_estimates", signature(x="familiarDataElementVi
 #'  `enhanced_borda`, `truncated_borda` and `enhanced_truncated_borda` methods.
 #'
 #'@inheritParams export_all
+#'@inheritParams export_univariate_analysis_data
 #'
 #'@inheritDotParams as_familiar_collection
 #'
@@ -349,6 +363,7 @@ setGeneric("export_model_vimp",
                     aggregate_results=TRUE,
                     aggregation_method=waiver(),
                     rank_threshold=waiver(),
+                    export_collection=FALSE,
                     ...) standardGeneric("export_model_vimp"))
 
 #####export_model_vimp (collection)#####
@@ -360,6 +375,7 @@ setMethod("export_model_vimp", signature(object="familiarCollection"),
                    aggregate_results=TRUE,
                    aggregation_method=waiver(),
                    rank_threshold=waiver(),
+                   export_collection=FALSE,
                    ...){
             
             # Extract data.
@@ -399,7 +415,8 @@ setMethod("export_model_vimp", signature(object="familiarCollection"),
                            dir_path=dir_path,
                            aggregate_results=aggregate_results,
                            type="variable_importance",
-                           subtype=subtype))
+                           subtype=subtype,
+                           export_collection=export_collection))
           })
 
 #####export_model_vimp (generic)#####
@@ -411,6 +428,7 @@ setMethod("export_model_vimp", signature(object="ANY"),
                    aggregate_results=TRUE,
                    aggregation_method=waiver(),
                    rank_threshold=waiver(),
+                   export_collection=FALSE,
                    ...){
             
             # Attempt conversion to familiarCollection object. Note that we pass
@@ -425,7 +443,10 @@ setMethod("export_model_vimp", signature(object="ANY"),
             return(do.call(export_model_vimp,
                            args=c(list("object"=object,
                                        "dir_path"=dir_path,
-                                       "aggregate_results"=aggregate_results),
+                                       "aggregate_results"=aggregate_results,
+                                       "aggregation_method"=aggregation_method,
+                                       "rank_threshold"=rank_threshold,
+                                       "export_collection"=export_collection),
                                   list(...))))
           })
 
@@ -484,6 +505,7 @@ setMethod("export_model_vimp", signature(object="ANY"),
 #'  `enhanced_borda`, `truncated_borda` and `enhanced_truncated_borda` methods.
 #'
 #'@inheritParams export_all
+#'@inheritParams export_univariate_analysis_data
 #'
 #'@inheritDotParams as_familiar_collection
 #'
@@ -522,6 +544,7 @@ setGeneric("export_fs_vimp",
                     aggregate_results=TRUE,
                     aggregation_method=waiver(),
                     rank_threshold=waiver(),
+                    export_collection=FALSE,
                     ...) standardGeneric("export_fs_vimp"))
 
 #####export_fs_vimp (collection)#####
@@ -533,6 +556,7 @@ setMethod("export_fs_vimp", signature(object="familiarCollection"),
                    aggregate_results=TRUE,
                    aggregation_method=waiver(),
                    rank_threshold=waiver(),
+                   export_collection=FALSE,
                    ...){
             
             # Extract data.
@@ -573,7 +597,8 @@ setMethod("export_fs_vimp", signature(object="familiarCollection"),
                            dir_path=dir_path,
                            aggregate_results=aggregate_results,
                            type="variable_importance",
-                           subtype=subtype))
+                           subtype=subtype,
+                           export_collection=export_collection))
           })
 
 #####export_fs_vimp (generic)#####
@@ -585,6 +610,7 @@ setMethod("export_fs_vimp", signature(object="ANY"),
                    aggregate_results=TRUE,
                    aggregation_method=waiver(),
                    rank_threshold=waiver(),
+                   export_collection=FALSE,
                    ...){
             
             # Attempt conversion to familiarCollection object. Note that we pass
@@ -596,9 +622,12 @@ setMethod("export_fs_vimp", signature(object="ANY"),
                                           "rank_threshold"=rank_threshold),
                                      list(...)))
             
-            return(do.call(export_model_vimp,
+            return(do.call(export_fs_vimp,
                            args=c(list("object"=object,
                                        "dir_path"=dir_path,
-                                       "aggregate_results"=aggregate_results),
+                                       "aggregate_results"=aggregate_results,
+                                       "aggregation_method"=aggregation_method,
+                                       "rank_threshold"=rank_threshold,
+                                       "export_collection"=export_collection),
                                   list(...))))
           })

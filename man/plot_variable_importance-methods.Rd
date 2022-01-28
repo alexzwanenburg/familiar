@@ -30,8 +30,8 @@ plot_variable_importance(
   rotate_x_tick_labels = waiver(),
   y_label = waiver(),
   legend_label = waiver(),
-  plot_title = NULL,
-  plot_sub_title = NULL,
+  plot_title = waiver(),
+  plot_sub_title = waiver(),
   caption = NULL,
   y_range = NULL,
   y_n_breaks = 5,
@@ -39,6 +39,7 @@ plot_variable_importance(
   width = waiver(),
   height = waiver(),
   units = waiver(),
+  export_collection = FALSE,
   ...
 )
 
@@ -61,8 +62,8 @@ plot_variable_importance(
   rotate_x_tick_labels = waiver(),
   y_label = waiver(),
   legend_label = waiver(),
-  plot_title = NULL,
-  plot_sub_title = NULL,
+  plot_title = waiver(),
+  plot_sub_title = waiver(),
   caption = NULL,
   y_range = NULL,
   y_n_breaks = 5,
@@ -70,6 +71,7 @@ plot_variable_importance(
   width = waiver(),
   height = waiver(),
   units = waiver(),
+  export_collection = FALSE,
   ...
 )
 
@@ -92,8 +94,8 @@ plot_variable_importance(
   rotate_x_tick_labels = waiver(),
   y_label = waiver(),
   legend_label = waiver(),
-  plot_title = NULL,
-  plot_sub_title = NULL,
+  plot_title = waiver(),
+  plot_sub_title = waiver(),
   caption = NULL,
   y_range = NULL,
   y_n_breaks = 5,
@@ -101,6 +103,7 @@ plot_variable_importance(
   width = waiver(),
   height = waiver(),
   units = waiver(),
+  export_collection = FALSE,
   ...
 )
 
@@ -235,8 +238,10 @@ number of facets, and the length of the longest feature name (if
 
 \item{units}{(\emph{optional}) Plot size unit. Either \code{cm} (default), \code{mm} or \verb{in}.}
 
+\item{export_collection}{(\emph{optional}) Exports the collection if TRUE.}
+
 \item{...}{
-  Arguments passed on to \code{\link[=as_familiar_collection]{as_familiar_collection}}, \code{\link[ggplot2:ggsave]{ggplot2::ggsave}}
+  Arguments passed on to \code{\link[=as_familiar_collection]{as_familiar_collection}}, \code{\link[ggplot2:ggsave]{ggplot2::ggsave}}, \code{\link[=extract_fs_vimp]{extract_fs_vimp}}
   \describe{
     \item{\code{familiar_data_names}}{Names of the dataset(s). Only used if the \code{object} parameter
 is one or more \code{familiarData} objects.}
@@ -244,7 +249,7 @@ is one or more \code{familiarData} objects.}
     \item{\code{filename}}{File name to create on disk.}
     \item{\code{plot}}{Plot to save, defaults to last plot displayed.}
     \item{\code{device}}{Device to use. Can either be a device function
-(e.g. \code{\link[=png]{png()}}), or one of "eps", "ps", "tex" (pictex),
+(e.g. \link{png}), or one of "eps", "ps", "tex" (pictex),
 "pdf", "jpeg", "tiff", "png", "bmp", "svg" or "wmf" (windows only).}
     \item{\code{path}}{Path of the directory to save plot to: \code{path} and \code{filename}
 are combined to create the fully qualified file name. Defaults to the
@@ -252,9 +257,15 @@ working directory.}
     \item{\code{scale}}{Multiplicative scaling factor.}
     \item{\code{dpi}}{Plot resolution. Also accepts a string input: "retina" (320),
 "print" (300), or "screen" (72). Applies only to raster output types.}
-    \item{\code{limitsize}}{When \code{TRUE} (the default), \code{ggsave} will not
+    \item{\code{limitsize}}{When \code{TRUE} (the default), \code{ggsave()} will not
 save images larger than 50x50 inches, to prevent the common error of
 specifying dimensions in pixels.}
+    \item{\code{bg}}{Background colour. If \code{NULL}, uses the \code{plot.background} fill value
+from the plot theme.}
+    \item{\code{message_indent}}{Number of indentation steps for messages shown during
+computation and extraction of various data elements.}
+    \item{\code{verbose}}{Flag to indicate whether feedback should be provided on the
+computation and extraction of various data elements.}
   }}
 }
 \value{

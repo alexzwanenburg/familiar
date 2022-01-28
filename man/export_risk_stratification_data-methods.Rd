@@ -12,6 +12,7 @@ export_risk_stratification_data(
   dir_path = NULL,
   export_strata = TRUE,
   time_range = NULL,
+  export_collection = FALSE,
   ...
 )
 
@@ -20,6 +21,7 @@ export_risk_stratification_data(
   dir_path = NULL,
   export_strata = TRUE,
   time_range = NULL,
+  export_collection = FALSE,
   ...
 )
 
@@ -28,6 +30,7 @@ export_risk_stratification_data(
   dir_path = NULL,
   export_strata = TRUE,
   time_range = NULL,
+  export_collection = FALSE,
   ...
 )
 }
@@ -44,11 +47,13 @@ exported.}
 \item{time_range}{Time range for which strata should be created. If \code{NULL},
 the full time range is used.}
 
+\item{export_collection}{(\emph{optional}) Exports the collection if TRUE.}
+
 \item{...}{
   Arguments passed on to \code{\link[=extract_risk_stratification_data]{extract_risk_stratification_data}}, \code{\link[=as_familiar_collection]{as_familiar_collection}}
   \describe{
     \item{\code{data}}{A \code{dataObject} object, \code{data.table} or \code{data.frame} that
-constitutes the data that are used to compute}
+constitutes the data that are assessed.}
     \item{\code{cl}}{Cluster created using the \code{parallel} package. This cluster is then
 used to speed up computation through parallellisation.}
     \item{\code{is_pre_processed}}{Flag that indicates whether the data was already
@@ -57,6 +62,8 @@ pre-processed externally, e.g. normalised and clustered. Only used if the
     \item{\code{ensemble_method}}{Method for ensembling predictions from models for the
 same sample. Available methods are:
 \itemize{
+\item \code{median} (default): Use the median of the predicted values as the ensemble
+value for a sample.
 \item \code{mean}: Use the mean of the predicted values as the ensemble value for a
 sample.
 }}
@@ -76,10 +83,10 @@ each model, in contrast to \code{ensemble} where performance is computed for the
 ensemble of models. If there are less than 20 trained models in the
 ensemble, bootstraps are created so that at least 20 point estimates can be
 made.
-\item \code{model} (to be implemented): Results are computed at the model level. This
-means that, for example, bias-corrected estimates of model performance are
-assessed by creating (at least) 20 bootstraps and computing the performance
-of the model for each bootstrap.
+\item \code{model}: Results are computed at the model level. This means that, for
+example, bias-corrected estimates of model performance are assessed by
+creating (at least) 20 bootstraps and computing the performance of the model
+for each bootstrap.
 }
 
 Note that each level of detail has a different interpretation for bootstrap
@@ -98,11 +105,12 @@ model.
 \code{hybrid} is generally computationally less expensive then \code{ensemble}, which
 in turn is somewhat less expensive than \code{model}.
 
-A non-default \code{detail_level} parameter can be
-specified for separate evaluation steps by providing a parameter value in a
-named list with data elements, e.g. \code{list("auc_data"="ensemble", "model_performance"="hybrid")}. This parameter can be set for the following
-data elements: \code{auc_data}, \code{decision_curve_analyis}, \code{model_performance},
-\code{permutation_vimp}, \code{prediction_data} and \code{confusion_matrix}.}
+A non-default \code{detail_level} parameter can be specified for separate
+evaluation steps by providing a parameter value in a named list with data
+elements, e.g. \code{list("auc_data"="ensemble", "model_performance"="hybrid")}.
+This parameter can be set for the following data elements: \code{auc_data},
+\code{decision_curve_analyis}, \code{model_performance}, \code{permutation_vimp},
+\code{ice_data}, \code{prediction_data} and \code{confusion_matrix}.}
     \item{\code{confidence_level}}{(\emph{optional}) Numeric value for the level at which
 confidence intervals are determined. In the case bootstraps are used to
 determine the confidence intervals bootstrap estimation, \code{familiar} uses the

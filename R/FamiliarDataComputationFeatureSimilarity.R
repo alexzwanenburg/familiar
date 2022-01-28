@@ -34,22 +34,23 @@ setClass("familiarDataElementFeatureSimilarity",
 #'  triangular is mirrored.
 #'@md
 #'@keywords internal
-setGeneric("extract_feature_similarity", function(object,
-                                                  data,
-                                                  cl=NULL,
-                                                  estimation_type=waiver(),
-                                                  aggregate_results=waiver(),
-                                                  confidence_level=waiver(),
-                                                  bootstrap_ci_method=waiver(),
-                                                  is_pre_processed=FALSE,
-                                                  feature_cluster_method=waiver(),
-                                                  feature_linkage_method=waiver(),
-                                                  feature_cluster_cut_method=waiver(),
-                                                  feature_similarity_threshold=waiver(),
-                                                  feature_similarity_metric=waiver(),
-                                                  verbose=FALSE,
-                                                  message_indent=0L,
-                                                  ...) standardGeneric("extract_feature_similarity"))
+setGeneric("extract_feature_similarity",
+           function(object,
+                    data,
+                    cl=NULL,
+                    estimation_type=waiver(),
+                    aggregate_results=waiver(),
+                    confidence_level=waiver(),
+                    bootstrap_ci_method=waiver(),
+                    is_pre_processed=FALSE,
+                    feature_cluster_method=waiver(),
+                    feature_linkage_method=waiver(),
+                    feature_cluster_cut_method=waiver(),
+                    feature_similarity_threshold=waiver(),
+                    feature_similarity_metric=waiver(),
+                    verbose=FALSE,
+                    message_indent=0L,
+                    ...) standardGeneric("extract_feature_similarity"))
 
 #####extract_feature_similarity#####
 setMethod("extract_feature_similarity", signature(object="familiarEnsemble", data="dataObject"),
@@ -72,9 +73,9 @@ setMethod("extract_feature_similarity", signature(object="familiarEnsemble", dat
             
             
             # Message extraction start
-            if(verbose){
-              logger.message(paste0("Computing pairwise similarity between features."), indent=message_indent)
-            }
+            logger.message(paste0("Computing pairwise similarity between features."),
+                           indent=message_indent,
+                           verbose=verbose)
             
             # Obtain cluster method from stored settings, if required.
             if(is.waive(feature_cluster_method)) feature_cluster_method <- object@settings$feature_cluster_method
@@ -125,6 +126,7 @@ setMethod("extract_feature_similarity", signature(object="familiarEnsemble", dat
             
             # Check the estimation type.
             estimation_type <- .parse_estimation_type(x = estimation_type,
+                                                      object = object,
                                                       default = "point",
                                                       data_element = "feature_similarity",
                                                       detail_level = "ensemble",
@@ -132,6 +134,7 @@ setMethod("extract_feature_similarity", signature(object="familiarEnsemble", dat
             
             # Check whether results should be aggregated.
             aggregate_results <- .parse_aggregate_results(x = aggregate_results,
+                                                          object = object,
                                                           default = TRUE,
                                                           data_element = "feature_similarity")
             
@@ -171,6 +174,7 @@ setMethod("extract_feature_similarity", signature(object="familiarEnsemble", dat
                                         progress_bar=FALSE,
                                         aggregate_results,
                                         n_bootstraps,
+                                        message_indent=0L,
                                         verbose=FALSE,
                                         ...){
   
@@ -228,7 +232,8 @@ setMethod("extract_feature_similarity", signature(object="familiarEnsemble", dat
                                 bootstrap_seed = bootstrap_data$seed,
                                 MoreArgs=list("data"=data,
                                               "cl"=cl,
-                                              "verbose"=verbose),
+                                              "verbose"=verbose,
+                                              "message_indent"=message_indent),
                                 progress_bar=FALSE)
     
   }
@@ -248,6 +253,7 @@ setMethod("extract_feature_similarity", signature(object="familiarEnsemble", dat
                                          data,
                                          bootstrap,
                                          bootstrap_seed,
+                                         message_indent=0L,
                                          verbose=FALSE){
   
   # Bootstrap the data.
@@ -266,6 +272,7 @@ setMethod("extract_feature_similarity", signature(object="familiarEnsemble", dat
                                                                 data_obj=data,
                                                                 feature_columns=feature_columns,
                                                                 similarity_metric=data_element@similarity_metric,
+                                                                message_indent=message_indent + 1L,
                                                                 verbose=verbose)
   
   return(data_element)
@@ -393,6 +400,7 @@ setMethod("extract_feature_similarity", signature(object="familiarEnsemble", dat
 #'
 #'@inheritParams export_all
 #'@inheritParams extract_data
+#'@inheritParams plot_univariate_importance
 #'
 #'@inheritDotParams as_familiar_collection
 #'
@@ -422,6 +430,7 @@ setGeneric("export_feature_similarity",
                     export_dendrogram=FALSE,
                     export_ordered_data=FALSE,
                     export_clustering=FALSE,
+                    export_collection=FALSE,
                     ...) standardGeneric("export_feature_similarity"))
 
 #####export_feature_similarity (collection)#####
@@ -438,6 +447,7 @@ setMethod("export_feature_similarity", signature(object="familiarCollection"),
                    export_dendrogram=FALSE,
                    export_ordered_data=FALSE,
                    export_clustering=FALSE,
+                   export_collection=FALSE,
                    ...){
             
             # Extract data.
@@ -512,7 +522,6 @@ setMethod("export_feature_similarity", signature(object="familiarCollection"),
                 # Add clustering information.
                 x <- lapply(x, ..compute_feature_similarity_clustering)
               }
-              
             }
             
             return(.export(x=object,
@@ -522,7 +531,8 @@ setMethod("export_feature_similarity", signature(object="familiarCollection"),
                            type="feature_similarity",
                            subtype=x[[1]]@similarity_metric,
                            export_dendrogram=export_dendrogram,
-                           export_ordered_data=export_ordered_data))
+                           export_ordered_data=export_ordered_data,
+                           export_collection=export_collection))
           })
 
 
@@ -537,6 +547,7 @@ setMethod("export_feature_similarity", signature(object="ANY"),
                    feature_linkage_method=waiver(),
                    feature_cluster_cut_method=waiver(),
                    feature_similarity_threshold=waiver(),
+                   export_collection=FALSE,
                    ...){
             
             # Attempt conversion to familiarCollection object.
@@ -557,7 +568,8 @@ setMethod("export_feature_similarity", signature(object="ANY"),
                                        "feature_cluster_method"=feature_cluster_method,
                                        "feature_linkage_method"=feature_linkage_method,
                                        "feature_cluster_cut_method"=feature_cluster_cut_method,
-                                       "feature_similarity_threshold"=feature_similarity_threshold),
+                                       "feature_similarity_threshold"=feature_similarity_threshold,
+                                       "export_collection"=export_collection),
                                   list(...))))
           })
 

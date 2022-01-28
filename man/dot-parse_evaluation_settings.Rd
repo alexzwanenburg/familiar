@@ -22,6 +22,7 @@
   skip_evaluation_elements = waiver(),
   ensemble_method = waiver(),
   evaluation_metric = waiver(),
+  sample_limit = waiver(),
   detail_level = waiver(),
   estimation_type = waiver(),
   aggregate_results = waiver(),
@@ -104,11 +105,14 @@ if any, should be skipped as part of the evaluation process. Defaults to
 have one or more of the following values:
 \itemize{
 \item \code{none}, \code{false}: no steps are skipped.
+\item \code{all}, \code{true}: all steps are skipped.
 \item \code{auc_data}: data for assessing and plotting the area under the receiver
 operating characteristic curve are not computed.
 \item \code{calibration_data}: data for assessing and plotting model calibration are
 not computed.
-\item \code{calibration_info}
+\item \code{calibration_info}: data required to assess calibration, such as baseline
+survival curves, are not collected. These data will still be present in the
+models.
 \item \code{confusion_matrix}: data for assessing and plotting a confusion matrix are
 not collected.
 \item \code{decision_curve_analyis}: data for performing a decision curve analysis
@@ -120,7 +124,9 @@ not computed.
 \item \code{fs_vimp}: data for assessing and plotting feature selection-based
 variable importance are not collected.
 \item \code{hyperparameters}: data for assessing model hyperparameters are not
-collected.
+collected. These data will still be present in the models.
+\item \code{ice_data}: data for individual conditional expectation and partial
+dependence plots are not created.
 \item \code{model_performance}: data for assessing and visualising model performance
 are not created.
 \item \code{model_vimp}: data for assessing and plotting model-based variable
@@ -128,10 +134,10 @@ importance are not collected.
 \item \code{permutation_vimp}: data for assessing and plotting model-agnostic
 permutation variable importance are not computed.
 \item \code{prediction_data}: predictions for each sample are not made and exported.
-\item \code{risk_stratification_data}: data for assessing and plotting Kaplan-Meier survival
-curves are not collected.
-\item \code{risk_stratification_info}: data for assessing stratification into risk groups
-are not computed.
+\item \code{risk_stratification_data}: data for assessing and plotting Kaplan-Meier
+survival curves are not collected.
+\item \code{risk_stratification_info}: data for assessing stratification into risk
+groups are not computed.
 \item \code{univariate_analysis}: data for assessing and plotting univariate feature
 importance are not computed.
 }}
@@ -157,6 +163,16 @@ depends on the value of \code{confidence_level} (Davison and Hinkley, 1997).
 
 If unset, the metric in the \code{optimisation_metric} variable is used.}
 
+\item{sample_limit}{(\emph{optional}) Set the upper limit of the number of samples
+that are used during evaluation steps. Cannot be less than 20.
+
+This setting can be specified per data element by providing a parameter
+value in a named list with data elements, e.g.
+\code{list("sample_similarity"=100, "permutation_vimp"=1000)}.
+
+This parameter can be set for the following data elements:
+\code{sample_similarity} and \code{ice_data}.}
+
 \item{detail_level}{(\emph{optional}) Sets the level at which results are computed
 and aggregated.
 \itemize{
@@ -173,10 +189,10 @@ each model, in contrast to \code{ensemble} where performance is computed for the
 ensemble of models. If there are less than 20 trained models in the
 ensemble, bootstraps are created so that at least 20 point estimates can be
 made.
-\item \code{model} (to be implemented): Results are computed at the model level. This
-means that, for example, bias-corrected estimates of model performance are
-assessed by creating (at least) 20 bootstraps and computing the performance
-of the model for each bootstrap.
+\item \code{model}: Results are computed at the model level. This means that, for
+example, bias-corrected estimates of model performance are assessed by
+creating (at least) 20 bootstraps and computing the performance of the model
+for each bootstrap.
 }
 
 Note that each level of detail has a different interpretation for bootstrap
@@ -195,11 +211,12 @@ model.
 \code{hybrid} is generally computationally less expensive then \code{ensemble}, which
 in turn is somewhat less expensive than \code{model}.
 
-A non-default \code{detail_level} parameter can be
-specified for separate evaluation steps by providing a parameter value in a
-named list with data elements, e.g. \code{list("auc_data"="ensemble", "model_performance"="hybrid")}. This parameter can be set for the following
-data elements: \code{auc_data}, \code{decision_curve_analyis}, \code{model_performance},
-\code{permutation_vimp}, \code{prediction_data} and \code{confusion_matrix}.}
+A non-default \code{detail_level} parameter can be specified for separate
+evaluation steps by providing a parameter value in a named list with data
+elements, e.g. \code{list("auc_data"="ensemble", "model_performance"="hybrid")}.
+This parameter can be set for the following data elements: \code{auc_data},
+\code{decision_curve_analyis}, \code{model_performance}, \code{permutation_vimp},
+\code{ice_data}, \code{prediction_data} and \code{confusion_matrix}.}
 
 \item{estimation_type}{(\emph{optional}) Sets the type of estimation that should be
 possible. This has the following options:
@@ -211,15 +228,14 @@ bootstrap the data to create them.
 \item \code{bootstrap_confidence_interval} or \code{bci} (default): Bias-corrected
 estimates with bootstrap confidence intervals (Efron and Hastie, 2016). The
 number of point estimates required depends on the \code{confidence_level}
-parameter, and \code{familiar} may bootstrap the data to create them. In some
-cases no bootstrap data
+parameter, and \code{familiar} may bootstrap the data to create them.
 }
 
 As with \code{detail_level}, a non-default \code{estimation_type} parameter can be
 specified for separate evaluation steps by providing a parameter value in a
 named list with data elements, e.g. \code{list("auc_data"="bci", "model_performance"="point")}. This parameter can be set for the following
 data elements: \code{auc_data}, \code{decision_curve_analyis}, \code{model_performance},
-\code{permutation_vimp}, and \code{prediction_data}.}
+\code{permutation_vimp}, \code{ice_data}, and \code{prediction_data}.}
 
 \item{aggregate_results}{(\emph{optional}) Flag that signifies whether results
 should be aggregated during evaluation. If \code{estimation_type} is
@@ -379,7 +395,17 @@ can afterwards be used to perform stratification on validation data.
 The following stratification methods are available:
 \itemize{
 \item \code{median} (default): The median predicted value in the development cohort
-is used to stratify the samples into two risk groups.
+is used to stratify the samples into two risk groups. For predicted outcome
+values that build a continuous spectrum, the two risk groups in the
+development cohort will be roughly equal in size.
+\item \code{mean}: The mean predicted value in the development cohort is used to
+stratify the samples into two risk groups.
+\item \code{mean_trim}: As \code{mean}, but based on the set of predicted values
+where the 5\% lowest and 5\% highest values are discarded. This reduces the
+effect of outliers.
+\item \code{mean_winsor}: As \code{mean}, but based on the set of predicted values where
+the 5\% lowest and 5\% highest values are winsorised. This reduces the effect
+of outliers.
 \item \code{fixed}: Samples are stratified based on the sample quantiles of the
 predicted values. These quantiles are defined using the
 \code{stratification_threshold} parameter.
@@ -440,29 +466,6 @@ learners, data subsamples, etc.
 \code{parallel_evaluation} is ignored if \code{parallel=FALSE}.}
 
 \item{...}{Unused arguments.}
-
-\item{stratification_ensemble_method}{(\emph{optional}) Method for ensembling the
-risk group assignments from different models for the same sample.
-
-The following methods are available:
-\itemize{
-\item \code{ensemble_mean}: Risk groups are determined for each sample using the
-threshold values of the different models in the ensemble. The risk groups
-are treated as ordinal and encoded using integer values. The mean of the
-encoded values is computed. The risk group bin containing the mean value is
-then used as the ensemble-based risk group.
-\item \code{ensemble_mode} (default): Risk groups are determined for each sample
-using the threshold values of the different models in the ensemble. The most
-commonly assigned risk group is then used as the ensemble-based risk group.
-\item \code{median_threshold}: The median threshold value for each risk group is
-determined from the threshold values of the different models in the
-ensemble. The resulting threshold(s) are then applied to the ensemble
-prediction of a sample to identify the ensemble-based risk group.
-\item \code{mean_threshold}: Similar to \code{median_threshold}, but uses the mean
-threshold value for each risk group.
-}
-
-This parameter is only relevant for \code{survival} outcomes.}
 }
 \value{
 List of parameters related to model evaluation.

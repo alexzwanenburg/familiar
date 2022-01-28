@@ -26,19 +26,20 @@ setClass("familiarDataElementRobustness",
 #'  univariate analysis of important features.
 #'@md
 #'@keywords internal
-setGeneric("extract_univariate_analysis", function(object,
-                                                   data,
-                                                   cl=NULL,
-                                                   icc_type=waiver(),
-                                                   feature_similarity=NULL,
-                                                   feature_cluster_method=waiver(),
-                                                   feature_cluster_cut_method=waiver(),
-                                                   feature_linkage_method=waiver(),
-                                                   feature_similarity_threshold=waiver(),
-                                                   feature_similarity_metric=waiver(),
-                                                   message_indent=0L,
-                                                   verbose=FALSE,
-                                                   ...) standardGeneric("extract_univariate_analysis"))
+setGeneric("extract_univariate_analysis",
+           function(object,
+                    data,
+                    cl=NULL,
+                    icc_type=waiver(),
+                    feature_similarity=NULL,
+                    feature_cluster_method=waiver(),
+                    feature_cluster_cut_method=waiver(),
+                    feature_linkage_method=waiver(),
+                    feature_similarity_threshold=waiver(),
+                    feature_similarity_metric=waiver(),
+                    message_indent=0L,
+                    verbose=FALSE,
+                    ...) standardGeneric("extract_univariate_analysis"))
 
 #####extract_univariate_analysis#####
 setMethod("extract_univariate_analysis", signature(object="familiarEnsemble", data="ANY"),
@@ -59,11 +60,10 @@ setMethod("extract_univariate_analysis", signature(object="familiarEnsemble", da
             p_value <- NULL
             
             # Message extraction start
-            if(verbose){
-              logger.message(paste0("Extracting univariate analysis information."),
-                             indent=message_indent)
-            }
-           
+            logger.message(paste0("Extracting univariate analysis information."),
+                           indent=message_indent,
+                           verbose=verbose)
+            
             # Obtain from settings, if unset.
             if(is.waive(icc_type)) icc_type <- object@settings$icc_type
 
@@ -74,20 +74,13 @@ setMethod("extract_univariate_analysis", signature(object="familiarEnsemble", da
             # Get and process the input data
             data <- process_input_data(object=object, data=data, stop_at="normalisation")
             
-            # Check if the data object is empty -- return an empty table if this
-            # is the case.
+            # Check if the data object is empty.
             if(is_empty(data)) return(NULL)
-            
-            # Check if the number of samples is sufficient (>5), and return an
-            # empty table if not.
-            if(data.table::uniqueN(data@data, by=get_id_columns(id_depth="sample")) <= 5) return(NULL)
             
             # Maintain only important features. The current set is based on the
             # required features.
             data <- filter_features(data=data,
                                     available_features=object@model_features)
-            
-            ##### Univariate p-values ------------------------------------------
             
             # Determine feature columns
             feature_columns <- get_feature_columns(x=data)
@@ -95,41 +88,66 @@ setMethod("extract_univariate_analysis", signature(object="familiarEnsemble", da
             # Check if there are any features in the model.
             if(length(feature_columns) == 0) return(NULL)
             
-            # Check that the qvalue package is installed.
-            has_qvalue_package <- is_package_installed(name="qvalue", verbose=FALSE)
-            
-            # Calculate univariate P values, based on aggregated data
-            regression_p_values <- compute_univariable_p_values(cl=cl,
-                                                                data_obj=aggregate_data(data=data),
-                                                                feature_columns=feature_columns)
-            
-            # Find and replace non-finite values
-            regression_p_values[!is.finite(regression_p_values)] <- 1.0
-            
-            # Collect to table
-            univariate_data <- data.table::data.table("feature"=names(regression_p_values),
-                                                      "p_value"=regression_p_values)[order(p_value)]
-          
-            # Only introduce q-values if the qvalue package is installed
-            if(has_qvalue_package){
+            ##### Univariate p-values ------------------------------------------
+            # Remove data with missing outcomes.
+            feature_data <- remove_missing_outcomes(data=data,
+                                                    outcome_type=object@outcome_type)
+
+            if(is_empty(feature_data)){
+              # Check that data are not empty
+              univariate_data <- NULL
               
-              # q-values can only be computed for larger numbers of features
-              computed_q_value <- tryCatch({qvalue::qvalue(p=univariate_data$p_value)$qvalues},
-                                           error=function(err)(return(NA_real_)))
+            } else if(data.table::uniqueN(feature_data@data, by=get_id_columns(id_depth="sample")) <= 5){
+              # Check if the number of samples is sufficient (>5), and return an
+              # empty table if not.
+              univariate_data <- NULL
               
-              # Set q-value
-              univariate_data[, "q_value":=computed_q_value]
+            } else {
+              # Check that the qvalue package is installed.
+              has_qvalue_package <- is_package_installed(name="qvalue")
+              
+              # Calculate univariate P values, based on aggregated data
+              regression_p_values <- compute_univariable_p_values(cl=cl,
+                                                                  data_obj=aggregate_data(data=feature_data),
+                                                                  feature_columns=feature_columns)
+              
+              # Find and replace non-finite values
+              regression_p_values[!is.finite(regression_p_values)] <- NA_real_
+              
+              # Collect to table
+              univariate_data <- data.table::data.table("feature"=names(regression_p_values),
+                                                        "p_value"=regression_p_values)[order(p_value)]
+              
+              # Only introduce q-values if the qvalue package is installed.
+              if(has_qvalue_package){
+
+                if(all(!is.finite(regression_p_values))){
+                  # q-values can only be computed if any p-values are not NA.
+                  computed_q_value <- NA_real_
+                  
+                } else {
+                  # q-values can only be computed for larger numbers of features
+                  computed_q_value <- tryCatch(qvalue::qvalue(p=univariate_data$p_value)$qvalues,
+                                               warning=identity,
+                                               error=identity)
+                  
+                  if(inherits(computed_q_value, "error")) computed_q_value <- NA_real_
+                  if(inherits(computed_q_value, "warning")) computed_q_value <- NA_real_
+                }
+                
+                # Set q-value
+                univariate_data[, "q_value":=computed_q_value]
+              }
+              
+              # Set univariate data.
+              univariate_data <- methods::new("familiarDataElementUnivariateAnalysis",
+                                              data=univariate_data,
+                                              value_column=ifelse(has_qvalue_package, c("p_value", "q_value"), "p_value"),
+                                              grouping_column="feature")
+              
+              # Add model name.
+              univariate_data <- add_model_name(univariate_data, object)
             }
-            
-            # Set univariate data.
-            univariate_data <- methods::new("familiarDataElementUnivariateAnalysis",
-                                            data=univariate_data,
-                                            value_column=ifelse(has_qvalue_package, c("p_value", "q_value"), "p_value"),
-                                            grouping_column="feature")
-            
-            # Add model name.
-            univariate_data <- add_model_name(univariate_data, object)
-            
             
             ##### Feature robustness -------------------------------------------
             
@@ -210,6 +228,7 @@ setGeneric("export_univariate_analysis_data",
            function(object,
                     dir_path=NULL,
                     p_adjustment_method=waiver(),
+                    export_collection=FALSE,
                     ...) standardGeneric("export_univariate_analysis_data"))
 
 #####export_univariate_analysis_data (collection)#####
@@ -219,10 +238,12 @@ setMethod("export_univariate_analysis_data", signature(object="familiarCollectio
           function(object,
                    dir_path=NULL,
                    p_adjustment_method=waiver(),
+                   export_collection=FALSE,
                    ...){
             
             # Set default adjust method.
             if(is.waive(p_adjustment_method)) p_adjustment_method <- "fdr"
+            if(is.null(p_adjustment_method)) p_adjustment_method <- "none"
             
             # Obtain data from the univariate analysis.
             univariate_data <- .export(x=object,
@@ -247,13 +268,14 @@ setMethod("export_univariate_analysis_data", signature(object="familiarCollectio
                                 subtype="robustness",
                                 object_class="familiarDataElementRobustness")
 
-            if(is.null(dir_path)){
-              return(list("univariate"=univariate_data,
-                          "icc"=icc_data))
-              
-            } else {
-              return(NULL)
-            }
+            # Set data list.
+            data_list <- list("univariate"=univariate_data,
+                              "icc"=icc_data)
+            
+            if(!is.null(dir_path)) data_list <- NULL
+            if(export_collection) data_list <- c(data_list, list("collection"=object))
+            
+            return(data_list)
           })
 
 #####export_univariate_analysis_data (generic)#####
@@ -263,6 +285,7 @@ setMethod("export_univariate_analysis_data", signature(object="ANY"),
           function(object,
                    dir_path=NULL,
                    p_adjustment_method=waiver(),
+                   export_collection=FALSE,
                    ...){
             
             # Attempt conversion to familiarCollection object.
@@ -274,7 +297,8 @@ setMethod("export_univariate_analysis_data", signature(object="ANY"),
             return(do.call(export_univariate_analysis_data,
                            args=c(list("object"=object,
                                        "dir_path"=dir_path,
-                                       "p_adjustment_method"=p_adjustment_method),
+                                       "p_adjustment_method"=p_adjustment_method,
+                                       "export_collection"=export_collection),
                                   list(...))))
           })
 

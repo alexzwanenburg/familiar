@@ -6,6 +6,8 @@ debug_flag <- FALSE
 # Generic test.
 familiar:::test_plots(plot_function=familiar:::plot_permutation_variable_importance,
                       data_element="permutation_vimp",
+                      except_prospective = TRUE,
+                      except_one_sample = TRUE,
                       outcome_type_available=c("count", "continuous", "binomial", "multinomial", "survival"),
                       estimation_type="point",
                       debug=debug_flag)

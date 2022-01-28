@@ -4,7 +4,12 @@
 \alias{extract_experimental_setup}
 \title{Parse experimental design}
 \usage{
-extract_experimental_setup(experimental_design, file_dir, verbose = TRUE)
+extract_experimental_setup(
+  experimental_design,
+  file_dir,
+  message_indent = 0L,
+  verbose = TRUE
+)
 }
 \arguments{
 \item{experimental_design}{(\strong{required}) Defines what the experiment looks
@@ -15,18 +20,22 @@ model-building, and external validation. The basic workflow components are:
 \item \code{fs}: (required) feature selection step.
 \item \code{mb}: (required) model building step.
 \item \code{ev}: (optional) external validation. Note that internal validation due
-to subsampling will always be conducted if the subsamplers create any
-validation data sets.
+to subsampling will always be conducted if the subsampling methods create
+any validation data sets.
 }
 
 The different components are linked using \code{+}.
 
-Different subsampling algorithms can be used in conjuction with the basic
+Different subsampling methods can be used in conjunction with the basic
 workflow components:
 \itemize{
+\item \code{bs(x,n)}: (stratified) .632 bootstrap, with \code{n} the number of
+bootstraps. In contrast to \code{bt}, feature pre-processing parameters and
+hyperparameter optimisation are conducted on individual bootstraps.
 \item \code{bt(x,n)}: (stratified) .632 bootstrap, with \code{n} the number of
-bootstraps. Unlike other subsamplers, no separate pre-processing parameters
-are determined for each bootstrap.
+bootstraps. Unlike \code{bs} and other subsampling methods, no separate
+pre-processing parameters or optimised hyperparameters will be determined
+for each bootstrap.
 \item \code{cv(x,n,p)}: (stratified) \code{n}-fold cross-validation, repeated \code{p} times.
 Pre-processing parameters are determined for each iteration.
 \item \code{lv(x)}: leave-one-out-cross-validation. Pre-processing parameters are
@@ -54,6 +63,10 @@ path to a file containing iterations, which is named \verb{####_iterations.RDS}
 by convention. This path can be relative to the directory of the current
 experiment (\code{experiment_dir}), or an absolute path. The absolute path may
 thus also point to a file from a different experiment.}
+
+\item{message_indent}{Spacing inserted before messages.}
+
+\item{verbose}{Sets verbosity.}
 }
 \value{
 data.table with subsampler information at different levels of the

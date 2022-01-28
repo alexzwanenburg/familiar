@@ -38,13 +38,13 @@ setMethod("extract_calibration_info", signature(object="familiarEnsemble"),
             if(!object@outcome_type %in% c("survival")) return(NULL)
             
             # Message extraction start
-            if(verbose){
-              logger.message(paste0("Extracting calibration information."),
-                             indent=message_indent)
-            }
+            logger.message(paste0("Extracting calibration information."),
+                           indent=message_indent,
+                           verbose=verbose)
             
             # Check the level detail.
             detail_level <- .parse_detail_level(x = detail_level,
+                                                object = object,
                                                 default = "ensemble",
                                                 data_element = "calibration_info")
             
@@ -224,6 +224,7 @@ setMethod("..compute_data_element_estimates", signature(x="familiarDataElementCa
 #'  survival) for data in a familiarCollection.
 #'
 #'@inheritParams export_all
+#'@inheritParams export_univariate_analysis_data
 #'
 #'@inheritDotParams as_familiar_collection
 #'
@@ -249,13 +250,18 @@ setMethod("..compute_data_element_estimates", signature(x="familiarDataElementCa
 setGeneric("export_calibration_info", function(object,
                                                dir_path=NULL,
                                                aggregate_results=TRUE,
+                                               export_collection=FALSE,
                                                ...) standardGeneric("export_calibration_info"))
 
 #####export_calibration_info (collection)#####
 
 #'@rdname export_calibration_info-methods
 setMethod("export_calibration_info", signature(object="familiarCollection"),
-          function(object, dir_path=NULL, aggregate_results=TRUE, ...){
+          function(object,
+                   dir_path=NULL,
+                   aggregate_results=TRUE,
+                   export_collection=FALSE,
+                   ...){
             
             if(object@outcome_type %in% c("binomial", "multinomial")){
               return(NULL)
@@ -275,14 +281,19 @@ setMethod("export_calibration_info", signature(object="familiarCollection"),
                            dir_path=dir_path,
                            aggregate_results=aggregate_results,
                            type="calibration",
-                           subtype=subtype))
+                           subtype=subtype,
+                           export_collection=export_collection))
           })
 
 #####export_calibration_info (generic)#####
 
 #'@rdname export_calibration_info-methods
 setMethod("export_calibration_info", signature(object="ANY"),
-          function(object, dir_path=NULL, aggregate_results=TRUE, ...){
+          function(object,
+                   dir_path=NULL,
+                   aggregate_results=TRUE,
+                   export_collection=FALSE,
+                   ...){
             
             # Attempt conversion to familiarCollection object.
             object <- do.call(as_familiar_collection,
@@ -293,6 +304,7 @@ setMethod("export_calibration_info", signature(object="ANY"),
             return(do.call(export_calibration_info,
                            args=c(list("object"=object,
                                        "dir_path"=dir_path,
-                                       "aggregate_results"=aggregate_results),
+                                       "aggregate_results"=aggregate_results,
+                                       "export_collection"=export_collection),
                                   list(...))))
           })

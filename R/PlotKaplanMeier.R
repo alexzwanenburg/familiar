@@ -37,6 +37,7 @@ NULL
 #'@inheritParams plotting.check_data_handling
 #'@inheritDotParams as_familiar_collection -object
 #'@inheritDotParams ggplot2::ggsave -height -width -units
+#'@inheritDotParams extract_risk_stratification_data -object
 #'
 #'@details This function generates a Kaplan-Meier survival plot based on risk
 #'  group stratification by the learners.
@@ -97,8 +98,8 @@ setGeneric("plot_kaplan_meier",
                     y_label="survival probability",
                     y_label_shared="row",
                     legend_label=waiver(),
-                    plot_title=NULL,
-                    plot_sub_title=NULL,
+                    plot_title=waiver(),
+                    plot_sub_title=waiver(),
                     caption=NULL,
                     x_range=NULL,
                     x_n_breaks=5,
@@ -116,6 +117,7 @@ setGeneric("plot_kaplan_meier",
                     width=waiver(),
                     height=waiver(),
                     units=waiver(),
+                    export_collection=FALSE,
                     ...) standardGeneric("plot_kaplan_meier"))
 
 
@@ -139,8 +141,8 @@ setMethod("plot_kaplan_meier", signature(object="ANY"),
                    y_label="survival probability",
                    y_label_shared="row",
                    legend_label=waiver(),
-                   plot_title=NULL,
-                   plot_sub_title=NULL,
+                   plot_title=waiver(),
+                   plot_sub_title=waiver(),
                    caption=NULL,
                    x_range=NULL,
                    x_n_breaks=5,
@@ -158,6 +160,7 @@ setMethod("plot_kaplan_meier", signature(object="ANY"),
                    width=waiver(),
                    height=waiver(),
                    units=waiver(),
+                   export_collection=FALSE,
                    ...){
             
             # Attempt conversion to familiarCollection object.
@@ -201,7 +204,8 @@ setMethod("plot_kaplan_meier", signature(object="ANY"),
                                      "show_survival_table"=show_survival_table,
                                      "width"=width,
                                      "height"=height,
-                                     "units"=units)))
+                                     "units"=units,
+                                     "export_collection"=export_collection)))
           })
 
 #####plot_kaplan_meier (collection)#####
@@ -224,8 +228,8 @@ setMethod("plot_kaplan_meier", signature(object="familiarCollection"),
                    y_label="survival probability",
                    y_label_shared="row",
                    legend_label=waiver(),
-                   plot_title=NULL,
-                   plot_sub_title=NULL,
+                   plot_title=waiver(),
+                   plot_sub_title=waiver(),
                    caption=NULL,
                    x_range=NULL,
                    x_n_breaks=5,
@@ -243,6 +247,7 @@ setMethod("plot_kaplan_meier", signature(object="familiarCollection"),
                    width=waiver(),
                    height=waiver(),
                    units=waiver(),
+                   export_collection=FALSE,
                    ...){
             
             # Suppress NOTES due to non-standard evaluation in data.table
@@ -278,6 +283,12 @@ setMethod("plot_kaplan_meier", signature(object="familiarCollection"),
             # Remove non-valid risk groups
             x@data <- x@data[!is.na(risk_group)]
             
+            # Check package requirements for plotting.
+            if(!require_package(x=..required_plotting_packages(extended=TRUE),
+                                purpose="to create kaplan-meier survival curves",
+                                message_type="warning")){
+              return(NULL)
+            }
             
             ##### Check input arguments ########################################
             
@@ -341,7 +352,6 @@ setMethod("plot_kaplan_meier", signature(object="familiarCollection"),
             # Store plots to list in case no dir_path is provided
             if(is.null(dir_path)) plot_list <- list()
             
-            
             # Add default splitting variables.
             if(is.null(split_by) & is.null(color_by) & is.null(linetype_by) & is.null(facet_by)){
               split_by <- c("fs_method", "learner", "stratification_method")
@@ -359,8 +369,8 @@ setMethod("plot_kaplan_meier", signature(object="familiarCollection"),
             
             # Update splitting variables
             split_by <- split_var_list$split_by
-            color_by <- split_var_list$color_by
             facet_by <- split_var_list$facet_by
+            color_by <- split_var_list$color_by
             linetype_by <- split_var_list$linetype_by
             
             # Create a legend label
@@ -394,6 +404,9 @@ setMethod("plot_kaplan_meier", signature(object="familiarCollection"),
             
             ##### Create plots ###############################################
             
+            # Determine if subtitle should be generated.
+            autogenerate_plot_subtitle <- is.waive(plot_sub_title)
+            
             # Split data and supporting data.
             if(!is.null(split_by)){
               data_split <- split(unique(x@data[, mget(split_by)]), by=split_by, drop=TRUE)
@@ -419,6 +432,15 @@ setMethod("plot_kaplan_meier", signature(object="familiarCollection"),
               
               if(is_empty(x_split)) next()
               if(!any_predictions_valid(x_split@data, outcome_type="survival")) return(NULL)
+              
+              if(is.waive(plot_title)){
+                plot_title <- "Kaplan-Meier survival curve"
+              }
+              
+              if(autogenerate_plot_subtitle){
+                plot_sub_title <- plotting.create_subtitle(split_by=split_by,
+                                                           x=current_split)
+              }
               
               # Create plot
               p <- .plot_kaplan_meier(x=x_split,
@@ -457,13 +479,9 @@ setMethod("plot_kaplan_meier", signature(object="familiarCollection"),
               # Save and export
               if(!is.null(dir_path)){
                 
-                # Determine the subtype
-                if(!is.null(split_by)){
-                  subtype <- paste0(sapply(split_by, function(jj, x) (x[[jj]][1]), x=current_split), collapse="_")
-                } else {
-                  subtype <- NULL
-                }
-                
+                # Set subtype.
+                subtype <- plotting.create_subtype(x=current_split,
+                                                   split_by=split_by)
                 # Obtain default plot dimensions
                 def_plot_dims <- .determine_km_plot_default_dimensions(x=x_split@data,
                                                                        facet_by=facet_by,
@@ -472,28 +490,27 @@ setMethod("plot_kaplan_meier", signature(object="familiarCollection"),
                 
                 # Save to file.
                 do.call(plotting.save_plot_to_file,
-                        args=append(list("plot_obj"=p,
-                                         "object"=object,
-                                         "dir_path"=dir_path,
-                                         "type"="stratification",
-                                         "subtype"=subtype,
-                                         "height"=ifelse(is.waive(height), def_plot_dims[1], height),
-                                         "width"=ifelse(is.waive(width), def_plot_dims[2], width),
-                                         "units"=ifelse(is.waive(units), "cm", units)),
-                                    list(...)))
+                        args=c(list("plot_obj"=p,
+                                    "object"=object,
+                                    "dir_path"=dir_path,
+                                    "type"="stratification",
+                                    "subtype"=subtype,
+                                    "height"=ifelse(is.waive(height), def_plot_dims[1], height),
+                                    "width"=ifelse(is.waive(width), def_plot_dims[2], width),
+                                    "units"=ifelse(is.waive(units), "cm", units)),
+                               list(...)))
                 
-                } else {
-                  # Store as list
-                  plot_list <- c(plot_list, list(p))
-                }
+              } else {
+                # Store as list
+                plot_list <- c(plot_list, list(p))
               }
-              
-            # Return
-            if(is.null(dir_path)){
-              return(plot_list)
-            } else {
-              return(NULL)
             }
+            
+            # Generate output
+            return(plotting.get_output(dir_path=dir_path,
+                                       plot_list=plot_list,
+                                       export_collection=export_collection,
+                                       object=object))
           })
 
 
@@ -562,7 +579,7 @@ setMethod("plot_kaplan_meier", signature(object="familiarCollection"),
     if(show_logrank){
       test_data <- .compute_risk_stratification_tests(x=x_split,
                                                       time_range=x_range)$logrank
-     
+      
     } else {
       test_data <- NULL
     }
@@ -655,77 +672,6 @@ setMethod("plot_kaplan_meier", signature(object="familiarCollection"),
 }
 
 
-# .prepare_km_plot_data <- function(x, conf_int, x_range){
-# 
-#   # Suppress NOTES due to non-standard evaluation in data.table
-#   surv <- surv_lower <- surv_upper <- time <- NULL
-#   
-#   if(is_empty(x)) return(NULL)
-#   
-#   # Use survfit to get kaplan-meier curves for each group
-#   if(conf_int > 0){
-#     km_fit <- survival::survfit(Surv(outcome_time, outcome_event) ~ 1, data=x, conf.int=conf_int)
-#   } else {
-#     km_fit <- survival::survfit(Surv(outcome_time, outcome_event) ~ 1, data=x)
-#   }
-#   
-#   # Extract plotting information
-#   km_data <- data.table::data.table("time"=km_fit$time, "group_size"=km_fit$n.risk, "n_event"=km_fit$n.event, "n_censor"=km_fit$n.censor,
-#                                     "surv"=km_fit$surv, "surv_lower"=km_fit$lower,  "surv_upper"=km_fit$upper)
-#   
-#   # Add in time = 0 if necessary
-#   if(min(km_data$time) > 0){
-#     km_data <- rbind(data.table::data.table("time"=0, "group_size"=km_fit$n, "n_event"=0, "n_censor"=0,
-#                                             "surv"=1.00, "surv_lower"=km_fit$lower[1], "surv_upper"=1.0),
-#                      km_data)
-#   }
-#   
-#   # Update absent censoring (notably when surv==0)
-#   km_data[surv==0 & is.na(surv_lower), "surv_lower":=0.0]
-#   km_data[surv==0 & is.na(surv_upper), "surv_upper":=0.0]
-#   
-#   # In rare circumstances (i.e. single-sample risk groups), surv_lower may be
-#   # missing at the initial time point.
-#   km_data[time==0 & is.na(surv_lower), "surv_lower":=0.0]
-#   
-#   # Add an entry at the proximal and distal range edges. This prevents the curve
-#   # from being cut off prematurely, or starting too late.
-#   if(is_empty(km_data[time==x_range[1]]) & x_range[1] > min(km_data$time) & x_range[1] < max(km_data$time)){
-#     # Select the closest entry prior to the proximal edge, make changes and
-#     # introduce it back into the data.
-#     proximal_data <- tail(km_data[time < x_range[1]][order(time)], n=1)[, ":="("time"=x_range[1], "n_event"=0, "n_censor"=0)]
-#     km_data <- rbind(km_data, proximal_data)[order(time)]
-#   }
-#   
-#   if(is_empty(km_data[time==x_range[2]]) & x_range[2] > min(km_data$time) & x_range[2] < max(km_data$time)){
-#     # Do the same for the distal edge.
-#     distal_data <- tail(km_data[time < x_range[2]][order(time)], n=1)[, ":="("time"=x_range[2], "n_event"=0, "n_censor"=0)]
-#     km_data <- rbind(km_data, distal_data)[order(time)]
-#   }
-# 
-#   # Add in data_set, fs_method, learner and risk_group and maintain factor
-#   # levels If one of these variables has more than one category present, this
-#   # indicates that this level is ignored.
-#   if(data.table::uniqueN(x, by="data_set") == 1){
-#     km_data$data_set   <- factor(x$data_set[1], levels=levels(x$data_set))
-#   }
-#   
-#   if(data.table::uniqueN(x, by="fs_method") == 1){
-#     km_data$fs_method  <- factor(x$fs_method[1], levels=levels(x$fs_method))
-#   }
-# 
-#   if(data.table::uniqueN(x, by="learner") == 1){
-#     km_data$learner    <- factor(x$learner[1], levels=levels(x$learner))
-#   }
-#   
-#   if(data.table::uniqueN(x, by="risk_group") == 1){
-#     km_data$risk_group <- factor(x$risk_group[1], levels=levels(x$risk_group))
-#   }
-#   
-#   return(km_data)
-# }
-
-
 
 .create_km_subplot <- function(x,
                                h,
@@ -746,7 +692,6 @@ setMethod("plot_kaplan_meier", signature(object="familiarCollection"),
                                x_breaks,
                                y_range,
                                y_breaks,
-                               conf_int,
                                conf_int_style,
                                conf_int_alpha,
                                censoring,
@@ -771,7 +716,7 @@ setMethod("plot_kaplan_meier", signature(object="familiarCollection"),
   # Create basic plot
   p <- ggplot2::ggplot(data=x, mapping=ggplot2::aes(x=!!sym("time"), y=!!sym("survival")))
   p <- p + ggtheme
-
+  
   # Create step function
   if(is.null(color_by) & is.null(linetype_by)){
     p <- p + ggplot2::geom_step()
@@ -831,7 +776,7 @@ setMethod("plot_kaplan_meier", signature(object="familiarCollection"),
   }
   
   # Plot confidence intervals
-  if(conf_int_style[1]!="none"){
+  if(conf_int_style[1]!="none" & !is_empty(x)){
     if(conf_int_style[1] == "step"){
       if(is.null(color_by)){
         p <- p + ggplot2::geom_step(mapping=ggplot2::aes(y=!!sym("ci_low"),
@@ -853,17 +798,10 @@ setMethod("plot_kaplan_meier", signature(object="familiarCollection"),
       }
       
     } else if(conf_int_style[1] == "ribbon"){
-      
-      if(!is_empty(x)){
-        # Create special data for ribbon so that it becomes a step ribbon.
-        x_ribbon <- data.table::rbindlist(lapply(split(x, by="color_breaks"),
-                                                 .prepare_km_conf_int_plot_data))
-      } else {
-        x_ribbon <- NULL
-      }
-      
-      
       if(is.null(color_by)){
+        # Create special data for ribbon so that it becomes a step ribbon.
+        x_ribbon <- .prepare_km_conf_int_plot_data(x=x)
+        
         p <- p + ggplot2::geom_ribbon(data=x_ribbon,
                                       mapping=ggplot2::aes(x=!!sym("time"),
                                                            ymin=!!sym("ci_low"),
@@ -871,6 +809,10 @@ setMethod("plot_kaplan_meier", signature(object="familiarCollection"),
                                       alpha=conf_int_alpha, na.rm=TRUE)
         
       } else {
+        # Create special data for ribbon so that it becomes a step ribbon.
+        x_ribbon <- data.table::rbindlist(lapply(split(x, by="color_breaks"),
+                                                 .prepare_km_conf_int_plot_data))
+        
         p <- p + ggplot2::geom_ribbon(data=x_ribbon,
                                       mapping=ggplot2::aes(x=!!sym("time"),
                                                            ymin=!!sym("ci_low"),
@@ -883,15 +825,23 @@ setMethod("plot_kaplan_meier", signature(object="familiarCollection"),
   
   # Censoring indicators
   if(censoring){
-    p <- p + ggplot2::geom_point(data=x[n_censor>0],
-                                 mapping=ggplot2::aes(colour=!!sym("color_breaks"),fill=!!sym("color_breaks")),
-                                 shape=censor_shape,
-                                 show.legend=FALSE)
+    if(is.null(color_by)){
+      p <- p + ggplot2::geom_point(data=x[n_censor>0],
+                                   shape=censor_shape,
+                                   show.legend=FALSE)
+      
+    } else {
+      p <- p + ggplot2::geom_point(data=x[n_censor>0],
+                                   mapping=ggplot2::aes(colour=!!sym("color_breaks"),
+                                                        fill=!!sym("color_breaks")),
+                                   shape=censor_shape,
+                                   show.legend=FALSE) 
+    }
   }
   
   # Update x and y scales
-  p <- p + ggplot2::scale_x_continuous(breaks=x_breaks, limits=x_range)
-  p <- p + ggplot2::scale_y_continuous(breaks=y_breaks, limits=y_range)
+  p <- p + ggplot2::scale_x_continuous(breaks=x_breaks)
+  p <- p + ggplot2::scale_y_continuous(breaks=y_breaks)
   
   # Labels
   p <- p + ggplot2::labs(x=x_label,
@@ -900,11 +850,11 @@ setMethod("plot_kaplan_meier", signature(object="familiarCollection"),
                          subtitle=plot_sub_title,
                          caption=caption)
   
-  # Determine how things are facetted
+  # Determine how things are facetted.
   facet_by_list <- plotting.parse_facet_by(x=x,
                                            facet_by=facet_by,
                                            facet_wrap_cols=facet_wrap_cols)
-
+  
   if(!is.null(facet_by)){
     if(is.null(facet_wrap_cols)){
       # Use a grid
@@ -918,6 +868,9 @@ setMethod("plot_kaplan_meier", signature(object="familiarCollection"),
                                    drop=TRUE)
     }
   }
+  
+  # Plot to Cartesian coordinates.
+  p <- p + ggplot2::coord_cartesian(xlim=x_range, ylim=y_range)
   
   return(p)
 }
@@ -933,41 +886,25 @@ setMethod("plot_kaplan_meier", signature(object="familiarCollection"),
                                            x_breaks){
   
   # Suppress NOTES due to non-standard evaluation in data.table
-  time <- id <- missing_entry <- survival <- NULL
-  
-  # Parse the table to obtain group sizes at x_breaks
-  survival_list <- lapply(split(x@data, by=c(color_by, linetype_by)), function(y, x_breaks){
-    
-    # Iterate over the breaks to obtain the group size at this time point.
-    survival_list <- lapply(x_breaks, function(break_time, y){
-      
-      # Find the nearest candidate entry
-      candidate_entry <- data.table::copy(tail(y[time <= break_time, ], n=1))
-      
-      # In case the number of survivors is 0, the group size is also 0.
-      candidate_entry[survival==0, "group_size":=0]
-      
-      return(candidate_entry)
-    }, y=y)
-    
-    # Convert to a new data.table
-    survival_table <- data.table::rbindlist(survival_list)
-    
-    # Update time to x_breaks
-    survival_table[, "time":=x_breaks]
-
-    return(survival_table)
-    
-  }, x_breaks=x_breaks)
-  
-  # Combine into list
-  survival_table <- data.table::rbindlist(survival_list)
+  id <- missing_entry <- NULL
   
   # Find the names for the groups
   if(is.null(c(color_by, linetype_by))){
+    # Parse the table to obtain group sizes at x_breaks
+    survival_table <- ..get_survival_breakpoints(x@data,
+                                                 x_breaks=x_breaks)
+    
     survival_table[, ":="("group_name"="")]
     
   } else {
+    # Parse the table to obtain group sizes at x_breaks
+    survival_list <- lapply(split(x@data, by=c(color_by, linetype_by)),
+                            ..get_survival_breakpoints,
+                            x_breaks=x_breaks)
+    
+    # Combine into list
+    survival_table <- data.table::rbindlist(survival_list, use.names=TRUE)
+    
     unique_vars <- unique(c(color_by, linetype_by))
     
     # Generate a guide table
@@ -987,7 +924,7 @@ setMethod("plot_kaplan_meier", signature(object="familiarCollection"),
     
     # Set breaks
     breaks <- apply(guide_table, 1, paste, collapse=", ")
-
+    
     # Update guide_table
     guide_table$group_name <- factor(breaks, levels=breaks)
     
@@ -997,7 +934,7 @@ setMethod("plot_kaplan_meier", signature(object="familiarCollection"),
     guide_table$missing_entry <- sapply(split(guide_table, by="id"),
                                         function(x, y, by) (is_empty(merge(x=x, y=y, by=by, all=FALSE))),
                                         y=survival_table, by=unique_vars)
-
+    
     if(any(guide_table$missing_entry)){
       # Find a suitable prototype and then create a prototype table.
       available_prototype <- head(guide_table[missing_entry==FALSE]$id, 1)
@@ -1031,7 +968,7 @@ setMethod("plot_kaplan_meier", signature(object="familiarCollection"),
     # Combine the guide table with the survival table to add in the group names.
     survival_table <- merge(x=survival_table, y=guide_table, by=unique_vars)
   }
-
+  
   # Obtain default settings.
   text_settings <- plotting.get_geom_text_settings(ggtheme=ggtheme)
   fontsize <- text_settings$fontsize
@@ -1067,7 +1004,7 @@ setMethod("plot_kaplan_meier", signature(object="familiarCollection"),
                           axis.ticks.x=ggplot2::element_blank(),
                           axis.title.x=ggplot2::element_blank(),
                           axis.title.y=ggplot2::element_blank())
-
+  
   # Convert to gtable
   g <- ggplot2::ggplotGrob(p)
   
@@ -1088,6 +1025,35 @@ setMethod("plot_kaplan_meier", signature(object="familiarCollection"),
   
   return(p)
 }
+
+
+
+..get_survival_breakpoints <- function(x, x_breaks){
+  # Suppress NOTES due to non-standard evaluation in data.table
+  time <- survival <- NULL
+  
+  # Iterate over the breaks to obtain the group size at this time point.
+  survival_list <- lapply(x_breaks, function(break_time, x){
+    
+    # Find the nearest candidate entry
+    candidate_entry <- data.table::copy(tail(x[time <= break_time, ], n=1))
+    
+    # In case the number of survivors is 0, the group size is also 0.
+    candidate_entry[survival==0, "group_size":=0]
+    
+    return(candidate_entry)
+  },
+  x=x)
+  
+  # Convert to a new data.table
+  survival_table <- data.table::rbindlist(survival_list, use.names=TRUE)
+  
+  # Update time to x_breaks
+  survival_table[, "time":=x_breaks]
+  
+  return(survival_table)
+}
+
 
 
 .determine_km_plot_default_dimensions <- function(x, facet_by, facet_wrap_cols, show_survival_table){
@@ -1111,6 +1077,7 @@ setMethod("plot_kaplan_meier", signature(object="familiarCollection"),
 }
 
 
+
 .prepare_km_conf_int_plot_data <- function(x){
   # Suppress NOTES due to non-standard evaluation in data.table
   time <- ci_low <- ci_up <- NULL
@@ -1121,7 +1088,7 @@ setMethod("plot_kaplan_meier", signature(object="familiarCollection"),
   x <- data.table::copy(x)[order(time)]
   y <- data.table::copy(x)[1:nrow(x)-1]
   y[, "time":=x$time[2:nrow(x)]]
-
+  
   # Combine and order correctly.
   x <- rbind(x, y)[order(time, -ci_low, -ci_up)]
   

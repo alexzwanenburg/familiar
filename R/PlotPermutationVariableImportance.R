@@ -24,8 +24,10 @@ NULL
 #'@inheritParams as_familiar_collection
 #'@inheritParams plotting.check_input_args
 #'@inheritParams plotting.check_data_handling
+#'@inheritParams plot_univariate_importance
 #'@inheritDotParams as_familiar_collection -object
 #'@inheritDotParams ggplot2::ggsave -height -width -units
+#'@inheritDotParams extract_permutation_vimp -object
 #'
 #'@details This function generates a horizontal barplot that lists features by
 #'  the estimated model improvement over that of a dataset where the respective
@@ -102,8 +104,8 @@ setGeneric("plot_permutation_variable_importance",
                     x_label=waiver(),
                     y_label="feature",
                     legend_label=waiver(),
-                    plot_title=NULL,
-                    plot_sub_title=NULL,
+                    plot_title=waiver(),
+                    plot_sub_title=waiver(),
                     caption=NULL,
                     x_range=NULL,
                     x_n_breaks=5,
@@ -113,6 +115,7 @@ setGeneric("plot_permutation_variable_importance",
                     width=waiver(),
                     height=waiver(),
                     units=waiver(),
+                    export_collection=FALSE,
                     ...) standardGeneric("plot_permutation_variable_importance"))
 
 #####plot_permutation_variable_importance (generic)#####
@@ -131,8 +134,8 @@ setMethod("plot_permutation_variable_importance", signature(object="ANY"),
                    x_label=waiver(),
                    y_label="feature",
                    legend_label=waiver(),
-                   plot_title=NULL,
-                   plot_sub_title=NULL,
+                   plot_title=waiver(),
+                   plot_sub_title=waiver(),
                    caption=NULL,
                    x_range=NULL,
                    x_n_breaks=5,
@@ -142,11 +145,14 @@ setMethod("plot_permutation_variable_importance", signature(object="ANY"),
                    width=waiver(),
                    height=waiver(),
                    units=waiver(),
+                   export_collection=FALSE,
                    ...){
             
             # Attempt conversion to familiarCollection object.
             object <- do.call(as_familiar_collection,
-                              args=append(list("object"=object, "data_element"="permutation_vimp"), list(...)))
+                              args=c(list("object"=object,
+                                          "data_element"="permutation_vimp"),
+                                     list(...)))
             
             return(do.call(plot_permutation_variable_importance,
                            args=list("object"=object,
@@ -171,7 +177,8 @@ setMethod("plot_permutation_variable_importance", signature(object="ANY"),
                                      "conf_int_style"=conf_int_style,
                                      "width"=width,
                                      "height"=height,
-                                     "units"=units)))
+                                     "units"=units,
+                                     "export_collection"=export_collection)))
           })
 
 #####plot_permutation_variable_importance (collection)#####
@@ -190,8 +197,8 @@ setMethod("plot_permutation_variable_importance", signature(object="familiarColl
                    x_label=waiver(),
                    y_label="feature",
                    legend_label=waiver(),
-                   plot_title=NULL,
-                   plot_sub_title=NULL,
+                   plot_title=waiver(),
+                   plot_sub_title=waiver(),
                    caption=NULL,
                    x_range=NULL,
                    x_n_breaks=5,
@@ -201,6 +208,7 @@ setMethod("plot_permutation_variable_importance", signature(object="familiarColl
                    width=waiver(),
                    height=waiver(),
                    units=waiver(),
+                   export_collection=FALSE,
                    ...){
             
             # Suppress NOTES due to non-standard evaluation in data.table
@@ -232,6 +240,13 @@ setMethod("plot_permutation_variable_importance", signature(object="familiarColl
             
             # Check that the data are not empty.
             if(is_empty(x)) return(NULL)
+            
+            # Check package requirements for plotting.
+            if(!require_package(x=..required_plotting_packages(extended=FALSE),
+                                purpose="to create permutation variable importance plots",
+                                message_type="warning")){
+              return(NULL)
+            }
 
             # ggtheme
             if(!is(ggtheme, "theme")) ggtheme <- plotting.get_theme(use_theme=ggtheme)
@@ -317,7 +332,7 @@ setMethod("plot_permutation_variable_importance", signature(object="familiarColl
                     
                   } else {
                     legend_label$guide_color <- sub(pattern="similarity threshold",
-                                                    replacement=paste0(x@similarity_metric, " threshold"),
+                                                    replacement="threshold",
                                                     x=legend_label$guide_color,
                                                     fixed=TRUE)
                   }
@@ -495,6 +510,9 @@ setMethod("plot_permutation_variable_importance", signature(object="familiarColl
             
             ##### Create plots #################################################
             
+            # Determine if subtitle should be generated.
+            autogenerate_plot_subtitle <- is.waive(plot_sub_title)
+            
             # Split data
             if(!is.null(split_by)){
               x_split <- split(x@data, by=split_by)
@@ -513,6 +531,14 @@ setMethod("plot_permutation_variable_importance", signature(object="familiarColl
               
               # Check that the table contains finite values.
               if(all(is.na(x_sub$value))) next()
+              
+              if(is.waive(plot_title)) plot_title <- "Permutation variable importance"
+              
+              if(autogenerate_plot_subtitle){
+                plot_sub_title <- plotting.create_subtitle(split_by=split_by,
+                                                           additional=list("similarity metric"=x@similarity_metric),
+                                                           x=x_sub)
+              }
               
               # Generate plot
               p <- .plot_permutation_variable_importance(x=x_sub,
@@ -540,12 +566,10 @@ setMethod("plot_permutation_variable_importance", signature(object="familiarColl
               
               # Save and export
               if(!is.null(dir_path)){
-                # Save to file
-                if(!is.null(split_by)){
-                  subtype <- paste0("permutation_", paste0(sapply(split_by, function(ii, x) (x[[ii]][1]), x=x_sub), collapse="_"))
-                } else {
-                  subtype <- "permutation"
-                }
+                # Set subtype.
+                subtype <- plotting.create_subtype(x=x_sub,
+                                                   subtype="permutation",
+                                                   split_by=split_by)
                 
                 # Obtain decent default values for the plot.
                 def_plot_dims <- .determine_permutation_importance_plot_dimensions(x=x_sub,
@@ -554,28 +578,27 @@ setMethod("plot_permutation_variable_importance", signature(object="familiarColl
                 
                 # Save to file.
                 do.call(plotting.save_plot_to_file,
-                        args=append(list("plot_obj"=p,
-                                         "object"=object,
-                                         "dir_path"=dir_path,
-                                         "type"="variable_importance",
-                                         "subtype"=subtype,
-                                         "height"=ifelse(is.waive(height), def_plot_dims[1], height),
-                                         "width"=ifelse(is.waive(width), def_plot_dims[2], width),
-                                         "units"=ifelse(is.waive(units), "cm", units)),
-                                    list(...)))
+                        args=c(list("plot_obj"=p,
+                                    "object"=object,
+                                    "dir_path"=dir_path,
+                                    "type"="variable_importance",
+                                    "subtype"=subtype,
+                                    "height"=ifelse(is.waive(height), def_plot_dims[1], height),
+                                    "width"=ifelse(is.waive(width), def_plot_dims[2], width),
+                                    "units"=ifelse(is.waive(units), "cm", units)),
+                               list(...)))
                 
               } else {
                 # Store as list and export
-                plot_list <- append(plot_list, list(p))
+                plot_list <- c(plot_list, list(p))
               }
             }
             
             # Generate output
-            if(is.null(dir_path)){
-              return(plot_list)
-            } else {
-              return(NULL)
-            }
+            return(plotting.get_output(dir_path=dir_path,
+                                       plot_list=plot_list,
+                                       export_collection=export_collection,
+                                       object=object))
           })
 
 
@@ -606,7 +629,8 @@ setMethod("plot_permutation_variable_importance", signature(object="familiarColl
                                                   x_breaks){
   
   # Suppress NOTES due to non-standard evaluation in data.table
-  value <- NULL
+  value <- metric <- similarity_threshold <- order_id <- i.order_id <- NULL
+  data_set <- learner <- fs_method <- NULL
   
   # Create local copy
   x <- data.table::copy(x)
@@ -633,10 +657,56 @@ setMethod("plot_permutation_variable_importance", signature(object="familiarColl
     available_metric <- as.character(x$metric[1])
   }
   
-  # Drop levels and reorder table so that features are sorted by values
-  x$feature <- droplevels(x$feature)
-  x <- x[order(-value)]
-  x$feature <- factor(x$feature, levels=rev(unique(x$feature)))
+  # Sort features. In the outer loop iterate over metrics. In the inner loop
+  # iterate over threshold values (in reverse). Resolve until order_id is unique
+  # for all features.
+  x[, "order_id":=1L]
+  for(current_data_set in levels(x$data_set)){
+    # Break in case all features have an unique order id.
+    if(data.table::uniqueN(x$order_id) == data.table::uniqueN(x$feature)) break()
+    
+    for(current_fs_method in levels(x$fs_method)){
+      # Break in case all features have an unique order id.
+      if(data.table::uniqueN(x$order_id) == data.table::uniqueN(x$feature)) break()
+      
+      for(current_learner in levels(x$learner)){
+        # Break in case all features have an unique order id.
+        if(data.table::uniqueN(x$order_id) == data.table::uniqueN(x$feature)) break()
+        
+        for(current_metric in levels(x$metric)){
+          
+          # Break in case all features have an unique order id.
+          if(data.table::uniqueN(x$order_id) == data.table::uniqueN(x$feature)) break()
+          
+          for(current_threshold in rev(levels(x$similarity_threshold))){
+            
+            for(id_table in split(x[data_set == current_data_set &
+                                    fs_method == current_fs_method &
+                                    learner == current_learner &
+                                    metric == current_metric &
+                                    similarity_threshold == current_threshold], by="order_id")){
+              if(nrow(id_table) < 2) next()
+              
+              # Local copy
+              id_table <- data.table::copy(id_table)
+              
+              # Rank by descending value.
+              id_table[, "order_id":=order_id + data.table::frank(-value, ties.method="min") - 1L][, mget(c("feature", "order_id"))]
+              
+              # Update order id in x.
+              x[id_table, "order_id":=i.order_id, on="feature"]
+            }
+            
+            # Break in case all features have an unique order id.
+            if(data.table::uniqueN(x$order_id) == data.table::uniqueN(x$feature)) break()
+          }
+        }
+      }
+    }
+  }
+  
+  # Order features by order_id
+  x$feature <- factor(x$feature, levels=rev(unique(x[, mget(c("feature", "order_id"))])[order(order_id)][["feature"]]))
   
   # Generate a guide table
   guide_list <- plotting.create_guide_table(x=x, 
@@ -645,7 +715,7 @@ setMethod("plot_permutation_variable_importance", signature(object="familiarColl
   
   # Extract data
   x <- guide_list$data
-
+  
   # Create basic plot.
   if(!is.null(color_by)){
     
@@ -699,20 +769,15 @@ setMethod("plot_permutation_variable_importance", signature(object="familiarColl
       ..error_reached_unreachable_code(".plot_permutation_variable_importance: unknown confidence interval style.")
     }
     
-    # Flip coordinates and add theme.
-    p <- p + ggplot2::coord_flip()
-    p <- p + ggtheme
-    
   } else {
     
     # Basic plot.
     p <- ggplot2::ggplot(data=x, mapping=ggplot2::aes(x=!!sym("feature"),
                                                       y=!!sym("value")))
-    
-    p <- p + ggplot2::coord_flip()
-    p <- p + ggtheme
   }
   
+  # Add theme.
+  p <- p + ggtheme
   
   # Add main plotting elements.
   if(conf_int_style %in% c("bar_line")){
@@ -749,9 +814,9 @@ setMethod("plot_permutation_variable_importance", signature(object="familiarColl
   x_range <- c(x_range[[available_metric]]$min_value,
                x_range[[available_metric]]$max_value)
   
-  p <- p + ggplot2::scale_y_continuous(breaks=x_breaks[[available_metric]],
-                                       limits=x_range)
-  
+  p <- p + ggplot2::scale_y_continuous(breaks=x_breaks[[available_metric]])
+  p <- p + ggplot2::coord_flip(ylim=x_range)
+
   # Determine how things are faceted.
   facet_by_list <- plotting.parse_facet_by(x=x,
                                            facet_by=facet_by,

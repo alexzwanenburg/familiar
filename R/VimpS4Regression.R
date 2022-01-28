@@ -56,7 +56,7 @@ setMethod("get_default_hyperparameters", signature(object="familiarRegressionVim
             
             # Determine which learners are available for the outcome_type
             learner_is_available <- sapply(learner_range,
-                                           learner.check_outcome_type,
+                                           .check_learner_outcome_type,
                                            outcome_type=object@outcome_type,
                                            as_flag=TRUE)
             
@@ -116,13 +116,13 @@ setMethod("..vimp", signature(object="familiarRegressionVimp"),
             # Create a generic model.
             fam_model <- promote_learner(object=methods::new("familiarModel",
                                                              outcome_type = object@outcome_type,
-                                                             learner = object@hyperparameters$learner,
+                                                             learner = as.character(object@hyperparameters$learner),
                                                              fs_method = "none",
                                                              feature_info = object@feature_info,
                                                              outcome_info = .compute_outcome_distribution_data(object=object@outcome_info, data=data)))
             
             # Create metric objects.
-            metric_object_list <- lapply(object@hyperparameters$metric,
+            metric_object_list <- lapply(as.character(object@hyperparameters$metric),
                                          as_metric,
                                          object=fam_model)
             

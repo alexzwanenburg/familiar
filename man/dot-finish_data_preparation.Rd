@@ -16,7 +16,7 @@
   censoring_indicator,
   event_indicator,
   competing_risk_indicator,
-  reference = NULL
+  check_stringency = "strict"
 )
 }
 \arguments{
@@ -114,10 +114,17 @@ unset, all values other than those specified by the \code{event_indicator} and
 \code{censoring_indicator} parameters are considered to indicate competing
 risks.}
 
-\item{reference}{list with class levels (\code{levels}) and ordering (\code{ordered})
-per list entry. Each list entry should have the name of the corresponding
-feature. The intended use is that \code{featureInfo} objects are parsed to
-generate such a reference.}
+\item{check_stringency}{Specifies stringency of various checks. This is mostly:
+\itemize{
+\item \code{strict}: default value used for \code{summon_familiar}. Thoroughly checks
+input data. Used internally for checking development data.
+\item \code{external_warn}: value used for \code{extract_data} and related methods. Less
+stringent checks, but will warn for possible issues. Used internally for
+checking data for evaluation and explanation.
+\item \code{external}: value used for external methods such as \code{predict}. Less
+stringent checks, particularly for identifier and outcome columns, which may
+be completely absent. Used internally for \code{predict}.
+}}
 }
 \value{
 data.table with expected column names.

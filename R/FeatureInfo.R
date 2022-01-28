@@ -625,7 +625,7 @@ find_unimportant_features <- function(cl=NULL, feature_info_list, data_obj, sett
   dt_regr_full[!is.finite(p_full), "p_full":=1]
   
   # Calculate q-value
-  if(nrow(dt_regr_full) >= 2 & is_package_installed(name="qvalue", verbose=FALSE)){
+  if(nrow(dt_regr_full) >= 2 & is_package_installed(name="qvalue")){
     dt_regr_full[, "q_full":=qvalue::qvalue(p=p_full, lambda=0)$qvalues]
   } else {
     dt_regr_full[, "q_full":=p_full]
@@ -656,7 +656,7 @@ find_unimportant_features <- function(cl=NULL, feature_info_list, data_obj, sett
       bt_regr_pval[[ii]][!is.finite(p_val), "p_val":=1.0]
       
       # Calculate q-values for the current bootstrap
-      if(nrow(bt_regr_pval[[ii]]) >= 2 & is_package_installed(name="qvalue", verbose=FALSE)){
+      if(nrow(bt_regr_pval[[ii]]) >= 2 & is_package_installed(name="qvalue")){
         bt_regr_pval[[ii]][, "q_val":=qvalue::qvalue(p=p_val, lambda=0)$qvalues]
       } else {
         bt_regr_pval[[ii]][, "q_val":=p_val]

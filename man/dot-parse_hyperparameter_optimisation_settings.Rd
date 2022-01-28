@@ -18,10 +18,12 @@ optimisation}
   smbo_stop_tolerance = waiver(),
   smbo_step_bootstraps = waiver(),
   smbo_intensify_steps = waiver(),
-  smbo_intensify_stop_p_value = waiver(),
+  smbo_stochastic_reject_p_value = waiver(),
   optimisation_function = waiver(),
   optimisation_metric = waiver(),
   acquisition_function = waiver(),
+  exploration_method = waiver(),
+  hyperparameter_learner = waiver(),
   parallel_hyperparameter_optimisation = waiver(),
   ...
 )
@@ -41,7 +43,7 @@ procedure one or more of these bootstraps (indicated by
 combinations of hyperparameters. The effect of the hyperparameters is then
 assessed by comparing in-bag and out-of-bag model performance.
 
-The default number of bootstraps is \code{200}. Hyperparameter optimisation may
+The default number of bootstraps is \code{50}. Hyperparameter optimisation may
 finish before exhausting the set of bootstraps.}
 
 \item{optimisation_determine_vimp}{(\emph{optional}) Logical value that indicates
@@ -90,7 +92,7 @@ If a combination of hyperparameters leads to better performance on the same
 data than the incumbent \emph{best} set of hyperparameters, it replaces the
 incumbent set at the end of the intensify iteration.
 
-The default number of intensify iteration is \code{30}. Iterations may be
+The default number of intensify iteration is \code{20}. Iterations may be
 stopped early if the incumbent set of hyperparameters remains the same for
 \code{smbo_stop_convergent_iterations} iterations, or performance improvement is
 minimal. This behaviour is suppressed during the first 4 iterations to
@@ -113,30 +115,19 @@ The default value is \code{0.01}.}
 the set of \code{optimisation_bootstraps} bootstraps as data for the initial
 SMBO step and the steps in each intensify iteration.
 
-The default value is \code{5}. The value cannot be larger than
-\code{optimisation_bootstraps}. Values of \code{1} or \code{2} may hinder exploration by
-optimistically or pessimistically biasing parameter sets on a single or two
-bootstraps.}
+The default value is \code{3}. The value cannot be larger than
+\code{optimisation_bootstraps}.}
 
 \item{smbo_intensify_steps}{(\emph{optional}) The number of steps in each SMBO
 intensify iteration. Each step a new set of \code{smbo_step_bootstraps}
 bootstraps is drawn and used in the run-off between the incumbent \emph{best}
 hyperparameter combination and its challengers.
 
-The default value is \code{3}. Higher numbers allow for a more detailed
+The default value is \code{5}. Higher numbers allow for a more detailed
 comparison, but this comes with added computational cost.}
 
-\item{smbo_intensify_stop_p_value}{(\emph{optional}) The p-value threshold which
-is used to test the hypothesis that a challenger hyperparameter set and the
-incumbent set have the same performance. A paired Wilcoxon test is
-performed, with the alternative hypothesis that the challenger set is less
-performant.
-
-The p-value from the test is compared to \code{smbo_intensify_stop_p_value} and
-if it is found lower, the challenger set is eliminated and not used in any
-further intensify steps during the current iteration. Elimination of sets
-of hyperparameters that are unlikely to lead to better models improves
-computational efficiency.
+\item{smbo_stochastic_reject_p_value}{(\emph{optional}) The p-value threshold used
+for the \code{stochastic_reject} exploration method.
 
 The default value is \code{0.05}.}
 
@@ -178,25 +169,12 @@ multinomial outcomes, the median outcome for count and continuous outcomes
 and a fixed risk or time for survival outcomes.}
 
 \item{acquisition_function}{(\emph{optional}) The acquisition function influences
-how new hyperparameter sets are selected.
-
-Any point in the hyperparameter space has a single, scalar, optimisation
-score value that is \emph{a priori} unknown. During the optimisation process,
-the algorithm samples from the hyperparameter space by selecting
-hyperparameter sets and computing the optimisation score value for one or
-more bootstraps. For each hyperparameter set the resulting values are
-distributed around the actual value. A random forest is then trained using
-all the resulting values.
-
-The random forest maps positions in the hyperparameter space to the 1D real
-space of optimisation values. The distribution of optimisation values at
-each point is captured by individual decision trees.
-
-The algorithm uses the random forest to search the hyperparameter space for
-hyperparameter sets that are either likely better than the best known set
-(\emph{exploitation}) or where there is considerable uncertainty
-(\emph{exploration}). The acquisition function quantifies this (Shahriari et
-al., 2016).
+how new hyperparameter sets are selected. The algorithm uses the model
+learned by the learner indicated by \code{hyperparameter_learner} to search the
+hyperparameter space for hyperparameter sets that are either likely better
+than the best known set (\emph{exploitation}) or where there is considerable
+uncertainty (\emph{exploration}). The acquisition function quantifies this
+(Shahriari et al., 2016).
 
 The following acquisition functions are available, and are described in
 more detail in the \emph{learner algorithms} vignette:
@@ -210,8 +188,53 @@ predicted by the individual decision trees.
 \item \code{expected_improvement} (default): Computes expected improvement.
 \item \code{upper_confidence_bound}: This acquisition function is based on the upper
 confidence bound of the distribution (Srinivas et al., 2012).
-\item \code{bayes_upper_confidence_bound}:This acquisition function is based on the
+\item \code{bayes_upper_confidence_bound}: This acquisition function is based on the
 upper confidence bound of the distribution (Kaufmann et al., 2012).
+}}
+
+\item{exploration_method}{(\emph{optional}) Method used to steer exploration in
+post-initialisation intensive searching steps. As stated earlier, each SMBO
+iteration step compares suggested alternative parameter sets with an
+incumbent \strong{best} set in a series of steps. The exploration method
+controls how the set of alternative parameter sets is pruned after each
+step in an iteration. Can be one of the following:
+\itemize{
+\item \code{successive_halving} (default): The set of alternative parameter sets is
+pruned by removing the worst performing half of the sets after each step
+(Jamieson and Talwalkar, 2016).
+\item \code{stochastic_reject}: The set of alternative parameter sets is pruned by
+comparing the performance of each parameter set with that of the incumbent
+\strong{best} parameter set using a paired Wilcoxon test based on shared
+bootstraps. Parameter sets that perform significantly worse, at an alpha
+level indicated by \code{smbo_stochastic_reject_p_value}, are pruned.
+\item \code{none}: The set of alternative parameter sets is not pruned.
+}}
+
+\item{hyperparameter_learner}{(\emph{optional}) Any point in the hyperparameter
+space has a single, scalar, optimisation score value that is \emph{a priori}
+unknown. During the optimisation process, the algorithm samples from the
+hyperparameter space by selecting hyperparameter sets and computing the
+optimisation score value for one or more bootstraps. For each
+hyperparameter set the resulting values are distributed around the actual
+value. The learner indicated by \code{hyperparameter_learner} is then used to
+infer optimisation score estimates for unsampled parts of the
+hyperparameter space.
+
+The following models are available:
+\itemize{
+\item \code{bayesian_additive_regression_trees} or \code{bart}: Uses Bayesian Additive
+Regression Trees (Sparapani et al., 2021) for inference. Unlike standard
+random forests, BART allows for estimating posterior distributions directly
+and can extrapolate.
+\item \code{gaussian_process} (default): Creates a localised approximate Gaussian
+process for inference (Gramacy, 2016). This allows for better scaling than
+deterministic Gaussian Processes.
+\item \code{random_forest}: Creates a random forest for inference. Originally
+suggested by Hutter et al. (2011). A weakness of random forests is their
+lack of extrapolation beyond observed values, which limits their usefulness
+in exploiting promising areas of hyperparameter space.
+\item \code{random} or \code{random_search}: Forgoes the use of models to steer
+optimisation. Instead, a random search is performed.
 }}
 
 \item{parallel_hyperparameter_optimisation}{(\emph{optional}) Enable parallel
@@ -248,6 +271,15 @@ the Bandit Setting. IEEE Trans. Inf. Theory 58, 3250–3265 (2012)
 \item Kaufmann, E., Cappé, O. & Garivier, A. On Bayesian upper confidence
 bounds for bandit problems. in Artificial intelligence and statistics
 592–600 (2012).
+\item Jamieson, K. & Talwalkar, A. Non-stochastic Best Arm Identification and
+Hyperparameter Optimization. in Proceedings of the 19th International
+Conference on Artificial Intelligence and Statistics (eds. Gretton, A. &
+Robert, C. C.) vol. 51 240–248 (PMLR, 2016).
+\item Gramacy, R. B. laGP: Large-Scale Spatial Modeling via Local Approximate
+Gaussian Processes in R. Journal of Statistical Software 72, 1–46 (2016)
+\item Sparapani, R., Spanbauer, C. & McCulloch, R. Nonparametric Machine
+Learning and Efficient Computation with Bayesian Additive Regression Trees:
+The BART R Package. Journal of Statistical Software 97, 1–66 (2021)
 }
 }
 \keyword{internal}

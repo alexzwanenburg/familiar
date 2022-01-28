@@ -34,6 +34,7 @@ NULL
 #'@inheritParams plotting.check_data_handling
 #'@inheritDotParams as_familiar_collection -object
 #'@inheritDotParams ggplot2::ggsave -height -width -units
+#'@inheritDotParams extract_calibration_data -object
 #'
 #'@details This function generates a calibration plot for each model in each
 #'  dataset. Any data used for calibration (e.g. baseline survival) is obtained
@@ -118,8 +119,8 @@ setGeneric("plot_calibration_data",
                     y_label=waiver(),
                     y_label_shared="row",
                     legend_label=waiver(),
-                    plot_title=NULL,
-                    plot_sub_title=NULL,
+                    plot_title=waiver(),
+                    plot_sub_title=waiver(),
                     caption=NULL,
                     x_range=NULL,
                     x_n_breaks=5,
@@ -136,6 +137,7 @@ setGeneric("plot_calibration_data",
                     width=waiver(),
                     height=waiver(),
                     units=waiver(),
+                    export_collection=FALSE,
                     ...) standardGeneric("plot_calibration_data"))
 
 
@@ -157,8 +159,8 @@ setMethod("plot_calibration_data", signature(object="ANY"),
                    y_label=waiver(),
                    y_label_shared="row",
                    legend_label=waiver(),
-                   plot_title=NULL,
-                   plot_sub_title=NULL,
+                   plot_title=waiver(),
+                   plot_sub_title=waiver(),
                    caption=NULL,
                    x_range=NULL,
                    x_n_breaks=5,
@@ -175,11 +177,13 @@ setMethod("plot_calibration_data", signature(object="ANY"),
                    width=waiver(),
                    height=waiver(),
                    units=waiver(),
+                   export_collection=FALSE,
                    ...){
             
             # Attempt conversion to familiarCollection object.
             object <- do.call(as_familiar_collection,
-                              args=append(list("object"=object, "data_element"="calibration_data"), list(...)))
+                              args=c(list("object"=object, "data_element"="calibration_data"),
+                                     list(...)))
             
             return(do.call(plot_calibration_data,
                            args=list("object"=object,
@@ -213,7 +217,8 @@ setMethod("plot_calibration_data", signature(object="ANY"),
                                      "density_plot_height"=density_plot_height,
                                      "width"=width,
                                      "height"=height,
-                                     "units"=units)))
+                                     "units"=units,
+                                     "export_collection"=export_collection)))
           })
 
 #####plot_calibration_data (collection)#####
@@ -234,8 +239,8 @@ setMethod("plot_calibration_data", signature(object="familiarCollection"),
                    y_label=waiver(),
                    y_label_shared="row",
                    legend_label=waiver(),
-                   plot_title=NULL,
-                   plot_sub_title=NULL,
+                   plot_title=waiver(),
+                   plot_sub_title=waiver(),
                    caption=NULL,
                    x_range=NULL,
                    x_n_breaks=5,
@@ -252,6 +257,7 @@ setMethod("plot_calibration_data", signature(object="familiarCollection"),
                    width=waiver(),
                    height=waiver(),
                    units=waiver(),
+                   export_collection=FALSE,
                    ...){
             
             # Suppress NOTES due to non-standard evaluation in data.table
@@ -278,6 +284,13 @@ setMethod("plot_calibration_data", signature(object="familiarCollection"),
               
             # Check that the calibration data are not empty.
             if(is_empty(calibration_data)) return(NULL)
+            
+            # Check package requirements for plotting.
+            if(!require_package(x=..required_plotting_packages(extended=TRUE),
+                                purpose="to create calibration plots",
+                                message_type="warning")){
+              return(NULL)
+            }
             
             ##### Check input arguments ########################################
             
@@ -445,6 +458,9 @@ setMethod("plot_calibration_data", signature(object="familiarCollection"),
             
             ##### Create plots ###############################################
             
+            # Determine if subtitle should be generated.
+            autogenerate_plot_subtitle <- is.waive(plot_sub_title)
+            
             # Split data and supporting data.
             if(!is.null(split_by)){
               data_split <- split(unique(calibration_data[, mget(split_by)]), by=split_by, drop=TRUE)
@@ -490,6 +506,13 @@ setMethod("plot_calibration_data", signature(object="familiarCollection"),
               
               if(is_empty(calibration_data_split)) next()
               
+              if(is.waive(plot_title)) plot_title <- "Calibration plot"
+              
+              if(autogenerate_plot_subtitle){
+                plot_sub_title <- plotting.create_subtitle(split_by=split_by,
+                                                           x=current_split)
+              }
+              
               # Generate plot
               p <- .plot_calibration_plot(x=calibration_data_split,
                                           color_by=color_by,
@@ -531,12 +554,9 @@ setMethod("plot_calibration_data", signature(object="familiarCollection"),
               # Save and export
               if(!is.null(dir_path)){
                 
-                # Determine the subtype
-                if(!is.null(split_by)){
-                  subtype <- paste0(sapply(split_by, function(jj, x) (x[[jj]][1]), x=current_split), collapse="_")
-                } else {
-                  subtype <- NULL
-                }
+                # Set subtype.
+                subtype <- plotting.create_subtype(x=current_split,
+                                                   split_by=split_by)
                 
                 # Obtain decent default values for the plot.
                 def_plot_dims <- .determine_calibration_plot_dimensions(x=calibration_data_split,
@@ -546,15 +566,15 @@ setMethod("plot_calibration_data", signature(object="familiarCollection"),
                 
                 # Save to file.
                 do.call(plotting.save_plot_to_file,
-                        args=append(list("plot_obj"=p,
-                                         "object"=object,
-                                         "dir_path"=dir_path,
-                                         "type"="calibration",
-                                         "subtype"=subtype,
-                                         "height"=ifelse(is.waive(height), def_plot_dims[1], height),
-                                         "width"=ifelse(is.waive(width), def_plot_dims[2], width),
-                                         "units"=ifelse(is.waive(units), "cm", units)),
-                                    list(...)))
+                        args=c(list("plot_obj"=p,
+                                    "object"=object,
+                                    "dir_path"=dir_path,
+                                    "type"="calibration",
+                                    "subtype"=subtype,
+                                    "height"=ifelse(is.waive(height), def_plot_dims[1], height),
+                                    "width"=ifelse(is.waive(width), def_plot_dims[2], width),
+                                    "units"=ifelse(is.waive(units), "cm", units)),
+                               list(...)))
                 
               } else {
                 # Store as list and export
@@ -563,11 +583,10 @@ setMethod("plot_calibration_data", signature(object="familiarCollection"),
             }
             
             # Generate output
-            if(is.null(dir_path)){
-              return(plot_list)
-            } else {
-              return(NULL)
-            }
+            return(plotting.get_output(dir_path=dir_path,
+                                       plot_list=plot_list,
+                                       export_collection=export_collection,
+                                       object=object))
           })
 
 
@@ -683,14 +702,17 @@ setMethod("plot_calibration_data", signature(object="familiarCollection"),
                                       g_new=g_margin,
                                       where="top",
                                       ref_element="panel-main",
-                                      partial_match=TRUE)
+                                      partial_match=TRUE,
+                                      spacer=list("b"=plotting.get_panel_spacing(ggtheme=ggtheme, axis="x")))
     }
     
     # Add combined grob to list
-    figure_list <- c(figure_list, list(g_calibration))
+    figure_list <- c(figure_list, 
+                     list(g_calibration))
     
     # Add extract elements to the grob_element_list
-    extracted_element_list <- c(extracted_element_list, list(extracted_elements))
+    extracted_element_list <- c(extracted_element_list,
+                                list(extracted_elements))
   }
   
   # Update the layout table.
@@ -870,18 +892,23 @@ setMethod("plot_calibration_data", signature(object="familiarCollection"),
   }
   
   # Set breaks and  limits on the x and y-axis
-  p <- p + ggplot2::scale_x_continuous(breaks=x_breaks, limits=x_range)
-  p <- p + ggplot2::scale_y_continuous(breaks=y_breaks, limits=y_range)
+  p <- p + ggplot2::scale_x_continuous(breaks=x_breaks)
+  p <- p + ggplot2::scale_y_continuous(breaks=y_breaks)
   
   # Determine how things are facetted
-  facet_by_list <- plotting.parse_facet_by(x=x, facet_by=facet_by, facet_wrap_cols=facet_wrap_cols)
+  facet_by_list <- plotting.parse_facet_by(x=x,
+                                           facet_by=facet_by,
+                                           facet_wrap_cols=facet_wrap_cols)
   
   if(!is.null(facet_by)){
     if(is.null(facet_wrap_cols)){
       # Use a grid
-      p <- p + ggplot2::facet_grid(rows=facet_by_list$facet_rows, cols=facet_by_list$facet_cols, labeller="label_context")
+      p <- p + ggplot2::facet_grid(rows=facet_by_list$facet_rows,
+                                   cols=facet_by_list$facet_cols,
+                                   labeller="label_context")
     } else {
-      p <- p + ggplot2::facet_wrap(facets=facet_by_list$facet_by, labeller="label_context")
+      p <- p + ggplot2::facet_wrap(facets=facet_by_list$facet_by,
+                                   labeller="label_context")
     }
   }
   
@@ -895,30 +922,36 @@ setMethod("plot_calibration_data", signature(object="familiarCollection"),
       
       # Add calibration-in-the-large.
       if(all(c("ci_low", "ci_up") %in% colnames(linear_test))){
-        label <- append(label, paste0("intercept: ",
-                                      round(linear_test[type=="offset"]$value, 2),
-                                      " (",
-                                      round(linear_test[type=="offset"]$ci_low, 2),
-                                      "\u2013",
-                                      round(linear_test[type=="offset"]$ci_up, 2),
-                                      ")"))
+        label <- c(label,
+                   paste0("intercept: ",
+                          format(round(linear_test[type=="offset"]$value, 2), nsmall=2),
+                          " (",
+                          format(round(linear_test[type=="offset"]$ci_low, 2), nsmall=2),
+                          "\u2013",
+                          ifelse(round(linear_test[type=="offset"]$ci_up, 2) < 0, " ", ""),
+                          format(round(linear_test[type=="offset"]$ci_up, 2), nsmall=2),
+                          ")"))
         
         # Add calibration slope.
-        label <- append(label, paste0("slope: ",
-                                      round(linear_test[type=="slope"]$value, 2),
-                                      " (",
-                                      round(linear_test[type=="slope"]$ci_low, 2),
-                                      "\u2013",
-                                      round(linear_test[type=="slope"]$ci_up, 2),
-                                      ")"))
+        label <- c(label,
+                   paste0("slope: ",
+                          format(round(linear_test[type=="slope"]$value, 2), nsmall=2),
+                          " (",
+                          format(round(linear_test[type=="slope"]$ci_low, 2), nsmall=2),
+                          "\u2013",
+                          ifelse(round(linear_test[type=="slope"]$ci_up, 2) < 0, " ", ""),
+                          format(round(linear_test[type=="slope"]$ci_up, 2), nsmall=2),
+                          ")"))
         
       } else {
-        label <- append(label, paste0("intercept: ",
-                                      round(linear_test[type=="offset"]$value, 2)))
+        label <- c(label,
+                   paste0("intercept: ",
+                          format(round(linear_test[type=="offset"]$value, 2), nsmall=2)))
         
         # Add calibration slope.
-        label <- append(label, paste0("slope: ",
-                                      round(linear_test[type=="slope"]$value, 2)))
+        label <- c(label,
+                   paste0("slope: ",
+                          format(round(linear_test[type=="slope"]$value, 2), nsmall=2)))
       }
     }
     
@@ -926,17 +959,23 @@ setMethod("plot_calibration_data", signature(object="familiarCollection"),
       
       # Hosmer-Lemeshow test
       if("hosmer_lemeshow" %in% c(gof_test$type)){
-        label <- append(label, paste0("HL-test p: ", signif(gof_test[type=="hosmer_lemeshow"]$p_value, 2)))
+        label <- c(label,
+                   paste0("HL-test p: ",
+                          format(signif(gof_test[type=="hosmer_lemeshow"]$p_value, 2), nsmall=2)))
       }
       
       # Nam-D'Agostino test
       if("nam_dagostino" %in% c(gof_test$type)){
-        label <- append(label, paste0("ND-test p: ", signif(gof_test[type=="nam_dagostino"]$p_value, 2)))
+        label <- c(label,
+                   paste0("ND-test p: ",
+                          format(signif(gof_test[type=="nam_dagostino"]$p_value, 2), nsmall=2)))
       }
       
       # Greenwood-Nam-D'Agostino test
       if("greenwood_nam_dagostino" %in% c(gof_test$type)){
-        label <- append(label, paste0("GND-test p: ", signif(gof_test[type=="greenwood_nam_dagostino"]$p_value, 2)))
+        label <- c(label,
+                   paste0("GND-test p: ",
+                          format(signif(gof_test[type=="greenwood_nam_dagostino"]$p_value, 2), nsmall=2)))
       }
     }
     
@@ -962,7 +1001,15 @@ setMethod("plot_calibration_data", signature(object="familiarCollection"),
   }
   
   # Update labels.
-  p <- p + ggplot2::labs(x=x_label, y=y_label, title=plot_title, subtitle=plot_sub_title, caption=caption)
+  p <- p + ggplot2::labs(x=x_label,
+                         y=y_label,
+                         title=plot_title,
+                         subtitle=plot_sub_title,
+                         caption=caption)
+  
+  # Prevent clipping of confidence intervals.
+  p <- p + ggplot2::coord_cartesian(xlim=x_range,
+                                    ylim=y_range)
   
   return(p)
 }

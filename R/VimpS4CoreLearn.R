@@ -18,6 +18,19 @@ setClass("familiarCoreLearnGainRatioVimp",
          contains="familiarCoreLearnVimp")
 
 
+#####initialize#################################################################
+setMethod("initialize", signature(.Object="familiarCoreLearnVimp"),
+          function(.Object, ...){
+            
+            # Update with parent class first.
+            .Object <- callNextMethod()
+            
+            # Update package
+            .Object@package <- "CORElearn"
+
+            return(.Object)
+          })
+
 
 .get_available_corelearn_gini_vimp_method <- function(show_general=TRUE){
   return("gini")
@@ -76,6 +89,9 @@ setMethod("..vimp", signature(object="familiarCoreLearnVimp"),
             score <- NULL
             
             if(is_empty(data)) return(callNextMethod())
+            
+            # Check that required packages are loaded and installed.
+            require_package(object, "vimp")
             
             # Identify feature columns.
             feature_columns <- get_feature_columns(data)

@@ -1,17 +1,29 @@
-run_evaluation <- function(cl, proj_list, settings, file_paths){
+run_evaluation <- function(cl,
+                           proj_list,
+                           settings,
+                           file_paths,
+                           message_indent=0L,
+                           verbose=TRUE){
   # performs evaluation of the data
   
   if(settings$eval$do_parallel == "FALSE") cl <- NULL
   
   # Extract data from ensembles
-  data_set_list <- .prepare_familiar_data_sets(cl=cl, only_pooling=settings$eval$pool_only)
+  data_set_list <- .prepare_familiar_data_sets(cl=cl,
+                                               only_pooling=settings$eval$pool_only,
+                                               message_indent=message_indent,
+                                               verbose=verbose)
 
   # Form collections (all individual ensembles with train and validation data combined)
   collection_list <- .prepare_familiar_collections(data_set_list=data_set_list)
   
   # Create and save collections and export data
   if(!file_paths$is_temporary){
-    lapply(collection_list, .process_collections, file_paths=file_paths)
+    lapply(collection_list,
+           .process_collections,
+           file_paths=file_paths,
+           message_indent=message_indent,
+           verbose=verbose)
   }
 }
 
@@ -30,11 +42,17 @@ run_evaluation <- function(cl, proj_list, settings, file_paths){
 #' @param cl Cluster for parallel processing.
 #' @param only_pooling Flag that, if set, forces evaluation of only the
 #'   top-level data, and not e.g. ensembles.
+#' @param message_indent indent that messages should have.
+#' @param verbose Sets verbosity
 #'
 #' @return A data.table with created links to created data objects.
-#'
+#' 
+#' @keywords internal
 #' @md
-.prepare_familiar_data_sets <- function(cl=NULL, only_pooling=FALSE){
+.prepare_familiar_data_sets <- function(cl=NULL,
+                                        only_pooling=FALSE,
+                                        message_indent=0L,
+                                        verbose=FALSE){
   
   # Suppress NOTES due to non-standard evaluation in data.table
   fam_ensemble_exists <- fam_ensemble <- fam_data_exists <- fam_data <- NULL
@@ -136,14 +154,16 @@ run_evaluation <- function(cl, proj_list, settings, file_paths){
     # Select unique entries.
     new_ensemble_table <- unique(new_ensemble_table)
     
-    logger.message("\nEvaluation: Creating ensemble models from individual models.")
+    logger.message("\nEvaluation: Creating ensemble models from individual models.",
+                   indent=message_indent,
+                   verbose=verbose)
     
     # Create familiarEnsemble objects
     fam_lapply_lb(cl=cl,
                   assign=NULL,
                   X=split(new_ensemble_table, by="fam_ensemble"),
                   FUN=.create_familiar_ensemble_runtime,
-                  progress_bar=TRUE,
+                  progress_bar=verbose,
                   dir_path=file_paths$mb_dir)
   }
   
@@ -166,7 +186,9 @@ run_evaluation <- function(cl, proj_list, settings, file_paths){
     # Add iteration_id and total number of iterations
     new_data_table[, ":="("iteration_id"=.I, "n_sets"=nrow(new_data_table))]
     
-    logger.message("\nEvaluation: Processing data to create familiarData objects.")
+    logger.message("\nEvaluation: Processing data to create familiarData objects.",
+                   indent=message_indent,
+                   verbose=verbose)
     
     # Set outer vs. inner loop parallelisation.
     if(settings$eval$do_parallel %in% c("TRUE", "inner")){
@@ -178,7 +200,9 @@ run_evaluation <- function(cl, proj_list, settings, file_paths){
       cl_outer <- cl
       
       if(!is.null(cl_outer)) logger.message(paste0("Evaluation: Parallel processing is done in the outer loop. ",
-                                                   "No progress can be displayed."))
+                                                   "No progress can be displayed."),
+                                            indent=message_indent,
+                                            verbose=verbose)
       
     } else {
       cl_inner <- cl_outer <- NULL
@@ -189,9 +213,11 @@ run_evaluation <- function(cl, proj_list, settings, file_paths){
                   assign="all",
                   FUN=.create_familiar_data_runtime,
                   pool_data_table=split(new_data_table, by="fam_data"),
-                  progress_bar=!is.null(cl_outer),
+                  progress_bar=!is.null(cl_outer) & verbose,
                   MoreArgs=list("cl"=cl_inner,
-                                "dir_path"=file_paths$fam_data_dir))
+                                "dir_path"=file_paths$fam_data_dir,
+                                "message_indent"=message_indent + 1L,
+                                "verbose"=verbose))
   }  
     
   # Re-check if all familiarData objects exist
@@ -397,11 +423,17 @@ run_evaluation <- function(cl, proj_list, settings, file_paths){
 
 
 
-.create_familiar_data_runtime <- function(cl=NULL, pool_data_table, dir_path){
+.create_familiar_data_runtime <- function(cl=NULL,
+                                          pool_data_table,
+                                          dir_path,
+                                          message_indent=0L,
+                                          verbose=TRUE){
   # Creates a familiarData object.
 
   logger.message(paste0("\nEvaluation: Processing dataset ", pool_data_table$iteration_id,
-                        " of ", pool_data_table$n_sets, "."))
+                        " of ", pool_data_table$n_sets, "."),
+                 indent=message_indent,
+                 verbose=verbose)
   
   # Load the familiarEnsemble
   fam_ensemble <- load_familiar_object(pool_data_table$fam_ensemble)
@@ -427,7 +459,8 @@ run_evaluation <- function(cl, proj_list, settings, file_paths){
                            cl=cl,
                            data_element = settings$eval$evaluation_data_elements,
                            time_max = settings$eval$time_max,
-                           eval_times = settings$eval$eval_times,
+                           evaluation_times = settings$eval$eval_times,
+                           sample_limit = settings$eval$sample_limit,
                            detail_level = settings$eval$detail_level,
                            estimation_type = settings$eval$estimation_type,
                            aggregate_results = settings$eval$aggregate_results,
@@ -448,8 +481,8 @@ run_evaluation <- function(cl, proj_list, settings, file_paths){
                            bootstrap_ci_method = settings$eval$bootstrap_ci_method,
                            dynamic_model_loading = settings$eval$auto_detach,
                            icc_type= settings$eval$icc_type,
-                           message_indent=1L,
-                           verbose=TRUE)
+                           message_indent=message_indent + 1L,
+                           verbose=verbose)
   
   # Update the pooling table
   fam_data@pooling_table <- fam_data@pooling_table[, ":="("pool_data_id"=pool_data_table$pool_data_id,
@@ -462,7 +495,9 @@ run_evaluation <- function(cl, proj_list, settings, file_paths){
   # Save the familiarData object
   save(list=fam_data, file=dir_path)
   
-  logger.message(paste0("Evaluation: familiarData object ", get_object_name(object=fam_data), " was created."))
+  logger.message(paste0("Evaluation: familiarData object ", get_object_name(object=fam_data), " was created."),
+                 indent=message_indent,
+                 verbose=verbose)
 }
 
 
@@ -515,14 +550,20 @@ run_evaluation <- function(cl, proj_list, settings, file_paths){
 
 
 
-.process_collections <- function(collection_info, file_paths){
+.process_collections <- function(collection_info,
+                                 file_paths,
+                                 message_indent=0L,
+                                 verbose=TRUE){
 
   # Create the expected file path to the familiarCollection object.
   fam_collection_file <- file.path(file_paths$fam_coll_dir, paste0(collection_info$collection_name, ".RDS"))
 
   # Check if the familiarCollection already exists.
   if(!file.exists(fam_collection_file)){
-    logger.message(paste0("\nEvaluation: Creating collection ", collection_info$collection_name))
+    logger.message(paste0("\nEvaluation: Creating collection ", collection_info$collection_name),
+                   indent=message_indent,
+                   verbose=verbose)
+    
     # Create a collection using the available input data
     fam_collection <- as_familiar_collection(object=collection_info$fam_data,
                                              familiar_data_names=collection_info$fam_data_names,
@@ -536,7 +577,9 @@ run_evaluation <- function(cl, proj_list, settings, file_paths){
     fam_collection <- load_familiar_object(fam_collection_file)
   }
   
-  logger.message(paste0("\nEvaluation: Exporting data from collection ", collection_info$collection_name))
+  logger.message(paste0("\nEvaluation: Exporting data from collection ", collection_info$collection_name),
+                 indent=message_indent,
+                 verbose=verbose)
   
   # Export to csv
   export_all(object=fam_collection, dir_path=file_paths$results_dir)

@@ -32,7 +32,7 @@ setGeneric("extract_predictions",
                     cl=NULL,
                     is_pre_processed=FALSE,
                     ensemble_method=waiver(),
-                    eval_times=waiver(),
+                    evaluation_times=waiver(),
                     detail_level=waiver(),
                     estimation_type=waiver(),
                     aggregate_results=waiver(),
@@ -48,7 +48,7 @@ setMethod("extract_predictions", signature(object="familiarEnsemble"),
                    cl=NULL,
                    is_pre_processed=FALSE,
                    ensemble_method=waiver(),
-                   eval_times=waiver(),
+                   evaluation_times=waiver(),
                    detail_level=waiver(),
                    estimation_type=waiver(),
                    aggregate_results=waiver(),
@@ -63,17 +63,16 @@ setMethod("extract_predictions", signature(object="familiarEnsemble"),
             # ensemble predictions.
             
             # Message extraction start
-            if(verbose){
-              logger.message(paste0("Computing ensemble predictions for the dataset."),
-                             indent=message_indent)
-            }
+            logger.message(paste0("Computing ensemble predictions for the dataset."),
+                           indent=message_indent,
+                           verbose=verbose)
             
-            # Load eval_times from the object settings attribute, if it is not provided.
-            if(is.waive(eval_times)) eval_times <- object@settings$eval_times
+            # Load evaluation_times from the object settings attribute, if it is not provided.
+            if(is.waive(evaluation_times)) evaluation_times <- object@settings$eval_times
             
-            # Check eval_times argument
+            # Check evaluation_times argument
             if(object@outcome_type %in% c("survival")){
-              sapply(eval_times, .check_number_in_valid_range, var_name="eval_times", range=c(0.0, Inf), closed=c(FALSE, TRUE))
+              sapply(evaluation_times, .check_number_in_valid_range, var_name="evaluation_times", range=c(0.0, Inf), closed=c(FALSE, TRUE))
             }
             
             # Load confidence alpha from object settings attribute if not
@@ -93,11 +92,13 @@ setMethod("extract_predictions", signature(object="familiarEnsemble"),
             
             # Check the level detail.
             detail_level <- .parse_detail_level(x = detail_level,
+                                                object = object,
                                                 default = "ensemble",
                                                 data_element = "prediction_data")
             
             # Check the estimation type.
             estimation_type <- .parse_estimation_type(x = estimation_type,
+                                                      object = object,
                                                       default = "point",
                                                       data_element = "prediction_data",
                                                       detail_level = detail_level,
@@ -105,6 +106,7 @@ setMethod("extract_predictions", signature(object="familiarEnsemble"),
             
             # Check whether results should be aggregated.
             aggregate_results <- .parse_aggregate_results(x = aggregate_results,
+                                                          object = object,
                                                           default = TRUE,
                                                           data_element = "prediction_data")
             
@@ -130,7 +132,7 @@ setMethod("extract_predictions", signature(object="familiarEnsemble"),
                                                    proto_data_element=proto_data_element,
                                                    is_pre_processed=is_pre_processed,
                                                    ensemble_method=ensemble_method,
-                                                   eval_times=eval_times,
+                                                   evaluation_times=evaluation_times,
                                                    message_indent=message_indent + 1L,
                                                    verbose=verbose)
             
@@ -141,7 +143,7 @@ setMethod("extract_predictions", signature(object="familiarEnsemble"),
 
 .extract_predictions <- function(object,
                                  proto_data_element,
-                                 eval_times=NULL,
+                                 evaluation_times=NULL,
                                  cl,
                                  ...){
   
@@ -152,9 +154,9 @@ setMethod("extract_predictions", signature(object="familiarEnsemble"),
   proto_data_element <- add_model_name(proto_data_element, object=object)
   
   # Add evaluation time as a identifier to the data element.
-  if(length(eval_times) > 0 & object@outcome_type == "survival"){
+  if(length(evaluation_times) > 0 & object@outcome_type == "survival"){
     data_elements <- add_data_element_identifier(x=proto_data_element,
-                                                 evaluation_time=eval_times)
+                                                 evaluation_time=evaluation_times)
     
   } else {
     data_elements <- list(proto_data_element)
@@ -430,7 +432,7 @@ setMethod("..compute_data_element_estimates", signature(x="familiarDataElementPr
                                                  grouping_column,
                                                  ...){
   
-  # Compute ensemble estimates for the 
+  # Compute ensemble estimates for the novelty score.
   prediction_data <- data[,
                           ...compute_ensemble_estimates(x=.SD,
                                                         prediction_columns="novelty",
@@ -561,6 +563,7 @@ setMethod("..compute_data_element_estimates", signature(x="familiarDataElementPr
 #'  models in a familiarCollection.
 #'
 #'@inheritParams export_all
+#'@inheritParams export_univariate_analysis_data
 #'
 #'@inheritDotParams extract_predictions
 #'@inheritDotParams as_familiar_collection
@@ -584,26 +587,36 @@ setMethod("..compute_data_element_estimates", signature(x="familiarDataElementPr
 #'@md
 #'@rdname export_prediction_data-methods
 setGeneric("export_prediction_data",
-           function(object, dir_path=NULL, ...) standardGeneric("export_prediction_data"))
+           function(object,
+                    dir_path=NULL,
+                    export_collection=FALSE,
+                    ...) standardGeneric("export_prediction_data"))
 
 #####export_prediction_data (collection)#####
 
 #'@rdname export_prediction_data-methods
 setMethod("export_prediction_data", signature(object="familiarCollection"),
-          function(object, dir_path=NULL, ...){
+          function(object,
+                   dir_path=NULL,
+                   export_collection=FALSE,
+                   ...){
             
             return(.export(x=object,
                            data_slot="prediction_data",
                            dir_path=dir_path,
                            type="prediction",
-                           subtype=NULL))
+                           subtype=NULL,
+                           export_collection=export_collection))
           })
 
 #####export_prediction_data (generic)#####
 
 #'@rdname export_prediction_data-methods
 setMethod("export_prediction_data", signature(object="ANY"),
-          function(object, dir_path=NULL, ...){
+          function(object,
+                   dir_path=NULL,
+                   export_collection=FALSE,
+                   ...){
             
             # Attempt conversion to familiarCollection object.
             object <- do.call(as_familiar_collection,
@@ -613,7 +626,8 @@ setMethod("export_prediction_data", signature(object="ANY"),
             
             return(do.call(export_prediction_data,
                            args=c(list("object"=object,
-                                       "dir_path"=dir_path),
+                                       "dir_path"=dir_path,
+                                       "export_collection"=export_collection),
                                   list(...))))
           })
 

@@ -36,16 +36,17 @@ setClass("familiarDataElementRiskLogrank",
 #'  stratification.
 #'@md
 #'@keywords internal
-setGeneric("extract_risk_stratification_data", function(object,
-                                                        data,
-                                                        cl=NULL,
-                                                        is_pre_processed=FALSE,
-                                                        ensemble_method=waiver(),
-                                                        detail_level=waiver(),
-                                                        confidence_level=waiver(),
-                                                        message_indent=0L,
-                                                        verbose=FALSE,
-                                                        ...) standardGeneric("extract_risk_stratification_data"))
+setGeneric("extract_risk_stratification_data",
+           function(object,
+                    data,
+                    cl=NULL,
+                    is_pre_processed=FALSE,
+                    ensemble_method=waiver(),
+                    detail_level=waiver(),
+                    confidence_level=waiver(),
+                    message_indent=0L,
+                    verbose=FALSE,
+                    ...) standardGeneric("extract_risk_stratification_data"))
 
 #####extract_risk_stratification_data#####
 setMethod("extract_risk_stratification_data", signature(object="familiarEnsemble"),
@@ -68,10 +69,9 @@ setMethod("extract_risk_stratification_data", signature(object="familiarEnsemble
             if(!object@outcome_type %in% c("survival")) return(NULL)
             
             # Message extraction start
-            if(verbose){
-              logger.message(paste0("Assessing stratification into risk groups."),
-                             indent=message_indent)
-            }
+            logger.message(paste0("Assessing stratification into risk groups."),
+                           indent=message_indent,
+                           verbose=verbose)
             
             # Load confidence alpha from object settings attribute if not
             # provided externally.
@@ -90,6 +90,7 @@ setMethod("extract_risk_stratification_data", signature(object="familiarEnsemble
             
             # Check the level detail.
             detail_level <- .parse_detail_level(x = detail_level,
+                                                object = object,
                                                 default = "ensemble",
                                                 data_element = "risk_stratification_data")
             
@@ -222,8 +223,15 @@ setMethod("extract_risk_stratification_data", signature(object="familiarEnsemble
   # Copy the data element.
   data <- data.table::copy(x@data)
   
-  # Remove NA
-  data <- data[!is.na(risk_group)]
+  # Remove data with missing predictions.
+  data <- remove_nonvalid_predictions(data,
+                                      outcome_type="survival")
+  
+  # Remove data with missing outcomes.
+  data <- remove_missing_outcomes(data=data,
+                                  outcome_type="survival")
+  
+  # Check that any prediction data remain.
   if(is_empty(data)) return(NULL)
   
   # Create new element with strata based on x.
@@ -336,6 +344,11 @@ setMethod("extract_risk_stratification_data", signature(object="familiarEnsemble
   # Copy the data element.
   data <- data.table::copy(x@data)
   
+  # Remove data without known outcome time, or failed risk-group predictions.
+  data <- remove_nonvalid_predictions(data, outcome_type="survival")
+  data <- remove_missing_outcomes(data=data, outcome_type="survival")
+  if(is_empty(data)) return(NULL)
+  
   # Right-censor the data to the desired time window.
   if(!is.null(time_range)){
     # Right censor data past the time range.
@@ -349,7 +362,8 @@ setMethod("extract_risk_stratification_data", signature(object="familiarEnsemble
   if(n_groups < 2) return(NULL)
   
   # Get data from logrank tests.
-  logrank_data <- .compute_risk_stratification_logrank_test(x=x)
+  logrank_data <- .compute_risk_stratification_logrank_test(x=x,
+                                                            time_range=time_range)
   
   # Get data from hazard ratio tests.
   hr_data <- .compute_risk_stratification_hazard_ratio_test(x=x,
@@ -519,9 +533,9 @@ setMethod("extract_risk_stratification_data", signature(object="familiarEnsemble
   }
   
   # Create Cox proportional hazards model.
-  model <- tryCatch(survival::coxph(survival::Surv(time=outcome_time, event=outcome_event) ~ risk_group,
-                                    data=x),
-                    error=identity)
+  model <- suppressWarnings(tryCatch(survival::coxph(survival::Surv(time=outcome_time, event=outcome_event) ~ risk_group,
+                                                     data=x),
+                                     error=identity))
   
   # Check if the Cox PH model could not be computed. Causes could be lack
   # of events, no events beyond the first time point, etc.
@@ -557,6 +571,7 @@ setMethod("extract_risk_stratification_data", signature(object="familiarEnsemble
 #'@param time_range Time range for which strata should be created. If `NULL`,
 #'  the full time range is used.
 #'@inheritParams export_all
+#'@inheritParams export_univariate_analysis_data
 #'
 #'@inheritDotParams extract_risk_stratification_data
 #'@inheritDotParams as_familiar_collection
@@ -587,13 +602,23 @@ setMethod("extract_risk_stratification_data", signature(object="familiarEnsemble
 #'@md
 #'@rdname export_risk_stratification_data-methods
 setGeneric("export_risk_stratification_data",
-           function(object, dir_path=NULL, export_strata=TRUE, time_range=NULL, ...) standardGeneric("export_risk_stratification_data"))
+           function(object,
+                    dir_path=NULL,
+                    export_strata=TRUE,
+                    time_range=NULL,
+                    export_collection=FALSE,
+                    ...) standardGeneric("export_risk_stratification_data"))
 
 #####export_risk_stratification_data (collection)#####
 
 #'@rdname export_risk_stratification_data-methods
 setMethod("export_risk_stratification_data", signature(object="familiarCollection"),
-          function(object, dir_path=NULL, export_strata=TRUE, time_range=NULL, ...){
+          function(object,
+                   dir_path=NULL,
+                   export_strata=TRUE,
+                   time_range=NULL,
+                   export_collection=FALSE,
+                   ...){
             
             if(!is.null(time_range)){
               # Check that time_range is valid.
@@ -636,7 +661,7 @@ setMethod("export_risk_stratification_data", signature(object="familiarCollectio
                                       aggregate_results=TRUE,
                                       object_class="familiarDataElementRiskLogrank",
                                       type="stratification",
-                                      subtype="strata")
+                                      subtype="logrank")
               
               # Export hazard ratio data.
               hazard_ratio_data <- .export(x=object,
@@ -645,12 +670,17 @@ setMethod("export_risk_stratification_data", signature(object="familiarCollectio
                                            aggregate_results=TRUE,
                                            object_class="familiarDataElementRiskHazardRatio",
                                            type="stratification",
-                                           subtype="strata")
+                                           subtype="hazard_ratio")
               
-              return(list("data"=raw_data,
-                          "strata"=strata_data,
-                          "logrank"=logrank_data,
-                          "hazard_ratio_data"=hazard_ratio_data))
+              data_list <- list("data"=raw_data,
+                                "strata"=strata_data,
+                                "logrank"=logrank_data,
+                                "hazard_ratio_data"=hazard_ratio_data)
+              
+              if(export_collection) data_list <- c(data_list,
+                                                   list("collection"=object))
+              
+              return(data_list)
               
             } else {
               return(.export(x=object,
@@ -658,7 +688,8 @@ setMethod("export_risk_stratification_data", signature(object="familiarCollectio
                              dir_path=dir_path,
                              aggregate_results=TRUE,
                              type="stratification",
-                             subtype="data"))
+                             subtype="data",
+                             export_collection=export_collection))
             }
           })
 
@@ -666,7 +697,12 @@ setMethod("export_risk_stratification_data", signature(object="familiarCollectio
 
 #'@rdname export_risk_stratification_data-methods
 setMethod("export_risk_stratification_data", signature(object="ANY"),
-          function(object, dir_path=NULL, export_strata=TRUE, time_range=NULL, ...){
+          function(object,
+                   dir_path=NULL,
+                   export_strata=TRUE,
+                   time_range=NULL,
+                   export_collection=FALSE,
+                   ...){
             
             # Attempt conversion to familiarCollection object.
             object <- do.call(as_familiar_collection,
@@ -677,6 +713,7 @@ setMethod("export_risk_stratification_data", signature(object="ANY"),
             return(do.call(export_risk_stratification_data,
                            args=c(list("object"=object,
                                        "dir_path"=dir_path,
-                                       "export_strata"=export_strata),
+                                       "export_strata"=export_strata,
+                                       "export_collection"=export_collection),
                                   list(...))))
           })

@@ -1,4 +1,4 @@
-test.create_good_data_set <- function(outcome_type){
+test.create_good_data_set <- function(outcome_type, to_data_object=TRUE){
   
   # Suppress NOTES due to non-standard evaluation in data.table
   etype <- median_house_value <- NULL
@@ -9,15 +9,22 @@ test.create_good_data_set <- function(outcome_type){
     
     # Focus on recurrence.
     data <- data[etype == 1]
-    data$adhere <- factor(data$adhere, levels=c(0, 1), labels=c(FALSE, TRUE))
+    data$adhere <- factor(data$adhere, levels=c(0, 1), labels=c(FALSE, TRUE), ordered=TRUE)
     
-    # Keep only first 100 samples for speed and only id, nodes, rx, extent,
-    # adhere and outcome.
-    data <- as_data_object(data=data[1:100, ],
-                           sample_id_column="id",
-                           outcome_column=c("time", "status"),
-                           outcome_type=outcome_type,
-                           include_features=c("nodes", "rx", "adhere"))
+    # Limit to 150 samples
+    data <- data[1:150, ]
+    
+    # update sample identifier.
+    data[, ":="("id"=.I)]
+    
+    if(to_data_object){
+      data <- as_data_object(data=data,
+                             sample_id_column="id",
+                             outcome_column=c("time", "status"),
+                             outcome_type=outcome_type,
+                             include_features=c("nodes", "rx", "adhere"))
+    }
+    
     
   } else if(outcome_type == "multinomial"){
     # Load iris data set.
@@ -27,10 +34,12 @@ test.create_good_data_set <- function(outcome_type){
     data[,":="("sample_id"=.I)]
     
     # Convert to a data object.
-    data <- as_data_object(data=data,
-                           sample_id_column="sample_id",
-                           outcome_column="Species",
-                           outcome_type=outcome_type)
+    if(to_data_object){
+      data <- as_data_object(data=data,
+                             sample_id_column="sample_id",
+                             outcome_column="Species",
+                             outcome_type=outcome_type)
+    }
     
   } else if(outcome_type == "binomial"){
     # Load the cancer breast biopsy data set.
@@ -50,14 +59,19 @@ test.create_good_data_set <- function(outcome_type){
     # Limit to 150 samples
     data <- data[1:150, ]
     
+    # update sample identifier.
+    data[, ":="("id"=.I)]
+    
     # Convert to a data object. Exclude cell_size_uniformity, as these are
     # correlated and make it difficult to stable establish variable importance.
-    data <- as_data_object(data=data,
-                           sample_id_column="id",
-                           outcome_column="cell_malignancy",
-                           outcome_type=outcome_type,
-                           exclude_features="cell_size_uniformity",
-                           class_levels=c("benign", "malignant"))
+    if(to_data_object){
+      data <- as_data_object(data=data,
+                             sample_id_column="id",
+                             outcome_column="cell_malignancy",
+                             outcome_type=outcome_type,
+                             exclude_features="cell_size_uniformity",
+                             class_levels=c("benign", "malignant"))
+    }
     
   } else if(outcome_type == "continuous"){
     # Load the California Test Score Data Set
@@ -66,19 +80,21 @@ test.create_good_data_set <- function(outcome_type){
     # Drop distcod, district, county, readscr, mathscr
     data[, ":="("distcod"=NULL, "district"=NULL, "county"=NULL, "readscr"=NULL, "mathscr"=NULL)]
     
-    # Add sample identifier.
-    data[, ":="("sample_id"=.I)]
-    
     # Limit to 150 samples
     data <- data[271:420, ]
     
+    # Add sample identifier.
+    data[, ":="("sample_id"=.I)]
+    
     # Convert to a data object. Exclude mealpct, as this feature is correlated
     # to avginc.
-    data <- as_data_object(data=data,
-                           sample_id_column="sample_id",
-                           outcome_column="testscr",
-                           outcome_type=outcome_type,
-                           exclude_features="mealpct")
+    if(to_data_object){
+      data <- as_data_object(data=data,
+                             sample_id_column="sample_id",
+                             outcome_column="testscr",
+                             outcome_type=outcome_type,
+                             exclude_features="mealpct")
+    }
     
   } else if(outcome_type == "count"){
     # Load the Boston Housing data set
@@ -98,17 +114,19 @@ test.create_good_data_set <- function(outcome_type){
     # Convert the median_house_value to the actual value.
     data[, "median_house_value":=median_house_value * 1000.0]
     
-    # Add sample identifier.
-    data[, ":="("sample_id"=.I)]
-    
     # Limit to 150 samples
     data <- data[1:150, ]
     
+    # Add sample identifier.
+    data[, ":="("sample_id"=.I)]
+    
     # Convert to a data object.
-    data <- as_data_object(data=data,
-                           sample_id_column="sample_id",
-                           outcome_column="median_house_value",
-                           outcome_type=outcome_type)
+    if(to_data_object){
+      data <- as_data_object(data=data,
+                             sample_id_column="sample_id",
+                             outcome_column="median_house_value",
+                             outcome_type=outcome_type)
+    }
     
   } else {
     ..error_outcome_type_not_implemented(outcome_type)
@@ -161,6 +179,57 @@ test.create_good_data_invariant_set <- function(outcome_type){
 
 
 
+test.create_good_data_no_censoring_set <- function(outcome_type){
+  
+  if(!outcome_type %in% c("survival", "competing_risk")) return(NULL)
+  
+  # Create good dataset first and work from there.
+  data <- test.create_good_data_set(outcome_type=outcome_type)
+  
+  # Set all data to event.
+  data@data[, "outcome_event":=1]
+  
+  return(data)
+}
+
+
+
+test.create_good_data_one_censored_set <- function(outcome_type){
+  
+  if(!outcome_type %in% c("survival", "competing_risk")) return(NULL)
+  
+  # Create good dataset first and work from there.
+  data <- test.create_good_data_set(outcome_type=outcome_type)
+  
+  # Set all data to event.
+  data@data[, "outcome_event":=1]
+  
+  # Set one instance to censored.
+  data@data[1L, "outcome_event":=0]
+  
+  return(data)
+}
+
+
+
+test.create_good_data_few_censored_set <- function(outcome_type){
+  
+  if(!outcome_type %in% c("survival", "competing_risk")) return(NULL)
+  
+  # Create good dataset first and work from there.
+  data <- test.create_good_data_set(outcome_type=outcome_type)
+  
+  # Set all data to event.
+  data@data[, "outcome_event":=1]
+  
+  # Set a few instances to censored.
+  data@data[seq_len(4), "outcome_event":=0]
+  
+  return(data)
+}
+
+
+
 test.create_empty_data_set <- function(outcome_type){
   
   # Create good dataset first and work from there.
@@ -174,13 +243,42 @@ test.create_empty_data_set <- function(outcome_type){
 
 
 
-test.create_one_sample_data_set <- function(outcome_type){
+test.create_bootstrapped_data_set <- function(outcome_type, to_data_object=TRUE){
+  
+  # Suppress NOTES due to non-standard evaluation in data.table
+  .NATURAL <- sample_id <- NULL
   
   # Create good dataset first and work from there.
-  data <- test.create_good_data_set(outcome_type=outcome_type)
+  data <- test.create_good_data_set(outcome_type=outcome_type,
+                                    to_data_object=to_data_object)
   
   # Now keep only the first sample.
-  data@data <- head(data@data, n=1)
+  if(to_data_object){
+    data@data[fam_sample(data@data, replace=TRUE), on=.NATURAL][order(sample_id)]
+    
+  } else {
+    data[fam_sample(data, replace=TRUE), on=.NATURAL][order(sample_id)]
+  }
+  
+  return(data)
+  
+}
+
+
+
+test.create_one_sample_data_set <- function(outcome_type, to_data_object=TRUE){
+  
+  # Create good dataset first and work from there.
+  data <- test.create_good_data_set(outcome_type=outcome_type,
+                                    to_data_object=to_data_object)
+  
+  # Now keep only the first sample.
+  if(to_data_object){
+    data@data <- head(data@data, n=1)
+    
+  } else {
+    data <- head(data, n=1)
+  }
   
   return(data)
 }
@@ -218,8 +316,15 @@ test.create_one_feature_data_set <- function(outcome_type){
     # Recurrence
     data <- data[etype == 1]
     
-    # Keep only first 100 samples for speed and only id, nodes, rx, extent and outcome.
-    data <- as_data_object(data=data[1:100, ],
+    # Limit to 150 samples
+    data <- data[1:150, ]
+    
+    # update sample identifier.
+    data[, ":="("id"=.I)]
+    
+    # Keep only first 150 samples for speed and only id, nodes, rx, extent,
+    # adhere and outcome.
+    data <- as_data_object(data=data,
                            sample_id_column="id",
                            outcome_column=c("time", "status"),
                            outcome_type=outcome_type,
@@ -257,6 +362,9 @@ test.create_one_feature_data_set <- function(outcome_type){
     # Limit to 150 samples
     data <- data[1:150, ]
     
+    # update sample identifier.
+    data[, ":="("id"=.I)]
+    
     # Convert to a data object.
     data <- as_data_object(data=data,
                            sample_id_column="id",
@@ -272,11 +380,11 @@ test.create_one_feature_data_set <- function(outcome_type){
     # Drop distcod, district, county, readscr, mathscr
     data[, ":="("distcod"=NULL, "district"=NULL, "county"=NULL, "readscr"=NULL, "mathscr"=NULL)]
     
-    # Add sample identifier.
-    data[, ":="("sample_id"=.I)]
-    
     # Limit to 150 samples
     data <- data[271:420, ]
+    
+    # Add sample identifier.
+    data[, ":="("sample_id"=.I)]
     
     # Convert to a data object.
     data <- as_data_object(data=data,
@@ -303,11 +411,11 @@ test.create_one_feature_data_set <- function(outcome_type){
     # Convert the median_house_value to the actual value.
     data[, "median_house_value":=median_house_value * 1000.0]
     
-    # Add sample identifier.
-    data[, ":="("sample_id"=.I)]
-    
     # Limit to 150 samples
     data <- data[1:150, ]
+    
+    # Add sample identifier.
+    data[, ":="("sample_id"=.I)]
     
     # Convert to a data object.
     data <- as_data_object(data=data,
@@ -386,6 +494,9 @@ test.create_wide_data_set <- function(outcome_type){
     data <- data[1:5, ]
     data$status <- 1
     
+    # update sample identifier.
+    data[, ":="("id"=.I)]
+    
     # Add twenty random features
     random_data <- lapply(seq_len(20), function(ii, n) stats::rnorm(n=n), n=nrow(data))
     names(random_data) <- paste0("random_", seq_len(20))
@@ -447,6 +558,9 @@ test.create_wide_data_set <- function(outcome_type){
     # Limit to 10 samples
     data <- data[11:20, ]
     
+    # update sample identifier.
+    data[, ":="("id"=.I)]
+    
     # Add twenty random features
     random_data <- lapply(seq_len(20), function(ii, n) stats::rnorm(n=n), n=nrow(data))
     names(random_data) <- paste0("random_", seq_len(20))
@@ -475,11 +589,11 @@ test.create_wide_data_set <- function(outcome_type){
     # Drop distcod, district, county, readscr, mathscr
     data[, ":="("distcod"=NULL, "district"=NULL, "county"=NULL, "readscr"=NULL, "mathscr"=NULL)]
     
-    # Add sample identifier.
-    data[, ":="("sample_id"=.I)]
-    
     # Limit to 10 samples
     data <- data[411:420, ]
+    
+    # Add sample identifier.
+    data[, ":="("sample_id"=.I)]
     
     # Add twenty random features
     random_data <- lapply(seq_len(20), function(ii, n) stats::rnorm(n=n), n=nrow(data))
@@ -512,11 +626,11 @@ test.create_wide_data_set <- function(outcome_type){
     # Convert the median_house_value to the actual value.
     data[, "median_house_value":=median_house_value * 1000.0]
     
-    # Add sample identifier.
-    data[, ":="("sample_id"=.I)]
-    
     # Limit to 10 samples
     data <- data[1:10, ]
+    
+    # Add sample identifier.
+    data[, ":="("sample_id"=.I)]
     
     # Add twenty random features
     random_data <- lapply(seq_len(20), function(ii, n) stats::rnorm(n=n), n=nrow(data))
@@ -639,6 +753,60 @@ test.create_small_bad_data_set <- function(outcome_type){
   data@data <- data@data[sample(30)]
   
   return(data)
+}
+
+
+
+test.create_prospective_data_set <- function(outcome_type){
+  # Prospective data has NA for outcome.
+  
+  data <- test.create_good_data_set(outcome_type=outcome_type)
+  
+  if(outcome_type %in% c("survival", "competing_risk")){
+    data@data[, ":="("outcome_time"=NA,
+                     "outcome_event"=NA)]
+  } else {
+    data@data[, ":="("outcome"=NA)]
+  }
+  
+  return(data)  
+}
+
+
+
+test.create_partially_prospective_data_set <- function(outcome_type){
+  # Prospective data has NA for outcome for a few samples, but not all.
+  
+  data <- test.create_good_data_set(outcome_type=outcome_type)
+  
+  if(outcome_type %in% c("survival", "competing_risk")){
+    data@data[c(1,2), ":="("outcome_time"=NA,
+                           "outcome_event"=NA)]
+  } else {
+    data@data[c(1,2), ":="("outcome"=NA)]
+  }
+  
+  return(data)  
+}
+
+
+
+test.create_mostly_prospective_data_set <- function(outcome_type){
+  # Prospective data has NA for all but one sample.
+  
+  # Suppress NOTES due to non-standard evaluation in data.table
+  sample_id <- NULL
+  
+  data <- test.create_good_data_set(outcome_type=outcome_type)
+  
+  if(outcome_type %in% c("survival", "competing_risk")){
+    data@data[sample_id > 1L, ":="("outcome_time"=NA,
+                                   "outcome_event"=NA)]
+  } else {
+    data@data[sample_id > 1L, ":="("outcome"=NA)]
+  }
+  
+  return(data)  
 }
 
 
@@ -899,7 +1067,7 @@ test_create_multiple_synthetic_series <- function(outcome_type){
     
     return(data)
   }
-
+  
   # Draw the first dataset.
   data_1 <- test_create_synthetic_series_data(outcome_type=outcome_type,
                                               n_numeric=3L,

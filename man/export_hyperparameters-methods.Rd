@@ -6,11 +6,29 @@
 \alias{export_hyperparameters,ANY-method}
 \title{Extract and export model hyperparameters.}
 \usage{
-export_hyperparameters(object, dir_path = NULL, aggregate_results = TRUE, ...)
+export_hyperparameters(
+  object,
+  dir_path = NULL,
+  aggregate_results = TRUE,
+  export_collection = FALSE,
+  ...
+)
 
-\S4method{export_hyperparameters}{familiarCollection}(object, dir_path = NULL, aggregate_results = TRUE, ...)
+\S4method{export_hyperparameters}{familiarCollection}(
+  object,
+  dir_path = NULL,
+  aggregate_results = TRUE,
+  export_collection = FALSE,
+  ...
+)
 
-\S4method{export_hyperparameters}{ANY}(object, dir_path = NULL, aggregate_results = TRUE, ...)
+\S4method{export_hyperparameters}{ANY}(
+  object,
+  dir_path = NULL,
+  aggregate_results = TRUE,
+  export_collection = FALSE,
+  ...
+)
 }
 \arguments{
 \item{object}{A \code{familiarCollection} object, or other other objects from which
@@ -21,6 +39,8 @@ will allow export as a structured list of data.tables.}
 
 \item{aggregate_results}{Flag that signifies whether results should be
 aggregated for export.}
+
+\item{export_collection}{(\emph{optional}) Exports the collection if TRUE.}
 
 \item{...}{
   Arguments passed on to \code{\link[=as_familiar_collection]{as_familiar_collection}}

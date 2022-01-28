@@ -21,6 +21,7 @@ NULL
 #'@inheritParams plotting.check_data_handling
 #'@inheritDotParams as_familiar_collection -object
 #'@inheritDotParams ggplot2::ggsave -height -width -units
+#'@inheritDotParams extract_decision_curve_data -object
 #'
 #'@details This function generates plots for decision curves.
 #'
@@ -82,8 +83,8 @@ setGeneric("plot_decision_curve",
                     x_label=waiver(),
                     y_label=waiver(),
                     legend_label=waiver(),
-                    plot_title=NULL,
-                    plot_sub_title=NULL,
+                    plot_title=waiver(),
+                    plot_sub_title=waiver(),
                     caption=NULL,
                     x_range=NULL,
                     x_n_breaks=5,
@@ -96,6 +97,7 @@ setGeneric("plot_decision_curve",
                     width=waiver(),
                     height=waiver(),
                     units=waiver(),
+                    export_collection=FALSE,
                     ...) standardGeneric("plot_decision_curve"))
 
 #####plot_decision_curve (generic)#####
@@ -114,8 +116,8 @@ setMethod("plot_decision_curve", signature(object="ANY"),
                    x_label=waiver(),
                    y_label=waiver(),
                    legend_label=waiver(),
-                   plot_title=NULL,
-                   plot_sub_title=NULL,
+                   plot_title=waiver(),
+                   plot_sub_title=waiver(),
                    caption=NULL,
                    x_range=NULL,
                    x_n_breaks=5,
@@ -128,11 +130,14 @@ setMethod("plot_decision_curve", signature(object="ANY"),
                    width=waiver(),
                    height=waiver(),
                    units=waiver(),
+                   export_collection=FALSE,
                    ...){
             
             # Attempt conversion to familiarCollection object.
             object <- do.call(as_familiar_collection,
-                              args=append(list("object"=object, "data_element"="decision_curve_analyis"), list(...)))
+                              args=c(list("object"=object,
+                                          "data_element"="decision_curve_analyis"),
+                                     list(...)))
             
             return(do.call(plot_decision_curve,
                            args=list("object"=object,
@@ -160,7 +165,8 @@ setMethod("plot_decision_curve", signature(object="ANY"),
                                      "conf_int_alpha"=conf_int_alpha,
                                      "width"=width,
                                      "height"=height,
-                                     "units"=units)))
+                                     "units"=units,
+                                     "export_collection"=export_collection)))
           })
 
 
@@ -180,8 +186,8 @@ setMethod("plot_decision_curve", signature(object="familiarCollection"),
                    x_label=waiver(),
                    y_label=waiver(),
                    legend_label=waiver(),
-                   plot_title=NULL,
-                   plot_sub_title=NULL,
+                   plot_title=waiver(),
+                   plot_sub_title=waiver(),
                    caption=NULL,
                    x_range=NULL,
                    x_n_breaks=5,
@@ -194,6 +200,7 @@ setMethod("plot_decision_curve", signature(object="familiarCollection"),
                    width=waiver(),
                    height=waiver(),
                    units=waiver(),
+                   export_collection=FALSE,
                    ...){
 
             # Suppress NOTES due to non-standard evaluation in data.table
@@ -224,6 +231,12 @@ setMethod("plot_decision_curve", signature(object="familiarCollection"),
             # Check that the data are not empty.
             if(is_empty(x)) return(NULL)
             
+            # Check package requirements for plotting.
+            if(!require_package(x=..required_plotting_packages(extended=FALSE),
+                                purpose="to plot decision curves",
+                                message_type="warning")){
+              return(NULL)
+            }
             
             ##### Check input arguments ------------------------------------------------
 
@@ -285,6 +298,13 @@ setMethod("plot_decision_curve", signature(object="familiarCollection"),
               y_range <- c(head(y_breaks, n=1),
                            tail(y_breaks, n=1))
             }
+            
+            # # Adapt the confidence intervals so that they fit in the y-range.
+            # if(conf_int_style != "none"){
+            #   x@data[curve_type == "model" & is.finite(ci_low) & ci_low < y_range[1] & ci_up > y_range[1], "ci_low":=y_range[1]]
+            #   x@data[curve_type == "model" & is.finite(ci_up) & ci_up > y_range[2] & ci_low < y_range[2], "ci_up":=y_range[2]]
+            # }
+            
 
             if(object@outcome_type %in% c("binomial", "multinomial")){
               split_variable <- "positive_class"
@@ -402,6 +422,9 @@ setMethod("plot_decision_curve", signature(object="familiarCollection"),
             
             ##### Create plots ---------------------------------------------------------
             
+            # Determine if subtitle should be generated.
+            autogenerate_plot_subtitle <- is.waive(plot_sub_title)
+            
             # Split data
             if(!is.null(split_by)){
               x_split <- split(x@data, by=split_by)
@@ -418,6 +441,13 @@ setMethod("plot_decision_curve", signature(object="familiarCollection"),
               
               # Skip empty datasets
               if(is_empty(x_split[[ii]])) next()
+              
+              if(is.waive(plot_title)) plot_title <- "Decision curve"
+              
+              if(autogenerate_plot_subtitle){
+                plot_sub_title <- plotting.create_subtitle(split_by=split_by,
+                                                           x=x_split[[ii]])
+              }
               
               # Generate plot
               p <- .plot_decision_curve_plot(x=x_split[[ii]],
@@ -448,13 +478,10 @@ setMethod("plot_decision_curve", signature(object="familiarCollection"),
               # Save and export
               if(!is.null(dir_path)){
                 
-                subtype <- "decision_curve"
-                
-                # Determine the subtype
-                if(!is.null(split_by)){
-                  subtype <- c(subtype, as.character(sapply(split_by, function(jj, x) (x[[jj]][1]), x=x_split[[ii]])))
-                  subtype <- paste0(subtype, collapse="_")
-                }
+                # Set subtype.
+                subtype <- plotting.create_subtype(x=x_split[[ii]],
+                                                   subtype="decision_curve",
+                                                   split_by=split_by)
                 
                 # Obtain decent default values for the plot.
                 def_plot_dims <- .determine_decision_curve_plot_dimensions(x=x_split[[ii]],
@@ -463,51 +490,49 @@ setMethod("plot_decision_curve", signature(object="familiarCollection"),
                 
                 # Save to file.
                 do.call(plotting.save_plot_to_file,
-                        args=append(list("plot_obj"=p,
-                                         "object"=object,
-                                         "dir_path"=dir_path,
-                                         "type"="decision_curve_analysis",
-                                         "subtype"=subtype,
-                                         "height"=ifelse(is.waive(height), def_plot_dims[1], height),
-                                         "width"=ifelse(is.waive(width), def_plot_dims[2], width),
-                                         "units"=ifelse(is.waive(units), "cm", units)),
-                                    list(...)))
+                        args=c(list("plot_obj"=p,
+                                    "object"=object,
+                                    "dir_path"=dir_path,
+                                    "type"="decision_curve_analysis",
+                                    "subtype"=subtype,
+                                    "height"=ifelse(is.waive(height), def_plot_dims[1], height),
+                                    "width"=ifelse(is.waive(width), def_plot_dims[2], width),
+                                    "units"=ifelse(is.waive(units), "cm", units)),
+                               list(...)))
                 
               } else {
                 # Store as list for export.
-                plot_list <- append(plot_list, list(p))
+                plot_list <- c(plot_list, list(p))
               }
             }
             
-            # Output
-            if(is.null(dir_path)){
-              return(plot_list)
-              
-            } else {
-              return(NULL)
-            }
+            # Generate output
+            return(plotting.get_output(dir_path=dir_path,
+                                       plot_list=plot_list,
+                                       export_collection=export_collection,
+                                       object=object))
           })
 
 
 
 .plot_decision_curve_plot <- function(x,
-                                 color_by,
-                                 facet_by,
-                                 facet_wrap_cols,
-                                 ggtheme,
-                                 discrete_palette,
-                                 x_label,
-                                 y_label,
-                                 legend_label,
-                                 plot_title,
-                                 plot_sub_title,
-                                 caption,
-                                 x_range,
-                                 x_breaks,
-                                 y_range,
-                                 y_breaks,
-                                 conf_int_style,
-                                 conf_int_alpha){
+                                      color_by,
+                                      facet_by,
+                                      facet_wrap_cols,
+                                      ggtheme,
+                                      discrete_palette,
+                                      x_label,
+                                      y_label,
+                                      legend_label,
+                                      plot_title,
+                                      plot_sub_title,
+                                      caption,
+                                      x_range,
+                                      x_breaks,
+                                      y_range,
+                                      y_breaks,
+                                      conf_int_style,
+                                      conf_int_alpha){
   
   # Suppress NOTES due to non-standard evaluation in data.table
   curve_type <- NULL
@@ -610,8 +635,8 @@ setMethod("plot_decision_curve", signature(object="familiarCollection"),
   }
   
   # Update x and y scales
-  p <- p + ggplot2::scale_x_continuous(breaks=x_breaks, limits=x_range)
-  p <- p + ggplot2::scale_y_continuous(breaks=y_breaks, limits=y_range)
+  p <- p + ggplot2::scale_x_continuous(breaks=x_breaks)
+  p <- p + ggplot2::scale_y_continuous(breaks=y_breaks)
   
   # Labels
   p <- p + ggplot2::labs(x=x_label,
@@ -639,6 +664,9 @@ setMethod("plot_decision_curve", signature(object="familiarCollection"),
                                    drop=TRUE)
     }
   }
+  
+  # Prevent clipping of confidence intervals.
+  p <- p + ggplot2::coord_cartesian(xlim=x_range, ylim=y_range)
   
   return(p)
 }

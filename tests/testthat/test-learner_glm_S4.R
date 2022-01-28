@@ -6,6 +6,8 @@ testthat::skip_on_cran()
 
 familiar:::test_all_learners_train_predict_vimp(learners=familiar:::.get_available_glm_learners(show_general=FALSE))
 
+familiar:::test_all_learners_parallel_train_predict_vimp(learners=familiar:::.get_available_glm_learners(show_general=FALSE))
+
 #####Count outcome tests-------------------------------------------------------------
 
 # Create test data sets.
@@ -13,18 +15,18 @@ good_data <- familiar:::test.create_good_data_set("count")
 wide_data <- familiar:::test.create_wide_data_set("count")
 
 # Train the model using the good dataset.
-good_model <- familiar:::train(data=good_data,
-                               cluster_method="none",
-                               imputation_method="simple",
-                               hyperparameter_list=list("sign_size"=familiar:::get_n_features(good_data)),
-                               learner="glm_poisson")
+good_model <- familiar:::test_train(data=good_data,
+                                    cluster_method="none",
+                                    imputation_method="simple",
+                                    hyperparameter_list=list("sign_size"=familiar:::get_n_features(good_data)),
+                                    learner="glm_poisson")
 
 # Train the model using wide data.
-wide_model <- familiar:::train(data=wide_data,
-                               cluster_method="none",
-                               imputation_method="simple",
-                               hyperparameter_list=list("sign_size"=familiar:::get_n_features(wide_data)),
-                               learner="glm_poisson")
+wide_model <- familiar:::test_train(data=wide_data,
+                                    cluster_method="none",
+                                    imputation_method="simple",
+                                    hyperparameter_list=list("sign_size"=familiar:::get_n_features(wide_data)),
+                                    learner="glm_poisson")
 
 testthat::test_that("Generalised linear model trained correctly", {
   # Model trained
@@ -68,18 +70,18 @@ good_data <- familiar:::test.create_good_data_set("continuous")
 wide_data <- familiar:::test.create_wide_data_set("continuous")
 
 # Train the model using the good dataset.
-good_model <- familiar:::train(data=good_data,
-                               cluster_method="none",
-                               imputation_method="simple",
-                               hyperparameter_list=list("sign_size"=familiar:::get_n_features(good_data)),
-                               learner="glm_gaussian")
+good_model <- familiar:::test_train(data=good_data,
+                                    cluster_method="none",
+                                    imputation_method="simple",
+                                    hyperparameter_list=list("sign_size"=familiar:::get_n_features(good_data)),
+                                    learner="glm_gaussian")
 
 # Train the model using wide data.
-wide_model <- familiar:::train(data=wide_data,
-                               cluster_method="none",
-                               imputation_method="simple",
-                               hyperparameter_list=list("sign_size"=familiar:::get_n_features(wide_data)),
-                               learner="glm_gaussian")
+wide_model <- familiar:::test_train(data=wide_data,
+                                    cluster_method="none",
+                                    imputation_method="simple",
+                                    hyperparameter_list=list("sign_size"=familiar:::get_n_features(wide_data)),
+                                    learner="glm_gaussian")
 
 testthat::test_that("Generalised linear model trained correctly", {
   # Model trained
@@ -123,18 +125,18 @@ good_data <- familiar:::test.create_good_data_set("binomial")
 wide_data <- familiar:::test.create_wide_data_set("binomial")
 
 # Train the model using the good dataset.
-good_model <- familiar:::train(data=good_data,
-                               cluster_method="none",
-                               imputation_method="simple",
-                               hyperparameter_list=list("sign_size"=familiar:::get_n_features(good_data)),
-                               learner="glm_logistic")
+good_model <- familiar:::test_train(data=good_data,
+                                    cluster_method="none",
+                                    imputation_method="simple",
+                                    hyperparameter_list=list("sign_size"=familiar:::get_n_features(good_data)),
+                                    learner="glm_logistic")
 
 # Train the model using wide data.
-wide_model <- familiar:::train(data=wide_data,
-                               cluster_method="none",
-                               imputation_method="simple",
-                               hyperparameter_list=list("sign_size"=familiar:::get_n_features(wide_data)),
-                               learner="glm_logistic")
+wide_model <- familiar:::test_train(data=wide_data,
+                                    cluster_method="none",
+                                    imputation_method="simple",
+                                    hyperparameter_list=list("sign_size"=familiar:::get_n_features(wide_data)),
+                                    learner="glm_logistic")
 
 testthat::test_that("Generalised linear model trained correctly", {
   # Model trained
@@ -166,7 +168,7 @@ testthat::test_that("Generalised linear model can train on wide data", {
   
   # Variable importance table is present.
   suppressWarnings(testthat::expect_equal(is_empty(familiar:::..vimp(wide_model)), FALSE))
-                   
+  
   # Valid predictions.
   suppressWarnings(testthat::expect_equal(familiar:::any_predictions_valid(familiar:::.predict(wide_model, wide_data), outcome_type=wide_data@outcome_type), TRUE))
 })
@@ -179,18 +181,18 @@ good_data <- familiar:::test.create_good_data_set("multinomial")
 wide_data <- familiar:::test.create_wide_data_set("multinomial")
 
 # Train the model using the good dataset.
-good_model <- suppressWarnings(familiar:::train(data=good_data,
-                                                cluster_method="none",
-                                                imputation_method="simple",
-                                                hyperparameter_list=list("sign_size"=familiar:::get_n_features(good_data)),
-                                                learner="glm_multinomial"))
+good_model <- suppressWarnings(familiar:::test_train(data=good_data,
+                                                     cluster_method="none",
+                                                     imputation_method="simple",
+                                                     hyperparameter_list=list("sign_size"=familiar:::get_n_features(good_data)),
+                                                     learner="glm_multinomial"))
 
 # Train the model using wide data.
-wide_model <- familiar:::train(data=wide_data,
-                               cluster_method="none",
-                               imputation_method="simple",
-                               hyperparameter_list=list("sign_size"=familiar:::get_n_features(wide_data)),
-                               learner="glm_multinomial")
+wide_model <- familiar:::test_train(data=wide_data,
+                                    cluster_method="none",
+                                    imputation_method="simple",
+                                    hyperparameter_list=list("sign_size"=familiar:::get_n_features(wide_data)),
+                                    learner="glm_multinomial")
 
 testthat::test_that("Generalised linear model trained correctly", {
   # Model trained
@@ -235,20 +237,20 @@ good_data <- familiar:::test.create_good_data_set("survival")
 wide_data <- familiar:::test.create_wide_data_set("survival")
 
 # Train the model using the good dataset.
-good_model <- familiar:::train(data=good_data,
-                               cluster_method="none",
-                               imputation_method="simple",
-                               hyperparameter_list=list("sign_size"=familiar:::get_n_features(good_data)),
-                               time_max=1832,
-                               learner="glm")
+good_model <- familiar:::test_train(data=good_data,
+                                    cluster_method="none",
+                                    imputation_method="simple",
+                                    hyperparameter_list=list("sign_size"=familiar:::get_n_features(good_data)),
+                                    time_max=1832,
+                                    learner="glm")
 
 # Train the model using wide data.
-wide_model <- suppressWarnings(familiar:::train(data=wide_data,
-                                                cluster_method="none",
-                                                imputation_method="simple",
-                                                hyperparameter_list=list("sign_size"=familiar:::get_n_features(wide_data)),
-                                                time_max=1832,
-                                                learner="glm"))
+wide_model <- suppressWarnings(familiar:::test_train(data=wide_data,
+                                                     cluster_method="none",
+                                                     imputation_method="simple",
+                                                     hyperparameter_list=list("sign_size"=familiar:::get_n_features(wide_data)),
+                                                     time_max=1832,
+                                                     learner="glm"))
 
 testthat::test_that("Generalised linear model trained correctly", {
   # Model trained

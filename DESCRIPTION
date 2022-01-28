@@ -1,64 +1,79 @@
 Package: familiar
-Title: End-To-End Machine Learning and Data Analysis Framework
-Version: 0.0.0.54
+Title: A Package for End-to-End Automated Machine Learning
+Version: 1.0.0
 Authors@R: c(
-   person("Alex", "Zwanenburg",
-          email = "alexander.zwanenburg@nct-dresden.de",
-          role = c("aut", "cre"),
-          comment = c(ORCID = "0000-0002-0342-9545")),
-   person("Steffen", "Löck", role="aut"),
-   person("Stefan", "Leger", role="ctb"))
-Description: Encapsulates the modelling and validation workflow for
-   (big) data analysis. Automatically performs steps such as data normalization,
-   dimensionality reduction, feature selection, hyper-parameter optimization,
-   model building and validation. Risk of biases is minimised through minimal
-   required user input, automation and separating development and training
-   data. Model discrimination and calibration are assessed.
+    person("Alex", "Zwanenburg",
+           email = "alexander.zwanenburg@nct-dresden.de",
+           role = c("aut", "cre"),
+           comment = c(ORCID = "0000-0002-0342-9545")),
+    person("Steffen", "Löck", role="aut"),
+    person("Stefan", "Leger", role="ctb"),
+    person("Iram", "Shahzadi", role="ctb"),
+    person("Asier", "Rabasco Meneghetti", role="ctb"),
+    person("Sebastian", "Starke", role="ctb"),
+    person("Technische Universität Dresden", role="cph"),
+    person("German Cancer Research Center (DKFZ)", role="cph"))
+Description: End-to-end, automated machine learning package for creating 
+    trustworthy and interpretable machine learning models. Familiar supports
+    modelling of regression, categorical and time-to-event (survival) outcomes.
+    Models created using familiar are self-containing, and their use does not
+    require additional information such as baseline survival, feature
+    clustering, or feature transformation and normalisation parameters. In
+    addition, an novelty or out-of-distribution detector is trained
+    simultaneously and contained with every model. Model performance,
+    calibration, risk group stratification, (permutation) variable importance,
+    individual conditional expectation, partial dependence, and more, are
+    assessed automatically as part of the evaluation process and exported in
+    tabular format and plotted, and may also be computed manually using export
+    and plot functions. Where possible, metrics and values obtained during the
+    evaluation process come with confidence intervals.
+URL: https://github.com/alexzwanenburg/familiar
+BugReports: https://github.com/alexzwanenburg/familiar/issues
 Depends: R (>= 3.4.0)
 License: EUPL
 Encoding: UTF-8
 LazyData: true
-RoxygenNote: 7.1.1
+RoxygenNote: 7.1.2
 VignetteBuilder: knitr
-Imports: methods,
-    microbenchmark,
-    callr (>= 3.4.3),
-    rlang (>= 0.3.4),
+Imports:
     data.table,
-    survival,
-    CORElearn,
-    cluster,
-    tools,
-    VGAM,
-    randomForestSRC,
-    mboost (>= 2.9.0),
-    partykit,
-    ggplot2 (>= 3.0.0),
-    gtable,
-    isotree,
-    e1071,
-    klaR,
-    xgboost,
-    glmnet,
-    ranger,
-    labeling,
-    scales,
+    methods,
+    rlang (>= 0.3.4),
     stringi,
-    xml2,
-    maxstat
+    survival
 Suggests:
-    dynamicTreeCut,
-    rmarkdown,
-    fastcluster,
-    Rservecoop,
-    RSclient,
-    Rserve,
-    qvalue,
+    BART,
+    callr (>= 3.4.3),
+    cluster,
+    CORElearn,
     cowplot,
-    knitr,
-    testthat (>= 2.1.0),
+    dynamicTreeCut,
+    e1071 (>= 1.7.5),
     Ecdat,
-    MASS
+    fastcluster,
+    ggplot2 (>= 3.0.0),
+    glmnet,
+    gtable,
+    harmonicmeanp,
+    isotree (>= 0.3.0),
+    knitr,
+    labeling,
+    laGP,
+    MASS,
+    maxstat,
+    mboost (>= 2.9.0),
+    microbenchmark,
+    partykit,
+    proxy,
+    qvalue,
+    randomForestSRC,
+    ranger,
+    rmarkdown,
+    scales,
+    testthat (>= 3.0.0),
+    xml2,
+    VGAM,
+    xgboost
 Collate: 
     'BatchNormalisation.R'
     'BootstrapConfidenceInterval.R'
@@ -66,6 +81,7 @@ Collate:
     'FamiliarS4Classes.R'
     'FamiliarS4Generics.R'
     'CheckHyperparameters.R'
+    'CheckPackages.R'
     'Clustering.R'
     'CombatNormalisation.R'
     'DataObject.R'
@@ -89,6 +105,7 @@ Collate:
     'FamiliarDataComputationFeatureExpression.R'
     'FamiliarDataComputationFeatureSimilarity.R'
     'FamiliarDataComputationHyperparameters.R'
+    'FamiliarDataComputationICE.R'
     'FamiliarDataComputationModelPerformance.R'
     'FamiliarDataComputationPermutationVimp.R'
     'FamiliarDataComputationPredictionData.R'
@@ -100,6 +117,7 @@ Collate:
     'FamiliarDataElement.R'
     'FamiliarEnsemble.R'
     'FamiliarModel.R'
+    'FamiliarNoveltyDetector.R'
     'FamiliarObjectConversion.R'
     'FamiliarObjectUpdate.R'
     'FamiliarSharedS4Methods.R'
@@ -135,6 +153,9 @@ Collate:
     'MetricS4ConcordanceIndex.R'
     'ModelBuilding.R'
     'Normalisation.R'
+    'NoveltyDetectorS4IsolationTree.R'
+    'NoveltyDetectorMain.R'
+    'NoveltyDetectorS4NoneNoveltyDetector.R'
     'OutcomeInfo.R'
     'PairwiseSimilarity.R'
     'ParallelFunctions.R'
@@ -149,6 +170,7 @@ Collate:
     'PlotFeatureRanking.R'
     'PlotFeatureSimilarity.R'
     'PlotGTable.R'
+    'PlotICE.R'
     'PlotInputArguments.R'
     'PlotKaplanMeier.R'
     'PlotModelPerformance.R'
@@ -167,6 +189,7 @@ Collate:
     'TestFunctions.R'
     'TrainS4Methods.R'
     'Transformation.R'
+    'TrimUtilities.R'
     'Utilities.R'
     'UtilitiesS4.R'
     'VimpS4Regression.R'
@@ -176,6 +199,6 @@ Collate:
     'VimpS4Concordance.R'
     'VimpMain.R'
     'VimpS4CoreLearn.R'
-    'zzz.R'
+    'aaa.R'
 Config/testthat/parallel: true
 Config/testthat/edition: 3

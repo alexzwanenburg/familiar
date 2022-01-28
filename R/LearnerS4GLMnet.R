@@ -9,6 +9,19 @@ setClass("familiarGLMnet",
          prototype=list("encoding_reference_table" = NULL,
                         "feature_order"=character()))
 
+#####initialize#################################################################
+setMethod("initialize", signature(.Object="familiarGLMnet"),
+          function(.Object, ...){
+            
+            # Update with parent class first.
+            .Object <- callNextMethod()
+            
+            # Set the required package
+            .Object@package <- "glmnet"
+            
+            return(.Object)
+          })
+
 setClass("familiarGLMnetRidge",
          contains="familiarGLMnet")
 
@@ -17,6 +30,9 @@ setClass("familiarGLMnetLasso",
 
 setClass("familiarGLMnetElasticNet",
          contains="familiarGLMnet")
+
+setClass("familiarGLMnetLassoTest",
+         contains="familiarGLMnetLasso")
 
 
 .get_available_glmnet_ridge_learners <- function(show_general=TRUE){
@@ -139,6 +155,9 @@ setMethod("get_default_hyperparameters", signature(object="familiarGLMnet"),
             fam <- stringi::stri_replace_first_regex(str=object@learner, pattern="elastic_net|lasso|ridge", replace="")
             if(fam != "") fam <- stringi::stri_replace_first_regex(str=fam, pattern="_", replace="")
             
+            # Check for lasso_test
+            if(object@learner == "lasso_test") fam <- ""
+            
             # Determine number of subjects
             n_samples <- data.table::uniqueN(data@data, by=get_id_columns(id_depth="series"))
             
@@ -250,6 +269,9 @@ setMethod("..train", signature(object="familiarGLMnet", data="dataObject"),
               return(..train(object=object, data=data))
             }
             
+            # Check that required packages are loaded and installed.
+            require_package(object, "train")
+            
             # Use effect coding to convert categorical data into encoded data -
             # this is required to deal with factors with missing/new levels
             # between training and test data sets.
@@ -289,39 +311,38 @@ setMethod("..train", signature(object="familiarGLMnet", data="dataObject"),
             # Train the model.
             if(is(object, "familiarGLMnetRidge")){
               # Attempt to train the model
-              model <- suppressWarnings(tryCatch(cv.glmnet(x = as.matrix(encoded_data$encoded_data@data[, mget(feature_columns)]),
-                                                           y = outcome_data,
-                                                           family = object@hyperparameters$family,
-                                                           alpha = 0.0,
-                                                           standardize = object@hyperparameters$normalise,
-                                                           nfolds = NULL,
-                                                           foldid = fold_table$fold_id,
-                                                           parallel = FALSE),
+              model <- suppressWarnings(tryCatch(glmnet::cv.glmnet(x = as.matrix(encoded_data$encoded_data@data[, mget(feature_columns)]),
+                                                                    y = outcome_data,
+                                                                    family = as.character(object@hyperparameters$family),
+                                                                    alpha = 0.0,
+                                                                    standardize = object@hyperparameters$normalise,
+                                                                    nfolds = NULL,
+                                                                    foldid = fold_table$fold_id,
+                                                                    parallel = FALSE),
                                                  error=identity))
-              
               
             } else if(is(object, "familiarGLMnetLasso")){
               # Attempt to train the model
-              model <- suppressWarnings(tryCatch(cv.glmnet(x = as.matrix(encoded_data$encoded_data@data[, mget(feature_columns)]),
-                                                           y = outcome_data,
-                                                           family = object@hyperparameters$family,
-                                                           alpha = 1.0,
-                                                           standardize = object@hyperparameters$normalise,
-                                                           nfolds = NULL,
-                                                           foldid = fold_table$fold_id,
-                                                           parallel = FALSE),
+              model <- suppressWarnings(tryCatch(glmnet::cv.glmnet(x = as.matrix(encoded_data$encoded_data@data[, mget(feature_columns)]),
+                                                                   y = outcome_data,
+                                                                   family = as.character(object@hyperparameters$family),
+                                                                   alpha = 1.0,
+                                                                   standardize = object@hyperparameters$normalise,
+                                                                   nfolds = NULL,
+                                                                   foldid = fold_table$fold_id,
+                                                                   parallel = FALSE),
                                                  error=identity))
               
             } else if(is(object, "familiarGLMnetElasticNet")){
               # Attempt to train the model
-              model <- suppressWarnings(tryCatch(cv.glmnet(x = as.matrix(encoded_data$encoded_data@data[, mget(feature_columns)]),
-                                                           y = outcome_data,
-                                                           family = object@hyperparameters$family,
-                                                           alpha = object@hyperparameters$alpha,
-                                                           standardize = object@hyperparameters$normalise,
-                                                           nfolds = NULL,
-                                                           foldid = fold_table$fold_id,
-                                                           parallel = FALSE),
+              model <- suppressWarnings(tryCatch(glmnet::cv.glmnet(x = as.matrix(encoded_data$encoded_data@data[, mget(feature_columns)]),
+                                                                   y = outcome_data,
+                                                                   family = as.character(object@hyperparameters$family),
+                                                                   alpha = object@hyperparameters$alpha,
+                                                                   standardize = object@hyperparameters$normalise,
+                                                                   nfolds = NULL,
+                                                                   foldid = fold_table$fold_id,
+                                                                   parallel = FALSE),
                                                  error=identity))
               
             } else {
@@ -340,6 +361,9 @@ setMethod("..train", signature(object="familiarGLMnet", data="dataObject"),
             # Add feature order
             object@feature_order <- feature_columns
             
+            # Set learner version
+            object <- set_package_version(object)
+            
             return(object)
           })
 
@@ -348,6 +372,9 @@ setMethod("..train", signature(object="familiarGLMnet", data="dataObject"),
 #####..predict#####
 setMethod("..predict", signature(object="familiarGLMnet", data="dataObject"),
           function(object, data, type="default", ...){
+            
+            # Check that required packages are loaded and installed.
+            require_package(object, "predict")
             
             if(type == "default"){
               ##### Default method #############################################
@@ -375,7 +402,7 @@ setMethod("..predict", signature(object="familiarGLMnet", data="dataObject"),
                 # Use the model to predict class probabilities.
                 model_predictions <- predict(object=object@model,
                                              newx=as.matrix(encoded_data$encoded_data@data[, mget(object@feature_order)]),
-                                             s=object@hyperparameters$lambda_min,
+                                             s=as.character(object@hyperparameters$lambda_min),
                                              type="response")
                 
                 # Obtain class levels.
@@ -398,7 +425,7 @@ setMethod("..predict", signature(object="familiarGLMnet", data="dataObject"),
                 # Use the model to predict class probabilities.
                 model_predictions <- predict(object=object@model,
                                              newx=as.matrix(encoded_data$encoded_data@data[, mget(object@feature_order)]),
-                                             s=object@hyperparameters$lambda_min,
+                                             s=as.character(object@hyperparameters$lambda_min),
                                              type="response")[, , 1]
                 
                 # Obtain class levels.
@@ -429,7 +456,7 @@ setMethod("..predict", signature(object="familiarGLMnet", data="dataObject"),
                 # Use the model for prediction.
                 model_predictions <- predict(object=object@model,
                                              newx=as.matrix(encoded_data$encoded_data@data[, mget(object@feature_order)]),
-                                             s=object@hyperparameters$lambda_min,
+                                             s=as.character(object@hyperparameters$lambda_min),
                                              type="response")
                 
                 # Add regression.
@@ -459,7 +486,7 @@ setMethod("..predict", signature(object="familiarGLMnet", data="dataObject"),
               # Use the model to predict class probabilities.
               return(predict(object=object@model,
                              newx=as.matrix(encoded_data$encoded_data@data[, mget(object@feature_order)]),
-                             s=object@hyperparameters$lambda_min,
+                             s=as.character(object@hyperparameters$lambda_min),
                              type=type,
                              ...))
             }
@@ -475,6 +502,9 @@ setMethod("..predict_survival_probability", signature(object="familiarGLMnet", d
             
             # If time is unset, read the max time stored by the model.
             if(is.null(time)) time <- object@settings$time_max
+            
+            # Check that required packages are loaded and installed.
+            require_package(object, "predict")
             
             return(learner.survival_probability_relative_risk(object=object, data=data, time=time))
           })
@@ -498,10 +528,13 @@ setMethod("..vimp", signature(object="familiarGLMnet"),
             # familiarGLM (which happens for one-feature datasets).
             if(!is(object, "familiarGLMnet")) return(..vimp(object=object, data=data))
             
+            # Check that required packages are loaded and installed.
+            require_package(object, "vimp")
+            
             if(object@hyperparameters$family == "multinomial"){
               # Read coefficient lists
               coefficient_list <- coef(object@model,
-                                       s=object@hyperparameters$lambda_min)
+                                       s=as.character(object@hyperparameters$lambda_min))
               
               # Parse into matrix and retrieve row names
               coefficient_matrix <- sapply(coefficient_list, as.matrix)
@@ -513,7 +546,7 @@ setMethod("..vimp", signature(object="familiarGLMnet"),
             } else {
               # Read coefficient matrix
               coefficient_matrix <- as.matrix(coef(object@model,
-                                                   s=object@hyperparameters$lambda_min))
+                                                   s=as.character(object@hyperparameters$lambda_min)))
               
               # Compute variable importance score
               vimp_score <- abs(coefficient_matrix)[, 1]
@@ -547,7 +580,7 @@ setMethod("..vimp", signature(object="familiarGLMnet"),
 
 
 
-#####..set_calibration_info#####
+#####..set_calibration_info-----------------------------------------------------
 setMethod("..set_calibration_info", signature(object="familiarGLMnet"),
           function(object, data){
             
@@ -564,3 +597,126 @@ setMethod("..set_calibration_info", signature(object="familiarGLMnet"),
             
             return(object)
           })
+
+
+#####.trim_model----------------------------------------------------------------
+setMethod(".trim_model", signature(object="familiarGLMnet"),
+          function(object, ...){
+
+            # Update model.
+            object@model <- ..trim_glmnet(object@model)
+            
+            # Set is_trimmed to TRUE.
+            object@is_trimmed <- TRUE
+            
+            # Default method for models that lack a more specific method.
+            return(object)
+          })
+
+
+
+..trim_glmnet <- function(object){
+  # Function to trim glmnet objects.
+  
+  # Check if the object is a glmnet object.
+  if(!(inherits(object, "glmnet") | inherits(object, "cv.glmnet"))) return(object)
+  
+  # Replace calls
+  object$call <- call("nullcall")
+  
+  # Specific to cv.glmnet.
+  if(!is.null(object$glmnet.fit)){
+    object$glmnet.fit$call <- call("nullcall")  
+  }
+  
+  return(object)
+}
+
+
+
+
+.get_available_glmnet_lasso_learners_test <- function(show_general=TRUE){
+  
+  # Learners
+  learners <- c("lasso_test")
+
+  return(learners)
+}
+
+
+#####is_available (test) #######################################################
+setMethod("is_available", signature(object="familiarGLMnetLassoTest"),
+          function(object, ...){
+            return(TRUE)
+          })
+
+
+
+#####..predict (test) ##########################################################
+setMethod("..predict", signature(object="familiarGLMnetLassoTest", data="dataObject"),
+          function(object, data, type="default", ...){
+            
+            # Check if the model was trained.
+            if(!model_is_trained(object)) return(callNextMethod())
+            
+            # Check if the data is empty.
+            if(is_empty(data)) return(callNextMethod())
+            
+            # Check that required packages are loaded and installed.
+            require_package(object, "predict")
+            
+            # Encode data so that the features are the same as in the training.
+            encoded_data <- encode_categorical_variables(data=data,
+                                                         object=object,
+                                                         encoding_method="dummy",
+                                                         drop_levels=FALSE)
+            
+            # Get an empty prediction table.
+            prediction_table <- get_placeholder_prediction_table(object=object,
+                                                                 data=encoded_data$encoded_data,
+                                                                 type=type)
+            
+            return(prediction_table)
+          })
+
+
+#####get_prediction_type (test)#####
+setMethod("get_prediction_type", signature(object="familiarGLMnetLassoTest"),
+          function(object, type="default"){
+            
+            if(object@outcome_type != "survival") return(callNextMethod())
+            
+            # Default are hazard ratios.
+            if(type == "default"){
+              return("hazard_ratio")
+              
+            } else if(type == "survival_probability"){
+              return("survival_probability")
+              
+            } else {
+              ..error_reached_unreachable_code("get_prediction_type,familiarGLMnetLassoTest: unknown type")
+            }
+          })
+
+
+#####..predict_survival_probability (test) #####
+setMethod("..predict_survival_probability", signature(object="familiarGLMnetLassoTest", data="dataObject"),
+          function(object, data, time){
+            
+            if(object@outcome_type != "survival") return(callNextMethod())
+            
+            # If time is unset, read the max time stored by the model.
+            if(is.null(time)) time <- object@settings$time_max
+            
+            # Check that required packages are loaded and installed.
+            require_package(object, "predict")
+            
+            # Predict, just to obtain a correctly formatted table.
+            survival_table <- learner.survival_probability_relative_risk(object=object, data=data, time=time)
+            
+            # Set predicted values to NA.
+            survival_table[, "survival_probability":=NA_real_]
+            
+            return(survival_table)
+          })
+

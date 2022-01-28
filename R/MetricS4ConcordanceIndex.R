@@ -9,7 +9,7 @@ setClass("familiarMetricConcordanceIndex",
          prototype=list("time"=Inf,
                         "prediction_type"="hazard_ratio"))
 
-setMethod("initialize", signature="familiarMetricConcordanceIndex",
+setMethod("initialize", signature(.Object="familiarMetricConcordanceIndex"),
           function(.Object, time=NULL, object=NULL, prediction_type=NULL, ...){
             
             # Update with parent class first.
@@ -88,6 +88,10 @@ setMethod("compute_metric_score", signature(metric="familiarMetricConcordanceInd
   # Remove any entries that lack valid predictions.
   data <- remove_nonvalid_predictions(prediction_table=data,
                                       outcome_type=metric@outcome_type)
+  
+  # Remove any entries that lack observed values.
+  data <- remove_missing_outcomes(data=data,
+                                  outcome_type=metric@outcome_type)
   
   if(is_empty(data)) return(NA_real_)
   

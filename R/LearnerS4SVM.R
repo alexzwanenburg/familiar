@@ -5,6 +5,19 @@ NULL
 setClass("familiarSVM",
          contains="familiarModel")
 
+#####initialize#################################################################
+setMethod("initialize", signature(.Object="familiarSVM"),
+          function(.Object, ...){
+            
+            # Update with parent class first.
+            .Object <- callNextMethod()
+            
+            # Set required package
+            .Object@package <- "e1071"
+            
+            return(.Object)
+          })
+
 
 setClass("familiarSVMC", contains="familiarSVM")
 setClass("familiarSVMNu", contains="familiarSVM")
@@ -115,7 +128,9 @@ setMethod("get_default_hyperparameters", signature(object="familiarSVM"),
             # the internal naming used by e1071::svm.
             
             # Set the svm kernel.
-            param$kernel <- .set_hyperparameter(default=svm_kernel, type="factor", range=svm_kernel,
+            param$kernel <- .set_hyperparameter(default=svm_kernel,
+                                                type="factor",
+                                                range=svm_kernel,
                                                 randomise=FALSE)
             
             
@@ -189,6 +204,9 @@ setMethod("..train", signature(object="familiarSVM", data="dataObject"),
             # Check if hyperparameters are set.
             if(is.null(object@hyperparameters)) return(callNextMethod())
             
+            # Check that required packages are loaded and installed.
+            require_package(object, "train")
+            
             # Find feature columns in data table
             feature_columns <- get_feature_columns(x=data)
             
@@ -206,10 +224,8 @@ setMethod("..train", signature(object="familiarSVM", data="dataObject"),
             if(is(object, "familiarSVMEps")) svm_type <- "eps-regression"
             
             # Set svm-related parameters.
-            svm_parameter_list <- list("kernel"=object@hyperparameters$kernel,
+            svm_parameter_list <- list("kernel"=as.character(object@hyperparameters$kernel),
                                        "cost"=10^(object@hyperparameters$c))
-            
-            
             
             # Set nu-parameter (which not all svm types use).
             if(is(object, "familiarSVMNu")){
@@ -256,6 +272,9 @@ setMethod("..train", signature(object="familiarSVM", data="dataObject"),
             # Add model
             object@model <- model
             
+            # Set learner version
+            object <- set_package_version(object)
+            
             return(object)
           })
 
@@ -264,6 +283,9 @@ setMethod("..train", signature(object="familiarSVM", data="dataObject"),
 #####..predict#####
 setMethod("..predict", signature(object="familiarSVM", data="dataObject"),
           function(object, data, type="default", ...){
+            
+            # Check that required packages are loaded and installed.
+            require_package(object, "predict")
             
             if(type == "default"){
               ##### Default method #############################################
@@ -330,4 +352,26 @@ setMethod("..predict", signature(object="familiarSVM", data="dataObject"),
               return(prediction_table)
               
             }
+          })
+
+
+
+#####.trim_model----------------------------------------------------------------
+setMethod(".trim_model", signature(object="familiarSVM"),
+          function(object, ...){
+            
+            # Update model by removing the call.
+            object@model$call <- call("trimmed")
+            
+            # Add show.
+            object <- .capture_show(object)
+            
+            # Remove .Environment.
+            object@model$terms <- .replace_environment(object@model$terms)
+            
+            # Set is_trimmed to TRUE.
+            object@is_trimmed <- TRUE
+            
+            # Default method for models that lack a more specific method.
+            return(object)
           })

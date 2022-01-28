@@ -211,6 +211,10 @@ setMethod("get_outcome_columns", signature(x="dataObject"), function(x){
   return(.get_outcome_columns(outcome_type=x@outcome_type))
 })
 
+setMethod("get_outcome_columns", signature(x="outcomeInfo"), function(x){
+  return(.get_outcome_columns(outcome_type=x@outcome_type))
+})
+
 setMethod("get_outcome_columns", signature(x="familiarModel"), function(x){
   return(.get_outcome_columns(outcome_type=x@outcome_type))
 })
@@ -227,6 +231,9 @@ setMethod("get_outcome_columns", signature(x="familiarEnsemble"), function(x){
     
   } else if(outcome_type %in% c("binomial", "multinomial", "continuous", "count")){
     outcome_cols <- c("outcome")
+  
+  } else if(outcome_type == "unsupervised"){
+    outcome_cols <- NULL
     
   } else if(outcome_type == "competing_risk"){
     ..error_outcome_type_not_implemented(outcome_type)
@@ -255,6 +262,10 @@ setMethod("get_non_feature_columns", signature(x="dataObject"), function(x, id_d
 
 setMethod("get_non_feature_columns", signature(x="familiarVimpMethod"), function(x, id_depth="repetition"){
   return(.get_non_feature_columns(outcome_type=x@outcome_type, id_depth=id_depth))
+})
+
+setMethod("get_non_feature_columns", signature(x="familiarNoveltyDetector"), function(x, id_depth="repetition"){
+  return(.get_non_feature_columns(outcome_type="unsupervised", id_depth=id_depth))
 })
 
 setMethod("get_non_feature_columns", signature(x="familiarModel"), function(x, id_depth="repetition"){
@@ -426,12 +437,23 @@ setMethod("encode_categorical_variables", signature(data="data.table", object="A
                 x <- droplevels(x)
               }
               
-              # Get names of levels and number of levels
-              level_names <- levels(x)
-              level_count <- nlevels(x)
+              if(is.factor(x)){
+                # Get names of levels and number of levels
+                level_names <- levels(x)
+                level_count <- nlevels(x)
+                
+              } else if(is.character(x)){
+                level_names <- unique(x)
+                level_count <- length(level_names)
+                
+              } else if(is.logical(x)){
+                level_names <- c(FALSE, TRUE)
+                level_count <- 2
+              }
+              
               
               # Apply coding scheme
-              if(encoding_method=="effect"){
+              if(encoding_method=="effect" | level_count == 1){
                 # Effect/one-hot encoding
                 curr_contrast_list  <- lapply(level_names, function(ii, x) (as.numeric(x==ii)), x=x)
                 
@@ -580,6 +602,31 @@ setMethod("get_placeholder_prediction_table", signature(object="familiarEnsemble
 setMethod("get_placeholder_prediction_table", signature(object="familiarEnsemble", data="data.table"),
           function(object, data, type="default") return(get_placeholder_prediction_table(object=object@outcome_info, data=data, type=type)))
 
+setMethod("get_placeholder_prediction_table", signature(object="familiarNoveltyDetector", data="dataObject"),
+          function(object, data, type="default") return(get_placeholder_prediction_table(object=object, data=data@data, type=type)))
+
+setMethod("get_placeholder_prediction_table", signature(object="familiarNoveltyDetector", data="data.table"),
+          function(object, data, type="default"){
+            # Check that the type parameter is valid,
+            .check_parameter_value_is_valid(x=type, var_name="type", values=.get_available_prediction_type_arguments())
+            
+            # Find non-feature columns.
+            non_feature_columns <- get_non_feature_columns(object)
+            
+            # Create the prediction table.
+            prediction_table <- data.table::copy(data[, mget(non_feature_columns)])
+            
+            if("novelty" %in% type){
+              # Add novelty column.
+              prediction_table[, "novelty":=as.double(NA)]
+              
+            } else {
+              stop("Only novelty predictions can be made.")
+            }
+            
+            return(prediction_table)
+          })
+
 setMethod("get_placeholder_prediction_table", signature(object="outcomeInfo", data="dataObject"),
           function(object, data, type="default") return(get_placeholder_prediction_table(object=object, data=data@data, type=type)))
 
@@ -591,6 +638,9 @@ setMethod("get_placeholder_prediction_table", signature(object="outcomeInfo", da
             
             # Find non-feature columns.
             non_feature_columns <- get_non_feature_columns(object)
+            if(all(type %in% .get_available_novelty_prediction_type_arguments())){
+              non_feature_columns <- setdiff(non_feature_columns, get_outcome_columns(object))
+            } 
             
             # Create the prediction table.
             prediction_table <- data.table::copy(data[, mget(non_feature_columns)])
@@ -630,7 +680,7 @@ setMethod("get_placeholder_prediction_table", signature(object="outcomeInfo", da
                 prediction_table[, "survival_probability":=as.double(NA)]
                 
               } else {
-                ..error_no_known_outcome_type(object@outcome_type)
+                ..error_no_predictions_possible(object@outcome_type, "survival_probability")
               }
                 
             } 
@@ -642,7 +692,7 @@ setMethod("get_placeholder_prediction_table", signature(object="outcomeInfo", da
                 prediction_table[, "risk_group":=as.character(NA)]
                 
               } else {
-                ..error_no_known_outcome_type(object@outcome_type)
+                ..error_no_predictions_possible(object@outcome_type, "risk_stratification")
               }
             }
             
@@ -654,6 +704,10 @@ setMethod("get_placeholder_prediction_table", signature(object="outcomeInfo", da
             
             return(prediction_table)
           })
+
+
+
+
 
 
 
@@ -739,6 +793,109 @@ setMethod("get_bootstrap_sample", signature(data="data.table"),
 setMethod("get_bootstrap_sample", signature(data="NULL"), function(data, seed=NULL, ...) return(NULL))
 
 
+
+#####get_subsample-------------------------------------------------------------
+setMethod("get_subsample", signature(data="dataObject"),
+          function(data, seed=NULL, size=NULL, outcome_type=NULL, ...){
+            # This function randomly selects up to "size" samples from the data.
+            # Set seed for reproducible results.
+            if(!is.null(seed)){
+              if(is.finite(seed)){
+                set.seed(seed)
+                on.exit(set.seed(NULL))
+              } 
+            }
+            
+            if(is.null(outcome_type)) outcome_type <- data@outcome_type
+            
+            if(.as_preprocessing_level(data) > "none"){
+              # Indicating that some preprocessing has taken please.
+              
+              # Bootstrap the data element.
+              data@data <- get_subsample(data=data@data,
+                                         size=size,
+                                         outcome_type=outcome_type)
+              
+            } else if(length(data@sample_set_on_load) > 0){
+              
+              # Subsample data.
+              data@sample_set_on_load <- get_subsample(data=data@sample_set_on_load,
+                                                       size=size,
+                                                       outcome_type=outcome_type)
+              
+            } else {
+              ..error_reached_unreachable_code("get_boostrap_sample,dataObject: could not identify a suitable method for bootstrapping.")
+            }
+            
+            return(data)
+          })
+
+
+setMethod("get_subsample", signature(data="data.table"),
+          function(data, seed=NULL, size=NULL, outcome_type=NULL, ...){
+            
+            # Suppress NOTES due to non-standard evaluation in data.table
+            .NATURAL <- NULL
+            
+            # If no size is set, 
+            if(is.null(size)) return(data)
+            
+            # Set seed for reproducible results.
+            if(!is.null(seed)){
+              if(is.finite(seed)){
+                set.seed(seed)
+                on.exit(set.seed(NULL))
+              } 
+            }
+            
+            # Update size, if required.
+            if(size > nrow(data)) size <- nrow(data)
+            
+            # If size is equal to the number of data elements, return the entire
+            # data.
+            if(size == nrow(data)) return(data)
+            
+            # Find identifier columns at the sample level, i.e. excluding
+            # repetitions and series.
+            id_columns <- intersect(get_id_columns(id_depth="sample"), colnames(data))
+            
+            if(length(id_columns) == 0){
+              # Sample rows.
+              row_ids <- fam_sample(x=seq_len(nrow(data)),
+                                    size=size,
+                                    replace=FALSE)
+              
+              # Create a subset.
+              data <- data[row_ids, ]
+              
+            } else if(is.null(outcome_type)){
+              # Sample rows.
+              row_ids <- fam_sample(x=seq_len(nrow(data)),
+                                    size=size,
+                                    replace=FALSE)
+              
+              # Create a subset.
+              data <- data[row_ids, ]
+              
+            } else {
+              # Get subsample.
+              id_table <- .create_subsample(data,
+                                            size=size, 
+                                            n_iter=1L,
+                                            outcome_type=outcome_type)
+              
+              # Isolate identifier table.
+              id_table <- id_table$train_list[[1]]
+              
+              # Select data.
+              data <- data[id_table, on=.NATURAL]
+            }
+            
+            return(data)
+          })
+
+
+setMethod("get_subsample", signature(data="NULL"), function(data, seed=NULL, ...) return(NULL))
 
 #####fam_sample-----------------------------------------------------------------
 setMethod("fam_sample", signature(x="ANY"),
@@ -865,3 +1022,55 @@ setMethod("fam_sample", signature(x="data.table"),
             
             return(y)
           })
+
+
+#####has_optimised_hyperparameters##############################################
+setMethod("has_optimised_hyperparameters", signature(object="familiarModel"), function(object){
+            return(.has_optimised_hyperparameters(object=object))
+          })
+
+
+setMethod("has_optimised_hyperparameters", signature(object="familiarVimpMethod"), function(object){
+            return(.has_optimised_hyperparameters(object=object))
+          })
+
+#####has_optimised_hyperparameters (novelty detector)###########################
+setMethod("has_optimised_hyperparameters", signature(object="familiarNoveltyDetector"), function(object){
+            return(.has_optimised_hyperparameters(object=object))
+          })
+
+
+.has_optimised_hyperparameters <- function(object){
+  
+  # Check if the object has any default parameters.
+  default_parameters <- get_default_hyperparameters(object)
+  
+  # If there are no default hyperparameters, return TRUE.
+  if(length(default_parameters) == 0) return(TRUE)
+  
+  # Check if any hyperparameters are present in the object.
+  if(is_empty(object@hyperparameters)) return(FALSE)
+  
+  # Check if any hyperparameters need to be optimised.
+  unoptimised_hyperparameter <- sapply(object@hyperparameters, function(x){
+    # If element x is not a list itself, return false.
+    if(!is.list(x)) return(FALSE)
+    
+    # If element x is a list, but does not have a "randomise" element return
+    # false.
+    if(is.null(x$randomise)) return(FALSE)
+    
+    # Else, the hyperparameter requires optimisation.
+    return(TRUE)
+  })
+  
+  # If any hyperparameter was unoptimised return false.
+  if(any(unoptimised_hyperparameter)) return(FALSE)
+  
+  # If any hyperparameter is missing, return false.
+  if(!all(names(default_parameters) %in% names(object@hyperparameters))) return(FALSE)
+  
+  # If none of the above cases apply, the hyperparameters can be assumed to be
+  # optimised.
+  return(TRUE)
+}

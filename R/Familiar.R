@@ -1,21 +1,28 @@
-#' familiar: Fully Automated MachIne Learning In Accessible R
+#' familiar: Fully Automated Machine Learning with Interpretable Analysis of Results
 #'
-#' Familiar processes data for diagnostic and prognostic purposes.
+#' End-to-end, automated machine learning package for creating 
+#' trustworthy and interpretable machine learning models. Familiar supports
+#' modelling of regression, categorical and time-to-event (survival) outcomes.
+#' Models created using familiar are self-containing, and their use does not
+#' require additional information such as baseline survival, feature
+#' clustering, or feature transformation and normalisation parameters. In
+#' addition, an novelty or out-of-distribution detector is trained
+#' simultaneously and contained with every model. Model performance,
+#' calibration, risk group stratification, (permutation) variable importance,
+#' individual conditional expectation, partial dependence, and more, are
+#' assessed automatically as part of the evaluation process and exported in
+#' tabular format and plotted, and may also be computed manually using export
+#' and plot functions. Where possible, metrics and values obtained during the
+#' evaluation process come with confidence intervals.
 #'
 #' @docType package
 #' @name familiar
 #' @import data.table
 #' @import methods
-#' @importFrom isotree isolation.forest
 #' @importFrom stats predict coef
 #' @importFrom survival Surv coxph survreg
-#' @importFrom utils head tail getFromNamespace
-#' @importFrom ranger ranger
-#' @importFrom e1071 svm
-#' @importFrom klaR NaiveBayes sknn
-#' @importFrom xgboost xgb.train
+#' @importFrom utils head tail
 #' @importFrom rlang quo quos enquo enquos sym syms ensym ensyms parse_expr parse_exprs
-#' @importFrom glmnet glmnet cv.glmnet
 "_PACKAGE"
 
 
@@ -57,6 +64,9 @@
 #'
 #' @param config_id Identifier for the configuration in case the list or `xml`
 #'   table indicated by `config` contains more than one set of configurations.
+#' @param verbose Indicates verbosity of the results. Default is TRUE, and all
+#'   messages and warnings are returned.
+#'
 #' @inheritDotParams .parse_file_paths -config
 #' @inheritDotParams .parse_experiment_settings -config
 #' @inheritDotParams .parse_setup_settings -config
@@ -75,7 +85,13 @@
 #'
 #' @export
 #' @md
-summon_familiar <- function(formula=NULL, data=NULL, cl=NULL, config=NULL, config_id=1,  ...){
+summon_familiar <- function(formula=NULL,
+                            data=NULL,
+                            cl=NULL,
+                            config=NULL,
+                            config_id=1,
+                            verbose=TRUE,
+                            ...){
   
   # Set options.
   # Disable randomForestSRC OpenMP core use.
@@ -129,7 +145,9 @@ summon_familiar <- function(formula=NULL, data=NULL, cl=NULL, config=NULL, confi
     data <- do.call(.load_data, args=append(list("data"=data), settings$data))
     
     # Update settings
-    settings <- .update_initial_settings(formula=formula, data=data, settings=settings)
+    settings <- .update_initial_settings(formula=formula,
+                                         data=data,
+                                         settings=settings)
   }
   
   # Parse data
@@ -147,7 +165,8 @@ summon_familiar <- function(formula=NULL, data=NULL, cl=NULL, config=NULL, confi
 
   # Derive experimental design
   experiment_setup <- extract_experimental_setup(experimental_design=settings$data$exp_design,
-                                                 file_dir=file_paths$iterations_dir)
+                                                 file_dir=file_paths$iterations_dir,
+                                                 verbose=verbose)
   
   # Check experiment settings
   settings <- .update_experimental_design_settings(section_table=experiment_setup,
@@ -167,7 +186,8 @@ summon_familiar <- function(formula=NULL, data=NULL, cl=NULL, config=NULL, confi
   project_info <- .get_iteration_data(file_dir=file_paths$iterations_dir,
                                       data=data,
                                       experiment_setup=experiment_setup,
-                                      settings=settings)
+                                      settings=settings,
+                                      verbose=verbose)
   
   # In case the iterations are loaded from a iterations file provided by the
   # user, perform some checks on the experimental design given the current data
@@ -238,13 +258,25 @@ summon_familiar <- function(formula=NULL, data=NULL, cl=NULL, config=NULL, confi
   
   
   # Start feature selection
-  run_feature_selection(cl=cl, project_list=project_info, settings=settings, file_paths=file_paths)
+  run_feature_selection(cl=cl,
+                        project_list=project_info,
+                        settings=settings,
+                        file_paths=file_paths,
+                        verbose=verbose)
   
   # Start model building
-  run_model_development(cl=cl, project_list=project_info, settings=settings, file_paths=file_paths)
+  run_model_development(cl=cl,
+                        project_list=project_info,
+                        settings=settings,
+                        file_paths=file_paths,
+                        verbose=verbose)
   
   # Start evaluation
-  run_evaluation(cl=cl, proj_list=project_info, settings=settings, file_paths=file_paths)
+  run_evaluation(cl=cl,
+                 proj_list=project_info,
+                 settings=settings,
+                 file_paths=file_paths,
+                 verbose=verbose)
   
   if(file_paths$is_temporary){
     # Collect all familiarModels, familiarEnsemble, familiarData and
@@ -280,6 +312,9 @@ summon_familiar <- function(formula=NULL, data=NULL, cl=NULL, config=NULL, confi
       # Normalise file paths
       config <- normalizePath(config)
       
+      # Check that the xml2 package is installed
+      require_package("xml2", "to configure familiar using a configuration file")
+      
       # Read xml file, parse to list and remove comments
       config <- xml2::as_list(xml2::read_xml(config))[[1]][[config_id]]
       config <- .clean_configuration_comments(config=config)
@@ -290,7 +325,7 @@ summon_familiar <- function(formula=NULL, data=NULL, cl=NULL, config=NULL, confi
       }
     }
   } else {
-    config    <- NULL
+    config <- NULL
   }
   
   return(config)

@@ -28,6 +28,10 @@ impute.add_lasso_imputation_info <- function(cl=NULL, feature_info_list, data_ob
   # Suppress NOTES due to non-standard evaluation in data.table
   name <- NULL
   
+  # Check that the glmnet package is installed.
+  require_package(x="glmnet",
+                  purpose="to impute data using lasso regression")
+  
   .add_info <- function(feature, feature_info_list, data_obj, uncensored_data_obj){
 
     # local featureInfo object
@@ -35,8 +39,8 @@ impute.add_lasso_imputation_info <- function(cl=NULL, feature_info_list, data_ob
     
     # Select valid data for training
     valid_entries <- is_valid_data(data_obj@data[[feature]])
-    train_data    <- uncensored_data_obj@data[valid_entries, get_feature_columns(x=uncensored_data_obj), with=FALSE]
-    train_data    <- train_data[, (feature):=NULL]
+    train_data <- uncensored_data_obj@data[valid_entries, get_feature_columns(x=uncensored_data_obj), with=FALSE]
+    train_data <- train_data[, (feature):=NULL]
     
     outcome_data  <- uncensored_data_obj@data[valid_entries, ][[feature]]
     
@@ -48,28 +52,26 @@ impute.add_lasso_imputation_info <- function(cl=NULL, feature_info_list, data_ob
     }
     
     # Use effect coding to convert categorical data into encoded data
-    contrast_list <- getContrasts(dt=train_data, method="dummy", drop_levels=FALSE)
-    
-    # Extract data table with contrasts
-    train_data    <- contrast_list$dt_contrast
+    encoded_data <- encode_categorical_variables(data=train_data,
+                                                 encoding_method="dummy",
+                                                 drop_levels=FALSE)
+
+    # Extract data table with contrasts.
+    train_data <- encoded_data$encoded_data
     
     # Perform a cross-validation to derive a optimal lambda. This may rarely
-    # fail if y is numeric but does not change in a particular fold. In this case, 
-    lasso_model <- tryCatch({
-      cv.glmnet(x           = as.matrix(train_data),
-                y           = outcome_data,
-                family      = distribution,
-                alpha       = 1,
-                standardize = FALSE,
-                nfolds      = min(nrow(train_data), 20),
-                parallel    = FALSE)
-    }, error = function(err){
-      return(NULL)
-    })
+    # fail if y is numeric but does not change in a particular fold. In this
+    # case, skip.
+    lasso_model <- tryCatch(glmnet::cv.glmnet(x=as.matrix(train_data),
+                                              y=outcome_data,
+                                              family=distribution,
+                                              alpha=1,
+                                              standardize=FALSE,
+                                              nfolds=min(nrow(train_data), 20),
+                                              parallel=FALSE),
+                            error=identity)
     
-    if(is.null(lasso_model)){
-      return(object)
-    }
+    if(inherits(lasso_model, "error")) return(object)
     
     # Determine the features with non-zero coefficients. We want to have the
     # minimal required support for the model to minimise the effort that is
@@ -96,44 +98,48 @@ impute.add_lasso_imputation_info <- function(cl=NULL, feature_info_list, data_ob
     }
     
     # Parse score to data.table
-    dt_vimp <- data.table::data.table("score"=score, "name"=names(score))
+    vimp_table <- data.table::data.table("score"=score, "name"=names(score))
   
     # Throw out the intercept and elements with 0.0 coefficients
-    dt_vimp <- dt_vimp[name!="(Intercept)" & score!=0.0]
+    vimp_table <- vimp_table[name!="(Intercept)" & score!=0.0]
     
     # Find the original names
-    dt_vimp <- applyContrastReference(dt=dt_vimp, dt_ref=contrast_list$dt_ref, method="max")
+    vimp_table <- decode_categorical_variables_vimp(object=encoded_data$reference_table,
+                                                    vimp_table=vimp_table,
+                                                    method="abs_max")
     
-    # Check that the optimal model complexity lambda is connected to at least one feature.
-    # If not, we have to use the simple estimate.
-    if(nrow(dt_vimp)==0){
-      return(object)
-    }
+    # Check that the optimal model complexity lambda is connected to at least
+    # one feature. If not, we have to use the simple estimate.
+    if(is_empty(vimp_table)) return(object)
     
     # Derive required features
-    required_features <- dt_vimp$name
+    required_features <- vimp_table$name
     
     # Create a data set with minimal support
-    train_data    <- uncensored_data_obj@data[valid_entries, required_features, with=FALSE]
+    train_data <- uncensored_data_obj@data[valid_entries, required_features, with=FALSE]
     
     # Use effect coding to convert categorical data into encoded data
-    contrast_list <- getContrasts(dt=train_data, method="dummy", drop_levels=FALSE)
+    encoded_data <- encode_categorical_variables(data=train_data,
+                                                 encoding_method="dummy",
+                                                 drop_levels=FALSE)
     
-    # Extract data table with contrasts
-    train_data    <- contrast_list$dt_contrast
+    # Extract data table with contrasts.
+    train_data <- encoded_data$encoded_data
 
-    # Check the number of columns in train_data. glmnet wants at least two columns
-    if(ncol(train_data) == 1){
-      train_data[, "bogus__variable__":=0.0]
-    }
+    # Check the number of columns in train_data. glmnet wants at least two
+    # columns.
+    if(ncol(train_data) == 1) train_data[, "bogus__variable__":=0.0]
     
     # Determine the lambda.1se and train a small model at this lambda
-    lasso_model <- glmnet(x = as.matrix(train_data),
-                          y = outcome_data,
-                          family = distribution,
-                          lambda = lasso_model$lambda.1se,
-                          standardize = FALSE)
-
+    lasso_model <- glmnet::glmnet(x = as.matrix(train_data),
+                                  y = outcome_data,
+                                  family = distribution,
+                                  lambda = lasso_model$lambda.1se,
+                                  standardize = FALSE)
+    
+    # Remove extraneous information from the model.
+    lasso_model <- ..trim_glmnet(lasso_model)
+    
     # Add lasso model and required features to the information.
     if(!is.list(object@imputation_parameters)){
       object@imputation_parameters <- list("lasso_model" = list(lasso_model),
@@ -176,27 +182,33 @@ impute.add_lasso_imputation_info <- function(cl=NULL, feature_info_list, data_ob
 
 impute.impute_lasso <- function(cl=NULL, feature_info_list, data_obj, uncensored_data_obj, censored_features=NULL){
   
-  # Suppress NOTES due to non-standard evaluation in data.table
+  # Suppress NOTES due to non-standard evaluation in data.table.
   values <- NULL
+  
+  # Check that the glmnet package is installed.
+  require_package(x="glmnet",
+                  purpose="to impute data using lasso regression")
   
   .get_imputed_values <- function(feature, data_obj, uncensored_data_obj, feature_info_list){
 
-    # featureInfo object for the current feature
+    # featureInfo object for the current feature.
     object <- feature_info_list[[feature]]
     
-    # Get data for the current feature
+    # Get data for the current feature.
     y <- data_obj@data[[feature]]
     
-    # Find the censored entries for the current data set
+    # Find the censored entries for the current data set.
     censored_entries <- !is_valid_data(y)
     
     # Replace missing values
     if(is_empty(object@imputation_parameters$lasso_model) | is.null(object@imputation_parameters$required_features)){
-      # Check if required entries are present in the featureInfo object and insert common value if not.
+      # Check if required entries are present in the featureInfo object and
+      # insert common value if not.
       y[censored_entries] <- object@imputation_parameters$common_value
       
     } else if(!all(object@imputation_parameters$required_features %in% colnames(uncensored_data_obj@data))) {
-      # Check if the required columns are present in the data, and insert the common value if not.
+      # Check if the required columns are present in the data, and insert the
+      # common value if not.
       y[censored_entries] <- object@imputation_parameters$common_value
       logger.warning(paste0("Imputation: not all required features were found for imputation of the ", feature, " feature. Missing are: ",
                             paste(setdiff(object@imputation_parameters$required_features, colnames(uncensored_data_obj@data)), collapse=", ")))
@@ -205,18 +217,19 @@ impute.impute_lasso <- function(cl=NULL, feature_info_list, data_obj, uncensored
       # Proceed with imputation using the lasso model
       
       # Create a data set with minimal support
-      validation_data <- uncensored_data_obj@data[censored_entries, object@imputation_parameters$required_features, with=FALSE]
+      validation_data <- uncensored_data_obj@data[censored_entries,
+                                                  mget(object@imputation_parameters$required_features)]
       
-      # Use effect coding to convert categorical data into encoded data
-      contrast_list <- getContrasts(dt=validation_data, method="dummy", drop_levels=FALSE)
+      # Use effect coding to convert categorical data into encoded data.
+      encoded_data <- encode_categorical_variables(data=validation_data,
+                                                   encoding_method="dummy",
+                                                   drop_levels=FALSE)
       
-      # Extract data table with contrasts
-      validation_data <- contrast_list$dt_contrast
+      # Extract data table with contrasts.
+      validation_data <- encoded_data$encoded_data
       
       # Check if the validation data has two or more columns
-      if(ncol(validation_data) == 1){
-        validation_data[, "bogus__variable__":=0.0]
-      }
+      if(ncol(validation_data) == 1) validation_data[, "bogus__variable__":=0.0]
 
       # Get the type of response for glmnet predict
       response_type <- ifelse(object@feature_type == "numeric", "response", "class")
@@ -238,12 +251,17 @@ impute.impute_lasso <- function(cl=NULL, feature_info_list, data_obj, uncensored
       # Concatenate to single table
       imputed_values <- data.table::rbindlist(imputed_values)
       
-      # The desired output is determined by the feature type (numeric or factor).
+      # The desired output is determined by the feature type (numeric or
+      # factor).
       if(object@feature_type == "numeric"){
-        y[censored_entries] <- imputed_values[, list("values"=mean(values, na.rm=TRUE)), by="temp_sample_id"]$values
+        y[censored_entries] <- imputed_values[,
+                                              list("values"=mean(values, na.rm=TRUE)),
+                                              by="temp_sample_id"]$values
 
       } else {
-        y[censored_entries] <- imputed_values[, list("values"=get_mode(values)), by="temp_sample_id"]$values
+        y[censored_entries] <- imputed_values[,
+                                              list("values"=get_mode(values)),
+                                              by="temp_sample_id"]$values
       }
     }
     
@@ -251,9 +269,7 @@ impute.impute_lasso <- function(cl=NULL, feature_info_list, data_obj, uncensored
   }
 
   # Check if data is present
-  if(is_empty(data_obj)){
-    return(data_obj)
-  }
+  if(is_empty(data_obj)) return(data_obj)
   
   # Check if censored_features are provided as input.
   if(is.null(censored_features)){
@@ -265,9 +281,7 @@ impute.impute_lasso <- function(cl=NULL, feature_info_list, data_obj, uncensored
   }
   
   # Skip if there are no missing values.
-  if(length(censored_features) == 0){
-    return(data_obj)
-  }
+  if(length(censored_features) == 0) return(data_obj)
   
   # Define the replacement list
   replacement_list <- fam_lapply(cl=cl,

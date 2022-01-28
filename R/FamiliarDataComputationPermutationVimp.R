@@ -35,7 +35,7 @@ setGeneric("extract_permutation_vimp",
                     feature_similarity_metric=waiver(),
                     feature_similarity_threshold=waiver(),
                     metric=waiver(),
-                    eval_times=waiver(),
+                    evaluation_times=waiver(),
                     detail_level=waiver(),
                     estimation_type=waiver(),
                     aggregate_results=waiver(),
@@ -59,7 +59,7 @@ setMethod("extract_permutation_vimp", signature(object="familiarEnsemble"),
                    feature_similarity_metric=waiver(),
                    feature_similarity_threshold=waiver(),
                    metric=waiver(),
-                   eval_times=waiver(),
+                   evaluation_times=waiver(),
                    detail_level=waiver(),
                    estimation_type=waiver(),
                    aggregate_results=waiver(),
@@ -71,17 +71,16 @@ setMethod("extract_permutation_vimp", signature(object="familiarEnsemble"),
                    ...){
             
             # Message extraction start
-            if(verbose){
-              logger.message(paste0("Computing permutation variable importance for models in the dataset."),
-                             indent=message_indent)
-            }
+            logger.message(paste0("Computing permutation variable importance for models in the dataset."),
+                           indent=message_indent,
+                           verbose=verbose)
             
-            # Load eval_times from the object settings attribute, if it is not provided.
-            if(is.waive(eval_times)) eval_times <- object@settings$eval_times
+            # Load evaluation_times from the object settings attribute, if it is not provided.
+            if(is.waive(evaluation_times)) evaluation_times <- object@settings$eval_times
             
-            # Check eval_times argument
+            # Check evaluation_times argument
             if(object@outcome_type %in% c("survival")){
-              sapply(eval_times, .check_number_in_valid_range, var_name="eval_times", range=c(0.0, Inf), closed=c(FALSE, TRUE))
+              sapply(evaluation_times, .check_number_in_valid_range, var_name="evaluation_times", range=c(0.0, Inf), closed=c(FALSE, TRUE))
             }
             
             # Obtain ensemble method from stored settings, if required.
@@ -107,11 +106,13 @@ setMethod("extract_permutation_vimp", signature(object="familiarEnsemble"),
             
             # Check the level detail.
             detail_level <- .parse_detail_level(x = detail_level,
+                                                object = object,
                                                 default = "hybrid",
                                                 data_element = "permutation_vimp")
             
             # Check the estimation type.
             estimation_type <- .parse_estimation_type(x = estimation_type,
+                                                      object = object,
                                                       default = "bootstrap_confidence_interval",
                                                       data_element = "permutation_vimp",
                                                       detail_level = detail_level,
@@ -119,6 +120,7 @@ setMethod("extract_permutation_vimp", signature(object="familiarEnsemble"),
             
             # Check whether results should be aggregated.
             aggregate_results <- .parse_aggregate_results(x = aggregate_results,
+                                                          object = object,
                                                           default = TRUE,
                                                           data_element = "permutation_vimp")
             
@@ -211,7 +213,7 @@ setMethod("extract_permutation_vimp", signature(object="familiarEnsemble"),
                                             is_pre_processed=is_pre_processed,
                                             ensemble_method=ensemble_method,
                                             metric=metric,
-                                            eval_times=eval_times,
+                                            evaluation_times=evaluation_times,
                                             aggregate_results=aggregate_results,
                                             similarity_table=feature_similarity,
                                             cluster_method=feature_cluster_method,
@@ -229,7 +231,7 @@ setMethod("extract_permutation_vimp", signature(object="familiarEnsemble"),
 
 .extract_permutation_vimp <- function(object,
                                       proto_data_element,
-                                      eval_times=NULL,
+                                      evaluation_times=NULL,
                                       aggregate_results,
                                       cl,
                                       ...){
@@ -240,8 +242,8 @@ setMethod("extract_permutation_vimp", signature(object="familiarEnsemble"),
   proto_data_element <- add_model_name(proto_data_element, object=object)
   
   # Add evaluation time as a identifier to the data element.
-  if(length(eval_times) > 0 & object@outcome_type == "survival"){
-    data_elements <- add_data_element_identifier(x=proto_data_element, evaluation_time=eval_times)
+  if(length(evaluation_times) > 0 & object@outcome_type == "survival"){
+    data_elements <- add_data_element_identifier(x=proto_data_element, evaluation_time=evaluation_times)
     
   } else {
     data_elements <- list(proto_data_element)
@@ -288,6 +290,18 @@ setMethod("extract_permutation_vimp", signature(object="familiarEnsemble"),
   # Check if any predictions are valid.
   if(!any_predictions_valid(prediction_data, outcome_type=object@outcome_type)) return(NULL)
   
+  # Remove data with missing predictions.
+  prediction_data <- remove_nonvalid_predictions(prediction_data,
+                                                 outcome_type=object@outcome_type)
+  
+  # Remove data with missing outcomes.
+  prediction_data <- remove_missing_outcomes(data=prediction_data,
+                                             outcome_type=object@outcome_type)
+  
+  # Check that any prediction data remain.
+  if(is_empty(prediction_data)) return(NULL)
+  if(data.table::uniqueN(prediction_data, by=get_id_columns(id_depth="sample")) < 5) return(NULL)
+  
   # Explicitly load input data. We stop at the signature step because we want to
   # work with the unclustered input features, but may need to apply
   # model-specific preprocessing steps later on.
@@ -295,6 +309,10 @@ setMethod("extract_permutation_vimp", signature(object="familiarEnsemble"),
                              data=data,
                              is_pre_processed=is_pre_processed,
                              stop_at="signature")
+  
+  # Remove instances with missing outcomes.
+  data <- remove_missing_outcomes(data=data,
+                                  outcome_type=object@outcome_type)
   
   # Perform some checks to see if there is sufficient data to perform a half-way
   # meaningful analysis.
@@ -305,7 +323,8 @@ setMethod("extract_permutation_vimp", signature(object="familiarEnsemble"),
   # only relevant for survival analysis.
   if(length(data_element@identifiers$evaluation_time) > 0 & progress_bar){
     logger.message(paste0("Computing permutation variable importance at time ", data_element@identifiers$evaluation_time, "."),
-                   indent=message_indent)
+                   indent=message_indent,
+                   verbose=verbose)
   }
   # Maintain only important features. The current set is based on the
   # required features.
@@ -656,6 +675,7 @@ setMethod("extract_permutation_vimp", signature(object="familiarEnsemble"),
 #'  familiarCollection.
 #'
 #'@inheritParams export_all
+#'@inheritParams export_univariate_analysis_data
 #'
 #'@inheritDotParams extract_permutation_vimp
 #'@inheritDotParams as_familiar_collection
@@ -700,27 +720,40 @@ setMethod("extract_permutation_vimp", signature(object="familiarEnsemble"),
 #'@md
 #'@rdname export_permutation_vimp-methods
 setGeneric("export_permutation_vimp",
-           function(object, dir_path=NULL, aggregate_results=TRUE, ...) standardGeneric("export_permutation_vimp"))
+           function(object,
+                    dir_path=NULL,
+                    aggregate_results=TRUE,
+                    export_collection=FALSE,
+                    ...) standardGeneric("export_permutation_vimp"))
 
 #####export_permutation_vimp (collection)#####
 
 #'@rdname export_permutation_vimp-methods
 setMethod("export_permutation_vimp", signature(object="familiarCollection"),
-          function(object, dir_path=NULL, aggregate_results=TRUE, ...){
+          function(object,
+                   dir_path=NULL,
+                   aggregate_results=TRUE,
+                   export_collection=FALSE,
+                   ...){
             
             return(.export(x=object,
                            data_slot="permutation_vimp",
                            dir_path=dir_path,
                            aggregate_results=aggregate_results,
                            type="variable_importance",
-                           subtype="permutation"))
+                           subtype="permutation",
+                           export_collection=export_collection))
           })
 
 #####export_permutation_vimp (generic)#####
 
 #'@rdname export_permutation_vimp-methods
 setMethod("export_permutation_vimp", signature(object="ANY"),
-          function(object, dir_path=NULL,  aggregate_results=TRUE, ...){
+          function(object,
+                   dir_path=NULL,
+                   aggregate_results=TRUE,
+                   export_collection=FALSE,
+                   ...){
             
             # Attempt conversion to familiarCollection object.
             object <- do.call(as_familiar_collection,
@@ -732,6 +765,7 @@ setMethod("export_permutation_vimp", signature(object="ANY"),
             return(do.call(export_permutation_vimp,
                            args=c(list("object"=object,
                                        "dir_path"=dir_path,
-                                       "aggregate_results"=aggregate_results),
+                                       "aggregate_results"=aggregate_results,
+                                       "export_collection"=export_collection),
                                   list(...))))
           })

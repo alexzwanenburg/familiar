@@ -15,7 +15,7 @@ extract_data(
   rank_threshold = waiver(),
   ensemble_method = waiver(),
   stratification_method = waiver(),
-  eval_times = waiver(),
+  evaluation_times = waiver(),
   metric = waiver(),
   feature_cluster_method = waiver(),
   feature_cluster_cut_method = waiver(),
@@ -25,6 +25,7 @@ extract_data(
   sample_cluster_method = waiver(),
   sample_linkage_method = waiver(),
   sample_similarity_metric = waiver(),
+  sample_limit = waiver(),
   detail_level = waiver(),
   estimation_type = waiver(),
   aggregate_results = waiver(),
@@ -42,7 +43,7 @@ extract_data(
 \code{familiarModel} objects.}
 
 \item{data}{A \code{dataObject} object, \code{data.table} or \code{data.frame} that
-constitutes the data that are used to compute}
+constitutes the data that are assessed.}
 
 \item{data_element}{String indicating which data elements are to be extracted.
 Default is \code{all}, but specific elements can be specified to speed up
@@ -86,6 +87,8 @@ creation of the underlying \code{familiarModel} objects.}
 \item{ensemble_method}{Method for ensembling predictions from models for the
 same sample. Available methods are:
 \itemize{
+\item \code{median} (default): Use the median of the predicted values as the ensemble
+value for a sample.
 \item \code{mean}: Use the mean of the predicted values as the ensemble value for a
 sample.
 }}
@@ -98,7 +101,17 @@ can afterwards be used to perform stratification on validation data.
 The following stratification methods are available:
 \itemize{
 \item \code{median} (default): The median predicted value in the development cohort
-is used to stratify the samples into two risk groups.
+is used to stratify the samples into two risk groups. For predicted outcome
+values that build a continuous spectrum, the two risk groups in the
+development cohort will be roughly equal in size.
+\item \code{mean}: The mean predicted value in the development cohort is used to
+stratify the samples into two risk groups.
+\item \code{mean_trim}: As \code{mean}, but based on the set of predicted values
+where the 5\% lowest and 5\% highest values are discarded. This reduces the
+effect of outliers.
+\item \code{mean_winsor}: As \code{mean}, but based on the set of predicted values where
+the 5\% lowest and 5\% highest values are winsorised. This reduces the effect
+of outliers.
 \item \code{fixed}: Samples are stratified based on the sample quantiles of the
 predicted values. These quantiles are defined using the
 \code{stratification_threshold} parameter.
@@ -111,7 +124,7 @@ One or more stratification methods can be selected simultaneously.
 
 This parameter is only relevant for \code{survival} outcomes.}
 
-\item{eval_times}{One or more time points that are used for in analysis of
+\item{evaluation_times}{One or more time points that are used for in analysis of
 survival problems when data has to be assessed at a set time, e.g.
 calibration. If not provided explicitly, this parameter is read from
 settings used at creation of the underlying \code{familiarModel} objects. Only
@@ -203,6 +216,16 @@ the metric name. This reduces the effect of outliers somewhat.
 If not provided explicitly, this parameter is read from settings used at
 creation of the underlying \code{familiarModel} objects.}
 
+\item{sample_limit}{(\emph{optional}) Set the upper limit of the number of samples
+that are used during evaluation steps. Cannot be less than 20.
+
+This setting can be specified per data element by providing a parameter
+value in a named list with data elements, e.g.
+\code{list("sample_similarity"=100, "permutation_vimp"=1000)}.
+
+This parameter can be set for the following data elements:
+\code{sample_similarity} and \code{ice_data}.}
+
 \item{detail_level}{(\emph{optional}) Sets the level at which results are computed
 and aggregated.
 \itemize{
@@ -219,10 +242,10 @@ each model, in contrast to \code{ensemble} where performance is computed for the
 ensemble of models. If there are less than 20 trained models in the
 ensemble, bootstraps are created so that at least 20 point estimates can be
 made.
-\item \code{model} (to be implemented): Results are computed at the model level. This
-means that, for example, bias-corrected estimates of model performance are
-assessed by creating (at least) 20 bootstraps and computing the performance
-of the model for each bootstrap.
+\item \code{model}: Results are computed at the model level. This means that, for
+example, bias-corrected estimates of model performance are assessed by
+creating (at least) 20 bootstraps and computing the performance of the model
+for each bootstrap.
 }
 
 Note that each level of detail has a different interpretation for bootstrap
@@ -241,11 +264,12 @@ model.
 \code{hybrid} is generally computationally less expensive then \code{ensemble}, which
 in turn is somewhat less expensive than \code{model}.
 
-A non-default \code{detail_level} parameter can be
-specified for separate evaluation steps by providing a parameter value in a
-named list with data elements, e.g. \code{list("auc_data"="ensemble", "model_performance"="hybrid")}. This parameter can be set for the following
-data elements: \code{auc_data}, \code{decision_curve_analyis}, \code{model_performance},
-\code{permutation_vimp}, \code{prediction_data} and \code{confusion_matrix}.}
+A non-default \code{detail_level} parameter can be specified for separate
+evaluation steps by providing a parameter value in a named list with data
+elements, e.g. \code{list("auc_data"="ensemble", "model_performance"="hybrid")}.
+This parameter can be set for the following data elements: \code{auc_data},
+\code{decision_curve_analyis}, \code{model_performance}, \code{permutation_vimp},
+\code{ice_data}, \code{prediction_data} and \code{confusion_matrix}.}
 
 \item{estimation_type}{(\emph{optional}) Sets the type of estimation that should be
 possible. This has the following options:
@@ -257,15 +281,14 @@ bootstrap the data to create them.
 \item \code{bootstrap_confidence_interval} or \code{bci} (default): Bias-corrected
 estimates with bootstrap confidence intervals (Efron and Hastie, 2016). The
 number of point estimates required depends on the \code{confidence_level}
-parameter, and \code{familiar} may bootstrap the data to create them. In some
-cases no bootstrap data
+parameter, and \code{familiar} may bootstrap the data to create them.
 }
 
 As with \code{detail_level}, a non-default \code{estimation_type} parameter can be
 specified for separate evaluation steps by providing a parameter value in a
 named list with data elements, e.g. \code{list("auc_data"="bci", "model_performance"="point")}. This parameter can be set for the following
 data elements: \code{auc_data}, \code{decision_curve_analyis}, \code{model_performance},
-\code{permutation_vimp}, and \code{prediction_data}.}
+\code{permutation_vimp}, \code{ice_data}, and \code{prediction_data}.}
 
 \item{aggregate_results}{(\emph{optional}) Flag that signifies whether results
 should be aggregated during evaluation. If \code{estimation_type} is

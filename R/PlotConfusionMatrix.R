@@ -41,6 +41,7 @@ NULL
 #'@inheritParams plotting.check_data_handling
 #'@inheritDotParams as_familiar_collection -object
 #'@inheritDotParams ggplot2::ggsave -height -width -units
+#'@inheritDotParams extract_confusion_matrix -object
 #'
 #'@details This function generates area under the ROC curve plots.
 #'
@@ -77,14 +78,15 @@ setGeneric("plot_confusion_matrix",
                     x_label=waiver(),
                     y_label=waiver(),
                     legend_label=waiver(),
-                    plot_title=NULL,
-                    plot_sub_title=NULL,
+                    plot_title=waiver(),
+                    plot_sub_title=waiver(),
                     caption=NULL,
                     rotate_x_tick_labels=waiver(),
                     show_alpha=TRUE,
                     width=waiver(),
                     height=waiver(),
                     units=waiver(),
+                    export_collection=FALSE,
                     ...) standardGeneric("plot_confusion_matrix"))
 
 #####plot_confusion_matrix (generic)#####
@@ -102,19 +104,22 @@ setMethod("plot_confusion_matrix", signature(object="ANY"),
                    x_label=waiver(),
                    y_label=waiver(),
                    legend_label=waiver(),
-                   plot_title=NULL,
-                   plot_sub_title=NULL,
+                   plot_title=waiver(),
+                   plot_sub_title=waiver(),
                    caption=NULL,
                    rotate_x_tick_labels=waiver(),
                    show_alpha=TRUE,
                    width=waiver(),
                    height=waiver(),
                    units=waiver(),
+                   export_collection=FALSE,
                    ...){
             
             # Attempt conversion to familiarCollection object.
             object <- do.call(as_familiar_collection,
-                              args=append(list("object"=object, "data_element"="confusion_matrix"), list(...)))
+                              args=c(list("object"=object,
+                                          "data_element"="confusion_matrix"),
+                                     list(...)))
             
             return(do.call(plot_confusion_matrix,
                            args=list("object"=object,
@@ -135,7 +140,8 @@ setMethod("plot_confusion_matrix", signature(object="ANY"),
                                      "show_alpha"=show_alpha,
                                      "width"=width,
                                      "height"=height,
-                                     "units"=units)))
+                                     "units"=units,
+                                     "export_collection"=export_collection)))
           })
 
 
@@ -154,14 +160,15 @@ setMethod("plot_confusion_matrix", signature(object="familiarCollection"),
                    x_label=waiver(),
                    y_label=waiver(),
                    legend_label=waiver(),
-                   plot_title=NULL,
-                   plot_sub_title=NULL,
+                   plot_title=waiver(),
+                   plot_sub_title=waiver(),
                    caption=NULL,
                    rotate_x_tick_labels=waiver(),
                    show_alpha=TRUE,
                    width=waiver(),
                    height=waiver(),
                    units=waiver(),
+                   export_collection=FALSE,
                    ...){
             
             # Suppress NOTES due to non-standard evaluation in data.table
@@ -185,6 +192,13 @@ setMethod("plot_confusion_matrix", signature(object="familiarCollection"),
             
             # Check that the data are not empty.
             if(is_empty(x)) return(NULL)
+            
+            # Check package requirements for plotting.
+            if(!require_package(x=..required_plotting_packages(extended=FALSE),
+                                purpose="to plot confusion matrices",
+                                message_type="warning")){
+              return(NULL)
+            }
             
             ##### Check input arguments ------------------------------------------------
             
@@ -298,6 +312,9 @@ setMethod("plot_confusion_matrix", signature(object="familiarCollection"),
             
             ##### Create plots ---------------------------------------------------------
             
+            # Determine if subtitle should be generated.
+            autogenerate_plot_subtitle <- is.waive(plot_sub_title)
+            
             # Split data
             if(!is.null(split_by)){
               x_split <- split(x@data, by=split_by)
@@ -314,6 +331,13 @@ setMethod("plot_confusion_matrix", signature(object="familiarCollection"),
               
               # Skip empty datasets
               if(is_empty(x_split[[ii]])) next()
+              
+              if(is.waive(plot_title)) plot_title <- "Confusion matrix"
+              
+              if(autogenerate_plot_subtitle){
+                plot_sub_title <- plotting.create_subtitle(split_by=split_by,
+                                                           x=x_split[[ii]])
+              }
               
               # Generate plot
               p <- .plot_confusion_matrix_plot(x=x_split[[ii]],
@@ -338,13 +362,10 @@ setMethod("plot_confusion_matrix", signature(object="familiarCollection"),
               # Save and export
               if(!is.null(dir_path)){
                 
-                subtype <- "confusion_matrix"
-                
-                # Determine the subtype
-                if(!is.null(split_by)){
-                  subtype <- c(subtype, as.character(sapply(split_by, function(jj, x) (x[[jj]][1]), x=x_split[[ii]])))
-                  subtype <- paste0(subtype, collapse="_")
-                }
+                # Set subtype.
+                subtype <- plotting.create_subtype(x=x_split[[ii]],
+                                                   subtype="confusion_matrix",
+                                                   split_by=split_by)
                 
                 # Obtain decent default values for the plot.
                 def_plot_dims <- .determine_confusion_matrix_plot_dimensions(x=x_split[[ii]],
@@ -355,29 +376,28 @@ setMethod("plot_confusion_matrix", signature(object="familiarCollection"),
                 
                 # Save to file.
                 do.call(plotting.save_plot_to_file,
-                        args=append(list("plot_obj"=p,
-                                         "object"=object,
-                                         "dir_path"=dir_path,
-                                         "type"="performance",
-                                         "subtype"=subtype,
-                                         "height"=ifelse(is.waive(height), def_plot_dims[1], height),
-                                         "width"=ifelse(is.waive(width), def_plot_dims[2], width),
-                                         "units"=ifelse(is.waive(units), "cm", units)),
-                                    list(...)))
+                        args=c(list("plot_obj"=p,
+                                    "object"=object,
+                                    "dir_path"=dir_path,
+                                    "type"="performance",
+                                    "subtype"=subtype,
+                                    "height"=ifelse(is.waive(height), def_plot_dims[1], height),
+                                    "width"=ifelse(is.waive(width), def_plot_dims[2], width),
+                                    "units"=ifelse(is.waive(units), "cm", units)),
+                               list(...)))
                 
               } else {
                 # Store as list for export.
-                plot_list <- append(plot_list, list(p))
+                plot_list <- c(plot_list,
+                               list(p))
               }
             }
             
-            # Output
-            if(is.null(dir_path)){
-              return(plot_list)
-              
-            } else {
-              return(NULL)
-            }
+            # Generate output
+            return(plotting.get_output(dir_path=dir_path,
+                                       plot_list=plot_list,
+                                       export_collection=export_collection,
+                                       object=object))
           })
 
 

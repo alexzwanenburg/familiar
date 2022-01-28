@@ -19,8 +19,8 @@ plot_auc_precision_recall_curve(
   x_label = waiver(),
   y_label = waiver(),
   legend_label = waiver(),
-  plot_title = NULL,
-  plot_sub_title = NULL,
+  plot_title = waiver(),
+  plot_sub_title = waiver(),
   caption = NULL,
   x_n_breaks = 5,
   x_breaks = NULL,
@@ -31,6 +31,7 @@ plot_auc_precision_recall_curve(
   width = waiver(),
   height = waiver(),
   units = waiver(),
+  export_collection = FALSE,
   ...
 )
 
@@ -47,8 +48,8 @@ plot_auc_precision_recall_curve(
   x_label = waiver(),
   y_label = waiver(),
   legend_label = waiver(),
-  plot_title = NULL,
-  plot_sub_title = NULL,
+  plot_title = waiver(),
+  plot_sub_title = waiver(),
   caption = NULL,
   x_n_breaks = 5,
   x_breaks = NULL,
@@ -59,6 +60,7 @@ plot_auc_precision_recall_curve(
   width = waiver(),
   height = waiver(),
   units = waiver(),
+  export_collection = FALSE,
   ...
 )
 
@@ -75,8 +77,8 @@ plot_auc_precision_recall_curve(
   x_label = waiver(),
   y_label = waiver(),
   legend_label = waiver(),
-  plot_title = NULL,
-  plot_sub_title = NULL,
+  plot_title = waiver(),
+  plot_sub_title = waiver(),
   caption = NULL,
   x_n_breaks = 5,
   x_breaks = NULL,
@@ -87,6 +89,7 @@ plot_auc_precision_recall_curve(
   width = waiver(),
   height = waiver(),
   units = waiver(),
+  export_collection = FALSE,
   ...
 )
 }
@@ -174,6 +177,8 @@ the number of features and the number of facets.}
 
 \item{units}{(\emph{optional}) Plot size unit. Either \code{cm} (default), \code{mm} or \verb{in}.}
 
+\item{export_collection}{(\emph{optional}) Exports the collection if TRUE.}
+
 \item{...}{
   Arguments passed on to \code{\link[=as_familiar_collection]{as_familiar_collection}}, \code{\link[ggplot2:ggsave]{ggplot2::ggsave}}
   \describe{
@@ -183,7 +188,7 @@ is one or more \code{familiarData} objects.}
     \item{\code{filename}}{File name to create on disk.}
     \item{\code{plot}}{Plot to save, defaults to last plot displayed.}
     \item{\code{device}}{Device to use. Can either be a device function
-(e.g. \code{\link[=png]{png()}}), or one of "eps", "ps", "tex" (pictex),
+(e.g. \link{png}), or one of "eps", "ps", "tex" (pictex),
 "pdf", "jpeg", "tiff", "png", "bmp", "svg" or "wmf" (windows only).}
     \item{\code{path}}{Path of the directory to save plot to: \code{path} and \code{filename}
 are combined to create the fully qualified file name. Defaults to the
@@ -191,9 +196,11 @@ working directory.}
     \item{\code{scale}}{Multiplicative scaling factor.}
     \item{\code{dpi}}{Plot resolution. Also accepts a string input: "retina" (320),
 "print" (300), or "screen" (72). Applies only to raster output types.}
-    \item{\code{limitsize}}{When \code{TRUE} (the default), \code{ggsave} will not
+    \item{\code{limitsize}}{When \code{TRUE} (the default), \code{ggsave()} will not
 save images larger than 50x50 inches, to prevent the common error of
 specifying dimensions in pixels.}
+    \item{\code{bg}}{Background colour. If \code{NULL}, uses the \code{plot.background} fill value
+from the plot theme.}
   }}
 }
 \value{

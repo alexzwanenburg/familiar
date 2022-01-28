@@ -3,9 +3,13 @@ testthat::skip_on_cran()
 
 debug_flag <- FALSE
 
-# FDR-crrected p-values
+# FDR-corrected p-values. Note that failure to predict survival probabilities does
+# not influence the produced plots.
 familiar:::test_plots(plot_function=familiar::plot_univariate_importance,
                       data_element="univariate_analysis",
+                      except_prospective=TRUE,
+                      except_one_sample=TRUE,
+                      except_failed_survival_prediction=FALSE,
                       outcome_type_available=c("count", "continuous", "binomial", "multinomial", "survival"),
                       plot_args=list("verbose"=FALSE),
                       debug=debug_flag)
@@ -13,6 +17,9 @@ familiar:::test_plots(plot_function=familiar::plot_univariate_importance,
 # Uncorrected p-values.
 familiar:::test_plots(plot_function=familiar::plot_univariate_importance,
                       data_element="univariate_analysis",
+                      except_prospective=TRUE,
+                      except_one_sample=TRUE,
+                      except_failed_survival_prediction=FALSE,
                       outcome_type_available=c("count", "continuous", "binomial", "multinomial", "survival"),
                       plot_args=list("verbose"=FALSE,
                                      "p_adjustment_method"="p_value"),

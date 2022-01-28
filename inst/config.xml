@@ -128,6 +128,10 @@
       <learner>required</learner>
       <!-- Hyperparameter list for user-provided hyperparameters (optional; not recommended as user-provided hyperparameters are usually sub-optimal or biased) -->
       <hyperparameter></hyperparameter>
+      <!-- Algorithm used for novelty, or out-of-distribution, detection (optional; isolation_forest by default, can be none as well) -->
+      <novelty_detector></novelty_detector>
+      <!-- Detector parameters for novelty detector algorithms (optional) -->
+      <detector_parameters></detector_parameters>
       <!-- Parallel processing for model building (optional, default: true) -->
       <parallel_model_development></parallel_model_development>
     </model_development>
@@ -136,9 +140,13 @@
       <optimisation_metric></optimisation_metric>
       <!-- Function for a computing optimisation score based on model performance metrics (optional, default: balanced; otherwise max_validation, stronger_balance) -->
       <optimisation_function></optimisation_function>
-      <!-- The acquisition function that is to be used for guiding exploration of the hyperparameter space (optional, default: expected_improvement -->
+      <!-- The acquisition function that is used to compute utility of hyperparameter sets and guide exploration of the hyperparameter space (optional, default: expected_improvement) -->
       <acquisition_function></acquisition_function>
-      <!-- Maximum number of bootstraps to evaluate hyperparameters on (optional, default: 200) -->
+      <!-- The exploration method defines how alternative hyperparameter sets are pruned during search (optional, default: successive_halving) -->
+      <exploration_method></exploration_method>
+      <!-- The model used to infer utility of hyperparameter sets and select them for exploration (optional, default: gaussian_process) -->
+      <hyperparameter_learner></hyperparameter_learner>
+      <!-- Maximum number of bootstraps to evaluate hyperparameters on (optional, default: 50) -->
       <optimisation_bootstraps></optimisation_bootstraps>
       <!-- Whether variable importance should be computed seperately for each bootstrap (true) when optimising learner hyperparameters or the feature selection results should be used (false). (optional, default: true) -->
       <optimisation_determine_vimp></optimisation_determine_vimp>
@@ -153,7 +161,7 @@
       <!-- Maximum number of intensify steps within each SMBO iteration (optional, default: 3) -->
       <smbo_intensify_steps></smbo_intensify_steps>
       <!-- p-value for early stopping of intensify iterations (optional, default: 0.05) -->
-      <smbo_intensify_stop_p_value></smbo_intensify_stop_p_value>
+      <smbo_stochastic_reject_p_value></smbo_stochastic_reject_p_value>
       <!-- Number of additional SMBO iterations to perform after convergence has been reached (optional, default: 3) -->
       <smbo_stop_convergent_iterations></smbo_stop_convergent_iterations>
       <!-- Tolerance level for convergence (optional, default: 1E-2) -->
@@ -186,6 +194,8 @@
       <ensemble_method></ensemble_method>
       <!-- Metric(s) for assessing model performance (optional, default: same as metric for hyperparameter_optimisation, multiple possible) -->
       <evaluation_metric></evaluation_metric>
+      <!-- Set maximum number of samples used for evaluation (optional, default: all samples) -->
+      <sample_limit></sample_limit>
       <!-- Level at which evaluation steps are computed (optional, default: hybrid) -->
       <detail_level></detail_level>
       <!-- Type of estimate being computed (optional, default: bootstrap_confidence_interval) -->

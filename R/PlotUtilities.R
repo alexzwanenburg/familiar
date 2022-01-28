@@ -1,3 +1,13 @@
+..required_plotting_packages <- function(extended=FALSE){
+  plot_packages <- c("ggplot2", "labeling", "scales", "rlang")
+  
+  if(extended){
+    plot_packages <- c(plot_packages, "gtable")
+  }
+  
+  return(plot_packages)
+}
+
 
 plotting.get_theme <- function(use_theme=NULL){
 
@@ -117,8 +127,11 @@ plotting.check_data_handling <- function(x,
     
   }
   
+  # Filter available down to those present in the data.
+  filter_available <- intersect(available, colnames(x))
+  
   # Filter available down to those that have more than one variable
-  filter_available <- available[sapply(available, function(ii, x) (data.table::uniqueN(x=x, by=ii) > 1), x=x)]
+  filter_available <- filter_available[sapply(filter_available, function(ii, x) (data.table::uniqueN(x=x, by=ii) > 1), x=x)]
   
   if(is.null(filter_available)){
     return(list())
@@ -262,6 +275,84 @@ plotting.parse_facet_by <- function(x, facet_by, facet_wrap_cols){
       return(list("facet_by"=quos(!!!parse_exprs(facet_by))))
     }
   }
+}
+
+
+plotting.create_subtitle <- function(x, split_by=NULL, additional=NULL){
+  
+  # Do not create a subtitle if there is no subtitle to be created.
+  subtitle <- NULL
+  
+  # Generate subtitle from splitting variables and data.
+  if(!is.null(split_by)){
+    subtitle <- c(subtitle,
+                  sapply(split_by, function(name, x){
+                    split_variable_name <- name
+                    
+                    if(split_variable_name == "fs_method"){
+                      split_variable_name <- "VIMP method"
+                      
+                    } else if(split_variable_name == "data_set"){
+                      split_variable_name <- "data set"
+                      
+                    } else if(split_variable_name == "evaluation_time"){
+                      split_variable_name <- "time point"
+                    }
+                    
+                    # Remove all underscores.
+                    split_variable_name <- stringi::stri_replace_all_fixed(split_variable_name, pattern="_", replacement=" ")
+                    
+                    # Parse to an elementary string.
+                    split_variable_name <- paste0(split_variable_name, ": ", x[[name]][1])
+                    
+                    return(split_variable_name)
+                  },
+                  x=x))
+  }
+  
+  # Generate additional strings from additional.
+  if(!is.null(additional)){
+    subtitle <- c(subtitle,
+                  mapply(function(name, value){
+                    # Remove all underscores.
+                    split_variable_name <- stringi::stri_replace_all_fixed(name, pattern="_", replacement=" ")
+                    
+                    # Parse to an elementary string.
+                    split_variable_name <- paste0(split_variable_name, ": ", value)
+                  },
+                  name=names(additional),
+                  value=additional))
+  }
+  
+  # Check if any subtitle was generated.
+  if(is.null(subtitle)) return(NULL)
+  
+  # Combine into single string.
+  subtitle <- paste_s(subtitle)
+  
+  return(subtitle)
+}
+
+
+plotting.create_subtype <- function(x, subtype=NULL, split_by=NULL, additional=NULL){
+  
+  # Generate additional terms for the subtype, based on splits.
+  if(!is.null(split_by)){
+    subtype <- c(subtype,
+                 as.character(sapply(split_by, function(jj, x) (x[[jj]][1]), x=x)))
+  }
+  
+  if(!is.null(additional)){
+    subtype <- c(subtype,
+                 sapply(additional, function(jj) as.character(jj[1])))
+  }
+  
+  if(is.null(subtype)) return(NULL)
+  
+  # Combine into a single string.
+  subtype <- paste0(subtype, collapse="_")
+  
+  return(subtype)
 }
 
 
@@ -858,7 +949,12 @@ plotting.add_global_plot_elements <- function(grobs,
   if(all(plot_layout_table$has_axis_label_y == FALSE)){
     figure_list$axis_label_l <- element_grobs[[present_figure_id]]$axis_label_l
     figure_list$axis_label_r <- element_grobs[[present_figure_id]]$axis_label_r
-  } 
+  }
+  
+  # Add title, subtitle and caption.
+  figure_list$title <- element_grobs[[present_figure_id]]$title
+  figure_list$subtitle <- element_grobs[[present_figure_id]]$subtitle
+  figure_list$caption <- element_grobs[[present_figure_id]]$caption
   
   # Insert global elements.
   g <- plotting.reinsert_plot_elements(grob_list=figure_list,
@@ -1025,9 +1121,17 @@ plotting.extract_plot_elements <- function(p){
   element_list$axis_text_l <- .gtable_extract(g=g, element="axis-l-main", partial_match=TRUE, drop_empty=TRUE)
   element_list$axis_text_r <- .gtable_extract(g=g, element="axis-r-main", partial_match=TRUE, drop_empty=TRUE)
   
-  # Update plot by removing the axis text.
+  # Title, subtitle and caption
+  element_list$title <- .gtable_extract(g=g, element="title", partial_match=FALSE, drop_empty=TRUE)
+  element_list$subtitle <- .gtable_extract(g=g, element="subtitle", partial_match=FALSE, drop_empty=TRUE)
+  element_list$caption <- .gtable_extract(g=g, element="caption", partial_match=FALSE, drop_empty=TRUE)
+  
+  # Update plot by removing the axis text, title, subtitle and captions.
   p <- p + ggplot2::theme(axis.text.x=ggplot2::element_blank(),
-                          axis.text.y=ggplot2::element_blank())
+                          axis.text.y=ggplot2::element_blank(),
+                          plot.title=ggplot2::element_blank(),
+                          plot.subtitle=ggplot2::element_blank(),
+                          plot.caption=ggplot2::element_blank())
   
   # Convert to grobs
   g <- plotting.to_grob(p)
@@ -1042,6 +1146,11 @@ plotting.extract_plot_elements <- function(p){
   
   element_list$axis_text_l_nt <- .gtable_extract(g=g, element="axis-l-main", partial_match=TRUE, drop_empty=TRUE)
   element_list$axis_text_r_nt <- .gtable_extract(g=g, element="axis-r-main", partial_match=TRUE, drop_empty=TRUE)
+  
+  # Title, subtitle, caption (without text)
+  element_list$title_nt <- .gtable_extract(g=g, element="title", partial_match=FALSE, drop_empty=TRUE)
+  element_list$subtitle_nt <- .gtable_extract(g=g, element="subtitle", partial_match=FALSE, drop_empty=TRUE)
+  element_list$caption_nt <- .gtable_extract(g=g, element="caption", partial_match=FALSE, drop_empty=TRUE)
   
   return(element_list)
 }
@@ -1066,7 +1175,10 @@ plotting.remove_plot_elements <- function(p){
                           axis.title.y=ggplot2::element_blank(),
                           axis.text.y=ggplot2::element_blank(),
                           axis.ticks.y=ggplot2::element_blank(),
-                          axis.line.y=ggplot2::element_blank())
+                          axis.line.y=ggplot2::element_blank(),
+                          plot.title=ggplot2::element_blank(),
+                          plot.subtitle=ggplot2::element_blank(),
+                          plot.caption=ggplot2::element_blank())
   
   return(p)
 }
@@ -1099,7 +1211,8 @@ plotting.reinsert_plot_elements <- function(g=NULL, elements=NULL, grob_list, gg
                                     spacer=list("l"=plotting.get_legend_spacing(ggtheme=ggtheme, axis="y")),
                                     where=legend_position,
                                     partial_match_ref=TRUE,
-                                    partial_match_along=TRUE)
+                                    partial_match_along=TRUE,
+                                    update_dimensions=FALSE)
           
           break()
         }
@@ -1119,7 +1232,8 @@ plotting.reinsert_plot_elements <- function(g=NULL, elements=NULL, grob_list, gg
                                     spacer=list("r"=plotting.get_legend_spacing(ggtheme=ggtheme, axis="y")),
                                     where=legend_position,
                                     partial_match_ref=TRUE,
-                                    partial_match_along=TRUE)
+                                    partial_match_along=TRUE,
+                                    update_dimensions=FALSE)
           
           break()
         }
@@ -1139,7 +1253,8 @@ plotting.reinsert_plot_elements <- function(g=NULL, elements=NULL, grob_list, gg
                                     spacer=list("t"=plotting.get_legend_spacing(ggtheme=ggtheme, axis="x")),
                                     where=legend_position,
                                     partial_match_ref=TRUE,
-                                    partial_match_along=TRUE)
+                                    partial_match_along=TRUE,
+                                    update_dimensions=FALSE)
           
           break()
         }
@@ -1159,7 +1274,8 @@ plotting.reinsert_plot_elements <- function(g=NULL, elements=NULL, grob_list, gg
                                     spacer=list("b"=plotting.get_legend_spacing(ggtheme=ggtheme, axis="x")),
                                     where=legend_position,
                                     partial_match_ref=TRUE,
-                                    partial_match_along=TRUE)
+                                    partial_match_along=TRUE,
+                                    update_dimensions=FALSE)
           
           break()
         }
@@ -1236,6 +1352,7 @@ plotting.reinsert_plot_elements <- function(g=NULL, elements=NULL, grob_list, gg
     }
   }
   
+  
   # Insert top x-axis text
   if("axis_text_t" %in% elements & !is.null(grob_list$axis_text_t)){
     
@@ -1306,7 +1423,6 @@ plotting.reinsert_plot_elements <- function(g=NULL, elements=NULL, grob_list, gg
       }
     }
   }
-  
   
   
   # Insert y-axis label to the left.
@@ -1398,6 +1514,41 @@ plotting.reinsert_plot_elements <- function(g=NULL, elements=NULL, grob_list, gg
         break()
       }
     }
+  }
+  
+  if("subtitle" %in% elements & !is.null(grob_list$subtitle)){
+    # Insert subtitle label to the top.
+    g <- .gtable_insert_along(g=g,
+                              g_new=grob_list$subtitle,
+                              ref_element="subtitle",
+                              where="top",
+                              attempt_replace=TRUE,
+                              partial_match_ref=FALSE,
+                              partial_match_along=FALSE)
+  }
+  
+  
+  # Insert title label to the top.
+  if("title" %in% elements & !is.null(grob_list$title)){
+    g <- .gtable_insert_along(g=g,
+                              g_new=grob_list$title,
+                              ref_element="title",
+                              where="top",
+                              attempt_replace=TRUE,
+                              partial_match_ref=FALSE,
+                              partial_match_along=FALSE)
+  }
+  
+  
+  # Insert caption to the bottom.
+  if("caption" %in% elements & !is.null(grob_list$caption)){
+    g <- .gtable_insert_along(g=g,
+                              g_new=grob_list$caption,
+                              ref_element="caption",
+                              where="bottom",
+                              attempt_replace=TRUE,
+                              partial_match_ref=FALSE,
+                              partial_match_along=FALSE)
   }
   
   return(g)
@@ -1896,9 +2047,29 @@ plotting.save_plot_to_file <- function(plot_obj, object, dir_path, type, subtype
     })
     
   }
-  invisible()
+  invisible(NULL)
 }
 
+
+
+plotting.get_output <- function(dir_path=NULL,
+                                plot_list=NULL,
+                                export_collection=FALSE,
+                                object=NULL){
+  
+  # Do not return plot information.
+  if(!is.null(dir_path)){
+    plot_list <- NULL
+  }
+  
+  if(export_collection){
+    return(list("collection"=object,
+                "plot_list"=plot_list))
+    
+  } else {
+    return(plot_list) 
+  }
+}
 
 
 plotting.format_number <- function(x, digits=3){
@@ -2150,4 +2321,49 @@ plotting.combine_guides <- function(g, ggtheme, no_empty=TRUE){
                              clip="inherit")
   
   return(g)
+}
+
+
+..set_edge_points <- function(x, range, type){
+  # Function used to determine edge points, such as used for ggplot2::geom_rect.
+  if(!is.numeric(x)){
+    x <- as.numeric(x)
+    range <- c(0.5, length(x) + 0.5)
+  }
+  
+  if(length(x) > 1){
+    # Make sure x is sorted ascendingly.
+    sort_index <- sort(x, index.return=TRUE)$ix
+    x <- x[sort_index]
+    
+    # Compute difference between subsequent values.
+    diff_x <- diff(x)
+    
+    # Compute edges.
+    xmax <- c(head(x, n=length(x)-1L) + diff_x  / 2.0,
+              tail(x, n=1L) + tail(diff_x, n=1L) / 2.0)
+    xmin <- c(head(x, n=1L) - head(diff_x, n=1L) / 2.0,
+              tail(x, n=length(x)-1L) - diff_x / 2.0)
+
+    # Shuffle back to input order.
+    xmax[sort_index] <- xmax
+    xmin[sort_index] <- xmin
+    
+  } else {
+    xmin <- range[1]
+    xmax <- range[2]
+  }
+  
+  edge_points <- list(xmin, xmax)
+  if(type == "x"){
+    names(edge_points) <- c("xmin", "xmax")
+    
+  } else if(type == "y"){
+    names(edge_points) <- c("ymin", "ymax")
+    
+  } else {
+    ..error_reached_unreachable_code(paste0("..set_edge_points: unknown type specified: ", type))
+  }
+  
+  return(edge_points)
 }
