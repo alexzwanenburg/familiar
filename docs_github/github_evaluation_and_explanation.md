@@ -1,9 +1,9 @@
 Evaluation and explanation
 ================
 Alex Zwanenburg
-2022-01-27
+2022-01-28
 
-<img src="../icon/familiar.svg" align="right" width="120"/>
+<img src="../vignettes/familiar.svg" align="right" width="120"/>
 
 -   [Model performance](#model-performance)
     -   [Receiver-operating characteristic
@@ -212,7 +212,7 @@ plots <- familiar::plot_model_performance(object=binomial_model,
 plots[[1]]
 ```
 
-<img src="figure/eval_and_explain/model-performance-plot-1.png" title="plot of chunk model-performance-plot" alt="plot of chunk model-performance-plot" style="display: block; margin: auto;" />
+<img src="eval_and_explain/model-performance-plot-1.png" title="plot of chunk model-performance-plot" alt="plot of chunk model-performance-plot" style="display: block; margin: auto;" />
 
 The plot shows distributions of the area under the receiver operating
 characteristic curve, the brier score and the f1-score. The plot
@@ -240,7 +240,7 @@ plots <- familiar::plot_auc_roc_curve(object=binomial_model,
 plots[[1]]
 ```
 
-<img src="figure/eval_and_explain/auc-roc-curve-bci-1.png" title="plot of chunk auc-roc-curve-bci" alt="plot of chunk auc-roc-curve-bci" style="display: block; margin: auto;" />
+<img src="eval_and_explain/auc-roc-curve-bci-1.png" title="plot of chunk auc-roc-curve-bci" alt="plot of chunk auc-roc-curve-bci" style="display: block; margin: auto;" />
 
 Under ideal circumstances, the curve would lie in the top-left corner of
 the plot. If a model does not predict better than at random, the curve
@@ -274,7 +274,7 @@ plots <- familiar::plot_auc_roc_curve(object=binomial_model,
 plots[[1]]
 ```
 
-<img src="figure/eval_and_explain/auc-roc-curve-point-1.png" title="plot of chunk auc-roc-curve-point" alt="plot of chunk auc-roc-curve-point" style="display: block; margin: auto;" />
+<img src="eval_and_explain/auc-roc-curve-point-1.png" title="plot of chunk auc-roc-curve-point" alt="plot of chunk auc-roc-curve-point" style="display: block; margin: auto;" />
 
 Note that we did not specify the detail level to create the above plot
 because only a single model is evaluated.
@@ -300,7 +300,7 @@ plots <- familiar::plot_auc_precision_recall_curve(object=binomial_model,
 plots[[1]]
 ```
 
-<img src="figure/eval_and_explain/auc-pr-curve-bci-1.png" title="plot of chunk auc-pr-curve-bci" alt="plot of chunk auc-pr-curve-bci" style="display: block; margin: auto;" />
+<img src="eval_and_explain/auc-pr-curve-bci-1.png" title="plot of chunk auc-pr-curve-bci" alt="plot of chunk auc-pr-curve-bci" style="display: block; margin: auto;" />
 
 Under ideal circumstances, the curve would lie in the top-right part of
 the plot. A random classifier would yield a curve that is mostly
@@ -336,7 +336,7 @@ plots <- familiar::plot_auc_precision_recall_curve(object=binomial_model,
 plots[[1]]
 ```
 
-<img src="figure/eval_and_explain/auc-pr-curve-point-1.png" title="plot of chunk auc-pr-curve-point" alt="plot of chunk auc-pr-curve-point" style="display: block; margin: auto;" />
+<img src="eval_and_explain/auc-pr-curve-point-1.png" title="plot of chunk auc-pr-curve-point" alt="plot of chunk auc-pr-curve-point" style="display: block; margin: auto;" />
 
 ## Confusion matrix
 
@@ -352,7 +352,7 @@ plots <- familiar::plot_confusion_matrix(object=binomial_model,
 plots[[1]]
 ```
 
-<img src="figure/eval_and_explain/confusion-matrix-1.png" title="plot of chunk confusion-matrix" alt="plot of chunk confusion-matrix" style="display: block; margin: auto;" />
+<img src="eval_and_explain/confusion-matrix-1.png" title="plot of chunk confusion-matrix" alt="plot of chunk confusion-matrix" style="display: block; margin: auto;" />
 
 Familiar selects the class with the highest predicted class probability
 as the expected class. It is currently not possible in familiar to
@@ -404,7 +404,7 @@ grid::grid.newpage()
 grid::grid.draw(plots[[1]])
 ```
 
-<img src="figure/eval_and_explain/kaplan-meier-plot-1.png" title="plot of chunk kaplan-meier-plot" alt="plot of chunk kaplan-meier-plot" style="display: block; margin: auto;" />
+<img src="eval_and_explain/kaplan-meier-plot-1.png" title="plot of chunk kaplan-meier-plot" alt="plot of chunk kaplan-meier-plot" style="display: block; margin: auto;" />
 
 In the plot above, familiar divides instances into two groups by the
 median threshold in the development dataset. The risk groups are shown
@@ -437,7 +437,7 @@ grid::grid.newpage()
 grid::grid.draw(plots[[1]])
 ```
 
-<img src="figure/eval_and_explain/calibration-data-bci-1.png" title="plot of chunk calibration-data-bci" alt="plot of chunk calibration-data-bci" style="display: block; margin: auto;" />
+<img src="eval_and_explain/calibration-data-bci-1.png" title="plot of chunk calibration-data-bci" alt="plot of chunk calibration-data-bci" style="display: block; margin: auto;" />
 
 The calibration curve shows the expected (predicted) probability of
 malignant cells versus the observed proportion of malignant cells,
@@ -510,7 +510,7 @@ grid::grid.newpage()
 grid::grid.draw(plots[[1]])
 ```
 
-<img src="figure/eval_and_explain/calibration-data-point-1.png" title="plot of chunk calibration-data-point" alt="plot of chunk calibration-data-point" style="display: block; margin: auto;" />
+<img src="eval_and_explain/calibration-data-point-1.png" title="plot of chunk calibration-data-point" alt="plot of chunk calibration-data-point" style="display: block; margin: auto;" />
 
 The plot with point estimates and the earlier calibration plot with
 bootstrap confidence intervals lead to the same assessment. However, you
@@ -561,7 +561,7 @@ plots[[1]]
 #> Warning: Removed 1 row(s) containing missing values (geom_path).
 ```
 
-<img src="figure/eval_and_explain/decision-curve-bci-1.png" title="plot of chunk decision-curve-bci" alt="plot of chunk decision-curve-bci" style="display: block; margin: auto;" />
+<img src="eval_and_explain/decision-curve-bci-1.png" title="plot of chunk decision-curve-bci" alt="plot of chunk decision-curve-bci" style="display: block; margin: auto;" />
 
 The shaded curve is the decision curve produced by the model, with 95%
 confidence intervals. The declining curve represents the intervention
@@ -601,7 +601,7 @@ plots <- familiar::plot_model_signature_variable_importance(object=binomial_mode
 plots[[1]]
 ```
 
-<img src="figure/eval_and_explain/model-variable-importance-1.png" title="plot of chunk model-variable-importance" alt="plot of chunk model-variable-importance" style="display: block; margin: auto;" />
+<img src="eval_and_explain/model-variable-importance-1.png" title="plot of chunk model-variable-importance" alt="plot of chunk model-variable-importance" style="display: block; margin: auto;" />
 
 In such plots, we always order features so that the most important
 features are on the left, and the least important features on the right.
@@ -634,7 +634,7 @@ plots <- familiar::plot_permutation_variable_importance(object=binomial_model,
 plots[[1]]
 ```
 
-<img src="figure/eval_and_explain/permutation-variable-importance-bc-1.png" title="plot of chunk permutation-variable-importance-bc" alt="plot of chunk permutation-variable-importance-bc" style="display: block; margin: auto;" />
+<img src="eval_and_explain/permutation-variable-importance-bc-1.png" title="plot of chunk permutation-variable-importance-bc" alt="plot of chunk permutation-variable-importance-bc" style="display: block; margin: auto;" />
 
 The figure shows the features along the y-axis, and the loss in AUC-ROC
 caused by permuting the feature values along the x-axis. Accordingly,
@@ -672,7 +672,7 @@ plots <- familiar::plot_permutation_variable_importance(object=binomial_model,
 plots[[1]]
 ```
 
-<img src="figure/eval_and_explain/permutation-variable-importance-bc-spearman-1.png" title="plot of chunk permutation-variable-importance-bc-spearman" alt="plot of chunk permutation-variable-importance-bc-spearman" style="display: block; margin: auto;" />
+<img src="eval_and_explain/permutation-variable-importance-bc-spearman-1.png" title="plot of chunk permutation-variable-importance-bc-spearman" alt="plot of chunk permutation-variable-importance-bc-spearman" style="display: block; margin: auto;" />
 
 This figure paints a different picture: the `cell_shape_uniformity`,
 `bare_nuclei`, `normal_nucleoli` and `epithelial_cell_size` features are
@@ -702,7 +702,7 @@ grid::grid.newpage()
 grid::grid.draw(plots[[1]])
 ```
 
-<img src="figure/eval_and_explain/ice-cell-shap-uniformity-1.png" title="plot of chunk ice-cell-shap-uniformity" alt="plot of chunk ice-cell-shap-uniformity" style="display: block; margin: auto;" />
+<img src="eval_and_explain/ice-cell-shap-uniformity-1.png" title="plot of chunk ice-cell-shap-uniformity" alt="plot of chunk ice-cell-shap-uniformity" style="display: block; margin: auto;" />
 
 The ICE plot shows multiple curves for individual samples, as well as
 their average, the partial dependence plot as a somewhat thicker curve.
@@ -738,7 +738,7 @@ grid::grid.newpage()
 grid::grid.draw(plots[[1]])
 ```
 
-<img src="figure/eval_and_explain/ice-cell-shape-uniformity-anchored-1.png" title="plot of chunk ice-cell-shape-uniformity-anchored" alt="plot of chunk ice-cell-shape-uniformity-anchored" style="display: block; margin: auto;" />
+<img src="eval_and_explain/ice-cell-shape-uniformity-anchored-1.png" title="plot of chunk ice-cell-shape-uniformity-anchored" alt="plot of chunk ice-cell-shape-uniformity-anchored" style="display: block; margin: auto;" />
 
 In the plot above, we have anchored the values at
 `cell_shape_uniformity=10`, which is the maximum value that this feature
@@ -757,7 +757,7 @@ grid::grid.newpage()
 grid::grid.draw(plots[[1]])
 ```
 
-<img src="figure/eval_and_explain/ice-2d-1.png" title="plot of chunk ice-2d" alt="plot of chunk ice-2d" style="display: block; margin: auto;" />
+<img src="eval_and_explain/ice-2d-1.png" title="plot of chunk ice-2d" alt="plot of chunk ice-2d" style="display: block; margin: auto;" />
 
 The partial dependence plot above shows the `cell_shape_uniformity`
 along the x-axis and `bare_nuclei` along the y-axis. Higher intensities
@@ -782,7 +782,7 @@ grid::grid.newpage()
 grid::grid.draw(plots[[1]])
 ```
 
-<img src="figure/eval_and_explain/ice-2d-anchored-1.png" title="plot of chunk ice-2d-anchored" alt="plot of chunk ice-2d-anchored" style="display: block; margin: auto;" />
+<img src="eval_and_explain/ice-2d-anchored-1.png" title="plot of chunk ice-2d-anchored" alt="plot of chunk ice-2d-anchored" style="display: block; margin: auto;" />
 
 We disabled novelty (`show_novelty=FALSE`) for plotting the 2D anchored
 plot. This changes the appearance of the plot, which now consists of
@@ -807,7 +807,7 @@ grid::grid.newpage()
 grid::grid.draw(plots[[1]])
 ```
 
-<img src="figure/eval_and_explain/ice-2d-survival-1.png" title="plot of chunk ice-2d-survival" alt="plot of chunk ice-2d-survival" style="display: block; margin: auto;" />
+<img src="eval_and_explain/ice-2d-survival-1.png" title="plot of chunk ice-2d-survival" alt="plot of chunk ice-2d-survival" style="display: block; margin: auto;" />
 
 Here we see that the number of nodes was not sampled linearly. Survival
 probability at 1000 days drops with an increase in nodes. Moreover, the
@@ -828,7 +828,7 @@ grid::grid.newpage()
 grid::grid.draw(plots[[1]])
 ```
 
-<img src="figure/eval_and_explain/feature-similarity-1.png" title="plot of chunk feature-similarity" alt="plot of chunk feature-similarity" style="display: block; margin: auto;" />
+<img src="eval_and_explain/feature-similarity-1.png" title="plot of chunk feature-similarity" alt="plot of chunk feature-similarity" style="display: block; margin: auto;" />
 
 The heatmap displays Spearman’s correlation coefficient between the
 different features. The features are also ordered by similarity, so that
@@ -850,7 +850,7 @@ grid::grid.newpage()
 grid::grid.draw(plots[[1]])
 ```
 
-<img src="figure/eval_and_explain/sample-similarity-1.png" title="plot of chunk sample-similarity" alt="plot of chunk sample-similarity" style="display: block; margin: auto;" />
+<img src="eval_and_explain/sample-similarity-1.png" title="plot of chunk sample-similarity" alt="plot of chunk sample-similarity" style="display: block; margin: auto;" />
 
 As may be observed, samples in the breast cancer dataset form two main
 clusters that correspond closely to cell malignancy. The top dendrogram
@@ -875,7 +875,7 @@ grid::grid.newpage()
 grid::grid.draw(plots[[1]])
 ```
 
-<img src="figure/eval_and_explain/sample-similarity-unnormalised-1.png" title="plot of chunk sample-similarity-unnormalised" alt="plot of chunk sample-similarity-unnormalised" style="display: block; margin: auto;" />
+<img src="eval_and_explain/sample-similarity-unnormalised-1.png" title="plot of chunk sample-similarity-unnormalised" alt="plot of chunk sample-similarity-unnormalised" style="display: block; margin: auto;" />
 
 # References
 

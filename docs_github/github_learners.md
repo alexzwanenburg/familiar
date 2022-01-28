@@ -1,9 +1,9 @@
 Learning algorithms and hyperparameter optimisation
 ================
 Alex Zwanenburg
-2022-01-27
+2022-01-28
 
-<img src="../icon/familiar.svg" align="right" width="120"/>
+<img src="../vignettes/familiar.svg" align="right" width="120"/>
 
 -   [Configuration options](#configuration-options)
 -   [Generalised linear models](#generalised-linear-models)

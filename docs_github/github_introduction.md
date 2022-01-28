@@ -1,9 +1,9 @@
 Introducing familiar
 ================
 Alex Zwanenburg
-2022-01-27
+2022-01-28
 
-<img src="../icon/familiar.svg" align="right" width="120"/>
+<img src="../vignettes/familiar.svg" align="right" width="120"/>
 
 -   [Familiar in brief](#familiar-in-brief)
     -   [Installing familiar](#installing-familiar)

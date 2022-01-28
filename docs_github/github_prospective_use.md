@@ -1,9 +1,9 @@
 Using familiar prospectively
 ================
 Alex Zwanenburg
-2022-01-27
+2022-01-28
 
-<img src="../icon/familiar.svg" align="right" width="120"/>
+<img src="../vignettes/familiar.svg" align="right" width="120"/>
 
 -   [Using models prospectively](#using-models-prospectively)
 -   [Using ensembles of models
@@ -116,10 +116,10 @@ model_directory_path <- file.path(tempdir(), "trained_models", "lasso", "none")
 
 # List files present in the directory.
 list.files(model_directory_path)
-#>  [1] "20220127214234_hyperparameters_lasso_none_2_1.RDS" "20220127214234_hyperparameters_lasso_none_2_2.RDS" "20220127214234_hyperparameters_lasso_none_2_3.RDS"
-#>  [4] "20220127214234_hyperparameters_lasso_none_2_4.RDS" "20220127214234_hyperparameters_lasso_none_2_5.RDS" "20220127214234_lasso_none_1_1_ensemble.RDS"       
-#>  [7] "20220127214234_lasso_none_2_1_model.RDS"           "20220127214234_lasso_none_2_2_model.RDS"           "20220127214234_lasso_none_2_3_model.RDS"          
-#> [10] "20220127214234_lasso_none_2_4_model.RDS"           "20220127214234_lasso_none_2_5_model.RDS"
+#>  [1] "20220128092642_hyperparameters_lasso_none_2_1.RDS" "20220128092642_hyperparameters_lasso_none_2_2.RDS" "20220128092642_hyperparameters_lasso_none_2_3.RDS"
+#>  [4] "20220128092642_hyperparameters_lasso_none_2_4.RDS" "20220128092642_hyperparameters_lasso_none_2_5.RDS" "20220128092642_lasso_none_1_1_ensemble.RDS"       
+#>  [7] "20220128092642_lasso_none_2_1_model.RDS"           "20220128092642_lasso_none_2_2_model.RDS"           "20220128092642_lasso_none_2_3_model.RDS"          
+#> [10] "20220128092642_lasso_none_2_4_model.RDS"           "20220128092642_lasso_none_2_5_model.RDS"
 ```
 
 There are 5 models in the directory, which are stored in RDS format in
@@ -266,7 +266,7 @@ plots <- familiar::plot_model_performance(object=model,
                                           familiar_data_names="lasso")
 ```
 
-<img src="figure/prospective_use/prospective-model-performance-plot-1.png" title="plot of chunk prospective-model-performance-plot" alt="plot of chunk prospective-model-performance-plot" style="display: block; margin: auto;" />
+<img src="prospective_use/prospective-model-performance-plot-1.png" title="plot of chunk prospective-model-performance-plot" alt="plot of chunk prospective-model-performance-plot" style="display: block; margin: auto;" />
 
 Note that we can achieve the same result without explicitly importing
 the model. Providing the path to the model as the `object` argument
@@ -282,7 +282,7 @@ plots <- familiar::plot_model_performance(object=model_path,
                                           familiar_data_names="lasso")
 ```
 
-<img src="figure/prospective_use/prospective-model-performance-plot-implicit-1.png" title="plot of chunk prospective-model-performance-plot-implicit" alt="plot of chunk prospective-model-performance-plot-implicit" style="display: block; margin: auto;" />
+<img src="prospective_use/prospective-model-performance-plot-implicit-1.png" title="plot of chunk prospective-model-performance-plot-implicit" alt="plot of chunk prospective-model-performance-plot-implicit" style="display: block; margin: auto;" />
 
 # Using ensembles of models prospectively
 
@@ -294,10 +294,10 @@ subdirectory of the `trained_models` folder as their constituent models:
 ``` r
 # List files present in the directory.
 list.files(model_directory_path)
-#>  [1] "20220127214234_hyperparameters_lasso_none_2_1.RDS" "20220127214234_hyperparameters_lasso_none_2_2.RDS" "20220127214234_hyperparameters_lasso_none_2_3.RDS"
-#>  [4] "20220127214234_hyperparameters_lasso_none_2_4.RDS" "20220127214234_hyperparameters_lasso_none_2_5.RDS" "20220127214234_lasso_none_1_1_ensemble.RDS"       
-#>  [7] "20220127214234_lasso_none_2_1_model.RDS"           "20220127214234_lasso_none_2_2_model.RDS"           "20220127214234_lasso_none_2_3_model.RDS"          
-#> [10] "20220127214234_lasso_none_2_4_model.RDS"           "20220127214234_lasso_none_2_5_model.RDS"
+#>  [1] "20220128092642_hyperparameters_lasso_none_2_1.RDS" "20220128092642_hyperparameters_lasso_none_2_2.RDS" "20220128092642_hyperparameters_lasso_none_2_3.RDS"
+#>  [4] "20220128092642_hyperparameters_lasso_none_2_4.RDS" "20220128092642_hyperparameters_lasso_none_2_5.RDS" "20220128092642_lasso_none_1_1_ensemble.RDS"       
+#>  [7] "20220128092642_lasso_none_2_1_model.RDS"           "20220128092642_lasso_none_2_2_model.RDS"           "20220128092642_lasso_none_2_3_model.RDS"          
+#> [10] "20220128092642_lasso_none_2_4_model.RDS"           "20220128092642_lasso_none_2_5_model.RDS"
 ```
 
 In this case there is only one ensemble in the directory, which is
@@ -362,7 +362,7 @@ plots <- familiar::plot_model_performance(object=ensemble,
                                           familiar_data_names="lasso")
 ```
 
-<img src="figure/prospective_use/prospective-model-performance-plot-ensemble-1.png" title="plot of chunk prospective-model-performance-plot-ensemble" alt="plot of chunk prospective-model-performance-plot-ensemble" style="display: block; margin: auto;" />
+<img src="prospective_use/prospective-model-performance-plot-ensemble-1.png" title="plot of chunk prospective-model-performance-plot-ensemble" alt="plot of chunk prospective-model-performance-plot-ensemble" style="display: block; margin: auto;" />
 
 There is one important limitation to using ensembles. Normally, when
 loading an ensemble, the models are not attached to the ensemble.
@@ -391,7 +391,7 @@ plots <- familiar::plot_model_performance(object=model_paths,
                                           familiar_data_names="lasso")
 ```
 
-<img src="figure/prospective_use/prospective-model-performance-plot-new-directory-1.png" title="plot of chunk prospective-model-performance-plot-new-directory" alt="plot of chunk prospective-model-performance-plot-new-directory" style="display: block; margin: auto;" />
+<img src="prospective_use/prospective-model-performance-plot-new-directory-1.png" title="plot of chunk prospective-model-performance-plot-new-directory" alt="plot of chunk prospective-model-performance-plot-new-directory" style="display: block; margin: auto;" />
 
 # Customising exports and plots
 
@@ -401,8 +401,8 @@ found in the `familiar_data` folder.
 
 ``` r
 list.files(file.path(tempdir(), "familiar_data"))
-#> [1] "20220127214234_lasso_none_1_1_ensemble_1_1_validation_data.RDS" "20220127214234_lasso_none_1_1_pool_1_1_development_data.RDS"   
-#> [3] "20220127214234_lasso_none_1_1_pool_1_1_validation_data.RDS"
+#> [1] "20220128092642_lasso_none_1_1_ensemble_1_1_validation_data.RDS" "20220128092642_lasso_none_1_1_pool_1_1_development_data.RDS"   
+#> [3] "20220128092642_lasso_none_1_1_pool_1_1_validation_data.RDS"
 ```
 
 In our example, we generated three data objects: one for internal
@@ -455,7 +455,7 @@ plots <- plot_auc_roc_curve(object=collection,
                             draw=TRUE)
 ```
 
-<img src="figure/prospective_use/prospective-auc_roc-plot-1.png" title="plot of chunk prospective-auc_roc-plot" alt="plot of chunk prospective-auc_roc-plot" style="display: block; margin: auto;" />
+<img src="prospective_use/prospective-auc_roc-plot-1.png" title="plot of chunk prospective-auc_roc-plot" alt="plot of chunk prospective-auc_roc-plot" style="display: block; margin: auto;" />
 
 ## Exporting collections
 
@@ -486,7 +486,7 @@ plots <- familiar::plot_auc_roc_curve(object=plot_data$collection,
                                       draw=TRUE)
 ```
 
-<img src="figure/prospective_use/prospective-auc_roc-plot-from-exported-collection-1.png" title="plot of chunk prospective-auc_roc-plot-from-exported-collection" alt="plot of chunk prospective-auc_roc-plot-from-exported-collection" style="display: block; margin: auto;" />
+<img src="prospective_use/prospective-auc_roc-plot-from-exported-collection-1.png" title="plot of chunk prospective-auc_roc-plot-from-exported-collection" alt="plot of chunk prospective-auc_roc-plot-from-exported-collection" style="display: block; margin: auto;" />
 
 <div class="footer">
 <br>

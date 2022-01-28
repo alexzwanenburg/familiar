@@ -1,9 +1,9 @@
 Performance metrics
 ================
 Alex Zwanenburg
-2022-01-27
+2022-01-28
 
-<img src="../icon/familiar.svg" align="right" width="120"/>
+<img src="../vignettes/familiar.svg" align="right" width="120"/>
 
 -   [Categorical outcomes](#categorical-outcomes)
     -   [Area under the receiver-operating

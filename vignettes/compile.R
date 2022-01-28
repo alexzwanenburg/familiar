@@ -2,7 +2,7 @@
 
 knitr::opts_knit$set(root.dir = getwd())
 knitr::opts_knit$set(base.dir = "vignettes")
-knitr::opts_chunk$set(fig.path = "figure/eval_and_explain/")
+knitr::opts_chunk$set(fig.path = "eval_and_explain/")
 
 # Render RMD.orig-files to RMD. This is done for compute-heavy data.
 # See https://ropensci.org/blog/2019/12/08/precompute-vignettes/
@@ -13,7 +13,7 @@ knitr::knit("vignettes/original/evaluation_and_explanation.Rmd", output = "vigne
 # Restart the session to flush the temporary directories.
 knitr::opts_knit$set(root.dir = getwd())
 knitr::opts_knit$set(base.dir = "vignettes")
-knitr::opts_chunk$set(fig.path = "figure/prospective_use/")
+knitr::opts_chunk$set(fig.path = "prospective_use/")
 
 knitr::knit("vignettes/original/prospective_use.Rmd", output = "vignettes/prospective_use_precompiled.Rmd")
 
@@ -31,4 +31,5 @@ rmarkdown::render("vignettes/prospective_use_precompiled.Rmd", output_format="rm
 rmarkdown::render("vignettes/evaluation_and_explanation_precompiled.Rmd", output_format="rmarkdown::github_document", output_file='../docs_github/github_evaluation_and_explanation.md')
 
 # Copy image files to docs_github
-file.copy("vignettes/figure", "docs_github", recursive=TRUE)
+file.copy("vignettes/eval_and_explain", "docs_github", recursive=TRUE)
+file.copy("vignettes/prospective_use", "docs_github", recursive=TRUE)
