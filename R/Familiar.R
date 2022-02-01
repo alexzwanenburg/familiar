@@ -19,6 +19,7 @@
 #' @name familiar
 #' @import data.table
 #' @import methods
+#' @importClassesFrom rstream rstream.runif
 #' @importFrom stats predict coef
 #' @importFrom survival Surv coxph survreg
 #' @importFrom utils head tail
