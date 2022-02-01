@@ -32,7 +32,7 @@ apply_list_fun_3 <- function(x, y, z){
 }
 
 # Start local cluster in the overall process.
-cl <- familiar:::.test_start_cluster(4L)
+cl <- familiar:::.test_start_cluster(2L)
 
 
 # Generate random values.
