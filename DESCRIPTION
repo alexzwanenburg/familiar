@@ -1,5 +1,5 @@
 Package: familiar
-Title: A Package for End-to-End Automated Machine Learning
+Title: End-to-End Automated Machine Learning and Model Evaluation
 Version: 1.0.0
 Authors@R: c(
     person("Alex", "Zwanenburg",
@@ -13,14 +13,11 @@ Authors@R: c(
     person("Sebastian", "Starke", role="ctb"),
     person("Technische Universität Dresden", role="cph"),
     person("German Cancer Research Center (DKFZ)", role="cph"))
-Description: End-to-end, automated machine learning package for creating 
-    trustworthy and interpretable machine learning models. Familiar supports
-    modelling of regression, categorical and time-to-event (survival) outcomes.
-    Models created using familiar are self-containing, and their use does not
-    require additional information such as baseline survival, feature
-    clustering, or feature transformation and normalisation parameters. In
-    addition, an novelty or out-of-distribution detector is trained
-    simultaneously and contained with every model. Model performance,
+Description: Single unified interface for end-to-end modelling of regression, 
+    categorical and time-to-event (survival) outcomes. Models created using
+    familiar are self-containing, and their use does not require additional
+    information such as baseline survival, feature clustering, or feature
+    transformation and normalisation parameters. Model performance,
     calibration, risk group stratification, (permutation) variable importance,
     individual conditional expectation, partial dependence, and more, are
     assessed automatically as part of the evaluation process and exported in
@@ -180,6 +177,7 @@ Collate:
     'PlotUnivariateImportance.R'
     'PlotUtilities.R'
     'PredictS4Methods.R'
+    'Random.R'
     'RandomGrouping.R'
     'RankBordaAggregation.R'
     'RankMain.R'
