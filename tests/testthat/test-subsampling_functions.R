@@ -1,5 +1,8 @@
+# Skip on CRAN as this test takes about a minute.
+testthat::skip_on_cran()
+
 # Create random number generator stream for reproducibility.
-r <- familiar:::.start_random_number_stream(seed=1844)
+r <- familiar:::.start_random_number_stream(seed=1863)
 
 ##### Subsampling ##############################################################
 for(outcome_type in c("binomial", "multinomial", "continuous", "count", "survival")){
@@ -206,10 +209,7 @@ for(outcome_type in c("binomial", "multinomial")){
   
   testthat::test_that(paste0("Full undersampling for correcting outcome imbalances for ", 
                              outcome_type, " functions correctly."), {
-                               if(outcome_type == "multinomial"){
-                                 print("here we go")
-                                 debugonce(familiar:::.create_balanced_partitions)
-                               }
+
                                # Create subsample.
                                subsample_data <- suppressWarnings(familiar:::.create_balanced_partitions(data=data@data,
                                                                                                          outcome_type=outcome_type,
