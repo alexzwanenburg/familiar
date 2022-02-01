@@ -1,10 +1,12 @@
-set.seed(1844)
-
+# Create random number generator stream for reproducibility.
+r <- familiar:::.start_random_number_stream(seed=1844)
 
 ##### Subsampling ##############################################################
 for(outcome_type in c("binomial", "multinomial", "continuous", "count", "survival")){
   
-  data <- familiar:::test_create_synthetic_series_data(outcome_type=outcome_type, rare_outcome=TRUE)
+  data <- familiar:::test_create_synthetic_series_data(outcome_type=outcome_type,
+                                                       rare_outcome=TRUE,
+                                                       rstream_object=r)
   n_rep <- 3L
   
   if(outcome_type %in% c("binomial", "multinomial", "survival")){
@@ -24,7 +26,8 @@ for(outcome_type in c("binomial", "multinomial", "continuous", "count", "surviva
                                                                                 n_iter=20,
                                                                                 size=20,
                                                                                 stratify=stratify,
-                                                                                outcome_type=outcome_type)
+                                                                                outcome_type=outcome_type,
+                                                                                rstream_object=r)
                                  
                                  # Check that none of in-bag datasets is the same.
                                  for(ii in 1:(length(subsample_data$train_list) - 1)){
@@ -157,14 +160,16 @@ for(outcome_type in c("binomial", "multinomial", "continuous", "count", "surviva
                                "for ", outcome_type, " with odd data functions correctly."), {
                                  
                                  # One outcome-data
-                                 data <- familiar:::test_create_synthetic_series_one_outcome(outcome_type=outcome_type)
+                                 data <- familiar:::test_create_synthetic_series_one_outcome(outcome_type=outcome_type,
+                                                                                             rstream_object=r)
                                  
                                  # Create subsample.
                                  subsample_data <- familiar:::.create_subsample(data=data@data,
                                                                                 n_iter=20,
                                                                                 size=20,
                                                                                 stratify=stratify,
-                                                                                outcome_type=outcome_type)
+                                                                                outcome_type=outcome_type,
+                                                                                rstream_object=r)
                                  
                                  # Expect a list. This is sort of a placeholder
                                  # because subsampling should work even
@@ -172,7 +177,8 @@ for(outcome_type in c("binomial", "multinomial", "continuous", "count", "surviva
                                  testthat::expect_type(subsample_data, "list")
                                  
                                  # One sample data.
-                                 data <- familiar:::test_create_synthetic_series_one_sample_data(outcome_type=outcome_type)
+                                 data <- familiar:::test_create_synthetic_series_one_sample_data(outcome_type=outcome_type,
+                                                                                                 rstream_object=r)
                                  
                                  # Create subsample. We don't expect an error because
                                  # you can't do cross-validation with a single
@@ -181,7 +187,8 @@ for(outcome_type in c("binomial", "multinomial", "continuous", "count", "surviva
                                                                                 n_iter=20,
                                                                                 size=20,
                                                                                 stratify=stratify,
-                                                                                outcome_type=outcome_type)
+                                                                                outcome_type=outcome_type,
+                                                                                rstream_object=r)
                                  # Expect 
                                  testthat::expect_type(subsample_data, "list")
                                })
@@ -192,16 +199,22 @@ for(outcome_type in c("binomial", "multinomial", "continuous", "count", "surviva
 ##### Full undersampling #######################################################
 for(outcome_type in c("binomial", "multinomial")){
   # Create synthetic dataset.
-  data <- familiar:::test_create_synthetic_series_data(outcome_type=outcome_type, rare_outcome=FALSE)
+  data <- familiar:::test_create_synthetic_series_data(outcome_type=outcome_type,
+                                                       rare_outcome=FALSE,
+                                                       rstream_object=r)
   n_rep <- 3L
   
   testthat::test_that(paste0("Full undersampling for correcting outcome imbalances for ", 
                              outcome_type, " functions correctly."), {
-                               
+                               if(outcome_type == "multinomial"){
+                                 print("here we go")
+                                 debugonce(familiar:::.create_balanced_partitions)
+                               }
                                # Create subsample.
                                subsample_data <- suppressWarnings(familiar:::.create_balanced_partitions(data=data@data,
                                                                                                          outcome_type=outcome_type,
-                                                                                                         imbalance_method="full_undersampling"))
+                                                                                                         imbalance_method="full_undersampling",
+                                                                                                         rstream_object=r))
                                
                                # Check that none of the training folds are the same.
                                if(length(subsample_data) > 1){
@@ -257,7 +270,11 @@ for(outcome_type in c("binomial", "multinomial")){
 
 for(outcome_type in c("binomial", "multinomial")){
   # Create synthetic dataset.
-  data <- familiar:::test_create_synthetic_series_data(outcome_type=outcome_type, n_series=1L, n_samples=30, rare_outcome=FALSE)
+  data <- familiar:::test_create_synthetic_series_data(outcome_type=outcome_type,
+                                                       n_series=1L,
+                                                       n_samples=30,
+                                                       rare_outcome=FALSE,
+                                                       rstream_object=r)
   n_rep <- 3L
   
   testthat::test_that(paste0("Full undersampling for correcting outcome imbalances for ", 
@@ -266,7 +283,8 @@ for(outcome_type in c("binomial", "multinomial")){
                                # Create subsample.
                                subsample_data <- suppressWarnings(familiar:::.create_balanced_partitions(data=data@data,
                                                                                                          outcome_type=outcome_type,
-                                                                                                         imbalance_method="full_undersampling"))
+                                                                                                         imbalance_method="full_undersampling",
+                                                                                                         rstream_object=r))
                                
                                # Check that none of the training folds are the same.
                                if(length(subsample_data) > 1){
@@ -331,23 +349,27 @@ for(outcome_type in c("binomial", "multinomial")){
                              outcome_type, " with odd data functions correctly."), {
                                
                                # One outcome-data
-                               data <- familiar:::test_create_synthetic_series_one_outcome(outcome_type=outcome_type)
+                               data <- familiar:::test_create_synthetic_series_one_outcome(outcome_type=outcome_type,
+                                                                                           rstream_object=r)
                                
                                # Create subsample.
                                subsample_data <- suppressWarnings(familiar:::.create_balanced_partitions(data=data@data,
                                                                                                          outcome_type=outcome_type,
-                                                                                                         imbalance_method="full_undersampling"))
+                                                                                                         imbalance_method="full_undersampling",
+                                                                                                         rstream_object=r))
                                # Expect a list. This is sort of a placeholder
                                # because the partitioning should work.
                                testthat::expect_type(subsample_data, "list")
                                
                                # One sample data.
-                               data <- familiar:::test_create_synthetic_series_one_sample_data(outcome_type=outcome_type)
+                               data <- familiar:::test_create_synthetic_series_one_sample_data(outcome_type=outcome_type,
+                                                                                               rstream_object=r)
                                
                                # Create subsample
                                subsample_data <- suppressWarnings(familiar:::.create_balanced_partitions(data=data@data,
                                                                                                          outcome_type=outcome_type,
-                                                                                                         imbalance_method="full_undersampling"))
+                                                                                                         imbalance_method="full_undersampling",
+                                                                                                         rstream_object=r))
                                
                                # Expect a list. This is sort of a placeholder
                                # because the partitioning should work.
@@ -359,7 +381,9 @@ for(outcome_type in c("binomial", "multinomial")){
 ##### Random undersampling #######################################################
 for(outcome_type in c("binomial", "multinomial")){
   # Create synthetic dataset.
-  data <- familiar:::test_create_synthetic_series_data(outcome_type=outcome_type, rare_outcome=FALSE)
+  data <- familiar:::test_create_synthetic_series_data(outcome_type=outcome_type,
+                                                       rare_outcome=FALSE,
+                                                       rstream_object=r)
   n_rep <- 3L
   
   testthat::test_that(paste0("Random undersampling for correcting outcome imbalances for ", 
@@ -369,7 +393,8 @@ for(outcome_type in c("binomial", "multinomial")){
                                subsample_data <- suppressWarnings(familiar:::.create_balanced_partitions(data=data@data,
                                                                                                          outcome_type=outcome_type,
                                                                                                          imbalance_n_partitions=3L,
-                                                                                                         imbalance_method="random_undersampling"))
+                                                                                                         imbalance_method="random_undersampling",
+                                                                                                         rstream_object=r))
                                
                                # Check that none of the training folds are the same.
                                if(length(subsample_data) > 1){
@@ -426,7 +451,11 @@ for(outcome_type in c("binomial", "multinomial")){
 
 for(outcome_type in c("binomial", "multinomial")){
   # Create synthetic dataset.
-  data <- familiar:::test_create_synthetic_series_data(outcome_type=outcome_type, n_series=1L, n_samples=30, rare_outcome=FALSE)
+  data <- familiar:::test_create_synthetic_series_data(outcome_type=outcome_type,
+                                                       n_series=1L,
+                                                       n_samples=30,
+                                                       rare_outcome=FALSE,
+                                                       rstream_object=r)
   n_rep <- 3L
   
   testthat::test_that(paste0("Random undersampling for correcting outcome imbalances for ", 
@@ -436,7 +465,8 @@ for(outcome_type in c("binomial", "multinomial")){
                                subsample_data <- suppressWarnings(familiar:::.create_balanced_partitions(data=data@data,
                                                                                                          outcome_type=outcome_type,
                                                                                                          imbalance_n_partitions=3L,
-                                                                                                         imbalance_method="random_undersampling"))
+                                                                                                         imbalance_method="random_undersampling",
+                                                                                                         rstream_object=r))
                                
                                # Check that none of the training folds are the same.
                                if(length(subsample_data) > 1){
@@ -494,25 +524,29 @@ for(outcome_type in c("binomial", "multinomial")){
                              outcome_type, " with odd data functions correctly."), {
                                
                                # One outcome-data
-                               data <- familiar:::test_create_synthetic_series_one_outcome(outcome_type=outcome_type)
+                               data <- familiar:::test_create_synthetic_series_one_outcome(outcome_type=outcome_type,
+                                                                                           rstream_object=r)
                                
                                # Create subsample.
                                subsample_data <- suppressWarnings(familiar:::.create_balanced_partitions(data=data@data,
                                                                                                          outcome_type=outcome_type,
                                                                                                          imbalance_n_partitions=3L,
-                                                                                                         imbalance_method="random_undersampling"))
+                                                                                                         imbalance_method="random_undersampling",
+                                                                                                         rstream_object=r))
                                # Expect a list. This is sort of a placeholder
                                # because the partitioning should work.
                                testthat::expect_type(subsample_data, "list")
                                
                                # One sample data.
-                               data <- familiar:::test_create_synthetic_series_one_sample_data(outcome_type=outcome_type)
+                               data <- familiar:::test_create_synthetic_series_one_sample_data(outcome_type=outcome_type,
+                                                                                               rstream_object=r)
                                
                                # Create subsample
                                subsample_data <- suppressWarnings(familiar:::.create_balanced_partitions(data=data@data,
                                                                                                          outcome_type=outcome_type,
                                                                                                          imbalance_n_partitions=3L,
-                                                                                                         imbalance_method="random_undersampling"))
+                                                                                                         imbalance_method="random_undersampling",
+                                                                                                         rstream_object=r))
                                
                                # Expect a list. This is sort of a placeholder
                                # because the partitioning should work.
@@ -525,7 +559,9 @@ for(outcome_type in c("binomial", "multinomial")){
 ##### Cross-validation #########################################################
 for(outcome_type in c("binomial", "multinomial", "continuous", "count", "survival")){
   
-  data <- familiar:::test_create_synthetic_series_data(outcome_type=outcome_type, rare_outcome=TRUE)
+  data <- familiar:::test_create_synthetic_series_data(outcome_type=outcome_type,
+                                                       rare_outcome=TRUE,
+                                                       rstream_object=r)
   n_rep <- 3L
   n_folds <- 3L
   
@@ -545,7 +581,8 @@ for(outcome_type in c("binomial", "multinomial", "continuous", "count", "surviva
                                  subsample_data <- familiar:::.create_cv(data=data@data,
                                                                          n_folds=n_folds,
                                                                          stratify=stratify,
-                                                                         outcome_type=outcome_type)
+                                                                         outcome_type=outcome_type,
+                                                                         rstream_object=r)
                                  
                                  # Check that none of the training folds are the same.
                                  for(ii in 1:(length(subsample_data$train_list) - 1)){
@@ -684,20 +721,23 @@ for(outcome_type in c("binomial", "multinomial", "continuous", "count", "surviva
                                "for ", outcome_type, " with odd data functions correctly."), {
                                  
                                  # One outcome-data
-                                 data <- familiar:::test_create_synthetic_series_one_outcome(outcome_type=outcome_type)
+                                 data <- familiar:::test_create_synthetic_series_one_outcome(outcome_type=outcome_type,
+                                                                                             rstream_object=r)
                                  
                                  # Create subsample.
                                  subsample_data <- suppressWarnings(familiar:::.create_cv(data=data@data,
                                                                                           n_folds=n_folds,
                                                                                           stratify=stratify,
-                                                                                          outcome_type=outcome_type))
+                                                                                          outcome_type=outcome_type,
+                                                                                          rstream_object=r))
                                  # Expect a list. This is sort of a placeholder
                                  # because cross-validation should work even
                                  # when the outcome value is singular.
                                  testthat::expect_type(subsample_data, "list")
                                  
                                  # One sample data.
-                                 data <- familiar:::test_create_synthetic_series_one_sample_data(outcome_type=outcome_type)
+                                 data <- familiar:::test_create_synthetic_series_one_sample_data(outcome_type=outcome_type,
+                                                                                                 rstream_object=r)
                                  
                                  # Create subsample. We expect an error because
                                  # you can't do cross-validation with a single
@@ -705,7 +745,8 @@ for(outcome_type in c("binomial", "multinomial", "continuous", "count", "surviva
                                  subsample_data <- testthat::expect_error(suppressWarnings(familiar:::.create_cv(data=data@data,
                                                                                                                  n_folds=n_folds,
                                                                                                                  stratify=stratify,
-                                                                                                                 outcome_type=outcome_type)))
+                                                                                                                 outcome_type=outcome_type,
+                                                                                                                 rstream_object=r)))
                                })
   }
 }
@@ -715,7 +756,9 @@ for(outcome_type in c("binomial", "multinomial", "continuous", "count", "surviva
 ##### Repeated cross-validation ################################################
 for(outcome_type in c("binomial", "multinomial", "continuous", "count", "survival")){
   
-  data <- familiar:::test_create_synthetic_series_data(outcome_type=outcome_type, rare_outcome=TRUE)
+  data <- familiar:::test_create_synthetic_series_data(outcome_type=outcome_type,
+                                                       rare_outcome=TRUE,
+                                                       rstream_object=r)
   n_rep <- 3L
   n_folds <- 3L
   
@@ -736,7 +779,8 @@ for(outcome_type in c("binomial", "multinomial", "continuous", "count", "surviva
                                                                                   n_rep=3L,
                                                                                   n_folds=n_folds,
                                                                                   stratify=stratify,
-                                                                                  outcome_type=outcome_type)
+                                                                                  outcome_type=outcome_type,
+                                                                                  rstream_object=r)
                                  
                                  # Check that none of the training folds are the same.
                                  for(ii in 1:(length(subsample_data$train_list) - 1)){
@@ -875,21 +919,24 @@ for(outcome_type in c("binomial", "multinomial", "continuous", "count", "surviva
                                "for ", outcome_type, " with odd data functions correctly."), {
                                  
                                  # One outcome-data
-                                 data <- familiar:::test_create_synthetic_series_one_outcome(outcome_type=outcome_type)
+                                 data <- familiar:::test_create_synthetic_series_one_outcome(outcome_type=outcome_type,
+                                                                                             rstream_object=r)
                                  
                                  # Create subsample.
                                  subsample_data <- suppressWarnings(familiar:::.create_repeated_cv(data=data@data,
                                                                                                    n_rep=3L,
                                                                                                    n_folds=n_folds,
                                                                                                    stratify=stratify,
-                                                                                                   outcome_type=outcome_type))
+                                                                                                   outcome_type=outcome_type,
+                                                                                                   rstream_object=r))
                                  # Expect a list. This is sort of a placeholder
                                  # because cross-validation should work even
                                  # when the outcome value is singular.
                                  testthat::expect_type(subsample_data, "list")
                                  
                                  # One sample data.
-                                 data <- familiar:::test_create_synthetic_series_one_sample_data(outcome_type=outcome_type)
+                                 data <- familiar:::test_create_synthetic_series_one_sample_data(outcome_type=outcome_type,
+                                                                                                 rstream_object=r)
                                  
                                  # Create subsample. We expect an error because
                                  # you can't do cross-validation with a single
@@ -898,7 +945,8 @@ for(outcome_type in c("binomial", "multinomial", "continuous", "count", "surviva
                                                                                                                           n_rep=3L,
                                                                                                                           n_folds=n_folds,
                                                                                                                           stratify=stratify,
-                                                                                                                          outcome_type=outcome_type)))
+                                                                                                                          outcome_type=outcome_type,
+                                                                                                                          rstream_object=r)))
                                })
   }
 }
@@ -909,7 +957,9 @@ for(outcome_type in c("binomial", "multinomial", "continuous", "count", "surviva
 for(outcome_type in c("binomial", "multinomial", "continuous", "count", "survival")){
   
   
-  data <- familiar:::test_create_synthetic_series_data(outcome_type=outcome_type, rare_outcome=TRUE)
+  data <- familiar:::test_create_synthetic_series_data(outcome_type=outcome_type,
+                                                       rare_outcome=TRUE,
+                                                       rstream_object=r)
   n_rep <- 3L
   
   testthat::test_that(paste0("Leave-one-out cross-validation for ",
@@ -917,7 +967,8 @@ for(outcome_type in c("binomial", "multinomial", "continuous", "count", "surviva
                                
                                # Create subsample
                                subsample_data <- familiar:::.create_loocv(data=data@data,
-                                                                          outcome_type=outcome_type)
+                                                                          outcome_type=outcome_type,
+                                                                          rstream_object=r)
                                
                                # Check that none of the training folds are the same.
                                for(ii in 1:(length(subsample_data$train_list) - 1)){
@@ -1034,24 +1085,28 @@ for(outcome_type in c("binomial", "multinomial", "continuous", "count", "surviva
                                outcome_type, " with odd data functions correctly."), {
                                  
                                  # One outcome-data
-                                 data <- familiar:::test_create_synthetic_series_one_outcome(outcome_type=outcome_type)
+                                 data <- familiar:::test_create_synthetic_series_one_outcome(outcome_type=outcome_type,
+                                                                                             rstream_object=r)
                                  
                                  # Create subsample.
                                  subsample_data <- suppressWarnings(familiar:::.create_loocv(data=data@data,
-                                                                                             outcome_type=outcome_type))
+                                                                                             outcome_type=outcome_type,
+                                                                                             rstream_object=r))
                                  # Expect a list. This is sort of a placeholder
                                  # because cross-validation should work even
                                  # when the outcome value is singular.
                                  testthat::expect_type(subsample_data, "list")
                                  
                                  # One sample data.
-                                 data <- familiar:::test_create_synthetic_series_one_sample_data(outcome_type=outcome_type)
+                                 data <- familiar:::test_create_synthetic_series_one_sample_data(outcome_type=outcome_type,
+                                                                                                 rstream_object=r)
                                  
                                  # Create subsample. We expect an error because
                                  # you can't do cross-validation with a single
                                  # sample.
                                  subsample_data <- testthat::expect_error(suppressWarnings(familiar:::.create_loocv(data=data@data,
-                                                                                                                    outcome_type=outcome_type)))
+                                                                                                                    outcome_type=outcome_type,
+                                                                                                                    rstream_object=r)))
                                })
 }
 
@@ -1060,7 +1115,9 @@ for(outcome_type in c("binomial", "multinomial", "continuous", "count", "surviva
 ##### Bootstraps ###############################################################
 for(outcome_type in c("binomial", "multinomial", "continuous", "count", "survival")){
   
-  data <- familiar:::test_create_synthetic_series_data(outcome_type=outcome_type, rare_outcome=TRUE)
+  data <- familiar:::test_create_synthetic_series_data(outcome_type=outcome_type,
+                                                       rare_outcome=TRUE,
+                                                       rstream_object=r)
   n_rep <- 3L
   
   if(outcome_type %in% c("binomial", "multinomial", "survival")){
@@ -1079,7 +1136,8 @@ for(outcome_type in c("binomial", "multinomial", "continuous", "count", "surviva
                                  subsample_data <- familiar:::.create_bootstraps(data=data@data,
                                                                                  n_iter=20,
                                                                                  stratify=stratify,
-                                                                                 outcome_type=outcome_type)
+                                                                                 outcome_type=outcome_type,
+                                                                                 rstream_object=r)
                                  
                                  # Check that none of in-bag datasets is the same.
                                  for(ii in 1:(length(subsample_data$train_list) - 1)){
@@ -1212,13 +1270,15 @@ for(outcome_type in c("binomial", "multinomial", "continuous", "count", "surviva
                                "for ", outcome_type, " with odd data functions correctly."), {
                                  
                                  # One outcome-data
-                                 data <- familiar:::test_create_synthetic_series_one_outcome(outcome_type=outcome_type)
+                                 data <- familiar:::test_create_synthetic_series_one_outcome(outcome_type=outcome_type,
+                                                                                             rstream_object=r)
                                  
                                  # Create subsample.
                                  subsample_data <- familiar:::.create_bootstraps(data=data@data,
                                                                                  n_iter=20,
                                                                                  stratify=stratify,
-                                                                                 outcome_type=outcome_type)
+                                                                                 outcome_type=outcome_type,
+                                                                                 rstream_object=r)
                                  
                                  # Expect a list. This is sort of a placeholder
                                  # because cross-validation should work even
@@ -1226,7 +1286,8 @@ for(outcome_type in c("binomial", "multinomial", "continuous", "count", "surviva
                                  testthat::expect_type(subsample_data, "list")
                                  
                                  # One sample data.
-                                 data <- familiar:::test_create_synthetic_series_one_sample_data(outcome_type=outcome_type)
+                                 data <- familiar:::test_create_synthetic_series_one_sample_data(outcome_type=outcome_type,
+                                                                                                 rstream_object=r)
                                  
                                  # Create subsample. We expect an error because
                                  # you can't do cross-validation with a single
@@ -1234,7 +1295,8 @@ for(outcome_type in c("binomial", "multinomial", "continuous", "count", "surviva
                                  subsample_data <- testthat::expect_error(familiar:::.create_bootstraps(data=data@data,
                                                                                                         n_iter=20,
                                                                                                         stratify=stratify,
-                                                                                                        outcome_type=outcome_type))
+                                                                                                        outcome_type=outcome_type,
+                                                                                                        rstream_object=r))
                                })
   }
 }

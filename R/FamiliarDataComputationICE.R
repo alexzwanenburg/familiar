@@ -798,7 +798,7 @@ setMethod("extract_ice", signature(object="familiarEnsemble"),
 
 
 
-..restrict_ice_samples <- function(x, n_samples, seed){
+..restrict_ice_samples <- function(x, n_samples, seed=NULL){
   
   # Suppress NOTES due to non-standard evaluation in data.table
   sample <- NULL
@@ -811,14 +811,11 @@ setMethod("extract_ice", signature(object="familiarEnsemble"),
   # Do not sample if the number of available samples is smaller than n_samples.
   if(length(sample_identifiers) < n_samples) return(x)
   
-  # Sample with fixed seed.
-  set.seed(seed)
-  on.exit(set.seed(NULL))
-  
   # Select samples.
   selected_identifiers <- fam_sample(x=sample_identifiers,
                                      size=n_samples,
-                                     replace=FALSE) 
+                                     replace=FALSE,
+                                     seed=seed) 
   
   x <- x[sample %in% selected_identifiers]
   

@@ -203,10 +203,6 @@ setMethod("extract_sample_similarity", signature(object="familiarEnsemble", data
   
   if(is_empty(x)) return(x)
   
-  # Set for reproducibility.
-  set.seed(0L)
-  on.exit(set.seed(NULL))
-  
   # Find the names of samples.
   sample_names <- unique(c(x@data$sample_1,
                            x@data$sample_2))
@@ -217,7 +213,8 @@ setMethod("extract_sample_similarity", signature(object="familiarEnsemble", data
   # Select samples.
   sample_names <- fam_sample(sample_names,
                              size=sample_limit,
-                             replace=FALSE)
+                             replace=FALSE,
+                             seed=0)
   
   # Select only the selected samples.
   x@data <- x@data[sample_1 %in% sample_names & sample_2 %in% sample_names]
