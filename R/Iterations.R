@@ -824,7 +824,8 @@
       
       # Randomly select one sample with the given outcome.
       sample_training <- fam_sample(subset_table[fold_id == 0L & outcome == outcome_level_training],
-                                    size=1L)
+                                    size=1L,
+                                    rstream_object=rstream_object)
       
       # Pre-assign the selected sample.
       subset_table[sample_training, "fold_id":=-1L, on=.NATURAL]
@@ -1101,7 +1102,9 @@
             missing_level <- missing_level_data[outcome_present == FALSE]$outcome[1]
             
             # Select an additional sample that contains the missing level.
-            additional_data <- fam_sample(subset_table[outcome == missing_level], size=1L)
+            additional_data <- fam_sample(subset_table[outcome == missing_level],
+                                          size=1L,
+                                          rstream_object=rstream_object)
             
             # Select the data corresponding to the sample.
             additional_data <- merge(x=additional_data,
