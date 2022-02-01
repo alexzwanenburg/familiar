@@ -10,3 +10,6 @@
 ^\.data$
 ^icon$
 ^docs_github$
+^vignettes/compile\.R$
+^vignettes/original$
+^tests/testthat/Rplots\.pdf$
