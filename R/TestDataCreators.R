@@ -854,9 +854,12 @@ test_create_synthetic_series_data <- function(outcome_type,
                             labels=c("0", "1"))
     
   } else if(outcome_type == "multinomial"){
-    # Convert to 0 (x < 2), 1 (2 < x 4), 2 (4 < x < 6)
-    outcome_value <- floor(outcome_raw / 2)
-    outcome_value[outcome_value==3.0] <- 2.0
+    outcome_value <- numeric(n_series_instances)
+    
+    # Convert to 0 (x < 2.59), 1 (2.59 < x < 3.41), 2 (3.41 < x < 6)
+    outcome_value[outcome_raw < 2.59] <- 0.0
+    outcome_value[outcome_raw >= 2.59 & outcome_raw < 3.41] <- 1.0
+    outcome_value[outcome_raw >= 3.41 & outcome_raw < 6.00] <- 2.0
     
     if(rare_outcome){
       outcome_value[length(outcome_value)] <- 3.0
