@@ -1,3 +1,5 @@
+# Skip on CRAN as this test takes about a 30 seconds.
+testthat::skip_on_cran()
 
 outcome_type <- "survival"
 
@@ -229,7 +231,7 @@ for(n_numeric_features in c(4, 3, 2, 1, 0)){
                                            # wider margins for the non-parametric method Check also that
                                            # the overall mean is around 0.
                                            if(batch_normalisation_method %in% c("combat", "combat_np", "combat_non_parametric")){
-                                             testthat::expect_equal(mu < 0.5 & mu > -0.5, TRUE)
+                                             testthat::expect_equal(mu < 0.7 & mu > -0.7, TRUE)
                                              
                                            } else {
                                              testthat::expect_equal(mu < 0.2 & mu > -0.2, TRUE)
