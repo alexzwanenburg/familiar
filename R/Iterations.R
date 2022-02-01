@@ -613,7 +613,14 @@
 
 
 
-.create_repeated_cv <- function(data, sample_identifiers=NULL, n_rep, n_folds, settings=NULL, outcome_type=NULL, stratify=TRUE){
+.create_repeated_cv <- function(data,
+                                sample_identifiers=NULL,
+                                n_rep,
+                                n_folds,
+                                settings=NULL,
+                                outcome_type=NULL,
+                                stratify=TRUE,
+                                rstream_object=NULL){
   # This function wraps the .create_cv function
 
   # Initiate lists for training and validation data
@@ -628,13 +635,12 @@
                                settings=settings,
                                outcome_type=outcome_type,
                                data=data,
-                               stratify=stratify)
+                               stratify=stratify,
+                               rstream_object=rstream_object)
     
     # Add new subsets to the list.
-    train_list <- append(train_list, cv_iter_list$train_list)
-    valid_list <- append(valid_list, cv_iter_list$valid_list)
-
-    rm(cv_iter_list)
+    train_list <- c(train_list, cv_iter_list$train_list)
+    valid_list <- c(valid_list, cv_iter_list$valid_list)
   }
 
   return(list("train_list"=train_list,
@@ -642,7 +648,11 @@
 }
 
 
-.create_loocv <- function(data, sample_identifiers=NULL, settings=NULL, outcome_type=NULL){
+.create_loocv <- function(data,
+                          sample_identifiers=NULL,
+                          settings=NULL,
+                          outcome_type=NULL,
+                          rstream_object=NULL){
   
   # Determine the number of samples.
   if(is.null(sample_identifiers)){
@@ -665,14 +675,22 @@
                                 n_folds=n_samples,
                                 settings=settings,
                                 outcome_type=outcome_type,
-                                stratify=FALSE)
+                                stratify=FALSE,
+                                rstream_object=rstream_object)
   
   return(loocv_iter_list)
 }
 
 
 
-.create_cv <- function(data, n_folds, sample_identifiers=NULL, settings=NULL, outcome_type=NULL, stratify=TRUE, return_fold_id=FALSE){
+.create_cv <- function(data,
+                       n_folds,
+                       sample_identifiers=NULL,
+                       settings=NULL,
+                       outcome_type=NULL,
+                       stratify=TRUE,
+                       return_fold_id=FALSE,
+                       rstream_object=NULL){
   # Cross-validation
 
   # Suppress NOTES due to non-standard evaluation in data.table
@@ -831,7 +849,8 @@
       # Choose subject id for current fold
       current_train_id <- fam_sample(x=subset_table[fold_id == 0L],
                                      size=fold_size,
-                                     replace=FALSE)
+                                     replace=FALSE,
+                                     rstream_object=rstream_object)
       
       # Join subset-table based on selected samples, and set the fold id.
       # See https://stackoverflow.com/questions/46978735/updating-a-data-table-column-based-on-matching-to-another-data-table.
@@ -887,7 +906,8 @@
       
       # Order available data randomly.
       sample_order <- fam_sample(x=available_data,
-                                 replace=FALSE)
+                                 replace=FALSE,
+                                 rstream_object=rstream_object)
       
       # Set sample_order_id. This will be used to order available_data.
       sample_order[, "sample_order_id":=.I]
@@ -923,7 +943,9 @@
     unassigned_data <- unique(subset_table[fold_id==0, mget(sample_id_columns)], by=sample_id_columns)
     if(nrow(unassigned_data) > 0){
       # Randomly order unassigned data.
-      unassigned_data <- fam_sample(unassigned_data)
+      unassigned_data <- fam_sample(unassigned_data,
+                                    replace=FALSE,
+                                    rstream_object=rstream_object)
       
       # Assign fold id.
       unassigned_data[, "fold_id":=rep_len(x=seq_len(n_folds), length.out=nrow(unassigned_data))]
@@ -964,7 +986,13 @@
 
 
 
-.create_bootstraps <- function(data, n_iter, sample_identifiers=NULL, settings=NULL, outcome_type=NULL, stratify=TRUE){
+.create_bootstraps <- function(data,
+                               n_iter,
+                               sample_identifiers=NULL,
+                               settings=NULL,
+                               outcome_type=NULL,
+                               stratify=TRUE,
+                               rstream_object=NULL){
 
   # Suppress NOTES due to non-standard evaluation in data.table
   outcome <- outcome_present <- .NATURAL <- NULL
@@ -1040,7 +1068,9 @@
     
     if(!stratify){
       # Sample training data with replacement
-      train_id <- fam_sample(x=subset_table, replace=TRUE)
+      train_id <- fam_sample(x=subset_table,
+                             replace=TRUE,
+                             rstream_object=rstream_object)
       
       # Merge train_id with subset_table.
       train_id <- merge(x=train_id,
@@ -1177,7 +1207,8 @@
         # Order available data randomly, with replacement.
         sample_order <- fam_sample(x=partition_data,
                                    size=level_frequency[outcome == current_class]$n,
-                                   replace=TRUE)
+                                   replace=TRUE,
+                                   rstream_object=rstream_object)
         
         # Set sample_order_id. This will be used to order partition_data.
         sample_order[, "sample_order_id":=.I]
@@ -1303,7 +1334,8 @@
                                         settings=NULL,
                                         outcome_type=NULL,
                                         imbalance_method=NULL,
-                                        imbalance_n_partitions=NULL) {
+                                        imbalance_n_partitions=NULL,
+                                        rstream_object=NULL) {
   # Methods to address class imbalance
 
   # Suppress NOTES due to non-standard evaluation in data.table
@@ -1468,7 +1500,8 @@
           
           # Order available data randomly.
           sample_order <- fam_sample(x=partition_data,
-                                     replace=FALSE)
+                                     replace=FALSE,
+                                     rstream_object=rstream_object)
           
           # Set sample_order_id. This will be used to order partition_data.
           sample_order[, "sample_order_id":=.I]
@@ -1488,7 +1521,8 @@
             
             # Order available data randomly.
             unassigned_sample_order <- fam_sample(x=unassigned_partition_data,
-                                                  replace=FALSE)
+                                                  replace=FALSE,
+                                                  rstream_object=rstream_object)
             
             # Set sample_order_id. This will be used to order available_data.
             unassigned_sample_order[, "sample_order_id":=.I]
@@ -1500,7 +1534,8 @@
           if(nrow(assigned_partition_data) > 0){
             # Order available data randomly.
             assigned_sample_order <- fam_sample(x=assigned_partition_data,
-                                                replace=FALSE)
+                                                replace=FALSE,
+                                                rstream_object=rstream_object)
             
             # Set sample_order_id. This will be used to order available_data.
             assigned_sample_order[, "sample_order_id":=.I + sample_order_offset]
@@ -1657,7 +1692,8 @@
                               settings=NULL,
                               outcome_type=NULL,
                               stratify=TRUE,
-                              tolerance=0.05){
+                              tolerance=0.05,
+                              rstream_object=NULL){
   
   # Suppress NOTES due to non-standard evaluation in data.table
   outcome <- frequency <- n <- .NATURAL <- NULL
@@ -1768,7 +1804,8 @@
         # Select a single sample from the potential datasets.
         train_id <- fam_sample(partition_data,
                                size=1L,
-                               replace=FALSE)
+                               replace=FALSE,
+                               rstream_object=rstream_object)
         
         # Mark as being selected.
         available_data[train_id, "is_available":=FALSE, on=.NATURAL]
@@ -1784,7 +1821,8 @@
       # Select a samples from the remaining available samples.
       train_id <- fam_sample(available_data[is_available==TRUE, mget(sample_id_columns)],
                              size=size_remaining,
-                             replace=FALSE)
+                             replace=FALSE,
+                             rstream_object=rstream_object)
       
       # Mark as being selected.
       available_data[train_id, "is_available":=FALSE, on=.NATURAL]
@@ -1816,7 +1854,8 @@
       # Randomly selected samples.
       random_data <- fam_sample(partition_data,
                                 size=size_remaining,
-                                replace=FALSE)
+                                replace=FALSE,
+                                rstream_object=rstream_object)
       
       # Add in indices.
       random_data[, "order_id":=.I]
@@ -1872,7 +1911,8 @@
         # Shuffle partition_data.
         partition_data <- fam_sample(partition_data,
                                      size=data.table::uniqueN(partition_data[, mget(sample_id_columns)]),
-                                     replace=FALSE)
+                                     replace=FALSE,
+                                     rstream_object=rstream_object)
         
         # Add in outcome data to the number of outcomes in random data
         partition_data <- available_data[partition_data, on=.NATURAL]
@@ -1936,7 +1976,8 @@
           # Select a single sample from the potential datasets.
           train_id <- fam_sample(partition_data,
                                  size=size_remaining,
-                                 replace=FALSE)
+                                 replace=FALSE,
+                                 rstream_object=rstream_object)
           
           # Mark as being selected.
           available_data[train_id, "is_available":=FALSE, on=.NATURAL]

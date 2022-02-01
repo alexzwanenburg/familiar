@@ -708,34 +708,29 @@ setMethod("get_placeholder_prediction_table", signature(object="outcomeInfo", da
 
 
 
-
-
-
 #####get_bootstrap_sample------------------------------------------------------
 setMethod("get_bootstrap_sample", signature(data="dataObject"),
           function(data, seed=NULL, ...){
-            
-            # Set seed for reproducible results.
-            if(!is.null(seed)){
-              if(is.finite(seed)) set.seed(seed)
-            }
-            
+
             if(.as_preprocessing_level(data) > "none"){
               # Indicating that some preprocessing has taken please.
               
               # Bootstrap the data element.
-              data@data <- get_bootstrap_sample(data=data@data)
+              data@data <- get_bootstrap_sample(data=data@data,
+                                                seed=seed)
               
             } else if(length(data@sample_set_on_load) > 0){
               
               if(data.table::is.data.table(data@sample_set_on_load)){
-                data@sample_set_on_load <- get_bootstrap_sample(data=data@sample_set_on_load)
+                data@sample_set_on_load <- get_bootstrap_sample(data=data@sample_set_on_load,
+                                                                seed=seed)
                 
               } else {
                 # Reshuffle the samples -- This is for backward compatibility.
                 data@sample_set_on_load <- fam_sample(x=unique(data@sample_set_on_load),
                                                       size=length(data@sample_set_on_load),
-                                                      replace=TRUE)
+                                                      replace=TRUE,
+                                                      seed=seed)
               }
               
             } else {
@@ -748,11 +743,6 @@ setMethod("get_bootstrap_sample", signature(data="dataObject"),
 setMethod("get_bootstrap_sample", signature(data="data.table"),
           function(data, seed=NULL, ...){
             
-            # Set seed for reproducible results.
-            if(!is.null(seed)){
-              if(is.finite(seed)) set.seed(seed)
-            }
-            
             # Find identifier columns at the sample level, i.e. excluding
             # repetitions and series.
             id_columns <- intersect(get_id_columns(id_depth="sample"), colnames(data))
@@ -761,7 +751,8 @@ setMethod("get_bootstrap_sample", signature(data="data.table"),
               # Sample rows.
               row_ids <- fam_sample(x=seq_len(nrow(data)),
                                     size=nrow(data),
-                                    replace=TRUE)
+                                    replace=TRUE,
+                                    seed=seed)
               
               # Create a subset.
               data <- data[row_ids, ]
@@ -773,7 +764,8 @@ setMethod("get_bootstrap_sample", signature(data="data.table"),
               # Sample the unique rows of the identifier table.
               row_ids <- fam_sample(x=seq_len(nrow(id_table)),
                                     size=nrow(id_table),
-                                    replace=TRUE)
+                                    replace=TRUE,
+                                    seed=seed)
               
               # Create subsample.
               id_table <- id_table[row_ids, ]
@@ -800,10 +792,7 @@ setMethod("get_subsample", signature(data="dataObject"),
             # This function randomly selects up to "size" samples from the data.
             # Set seed for reproducible results.
             if(!is.null(seed)){
-              if(is.finite(seed)){
-                set.seed(seed)
-                on.exit(set.seed(NULL))
-              } 
+              rstream_object <- .start_random_number_stream(seed=seed)
             }
             
             if(is.null(outcome_type)) outcome_type <- data@outcome_type
@@ -814,14 +803,16 @@ setMethod("get_subsample", signature(data="dataObject"),
               # Bootstrap the data element.
               data@data <- get_subsample(data=data@data,
                                          size=size,
-                                         outcome_type=outcome_type)
+                                         outcome_type=outcome_type,
+                                         rstream_object=rstream_object)
               
             } else if(length(data@sample_set_on_load) > 0){
               
               # Subsample data.
               data@sample_set_on_load <- get_subsample(data=data@sample_set_on_load,
                                                        size=size,
-                                                       outcome_type=outcome_type)
+                                                       outcome_type=outcome_type,
+                                                       rstream_object=rstream_object)
               
             } else {
               ..error_reached_unreachable_code("get_boostrap_sample,dataObject: could not identify a suitable method for bootstrapping.")
@@ -840,20 +831,17 @@ setMethod("get_subsample", signature(data="data.table"),
             # If no size is set, 
             if(is.null(size)) return(data)
             
-            # Set seed for reproducible results.
-            if(!is.null(seed)){
-              if(is.finite(seed)){
-                set.seed(seed)
-                on.exit(set.seed(NULL))
-              } 
-            }
-            
             # Update size, if required.
             if(size > nrow(data)) size <- nrow(data)
             
             # If size is equal to the number of data elements, return the entire
             # data.
             if(size == nrow(data)) return(data)
+            
+            # Generate a random stream object.
+            if(!is.null(seed)){
+              
+            }
             
             # Find identifier columns at the sample level, i.e. excluding
             # repetitions and series.
@@ -899,7 +887,7 @@ setMethod("get_subsample", signature(data="NULL"), function(data, seed=NULL, ...
 
 #####fam_sample-----------------------------------------------------------------
 setMethod("fam_sample", signature(x="ANY"),
-          function(x, size=NULL, replace=FALSE, prob=NULL, ...){
+          function(x, size=NULL, replace=FALSE, prob=NULL, seed=NULL, rstream_object=NULL, ...){
             # This function prevents the documented behaviour of the sample
             # function, where if x is positive, numeric and only has one
             # element, it interprets x as a series of x, i.e. x=seq_len(x).
@@ -922,13 +910,25 @@ setMethod("fam_sample", signature(x="ANY"),
               # If x is a vector, array or list with multiple elements, then all
               # of the above is not an issue, and we can make use of sample.
               
-              return(sample(x=x, size=size, replace=replace, prob=prob))
+              if(is.null(seed) & is.null(rstream_object)){
+                return(sample(x=x,
+                              size=size,
+                              replace=replace,
+                              prob=prob))
+                
+              } else {
+                return(..fam_sample(x=x,
+                                    size=size,
+                                    replace=replace,
+                                    seed=seed,
+                                    rstream_object=rstream_object))
+              }
             }
           })
 
 
 setMethod("fam_sample", signature(x="data.table"),
-          function(x, size=NULL, replace=FALSE, prob=NULL, ...){
+          function(x, size=NULL, replace=FALSE, prob=NULL, seed=NULL, rstream_object=NULL, ...){
             # This function prevents the documented behaviour of the sample
             # function, where if x is positive, numeric and only has one
             # element, it interprets x as a series of x, i.e. x=seq_len(x).
@@ -1010,11 +1010,20 @@ setMethod("fam_sample", signature(x="data.table"),
                 prob <- x$prob
               }
               
-              # Get sampled row identifiers.
-              row_id <- sample(x=seq_len(nrow(x)),
-                               size=size,
-                               replace=replace,
-                               prob=prob)
+              if(is.null(seed) & is.null(rstream_object)){
+                # Get sampled row identifiers.
+                row_id <- sample(x=seq_len(nrow(x)),
+                                 size=size,
+                                 replace=replace,
+                                 prob=prob)
+                
+              } else {
+                row_id <- ..fam_sample(x=seq_len(nrow(x)),
+                                       size=size,
+                                       replace=replace,
+                                       seed=seed,
+                                       rstream_object=rstream_object)
+              }
               
               # Create output table y.
               y <- x[row_id, mget(id_columns)]
