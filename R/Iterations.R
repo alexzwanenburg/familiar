@@ -1670,7 +1670,34 @@
                                   ifelse(n_samples_not_assigned > 1, " samples", " sample"),
                                   " could not be assigned during undersampling for balance correction."))
             break()
-          } 
+            
+          } else if(ii > 1){
+            # Check if the generated dataset is actually unique.
+            flag_infinite_loop <- FALSE
+            
+            for(jj in seq_len(ii-1)){
+              if(data.table::fsetequal(train_list[[ii]], train_list[[jj]])){
+                # Remove non-unique dataset from train_list and break from the
+                # loop.
+                train_list[[ii]] <- NULL
+                flag_infinite_loop <- TRUE
+                
+                # Break from for-loop
+                break()
+              }
+            }
+            
+            if(flag_infinite_loop){
+              # Determine the number of samples that cannot be assigned.
+              n_samples_not_assigned <- data.table::uniqueN(subset_table[is.na(partition), mget(sample_id_columns)])
+              
+              # Throw warning.
+              logger.warning(paste0(n_samples_not_assigned,
+                                    ifelse(n_samples_not_assigned > 1, " samples", " sample"),
+                                    " could not be assigned during undersampling for balance correction."))
+              break()
+            }
+          }
         }
       }
     }
