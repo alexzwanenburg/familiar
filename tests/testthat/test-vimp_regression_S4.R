@@ -28,7 +28,7 @@ testthat::test_that(paste0("Multivariate regression correctly ranks count data."
   vimp_table <- suppressWarnings(familiar:::.vimp(vimp_object, data))
   
   testthat::expect_equal(all(vimp_table[rank <= 2]$name %in%  c("per_capita_crime", "lower_status_percentage",
-                                                                "residence_before_1940_proportion", "avg_rooms")), TRUE)
+                                                                "residence_before_1940_proportion", "avg_rooms", "pupil_teacher_ratio")), TRUE)
 })
 
 
@@ -70,7 +70,7 @@ testthat::test_that(paste0("Multivariate regression correctly ranks binomial dat
   
   vimp_table <- suppressWarnings(familiar:::.vimp(vimp_object, data))
   
-  testthat::expect_equal(all(vimp_table[rank <= 2]$name %in% c("cell_shape_uniformity", "clump_thickness", "bare_nuclei")), TRUE)
+  testthat::expect_equal(all(vimp_table[rank <= 2]$name %in% c("cell_shape_uniformity", "clump_thickness", "bare_nuclei", "normal_nucleoli")), TRUE)
 })
 
 

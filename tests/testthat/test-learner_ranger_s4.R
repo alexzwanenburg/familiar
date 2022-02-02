@@ -80,7 +80,7 @@ good_model <- familiar:::test_train(data=good_data,
                                     cluster_method="none",
                                     imputation_method="simple",
                                     hyperparameter_list=list("sign_size"=familiar:::get_n_features(good_data),
-                                                             "n_tree"=4,
+                                                             "n_tree"=8,
                                                              "sample_size"=1.00,
                                                              "m_try"=0.3,
                                                              "node_size"=5,
@@ -93,7 +93,7 @@ wide_model <- familiar:::test_train(data=wide_data,
                                     cluster_method="none",
                                     imputation_method="simple",
                                     hyperparameter_list=list("sign_size"=familiar:::get_n_features(wide_data),
-                                                             "n_tree"=4,
+                                                             "n_tree"=8,
                                                              "sample_size"=1.00,
                                                              "m_try"=0.3,
                                                              "node_size"=5,
@@ -119,9 +119,9 @@ testthat::test_that("Ranger random forest model has variable importance", {
   # Expect that the names are the same as that of the features.
   testthat::expect_equal(all(familiar:::get_feature_columns(good_data) %in% vimp_table$name), TRUE)
   
-  # Expect that avginc has rank 1 and mealpct has rank 2.
-  testthat::expect_equal(vimp_table[rank == 1, ]$name, "avg_rooms")
-  testthat::expect_equal(vimp_table[rank == 2, ]$name, "per_capita_crime")
+  # Expect specific features to be highly ranked.
+  testthat::expect_equal(any(vimp_table[rank <= 2]$name %in% c("avg_rooms", "per_capita_crime", "lower_status_percentage", "industry")), TRUE)
+
 })
 
 
@@ -149,7 +149,7 @@ good_model <- familiar:::test_train(data=good_data,
                                     cluster_method="none",
                                     imputation_method="simple",
                                     hyperparameter_list=list("sign_size"=familiar:::get_n_features(good_data),
-                                                             "n_tree"=4,
+                                                             "n_tree"=8,
                                                              "sample_size"=1.00,
                                                              "m_try"=0.3,
                                                              "node_size"=5,
@@ -162,7 +162,7 @@ wide_model <- familiar:::test_train(data=wide_data,
                                     cluster_method="none",
                                     imputation_method="simple",
                                     hyperparameter_list=list("sign_size"=familiar:::get_n_features(wide_data),
-                                                             "n_tree"=4,
+                                                             "n_tree"=8,
                                                              "sample_size"=1.00,
                                                              "m_try"=0.3,
                                                              "node_size"=5,
@@ -189,8 +189,7 @@ testthat::test_that("Ranger random forest model has variable importance", {
   testthat::expect_equal(all(familiar:::get_feature_columns(good_data) %in% vimp_table$name), TRUE)
   
   # Expect that avginc has rank 1 and mealpct has rank 2.
-  testthat::expect_equal(vimp_table[rank == 1, ]$name, "avginc")
-  testthat::expect_equal(vimp_table[rank == 2, ]$name, "calwpct")
+  testthat::expect_equal(any(vimp_table[rank <= 2]$name %in% c("enrltot", "avginc", "calwpct")), TRUE)
 })
 
 
@@ -218,7 +217,7 @@ good_model <- familiar:::test_train(data=good_data,
                                     cluster_method="none",
                                     imputation_method="simple",
                                     hyperparameter_list=list("sign_size"=familiar:::get_n_features(good_data),
-                                                             "n_tree"=4,
+                                                             "n_tree"=8,
                                                              "sample_size"=1.00,
                                                              "m_try"=0.3,
                                                              "node_size"=5,
@@ -232,7 +231,7 @@ wide_model <- familiar:::test_train(data=wide_data,
                                     cluster_method="none",
                                     imputation_method="simple",
                                     hyperparameter_list=list("sign_size"=familiar:::get_n_features(wide_data),
-                                                             "n_tree"=4,
+                                                             "n_tree"=8,
                                                              "sample_size"=1.00,
                                                              "m_try"=0.3,
                                                              "node_size"=5,
@@ -287,7 +286,7 @@ good_model <- familiar:::test_train(data=good_data,
                                     cluster_method="none",
                                     imputation_method="simple",
                                     hyperparameter_list=list("sign_size"=familiar:::get_n_features(good_data),
-                                                             "n_tree"=4,
+                                                             "n_tree"=8,
                                                              "sample_size"=1.00,
                                                              "m_try"=0.3,
                                                              "node_size"=5,
@@ -301,7 +300,7 @@ wide_model <- familiar:::test_train(data=wide_data,
                                     cluster_method="none",
                                     imputation_method="simple",
                                     hyperparameter_list=list("sign_size"=familiar:::get_n_features(wide_data),
-                                                             "n_tree"=4,
+                                                             "n_tree"=8,
                                                              "sample_size"=1.00,
                                                              "m_try"=0.3,
                                                              "node_size"=5,
@@ -356,7 +355,7 @@ good_model <- familiar:::test_train(data=good_data,
                                     cluster_method="none",
                                     imputation_method="simple",
                                     hyperparameter_list=list("sign_size"=familiar:::get_n_features(good_data),
-                                                             "n_tree"=4,
+                                                             "n_tree"=8,
                                                              "sample_size"=1.00,
                                                              "m_try"=0.3,
                                                              "node_size"=5,
@@ -369,7 +368,7 @@ wide_model <- familiar:::test_train(data=wide_data,
                                     cluster_method="none",
                                     imputation_method="simple",
                                     hyperparameter_list=list("sign_size"=familiar:::get_n_features(wide_data),
-                                                             "n_tree"=4,
+                                                             "n_tree"=8,
                                                              "sample_size"=1.00,
                                                              "m_try"=0.3,
                                                              "node_size"=5,
@@ -404,8 +403,7 @@ testthat::test_that("Ranger random forest model has variable importance", {
   testthat::expect_equal(all(familiar:::get_feature_columns(good_data) %in% vimp_table$name), TRUE)
   
   # Expect that nodes has rank 1 and rx has rank 2.
-  testthat::expect_equal(vimp_table[rank == 1, ]$name, "nodes")
-  testthat::expect_equal(vimp_table[rank == 2, ]$name, "rx")
+  testthat::expect_equal(any(vimp_table[rank <= 2]$name %in% c("nodes", "rx")), TRUE)
 })
 
 
