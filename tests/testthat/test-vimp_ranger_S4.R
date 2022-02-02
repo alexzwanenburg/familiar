@@ -90,7 +90,7 @@ testthat::test_that(paste0("The ranger random forest impurity method correctly r
   vimp_table <- suppressWarnings(familiar:::.vimp(vimp_object, data))
   
   testthat::expect_equal(all(vimp_table[rank <= 2]$name %in% c("per_capita_crime", "lower_status_percentage",
-                                                               "residence_before_1940_proportion", "avg_rooms")), TRUE)
+                                                               "residence_before_1940_proportion", "avg_rooms", "industry")), TRUE)
 })
 
 # Process dataset.
