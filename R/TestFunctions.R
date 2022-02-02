@@ -4722,6 +4722,8 @@ test_export_specific <- function(export_function,
 
 integrated_test <- function(...,
                             outcome_type_available=c("count", "continuous", "binomial", "multinomial", "survival"),
+                            warning_good=NULL,
+                            warning_bad=NULL,
                             debug=FALSE){
   
   if(debug){
@@ -4734,6 +4736,12 @@ integrated_test <- function(...,
   }
   
   for(outcome_type in outcome_type_available){
+    
+    .warning_good <- warning_good
+    if(is.list(warning_good)) .warning_good <- warning_good[[outcome_type]]
+    
+    .warning_bad <- warning_bad
+    if(is.list(warning_bad)) .warning_bad <- warning_bad[[outcome_type]]
     
     test_fun(paste0("Experiment for a good dataset with ", outcome_type, " outcome functions correctly."), {
       
@@ -4748,13 +4756,23 @@ integrated_test <- function(...,
                                               "binomial"="binomial",
                                               "multinomial"="multinomial",
                                               "survival"="cox"))
-      
-      output <- suppress_fun(summon_familiar(data=full_data,
-                                             learner="lasso",
-                                             hyperparameter=list("lasso"=hyperparameters),
-                                             time_max=1832,
-                                             verbose=debug,
-                                             ...))
+      if(!is.null(.warning_good)){
+        testthat::expect_warning(output <- suppress_fun(summon_familiar(data=full_data,
+                                                                        learner="lasso",
+                                                                        hyperparameter=list("lasso"=hyperparameters),
+                                                                        time_max=1832,
+                                                                        verbose=debug,
+                                                                        ...)),
+                                 .warning_good)
+        
+      } else {
+        output <- suppress_fun(summon_familiar(data=full_data,
+                                               learner="lasso",
+                                               hyperparameter=list("lasso"=hyperparameters),
+                                               time_max=1832,
+                                               verbose=debug,
+                                               ...))
+      }
       
       testthat::expect_equal(is.null(output), FALSE)
     })
@@ -4776,15 +4794,27 @@ integrated_test <- function(...,
                                               "multinomial"="multinomial",
                                               "survival"="cox"))
       
-      # Note that we set a very high feature_max_fraction_missing to deal with
-      # NA rows in the dataset. Also time is explicitly set to prevent an error.
-      output <- suppress_fun(summon_familiar(data=bad_data,
-                                             learner="lasso",
-                                             hyperparameter=list("lasso"=hyperparameters),
-                                             feature_max_fraction_missing=0.95,
-                                             time_max=1832,
-                                             verbose=debug,
-                                             ...))
+      if(!is.null(.warning_bad)){
+        testthat::expect_warning(output <- suppress_fun(summon_familiar(data=bad_data,
+                                                                         learner="lasso",
+                                                                         hyperparameter=list("lasso"=hyperparameters),
+                                                                         feature_max_fraction_missing=0.95,
+                                                                         time_max=1832,
+                                                                         verbose=debug,
+                                                                         ...)),
+                                 .warning_bad)
+        
+      } else {
+        # Note that we set a very high feature_max_fraction_missing to deal with
+        # NA rows in the dataset. Also time is explicitly set to prevent an error.
+        output <- suppress_fun(summon_familiar(data=bad_data,
+                                               learner="lasso",
+                                               hyperparameter=list("lasso"=hyperparameters),
+                                               feature_max_fraction_missing=0.95,
+                                               time_max=1832,
+                                               verbose=debug,
+                                               ...))
+      }
       
       testthat::expect_equal(is.null(output), FALSE) 
     })
