@@ -823,7 +823,7 @@ setMethod("get_subsample", signature(data="dataObject"),
 
 
 setMethod("get_subsample", signature(data="data.table"),
-          function(data, seed=NULL, size=NULL, outcome_type=NULL, ...){
+          function(data, seed=NULL, size=NULL, outcome_type=NULL, rstream_object=NULL, ...){
             
             # Suppress NOTES due to non-standard evaluation in data.table
             .NATURAL <- NULL
@@ -839,8 +839,8 @@ setMethod("get_subsample", signature(data="data.table"),
             if(size == nrow(data)) return(data)
             
             # Generate a random stream object.
-            if(!is.null(seed)){
-              
+            if(!is.null(seed) & is.null(rstream_object)){
+              rstream_object <- .start_random_number_stream(seed=seed)
             }
             
             # Find identifier columns at the sample level, i.e. excluding
@@ -851,7 +851,8 @@ setMethod("get_subsample", signature(data="data.table"),
               # Sample rows.
               row_ids <- fam_sample(x=seq_len(nrow(data)),
                                     size=size,
-                                    replace=FALSE)
+                                    replace=FALSE,
+                                    rstream_object=rstream_object)
               
               # Create a subset.
               data <- data[row_ids, ]
@@ -860,7 +861,8 @@ setMethod("get_subsample", signature(data="data.table"),
               # Sample rows.
               row_ids <- fam_sample(x=seq_len(nrow(data)),
                                     size=size,
-                                    replace=FALSE)
+                                    replace=FALSE,
+                                    rstream_object=rstream_object)
               
               # Create a subset.
               data <- data[row_ids, ]
@@ -870,7 +872,8 @@ setMethod("get_subsample", signature(data="data.table"),
               id_table <- .create_subsample(data,
                                             size=size, 
                                             n_iter=1L,
-                                            outcome_type=outcome_type)
+                                            outcome_type=outcome_type,
+                                            rstream_object=rstream_object)
               
               # Isolate identifier table.
               id_table <- id_table$train_list[[1]]
