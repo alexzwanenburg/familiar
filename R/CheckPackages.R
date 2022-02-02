@@ -303,11 +303,23 @@ is_package_newer <- function(name, version){
   # Select unique packages.
   x <- unique(x)
   
-  message_str <- paste0("The following package",
-                        ifelse(length(x) > 1, "s have", " has"),
-                        " to be installed",
-                        ifelse(is.null(purpose), ": ", paste0(" ", purpose, ": ")),
-                        paste_s(x), ".")
+  # Check whether packages are not actually installed.
+  all_missing <- all(!sapply(x, is_package_installed))
+  
+  if(all_missing){
+    message_str <- paste0("The following package",
+                          ifelse(length(x) > 1, "s have", " has"),
+                          " to be installed",
+                          ifelse(is.null(purpose), ": ", paste0(" ", purpose, ": ")),
+                          paste_s(x), ".")
+    
+  } else {
+    message_str <- paste0("The following package",
+                          ifelse(length(x) > 1, "s have", " has"),
+                          " to be installed, or installed again to update dependencies",
+                          ifelse(is.null(purpose), ": ", paste0(" ", purpose, ": ")),
+                          paste_s(x), ".")
+  }
   
   return(message_str)
 }
