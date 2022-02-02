@@ -1,7 +1,7 @@
 Performance metrics
 ================
 Alex Zwanenburg
-2022-01-28
+2022-02-02
 
 <img src="../vignettes/familiar.svg" align="right" width="120"/>
 

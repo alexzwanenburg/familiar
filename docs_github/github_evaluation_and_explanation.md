@@ -1,7 +1,7 @@
 Evaluation and explanation
 ================
 Alex Zwanenburg
-2022-01-28
+2022-02-02
 
 <img src="../vignettes/familiar.svg" align="right" width="120"/>
 
@@ -557,8 +557,7 @@ plots <- familiar::plot_decision_curve(object=binomial_model,
 
 plots[[1]]
 #> Warning: Removed 1 row(s) containing missing values (geom_path).
-
-#> Warning: Removed 1 row(s) containing missing values (geom_path).
+#> Removed 1 row(s) containing missing values (geom_path).
 ```
 
 <img src="eval_and_explain/decision-curve-bci-1.png" title="plot of chunk decision-curve-bci" alt="plot of chunk decision-curve-bci" style="display: block; margin: auto;" />

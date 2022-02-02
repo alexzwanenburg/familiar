@@ -1,7 +1,7 @@
 Using familiar prospectively
 ================
 Alex Zwanenburg
-2022-01-28
+2022-02-02
 
 <img src="../vignettes/familiar.svg" align="right" width="120"/>
 
@@ -116,10 +116,10 @@ model_directory_path <- file.path(tempdir(), "trained_models", "lasso", "none")
 
 # List files present in the directory.
 list.files(model_directory_path)
-#>  [1] "20220128092642_hyperparameters_lasso_none_2_1.RDS" "20220128092642_hyperparameters_lasso_none_2_2.RDS" "20220128092642_hyperparameters_lasso_none_2_3.RDS"
-#>  [4] "20220128092642_hyperparameters_lasso_none_2_4.RDS" "20220128092642_hyperparameters_lasso_none_2_5.RDS" "20220128092642_lasso_none_1_1_ensemble.RDS"       
-#>  [7] "20220128092642_lasso_none_2_1_model.RDS"           "20220128092642_lasso_none_2_2_model.RDS"           "20220128092642_lasso_none_2_3_model.RDS"          
-#> [10] "20220128092642_lasso_none_2_4_model.RDS"           "20220128092642_lasso_none_2_5_model.RDS"
+#>  [1] "20220202154621_hyperparameters_lasso_none_2_1.RDS" "20220202154621_hyperparameters_lasso_none_2_2.RDS" "20220202154621_hyperparameters_lasso_none_2_3.RDS"
+#>  [4] "20220202154621_hyperparameters_lasso_none_2_4.RDS" "20220202154621_hyperparameters_lasso_none_2_5.RDS" "20220202154621_lasso_none_1_1_ensemble.RDS"       
+#>  [7] "20220202154621_lasso_none_2_1_model.RDS"           "20220202154621_lasso_none_2_2_model.RDS"           "20220202154621_lasso_none_2_3_model.RDS"          
+#> [10] "20220202154621_lasso_none_2_4_model.RDS"           "20220202154621_lasso_none_2_5_model.RDS"
 ```
 
 There are 5 models in the directory, which are stored in RDS format in
@@ -244,8 +244,8 @@ plots <- familiar::plot_model_performance(object=model,
                                           facet_by="metric",
                                           data=data[batch_id=="validation"],
                                           metric=c("auc", "accuracy"))
-#> Warning in (new("standardGeneric", .Data = function (object, draw = FALSE, : Creating a violinplot requires bias-corrected estimates or bootstrap confidence interval estimates instead of point
-#> estimates.
+#> Warning in (new("standardGeneric", .Data = function (object, draw = FALSE, : Creating a violinplot requires bias-corrected estimates or bootstrap confidence interval estimates instead
+#> of point estimates.
 ```
 
 You may notice that no plot is produced. This is because the type of
@@ -294,10 +294,10 @@ subdirectory of the `trained_models` folder as their constituent models:
 ``` r
 # List files present in the directory.
 list.files(model_directory_path)
-#>  [1] "20220128092642_hyperparameters_lasso_none_2_1.RDS" "20220128092642_hyperparameters_lasso_none_2_2.RDS" "20220128092642_hyperparameters_lasso_none_2_3.RDS"
-#>  [4] "20220128092642_hyperparameters_lasso_none_2_4.RDS" "20220128092642_hyperparameters_lasso_none_2_5.RDS" "20220128092642_lasso_none_1_1_ensemble.RDS"       
-#>  [7] "20220128092642_lasso_none_2_1_model.RDS"           "20220128092642_lasso_none_2_2_model.RDS"           "20220128092642_lasso_none_2_3_model.RDS"          
-#> [10] "20220128092642_lasso_none_2_4_model.RDS"           "20220128092642_lasso_none_2_5_model.RDS"
+#>  [1] "20220202154621_hyperparameters_lasso_none_2_1.RDS" "20220202154621_hyperparameters_lasso_none_2_2.RDS" "20220202154621_hyperparameters_lasso_none_2_3.RDS"
+#>  [4] "20220202154621_hyperparameters_lasso_none_2_4.RDS" "20220202154621_hyperparameters_lasso_none_2_5.RDS" "20220202154621_lasso_none_1_1_ensemble.RDS"       
+#>  [7] "20220202154621_lasso_none_2_1_model.RDS"           "20220202154621_lasso_none_2_2_model.RDS"           "20220202154621_lasso_none_2_3_model.RDS"          
+#> [10] "20220202154621_lasso_none_2_4_model.RDS"           "20220202154621_lasso_none_2_5_model.RDS"
 ```
 
 In this case there is only one ensemble in the directory, which is
@@ -401,8 +401,8 @@ found in the `familiar_data` folder.
 
 ``` r
 list.files(file.path(tempdir(), "familiar_data"))
-#> [1] "20220128092642_lasso_none_1_1_ensemble_1_1_validation_data.RDS" "20220128092642_lasso_none_1_1_pool_1_1_development_data.RDS"   
-#> [3] "20220128092642_lasso_none_1_1_pool_1_1_validation_data.RDS"
+#> [1] "20220202154621_lasso_none_1_1_ensemble_1_1_validation_data.RDS" "20220202154621_lasso_none_1_1_pool_1_1_development_data.RDS"   
+#> [3] "20220202154621_lasso_none_1_1_pool_1_1_validation_data.RDS"
 ```
 
 In our example, we generated three data objects: one for internal
