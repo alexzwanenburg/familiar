@@ -60,6 +60,8 @@
 
 -   Familiar will now actively check whether packages are installed.
 
+-   The default number of cores used for parallel processing is now 2 by default, instead of all cores - 1. This can be changed by setting the `parallel_nr_cores` parameter.
+
 ## Bug fixes
 
 -   `detail_level`, `sample_limit`, `estimation_type` and `aggregate_results` arguments used during evaluation and explanation are now propagated from `familiarModel` and `familiarEnsemble` objects instead of reverting to default values.
