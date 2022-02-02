@@ -61,6 +61,8 @@ familiar:::integrated_test(experimental_design="ip(fs+mb)",
                            parallel=FALSE,
                            skip_evaluation_elements="all",
                            outcome_type_available="binomial",
+                           warning_good="Imbalance partitions are not required as data are not severely imbalanced.",
+                           warning_bad="Imbalance partitions are not required as data are not severely imbalanced.",
                            debug=debug_flag)
 
 # Imbalance corrections using full undersampling
@@ -73,4 +75,6 @@ familiar:::integrated_test(experimental_design="ip(fs+mb)",
                            parallel=FALSE,
                            skip_evaluation_elements="all",
                            outcome_type_available="binomial",
+                           warning_good="Imbalance partitions are not required as data are not severely imbalanced.",
+                           warning_bad="Imbalance partitions are not required as data are not severely imbalanced.",
                            debug=debug_flag)
