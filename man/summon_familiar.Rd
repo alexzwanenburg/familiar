@@ -279,8 +279,8 @@ specific parameters such as \code{parallel_preprocessing}. However, when
 \code{parallel} is \code{TRUE}, parallel processing of different parts of the
 workflow can be disabled by setting respective flags to \code{FALSE}.}
     \item{\code{parallel_nr_cores}}{(\emph{optional}) Number of cores available for
-parallelisation. Defaults to all available cores-1. This setting does
-nothing if parallelisation is disabled.}
+parallelisation. Defaults to 2. This setting does nothing if
+parallelisation is disabled.}
     \item{\code{restart_cluster}}{(\emph{optional}) Restart nodes used for parallel computing
 to free up memory prior to starting a parallel process. Note that it does
 take time to set up the clusters. Therefore setting this argument to \code{TRUE}

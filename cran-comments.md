@@ -38,7 +38,9 @@ suite takes several hours. Locally run unit and integrated tests did not produce
 R CMD check was run on Rhub using rhub::check_for_cran(), producing the following results:
 
 Windows Server 2022, R-devel, 64 bit: 0 errors | 0 warnings | 2 notes
+
 Ubuntu Linux 20.04.1 LTS, R-release, GCC: 0 errors | 0 warnings | 2 notes
+
 Fedora Linux, R-devel, clang, gfortran: 0 errors | 0 warnings | 2 notes
 
 * NOTE: checking CRAN incoming feasibility ... NOTE

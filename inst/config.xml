@@ -54,7 +54,7 @@
     <run>
       <!--Parallisation master switch (optional, default: TRUE). If set to FALSE, suppresses all parallelisation.-->
       <parallel></parallel>
-      <!-- Number of cores available for parallelisation (optional, default: all-1) -->
+      <!-- Number of cores available for parallelisation (optional, default: 2) -->
       <parallel_nr_cores></parallel_nr_cores>
       <!-- Flag indicating that parallel computation clusters started locally should be restarted prior to parallel computations (optional, default: FALSE) -->
       <restart_cluster></restart_cluster>
