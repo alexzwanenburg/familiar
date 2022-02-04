@@ -19,6 +19,7 @@ testthat::test_that("Logistic model can be trained using train_familiar", {
   testthat::expect_equal(familiar:::model_is_trained(model), TRUE)
   testthat::expect_s3_class(summary(model), "summary.glm")
   testthat::expect_equal(is.null(familiar::coef(model)), FALSE)
+  testthat::expect_equal(is.null(familiar::vcov(model)), FALSE)
 })
 
 
@@ -44,6 +45,7 @@ testthat::test_that("Logistic model can be trained using train_familiar", {
   testthat::expect_equal(familiar:::model_is_trained(model), TRUE)
   testthat::expect_s4_class(summary(model), "summary.vglm")
   testthat::expect_equal(is.null(familiar::coef(model)), FALSE)
+  testthat::expect_equal(is.null(familiar::vcov(model)), FALSE)
 })
 
 
@@ -69,6 +71,7 @@ testthat::test_that("Poisson model can be trained using train_familiar", {
   testthat::expect_equal(familiar:::model_is_trained(model), TRUE)
   testthat::expect_s3_class(summary(model), "summary.glm")
   testthat::expect_equal(is.null(familiar::coef(model)), FALSE)
+  testthat::expect_equal(is.null(familiar::vcov(model)), FALSE)
 })
 
 
@@ -94,6 +97,7 @@ testthat::test_that("Gaussian model can be trained using train_familiar", {
   testthat::expect_equal(familiar:::model_is_trained(model), TRUE)
   testthat::expect_s3_class(summary(model), "summary.glm")
   testthat::expect_equal(is.null(familiar::coef(model)), FALSE)
+  testthat::expect_equal(is.null(familiar::vcov(model)), FALSE)
 })
 
 
@@ -118,4 +122,5 @@ testthat::test_that("Cox proportional hazards model can be trained using train_f
   testthat::expect_equal(familiar:::model_is_trained(model), TRUE)
   testthat::expect_s3_class(summary(model), "summary.coxph")
   testthat::expect_equal(is.null(familiar::coef(model)), FALSE)
+  testthat::expect_equal(is.null(familiar::vcov(model)), FALSE)
 })

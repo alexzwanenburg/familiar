@@ -6,7 +6,7 @@
 
 ## Minor changes
 
--   Added `summary` and `coef` method for `familiarModel` objects. These respectively apply `summary` and `coef` to the stored model.
+-   Added `summary`, `vcov` and `coef` method for `familiarModel` objects. These respectively apply `summary`, `vcov` and `coef` to the stored model.
 
 ## Bug fixes
 
