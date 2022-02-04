@@ -8,6 +8,9 @@ run_evaluation <- function(cl,
   
   if(settings$eval$do_parallel == "FALSE") cl <- NULL
   
+  # Suppress verbosity if no data elements are extracted.
+  if(length(settings$eval$evaluation_data_elements) == 0) verbose <- FALSE
+  
   # Extract data from ensembles
   data_set_list <- .prepare_familiar_data_sets(cl=cl,
                                                only_pooling=settings$eval$pool_only,
