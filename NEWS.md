@@ -2,6 +2,8 @@
 
 ## Major changes
 
+-   Added `train_familiar` function that trains (and returns) models, but skips evaluation steps. This function is essentially a wrapper around `summon_familiar`.
+
 ## Minor changes
 
 ## Bug fixes
