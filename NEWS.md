@@ -6,6 +6,8 @@
 
 ## Bug fixes
 
+-   Fixed some missing verbosity settings.
+
 # Version 1.0.0 (Boisterous Bullfrog)
 
 ## Major changes

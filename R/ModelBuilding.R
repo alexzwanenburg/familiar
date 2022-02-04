@@ -75,7 +75,8 @@ run_model_development <- function(cl,
     logger.message(paste0("Model building: model building using \"",
                           iter_methods$learner, "\" learner, based on \"",
                           iter_methods$fs_method, "\" feature selection, has been completed."),
-                   indent=message_indent)
+                   indent=message_indent,
+                   verbose=verbose)
   }
 }
 
