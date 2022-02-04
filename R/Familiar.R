@@ -105,7 +105,7 @@ summon_familiar <- function(formula=NULL,
   on.exit(data.table::setDTthreads(0L), add=TRUE)
   
 
-  ##### Load configuration file -----------------------------------
+  ##### Load configuration file ------------------------------------------------
   config <- .load_configuration_file(config=config,
                                      config_id=config_id)
   
@@ -115,9 +115,12 @@ summon_familiar <- function(formula=NULL,
   .check_configuration_tag_is_parameter(config=config)
   
   
-  ##### File paths ------------------------------------------------------------------
+  ##### File paths -------------------------------------------------------------
   # Parse file paths
-  file_paths  <- do.call(.parse_file_paths, append(list("config"=config), list(...)))
+  file_paths  <- do.call(.parse_file_paths,
+                         args=c(list("config"=config,
+                                     "verbose"=verbose),
+                                list(...)))
   
   # Set paths to data
   if(!is.null(file_paths$data) & is.null(data)){
@@ -127,7 +130,7 @@ summon_familiar <- function(formula=NULL,
   # Make sure to remove the directory if it is on the temporary path.
   if(file_paths$is_temporary) on.exit(unlink(file_paths$experiment_dir, recursive=TRUE), add=TRUE)
   
-  ##### Load data -------------------------------------------------------------------
+  ##### Load data --------------------------------------------------------------
   # Parse experiment and data settings
   settings <- .parse_initial_settings(config=config, ...)
   
@@ -143,7 +146,9 @@ summon_familiar <- function(formula=NULL,
     
   } else {
     # Load data.
-    data <- do.call(.load_data, args=append(list("data"=data), settings$data))
+    data <- do.call(.load_data,
+                    args=c(list("data"=data),
+                           settings$data))
     
     # Update settings
     settings <- .update_initial_settings(formula=formula,
