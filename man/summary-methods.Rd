@@ -10,9 +10,9 @@ summary(object, ...)
 \S4method{summary}{familiarModel}(object, ...)
 }
 \arguments{
-\item{object}{familiarModel.}
+\item{object}{a familiarModel object}
 
-\item{...}{additional arguments passed to summary methods for the underlying
+\item{...}{additional arguments passed to \code{summary} methods for the underlying
 model, when available.}
 }
 \value{
