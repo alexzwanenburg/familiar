@@ -1,3 +1,11 @@
+# Development
+
+## Major changes
+
+## Minor changes
+
+## Bug fixes
+
 # Version 1.0.0 (Boisterous Bullfrog)
 
 ## Major changes
