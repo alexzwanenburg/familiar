@@ -43,6 +43,7 @@
 #'   are expected to be `data.frame` or `data.table` objects or paths to data
 #'   files. The latter are handled in the same way as file paths provided to
 #'   `data_file`.
+#' @param verbose Sets verbosity.
 #' @param ... Unused arguments
 #'
 #' @return List of paths to important directories and files.
@@ -53,6 +54,7 @@
                               project_dir=waiver(),
                               experiment_dir=waiver(),
                               data_file=waiver(),
+                              verbose=TRUE,
                               ...){
 
   # Initialise list of file paths
@@ -162,7 +164,8 @@
   }
   
   if(file_paths$is_temporary){
-    logger.message(paste0("Configuration: A temporary R directory is created for the analysis: ", temporary_directory))
+    logger.message(paste0("Configuration: A temporary R directory is created for the analysis: ", temporary_directory),
+                   verbose=verbose)
   }
   
   return(file_paths)

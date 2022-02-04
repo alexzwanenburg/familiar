@@ -68,7 +68,7 @@
 #' @param verbose Indicates verbosity of the results. Default is TRUE, and all
 #'   messages and warnings are returned.
 #'
-#' @inheritDotParams .parse_file_paths -config
+#' @inheritDotParams .parse_file_paths -config -verbose
 #' @inheritDotParams .parse_experiment_settings -config
 #' @inheritDotParams .parse_setup_settings -config
 #' @inheritDotParams .parse_preprocessing_settings -config -data -parallel -outcome_type
