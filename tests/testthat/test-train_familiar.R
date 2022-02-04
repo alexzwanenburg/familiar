@@ -17,7 +17,7 @@ testthat::test_that("Logistic model can be trained using train_familiar", {
   
   testthat::expect_s4_class(model, "familiarGLM")
   testthat::expect_equal(familiar:::model_is_trained(model), TRUE)
-  
+  testthat::expect_s3_class(summary(model), "summary.glm")
 })
 
 
@@ -41,7 +41,7 @@ testthat::test_that("Logistic model can be trained using train_familiar", {
   
   testthat::expect_s4_class(model, "familiarGLM")
   testthat::expect_equal(familiar:::model_is_trained(model), TRUE)
-  
+  testthat::expect_s4_class(summary(model), "summary.vglm")
 })
 
 
@@ -65,7 +65,7 @@ testthat::test_that("Poisson model can be trained using train_familiar", {
   
   testthat::expect_s4_class(model, "familiarGLM")
   testthat::expect_equal(familiar:::model_is_trained(model), TRUE)
-  
+  testthat::expect_s3_class(summary(model), "summary.glm")
 })
 
 
@@ -89,7 +89,7 @@ testthat::test_that("Gaussian model can be trained using train_familiar", {
   
   testthat::expect_s4_class(model, "familiarGLM")
   testthat::expect_equal(familiar:::model_is_trained(model), TRUE)
-  
+  testthat::expect_s3_class(summary(model), "summary.glm")
 })
 
 
@@ -112,5 +112,5 @@ testthat::test_that("Cox proportional hazards model can be trained using train_f
   
   testthat::expect_s4_class(model, "familiarCoxPH")
   testthat::expect_equal(familiar:::model_is_trained(model), TRUE)
-  
+  testthat::expect_s3_class(summary(model), "summary.coxph")
 })

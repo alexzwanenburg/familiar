@@ -211,6 +211,72 @@ setMethod("show", signature(object="familiarModel"),
           })
 
 
+#' Model summaries
+#'
+#' `summary` produces model summaries.
+#'
+#' @param object familiarModel.
+#' @param ... additional arguments passed to summary methods for the underlying
+#'   model, when available.
+#'
+#' @details This method extends the `summary` S3 method. For some models
+#'   `summary` requires information that is trimmed from the model. In this case
+#'   a copy of summary data is stored with the model, and returned.
+#'
+#' @return Depends on underlying model. See the documentation for the particular
+#'   models.
+#'
+#' @exportMethod summary
+#' @rdname summary-methods
+#' @md
+setGeneric("summary")
+
+#####summary--------------------------------------------------------------------
+
+#' @rdname summary-methods
+setMethod("summary", signature(object="familiarModel"),
+          function(object, ...){
+            
+            if(!model_is_trained(object)){
+              message("The model was not trained. A summary is not available.")
+              return(invisible(NULL))
+            }
+            
+            # Attempt to retrieve the summary from the model.
+            if(object@is_trimmed){
+              if(!is.null(object@trimmed_function$summary)) return(object@trimmed_function$summary)
+            }
+            
+            # Attempt to capture the summary directly.
+            h <- tryCatch(summary(object@model, ...),
+                          error=identity)
+            
+            # If an error is generated, create a message and return an invisible
+            # NULL.
+            if(inherits(h, "error")){
+              message("No summary is available for this model.")
+              return(invisible(NULL))
+            } 
+            
+            # If the summary is a default one, create a message and return an
+            # invisible NULL.
+            if(inherits(h, "summaryDefault")){
+              message("No summary is available for this model.")
+              return(invisible(NULL))
+            }
+            
+            return(h)
+          })
+
+
+#####coef-----------------------------------------------------------------------
+# setGeneric("coef")
+
+
+#####vcov-----------------------------------------------------------------------
+# setGeneric("vcov")
+
+
 
 #####require_package (model)#####
 setMethod("require_package", signature(x="familiarModel"),

@@ -20,7 +20,7 @@
 #' @import data.table
 #' @import methods
 #' @importClassesFrom rstream rstream.runif
-#' @importFrom stats predict coef
+#' @importFrom stats predict coef vcov
 #' @importFrom survival Surv coxph survreg
 #' @importFrom utils head tail
 #' @importFrom rlang quo quos enquo enquos sym syms ensym ensyms parse_expr parse_exprs

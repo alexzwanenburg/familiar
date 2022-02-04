@@ -6,6 +6,8 @@
 
 ## Minor changes
 
+-   Added `summary` method for `familiarModel` objects. These apply `summary` to the stored model.
+
 ## Bug fixes
 
 -   Fixed some missing verbosity settings.
