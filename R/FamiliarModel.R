@@ -665,8 +665,8 @@ setMethod("trim_model", signature(object="familiarModel"),
             if(!trimmed_object@is_trimmed) return(object)
             
             # Go over different functions.
-            trimmed_object <- .replace_broken_functions(object=object,
-                                                        trimmed_object=trimmed_object)
+            trimmed_object <- suppressWarnings(.replace_broken_functions(object=object,
+                                                                         trimmed_object=trimmed_object))
             
             return(trimmed_object)
           })
