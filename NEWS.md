@@ -8,6 +8,8 @@
 
 -   Fixed some missing verbosity settings.
 
+-   Trained models now contain information for features used only for missing data inference.
+
 # Version 1.0.0 (Boisterous Bullfrog)
 
 ## Major changes

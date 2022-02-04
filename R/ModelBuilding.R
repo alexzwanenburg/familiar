@@ -136,7 +136,7 @@ build_model <- function(run, hpo_list){
   # Select features
   fam_model <- set_signature(object=fam_model,
                              rank_table=rank_table,
-                             minimise_footprint=TRUE)
+                             minimise_footprint=FALSE)
   
   ############### Model building ################################################################
   
