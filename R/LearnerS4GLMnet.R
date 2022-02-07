@@ -253,7 +253,10 @@ setMethod("get_prediction_type", signature(object="familiarGLMnet"),
 
 #####..train####
 setMethod("..train", signature(object="familiarGLMnet", data="dataObject"),
-          function(object, data){
+          function(object, data, force_signature=FALSE, ...){
+            
+            # Suppress NOTES due to non-standard evaluation in data.table
+            original_name <- NULL
             
             # Check if training data is ok.
             if(has_bad_training_data(object=object, data=data)) return(callNextMethod())
@@ -308,17 +311,44 @@ setMethod("..train", signature(object="familiarGLMnet", data="dataObject"),
                                 y=encoded_data$encoded_data@data[, mget(id_columns)],
                                 by=id_columns)
             
+            if(force_signature){
+              
+              # Find signature features.
+              signature_feature <- names(object@feature_info)[sapply(object@feature_info, is_in_signature)]
+              
+              if(length(signature_feature) > 0 ){
+                # Initially mark all features for shrinkage.
+                penalty_factor <- rep(1, length(feature_columns))
+                
+                # Update all signature features that were not encoded.
+                penalty_factor[feature_columns %in% signature_feature] <- 0
+                
+                # Update all signatures features that were encoded.
+                encoded_signature <- encoded_data$reference_table[original_name %in% signature_feature]$reference_name
+                penalty_factor[feature_columns %in% encoded_signature] <- 0
+                
+              } else {
+                # Allow shrinking of each feature.
+                penalty_factor <- rep(1, length(feature_columns))
+              }
+              
+            } else {
+              # Allow shrinking of each feature.
+              penalty_factor <- rep(1, length(feature_columns))
+            }
+            
             # Train the model.
             if(is(object, "familiarGLMnetRidge")){
               # Attempt to train the model
               model <- suppressWarnings(tryCatch(glmnet::cv.glmnet(x = as.matrix(encoded_data$encoded_data@data[, mget(feature_columns)]),
-                                                                    y = outcome_data,
-                                                                    family = as.character(object@hyperparameters$family),
-                                                                    alpha = 0.0,
-                                                                    standardize = object@hyperparameters$normalise,
-                                                                    nfolds = NULL,
-                                                                    foldid = fold_table$fold_id,
-                                                                    parallel = FALSE),
+                                                                   y = outcome_data,
+                                                                   family = as.character(object@hyperparameters$family),
+                                                                   alpha = 0.0,
+                                                                   standardize = object@hyperparameters$normalise,
+                                                                   nfolds = NULL,
+                                                                   foldid = fold_table$fold_id,
+                                                                   parallel = FALSE,
+                                                                   penalty.factor = penalty_factor),
                                                  error=identity))
               
             } else if(is(object, "familiarGLMnetLasso")){
@@ -330,7 +360,8 @@ setMethod("..train", signature(object="familiarGLMnet", data="dataObject"),
                                                                    standardize = object@hyperparameters$normalise,
                                                                    nfolds = NULL,
                                                                    foldid = fold_table$fold_id,
-                                                                   parallel = FALSE),
+                                                                   parallel = FALSE,
+                                                                   penalty.factor = penalty_factor),
                                                  error=identity))
               
             } else if(is(object, "familiarGLMnetElasticNet")){
@@ -342,7 +373,8 @@ setMethod("..train", signature(object="familiarGLMnet", data="dataObject"),
                                                                    standardize = object@hyperparameters$normalise,
                                                                    nfolds = NULL,
                                                                    foldid = fold_table$fold_id,
-                                                                   parallel = FALSE),
+                                                                   parallel = FALSE,
+                                                                   penalty.factor = penalty_factor),
                                                  error=identity))
               
             } else {
@@ -519,7 +551,7 @@ setMethod("..vimp", signature(object="familiarGLMnet"),
             score <- NULL
             
             # Attempt to train the model if it has not been trained yet.
-            if(!model_is_trained(object)) object <- ..train(object, data)
+            if(!model_is_trained(object)) object <- ..train(object, data, force_signature=TRUE)
             
             # Check if the model has been trained upon retry.
             if(!model_is_trained(object)) return(callNextMethod())
