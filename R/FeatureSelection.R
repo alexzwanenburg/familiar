@@ -79,6 +79,9 @@ run_feature_selection <- function(cl,
 compute_variable_importance <- function(run, fs_method, hpo_list, proj_list, settings, file_paths){
   # Function for calculating variable importance
   
+  # Suppress NOTES due to non-standard evaluation in data.table
+  name <- NULL
+  
   ############### Data preparation ################################################################
   # Pre-process data
   
@@ -103,15 +106,6 @@ compute_variable_importance <- function(run, fs_method, hpo_list, proj_list, set
   # Load feature_info_list
   feature_info_list <- get_feature_info_list(run=run)
   
-  # Find required features
-  required_features <- find_required_features(features=get_available_features(feature_info_list=feature_info_list,
-                                                                              exclude_signature=TRUE),
-                                              feature_info_list=feature_info_list)
-  
-  # Limit to required features. In principle, this removes signature features
-  # which are not assessed through variable importance.
-  feature_info_list <- feature_info_list[required_features]
-  
   # Create the variable importance method object or familiar model object to
   # compute variable importance with.
   vimp_object <- methods::new("familiarVimpMethod",
@@ -119,10 +113,25 @@ compute_variable_importance <- function(run, fs_method, hpo_list, proj_list, set
                               hyperparameters = parameter_list,
                               vimp_method = fs_method,
                               outcome_info = .get_outcome_info(),
-                              feature_info = feature_info_list,
-                              required_features = required_features,
                               run_table = run$run_table)
-
+  
+  # Promote to the correct subclass.
+  vimp_object <- promote_vimp_method(object=vimp_object)
+  
+  # Set multivariate methods.
+  if(is(vimp_object, "familiarModel")) is_multivariate <- TRUE
+  if(is(vimp_object, "familiarVimpMethod")) is_multivariate <- vimp_object@multivariate
+  
+  # Find required features. Exclude the signature features at this point, as
+  # these will have been dropped from the variable importance table.
+  required_features <- find_required_features(features=get_available_features(feature_info_list=feature_info_list,
+                                                                              exclude_signature=!is_multivariate),
+                                              feature_info_list=feature_info_list)
+  
+  # Limit to required features.
+  vimp_object@required_features <- required_features
+  vimp_object@feature_info <- feature_info_list[required_features]
+  
   # Compute variable importance.
   vimp_table <- .vimp(object=vimp_object, data=data)
   
@@ -136,18 +145,38 @@ compute_variable_importance <- function(run, fs_method, hpo_list, proj_list, set
   } else {
     # Obtain the list of identifiers.
     id_list <- .get_iteration_identifiers(run=run)
-
+    
     # Add identifiers to variable importance data table
     vimp_table$data_id   <- id_list$data
     vimp_table$run_id    <- id_list$run
     vimp_table$fs_method <- fs_method
   }
+  
+  # Remove signature features from the table, and re-rank.
+  if(is_multivariate & nrow(vimp_table) > 0){
+    
+    # Identify signature features, if any.
+    signature_features <- names(feature_info_list)[sapply(feature_info_list, is_in_signature)]
+    
+    if(length(signature_features) > 0){
+      # Remove signature features.
+      vimp_table <- vimp_table[!name %in% signature_features]
+      
+      if(nrow(vimp_table) > 0){
+        # Re-rank features after removing signature features.
+        vimp_table[, "rank":=data.table::frank(rank, ties.method="min")]
+      }
+    }
+  }
 
   # Generate the translation table for the selected set of features.
   translation_table <- rank.get_decluster_translation_table(features=vimp_table$name,
-                                                            feature_info_list=feature_info_list)
-
-  return(list("run_table"=run$run_table, "fs_method"=fs_method, "vimp"=vimp_table, "translation_table"=translation_table))
+                                                            feature_info_list=feature_info_list[required_features])
+  
+  return(list("run_table"=run$run_table,
+              "fs_method"=fs_method,
+              "vimp"=vimp_table,
+              "translation_table"=translation_table))
 }
 
 
