@@ -1,15 +1,25 @@
-familiar:::test_all_vimp_methods_available(familiar:::.get_available_regression_vimp_methods(show_general=TRUE))
+familiar:::test_all_vimp_methods_available(familiar:::.get_available_univariate_regression_vimp_methods(show_general=TRUE))
+familiar:::test_all_vimp_methods_available(familiar:::.get_available_multivariate_regression_vimp_methods(show_general=TRUE))
 
 # Don't perform any further tests on CRAN due to time of running the complete test.
 testthat::skip_on_cran()
 
-familiar:::test_hyperparameter_optimisation(vimp_methods=familiar:::.get_available_regression_vimp_methods(show_general=TRUE),
+familiar:::test_hyperparameter_optimisation(vimp_methods=familiar:::.get_available_univariate_regression_vimp_methods(show_general=TRUE),
                                             debug=FALSE,
                                             parallel=FALSE,
                                             always_available=TRUE)
 
-familiar:::test_all_vimp_methods(familiar:::.get_available_regression_vimp_methods(show_general=FALSE))
-familiar:::test_all_vimp_methods_parallel(familiar:::.get_available_regression_vimp_methods(show_general=FALSE))
+familiar:::test_all_vimp_methods(familiar:::.get_available_univariate_regression_vimp_methods(show_general=FALSE))
+familiar:::test_all_vimp_methods_parallel(familiar:::.get_available_univariate_regression_vimp_methods(show_general=FALSE))
+
+familiar:::test_hyperparameter_optimisation(vimp_methods=familiar:::.get_available_multivariate_regression_vimp_methods(show_general=TRUE),
+                                            debug=FALSE,
+                                            parallel=FALSE,
+                                            always_available=TRUE)
+
+familiar:::test_all_vimp_methods(familiar:::.get_available_multivariate_regression_vimp_methods(show_general=FALSE))
+familiar:::test_all_vimp_methods_parallel(familiar:::.get_available_multivariate_regression_vimp_methods(show_general=FALSE))
+
 
 ##### Count outcome #####
 data <- familiar:::test.create_good_data_set("count")
