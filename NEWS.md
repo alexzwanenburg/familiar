@@ -3,7 +3,7 @@
 ## Major changes
 
 -   Added `train_familiar` function that trains (and returns) models, but skips evaluation steps. This function is essentially a wrapper around `summon_familiar`.
--   Multivariate feature selection / variable importance methods such as `multivariate_regression`, `mrmr` and `lasso` now respect signature features set using the `signature` configuration parameter. Features provided in `signature` are always selected for the resulting model, and were therefore ignored during feature selection for both univariate and multivariate method. This has changed, so that multivariate methods now use the signature features as the basic set and attempt to identify any additional suitable features.
+-   Multivariate feature selection / variable importance methods such as `multivariate_regression`, `mrmr` and `lasso` now respect signature features set using the `signature` configuration parameter. Features provided in `signature` are always selected for the resulting model, and were therefore ignored during feature selection for both univariate and multivariate method. This has changed, so that multivariate methods now use the signature features as the basic set and attempt to identify any additional suitable features. Signature features are still ignored for univariate methods.
 
 ## Minor changes
 
