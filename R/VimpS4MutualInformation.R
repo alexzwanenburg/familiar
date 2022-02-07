@@ -5,13 +5,25 @@ NULL
 setClass("familiarMutualInformationVimp",
          contains="familiarVimpMethod")
 
-setClass("familiarCoreUnivariateMutualInfoVimp",
+setClass("familiarUnivariateMutualInfoVimp",
          contains="familiarMutualInformationVimp")
 
-setClass("familiarCoreMultivariateMutualInfoVimp",
-         contains="familiarMutualInformationVimp")
+setClass("familiarMultivariateMutualInfoVimp",
+         contains="familiarMutualInformationVimp",
+         prototype = methods::prototype(multivariate=TRUE))
 
-
+#####initialize######
+setMethod("initialize", signature(.Object="familiarMultivariateMutualInfoVimp"),
+          function(.Object, ...){
+            
+            # Update with parent class first.
+            .Object <- callNextMethod()
+            
+            # Set the required package
+            .Object@multivariate <- TRUE
+            
+            return(.Object)
+          })
 
 .get_available_univariate_mutual_information_vimp_method <- function(show_general=TRUE){
   return("mim")
@@ -37,7 +49,7 @@ setMethod("get_default_hyperparameters", signature(object="familiarMutualInforma
 
 
 #####..vimp,univariate######
-setMethod("..vimp", signature(object="familiarCoreUnivariateMutualInfoVimp"),
+setMethod("..vimp", signature(object="familiarUnivariateMutualInfoVimp"),
           function(object, data, ...){
             # Suppress NOTES due to non-standard evaluation in data.table
             score <- NULL
@@ -62,7 +74,7 @@ setMethod("..vimp", signature(object="familiarCoreUnivariateMutualInfoVimp"),
 
 
 #####..vimp,multivariate#####
-setMethod("..vimp", signature(object="familiarCoreMultivariateMutualInfoVimp"),
+setMethod("..vimp", signature(object="familiarMultivariateMutualInfoVimp"),
           function(object, data, ...){
             # mifs: Mutual information feature selection using greedy search (Battiti 1994)
             # mrmr: Minimum Redundancy Maximum Relevance feature selection using greedy search (Peng 2005)
@@ -71,9 +83,12 @@ setMethod("..vimp", signature(object="familiarCoreMultivariateMutualInfoVimp"),
             objective_score <- available <- name <- mi_redundancy <- mi <- selected <- NULL
             
             if(is_empty(data)) return(callNextMethod())
-
+            
             # Find feature columns in data table.
             feature_columns <- get_feature_columns(data)
+            
+            # Find signature features.
+            signature_feature <- names(object@feature_info)[sapply(object@feature_info, is_in_signature)]
             
             # Calculate mutual information.
             mutual_information <- .compute_mutual_information(data=data)
@@ -86,17 +101,80 @@ setMethod("..vimp", signature(object="familiarCoreMultivariateMutualInfoVimp"),
                                               "selected"=FALSE,
                                               "available"=TRUE,
                                               "selection_step"=0)
+            browser()
+            if(length(signature_feature) > 0){
+              
+              # Iteration counter.
+              ii <- 1
+              
+              for(current_feature in signature_feature){
+                # Mark the current signature feature. Note that we iterate over
+                # the features, and update mutual information to ensure that we
+                # get to the correct starting point for the non-signature
+                # variables.
+                best_feature <- current_feature
+                mi_data[name %in% best_feature, ":="("selected"=TRUE, "available"=FALSE, "selection_step"=ii)]
+                
+                # Update Iteration counter.
+                ii <- ii + 1
+                
+                # Determine the features still available.
+                available_features <- mi_data[available == TRUE, ]$name
+                if(length(available_features) == 0) break()
+                
+                # Also skip if this is the last signature feature -- this is to
+                # prevent overlap with the main while-cycle below.
+                if(current_feature == tail(signature_feature, n=1L)) break()
+                
+                # Calculate mutual information of available features and the
+                # current signature feature.
+                current_redundancy_mi <- .compute_mutual_information(data, features=available_features, with_feature=best_feature)
+                
+                # Update redundancy
+                mi_data[available==TRUE, "mi_redundancy":=mi_redundancy + current_redundancy_mi]
+                
+                if(object@vimp_method == "mifs"){
+                  # Update the objective score by subtracting the redundancy
+                  # score. MIFS uses beta=1 (Battiti 1994)
+                  mi_data[available==TRUE, "objective_score":= mi - mi_redundancy]
+                  
+                  # Only consider features with a valid, non-negative
+                  # optimisation score, as redundancy is strictly increasing.
+                  # Note that signature features are never removed until they
+                  # are selected.
+                  mi_data[objective_score < 0.0 & selected == FALSE & !name %in% signature_feature, "available":=FALSE]
+                  
+                } else if(object@vimp_method == "mrmr"){
+                  
+                  # Calculate optimisation score. MRMR uses beta=1/(ii-1), with
+                  # ii-1 the size of the selected feature set.
+                  mi_data[available==TRUE, "objective_score":= mi - mi_redundancy / (ii-1)]
+                  
+                  # Only consider features with a valid, non-negative
+                  # optimisation score, as redundancy is strictly increasing.
+                  # Note that signature features are never removed until they
+                  # are selected.
+                  mi_data[objective_score < 0.0 & selected == FALSE & !name %in% signature_feature, "available":=FALSE]
+                  
+                } else {
+                  ..error_reached_unreachable_code(paste0("vimp,familiarMultivariateMutualInfoVimp: encountered unknown vimp_method: ", object@vimp_method))
+                }
+              }
+              
+            } else {
+              
+              # Select initial feature and update mi_data.
+              max_objective_score <- max(mi_data$objective_score)
+              best_feature <- mi_data[objective_score == max_objective_score, ]$name[1]
+              mi_data[name %in% best_feature, ":="("selected"=TRUE, "available"=FALSE, "selection_step"=1)]
+              
+              # Determine the features that were not selected.
+              available_features <- mi_data[available == TRUE, ]$name
+              
+              # Iteration counter.
+              ii <- 2
+            }
             
-            # Select initial feature and update mi_data.
-            max_objective_score <- max(mi_data$objective_score)
-            best_feature <- mi_data[objective_score == max_objective_score, ]$name[1]
-            mi_data[name %in% best_feature, ":="("selected"=TRUE, "available"=FALSE, "selection_step"=1)]
-            
-            # Determine the features that were not selected.
-            available_features <- mi_data[available == TRUE, ]$name
-           
-            # Iteration counter.
-            ii <- 2
 
             while(length(available_features) > 0 ){
               
@@ -126,7 +204,7 @@ setMethod("..vimp", signature(object="familiarCoreMultivariateMutualInfoVimp"),
                 mi_data[objective_score < 0.0 & selected == FALSE, "available":=FALSE]
               
               } else {
-                ..error_reached_unreachable_code(paste0("vimp,familiarCoreMultivariateMutualInfoVimp: encountered unknown vimp_method: ", object@vimp_method))
+                ..error_reached_unreachable_code(paste0("vimp,familiarMultivariateMutualInfoVimp: encountered unknown vimp_method: ", object@vimp_method))
               }
               
               # If there are no more available features (i.e. due to negative

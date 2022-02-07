@@ -21,11 +21,11 @@ setMethod("promote_vimp_method", signature(object="familiarVimpMethod"),
               
             } else if(method %in% .get_available_univariate_mutual_information_vimp_method()){
               # Mutual information maximisation.
-              object <- methods::new("familiarCoreUnivariateMutualInfoVimp", object)
+              object <- methods::new("familiarUnivariateMutualInfoVimp", object)
               
             } else if(method %in% .get_available_multivariate_mutual_information_vimp_method()){
               # Multivariate information methods.
-              object <- methods::new("familiarCoreMultivariateMutualInfoVimp", object)
+              object <- methods::new("familiarMultivariateMutualInfoVimp", object)
               
             } else if(method %in% .get_available_correlation_vimp_methods()){
               # Correlation-based methods.
