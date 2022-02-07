@@ -101,7 +101,7 @@ setMethod("..vimp", signature(object="familiarMultivariateMutualInfoVimp"),
                                               "selected"=FALSE,
                                               "available"=TRUE,
                                               "selection_step"=0)
-            browser()
+            
             if(length(signature_feature) > 0){
               
               # Iteration counter.
