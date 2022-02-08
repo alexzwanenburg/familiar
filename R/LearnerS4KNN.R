@@ -169,7 +169,8 @@ setMethod("..train", signature(object="familiarKNN", data="dataObject"),
                                           data=data@data,
                                           k=object@hyperparameters$k,
                                           method=as.character(object@hyperparameters$distance_metric),
-                                          scale=FALSE))
+                                          scale=FALSE),
+                              error=identity)
             
             # Check if the model trained at all.
             if(inherits(model, "error")) return(callNextMethod())
