@@ -1,3 +1,5 @@
+testthat::skip_on_cran()
+
 ##### binomial -----------------------------------------------------------------
 # Create data.table.
 data <- familiar:::test.create_good_data_set(outcome_type="binomial",
