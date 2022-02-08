@@ -199,6 +199,8 @@ setGeneric("get_bootstrap_sample", function(data, ...) standardGeneric("get_boot
 
 setGeneric("get_subsample", function(data, ...) standardGeneric("get_subsample"))
 
+setGeneric("create_instance_weights", function(data, ...) standardGeneric("create_instance_weights"))
+
 
 ##### familiarModel learner methods #####
 setGeneric("promote_learner", function(object, ...) standardGeneric("promote_learner"))

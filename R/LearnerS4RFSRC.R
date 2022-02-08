@@ -53,6 +53,8 @@ setMethod("get_default_hyperparameters", signature(object="familiarRFSRC"),
             param$tree_depth   <- list()
             param$n_split      <- list()
             param$split_rule   <- list()
+            param$sample_weighting <- list()
+            param$sample_weighting_beta <- list()
             
             # Variable importance only parameters (are not optimised by hyperparameter optimisation)
             param$fs_vimp_method  <- list()
@@ -76,16 +78,22 @@ setMethod("get_default_hyperparameters", signature(object="familiarRFSRC"),
             # Note that the number of trees is defined in powers of 2, based on Oshiro, T.
             # M., Perez, P. S., & Baranauskas, J. A. (2012, July). How many trees in a
             # random forest?. In MLDM (pp. 154-168).
-            param$n_tree <- .set_hyperparameter(default=c(4, 8, 10), type="integer", range=c(4, 10),
-                                                valid_range=c(0, Inf), randomise=TRUE)
+            param$n_tree <- .set_hyperparameter(default=c(4, 8, 10),
+                                                type="integer",
+                                                range=c(4, 10),
+                                                valid_range=c(0, Inf),
+                                                randomise=TRUE)
             
             
             ###### Sample size ###########################################################
             
             # Note that the sample size is here noted as a fraction, which corresponds to
             # the usage in random forest SRC
-            param$sample_size <- .set_hyperparameter(default=c(0.30, 0.50, 0.70, 0.90), type="numeric", range=c(2.0/n_samples, 1.00),
-                                                     valid_range=c(0, 1.0), randomise=TRUE)
+            param$sample_size <- .set_hyperparameter(default=c(0.30, 0.50, 0.70, 0.90),
+                                                     type="numeric",
+                                                     range=c(2.0/n_samples, 1.00),
+                                                     valid_range=c(0, 1.0),
+                                                     randomise=TRUE)
             
             
             ##### Number of candidate features selected at node ##########################
@@ -93,7 +101,9 @@ setMethod("get_default_hyperparameters", signature(object="familiarRFSRC"),
             # Note that the number of features is here noted as a fraction, but is used in
             # randomforestSRC as an integer. Familiar ensures that always at least 1
             # feature is available as a candidate.
-            param$m_try <- .set_hyperparameter(default=c(0.1, 0.3, 0.5, 1.0), type="numeric", range=c(0.0, 1.0),
+            param$m_try <- .set_hyperparameter(default=c(0.1, 0.3, 0.5, 1.0),
+                                               type="numeric",
+                                               range=c(0.0, 1.0),
                                                randomise=TRUE)
             
             
@@ -111,24 +121,33 @@ setMethod("get_default_hyperparameters", signature(object="familiarRFSRC"),
                                                      node_size_default <= node_size_range[2]]
             
             # Set the node_size parameter.
-            param$node_size <- .set_hyperparameter(default=node_size_default, type="integer", range=node_size_range,
-                                                   valid_range=c(1, Inf), randomise=TRUE)
+            param$node_size <- .set_hyperparameter(default=node_size_default,
+                                                   type="integer",
+                                                   range=node_size_range,
+                                                   valid_range=c(1, Inf),
+                                                   randomise=TRUE)
             
             
             ##### Maximum tree depth #####################################################
             
             # Determines the depth trees are allowed to grow to. Larger depths increase
             # the risk of overfitting.
-            param$tree_depth <- .set_hyperparameter(default=c(1, 2, 3, 7), type="integer", range=c(1, 10),
-                                                    valid_range=c(1, Inf), randomise=TRUE)
+            param$tree_depth <- .set_hyperparameter(default=c(1, 2, 3, 7),
+                                                    type="integer",
+                                                    range=c(1, 10),
+                                                    valid_range=c(1, Inf),
+                                                    randomise=TRUE)
             
             
             ##### Number of split points #################################################
             
             # The number of split points for each candidate variable is not randomised by
             # default, and deterministic splitting is used.
-            param$n_split <- .set_hyperparameter(default=0, type="integer", range=c(0, 10),
-                                                 valid_range=c(0, Inf), randomise=FALSE)
+            param$n_split <- .set_hyperparameter(default=0,
+                                                 type="integer",
+                                                 range=c(0, 10),
+                                                 valid_range=c(0, Inf),
+                                                 randomise=FALSE)
             
             
             ##### Splitting rule #########################################################
@@ -155,28 +174,53 @@ setMethod("get_default_hyperparameters", signature(object="familiarRFSRC"),
             }
             
             # Set the split_rule parameter.
-            param$split_rule <- .set_hyperparameter(default=split_rule_default, type="factor", range=split_rule_range,
+            param$split_rule <- .set_hyperparameter(default=split_rule_default,
+                                                    type="factor",
+                                                    range=split_rule_range,
                                                     randomise=FALSE)
             
+            
+            ##### Sample weighting method ######################################
+            #Class imbalances may lead to learning majority classes. This can be
+            #partially mitigated by increasing weight of minority classes.
+            param$sample_weighting <- .get_default_sample_weighting_method(outcome_type=object@outcome_type)
+            
+            
+            ##### Effective number of samples beta #############################
+            #Specifies the beta parameter for effective number sample weighting
+            #method. See Cui et al. (2019).
+            param$sample_weighting_beta <- .get_default_sample_weighting_beta(method=param$sample_weighting$init_config)
+            
+            
             ##### variable importance method #####
-            param$fs_vimp_method <- .set_hyperparameter(default="permutation", type="factor",
+            param$fs_vimp_method <- .set_hyperparameter(default="permutation", 
+                                                        type="factor",
                                                         range=c("permutation", "minimum_depth", "variable_hunting", "holdout"),
                                                         randomise=FALSE)
             
             
             ##### Variable hunting cross-validation folds (variable importance only) #####
-            param$fs_vh_fold <- .set_hyperparameter(default=5, type="integer", range=c(2, n_samples),
-                                                    valid_range=c(2, Inf), randomise=FALSE)
+            param$fs_vh_fold <- .set_hyperparameter(default=5,
+                                                    type="integer",
+                                                    range=c(2, n_samples),
+                                                    valid_range=c(2, Inf),
+                                                    randomise=FALSE)
             
             
             ##### Variable hunting step size (variable importance only) #####
-            param$fs_vh_step_size <- .set_hyperparameter(default=1, type="integer", range=c(1, 50),
-                                                         valid_range=c(1, Inf), randomise=FALSE)
+            param$fs_vh_step_size <- .set_hyperparameter(default=1,
+                                                         type="integer",
+                                                         range=c(1, 50),
+                                                         valid_range=c(1, Inf),
+                                                         randomise=FALSE)
             
             
             ##### Variable hunting repetitions (variable importance only) #####
-            param$fs_vh_n_rep <- .set_hyperparameter(default=50, type="integer", range=c(1,50),
-                                                     valid_range=c(1, Inf), randomise=FALSE)
+            param$fs_vh_n_rep <- .set_hyperparameter(default=50,
+                                                     type="integer",
+                                                     range=c(1,50),
+                                                     valid_range=c(1, Inf),
+                                                     randomise=FALSE)
             
             return(param)
           })
@@ -251,6 +295,12 @@ setMethod("..train", signature(object="familiarRFSRC", data="dataObject"),
             sample_size <- ceiling(param$sample_size * nrow(data@data))
             sample_type <- ifelse(sample_size == nrow(data@data), "swr", "swor")
             
+            # Set weights.
+            weights <- create_instance_weights(data=data,
+                                               method=object@hyperparameters$sample_weighting,
+                                               beta=..compute_effective_number_of_samples_beta(object@hyperparameters$sample_weighting_beta),
+                                               normalisation="average_one")
+            
             # Set forest seed. If object comes with a defined seed use the seed.
             forest_seed <- ifelse(is.null(object@seed), as.integer(stats::runif(1, -100000, -1)), object@seed)
             
@@ -273,6 +323,7 @@ setMethod("..train", signature(object="familiarRFSRC", data="dataObject"),
                                      nodedepth = param$tree_depth,
                                      nsplit = param$n_split,
                                      splitrule = as.character(param$split_rule),
+                                     case.wt = weights,
                                      seed = forest_seed)
             
             # Add model to the object.

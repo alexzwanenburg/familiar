@@ -139,6 +139,8 @@ setMethod("get_default_hyperparameters", signature(object="familiarGLMnet"),
             param$lambda_min <- list()
             param$n_folds <- list()
             param$normalise <- list()
+            param$sample_weighting <- list()
+            param$sample_weighting_beta <- list()
             
             if(is(object, "familiarGLMnetElasticNet")){
               param$alpha <- list()
@@ -187,13 +189,17 @@ setMethod("get_default_hyperparameters", signature(object="familiarGLMnet"),
             }
             
             # Set family parameter
-            param$family <- .set_hyperparameter(default=family_default, type="factor", range=family_default,
+            param$family <- .set_hyperparameter(default=family_default,
+                                                type="factor",
+                                                range=family_default,
                                                 randomise=ifelse(length(family_default) > 1, TRUE, FALSE))
             
             
             ##### Lambda indicating the optimal model complexity ###############
-            param$lambda_min <- .set_hyperparameter(default="lambda.min", type="factor",
-                                                    range=c("lambda.1se", "lambda.min"), randomise=FALSE)
+            param$lambda_min <- .set_hyperparameter(default="lambda.min",
+                                                    type="factor",
+                                                    range=c("lambda.1se", "lambda.min"),
+                                                    randomise=FALSE)
             
             
             ##### Number of cross-validation folds #############################
@@ -204,8 +210,11 @@ setMethod("get_default_hyperparameters", signature(object="familiarGLMnet"),
             n_folds_default <- min(c(20, max(c(3, floor(n_samples/10)))))
             
             # Set the number of cross-validation folds.
-            param$n_folds <- .set_hyperparameter(default=n_folds_default, type="integer", range=c(3, n_samples),
-                                                 valid_range=c(3, Inf), randomise=FALSE)
+            param$n_folds <- .set_hyperparameter(default=n_folds_default,
+                                                 type="integer",
+                                                 range=c(3, n_samples),
+                                                 valid_range=c(3, Inf),
+                                                 randomise=FALSE)
             
             
             ##### Feature normalisation ########################################
@@ -213,7 +222,10 @@ setMethod("get_default_hyperparameters", signature(object="familiarGLMnet"),
             # By default, normalisation is part of the pre-processing of
             # familiar, but the user may have disabled it. In that the case, the
             # user can set normalisation to TRUE to avoid complaints by glmnet.
-            param$normalise <- .set_hyperparameter(default=FALSE, type="logical", range=c(FALSE, TRUE), randomise=FALSE)
+            param$normalise <- .set_hyperparameter(default=FALSE,
+                                                   type="logical",
+                                                   range=c(FALSE, TRUE),
+                                                   randomise=FALSE)
             
             
             if(is(object, "familiarGLMnetElasticNet")){
@@ -221,9 +233,21 @@ setMethod("get_default_hyperparameters", signature(object="familiarGLMnet"),
               
               # Set alpha parameter. Alpha = 1 is lasso, alpha = 0 is ridge.
               # glmnet requires alpha to be in the closed interval [0, 1].
-              param$alpha <- .set_hyperparameter(default= c(0, 1/3, 2/3, 1), type="numeric", range=c(0, 1),
-                                                 valid_range=c(0, 1), randomise=TRUE)
+              param$alpha <- .set_hyperparameter(default= c(0, 1/3, 2/3, 1),
+                                                 type="numeric",
+                                                 range=c(0, 1),
+                                                 valid_range=c(0, 1),
+                                                 randomise=TRUE)
             }
+            ##### Sample weighting method ######################################
+            #Class imbalances may lead to learning majority classes. This can be
+            #partially mitigated by increasing weight of minority classes.
+            param$sample_weighting <- .get_default_sample_weighting_method(outcome_type=outcome_type)
+            
+            ##### Effective number of samples beta #############################
+            #Specifies the beta parameter for effective number sample weighting
+            #method. See Cui et al. (2019).
+            param$sample_weighting_beta <- .get_default_sample_weighting_beta(method=param$sample_weighting$init_config)
             
             # Return hyperparameters
             return(param)
@@ -337,12 +361,19 @@ setMethod("..train", signature(object="familiarGLMnet", data="dataObject"),
               penalty_factor <- rep(1, length(feature_columns))
             }
             
+            # Set weights
+            weights <- create_instance_weights(data=encoded_data$encoded_data,
+                                               method=object@hyperparameters$sample_weighting,
+                                               beta=..compute_effective_number_of_samples_beta(object@hyperparameters$sample_weighting_beta),
+                                               normalisation="average_one")
+            
             # Train the model.
             if(is(object, "familiarGLMnetRidge")){
               # Attempt to train the model
               model <- suppressWarnings(tryCatch(glmnet::cv.glmnet(x = as.matrix(encoded_data$encoded_data@data[, mget(feature_columns)]),
                                                                    y = outcome_data,
                                                                    family = as.character(object@hyperparameters$family),
+                                                                   weights = weights,
                                                                    alpha = 0.0,
                                                                    standardize = object@hyperparameters$normalise,
                                                                    nfolds = NULL,
@@ -356,6 +387,7 @@ setMethod("..train", signature(object="familiarGLMnet", data="dataObject"),
               model <- suppressWarnings(tryCatch(glmnet::cv.glmnet(x = as.matrix(encoded_data$encoded_data@data[, mget(feature_columns)]),
                                                                    y = outcome_data,
                                                                    family = as.character(object@hyperparameters$family),
+                                                                   weights = weights,
                                                                    alpha = 1.0,
                                                                    standardize = object@hyperparameters$normalise,
                                                                    nfolds = NULL,
@@ -369,6 +401,7 @@ setMethod("..train", signature(object="familiarGLMnet", data="dataObject"),
               model <- suppressWarnings(tryCatch(glmnet::cv.glmnet(x = as.matrix(encoded_data$encoded_data@data[, mget(feature_columns)]),
                                                                    y = outcome_data,
                                                                    family = as.character(object@hyperparameters$family),
+                                                                   weights = weights,
                                                                    alpha = object@hyperparameters$alpha,
                                                                    standardize = object@hyperparameters$normalise,
                                                                    nfolds = NULL,

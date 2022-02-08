@@ -128,6 +128,8 @@ setMethod("get_default_hyperparameters", signature(object="familiarXGBoost"),
             param$learning_rate <- list()
             param$lambda <- list()
             param$alpha <- list()
+            param$sample_weighting <- list()
+            param$sample_weighting_beta <- list()
             
             # Tree specific parameters
             if(is(object, "familiarXGBoostTree") | is(object, "familiarXGBoostDart")){
@@ -214,8 +216,11 @@ setMethod("get_default_hyperparameters", signature(object="familiarXGBoost"),
             
             # This hyper-parameter is expressed on the log 10 scale. It is
             # called nrounds in xgboost.
-            param$n_boost <- .set_hyperparameter(default=c(0, 1, 2, 3), type="numeric", range=c(0, 3),
-                                                 valid_range=c(0, Inf), randomise=TRUE)
+            param$n_boost <- .set_hyperparameter(default=c(0, 1, 2, 3),
+                                                 type="numeric",
+                                                 range=c(0, 3),
+                                                 valid_range=c(0, Inf),
+                                                 randomise=TRUE)
             
             
             ##### Learning rate ################################################
@@ -224,24 +229,43 @@ setMethod("get_default_hyperparameters", signature(object="familiarXGBoost"),
             # determines how fast the algorithm tries to learn. Lower values
             # typically lead to better models, but take longer to learn. This
             # parameter is called eta by xgboost.
-            param$learning_rate <- .set_hyperparameter(default=c(-3, -2, -1), type="numeric", range=c(-5, 0),
-                                                       valid_range=c(-Inf, 0), randomise=TRUE)
+            param$learning_rate <- .set_hyperparameter(default=c(-3, -2, -1),
+                                                       type="numeric",
+                                                       range=c(-5, 0),
+                                                       valid_range=c(-Inf, 0),
+                                                       randomise=TRUE)
             
             
             ##### L2 regularisation term #######################################
             
             # The L2 regularisation term lambda lies in the half-open range [0,
             # inf). This term is implemented as a power(10) with a 10^-6 offset.
-            param$lambda <- .set_hyperparameter(default=c(-6,-3,-1,1,3), type="numeric", range=c(-6, 3),
-                                                valid_range=c(-6, Inf), randomise=TRUE)
+            param$lambda <- .set_hyperparameter(default=c(-6,-3,-1,1,3),
+                                                type="numeric",
+                                                range=c(-6, 3),
+                                                valid_range=c(-6, Inf),
+                                                randomise=TRUE)
             
             
             ##### L1 regularisation term #######################################
             
             # The L1 regularisation term alpha is implemented as the L2
             # regularisation term.
-            param$alpha <- .set_hyperparameter(default=c(-6,-3,-1,1,3), type="numeric", range=c(-6, 3),
-                                               valid_range=c(-6, Inf), randomise=TRUE)
+            param$alpha <- .set_hyperparameter(default=c(-6,-3,-1,1,3),
+                                               type="numeric",
+                                               range=c(-6, 3),
+                                               valid_range=c(-6, Inf),
+                                               randomise=TRUE)
+            
+            ##### Sample weighting method ######################################
+            #Class imbalances may lead to learning majority classes. This can be
+            #partially mitigated by increasing weight of minority classes.
+            param$sample_weighting <- .get_default_sample_weighting_method(outcome_type=object@outcome_type)
+            
+            ##### Effective number of samples beta #############################
+            #Specifies the beta parameter for effective number sample weighting
+            #method. See Cui et al. (2019).
+            param$sample_weighting_beta <- .get_default_sample_weighting_beta(method=param$sample_weighting$init_config)
             
             # Parameters for tree-based gradient boosting
             if(is(object, "familiarXGBoostTree") | is(object, "familiarXGBoostDart")){
@@ -251,16 +275,22 @@ setMethod("get_default_hyperparameters", signature(object="familiarXGBoost"),
               # This hyperparameter is only used by tree models. The parameter
               # is called max_depth by xgboost. Larger depths increase the risk
               # of overfitting.
-              param$tree_depth <- .set_hyperparameter(default=c(1, 2, 3, 7), type="integer", range=c(1, 10),
-                                                      valid_range=c(1, Inf), randomise=TRUE)
+              param$tree_depth <- .set_hyperparameter(default=c(1, 2, 3, 7),
+                                                      type="integer",
+                                                      range=c(1, 10),
+                                                      valid_range=c(1, Inf),
+                                                      randomise=TRUE)
               
               
               ##### Data subsampling fraction ##################################
               
               # Trees may be grown using only a subset of the data to limit
               # overfitting. The parameter is called subsample in xgboost.
-              param$sample_size <- .set_hyperparameter(default=c(0.30, 0.50, 0.70, 1.00), type="numeric", range=c(2/n_samples, 1.0),
-                                                       valid_range=c(0, 1), randomise=TRUE)
+              param$sample_size <- .set_hyperparameter(default=c(0.30, 0.50, 0.70, 1.00),
+                                                       type="numeric",
+                                                       range=c(2/n_samples, 1.0),
+                                                       valid_range=c(0, 1),
+                                                       randomise=TRUE)
               
               
               ##### Minimum sum of instance weight #############################
@@ -274,8 +304,11 @@ setMethod("get_default_hyperparameters", signature(object="familiarXGBoost"),
               # algorithm will be. (source:xgboost documentation)
               #
               # We implement this on a power(10) scale, with -1 offset.
-              param$min_child_weight <- .set_hyperparameter(default=c(0, 1, 2), type="numeric", range=c(0, 2),
-                                                            valid_range=c(0, Inf), randomise=TRUE)
+              param$min_child_weight <- .set_hyperparameter(default=c(0, 1, 2),
+                                                            type="numeric",
+                                                            range=c(0, 2),
+                                                            valid_range=c(0, Inf),
+                                                            randomise=TRUE)
               
               
               ##### Minimum splitting error reduction ##########################
@@ -288,8 +321,11 @@ setMethod("get_default_hyperparameters", signature(object="familiarXGBoost"),
               # bit tricky due to a wide range in possible scales, and thus in
               # error values. This is resolved by normalising the outcome to the
               # [0, 1] range.
-              param$gamma <- .set_hyperparameter(default=c(-6,-3,-1,1,3), type="numeric", range=c(-6, 3),
-                                                 valid_range=c(-6, Inf), randomise=TRUE)
+              param$gamma <- .set_hyperparameter(default=c(-6,-3,-1,1,3),
+                                                 type="numeric",
+                                                 range=c(-6, 3),
+                                                 valid_range=c(-6, Inf),
+                                                 randomise=TRUE)
             }
             
             # Parameters for dart tree-based gradient boosting
@@ -306,8 +342,10 @@ setMethod("get_default_hyperparameters", signature(object="familiarXGBoost"),
               ##### Dart booster tree drop rate ################################
               
               # Fraction of previous trees to drop during dropout.
-              param$rate_drop <- .set_hyperparameter(default=c(0, 0.1, 0.3), type="numeric", range=c(0,1), randomise=TRUE)
-              
+              param$rate_drop <- .set_hyperparameter(default=c(0, 0.1, 0.3),
+                                                     type="numeric", 
+                                                     range=c(0,1), 
+                                                     randomise=TRUE)
             }
             
             # Return hyper-parameters
@@ -426,6 +464,12 @@ setMethod("..train", signature(object="familiarXGBoost", data="dataObject"),
               outcome_labels[right_censored] <- outcome_labels[right_censored] * -1.0
             }
             
+            # Set weights.
+            weights <- create_instance_weights(data=encoded_data$encoded_data,
+                                               method=object@hyperparameters$sample_weighting,
+                                               beta=..compute_effective_number_of_samples_beta(object@hyperparameters$sample_weighting_beta),
+                                               normalisation="average_one")
+            
             # Create a data_matrix object
             data_matrix <- xgboost::xgb.DMatrix(data=as.matrix(encoded_data$encoded_data@data[, mget(feature_columns)]),
                                                 label=outcome_labels)
@@ -453,52 +497,55 @@ setMethod("..train", signature(object="familiarXGBoost", data="dataObject"),
             
             # Train the model
             if(is(object, "familiarXGBoostLM")){
-              model <- tryCatch(xgboost::xgb.train(params=list("booster" = booster,
-                                                               "nthread" = 1,
-                                                               "eta" = 10^object@hyperparameters$learning_rate,
-                                                               "lambda" = 10^object@hyperparameters$lambda - 10^-6,
-                                                               "alpha" = 10^object@hyperparameters$alpha - 10^-6,
-                                                               "objective" = ..get_distribution_family(object),
-                                                               "num_class" = n_classes),
-                                                   data=data_matrix,
-                                                   nrounds=round(10^object@hyperparameters$n_boost),
-                                                   verbose=0),
+              model <- tryCatch(xgboost::xgboost(params=list("booster" = booster,
+                                                             "nthread" = 1,
+                                                             "eta" = 10^object@hyperparameters$learning_rate,
+                                                             "lambda" = 10^object@hyperparameters$lambda - 10^-6,
+                                                             "alpha" = 10^object@hyperparameters$alpha - 10^-6,
+                                                             "objective" = ..get_distribution_family(object),
+                                                             "num_class" = n_classes),
+                                                 data=data_matrix,
+                                                 weight=weights,
+                                                 nrounds=round(10^object@hyperparameters$n_boost),
+                                                 verbose=0),
                                 error=identity)
               
             } else if(is(object, "familiarXGBoostTree")){
-              model <- tryCatch(xgboost::xgb.train(params=list("booster" = booster,
-                                                               "nthread" = 1,
-                                                               "eta" = 10^object@hyperparameters$learning_rate,
-                                                               "max_depth" = object@hyperparameters$tree_depth,
-                                                               "subsample" = object@hyperparameters$sample_size,
-                                                               "min_child_weight" = 10^object@hyperparameters$min_child_weight - 1.0,
-                                                               "gamma" = 10^object@hyperparameters$gamma - 10^-6,
-                                                               "lambda" = 10^object@hyperparameters$lambda - 10^-6,
-                                                               "alpha" = 10^object@hyperparameters$alpha - 10^-6,
-                                                               "objective" = ..get_distribution_family(object),
-                                                               "num_class" = n_classes),
-                                                   data=data_matrix,
-                                                   nrounds=round(10^object@hyperparameters$n_boost),
-                                                   verbose=0),
+              model <- tryCatch(xgboost::xgboost(params=list("booster" = booster,
+                                                             "nthread" = 1,
+                                                             "eta" = 10^object@hyperparameters$learning_rate,
+                                                             "max_depth" = object@hyperparameters$tree_depth,
+                                                             "subsample" = object@hyperparameters$sample_size,
+                                                             "min_child_weight" = 10^object@hyperparameters$min_child_weight - 1.0,
+                                                             "gamma" = 10^object@hyperparameters$gamma - 10^-6,
+                                                             "lambda" = 10^object@hyperparameters$lambda - 10^-6,
+                                                             "alpha" = 10^object@hyperparameters$alpha - 10^-6,
+                                                             "objective" = ..get_distribution_family(object),
+                                                             "num_class" = n_classes),
+                                                 data=data_matrix,
+                                                 weight=weights,
+                                                 nrounds=round(10^object@hyperparameters$n_boost),
+                                                 verbose=0),
                                 error=identity)
               
             } else if(is(object, "familiarXGBoostDart")){
-              model <- tryCatch(xgboost::xgb.train(params=list("booster" = booster,
-                                                               "nthread" = 1,
-                                                               "eta" = 10^object@hyperparameters$learning_rate,
-                                                               "max_depth" = object@hyperparameters$tree_depth,
-                                                               "subsample" = object@hyperparameters$sample_size,
-                                                               "min_child_weight" = 10^object@hyperparameters$min_child_weight - 1.0,
-                                                               "gamma" = 10^object@hyperparameters$gamma - 10^-6,
-                                                               "lambda" = 10^object@hyperparameters$lambda - 10^-6,
-                                                               "alpha" = 10^object@hyperparameters$alpha - 10^-6,
-                                                               "sample_type" = as.character(object@hyperparameters$sample_type),
-                                                               "rate_drop" = object@hyperparameters$rate_drop,
-                                                               "objective" = ..get_distribution_family(object),
-                                                               "num_class" = n_classes),
-                                                   data=data_matrix,
-                                                   nrounds=round(10^object@hyperparameters$n_boost),
-                                                   verbose=0),
+              model <- tryCatch(xgboost::xgboost(params=list("booster" = booster,
+                                                             "nthread" = 1,
+                                                             "eta" = 10^object@hyperparameters$learning_rate,
+                                                             "max_depth" = object@hyperparameters$tree_depth,
+                                                             "subsample" = object@hyperparameters$sample_size,
+                                                             "min_child_weight" = 10^object@hyperparameters$min_child_weight - 1.0,
+                                                             "gamma" = 10^object@hyperparameters$gamma - 10^-6,
+                                                             "lambda" = 10^object@hyperparameters$lambda - 10^-6,
+                                                             "alpha" = 10^object@hyperparameters$alpha - 10^-6,
+                                                             "sample_type" = as.character(object@hyperparameters$sample_type),
+                                                             "rate_drop" = object@hyperparameters$rate_drop,
+                                                             "objective" = ..get_distribution_family(object),
+                                                             "num_class" = n_classes),
+                                                 data=data_matrix,
+                                                 weight=weights,
+                                                 nrounds=round(10^object@hyperparameters$n_boost),
+                                                 verbose=0),
                                 error=identity)
               
             } else {

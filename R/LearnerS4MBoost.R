@@ -163,6 +163,8 @@ setMethod("get_default_hyperparameters", signature(object="familiarMBoost"),
             param$family <- list()
             param$n_boost <- list()
             param$learning_rate <- list()
+            param$sample_weighting <- list()
+            param$sample_weighting_beta <- list()
             
             if(is(object, "familiarMBoostTree")){
               param$tree_depth <- list()
@@ -255,6 +257,18 @@ setMethod("get_default_hyperparameters", signature(object="familiarMBoost"),
             # models, but converge slower.
             param$learning_rate <- .set_hyperparameter(default=c(-5, -3, -2, -1), type="numeric", range=c(-7, 0),
                                                        valid_range=c(-Inf, 0), randomise=TRUE)
+            
+            
+            ##### Sample weighting method ######################################
+            #Class imbalances may lead to learning majority classes. This can be
+            #partially mitigated by increasing weight of minority classes.
+            param$sample_weighting <- .get_default_sample_weighting_method(outcome_type=object@outcome_type)
+            
+            ##### Effective number of samples beta #############################
+            #Specifies the beta parameter for effective number sample weighting
+            #method. See Cui et al. (2019).
+            param$sample_weighting_beta <- .get_default_sample_weighting_beta(method=param$sample_weighting$init_config)
+            
             
             if(is(object, "familiarMBoostTree")){
               ##### Tree maximum depth #########################################
@@ -363,10 +377,17 @@ setMethod("..train", signature(object="familiarMBoost", data="dataObject"),
             control_object <- mboost::boost_control(mstop = round(10^object@hyperparameters$n_boost),
                                                     nu = 10^object@hyperparameters$learning_rate)
             
+            # Set weights.
+            weights <- create_instance_weights(data=encoded_data$encoded_data,
+                                               method=object@hyperparameters$sample_weighting,
+                                               beta=..compute_effective_number_of_samples_beta(object@hyperparameters$sample_weighting_beta),
+                                               normalisation="average_one")
+            
             if(is(object, "familiarMBoostLM")){
               # Attempt to create model
               model <- suppressWarnings(tryCatch(mboost::glmboost(formula,
                                                                   data=encoded_data$encoded_data@data,
+                                                                  weights=weights,
                                                                   family=family,
                                                                   center=FALSE,
                                                                   control=control_object),
@@ -384,6 +405,7 @@ setMethod("..train", signature(object="familiarMBoost", data="dataObject"),
               # Attempt to create model
               model <- suppressWarnings(tryCatch(mboost::blackboost(formula,
                                                                     data=encoded_data$encoded_data@data,
+                                                                    weights = weights,
                                                                     family=family,
                                                                     control=control_object,
                                                                     tree_controls=tree_control_object),

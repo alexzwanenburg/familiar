@@ -86,6 +86,8 @@ setMethod("get_default_hyperparameters", signature(object="familiarGLM"),
             param <- list()
             param$sign_size <- list()
             param$family <- list()
+            param$sample_weighting <- list()
+            param$sample_weighting_beta <- list()
             
             # If no data object is not provided, return the list with hyperparameter names only
             if(is.null(data)) return(param)
@@ -146,6 +148,17 @@ setMethod("get_default_hyperparameters", signature(object="familiarGLM"),
                                                 type="factor",
                                                 range=family_default,
                                                 randomise=ifelse(length(family_default) > 1, TRUE, FALSE))
+            
+            ##### Sample weighting method ######################################
+            #Class imbalances may lead to learning majority classes. This can be
+            #partially mitigated by increasing weight of minority classes.
+            param$sample_weighting <- .get_default_sample_weighting_method(outcome_type=outcome_type)
+            
+            ##### Effective number of samples beta #############################
+            #Specifies the beta parameter for effective number sample weighting
+            #method. See Cui et al. (2019).
+            param$sample_weighting_beta <- .get_default_sample_weighting_beta(method=param$sample_weighting$init_config)
+            
             
             return(param)
           })
@@ -211,10 +224,17 @@ setMethod("..train", signature(object="familiarGLM", data="dataObject"),
             # predictors are linked.
             family <- ..get_distribution_family(object)
             
+            # Set weights
+            weights <- create_instance_weights(data=encoded_data$encoded_data,
+                                               method=object@hyperparameters$sample_weighting,
+                                               beta=..compute_effective_number_of_samples_beta(object@hyperparameters$sample_weighting_beta),
+                                               normalisation="average_one")
+            
             if(object@outcome_type %in% c("binomial", "continuous", "count")){
               # Generate model
               model <- tryCatch(suppressWarnings(stats::glm(formula,
                                                             data=encoded_data$encoded_data@data,
+                                                            weights=weights,
                                                             family=family,
                                                             model=FALSE,
                                                             x=FALSE,
@@ -225,6 +245,7 @@ setMethod("..train", signature(object="familiarGLM", data="dataObject"),
               # Generate model
               model <- tryCatch(suppressWarnings(VGAM::vglm(formula,
                                                             data=encoded_data$encoded_data@data,
+                                                            weights=weights,
                                                             family=family)),
                                 error=identity)
               

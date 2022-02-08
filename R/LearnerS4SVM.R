@@ -138,8 +138,11 @@ setMethod("get_default_hyperparameters", signature(object="familiarSVM"),
             
             # This parameter defines the cost for constraint violations. It is
             # expressed on a log10 scale.
-            param$c <- .set_hyperparameter(default=c(-3, -1, -0, 1, 3), type="numeric", range=c(-5, 3),
-                                           valid_range=c(-Inf, Inf), randomise=TRUE)
+            param$c <- .set_hyperparameter(default=c(-3, -1, -0, 1, 3),
+                                           type="numeric",
+                                           range=c(-5, 3),
+                                           valid_range=c(-Inf, Inf),
+                                           randomise=TRUE)
             
             
             ##### Error tolerance epsilon ####################################
@@ -147,8 +150,11 @@ setMethod("get_default_hyperparameters", signature(object="familiarSVM"),
               
               # This parameter defines the error tolerance for regression SVM.
               # It is expressed on a log10 scale.
-              param$epsilon <- .set_hyperparameter(default=c(-5, -3, -1, 0, 1), type="numeric", range=c(-5, 1),
-                                                   valid_range=c(-Inf, Inf), randomise=TRUE)
+              param$epsilon <- .set_hyperparameter(default=c(-5, -3, -1, 0, 1),
+                                                   type="numeric",
+                                                   range=c(-5, 1),
+                                                   valid_range=c(-Inf, Inf),
+                                                   randomise=TRUE)
             }
             
             
@@ -156,8 +162,11 @@ setMethod("get_default_hyperparameters", signature(object="familiarSVM"),
             if(is(object, "familiarSVMNu")){
               
               # nu is expressed on a log10 scale.
-              param$nu <- .set_hyperparameter(default=c(-5, -3, -1, 0, 1), type="numeric", range=c(-5, 1),
-                                              valid_range=c(-Inf, Inf), randomise=TRUE)
+              param$nu <- .set_hyperparameter(default=c(-5, -3, -1, 0, 1),
+                                              type="numeric",
+                                              range=c(-5, 1),
+                                              valid_range=c(-Inf, Inf),
+                                              randomise=TRUE)
               
             }
             
@@ -166,8 +175,11 @@ setMethod("get_default_hyperparameters", signature(object="familiarSVM"),
             if(svm_kernel %in% c("radial", "polynomial", "sigmoid")){
               
               # sigma is expressed on a log10 scale
-              param$gamma <- .set_hyperparameter(default=c(-7, -5, -3, -1, 1), type="numeric", range=c(-9, 3),
-                                                 valid_range=c(-Inf, Inf), randomise=TRUE)
+              param$gamma <- .set_hyperparameter(default=c(-7, -5, -3, -1, 1),
+                                                 type="numeric",
+                                                 range=c(-9, 3),
+                                                 valid_range=c(-Inf, Inf),
+                                                 randomise=TRUE)
             }
             
             
@@ -175,8 +187,11 @@ setMethod("get_default_hyperparameters", signature(object="familiarSVM"),
             if(svm_kernel %in% c("polynomial")){
               
               # polydot, besseldot and anovadot expect positive integer degrees.
-              param$degree <- .set_hyperparameter(default=c(1, 2, 3, 4, 5), type="integer", range=c(1, 5),
-                                                  valid_range=c(1, Inf), randomise=TRUE)
+              param$degree <- .set_hyperparameter(default=c(1, 2, 3, 4, 5),
+                                                  type="integer",
+                                                  range=c(1, 5),
+                                                  valid_range=c(1, Inf),
+                                                  randomise=TRUE)
             }
             
             
@@ -186,8 +201,11 @@ setMethod("get_default_hyperparameters", signature(object="familiarSVM"),
               # As feature data is rescaled internally by svm, we should not
               # expect offsets outside the [0, 1] range. Also, negative values
               # are not allowed for either kernel.
-              param$offset <- .set_hyperparameter(default=c(0.0, 0.2, 0.5, 1.0), type="numeric", range=c(0, 1),
-                                                  valid_range=c(0, Inf), randomise=TRUE)
+              param$offset <- .set_hyperparameter(default=c(0.0, 0.2, 0.5, 1.0),
+                                                  type="numeric",
+                                                  range=c(0, 1),
+                                                  valid_range=c(0, Inf),
+                                                  randomise=TRUE)
             }
             
             return(param)
@@ -249,6 +267,10 @@ setMethod("..train", signature(object="familiarSVM", data="dataObject"),
            
             if(!is.null(object@hyperparameters$offset)){
               svm_parameter_list$coef0 <- object@hyperparameters$offset
+            }
+            
+            if(object@outcome_type %in% c("binomial", "multinomial")){
+              svm_parameter_list$class.weights <- "inverse"
             }
             
             # Fit the SVM model using e1071::svm. The quiet wrapper suppresses C
