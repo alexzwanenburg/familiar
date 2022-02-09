@@ -39,7 +39,7 @@ setMethod("is_available", signature(object="familiarNaiveBayes"),
 
 #####get_default_hyperparameters#####
 setMethod("get_default_hyperparameters", signature(object="familiarNaiveBayes"),
-          function(object, data=NULL){
+          function(object, data=NULL, ...){
             
             # Initialise list and declare hyperparameter entries.
             param <- list()

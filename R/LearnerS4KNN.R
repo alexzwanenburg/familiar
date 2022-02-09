@@ -66,7 +66,7 @@ setMethod("is_available", signature(object="familiarKNN"),
 
 #####get_default_hyperparameters,KNNlinear#####
 setMethod("get_default_hyperparameters", signature(object="familiarKNN"),
-          function(object, data=NULL){
+          function(object, data=NULL, ...){
             
             # Initialise list and declare hyperparameter entries.
             param <- list()

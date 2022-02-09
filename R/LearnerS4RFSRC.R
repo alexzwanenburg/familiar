@@ -41,7 +41,7 @@ setMethod("is_available", signature(object="familiarRFSRC"),
 
 #####get_default_hyperparameters#####
 setMethod("get_default_hyperparameters", signature(object="familiarRFSRC"),
-          function(object, data=NULL){
+          function(object, data=NULL, ...){
             
             # Initialise list and declare hyperparameter entries
             param    <- list()

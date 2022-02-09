@@ -44,7 +44,7 @@ setMethod("is_available", signature(object="familiarRegressionVimp"),
 
 #####get_default_hyperparameters#####
 setMethod("get_default_hyperparameters", signature(object="familiarRegressionVimp"),
-          function(object, data=NULL){
+          function(object, data=NULL, ...){
 
             param <- list()
             param$n_bootstrap <- list()

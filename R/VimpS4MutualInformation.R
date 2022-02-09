@@ -44,7 +44,7 @@ setMethod("is_available", signature(object="familiarMutualInformationVimp"),
 
 #####get_default_hyperparameters#####
 setMethod("get_default_hyperparameters", signature(object="familiarMutualInformationVimp"),
-          function(object, data=NULL) return(list()))
+          function(object, data=NULL, ...) return(list()))
 
 
 

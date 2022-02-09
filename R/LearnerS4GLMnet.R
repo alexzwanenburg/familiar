@@ -130,7 +130,7 @@ setMethod("is_available", signature(object="familiarGLMnet"),
 
 #####get_default_hyperparameters,familiarGLMnet#####
 setMethod("get_default_hyperparameters", signature(object="familiarGLMnet"),
-          function(object, data=NULL){
+          function(object, data=NULL, ...){
             
             # Initialise list and declare hyperparameter entries.
             param <- list()

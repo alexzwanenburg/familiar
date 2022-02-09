@@ -79,7 +79,7 @@ setMethod("is_available", signature(object="familiarSVM"),
 
 #####get_default_hyperparameters#####
 setMethod("get_default_hyperparameters", signature(object="familiarSVM"),
-          function(object, data=NULL){
+          function(object, data=NULL, ...){
             
             # Find kernel type.
             svm_kernel <- ..find_kernel_type(learner=object@learner)

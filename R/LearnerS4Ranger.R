@@ -40,7 +40,7 @@ setMethod("is_available", signature(object="familiarRanger"),
 
 #####get_default_hyperparameters#####
 setMethod("get_default_hyperparameters", signature(object="familiarRanger"),
-          function(object, data=NULL){
+          function(object, data=NULL, ...){
             
             # Initialise list and declare hyperparameter entries.
             param <- list()
