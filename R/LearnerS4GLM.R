@@ -80,7 +80,7 @@ setMethod("is_available", signature(object="familiarGLM"),
 
 #####get_default_hyperparameters#####
 setMethod("get_default_hyperparameters", signature(object="familiarGLM"),
-          function(object, data=NULL, ...){
+          function(object, data=NULL, user_list=NULL, ...){
             
             # Initialise list and declare hyperparameter entries
             param <- list()
@@ -157,8 +157,8 @@ setMethod("get_default_hyperparameters", signature(object="familiarGLM"),
             ##### Effective number of samples beta #############################
             #Specifies the beta parameter for effective number sample weighting
             #method. See Cui et al. (2019).
-            param$sample_weighting_beta <- .get_default_sample_weighting_beta(method=param$sample_weighting$init_config)
-            
+            param$sample_weighting_beta <- .get_default_sample_weighting_beta(method=c(param$sample_weighting$init_config,
+                                                                                       user_list$sample_weighting))
             
             return(param)
           })

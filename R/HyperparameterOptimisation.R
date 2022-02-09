@@ -261,6 +261,13 @@ setMethod("optimise_hyperparameters", signature(object="familiarNoveltyDetector"
               user_list <- object@hyperparameters
             }
             
+            # Recreate the default parameter list with information from the
+            # user-provided list, if any. This allows for changing some
+            # hyperparameter settings that depend on other hyperparameters.
+            parameter_list <- get_default_hyperparameters(object=object,
+                                                          data=data,
+                                                          user_list=user_list)
+            
             # Update the parameter list With user-defined variables.
             parameter_list <- .update_hyperparameters(parameter_list=parameter_list,
                                                       user_list=user_list)
@@ -303,6 +310,13 @@ setMethod("optimise_hyperparameters", signature(object="familiarVimpMethod", dat
             # Set the signature size. This parameter may not be used by all
             # feature selection methods, and will be ignored in that case.
             user_list$sign_size <- get_n_features(x=data)
+            
+            # Recreate the default parameter list with information from the
+            # user-provided list, if any. This allows for changing some
+            # hyperparameter settings that depend on other hyperparameters.
+            parameter_list <- get_default_hyperparameters(object=object,
+                                                          data=data,
+                                                          user_list=user_list)
             
             # Update the parameter list With user-defined variables.
             parameter_list <- .update_hyperparameters(parameter_list=parameter_list,
@@ -461,6 +475,13 @@ setMethod("optimise_hyperparameters", signature(object="familiarModel", data="da
               # signature.
               if(user_list$sign_size[1] == 0) user_list$sign_size[1] <- 1
             }
+            
+            # Recreate the default parameter list with information from the
+            # user-provided list, if any. This allows for changing some
+            # hyperparameter settings that depend on other hyperparameters.
+            parameter_list <- get_default_hyperparameters(object=object,
+                                                          data=data,
+                                                          user_list=user_list)
             
             # Update the parameter list With user-defined variables.
             parameter_list <- .update_hyperparameters(parameter_list=parameter_list,

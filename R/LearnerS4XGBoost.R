@@ -116,7 +116,7 @@ setMethod("is_available", signature(object="familiarXGBoost"),
 
 #####get_default_hyperparameters#####
 setMethod("get_default_hyperparameters", signature(object="familiarXGBoost"),
-          function(object, data=NULL, ...){
+          function(object, data=NULL, user_list=NULL, ...){
             
             # Initialise list and declare hyperparameter entries
             param <- list()
@@ -265,7 +265,8 @@ setMethod("get_default_hyperparameters", signature(object="familiarXGBoost"),
             ##### Effective number of samples beta #############################
             #Specifies the beta parameter for effective number sample weighting
             #method. See Cui et al. (2019).
-            param$sample_weighting_beta <- .get_default_sample_weighting_beta(method=param$sample_weighting$init_config)
+            param$sample_weighting_beta <- .get_default_sample_weighting_beta(method=c(param$sample_weighting$init_config,
+                                                                                       user_list$sample_weighting))
             
             # Parameters for tree-based gradient boosting
             if(is(object, "familiarXGBoostTree") | is(object, "familiarXGBoostDart")){
