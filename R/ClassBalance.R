@@ -151,10 +151,10 @@ setMethod("create_instance_weights", signature(data="data.table"),
 
 
 
-.get_default_sample_weighting_beta <- function(method){
+.get_default_sample_weighting_beta <- function(method, outcome_type){
   
   # Default values.
-  if("effective_number_of_samples" %in% method){
+  if("effective_number_of_samples" %in% method & outcome_type %in% c("binomial", "multinomial")){
     default_values <- c(-4, -3, -2, -1)
     
   } else {
@@ -164,5 +164,5 @@ setMethod("create_instance_weights", signature(data="data.table"),
   return(.set_hyperparameter(default=default_values,
                              type="integer",
                              range=c(-6, -1),
-                             randomise="effective_number_of_samples" %in% method))
+                             randomise=length(default_values) > 1))
 }

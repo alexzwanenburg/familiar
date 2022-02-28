@@ -190,7 +190,8 @@ setMethod("get_default_hyperparameters", signature(object="familiarRFSRC"),
             #Specifies the beta parameter for effective number sample weighting
             #method. See Cui et al. (2019).
             param$sample_weighting_beta <- .get_default_sample_weighting_beta(method=c(param$sample_weighting$init_config,
-                                                                                       user_list$sample_weighting))
+                                                                                       user_list$sample_weighting),
+                                                                              outcome_type=object@outcome_type)
             
             
             ##### variable importance method #####

@@ -237,7 +237,9 @@ setMethod("get_default_hyperparameters", signature(object="familiarMBoost"),
             }
             
             # Set the family parameter.
-            param$family <- .set_hyperparameter(default=family_default, type="factor", range=family_default,
+            param$family <- .set_hyperparameter(default=family_default,
+                                                type="factor",
+                                                range=family_default,
                                                 randomise=ifelse(length(family_default) > 1, TRUE, FALSE))
             
             ##### Number of boosting iterations ################################
@@ -246,8 +248,11 @@ setMethod("get_default_hyperparameters", signature(object="familiarMBoost"),
             # mboost. However, the SMAC hyperoptimisation method implemented in
             # the framework is superior to that of the grid-search method of cv
             # and cvrisk This hyper-parameter is expressed on the log 10 scale
-            param$n_boost <- .set_hyperparameter(default=c(0, 1, 2, 3), type="numeric", range=c(0, 3),
-                                                 valid_range=c(0, Inf), randomise=TRUE)
+            param$n_boost <- .set_hyperparameter(default=c(0, 1, 2, 3),
+                                                 type="numeric",
+                                                 range=c(0, 3),
+                                                 valid_range=c(0, Inf),
+                                                 randomise=TRUE)
             
             
             ##### Learning rate ################################################
@@ -255,8 +260,11 @@ setMethod("get_default_hyperparameters", signature(object="familiarMBoost"),
             # Learning rate is on a log10 scale and determines how fast the
             # algorithm tries to learn. Lower values typically lead to better
             # models, but converge slower.
-            param$learning_rate <- .set_hyperparameter(default=c(-5, -3, -2, -1), type="numeric", range=c(-7, 0),
-                                                       valid_range=c(-Inf, 0), randomise=TRUE)
+            param$learning_rate <- .set_hyperparameter(default=c(-5, -3, -2, -1), 
+                                                       type="numeric",
+                                                       range=c(-7, 0),
+                                                       valid_range=c(-Inf, 0),
+                                                       randomise=TRUE)
             
             
             ##### Sample weighting method ######################################
@@ -268,7 +276,8 @@ setMethod("get_default_hyperparameters", signature(object="familiarMBoost"),
             #Specifies the beta parameter for effective number sample weighting
             #method. See Cui et al. (2019).
             param$sample_weighting_beta <- .get_default_sample_weighting_beta(method=c(param$sample_weighting$init_config,
-                                                                                       user_list$sample_weighting))
+                                                                                       user_list$sample_weighting),
+                                                                              outcome_type=object@outcome_type)
             
             
             if(is(object, "familiarMBoostTree")){
@@ -276,22 +285,32 @@ setMethod("get_default_hyperparameters", signature(object="familiarMBoost"),
               
               # This hyperparameter is only used by tree models. Larger depths
               # increase the risk of overfitting.
-              param$tree_depth <- .set_hyperparameter(default=c(1, 2, 3, 7), type="integer", range=c(1, 10),
-                                                      valid_range=c(1, Inf), randomise=TRUE)
+              param$tree_depth <- .set_hyperparameter(default=c(1, 2, 3, 7),
+                                                      type="integer",
+                                                      range=c(1, 10),
+                                                      valid_range=c(1, Inf),
+                                                      randomise=TRUE)
               
               
               ##### Minimum sum of instance weight #############################
               
               # We implement this on a power(10) scale, with -1 offset.
-              param$min_child_weight <- .set_hyperparameter(default=c(0, 1, 2), type="numeric", range=c(0, 2),
-                                                            valid_range=c(0, Inf), randomise=TRUE)
+              param$min_child_weight <- .set_hyperparameter(default=c(0, 1, 2),
+                                                            type="numeric", 
+                                                            range=c(0, 2),
+                                                            valid_range=c(0, Inf),
+                                                            randomise=TRUE)
               
               
               ##### Significance threshold for splitting #######################
               
               # Sets the significance level required to allow a split on a variable.
-              param$alpha <- .set_hyperparameter(default=c(0.05, 0.1, 0.5, 1.0), type="numeric", range=c(10^-6, 1.0),
-                                                 valid_range=c(0.0, 1.0), randomise=TRUE, distribution="log")
+              param$alpha <- .set_hyperparameter(default=c(0.05, 0.1, 0.5, 1.0),
+                                                 type="numeric",
+                                                 range=c(10^-6, 1.0),
+                                                 valid_range=c(0.0, 1.0),
+                                                 randomise=TRUE,
+                                                 distribution="log")
             }
             
             # Return hyper-parameters
