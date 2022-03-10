@@ -342,7 +342,7 @@ setMethod("extract_ice", signature(object="familiarEnsemble"),
   
   # Add evaluation time.
   if(length(data_element@identifiers$evaluation_time) > 0){
-    message_str <- c(message_str, paste0(" at time", data_element@identifiers$evaluation_time, "."))
+    message_str <- c(message_str, paste0(" at time ", data_element@identifiers$evaluation_time, "."))
     
   } else {
     message_str <- c(message_str, ".")
