@@ -8,8 +8,6 @@
 
 -   Fixed a bug that would only occur during unit testing that was due to feature importance files being considered present without these files actually existing.
 
--   
-
 # Version 1.0.0 (Boisterous Bullfrog)
 
 ## Major changes
