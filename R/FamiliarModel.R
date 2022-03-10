@@ -3,7 +3,7 @@
 NULL
 
 
-#####.train#####
+#####.train (familiarModel, dataObject)#####
 setMethod(".train", signature(object="familiarModel", data="dataObject"),
           function(object, 
                    data,
@@ -83,6 +83,17 @@ setMethod(".train", signature(object="familiarModel", data="dataObject"),
               object@novelty_features <- NULL
             }
             
+            return(object)
+          })
+
+
+#####.train (familiarModel, NULL)-----------------------------------------------
+setMethod(".train", signature(object="familiarModel", data="NULL"),
+          function(object, 
+                   data,
+                   ...){
+            
+            # The model cannot be trained, and is returned directly.
             return(object)
           })
 
