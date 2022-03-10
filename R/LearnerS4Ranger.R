@@ -215,7 +215,7 @@ setMethod("get_prediction_type", signature(object="familiarRanger"),
 
 #####..train####
 setMethod("..train", signature(object="familiarRanger", data="dataObject"),
-          function(object, data){
+          function(object, data, ...){
 
             # Aggregate repeated measurement data - ranger does not facilitate
             # repeated measurements.

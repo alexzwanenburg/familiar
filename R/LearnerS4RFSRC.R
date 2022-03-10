@@ -212,7 +212,7 @@ setMethod("get_prediction_type", signature(object="familiarRFSRC"),
 
 #####..train####
 setMethod("..train", signature(object="familiarRFSRC", data="dataObject"),
-          function(object, data, anonymous=TRUE){
+          function(object, data, anonymous=TRUE, ...){
             
             # Aggregate repeated measurement data - randomForestSRC does not
             # facilitate repeated measurements.

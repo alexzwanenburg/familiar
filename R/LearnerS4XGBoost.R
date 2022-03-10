@@ -342,7 +342,7 @@ setMethod("get_prediction_type", signature(object="familiarXGBoost"),
 
 #####..train####
 setMethod("..train", signature(object="familiarXGBoost", data="dataObject"),
-          function(object, data){
+          function(object, data, ...){
             
             # Suppress NOTES due to non-standard evaluation in data.table
             outcome <- NULL

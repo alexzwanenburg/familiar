@@ -40,7 +40,9 @@ setMethod(".train", signature(object="familiarModel", data="dataObject"),
             if(!has_optimised_hyperparameters(object=object)) can_train <- FALSE
             
             # Train a new model based on data.
-            if(can_train) object <- ..train(object=object, data=data)
+            if(can_train) object <- ..train(object=object,
+                                            data=data,
+                                            ...)
             
             # Extract information required for assessing model performance,
             # calibration (e.g. baseline survival) etc.

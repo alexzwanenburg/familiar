@@ -253,7 +253,7 @@ setMethod("get_prediction_type", signature(object="familiarGLMnet"),
 
 #####..train####
 setMethod("..train", signature(object="familiarGLMnet", data="dataObject"),
-          function(object, data){
+          function(object, data, ...){
             
             # Check if training data is ok.
             if(has_bad_training_data(object=object, data=data)) return(callNextMethod())
@@ -266,7 +266,9 @@ setMethod("..train", signature(object="familiarGLMnet", data="dataObject"),
               # Create a familiarGLM object.
               object <- methods::new("familiarGLM", object)
               
-              return(..train(object=object, data=data))
+              return(..train(object=object,
+                             data=data,
+                             ...))
             }
             
             # Check that required packages are loaded and installed.
@@ -519,7 +521,7 @@ setMethod("..vimp", signature(object="familiarGLMnet"),
             score <- NULL
             
             # Attempt to train the model if it has not been trained yet.
-            if(!model_is_trained(object)) object <- ..train(object, data)
+            if(!model_is_trained(object)) object <- .train(object, data)
             
             # Check if the model has been trained upon retry.
             if(!model_is_trained(object)) return(callNextMethod())

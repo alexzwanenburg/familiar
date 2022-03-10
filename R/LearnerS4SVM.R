@@ -196,7 +196,7 @@ setMethod("get_default_hyperparameters", signature(object="familiarSVM"),
 
 #####..train####
 setMethod("..train", signature(object="familiarSVM", data="dataObject"),
-          function(object, data){
+          function(object, data, ...){
             
             # Check if the training data is ok.
             if(has_bad_training_data(object=object, data=data)) return(callNextMethod())
@@ -353,6 +353,11 @@ setMethod("..predict", signature(object="familiarSVM", data="dataObject"),
               
             }
           })
+
+
+
+#####..vimp---------------------------------------------------------------------
+# SVM does not have an associated variable importance method.
 
 
 

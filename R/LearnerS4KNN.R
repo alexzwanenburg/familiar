@@ -146,7 +146,7 @@ setMethod("get_default_hyperparameters", signature(object="familiarKNN"),
 
 #####..train####
 setMethod("..train", signature(object="familiarKNN", data="dataObject"),
-          function(object, data){
+          function(object, data, ...){
             
             # Check if training data is ok.
             if(has_bad_training_data(object=object, data=data)) return(callNextMethod())
