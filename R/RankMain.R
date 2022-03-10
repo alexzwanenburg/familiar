@@ -3,10 +3,13 @@ rank.get_vimp_table <- function(run, fs_method, proj_list, file_paths, decluster
   # Suppress NOTES due to non-standard evaluation in data.table
   data_id <- run_id <- NULL
   
-  # Find and load vimp list
-  vimp_list <- readRDS(.get_feature_selection_data_filename(proj_list=proj_list,
-                                                            fs_method=fs_method,
-                                                            file_paths=file_paths))
+  # Find and load vimp list.
+  vimp_list <- tryCatch(readRDS(.get_feature_selection_data_filename(proj_list=proj_list,
+                                                                     fs_method=fs_method,
+                                                                     file_paths=file_paths)),
+                        error=identity)
+  
+  if(inherits(vimp_list, "error")) return(NULL)
   
   # Try and identify matching data and run ids between vimp_list entries and run$run_table
   # Start at the bottom and try to match.

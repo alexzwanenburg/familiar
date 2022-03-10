@@ -202,6 +202,9 @@ setMethod("extract_fs_vimp", signature(object="familiarEnsemble"),
                                               file_paths=file_paths,
                                               decluster=TRUE)
             
+            # Check if the variable importance table has been set.
+            if(is.null(vimp_table)) return(NULL)
+            
             # Generate a prototype data element
             data_element <- methods::new("familiarDataElementVimpData",
                                          data=vimp_table,
