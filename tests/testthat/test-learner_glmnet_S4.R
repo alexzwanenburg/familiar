@@ -55,8 +55,8 @@ testthat::test_that("Regularised regression model has variable importance", {
   # Extract the variable importance table.
   vimp_table <- familiar:::..vimp(good_model)
   
-  # Expect that the vimp table has two rows.
-  testthat::expect_equal(nrow(vimp_table), 11)
+  # Expect that the vimp table has entries up to the number of features.
+  testthat::expect_equal(nrow(vimp_table) <= familiar:::get_n_features(good_data), TRUE)
   
   # Expect that the names are the same as that of the features.
   testthat::expect_equal(all(vimp_table$name %in% familiar:::get_feature_columns(good_data)), TRUE)
