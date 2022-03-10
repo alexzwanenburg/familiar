@@ -78,7 +78,7 @@ setMethod("is_available", signature(object="familiarCoreLearnGainRatioVimp"),
 
 #####get_default_hyperparameters#####
 setMethod("get_default_hyperparameters", signature(object="familiarCoreLearnVimp"),
-          function(object, data=NULL) return(list()))
+          function(object, data=NULL, ...) return(list()))
 
 
 

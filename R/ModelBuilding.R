@@ -75,7 +75,8 @@ run_model_development <- function(cl,
     logger.message(paste0("Model building: model building using \"",
                           iter_methods$learner, "\" learner, based on \"",
                           iter_methods$fs_method, "\" feature selection, has been completed."),
-                   indent=message_indent)
+                   indent=message_indent,
+                   verbose=verbose)
   }
 }
 
@@ -135,7 +136,7 @@ build_model <- function(run, hpo_list){
   # Select features
   fam_model <- set_signature(object=fam_model,
                              rank_table=rank_table,
-                             minimise_footprint=TRUE)
+                             minimise_footprint=FALSE)
   
   ############### Model building ################################################################
   

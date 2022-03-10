@@ -9,6 +9,7 @@
   project_dir = waiver(),
   experiment_dir = waiver(),
   data_file = waiver(),
+  verbose = TRUE,
   ...
 )
 }
@@ -57,6 +58,8 @@ Alternatively, data can be provided using the \code{data} argument. These data
 are expected to be \code{data.frame} or \code{data.table} objects or paths to data
 files. The latter are handled in the same way as file paths provided to
 \code{data_file}.}
+
+\item{verbose}{Sets verbosity.}
 
 \item{...}{Unused arguments}
 }

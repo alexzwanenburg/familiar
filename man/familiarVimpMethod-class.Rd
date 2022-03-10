@@ -19,6 +19,9 @@ method.}
 \item{\code{vimp_method}}{The character string indicating the variable importance
 method.}
 
+\item{\code{multivariate}}{Flags whether the variable importance method is
+multivariate vs. univariate.}
+
 \item{\code{outcome_info}}{Outcome information object, which contains additional
 information concerning the outcome, such as class levels.}
 

@@ -155,7 +155,7 @@ setMethod("is_available", signature(object="familiarMBoostTree"),
 
 #####get_default_hyperparameters#####
 setMethod("get_default_hyperparameters", signature(object="familiarMBoost"),
-          function(object, data=NULL){
+          function(object, data=NULL, user_list=NULL, ...){
             
             # Initialise list and declare hyperparameter entries.
             param <- list()
@@ -163,6 +163,8 @@ setMethod("get_default_hyperparameters", signature(object="familiarMBoost"),
             param$family <- list()
             param$n_boost <- list()
             param$learning_rate <- list()
+            param$sample_weighting <- list()
+            param$sample_weighting_beta <- list()
             
             if(is(object, "familiarMBoostTree")){
               param$tree_depth <- list()
@@ -235,7 +237,9 @@ setMethod("get_default_hyperparameters", signature(object="familiarMBoost"),
             }
             
             # Set the family parameter.
-            param$family <- .set_hyperparameter(default=family_default, type="factor", range=family_default,
+            param$family <- .set_hyperparameter(default=family_default,
+                                                type="factor",
+                                                range=family_default,
                                                 randomise=ifelse(length(family_default) > 1, TRUE, FALSE))
             
             ##### Number of boosting iterations ################################
@@ -244,8 +248,11 @@ setMethod("get_default_hyperparameters", signature(object="familiarMBoost"),
             # mboost. However, the SMAC hyperoptimisation method implemented in
             # the framework is superior to that of the grid-search method of cv
             # and cvrisk This hyper-parameter is expressed on the log 10 scale
-            param$n_boost <- .set_hyperparameter(default=c(0, 1, 2, 3), type="numeric", range=c(0, 3),
-                                                 valid_range=c(0, Inf), randomise=TRUE)
+            param$n_boost <- .set_hyperparameter(default=c(0, 1, 2, 3),
+                                                 type="numeric",
+                                                 range=c(0, 3),
+                                                 valid_range=c(0, Inf),
+                                                 randomise=TRUE)
             
             
             ##### Learning rate ################################################
@@ -253,30 +260,57 @@ setMethod("get_default_hyperparameters", signature(object="familiarMBoost"),
             # Learning rate is on a log10 scale and determines how fast the
             # algorithm tries to learn. Lower values typically lead to better
             # models, but converge slower.
-            param$learning_rate <- .set_hyperparameter(default=c(-5, -3, -2, -1), type="numeric", range=c(-7, 0),
-                                                       valid_range=c(-Inf, 0), randomise=TRUE)
+            param$learning_rate <- .set_hyperparameter(default=c(-5, -3, -2, -1), 
+                                                       type="numeric",
+                                                       range=c(-7, 0),
+                                                       valid_range=c(-Inf, 0),
+                                                       randomise=TRUE)
+            
+            
+            ##### Sample weighting method ######################################
+            #Class imbalances may lead to learning majority classes. This can be
+            #partially mitigated by increasing weight of minority classes.
+            param$sample_weighting <- .get_default_sample_weighting_method(outcome_type=object@outcome_type)
+            
+            ##### Effective number of samples beta #############################
+            #Specifies the beta parameter for effective number sample weighting
+            #method. See Cui et al. (2019).
+            param$sample_weighting_beta <- .get_default_sample_weighting_beta(method=c(param$sample_weighting$init_config,
+                                                                                       user_list$sample_weighting),
+                                                                              outcome_type=object@outcome_type)
+            
             
             if(is(object, "familiarMBoostTree")){
               ##### Tree maximum depth #########################################
               
               # This hyperparameter is only used by tree models. Larger depths
               # increase the risk of overfitting.
-              param$tree_depth <- .set_hyperparameter(default=c(1, 2, 3, 7), type="integer", range=c(1, 10),
-                                                      valid_range=c(1, Inf), randomise=TRUE)
+              param$tree_depth <- .set_hyperparameter(default=c(1, 2, 3, 7),
+                                                      type="integer",
+                                                      range=c(1, 10),
+                                                      valid_range=c(1, Inf),
+                                                      randomise=TRUE)
               
               
               ##### Minimum sum of instance weight #############################
               
               # We implement this on a power(10) scale, with -1 offset.
-              param$min_child_weight <- .set_hyperparameter(default=c(0, 1, 2), type="numeric", range=c(0, 2),
-                                                            valid_range=c(0, Inf), randomise=TRUE)
+              param$min_child_weight <- .set_hyperparameter(default=c(0, 1, 2),
+                                                            type="numeric", 
+                                                            range=c(0, 2),
+                                                            valid_range=c(0, Inf),
+                                                            randomise=TRUE)
               
               
               ##### Significance threshold for splitting #######################
               
               # Sets the significance level required to allow a split on a variable.
-              param$alpha <- .set_hyperparameter(default=c(0.05, 0.1, 0.5, 1.0), type="numeric", range=c(10^-6, 1.0),
-                                                 valid_range=c(0.0, 1.0), randomise=TRUE, distribution="log")
+              param$alpha <- .set_hyperparameter(default=c(0.05, 0.1, 0.5, 1.0),
+                                                 type="numeric",
+                                                 range=c(10^-6, 1.0),
+                                                 valid_range=c(0.0, 1.0),
+                                                 randomise=TRUE,
+                                                 distribution="log")
             }
             
             # Return hyper-parameters
@@ -363,10 +397,17 @@ setMethod("..train", signature(object="familiarMBoost", data="dataObject"),
             control_object <- mboost::boost_control(mstop = round(10^object@hyperparameters$n_boost),
                                                     nu = 10^object@hyperparameters$learning_rate)
             
+            # Set weights.
+            weights <- create_instance_weights(data=encoded_data$encoded_data,
+                                               method=object@hyperparameters$sample_weighting,
+                                               beta=..compute_effective_number_of_samples_beta(object@hyperparameters$sample_weighting_beta),
+                                               normalisation="average_one")
+            
             if(is(object, "familiarMBoostLM")){
               # Attempt to create model
               model <- suppressWarnings(tryCatch(mboost::glmboost(formula,
                                                                   data=encoded_data$encoded_data@data,
+                                                                  weights=weights,
                                                                   family=family,
                                                                   center=FALSE,
                                                                   control=control_object),
@@ -384,6 +425,7 @@ setMethod("..train", signature(object="familiarMBoost", data="dataObject"),
               # Attempt to create model
               model <- suppressWarnings(tryCatch(mboost::blackboost(formula,
                                                                     data=encoded_data$encoded_data@data,
+                                                                    weights = weights,
                                                                     family=family,
                                                                     control=control_object,
                                                                     tree_controls=tree_control_object),

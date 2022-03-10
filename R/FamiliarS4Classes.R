@@ -893,6 +893,8 @@ setClass("outcomeInfo",
 #'   method.
 #' @slot vimp_method The character string indicating the variable importance
 #'   method.
+#' @slot multivariate Flags whether the variable importance method is
+#'   multivariate vs. univariate.
 #' @slot outcome_info Outcome information object, which contains additional
 #'   information concerning the outcome, such as class levels.
 #' @slot feature_info List of objects containing feature information, e.g.,
@@ -916,6 +918,9 @@ setClass("familiarVimpMethod",
            hyperparameters = "ANY",
            # Name of variable importance method
            vimp_method = "character",
+           # Indicates whether the method is a univariate or multivariate
+           # method.
+           multivariate = "logical",
            # Outcome info, such as class levels, mean values etc.
            outcome_info = "ANY",
            # Data required for feature pre-processing
@@ -933,6 +938,7 @@ setClass("familiarVimpMethod",
            outcome_type = NA_character_,
            hyperparameters = NULL,
            vimp_method = NA_character_,
+           multivariate = FALSE,
            outcome_info = NULL,
            feature_info = NULL,
            required_features = NULL,
