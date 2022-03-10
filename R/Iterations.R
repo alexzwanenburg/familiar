@@ -107,7 +107,7 @@
 
   if(is.null(iteration_file)){  
     # Find files in directory
-    iter_files <- list.files(path=file_dir, pattern="*_iterations.RDS", full.names=FALSE)
+    iter_files <- list.files(path=file_dir, pattern="_iterations.RDS", full.names=FALSE)
     
     # If no files match the iteration files, return a FALSE
     if(length(iter_files) == 0) return(list("iteration_file_exists"=FALSE))

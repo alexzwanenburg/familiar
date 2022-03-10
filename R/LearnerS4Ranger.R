@@ -215,7 +215,7 @@ setMethod("get_prediction_type", signature(object="familiarRanger"),
 
 #####..train####
 setMethod("..train", signature(object="familiarRanger", data="dataObject"),
-          function(object, data){
+          function(object, data, ...){
 
             # Aggregate repeated measurement data - ranger does not facilitate
             # repeated measurements.
@@ -453,7 +453,10 @@ setMethod("..vimp", signature(object="familiarRanger"),
             score <- NULL
             
             # Attempt to train the model if it has not been trained yet.
-            if(!model_is_trained(object)) object <- ..train(object, data)
+            if(!model_is_trained(object)) object <- .train(object=object,
+                                                           data=data,
+                                                           get_additional_info=FALSE,
+                                                           trim_model=FALSE)
             
             # Check if the model has been trained upon retry.
             if(!model_is_trained(object)) return(callNextMethod())

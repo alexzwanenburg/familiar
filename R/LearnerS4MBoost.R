@@ -311,7 +311,7 @@ setMethod("get_prediction_type", signature(object="familiarMBoost"),
 
 #####..train####
 setMethod("..train", signature(object="familiarMBoost", data="dataObject"),
-          function(object, data){
+          function(object, data, ...){
             
             # Aggregate repeated measurement data - mboost does not facilitate
             # repeated measurements.

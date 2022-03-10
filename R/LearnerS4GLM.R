@@ -174,14 +174,16 @@ setMethod("get_prediction_type", signature(object="familiarGLM"),
 
 #####..train####
 setMethod("..train", signature(object="familiarGLM", data="dataObject"),
-          function(object, data){
+          function(object, data, ...){
             
             # For survival outcomes, switch to familiarCoxPH.
             if(object@outcome_type == "survival"){
               # Create a familiarCoxPH object.
               object <- methods::new("familiarCoxPH", object)
               
-              return(..train(object=object, data=data))
+              return(..train(object=object,
+                             data=data,
+                             ...))
             }
             
             # Check if training data is ok.
