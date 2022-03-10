@@ -410,9 +410,11 @@ setMethod("..vimp", signature(object="familiarRFSRC"),
             score <- NULL
             
             # Attempt to train the model if it has not been trained yet.
-            if(!model_is_trained(object)) object <- ..train(object=object,
-                                                            data=data,
-                                                            anonymous=FALSE)
+            if(!model_is_trained(object)) object <- .train(object=object,
+                                                           data=data,
+                                                           get_additional_info=FALSE,
+                                                           trim_model=FALSE,
+                                                           anonymous=FALSE)
             
             # Check if the model has been trained upon retry.
             if(!model_is_trained(object)) return(callNextMethod())
@@ -430,9 +432,11 @@ setMethod("..vimp", signature(object="familiarRFSRC"),
               
               # Check if the model is anonymous, and rebuild if it is. VIMP does
               # not work otherwise.
-              if(inherits(object@model, "anonymous")) object <- ..train(object=object,
-                                                                        data=data,
-                                                                        anonymous=FALSE)
+              if(inherits(object@model, "anonymous")) object <- .train(object=object,
+                                                                       data=data,
+                                                                       get_additional_info=FALSE,
+                                                                       trim_model=FALSE,
+                                                                       anonymous=FALSE)
               
               # Determine permutation variable importance
               vimp_score <- randomForestSRC::vimp(object=object@model,
@@ -459,9 +463,11 @@ setMethod("..vimp", signature(object="familiarRFSRC"),
               
               # Check if the model is anonymous, and rebuild if it is. VIMP does
               # not work otherwise.
-              if(inherits(object@model, "anonymous")) object <- ..train(object=object,
-                                                                        data=data,
-                                                                        anonymous=FALSE)
+              if(inherits(object@model, "anonymous")) object <- .train(object=object,
+                                                                       data=data,
+                                                                       get_additional_info=FALSE,
+                                                                       trim_model=FALSE,
+                                                                       anonymous=FALSE)
               
               # Determine minimum depth variable importance
               vimp_score <- randomForestSRC::var.select(object=object@model,
@@ -489,9 +495,11 @@ setMethod("..vimp", signature(object="familiarRFSRC"),
               
               # Check if the model is anonymous, and rebuild if it is. VIMP does
               # not work otherwise.
-              if(inherits(object@model, "anonymous")) object <- ..train(object=object,
-                                                                        data=data,
-                                                                        anonymous=FALSE)
+              if(inherits(object@model, "anonymous")) object <- .train(object=object,
+                                                                       data=data,
+                                                                       get_additional_info=FALSE,
+                                                                       trim_model=FALSE,
+                                                                       anonymous=FALSE)
               
               # Perform variable hunting
               vimp_score <- randomForestSRC::var.select(object=object@model,

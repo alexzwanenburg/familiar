@@ -521,7 +521,10 @@ setMethod("..vimp", signature(object="familiarGLMnet"),
             score <- NULL
             
             # Attempt to train the model if it has not been trained yet.
-            if(!model_is_trained(object)) object <- .train(object, data)
+            if(!model_is_trained(object)) object <- .train(object=object,
+                                                           data=data,
+                                                           get_additional_info=FALSE,
+                                                           trim_model=FALSE)
             
             # Check if the model has been trained upon retry.
             if(!model_is_trained(object)) return(callNextMethod())
