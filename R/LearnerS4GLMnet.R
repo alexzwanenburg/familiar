@@ -295,7 +295,9 @@ setMethod("..train", signature(object="familiarGLMnet", data="dataObject"),
               # Create a familiarGLM object.
               object <- methods::new("familiarGLM", object)
               
-              return(..train(object=object, data=data))
+              return(..train(object=object,
+                             data=data,
+                             ...))
             }
             
             # Check that required packages are loaded and installed.
@@ -586,7 +588,11 @@ setMethod("..vimp", signature(object="familiarGLMnet"),
             score <- NULL
             
             # Attempt to train the model if it has not been trained yet.
-            if(!model_is_trained(object)) object <- ..train(object, data, force_signature=TRUE)
+            if(!model_is_trained(object)) object <- .train(object=object,
+                                                           data=data,
+                                                           get_additional_info=FALSE,
+                                                           trim_model=FALSE,
+                                                           force_signature=TRUE)
             
             # Check if the model has been trained upon retry.
             if(!model_is_trained(object)) return(callNextMethod())

@@ -109,7 +109,7 @@ setMethod("get_prediction_type", signature(object="familiarSurvRegr"),
 
 #####..train####
 setMethod("..train", signature(object="familiarSurvRegr", data="dataObject"),
-          function(object, data){
+          function(object, data, ...){
             
             # Check if training data is ok.
             if(has_bad_training_data(object=object, data=data)) return(callNextMethod())

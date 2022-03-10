@@ -16,6 +16,16 @@
 
 -   Trained models now contain information for features used only for missing data inference.
 
+# Version 1.0.1 (Capricious Cat)
+
+## Bug fixes
+
+-   Fixed a bug that prevented computation of model variable importance when data was not loaded. This affected learners based on *glmnet*, *randomForestSRC* and *ranger* packages.
+
+-   Fixed a bug that prevented familiar from identifying iteration files that were created previously for the same experiment.
+
+-   Fixed a bug that would only occur during unit testing that was due to feature importance files being considered present without these files actually existing.
+
 # Version 1.0.0 (Boisterous Bullfrog)
 
 ## Major changes

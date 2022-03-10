@@ -68,7 +68,7 @@ setMethod("get_default_hyperparameters", signature(object="familiarNaiveBayes"),
 
 #####..train####
 setMethod("..train", signature(object="familiarNaiveBayes", data="dataObject"),
-          function(object, data){
+          function(object, data, ...){
             
             # Check if training data is ok.
             if(has_bad_training_data(object=object, data=data)) return(callNextMethod())
@@ -167,8 +167,10 @@ setMethod("..predict", signature(object="familiarNaiveBayes", data="dataObject")
 
 
 
-#####..vimp#####
+#####..vimp---------------------------------------------------------------------
 # Naive Bayes does not have an associated variable importance method.
+
+
 
 #####.trim_model----------------------------------------------------------------
 setMethod(".trim_model", signature(object="familiarNaiveBayes"),
