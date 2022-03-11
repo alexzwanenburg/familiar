@@ -94,6 +94,9 @@ summon_familiar <- function(formula=NULL,
                             verbose=TRUE,
                             ...){
   
+  # Clean familiar environment on exit.
+  on.exit(.clean_familiar_environment(), add=TRUE)
+  
   # Set options.
   # Disable randomForestSRC OpenMP core use.
   options(rf.cores=as.integer(1))
@@ -658,4 +661,12 @@ get_project_list <- function(){
   familiar_list$familiarCollection <- load_familiar_object(coll_files)
   
   return(familiar_list)
+}
+
+
+.clean_familiar_environment <- function(){
+  # Cleans all objects assigned to the familiar global environment.
+  if(exists("familiar_global_env")){
+    rm(list=ls(envir=familiar_global_env), envir=familiar_global_env)
+  }
 }
