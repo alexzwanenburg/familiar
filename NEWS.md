@@ -9,6 +9,7 @@
 ## Minor changes
 
 -   Added `summary`, `vcov` and `coef` method for `familiarModel` objects. These respectively apply `summary`, `vcov` and `coef` to the stored model.
+-   Added relative absolute error, relative squared error and root relative squared error as performance metrics.
 
 ## Bug fixes
 

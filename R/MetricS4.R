@@ -134,6 +134,12 @@ as_metric <- function(metric,
                                                        "outcome_type"=outcome_type),
                                                   .sanitise_dots("familiarMetricMAE",
                                                                  ...)))
+  } else if(metric %in% .get_available_rae_metrics()){
+    metric_object <- do.call(methods::new, args=c(list("Class"="familiarMetricRAE",
+                                                       "metric"=metric,
+                                                       "outcome_type"=outcome_type),
+                                                  .sanitise_dots("familiarMetricRAE",
+                                                                 ...)))
     
   } else if(metric %in% .get_available_mlae_metrics()){
     metric_object <- do.call(methods::new, args=c(list("Class"="familiarMetricMLAE",
@@ -147,6 +153,13 @@ as_metric <- function(metric,
                                                        "metric"=metric,
                                                        "outcome_type"=outcome_type),
                                                   .sanitise_dots("familiarMetricMSE",
+                                                                 ...)))
+    
+  } else if(metric %in% .get_available_rse_metrics()){
+    metric_object <- do.call(methods::new, args=c(list("Class"="familiarMetricRSE",
+                                                       "metric"=metric,
+                                                       "outcome_type"=outcome_type),
+                                                  .sanitise_dots("familiarMetricRSE",
                                                                  ...)))
     
   } else if(metric %in% .get_available_msle_metrics()){
@@ -168,6 +181,13 @@ as_metric <- function(metric,
                                                        "metric"=metric,
                                                        "outcome_type"=outcome_type),
                                                   .sanitise_dots("familiarMetricRMSE",
+                                                                 ...)))
+    
+  } else if(metric %in% .get_available_rrse_metrics()){
+    metric_object <- do.call(methods::new, args=c(list("Class"="familiarMetricRRSE",
+                                                       "metric"=metric,
+                                                       "outcome_type"=outcome_type),
+                                                  .sanitise_dots("familiarMetricRRSE",
                                                                  ...)))
     
   } else if(metric %in% .get_available_rmsle_metrics()){
