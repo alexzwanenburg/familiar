@@ -404,14 +404,28 @@ setMethod("..train", signature(object="familiarMBoost", data="dataObject"),
                                                normalisation="average_one")
             
             if(is(object, "familiarMBoostLM")){
-              # Attempt to create model
-              model <- suppressWarnings(tryCatch(mboost::glmboost(formula,
-                                                                  data=encoded_data$encoded_data@data,
-                                                                  weights=weights,
-                                                                  family=family,
-                                                                  center=FALSE,
-                                                                  control=control_object),
-                                                 error=identity))
+              if(object@hyperparameters$family %in% c("auc")){
+                # mboost does not support weights when gradient boosting with
+                # the AUC family.
+                
+                # Attempt to create model
+                model <- suppressWarnings(tryCatch(mboost::glmboost(formula,
+                                                                    data=encoded_data$encoded_data@data,
+                                                                    family=family,
+                                                                    center=FALSE,
+                                                                    control=control_object),
+                                                   error=identity))
+                
+              } else {
+                # Attempt to create model
+                model <- suppressWarnings(tryCatch(mboost::glmboost(formula,
+                                                                    data=encoded_data$encoded_data@data,
+                                                                    weights=weights,
+                                                                    family=family,
+                                                                    center=FALSE,
+                                                                    control=control_object),
+                                                   error=identity))
+              }
               
             } else if(is(object, "familiarMBoostTree")){
               # Set tree controls. Note that every parameter except max depth is
@@ -422,14 +436,27 @@ setMethod("..train", signature(object="familiarMBoost", data="dataObject"),
                                                              mincriterion = 1 - object@hyperparameters$alpha,
                                                              saveinfo = FALSE)
               
-              # Attempt to create model
-              model <- suppressWarnings(tryCatch(mboost::blackboost(formula,
-                                                                    data=encoded_data$encoded_data@data,
-                                                                    weights = weights,
-                                                                    family=family,
-                                                                    control=control_object,
-                                                                    tree_controls=tree_control_object),
-                                                 error=identity))
+              if(object@hyperparameters$family %in% c("auc")){
+                # mboost does not support weights when gradient boosting with
+                # the AUC family.
+                # Attempt to create model
+                model <- suppressWarnings(tryCatch(mboost::blackboost(formula,
+                                                                      data=encoded_data$encoded_data@data,
+                                                                      family=family,
+                                                                      control=control_object,
+                                                                      tree_controls=tree_control_object),
+                                                   error=identity))
+                
+              } else {
+                # Attempt to create model
+                model <- suppressWarnings(tryCatch(mboost::blackboost(formula,
+                                                                      data=encoded_data$encoded_data@data,
+                                                                      weights = weights,
+                                                                      family=family,
+                                                                      control=control_object,
+                                                                      tree_controls=tree_control_object),
+                                                   error=identity))
+              }
               
             } else {
               ..error_reached_unreachable_code(paste0("..train,familiarMBoost: encountered unknown learner of unknown class: ", paste0(class(object), collapse=", ")))
