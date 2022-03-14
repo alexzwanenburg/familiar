@@ -325,7 +325,12 @@ setMethod("..vimp", signature(object="familiarRegressionVimp"),
 
 
 
-..regression_vimp_assess_feature <- function(feature, fam_model, metric_objects, data, iteration_list, fixed_set){
+..regression_vimp_assess_feature <- function(feature,
+                                             fam_model,
+                                             metric_objects,
+                                             data,
+                                             iteration_list,
+                                             fixed_set){
 
   # Make local copy of the data prior to filtering features.
   data <- data.table::copy(data)
@@ -343,8 +348,20 @@ setMethod("..vimp", signature(object="familiarRegressionVimp"),
     test_data <- select_data_from_samples(data=data,
                                           samples=iteration_list$valid_list[[bootstrap_id]])
     
-    # Update the familiar model
+    # Update the familiar model.
     fam_model@hyperparameters$sign_size=length(c(feature, fixed_set))
+    
+    #Set missing parameters.
+    parameter_list <- get_default_hyperparameters(object=fam_model,
+                                                  data=train_data,
+                                                  user_list=fam_model@hyperparameters)
+    
+    # Update the parameter list With user-defined variables.
+    parameter_list <- .update_hyperparameters(parameter_list=parameter_list,
+                                              user_list=fam_model@hyperparameters)
+    
+    # Update hyperparameters to set any fixed parameters.
+    fam_model@hyperparameters <- lapply(parameter_list, function(list_entry) list_entry$init_config)
     
     # Set additional parameters, e.g. the learner family.
     fam_model <- ..set_vimp_parameters(object=fam_model,

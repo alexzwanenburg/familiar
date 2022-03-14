@@ -55,7 +55,7 @@ vimp_object <- familiar:::prepare_vimp_object(data=data,
                                               imputation_method="simple")
 
 
-testthat::test_that(paste0("Multivariate regression correctly ranks continuous data.."), {
+testthat::test_that(paste0("Multivariate regression correctly ranks continuous data."), {
   
   vimp_table <- suppressWarnings(familiar:::.vimp(vimp_object, data))
   
