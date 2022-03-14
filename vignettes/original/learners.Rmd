@@ -42,8 +42,8 @@ hyperparameters. Then, hyperparameter optimisation is described in more detail.
 | log-normal | `glm_log`, `glm_log_gaussian` 	    | 	| 	| × | 	| 	|
 | normal (gaussian) | `glm_gaussian` 			        | 	| 	| × | 	| 	|
 | inverse gaussian | `glm_inv_gaussian` 		      | 	| 	| × | 	| 	|
-| log-poisson | `glm_log_poisson` 				        | 	| 	| 	| × | 	|
-| poisson | `glm_poisson` 						            | 	| 	| 	| × | 	|
+| log-poisson | `glm_log_poisson` 				        | 	| 	| x	| × | 	|
+| poisson | `glm_poisson` 						            | 	| 	| x	| × | 	|
 | cox | `cox` 									                  | 	| 	| 	|	  | × |
 | exponential | `survival_regr_exponential` 	    | 	| 	| 	|	  | × |
 | gaussian | `survival_regr_gaussian` 			      | 	| 	| 	| 	| × |
