@@ -94,9 +94,6 @@ summon_familiar <- function(formula=NULL,
                             verbose=TRUE,
                             ...){
   
-  # Clean familiar environment on exit.
-  on.exit(.clean_familiar_environment(), add=TRUE)
-  
   # Set options.
   # Disable randomForestSRC OpenMP core use.
   options(rf.cores=as.integer(1))
@@ -265,6 +262,9 @@ summon_familiar <- function(formula=NULL,
     cl <- NULL
   }
   
+  # Clean familiar environment on exit. This is run last to avoid cleaning up
+  # the familiar environment prior to shutting down the socket server process.
+  on.exit(.clean_familiar_environment(), add=TRUE)
   
   # Start feature selection
   run_feature_selection(cl=cl,

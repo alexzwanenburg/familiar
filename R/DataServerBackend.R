@@ -591,17 +591,13 @@ start_socket_server_process <- function(server_port=NULL){
       # Find the server port if not directly provided.
       if(is.null(server_port)) server_port <- .get_backend_server_port()
       
-      repeat{
-        # Close the socket_server routine
-        socket_client_server_shutdown(port=server_port)
-        
-        # The process should be responsive within a few milliseconds after sending
-        # the command to stop the subroutine. We leave the process 0.5 seconds to
-        # respond and then check again.
-        process_ready <- socket_server_process$poll_process(500)
-        
-        if(process_ready == "ready") break()
-      }
+      # Close the socket_server routine
+      socket_client_server_shutdown(port=server_port)
+
+      # The process should be responsive within a few milliseconds after sending
+      # the command to stop the subroutine. We leave the process 5 seconds to
+      # respond.      
+      process_ready <- socket_server_process$poll_process(5000)
       
       # Read from the socket_server_process to free up the process again,
       # thereby finalising the shutdown of the socket_server subroutine and
