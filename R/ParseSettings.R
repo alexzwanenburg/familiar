@@ -3746,7 +3746,8 @@
   available_parameters <- setdiff(available_parameters,
                                   c("", "...", "config", "data", "hpo_metric", "prep_cluster_method",
                                     "prep_cluster_linkage_method", "prep_cluster_cut_method",
-                                    "prep_cluster_similarity_threshold", "prep_cluster_similarity_metric"))
+                                    "prep_cluster_similarity_threshold", "prep_cluster_similarity_metric",
+                                    "verbose"))
   
   return(available_parameters)
 }
