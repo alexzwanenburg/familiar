@@ -533,12 +533,12 @@ setMethod("model_is_trained", signature(object="familiarModel"),
           function(object){
             # Check if a model was trained
             if(is.null(object@model)){
-              # Check if a model is present
+              # If no model is attached to the object, assume that no model was
+              # trained.
               return(FALSE)
               
             } else {
-              # Assume that the model is present if it is not specifically
-              # stated using the model_trained element
+              # If the the model is not NULL, assume that it is present.
               return(TRUE)
             }
           })
