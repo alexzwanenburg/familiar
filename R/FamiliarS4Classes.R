@@ -1062,6 +1062,9 @@ setClass("familiarNoveltyDetector",
 #' @slot learner Algorithm used to create the hyperparameter learner.
 #' @slot target_learner Algorithm for which the hyperparameters are being
 #'   learned.
+#' @slot target_outcome_type Outcome type of the learner for which
+#'   hyperparameters are being modeled. Used to determine the target
+#'   hyperparameters.
 #' @slot optimisation_metric One or metrics used to generate the optimisation
 #'   score.
 #' @slot optimisation_function Function used to generate the optimisation score.
@@ -1092,6 +1095,8 @@ setClass("familiarHyperparameterLearner",
            learner = "character",
            # Learner for which the hyperparameters are being learned.
            target_learner = "character",
+           # Outcome type for the above learner.
+           target_outcome_type = "character",
            # Metric(s) used to generate the input data for optimisation score
            # that is being learned.
            optimisation_metric = "character",
@@ -1114,6 +1119,7 @@ setClass("familiarHyperparameterLearner",
            name = character(0),
            learner = NA_character_,
            target_learner = NA_character_,
+           target_outcome_type = NA_character_,
            optimisation_metric = NA_character_,
            optimisation_function = NA_character_,
            model = NULL,
