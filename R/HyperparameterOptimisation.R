@@ -381,10 +381,7 @@ setMethod("optimise_hyperparameters", signature(object="familiarModel", data="da
             # multi-metric optimisation.
             sapply(metric, metric.check_outcome_type, outcome_type=object@outcome_type)
             
-            # Check if optimisation_function is correctly specified.
-            .check_parameter_value_is_valid(x=optimisation_function,
-                                            var_name="optimisation_function",
-                                            values=.get_available_optimisation_functions())
+
             
             # Check if acquisition_function is correctly specified.
             .check_parameter_value_is_valid(x=acquisition_function,
@@ -396,11 +393,21 @@ setMethod("optimise_hyperparameters", signature(object="familiarModel", data="da
                                             var_name="hyperparameter_learner",
                                             values=.get_available_hyperparameter_learners())
             
+            # Check if optimisation_function is correctly specified.
+            .check_parameter_value_is_valid(x=optimisation_function,
+                                            var_name="optimisation_function",
+                                            values=.get_available_optimisation_functions(hyperparameter_learner=hyperparameter_learner))
+            
             # Report on methodology used.
             optimisation_description <- switch(optimisation_function,
                                                "max_validation"="maximising out-of-bag performance",
+                                               "validation"="maximising out-of-bag performance",
                                                "balanced"="maximising out-of-bag performance while constraining performance differences between in-bag and out-of-bag data",
-                                               "stronger_balance"="maximum out-of-bag performance while strongly constraining performance differences between in-bag and out-of-bag data")
+                                               "stronger_balance"="maximising out-of-bag performance while strongly constraining performance differences between in-bag and out-of-bag data",
+                                               "validation_minus_sd"="maximising out-of-bag performance while penalising variance using the lower 1 standard deviation bound",
+                                               "validation_25th_percentile"="maximising out-of-bag performance while penalising variance using the 25th percentile bound",
+                                               "model_estimate"="maximising performance estimates from the hyperparameter model",
+                                               "model_estimate_minus_sd"="maximising performances estimates while penalising variance estimated by the model")
             
             logger.message(paste0("Hyperparameter optimisation is conducted using the ", paste_s(metric), ifelse(length(metric) > 1, " metrics", " metric"),
                                   " by ", optimisation_description, "."),

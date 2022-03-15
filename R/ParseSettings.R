@@ -2594,6 +2594,24 @@
                                closed=c(FALSE, TRUE))
   
   
+  ##### hyperparameter_learner #################################################
+  # Hyperparameter learner
+  settings$hpo_hyperparameter_learner <- .parse_arg(x_config=config$hyperparameter_learner,
+                                                    x_var=hyperparameter_learner,
+                                                    var_name="hyperparameter_learner",
+                                                    type="character",
+                                                    optional=TRUE,
+                                                    default="gaussian_process")
+  
+  .check_parameter_value_is_valid(x=settings$hpo_hyperparameter_learner,
+                                  var_name="hyperparameter_learner",
+                                  values=.get_available_hyperparameter_learners())
+  
+  require_package(x=.required_packages_hyperparameter_learner(settings$hpo_hyperparameter_learner),
+                  purpose="to use the requested learner (", settings$hpo_hyperparameter_learner, ") for model-based hyperparameter optimisation",
+                  message_type="backend_error")
+  
+  
   ##### optimisation_function ##################################################
   # Objective function
   settings$hpo_optimisation_function <- .parse_arg(x_config=config$optimisation_function,
@@ -2605,7 +2623,8 @@
   
   .check_parameter_value_is_valid(x=settings$hpo_optimisation_function,
                                   var_name="optimisation_function",
-                                  values=.get_available_optimisation_functions())
+                                  values=.get_available_optimisation_functions(hyperparameter_learner=settings$hpo_hyperparameter_learner))
+  
   
   ##### acquisition_function ###################################################
   # Acquisition function
@@ -2619,6 +2638,7 @@
   .check_parameter_value_is_valid(x=settings$hpo_acquisition_function,
                                   var_name="acquisition_function",
                                   values=.get_available_acquisition_functions())
+  
   
   ##### exploration_method #####################################################
   # Exploration method
@@ -2650,22 +2670,6 @@
          metric.check_outcome_type,
          outcome_type=outcome_type)
   
-  ##### hyperparameter_learner #################################################
-  # Hyperparameter learner
-  settings$hpo_hyperparameter_learner <- .parse_arg(x_config=config$hyperparameter_learner,
-                                                    x_var=hyperparameter_learner,
-                                                    var_name="hyperparameter_learner",
-                                                    type="character",
-                                                    optional=TRUE,
-                                                    default="gaussian_process")
-  
-  .check_parameter_value_is_valid(x=settings$hpo_hyperparameter_learner,
-                                  var_name="hyperparameter_learner",
-                                  values=.get_available_hyperparameter_learners())
-  
-  require_package(x=.required_packages_hyperparameter_learner(settings$hpo_hyperparameter_learner),
-                  purpose="to use the requested learner (", settings$hpo_hyperparameter_learner, ") for model-based hyperparameter optimisation",
-                  message_type="backend_error")
   
   ##### parallel_hyperparameter_optimisation ###################################
   # Parallelisation switch for parallel processing

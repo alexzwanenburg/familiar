@@ -641,6 +641,22 @@ metric.optim_score.balanced <- function(training, validation) return(validation 
 metric.optim_score.stronger_balance <- function(training, validation) return(validation - 2.0 * abs(validation - training))
 
 
-.get_available_optimisation_functions <- function(){
-  return(c("max_validation", "balanced", "stronger_balance"))
+.get_available_optimisation_functions <- function(hyperparameter_learner=NULL){
+  
+  # All optimisation functions.
+  all_optimisation_functions <- c("validation", "max_validation", "balanced", "stronger_balance",
+                                  "validation_minus_sd", "validation_25th_percentile", "model_estimate",
+                                  "model_estimate_minus_sd")
+  
+  if(is.null(hyperparameter_learner)){
+    return(all_optimisation_functions)
+    
+  } else if(hyperparameter_learner %in% c("random", "random_search")){
+    # Random search does not return an estimate that can be used for
+    # optimisation.
+    return(setdiff(all_optimisation_functions,
+                   c("model_estimate", "model_estimate_minus_sd")))
+  }
+  
+  return(all_optimisation_functions)
 }
