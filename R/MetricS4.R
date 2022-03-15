@@ -563,6 +563,12 @@ metric.is_higher_score_better <- function(metric, object=NULL, outcome_type=NULL
 
 metric.compute_optimisation_score <- function(score_table,
                                               optimisation_function){
+  # Compute an optimisation score from validation and training scores. This
+  # optimisation score is typically computed for each set of hyperparameters
+  # (param_id) and subsample (run_id).
+  #
+  # For hyperparameter optimisation scores are aggregated as follows:
+  # validation and training scores --> optimisation score --> summary score.
   
   # Suppress NOTES due to non-standard evaluation in data.table
   optimisation_score <- training <- validation <- NULL
@@ -570,8 +576,13 @@ metric.compute_optimisation_score <- function(score_table,
   # Select the correct optimisation function.
   optimisation_function <- switch(optimisation_function,
                                   "max_validation" = metric.optim_score.max_validation,
+                                  "validation" = metric.optim_score.max_validation,
                                   "balanced" = metric.optim_score.balanced,
-                                  "stronger_balance" = metric.optim_score.stronger_balance)
+                                  "stronger_balance" = metric.optim_score.stronger_balance,
+                                  "validation_minus_sd" = metric.optim_score.max_validation,
+                                  "validation_25th_percentile" = metric.optim_score.max_validation,
+                                  "model_estimate"=metric.optim_score.max_validation,
+                                  "model_estimate_minus_sd"=metric.optim_score.max_validation)
   
   # Find identifier columns.
   id_columns <- intersect(colnames(score_table),
@@ -601,7 +612,12 @@ metric.compute_optimisation_score <- function(score_table,
 
 
 metric.summarise_optimisation_score <- function(score_table, method, replace_na=TRUE){
-  # Calculates a summary objective score
+  # Compute a summary score either directly from optimisation scores, or using a
+  # model. This optimisation score is typically computed for each set of
+  # hyperparameters.
+  #
+  # For hyperparameter optimisation scores are aggregated as follows:
+  # validation and training scores --> optimisation score --> summary score.
   
   # Suppress NOTES due to non-standard evaluation in data.table
   optimisation_score <- NULL
