@@ -357,6 +357,7 @@ setMethod("optimise_hyperparameters", signature(object="familiarModel", data="da
                    intensify_stop_p_value=0.05,
                    convergence_tolerance=1E-2,
                    convergence_stopping=3,
+                   time_limit=NULL,
                    verbose=TRUE,
                    message_indent=0L,
                    ...){
@@ -380,8 +381,6 @@ setMethod("optimise_hyperparameters", signature(object="familiarModel", data="da
             # Check if the metric is ok. Packed into a for loop to enable
             # multi-metric optimisation.
             sapply(metric, metric.check_outcome_type, outcome_type=object@outcome_type)
-            
-
             
             # Check if acquisition_function is correctly specified.
             .check_parameter_value_is_valid(x=acquisition_function,
@@ -587,6 +586,7 @@ setMethod("optimise_hyperparameters", signature(object="familiarModel", data="da
                                                                            intensify_stop_p_value=intensify_stop_p_value,
                                                                            convergence_tolerance=min(c(convergence_tolerance, 1E-2)),
                                                                            convergence_stopping=min(c(convergence_stopping, 3L)),
+                                                                           time_limit=time_limit,
                                                                            verbose=verbose,
                                                                            message_indent=message_indent)
             
