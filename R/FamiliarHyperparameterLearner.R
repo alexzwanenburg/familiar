@@ -250,10 +250,12 @@ setMethod("..train", signature(object="familiarHyperparameterLearner", data="ANY
 
 ##### ..predict (hyperparameter learner, data) ---------------------------------
 setMethod("..predict", signature(object="familiarHyperparameterLearner", data="data.table"),
-          function(object, data, ...){
+          function(object, data, type="default", ...){
             # Like ..train, this method is a capture-all for when predictions
             # fail.
-            return(rep_len(-1.0, length.out=nrow(data)))
+            return(get_placeholder_prediction_table(object=object,
+                                                    data=data,
+                                                    type=type))
           })
 
 
@@ -270,3 +272,4 @@ setMethod("has_bad_training_data", signature(object="familiarHyperparameterLearn
             
             return(FALSE)
           })
+
