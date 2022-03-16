@@ -808,8 +808,7 @@
   return(c(.get_available_ranger_hyperparameter_learners(),
            .get_available_lagp_hyperparameter_learners(),
            .get_available_bart_hyperparameter_learners(),
-           "random",
-           "random_search"))
+           .get_available_random_search_hyperparameter_learners()))
 }
 # 
 # 

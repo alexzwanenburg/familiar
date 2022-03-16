@@ -2,6 +2,7 @@
 #' @include FamiliarS4Classes.R
 #' @include HyperparameterS4BayesianAdditiveRegressionTrees.R
 #' @include HyperparameterS4GaussianProcess.R
+#' @include HyperparameterS4RandomSearch.R
 #' @include HyperparameterS4Ranger.R
 
 
@@ -23,11 +24,15 @@ setMethod("promote_learner", signature(object="familiarHyperparameterLearner"),
               # Bayesian additive regression trees
               object <- methods::new("familiarHyperparameterLearnerBART", object)
               
+            } else if(learner %in% .get_available_random_search_hyperparameter_learners()){
+              # Random search
+              object <- methods::new("familiarHyperparameterRandomSearch", object)
+              
+            } else {
+              ..error_reached_unreachable_code(paste0("promote_learner,familiarHyperparameterLearner: encountered unknown hyperparameter learner: ", learner))
             }
             
-            
-            # Returned object can be a standard familiarHyperparameterLearner
-            # object.
+            # Return promoted object.
             return(object)
           })
 
