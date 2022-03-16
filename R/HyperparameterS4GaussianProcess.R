@@ -52,10 +52,10 @@ setMethod("..train", signature(object="familiarHyperparameterLearnerLAGP", data=
             require_package(object, "train")
             
             # Encode categorical variables.
-            x_encoded <- encode_categorical_variables(data=data[, mget(object@target_hyperparameters)],
-                                                      object=NULL,
-                                                      encoding_method="dummy",
-                                                      drop_levels=FALSE)$encoded_data
+            encoded_data <- encode_categorical_variables(data=data[, mget(object@target_hyperparameters)],
+                                                         object=NULL,
+                                                         encoding_method="dummy",
+                                                         drop_levels=FALSE)
             
             # Get optimisation score as response.
             y <- data$optimisation_score
@@ -63,7 +63,7 @@ setMethod("..train", signature(object="familiarHyperparameterLearnerLAGP", data=
             # Add model. Note that laGP basically builds and evaluates the
             # Gaussian process when predicting. We are just passing the
             # information at this point.
-            object@model <- list("X"=as.matrix(x_encoded),
+            object@model <- list("X"=as.matrix(encoded_data$encoded_data),
                                  "Z"=y)
             
             # Set reference table for encoding.
