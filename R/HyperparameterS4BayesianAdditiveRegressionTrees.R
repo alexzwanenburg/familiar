@@ -75,10 +75,10 @@ setMethod("..train", signature(object="familiarHyperparameterLearnerBART", data=
             
             # Create model. Note that prediction by BART is expensive for large
             # ndpost.
-            quiet(bart_model <- BART::wbart(x.train=data.frame(encoded_data$encoded_data[, mget(hyperparameter_names)]),
-                                            y.train=y,
-                                            ntree=100,
-                                            ndpost=50))
+            quiet(model <- BART::wbart(x.train=data.frame(encoded_data$encoded_data[, mget(hyperparameter_names)]),
+                                       y.train=y,
+                                       ntree=100,
+                                       ndpost=50))
             
             # Add model
             object@model <- model
@@ -123,7 +123,7 @@ setMethod("..predict", signature(object="familiarHyperparameterLearnerBART", dat
             
             # Get predicted values. object@hyperparameter_order is used to drop
             # any columns that were invariant during training.
-            quiet(predicted_scores <- predict(object@model,
+            quiet(predicted_scores <- predict(object=object@model,
                                               data.frame(x_encoded[, mget(object@hyperparameter_order)])))
             
             # Compute mean and standard deviation.
@@ -154,7 +154,7 @@ setMethod("..predict", signature(object="familiarHyperparameterLearnerBART", dat
               raw_data <- data.table::data.table(t(predicted_scores))
               
               # Set colnames.
-              data.table::setnames(raw_data, new=past0("raw_", seq_len(ncol(raw_data))))
+              data.table::setnames(raw_data, new=paste0("raw_", seq_len(ncol(raw_data))))
               
               # Combine with the placeholder prediction table.
               prediction_table <- cbind(prediction_table, raw_data)

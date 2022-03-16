@@ -99,8 +99,8 @@ setMethod("..predict", signature(object="familiarHyperparameterLearnerRanger", d
                                                                  type=type)
             
             # Make predictions.
-            predicted_scores <- predict(score_model,
-                                        data=parameter_set,
+            predicted_scores <- predict(object=object,
+                                        data=data,
                                         predict.all=TRUE,
                                         num.threads=1L,
                                         verbose=FALSE)$predictions
@@ -131,7 +131,7 @@ setMethod("..predict", signature(object="familiarHyperparameterLearnerRanger", d
               raw_data <- data.table::data.table(predicted_scores)
               
               # Set colnames.
-              data.table::setnames(raw_data, new=past0("raw_", seq_len(ncol(raw_data))))
+              data.table::setnames(raw_data, new=paste0("raw_", seq_len(ncol(raw_data))))
               
               # Combine with the placeholder prediction table.
               prediction_table <- cbind(prediction_table, raw_data)
