@@ -1,5 +1,6 @@
 #' @include FamiliarS4Generics.R
 #' @include FamiliarS4Classes.R
+#' @include HyperparameterS4BayesianAdditiveRegressionTrees.R
 #' @include HyperparameterS4GaussianProcess.R
 #' @include HyperparameterS4Ranger.R
 
@@ -17,11 +18,16 @@ setMethod("promote_learner", signature(object="familiarHyperparameterLearner"),
             } else if(learner %in% .get_available_lagp_hyperparameter_learners()){
               # Localised approximate Gaussian process.
               object <- methods::new("familiarHyperparameterLearnerLAGP", object)
+              
+            } else if(learner %in% .get_available_bart_hyperparameter_learners()){
+              # Bayesian additive regression trees
+              object <- methods::new("familiarHyperparameterLearnerBART", object)
+              
             }
             
             
-            # Returned object can be a standard
-            # familiarHyperparameterLearner object.
+            # Returned object can be a standard familiarHyperparameterLearner
+            # object.
             return(object)
           })
 
