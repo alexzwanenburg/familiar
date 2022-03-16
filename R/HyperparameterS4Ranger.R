@@ -80,7 +80,7 @@ setMethod("..train", signature(object="familiarHyperparameterLearnerRanger", dat
 
 
 
-#####..predict#####
+##### ..predict ----------------------------------------------------------------
 setMethod("..predict", signature(object="familiarHyperparameterLearnerRanger", data="data.table"),
           function(object, data, type="default", percentile=NULL, ...){
             

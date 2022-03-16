@@ -79,7 +79,7 @@ setMethod("..train", signature(object="familiarHyperparameterLearnerLAGP", data=
 
 ##### ..predict ----------------------------------------------------------------
 setMethod("..predict", signature(object="familiarHyperparameterLearnerLAGP", data="data.table"),
-          function(object, data, type="default", percentile=NULL, ...){
+          function(object, data, type="default", ...){
             
             # Check that required packages are loaded and installed.
             require_package(object, "predict")
