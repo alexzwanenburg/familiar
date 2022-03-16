@@ -807,30 +807,29 @@
 .get_available_hyperparameter_learners <- function(){
   return(c(.get_available_ranger_hyperparameter_learners(),
            .get_available_lagp_hyperparameter_learners(),
-           "bayesian_additive_regression_trees", 
-           "bart",
+           .get_available_bart_hyperparameter_learners(),
            "random",
            "random_search"))
 }
-
-
-
-.required_packages_hyperparameter_learner <- function(x){
-  
-  learner_packages <- NULL
-  if(x == "random_forest"){
-    learner_packages <- "ranger"
-    
-  } else if(x == "gaussian_process"){
-    learner_packages <- "laGP"
-    
-  } else if(x %in% c("bayesian_additive_regression_trees", "bart")){
-    learner_packages <- "BART"
-  }
-  
-  return(learner_packages)
-}
-
+# 
+# 
+# 
+# .required_packages_hyperparameter_learner <- function(x){
+#   
+#   learner_packages <- NULL
+#   if(x == "random_forest"){
+#     learner_packages <- "ranger"
+#     
+#   } else if(x == "gaussian_process"){
+#     learner_packages <- "laGP"
+#     
+#   } else if(x %in% c("bayesian_additive_regression_trees", "bart")){
+#     learner_packages <- "BART"
+#   }
+#   
+#   return(learner_packages)
+# }
+# 
 
 
 .get_available_hyperparameter_exploration_methods <- function(){
