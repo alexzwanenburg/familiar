@@ -114,6 +114,17 @@ setMethod(".predict", signature(object="familiarHyperparameterLearner", data="da
             return(prediction_table)
           })
 
+
+
+##### get_prediction_type ------------------------------------------------------
+setMethod("get_prediction_type", signature(object="familiarHyperparameterLearner"),
+          function(object, ...){
+            # Placeholder for hyperparameter learners.
+            return(NULL)
+          })
+
+
+
 ##### show(hyperparameter learner) ---------------------------------------------
 setMethod("show", signature(object="familiarHyperparameterLearner"),
           function(object){
