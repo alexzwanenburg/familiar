@@ -1,5 +1,6 @@
 #' @include FamiliarS4Generics.R
 #' @include FamiliarS4Classes.R
+#' @include HyperparameterS4Ranger.R
 
 
 ##### promote_learner (hyperparameter learner) ---------------------------------
@@ -8,84 +9,15 @@ setMethod("promote_learner", signature(object="familiarHyperparameterLearner"),
             
             learner <- object@learner
             
-            # if(learner %in% .get_available_naive_bayes_learners()){
-            #   # Naive bayes model
-            #   object <- methods::new("familiarNaiveBayes", object)
-            #   
-            # } else if(learner %in% .get_available_knn_learners()){
-            #   # k-nearest neighbours model with radial kernel
-            #   object <- methods::new("familiarKNN", object)
-            #   
-            # } else if(learner %in% .get_available_svm_c_learners()){
-            #   # C-classification support vector machines.
-            #   object <- methods::new("familiarSVMC", object)
-            #   
-            # } else if(learner %in% .get_available_svm_nu_learners()){
-            #   # Nu-classification and regression support vector machines.
-            #   object <- methods::new("familiarSVMNu", object)
-            #   
-            # } else if(learner %in% .get_available_svm_eps_learners()){
-            #   # Epsilon regression support vector machines.
-            #   object <- methods::new("familiarSVMEps", object)
-            #   
-            # } else if(learner %in% .get_available_glm_learners()){
-            #   # Generalised linear models
-            #   object <- methods::new("familiarGLM", object)
-            #   
-            # } else if(learner %in% .get_available_glmnet_ridge_learners()){
-            #   # Ridge penalised regression models
-            #   object <- methods::new("familiarGLMnetRidge", object)
-            #   
-            # } else if(learner %in% .get_available_glmnet_lasso_learners()){
-            #   # Lasso penalised regression models
-            #   object <- methods::new("familiarGLMnetLasso", object)
-            #   
-            # } else if(learner %in% .get_available_glmnet_elastic_net_learners()){
-            #   # Elastic net penalised regression models.
-            #   object <- methods::new("familiarGLMnetElasticNet", object)
-            #   
-            # } else if(learner %in% .get_available_mboost_lm_learners()){
-            #   # Boosted generalised linear models
-            #   object <- methods::new("familiarMBoostLM", object)
-            #   
-            # } else if(learner %in% .get_available_xgboost_lm_learners()){
-            #   # Extreme gradient boosted linear models
-            #   object <- methods::new("familiarXGBoostLM", object)
-            #   
-            # } else if(learner %in% .get_available_cox_learners()){
-            #   # Cox proportional hazards regression model
-            #   object <- methods::new("familiarCoxPH", object)
-            #   
-            # } else if(learner %in% .get_available_survival_regression_learners()){
-            #   # Fully parametric survival regression model
-            #   object <- methods::new("familiarSurvRegr", object)
-            #   
-            # } else if(learner %in% .get_available_rfsrc_learners()){
-            #   # Random forests for survival, regression, and classification
-            #   object <- methods::new("familiarRFSRC", object)
-            #   
-            # } else if(learner %in% .get_available_ranger_learners()){
-            #   # Ranger random forests
-            #   object <- methods::new("familiarRanger", object)
-            #   
-            # } else if(learner %in% .get_available_mboost_tree_learners()){
-            #   # Boosted regression trees
-            #   object <- methods::new("familiarMBoostTree", object)
-            #   
-            # } else if(learner %in% .get_available_xgboost_tree_learners()){
-            #   # Extreme gradient boosted trees
-            #   object <- methods::new("familiarXGBoostTree", object)
-            #   
-            # } else if(learner %in% .get_available_xgboost_dart_learners()){
-            #   # Extreme gradient boosted trees
-            #   object <- methods::new("familiarXGBoostDart", object)
-            #   
-            # } else if(learner %in% .get_available_glmnet_lasso_learners_test()){
-            #   # Lasso penalised regression models for testing purposes.
-            #   object <- methods::new("familiarGLMnetLassoTest", object)
-            # }
+            if(learner %in% .get_available_ranger_hyperparameter_learners()){
+              # Ranger random forest
+              object <- methods::new("familiarHyperparameterLearnerRanger", object)
+              
+            }
             
-            # Returned object can be a standard familiarModel
+            
+            # Returned object can be a standard
+            # familiarHyperparameterLearner object.
             return(object)
           })
 
@@ -97,6 +29,9 @@ setMethod(".train", signature(object="familiarHyperparameterLearner", data="data
                    parameter_data=NULL,
                    ...) {
             # Train method for training hyperparameter models
+            
+            # Suppress NOTES due to non-standard evaluation in data.table
+            optimisation_score <- NULL
             
             # Check if the class of object is a subclass of
             # familiarHyperparameterLearner.
@@ -116,6 +51,9 @@ setMethod(".train", signature(object="familiarHyperparameterLearner", data="data
                             all.y=FALSE,
                             by="param_id")
             }
+            
+            # Replace NA entries with the minimum optimisation score.
+            data[is.na(optimisation_score), optimisation_score:=-1.0]
             
             # Get hyperparameter names from the target learner.
             default_hyperparameters <- .get_learner_hyperparameters(learner=object@target_learner,

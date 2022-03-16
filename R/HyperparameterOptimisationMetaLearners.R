@@ -805,8 +805,8 @@
 
 
 .get_available_hyperparameter_learners <- function(){
-  return(c("random_forest",
            "gaussian_process",
+  return(c(.get_available_ranger_hyperparameter_learners(),
            "bayesian_additive_regression_trees", 
            "bart",
            "random",
