@@ -424,7 +424,7 @@ setMethod("..train", signature(object="familiarGLMnet", data="dataObject"),
             # Add model
             object@model <- model
             
-            # Add the contrast references to model_list
+            # Add the contrast references to the object.
             object@encoding_reference_table <- encoded_data$reference_table
             
             # Add feature order
