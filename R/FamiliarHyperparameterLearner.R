@@ -159,7 +159,49 @@ setMethod(".predict", signature(object="familiarHyperparameterLearner", data="da
           })
 
 ##### show(hyperparameter learner) ---------------------------------------------
-
+setMethod("show", signature(object="familiarHyperparameterLearner"),
+          function(object){
+            if(!model_is_trained(object)){
+              cat(paste0("A ", object@learner, " model (class: ", class(object)[1],
+                         ") for inferring hyperparameters of the ", object@target_learner, ". ",
+                         "This hyperparameter model could not successfully be trained (v", object@familiar_version, ").\n"))
+              
+            } else {
+              # Describe the learner and the version of familiar.
+              message_str <- paste0("A ", object@learner, " model (class: ", class(object)[1],
+                                    "; v", object@familiar_version, ") ",
+                                    "for inferring hyperparameters of the ", object@target_learner, " learner. ")
+              
+              # Describe the package(s), if any
+              if(!is.null(object@package)){
+                message_str <- c(message_str,
+                                 paste0("This model was trained using "),
+                                 paste_s(mapply(..message_package_version, x=object@package, version=object@package_version)),
+                                 ifelse(length(object@package) > 1, " packages", " package"))
+              }
+              
+              # Complete message and write.
+              message_str <- paste0(c(message_str, ".\n"), collapse="")
+              cat(message_str)
+              
+              cat(paste0("\n--------------- Model details ---------------\n"))
+              
+              # Model details
+              show(object@model)
+              
+              cat(paste0("---------------------------------------------\n"))
+              
+              # Details concerning hyperparameters.
+              cat(paste0("\nThe model was trained to infer the optimisation score of the following hyperparameter set:\n",
+                         paste_s(object@target_hyperparameters), "\n"))
+              
+              cat(paste0("\nOptimisation scores were determined using the ", object@optimisation_function, " method, ",
+                         "based on assessment of model performance using the ", paste_s(object@optimisation_metric), " metrics.\n"))
+              
+              # Check package version.
+              check_package_version(object)
+            }
+          })
 
 
 
