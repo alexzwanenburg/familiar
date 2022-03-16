@@ -1,5 +1,6 @@
 #' @include FamiliarS4Generics.R
 #' @include FamiliarS4Classes.R
+#' @include HyperparameterS4GaussianProcess.R
 #' @include HyperparameterS4Ranger.R
 
 
@@ -13,6 +14,9 @@ setMethod("promote_learner", signature(object="familiarHyperparameterLearner"),
               # Ranger random forest
               object <- methods::new("familiarHyperparameterLearnerRanger", object)
               
+            } else if(learner %in% .get_available_lagp_hyperparameter_learners()){
+              # Localised approximate Gaussian process.
+              object <- methods::new("familiarHyperparameterLearnerLAGP", object)
             }
             
             
