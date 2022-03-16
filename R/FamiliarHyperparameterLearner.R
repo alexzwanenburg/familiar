@@ -151,11 +151,19 @@ setMethod(".predict", signature(object="familiarHyperparameterLearner", data="da
                    ...) {
             # Predict method for hyperparameter models. The type argument can be
             # default (reports the model estimate), sd (reports the model
-            # estimate + standard deviation), or percentile, in which case the
-            # model estimate and the requested percentile are returned.
+            # estimate + standard deviation), percentile, in which case the
+            # model estimate and the requested percentile are returned, and raw,
+            # which returns the data in a wide format. Not all learners support
+            # the same types. Use the get_prediction_type method to figure out
+            # which type of output can be generated.
             
+            # Dispatch to the ..predict methods of the child classes. 
+            prediction_table <- ..predict(object=object,
+                                          data=data,
+                                          type=type,
+                                          percentile=percentile)
             
-            return(object)
+            return(prediction_table)
           })
 
 ##### show(hyperparameter learner) ---------------------------------------------
