@@ -28,8 +28,8 @@ setMethod("initialize", signature(.Object="familiarHyperparameterRandomSearch"),
 
 
 ##### model_is_trained ---------------------------------------------------------
-setMethod("model_is_trained", signature(x="familiarHyperparameterRandomSearch"),
-          function(x){
+setMethod("model_is_trained", signature(object="familiarHyperparameterRandomSearch"),
+          function(object){
             # Override default model_is_trained since random search is
             # technically not a model at all.
             return(TRUE)
