@@ -581,8 +581,8 @@ metric.compute_optimisation_score <- function(score_table,
                                   "stronger_balance" = metric.optim_score.stronger_balance,
                                   "validation_minus_sd" = metric.optim_score.max_validation,
                                   "validation_25th_percentile" = metric.optim_score.max_validation,
-                                  "model_estimate"=metric.optim_score.max_validation,
-                                  "model_estimate_minus_sd"=metric.optim_score.max_validation)
+                                  "model_estimate " = metric.optim_score.max_validation,
+                                  "model_estimate_minus_sd" = metric.optim_score.max_validation)
   
   # Find identifier columns.
   id_columns <- intersect(colnames(score_table),
