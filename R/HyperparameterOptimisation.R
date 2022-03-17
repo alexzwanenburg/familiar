@@ -566,7 +566,7 @@ setMethod("optimise_hyperparameters", signature(object="familiarModel", data="da
               
               return(object)
             } 
-                                   
+            
             ##### Create or obtain variable importance -------------------------
             rank_table_list <- .compute_hyperparameter_variable_importance(cl=cl,
                                                                            determine_vimp=determine_vimp,
@@ -589,6 +589,17 @@ setMethod("optimise_hyperparameters", signature(object="familiarModel", data="da
                                                                            time_limit=time_limit,
                                                                            verbose=verbose,
                                                                            message_indent=message_indent)
+            
+            ##### Setup the hyperparameter model prototype ---------------------
+            
+            # Set up the model prototype.
+            optimisation_model_prototype <- methods::new("familiarHyperparameterLearner",
+                                                         learner = hyperparameter_learner,
+                                                         target_learner = object@learner,
+                                                         target_outcome_type = object@outcome_type,
+                                                         optimisation_metric = metric,
+                                                         optimisation_function = optimisation_function)
+            
             
             ##### Perform initial set of computations --------------------------
             if(measure_time & n_intensify_step_bootstraps > 1L) {
