@@ -2607,9 +2607,7 @@
                                   var_name="hyperparameter_learner",
                                   values=.get_available_hyperparameter_learners())
   
-  require_package(x=.required_packages_hyperparameter_learner(settings$hpo_hyperparameter_learner),
-                  purpose="to use the requested learner (", settings$hpo_hyperparameter_learner, ") for model-based hyperparameter optimisation",
-                  message_type="backend_error")
+  .check_hyperparameter_learner_available(hyperparameter_learner=settings$hpo_hyperparameter_learner)
   
   
   ##### optimisation_function ##################################################

@@ -287,3 +287,24 @@ setMethod("has_bad_training_data", signature(object="familiarHyperparameterLearn
             return(FALSE)
           })
 
+
+
+.check_hyperparameter_learner_available <- function(hyperparameter_learner, as_flag=FALSE){
+  
+  # Create familiarHyperparameterLearner object.
+  fam_hyperparameter_model <- methods::new("familiarHyperparameterLearner",
+                               learner=hyperparameter_learner)
+  
+  # Set up the specific novelty detector
+  fam_hyperparameter_model <- promote_learner(fam_hyperparameter_model)
+  
+  # Check if the familiar model has been successfully promoted.
+  if(!is_subclass(class(fam_hyperparameter_model)[1], "familiarHyperparameterLearner")){
+    stop(paste0(hyperparameter_learner, " is not a valid hyperparameter learner. Please check the vignette for available hyperparameter learners."))
+  }
+  
+  # Check that the required package can be loaded.
+  require_package(x=fam_hyperparameter_model,
+                  purpose="train",
+                  message_type="backend_error")
+}
