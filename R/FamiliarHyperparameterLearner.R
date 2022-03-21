@@ -71,7 +71,8 @@ setMethod(".train", signature(object="familiarHyperparameterLearner", data="data
             data[is.na(optimisation_score), optimisation_score:=-1.0]
             
             # Get hyperparameter names from the target learner.
-            default_hyperparameters <- .get_learner_hyperparameters(learner=object@target_learner,
+            default_hyperparameters <- .get_learner_hyperparameters(data=NULL,
+                                                                    learner=object@target_learner,
                                                                     outcome_type=object@target_outcome_type,
                                                                     names_only=TRUE)
             
@@ -130,7 +131,7 @@ setMethod("get_prediction_type", signature(object="familiarHyperparameterLearner
 
 
 
-##### show(hyperparameter learner) ---------------------------------------------
+##### show (hyperparameter learner) --------------------------------------------
 setMethod("show", signature(object="familiarHyperparameterLearner"),
           function(object){
             if(!model_is_trained(object)){
@@ -168,7 +169,8 @@ setMethod("show", signature(object="familiarHyperparameterLearner"),
                          paste_s(object@target_hyperparameters), "\n"))
               
               cat(paste0("\nOptimisation scores were determined using the ", object@optimisation_function, " method, ",
-                         "based on assessment of model performance using the ", paste_s(object@optimisation_metric), " metrics.\n"))
+                         "based on assessment of model performance using the ", paste_s(object@optimisation_metric),
+                         ifelse(length(object@optimisation_metric) > 1, " metrics", " metric"), ".\n"))
               
               # Check package version.
               check_package_version(object)
@@ -279,7 +281,17 @@ setMethod("has_bad_training_data", signature(object="familiarHyperparameterLearn
             
             # One cannot train without data or on a single sample.
             if(is_empty(data)) return(TRUE)
-            if(data.table::uniqueN(data@data, by=get_id_columns(id_depth="sample")) < 2) return(TRUE)
+            
+            # Get identifier columns in the data.
+            id_columns <- intersect(c("param_id", "run_id"), colnames(data))
+            if(length(id_columns) > 0){
+              # Check that at least two unique entries are present.
+              if(data.table::uniqueN(data, by=c(id_columns)) < 2) return(TRUE)
+              
+            } else {
+              # Check that at least two rows are present.
+              if(nrow(data) < 2) return(TRUE)
+            }
             
             # Check if all data are non-singular.
             if(all(sapply(data[, mget(object@target_hyperparameters)], is_singular_data))) return(TRUE)
