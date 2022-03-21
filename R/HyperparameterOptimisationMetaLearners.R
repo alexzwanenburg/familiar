@@ -337,34 +337,6 @@
 
 
 
-.create_hyperparameter_score_optimisation_model <- function(hyperparameter_learner,
-                                                            score_table,
-                                                            parameter_table){
-  
-  if(hyperparameter_learner == "random_forest"){
-    model <- ..hyperparameter_random_forest_optimisation_score_learner(score_table=score_table,
-                                                                       parameter_table=parameter_table)
-    
-  } else if(hyperparameter_learner == "gaussian_process"){
-    model <- ..hyperparameter_gaussian_process_optimisation_score_learner(score_table=score_table,
-                                                                          parameter_table=parameter_table)
-    
-  } else if(hyperparameter_learner %in% c("bayesian_additive_regression_trees", "bart")){
-    model <- ..hyperparameter_bart_optimisation_score_learner(score_table=score_table,
-                                                              parameter_table=parameter_table)
-    
-  } else if(hyperparameter_learner %in% c("random", "random_search")){
-    model <- NULL
-    
-  } else {
-    ..error_reached_unreachable_code(paste0(".create_hyperparameter_score_optimisation_model: hyperparameter_learner was not recognised: ", hyperparameter_learner))
-  }
-  
-  return(model)
-}
-  
-
-
 .create_hyperparameter_time_optimisation_model <- function(hyperparameter_learner="random_forest",
                                                            score_table,
                                                            parameter_table,
@@ -384,47 +356,6 @@
 }
 
 
-
-..hyperparameter_random_forest_optimisation_score_learner <- function(score_table, parameter_table){
-  
-  # Suppress NOTES due to non-standard evaluation in data.table
-  optimisation_score <- NULL
-  
-  # Check if package is installed
-  require_package(x="ranger", purpose="to perform model-based hyperparameter optimisation")
-  
-  # Merge score and parameter data tables on param id.
-  joint_table <- merge(x=score_table,
-                       y=parameter_table,
-                       by="param_id",
-                       all=FALSE)
-  
-  # Replace NA entries with the minimum optimisation score.
-  joint_table[is.na(optimisation_score), optimisation_score:=-1.0]
-  
-  # Get parameter names.
-  parameter_names <- setdiff(colnames(parameter_table),
-                             c("param_id", "run_id", "optimisation_score", "time_taken"))
-  
-  # Hyperparameters for the random forest.
-  n_tree <- 400
-  n_train <- nrow(joint_table)
-  sample_fraction <- max(c(0.3, min(c(1, 1/(0.025*n_train)))))
-  
-  # Parse formula.
-  formula <- stats::reformulate(termlabels=parameter_names,
-                                response="optimisation_score")
-  
-  # Train random forest.
-  rf_model <- ranger::ranger(formula,
-                             data=joint_table,
-                             num.trees=n_tree,
-                             num.threads=1L,
-                             sample.fraction=sample_fraction,
-                             verbose=FALSE)
-  
-  return(rf_model)
-}
 
 
 
@@ -711,25 +642,7 @@ acquisition_bayes_upper_confidence_bound <- function(object,
            .get_available_bart_hyperparameter_learners(),
            .get_available_random_search_hyperparameter_learners()))
 }
-# 
-# 
-# 
-# .required_packages_hyperparameter_learner <- function(x){
-#   
-#   learner_packages <- NULL
-#   if(x == "random_forest"){
-#     learner_packages <- "ranger"
-#     
-#   } else if(x == "gaussian_process"){
-#     learner_packages <- "laGP"
-#     
-#   } else if(x %in% c("bayesian_additive_regression_trees", "bart")){
-#     learner_packages <- "BART"
-#   }
-#   
-#   return(learner_packages)
-# }
-# 
+
 
 
 .get_available_hyperparameter_exploration_methods <- function(){
