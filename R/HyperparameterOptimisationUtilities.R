@@ -594,32 +594,125 @@
 
 
 
-..get_best_hyperparameter_set <- function(optimisation_score_table,
-                                          acquisition_function,
-                                          n=1L){
-  # Find the best configurations based on the optimisation score
+get_best_hyperparameter_set <- function(score_table,
+                                        parameter_table,
+                                        optimisation_model,
+                                        n_max_bootstraps,
+                                        n=1L,
+                                        parameter_id_set=NULL){
+  # The best set has several interesting values that can be computed and used
+  # for acquisition functions, information for the user etc.
   
   # Suppress NOTES due to non-standard evaluation in data.table
-  optimisation_score <- time_taken <- .NATURAL <- NULL
+  summary_score <- param_id <- NULL
   
-  # Compute time taken.
-  time_table <- optimisation_score_table[, list("time_taken"=stats::median(time_taken, na.rm=TRUE)), by="param_id"]
+  # Compute summary scores.
+  data <- .compute_hyperparameter_summary_score(score_table=score_table,
+                                                parameter_table=parameter_table,
+                                                optimisation_model=optimisation_model)
   
-  # Compute the summary score per parameter id.
-  summary_table <- metric.summarise_optimisation_score(score_table=optimisation_score_table,
-                                                       method=acquisition_function)
+  # Select only the parameter sets of interest. This happens during the run-off
+  # between the incumbent and challenger hyperparameter sets.
+  if(!is.null(parameter_id_set)){
+    data <- data[param_id %in% parameter_id_set]
+  }
   
-  # Join with time table.
-  summary_table <- summary_table[time_table, on=.NATURAL]
+  # Find the best hyperparameter set based on summary scores in data.
+  data <- data[order(-summary_score)]
+  data <- head(data, n=n)
   
-  # Sort by decreasing optimisation score.
-  summary_table <- summary_table[order(-optimisation_score)]
+  # Compute round t, i.e. the highest number of bootstraps observed across the
+  # parameters.
+  t <- max(unique(score_table[, mget(c("param_id", "run_id"))])[, list("n"=.N), by="param_id"]$n)
   
-  # Average objective score over known available in the score table.
-  best_parameter_data <- head(summary_table, n=n)
+  # Compute the maximum allowed time.
+  max_time <- (5.0 - 4.0 * t / n_max_bootstraps) * data$time_taken[1]
   
-  return(best_parameter_data)
+  # Check that the maximum time is not trivially small (i.e. less than 10
+  # seconds).
+  if(is.na(max_time)){
+    max_time <- Inf
+    
+  } else if(max_time < 10.0) {
+    max_time <- 10.0
+  }
+  
+  # Extract the summary score, score estimate, and time taken, and return with
+  # other information.
+  return(list("param_id"=data$param_id,
+              "t"=t,
+              "time"=data$time_taken,
+              "max_time"=max_time,
+              "summary_score"=data$summary_score,
+              "score_estimate"=data$score_estimate,
+              "n"=n_max_bootstraps))
 }
+
+
+
+# ..get_acquisition_function_parameters <- function(optimisation_score_table,
+#                                                   acquisition_function,
+#                                                   n_max_bootstraps){
+#   # Determine optimal score.
+#   best_hyperparameter_set <- ..get_best_hyperparameter_set(optimisation_score_table=optimisation_score_table,
+#                                                            acquisition_function=acquisition_function,
+#                                                            n=1L)
+#   
+#   # Determine the optimal parameter score tau.
+#   tau <- best_hyperparameter_set$optimisation_score
+#   
+#   # Determine time corresponding to the best parameter set.
+#   time <- best_hyperparameter_set$time_taken
+#   
+#   # Determine round t.
+#   t <- max(optimisation_score_table[, list("n"=.N), by="param_id"]$n)
+#   
+#   # Determine maximum time that can be countenanced.
+#   max_time <- (5.0 - 4.0 * t / n_max_bootstraps) * time
+#   
+#   # Check that the maximum time is not trivially small (i.e. less than 10
+#   # seconds).
+#   if(is.na(max_time)){
+#     max_time <- Inf
+#   } else if(max_time < 10.0) {
+#     max_time <- 10.0
+#   }
+#   
+#   return(list("t"=t,
+#               "time"=time,
+#               "max_time"=max_time,
+#               "tau"=tau,
+#               "n"=n_max_bootstraps))
+# }
+
+
+
+# ..get_best_hyperparameter_set <- function(optimisation_score_table,
+#                                           acquisition_function,
+#                                           n=1L){
+#   # Find the best configurations based on the optimisation score
+#   
+#   # Suppress NOTES due to non-standard evaluation in data.table
+#   optimisation_score <- time_taken <- .NATURAL <- NULL
+#   
+#   # Compute time taken.
+#   time_table <- optimisation_score_table[, list("time_taken"=stats::median(time_taken, na.rm=TRUE)), by="param_id"]
+#   
+#   # Compute the summary score per parameter id.
+#   summary_table <- metric.summarise_optimisation_score(score_table=optimisation_score_table,
+#                                                        method=acquisition_function)
+#   
+#   # Join with time table.
+#   summary_table <- summary_table[time_table, on=.NATURAL]
+#   
+#   # Sort by decreasing optimisation score.
+#   summary_table <- summary_table[order(-optimisation_score)]
+#   
+#   # Average objective score over known available in the score table.
+#   best_parameter_data <- head(summary_table, n=n)
+#   
+#   return(best_parameter_data)
+# }
 
 
 
@@ -800,8 +893,8 @@
   
   # Make a copy of the score table and keep only relevant parameter and run
   # identifiers.
-  score_table <- data.table::copy(score_table[param_id %in% parameter_ids,
-                                              c("param_id","run_id")])
+  score_table <- unique(data.table::copy(score_table[param_id %in% parameter_ids,
+                                                     c("param_id","run_id")]))
   
   # Add a sampled column that marks those elements that have been previously
   # sampled.
