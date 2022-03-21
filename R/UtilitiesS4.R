@@ -710,9 +710,16 @@ setMethod("get_placeholder_prediction_table", signature(object="familiarHyperpar
             # Find the id columns.
             id_columns <- intersect(c("param_id", "run_id"), colnames(data))
             
-            # Create a placeholder by only keeping the identifier columns.
-            prediction_table <- data.table::copy(data[, mget(id_columns)])
+            if(length(id_columns) > 0){
+              # Create a placeholder by only keeping the identifier columns.
+              prediction_table <- data.table::copy(data[, mget(id_columns)])
+              
+            } else {
+              # Add a placeholder parameter identifier as scaffolding.
+              prediction_table <- data.table::data.table(param_id=rep_len(NA_integer_, nrow(data)))
+            }
             
+            # Add placeholder columns.
             if(type == "default"){
               prediction_table[, "mu":=as.double(NA)]
               
