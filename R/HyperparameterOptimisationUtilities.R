@@ -215,8 +215,9 @@
 ..create_hyperparameter_run_table <- function(run_ids,
                                               parameter_ids=NULL,
                                               measure_time=FALSE,
-                                              optimisation_score_table=NULL,
-                                              acquisition_function=NULL,
+                                              score_table=NULL,
+                                              parameter_table=NULL,
+                                              optimisation_model=NULL,
                                               n_max_bootstraps=NULL){
   # Creates a run table from the run identifiers and parameter identifiers.
   
@@ -227,17 +228,23 @@
     # Filter by time. This filters out the hyperparameter sets that took very
     # long to complete, while not delivering good enough performance.
     
-    # Get acquisition details.
-    acquisition_data <- ..get_acquisition_function_parameters(optimisation_score_table=optimisation_score_table,
-                                                              acquisition_function=acquisition_function,
-                                                              n_max_bootstraps=n_max_bootstraps)
+    # Compute optimisation score based on the presented scores.
+    optimisation_score_table <- .compute_hyperparameter_optimisation_score(score_table=score_table,
+                                                                           optimisation_function=optimisation_model@optimisation_function)
+    
+    # Find data related to the most promising set of hyperparameters.
+    incumbent_set <- get_best_hyperparameter_set(score_table=optimisation_score_table,
+                                                 parameter_table=parameter_table,
+                                                 optimisation_model=optimisation_model,
+                                                 n_max_bootstraps=n_max_bootstraps)
     
     # Select fitting hyperparameters.
-    parameter_ids <- optimisation_score_table[time_taken <= acquisition_data$max_time]$param_id
+    parameter_ids <- optimisation_score_table[time_taken <= incumbent_set$max_time]$param_id
   }
   
   if(is.null(parameter_ids)) ..error_reached_unreachable_code("..create_hyperparameter_run_table: parameter_ids cannot be NULL.")
   
+  # Create a run table consisting of parameter and run identifiers.
   run_table <- data.table::as.data.table(expand.grid(param_id=parameter_ids,
                                                      run_id=run_ids,
                                                      KEEP.OUT.ATTRS=FALSE,
