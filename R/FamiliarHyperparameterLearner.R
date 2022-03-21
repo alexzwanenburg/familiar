@@ -84,6 +84,7 @@ setMethod(".train", signature(object="familiarHyperparameterLearner", data="data
             if(has_bad_training_data(object=object, data=data)){
               # Create a random search object in case training data are bad in
               # some way or form.
+              object@learner <- "random_search"
               object <- methods::new("familiarHyperparameterRandomSearch", object)
             }
             
