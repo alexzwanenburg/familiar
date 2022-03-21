@@ -395,17 +395,18 @@
 
 .create_hyperparameter_time_optimisation_model <- function(hyperparameter_learner="random_forest",
                                                            score_table,
-                                                           parameter_table){
+                                                           parameter_table,
+                                                           optimisation_function){
   
+  # Check that score_table contains optimisation scores.
+  if(!"optimisation_score" %in% colnames(score_table)){
+    score_table <- .compute_hyperparameter_optimisation_score(score_table=score_table,
+                                                              optimisation_function=optimisation_function)
+  }
+  
+  # Train model to predict process time.
   model <- ..hyperparameter_random_forest_time_learner(score_table=score_table,
                                                        parameter_table=parameter_table)
-  
-  # if(hyperparameter_learner == "random_forest"){
-  #   model <- ..hyperparameter_random_forest_time_learner(score_table=score_table,
-  #                                                        parameter_table=parameter_table)
-  # } else {
-  #   ..error_reached_unreachable_code(paste0(".create_hyperparameter_time_optimisation_model: hyperparameter_learner was not recognised: ", hyperparameter_learner))
-  # }
   
   return(model)
 }
