@@ -57,10 +57,6 @@ setMethod("..train", signature(object="familiarHyperparameterLearnerRanger", dat
             n_train <- nrow(data)
             sample_fraction <- max(c(0.3, min(c(1, 1/(0.025*n_train)))))
             
-            # Parse formula.
-            formula <- stats::reformulate(termlabels=parameter_names,
-                                          response="optimisation_score")
-            
             # Train a conventional random forest
             model <- ranger::ranger(formula,
                                     data = data,
@@ -99,7 +95,7 @@ setMethod("..predict", signature(object="familiarHyperparameterLearnerRanger", d
                                                                  type=type)
             
             # Make predictions.
-            predicted_scores <- predict(object=object,
+            predicted_scores <- predict(object=object@model,
                                         data=data,
                                         predict.all=TRUE,
                                         num.threads=1L,
