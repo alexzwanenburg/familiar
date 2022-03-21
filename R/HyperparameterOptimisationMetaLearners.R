@@ -508,37 +508,28 @@
 
 
 
-..hyperparameter_gaussian_process_optimisation_score_learner <- function(score_table, parameter_table){
-  # Suppress NOTES due to non-standard evaluation in data.table
-  optimisation_score <- NULL
+.compute_utility_value <- function(parameter_set,
+                                   score_model,
+                                   acquisition_data,
+                                   acquisition_function){
   
-  # Merge score and parameter data tables on param id.
-  joint_table <- merge(x=score_table,
-                       y=parameter_table,
-                       by="param_id",
-                       all=FALSE)
+  # Check that the score_model is trained, and return NA if not.
+  if(!model_is_trained(score_model)) return(rep_len(NA_real_, nrow(parameter_set)))
   
-  # Replace NA entries with the minimum optimisation score.
-  joint_table[is.na(optimisation_score), optimisation_score:=-1.0]
+  # Dispatch to acquisition functions.
+  acquisition_FUN <- switch(acquisition_function,
+                            "improvement_probability" = acquisition_improvement_probability,
+                            "improvement_empirical_probability" = acquisition_improvement_empirical_probability,
+                            "expected_improvement" = acquisition_expected_improvement,
+                            "upper_confidence_bound" = acquisition_upper_confidence_bound,
+                            "bayes_upper_confidence_bound" = acquisition_bayes_upper_confidence_bound)
   
-  # Get parameter names.
-  parameter_names <- setdiff(colnames(parameter_table),
-                             c("param_id", "run_id", "optimisation_score", "time_taken"))
   
-  # Get training data and response.
-  x <- joint_table[, mget(parameter_names)]
+  utility_scores <- acquisition_FUN(object=score_model,
+                                    parameter_data=parameter_set,
+                                    acquisition_data=acquisition_data)
   
-  # Encode categorical variables.
-  x_encoded <- encode_categorical_variables(data=x,
-                                            object=NULL,
-                                            encoding_method="dummy",
-                                            drop_levels=FALSE)$encoded_data
-  
-  # Get optimisation score as response.
-  y <- joint_table$optimisation_score
-  
-  return(list("X"=as.matrix(x_encoded),
-              "Z"=y))
+  return(utility_scores)
 }
 
 
