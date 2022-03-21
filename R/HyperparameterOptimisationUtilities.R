@@ -564,39 +564,139 @@
 
 
 
-..get_acquisition_function_parameters <- function(optimisation_score_table,
-                                                  acquisition_function,
-                                                  n_max_bootstraps){
-  # Determine optimal score.
-  best_hyperparameter_set <- ..get_best_hyperparameter_set(optimisation_score_table=optimisation_score_table,
-                                                           acquisition_function=acquisition_function,
-                                                           n=1L)
+.compute_hyperparameter_summary_score <- function(score_table, parameter_table, optimisation_model){
   
-  # Determine the optimal parameter score tau.
-  tau <- best_hyperparameter_set$optimisation_score
+  # Suppress NOTES due to non-standard evaluation in data.table
+  optimisation_score <- time_taken <- .NATURAL <- mu <- sigma <- NULL
   
-  # Determine time corresponding to the best parameter set.
-  time <- best_hyperparameter_set$time_taken
+  # Check that the table is not empty.
+  if(is_empty(score_table)) return(NULL)
   
-  # Determine round t.
-  t <- max(optimisation_score_table[, list("n"=.N), by="param_id"]$n)
+  # Check if summary score has already been created.
+  if("summary_score" %in% colnames(score_table)) return(score_table)
   
-  # Determine maximum time that can be countenanced.
-  max_time <- (5.0 - 4.0 * t / n_max_bootstraps) * time
+  # Extract the optimisation function.
+  optimisation_function <- optimisation_model@optimisation_function
   
-  # Check that the maximum time is not trivially small (i.e. less than 10
-  # seconds).
-  if(is.na(max_time)){
-    max_time <- Inf
-  } else if(max_time < 10.0) {
-    max_time <- 10.0
+  # Check if the score table already contains optimisation scores.
+  if(!"optimisation_score" %in% colnames(score_table)){
+    score_table <- .compute_hyperparameter_optimisation_score(score_table=score_table,
+                                                              optimisation_function=optimisation_function)
   }
   
-  return(list("t"=t,
-              "time"=time,
-              "max_time"=max_time,
-              "tau"=tau,
-              "n"=n_max_bootstraps))
+  # Make sure to return both the summary score, as well as the mean optimisation
+  # score (or its model estimate if the optimisation function allows it). The
+  # mean score is important for acquisition functions, where we work with
+  # predictions of the optimisation score -- not the summary score. In addition,
+  # compute time_taken.
+  if(optimisation_function %in% c("validation", "max_validation", "balanced", "stronger_balance")){
+    # Here we just use the mean score.
+    data <- score_table[, list("summary_score"=mean(optimisation_score),
+                               "score_estimate"=mean(optimisation_score),
+                               "time_taken"=stats::median(time_taken)), by="param_id"]
+    
+  } else if(optimisation_function %in% c("validation_minus_sd")){
+    # Here we need to compute the standard deviation, with an exception for
+    # single subsamples.
+    data <- score_table[, list("summary_score"=..optimisation_function_validation_minus_sd(optimisation_score),
+                               "score_estimate"=mean(optimisation_score),
+                               "time_taken"=stats::median(time_taken)), by="param_id"]
+    
+    
+  } else if(optimisation_function %in% c("validation_25th_percentile")){
+    # Summary score is formed by the 25th percentile of the optimisation scores.
+    data <- score_table[, list("summary_score"=stats::quantile(optimisation_score, probs=0.25, names=FALSE),
+                               "score_estimate"=mean(optimisation_score),
+                               "time_taken"=stats::median(time_taken)), by="param_id"]
+    
+  } else if(optimisation_function %in% c("model_estimate", "model_estimate_minus_sd")){
+    # Model based summary scores. The main difference with other optimisation
+    # functions is that a hyperparameter model is used to both infer the summary
+    # scores and the score estimate.
+    
+    # Check if the model is trained.
+    if(!model_is_trained(optimisation_model)) optimisation_model <- .train(object=optimisation_model,
+                                                                           data=score_table,
+                                                                           parameter_data=parameter_table)
+    
+    # Get parameter data that is used in the score table.
+    parameter_data <- parameter_table[unique(score_table[, mget("param_id")]), on=.NATURAL]
+    
+    # Model was successfully trained.
+    prediction_table <- .predict(object=optimisation_model,
+                                 data=parameter_data,
+                                 type=ifelse(optimisation_function=="model_estimate", "default", "sd"))
+    
+    # Check the prediction table has returned sensible information.
+    if(any(is.finite(prediction_table$mu))){
+      # Prepare the score estimate and time taken.
+      data <-  score_table[, list("time_taken"=stats::median(time_taken)), by="param_id"]
+      
+      # Fold the prediction table into data.
+      data <- merge(x=data,
+                    y=prediction_table,
+                    all.x=TRUE,
+                    all.y=FALSE,
+                    by="param_id")
+      
+      if(optimisation_function == "model_estimate"){
+        # Copy mu as score estimate.
+        data[, "score_estimate":=mu]
+        
+        # Rename mu to summary_score.
+        data.table::setnames(data, old="mu", new="summary_score")
+        
+      } else if(optimisation_function == "model_estimate_minus_sd"){
+        # Compute summary score.
+        data[, "summary_score":=mu - sigma]
+        
+        # Rename mu to score_estimate.
+        data.table::setnames(data, old="mu", new="score_estimate")
+        
+      } else {
+        ..error_reached_unreachable_code(paste0(".compute_hyperparameter_summary_score: encountered unknown optimisation function: ", optimisation_function))
+      }
+      
+    } else if(optimisation_function == "model_estimate"){
+      # In absence of suitable data, use the model-less equivalent of
+      # model_estimate, namely "validation".
+      data <- score_table[, list("summary_score"=mean(optimisation_score),
+                                 "score_estimate"=mean(optimisation_score),
+                                 "time_taken"=stats::median(time_taken)), by="param_id"]
+      
+    } else if(optimisation_function == "model_estimate_minus_sd"){
+      # In absence of suitable data, use the model-less equivalent of
+      # model_estimate_minus_sd, namely "validation_minus_sd".
+      data <- score_table[, list("summary_score"=..optimisation_function_validation_minus_sd(optimisation_score),
+                                 "score_estimate"=mean(optimisation_score),
+                                 "time_taken"=stats::median(time_taken)), by="param_id"]
+      
+    } else {
+      ..error_reached_unreachable_code(paste0(".compute_hyperparameter_summary_score: encountered unknown optimisation function: ", optimisation_function))
+    }
+
+  } else {
+    ..error_reached_unreachable_code(".compute_hyperparameter_summary_score: encountered an unknown optimisation function")
+  }
+  
+  # Format data by selecting only relevant columns. This also orders the data.
+  data <- data[, mget(c("param_id", "summary_score", "score_estimate", "time_taken"))]
+  
+  return(data)
+}
+
+
+
+..optimisation_function_validation_minus_sd <- function(x){
+  # Here we need to switch based on the length of x.
+  
+  # The default behaviour is when multiple subsamples exist, and the standard
+  # deviation can be computed.
+  if(length(x) > 1) return(mean(x) - stats::sd(x))
+  
+  # The exception for x with length 1, where the standard deviation does not
+  # exist.
+  return(mean(x))
 }
 
 
