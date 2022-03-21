@@ -93,6 +93,9 @@ setMethod(".train", signature(object="familiarHyperparameterLearner", data="data
                               data=data,
                               ...)
             
+            # Add familiar version.
+            object <- add_package_version(object)
+            
             return(object)
           })
 
