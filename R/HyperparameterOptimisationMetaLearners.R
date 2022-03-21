@@ -543,232 +543,169 @@
 
 
 
-..hyperparameter_bart_optimisation_score_learner <- function(score_table, parameter_table){
-  # Suppress NOTES due to non-standard evaluation in data.table
-  optimisation_score <- NULL
+acquisition_improvement_probability <- function(object,
+                                                parameter_data,
+                                                acquisition_data){
+  # The definition of probability of improvement is found in Shahriari, B.,
+  # Swersky, K., Wang, Z., Adams, R. P. & de Freitas, N. Taking the Human Out
+  # of the Loop: A Review of Bayesian Optimization. Proc. IEEE 104, 148–175
+  # (2016)
+  browser()
+  # Get the score estimate from the incumbent hyperparameter set.
+  tau <- acquisition_data$score_estimate
   
-  # Check if package is installed
-  require_package(x="BART", purpose="to predict process time of hyperparameter sets")
+  # Predict the mean and standard deviation for the parameter sets in parameter
+  # data.
+  prediction_table <- .predict(object=object,
+                               data=parameter_data,
+                               type="sd")
   
-  # Merge score and parameter data tables on param id.
-  joint_table <- merge(x=score_table,
-                       y=parameter_table,
-                       by="param_id",
-                       all=FALSE)
+  # Compute the probability of improvement.
+  alpha <- stats::pnorm((prediction_table$mu - tau) / prediction_table$sigma)
   
-  # Replace NA entries with the minimum optimisation score.
-  joint_table[is.na(optimisation_score), optimisation_score:=-1.0]
-  
-  # Get parameter names.
-  parameter_names <- setdiff(colnames(parameter_table),
-                             c("param_id", "run_id", "optimisation_score", "time_taken"))
-  
-  # Get training data and response.
-  x <- joint_table[, mget(parameter_names)]
-  
-  # Drop invariant columns.
-  invariant_columns <- sapply(x, is_singular_data)
-  parameter_names <- parameter_names[!invariant_columns]
-  x <- joint_table[, mget(parameter_names)]
-  
-  # Encode categorical variables.
-  x_encoded <- encode_categorical_variables(data=x,
-                                            object=NULL,
-                                            encoding_method="dummy",
-                                            drop_levels=FALSE)$encoded_data
-  
-  # Get optimisation score as response.
-  y <- joint_table$optimisation_score
-  
-  # Create model. Note that prediction by BART is expensive for large ndpost.
-  quiet(bart_model <- BART::wbart(x.train=data.frame(x_encoded), y.train=y, ntree=100, ndpost=50))
-  
-  return(bart_model)
-}
-
-
-.compute_utility_value <- function(parameter_set,
-                                   score_model,
-                                   hyperparameter_learner,
-                                   acquisition_data,
-                                   acquisition_function){
-  # Predict score and compute .
-  if(hyperparameter_learner == "random_forest"){
-    # Check if package is installed
-    require_package(x="ranger", purpose="to perform model-based hyperparameter optimisation")
-    
-    # Compute score per decision tree in the random forest.
-    predicted_scores <- predict(score_model,
-                                data=parameter_set,
-                                predict.all=TRUE,
-                                num.threads=1L,
-                                verbose=FALSE)$predictions
-    
-    # Compute utility scores.
-    utility_scores <- apply(predicted_scores,
-                            MARGIN=1,
-                            ..compute_utility_score,
-                            acquisition_function=acquisition_function,
-                            acquisition_data=acquisition_data,
-                            n_parameters=ncol(parameter_set))
-    
-  } else if(hyperparameter_learner == "gaussian_process") {
-    # Check if package is installed
-    require_package(x="laGP", purpose="to perform model-based hyperparameter optimisation")
-    
-    # Encode categorical variables.
-    x_encoded <- encode_categorical_variables(data=parameter_set,
-                                              object=NULL,
-                                              encoding_method="dummy",
-                                              drop_levels=FALSE)$encoded_data
-    
-    # Update the end-size parameter, if the number of instances is smaller than
-    # the default of 51. Note that we already capture end_size of 7 or smaller
-    # in the parent function.
-    end_size <- ifelse(nrow(score_model$X) < 51, nrow(score_model$X) - 1, 50)
-    
-    # Infer scores for the hyperparameters.
-    quiet(predicted_scores <- laGP::aGP(X=score_model$X,
-                                        Z=score_model$Z,
-                                        XX=as.matrix(x_encoded),
-                                        end=end_size))
-    
-    # Compute utility_scores
-    utility_scores <- mapply(..compute_utility_score,
-                             mu=predicted_scores$mean,
-                             sigma=sqrt(predicted_scores$var),
-                             MoreArgs=list("acquisition_function"=acquisition_function,
-                                           "acquisition_data"=acquisition_data,
-                                           "n_parameters"=ncol(parameter_set)))
-    
-  } else if(hyperparameter_learner %in% c("bayesian_additive_regression_trees", "bart")){
-    
-    # Check if package is installed
-    require_package(x="BART", purpose="to perform model-based hyperparameter optimisation")
-    
-    # Drop columns not in the model object.
-    modelled_parameters <- colnames(score_model$varcount)
-    
-    # Encode categorical variables.
-    x_encoded <- encode_categorical_variables(data=parameter_set,
-                                              object=NULL,
-                                              encoding_method="dummy",
-                                              drop_levels=FALSE)$encoded_data
-    
-    # Get predicted values.
-    quiet(predicted_scores <- predict(score_model, data.frame(x_encoded[, mget(modelled_parameters)])))
-    
-    # Compute utility scores.
-    utility_scores <- apply(predicted_scores,
-                            MARGIN=2,
-                            ..compute_utility_score,
-                            acquisition_function=acquisition_function,
-                            acquisition_data=acquisition_data,
-                            n_parameters=ncol(parameter_set))
-    
-  } else if(hyperparameter_learner %in% c("random", "random_search")){
-    # Utility scores are not used for utility scores.
-    utility_scores <- rep_len(NA_real_, nrow(parameter_set))
-    
-  } else {
-    ..error_reached_unreachable_code(paste0(".compute_utility_value: hyperparameter_learner was not recognised: ", hyperparameter_learner))
-  }
-  
-  return(utility_scores)
+  return(alpha)
 }
 
 
 
-..compute_utility_score <- function(x=NULL, mu=NULL, sigma=NULL, acquisition_function, acquisition_data, n_parameters){
+acquisition_improvement_empirical_probability <- function(object,
+                                                          parameter_data,
+                                                          acquisition_data){
+  # The definition of probability of improvement is found in Shahriari, B.,
+  # Swersky, K., Wang, Z., Adams, R. P. & de Freitas, N. Taking the Human Out
+  # of the Loop: A Review of Bayesian Optimization. Proc. IEEE 104, 148–175
+  # (2016)
   
-  if(is.null(mu)) mu <- mean(x)
-  if(is.null(sigma)) sigma <- stats::sd(x)
+  # Get the incumbent score.
+  tau <- acquisition_data$score_estimate
   
-  if(!is.null(x)) if(all(!is.finite(x))) return(0.0)
-  if(!is.finite(mu)) return(0.0)
-  if(!is.finite(sigma)) return(0.0)
-  
-  if(acquisition_function == "improvement_probability"){
-    # The definition of probability of improvement is found in Shahriari, B.,
-    # Swersky, K., Wang, Z., Adams, R. P. & de Freitas, N. Taking the Human Out
-    # of the Loop: A Review of Bayesian Optimization. Proc. IEEE 104, 148–175
-    # (2016)
+  if("raw" %in% get_prediction_type(object)){
+    # Compute the empirical probability of improvement.
     
-    # Get the incumbent score.
-    tau <- acquisition_data$tau
-    
-    # Compute the probability of improvement.
-    alpha <- stats::pnorm((mu - tau) / sigma)
-    
-  } else if(acquisition_function == "improvement_empirical_probability"){
-    
-    # Get the incumbent score.
-    tau <- acquisition_data$tau
-    
-    if(!is.null(x)){
-      # Compute the empirical probability of improvement.
-      alpha <- sum(x > tau) / length(x)
-      
-    } else {
-      # Compute the stochastic probability of improvement.
-      alpha <- stats::pnorm((mu - tau) / sigma)
+    # Define helper function.
+    .acquisition_improvement_empirical_probability <- function(x, tau){
+      return(sum(x > tau) / length(x))
     }
     
-  } else if(acquisition_function == "expected_improvement"){
-    # The definition of expected improvement is found in Shahriari, B., Swersky,
-    # K., Wang, Z., Adams, R. P. & de Freitas, N. Taking the Human Out of the
-    # Loop: A Review of Bayesian Optimization. Proc. IEEE 104, 148–175 (2016).
+    # Predict raw data for the hyperparameter sets.
+    prediction_table <- .predict(object=object,
+                                 data=parameter_data,
+                                 type="raw")
     
-    # Get the incumbent score.
-    tau <- acquisition_data$tau
+    # Drop parameter id. This should leave only raw data.
+    prediction_table[, "param_id":=NULL]
     
-    # Compute a z-score.
-    if(sigma > 0){
-      z <- (mu - tau) / sigma
-    } else {
-      return(0.0)
-    }
-    
-    # Compute the expected improvement.
-    alpha <- (mu - tau) * stats::pnorm(z) + sigma * stats::dnorm(z)
-    
-  } else if(acquisition_function == "upper_confidence_bound"){
-    # The definition of upper confidence bound is adapted from Srinivas, N.,
-    # Krause, A., Kakade, S. M. & Seeger, M. W. Information-Theoretic Regret
-    # Bounds for Gaussian Process Optimization in the Bandit Setting. IEEE
-    # Trans. Inf. Theory 58, 3250–3265 (2012).
-    
-    # Compute the beta parameter.
-    beta <- 2/5 * log(5/3 * n_parameters * (acquisition_data$t + 1)^2 * pi^2)
-    
-    # Compute alpha
-    alpha <- mu + beta * sigma
-    
-  } else if(acquisition_function == "bayes_upper_confidence_bound"){
-    # The definition of the Bayesian upper confidence bound is adapted from
-    # Kaufmann, E., Cappé, O. & Garivier, A. On Bayesian upper confidence bounds
-    # for bandit problems. in Artificial intelligence and statistics 592–600
-    # (2012).
-    
-    # Compute the quantile we are interested in.
-    q <- 1.0 - 1.0 / (acquisition_data$t + 1)
-    
-    if(!is.null(x)){
-      # Compute empiric alpha.
-      alpha <- stats::quantile(x=x,
-                               probs=q,
-                               names=FALSE)
-    } else {
-      # Stochastic alpha.
-      alpha <- stats::qnorm(q, mean=mu, sd=sigma)
-    }
+    # Compute utility.
+    alpha <- apply(prediction_table,
+                   MARGIN=1,
+                   .acquisition_improvement_empirical_probability,
+                   tau=tau)
     
   } else {
-    ..error_reached_unreachable_code(paste0("hpo.acquisition_function: unknown acquisition function: ", acquisition_function))
+    # Compute the stochastic probability of improvement.
+    
+    # Predict the mean and standard deviation for the parameter sets in parameter
+    # data.
+    prediction_table <- .predict(object=object,
+                                 data=parameter_data,
+                                 type="sd")
+    
+    # Stochastic values
+    alpha <- stats::pnorm((prediction_table$mu - tau) / prediction_table$sigma)
   }
   
   return(alpha)
 }
+
+
+
+acquisition_expected_improvement <- function(object,
+                                             parameter_data,
+                                             acquisition_data){
+  # The definition of expected improvement is found in Shahriari, B., Swersky,
+  # K., Wang, Z., Adams, R. P. & de Freitas, N. Taking the Human Out of the
+  # Loop: A Review of Bayesian Optimization. Proc. IEEE 104, 148–175 (2016).
+  browser()
+  # Get the incumbent score.
+  tau <- acquisition_data$score_estimate
+  
+  # Predict the mean and standard deviation for the parameter sets in parameter
+  # data.
+  prediction_table <- .predict(object=object,
+                               data=parameter_data,
+                               type="sd")
+  
+  # Compute a z-score.
+  z <- (prediction_table$mu - tau) / prediction_table$sigma
+
+  # Compute the expected improvement.
+  alpha <- (prediction_table$mu - tau) * stats::pnorm(z) + prediction_table$sigma * stats::dnorm(z)
+  
+  return(alpha)
+}
+
+
+
+acquisition_upper_confidence_bound <- function(object,
+                                               parameter_data,
+                                               acquisition_data){
+  # The definition of upper confidence bound is adapted from Srinivas, N.,
+  # Krause, A., Kakade, S. M. & Seeger, M. W. Information-Theoretic Regret
+  # Bounds for Gaussian Process Optimization in the Bandit Setting. IEEE
+  # Trans. Inf. Theory 58, 3250–3265 (2012).
+  browser()
+  # Find the number hyperparameters.
+  n_parameters <- length(object@target_hyperparameters)
+  
+  # Predict the mean and standard deviation for the parameter sets in parameter
+  # data.
+  prediction_table <- .predict(object=object,
+                               data=parameter_data,
+                               type="sd")
+  
+  # Compute the beta parameter.
+  beta <- 2/5 * log(5/3 * n_parameters * (acquisition_data$t + 1)^2 * pi^2)
+  
+  # Compute alpha
+  alpha <- prediction_table$mu + beta * prediction_table$sigma
+  
+  return(alpha)
+}
+  
+
+
+acquisition_bayes_upper_confidence_bound <- function(object,
+                                                     parameter_data,
+                                                     acquisition_data){
+  # The definition of the Bayesian upper confidence bound is adapted from
+  # Kaufmann, E., Cappé, O. & Garivier, A. On Bayesian upper confidence bounds
+  # for bandit problems. in Artificial intelligence and statistics 592–600
+  # (2012).
+  
+  # Compute the quantile we are interested in.
+  q <- 1.0 - 1.0 / (acquisition_data$t + 1)
+  browser()
+  if("percentile" %in% get_prediction_type(object)){
+    # Compute empiric alpha.
+    alpha <- .predict(object=object,
+                      data=data,
+                      type="percentile",
+                      percentile=q)$percentile
+    
+  } else {
+    # Predict the mean and standard deviation for the parameter sets in parameter
+    # data.
+    prediction_table <- .predict(object=object,
+                                 data=parameter_data,
+                                 type="sd")
+    
+    # Stochastic alpha.
+    alpha <- stats::qnorm(q, mean=prediction_table$mu, sd=prediction_table$sigma)
+  }
+  
+  return(alpha)
+}
+
 
 
 
