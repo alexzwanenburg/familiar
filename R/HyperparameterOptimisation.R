@@ -720,7 +720,14 @@ setMethod("optimise_hyperparameters", signature(object="familiarModel", data="da
             
             # Check whether any combination yielded anything valid.
             skip_optimisation <- incumbent_set$summary_score == -1.0
-            browser()
+            
+            # Update n_intensify_step_bootstraps and n_max_intensify_steps when
+            # exploration_method equals none. There is no reason to perform
+            # steps sequentially as there is no pruning.
+            if(exploration_method == "none"){
+              n_intensify_step_bootstraps <- n_intensify_step_bootstraps * n_max_intensify_steps
+              n_max_intensify_steps <- 1L
+            }
             optimisation_step <- 0L
             while(optimisation_step < n_max_optimisation_steps & !skip_optimisation){
               
