@@ -714,10 +714,6 @@ setMethod("optimise_hyperparameters", signature(object="familiarModel", data="da
                            indent=message_indent+1L,
                            verbose=verbose)
             
-            
-            # Initialise vector to track old config scores and parameter ids.
-            stop_list <- ..initialise_hyperparameter_optimisation_stopping_criteria()
-            
             # Check whether any combination yielded anything valid.
             skip_optimisation <- incumbent_set$summary_score == -1.0
             
@@ -728,6 +724,12 @@ setMethod("optimise_hyperparameters", signature(object="familiarModel", data="da
               n_intensify_step_bootstraps <- n_intensify_step_bootstraps * n_max_intensify_steps
               n_max_intensify_steps <- 1L
             }
+            
+            # Create list with stopping criteria based on initial runs.
+            stop_list <- ..update_hyperparameter_optimisation_stopping_criteria(set_data=incumbent_set,
+                                                                                stop_data=NULL,
+                                                                                tolerance=convergence_tolerance)
+            
             optimisation_step <- 0L
             while(optimisation_step < n_max_optimisation_steps & !skip_optimisation){
               
@@ -815,27 +817,18 @@ setMethod("optimise_hyperparameters", signature(object="familiarModel", data="da
                                      score_results$results,
                                      use.names=TRUE)
                 
-                # Find information regarding the dataset that has the highest
-                # optimisation score from among the challengers and the
-                # incumbent.
-                incumbent_set <- get_best_hyperparameter_set(score_table=score_table,
-                                                             parameter_table=parameter_table,
-                                                             optimisation_model=optimisation_model_prototype,
-                                                             n_max_bootstraps=n_max_bootstraps,
-                                                             n=1L,
-                                                             parameter_id_set=c(parameter_id_incumbent, parameter_id_challenger))
-                
                 # Find scores and return parameter ids for challenger and
                 # incumbent hyperparameter sets. Compared to the original SMAC
                 # algorithm, we actively eliminate unsuccessful challengers. To
                 # do so we determine the probability that the optimisation score
                 # of a challenger does not exceed the incumbent score.
-                runoff_parameter_ids <- .compare_hyperparameter_optimisation_scores(score_table=optimisation_score_table,
-                                                                                    parameter_id_incumbent=parameter_id_incumbent,
-                                                                                    parameter_id_challenger=parameter_id_challenger,
-                                                                                    acquisition_function=acquisition_function,
-                                                                                    exploration_method=exploration_method,
-                                                                                    intensify_stop_p_value=intensify_stop_p_value)
+                runoff_parameter_ids <- .compare_hyperparameter_sets(score_table=score_table,
+                                                                     parameter_table=parameter_table,
+                                                                     optimisation_model=optimisation_model_prototype,
+                                                                     parameter_id_incumbent=parameter_id_incumbent,
+                                                                     parameter_id_challenger=parameter_id_challenger,
+                                                                     exploration_method=exploration_method,
+                                                                     intensify_stop_p_value=intensify_stop_p_value)
                 
                 # Extract hyperparameter set identifiers.
                 parameter_id_incumbent <- runoff_parameter_ids$parameter_id_incumbent
@@ -849,7 +842,7 @@ setMethod("optimise_hyperparameters", signature(object="familiarModel", data="da
                 
                 # Update the model that predicts the time a process takes to
                 # complete training.
-                time_optimisation_model <- .create_hyperparameter_time_optimisation_model(score_table=optimisation_score_table,
+                time_optimisation_model <- .create_hyperparameter_time_optimisation_model(score_table=score_table,
                                                                                           parameter_table=parameter_table,
                                                                                           optimisation_function=optimisation_function)
               }
@@ -858,28 +851,29 @@ setMethod("optimise_hyperparameters", signature(object="familiarModel", data="da
               # We assess improvement to provide early stopping on non-improving
               # incumbents.
               
-              # Get all runs and determine incumbent parameter id.
-              incumbent_set_data <- ..get_best_hyperparameter_set(optimisation_score_table=optimisation_score_table,
-                                                                  acquisition_function=acquisition_function)
+              # Get all runs and compute details for the incumbent set.
+              incumbent_set <- get_best_hyperparameter_set(score_table=score_table,
+                                                           parameter_table=parameter_table,
+                                                           optimisation_model=optimisation_model_prototype,
+                                                           n_max_bootstraps=n_max_bootstraps)
               
               # Update list with stopping criteria
-              stop_list <- ..update_hyperparameter_optimisation_stopping_criteria(score_table=optimisation_score_table,
-                                                                                  parameter_id_incumbent=incumbent_set_data$param_id,
-                                                                                  stop_list=stop_list,
-                                                                                  tolerance=convergence_tolerance,
-                                                                                  acquisition_function=acquisition_function)
+              stop_list <- ..update_hyperparameter_optimisation_stopping_criteria(set_data=incumbent_set,
+                                                                                  stop_data=stop_list,
+                                                                                  tolerance=convergence_tolerance)
               
               # Message progress.
               logger.message(paste0("Hyperparameter optimisation: SMBO iteration ", optimisation_step + 1L, ": score ",
-                                    incumbent_set_data$optimisation_score, "; ",
-                                    ..parse_hyperparameters_to_string(id=incumbent_set_data$param_id,
+                                    incumbent_set$summary_score, "; ",
+                                    ..parse_hyperparameters_to_string(id=incumbent_set$param_id,
                                                                       parameter_table=parameter_table,
                                                                       parameter_list=parameter_list)),
                              indent=message_indent+1L,
                              verbose=verbose)
               
               # Break if the convergence counter reaches a certain number
-              if(stop_list$convergence_counter >= convergence_stopping){
+              if(stop_list$convergence_counter_score >= convergence_stopping | 
+                 stop_list$convergence_counter_parameter_id >= convergence_stopping){
                 
                 # Message convergence
                 logger.message(paste0("Hyperparameter optimisation: Optimisation stopped early as convergence was achieved."),
@@ -896,16 +890,17 @@ setMethod("optimise_hyperparameters", signature(object="familiarModel", data="da
             ##### SMBO - Wrap-up and report-------------------------------------
             
             # Get all runs and determine incumbent parameter id.
-            optimal_set_data <- ..get_best_hyperparameter_set(optimisation_score_table=optimisation_score_table,
-                                                              acquisition_function=acquisition_function,
-                                                              n=1L)
+            incumbent_set <- get_best_hyperparameter_set(score_table=score_table,
+                                                         parameter_table=parameter_table,
+                                                         optimisation_model=optimisation_model_prototype,
+                                                         n_max_bootstraps=n_max_bootstraps)
             
             # Add corresponding hyper parameters and remove redundant columns.
-            optimal_set_table <- parameter_table[param_id==optimal_set_data$param_id, ]
+            optimal_set_table <- parameter_table[param_id==incumbent_set$param_id, ]
             optimal_set_table[ ,"param_id":=NULL]
             
             # Check that a suitable set of hyperparameters was found.
-            if(optimal_set_data$optimisation_score > -1){
+            if(incumbent_set$summary_score > -1){
               object@hyperparameters <- as.list(optimal_set_table)
               
             } else {
