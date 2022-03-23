@@ -854,125 +854,63 @@ get_best_hyperparameter_set <- function(score_table,
 
 
 
-..update_hyperparameter_optimisation_stopping_criteria <- function(score_table,
-                                                                   parameter_id_incumbent,
-                                                                   stop_list,
-                                                                   tolerance=1E-2,
-                                                                   acquisition_function){
+..update_hyperparameter_optimisation_stopping_criteria <- function(set_data,
+                                                                   stop_data=NULL,
+                                                                   tolerance=1E-2){
   
-  # Suppress NOTES due to non-standard evaluation in data.table
-  param_id <- NULL
+  # Store the summary score. Note that the latest score is always appended.
+  summary_scores <- c(stop_data$score,
+                      set_data$summary_score)
   
-  # Compute aggregate optimisation score.
-  summary_score_table <- metric.summarise_optimisation_score(score_table=score_table[param_id==parameter_id_incumbent, ],
-                                                             method=acquisition_function,
-                                                             replace_na=FALSE)
+  # Store the parameter id of the incumbent set. Note that the most recent
+  # hyperparameter set identifier is always appended.
+  incumbent_parameter_id <- c(stop_data$parameter_id,
+                              set_data$param_id)
   
-  # Read the convergence counter.
-  convergence_counter <- stop_list$convergence_counter
+  # Read the convergence counters. Can be NULL initially.
+  convergence_counter_score <- stop_data$convergence_counter_score
+  if(is.null(convergence_counter_score)) convergence_counter_score <- 0L
   
-  # Assess convergence and stability
-  if(length(stop_list$score) >= 4){
-    
-    # Calculate mean over last 4 incumbent scores and compare with incumbent
-    # Note that if the series is converging, the difference between the moving
-    # average over the last 4 incumbents and the current incumbent should be
-    # positive or 0.
-    recent_scores <- tail(stop_list$score, n=4L)
-    recent_parameter_id <- tail(stop_list$parameter_id, n=4L)
-    
-    # Determine the max absolute deviation from the mean.
-    max_abs_deviation <- max(recent_scores) - min(recent_scores)
-    
-    # Start counting convergence if:
-    #
-    # 1. The maximum absolute deviation is below the tolerance.
-    #
-    # 2. the param_id of the incumbent dataset has not changed over the last
-    # iterations.
-    if(is.na(max_abs_deviation)){
-      # This means that a combination of parameters that leads to a correctly
-      # predicting model was not found.
-      convergence_counter <- 0L
+  # Convergence counter for parameter identifiers.
+  convergence_counter_parameter_id <- stop_data$convergence_counter_parameter_id
+  if(is.null(convergence_counter_parameter_id)) convergence_counter_parameter_id <- 0L
+  
+  # Update convergence counter for parameter identifiers if there is no change
+  # in the incumbent parameter set. Skip on the first run-through.
+  if(length(incumbent_parameter_id) >= 2){
+    if(all(tail(incumbent_parameter_id, n=3L) == set_data$param_id)){
       
-    } else if(max_abs_deviation <= tolerance | all(recent_parameter_id == parameter_id_incumbent)){
-      # Check if all recent optimal parameter sets are the same or the result is
-      # relatively stable.
-      convergence_counter <- convergence_counter + 1L
+      # Update the convergence counter.
+      convergence_counter_parameter_id <- convergence_counter_parameter_id + 1L
       
     } else {
-      # This means that there is no convergence.
-      convergence_counter <- 0L
+      # Reset the convergence counter.
+      convergence_counter_parameter_id <- 0L
     }
-  } else {
-    convergence_counter <- 0L
   }
   
-  # Append new items to the stop list.
-  return(list("score"=c(stop_list$score, summary_score_table$optimisation_score),
-              "parameter_id"=c(stop_list$parameter_id, parameter_id_incumbent),
-              "convergence_counter"= convergence_counter))
-}
-
-
-
-..update_hyperparameter_optimisation_stopping_criteria <- function(score_table,
-                                                                   parameter_id_incumbent,
-                                                                   stop_list, tolerance=1E-2,
-                                                                   acquisition_function){
-  
-  # Suppress NOTES due to non-standard evaluation in data.table
-  param_id <- NULL
-  
-  # Compute aggregate optimisation score.
-  summary_score_table <- metric.summarise_optimisation_score(score_table=score_table[param_id==parameter_id_incumbent, ],
-                                                             method=acquisition_function,
-                                                             replace_na=FALSE)
-  
-  # Read the convergence counter.
-  convergence_counter <- stop_list$convergence_counter
-  
-  # Assess convergence and stability
-  if(length(stop_list$score) >= 4){
+  # Assess convergence of the summary scores. This is skipped on the first
+  # run-through.
+  if(length(summary_scores) >= 2){
+    # Compute absolute deviation from the mean.
+    max_abs_deviation <- max(abs(tail(summary_scores, n=3L) - mean(tail(summary_scores, n=3L))))
     
-    # Calculate mean over last 4 incumbent scores and compare with incumbent
-    # Note that if the series is converging, the difference between the moving
-    # average over the last 4 incumbents and the current incumbent should be
-    # positive or 0.
-    recent_scores <- tail(stop_list$score, n=4L)
-    recent_parameter_id <- tail(stop_list$parameter_id, n=4L)
-    
-    # Determine the max absolute deviation from the mean.
-    max_abs_deviation <- max(recent_scores) - min(recent_scores)
-    
-    # Start counting convergence if:
-    #
-    # 1. The maximum absolute deviation is below the tolerance.
-    #
-    # 2. the param_id of the incumbent dataset has not changed over the last
-    # iterations.
     if(is.na(max_abs_deviation)){
-      # This means that a combination of parameters that leads to a correctly
-      # predicting model was not found.
-      convergence_counter <- 0L
+      convergence_counter_score <- 0L
       
-    } else if(max_abs_deviation <= tolerance | all(recent_parameter_id == parameter_id_incumbent)){
-      # Check if all recent optimal parameter sets are the same or the result is
-      # relatively stable.
-      convergence_counter <- convergence_counter + 1L
+    } else if(max_abs_deviation <= tolerance){
+      convergence_counter_score <- convergence_counter_score + 1L
       
     } else {
-      # This means that there is no convergence.
-      convergence_counter <- 0L
+      convergence_counter_score <- 0L
     }
-  } else {
-    convergence_counter <- 0L
   }
   
-  # Append new items to the stop list.
-  return(list("score"=c(stop_list$score, summary_score_table$optimisation_score),
-              "parameter_id"=c(stop_list$parameter_id, parameter_id_incumbent),
-              "convergence_counter"= convergence_counter))
+  # Return list with stopping parameters.
+  return(list("score"=summary_scores,
+              "parameter_id"=incumbent_parameter_id,
+              "convergence_counter_score" = convergence_counter_score,
+              "convergence_counter_parameter_id" = convergence_counter_parameter_id))
 }
 
 
