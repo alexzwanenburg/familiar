@@ -922,7 +922,7 @@ get_best_hyperparameter_set <- function(score_table,
                                                         n_intensify_step_bootstraps){
   
   # Suppress NOTES due to non-standard evaluation in data.table
-  param_id <- sampled <- run_id <- to_sample <- sample_id <- NULL
+  param_id <- sampled <- run_id <- to_sample <- sample_id <- n <- NULL
   
   # Combine all parameter ids.
   parameter_ids <- c(parameter_id_incumbent, parameter_id_challenger)
@@ -953,68 +953,57 @@ get_best_hyperparameter_set <- function(score_table,
   # Add a to_sample column to mark new samples to be made.
   run_table[, "to_sample":=FALSE]
   
-  # Find all run ids that have been sampled using the incumbent hyperparameter
-  # set.
-  run_id_incumbent <- unique(run_table[param_id==parameter_id_incumbent & sampled==TRUE, ]$run_id)
+  # Find runs that have only been fully, partially or not sampled by the hyperparameter sets.
+  sampled_runs <- run_table[sampled == TRUE, list("n"=.N), by="run_id"]
   
-  # Find all run ids that have been sampled using any of the challenger
-  # hyperparameter sets.
-  run_id_challenger <- unique(run_table[param_id %in% parameter_id_challenger & sampled==TRUE, ]$run_id)
+  # Identify run identifiers.
+  fully_sampled_runs <- sampled_runs[n == length(parameter_ids)]$run_id
+  partially_sampled_runs <- sampled_runs[n > 0 & n < length(parameter_ids)]$run_id
+  unsampled_runs <- setdiff(seq_len(n_max_bootstraps), sampled_runs[n > 0]$run_id)
   
-  # Determine run ids that have been sampled by challengers, but not by the
-  # incumbent.
-  run_id_incumbent_new <- setdiff(run_id_challenger, run_id_incumbent)
+  # Check that there are any runs to be sampled.
+  if(length(fully_sampled_runs) == n_max_bootstraps) return(NULL)
   
-  # Identify if additional new bootstraps should be made for the incumbent.
-  if(length(run_id_incumbent_new) < n_intensify_step_bootstraps){
-    # Sample n_sample new runs
-    n_sample <- n_intensify_step_bootstraps - length(run_id_incumbent_new)
+  # Compute the number of runs that could be completed new. This is 1/3rd of
+  # n_max_bootstraps, with a minimum of 1. This makes the selection of new runs
+  # more conservative, saving time and resources.
+  n_new_runs <- max(c(1L, floor(n_intensify_step_bootstraps / 2)))
+  
+  # An exception should be made if there are no partially sampled runs. Then up
+  # to n_intensify_step_bootstraps should be sampled.
+  if(length(partially_sampled_runs) == 0) n_new_runs <- n_intensify_step_bootstraps
+  
+  # Iterate over the parameter identifiers and identify what runs should be
+  # sampled.
+  for(parameter_id in parameter_ids){
     
-    # Determine which run ids have not been sampled by the incumbent.
-    run_id_incumbent_new_samples <- unique(run_table[param_id==parameter_id_incumbent & sampled==FALSE, ]$run_id)
+    # Find partially sampled runs that have not been sampled for the current
+    # hyperparameter set.
+    current_partially_sampled_runs <- setdiff(partially_sampled_runs,
+                                              run_table[sampled==TRUE & param_id==parameter_id, ]$run_id)
     
-    # Update n_sample to be the smallest of itself or the number of unsampled
-    # runs. This prevents an overflow beyond n_max_bootstraps.
-    n_sample <- min(c(n_sample, length(run_id_incumbent_new_samples)))
-    
-    # Sample and add to run_id_incumbent_new
-    if(n_sample > 0){
-      run_id_incumbent_new <- c(run_id_incumbent_new,
-                                fam_sample(x=run_id_incumbent_new_samples,
-                                           size=n_sample,
-                                           replace=FALSE))
+    # Select runs to be sampled from among those that have been sampled by other
+    # hyperparameter sets.
+    if(length(current_partially_sampled_runs) > 0){
+      run_table[run_id %in% head(current_partially_sampled_runs, n=n_intensify_step_bootstraps) & param_id==parameter_id, "to_sample":=TRUE]
     }
     
-  } else {
-    # Sample up to n_intensify_step_bootstraps from run_id_incumbent_new
-    run_id_incumbent_new <- fam_sample(x=run_id_incumbent_new, 
-                                       size=n_intensify_step_bootstraps,
-                                       replace=FALSE)
+    # Add completely new runs if there is room.
+    if(length(current_partially_sampled_runs) < n_intensify_step_bootstraps &
+       length(unsampled_runs) > 0){
+      
+      # Determine the number of new runs that should be added.
+      n_current_new_runs <- min(c(n_new_runs,
+                                  n_intensify_step_bootstraps - length(current_partially_sampled_runs)))
+      
+      # Select up to current_new_runs to sample.
+      run_table[run_id %in% head(unsampled_runs, n=n_current_new_runs) & param_id==parameter_id, "to_sample":=TRUE]
+    }
   }
   
-  # Add new runs to the incumbent and applicable challengers.
-  if(length(run_id_incumbent_new) > 0){
-    run_table[run_id %in% run_id_incumbent_new & sampled==FALSE,
-              "to_sample":=TRUE]
-  }
-  
-  # Add incumbent runs that have not been performed by the challengers to the
-  # sample.
-  run_table[param_id %in% parameter_id_challenger & run_id %in% run_id_incumbent & sampled==FALSE,
-            "to_sample":=TRUE]
-  
-  # Select only those runs that are to be sampled
-  run_table <- run_table[to_sample==TRUE, ]
-  
-  # Do not sample more than n_intensify_step_bootstraps for challengers. We
-  # first create a randomly ordered sample identifier, and than select up to
-  # n_intensify_step_bootstraps runs from that list.
-  run_table[param_id %in% parameter_id_challenger,
-            "sample_id":=fam_sample(x=seq_len(.N), size=.N), by="param_id"]
-  
-  run_table <- run_table[(param_id == parameter_id_incumbent) |
-                           (param_id %in% parameter_id_challenger & sample_id <= n_intensify_step_bootstraps),
-                         c("param_id", "run_id")]
+  # Select only runs that should be sampled, and return run_id and param_id
+  # columns.
+  run_table <- run_table[to_sample==TRUE , c("param_id", "run_id")]
   
   return(run_table)
 }
