@@ -359,6 +359,7 @@
                                                       data,
                                                       rank_table_list,
                                                       metric_objects,
+                                                      iteration_id,
                                                       time_optimisation_model=NULL,
                                                       overhead_time=NULL,
                                                       verbose=FALSE){
@@ -436,6 +437,9 @@
   
   # Add in process times to the results.
   score_table$results[, "time_taken":=rep(score_table$process_time, each=2*length(metric_objects))]
+  
+  # Add in iteration id.
+  score_table$results[, "iteration_id":=iteration_id]
   
   # Return scores.
   return(score_table)

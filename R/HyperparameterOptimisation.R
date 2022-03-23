@@ -605,7 +605,6 @@ setMethod("optimise_hyperparameters", signature(object="familiarModel", data="da
                                                          optimisation_metric = metric,
                                                          optimisation_function = optimisation_function)
             
-            
             ##### Perform initial set of computations --------------------------
             if(measure_time & n_intensify_step_bootstraps > 1L) {
               
@@ -629,6 +628,7 @@ setMethod("optimise_hyperparameters", signature(object="familiarModel", data="da
                                                                        rank_table_list=rank_table_list,
                                                                        parameter_table=parameter_table,
                                                                        metric_objects=metric_object_list,
+                                                                       iteration_id=0L,
                                                                        verbose=verbose)
               
               # Get score table.
@@ -662,6 +662,7 @@ setMethod("optimise_hyperparameters", signature(object="familiarModel", data="da
                                                                          rank_table_list=rank_table_list,
                                                                          parameter_table=parameter_table,
                                                                          metric_objects=metric_object_list,
+                                                                         iteration_id=0L,
                                                                          time_optimisation_model=time_optimisation_model,
                                                                          overhead_time=score_results$overhead_time,
                                                                          verbose=verbose)
@@ -690,6 +691,7 @@ setMethod("optimise_hyperparameters", signature(object="familiarModel", data="da
                                                                          data=data,
                                                                          rank_table_list=rank_table_list,
                                                                          parameter_table=parameter_table,
+                                                                         iteration_id=0L,
                                                                          metric_objects=metric_object_list,
                                                                          verbose=verbose)
               
@@ -807,6 +809,7 @@ setMethod("optimise_hyperparameters", signature(object="familiarModel", data="da
                                                                            rank_table_list=rank_table_list,
                                                                            parameter_table=parameter_table,
                                                                            metric_objects=metric_object_list,
+                                                                           iteration_id=optimisation_step + 1L,
                                                                            time_optimisation_model=time_optimisation_model,
                                                                            overhead_time=score_results$overhead_time,
                                                                            verbose=verbose)
@@ -903,6 +906,14 @@ setMethod("optimise_hyperparameters", signature(object="familiarModel", data="da
             if(incumbent_set$summary_score > -1){
               object@hyperparameters <- as.list(optimal_set_table)
               
+              logger.message(paste0("Hyperparameter optimisation: A suitable set of hyperparameters was identified: score ",
+                                    incumbent_set$summary_score, "; ",
+                                    ..parse_hyperparameters_to_string(id=incumbent_set$param_id,
+                                                                      parameter_table=parameter_table,
+                                                                      parameter_list=parameter_list)),
+                             indent=message_indent,
+                             verbose=verbose)
+              
             } else {
               logger.message(paste0("Hyperparameter optimisation: No suitable set of hyperparameters was found."),
                              indent=message_indent,
@@ -914,7 +925,7 @@ setMethod("optimise_hyperparameters", signature(object="familiarModel", data="da
             
             # Update attributes of object.
             object@hyperparameter_data <- score_table[parameter_table, on=.NATURAL]
-            
+            browser()
             return(object)
           })
 
