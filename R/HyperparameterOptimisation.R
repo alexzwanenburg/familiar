@@ -397,6 +397,11 @@ setMethod("optimise_hyperparameters", signature(object="familiarModel", data="da
                                             var_name="optimisation_function",
                                             values=.get_available_optimisation_functions(hyperparameter_learner=hyperparameter_learner))
             
+            # Check if exploration_method is correctly specified.
+            .check_parameter_value_is_valid(x=exploration_method,
+                                            var_name="exploration_method",
+                                            values=.get_available_hyperparameter_exploration_methods())
+            
             # Report on methodology used.
             optimisation_description <- switch(optimisation_function,
                                                "max_validation"="maximising out-of-bag performance",
