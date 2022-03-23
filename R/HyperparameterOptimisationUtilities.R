@@ -1021,56 +1021,92 @@ get_best_hyperparameter_set <- function(score_table,
 
 
 
-.compare_hyperparameter_optimisation_scores <- function(score_table,
-                                                        parameter_id_incumbent,
-                                                        parameter_id_challenger,
-                                                        acquisition_function,
-                                                        exploration_method="successive_halving",
-                                                        intensify_stop_p_value){
+.compare_hyperparameter_sets <- function(score_table,
+                                         parameter_table,
+                                         optimisation_model,
+                                         parameter_id_incumbent,
+                                         parameter_id_challenger,
+                                         exploration_method="successive_halving",
+                                         intensify_stop_p_value){
   
   # Suppress NOTES due to non-standard evaluation in data.table
-  param_id <- challenger_score <- p_value <- NULL
+  param_id <- p_value <- summary_score <- NULL
   
-  # Determine scores and comparison p-values
-  comparison_table <- score_table[param_id %in% parameter_id_challenger,
-                                  ..compare_hyperparameter_optimisation_scores(challenger_score_table=.SD, 
-                                                                               incumbent_score_table=score_table[param_id==parameter_id_incumbent, ],
-                                                                               exploration_method=exploration_method,
-                                                                               acquisition_function=acquisition_function),
-                                  by=c("param_id")]
-  
-  if(any(comparison_table$challenger_score > comparison_table$incumbent_score)){
-    # If a challenger beats the incumbent, replace the incumbent.
-    param_id_incumbent_new  <- head(comparison_table[order(-challenger_score)], n=1L)$param_id
+  if(exploration_method == "successive_halving"){
+    # Compute summary scores.
+    data <- .compute_hyperparameter_summary_score(score_table=score_table,
+                                                  parameter_table=parameter_table,
+                                                  optimisation_model=optimisation_model)
     
-  } else {
-    # Do not replace the incumbent.
-    param_id_incumbent_new <- parameter_id_incumbent
-  }
-  
-  if(exploration_method == "stochastic_reject"){
-    # Remove new incumbent from the challengers and determine remaining
-    # challengers by against significance threshold alpha
-    param_id_challenger_new <- comparison_table[param_id != param_id_incumbent_new &
-                                                  p_value > intensify_stop_p_value, ]$param_id
+    # Select only data concerning the incumbent and challenger sets
+    data <- data[param_id %in% c(parameter_id_incumbent, parameter_id_challenger)]
     
-  } else if(exploration_method == "successive_halving"){
-    # Remove the worst half of performers.
-    n_selectable <- floor(length(parameter_id_challenger + 1) / 2)
+    # Order the relevant data according to summary score.
+    data <- data[order(-summary_score)]
     
-    # Order by decreasing challenger score and keep the best half.
-    param_id_challenger_new <- head(comparison_table[order(-challenger_score)], n=n_selectable)$param_id
+    # Remove the worst half of performers. For simplicity we increase the number
+    # of selectable hyperparameters by one to account for the challenger.
+    n_selectable <- floor((length(parameter_id_challenger)) / 2)
+    
+    # Select the new incumbent, which may be identical to the old incumbent.
+    param_id_incumbent_new <- head(data, n=1L)$param_id
+    
+    # Select the remaining challengers, which temporarily includes the new
+    # incumbent.
+    param_id_challenger_new <- head(data, n=n_selectable+1L)$param_id
+    
+  } else if(exploration_method == "stochastic_reject"){
+    # Compute hyperparameter optimisation scores. First check if the score table
+    # already contains optimisation scores.
+    if(!"optimisation_score" %in% colnames(score_table)){
+      data <- .compute_hyperparameter_optimisation_score(score_table=score_table[param_id %in% c(parameter_id_incumbent, parameter_id_challenger)],
+                                                         optimisation_function=optimisation_model@optimisation_function)
+      
+    } else {
+      data <- data.table::copy(score_table)
+    }
+
+    # Compute summary scores.
+    summary_data <- .compute_hyperparameter_summary_score(score_table=data,
+                                                          parameter_table=parameter_table,
+                                                          optimisation_model=optimisation_model)
+    
+    # Select only data concerning the incumbent and challenger sets
+    summary_data <- summary_data[param_id %in% c(parameter_id_incumbent, parameter_id_challenger)]
+    
+    # Order the relevant data according to summary score.
+    summary_data <- summary_data[order(-summary_score)]
+    
+    # Select the new incumbent, which may be identical to the old incumbent.
+    param_id_incumbent_new <- head(summary_data, n=1L)$param_id
+    
+    # Select the preliminary set of challengers.
+    param_id_challenger_new <- setdiff(union(parameter_id_incumbent, parameter_id_challenger),
+                                       param_id_incumbent_new)
+    
+    # Compare optimisation scores and compute p-values.
+    p_value_table <-  data[param_id %in% param_id_challenger_new,
+                           ..compare_hyperparameter_optimisation_scores(challenger_score_table=.SD, 
+                                                                        incumbent_score_table=data[param_id==param_id_incumbent_new]),
+                           by=c("param_id")]
+    
+    # Select parameter identifiers with p-values above the thresholds.
+    param_id_challenger_new <- p_value_table[p_value > intensify_stop_p_value, ]$param_id
     
   } else if(exploration_method == "none"){
-    # Do not remove anything.
+    # Keep the incumbent set.
+    param_id_incumbent_new <- parameter_id_incumbent
+    
+    # Keep the challengers.
     param_id_challenger_new <- parameter_id_challenger
+    
+  } else {
+    ..error_reached_unreachable_code(paste0(".compare_hyperparameter_sets: encountered unknown exploration method: ", exploration_method))
   }
   
-  # Add incumbent to the challengers.
-  param_id_challenger_new <- union(param_id_challenger_new, parameter_id_incumbent)
-  
-  # Remove the new incumbent from the challengers.
-  param_id_challenger_new <- setdiff(param_id_challenger_new, param_id_incumbent_new)
+  # Update param_id_challenger_new by removing the incumbent set.
+  param_id_challenger_new <- setdiff(union(param_id_incumbent_new, param_id_challenger_new),
+                                     param_id_incumbent_new)
   
   return(list("parameter_id_incumbent"=param_id_incumbent_new,
               "parameter_id_challenger"=param_id_challenger_new))
@@ -1079,9 +1115,7 @@ get_best_hyperparameter_set <- function(score_table,
 
 
 ..compare_hyperparameter_optimisation_scores <- function(challenger_score_table,
-                                                         incumbent_score_table,
-                                                         exploration_method,
-                                                         acquisition_function){
+                                                         incumbent_score_table){
   # Suppress NOTES due to non-standard evaluation in data.table
   run_id <- optimisation_score <- NULL
   
@@ -1095,29 +1129,13 @@ get_best_hyperparameter_set <- function(score_table,
   challenger_score_table <- data.table::copy(challenger_score_table[run_id %in% run_id_match, ])[is.na(optimisation_score), "optimisation_score":=-1.0]
   incumbent_score_table <- data.table::copy(incumbent_score_table[run_id %in% run_id_match, ])[is.na(optimisation_score), "optimisation_score":=-1.0]
   
-  # Calculate the aggregate optimisation score for challenger and incumbent for
-  # the matching bootstraps.
-  challenger_score <- metric.summarise_optimisation_score(score_table=challenger_score_table,
-                                                          method=acquisition_function)$optimisation_score
-  incumbent_score <- metric.summarise_optimisation_score(score_table=incumbent_score_table,
-                                                         method=acquisition_function)$optimisation_score
-  
-  if(exploration_method == "stochastic_reject"){
-    # Find p-value for matching means using paired wilcoxon rank test
-    p_value <- suppressWarnings(stats::wilcox.test(x=challenger_score_table[order(run_id_match)]$optimisation_score,
-                                                   y=incumbent_score_table[order(run_id_match)]$optimisation_score,
-                                                   paired=TRUE,
-                                                   alternative="less")$p.value)
-    # Return list with data
-    return(list("challenger_score"=challenger_score,
-                "incumbent_score"=incumbent_score,
-                "p_value"=p_value))
-    
-  } else {
-    # Return list with data
-    return(list("challenger_score"=challenger_score,
-                "incumbent_score"=incumbent_score))
-  }
+  # Find p-value for matching means using paired wilcoxon rank test.
+  p_value <- suppressWarnings(stats::wilcox.test(x=challenger_score_table[order(run_id_match)]$optimisation_score,
+                                                 y=incumbent_score_table[order(run_id_match)]$optimisation_score,
+                                                 paired=TRUE,
+                                                 alternative="less")$p.value)
+  # Return list with p-values.
+  return(list("p_value"=p_value))
 }
 
 
