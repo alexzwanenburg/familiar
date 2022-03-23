@@ -854,15 +854,6 @@ get_best_hyperparameter_set <- function(score_table,
 
 
 
-..initialise_hyperparameter_optimisation_stopping_criteria <- function(){
-  # Initialise the stop list.
-  return(list("score"=numeric(0),
-              "parameter_id"=integer(0),
-              "convergence_counter"= 0L))
-}
-
-
-
 ..update_hyperparameter_optimisation_stopping_criteria <- function(score_table,
                                                                    parameter_id_incumbent,
                                                                    stop_list,
