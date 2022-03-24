@@ -78,7 +78,7 @@ new_object <- familiar:::optimise_hyperparameters(object=object,
                                                   verbose=verbose)
 
 testthat::test_that("Test that \"none\" feature selection keeps all features.",{
-  testthat::expect_equal(all(new_object@hyperparameter_data$sign_size == familiar:::get_n_features(data)), TRUE)
+  testthat::expect_equal(all(new_object@hyperparameter_data$parameter_table$sign_size == familiar:::get_n_features(data)), TRUE)
 })
 
 
@@ -102,8 +102,8 @@ new_object <- familiar:::optimise_hyperparameters(object=object,
                                                   verbose=verbose)
 
 testthat::test_that("Test that \"random\" feature selection can select up to the maximum number of features.",{
-  testthat::expect_equal(all(new_object@hyperparameter_data$sign_size >= 1L &
-                               new_object@hyperparameter_data$sign_size <= familiar:::get_n_features(data)), TRUE)
+  testthat::expect_equal(all(new_object@hyperparameter_data$parameter_table$sign_size >= 1L &
+                               new_object@hyperparameter_data$parameter_table$sign_size <= familiar:::get_n_features(data)), TRUE)
 })
 
 
@@ -127,7 +127,7 @@ new_object <- familiar:::optimise_hyperparameters(object=object,
                                                   verbose=verbose)
 
 testthat::test_that("Test that \"signature_only\" feature selection keeps only signature features.",{
-  testthat::expect_equal(all(new_object@hyperparameter_data$sign_size == 2L), TRUE)
+  testthat::expect_equal(all(new_object@hyperparameter_data$parameter_table$sign_size == 2L), TRUE)
 })
 
 
@@ -152,9 +152,10 @@ new_object <- familiar:::optimise_hyperparameters(object=object,
                                                   verbose=verbose)
 
 testthat::test_that("Test that \"signature_only\" feature selection keeps only signature features.",{
-  testthat::expect_equal(all(new_object@hyperparameter_data$sign_size >= 2L & new_object@hyperparameter_data$sign_size <= 5L), TRUE)
-  testthat::expect_equal(all(new_object@hyperparameter_data$sign_size %in% 2:5), TRUE)
-  testthat::expect_equal(length(setdiff(unique(new_object@hyperparameter_data$sign_size), c(2, 5))) >= 1, TRUE)
+  testthat::expect_equal(all(new_object@hyperparameter_data$parameter_table$sign_size >= 2L &
+                               new_object@hyperparameter_data$parameter_table$sign_size <= 5L), TRUE)
+  testthat::expect_equal(all(new_object@hyperparameter_data$parameter_table$sign_size %in% 2:5), TRUE)
+  testthat::expect_equal(length(setdiff(unique(new_object@hyperparameter_data$parameter_table$sign_size), c(2, 5))) >= 1, TRUE)
 })
 
 
@@ -178,7 +179,7 @@ new_object <- familiar:::optimise_hyperparameters(object=object,
                                                   verbose=verbose)
 
 testthat::test_that("Test that \"signature_only\" feature selection keeps only signature features.",{
-  testthat::expect_setequal(unique(new_object@hyperparameter_data$sign_size), c(1, 4, 8))
+  testthat::expect_setequal(unique(new_object@hyperparameter_data$parameter_table$sign_size), c(1, 4, 8))
 })
 
 
@@ -215,8 +216,8 @@ expected_rows_lower <- 2 * 16 + 10 * 4 * 2
 expected_rows_upper <- expected_rows_lower + 2 * 4
 
 testthat::test_that("Test that \"none\" exploration method does not prune any hyperparameter sets during intensification",{
-  testthat::expect_lte(nrow(new_object@hyperparameter_data), expected_rows_upper)
-  testthat::expect_gte(nrow(new_object@hyperparameter_data), expected_rows_lower)
+  testthat::expect_lte(nrow(new_object@hyperparameter_data$score_table), expected_rows_upper)
+  testthat::expect_gte(nrow(new_object@hyperparameter_data$score_table), expected_rows_lower)
 })
 
 
@@ -243,8 +244,8 @@ expected_rows_lower <- 2 * 16 + 10 * 2 + 5 * 2 + 2 * 2 + 1 * 2
 expected_rows_upper <- expected_rows_lower + 2 * 4
 
 testthat::test_that("Test that \"successive_halving\" exploration method may prune any hyperparameter sets during intensification",{
-  testthat::expect_lte(nrow(new_object@hyperparameter_data), expected_rows_upper)
-  testthat::expect_gte(nrow(new_object@hyperparameter_data), expected_rows_lower)
+  testthat::expect_lte(nrow(new_object@hyperparameter_data$score_table), expected_rows_upper)
+  testthat::expect_gte(nrow(new_object@hyperparameter_data$score_table), expected_rows_lower)
 })
 
 
@@ -268,6 +269,6 @@ expected_rows_lower <- 2 * 16 * 5 + 10 * 2 * 5
 expected_rows_upper <- 2 * 16 * 5 + 4 * 10 * 2 * 5 + 2 * 4 * 5
 
 testthat::test_that("Test that \"stochastic_reject\" exploration method may prune any hyperparameter sets during intensification",{
-  testthat::expect_lte(nrow(new_object@hyperparameter_data), expected_rows_upper)
-  testthat::expect_gte(nrow(new_object@hyperparameter_data), expected_rows_lower)
+  testthat::expect_lte(nrow(new_object@hyperparameter_data$score_table), expected_rows_upper)
+  testthat::expect_gte(nrow(new_object@hyperparameter_data$score_table), expected_rows_lower)
 })

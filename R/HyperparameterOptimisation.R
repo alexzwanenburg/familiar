@@ -924,8 +924,12 @@ setMethod("optimise_hyperparameters", signature(object="familiarModel", data="da
             }
             
             # Update attributes of object.
-            object@hyperparameter_data <- score_table[parameter_table, on=.NATURAL]
-            browser()
+            object@hyperparameter_data <- list("$parameter_table"=score_table,
+                                               "parameter_table"=parameter_table,
+                                               "time_taken"=NA_real_,
+                                               "hyperparameter_learner"=hyperparameter_learner,
+                                               "optimisation_function"=optimisation_function)
+            
             return(object)
           })
 
