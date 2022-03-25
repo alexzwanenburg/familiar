@@ -462,6 +462,24 @@ test.create_one_feature_invariant_data_set <- function(outcome_type){
 
 
 
+test.create_one_feature_two_values_data_set <- function(outcome_type){
+  # Create good dataset first.
+  data <- test.create_one_feature_data_set(outcome_type=outcome_type)
+  
+  # Get the feature columns
+  feature_column <- get_feature_columns(data)
+  
+  # Find unique values of the feature and use the first 2.
+  feature_values <- head(unique(data@data[[feature_column]]), n=2L)
+  
+  # Fill all the rows while alternating the value.
+  data@data[, (feature_column):=rep_len(feature_values, nrow(data@data))]
+  
+  return(data)
+}
+
+
+
 test.create_wide_data_set <- function(outcome_type){
   
   # Suppress NOTES due to non-standard evaluation in data.table

@@ -69,35 +69,62 @@
                             optional=TRUE,
                             default=NULL)
   
-  if(!is.null(project_dir)) {
-    project_dir <- normalizePath(project_dir, mustWork=TRUE)
-    file_paths$is_temporary <- FALSE
-    
-  } else {
-    temporary_directory <- file.path(tempdir(), "familiar", stringi::stri_rand_strings(1, 8))
-    project_dir <- normalizePath(temporary_directory, mustWork=FALSE)
-    file_paths$is_temporary <- TRUE
-  }
-  
   # Read experiment directory path and create the directory if required
   experiment_dir <- .parse_arg(x_config=config$paths$experiment_dir,
                                x_var=experiment_dir,
                                var_name="experiment_dir",
                                type="character",
                                optional=TRUE,
-                               default="")
+                               default=NULL)
   
-  # Determine if the experiment directory is relative to the project directory,
-  # or if it is its own path.
-  if(.is_absolute_path(experiment_dir)){
-    experiment_dir <- normalizePath(experiment_dir, mustWork=FALSE)
+  # Set temporary directory flag to FALSE by default.
+  file_paths$is_temporary <- FALSE
+  
+  # Check how project_dir and experiment_dir settings should be interpreted.
+  if(!is.null(project_dir)){
+    # Cases 1-3. project_dir exists.
     
-    # If the experiment directory is an absolute path, there is no need to
-    # create a temporary directory.
-    file_paths$is_temporary <- FALSE
+    # Check that project_dir exists, and can be accessed.
+    project_dir <- normalizePath(project_dir, mustWork=TRUE)
+    
+    if(is.null(experiment_dir)){
+      # Case 1. project_dir exists and experiment_dir does not.
+      experiment_dir <- project_dir
+      
+    } else if(.is_absolute_path(experiment_dir)){
+      # Case 2. project_dir exists and experiment_dir is on its own path.
+      experiment_dir <- normalizePath(experiment_dir, mustWork=FALSE)
+      
+    } else {
+      # Case 3. project_dir exists and experiment_dir is a subdirectory.
+      experiment_dir <- normalizePath(file.path(project_dir, experiment_dir), mustWork=FALSE)
+    }
     
   } else {
-    experiment_dir <- normalizePath(file.path(project_dir, experiment_dir), mustWork=FALSE)
+    # Cases 4-6. project_dir does not exist.
+    if(is.null(experiment_dir)){
+      # Case 4. project_dir does not exist, and neither does experiment_dir.
+      
+      # Work in a temporary directory.
+      temporary_directory <- file.path(tempdir(), "familiar", stringi::stri_rand_strings(1, 8))
+      experiment_dir <- project_dir <- normalizePath(temporary_directory, mustWork=FALSE)
+      file_paths$is_temporary <- TRUE
+      
+    } else if(.is_absolute_path(experiment_dir)){
+      # Case 5. project_dir does not exist, and experiment_dir is on its own
+      # path.
+      project_dir <- experiment_dir <- normalizePath(experiment_dir, mustWork=FALSE)
+      
+    } else {
+      # Case 6. project_dir does not exist, and experiment_dir is a
+      # subdirectory. We ignore the fact that experiment_dir may be a
+      # subdirectory, and assign a random name instead.
+      
+      # Work in a temporary directory.
+      temporary_directory <- file.path(tempdir(), "familiar", stringi::stri_rand_strings(1, 8))
+      experiment_dir <- project_dir <- normalizePath(temporary_directory, mustWork=FALSE)
+      file_paths$is_temporary <- TRUE
+    }
   }
   
   file_paths$experiment_dir <- experiment_dir

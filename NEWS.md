@@ -18,6 +18,14 @@
 
 -   Trained models now contain information for features used only for missing data inference.
 
+# Version 1.0.2 (Dolorous Dragon)
+
+## Bug fixes
+
+-   Capture a rare error produced by the *maxstat* package when determining optimal risk stratification thresholds.
+
+-   Fixed unexpected behaviour in interactions between *project_dir* and *experiment_dir* configuration parameters.
+
 # Version 1.0.1 (Capricious Cat)
 
 ## Bug fixes
