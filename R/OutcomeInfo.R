@@ -371,7 +371,7 @@ get_outcome_info_from_backend <- function(){
     surv_group[, "n":=nrow(x) - data.table::shift(cumsum(event + censored + competing), n=1, fill=0, type="lag")]
     
     # Compute the incidence and censoring rates in the interval
-    surv_group[, ":="("interval_survival"= 1.0 - event / n,
+    surv_group[, ":="("interval_survival"= 1.0 - (event + competing) / n,
                       "interval_incidence_rate"=event/ n,
                       "interval_non_censoring_rate"=1.0 - censored / n)]
     

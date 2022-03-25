@@ -134,6 +134,12 @@ as_metric <- function(metric,
                                                        "outcome_type"=outcome_type),
                                                   .sanitise_dots("familiarMetricMAE",
                                                                  ...)))
+  } else if(metric %in% .get_available_rae_metrics()){
+    metric_object <- do.call(methods::new, args=c(list("Class"="familiarMetricRAE",
+                                                       "metric"=metric,
+                                                       "outcome_type"=outcome_type),
+                                                  .sanitise_dots("familiarMetricRAE",
+                                                                 ...)))
     
   } else if(metric %in% .get_available_mlae_metrics()){
     metric_object <- do.call(methods::new, args=c(list("Class"="familiarMetricMLAE",
@@ -147,6 +153,13 @@ as_metric <- function(metric,
                                                        "metric"=metric,
                                                        "outcome_type"=outcome_type),
                                                   .sanitise_dots("familiarMetricMSE",
+                                                                 ...)))
+    
+  } else if(metric %in% .get_available_rse_metrics()){
+    metric_object <- do.call(methods::new, args=c(list("Class"="familiarMetricRSE",
+                                                       "metric"=metric,
+                                                       "outcome_type"=outcome_type),
+                                                  .sanitise_dots("familiarMetricRSE",
                                                                  ...)))
     
   } else if(metric %in% .get_available_msle_metrics()){
@@ -168,6 +181,13 @@ as_metric <- function(metric,
                                                        "metric"=metric,
                                                        "outcome_type"=outcome_type),
                                                   .sanitise_dots("familiarMetricRMSE",
+                                                                 ...)))
+    
+  } else if(metric %in% .get_available_rrse_metrics()){
+    metric_object <- do.call(methods::new, args=c(list("Class"="familiarMetricRRSE",
+                                                       "metric"=metric,
+                                                       "outcome_type"=outcome_type),
+                                                  .sanitise_dots("familiarMetricRRSE",
                                                                  ...)))
     
   } else if(metric %in% .get_available_rmsle_metrics()){
@@ -543,6 +563,12 @@ metric.is_higher_score_better <- function(metric, object=NULL, outcome_type=NULL
 
 metric.compute_optimisation_score <- function(score_table,
                                               optimisation_function){
+  # Compute an optimisation score from validation and training scores. This
+  # optimisation score is typically computed for each set of hyperparameters
+  # (param_id) and subsample (run_id).
+  #
+  # For hyperparameter optimisation scores are aggregated as follows:
+  # validation and training scores --> optimisation score --> summary score.
   
   # Suppress NOTES due to non-standard evaluation in data.table
   optimisation_score <- training <- validation <- NULL
@@ -550,8 +576,13 @@ metric.compute_optimisation_score <- function(score_table,
   # Select the correct optimisation function.
   optimisation_function <- switch(optimisation_function,
                                   "max_validation" = metric.optim_score.max_validation,
+                                  "validation" = metric.optim_score.max_validation,
                                   "balanced" = metric.optim_score.balanced,
-                                  "stronger_balance" = metric.optim_score.stronger_balance)
+                                  "stronger_balance" = metric.optim_score.stronger_balance,
+                                  "validation_minus_sd" = metric.optim_score.max_validation,
+                                  "validation_25th_percentile" = metric.optim_score.max_validation,
+                                  "model_estimate " = metric.optim_score.max_validation,
+                                  "model_estimate_minus_sd" = metric.optim_score.max_validation)
   
   # Find identifier columns.
   id_columns <- intersect(colnames(score_table),
@@ -581,7 +612,12 @@ metric.compute_optimisation_score <- function(score_table,
 
 
 metric.summarise_optimisation_score <- function(score_table, method, replace_na=TRUE){
-  # Calculates a summary objective score
+  # Compute a summary score either directly from optimisation scores, or using a
+  # model. This optimisation score is typically computed for each set of
+  # hyperparameters.
+  #
+  # For hyperparameter optimisation scores are aggregated as follows:
+  # validation and training scores --> optimisation score --> summary score.
   
   # Suppress NOTES due to non-standard evaluation in data.table
   optimisation_score <- NULL
@@ -621,6 +657,22 @@ metric.optim_score.balanced <- function(training, validation) return(validation 
 metric.optim_score.stronger_balance <- function(training, validation) return(validation - 2.0 * abs(validation - training))
 
 
-.get_available_optimisation_functions <- function(){
-  return(c("max_validation", "balanced", "stronger_balance"))
+.get_available_optimisation_functions <- function(hyperparameter_learner=NULL){
+  
+  # All optimisation functions.
+  all_optimisation_functions <- c("validation", "max_validation", "balanced", "stronger_balance",
+                                  "validation_minus_sd", "validation_25th_percentile", "model_estimate",
+                                  "model_estimate_minus_sd")
+  
+  if(is.null(hyperparameter_learner)){
+    return(all_optimisation_functions)
+    
+  } else if(hyperparameter_learner %in% c("random", "random_search")){
+    # Random search does not return an estimate that can be used for
+    # optimisation.
+    return(setdiff(all_optimisation_functions,
+                   c("model_estimate", "model_estimate_minus_sd")))
+  }
+  
+  return(all_optimisation_functions)
 }

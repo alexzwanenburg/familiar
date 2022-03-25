@@ -43,6 +43,7 @@
 #'   are expected to be `data.frame` or `data.table` objects or paths to data
 #'   files. The latter are handled in the same way as file paths provided to
 #'   `data_file`.
+#' @param verbose Sets verbosity.
 #' @param ... Unused arguments
 #'
 #' @return List of paths to important directories and files.
@@ -53,6 +54,7 @@
                               project_dir=waiver(),
                               experiment_dir=waiver(),
                               data_file=waiver(),
+                              verbose=TRUE,
                               ...){
 
   # Initialise list of file paths
@@ -189,7 +191,8 @@
   }
   
   if(file_paths$is_temporary){
-    logger.message(paste0("Configuration: A temporary R directory is created for the analysis: ", temporary_directory))
+    logger.message(paste0("Configuration: A temporary R directory is created for the analysis: ", temporary_directory),
+                   verbose=verbose)
   }
   
   return(file_paths)
@@ -2618,6 +2621,22 @@
                                closed=c(FALSE, TRUE))
   
   
+  ##### hyperparameter_learner #################################################
+  # Hyperparameter learner
+  settings$hpo_hyperparameter_learner <- .parse_arg(x_config=config$hyperparameter_learner,
+                                                    x_var=hyperparameter_learner,
+                                                    var_name="hyperparameter_learner",
+                                                    type="character",
+                                                    optional=TRUE,
+                                                    default="gaussian_process")
+  
+  .check_parameter_value_is_valid(x=settings$hpo_hyperparameter_learner,
+                                  var_name="hyperparameter_learner",
+                                  values=.get_available_hyperparameter_learners())
+  
+  .check_hyperparameter_learner_available(hyperparameter_learner=settings$hpo_hyperparameter_learner)
+  
+  
   ##### optimisation_function ##################################################
   # Objective function
   settings$hpo_optimisation_function <- .parse_arg(x_config=config$optimisation_function,
@@ -2629,7 +2648,8 @@
   
   .check_parameter_value_is_valid(x=settings$hpo_optimisation_function,
                                   var_name="optimisation_function",
-                                  values=.get_available_optimisation_functions())
+                                  values=.get_available_optimisation_functions(hyperparameter_learner=settings$hpo_hyperparameter_learner))
+  
   
   ##### acquisition_function ###################################################
   # Acquisition function
@@ -2643,6 +2663,7 @@
   .check_parameter_value_is_valid(x=settings$hpo_acquisition_function,
                                   var_name="acquisition_function",
                                   values=.get_available_acquisition_functions())
+  
   
   ##### exploration_method #####################################################
   # Exploration method
@@ -2674,22 +2695,6 @@
          metric.check_outcome_type,
          outcome_type=outcome_type)
   
-  ##### hyperparameter_learner #################################################
-  # Hyperparameter learner
-  settings$hpo_hyperparameter_learner <- .parse_arg(x_config=config$hyperparameter_learner,
-                                                    x_var=hyperparameter_learner,
-                                                    var_name="hyperparameter_learner",
-                                                    type="character",
-                                                    optional=TRUE,
-                                                    default="gaussian_process")
-  
-  .check_parameter_value_is_valid(x=settings$hpo_hyperparameter_learner,
-                                  var_name="hyperparameter_learner",
-                                  values=.get_available_hyperparameter_learners())
-  
-  require_package(x=.required_packages_hyperparameter_learner(settings$hpo_hyperparameter_learner),
-                  purpose="to use the requested learner (", settings$hpo_hyperparameter_learner, ") for model-based hyperparameter optimisation",
-                  message_type="backend_error")
   
   ##### parallel_hyperparameter_optimisation ###################################
   # Parallelisation switch for parallel processing
@@ -3770,7 +3775,8 @@
   available_parameters <- setdiff(available_parameters,
                                   c("", "...", "config", "data", "hpo_metric", "prep_cluster_method",
                                     "prep_cluster_linkage_method", "prep_cluster_cut_method",
-                                    "prep_cluster_similarity_threshold", "prep_cluster_similarity_metric"))
+                                    "prep_cluster_similarity_threshold", "prep_cluster_similarity_metric",
+                                    "verbose"))
   
   return(available_parameters)
 }

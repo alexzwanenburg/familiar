@@ -893,6 +893,8 @@ setClass("outcomeInfo",
 #'   method.
 #' @slot vimp_method The character string indicating the variable importance
 #'   method.
+#' @slot multivariate Flags whether the variable importance method is
+#'   multivariate vs. univariate.
 #' @slot outcome_info Outcome information object, which contains additional
 #'   information concerning the outcome, such as class levels.
 #' @slot feature_info List of objects containing feature information, e.g.,
@@ -916,6 +918,9 @@ setClass("familiarVimpMethod",
            hyperparameters = "ANY",
            # Name of variable importance method
            vimp_method = "character",
+           # Indicates whether the method is a univariate or multivariate
+           # method.
+           multivariate = "logical",
            # Outcome info, such as class levels, mean values etc.
            outcome_info = "ANY",
            # Data required for feature pre-processing
@@ -933,6 +938,7 @@ setClass("familiarVimpMethod",
            outcome_type = NA_character_,
            hyperparameters = NULL,
            vimp_method = NA_character_,
+           multivariate = FALSE,
            outcome_info = NULL,
            feature_info = NULL,
            required_features = NULL,
@@ -1043,6 +1049,87 @@ setClass("familiarNoveltyDetector",
          )
 )
 
+
+
+#### familiarHyperparameterLearner ---------------------------------------------
+
+#' Hyperparameter learner.
+#'
+#' A familiarHyperparameterLearner object is a self-contained model that can be
+#' applied to predict optimisation scores for a set of hyperparameters.
+#'
+#' @slot name Name of the familiarHyperparameterLearner object.
+#' @slot learner Algorithm used to create the hyperparameter learner.
+#' @slot target_learner Algorithm for which the hyperparameters are being
+#'   learned.
+#' @slot target_outcome_type Outcome type of the learner for which
+#'   hyperparameters are being modeled. Used to determine the target
+#'   hyperparameters.
+#' @slot optimisation_metric One or metrics used to generate the optimisation
+#'   score.
+#' @slot optimisation_function Function used to generate the optimisation score.
+#' @slot model The actual model trained using the specific algorithm, e.g. a
+#'   isolation forest from the `isotree` package.
+#' @slot target_hyperparameters The names of the hyperparameters that are used
+#'   to train the hyperparameter learner.
+#' @slot project_id Identifier of the project that generated the
+#'   familiarHyperparameterLearner object.
+#' @slot familiar_version Version of the familiar package.
+#' @slot package Name of package(s) required to executed the hyperparameter
+#'   learner itself, e.g. `laGP`.
+#' @slot package_version Version of the packages mentioned in the `package`
+#'   attribute.
+#'
+#' @details Hyperparameter learners are used to infer the optimisation score for
+#'   sets of hyperparameters. These are then used to either infer utility using
+#'   acquisition functions or to generate summary scores to identify the optimal
+#'   model.
+#'
+#' @export
+
+setClass("familiarHyperparameterLearner",
+         slots = list(
+           # Model name.
+           name = "character",
+           # Hyperparameter learner
+           learner = "character",
+           # Learner for which the hyperparameters are being learned.
+           target_learner = "character",
+           # Outcome type for the above learner.
+           target_outcome_type = "character",
+           # Metric(s) used to generate the input data for optimisation score
+           # that is being learned.
+           optimisation_metric = "character",
+           # Function used to generate the optimisation score.
+           optimisation_function = "character",
+           # Model container
+           model = "ANY",
+           # Names of the hyperparameters that are being learned.
+           target_hyperparameters = "ANY",
+           # Project identifier for consistency tracking
+           project_id = "ANY",
+           # Package version for backward compatibility.
+           familiar_version = "ANY",
+           # Name of the package required to train the learner.
+           package = "ANY",
+           # Version of the learner for reproducibility.
+           package_version = "ANY"
+         ),
+         prototype = list(
+           name = character(0),
+           learner = NA_character_,
+           target_learner = NA_character_,
+           target_outcome_type = NA_character_,
+           optimisation_metric = NA_character_,
+           optimisation_function = NA_character_,
+           model = NULL,
+           target_hyperparameters = NULL,
+           project_id = NULL,
+           familiar_version = NULL,
+           package = NULL,
+           package_version = NULL
+         )
+)
 
 
 

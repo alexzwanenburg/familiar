@@ -21,7 +21,7 @@ setMethod("is_available", signature(object="familiarConcordanceVimp"),
 
 #####get_default_hyperparameters#####
 setMethod("get_default_hyperparameters", signature(object="familiarConcordanceVimp"),
-          function(object, data=NULL) return(list()))
+          function(object, data=NULL, ...) return(list()))
 
 
 

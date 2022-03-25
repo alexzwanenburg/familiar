@@ -705,7 +705,41 @@ setMethod("get_placeholder_prediction_table", signature(object="outcomeInfo", da
             return(prediction_table)
           })
 
-
+setMethod("get_placeholder_prediction_table", signature(object="familiarHyperparameterLearner", data="data.table"),
+          function(object, data, type="default"){
+            # Find the id columns.
+            id_columns <- intersect(c("param_id", "run_id"), colnames(data))
+            
+            if(length(id_columns) > 0){
+              # Create a placeholder by only keeping the identifier columns.
+              prediction_table <- data.table::copy(data[, mget(id_columns)])
+              
+            } else {
+              # Add a placeholder parameter identifier as scaffolding.
+              prediction_table <- data.table::data.table(param_id=rep_len(NA_integer_, nrow(data)))
+            }
+            
+            # Add placeholder columns.
+            if(type == "default"){
+              prediction_table[, "mu":=as.double(NA)]
+              
+            } else if(type == "sd"){
+              prediction_table[, ":="("mu"=as.double(NA), 
+                                      "sigma"=as.double(NA))]
+              
+            } else if(type == "percentile"){
+              prediction_table[, "percentile":=as.double(NA)]
+              
+            } else if(type == "raw"){
+              prediction_table[, "raw_1":=as.double(NA)]
+              
+            } else {
+              ..error_reached_unreachable_code(paste0("get_placeholder_prediction_table,familiarHyperparameterLearner,data.table: ",
+                                                      "Encountered an unknown prediction type: ", type))
+            }
+            
+            return(prediction_table)
+          })
 
 
 #####get_bootstrap_sample------------------------------------------------------

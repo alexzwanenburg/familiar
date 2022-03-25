@@ -40,7 +40,7 @@ setMethod("is_available", signature(object="familiarRanger"),
 
 #####get_default_hyperparameters#####
 setMethod("get_default_hyperparameters", signature(object="familiarRanger"),
-          function(object, data=NULL){
+          function(object, data=NULL, user_list=NULL, ...){
             
             # Initialise list and declare hyperparameter entries.
             param <- list()
@@ -52,6 +52,8 @@ setMethod("get_default_hyperparameters", signature(object="familiarRanger"),
             param$tree_depth  <- list()
             param$split_rule  <- list()
             param$alpha       <- list()
+            param$sample_weighting <- list()
+            param$sample_weighting_beta <- list()
             
             # The following hyperparameters are only used for feature selection.
             param$fs_forest_type <- list()
@@ -72,16 +74,22 @@ setMethod("get_default_hyperparameters", signature(object="familiarRanger"),
             # Note that the number of trees is defined in powers of 2, based on
             # Oshiro, T. M., Perez, P. S., & Baranauskas, J. A. (2012, July).
             # How many trees in a random forest?. In MLDM (pp. 154-168).
-            param$n_tree <- .set_hyperparameter(default=c(4, 8, 10), type="integer", range=c(4, 10),
-                                                valid_range=c(0, Inf), randomise=TRUE)
+            param$n_tree <- .set_hyperparameter(default=c(4, 8, 10),
+                                                type="integer",
+                                                range=c(4, 10),
+                                                valid_range=c(0, Inf),
+                                                randomise=TRUE)
             
             
             ###### Sample size #################################################
             
             # Note that the sample size is here noted as a fraction, which
             # corresponds to the usage in ranger.
-            param$sample_size <- .set_hyperparameter(default=c(0.30, 0.50, 0.70, 1.00), type="numeric", range=c(2/n_samples, 1.0),
-                                                     valid_range=c(0, 1), randomise=TRUE)
+            param$sample_size <- .set_hyperparameter(default=c(0.30, 0.50, 0.70, 1.00),
+                                                     type="numeric",
+                                                     range=c(2/n_samples, 1.0),
+                                                     valid_range=c(0, 1),
+                                                     randomise=TRUE)
             
             
             ##### Number of candidate features selected at node ################
@@ -89,7 +97,9 @@ setMethod("get_default_hyperparameters", signature(object="familiarRanger"),
             # Note that the number of features is here noted as a fraction, but
             # is used in ranger as an integer. Familiar ensures that always at
             # least 1 feature is available as a candidate.
-            param$m_try <- .set_hyperparameter(default=c(0.1, 0.3, 0.5, 1.0), type="numeric", range=c(0.0, 1.0),
+            param$m_try <- .set_hyperparameter(default=c(0.1, 0.3, 0.5, 1.0),
+                                               type="numeric",
+                                               range=c(0.0, 1.0),
                                                randomise=TRUE)
             
             
@@ -107,16 +117,22 @@ setMethod("get_default_hyperparameters", signature(object="familiarRanger"),
                                                      node_size_default <= node_size_range[2]]
             
             # Set the node_size parameter.
-            param$node_size <- .set_hyperparameter(default=node_size_default, type="integer", range=node_size_range,
-                                                   valid_range=c(1, Inf), randomise=TRUE)
+            param$node_size <- .set_hyperparameter(default=node_size_default,
+                                                   type="integer",
+                                                   range=node_size_range,
+                                                   valid_range=c(1, Inf),
+                                                   randomise=TRUE)
             
             
             ##### Maximum tree depth ###########################################
             
             # Determines the depth trees are allowed to grow to. Larger depths
             # increase the risk of overfitting.
-            param$tree_depth <- .set_hyperparameter(default=c(1, 2, 3, 7), type="integer", range=c(1, 10),
-                                                    valid_range=c(1, Inf), randomise=TRUE)
+            param$tree_depth <- .set_hyperparameter(default=c(1, 2, 3, 7),
+                                                    type="integer",
+                                                    range=c(1, 10),
+                                                    valid_range=c(1, Inf),
+                                                    randomise=TRUE)
             
             
             ##### Splitting rule ###############################################
@@ -140,7 +156,9 @@ setMethod("get_default_hyperparameters", signature(object="familiarRanger"),
             }
             
             # Set the split_rule parameter.
-            param$split_rule <- .set_hyperparameter(default=split_rule_default, type="factor", range=split_rule_range,
+            param$split_rule <- .set_hyperparameter(default=split_rule_default,
+                                                    type="factor",
+                                                    range=split_rule_range,
                                                     randomise=FALSE)
             
             
@@ -165,11 +183,25 @@ setMethod("get_default_hyperparameters", signature(object="familiarRanger"),
                                                randomise=alpha_randomise,
                                                distribution="log")
             
+            ##### Sample weighting method ######################################
+            #Class imbalances may lead to learning majority classes. This can be
+            #partially mitigated by increasing weight of minority classes.
+            param$sample_weighting <- .get_default_sample_weighting_method(outcome_type=object@outcome_type)
+            
+            ##### Effective number of samples beta #############################
+            #Specifies the beta parameter for effective number sample weighting
+            #method. See Cui et al. (2019).
+            param$sample_weighting_beta <- .get_default_sample_weighting_beta(method=c(param$sample_weighting$init_config,
+                                                                                       user_list$sample_weighting),
+                                                                              outcome_type=object@outcome_type)
+            
+            
             ##### Feature selection forest type ################################
             
             # Enables the construction of holdout forests. A conventional forest
             # is grown by default.
-            param$fs_forest_type <- .set_hyperparameter(default="standard", type="factor",
+            param$fs_forest_type <- .set_hyperparameter(default="standard",
+                                                        type="factor",
                                                         range=c("standard", "holdout"),
                                                         randomise=FALSE)
             
@@ -177,7 +209,8 @@ setMethod("get_default_hyperparameters", signature(object="familiarRanger"),
             
             # Enables the use of different variable importance methods. The
             # permutation method is used by default.
-            param$fs_vimp_method <- .set_hyperparameter(default="permutation", type="factor",
+            param$fs_vimp_method <- .set_hyperparameter(default="permutation",
+                                                        type="factor",
                                                         range=c("permutation", "impurity", "impurity_corrected"),
                                                         randomise=FALSE)
             
@@ -252,6 +285,12 @@ setMethod("..train", signature(object="familiarRanger", data="dataObject"),
             # Extract hyperparameters from the model
             param <- object@hyperparameters
             
+            # Set weights.
+            weights <- create_instance_weights(data=data,
+                                               method=object@hyperparameters$sample_weighting,
+                                               beta=..compute_effective_number_of_samples_beta(object@hyperparameters$sample_weighting_beta),
+                                               normalisation="average_one")
+            
             # Create random forest using ranger.
             if(param$fs_forest_type == "standard"){
               # Conventional random forest (used for model building and variable
@@ -264,6 +303,7 @@ setMethod("..train", signature(object="familiarRanger", data="dataObject"),
                                       min.node.size = param$node_size,
                                       max.depth = param$tree_depth,
                                       alpha = param$alpha,
+                                      case.weights = weights,
                                       splitrule = as.character(param$split_rule),
                                       importance = as.character(param$fs_vimp_method),
                                       probability = fit_probability,

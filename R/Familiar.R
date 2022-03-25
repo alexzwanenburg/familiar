@@ -20,7 +20,7 @@
 #' @import data.table
 #' @import methods
 #' @importClassesFrom rstream rstream.runif
-#' @importFrom stats predict coef
+#' @importFrom stats predict coef vcov
 #' @importFrom survival Surv coxph survreg
 #' @importFrom utils head tail
 #' @importFrom rlang quo quos enquo enquos sym syms ensym ensyms parse_expr parse_exprs
@@ -68,7 +68,7 @@
 #' @param verbose Indicates verbosity of the results. Default is TRUE, and all
 #'   messages and warnings are returned.
 #'
-#' @inheritDotParams .parse_file_paths -config
+#' @inheritDotParams .parse_file_paths -config -verbose
 #' @inheritDotParams .parse_experiment_settings -config
 #' @inheritDotParams .parse_setup_settings -config
 #' @inheritDotParams .parse_preprocessing_settings -config -data -parallel -outcome_type
@@ -105,7 +105,7 @@ summon_familiar <- function(formula=NULL,
   on.exit(data.table::setDTthreads(0L), add=TRUE)
   
 
-  ##### Load configuration file -----------------------------------
+  ##### Load configuration file ------------------------------------------------
   config <- .load_configuration_file(config=config,
                                      config_id=config_id)
   
@@ -115,9 +115,12 @@ summon_familiar <- function(formula=NULL,
   .check_configuration_tag_is_parameter(config=config)
   
   
-  ##### File paths ------------------------------------------------------------------
+  ##### File paths -------------------------------------------------------------
   # Parse file paths
-  file_paths  <- do.call(.parse_file_paths, append(list("config"=config), list(...)))
+  file_paths  <- do.call(.parse_file_paths,
+                         args=c(list("config"=config,
+                                     "verbose"=verbose),
+                                list(...)))
   
   # Set paths to data
   if(!is.null(file_paths$data) & is.null(data)){
@@ -127,7 +130,7 @@ summon_familiar <- function(formula=NULL,
   # Make sure to remove the directory if it is on the temporary path.
   if(file_paths$is_temporary) on.exit(unlink(file_paths$experiment_dir, recursive=TRUE), add=TRUE)
   
-  ##### Load data -------------------------------------------------------------------
+  ##### Load data --------------------------------------------------------------
   # Parse experiment and data settings
   settings <- .parse_initial_settings(config=config, ...)
   
@@ -143,7 +146,9 @@ summon_familiar <- function(formula=NULL,
     
   } else {
     # Load data.
-    data <- do.call(.load_data, args=append(list("data"=data), settings$data))
+    data <- do.call(.load_data,
+                    args=c(list("data"=data),
+                           settings$data))
     
     # Update settings
     settings <- .update_initial_settings(formula=formula,
@@ -257,6 +262,9 @@ summon_familiar <- function(formula=NULL,
     cl <- NULL
   }
   
+  # Clean familiar environment on exit. This is run last to avoid cleaning up
+  # the familiar environment prior to shutting down the socket server process.
+  on.exit(.clean_familiar_environment(), add=TRUE)
   
   # Start feature selection
   run_feature_selection(cl=cl,
@@ -290,6 +298,149 @@ summon_familiar <- function(formula=NULL,
   } else {
     return(invisible(TRUE))
   }
+}
+
+
+
+#' Create models using end-to-end machine learning
+#'
+#' @description Train models using familiar. Evaluation is not performed.
+#'
+#' @param experimental_design (**required**) Defines what the experiment looks
+#'   like, e.g. `cv(bt(fs,20)+mb,3,2)` for 2 times repeated 3-fold
+#'   cross-validation with nested feature selection on 20 bootstraps and
+#'   model-building. The basic workflow components are:
+#'
+#'   * `fs`: (required) feature selection step.
+#'
+#'   * `mb`: (required) model building step.
+#'
+#'   * `ev`: (optional) external validation. Setting this is not required for
+#'   `train_familiar`, but if validation batches or cohorts are present in the
+#'   dataset (`data`), these should be indicated in the `validation_batch_id`
+#'   argument.
+#'
+#'   The different components are linked using `+`.
+#'
+#'   Different subsampling methods can be used in conjunction with the basic
+#'   workflow components:
+#'
+#'   * `bs(x,n)`: (stratified) .632 bootstrap, with `n` the number of
+#'   bootstraps. In contrast to `bt`, feature pre-processing parameters and
+#'   hyperparameter optimisation are conducted on individual bootstraps.
+#'
+#'   * `bt(x,n)`: (stratified) .632 bootstrap, with `n` the number of
+#'   bootstraps. Unlike `bs` and other subsampling methods, no separate
+#'   pre-processing parameters or optimised hyperparameters will be determined
+#'   for each bootstrap.
+#'
+#'   * `cv(x,n,p)`: (stratified) `n`-fold cross-validation, repeated `p` times.
+#'   Pre-processing parameters are determined for each iteration.
+#'
+#'   * `lv(x)`: leave-one-out-cross-validation. Pre-processing parameters are
+#'   determined for each iteration.
+#'
+#'   * `ip(x)`: imbalance partitioning for addressing class imbalances on the
+#'   data set. Pre-processing parameters are determined for each partition. The
+#'   number of partitions generated depends on the imbalance correction method
+#'   (see the `imbalance_correction_method` parameter).
+#'
+#'   As shown in the example above, sampling algorithms can be nested.
+#'
+#'   The simplest valid experimental design is `fs+mb`. This is the default in
+#'   `train_familiar`, and will create one model for each feature selection
+#'   method in `fs_method`. To create more models, a subsampling method should
+#'   be introduced, e.g. `bs(fs+mb,20)` to create 20 models based on bootstraps
+#'   of the data.
+#'
+#' @param learner (**required**) Name of the learner used to develop a model. A
+#'   sizeable number learners is supported in `familiar`. Please see the
+#'   vignette on learners for more information concerning the available
+#'   learners. Unlike the `summon_familiar` function, `train_familiar` only
+#'   allows for a single learner.
+#' @param hyperparameter (*optional*) List, or nested list containing
+#'   hyperparameters for learners. If a nested list is provided, each sublist
+#'   should have the name of the learner method it corresponds to, with list
+#'   elements being named after the intended hyperparameter, e.g.
+#'   \code{"glm_logistic"=list("sign_size"=3)}
+#'
+#'   All learners have hyperparameters. Please refer to the vignette on learners
+#'   for more details. If no parameters are provided, sequential model-based
+#'   optimisation is used to determine optimal hyperparameters.
+#'
+#'   Hyperparameters provided by the user are never optimised. However, if more
+#'   than one value is provided for a single hyperparameter, optimisation will
+#'   be conducted using these values.
+#'
+#' @inheritParams summon_familiar
+#' @inheritDotParams .parse_experiment_settings -config
+#' @inheritDotParams .parse_setup_settings -config
+#' @inheritDotParams .parse_preprocessing_settings -config -data -parallel -outcome_type
+#' @inheritDotParams .parse_feature_selection_settings -config -data -parallel -outcome_type
+#' @inheritDotParams .parse_model_development_settings -config -data -parallel -outcome_type
+#' @inheritDotParams .parse_hyperparameter_optimisation_settings -config -parallel -outcome_type
+#'
+#' @details This is a thin wrapper around `summon_familiar`, and functions like
+#'   it, but automatically skip all evaluation steps. Only a single learner is
+#'   allowed.
+#'
+#' @return One or more familiarModel objects.
+#'   
+#' @export
+#' @md
+train_familiar <- function(formula=NULL,
+                           data=NULL,
+                           cl=NULL,
+                           experimental_design="fs+mb",
+                           learner=NULL,
+                           hyperparameter=NULL,
+                           verbose=TRUE,
+                           ...){
+  
+  # Check that a single learner is present.
+  learner <- .parse_arg(x_config=NULL,
+                        x_var=learner,
+                        var_name="learner",
+                        type="character",
+                        optional=FALSE)
+  
+  # Hyperparameters may be interpreted as belonging to the specified learner.
+  hyperparameter <- .parse_arg(x_config=NULL,
+                               x_var=hyperparameter,
+                               var_name="hyperparameter",
+                               type="list",
+                               optional=TRUE,
+                               default=list())
+  
+  # Encode hyperparameter as expected by parsing it to a nested list.
+  if(length(hyperparameter) > 0 & is.null(hyperparameter[[learner]])){
+    hyperparameter_list <- list()
+    hyperparameter_list[[learner]] <- hyperparameter
+    hyperparameter <- hyperparameter_list
+  }
+  
+  # Isolate dots.
+  dots <- list(...)
+  
+  # Drop skip_na, project_dir, experiment_dir, and config if present.
+  dots$skip_evaluation_elements <- NULL
+  dots$project_dir <- NULL
+  dots$experiment_dir <- NULL
+  
+  # Summon a familiar.
+  familiar_models <- do.call(summon_familiar, args=(c(list("formula"=formula,
+                                                           "data"=data,
+                                                           "cl"=cl,
+                                                           "experimental_design"=experimental_design,
+                                                           "learner"=learner,
+                                                           "hyperparameter"=hyperparameter,
+                                                           "experiment_dir"=NULL,
+                                                           "project_dir"=NULL,
+                                                           "skip_evaluation_elements"="all",
+                                                           "verbose"=verbose),
+                                                      dots)))
+  # Extract familiar models.
+  return(familiar_models$familiarModel)
 }
 
 
@@ -510,4 +661,12 @@ get_project_list <- function(){
   familiar_list$familiarCollection <- load_familiar_object(coll_files)
   
   return(familiar_list)
+}
+
+
+.clean_familiar_environment <- function(){
+  # Cleans all objects assigned to the familiar global environment.
+  if(exists("familiar_global_env")){
+    rm(list=ls(envir=familiar_global_env), envir=familiar_global_env)
+  }
 }

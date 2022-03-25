@@ -77,13 +77,13 @@
   if(length(req_length) == 1){
     # The req_length argument specifies the exact number or the minimum number
     # of values.
-    stop(paste0("The ", var_name, "argument requires ", ifelse(allow_more, "at least ", "exactly "), req_length,
+    stop(paste0("The ", var_name, " argument requires ", ifelse(allow_more, "at least ", "exactly "), req_length,
                 ifelse(req_length==1, " value", " values"), ". ", length(x),
                 ifelse(length(x)==1, " value was", " values were"), " found."))
     
   } else {
     # The req_length argument specifies a range for the number of values.
-    stop(paste0("The ", var_name, "argument requires between ", req_length[1], " and ", req_length[2], " values. ",
+    stop(paste0("The ", var_name, " argument requires between ", req_length[1], " and ", req_length[2], " values. ",
                 ifelse(length(x)==1, " value was", " values were"), " found."))
   }
 }
@@ -110,7 +110,7 @@
     
   } else {
     
-    stop(paste0("The ",var_name, " argument requires between", req_length[1], " and ", req_length[2], " values. ",
+    stop(paste0("The ",var_name, " argument requires between ", req_length[1], " and ", req_length[2], " values. ",
                 ifelse(length(x)==1, " value was", " values were"), " found."))
   }
 }

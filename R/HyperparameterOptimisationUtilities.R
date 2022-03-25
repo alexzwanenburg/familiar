@@ -215,8 +215,9 @@
 ..create_hyperparameter_run_table <- function(run_ids,
                                               parameter_ids=NULL,
                                               measure_time=FALSE,
-                                              optimisation_score_table=NULL,
-                                              acquisition_function=NULL,
+                                              score_table=NULL,
+                                              parameter_table=NULL,
+                                              optimisation_model=NULL,
                                               n_max_bootstraps=NULL){
   # Creates a run table from the run identifiers and parameter identifiers.
   
@@ -227,17 +228,23 @@
     # Filter by time. This filters out the hyperparameter sets that took very
     # long to complete, while not delivering good enough performance.
     
-    # Get acquisition details.
-    acquisition_data <- ..get_acquisition_function_parameters(optimisation_score_table=optimisation_score_table,
-                                                              acquisition_function=acquisition_function,
-                                                              n_max_bootstraps=n_max_bootstraps)
+    # Compute optimisation score based on the presented scores.
+    optimisation_score_table <- .compute_hyperparameter_optimisation_score(score_table=score_table,
+                                                                           optimisation_function=optimisation_model@optimisation_function)
+    
+    # Find data related to the most promising set of hyperparameters.
+    incumbent_set <- get_best_hyperparameter_set(score_table=optimisation_score_table,
+                                                 parameter_table=parameter_table,
+                                                 optimisation_model=optimisation_model,
+                                                 n_max_bootstraps=n_max_bootstraps)
     
     # Select fitting hyperparameters.
-    parameter_ids <- optimisation_score_table[time_taken <= acquisition_data$max_time]$param_id
+    parameter_ids <- optimisation_score_table[time_taken <= incumbent_set$max_time]$param_id
   }
   
   if(is.null(parameter_ids)) ..error_reached_unreachable_code("..create_hyperparameter_run_table: parameter_ids cannot be NULL.")
   
+  # Create a run table consisting of parameter and run identifiers.
   run_table <- data.table::as.data.table(expand.grid(param_id=parameter_ids,
                                                      run_id=run_ids,
                                                      KEEP.OUT.ATTRS=FALSE,
@@ -352,6 +359,7 @@
                                                       data,
                                                       rank_table_list,
                                                       metric_objects,
+                                                      iteration_id,
                                                       time_optimisation_model=NULL,
                                                       overhead_time=NULL,
                                                       verbose=FALSE){
@@ -429,6 +437,9 @@
   
   # Add in process times to the results.
   score_table$results[, "time_taken":=rep(score_table$process_time, each=2*length(metric_objects))]
+  
+  # Add in iteration id.
+  score_table$results[, "iteration_id":=iteration_id]
   
   # Return scores.
   return(score_table)
@@ -557,69 +568,262 @@
 
 
 
-..get_acquisition_function_parameters <- function(optimisation_score_table,
-                                                  acquisition_function,
-                                                  n_max_bootstraps){
-  # Determine optimal score.
-  best_hyperparameter_set <- ..get_best_hyperparameter_set(optimisation_score_table=optimisation_score_table,
-                                                           acquisition_function=acquisition_function,
-                                                           n=1L)
+.compute_hyperparameter_summary_score <- function(score_table, parameter_table, optimisation_model){
   
-  # Determine the optimal parameter score tau.
-  tau <- best_hyperparameter_set$optimisation_score
+  # Suppress NOTES due to non-standard evaluation in data.table
+  optimisation_score <- time_taken <- .NATURAL <- mu <- sigma <- NULL
   
-  # Determine time corresponding to the best parameter set.
-  time <- best_hyperparameter_set$time_taken
+  # Check that the table is not empty.
+  if(is_empty(score_table)) return(NULL)
   
-  # Determine round t.
-  t <- max(optimisation_score_table[, list("n"=.N), by="param_id"]$n)
+  # Check if summary score has already been created.
+  if("summary_score" %in% colnames(score_table)) return(score_table)
   
-  # Determine maximum time that can be countenanced.
-  max_time <- (5.0 - 4.0 * t / n_max_bootstraps) * time
+  # Extract the optimisation function.
+  optimisation_function <- optimisation_model@optimisation_function
+  
+  # Check if the score table already contains optimisation scores.
+  if(!"optimisation_score" %in% colnames(score_table)){
+    score_table <- .compute_hyperparameter_optimisation_score(score_table=score_table,
+                                                              optimisation_function=optimisation_function)
+  }
+  
+  # Make sure to return both the summary score, as well as the mean optimisation
+  # score (or its model estimate if the optimisation function allows it). The
+  # mean score is important for acquisition functions, where we work with
+  # predictions of the optimisation score -- not the summary score. In addition,
+  # compute time_taken.
+  if(optimisation_function %in% c("validation", "max_validation", "balanced", "stronger_balance")){
+    # Here we just use the mean score.
+    data <- score_table[, list("summary_score"=mean(optimisation_score),
+                               "score_estimate"=mean(optimisation_score),
+                               "time_taken"=stats::median(time_taken)), by="param_id"]
+    
+  } else if(optimisation_function %in% c("validation_minus_sd")){
+    # Here we need to compute the standard deviation, with an exception for
+    # single subsamples.
+    data <- score_table[, list("summary_score"=..optimisation_function_validation_minus_sd(optimisation_score),
+                               "score_estimate"=mean(optimisation_score),
+                               "time_taken"=stats::median(time_taken)), by="param_id"]
+    
+    
+  } else if(optimisation_function %in% c("validation_25th_percentile")){
+    # Summary score is formed by the 25th percentile of the optimisation scores.
+    data <- score_table[, list("summary_score"=stats::quantile(optimisation_score, probs=0.25, names=FALSE),
+                               "score_estimate"=mean(optimisation_score),
+                               "time_taken"=stats::median(time_taken)), by="param_id"]
+    
+  } else if(optimisation_function %in% c("model_estimate", "model_estimate_minus_sd")){
+    # Model based summary scores. The main difference with other optimisation
+    # functions is that a hyperparameter model is used to both infer the summary
+    # scores and the score estimate.
+    
+    # Check if the model is trained.
+    if(!model_is_trained(optimisation_model)) optimisation_model <- .train(object=optimisation_model,
+                                                                           data=score_table,
+                                                                           parameter_data=parameter_table)
+    
+    # Get parameter data that is used in the score table.
+    parameter_data <- parameter_table[unique(score_table[, mget("param_id")]), on=.NATURAL]
+    
+    # Model was successfully trained.
+    prediction_table <- .predict(object=optimisation_model,
+                                 data=parameter_data,
+                                 type=ifelse(optimisation_function=="model_estimate", "default", "sd"))
+    
+    # Check the prediction table has returned sensible information.
+    if(any(is.finite(prediction_table$mu))){
+      # Prepare the score estimate and time taken.
+      data <-  score_table[, list("time_taken"=stats::median(time_taken)), by="param_id"]
+      
+      # Fold the prediction table into data.
+      data <- merge(x=data,
+                    y=prediction_table,
+                    all.x=TRUE,
+                    all.y=FALSE,
+                    by="param_id")
+      
+      if(optimisation_function == "model_estimate"){
+        # Copy mu as score estimate.
+        data[, "score_estimate":=mu]
+        
+        # Rename mu to summary_score.
+        data.table::setnames(data, old="mu", new="summary_score")
+        
+      } else if(optimisation_function == "model_estimate_minus_sd"){
+        # Compute summary score.
+        data[, "summary_score":=mu - sigma]
+        
+        # Rename mu to score_estimate.
+        data.table::setnames(data, old="mu", new="score_estimate")
+        
+      } else {
+        ..error_reached_unreachable_code(paste0(".compute_hyperparameter_summary_score: encountered unknown optimisation function: ", optimisation_function))
+      }
+      
+    } else if(optimisation_function == "model_estimate"){
+      # In absence of suitable data, use the model-less equivalent of
+      # model_estimate, namely "validation".
+      data <- score_table[, list("summary_score"=mean(optimisation_score),
+                                 "score_estimate"=mean(optimisation_score),
+                                 "time_taken"=stats::median(time_taken)), by="param_id"]
+      
+    } else if(optimisation_function == "model_estimate_minus_sd"){
+      # In absence of suitable data, use the model-less equivalent of
+      # model_estimate_minus_sd, namely "validation_minus_sd".
+      data <- score_table[, list("summary_score"=..optimisation_function_validation_minus_sd(optimisation_score),
+                                 "score_estimate"=mean(optimisation_score),
+                                 "time_taken"=stats::median(time_taken)), by="param_id"]
+      
+    } else {
+      ..error_reached_unreachable_code(paste0(".compute_hyperparameter_summary_score: encountered unknown optimisation function: ", optimisation_function))
+    }
+
+  } else {
+    ..error_reached_unreachable_code(".compute_hyperparameter_summary_score: encountered an unknown optimisation function")
+  }
+  
+  # Format data by selecting only relevant columns. This also orders the data.
+  data <- data[, mget(c("param_id", "summary_score", "score_estimate", "time_taken"))]
+  
+  return(data)
+}
+
+
+
+..optimisation_function_validation_minus_sd <- function(x){
+  # Here we need to switch based on the length of x.
+  
+  # The default behaviour is when multiple subsamples exist, and the standard
+  # deviation can be computed.
+  if(length(x) > 1) return(mean(x) - stats::sd(x))
+  
+  # The exception for x with length 1, where the standard deviation does not
+  # exist.
+  return(mean(x))
+}
+
+
+
+get_best_hyperparameter_set <- function(score_table,
+                                        parameter_table,
+                                        optimisation_model,
+                                        n_max_bootstraps,
+                                        n=1L,
+                                        parameter_id_set=NULL){
+  # The best set has several interesting values that can be computed and used
+  # for acquisition functions, information for the user etc.
+  
+  # Suppress NOTES due to non-standard evaluation in data.table
+  summary_score <- param_id <- NULL
+  
+  # Compute summary scores.
+  data <- .compute_hyperparameter_summary_score(score_table=score_table,
+                                                parameter_table=parameter_table,
+                                                optimisation_model=optimisation_model)
+  
+  # Select only the parameter sets of interest. This happens during the run-off
+  # between the incumbent and challenger hyperparameter sets.
+  if(!is.null(parameter_id_set)){
+    data <- data[param_id %in% parameter_id_set]
+  }
+  
+  # Find the best hyperparameter set based on summary scores in data.
+  data <- data[order(-summary_score)]
+  data <- head(data, n=n)
+  
+  # Compute round t, i.e. the highest number of bootstraps observed across the
+  # parameters.
+  t <- max(unique(score_table[, mget(c("param_id", "run_id"))])[, list("n"=.N), by="param_id"]$n)
+  
+  # Compute the maximum allowed time.
+  max_time <- (5.0 - 4.0 * t / n_max_bootstraps) * data$time_taken[1]
   
   # Check that the maximum time is not trivially small (i.e. less than 10
   # seconds).
   if(is.na(max_time)){
     max_time <- Inf
+    
   } else if(max_time < 10.0) {
     max_time <- 10.0
   }
   
-  return(list("t"=t,
-              "time"=time,
+  # Extract the summary score, score estimate, and time taken, and return with
+  # other information.
+  return(list("param_id"=data$param_id,
+              "t"=t,
+              "time"=data$time_taken,
               "max_time"=max_time,
-              "tau"=tau,
+              "summary_score"=data$summary_score,
+              "score_estimate"=data$score_estimate,
               "n"=n_max_bootstraps))
 }
 
 
 
-..get_best_hyperparameter_set <- function(optimisation_score_table,
-                                          acquisition_function,
-                                          n=1L){
-  # Find the best configurations based on the optimisation score
-  
-  # Suppress NOTES due to non-standard evaluation in data.table
-  optimisation_score <- time_taken <- .NATURAL <- NULL
-  
-  # Compute time taken.
-  time_table <- optimisation_score_table[, list("time_taken"=stats::median(time_taken, na.rm=TRUE)), by="param_id"]
-  
-  # Compute the summary score per parameter id.
-  summary_table <- metric.summarise_optimisation_score(score_table=optimisation_score_table,
-                                                       method=acquisition_function)
-  
-  # Join with time table.
-  summary_table <- summary_table[time_table, on=.NATURAL]
-  
-  # Sort by decreasing optimisation score.
-  summary_table <- summary_table[order(-optimisation_score)]
-  
-  # Average objective score over known available in the score table.
-  best_parameter_data <- head(summary_table, n=n)
-  
-  return(best_parameter_data)
-}
+# ..get_acquisition_function_parameters <- function(optimisation_score_table,
+#                                                   acquisition_function,
+#                                                   n_max_bootstraps){
+#   # Determine optimal score.
+#   best_hyperparameter_set <- ..get_best_hyperparameter_set(optimisation_score_table=optimisation_score_table,
+#                                                            acquisition_function=acquisition_function,
+#                                                            n=1L)
+#   
+#   # Determine the optimal parameter score tau.
+#   tau <- best_hyperparameter_set$optimisation_score
+#   
+#   # Determine time corresponding to the best parameter set.
+#   time <- best_hyperparameter_set$time_taken
+#   
+#   # Determine round t.
+#   t <- max(optimisation_score_table[, list("n"=.N), by="param_id"]$n)
+#   
+#   # Determine maximum time that can be countenanced.
+#   max_time <- (5.0 - 4.0 * t / n_max_bootstraps) * time
+#   
+#   # Check that the maximum time is not trivially small (i.e. less than 10
+#   # seconds).
+#   if(is.na(max_time)){
+#     max_time <- Inf
+#   } else if(max_time < 10.0) {
+#     max_time <- 10.0
+#   }
+#   
+#   return(list("t"=t,
+#               "time"=time,
+#               "max_time"=max_time,
+#               "tau"=tau,
+#               "n"=n_max_bootstraps))
+# }
+
+
+
+# ..get_best_hyperparameter_set <- function(optimisation_score_table,
+#                                           acquisition_function,
+#                                           n=1L){
+#   # Find the best configurations based on the optimisation score
+#   
+#   # Suppress NOTES due to non-standard evaluation in data.table
+#   optimisation_score <- time_taken <- .NATURAL <- NULL
+#   
+#   # Compute time taken.
+#   time_table <- optimisation_score_table[, list("time_taken"=stats::median(time_taken, na.rm=TRUE)), by="param_id"]
+#   
+#   # Compute the summary score per parameter id.
+#   summary_table <- metric.summarise_optimisation_score(score_table=optimisation_score_table,
+#                                                        method=acquisition_function)
+#   
+#   # Join with time table.
+#   summary_table <- summary_table[time_table, on=.NATURAL]
+#   
+#   # Sort by decreasing optimisation score.
+#   summary_table <- summary_table[order(-optimisation_score)]
+#   
+#   # Average objective score over known available in the score table.
+#   best_parameter_data <- head(summary_table, n=n)
+#   
+#   return(best_parameter_data)
+# }
 
 
 
@@ -654,134 +858,63 @@
 
 
 
-..initialise_hyperparameter_optimisation_stopping_criteria <- function(){
-  # Initialise the stop list.
-  return(list("score"=numeric(0),
-              "parameter_id"=integer(0),
-              "convergence_counter"= 0L))
-}
-
-
-
-..update_hyperparameter_optimisation_stopping_criteria <- function(score_table,
-                                                                   parameter_id_incumbent,
-                                                                   stop_list,
-                                                                   tolerance=1E-2,
-                                                                   acquisition_function){
+..update_hyperparameter_optimisation_stopping_criteria <- function(set_data,
+                                                                   stop_data=NULL,
+                                                                   tolerance=1E-2){
   
-  # Suppress NOTES due to non-standard evaluation in data.table
-  param_id <- NULL
+  # Store the summary score. Note that the latest score is always appended.
+  summary_scores <- c(stop_data$score,
+                      set_data$summary_score)
   
-  # Compute aggregate optimisation score.
-  summary_score_table <- metric.summarise_optimisation_score(score_table=score_table[param_id==parameter_id_incumbent, ],
-                                                             method=acquisition_function,
-                                                             replace_na=FALSE)
+  # Store the parameter id of the incumbent set. Note that the most recent
+  # hyperparameter set identifier is always appended.
+  incumbent_parameter_id <- c(stop_data$parameter_id,
+                              set_data$param_id)
   
-  # Read the convergence counter.
-  convergence_counter <- stop_list$convergence_counter
+  # Read the convergence counters. Can be NULL initially.
+  convergence_counter_score <- stop_data$convergence_counter_score
+  if(is.null(convergence_counter_score)) convergence_counter_score <- 0L
   
-  # Assess convergence and stability
-  if(length(stop_list$score) >= 4){
-    
-    # Calculate mean over last 4 incumbent scores and compare with incumbent
-    # Note that if the series is converging, the difference between the moving
-    # average over the last 4 incumbents and the current incumbent should be
-    # positive or 0.
-    recent_scores <- tail(stop_list$score, n=4L)
-    recent_parameter_id <- tail(stop_list$parameter_id, n=4L)
-    
-    # Determine the max absolute deviation from the mean.
-    max_abs_deviation <- max(recent_scores) - min(recent_scores)
-    
-    # Start counting convergence if:
-    #
-    # 1. The maximum absolute deviation is below the tolerance.
-    #
-    # 2. the param_id of the incumbent dataset has not changed over the last
-    # iterations.
-    if(is.na(max_abs_deviation)){
-      # This means that a combination of parameters that leads to a correctly
-      # predicting model was not found.
-      convergence_counter <- 0L
+  # Convergence counter for parameter identifiers.
+  convergence_counter_parameter_id <- stop_data$convergence_counter_parameter_id
+  if(is.null(convergence_counter_parameter_id)) convergence_counter_parameter_id <- 0L
+  
+  # Update convergence counter for parameter identifiers if there is no change
+  # in the incumbent parameter set. Skip on the first run-through.
+  if(length(incumbent_parameter_id) >= 2){
+    if(all(tail(incumbent_parameter_id, n=3L) == set_data$param_id)){
       
-    } else if(max_abs_deviation <= tolerance | all(recent_parameter_id == parameter_id_incumbent)){
-      # Check if all recent optimal parameter sets are the same or the result is
-      # relatively stable.
-      convergence_counter <- convergence_counter + 1L
+      # Update the convergence counter.
+      convergence_counter_parameter_id <- convergence_counter_parameter_id + 1L
       
     } else {
-      # This means that there is no convergence.
-      convergence_counter <- 0L
+      # Reset the convergence counter.
+      convergence_counter_parameter_id <- 0L
     }
-  } else {
-    convergence_counter <- 0L
   }
   
-  # Append new items to the stop list.
-  return(list("score"=c(stop_list$score, summary_score_table$optimisation_score),
-              "parameter_id"=c(stop_list$parameter_id, parameter_id_incumbent),
-              "convergence_counter"= convergence_counter))
-}
-
-
-
-..update_hyperparameter_optimisation_stopping_criteria <- function(score_table,
-                                                                   parameter_id_incumbent,
-                                                                   stop_list, tolerance=1E-2,
-                                                                   acquisition_function){
-  
-  # Suppress NOTES due to non-standard evaluation in data.table
-  param_id <- NULL
-  
-  # Compute aggregate optimisation score.
-  summary_score_table <- metric.summarise_optimisation_score(score_table=score_table[param_id==parameter_id_incumbent, ],
-                                                             method=acquisition_function,
-                                                             replace_na=FALSE)
-  
-  # Read the convergence counter.
-  convergence_counter <- stop_list$convergence_counter
-  
-  # Assess convergence and stability
-  if(length(stop_list$score) >= 4){
+  # Assess convergence of the summary scores. This is skipped on the first
+  # run-through.
+  if(length(summary_scores) >= 2){
+    # Compute absolute deviation from the mean.
+    max_abs_deviation <- max(abs(tail(summary_scores, n=3L) - mean(tail(summary_scores, n=3L))))
     
-    # Calculate mean over last 4 incumbent scores and compare with incumbent
-    # Note that if the series is converging, the difference between the moving
-    # average over the last 4 incumbents and the current incumbent should be
-    # positive or 0.
-    recent_scores <- tail(stop_list$score, n=4L)
-    recent_parameter_id <- tail(stop_list$parameter_id, n=4L)
-    
-    # Determine the max absolute deviation from the mean.
-    max_abs_deviation <- max(recent_scores) - min(recent_scores)
-    
-    # Start counting convergence if:
-    #
-    # 1. The maximum absolute deviation is below the tolerance.
-    #
-    # 2. the param_id of the incumbent dataset has not changed over the last
-    # iterations.
     if(is.na(max_abs_deviation)){
-      # This means that a combination of parameters that leads to a correctly
-      # predicting model was not found.
-      convergence_counter <- 0L
+      convergence_counter_score <- 0L
       
-    } else if(max_abs_deviation <= tolerance | all(recent_parameter_id == parameter_id_incumbent)){
-      # Check if all recent optimal parameter sets are the same or the result is
-      # relatively stable.
-      convergence_counter <- convergence_counter + 1L
+    } else if(max_abs_deviation <= tolerance){
+      convergence_counter_score <- convergence_counter_score + 1L
       
     } else {
-      # This means that there is no convergence.
-      convergence_counter <- 0L
+      convergence_counter_score <- 0L
     }
-  } else {
-    convergence_counter <- 0L
   }
   
-  # Append new items to the stop list.
-  return(list("score"=c(stop_list$score, summary_score_table$optimisation_score),
-              "parameter_id"=c(stop_list$parameter_id, parameter_id_incumbent),
-              "convergence_counter"= convergence_counter))
+  # Return list with stopping parameters.
+  return(list("score"=summary_scores,
+              "parameter_id"=incumbent_parameter_id,
+              "convergence_counter_score" = convergence_counter_score,
+              "convergence_counter_parameter_id" = convergence_counter_parameter_id))
 }
 
 
@@ -793,15 +926,15 @@
                                                         n_intensify_step_bootstraps){
   
   # Suppress NOTES due to non-standard evaluation in data.table
-  param_id <- sampled <- run_id <- to_sample <- sample_id <- NULL
+  param_id <- sampled <- run_id <- to_sample <- sample_id <- n <- NULL
   
   # Combine all parameter ids.
   parameter_ids <- c(parameter_id_incumbent, parameter_id_challenger)
   
   # Make a copy of the score table and keep only relevant parameter and run
   # identifiers.
-  score_table <- data.table::copy(score_table[param_id %in% parameter_ids,
-                                              c("param_id","run_id")])
+  score_table <- unique(data.table::copy(score_table[param_id %in% parameter_ids,
+                                                     c("param_id","run_id")]))
   
   # Add a sampled column that marks those elements that have been previously
   # sampled.
@@ -824,124 +957,149 @@
   # Add a to_sample column to mark new samples to be made.
   run_table[, "to_sample":=FALSE]
   
-  # Find all run ids that have been sampled using the incumbent hyperparameter
-  # set.
-  run_id_incumbent <- unique(run_table[param_id==parameter_id_incumbent & sampled==TRUE, ]$run_id)
+  # Find runs that have only been fully, partially or not sampled by the hyperparameter sets.
+  sampled_runs <- run_table[sampled == TRUE, list("n"=.N), by="run_id"]
   
-  # Find all run ids that have been sampled using any of the challenger
-  # hyperparameter sets.
-  run_id_challenger <- unique(run_table[param_id %in% parameter_id_challenger & sampled==TRUE, ]$run_id)
+  # Identify run identifiers.
+  fully_sampled_runs <- sampled_runs[n == length(parameter_ids)]$run_id
+  partially_sampled_runs <- sampled_runs[n > 0 & n < length(parameter_ids)]$run_id
+  unsampled_runs <- setdiff(seq_len(n_max_bootstraps), sampled_runs[n > 0]$run_id)
   
-  # Determine run ids that have been sampled by challengers, but not by the
-  # incumbent.
-  run_id_incumbent_new <- setdiff(run_id_challenger, run_id_incumbent)
+  # Check that there are any runs to be sampled.
+  if(length(fully_sampled_runs) == n_max_bootstraps) return(NULL)
   
-  # Identify if additional new bootstraps should be made for the incumbent.
-  if(length(run_id_incumbent_new) < n_intensify_step_bootstraps){
-    # Sample n_sample new runs
-    n_sample <- n_intensify_step_bootstraps - length(run_id_incumbent_new)
+  # Compute the number of runs that could be completed new. This is 1/3rd of
+  # n_max_bootstraps, with a minimum of 1. This makes the selection of new runs
+  # more conservative, saving time and resources.
+  n_new_runs <- max(c(1L, floor(n_intensify_step_bootstraps / 2)))
+  
+  # An exception should be made if there are no partially sampled runs. Then up
+  # to n_intensify_step_bootstraps should be sampled.
+  if(length(partially_sampled_runs) == 0) n_new_runs <- n_intensify_step_bootstraps
+  
+  # Iterate over the parameter identifiers and identify what runs should be
+  # sampled.
+  for(parameter_id in parameter_ids){
     
-    # Determine which run ids have not been sampled by the incumbent.
-    run_id_incumbent_new_samples <- unique(run_table[param_id==parameter_id_incumbent & sampled==FALSE, ]$run_id)
+    # Find partially sampled runs that have not been sampled for the current
+    # hyperparameter set.
+    current_partially_sampled_runs <- setdiff(partially_sampled_runs,
+                                              run_table[sampled==TRUE & param_id==parameter_id, ]$run_id)
     
-    # Update n_sample to be the smallest of itself or the number of unsampled
-    # runs. This prevents an overflow beyond n_max_bootstraps.
-    n_sample <- min(c(n_sample, length(run_id_incumbent_new_samples)))
-    
-    # Sample and add to run_id_incumbent_new
-    if(n_sample > 0){
-      run_id_incumbent_new <- c(run_id_incumbent_new,
-                                fam_sample(x=run_id_incumbent_new_samples,
-                                           size=n_sample,
-                                           replace=FALSE))
+    # Select runs to be sampled from among those that have been sampled by other
+    # hyperparameter sets.
+    if(length(current_partially_sampled_runs) > 0){
+      run_table[run_id %in% head(current_partially_sampled_runs, n=n_intensify_step_bootstraps) & param_id==parameter_id, "to_sample":=TRUE]
     }
     
-  } else {
-    # Sample up to n_intensify_step_bootstraps from run_id_incumbent_new
-    run_id_incumbent_new <- fam_sample(x=run_id_incumbent_new, 
-                                       size=n_intensify_step_bootstraps,
-                                       replace=FALSE)
+    # Add completely new runs if there is room.
+    if(length(current_partially_sampled_runs) < n_intensify_step_bootstraps &
+       length(unsampled_runs) > 0){
+      
+      # Determine the number of new runs that should be added.
+      n_current_new_runs <- min(c(n_new_runs,
+                                  n_intensify_step_bootstraps - length(current_partially_sampled_runs)))
+      
+      # Select up to current_new_runs to sample.
+      run_table[run_id %in% head(unsampled_runs, n=n_current_new_runs) & param_id==parameter_id, "to_sample":=TRUE]
+    }
   }
   
-  # Add new runs to the incumbent and applicable challengers.
-  if(length(run_id_incumbent_new) > 0){
-    run_table[run_id %in% run_id_incumbent_new & sampled==FALSE,
-              "to_sample":=TRUE]
-  }
-  
-  # Add incumbent runs that have not been performed by the challengers to the
-  # sample.
-  run_table[param_id %in% parameter_id_challenger & run_id %in% run_id_incumbent & sampled==FALSE,
-            "to_sample":=TRUE]
-  
-  # Select only those runs that are to be sampled
-  run_table <- run_table[to_sample==TRUE, ]
-  
-  # Do not sample more than n_intensify_step_bootstraps for challengers. We
-  # first create a randomly ordered sample identifier, and than select up to
-  # n_intensify_step_bootstraps runs from that list.
-  run_table[param_id %in% parameter_id_challenger,
-            "sample_id":=fam_sample(x=seq_len(.N), size=.N), by="param_id"]
-  
-  run_table <- run_table[(param_id == parameter_id_incumbent) |
-                           (param_id %in% parameter_id_challenger & sample_id <= n_intensify_step_bootstraps),
-                         c("param_id", "run_id")]
+  # Select only runs that should be sampled, and return run_id and param_id
+  # columns.
+  run_table <- run_table[to_sample==TRUE , c("param_id", "run_id")]
   
   return(run_table)
 }
 
 
 
-.compare_hyperparameter_optimisation_scores <- function(score_table,
-                                                        parameter_id_incumbent,
-                                                        parameter_id_challenger,
-                                                        acquisition_function,
-                                                        exploration_method="successive_halving",
-                                                        intensify_stop_p_value){
+.compare_hyperparameter_sets <- function(score_table,
+                                         parameter_table,
+                                         optimisation_model,
+                                         parameter_id_incumbent,
+                                         parameter_id_challenger,
+                                         exploration_method="successive_halving",
+                                         intensify_stop_p_value){
   
   # Suppress NOTES due to non-standard evaluation in data.table
-  param_id <- challenger_score <- p_value <- NULL
+  param_id <- p_value <- summary_score <- NULL
   
-  # Determine scores and comparison p-values
-  comparison_table <- score_table[param_id %in% parameter_id_challenger,
-                                  ..compare_hyperparameter_optimisation_scores(challenger_score_table=.SD, 
-                                                                               incumbent_score_table=score_table[param_id==parameter_id_incumbent, ],
-                                                                               exploration_method=exploration_method,
-                                                                               acquisition_function=acquisition_function),
-                                  by=c("param_id")]
-  
-  if(any(comparison_table$challenger_score > comparison_table$incumbent_score)){
-    # If a challenger beats the incumbent, replace the incumbent.
-    param_id_incumbent_new  <- head(comparison_table[order(-challenger_score)], n=1L)$param_id
+  if(exploration_method == "successive_halving"){
+    # Compute summary scores.
+    data <- .compute_hyperparameter_summary_score(score_table=score_table,
+                                                  parameter_table=parameter_table,
+                                                  optimisation_model=optimisation_model)
     
-  } else {
-    # Do not replace the incumbent.
-    param_id_incumbent_new <- parameter_id_incumbent
-  }
-  
-  if(exploration_method == "stochastic_reject"){
-    # Remove new incumbent from the challengers and determine remaining
-    # challengers by against significance threshold alpha
-    param_id_challenger_new <- comparison_table[param_id != param_id_incumbent_new &
-                                                  p_value > intensify_stop_p_value, ]$param_id
+    # Select only data concerning the incumbent and challenger sets
+    data <- data[param_id %in% c(parameter_id_incumbent, parameter_id_challenger)]
     
-  } else if(exploration_method == "successive_halving"){
-    # Remove the worst half of performers.
-    n_selectable <- floor(length(parameter_id_challenger + 1) / 2)
+    # Order the relevant data according to summary score.
+    data <- data[order(-summary_score)]
     
-    # Order by decreasing challenger score and keep the best half.
-    param_id_challenger_new <- head(comparison_table[order(-challenger_score)], n=n_selectable)$param_id
+    # Remove the worst half of performers. For simplicity we increase the number
+    # of selectable hyperparameters by one to account for the challenger.
+    n_selectable <- floor((length(parameter_id_challenger)) / 2)
+    
+    # Select the new incumbent, which may be identical to the old incumbent.
+    param_id_incumbent_new <- head(data, n=1L)$param_id
+    
+    # Select the remaining challengers, which temporarily includes the new
+    # incumbent.
+    param_id_challenger_new <- head(data, n=n_selectable+1L)$param_id
+    
+  } else if(exploration_method == "stochastic_reject"){
+    # Compute hyperparameter optimisation scores. First check if the score table
+    # already contains optimisation scores.
+    if(!"optimisation_score" %in% colnames(score_table)){
+      data <- .compute_hyperparameter_optimisation_score(score_table=score_table[param_id %in% c(parameter_id_incumbent, parameter_id_challenger)],
+                                                         optimisation_function=optimisation_model@optimisation_function)
+      
+    } else {
+      data <- data.table::copy(score_table)
+    }
+
+    # Compute summary scores.
+    summary_data <- .compute_hyperparameter_summary_score(score_table=data,
+                                                          parameter_table=parameter_table,
+                                                          optimisation_model=optimisation_model)
+    
+    # Select only data concerning the incumbent and challenger sets
+    summary_data <- summary_data[param_id %in% c(parameter_id_incumbent, parameter_id_challenger)]
+    
+    # Order the relevant data according to summary score.
+    summary_data <- summary_data[order(-summary_score)]
+    
+    # Select the new incumbent, which may be identical to the old incumbent.
+    param_id_incumbent_new <- head(summary_data, n=1L)$param_id
+    
+    # Select the preliminary set of challengers.
+    param_id_challenger_new <- setdiff(union(parameter_id_incumbent, parameter_id_challenger),
+                                       param_id_incumbent_new)
+    
+    # Compare optimisation scores and compute p-values.
+    p_value_table <-  data[param_id %in% param_id_challenger_new,
+                           ..compare_hyperparameter_optimisation_scores(challenger_score_table=.SD, 
+                                                                        incumbent_score_table=data[param_id==param_id_incumbent_new]),
+                           by=c("param_id")]
+    
+    # Select parameter identifiers with p-values above the thresholds.
+    param_id_challenger_new <- p_value_table[p_value > intensify_stop_p_value, ]$param_id
     
   } else if(exploration_method == "none"){
-    # Do not remove anything.
+    # Keep the incumbent set.
+    param_id_incumbent_new <- parameter_id_incumbent
+    
+    # Keep the challengers.
     param_id_challenger_new <- parameter_id_challenger
+    
+  } else {
+    ..error_reached_unreachable_code(paste0(".compare_hyperparameter_sets: encountered unknown exploration method: ", exploration_method))
   }
   
-  # Add incumbent to the challengers.
-  param_id_challenger_new <- union(param_id_challenger_new, parameter_id_incumbent)
-  
-  # Remove the new incumbent from the challengers.
-  param_id_challenger_new <- setdiff(param_id_challenger_new, param_id_incumbent_new)
+  # Update param_id_challenger_new by removing the incumbent set.
+  param_id_challenger_new <- setdiff(union(param_id_incumbent_new, param_id_challenger_new),
+                                     param_id_incumbent_new)
   
   return(list("parameter_id_incumbent"=param_id_incumbent_new,
               "parameter_id_challenger"=param_id_challenger_new))
@@ -950,9 +1108,7 @@
 
 
 ..compare_hyperparameter_optimisation_scores <- function(challenger_score_table,
-                                                         incumbent_score_table,
-                                                         exploration_method,
-                                                         acquisition_function){
+                                                         incumbent_score_table){
   # Suppress NOTES due to non-standard evaluation in data.table
   run_id <- optimisation_score <- NULL
   
@@ -966,29 +1122,13 @@
   challenger_score_table <- data.table::copy(challenger_score_table[run_id %in% run_id_match, ])[is.na(optimisation_score), "optimisation_score":=-1.0]
   incumbent_score_table <- data.table::copy(incumbent_score_table[run_id %in% run_id_match, ])[is.na(optimisation_score), "optimisation_score":=-1.0]
   
-  # Calculate the aggregate optimisation score for challenger and incumbent for
-  # the matching bootstraps.
-  challenger_score <- metric.summarise_optimisation_score(score_table=challenger_score_table,
-                                                          method=acquisition_function)$optimisation_score
-  incumbent_score <- metric.summarise_optimisation_score(score_table=incumbent_score_table,
-                                                         method=acquisition_function)$optimisation_score
-  
-  if(exploration_method == "stochastic_reject"){
-    # Find p-value for matching means using paired wilcoxon rank test
-    p_value <- suppressWarnings(stats::wilcox.test(x=challenger_score_table[order(run_id_match)]$optimisation_score,
-                                                   y=incumbent_score_table[order(run_id_match)]$optimisation_score,
-                                                   paired=TRUE,
-                                                   alternative="less")$p.value)
-    # Return list with data
-    return(list("challenger_score"=challenger_score,
-                "incumbent_score"=incumbent_score,
-                "p_value"=p_value))
-    
-  } else {
-    # Return list with data
-    return(list("challenger_score"=challenger_score,
-                "incumbent_score"=incumbent_score))
-  }
+  # Find p-value for matching means using paired wilcoxon rank test.
+  p_value <- suppressWarnings(stats::wilcox.test(x=challenger_score_table[order(run_id_match)]$optimisation_score,
+                                                 y=incumbent_score_table[order(run_id_match)]$optimisation_score,
+                                                 paired=TRUE,
+                                                 alternative="less")$p.value)
+  # Return list with p-values.
+  return(list("p_value"=p_value))
 }
 
 

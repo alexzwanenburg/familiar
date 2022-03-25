@@ -593,10 +593,10 @@ start_socket_server_process <- function(server_port=NULL){
       
       # Close the socket_server routine
       socket_client_server_shutdown(port=server_port)
-      
+
       # The process should be responsive within a few milliseconds after sending
       # the command to stop the subroutine. We leave the process 5 seconds to
-      # respond.
+      # respond.      
       process_ready <- socket_server_process$poll_process(5000)
       
       # Read from the socket_server_process to free up the process again,

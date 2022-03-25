@@ -1,3 +1,23 @@
+# Development
+
+## Major changes
+
+-   Added `train_familiar` function that trains (and returns) models, but skips evaluation steps. This function is essentially a wrapper around `summon_familiar`.
+-   Multivariate feature selection / variable importance methods such as `multivariate_regression`, `mrmr` and `lasso` now respect signature features set using the `signature` configuration parameter. Features provided in `signature` are always selected for the resulting model, and were therefore ignored during feature selection for both univariate and multivariate method. This has changed, so that multivariate methods now use the signature features as the basic set and attempt to identify any additional suitable features. Signature features are still ignored for univariate methods.
+-   Many learners now allow for sample weighting to correct for class imbalances. By default this is done by weighting using inverse sample weights. This can be changed to an effective number method by setting model hyperparameters.
+
+## Minor changes
+
+-   Added `summary`, `vcov` and `coef` method for `familiarModel` objects. These respectively apply `summary`, `vcov` and `coef` to the stored model.
+-   Added relative absolute error, relative squared error and root relative squared error as performance metrics.
+-   Models to predict the score of hyperparameter sets are now object-oriented. This change is not visible to the user.
+
+## Bug fixes
+
+-   Fixed some missing verbosity settings.
+
+-   Trained models now contain information for features used only for missing data inference.
+
 # Version 1.0.2 (Dolorous Dragon)
 
 ## Bug fixes

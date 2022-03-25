@@ -254,12 +254,15 @@ Performance metrics for models with regression outcomes, i.e. `count` and
 |:---------------------------|:--------------------------------------|
 | explained variance         | `explained_variance`                  |
 | mean absolute error        | `mae`, `mean_absolute_error`          |
+| relative absolute error    | `rae`, `relative_absolutive_error`    |
 | mean log absolute error    | `mlae`, `mean_log_absolute_error`     |
 | mean squared error         | `mse`, `mean_squared_error`           |
+| relative squared error     | `rse`, `relative_squared_error`       |
 | mean squared log error     | `msle`, `mean_squared_log_error`      |
 | median absolute error      | `medae`, `median_absolute_error`      |
 | R<sup>2</sup> score        | `r2_score`, `r_squared`               |
 | root mean square error     | `rmse`, `root_mean_square_error`      |
+| root relative squared error| `rrse`, `root_relative_squared_error` |
 | root mean square log error | `rmsle`, `root_mean_square_log_error` |
 
 Let $y$ be the set of observed values, and $\hat{y}$ the corresponding predicted
@@ -276,6 +279,10 @@ not sensitive to differences in offset between observed and predicted values.
 The mean absolute error is defined as $1/N \sum_i^N \left|\epsilon_i\right|$,
 with $N$ the number of samples.
 
+## Relative absolute error
+
+The relative absolute error is defined as $\sum_i^N \left|\epsilon_i\right|/ \sum_i^N \left|y_i - \bar{y}\right|$.
+
 ## Mean log absolute error
 
 The mean log absolute error is defined as
@@ -284,6 +291,10 @@ $1/N \sum_i^N \log(\left|\epsilon_i\right| + 1)$.
 ## Mean squared error
 
 The mean squared error is defined as $1/N \sum_i^N \left(\epsilon_i \right)^2$.
+
+## Relative squared error
+
+The relative squared error is defined as $\sum_i^N \left(\epsilon_i\right)^2/ \sum_i^N \left(y_i - \bar{y}\right)^2$.
 
 ## Mean squared log error
 
@@ -307,6 +318,10 @@ $\bar{y}$ denotes the mean value of $y$.
 
 The root mean square error is defined as
 $\sqrt{1/N \sum_i^N \left(\epsilon_i \right)^2}$.
+
+## Root relative squared error
+
+The root relative squared error is defined as $\sqrt{\sum_i^N \left(\epsilon_i\right)^2/ \sum_i^N \left(y_i - \bar{y}\right)^2}$.
 
 ## Root mean square log error
 
