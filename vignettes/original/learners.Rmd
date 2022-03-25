@@ -531,16 +531,17 @@ forest subsequently infers runtime for a challenger hyperparameter set. The
 runtime estimate is compared against $t_{\texttt{max}}$, and if it exceeds the
 threshold, it is rejected and not evaluated.
 
-## Computing the optimisation score
+## Assessing goodness of hyperparameter sets
 
-The optimisation score $s$ determines how good a set of hyperparameters is. An
-optimisation score is computed in two steps. First an objective score is
-computed to assess model performance for a set of hyperparameters. The
-optimisation score is computed subsequently.
+A summary score $s$ determines how good a set of hyperparameters $\mathbf{x}$
+is. This score is computed in two steps. First an objective score is computed to
+assess model performance for a hyperparameter set in a bootstrap subsample.
+Subsequently an optimisation score is computed within the subsample. Finally a
+summary score is determined from the optimisation score over all subsamples.
 
-An objective score $s'$ is computed from the performance metric value for a
-specific hyperparameter set for in-bag (IB; $s'_{\textrm{IB}}$) and out-of-bag
-data (OOB; $s'_{\textrm{OOB}}$). The objective score always lies in the interval
+An objective score $s''$ is computed from the performance metric value for a
+specific hyperparameter set for in-bag (IB; $s''_{\textrm{IB}}$) and out-of-bag
+data (OOB; $s''_{\textrm{OOB}}$). The objective score always lies in the interval
 $[-1.0, 1.0]$. An objective score of $1.0$ always indicates the best possible
 score. A score of $0.0$ indicates that the hyperparameter set leads to the same
 degree of performance as the best educated guess, i.e. the majority class (for
@@ -550,25 +551,57 @@ scores that are either missing or below $-1.0$ are truncated to the value of
 $-1.0$. In case multiple metrics are used to assess model performance, the mean
 of the respective objective scores is used.
 
-The optimisation score $s$ is subsequently computed using one of the following
-functions:
+The optimisation scores $s'$ and summary score $s$ of each hyperparameter set
+are subsequently computed using one of the following functions, which can be set
+using the `optimisation_function` parameter:
 
-1. `max_validation`: $s=s'_{\textrm{OOB}}$. A commonly used criterion that
+1. `validation`, `max_validation` (default): The optimisation score for each
+bootstrap subsample is $s'=s''_{\textrm{OOB}}$. The summary score $s$ is then
+the average of optimisation scores $s'$. This is a commonly used criterion that
 tries to maximise the score on the OOB validation data.
 
-2. `balanced` (default): $s=s'_{\textrm{OOB}} - \left| s'_{\textrm{OOB}} - s'_{\textrm{IB}} \right|$.
-A variation on `max_validation` with a penalty for differences in performance
+2. `balanced`:  The optimisation score for each bootstrap subsample is
+$s'=s''_{\textrm{OOB}} - \left| s''_{\textrm{OOB}} - s''_{\textrm{IB}} \right|$.
+The summary score $s$ is then the average of optimisation scores $s'$. A
+variation on `max_validation` with a penalty for differences in performance
 between the IB and OOB data. The underlying idea is that a good set of
 hyperparameters should lead to models that perform well on both development and
 validation data.
 
-3. `strong_balance`: $s=s'_{\textrm{OOB}} - 2\left| s'_{\textrm{OOB}}-s'_{\textrm{IB}} \right|$.
-A variant of `balanced` with a stronger penalty term.
+3. `strong_balance`: The optimisation score for each bootstrap subsample is
+$s'=s''_{\textrm{OOB}} - 2\left| s''_{\textrm{OOB}}-s''_{\textrm{IB}} \right|$.
+The summary score $s$ is then the average of optimisation scores $s'$. A variant
+of `balanced` with a stronger penalty term.
 
-The optimisation score is then used to select the best known hyperparameter set,
-i.e. the set that minimises the optimisation score, and to identify candidate
-hyperparameter sets as described in the following section. The optimisation
-function is set using the `optimisation_function` argument.
+4. `validation_minus_sd`: The optimisation score for each bootstrap subsample is
+$s'=s''_{\textrm{OOB}}$. The summary score $s$ is then the average of
+optimisation scores $s'$ minus the standard deviation of $s'$. This penalises
+hyperparameter sets that lead to wide variance on OOB data.
+
+5. `validation_25th_percentile`: The optimisation score for each bootstrap
+subsample is $s'=s''_{\textrm{OOB}}$. The summary score $s$ is the 25th
+percentile of optimisation scores $s'$. Like `validation_minus_sd` this
+penalises hyperparameter sets that lead to wide variance on OOB data.
+
+6. `model_estimate`: The optimisation score for each bootstrap subsample is
+$s'=s''_{\textrm{OOB}}$. The model used to infer utility of new hyperparameter
+sets (see the next section [Predicting optimisation score for new hyperparameter
+sets]) is used to predict the expected optimisation score $\mu(\mathbf{x})$.
+This score is used as summary score $s$. Not available for random search.
+
+7. `model_estimate_minus_sd`: The optimisation score for each bootstrap
+subsample is $s'=s''_{\textrm{OOB}}$. The model used to infer utility of new
+hyperparameter sets (see the next section [Predicting optimisation score for new
+hyperparameter sets]) is used to predict the expected optimisation score
+$\mu(\mathbf{x})$ and its standard deviation $\sigma(\mathbf{x})$. Then
+$s = \mu(\mathbf{x}) - \sigma(\mathbf{x})$. This penalises hyperparameter sets
+for which a large variance is expected. Not available for random search.
+
+The summary score is then used to select the best known hyperparameter set, i.e.
+the set that maximises the summary score. Moreover, the optimisation scores are
+used to identify candidate hyperparameter sets as described in the following
+section. The optimisation function is set using the `optimisation_function`
+argument.
 
 ## Predicting optimisation score for new hyperparameter sets
 
@@ -735,7 +768,7 @@ Hyperparameter optimization may be configured using the tags/arguments in the ta
 
 | **tag** / **argument** | **description** | **default** |
 |:----------:|:-------------------------|:-----------:|
-| `optimisation_bootstraps`  | Maximum number of bootstraps created for optimisation | `50` |
+| `optimisation_bootstraps`  | Maximum number of bootstraps created for optimisation. | `20` |
 | `optimisation_determine_vimp` | If `TRUE`, compute variable importance for each bootstrap. If `FALSE` use variable importance computed during the feature selection step. | `TRUE` |
 | `smbo_random_initialisation` | If `random` initial parameter sets are generated randomly from default ranges. If `fixed` or `fixed_subsample`, the initial parameter sets are based on a grid in parameter space. | `fixed_subsample` |
 | `smbo_n_random_sets` | Sets the number of hyperparameter sets drawn for initialisation. Ignored if `smbo_random_initialisation` is `fixed`. If `smbo_random_initialisation` is `fixed_subsample`, the number of selected hyperparameters may be lower. | `100` |
@@ -745,7 +778,7 @@ Hyperparameter optimization may be configured using the tags/arguments in the ta
 | `smbo_step_bootstraps` | Number of bootstraps used within each step of an intensify iteration. | `3` |
 | `smbo_intensify_steps` | Number of intensify steps within each intensify iteration. | `5` |
 | `optimisation_metric` | The metric used for optimisation, e.g. `auc`. See the vignette on performance metrics for available options. More than one metric may be specified. | `auc_roc` (`binomial`, `multinomial`); `mse` (`continuous`); `msle` (`count`); and `concordance_index` (`survival`) |
-| `optimisation_function` | The optimisation function used (see [Computing the optimisation score]). | `balanced` |
+| `optimisation_function` | The optimisation function used (see [Assessing goodness of hyperparameter sets]). | `balanced` |
 | `hyperparameter_learner` | Learner used to predict optimisation scores for new hyperparameter sets (see [Predicting optimisation score for new hyperparameter sets]). | `gaussian_process` |
 | `acquisition_function` | The function used to quantify utility of hyperparameter sets (see [Acquisition functions for utility of hyperparameter sets]) | `expected_improvement` |
 | `exploration_method` | Method used to explore challenger hyperparameter sets (see [Exploring challenger sets]) | `successive_halving` |

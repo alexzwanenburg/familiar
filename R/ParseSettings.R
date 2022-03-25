@@ -2532,11 +2532,11 @@
                                             var_name="optimisation_bootstraps",
                                             type="integer",
                                             optional=TRUE,
-                                            default=50)
+                                            default=20)
   
   .check_number_in_valid_range(x=settings$hpo_max_bootstraps,
                                var_name="optimisation_bootstraps",
-                               range=c(20, Inf))
+                               range=c(10, Inf))
   
   ##### max_smbo_iterations ####################################################
   # Maximum number of SMBO iterations before stopping
@@ -2644,7 +2644,7 @@
                                                    var_name="optimisation_function",
                                                    type="character",
                                                    optional=TRUE,
-                                                   default="balanced")
+                                                   default="validation")
   
   .check_parameter_value_is_valid(x=settings$hpo_optimisation_function,
                                   var_name="optimisation_function",
