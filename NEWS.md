@@ -12,6 +12,7 @@
 -   Added relative absolute error, relative squared error and root relative squared error as performance metrics.
 -   Models to predict the goodness (*optimisation score*) of hyperparameter sets are now object-oriented. This change is not visible to the user.
 -   Hyperparameter optimisation is now less greedy during the intensification steps. Fewer bootstraps are assessed during intensification steps if there are any bootstraps that have only partially been sampled by the hyperparameter sets under evaluation.
+    -   By default, a maximum of 20 bootstraps are now used to evaluate hyperparameter sets. This is down from the default of 50 used previously.
 -   Additional options are now available to as `optimisation_function` to determine optimisation and overall summary scores of hyperparameter sets. Newly introduced are:
     -   `validation_minus_sd`: The mean performance on out-of-bag data minus its standard deviation.
 
@@ -20,6 +21,7 @@
     -   `model_estimate`: The estimated model performance inferred by the hyperparameter model that was previously used to identify new candidate hyperparameter sets. Not available for random search.
 
     -   `model_estimate_minus_sd`: The estimated model performance minus its standard deviation. Not available for random search.
+-   The default `optimisation_function` is now `validation`.
 -   Additional data are now exported after optimising hyperparameters, namely the iteration step during which performance data were obtained, the time taken by the optimisation process, the learner used to learn how well hyperparameter sets perform, and the optimisation function. This is in addition to the score table and parameter tables that were already exported previously.
 
 ## Bug fixes
