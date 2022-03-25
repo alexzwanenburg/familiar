@@ -117,11 +117,15 @@ learner.find_maxstat_threshold <- function(pred_table){
                   purpose="to determine an optimal risk threshold")
   
   # Perform maxstat test
-  h <- maxstat::maxstat.test(survival::Surv(outcome_time, outcome_event) ~ predicted_outcome,
-                             data=pred_table,
-                             smethod="LogRank",
-                             minprop=0.10,
-                             maxprop=0.90)
+  h <- tryCatch(maxstat::maxstat.test(survival::Surv(outcome_time, outcome_event) ~ predicted_outcome,
+                                      data=pred_table,
+                                      smethod="LogRank",
+                                      minprop=0.10,
+                                      maxprop=0.90),
+                error=identity)
+  
+  # Check that maxstat.test did not produce an error.
+  if(inherits(h, "error")) return(mean(pred_table$predicted_outcome, na.rm=TRUE))
   
   # Check if at least 4 unique values are present for the smoothing spline
   if(length(h$cuts) < 4) return(unname(h$estimate))
