@@ -2293,6 +2293,14 @@
 #'   convergent optimisation score.
 #'
 #'   The default value is `0.01`.
+#' @param smbo_time_limit (*optional*) Time limit (in seconds) for the
+#'   optimisation process. Optimisation is stopped after this limit is exceeded.
+#'   Time taken to determine variable importance for the optimisation process
+#'   (see the `optimisation_determine_vimp` parameter) does not count.
+#'
+#'   The default is `NULL`, indicating that there is no time limit for the
+#'   optimisation process.
+#'   
 #' @param smbo_step_bootstraps (*optional*) The number of bootstraps taken from
 #'   the set of `optimisation_bootstraps` bootstraps as data for the initial
 #'   SMBO step and the steps in each intensify iteration.
@@ -2478,6 +2486,7 @@
                                                         max_smbo_iterations=waiver(),
                                                         smbo_stop_convergent_iterations=waiver(),
                                                         smbo_stop_tolerance=waiver(),
+                                                        smbo_time_limit=waiver(),
                                                         smbo_step_bootstraps=waiver(),
                                                         smbo_intensify_steps=waiver(),
                                                         smbo_stochastic_reject_p_value=waiver(),
@@ -2619,6 +2628,22 @@
                                var_name="smbo_stop_tolerance",
                                range=c(0.0, 2.0),
                                closed=c(FALSE, TRUE))
+  
+  ##### smbo_time_limit ########################################################
+  # Time limit for the optimisation process..
+  settings$hpo_time_limit <- .parse_arg(x_config=config$smbo_time_limit,
+                                        x_var=smbo_time_limit,
+                                        var_name="smbo_time_limit",
+                                        type="numeric",
+                                        optional=TRUE,
+                                        default=NULL)
+  
+  if(!is.null(settings$hpo_time_limit)){
+    .check_number_in_valid_range(x=settings$hpo_time_limit,
+                                 x_var="smbo_time_limit",
+                                 range=c(1.0, Inf))
+  }
+  
   
   
   ##### hyperparameter_learner #################################################

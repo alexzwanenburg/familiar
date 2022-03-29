@@ -166,6 +166,8 @@
       <smbo_stop_convergent_iterations></smbo_stop_convergent_iterations>
       <!-- Tolerance level for convergence (optional, default: 1E-2) -->
       <smbo_stop_tolerance></smbo_stop_tolerance>
+      <!-- Time limit (in seconds) for the optimisation process (optional, default: NULL) -->
+      <smbo_time_limit></smbo_time_limit>
       <!-- Parallel processing for hyperparameter optimisation (optional; default: true) -->
       <parallel_hyperparameter_optimisation></parallel_hyperparameter_optimisation>
     </hyperparameter_optimisation>

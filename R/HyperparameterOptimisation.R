@@ -157,6 +157,7 @@ run_hyperparameter_optimisation <- function(cl=NULL,
                                                  "intensify_stop_p_value"=settings$hpo$hpo_alpha,
                                                  "convergence_tolerance"=settings$hpo$hpo_convergence_tolerance,
                                                  "convergence_stopping"=settings$hpo$hpo_conv_stop,
+                                                 "time_limit"=settings$hpo$hpo_time_limit,
                                                  "verbose"=verbose,
                                                  "message_indent"=message_indent+1L,
                                                  "save_in_place"=TRUE,
@@ -606,6 +607,10 @@ setMethod("optimise_hyperparameters", signature(object="familiarModel", data="da
                                                          optimisation_function = optimisation_function)
             
             ##### Perform initial set of computations --------------------------
+            
+            # Set the process start time.
+            optimisation_start_time <- Sys.time()
+            
             if(measure_time & n_intensify_step_bootstraps > 1L) {
               
               # Start with an initial run to measure performance and time.
@@ -634,43 +639,48 @@ setMethod("optimise_hyperparameters", signature(object="familiarModel", data="da
               # Get score table.
               score_table <- score_results$results
               
-              # Set up the runs for the remaining initial computations.
-              run_table <- ..create_hyperparameter_run_table(run_ids=setdiff(seq_len(n_intensify_step_bootstraps), 1L),
-                                                             measure_time=measure_time,
-                                                             score_table=score_table,
-                                                             parameter_table=parameter_table,
-                                                             optimisation_model=optimisation_model_prototype,
-                                                             n_max_bootstraps=n_max_bootstraps)
-              
-              logger.message(paste0("Compute initial model performance based on the second batch of ",
-                                   nrow(run_table), " hyperparameter sets."),
-                             indent=message_indent+1L,
-                             verbose=verbose)
-              
-              # Create a model to predict the time a process takes to complete
-              # training.
-              time_optimisation_model <- .create_hyperparameter_time_optimisation_model(score_table=score_table,
-                                                                                        parameter_table=parameter_table,
-                                                                                        optimisation_function=optimisation_function)
-              
-              # Compute second batch of results.
-              score_results <- .compute_hyperparameter_model_performance(cl=cl,
-                                                                         object=object,
-                                                                         run_table=run_table,
-                                                                         bootstraps=bootstraps,
-                                                                         data=data,
-                                                                         rank_table_list=rank_table_list,
-                                                                         parameter_table=parameter_table,
-                                                                         metric_objects=metric_object_list,
-                                                                         iteration_id=0L,
-                                                                         time_optimisation_model=time_optimisation_model,
-                                                                         overhead_time=score_results$overhead_time,
-                                                                         verbose=verbose)
-              
-              # Add new data to score and optimisation tables.
-              score_table <- rbind(score_table,
-                                   score_results$results,
-                                   use.names=TRUE)
+              if(.optimisation_process_time_available(start_time=optimisation_start_time,
+                                                      time_limit=time_limit,
+                                                      verbose=FALSE)){
+                
+                # Set up the runs for the remaining initial computations.
+                run_table <- ..create_hyperparameter_run_table(run_ids=setdiff(seq_len(n_intensify_step_bootstraps), 1L),
+                                                               measure_time=measure_time,
+                                                               score_table=score_table,
+                                                               parameter_table=parameter_table,
+                                                               optimisation_model=optimisation_model_prototype,
+                                                               n_max_bootstraps=n_max_bootstraps)
+                
+                logger.message(paste0("Compute initial model performance based on the second batch of ",
+                                      nrow(run_table), " hyperparameter sets."),
+                               indent=message_indent+1L,
+                               verbose=verbose)
+                
+                # Create a model to predict the time a process takes to complete
+                # training.
+                time_optimisation_model <- .create_hyperparameter_time_optimisation_model(score_table=score_table,
+                                                                                          parameter_table=parameter_table,
+                                                                                          optimisation_function=optimisation_function)
+                
+                # Compute second batch of results.
+                score_results <- .compute_hyperparameter_model_performance(cl=cl,
+                                                                           object=object,
+                                                                           run_table=run_table,
+                                                                           bootstraps=bootstraps,
+                                                                           data=data,
+                                                                           rank_table_list=rank_table_list,
+                                                                           parameter_table=parameter_table,
+                                                                           metric_objects=metric_object_list,
+                                                                           iteration_id=0L,
+                                                                           time_optimisation_model=time_optimisation_model,
+                                                                           overhead_time=score_results$overhead_time,
+                                                                           verbose=verbose)
+                
+                # Add new data to score and optimisation tables.
+                score_table <- rbind(score_table,
+                                     score_results$results,
+                                     use.names=TRUE)
+              }
               
             } else {
               # Set up hyperparameter experiment runs
@@ -735,6 +745,15 @@ setMethod("optimise_hyperparameters", signature(object="familiarModel", data="da
             optimisation_step <- 0L
             while(optimisation_step < n_max_optimisation_steps & !skip_optimisation){
               
+              # Stop optimisation if there is no time left. This is an initial
+              # check because the nested loop may break for different reasons.
+              # This check is not verbose, pending a later, final check.
+              if(!.optimisation_process_time_available(start_time=optimisation_start_time,
+                                                       time_limit=time_limit,
+                                                       verbose=FALSE)){
+                break()
+              }
+              
               ##### SMBO - Intensify -------------------------------------------
               
               # Create a model to predict the time a process takes to complete
@@ -782,6 +801,13 @@ setMethod("optimise_hyperparameters", signature(object="familiarModel", data="da
               # Start intensification rounds
               n_intensify_steps  <- 0L
               while(n_intensify_steps < n_max_intensify_steps){
+                
+                # Check if there is time left for intensification.
+                if(!.optimisation_process_time_available(start_time=optimisation_start_time,
+                                                         time_limit=time_limit,
+                                                         verbose=FALSE)){
+                  break()
+                }
                 
                 # Create run table.
                 run_table <- ..create_hyperparameter_intensify_run_table(parameter_id_incumbent=parameter_id_incumbent,
@@ -874,6 +900,15 @@ setMethod("optimise_hyperparameters", signature(object="familiarModel", data="da
                              indent=message_indent+1L,
                              verbose=verbose)
               
+              # Check time and finish the optimisation process if required. This
+              # will also automatically generate a message if verbose is TRUE.
+              if(!.optimisation_process_time_available(start_time=optimisation_start_time,
+                                                       time_limit=time_limit,
+                                                       indent=message_indent,
+                                                       verbose=verbose)){
+                break()
+              }
+              
               # Break if the convergence counter reaches a certain number
               if(stop_list$convergence_counter_score >= convergence_stopping | 
                  stop_list$convergence_counter_parameter_id >= convergence_stopping){
@@ -926,7 +961,7 @@ setMethod("optimise_hyperparameters", signature(object="familiarModel", data="da
             # Update attributes of object.
             object@hyperparameter_data <- list("$parameter_table"=score_table,
                                                "parameter_table"=parameter_table,
-                                               "time_taken"=NA_real_,
+                                               "time_taken"=as.numeric(Sys.time() - optimisation_start_time),
                                                "hyperparameter_learner"=hyperparameter_learner,
                                                "optimisation_function"=optimisation_function)
             

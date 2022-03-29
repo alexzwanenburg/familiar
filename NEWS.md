@@ -5,14 +5,15 @@
 -   Added `train_familiar` function that trains (and returns) models, but skips evaluation steps. This function is essentially a wrapper around `summon_familiar`.
 -   Multivariate feature selection / variable importance methods such as `multivariate_regression`, `mrmr` and `lasso` now respect signature features set using the `signature` configuration parameter. Features provided in `signature` are always selected for the resulting model, and were therefore ignored during feature selection for both univariate and multivariate method. This has changed, so that multivariate methods now use the signature features as the basic set and attempt to identify any additional suitable features. Signature features are still ignored for univariate methods.
 -   Many learners now allow for sample weighting to correct for class imbalances. By default this is done by weighting using inverse sample weights. This can be changed to an effective number method by setting model hyperparameters.
+-   Hyperparameter optimisation is now less greedy during the intensification steps. Fewer bootstraps are assessed during intensification steps if there are any bootstraps that have only partially been sampled by the hyperparameter sets under evaluation. This should accelerate the optimisation process considerably. The (so far untested) rationale is that the hyperparameter learners should generally be able to accurately model performance of hyperparameter sets using locally sparse data.
+    -   By default, a maximum of 20 bootstraps are now used to evaluate hyperparameter sets. This is down from the default of 50 used previously.
+    -   It is now moreover possible to limit the time (in seconds) spent on optimisation using the `smbo_time_limit` parameter. Optimisation will stop once this limit has been exceeded. Note that familiar does not actively kill ongoing optimisation processes, but waits until they complete before stopping optimisation. Actively killing processes would require a general overhaul of the parallelisation routines used in familiar, which is complex and not an urgent priority.
 
 ## Minor changes
 
 -   Added `summary`, `vcov` and `coef` method for `familiarModel` objects. These respectively apply `summary`, `vcov` and `coef` to the stored model.
 -   Added relative absolute error, relative squared error and root relative squared error as performance metrics.
 -   Models to predict the goodness (*optimisation score*) of hyperparameter sets are now object-oriented. This change is not visible to the user.
--   Hyperparameter optimisation is now less greedy during the intensification steps. Fewer bootstraps are assessed during intensification steps if there are any bootstraps that have only partially been sampled by the hyperparameter sets under evaluation.
-    -   By default, a maximum of 20 bootstraps are now used to evaluate hyperparameter sets. This is down from the default of 50 used previously.
 -   Additional options are now available to as `optimisation_function` to determine optimisation and overall summary scores of hyperparameter sets. Newly introduced are:
     -   `validation_minus_sd`: The mean performance on out-of-bag data minus its standard deviation.
 

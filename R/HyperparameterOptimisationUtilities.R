@@ -255,6 +255,30 @@
 
 
 
+.optimisation_process_time_available <- function(start_time,
+                                                 time_limit=NULL,
+                                                 message_indent=0L,
+                                                 verbose=FALSE){
+  
+  # Check that there is time-limit to obey.
+  if(is.null(time_limit)) return(TRUE)
+  
+  # Compute time spent optimising.
+  optimisation_time <- as.numeric(Sys.time() - start_time)
+  
+  # Check if there still is time left.
+  if(optimisation_time < time_limit) return(TRUE)
+  
+  logger.message(paste0("Hyperparameter optimisation: Optimisation stopped because the optimisation process exceeded the allotted time: time spent: ",
+                        optimisation_time, " seconds; time allotted: ", time_limit, " seconds."),
+                 indent=message_indent,
+                 verbose=verbose)
+  
+  return(FALSE)
+}
+
+
+
 .compute_hyperparameter_variable_importance <- function(cl=NULL,
                                                         determine_vimp=TRUE,
                                                         object,
