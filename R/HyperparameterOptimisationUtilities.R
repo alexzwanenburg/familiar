@@ -772,14 +772,21 @@ get_best_hyperparameter_set <- function(score_table,
     max_time <- 10.0
   }
   
+  # Extract and update summary score and score estimate
+  summary_score <- data$summary_score
+  if(!is.finite(summary_score)) summary_score <- -1.0
+  
+  score_estimate <- data$score_estimate
+  if(!is.finite(score_estimate)) score_estimate <- -1.0
+  
   # Extract the summary score, score estimate, and time taken, and return with
   # other information.
   return(list("param_id"=data$param_id,
               "t"=t,
               "time"=data$time_taken,
               "max_time"=max_time,
-              "summary_score"=data$summary_score,
-              "score_estimate"=data$score_estimate,
+              "summary_score"=summary_score,
+              "score_estimate"=score_estimate,
               "n"=n_max_bootstraps))
 }
 
