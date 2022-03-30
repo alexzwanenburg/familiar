@@ -445,7 +445,7 @@ acquisition_improvement_probability <- function(object,
   # Swersky, K., Wang, Z., Adams, R. P. & de Freitas, N. Taking the Human Out
   # of the Loop: A Review of Bayesian Optimization. Proc. IEEE 104, 148–175
   # (2016)
-  browser()
+  
   # Get the score estimate from the incumbent hyperparameter set.
   tau <- acquisition_data$score_estimate
   
@@ -520,7 +520,7 @@ acquisition_expected_improvement <- function(object,
   # The definition of expected improvement is found in Shahriari, B., Swersky,
   # K., Wang, Z., Adams, R. P. & de Freitas, N. Taking the Human Out of the
   # Loop: A Review of Bayesian Optimization. Proc. IEEE 104, 148–175 (2016).
-  browser()
+  
   # Get the incumbent score.
   tau <- acquisition_data$score_estimate
   
@@ -548,7 +548,7 @@ acquisition_upper_confidence_bound <- function(object,
   # Krause, A., Kakade, S. M. & Seeger, M. W. Information-Theoretic Regret
   # Bounds for Gaussian Process Optimization in the Bandit Setting. IEEE
   # Trans. Inf. Theory 58, 3250–3265 (2012).
-  browser()
+  
   # Find the number hyperparameters.
   n_parameters <- length(object@target_hyperparameters)
   
@@ -579,11 +579,11 @@ acquisition_bayes_upper_confidence_bound <- function(object,
   
   # Compute the quantile we are interested in.
   q <- 1.0 - 1.0 / (acquisition_data$t + 1)
-  browser()
+  
   if("percentile" %in% get_prediction_type(object)){
     # Compute empiric alpha.
     alpha <- .predict(object=object,
-                      data=data,
+                      data=parameter_data,
                       type="percentile",
                       percentile=q)$percentile
     
