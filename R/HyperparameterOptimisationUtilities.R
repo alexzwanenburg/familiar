@@ -619,22 +619,22 @@
   # compute time_taken.
   if(optimisation_function %in% c("validation", "max_validation", "balanced", "stronger_balance")){
     # Here we just use the mean score.
-    data <- score_table[, list("summary_score"=mean(optimisation_score),
-                               "score_estimate"=mean(optimisation_score),
+    data <- score_table[, list("summary_score"=mean(optimisation_score, na.rm=TRUE),
+                               "score_estimate"=mean(optimisation_score, na.rm=TRUE),
                                "time_taken"=stats::median(time_taken)), by="param_id"]
     
   } else if(optimisation_function %in% c("validation_minus_sd")){
     # Here we need to compute the standard deviation, with an exception for
     # single subsamples.
     data <- score_table[, list("summary_score"=..optimisation_function_validation_minus_sd(optimisation_score),
-                               "score_estimate"=mean(optimisation_score),
+                               "score_estimate"=mean(optimisation_score, na.rm=TRUE),
                                "time_taken"=stats::median(time_taken)), by="param_id"]
     
     
   } else if(optimisation_function %in% c("validation_25th_percentile")){
     # Summary score is formed by the 25th percentile of the optimisation scores.
-    data <- score_table[, list("summary_score"=stats::quantile(optimisation_score, probs=0.25, names=FALSE),
-                               "score_estimate"=mean(optimisation_score),
+    data <- score_table[, list("summary_score"=stats::quantile(optimisation_score, probs=0.25, names=FALSE, na.rm=TRUE),
+                               "score_estimate"=mean(optimisation_score, na.rm=TRUE),
                                "time_taken"=stats::median(time_taken)), by="param_id"]
     
   } else if(optimisation_function %in% c("model_estimate", "model_estimate_minus_sd")){
@@ -685,18 +685,24 @@
         ..error_reached_unreachable_code(paste0(".compute_hyperparameter_summary_score: encountered unknown optimisation function: ", optimisation_function))
       }
       
+      # Check that any predictions make sense at all.
+      if(all(!is.finite(score_table$optimisation_score))){
+        data[, ":="(summary_score=NA_real_,
+                    score_estimate=NA_real_)]
+      }
+      
     } else if(optimisation_function == "model_estimate"){
       # In absence of suitable data, use the model-less equivalent of
       # model_estimate, namely "validation".
-      data <- score_table[, list("summary_score"=mean(optimisation_score),
-                                 "score_estimate"=mean(optimisation_score),
+      data <- score_table[, list("summary_score"=mean(optimisation_score, na.rm=TRUE),
+                                 "score_estimate"=mean(optimisation_score, na.rm=TRUE),
                                  "time_taken"=stats::median(time_taken)), by="param_id"]
       
     } else if(optimisation_function == "model_estimate_minus_sd"){
       # In absence of suitable data, use the model-less equivalent of
       # model_estimate_minus_sd, namely "validation_minus_sd".
       data <- score_table[, list("summary_score"=..optimisation_function_validation_minus_sd(optimisation_score),
-                                 "score_estimate"=mean(optimisation_score),
+                                 "score_estimate"=mean(optimisation_score, na.rm=TRUE),
                                  "time_taken"=stats::median(time_taken)), by="param_id"]
       
     } else {
@@ -720,11 +726,11 @@
   
   # The default behaviour is when multiple subsamples exist, and the standard
   # deviation can be computed.
-  if(length(x) > 1) return(mean(x) - stats::sd(x))
+  if(length(x) > 1) return(mean(x, na.rm=TRUE) - stats::sd(x, na.rm=TRUE))
   
   # The exception for x with length 1, where the standard deviation does not
   # exist.
-  return(mean(x))
+  return(mean(x, na.rm=TRUE))
 }
 
 
