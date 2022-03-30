@@ -342,7 +342,7 @@ setMethod("optimise_hyperparameters", signature(object="familiarModel", data="da
                    experiment_info=NULL,
                    user_list=NULL,
                    metric=waiver(),
-                   optimisation_function="balanced",
+                   optimisation_function="validation",
                    acquisition_function="expected_improvement",
                    grid_initialisation_method="fixed_subsample",
                    exploration_method="successive_halving",
