@@ -356,7 +356,7 @@ setMethod("optimise_hyperparameters", signature(object="familiarModel", data="da
                    n_max_intensify_steps=5L,
                    n_challengers=20L,
                    intensify_stop_p_value=0.05,
-                   convergence_tolerance=1E-2,
+                   convergence_tolerance=NULL,
                    convergence_stopping=3,
                    time_limit=NULL,
                    verbose=TRUE,
@@ -375,9 +375,27 @@ setMethod("optimise_hyperparameters", signature(object="familiarModel", data="da
                              verbose=verbose)
             }
             
-            
             # Set default metric
             if(is.waive(metric)) metric <- .get_default_metric(outcome_type=object@outcome_type)
+            
+            # Set convergence tolerance, if it has not been set.
+            if(is.null(convergence_tolerance)){
+              # Get the number of samples.
+              n_samples <- get_n_samples(data, "series")
+              
+              # Nothing to do if there are no samples.
+              if(n_samples == 0) return(object)
+              
+              # Set convergence tolerance.
+              convergence_tolerance <- -2 + (-log10(n_samples) + 2) / 2
+              
+              # Limit between -2 and -3.
+              if(convergence_tolerance > -2) convergence_tolerance <- -2
+              if(convergence_tolerance < -3) convergence_tolerance <- -3
+              
+              # Convert to value.
+              convergence_tolerance <- 10^convergence_tolerance
+            }
             
             # Check if the metric is ok. Packed into a for loop to enable
             # multi-metric optimisation.

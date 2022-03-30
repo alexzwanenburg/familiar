@@ -2292,7 +2292,9 @@
 #' @param smbo_stop_tolerance (*optional*) Tolerance for early stopping due to
 #'   convergent optimisation score.
 #'
-#'   The default value is `0.01`.
+#'   The default value depends on the number of samples (at the series level),
+#'   ranging from `0.01` for 100 or fewer samples, to `0.001` for 10000 or more
+#'   samples.
 #' @param smbo_time_limit (*optional*) Time limit (in seconds) for the
 #'   optimisation process. Optimisation is stopped after this limit is exceeded.
 #'   Time taken to determine variable importance for the optimisation process
@@ -2622,12 +2624,15 @@
                                                    var_name="smbo_stop_tolerance",
                                                    type="numeric",
                                                    optional=TRUE,
-                                                   default=1E-2)
+                                                   default=NULL)
   
-  .check_number_in_valid_range(x=settings$hpo_convergence_tolerance,
-                               var_name="smbo_stop_tolerance",
-                               range=c(0.0, 2.0),
-                               closed=c(FALSE, TRUE))
+  # Check provided settings. If NULL, convergence will be set by the 
+  if(!is.null(settings$hpo_convergence_tolerance)){
+    .check_number_in_valid_range(x=settings$hpo_convergence_tolerance,
+                                 var_name="smbo_stop_tolerance",
+                                 range=c(0.0, 2.0),
+                                 closed=c(FALSE, TRUE)) 
+  }
   
   ##### smbo_time_limit ########################################################
   # Time limit for the optimisation process..
@@ -2640,7 +2645,7 @@
   
   if(!is.null(settings$hpo_time_limit)){
     .check_number_in_valid_range(x=settings$hpo_time_limit,
-                                 x_var="smbo_time_limit",
+                                 var_name="smbo_time_limit",
                                  range=c(1.0, Inf))
   }
   
