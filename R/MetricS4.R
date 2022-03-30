@@ -574,15 +574,15 @@ metric.compute_optimisation_score <- function(score_table,
   optimisation_score <- training <- validation <- NULL
   
   # Select the correct optimisation function.
-  optimisation_function <- switch(optimisation_function,
-                                  "max_validation" = metric.optim_score.max_validation,
-                                  "validation" = metric.optim_score.max_validation,
-                                  "balanced" = metric.optim_score.balanced,
-                                  "stronger_balance" = metric.optim_score.stronger_balance,
-                                  "validation_minus_sd" = metric.optim_score.max_validation,
-                                  "validation_25th_percentile" = metric.optim_score.max_validation,
-                                  "model_estimate " = metric.optim_score.max_validation,
-                                  "model_estimate_minus_sd" = metric.optim_score.max_validation)
+  optimisation_fun <- switch(optimisation_function,
+                             "max_validation" = metric.optim_score.max_validation,
+                             "validation" = metric.optim_score.max_validation,
+                             "balanced" = metric.optim_score.balanced,
+                             "stronger_balance" = metric.optim_score.stronger_balance,
+                             "validation_minus_sd" = metric.optim_score.max_validation,
+                             "validation_25th_percentile" = metric.optim_score.max_validation,
+                             "model_estimate" = metric.optim_score.max_validation,
+                             "model_estimate_minus_sd" = metric.optim_score.max_validation)
   
   # Find identifier columns.
   id_columns <- intersect(colnames(score_table),
@@ -598,8 +598,8 @@ metric.compute_optimisation_score <- function(score_table,
                                           value.var="objective_score")
   
   # Compute optimisation score based on objective scores.
-  optimisation_table <- optimisation_table[, list("optimisation_score"=optimisation_function(training=training,
-                                                                                             validation=validation)),
+  optimisation_table <- optimisation_table[, list("optimisation_score"=optimisation_fun(training=training,
+                                                                                        validation=validation)),
                                            by=c(id_columns, "metric")]
   
   # Average optimisation score over metrics.
