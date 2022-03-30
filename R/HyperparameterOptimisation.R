@@ -960,7 +960,7 @@ setMethod("optimise_hyperparameters", signature(object="familiarModel", data="da
             }
             
             # Update attributes of object.
-            object@hyperparameter_data <- list("$parameter_table"=score_table,
+            object@hyperparameter_data <- list("score_table"=score_table,
                                                "parameter_table"=parameter_table,
                                                "time_taken"=as.numeric(Sys.time() - optimisation_start_time),
                                                "hyperparameter_learner"=hyperparameter_learner,
