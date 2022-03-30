@@ -905,7 +905,7 @@ setMethod("optimise_hyperparameters", signature(object="familiarModel", data="da
               # will also automatically generate a message if verbose is TRUE.
               if(!.optimisation_process_time_available(start_time=optimisation_start_time,
                                                        time_limit=time_limit,
-                                                       indent=message_indent,
+                                                       message_indent=message_indent,
                                                        verbose=verbose)){
                 break()
               }
