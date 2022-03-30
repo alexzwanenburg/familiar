@@ -954,7 +954,8 @@ get_best_hyperparameter_set <- function(score_table,
                                                         parameter_id_challenger,
                                                         score_table,
                                                         n_max_bootstraps,
-                                                        n_intensify_step_bootstraps){
+                                                        n_intensify_step_bootstraps,
+                                                        exploration_method){
   
   # Suppress NOTES due to non-standard evaluation in data.table
   param_id <- sampled <- run_id <- to_sample <- sample_id <- n <- NULL
@@ -999,10 +1000,16 @@ get_best_hyperparameter_set <- function(score_table,
   # Check that there are any runs to be sampled.
   if(length(fully_sampled_runs) == n_max_bootstraps) return(NULL)
   
-  # Compute the number of runs that could be completed new. This is 1/3rd of
+  # Compute the number of runs that could be completely new. This is 1/3rd of
   # n_max_bootstraps, with a minimum of 1. This makes the selection of new runs
-  # more conservative, saving time and resources.
-  n_new_runs <- max(c(1L, floor(n_intensify_step_bootstraps / 2)))
+  # more conservative, saving time and resources. When the exploration method
+  # equals none, we select up to n_intensify_step_bootstraps of new runs.
+  if(exploration_method == "none"){
+    n_new_runs <- n_intensify_step_bootstraps
+    
+  } else {
+    n_new_runs <- max(c(1L, floor(n_intensify_step_bootstraps / 3)))
+  }
   
   # An exception should be made if there are no partially sampled runs. Then up
   # to n_intensify_step_bootstraps should be sampled.

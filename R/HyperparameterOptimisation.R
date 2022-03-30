@@ -814,7 +814,8 @@ setMethod("optimise_hyperparameters", signature(object="familiarModel", data="da
                                                                          parameter_id_challenger=parameter_id_challenger,
                                                                          score_table=score_table,
                                                                          n_max_bootstraps=n_max_bootstraps,
-                                                                         n_intensify_step_bootstraps=n_intensify_step_bootstraps)
+                                                                         n_intensify_step_bootstraps=n_intensify_step_bootstraps,
+                                                                         exploration_method=exploration_method)
                 
                 # Check if there are any runs to perform.
                 if(nrow(run_table) == 0) break()
