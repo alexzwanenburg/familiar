@@ -836,7 +836,7 @@ setMethod("optimise_hyperparameters", signature(object="familiarModel", data="da
                                                                          exploration_method=exploration_method)
                 
                 # Check if there are any runs to perform.
-                if(nrow(run_table) == 0) break()
+                if(is_empty(run_table)) break()
                 
                 # Message the user.
                 logger.message(paste("Intensify step", n_intensify_steps + 1L, "using", length(parameter_id_challenger),
