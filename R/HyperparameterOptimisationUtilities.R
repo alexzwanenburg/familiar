@@ -595,7 +595,7 @@
 .compute_hyperparameter_summary_score <- function(score_table, parameter_table, optimisation_model){
   
   # Suppress NOTES due to non-standard evaluation in data.table
-  optimisation_score <- time_taken <- .NATURAL <- mu <- sigma <- NULL
+  optimisation_score <- time_taken <- .NATURAL <- mu <- sigma <- summary_score <- score_estimate <- NULL
   
   # Check that the table is not empty.
   if(is_empty(score_table)) return(NULL)
@@ -715,6 +715,10 @@
   
   # Format data by selecting only relevant columns. This also orders the data.
   data <- data[, mget(c("param_id", "summary_score", "score_estimate", "time_taken"))]
+  
+  # Update missing scores.
+  data[!is.finite(summary_score), "summary_score":=-1.0]
+  data[!is.finite(score_estimate), "score_estimate":=-1.0]
   
   return(data)
 }
