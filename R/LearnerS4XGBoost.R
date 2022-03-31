@@ -610,11 +610,22 @@ setMethod("..predict", signature(object="familiarXGBoost", data="dataObject"),
               #
               # Also note that for cox regression, the predictions are
               # recalibrated based on the linear predictor / marginal prediction.
-              model_predictions <- predict(object=object@model,
-                                           newdata=as.matrix(encoded_data$encoded_data@data[, mget(object@feature_order)]),
-                                           outputmargin=object@outcome_type == "survival",
-                                           ntreelimit=round(10^object@hyperparameters$n_boost),
-                                           reshape=TRUE)
+              if(utils::packageVersion("xgboost")  < "1.4.0"){
+                model_predictions <- predict(object=object@model,
+                                             newdata=as.matrix(encoded_data$encoded_data@data[, mget(object@feature_order)]),
+                                             outputmargin=object@outcome_type == "survival",
+                                             ntreelimit=round(10^object@hyperparameters$n_boost),
+                                             reshape=TRUE)
+                
+              } else {
+                # From version 1.4 onward, ntreelimit was deprecated, and
+                # replaced by iterationrange.
+                model_predictions <- predict(object=object@model,
+                                             newdata=as.matrix(encoded_data$encoded_data@data[, mget(object@feature_order)]),
+                                             outputmargin=object@outcome_type == "survival",
+                                             iterationrange=c(1, round(10^object@hyperparameters$n_boost)),
+                                             reshape=TRUE)
+              }
               
               if(object@outcome_type == "binomial"){
                 #####Binomial outcomes######
