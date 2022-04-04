@@ -1,28 +1,5 @@
 #' @include FamiliarS4Generics.R
 
-check_column_name <- function(column_name){
-  
-  # Remove spaces
-  column_name <- gsub(pattern=" ", replacement="_", column_name)
-  
-  # Remove less/equal/greater than signs
-  column_name <- gsub(pattern=">=", replacement="_geq_", fixed=TRUE, column_name)
-  column_name <- gsub(pattern="<=", replacement="_leq_", fixed=TRUE, column_name)
-  column_name <- gsub(pattern="!=", replacement="_neq_", fixed=TRUE, column_name)
-  column_name <- gsub(pattern="<", replacement="_l_", fixed=TRUE, column_name)
-  column_name <- gsub(pattern=">", replacement="_g_", fixed=TRUE, column_name)
-  column_name <- gsub(pattern="=", replacement="_eq_", fixed=TRUE, column_name)
-  
-  # Remove punctuation
-  column_name <- gsub(pattern="[[:punct:]]", replacement="_", column_name)
-  
-  # Remove starting number
-  column_name <- gsub(pattern="^([0-9])", replacement="n_\\1", column_name)
-  
-  return(column_name)
-}
-
-
 
 stop_or_warn <- function(message, as_error=TRUE){
   # Find the name of the calling environment.
@@ -1145,24 +1122,24 @@ quiet <- function(x) {
   invisible(utils::capture.output(x, file=nullfile(), type="message"))
 } 
 
-.append_new <- function(l, new){
-
-  # Find the names of list elements in l and new
-  existing_names <- names(l)
-  new_names <- names(new)
-  
-  # Find which elements should be migrated.
-  migrate_elements <- setdiff(new_names, existing_names)
-  if(length(migrate_elements) == 0){ return(l) }
-  
-  # Drop any duplicate elements.
-  duplicate_elements <- intersect(new_names, existing_names)
-  for(duplicate_element in duplicate_elements){
-    new[[duplicate_element]] <- NULL
-  }
-  
-  return(append(l, new))
-}
+# .append_new <- function(l, new){
+# 
+#   # Find the names of list elements in l and new
+#   existing_names <- names(l)
+#   new_names <- names(new)
+#   
+#   # Find which elements should be migrated.
+#   migrate_elements <- setdiff(new_names, existing_names)
+#   if(length(migrate_elements) == 0){ return(l) }
+#   
+#   # Drop any duplicate elements.
+#   duplicate_elements <- intersect(new_names, existing_names)
+#   for(duplicate_element in duplicate_elements){
+#     new[[duplicate_element]] <- NULL
+#   }
+#   
+#   return(append(l, new))
+# }
 
 
 is_subclass <- function(class_1, class_2){
@@ -1183,25 +1160,6 @@ is_subclass <- function(class_1, class_2){
   return(TRUE)
 }
 
-
-paste_s <- function(...){
-  dots <- c(...)
-  
-  if(length(dots) > 2){
-    # 
-    initial_string <- paste0(head(dots, n=length(dots)-2), collapse=", ")
-    
-    final_string <- paste0(tail(dots, n=2), collapse=" and ")
-    
-    return(paste0(c(initial_string, final_string), collapse=", "))
-    
-  } else if(length(dots) == 2){
-    
-    return(paste0(dots, collapse=" and "))
-  } else {
-    return(paste0(dots))
-  }
-}
 
 
 .as_preprocessing_level <- function(x){
