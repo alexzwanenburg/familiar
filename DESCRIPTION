@@ -37,7 +37,6 @@ Imports:
     methods,
     rlang (>= 0.3.4),
     rstream,
-    stringi,
     survival
 Suggests:
     BART,
