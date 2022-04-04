@@ -1,4 +1,4 @@
-strict.do.call <- function(what, args, quote = FALSE, envir = parent.frame()){
+do.call_strict <- function(what, args, quote = FALSE, envir = parent.frame()){
   # Only pass fully matching arguments. Side effect is that ... is always empty.
   # Use with care in case arguments need to be passed to another function.
   

@@ -357,7 +357,7 @@
 .parse_general_settings <- function(settings, config=NULL, data, ...){
   
   # Computational setup settings
-  settings$run <- strict.do.call(.parse_setup_settings,
+  settings$run <- do.call_strict(.parse_setup_settings,
                                  args=c(list("config"=config$run),
                                         list(...)))
   
@@ -368,7 +368,7 @@
   dots$outcome_type <- NULL
   
   # Pre-processing settings
-  settings$prep <- strict.do.call(.parse_preprocessing_settings,
+  settings$prep <- do.call_strict(.parse_preprocessing_settings,
                                   args=c(list("config"=config$preprocessing,
                                               "data"=data,
                                               "parallel"=settings$run$parallel,
@@ -376,7 +376,7 @@
                                          dots))
   
   # Feature selection settings
-  settings$fs <- strict.do.call(.parse_feature_selection_settings,
+  settings$fs <- do.call_strict(.parse_feature_selection_settings,
                                 args=c(list("config"=config$feature_selection,
                                             "data"=data,
                                             "parallel"=settings$run$parallel,
@@ -384,7 +384,7 @@
                                        dots))
   
   # Model development settings
-  settings$mb <- strict.do.call(.parse_model_development_settings,
+  settings$mb <- do.call_strict(.parse_model_development_settings,
                                 args=c(list("config"=config$model_development,
                                             "data"=data,
                                             "parallel"=settings$run$parallel,
@@ -392,7 +392,7 @@
                                        dots))
   
   # Hyperparameter optimisation settings
-  settings$hpo <- strict.do.call(.parse_hyperparameter_optimisation_settings,
+  settings$hpo <- do.call_strict(.parse_hyperparameter_optimisation_settings,
                                  args=c(list("config"=config$hyperparameter_optimisation,
                                              "parallel"=settings$run$parallel,
                                              "outcome_type"=settings$data$outcome_type),
@@ -407,7 +407,7 @@
   dots$vimp_aggregation_rank_threshold <- NULL
   
   # Evaluation settings
-  settings$eval <- strict.do.call(.parse_evaluation_settings,
+  settings$eval <- do.call_strict(.parse_evaluation_settings,
                                   args=c(list("config"=config$evaluation,
                                               "data"=data,
                                               "parallel"=settings$run$parallel,
