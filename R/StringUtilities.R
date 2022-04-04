@@ -103,3 +103,26 @@ endswith_any <- function(x, suffix){
                 suffix=suffix,
                 USE.NAMES=FALSE))
 }
+
+
+
+sub_all_patterns <- function(pattern, replacement, x, ...){
+  # Replace the first instance of multiple patterns in x with the same
+  # replacement.
+  for(current_pattern in pattern){
+    x <- sub(x=x, replacement=replacement, pattern=current_pattern, ...)
+  }
+  
+  return(x)
+}
+  
+  
+
+gsub_all_patterns <- function(pattern, replacement, x, ...){
+  # Replace all instances of multiple patterns in x with the same replacement.
+  for(current_pattern in pattern){
+    x <- gsub(x=x, replacement=replacement, pattern=current_pattern, ...)
+  }
+  
+  return(x)
+}
