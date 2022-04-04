@@ -126,3 +126,29 @@ gsub_all_patterns <- function(pattern, replacement, x, ...){
   
   return(x)
 }
+
+
+
+sub_last <- function(pattern, replacement, x, ...){
+  # Dispatch to underlying function for individual strings.
+  return(sapply(x, .sub_last, pattern=pattern, replacement=replacement, ..., USE.NAMES=FALSE))
+}
+
+
+
+.sub_last <- function(x, pattern, replacement, ...){
+  # Replace last instance of a pattern in x.
+  instances <- gregexpr(pattern=pattern, text=x, ...)[[1]]
+  
+  # Skip if pattern has not been found.
+  if(all(instances == -1)) return(x)
+  
+  # Select last instance.
+  instances <- tail(instances, n=1L)
+  
+  # Replace the pattern with its replacement.
+  initial_string <- substr(x, start=1L, instances-1)
+  final_string <- substr(x, start=instances+nchar(pattern), stop=nchar(x))
+  
+  return(paste0(initial_string, replacement, final_string, collapse=""))
+}
