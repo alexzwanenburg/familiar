@@ -21,7 +21,7 @@
   if(inherits(captured_message, "error")) return(object)
   
   # Remove call.
-  call_present <- stringi::stri_startswith(str=captured_message, fixed="Call:")
+  call_present <- startsWith(x=captured_message, prefix="Call:")
   if(any(call_present)){
     call_present <- which(call_present)
     call_present <- c(call_present - 1L, call_present)
