@@ -300,7 +300,7 @@ plotting.create_subtitle <- function(x, split_by=NULL, additional=NULL){
                     }
                     
                     # Remove all underscores.
-                    split_variable_name <- stringi::stri_replace_all_fixed(split_variable_name, pattern="_", replacement=" ")
+                    split_variable_name <- gsub(x=split_variable_name, pattern="_", replacement=" ", fixed=TRUE)
                     
                     # Parse to an elementary string.
                     split_variable_name <- paste0(split_variable_name, ": ", x[[name]][1])
@@ -315,7 +315,7 @@ plotting.create_subtitle <- function(x, split_by=NULL, additional=NULL){
     subtitle <- c(subtitle,
                   mapply(function(name, value){
                     # Remove all underscores.
-                    split_variable_name <- stringi::stri_replace_all_fixed(name, pattern="_", replacement=" ")
+                    split_variable_name <- gsub(x=name, pattern="_", replacement=" ", fixed=TRUE)
                     
                     # Parse to an elementary string.
                     split_variable_name <- paste0(split_variable_name, ": ", value)
@@ -1800,9 +1800,10 @@ plotting.create_legend_label <- function(user_label, color_by=NULL, linetype_by=
   # Waiver: no user input
   if(is.waive(user_label)){
     if(combine_legend){
-      legend_label <- stringi::stri_replace_all_fixed(str=paste0(unique(c(color_by, linetype_by)), collapse=" & "),
-                                                      pattern="_",
-                                                      replacement=" ")
+      legend_label <- gsub(x=paste0(unique(c(color_by, linetype_by)), collapse=" & "),
+                           pattern="_",
+                           replacement=" ",
+                           fixed=TRUE)
       
       return(list("guide_color"=legend_label, "guide_linetype"=legend_label))
       
@@ -1810,18 +1811,21 @@ plotting.create_legend_label <- function(user_label, color_by=NULL, linetype_by=
       
       # Colour labels
       if(!is.null(color_by)){
-        color_guide_label <- stringi::stri_replace_all_fixed(str=paste0(color_by, collapse=" & "),
-                                                             pattern="_",
-                                                             replacement=" ")
+        
+        color_guide_label <- gsub(x=paste0(color_by, collapse=" & "),
+                                  pattern="_",
+                                  replacement=" ",
+                                  fixed=TRUE)
       } else {
         color_guide_label <- NULL
       }
       
       # Linetype labels
       if(!is.null(linetype_by)){
-        linetype_guide_label <- stringi::stri_replace_all_fixed(str=paste0(linetype_by, collapse=" & "),
-                                                                pattern="_",
-                                                                replacement=" ")
+        linetype_guide_label <- gsub(x=paste0(linetype_by, collapse=" & "),
+                                     pattern="_",
+                                     replacement=" ",
+                                     fixed=TRUE)
       } else {
         linetype_guide_label <- NULL
       }
