@@ -191,7 +191,7 @@
     # Trim whitespace and split variables
     if(type %in% c("character_list", "numeric_list", "integer_list", "logical_list") & length(x) > 0){
       # Divide by comma
-      x <- strsplit(x=x, split=",", fixed=TRUE)[[1]]
+      x <- strsplit_all(x=x, split=",", fixed=TRUE)[[1]]
 
       # Remove whitespace
       x <- gsub(x=x, pattern=" ", replacement="", fixed=TRUE)

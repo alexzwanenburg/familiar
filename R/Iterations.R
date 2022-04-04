@@ -111,7 +111,7 @@
     
     # If no files match the iteration files, return a FALSE
     if(length(iter_files) == 0) return(list("iteration_file_exists"=FALSE))
-    browser()
+    
     # Extract date strings from file name
     file_table <- data.table::data.table("file_name"=iter_files)
     file_table[, "file_prefix_num":=strsplit(x=file_name, split="_", fixed=TRUE)[[1]][1], by=file_name]

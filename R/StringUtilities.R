@@ -154,3 +154,14 @@ sub_last <- function(pattern, replacement, x, ...){
 }
 
 
+
+strsplit_all <- function(x, split, ...){
+  # Iterate over list or vector.
+  y <- lapply(x, function(x, split, ...){
+    return(strsplit(x=x, split=split, ...)[[1]])
+  },
+  split=split,
+  ...)
+
+  return(y)  
+}
