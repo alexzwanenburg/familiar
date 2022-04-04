@@ -194,7 +194,7 @@
       x <- stringi::stri_split(str=x, fixed=",")[[1]]
       
       # Remove whitespace
-      x <- stringi::stri_replace_all(str=x, fixed=" ", replacement="")
+      x <- gsub(x=x, pattern=" ", replacement="", fixed=TRUE)
     }
     
   } else if(optional){
