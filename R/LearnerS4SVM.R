@@ -45,7 +45,7 @@ setClass("familiarSVMEps", contains="familiarSVM")
   svm_kernels <- ..get_available_svm_kernels()
   
   # Find matches with end of learner string.
-  kernel_matches <- stringi::stri_endswith_fixed(learner, pattern=svm_kernels)
+  kernel_matches <- endswith_any(learner, suffix=svm_kernels)
   
   # If all are missing (e.g. "svm_eps), use default RBF kernel.
   if(all(!kernel_matches)) return("radial")

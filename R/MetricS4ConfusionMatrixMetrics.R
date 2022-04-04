@@ -16,19 +16,19 @@ setMethod("initialize", signature(.Object="familiarMetricCMAveraging"),
             # Update with parent class first.
             .Object <- callNextMethod()
             
-            if(stringi::stri_endswith_fixed(str=metric, pattern="_macro")){
+            if(endsWith(x=metric, suffix="_macro")){
               .Object@averaging <- "macro"
               .Object@metric <- stringi::stri_replace_last_fixed(str=metric,
                                                                  pattern="_macro",
                                                                  replacement="")
               
-            } else if(stringi::stri_endswith_fixed(str=metric, pattern="_micro")){
+            } else if(endsWith(x=metric, suffix="_micro")){
               .Object@averaging <- "micro"
               .Object@metric <- stringi::stri_replace_last_fixed(str=metric,
                                                                  pattern="_micro",
                                                                  replacement="")
               
-            } else if(stringi::stri_endswith_fixed(str=metric, pattern="_weighted")){
+            } else if(endsWith(x=metric, suffix="_weighted")){
               .Object@averaging <- "weighted"
               .Object@metric <- stringi::stri_replace_last_fixed(str=metric,
                                                                  pattern="_weighted",
