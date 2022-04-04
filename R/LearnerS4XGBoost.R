@@ -89,8 +89,8 @@ setMethod("is_available", signature(object="familiarXGBoost"),
             outcome_type <- object@outcome_type
             
             # Strip booster type from the learner.
-            learner <- stringi::stri_replace_first_regex(str=object@learner, pattern="xgboost_lm|xgboost_tree|xgboost_dart", replace="")
-            learner <- stringi::stri_replace_first_fixed(str=learner, pattern="_", replace="")
+            learner <- sub_all_patterns(x=object@learner, pattern=c("xgboost_lm", "xgboost_tree", "xgboost_dart"), replacement="", fixed=TRUE)
+            if(startsWith(learner, "_")) learner <- sub(x=learner, pattern="_", replacement = "", fixed=TRUE)
 
             if(outcome_type == "continuous" & learner %in% c("", "logistic", "gaussian", "gamma")){
               return(TRUE)
@@ -165,8 +165,8 @@ setMethod("get_default_hyperparameters", signature(object="familiarXGBoost"),
             # used.
             
             # Read family string by parsing learner.
-            fam <- stringi::stri_replace_first_regex(str=object@learner, pattern="xgboost_lm|xgboost_tree|xgboost_dart", replace="")
-            if(fam != "") fam <- stringi::stri_replace_first_regex(str=fam, pattern="_", replace="")
+            fam <- sub_all_patterns(x=object@learner, pattern=c("xgboost_lm", "xgboost_tree", "xgboost_dart"), replacement="", fixed=TRUE)
+            if(fam != "") fam <- sub(x=fam, pattern="_", replacement="", fixed=TRUE)
             
             # Define the objective based on the name of the learner.
             if(fam == ""){

@@ -101,8 +101,8 @@ setMethod("get_default_hyperparameters", signature(object="familiarKNN"),
             ##### Distance metric ----------------------------------------------
             
             # Read distance_metric string by parsing the learner.
-            distance_metric <- stringi::stri_replace_first_regex(str=object@learner, pattern="knn|k_nearest_neighbours", replacement="")
-            if(distance_metric != "") distance_metric <- stringi::stri_replace_first_regex(str=distance_metric, pattern="_", replacement="")
+            distance_metric <- sub_all_patterns(x=object@learner, pattern=c("knn", "k_nearest_neighbours"), replacement="", fixed=TRUE)
+            if(distance_metric != "") distance_metric <- sub(x=distance_metric, pattern="_", replacement="", fixed=TRUE)
             
             if(distance_metric == ""){
               

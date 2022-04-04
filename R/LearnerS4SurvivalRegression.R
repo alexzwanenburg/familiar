@@ -71,9 +71,10 @@ setMethod("get_default_hyperparameters", signature(object="familiarSurvRegr"),
               distribution_default <- c("weibull", "exponential", "gaussian", "logistic", "loglogistic", "lognormal")
               
             } else {
-              distribution_default <- stringi::stri_replace_first_fixed(str=object@learner,
-                                                                        pattern="survival_regr_",
-                                                                        replacement="")
+              distribution_default <- sub(x=object@learner,
+                                          pattern="survival_regr_",
+                                          replacement="",
+                                          fixed=TRUE)
             }
             
             # Set the distribution parameter
@@ -398,9 +399,10 @@ setMethod("..set_vimp_parameters", signature(object="familiarSurvRegr"),
               distribution_default <- "weibull"
               
             } else {
-              distribution_default <- stringi::stri_replace_first_fixed(str=method,
-                                                                        pattern="survival_regr_",
-                                                                        replacement="")
+              distribution_default <- sub(x=method,
+                                          pattern="survival_regr_",
+                                          replacement="",
+                                          fixed=TRUE)
             }
             
             # Set the distribution parameter

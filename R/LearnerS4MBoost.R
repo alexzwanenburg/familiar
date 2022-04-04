@@ -189,8 +189,8 @@ setMethod("get_default_hyperparameters", signature(object="familiarMBoost"),
                                     "surv_loglog", "gehan", "cindex", "multinomial")
             
             # Read family string by parsing learner
-            fam <- stringi::stri_replace_first_regex(str=object@learner, pattern="boosted_glm|boosted_tree", replace="")
-            if(fam != "") fam <- stringi::stri_replace_first_regex(str=fam, pattern="_", replace="")
+            fam <- sub_all_patterns(x=object@learner, pattern=c("boosted_glm", "boosted_tree"), replacement="", fixed=TRUE)
+            if(fam != "") fam <- sub(x=fam, pattern="_", replacement="", fixed=TRUE)
             
             # Define the family based on the name of the learner.
             if(fam == ""){
