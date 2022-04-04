@@ -487,13 +487,17 @@ compute_icc <- function(x, feature, id_data, type="1"){
 
 
 .file_extension <- function(x){
-  
   # Find the file extension by extracting the substring to the right of the
   # final period.
-  extension <- stringi::stri_sub(x, from=stringi::stri_locate_last_fixed(x, '.')[1,2] + 1L)
   
-  # Check for NA values in case an extension is missing.
-  if(is.na(extension)) return("")
+  # Find the position of the period preceding the file extension.
+  indicator <- tail(gregexpr(pattern=".", text=x, fixed=TRUE)[[1]], n=1L)
+  
+  # Check when period (.) is not found in x.
+  if(indicator == -1) return("")
+  
+  # Find the extension
+  extension <- substr(x, start=indicator+1L, stop=nchar(x))
   
   return(extension)
 }
