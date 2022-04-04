@@ -56,12 +56,12 @@ rstring <- function(n=1L, character_set="alphanumeric"){
   if(n < 1) stop("n cannot be smaller than 1.")
   
   # Uppercase characters
-  if(character_set %in% c("uppercase", "alphanumeric")){
+  if(character_set %in% c("uppercase", "alphanumeric", "letters")){
     available_characters <- c(available_characters, LETTERS)
   }
   
   # Lowercase characters
-  if(character_set %in% c("lowercase", "alphanumeric")){
+  if(character_set %in% c("lowercase", "alphanumeric", "letters")){
     available_characters <- c(available_characters, letters)
   }
   
@@ -152,3 +152,5 @@ sub_last <- function(pattern, replacement, x, ...){
   
   return(paste0(initial_string, replacement, final_string, collapse=""))
 }
+
+
