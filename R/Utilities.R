@@ -576,18 +576,6 @@ get_estimate <- function(x, na.rm=TRUE){
 }
 
 
-strict.do.call <- function(what, args, quote = FALSE, envir = parent.frame()){
-  # Only pass fully matching arguments. Side effect is that ... is always empty.
-  # Use with care in case arguments need to be passed to another function.
-  
-  # Get arguments that can be passed.
-  passable_argument_names <- intersect(names(formals(what)),
-                                       names(args))
-  
-  return(do.call(what, args=args[passable_argument_names], quote=quote, envir=envir))
-}
-
-
 
 get_placeholder_vimp_table <- function(){
   return(data.table::data.table("name"=character(0), "rank"=numeric(0), "score"=numeric(0), "multi_var"=logical(0)))
@@ -617,7 +605,6 @@ get_id_columns <- function(id_depth="repetition", single_column=NULL){
                          "series" = "series_id",
                          "repetition" = "repetition_id")
   }
-  
   
   return(id_columns)
 }
@@ -1116,15 +1103,6 @@ encapsulate_path <- function(path){
 #' @keywords internal
 is.encapsulated_path <- function(x){ return(inherits(x, "encapsulated_path")) }
 
-
-quiet <- function(x) { 
-  # Removes all output to console.
-  
-  sink(nullfile()) 
-  on.exit(sink()) 
-  
-  invisible(utils::capture.output(x, file=nullfile(), type="message"))
-} 
 
 # .append_new <- function(l, new){
 # 

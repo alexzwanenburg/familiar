@@ -127,6 +127,7 @@ Collate:
     'FamiliarVimpMethod.R'
     'FeatureInfo.R'
     'FeatureSelection.R'
+    'FunctionWrapperUtilities.R'
     'HyperparameterOptimisation.R'
     'HyperparameterOptimisationMetaLearners.R'
     'HyperparameterOptimisationUtilities.R'
