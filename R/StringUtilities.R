@@ -45,3 +45,37 @@ paste_s <- function(...){
     return(paste0(dots))
   }
 }
+
+
+
+rstring <- function(n=1L, character_set="alphanumeric"){
+  # Initialise the available set.
+  available_characters <- NULL
+  
+  # Sanity check on n.
+  if(n < 1) stop("n cannot be smaller than 1.")
+  
+  # Uppercase characters
+  if(character_set %in% c("uppercase", "alphanumeric")){
+    available_characters <- c(available_characters, LETTERS)
+  }
+  
+  # Lowercase characters
+  if(character_set %in% c("lowercase", "alphanumeric")){
+    available_characters <- c(available_characters, letters)
+  }
+  
+  # Numbers
+  if(character_set %in% (c("numbers", "numeric", "alphanumeric"))){
+    available_characters <- c(available_characters,
+                              "0", "1", "2", "3", "4", "5", "6", "7", "8", "9")
+  }
+  
+  # Draw random indices and convert to integer values by rounding up.
+  random_indices <- ceiling(stats::runif(n=n, min=0, max=length(available_characters)))
+  
+  # Replaces any 0 (which is improbable, but could happen).
+  random_indices[random_indices == 0] <- 1
+  
+  return(paste0(available_characters[random_indices], collapse=""))
+}
