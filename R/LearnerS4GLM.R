@@ -424,7 +424,7 @@ setMethod("..vimp", signature(object="familiarGLM"),
               
               # Parse coefficient names. vglm adds :1 and :2 (and so on) to
               # coefficient names.
-              coefficient_names <- stringi::stri_split_fixed(names(coefficient_z_values), pattern=":")
+              coefficient_names <- strsplit(x=names(coefficient_z_values), split=":", fixed=TRUE)
               coefficient_names <- sapply(coefficient_names, function(coefficient_name) coefficient_name[1])
               names(coefficient_z_values) <- coefficient_names
             }

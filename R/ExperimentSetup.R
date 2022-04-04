@@ -210,8 +210,8 @@ extract_experimental_setup <- function(experimental_design,
       
       # Drop parentheses and split string by comma
       curr_data_id_str <- gsub(pattern="\\(|\\)", replacement="", x=curr_data_id_str)
-      curr_data_id_str <- stringi::stri_split(str=curr_data_id_str, fixed=",")[[1]]
-      
+      curr_data_id_str <- strsplit(x=curr_data_id_str, split=",", fixed=TRUE)[[1]]
+
       # Check if feature selection is included in the current section
       if(grepl(pattern="fs", x=curr_data_id_str[1])){
         section_table$feat_sel[ii] <- TRUE
