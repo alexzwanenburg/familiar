@@ -111,10 +111,10 @@
     
     # If no files match the iteration files, return a FALSE
     if(length(iter_files) == 0) return(list("iteration_file_exists"=FALSE))
-    
+    browser()
     # Extract date strings from file name
     file_table <- data.table::data.table("file_name"=iter_files)
-    file_table[, "file_prefix_num":=paste0(stringi::stri_extract_all_regex(str=file_name, pattern="[0-9]")[[1]], collapse=""), by=file_name]
+    file_table[, "file_prefix_num":=strsplit(x=file_name, split="_", fixed=TRUE)[[1]][1], by=file_name]
     file_table <- file_table[!is.na(file_prefix_num),]
     
     # If no date strings were found (i.e. backup files), return a FALSE
@@ -158,7 +158,7 @@
   } else {
     # From user-provided iteration file
     select_file <- basename(iteration_file)
-    project_id <- as.numeric(paste0(stringi::stri_extract_all_regex(str=select_file, pattern="[0-9]")[[1]], collapse=""))
+    project_id <- as.numeric(strsplit(x=select_file, split="_", fixed=TRUE)[[1]][1])
     
     # Attempt to load the user-provided iteration file.
     if(file.exists(iteration_file)){

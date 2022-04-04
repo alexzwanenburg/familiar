@@ -65,8 +65,8 @@ extract_experimental_setup <- function(experimental_design,
 
   # Determine the number of experimental levels
   # First we locate the position of parentheses
-  left_parenthesis  <- stringi::stri_locate_all(pattern="(", str=experimental_design, fixed=TRUE)[[1]][,1]
-  right_parenthesis <- stringi::stri_locate_all(pattern=")", str=experimental_design, fixed=TRUE)[[1]][,1]
+  left_parenthesis <- gregexpr(pattern="(", text=experimental_design, fixed=TRUE)[[1]]
+  right_parenthesis <- gregexpr(pattern=")", text=experimental_design, fixed=TRUE)[[1]]
   
   # Subsequently generate the corresponding experimental levels
   experiment_levels <- integer(nchar(experimental_design))
@@ -121,9 +121,9 @@ extract_experimental_setup <- function(experimental_design,
     
     # Check if ip, bt, lv or cv preceeds the current section
     if(section_table$sect_start[ii] > 2){
-      sampler_str <- stringi::stri_sub(str=experimental_design,
-                                       from=section_table$sect_start[ii]-2,
-                                       to=section_table$sect_start[ii]-1)
+      sampler_str <- substr(x=experimental_design,
+                            start=section_table$sect_start[ii]-2,
+                            stop=section_table$sect_start[ii]-1)
       
       # Check for imbalance partition (ip), limited bootstrap (bt), full
       # bootstrap (bs), cross-validation (cv) and leave-one-out-cross-validation
@@ -204,7 +204,8 @@ extract_experimental_setup <- function(experimental_design,
       # Create readable string for current data id
       curr_data_id_str <- NULL
       for(jj in which(section_table$main_data_id==section_table$main_data_id[ii])){
-        curr_data_id_str <- c(curr_data_id_str, stringi::stri_sub(experimental_design, from=section_table$sect_start[jj], to=section_table$sect_end[jj]))
+        curr_data_id_str <- c(curr_data_id_str,
+                              substr(experimental_design, start=section_table$sect_start[jj], stop=section_table$sect_end[jj]))
       }
       curr_data_id_str <- paste0(curr_data_id_str, collapse="")
       
