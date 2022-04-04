@@ -154,8 +154,8 @@ setMethod("get_default_hyperparameters", signature(object="familiarGLMnet"),
             outcome_type <- data@outcome_type
             
             # Determine the family.
-            fam <- stringi::stri_replace_first_regex(str=object@learner, pattern="elastic_net|lasso|ridge", replace="")
-            if(fam != "") fam <- stringi::stri_replace_first_regex(str=fam, pattern="_", replace="")
+            fam <- sub_all_patterns(x=object@learner, pattern=c("elastic_net", "lasso", "ridge"), replacement="", fixed=TRUE)
+            if(fam != "") fam <- sub(x=fam, pattern="_", replacement="", fixed=TRUE)
             
             # Check for lasso_test
             if(object@learner == "lasso_test") fam <- ""
