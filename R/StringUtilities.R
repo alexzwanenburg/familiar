@@ -79,3 +79,27 @@ rstring <- function(n=1L, character_set="alphanumeric"){
   
   return(paste0(available_characters[random_indices], collapse=""))
 }
+
+
+
+startswith_any <- function(x, prefix){
+  # Check that x starts with any of the prefixes. x can be multiple strings.
+  return(sapply(x,
+                function(x, prefix){
+                  any(startsWith(x=x, prefix=prefix))
+                },
+                prefix=prefix,
+                USE.NAMES=FALSE))
+}
+
+
+
+endswith_any <- function(x, suffix){
+  # Check that x ends with any of the suffixes. x can be multiple strings.
+  return(sapply(x,
+                function(x, suffix){
+                  any(endsWith(x=x, suffix=suffix))
+                },
+                suffix=suffix,
+                USE.NAMES=FALSE))
+}
