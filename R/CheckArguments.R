@@ -236,8 +236,8 @@
     x <- .perform_type_conversion(x=x, to_type=type, var_name=var_name, req_length=1, allow_more=FALSE)
     
   } else if(type %in% c("character_list", "numeric_list", "integer_list", "logical_list")){
-    # Find basic type string
-    list_type <- stringi::stri_replace(str=type, replacement="", fixed="_list", mode="last")
+    # Find basic type string.
+    list_type <- sub_last(x=type, pattern="_list", replacement="", fixed=TRUE)
     
     # Convert to type
     x <- .perform_type_conversion(x=x, to_type=list_type, var_name=var_name, req_length=1, allow_more=TRUE)
