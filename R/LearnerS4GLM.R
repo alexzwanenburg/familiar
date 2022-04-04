@@ -102,8 +102,8 @@ setMethod("get_default_hyperparameters", signature(object="familiarGLM"),
             ##### Model family ###########################################################
             
             # Read family string by parsing the learner.
-            fam <- stringi::stri_replace_first_regex(str=object@learner, pattern="glm", replace="")
-            if(fam != "") fam <- stringi::stri_replace_first_regex(str=fam, pattern="_", replace="")
+            fam <- sub(x=object@learner, pattern="glm", replacement="", fixed=TRUE)
+            if(fam != "") fam <- sub(x=fam, pattern="_", replacement="", fixed=TRUE)
             
             # Determine the family or families.
             if(fam == ""){
@@ -513,8 +513,8 @@ setMethod("..set_vimp_parameters", signature(object="familiarGLM"),
           function(object, method, ...){
             
             # Read family string by parsing the learner.
-            family_str <- stringi::stri_replace_first_regex(str=method, pattern="glm", replace="")
-            if(family_str != "") family_str <- stringi::stri_replace_first_regex(str=family_str, pattern="_", replace="")
+            family_str <- sub(x=method, pattern="glm", replacement="", fixed=TRUE)
+            if(family_str != "") family_str <- sub(x=family_str, pattern="_", replacement="", fixed=TRUE)
             
             # Determine the family or families.
             if(family_str == ""){
