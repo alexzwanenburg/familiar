@@ -486,7 +486,7 @@ setMethod("set_object_name", signature(x="familiarModel"),
               # randomly generate characters and add a time stamp, so that
               # collision is practically impossible.
               slot(object=x, name="name") <- paste0(as.character(as.numeric(format(Sys.time(),"%H%M%S"))),
-                                                    "_", stringi::stri_rand_strings(1, 20, '[A-Z]'))
+                                                    "_", rstring(n=20L))
               
             } else if(is.null(new)) {
               # Generate a sensible object name.

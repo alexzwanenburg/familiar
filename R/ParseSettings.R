@@ -106,7 +106,7 @@
       # Case 4. project_dir does not exist, and neither does experiment_dir.
       
       # Work in a temporary directory.
-      temporary_directory <- file.path(tempdir(), "familiar", stringi::stri_rand_strings(1, 8))
+      temporary_directory <- file.path(tempdir(), "familiar", rstring(n=8L))
       experiment_dir <- project_dir <- normalizePath(temporary_directory, mustWork=FALSE)
       file_paths$is_temporary <- TRUE
       
@@ -121,7 +121,7 @@
       # subdirectory, and assign a random name instead.
       
       # Work in a temporary directory.
-      temporary_directory <- file.path(tempdir(), "familiar", stringi::stri_rand_strings(1, 8))
+      temporary_directory <- file.path(tempdir(), "familiar", rstring(n=8L))
       experiment_dir <- project_dir <- normalizePath(temporary_directory, mustWork=FALSE)
       file_paths$is_temporary <- TRUE
     }
