@@ -1,4 +1,4 @@
-# Development
+# Version 1.1.0 (Enchanting Earthworm)
 
 ## Major changes
 
@@ -25,6 +25,7 @@
 -   The default `optimisation_function` is now `validation`.
 -   The default `smbo_stop_tolerance` now depends on the number of samples and varies between `0.01` for 100 or fewer samples, and `0.001` for 10000 or more samples.
 -   Additional data are now exported after optimising hyperparameters, namely the iteration step during which performance data were obtained, the time taken by the optimisation process, the learner used to learn how well hyperparameter sets perform, and the optimisation function. This is in addition to the score table and parameter tables that were already exported previously.
+-   The `stringi` package has been phased out, and is no longer suggested or imported.
 
 ## Bug fixes
 
