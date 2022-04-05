@@ -164,6 +164,22 @@ setMethod("show", signature(object="familiarModel"),
               cat(paste0("A ", object@learner, " model (class: ", class(object)[1],
                          ") that was not successfully trained (v", object@familiar_version, ").\n"))
               
+              if(length(object@messages$warning) > 0){
+                cat(paste0("\nThe following ",
+                           ifelse(length(object@messages$warning) == 1, "warning was", "warnings were"),
+                           " generated while trying to train the model:\n",
+                           paste0(object@messages$warning, collapse="\n"),
+                           "\n"))
+              }
+              
+              if(length(object@messages$error) > 0){
+                cat(paste0("\nThe following ",
+                           ifelse(length(object@messages$error) == 1, "error was", "errors were"),
+                           " encountered while trying to train the model:\n",
+                           paste0(object@messages$error, collapse="\n"),
+                           "\n"))
+              }
+              
             } else {
               # Describe the learner and the version of familiar.
               message_str <- paste0("A ", object@learner, " model (class: ", class(object)[1],
@@ -191,7 +207,7 @@ setMethod("show", signature(object="familiarModel"),
                 show(object@model)
               }
 
-              cat(paste0("---------------------------------------------\n"))
+              cat(paste0("\n---------------------------------------------\n"))
               
               # Outcome details
               cat("\nThe following outcome was modelled:\n")
@@ -227,6 +243,24 @@ setMethod("show", signature(object="familiarModel"),
                 lapply(novelty_features, function(x, object) show(object@feature_info[[x]]), object=object)
               }
               
+              if(length(object@messages$warning) > 0 || length(object@messages$error) > 0){
+                
+                cat(paste0("\n------------ Warnings and errors ------------\n"))
+              
+                if(length(object@messages$warning) > 0){
+                  cat(paste0("\nThe following ",
+                             ifelse(length(object@messages$warning) == 1, "warning was", "warnings were"),
+                             " generated while training the model:\n",
+                             paste0(object@messages$warning, collapse="\n")))
+                }
+                
+                if(length(object@messages$error) > 0){
+                  cat(paste0("\nThe following ",
+                             ifelse(length(object@messages$error) == 1, "error was", "errors were"),
+                             " encountered while training the model:\n",
+                             paste0(object@messages$error, collapse="\n")))
+                }
+              }
               # Check package version.
               check_package_version(object)
             }
