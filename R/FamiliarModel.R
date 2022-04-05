@@ -30,14 +30,23 @@ setMethod(".train", signature(object="familiarModel", data="dataObject"),
             
             # Check if there are any data entries. The familiar model cannot be
             # trained otherwise
-            if(is_empty(x=data)) can_train <- FALSE
+            if(is_empty(x=data)){
+              can_train <- FALSE
+              object <- ..update_errors(object=object, ..error_message_no_training_data_available())
+            } 
             
             # Check the number of features in data; if it has no features, the
             # familiar model can not be trained
-            if(!has_feature_data(x=data)) can_train <- FALSE
+            if(!has_feature_data(x=data)){
+              can_train <- FALSE
+              object <- ..update_errors(object=object, ..error_message_no_features_selected_for_training())
+            } 
             
             # Check if the hyperparameters are plausible.
-            if(!has_optimised_hyperparameters(object=object)) can_train <- FALSE
+            if(!has_optimised_hyperparameters(object=object)){
+              can_train <- FALSE
+              object <- ..update_errors(object=object, ..error_message_no_optimised_hyperparameters_available())
+            } 
             
             # Train a new model based on data.
             if(can_train) object <- ..train(object=object,
