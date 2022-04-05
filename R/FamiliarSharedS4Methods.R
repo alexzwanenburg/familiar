@@ -64,14 +64,25 @@
 #####has_bad_training_data######################################################
 setMethod("has_bad_training_data", signature(object="ANY", data="dataObject"),
           function(object, data, ...){
+            # Checks the data for consistency and usability. Any errors are passed as attributes
             
             if(!(is(object, "familiarModel") | is(object, "familiarVimpMethod") | is(object, "familiarNoveltyDetector"))){
               ..error_reached_unreachable_code("has_bad_training_data: object is not a familiarModel, familiarVimpMethod or familiarNoveltyDetector.")
             }
             
             # One cannot train without data or on a single sample.
-            if(is_empty(data)) return(TRUE)
-            if(data.table::uniqueN(data@data, by=get_id_columns(id_depth="sample")) < 2) return(TRUE)
+            if(is_empty(data)){
+              return_value <- TRUE
+              attr(return_value, "error") <- ..error_message_no_training_data_available()
+              
+              return(return_value)
+            } 
+            if(data.table::uniqueN(data@data, by=get_id_columns(id_depth="sample")) < 2){
+              return_value <- TRUE
+              attr(return_value, "error") <- "Only one sample was available to train the model."
+              
+              return(return_value)
+            }
             
             # For familiarNoveltyDetector objects outcome is not important.
             if(is(object, "familiarNoveltyDetector")) return(FALSE)
@@ -93,25 +104,57 @@ setMethod("has_bad_training_data", signature(object="ANY", data="dataObject"),
               # Check that not all data are censored.
               censoring_variable <- outcome_info@censored
               if(length(censoring_variable) > 0){
-                if(all(data@data$outcome_event == censoring_variable)) return(TRUE)
+                if(all(data@data$outcome_event == censoring_variable)){
+                  return_value <- TRUE
+                  attr(return_value, "error") <- "All instances in the data set were censored. Events are required for training the model."
+                  
+                  return(return_value)
+                } 
               }
-              if(all(data@data$outcome_event == 0)) return(TRUE)
+              
+              # The same as above.
+              if(all(data@data$outcome_event == 0)){
+                return_value <- TRUE
+                attr(return_value, "error") <- "All instances in the data set were censored. Events are required for training the model."
+                
+                return(return_value)
+              }
               
               # Check that not all data have the same survival time.
-              if(all(data@data$outcome_time == data@data$outcome_time[1])) return(TRUE)
+              if(all(data@data$outcome_time == data@data$outcome_time[1])){
+                return_value <- TRUE
+                attr(return_value, "error") <- "All instances in the data set had the same recorded survival time."
+                
+                return(return_value)
+              } 
               
             } else if(object@outcome_type %in% c("binomial", "multinomial")){
               
               # Check that not all data have the same class.
-              if(data.table::uniqueN(data@data$outcome) == 1) return(TRUE)
+              if(data.table::uniqueN(data@data$outcome) == 1){
+                return_value <- TRUE
+                attr(return_value, "error") <- "All instances in the data set were of the same class."
+                
+                return(return_value)
+              }
               
               # Check that all classes are present at least once.
-              if(data.table::uniqueN(data@data$outcome) < nlevels(data@data$outcome)) return(TRUE)
+              if(data.table::uniqueN(data@data$outcome) < nlevels(data@data$outcome)){
+                return_value <- TRUE
+                attr(return_value, "error") <- "Some expected classes were not found in the data set."
+                
+                return(return_value)
+              }
               
             } else if(object@outcome_type %in% c("count", "continuous")){
               
               # Check that not all data have the same outcome value.
-              if(all(data@data$outcome == data@data$outcome[1])) return(TRUE)
+              if(all(data@data$outcome == data@data$outcome[1])){
+                return_value <- TRUE
+                attr(return_value, "error") <- "All instances in the data set had the same outcome value."
+                
+                return(return_value)
+              }
               
             } else {
               ..error_outcome_type_not_implemented(object@outcome_type)
@@ -119,3 +162,21 @@ setMethod("has_bad_training_data", signature(object="ANY", data="dataObject"),
             
             return(FALSE)
           })
+
+
+
+.why_bad_training_data <- function(object, reason){
+  # Determine the reason why training data was bad.
+  
+  # If the reason was FALSE, return the object as is.
+  if(!reason) return(object)
+  
+  # Check that object is a familiarModel, because otherwise we have nowhere to
+  # store the reason.
+  if(!(is(object, "familiarModel"))){
+    ..error_reached_unreachable_code(".why_bad_training_data: object is not a familiarModel.")
+  }
+  
+  # Store error messages and return the object.
+  return(..update_errors(object=object, attr(reason, "error")))
+}
