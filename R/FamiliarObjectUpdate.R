@@ -80,6 +80,11 @@ setMethod("update_object", signature(object="familiarModel"),
               attr(object, "learner_version") <- NULL
             }
             
+            if(object@familiar_version < "1.1.0"){
+              # Add placeholder messages attribute.
+              attr(object, "messages") <- list()
+            }
+            
             if(!methods::validObject(object)) stop("Could not update the familiarModel object to the most recent definition.")
             
             # Update package version.

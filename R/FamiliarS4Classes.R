@@ -44,6 +44,7 @@
 #'   slot, has been trimmed.
 #' @slot trimmed_function List of functions whose output has been captured prior
 #'   to trimming the model.
+#' @slot messages List of warning and error messages generated during training.
 #' @slot project_id Identifier of the project that generated the familiarModel
 #'   object.
 #' @slot familiar_version Version of the familiar package.
@@ -101,6 +102,8 @@ setClass("familiarModel",
            # Restores functions lost due to model trimming, such as coef or
            # vcov.
            trimmed_function = "list",
+           # List of warning and error messages encountered during training.
+           messages = "list",
            # Project identifier for consistency tracking
            project_id = "ANY",
            # Package version for backward compatibility
@@ -132,6 +135,7 @@ setClass("familiarModel",
            settings = NULL,
            is_trimmed = FALSE,
            trimmed_function = list(),
+           messages = list(),
            project_id = NULL,
            familiar_version = NULL,
            package = NULL,
