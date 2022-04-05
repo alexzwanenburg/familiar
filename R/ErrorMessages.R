@@ -232,3 +232,22 @@
   
   stop(paste0(err_message, collapse=""))
 }
+
+
+
+
+..error_message_no_training_data_available <- function(){
+  return("No data was available to train the model.")
+}
+
+
+
+..error_message_no_features_selected_for_training <- function(){
+  return("No features were selected to train the model on.")
+}
+
+
+
+..error_message_no_optimised_hyperparameters_available <- function(){
+  return("Model hyperparameters were not optimised.")
+}
