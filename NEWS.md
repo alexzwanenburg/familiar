@@ -8,6 +8,7 @@
 -   Hyperparameter optimisation is now less greedy during intensification steps when using `successive_halving` or `stochastic_reject` as exploration methods. Fewer bootstraps are assessed during intensification steps if there are any bootstraps that have only partially been sampled by the hyperparameter sets under evaluation. This should accelerate the optimisation process considerably. The (so far untested) rationale is that the hyperparameter learners should generally be able to accurately model the optimisation score of hyperparameter sets using locally sparse data.
     -   By default, a maximum of 20 bootstraps are now used to evaluate hyperparameter sets. This is down from the default of 50 used previously. This saves time spent on computing variable importance.
     -   It is now moreover possible to limit the time (in seconds) spent on optimisation using the `smbo_time_limit` parameter. Optimisation will stop once this limit has been exceeded. Note that familiar does not actively kill ongoing optimisation processes, but waits until they complete before stopping optimisation. Actively killing processes would require a general overhaul of the parallelisation routines used in familiar, which is complex and not an urgent priority.
+-   Models now show warnings and errors encountered while (attempting to) train the model.
 
 ## Minor changes
 
