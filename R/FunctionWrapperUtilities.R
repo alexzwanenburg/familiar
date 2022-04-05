@@ -30,7 +30,7 @@ do.call_with_handlers <- function(what, args, quote=FALSE, envir=parent.frame(),
         # notes, because <<- can be a global assignment, i.e. in the user space.
         # Hence we explicitly use get and assign to update the variable.
         warn_logs <- assign("warn_logs",
-                            append(get("warn_logs"), conditionMessage(w)),
+                            append(get("warn_logs"), condition_parser(w)),
                             inherits=TRUE)
         
         # This prevents any warnings from being generated outside the function.
@@ -40,13 +40,47 @@ do.call_with_handlers <- function(what, args, quote=FALSE, envir=parent.frame(),
   
   
   if(inherits(value, "error")){
-    error_logs <- conditionMessage(value)
+    error_logs <- condition_parser(value)
     value <- NULL
   }
   
   return(list("value"=value,
               "warning"=warn_logs,
               "error"=error_logs))
+}
+
+
+
+condition_parser <- function(x, ...){
+  # Based on print.condition
+  
+  # Find information on the condition message and call.
+  condition_message <- conditionMessage(x)
+  condition_call <- conditionCall(x)
+  
+  # Determine condition class.
+  if(inherits(x, "error")){
+    condition_class <- "error"
+    
+  } else if(inherits(x, "warning")){
+    condition_class <- "warning"
+    
+  } else {
+    condition_class <- class(x)[1L]
+  }
+  
+  # Parse condition to string.
+  if(!is.null(call)){
+    parsed_condition <- paste0(condition_class, " in ",
+                               paste0(deparse1(condition_call), collapse=""),
+                               ": ", 
+                               condition_message)
+  } else {
+    parsed_condition <- paste0(condition_class, ": ", 
+                               condition_message)
+  }
+  
+  return(parsed_condition)
 }
 
 
