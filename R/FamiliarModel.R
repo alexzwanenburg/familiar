@@ -770,6 +770,30 @@ setMethod(".trim_model", signature(object="familiarModel"),
           })
 
 
+#####..update_warnings----------------------------------------------------------
+setMethod("..update_warnings", signature(object="familiarModel"),
+          function(object, messages){
+            
+            # Update warnings attached to the object.
+            object@messages$warning <- c(object@messages$warning,
+                                         messages)
+            
+            return(object)
+          })
+
+
+#####..update_errors------------------------------------------------------------
+setMethod("..update_errors", signature(object="familiarModel"),
+          function(object, messages){
+            
+            # Update error attached to the object.
+            object@messages$error <- c(object@messages$error,
+                                       messages)
+            
+            return(object)
+          })
+
+
 ####has_calibration_info####
 setMethod("has_calibration_info", signature(object="familiarModel"),
           function(object) return(!is.null(object@calibration_info)))

@@ -231,6 +231,10 @@ setGeneric("..get_distribution_family", function(object, ...) standardGeneric(".
 
 setGeneric("..update_outcome", function(object, data, ...) standardGeneric("..update_outcome"))
 
+setGeneric("..update_warnings", function(object, ...) standardGeneric("..update_warnings"))
+
+setGeneric("..update_errors", function(object, ...) standardGeneric("..update_errors"))
+
 setGeneric("optimise_hyperparameters", function(object, data, ...) standardGeneric("optimise_hyperparameters"))
 
 setGeneric("trim_model", function(object, ...) standardGeneric("trim_model"))
