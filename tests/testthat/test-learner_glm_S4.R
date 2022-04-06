@@ -31,6 +31,12 @@ wide_model <- familiar:::test_train(data=wide_data,
 testthat::test_that("Generalised linear model trained correctly", {
   # Model trained
   testthat::expect_equal(familiar:::model_is_trained(good_model), TRUE)
+  
+  # That no deprecation warnings are given.
+  familiar:::test_not_deprecated(good_model@messages$warning)
+  
+  # Test that no errors appear.
+  testthat::expect_equal(good_model@messages$error, NULL)
 })
 
 
@@ -50,6 +56,7 @@ testthat::test_that("Generalised linear model has variable importance", {
   testthat::expect_equal(vimp_table[rank == 2, ]$name, "residence_before_1940_proportion")
 })
 
+
 testthat::test_that("Generalised linear model can train on wide data", {
   
   # Model trained
@@ -60,6 +67,12 @@ testthat::test_that("Generalised linear model can train on wide data", {
   
   # Valid predictions.
   suppressWarnings(testthat::expect_equal(familiar:::any_predictions_valid(familiar:::.predict(wide_model, wide_data), outcome_type=wide_data@outcome_type), TRUE))
+  
+  # That no deprecation warnings are given.
+  familiar:::test_not_deprecated(wide_model@messages$warning)
+  
+  # Test that no errors appear.
+  testthat::expect_equal(wide_model@messages$error, NULL)
 })
 
 
@@ -86,6 +99,12 @@ wide_model <- familiar:::test_train(data=wide_data,
 testthat::test_that("Generalised linear model trained correctly", {
   # Model trained
   testthat::expect_equal(familiar:::model_is_trained(good_model), TRUE)
+  
+  # That no deprecation warnings are given.
+  familiar:::test_not_deprecated(good_model@messages$warning)
+  
+  # Test that no errors appear.
+  testthat::expect_equal(good_model@messages$error, NULL)
 })
 
 
@@ -105,6 +124,7 @@ testthat::test_that("Generalised linear model has variable importance", {
   testthat::expect_equal(vimp_table[rank == 2, ]$name, "elpct")
 })
 
+
 testthat::test_that("Generalised linear model can train on wide data", {
   
   # Model trained
@@ -115,6 +135,12 @@ testthat::test_that("Generalised linear model can train on wide data", {
   
   # Valid predictions.
   suppressWarnings(testthat::expect_equal(familiar:::any_predictions_valid(familiar:::.predict(wide_model, wide_data), outcome_type=wide_data@outcome_type), TRUE))
+  
+  # That no deprecation warnings are given.
+  familiar:::test_not_deprecated(wide_model@messages$warning)
+  
+  # Test that no errors appear.
+  testthat::expect_equal(wide_model@messages$error, NULL)
 })
 
 
@@ -141,6 +167,12 @@ wide_model <- familiar:::test_train(data=wide_data,
 testthat::test_that("Generalised linear model trained correctly", {
   # Model trained
   testthat::expect_equal(familiar:::model_is_trained(good_model), TRUE)
+  
+  # That no deprecation warnings are given.
+  familiar:::test_not_deprecated(good_model@messages$warning)
+  
+  # Test that no errors appear.
+  testthat::expect_equal(good_model@messages$error, NULL)
 })
 
 
@@ -171,6 +203,12 @@ testthat::test_that("Generalised linear model can train on wide data", {
   
   # Valid predictions.
   suppressWarnings(testthat::expect_equal(familiar:::any_predictions_valid(familiar:::.predict(wide_model, wide_data), outcome_type=wide_data@outcome_type), TRUE))
+  
+  # That no deprecation warnings are given.
+  familiar:::test_not_deprecated(wide_model@messages$warning)
+  
+  # Test that no errors appear.
+  testthat::expect_equal(wide_model@messages$error, NULL)
 })
 
 
@@ -197,6 +235,12 @@ wide_model <- familiar:::test_train(data=wide_data,
 testthat::test_that("Generalised linear model trained correctly", {
   # Model trained
   testthat::expect_equal(familiar:::model_is_trained(good_model), TRUE)
+  
+  # That no deprecation warnings are given.
+  familiar:::test_not_deprecated(good_model@messages$warning, "deprec")
+  
+  # Test that no errors appear.
+  testthat::expect_equal(good_model@messages$error, NULL)
 })
 
 
@@ -227,6 +271,16 @@ testthat::test_that("Generalised linear model can not train on wide data", {
   
   # Valid predictions cannot be made.
   testthat::expect_equal(familiar:::any_predictions_valid(familiar:::.predict(wide_model, wide_data), outcome_type=wide_data@outcome_type), FALSE)
+  
+  # That no deprecation warnings are given.
+  familiar:::test_not_deprecated(wide_model@messages$warning)
+  
+  # Test that specific warnings and errors appear.
+  testthat::expect_equal(length(wide_model@messages$error), 1L)
+  testthat::expect_equal(grepl(x=wide_model@messages$error, pattern="vglm.fitter: There are", fixed=TRUE) &&
+                           grepl(x=wide_model@messages$error, pattern="parameters but only", fixed=TRUE) &&
+                           grepl(x=wide_model@messages$error, pattern="observations", fixed=TRUE),
+                         TRUE)
 })
 
 
@@ -259,6 +313,11 @@ testthat::test_that("Generalised linear model trained correctly", {
   # Test that the model predicts hazard ratios.
   testthat::expect_equal(familiar:::get_prediction_type(good_model), "hazard_ratio")
   
+  # That no deprecation warnings are given.
+  familiar:::test_not_deprecated(good_model@messages$warning)
+  
+  # Test that no errors appear.
+  testthat::expect_equal(good_model@messages$error, NULL)
 })
 
 
@@ -292,6 +351,15 @@ testthat::test_that("Generalised linear model cannot train on wide data", {
   
   # Valid survival probability predictions can not be made.
   testthat::expect_equal(familiar:::any_predictions_valid(familiar:::.predict(wide_model, wide_data, type="survival_probability", time=1000), outcome_type=wide_data@outcome_type), FALSE)
+  
+  # Test that specific warnings and errors appear.
+  testthat::expect_equal(length(wide_model@messages$warning), 1L)
+  testthat::expect_equal(grepl(x=wide_model@messages$warning, pattern="did not converge", fixed=TRUE),
+                         TRUE)
+  
+  testthat::expect_equal(length(wide_model@messages$error), 1L)
+  testthat::expect_equal(grepl(x=wide_model@messages$error, pattern="did not converge", fixed=TRUE),
+                         TRUE)
 })
 
 
