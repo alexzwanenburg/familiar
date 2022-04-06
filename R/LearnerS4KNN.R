@@ -149,10 +149,15 @@ setMethod("..train", signature(object="familiarKNN", data="dataObject"),
           function(object, data, ...){
             
             # Check if training data is ok.
-            if(has_bad_training_data(object=object, data=data)) return(callNextMethod())
+            if(reason <- has_bad_training_data(object=object, data=data)){
+              return(callNextMethod(object=.why_bad_training_data(object=object, reason=reason)))
+            } 
             
             # Check if hyperparameters are set.
-            if(is.null(object@hyperparameters)) return(callNextMethod())
+            if(is.null(object@hyperparameters)){
+              return(callNextMethod(object=..update_errors(object=object,
+                                                           ..error_message_no_optimised_hyperparameters_available())))
+            }
             
             # Check that required packages are loaded and installed.
             require_package(object, "train")
@@ -165,15 +170,20 @@ setMethod("..train", signature(object="familiarKNN", data="dataObject"),
             
             # Train model. Disable scaling because of bad interaction with
             # predicting single instances.
-            model <- tryCatch(e1071::gknn(formula,
-                                          data=data@data,
-                                          k=object@hyperparameters$k,
-                                          method=as.character(object@hyperparameters$distance_metric),
-                                          scale=FALSE),
-                              error=identity)
+            model <- do.call_with_handlers(e1071::gknn,
+                                           args=list(formula,
+                                                     "data"=data@data,
+                                                     "k"=object@hyperparameters$k,
+                                                     "method"=as.character(object@hyperparameters$distance_metric),
+                                                     "scale"=FALSE))
+            
+            # Extract values.
+            object <- ..update_warnings(object=object, model$warning)
+            object <- ..update_errors(object=object, model$error)
+            model <- model$value
             
             # Check if the model trained at all.
-            if(inherits(model, "error")) return(callNextMethod())
+            if(!is.null(object@messages$error)) return(callNextMethod(object=object))
             
             # Add model to the familiarModel object.
             object@model <- model
