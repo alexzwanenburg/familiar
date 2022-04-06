@@ -84,7 +84,7 @@ testthat::test_that("Regularised regression model can train on wide data", {
   # Valid predictions.
   testthat::expect_equal(familiar:::any_predictions_valid(familiar:::.predict(wide_model, wide_data), outcome_type=wide_data@outcome_type), TRUE)
   
-  # That no deprecation warnings are given.
+  # Test that no deprecation warnings are given.
   familiar:::test_not_deprecated(wide_model@messages$warning)
   
   # Test that no errors appear.
