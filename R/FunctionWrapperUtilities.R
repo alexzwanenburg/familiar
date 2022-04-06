@@ -59,7 +59,7 @@ condition_parser <- function(x, ...){
   condition_call <- conditionCall(x)
   
   # Parse condition to string.
-  if(!is.null(call)){
+  if(!is.null(condition_call)){
     
     # Get the condition call. Also, just in case, select only the first section
     # that contains the function itself.
