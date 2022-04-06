@@ -58,26 +58,39 @@ condition_parser <- function(x, ...){
   condition_message <- conditionMessage(x)
   condition_call <- conditionCall(x)
   
-  # Determine condition class.
-  if(inherits(x, "error")){
-    condition_class <- "error"
-    
-  } else if(inherits(x, "warning")){
-    condition_class <- "warning"
-    
-  } else {
-    condition_class <- class(x)[1L]
-  }
-  
   # Parse condition to string.
   if(!is.null(call)){
-    parsed_condition <- paste0(condition_class, " in ",
-                               paste0(deparse1(condition_call), collapse=""),
-                               ": ", 
+    
+    # Get the condition call. Also, just in case, select only the first section
+    # that contains the function itself.
+    deparsed_condition_call <- deparse1(condition_call)[1]
+    
+    # We remove the function arguments from the call to prevent leaking data, if
+    # any. Identify the first parenthesis that opens the argument section.
+    parenthesis_position <- regexpr(text=deparsed_condition_call,
+                                    pattern="(",
+                                    fixed=TRUE)[1]
+    
+    # Check if a parenthesis appears in the initial section of the call.
+    if(parenthesis_position > -1){
+      # Select the function name which appears prior to the parenthesis.
+      deparsed_condition_call <- substr(deparsed_condition_call,
+                                        start=1L,
+                                        stop=parenthesis_position-1L)
+      
+    } else {
+      # If no parenthesis appears, the function call was likely cut off prior to
+      # the argument section. We mark this abbreviation.
+      deparsed_condition_call <- paste0(deparsed_condition_call, "[...]")
+    }
+    
+    # Add in the deparsed condition call, and combine.
+    parsed_condition <- paste0(deparsed_condition_call, ": ", 
                                condition_message)
+    
   } else {
-    parsed_condition <- paste0(condition_class, ": ", 
-                               condition_message)
+    # Set message.
+    parsed_condition <- condition_message
   }
   
   return(parsed_condition)
