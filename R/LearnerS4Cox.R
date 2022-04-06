@@ -83,10 +83,15 @@ setMethod("..train", signature(object="familiarCoxPH", data="dataObject"),
           function(object, data, ...){
             
             # Check if training data is ok.
-            if(reason <- has_bad_training_data(object=object, data=data)) return(callNextMethod(object=.why_bad_training_data(object=object, reason=reason)))
+            if(reason <- has_bad_training_data(object=object, data=data)){
+              return(callNextMethod(object=.why_bad_training_data(object=object, reason=reason)))
+            } 
             
             # Check if hyperparameters are set.
-            if(is.null(object@hyperparameters)) return(callNextMethod(object=..update_errors(object=object)))
+            if(is.null(object@hyperparameters)){
+              return(callNextMethod(object=..update_errors(object=object,
+                                                           ..error_message_no_optimised_hyperparameters_available())))
+            } 
             
             # Check that required packages are loaded and installed.
             require_package(object, "train")
@@ -129,8 +134,10 @@ setMethod("..train", signature(object="familiarCoxPH", data="dataObject"),
                                                                                "Model fitter ran out of iterations and did not converge.")))
             
             # Check if all coefficients could not be estimated.
-            if(all(!sapply(stats::coef(model), is.finite))) return(callNextMethod(object=..update_errors(object=object,
-                                                                                                         "Not all model coefficients could be estimated.")))
+            if(all(!sapply(stats::coef(model), is.finite))){
+              return(callNextMethod(object=..update_errors(object=object,
+                                                           ..error_message_failed_model_coefficient_estimation())))
+            } 
             
             # Add model
             object@model <- model
