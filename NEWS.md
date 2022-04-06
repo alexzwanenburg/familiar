@@ -9,6 +9,7 @@
     -   By default, a maximum of 20 bootstraps are now used to evaluate hyperparameter sets. This is down from the default of 50 used previously. This saves time spent on computing variable importance.
     -   It is now moreover possible to limit the time (in seconds) spent on optimisation using the `smbo_time_limit` parameter. Optimisation will stop once this limit has been exceeded. Note that familiar does not actively kill ongoing optimisation processes, but waits until they complete before stopping optimisation. Actively killing processes would require a general overhaul of the parallelisation routines used in familiar, which is complex and not an urgent priority.
 -   Models now show warnings and errors encountered while (attempting to) train the model. This allows for identifying potential issues with the underlying data, and model-specific issues.
+    -   In case hyperparameters cannot be obtained for a model due to errors encountered while training the models, these errors are now reported.
 
 ## Minor changes
 

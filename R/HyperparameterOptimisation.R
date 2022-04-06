@@ -657,6 +657,9 @@ setMethod("optimise_hyperparameters", signature(object="familiarModel", data="da
               # Get score table.
               score_table <- score_results$results
               
+              # Get errors encountered during model training.
+              train_errors <- score_results$error
+              
               if(.optimisation_process_time_available(start_time=optimisation_start_time,
                                                       time_limit=time_limit,
                                                       verbose=FALSE)){
@@ -698,6 +701,9 @@ setMethod("optimise_hyperparameters", signature(object="familiarModel", data="da
                 score_table <- rbind(score_table,
                                      score_results$results,
                                      use.names=TRUE)
+                
+                # Add errors encountered during model training.
+                train_errors <- c(train_errors, score_results$error)
               }
               
             } else {
@@ -725,6 +731,9 @@ setMethod("optimise_hyperparameters", signature(object="familiarModel", data="da
               
               # Get score table.
               score_table <- score_results$results
+              
+              # Get errors encountered during model training.
+              train_errors <- score_results$error
             }
             
             # Find information regarding the dataset that has the highest
@@ -865,6 +874,9 @@ setMethod("optimise_hyperparameters", signature(object="familiarModel", data="da
                                      score_results$results,
                                      use.names=TRUE)
                 
+                # Add errors encountered during model training.
+                train_errors <- c(train_errors, score_results$error)
+                
                 # Find scores and return parameter ids for challenger and
                 # incumbent hyperparameter sets. Compared to the original SMAC
                 # algorithm, we actively eliminate unsuccessful challengers. To
@@ -972,6 +984,22 @@ setMethod("optimise_hyperparameters", signature(object="familiarModel", data="da
               logger.message(paste0("Hyperparameter optimisation: No suitable set of hyperparameters was found."),
                              indent=message_indent,
                              verbose=verbose)
+              
+              # Report on errors.
+              if(!is.null(train_errors)){
+                # Generate a summary of the errors.
+                train_errors <- condition_summary(train_errors)
+                
+                # Notify that one or more errors were encountered.
+                logger.message(paste0("Hyperparameter optimisation: The following ",
+                                      ifelse(length(train_errors) == 1, "error was", "errors were"),
+                                      " encountered while training models:"),
+                               indent=message_indent,
+                               verbose=verbose)
+                
+                # Show errors.
+                sapply(train_errors, logger.message, indent=message_indent+1, verbose=verbose)
+              }
               
               # Set NULL.
               object@hyperparameters <- NULL

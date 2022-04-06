@@ -415,20 +415,20 @@
                             rank_table_list=rank_table_list)
   
   if(is.null(time_optimisation_model)){
-    # Create a scoring table.
-    score_table <- fam_mapply_lb(cl = cl,
-                                 assign = NULL,
-                                 FUN = ..compute_hyperparameter_model_performance,
-                                 run_id = run_table$run_id,
-                                 training_samples = training_list,
-                                 validation_samples = validation_list,
-                                 rank_table=rank_table_list,
-                                 parameter_table=parameter_list,
-                                 progress_bar=verbose,
-                                 MEASURE.TIME=TRUE,
-                                 MoreArgs=list("object"=object,
-                                               "data"=data,
-                                               "metric_objects"=metric_objects))
+    # Create a scoring table, with accompanying information.
+    score_results <- fam_mapply_lb(cl = cl,
+                                   assign = NULL,
+                                   FUN = ..compute_hyperparameter_model_performance,
+                                   run_id = run_table$run_id,
+                                   training_samples = training_list,
+                                   validation_samples = validation_list,
+                                   rank_table=rank_table_list,
+                                   parameter_table=parameter_list,
+                                   progress_bar=verbose,
+                                   MEASURE.TIME=TRUE,
+                                   MoreArgs=list("object"=object,
+                                                 "data"=data,
+                                                 "metric_objects"=metric_objects))
     
   } else {
   
@@ -437,36 +437,39 @@
                            .compute_expected_train_time,
                            time_model=time_optimisation_model)
     
-    # Create a scoring table.
-    score_table <- fam_mapply(cl = cl,
-                              assign = NULL,
-                              FUN = ..compute_hyperparameter_model_performance,
-                              run_id = run_table$run_id,
-                              training_samples = training_list,
-                              validation_samples = validation_list,
-                              rank_table=rank_table_list,
-                              parameter_table=parameter_list,
-                              progress_bar=verbose,
-                              process_time=process_time,
-                              overhead_time=overhead_time,
-                              chopchop=TRUE,
-                              MEASURE.TIME=TRUE,
-                              MoreArgs=list("object"=object,
-                                            "data"=data,
-                                            "metric_objects"=metric_objects))
+    # Create a scoring table, with accompanying information.
+    score_results <- fam_mapply(cl = cl,
+                                assign = NULL,
+                                FUN = ..compute_hyperparameter_model_performance,
+                                run_id = run_table$run_id,
+                                training_samples = training_list,
+                                validation_samples = validation_list,
+                                rank_table=rank_table_list,
+                                parameter_table=parameter_list,
+                                progress_bar=verbose,
+                                process_time=process_time,
+                                overhead_time=overhead_time,
+                                chopchop=TRUE,
+                                MEASURE.TIME=TRUE,
+                                MoreArgs=list("object"=object,
+                                              "data"=data,
+                                              "metric_objects"=metric_objects))
   }
   
-  # Aggregate the table.
-  score_table$results <- data.table::rbindlist(score_table$results, use.names=TRUE)
+  # Aggregate the results, and the score table
+  aggregated_results <- list("results"=data.table::rbindlist(lapply(score_results$results, function(x)(x$score_table)), use.names=TRUE))
   
   # Add in process times to the results.
-  score_table$results[, "time_taken":=rep(score_table$process_time, each=2*length(metric_objects))]
+  aggregated_results$results[, "time_taken":=rep(score_results$process_time, each=2*length(metric_objects))]
   
   # Add in iteration id.
-  score_table$results[, "iteration_id":=iteration_id]
+  aggregated_results$results[, "iteration_id":=iteration_id]
   
-  # Return scores.
-  return(score_table)
+  # Aggregate errors.
+  aggregated_results$error <- unlist(lapply(score_results$results, function(x)(x$error)))
+  
+  # Return aggregated results.
+  return(aggregated_results)
 }
 
 
@@ -567,7 +570,8 @@
   # Set the column order.
   data.table::setcolorder(score_table, neworder=c("param_id", "run_id"))
   
-  return(score_table)
+  return(list("score_table"=score_table,
+              "error"=object@messages$error))
 }
 
 
