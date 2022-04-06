@@ -201,10 +201,14 @@ setMethod("..train", signature(object="familiarGLM", data="dataObject"),
             }
             
             # Check if training data is ok.
-            if(has_bad_training_data(object=object, data=data)) return(callNextMethod())
+            if(reason <- has_bad_training_data(object=object, data=data)){
+              return(callNextMethod(object=.why_bad_training_data(object=object, reason=reason)))
+            } 
             
             # Check if hyperparameters are set.
-            if(is.null(object@hyperparameters)) return(callNextMethod())
+            if(is.null(object@hyperparameters)){
+              return(callNextMethod(object=..update_errors(object=object, ..error_message_no_optimised_hyperparameters_available())))
+            }
             
             # Check that required packages are loaded and installed.
             require_package(object, "train")
@@ -234,33 +238,41 @@ setMethod("..train", signature(object="familiarGLM", data="dataObject"),
                                                normalisation="average_one")
             
             if(object@outcome_type %in% c("binomial", "continuous", "count")){
-              # Generate model
-              model <- tryCatch(suppressWarnings(stats::glm(formula,
-                                                            data=encoded_data$encoded_data@data,
-                                                            weights=weights,
-                                                            family=family,
-                                                            model=FALSE,
-                                                            x=FALSE,
-                                                            y=FALSE)),
-                                error=identity)
+              # Train the model.
+              model <- do.call_with_handlers(stats::glm,
+                                             args=list(formula,
+                                                       "data"=encoded_data$encoded_data@data,
+                                                       "weights"=weights,
+                                                       "family"=family,
+                                                       "model"=FALSE,
+                                                       "x"=FALSE,
+                                                       "y"=FALSE))
               
             } else if(object@outcome_type=="multinomial"){
-              # Generate model
-              model <- tryCatch(suppressWarnings(VGAM::vglm(formula,
-                                                            data=encoded_data$encoded_data@data,
-                                                            weights=weights,
-                                                            family=family)),
-                                error=identity)
+              # Train the model.
+              model <- do.call_with_handlers(VGAM::vglm,
+                                             args=list(formula,
+                                                       "data"=encoded_data$encoded_data@data,
+                                                       "weights"=weights,
+                                                       "family"=family))
               
             } else {
               ..error_reached_unreachable_code(paste0("..train,familiarGLM: unknown outcome type: ", object@outcome_type))
             }
               
-            # Check if the model trained at all.
-            if(inherits(model, "error")) return(callNextMethod())
+            # Extract values.
+            object <- ..update_warnings(object=object, model$warning)
+            object <- ..update_errors(object=object, model$error)
+            model <- model$value
             
-            # Check if all coefficients could not be estimated.
-            if(all(!sapply(stats::coef(model), is.finite))) return(callNextMethod())
+            # Check if the model trained at all.
+            if(!is.null(object@messages$error)) return(callNextMethod(object=object))
+            
+            # Check if all coefficients could be estimated.
+            if(all(!sapply(stats::coef(model), is.finite))){
+              return(callNextMethod(object=..update_errors(object=object,
+                                                           ..error_message_failed_model_coefficient_estimation())))
+            }
             
             # Add model
             object@model <- model
