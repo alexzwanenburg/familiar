@@ -98,6 +98,36 @@ condition_parser <- function(x, ...){
 
 
 
+condition_summary <- function(x){
+  
+  # Convert x to a data.table.
+  data <- data.table::data.table("condition_message"=x)
+  
+  # Count the number of times each unique condition message appears.
+  data <- data[, list("n"=.N, "id"=.GRP), by="condition_message"]
+  
+  # Parse each line.
+  summary_vector <- sapply(split(data, by="condition_message"), function(x){
+    # Initialise using the id, e.g. "3. "
+    message_string <- paste0(as.character(x$id), ". ")
+    
+    # Show the number of times the condition has appeared, but ignore if it only
+    # appeared once.
+    if(x$n > 1) message_string <- c(message_string,
+                                    paste0("(", x$n, "x) "))
+    
+    # Add the condition message itself.
+    message_string <- c(message_string,
+                        x$condition_message)
+    
+    return(paste0(message_string, collapse=""))
+  }, USE.NAMES=FALSE)
+  
+  return(unname(summary_vector))
+}
+
+
+
 quiet <- function(x) { 
   # Removes all output to console.
   
