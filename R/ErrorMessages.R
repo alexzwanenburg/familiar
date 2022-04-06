@@ -251,3 +251,8 @@
 ..error_message_no_optimised_hyperparameters_available <- function(){
   return("Model hyperparameters were not optimised.")
 }
+
+
+..error_message_failed_model_coefficient_estimation <- function(){
+  return("None of the model coefficients could be estimated.")
+}
