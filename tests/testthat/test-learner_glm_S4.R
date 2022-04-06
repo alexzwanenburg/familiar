@@ -32,7 +32,7 @@ testthat::test_that("Generalised linear model trained correctly", {
   # Model trained
   testthat::expect_equal(familiar:::model_is_trained(good_model), TRUE)
   
-  # That no deprecation warnings are given.
+  # Test that no deprecation warnings are given.
   familiar:::test_not_deprecated(good_model@messages$warning)
   
   # Test that no errors appear.

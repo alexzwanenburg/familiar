@@ -87,6 +87,12 @@ wide_model <- familiar:::test_train(data=wide_data,
 testthat::test_that("Gradient boosting tree model trained correctly", {
   # Model trained
   testthat::expect_equal(familiar:::model_is_trained(good_model), TRUE)
+  
+  # Test that no deprecation warnings are given.
+  familiar:::test_not_deprecated(good_model@messages$warning)
+  
+  # Test that no errors appear.
+  testthat::expect_equal(good_model@messages$error, NULL)
 })
 
 
@@ -100,6 +106,12 @@ testthat::test_that("Gradient boosting tree model can train on wide data", {
   
   # Valid predictions.
   testthat::expect_equal(familiar:::any_predictions_valid(familiar:::.predict(wide_model, wide_data), outcome_type=wide_data@outcome_type), TRUE)
+  
+  # That no deprecation warnings are given.
+  familiar:::test_not_deprecated(wide_model@messages$warning)
+  
+  # Test that no errors appear.
+  testthat::expect_equal(wide_model@messages$error, NULL)
 })
 
 
@@ -137,6 +149,12 @@ wide_model <- familiar:::test_train(data=wide_data,
 testthat::test_that("Gradient boosting tree model trained correctly", {
   # Model trained
   testthat::expect_equal(familiar:::model_is_trained(good_model), TRUE)
+  
+  # Test that no deprecation warnings are given.
+  familiar:::test_not_deprecated(good_model@messages$warning)
+  
+  # Test that no errors appear.
+  testthat::expect_equal(good_model@messages$error, NULL)
 })
 
 
@@ -150,6 +168,12 @@ testthat::test_that("Gradient boosting tree model can train on wide data", {
   
   # Valid predictions.
   testthat::expect_equal(familiar:::any_predictions_valid(familiar:::.predict(wide_model, wide_data), outcome_type=wide_data@outcome_type), TRUE)
+  
+  # That no deprecation warnings are given.
+  familiar:::test_not_deprecated(wide_model@messages$warning)
+  
+  # Test that no errors appear.
+  testthat::expect_equal(wide_model@messages$error, NULL)
 })
 
 
@@ -186,6 +210,12 @@ wide_model <- suppressWarnings(familiar:::test_train(data=wide_data,
 testthat::test_that("Gradient boosting tree model trained correctly", {
   # Model trained
   testthat::expect_equal(familiar:::model_is_trained(good_model), TRUE)
+  
+  # Test that no deprecation warnings are given.
+  familiar:::test_not_deprecated(good_model@messages$warning)
+  
+  # Test that no errors appear.
+  testthat::expect_equal(good_model@messages$error, NULL)
 })
 
 
@@ -199,6 +229,12 @@ testthat::test_that("Gradient boosting tree model can train on wide data", {
   
   # Valid predictions.
   testthat::expect_equal(familiar:::any_predictions_valid(familiar:::.predict(wide_model, wide_data), outcome_type=wide_data@outcome_type), TRUE)
+  
+  # That no deprecation warnings are given.
+  familiar:::test_not_deprecated(wide_model@messages$warning)
+  
+  # Test that no errors appear.
+  testthat::expect_equal(wide_model@messages$error, NULL)
 })
 
 
@@ -245,6 +281,12 @@ testthat::test_that("Gradient boosting tree model trained correctly", {
   
   # Test that the model predicts hazard ratios
   testthat::expect_equal(familiar:::get_prediction_type(good_model, type="survival_probability"), "survival_probability")
+  
+  # Test that no deprecation warnings are given.
+  familiar:::test_not_deprecated(good_model@messages$warning)
+  
+  # Test that no errors appear.
+  testthat::expect_equal(good_model@messages$error, NULL)
 })
 
 
@@ -261,6 +303,12 @@ testthat::test_that("Gradient boosting tree model can train and predict on wide 
   
   # Valid survival probability predictions can be made.
   testthat::expect_equal(familiar:::any_predictions_valid(familiar:::.predict(wide_model, wide_data, type="survival_probability", time=1000), outcome_type=wide_data@outcome_type), TRUE)
+  
+  # That no deprecation warnings are given.
+  familiar:::test_not_deprecated(wide_model@messages$warning)
+  
+  # Test that no errors appear.
+  testthat::expect_equal(wide_model@messages$error, NULL)
 })
 
 
