@@ -4838,6 +4838,17 @@ debug_test_that <- function(desc, code){
 
 
 
+test_not_deprecated <- function(x, deprecation_string=c("deprec", "replac")){
+  # Test that no deprecation warnings are given.
+  if(length(x) > 0){
+    for(current_string in deprecation_string){
+      testthat::expect_equal(any(grepl(x=x, pattern=current_string, fixed=TRUE)), FALSE)
+    }
+  }
+}
+
+
+
 .test_which_plot_present <- function(p){
   
   # Check if the top element is null or empty.
