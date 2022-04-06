@@ -47,6 +47,12 @@ wide_model <- familiar:::test_train(data=wide_data,
 testthat::test_that("Regularised regression model trained correctly", {
   # Model trained
   testthat::expect_equal(familiar:::model_is_trained(good_model), TRUE)
+  
+  # That no deprecation warnings are given.
+  familiar:::test_not_deprecated(good_model@messages$warning)
+  
+  # Test that no errors appear.
+  testthat::expect_equal(good_model@messages$error, NULL)
 })
 
 
@@ -77,6 +83,12 @@ testthat::test_that("Regularised regression model can train on wide data", {
   
   # Valid predictions.
   testthat::expect_equal(familiar:::any_predictions_valid(familiar:::.predict(wide_model, wide_data), outcome_type=wide_data@outcome_type), TRUE)
+  
+  # That no deprecation warnings are given.
+  familiar:::test_not_deprecated(wide_model@messages$warning)
+  
+  # Test that no errors appear.
+  testthat::expect_equal(wide_model@messages$error, NULL)
 })
 
 
@@ -103,6 +115,12 @@ wide_model <- familiar:::test_train(data=wide_data,
 testthat::test_that("Regularised regression model trained correctly", {
   # Model trained
   testthat::expect_equal(familiar:::model_is_trained(good_model), TRUE)
+  
+  # That no deprecation warnings are given.
+  familiar:::test_not_deprecated(good_model@messages$warning)
+  
+  # Test that no errors appear.
+  testthat::expect_equal(good_model@messages$error, NULL)
 })
 
 
@@ -122,6 +140,7 @@ testthat::test_that("Regularised regression model has variable importance", {
   testthat::expect_equal(vimp_table[rank == 2, ]$name, "calwpct")
 })
 
+
 testthat::test_that("Regularised regression model can train on wide data", {
   
   # Model trained
@@ -132,6 +151,12 @@ testthat::test_that("Regularised regression model can train on wide data", {
   
   # Valid predictions.
   testthat::expect_equal(familiar:::any_predictions_valid(familiar:::.predict(wide_model, wide_data), outcome_type=wide_data@outcome_type), TRUE)
+  
+  # That no deprecation warnings are given.
+  familiar:::test_not_deprecated(wide_model@messages$warning)
+  
+  # Test that no errors appear.
+  testthat::expect_equal(wide_model@messages$error, NULL)
 })
 
 #####Binomial tests-------------------------------------------------------------
@@ -157,6 +182,12 @@ wide_model <- suppressWarnings(familiar:::test_train(data=wide_data,
 testthat::test_that("Regularised regression model trained correctly", {
   # Model trained
   testthat::expect_equal(familiar:::model_is_trained(good_model), TRUE)
+  
+  # That no deprecation warnings are given.
+  familiar:::test_not_deprecated(good_model@messages$warning)
+  
+  # Test that no errors appear.
+  testthat::expect_equal(good_model@messages$error, NULL)
 })
 
 
@@ -176,6 +207,7 @@ testthat::test_that("Regularised regression model has variable importance", {
   testthat::expect_equal(vimp_table[rank == 2, ]$name, "bare_nuclei")
 })
 
+
 testthat::test_that("Regularised regression model can train on wide data", {
   
   # Model trained
@@ -186,6 +218,12 @@ testthat::test_that("Regularised regression model can train on wide data", {
   
   # Valid predictions.
   testthat::expect_equal(familiar:::any_predictions_valid(familiar:::.predict(wide_model, wide_data), outcome_type=wide_data@outcome_type), TRUE)
+  
+  # That no deprecation warnings are given.
+  familiar:::test_not_deprecated(wide_model@messages$warning)
+  
+  # Test that no errors appear.
+  testthat::expect_equal(wide_model@messages$error, NULL)
 })
 
 
@@ -212,6 +250,12 @@ wide_model <- suppressWarnings(familiar:::test_train(data=wide_data,
 testthat::test_that("Regularised regression model trained correctly", {
   # Model trained
   testthat::expect_equal(familiar:::model_is_trained(good_model), TRUE)
+  
+  # That no deprecation warnings are given.
+  familiar:::test_not_deprecated(good_model@messages$warning)
+  
+  # Test that no errors appear.
+  testthat::expect_equal(good_model@messages$error, NULL)
 })
 
 
@@ -232,16 +276,38 @@ testthat::test_that("Regularised regression model has variable importance", {
 })
 
 
+# This model may occasionally be able to train.
 testthat::test_that("Regularised regression model can not train on wide data", {
   
-  # Model cannot be trained.
-  testthat::expect_equal(familiar:::model_is_trained(wide_model), FALSE)
-  
-  # Variable importance table is empty.
-  testthat::expect_equal(familiar:::is_empty(familiar:::..vimp(wide_model)), TRUE)
-  
-  # Valid predictions cannot be made.
-  testthat::expect_equal(familiar:::any_predictions_valid(familiar:::.predict(wide_model, wide_data), outcome_type=wide_data@outcome_type), FALSE)
+  if(familiar:::model_is_trained(wide_model)){
+    
+    # Variable importance table is empty.
+    testthat::expect_equal(familiar:::is_empty(familiar:::..vimp(wide_model)), FALSE)
+    
+    # Valid predictions cannot be made.
+    testthat::expect_equal(familiar:::any_predictions_valid(familiar:::.predict(wide_model, wide_data), outcome_type=wide_data@outcome_type), TRUE)
+    
+    # That no deprecation warnings are given.
+    familiar:::test_not_deprecated(wide_model@messages$warning)
+    
+    # Check that the expected error appears.
+    testthat::expect_equal(wide_model@messages$error, NULL)
+    
+  } else {
+    # Variable importance table is empty.
+    testthat::expect_equal(familiar:::is_empty(familiar:::..vimp(wide_model)), TRUE)
+    
+    # Valid predictions cannot be made.
+    testthat::expect_equal(familiar:::any_predictions_valid(familiar:::.predict(wide_model, wide_data), outcome_type=wide_data@outcome_type), FALSE)
+    
+    # That no deprecation warnings are given.
+    familiar:::test_not_deprecated(wide_model@messages$warning)
+    
+    # Check that the expected error appears.
+    testthat::expect_equal(length(wide_model@messages$error), 1L)
+    testthat::expect_equal(grepl(x=wide_model@messages$error, pattern="lognet: one multinomial or binomial class has 1 or 0 observations; not allowed", fixed=TRUE),
+                           TRUE)
+  }
 })
 
 
@@ -279,6 +345,12 @@ testthat::test_that("Regularised regression model trained correctly", {
   
   # Test that the model predicts hazard ratios
   testthat::expect_equal(familiar:::get_prediction_type(good_model, type="survival_probability"), "survival_probability")
+  
+  # That no deprecation warnings are given.
+  familiar:::test_not_deprecated(good_model@messages$warning)
+  
+  # Test that no errors appear.
+  testthat::expect_equal(good_model@messages$error, NULL)
 })
 
 
@@ -313,6 +385,12 @@ testthat::test_that("Regularised regression model can train on wide data", {
   
   # Valid survival probability predictions can be made.
   testthat::expect_equal(familiar:::any_predictions_valid(familiar:::.predict(wide_model, wide_data, type="survival_probability", time=1000), outcome_type=wide_data@outcome_type), TRUE)
+  
+  # That no deprecation warnings are given.
+  familiar:::test_not_deprecated(wide_model@messages$warning)
+  
+  # Test that no errors appear.
+  testthat::expect_equal(wide_model@messages$error, NULL)
 })
 
 

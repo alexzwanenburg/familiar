@@ -285,10 +285,15 @@ setMethod("..train", signature(object="familiarGLMnet", data="dataObject"),
             original_name <- NULL
             
             # Check if training data is ok.
-            if(has_bad_training_data(object=object, data=data)) return(callNextMethod())
+            if(reason <- has_bad_training_data(object=object, data=data)){
+              return(callNextMethod(object=.why_bad_training_data(object=object, reason=reason)))
+            } 
             
             # Check if hyperparameters are set.
-            if(is.null(object@hyperparameters)) return(callNextMethod())
+            if(is.null(object@hyperparameters)){
+              return(callNextMethod(object=..update_errors(object=object,
+                                                           ..error_message_no_optimised_hyperparameters_available())))
+            }
             
             # For data with one feature, switch to familiarGLM.
             if(get_n_features(data) == 1){
@@ -371,55 +376,42 @@ setMethod("..train", signature(object="familiarGLMnet", data="dataObject"),
                                                beta=..compute_effective_number_of_samples_beta(object@hyperparameters$sample_weighting_beta),
                                                normalisation="average_one")
             
-            # Train the model.
+            # Get the arguments which are shared between all different objects.
+            learner_arguments <- list("x" = as.matrix(encoded_data$encoded_data@data[, mget(feature_columns)]),
+                                      "y" = outcome_data,
+                                      "family" = as.character(object@hyperparameters$family),
+                                      "weights" = weights,
+                                      "standardize" = object@hyperparameters$normalise,
+                                      "nfolds" = NULL,
+                                      "foldid" = fold_table$fold_id,
+                                      "parallel" = FALSE,
+                                      "penalty.factor" = penalty_factor)
+            
+            # Set learner-specific arguments.
             if(is(object, "familiarGLMnetRidge")){
-              # Attempt to train the model
-              model <- suppressWarnings(tryCatch(glmnet::cv.glmnet(x = as.matrix(encoded_data$encoded_data@data[, mget(feature_columns)]),
-                                                                   y = outcome_data,
-                                                                   family = as.character(object@hyperparameters$family),
-                                                                   weights = weights,
-                                                                   alpha = 0.0,
-                                                                   standardize = object@hyperparameters$normalise,
-                                                                   nfolds = NULL,
-                                                                   foldid = fold_table$fold_id,
-                                                                   parallel = FALSE,
-                                                                   penalty.factor = penalty_factor),
-                                                 error=identity))
-              
+              learner_arguments <- c(learner_arguments, list("alpha"=0.0))
+            
             } else if(is(object, "familiarGLMnetLasso")){
-              # Attempt to train the model
-              model <- suppressWarnings(tryCatch(glmnet::cv.glmnet(x = as.matrix(encoded_data$encoded_data@data[, mget(feature_columns)]),
-                                                                   y = outcome_data,
-                                                                   family = as.character(object@hyperparameters$family),
-                                                                   weights = weights,
-                                                                   alpha = 1.0,
-                                                                   standardize = object@hyperparameters$normalise,
-                                                                   nfolds = NULL,
-                                                                   foldid = fold_table$fold_id,
-                                                                   parallel = FALSE,
-                                                                   penalty.factor = penalty_factor),
-                                                 error=identity))
+              learner_arguments <- c(learner_arguments, list("alpha"=1.0))
               
             } else if(is(object, "familiarGLMnetElasticNet")){
-              # Attempt to train the model
-              model <- suppressWarnings(tryCatch(glmnet::cv.glmnet(x = as.matrix(encoded_data$encoded_data@data[, mget(feature_columns)]),
-                                                                   y = outcome_data,
-                                                                   family = as.character(object@hyperparameters$family),
-                                                                   weights = weights,
-                                                                   alpha = object@hyperparameters$alpha,
-                                                                   standardize = object@hyperparameters$normalise,
-                                                                   nfolds = NULL,
-                                                                   foldid = fold_table$fold_id,
-                                                                   parallel = FALSE,
-                                                                   penalty.factor = penalty_factor),
-                                                 error=identity))
+              learner_arguments <- c(learner_arguments, list("alpha"=object@hyperparameters$alpha))
               
             } else {
-              ..error_reached_unreachable_code(paste0("..train,familiarGLMnet: encountered unknown learner of unknown class: ", paste0(class(object), collapse=", ")))
+              ..error_reached_unreachable_code(paste0("..train,familiarGLMnet: encountered unknown learner of unknown class: ", paste_s(class(object))))
             }
             
+            # Train the model.
+            model <- do.call_with_handlers(glmnet::cv.glmnet,
+                                           args=learner_arguments)
+            
+            # Extract values.
+            object <- ..update_warnings(object=object, model$warning)
+            object <- ..update_errors(object=object, model$error)
+            model <- model$value
+            
             # Check if the model trained at all.
-            if(inherits(model, "error")) return(callNextMethod())
+            if(!is.null(object@messages$error)) return(callNextMethod(object=object))
             
             # Add model
             object@model <- model

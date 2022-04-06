@@ -91,7 +91,7 @@ setMethod("..train", signature(object="familiarCoxPH", data="dataObject"),
             if(is.null(object@hyperparameters)){
               return(callNextMethod(object=..update_errors(object=object,
                                                            ..error_message_no_optimised_hyperparameters_available())))
-            } 
+            }
             
             # Check that required packages are loaded and installed.
             require_package(object, "train")
