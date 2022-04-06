@@ -165,18 +165,20 @@ setMethod("show", signature(object="familiarModel"),
                          ") that was not successfully trained (v", object@familiar_version, ").\n"))
               
               if(length(object@messages$warning) > 0){
+                condition_messages <- condition_summary(object@messages$warning)
                 cat(paste0("\nThe following ",
-                           ifelse(length(object@messages$warning) == 1, "warning was", "warnings were"),
+                           ifelse(length(condition_messages) == 1, "warning was", "warnings were"),
                            " generated while trying to train the model:\n",
-                           paste0(object@messages$warning, collapse="\n"),
+                           paste0(condition_messages, collapse="\n"),
                            "\n"))
               }
               
               if(length(object@messages$error) > 0){
+                condition_messages <- condition_summary(object@messages$error)
                 cat(paste0("\nThe following ",
-                           ifelse(length(object@messages$error) == 1, "error was", "errors were"),
+                           ifelse(length(condition_messages) == 1, "error was", "errors were"),
                            " encountered while trying to train the model:\n",
-                           paste0(object@messages$error, collapse="\n"),
+                           paste0(condition_messages, collapse="\n"),
                            "\n"))
               }
               
@@ -248,19 +250,22 @@ setMethod("show", signature(object="familiarModel"),
                 cat(paste0("\n------------ Warnings and errors ------------\n"))
               
                 if(length(object@messages$warning) > 0){
+                  condition_messages <- condition_summary(object@messages$warning)
                   cat(paste0("\nThe following ",
-                             ifelse(length(object@messages$warning) == 1, "warning was", "warnings were"),
+                             ifelse(length(condition_messages) == 1, "warning was", "warnings were"),
                              " generated while training the model:\n",
-                             paste0(object@messages$warning, collapse="\n")))
+                             paste0(condition_messages, collapse="\n")))
                 }
                 
                 if(length(object@messages$error) > 0){
+                  condition_messages <- condition_summary(object@messages$error)
                   cat(paste0("\nThe following ",
-                             ifelse(length(object@messages$error) == 1, "error was", "errors were"),
+                             ifelse(length(condition_messages) == 1, "error was", "errors were"),
                              " encountered while training the model:\n",
-                             paste0(object@messages$error, collapse="\n")))
+                             paste0(condition_messages, collapse="\n")))
                 }
               }
+              
               # Check package version.
               check_package_version(object)
             }
