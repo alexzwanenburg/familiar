@@ -78,7 +78,7 @@ new_object <- familiar:::optimise_hyperparameters(object=object,
                                                   verbose=verbose)
 
 testthat::test_that("Test that \"none\" feature selection keeps all features.",{
-  testthat::expect_equal(all(new_object@hyperparameter_data$sign_size == familiar:::get_n_features(data)), TRUE)
+  testthat::expect_equal(all(new_object@hyperparameter_data$parameter_table$sign_size == familiar:::get_n_features(data)), TRUE)
 })
 
 
@@ -102,8 +102,8 @@ new_object <- familiar:::optimise_hyperparameters(object=object,
                                                   verbose=verbose)
 
 testthat::test_that("Test that \"random\" feature selection can select up to the maximum number of features.",{
-  testthat::expect_equal(all(new_object@hyperparameter_data$sign_size >= 1L &
-                               new_object@hyperparameter_data$sign_size <= familiar:::get_n_features(data)), TRUE)
+  testthat::expect_equal(all(new_object@hyperparameter_data$parameter_table$sign_size >= 1L &
+                               new_object@hyperparameter_data$parameter_table$sign_size <= familiar:::get_n_features(data)), TRUE)
 })
 
 
@@ -127,7 +127,7 @@ new_object <- familiar:::optimise_hyperparameters(object=object,
                                                   verbose=verbose)
 
 testthat::test_that("Test that \"signature_only\" feature selection keeps only signature features.",{
-  testthat::expect_equal(all(new_object@hyperparameter_data$sign_size == 2L), TRUE)
+  testthat::expect_equal(all(new_object@hyperparameter_data$parameter_table$sign_size == 2L), TRUE)
 })
 
 
@@ -152,9 +152,10 @@ new_object <- familiar:::optimise_hyperparameters(object=object,
                                                   verbose=verbose)
 
 testthat::test_that("Test that \"signature_only\" feature selection keeps only signature features.",{
-  testthat::expect_equal(all(new_object@hyperparameter_data$sign_size >= 2L & new_object@hyperparameter_data$sign_size <= 5L), TRUE)
-  testthat::expect_equal(all(new_object@hyperparameter_data$sign_size %in% 2:5), TRUE)
-  testthat::expect_equal(length(setdiff(unique(new_object@hyperparameter_data$sign_size), c(2, 5))) >= 1, TRUE)
+  testthat::expect_equal(all(new_object@hyperparameter_data$parameter_table$sign_size >= 2L &
+                               new_object@hyperparameter_data$parameter_table$sign_size <= 5L), TRUE)
+  testthat::expect_equal(all(new_object@hyperparameter_data$parameter_table$sign_size %in% 2:5), TRUE)
+  testthat::expect_equal(length(setdiff(unique(new_object@hyperparameter_data$parameter_table$sign_size), c(2, 5))) >= 1, TRUE)
 })
 
 
@@ -178,7 +179,7 @@ new_object <- familiar:::optimise_hyperparameters(object=object,
                                                   verbose=verbose)
 
 testthat::test_that("Test that \"signature_only\" feature selection keeps only signature features.",{
-  testthat::expect_setequal(unique(new_object@hyperparameter_data$sign_size), c(1, 4, 8))
+  testthat::expect_setequal(unique(new_object@hyperparameter_data$parameter_table$sign_size), c(1, 4, 8))
 })
 
 
@@ -208,15 +209,13 @@ new_object <- familiar:::optimise_hyperparameters(object=object,
                                                   is_vimp=FALSE,
                                                   verbose=verbose)
 
-# Set expected range of rows. The lowest boundary occurs when the incumbent does
-# not change during intensification, whereas the upper boundary is expected when
-# it does.
-expected_rows_lower <- 2 * 16 + 10 * 4 * 2
-expected_rows_upper <- expected_rows_lower + 2 * 4
+# Set expected range of rows. Upper and lower boundary are the same, as all runs
+# are executed simultaneously.
+expected_rows_lower <-  expected_rows_upper <- (16 + 10 * 4 + 1 * 4) * 2  # initial + challengers + incumbent
 
 testthat::test_that("Test that \"none\" exploration method does not prune any hyperparameter sets during intensification",{
-  testthat::expect_lte(nrow(new_object@hyperparameter_data), expected_rows_upper)
-  testthat::expect_gte(nrow(new_object@hyperparameter_data), expected_rows_lower)
+  testthat::expect_lte(nrow(new_object@hyperparameter_data$score_table), expected_rows_upper)
+  testthat::expect_gte(nrow(new_object@hyperparameter_data$score_table), expected_rows_lower)
 })
 
 
@@ -236,15 +235,14 @@ new_object <- familiar:::optimise_hyperparameters(object=object,
                                                   verbose=verbose)
 
 # Set expected range of rows. 10 initial challengers decrease to 5, 2 and 1 in
-# subsequent rounds. The lowest boundary occurs when the incumbent does not
-# change during intensification, whereas the upper boundary is expected when it
-# does.
-expected_rows_lower <- 2 * 16 + 10 * 2 + 5 * 2 + 2 * 2 + 1 * 2
-expected_rows_upper <- expected_rows_lower + 2 * 4
+# subsequent rounds. Upper and lower boundary are the same because here
+# n_intensify_step_bootstraps = 1, and only one new run will be assessed for
+# each parameter set.
+expected_rows_lower <- expected_rows_upper <-  (16 + 10 + 5 + 2 + 1 + 4) * 2  # initial + step 1 + step 2 + step 3 + step 4 + incumbent
 
 testthat::test_that("Test that \"successive_halving\" exploration method may prune any hyperparameter sets during intensification",{
-  testthat::expect_lte(nrow(new_object@hyperparameter_data), expected_rows_upper)
-  testthat::expect_gte(nrow(new_object@hyperparameter_data), expected_rows_lower)
+  testthat::expect_lte(nrow(new_object@hyperparameter_data$score_table), expected_rows_upper)
+  testthat::expect_gte(nrow(new_object@hyperparameter_data$score_table), expected_rows_lower)
 })
 
 
@@ -262,12 +260,12 @@ new_object <- familiar:::optimise_hyperparameters(object=object,
                                                   verbose=verbose)
 
 # Set expected range of rows. The lowest boundary occurs when all challengers
-# are rejected after one round. The upper boundary occurs when no challengers
-# are rejected at all, and the incumbent changes during intensification.
-expected_rows_lower <- 2 * 16 * 5 + 10 * 2 * 5
-expected_rows_upper <- 2 * 16 * 5 + 4 * 10 * 2 * 5 + 2 * 4 * 5
+# are rejected after one round, and only one new run is sampled. The upper boundary occurs when no challengers
+# are rejected at all and 5 new runs are sampled.
+expected_rows_lower <- (16 * 5 + 10 + 1) * 2  # initial + step 1 + incumbent
+expected_rows_upper <- (16 * 5 + 10 * 5 * 4 + 1 * 5 * 4) * 2  # initial + steps 1-4 + incumbent
 
 testthat::test_that("Test that \"stochastic_reject\" exploration method may prune any hyperparameter sets during intensification",{
-  testthat::expect_lte(nrow(new_object@hyperparameter_data), expected_rows_upper)
-  testthat::expect_gte(nrow(new_object@hyperparameter_data), expected_rows_lower)
+  testthat::expect_lte(nrow(new_object@hyperparameter_data$score_table), expected_rows_upper)
+  testthat::expect_gte(nrow(new_object@hyperparameter_data$score_table), expected_rows_lower)
 })

@@ -69,6 +69,22 @@ testthat::test_that("Mean absolute error is correct", {
 })
 
 
+
+##### Relative absolute error ##################################################
+familiar:::test_all_metrics(metrics=familiar:::.get_available_rae_metrics(),
+                            except_one_sample=TRUE,
+                            except_identical=TRUE)
+
+testthat::test_that("Relative absolute error is correct", {
+  for(metric in familiar:::.get_available_rae_metrics()){
+    regr_metric_test(data_list = data_list,
+                     metric = metric,
+                     expected_score = c(0.0, 2.0, 1.0, 5/6),
+                     expected_objective = c(1.0, -1.0, 0.0, 1/6))
+  }
+})
+
+
 ##### Mean log absolute error ##################################################
 familiar:::test_all_metrics(metrics=familiar:::.get_available_mlae_metrics(),
                             except_one_sample=FALSE,
@@ -103,6 +119,23 @@ testthat::test_that("Mean squared error is correct", {
                      expected_objective = c(1.0, -1.0, 0.0, 1/2))
   }
 })
+
+
+
+##### Relative squared error ###################################################
+familiar:::test_all_metrics(metrics=familiar:::.get_available_rse_metrics(),
+                            except_one_sample=TRUE,
+                            except_identical=TRUE)
+
+testthat::test_that("Relative squared error is correct", {
+  for(metric in familiar:::.get_available_rse_metrics()){
+    regr_metric_test(data_list = data_list,
+                     metric = metric,
+                     expected_score = c(0.0, 4.0, 1.0, 1/2),
+                     expected_objective = c(1.0, -1.0, 0.0, 1/2))
+  }
+})
+
 
 
 ##### Mean squared log error ###############################
@@ -155,6 +188,23 @@ testthat::test_that("Root mean square error is correct", {
                      expected_objective = c(1.0, -1.0, 0.0, 1-1/sqrt(2)))
   }
 })
+
+
+##### Root relative squared error ###########################
+familiar:::test_all_metrics(metrics=familiar:::.get_available_rrse_metrics(),
+                            except_one_sample=TRUE,
+                            except_identical=TRUE)
+
+testthat::test_that("Root relative squared error is correct", {
+  for(metric in familiar:::.get_available_rrse_metrics()){
+    regr_metric_test(data_list = data_list,
+                     metric = metric,
+                     expected_score = c(0.0, 2.0, 1.0, 1.0/sqrt(2)),
+                     expected_objective = c(1.0, -1.0, 0.0, 1-1/sqrt(2)))
+  }
+})
+
+
 
 
 ##### Root mean square log error ###############################

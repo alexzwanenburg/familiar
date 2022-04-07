@@ -42,8 +42,8 @@ hyperparameters. Then, hyperparameter optimisation is described in more detail.
 | log-normal | `glm_log`, `glm_log_gaussian` 	    | 	| 	| × | 	| 	|
 | normal (gaussian) | `glm_gaussian` 			        | 	| 	| × | 	| 	|
 | inverse gaussian | `glm_inv_gaussian` 		      | 	| 	| × | 	| 	|
-| log-poisson | `glm_log_poisson` 				        | 	| 	| 	| × | 	|
-| poisson | `glm_poisson` 						            | 	| 	| 	| × | 	|
+| log-poisson | `glm_log_poisson` 				        | 	| 	| x	| × | 	|
+| poisson | `glm_poisson` 						            | 	| 	| x	| × | 	|
 | cox | `cox` 									                  | 	| 	| 	|	  | × |
 | exponential | `survival_regr_exponential` 	    | 	| 	| 	|	  | × |
 | gaussian | `survival_regr_gaussian` 			      | 	| 	| 	| 	| × |
@@ -209,6 +209,8 @@ include linkage functions and are shown in the table below.
 |:--------------|:--------|:----------:|:----------:|:-------------|
 | signature size |`sign_size` | $\mathbb{Z} \in \left[1,n\right]$ | yes | -- |
 | linking function |`family` | `logistic`, `probit`, `loglog`, `cauchy` | `glm` only | The linking function is not optimised when it is specified, e.g. `glm_logistic`.|
+| sample weighting | `sample_weighting` | `inverse_number_of_samples`, `effective_number_of_samples`, `none` | no | Sample weighting allows for mitigating class imbalances. The default is `inverse_number_of_samples`. Instances with the majority class receive less weight. |
+| beta | `sample_weighting_beta` | $\mathbb{Z} \in \left[-6,-1\right]$ | `effective_number_of_samples` only | Specifies the $\beta$ parameter for effective number of samples weighting [@Cui2019-ys]. It is expressed on the $\log_{10}$ scale: $\beta=1-10^\texttt{beta}$. |
 
 ### Linear models for multinomial outcomes
 
@@ -220,6 +222,8 @@ are shown in the table below.
 |:--------------|:--------|:----------:|:----------:|:-------------|
 | signature size |`sign_size` | $\mathbb{Z} \in \left[1,n\right]$ | yes | -- |
 | linking function |`family` | `multinomial` | no | There is only one linking function available.|
+| sample weighting | `sample_weighting` | `inverse_number_of_samples`, `effective_number_of_samples`, `none` | no | Sample weighting allows for mitigating class imbalances. The default is `inverse_number_of_samples`. Instances with the majority class receive less weight. |
+| beta | `sample_weighting_beta` | $\mathbb{Z} \in \left[-6,-1\right]$ | `effective_number_of_samples` only | Specifies the $\beta$ parameter for effective number of samples weighting [@Cui2019-ys]. It is expressed on the $\log_{10}$ scale: $\beta=1-10^\texttt{beta}$. |
 
 ### Linear models for continuous and count-type outcomes
 
@@ -270,6 +274,8 @@ hyperparameter optimisation.
 | elastic net penalty | `alpha` | $\mathbb{R} \in \left[0,1\right]$ | elastic net | This penalty is fixed for ridge regression (`alpha = 0`) and lasso (`alpha = 1`). |
 | optimal lambda | `lambda_min` | `lambda.1se`, `lambda.min` | no | Default is `lambda.min`.|
 | number of CV folds | `n_folds` | $\mathbb{Z} \in \left[3,n\right]$ | no | Default is $3$ if $n<30$, $\lfloor n/10\rfloor$ if $30\leq n \leq 200$ and $20$ if $n>200$.|
+| sample weighting | `sample_weighting` | `inverse_number_of_samples`, `effective_number_of_samples`, `none` | no | Sample weighting allows for mitigating class imbalances. The default is `inverse_number_of_samples` for `binomial` and `multinomial` outcomes, and `none` otherwise. Instances with the majority class receive less weight. |
+| beta | `sample_weighting_beta` | $\mathbb{Z} \in \left[-6,-1\right]$ | `effective_number_of_samples` only | Specifies the $\beta$ parameter for effective number of samples weighting [@Cui2019-ys]. It is expressed on the $\log_{10}$ scale: $\beta=1-10^\texttt{beta}$. |
 | normalisation | `normalise` | `FALSE`, `TRUE` | no | Default is `FALSE`, as normalisation is part of pre-processing in familiar.|
 
 ## Boosted generalised linear models and regression trees
@@ -287,6 +293,8 @@ the table below.
 | family | `family` | `logistic`, `probit`, `bin_loglog`, `cauchy`, `log`, `auc`, `gaussian`, `huber`, `laplace`, `poisson`, `cox`, `weibull`, `lognormal`, `surv_loglog`, `gehan`, `cindex` | general tags | The family is not optimised when it is specified, e.g. `boosted_tree_gaussian`.|
 | boosting iterations | `n_boost` | $\mathbb{R} \in \left[0,\infty\right)$ | yes | This parameter is expressed on the $\log_{10}$ scale, i.e. the actual input value will be $10^\texttt{n_boost}$. The default range is $\left[0, 3\right]$. |
 | learning rate | `learning_rate` | $\mathbb{R} \in \left[-\infty,0\right]$ | yes | This parameter is expressed on the $\log_{10}$ scale. The default range is $\left[-5,0\right]$.|
+| sample weighting | `sample_weighting` | `inverse_number_of_samples`, `effective_number_of_samples`, `none` | no | Sample weighting allows for mitigating class imbalances. The default is `inverse_number_of_samples` for `binomial` and `multinomial` outcomes, and `none` otherwise. Instances with the majority class receive less weight. |
+| beta | `sample_weighting_beta` | $\mathbb{Z} \in \left[-6,-1\right]$ | `effective_number_of_samples` only | Specifies the $\beta$ parameter for effective number of samples weighting [@Cui2019-ys]. It is expressed on the $\log_{10}$ scale: $\beta=1-10^\texttt{beta}$. |
 | maximum tree depth | `tree_depth` | $\mathbb{Z} \in \left[1,n\right]$ | trees only | Maximum depth to which trees are allowed to grow.|
 | minimum sum of instance weight | `min_child_weight` | $\mathbb{R} \in \left[0,\infty\right)$ | trees only | Minimal instance weight required for further branch partitioning, or the number of instances required in each node. This parameter is expressed on the $\log_{10}$ scale with a $-1$ offset. The default range is $\left[0, 2\right]$.|
 | significance split threshold | `alpha` | $\mathbb{R} \in \left(0.0, 1.0\right]$ | trees only | Minimum significance level for further splitting. The default range is $\left[10^{-6}, 1.0\right]$ |
@@ -319,6 +327,8 @@ regression-tree based boosting with drop-outs (`xgboost_dart`).
 | learning rate | `learning_rate` | $\mathbb{R} \in \left(-\infty,0\right]$ | yes | This parameter is expressed on the $\log_{10}$ scale. The default range is $\left[-5, 0 \right]$.|
 | L1 regularisation | `alpha` | $\mathbb{R} \in \left[-6, \infty\right)$ | yes | This parameter is expressed on the $\log_{10}$ scale with a $10^{-6}$ offset. The default range is $\left[-6, 3\right]$.|
 | L2 regularisation | `lambda` | $\mathbb{R} \in \left[-6, \infty\right)$ | yes | This parameter is expressed on the $\log_{10}$ scale with a $10^{-6}$ offset. The default range is $\left[-6, 3\right]$.|
+| sample weighting | `sample_weighting` | `inverse_number_of_samples`, `effective_number_of_samples`, `none` | no | Sample weighting allows for mitigating class imbalances. The default is `inverse_number_of_samples` for `binomial` and `multinomial` outcomes, and `none` otherwise. Instances with the majority class receive less weight. |
+| beta | `sample_weighting_beta` | $\mathbb{Z} \in \left[-6,-1\right]$ | `effective_number_of_samples` only | Specifies the $\beta$ parameter for effective number of samples weighting [@Cui2019-ys]. It is expressed on the $\log_{10}$ scale: $\beta=1-10^\texttt{beta}$. |
 | maximum tree depth | `tree_depth` | $\mathbb{Z} \in \left[1,\infty\right)$ | `gbtree`, `dart` | Maximum depth to which trees are allowed to grow. The default range is $\left[1, 10\right]$. |
 | subsampling fraction | `sample_size` | $\mathbb{R} \in \left(0, 1.0\right]$ | `gbtree`, `dart` | Fraction of available data that is used for to create a single tree. The default range is $\left[2 / m, 1.0\right]$, with $m$ the number of samples. |
 | minimum sum of instance weight | `min_child_weight` | $\mathbb{R} \in \left[0,\infty\right)$ | `gbtree`, `dart` | Minimal instance weight required for further branch partitioning, or the number of instances required in each node. This parameter is expressed on the $\log_{10}$ scale with a $-1$ offset. The default range is $\left[0, 2\right]$.|
@@ -348,6 +358,8 @@ Hyperparameters for random forest learners are shown in the table below.
 | maximum tree depth | `tree_depth` | $\mathbb{Z} \in \left[1,\infty\right)$ | yes | Maximum depth to which trees are allowed to grow. The default range is $\left[1, 10\right]$. |
 | number of split points | `n_split` | $\mathbb{Z} \in \left[0, \infty\right)$ | no | By default, splitting is deterministic and has one split point ($0$).|
 | splitting rule | `split_rule` | `gini`, `auc`, `entropy`, `mse`, `quantile.regr`, `la.quantile.regr`, `logrank`, `logrankscore`, `bs.gradient` | no | Default splitting rules are `gini` for `binomial` and `multinonial` outcomes, `mse` for `continuous` and `count` outcomes and `logrank` for `survival` outcomes.|
+| sample weighting | `sample_weighting` | `inverse_number_of_samples`, `effective_number_of_samples`, `none` | no | Sample weighting allows for mitigating class imbalances. The default is `inverse_number_of_samples` for `binomial` and `multinomial` outcomes, and `none` otherwise. Instances with the majority class receive less weight. |
+| beta | `sample_weighting_beta` | $\mathbb{Z} \in \left[-6,-1\right]$ | `effective_number_of_samples` only | Specifies the $\beta$ parameter for effective number of samples weighting [@Cui2019-ys]. It is expressed on the $\log_{10}$ scale: $\beta=1-10^\texttt{beta}$. |
 
 Note that optimising that optimising the number of trees can be slow, as big
 forests take longer to construct and perform more computations for predictions.
@@ -373,6 +385,8 @@ are shown in the table below.
 | maximum tree depth | `tree_depth` | $\mathbb{Z} \in \left[1,\infty\right)$ | yes | Maximum depth to which trees are allowed to grow. The default range is $\left[1, 10\right]$. |
 | splitting rule | `split_rule` | `gini`, `extratrees`, `variance`, `logrank`, `C`, `maxstat`| no | Default splitting rules are `gini` for `binomial` and `multinomial` outcomes and `maxstat` for `continuous`, `count` and `survival` outcomes.|
 | significance split threshold | `alpha` | $\mathbb{R} \in \left(0.0, 1.0\right]$ | `maxstat` | Minimum significance level for further splitting. The default range is $\left[10^{-6}, 1.0\right]$ |
+| sample weighting | `sample_weighting` | `inverse_number_of_samples`, `effective_number_of_samples`, `none` | no | Sample weighting allows for mitigating class imbalances. The default is `inverse_number_of_samples` for `binomial` and `multinomial` outcomes, and `none` otherwise. Instances with the majority class receive less weight. |
+| beta | `sample_weighting_beta` | $\mathbb{Z} \in \left[-6,-1\right]$ | `effective_number_of_samples` only | Specifies the $\beta$ parameter for effective number of samples weighting [@Cui2019-ys]. It is expressed on the $\log_{10}$ scale: $\beta=1-10^\texttt{beta}$. |
 
 Note that optimising the number of trees can be slow, as big forests take longer
 to construct and perform more computations for predictions. Hence hyperparameter
@@ -517,16 +531,17 @@ forest subsequently infers runtime for a challenger hyperparameter set. The
 runtime estimate is compared against $t_{\texttt{max}}$, and if it exceeds the
 threshold, it is rejected and not evaluated.
 
-## Computing the optimisation score
+## Assessing goodness of hyperparameter sets
 
-The optimisation score $s$ determines how good a set of hyperparameters is. An
-optimisation score is computed in two steps. First an objective score is
-computed to assess model performance for a set of hyperparameters. The
-optimisation score is computed subsequently.
+A summary score $s$ determines how good a set of hyperparameters $\mathbf{x}$
+is. This score is computed in two steps. First an objective score is computed to
+assess model performance for a hyperparameter set in a bootstrap subsample.
+Subsequently an optimisation score is computed within the subsample. Finally a
+summary score is determined from the optimisation score over all subsamples.
 
-An objective score $s'$ is computed from the performance metric value for a
-specific hyperparameter set for in-bag (IB; $s'_{\textrm{IB}}$) and out-of-bag
-data (OOB; $s'_{\textrm{OOB}}$). The objective score always lies in the interval
+An objective score $s''$ is computed from the performance metric value for a
+specific hyperparameter set for in-bag (IB; $s''_{\textrm{IB}}$) and out-of-bag
+data (OOB; $s''_{\textrm{OOB}}$). The objective score always lies in the interval
 $[-1.0, 1.0]$. An objective score of $1.0$ always indicates the best possible
 score. A score of $0.0$ indicates that the hyperparameter set leads to the same
 degree of performance as the best educated guess, i.e. the majority class (for
@@ -536,25 +551,57 @@ scores that are either missing or below $-1.0$ are truncated to the value of
 $-1.0$. In case multiple metrics are used to assess model performance, the mean
 of the respective objective scores is used.
 
-The optimisation score $s$ is subsequently computed using one of the following
-functions:
+The optimisation scores $s'$ and summary score $s$ of each hyperparameter set
+are subsequently computed using one of the following functions, which can be set
+using the `optimisation_function` parameter:
 
-1. `max_validation`: $s=s'_{\textrm{OOB}}$. A commonly used criterion that
+1. `validation`, `max_validation` (default): The optimisation score for each
+bootstrap subsample is $s'=s''_{\textrm{OOB}}$. The summary score $s$ is then
+the average of optimisation scores $s'$. This is a commonly used criterion that
 tries to maximise the score on the OOB validation data.
 
-2. `balanced` (default): $s=s'_{\textrm{OOB}} - \left| s'_{\textrm{OOB}} - s'_{\textrm{IB}} \right|$.
-A variation on `max_validation` with a penalty for differences in performance
+2. `balanced`:  The optimisation score for each bootstrap subsample is
+$s'=s''_{\textrm{OOB}} - \left| s''_{\textrm{OOB}} - s''_{\textrm{IB}} \right|$.
+The summary score $s$ is then the average of optimisation scores $s'$. A
+variation on `max_validation` with a penalty for differences in performance
 between the IB and OOB data. The underlying idea is that a good set of
 hyperparameters should lead to models that perform well on both development and
 validation data.
 
-3. `strong_balance`: $s=s'_{\textrm{OOB}} - 2\left| s'_{\textrm{OOB}}-s'_{\textrm{IB}} \right|$.
-A variant of `balanced` with a stronger penalty term.
+3. `strong_balance`: The optimisation score for each bootstrap subsample is
+$s'=s''_{\textrm{OOB}} - 2\left| s''_{\textrm{OOB}}-s''_{\textrm{IB}} \right|$.
+The summary score $s$ is then the average of optimisation scores $s'$. A variant
+of `balanced` with a stronger penalty term.
 
-The optimisation score is then used to select the best known hyperparameter set,
-i.e. the set that minimises the optimisation score, and to identify candidate
-hyperparameter sets as described in the following section. The optimisation
-function is set using the `optimisation_function` argument.
+4. `validation_minus_sd`: The optimisation score for each bootstrap subsample is
+$s'=s''_{\textrm{OOB}}$. The summary score $s$ is then the average of
+optimisation scores $s'$ minus the standard deviation of $s'$. This penalises
+hyperparameter sets that lead to wide variance on OOB data.
+
+5. `validation_25th_percentile`: The optimisation score for each bootstrap
+subsample is $s'=s''_{\textrm{OOB}}$. The summary score $s$ is the 25th
+percentile of optimisation scores $s'$. Like `validation_minus_sd` this
+penalises hyperparameter sets that lead to wide variance on OOB data.
+
+6. `model_estimate`: The optimisation score for each bootstrap subsample is
+$s'=s''_{\textrm{OOB}}$. The model used to infer utility of new hyperparameter
+sets (see the next section [Predicting optimisation score for new hyperparameter
+sets]) is used to predict the expected optimisation score $\mu(\mathbf{x})$.
+This score is used as summary score $s$. Not available for random search.
+
+7. `model_estimate_minus_sd`: The optimisation score for each bootstrap
+subsample is $s'=s''_{\textrm{OOB}}$. The model used to infer utility of new
+hyperparameter sets (see the next section [Predicting optimisation score for new
+hyperparameter sets]) is used to predict the expected optimisation score
+$\mu(\mathbf{x})$ and its standard deviation $\sigma(\mathbf{x})$. Then
+$s = \mu(\mathbf{x}) - \sigma(\mathbf{x})$. This penalises hyperparameter sets
+for which a large variance is expected. Not available for random search.
+
+The summary score is then used to select the best known hyperparameter set, i.e.
+the set that maximises the summary score. Moreover, the optimisation scores are
+used to identify candidate hyperparameter sets as described in the following
+section. The optimisation function is set using the `optimisation_function`
+argument.
 
 ## Predicting optimisation score for new hyperparameter sets
 
@@ -721,22 +768,23 @@ Hyperparameter optimization may be configured using the tags/arguments in the ta
 
 | **tag** / **argument** | **description** | **default** |
 |:----------:|:-------------------------|:-----------:|
-| `optimisation_bootstraps`  | Maximum number of bootstraps created for optimisation | `50` |
+| `optimisation_bootstraps`  | Maximum number of bootstraps created for optimisation. | `20` |
 | `optimisation_determine_vimp` | If `TRUE`, compute variable importance for each bootstrap. If `FALSE` use variable importance computed during the feature selection step. | `TRUE` |
 | `smbo_random_initialisation` | If `random` initial parameter sets are generated randomly from default ranges. If `fixed` or `fixed_subsample`, the initial parameter sets are based on a grid in parameter space. | `fixed_subsample` |
 | `smbo_n_random_sets` | Sets the number of hyperparameter sets drawn for initialisation. Ignored if `smbo_random_initialisation` is `fixed`. If `smbo_random_initialisation` is `fixed_subsample`, the number of selected hyperparameters may be lower. | `100` |
-| `max_smbo_iterations` | Maximum number of intensify iterations of the SMBO algorithm | `20` |
+| `max_smbo_iterations` | Maximum number of intensify iterations of the SMBO algorithm. | `20` |
 | `smbo_stop_convergent_iterations` | Number of subsequent convergent SMBO iterations required to stop hyperparameter optimisation early. | `3` |
-| `smbo_stop_tolerance` | Tolerance for recent optimisation scores to determine convergence | `0.01` |
+| `smbo_stop_tolerance` | Tolerance for recent optimisation scores to determine convergence. | between `0.01` and `0.001` |
+| `smbo_time_limit` | Time limit (in minutes) for the optimisation process. | `NULL` |
 | `smbo_step_bootstraps` | Number of bootstraps used within each step of an intensify iteration. | `3` |
 | `smbo_intensify_steps` | Number of intensify steps within each intensify iteration. | `5` |
 | `optimisation_metric` | The metric used for optimisation, e.g. `auc`. See the vignette on performance metrics for available options. More than one metric may be specified. | `auc_roc` (`binomial`, `multinomial`); `mse` (`continuous`); `msle` (`count`); and `concordance_index` (`survival`) |
-| `optimisation_function` | The optimisation function used (see [Computing the optimisation score]). | `balanced` |
+| `optimisation_function` | The optimisation function used (see [Assessing goodness of hyperparameter sets]). | `balanced` |
 | `hyperparameter_learner` | Learner used to predict optimisation scores for new hyperparameter sets (see [Predicting optimisation score for new hyperparameter sets]). | `gaussian_process` |
-| `acquisition_function` | The function used to quantify utility of hyperparameter sets (see [Acquisition functions for utility of hyperparameter sets]) | `expected_improvement` |
-| `exploration_method` | Method used to explore challenger hyperparameter sets (see [Exploring challenger sets]) | `successive_halving` |
-| `smbo_stochastic_reject_p_value` | The p-value level for stochastic pruning | `0.05` |
-| `parallel_hyperparameter_optimisation` | Enables parallel processing for hyperparameter optimisation. Ignored if `parallel=FALSE`. | `TRUE` |
+| `acquisition_function` | The function used to quantify utility of hyperparameter sets (see [Acquisition functions for utility of hyperparameter sets]). | `expected_improvement` |
+| `exploration_method` | Method used to explore challenger hyperparameter sets (see [Exploring challenger sets]). | `successive_halving` |
+| `smbo_stochastic_reject_p_value` | The p-value level for stochastic pruning. | `0.05` |
+| `parallel_hyperparameter_optimisation` | Enables parallel processing for hyperparameter optimisation. Ignored if `parallel=FALSE`. Can be `outer` to process multiple optimisation processes simultaneously. | `TRUE` |
 
 Table: Configuration options for hyperparameter optimisation.
 

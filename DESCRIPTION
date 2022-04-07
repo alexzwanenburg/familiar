@@ -1,6 +1,6 @@
 Package: familiar
 Title: End-to-End Automated Machine Learning and Model Evaluation
-Version: 1.0.2
+Version: 1.1.0
 Authors@R: c(
     person("Alex", "Zwanenburg",
            email = "alexander.zwanenburg@nct-dresden.de",
@@ -26,7 +26,7 @@ Description: Single unified interface for end-to-end modelling of regression,
     evaluation process come with confidence intervals.
 URL: https://github.com/alexzwanenburg/familiar
 BugReports: https://github.com/alexzwanenburg/familiar/issues
-Depends: R (>= 3.4.0)
+Depends: R (>= 4.0.0)
 License: EUPL
 Encoding: UTF-8
 LazyData: true
@@ -37,7 +37,6 @@ Imports:
     methods,
     rlang (>= 0.3.4),
     rstream,
-    stringi,
     survival
 Suggests:
     BART,
@@ -80,6 +79,7 @@ Collate:
     'FamiliarS4Generics.R'
     'CheckHyperparameters.R'
     'CheckPackages.R'
+    'ClassBalance.R'
     'Clustering.R'
     'CombatNormalisation.R'
     'DataObject.R'
@@ -114,6 +114,11 @@ Collate:
     'FamiliarDataComputationVimp.R'
     'FamiliarDataElement.R'
     'FamiliarEnsemble.R'
+    'HyperparameterS4Ranger.R'
+    'HyperparameterS4RandomSearch.R'
+    'HyperparameterS4GaussianProcess.R'
+    'HyperparameterS4BayesianAdditiveRegressionTrees.R'
+    'FamiliarHyperparameterLearner.R'
     'FamiliarModel.R'
     'FamiliarNoveltyDetector.R'
     'FamiliarObjectConversion.R'
@@ -122,6 +127,7 @@ Collate:
     'FamiliarVimpMethod.R'
     'FeatureInfo.R'
     'FeatureSelection.R'
+    'FunctionWrapperUtilities.R'
     'HyperparameterOptimisation.R'
     'HyperparameterOptimisationMetaLearners.R'
     'HyperparameterOptimisationUtilities.R'
@@ -184,6 +190,7 @@ Collate:
     'RankSimpleAggregation.R'
     'RankStabilityAggregation.R'
     'SocketServer.R'
+    'StringUtilities.R'
     'TestDataCreators.R'
     'TestFunctions.R'
     'TrainS4Methods.R'

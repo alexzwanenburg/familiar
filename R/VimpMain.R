@@ -21,11 +21,11 @@ setMethod("promote_vimp_method", signature(object="familiarVimpMethod"),
               
             } else if(method %in% .get_available_univariate_mutual_information_vimp_method()){
               # Mutual information maximisation.
-              object <- methods::new("familiarCoreUnivariateMutualInfoVimp", object)
+              object <- methods::new("familiarUnivariateMutualInfoVimp", object)
               
             } else if(method %in% .get_available_multivariate_mutual_information_vimp_method()){
               # Multivariate information methods.
-              object <- methods::new("familiarCoreMultivariateMutualInfoVimp", object)
+              object <- methods::new("familiarMultivariateMutualInfoVimp", object)
               
             } else if(method %in% .get_available_correlation_vimp_methods()){
               # Correlation-based methods.
@@ -47,10 +47,14 @@ setMethod("promote_vimp_method", signature(object="familiarVimpMethod"),
               # Gain ratio measure.
               object <- methods::new("familiarCoreLearnGainRatioVimp", object)
               
-            } else if(method %in% .get_available_regression_vimp_methods()){
-              # Regression-based methods.
-              object <- methods::new("familiarRegressionVimp", object)
+            } else if(method %in% .get_available_univariate_regression_vimp_methods()){
+              # Univariate regression-based methods.
+              object <- methods::new("familiarUnivariateRegressionVimp", object)
             
+            } else if(method %in% .get_available_multivariate_regression_vimp_methods()){
+              # Multivariate regression-based methods.
+              object <- methods::new("familiarMultivariateRegressionVimp", object)
+              
             } else if(method %in% .get_available_glmnet_ridge_vimp_methods()){
               # Ridge penalised regression model-based methods.
               

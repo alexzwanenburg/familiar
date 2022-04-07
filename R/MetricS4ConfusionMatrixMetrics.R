@@ -16,23 +16,26 @@ setMethod("initialize", signature(.Object="familiarMetricCMAveraging"),
             # Update with parent class first.
             .Object <- callNextMethod()
             
-            if(stringi::stri_endswith_fixed(str=metric, pattern="_macro")){
+            if(endsWith(x=metric, suffix="_macro")){
               .Object@averaging <- "macro"
-              .Object@metric <- stringi::stri_replace_last_fixed(str=metric,
-                                                                 pattern="_macro",
-                                                                 replacement="")
+              .Object@metric <- sub_last(x=metric,
+                                         pattern="_macro",
+                                         replacement="",
+                                         fixed=TRUE)
               
-            } else if(stringi::stri_endswith_fixed(str=metric, pattern="_micro")){
+            } else if(endsWith(x=metric, suffix="_micro")){
               .Object@averaging <- "micro"
-              .Object@metric <- stringi::stri_replace_last_fixed(str=metric,
-                                                                 pattern="_micro",
-                                                                 replacement="")
+              .Object@metric <- sub_last(x=metric,
+                                         pattern="_micro",
+                                         replacement="",
+                                         fixed=TRUE)
               
-            } else if(stringi::stri_endswith_fixed(str=metric, pattern="_weighted")){
+            } else if(endsWith(x=metric, suffix="_weighted")){
               .Object@averaging <- "weighted"
-              .Object@metric <- stringi::stri_replace_last_fixed(str=metric,
-                                                                 pattern="_weighted",
-                                                                 replacement="")
+              .Object@metric <- sub_last(x=metric,
+                                         pattern="_weighted",
+                                         replacement="",
+                                         fixed=TRUE)
               
             } else {
               # Default setting.

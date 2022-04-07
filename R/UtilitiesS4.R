@@ -377,6 +377,30 @@ setMethod("get_unique_row_names", signature(x="dataObject"), function(x, include
 
 
 
+##### get_n_samples ------------------------------------------------------------
+setMethod("get_n_samples", signature(x="data.table"), function(x, id_depth="sample"){
+  return(.get_n_samples(x=x, id_depth=id_depth))
+})
+
+setMethod("get_n_samples", signature(x="dataObject"), function(x, id_depth="sample"){
+  return(.get_n_samples(x=x@data, id_depth=id_depth))
+})
+
+
+.get_n_samples <- function(x, id_depth){
+  
+  # Check if x is empty.
+  if(is_empty(x)) return(0L)
+  
+  # Find identifier columns.
+  id_columns <- get_id_columns(id_depth=id_depth)
+  
+  # Return the number of rows with unique values for the combination of
+  # identifier columns.
+  return(nrow(unique(x[, mget(id_columns)])))
+}
+
+
 #####encode_categorical_variables-------------------------------------------------------------
 setMethod("encode_categorical_variables", signature(data="dataObject", object="ANY"),
           function(object=NULL, data, encoding_method="effect", drop_levels=TRUE, feature_columns=NULL){
@@ -705,7 +729,41 @@ setMethod("get_placeholder_prediction_table", signature(object="outcomeInfo", da
             return(prediction_table)
           })
 
-
+setMethod("get_placeholder_prediction_table", signature(object="familiarHyperparameterLearner", data="data.table"),
+          function(object, data, type="default"){
+            # Find the id columns.
+            id_columns <- intersect(c("param_id", "run_id"), colnames(data))
+            
+            if(length(id_columns) > 0){
+              # Create a placeholder by only keeping the identifier columns.
+              prediction_table <- data.table::copy(data[, mget(id_columns)])
+              
+            } else {
+              # Add a placeholder parameter identifier as scaffolding.
+              prediction_table <- data.table::data.table(param_id=rep_len(NA_integer_, nrow(data)))
+            }
+            
+            # Add placeholder columns.
+            if(type == "default"){
+              prediction_table[, "mu":=as.double(NA)]
+              
+            } else if(type == "sd"){
+              prediction_table[, ":="("mu"=as.double(NA), 
+                                      "sigma"=as.double(NA))]
+              
+            } else if(type == "percentile"){
+              prediction_table[, "percentile":=as.double(NA)]
+              
+            } else if(type == "raw"){
+              prediction_table[, "raw_1":=as.double(NA)]
+              
+            } else {
+              ..error_reached_unreachable_code(paste0("get_placeholder_prediction_table,familiarHyperparameterLearner,data.table: ",
+                                                      "Encountered an unknown prediction type: ", type))
+            }
+            
+            return(prediction_table)
+          })
 
 
 #####get_bootstrap_sample------------------------------------------------------

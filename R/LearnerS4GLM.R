@@ -80,12 +80,14 @@ setMethod("is_available", signature(object="familiarGLM"),
 
 #####get_default_hyperparameters#####
 setMethod("get_default_hyperparameters", signature(object="familiarGLM"),
-          function(object, data=NULL){
+          function(object, data=NULL, user_list=NULL, ...){
             
             # Initialise list and declare hyperparameter entries
             param <- list()
             param$sign_size <- list()
             param$family <- list()
+            param$sample_weighting <- list()
+            param$sample_weighting_beta <- list()
             
             # If no data object is not provided, return the list with hyperparameter names only
             if(is.null(data)) return(param)
@@ -100,8 +102,8 @@ setMethod("get_default_hyperparameters", signature(object="familiarGLM"),
             ##### Model family ###########################################################
             
             # Read family string by parsing the learner.
-            fam <- stringi::stri_replace_first_regex(str=object@learner, pattern="glm", replace="")
-            if(fam != "") fam <- stringi::stri_replace_first_regex(str=fam, pattern="_", replace="")
+            fam <- sub(x=object@learner, pattern="glm", replacement="", fixed=TRUE)
+            if(fam != "") fam <- sub(x=fam, pattern="_", replacement="", fixed=TRUE)
             
             # Determine the family or families.
             if(fam == ""){
@@ -147,6 +149,18 @@ setMethod("get_default_hyperparameters", signature(object="familiarGLM"),
                                                 range=family_default,
                                                 randomise=ifelse(length(family_default) > 1, TRUE, FALSE))
             
+            ##### Sample weighting method ######################################
+            #Class imbalances may lead to learning majority classes. This can be
+            #partially mitigated by increasing weight of minority classes.
+            param$sample_weighting <- .get_default_sample_weighting_method(outcome_type=outcome_type)
+            
+            ##### Effective number of samples beta #############################
+            #Specifies the beta parameter for effective number sample weighting
+            #method. See Cui et al. (2019).
+            param$sample_weighting_beta <- .get_default_sample_weighting_beta(method=c(param$sample_weighting$init_config,
+                                                                                       user_list$sample_weighting),
+                                                                              outcome_type=outcome_type)
+            
             return(param)
           })
 
@@ -187,10 +201,14 @@ setMethod("..train", signature(object="familiarGLM", data="dataObject"),
             }
             
             # Check if training data is ok.
-            if(has_bad_training_data(object=object, data=data)) return(callNextMethod())
+            if(reason <- has_bad_training_data(object=object, data=data)){
+              return(callNextMethod(object=.why_bad_training_data(object=object, reason=reason)))
+            } 
             
             # Check if hyperparameters are set.
-            if(is.null(object@hyperparameters)) return(callNextMethod())
+            if(is.null(object@hyperparameters)){
+              return(callNextMethod(object=..update_errors(object=object, ..error_message_no_optimised_hyperparameters_available())))
+            }
             
             # Check that required packages are loaded and installed.
             require_package(object, "train")
@@ -213,32 +231,48 @@ setMethod("..train", signature(object="familiarGLM", data="dataObject"),
             # predictors are linked.
             family <- ..get_distribution_family(object)
             
+            # Set weights
+            weights <- create_instance_weights(data=encoded_data$encoded_data,
+                                               method=object@hyperparameters$sample_weighting,
+                                               beta=..compute_effective_number_of_samples_beta(object@hyperparameters$sample_weighting_beta),
+                                               normalisation="average_one")
+            
             if(object@outcome_type %in% c("binomial", "continuous", "count")){
-              # Generate model
-              model <- tryCatch(suppressWarnings(stats::glm(formula,
-                                                            data=encoded_data$encoded_data@data,
-                                                            family=family,
-                                                            model=FALSE,
-                                                            x=FALSE,
-                                                            y=FALSE)),
-                                error=identity)
+              # Train the model.
+              model <- do.call_with_handlers(stats::glm,
+                                             args=list(formula,
+                                                       "data"=encoded_data$encoded_data@data,
+                                                       "weights"=weights,
+                                                       "family"=family,
+                                                       "model"=FALSE,
+                                                       "x"=FALSE,
+                                                       "y"=FALSE))
               
             } else if(object@outcome_type=="multinomial"){
-              # Generate model
-              model <- tryCatch(suppressWarnings(VGAM::vglm(formula,
-                                                            data=encoded_data$encoded_data@data,
-                                                            family=family)),
-                                error=identity)
+              # Train the model.
+              model <- do.call_with_handlers(VGAM::vglm,
+                                             args=list(formula,
+                                                       "data"=encoded_data$encoded_data@data,
+                                                       "weights"=weights,
+                                                       "family"=family))
               
             } else {
               ..error_reached_unreachable_code(paste0("..train,familiarGLM: unknown outcome type: ", object@outcome_type))
             }
               
-            # Check if the model trained at all.
-            if(inherits(model, "error")) return(callNextMethod())
+            # Extract values.
+            object <- ..update_warnings(object=object, model$warning)
+            object <- ..update_errors(object=object, model$error)
+            model <- model$value
             
-            # Check if all coefficients could not be estimated.
-            if(all(!sapply(stats::coef(model), is.finite))) return(callNextMethod())
+            # Check if the model trained at all.
+            if(!is.null(object@messages$error)) return(callNextMethod(object=object))
+            
+            # Check if all coefficients could be estimated.
+            if(all(!sapply(stats::coef(model), is.finite))){
+              return(callNextMethod(object=..update_errors(object=object,
+                                                           ..error_message_failed_model_coefficient_estimation())))
+            }
             
             # Add model
             object@model <- model
@@ -402,7 +436,7 @@ setMethod("..vimp", signature(object="familiarGLM"),
               
               # Parse coefficient names. vglm adds :1 and :2 (and so on) to
               # coefficient names.
-              coefficient_names <- stringi::stri_split_fixed(names(coefficient_z_values), pattern=":")
+              coefficient_names <- strsplit(x=names(coefficient_z_values), split=":", fixed=TRUE)
               coefficient_names <- sapply(coefficient_names, function(coefficient_name) coefficient_name[1])
               names(coefficient_z_values) <- coefficient_names
             }
@@ -491,8 +525,8 @@ setMethod("..set_vimp_parameters", signature(object="familiarGLM"),
           function(object, method, ...){
             
             # Read family string by parsing the learner.
-            family_str <- stringi::stri_replace_first_regex(str=method, pattern="glm", replace="")
-            if(family_str != "") family_str <- stringi::stri_replace_first_regex(str=family_str, pattern="_", replace="")
+            family_str <- sub(x=method, pattern="glm", replacement="", fixed=TRUE)
+            if(family_str != "") family_str <- sub(x=family_str, pattern="_", replacement="", fixed=TRUE)
             
             # Determine the family or families.
             if(family_str == ""){

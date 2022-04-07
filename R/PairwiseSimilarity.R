@@ -1,8 +1,8 @@
 similarity.compute_similarity <- function(x, y, x_categorical, y_categorical, similarity_metric){
 
   # Strip some information from similarity_metric
-  similarity_metric <- stringi::stri_replace_all_fixed(str=similarity_metric, pattern="_trim", replacement="")
-  similarity_metric <- stringi::stri_replace_all_fixed(str=similarity_metric, pattern="_winsor", replacement="")
+  similarity_metric <- gsub(x=similarity_metric, pattern="_trim", replacement="", fixed=TRUE)
+  similarity_metric <- gsub(x=similarity_metric, pattern="_winsor", replacement="", fixed=TRUE)
   
   if(similarity_metric %in% c("cox_snell_r2", "nagelkerke_r2", "mcfadden_r2")){
     # Pseudo-R2 similarity measures
@@ -368,8 +368,8 @@ similarity.to_similarity <- function(x, similarity_metric){
 similarity.message_similarity_metric <- function(similarity_metric){
   
   # Strip some information from similarity_metric
-  similarity_metric <- stringi::stri_replace_all_fixed(str=similarity_metric, pattern="_trim", replacement="")
-  similarity_metric <- stringi::stri_replace_all_fixed(str=similarity_metric, pattern="_winsor", replacement="")
+  similarity_metric <- gsub(x=similarity_metric, pattern="_trim", replacement="", fixed=TRUE)
+  similarity_metric <- gsub(x=similarity_metric, pattern="_winsor", replacement="", fixed=TRUE)
   
   if(similarity_metric == "mcfadden_r2"){
     return("McFadden\'s pseudo-R2")
@@ -405,8 +405,8 @@ similarity.message_similarity_metric <- function(similarity_metric){
 similarity.requires_normalisation <- function(similarity_metric){
   
   # Strip some information from similarity_metric
-  similarity_metric <- stringi::stri_replace_all_fixed(str=similarity_metric, pattern="_trim", replacement="")
-  similarity_metric <- stringi::stri_replace_all_fixed(str=similarity_metric, pattern="_winsor", replacement="")
+  similarity_metric <- gsub(x=similarity_metric, pattern="_trim", replacement="", fixed=TRUE)
+  similarity_metric <- gsub(x=similarity_metric, pattern="_winsor", replacement="", fixed=TRUE)
   
   if(similarity_metric %in% c("gower", "euclidean")){
     return(TRUE)
@@ -433,8 +433,8 @@ similarity.requires_normalisation <- function(similarity_metric){
 similarity.metric_range <- function(similarity_metric, as_distance=FALSE){
   
   # Strip some information from similarity_metric
-  similarity_metric <- stringi::stri_replace_all_fixed(str=similarity_metric, pattern="_trim", replacement="")
-  similarity_metric <- stringi::stri_replace_all_fixed(str=similarity_metric, pattern="_winsor", replacement="")
+  similarity_metric <- gsub(x=similarity_metric, pattern="_trim", replacement="", fixed=TRUE)
+  similarity_metric <- gsub(x=similarity_metric, pattern="_winsor", replacement="", fixed=TRUE)
   
   if(similarity_metric %in% c("gower", "mcfadden_r2", "cox_snell_r2", "nagelkerke_r2")){
     return(c(0.0, 1.0))

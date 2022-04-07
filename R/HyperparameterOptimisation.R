@@ -157,7 +157,8 @@ run_hyperparameter_optimisation <- function(cl=NULL,
                                                  "intensify_stop_p_value"=settings$hpo$hpo_alpha,
                                                  "convergence_tolerance"=settings$hpo$hpo_convergence_tolerance,
                                                  "convergence_stopping"=settings$hpo$hpo_conv_stop,
-                                                 "verbose"=TRUE,
+                                                 "time_limit"=settings$hpo$hpo_time_limit,
+                                                 "verbose"=verbose,
                                                  "message_indent"=message_indent+1L,
                                                  "save_in_place"=TRUE,
                                                  "is_vimp"=is.null(learner)))
@@ -261,6 +262,13 @@ setMethod("optimise_hyperparameters", signature(object="familiarNoveltyDetector"
               user_list <- object@hyperparameters
             }
             
+            # Recreate the default parameter list with information from the
+            # user-provided list, if any. This allows for changing some
+            # hyperparameter settings that depend on other hyperparameters.
+            parameter_list <- get_default_hyperparameters(object=object,
+                                                          data=data,
+                                                          user_list=user_list)
+            
             # Update the parameter list With user-defined variables.
             parameter_list <- .update_hyperparameters(parameter_list=parameter_list,
                                                       user_list=user_list)
@@ -304,6 +312,13 @@ setMethod("optimise_hyperparameters", signature(object="familiarVimpMethod", dat
             # feature selection methods, and will be ignored in that case.
             user_list$sign_size <- get_n_features(x=data)
             
+            # Recreate the default parameter list with information from the
+            # user-provided list, if any. This allows for changing some
+            # hyperparameter settings that depend on other hyperparameters.
+            parameter_list <- get_default_hyperparameters(object=object,
+                                                          data=data,
+                                                          user_list=user_list)
+            
             # Update the parameter list With user-defined variables.
             parameter_list <- .update_hyperparameters(parameter_list=parameter_list,
                                                       user_list=user_list)
@@ -327,7 +342,7 @@ setMethod("optimise_hyperparameters", signature(object="familiarModel", data="da
                    experiment_info=NULL,
                    user_list=NULL,
                    metric=waiver(),
-                   optimisation_function="balanced",
+                   optimisation_function="validation",
                    acquisition_function="expected_improvement",
                    grid_initialisation_method="fixed_subsample",
                    exploration_method="successive_halving",
@@ -335,14 +350,15 @@ setMethod("optimise_hyperparameters", signature(object="familiarModel", data="da
                    determine_vimp=TRUE,
                    measure_time=TRUE,
                    hyperparameter_learner="gaussian_process",
-                   n_max_bootstraps=200L,
-                   n_intensify_step_bootstraps=5L,
+                   n_max_bootstraps=20L,
+                   n_intensify_step_bootstraps=3L,
                    n_max_optimisation_steps=20L,
                    n_max_intensify_steps=5L,
                    n_challengers=20L,
                    intensify_stop_p_value=0.05,
-                   convergence_tolerance=1E-2,
+                   convergence_tolerance=NULL,
                    convergence_stopping=3,
+                   time_limit=NULL,
                    verbose=TRUE,
                    message_indent=0L,
                    ...){
@@ -359,18 +375,31 @@ setMethod("optimise_hyperparameters", signature(object="familiarModel", data="da
                              verbose=verbose)
             }
             
-            
             # Set default metric
             if(is.waive(metric)) metric <- .get_default_metric(outcome_type=object@outcome_type)
+            
+            # Set convergence tolerance, if it has not been set.
+            if(is.null(convergence_tolerance)){
+              # Get the number of samples.
+              n_samples <- get_n_samples(data, "series")
+              
+              # Nothing to do if there are no samples.
+              if(n_samples == 0) return(object)
+              
+              # Set convergence tolerance.
+              convergence_tolerance <- -2 + (-log10(n_samples) + 2) / 2
+              
+              # Limit between -2 and -3.
+              if(convergence_tolerance > -2) convergence_tolerance <- -2
+              if(convergence_tolerance < -3) convergence_tolerance <- -3
+              
+              # Convert to value.
+              convergence_tolerance <- 10^convergence_tolerance
+            }
             
             # Check if the metric is ok. Packed into a for loop to enable
             # multi-metric optimisation.
             sapply(metric, metric.check_outcome_type, outcome_type=object@outcome_type)
-            
-            # Check if optimisation_function is correctly specified.
-            .check_parameter_value_is_valid(x=optimisation_function,
-                                            var_name="optimisation_function",
-                                            values=.get_available_optimisation_functions())
             
             # Check if acquisition_function is correctly specified.
             .check_parameter_value_is_valid(x=acquisition_function,
@@ -382,11 +411,26 @@ setMethod("optimise_hyperparameters", signature(object="familiarModel", data="da
                                             var_name="hyperparameter_learner",
                                             values=.get_available_hyperparameter_learners())
             
+            # Check if optimisation_function is correctly specified.
+            .check_parameter_value_is_valid(x=optimisation_function,
+                                            var_name="optimisation_function",
+                                            values=.get_available_optimisation_functions(hyperparameter_learner=hyperparameter_learner))
+            
+            # Check if exploration_method is correctly specified.
+            .check_parameter_value_is_valid(x=exploration_method,
+                                            var_name="exploration_method",
+                                            values=.get_available_hyperparameter_exploration_methods())
+            
             # Report on methodology used.
             optimisation_description <- switch(optimisation_function,
                                                "max_validation"="maximising out-of-bag performance",
+                                               "validation"="maximising out-of-bag performance",
                                                "balanced"="maximising out-of-bag performance while constraining performance differences between in-bag and out-of-bag data",
-                                               "stronger_balance"="maximum out-of-bag performance while strongly constraining performance differences between in-bag and out-of-bag data")
+                                               "stronger_balance"="maximising out-of-bag performance while strongly constraining performance differences between in-bag and out-of-bag data",
+                                               "validation_minus_sd"="maximising out-of-bag performance while penalising variance using the lower 1 standard deviation bound",
+                                               "validation_25th_percentile"="maximising out-of-bag performance while penalising variance using the 25th percentile bound",
+                                               "model_estimate"="maximising performance estimates from the hyperparameter model",
+                                               "model_estimate_minus_sd"="maximising performances estimates while penalising variance estimated by the model")
             
             logger.message(paste0("Hyperparameter optimisation is conducted using the ", paste_s(metric), ifelse(length(metric) > 1, " metrics", " metric"),
                                   " by ", optimisation_description, "."),
@@ -461,6 +505,13 @@ setMethod("optimise_hyperparameters", signature(object="familiarModel", data="da
               # signature.
               if(user_list$sign_size[1] == 0) user_list$sign_size[1] <- 1
             }
+            
+            # Recreate the default parameter list with information from the
+            # user-provided list, if any. This allows for changing some
+            # hyperparameter settings that depend on other hyperparameters.
+            parameter_list <- get_default_hyperparameters(object=object,
+                                                          data=data,
+                                                          user_list=user_list)
             
             # Update the parameter list With user-defined variables.
             parameter_list <- .update_hyperparameters(parameter_list=parameter_list,
@@ -539,7 +590,7 @@ setMethod("optimise_hyperparameters", signature(object="familiarModel", data="da
               
               return(object)
             } 
-                                   
+            
             ##### Create or obtain variable importance -------------------------
             rank_table_list <- .compute_hyperparameter_variable_importance(cl=cl,
                                                                            determine_vimp=determine_vimp,
@@ -559,10 +610,25 @@ setMethod("optimise_hyperparameters", signature(object="familiarModel", data="da
                                                                            intensify_stop_p_value=intensify_stop_p_value,
                                                                            convergence_tolerance=min(c(convergence_tolerance, 1E-2)),
                                                                            convergence_stopping=min(c(convergence_stopping, 3L)),
+                                                                           time_limit=time_limit,
                                                                            verbose=verbose,
                                                                            message_indent=message_indent)
             
+            ##### Setup the hyperparameter model prototype ---------------------
+            
+            # Set up the model prototype.
+            optimisation_model_prototype <- methods::new("familiarHyperparameterLearner",
+                                                         learner = hyperparameter_learner,
+                                                         target_learner = object@learner,
+                                                         target_outcome_type = object@outcome_type,
+                                                         optimisation_metric = metric,
+                                                         optimisation_function = optimisation_function)
+            
             ##### Perform initial set of computations --------------------------
+            
+            # Set the process start time.
+            optimisation_start_time <- Sys.time()
+            
             if(measure_time & n_intensify_step_bootstraps > 1L) {
               
               # Start with an initial run to measure performance and time.
@@ -578,78 +644,75 @@ setMethod("optimise_hyperparameters", signature(object="familiarModel", data="da
               # Build and evaluate models. This creates a table with metric
               # values, objective scores for in-bag and out-of-bag data.
               score_results <- .compute_hyperparameter_model_performance(cl=cl,
-                                                                         object=object,
-                                                                         run_table=run_table,
-                                                                         bootstraps=bootstraps,
-                                                                         data=data,
-                                                                         rank_table_list=rank_table_list,
-                                                                         parameter_table=parameter_table,
-                                                                         metric_objects=metric_object_list,
-                                                                         verbose=verbose)
+                                                                       object=object,
+                                                                       run_table=run_table,
+                                                                       bootstraps=bootstraps,
+                                                                       data=data,
+                                                                       rank_table_list=rank_table_list,
+                                                                       parameter_table=parameter_table,
+                                                                       metric_objects=metric_object_list,
+                                                                       iteration_id=0L,
+                                                                       verbose=verbose)
               
               # Get score table.
               score_table <- score_results$results
               
-              # Compute the optimisation score. This creates a table with
-              # optimisation scores per bootstrap and parameter identifier.
-              optimisation_score_table <- .compute_hyperparameter_optimisation_score(score_table=score_table,
-                                                                                     optimisation_function=optimisation_function)
+              # Get errors encountered during model training.
+              train_errors <- score_results$error
               
-              # Set up the runs for the current.
-              run_table <- ..create_hyperparameter_run_table(run_ids=setdiff(seq_len(n_intensify_step_bootstraps), 1L),
-                                                             measure_time=measure_time,
-                                                             optimisation_score_table=optimisation_score_table,
-                                                             acquisition_function=acquisition_function,
-                                                             n_max_bootstraps=n_max_bootstraps)
-              
-              logger.message(paste("Compute initial model performance based on the second batch of",
-                                   nrow(run_table), "hyperparameter sets."),
-                             indent=message_indent+1L,
-                             verbose=verbose)
-              
-              # Create a model to predict the time a process takes to complete
-              # training.
-              time_optimisation_model <- .create_hyperparameter_time_optimisation_model(score_table=optimisation_score_table,
-                                                                                        parameter_table=parameter_table)
-              
-              
-              # Compute second batch of results.
-              score_results <- .compute_hyperparameter_model_performance(cl=cl,
-                                                                         object=object,
-                                                                         run_table=run_table,
-                                                                         bootstraps=bootstraps,
-                                                                         data=data,
-                                                                         rank_table_list=rank_table_list,
-                                                                         parameter_table=parameter_table,
-                                                                         metric_objects=metric_object_list,
-                                                                         time_optimisation_model=time_optimisation_model,
-                                                                         overhead_time=score_results$overhead_time,
-                                                                         verbose=verbose)
-              
-              # Get score table.
-              second_score_table <- score_results$results
-              
-              # Compute the optimisation score. This creates a table with
-              # optimisation scores per bootstrap and parameter identifier.
-              second_optimisation_score_table <- .compute_hyperparameter_optimisation_score(score_table=second_score_table,
-                                                                                            optimisation_function=optimisation_function)
-              
-              # Add new data to score and optimisation tables.
-              score_table <- rbind(score_table,
-                                   second_score_table,
-                                   use.names=TRUE)
-              
-              optimisation_score_table <- rbind(optimisation_score_table,
-                                                second_optimisation_score_table,
-                                                use.names=TRUE)
+              if(.optimisation_process_time_available(start_time=optimisation_start_time,
+                                                      time_limit=time_limit,
+                                                      verbose=FALSE)){
+                
+                # Set up the runs for the remaining initial computations.
+                run_table <- ..create_hyperparameter_run_table(run_ids=setdiff(seq_len(n_intensify_step_bootstraps), 1L),
+                                                               measure_time=measure_time,
+                                                               score_table=score_table,
+                                                               parameter_table=parameter_table,
+                                                               optimisation_model=optimisation_model_prototype,
+                                                               n_max_bootstraps=n_max_bootstraps)
+                
+                logger.message(paste0("Compute initial model performance based on the second batch of ",
+                                      nrow(run_table), " hyperparameter sets."),
+                               indent=message_indent+1L,
+                               verbose=verbose)
+                
+                # Create a model to predict the time a process takes to complete
+                # training.
+                time_optimisation_model <- .create_hyperparameter_time_optimisation_model(score_table=score_table,
+                                                                                          parameter_table=parameter_table,
+                                                                                          optimisation_function=optimisation_function)
+                
+                # Compute second batch of results.
+                score_results <- .compute_hyperparameter_model_performance(cl=cl,
+                                                                           object=object,
+                                                                           run_table=run_table,
+                                                                           bootstraps=bootstraps,
+                                                                           data=data,
+                                                                           rank_table_list=rank_table_list,
+                                                                           parameter_table=parameter_table,
+                                                                           metric_objects=metric_object_list,
+                                                                           iteration_id=0L,
+                                                                           time_optimisation_model=time_optimisation_model,
+                                                                           overhead_time=score_results$overhead_time,
+                                                                           verbose=verbose)
+                
+                # Add new data to score and optimisation tables.
+                score_table <- rbind(score_table,
+                                     score_results$results,
+                                     use.names=TRUE)
+                
+                # Add errors encountered during model training.
+                train_errors <- c(train_errors, score_results$error)
+              }
               
             } else {
               # Set up hyperparameter experiment runs
               run_table <- ..create_hyperparameter_run_table(run_ids=seq_len(n_intensify_step_bootstraps),
                                                              parameter_ids=parameter_table$param_id)
               
-              logger.message(paste("Compute initial model performance based on",
-                                   nrow(run_table), "hyperparameter sets."),
+              logger.message(paste0("Compute initial model performance based on ",
+                                    nrow(run_table), " hyperparameter sets."),
                              indent=message_indent+1L,
                              verbose=verbose)
               
@@ -662,67 +725,81 @@ setMethod("optimise_hyperparameters", signature(object="familiarModel", data="da
                                                                          data=data,
                                                                          rank_table_list=rank_table_list,
                                                                          parameter_table=parameter_table,
+                                                                         iteration_id=0L,
                                                                          metric_objects=metric_object_list,
                                                                          verbose=verbose)
               
               # Get score table.
               score_table <- score_results$results
               
-              # Compute the optimisation score. This creates a table with
-              # optimisation scores per bootstrap and parameter identifier.
-              optimisation_score_table <- .compute_hyperparameter_optimisation_score(score_table=score_table,
-                                                                                     optimisation_function=optimisation_function)
+              # Get errors encountered during model training.
+              train_errors <- score_results$error
             }
             
             # Find information regarding the dataset that has the highest
             # optimisation score.
-            incumbent_set_data <- ..get_best_hyperparameter_set(optimisation_score_table=optimisation_score_table,
-                                                                acquisition_function=acquisition_function,
-                                                                n=1L)
+            incumbent_set <- get_best_hyperparameter_set(score_table=score_table,
+                                                         parameter_table=parameter_table,
+                                                         optimisation_model=optimisation_model_prototype,
+                                                         n_max_bootstraps=n_max_bootstraps,
+                                                         n=1L)
             
             # Message the user concerning the initial optimisation score.
             logger.message(paste0("Hyperparameter optimisation: Initialisation complete: ",
-                                  incumbent_set_data$optimisation_score, "; ",
-                                  ..parse_hyperparameters_to_string(id=incumbent_set_data$param_id,
+                                  incumbent_set$summary_score, "; ",
+                                  ..parse_hyperparameters_to_string(id=incumbent_set$param_id,
                                                                     parameter_table=parameter_table,
                                                                     parameter_list=parameter_list)),
                            indent=message_indent+1L,
                            verbose=verbose)
             
-            
-            # Initialise vector to track old config scores and parameter ids.
-            stop_list <- ..initialise_hyperparameter_optimisation_stopping_criteria()
-            
             # Check whether any combination yielded anything valid.
-            if(incumbent_set_data$optimisation_score == -1){
-              skip_optimisation <- TRUE
-              
-            } else {
-              skip_optimisation <- FALSE
+            skip_optimisation <- incumbent_set$summary_score == -1.0
+            
+            # Update n_intensify_step_bootstraps and n_max_intensify_steps when
+            # exploration_method equals none. There is no reason to perform
+            # steps sequentially as there is no pruning.
+            if(exploration_method == "none"){
+              n_intensify_step_bootstraps <- n_intensify_step_bootstraps * n_max_intensify_steps
+              n_max_intensify_steps <- 1L
             }
+            
+            # Create list with stopping criteria based on initial runs.
+            stop_list <- ..update_hyperparameter_optimisation_stopping_criteria(set_data=incumbent_set,
+                                                                                stop_data=NULL,
+                                                                                tolerance=convergence_tolerance)
             
             optimisation_step <- 0L
             while(optimisation_step < n_max_optimisation_steps & !skip_optimisation){
+              
+              # Stop optimisation if there is no time left. This is an initial
+              # check because the nested loop may break for different reasons.
+              # This check is not verbose, pending a later, final check.
+              if(!.optimisation_process_time_available(start_time=optimisation_start_time,
+                                                       time_limit=time_limit,
+                                                       verbose=FALSE)){
+                break()
+              }
               
               ##### SMBO - Intensify -------------------------------------------
               
               # Create a model to predict the time a process takes to complete
               # training.
-              time_optimisation_model <- .create_hyperparameter_time_optimisation_model(score_table=optimisation_score_table,
-                                                                                        parameter_table=parameter_table)
+              time_optimisation_model <- .create_hyperparameter_time_optimisation_model(score_table=score_table,
+                                                                                        parameter_table=parameter_table,
+                                                                                        optimisation_function=optimisation_function)
               
               # Local neighbourhood + random hyperparameter randomisation for
               # challenger configurations. This selects challengers
               # combinations.
-              challenger_data <- .create_hyperparameter_challenger_sets(parameter_table=parameter_table,
-                                                                        score_table=score_table,
+              challenger_data <- .create_hyperparameter_challenger_sets(score_table=score_table,
                                                                         parameter_list=parameter_list,
+                                                                        parameter_table=parameter_table,
                                                                         time_optimisation_model=time_optimisation_model,
-                                                                        smbo_iter=optimisation_step,
-                                                                        hyperparameter_learner=hyperparameter_learner,
-                                                                        optimisation_function=optimisation_function,
+                                                                        score_optimisation_model=optimisation_model_prototype,
                                                                         acquisition_function=acquisition_function,
                                                                         n_max_bootstraps=n_max_bootstraps,
+                                                                        smbo_iter=optimisation_step,
                                                                         measure_time=measure_time,
                                                                         n_challengers=n_challengers)
               
@@ -739,7 +816,7 @@ setMethod("optimise_hyperparameters", signature(object="familiarModel", data="da
                                         by="param_id")
               
               # Determine parameter ids from incumbent and challenger
-              parameter_id_incumbent <- incumbent_set_data$param_id
+              parameter_id_incumbent <- incumbent_set$param_id
               parameter_id_challenger <- challenger_data$param_id
               
               # Drop incumbent parameter id from the list of challengers
@@ -752,15 +829,23 @@ setMethod("optimise_hyperparameters", signature(object="familiarModel", data="da
               n_intensify_steps  <- 0L
               while(n_intensify_steps < n_max_intensify_steps){
                 
+                # Check if there is time left for intensification.
+                if(!.optimisation_process_time_available(start_time=optimisation_start_time,
+                                                         time_limit=time_limit,
+                                                         verbose=FALSE)){
+                  break()
+                }
+                
                 # Create run table.
                 run_table <- ..create_hyperparameter_intensify_run_table(parameter_id_incumbent=parameter_id_incumbent,
                                                                          parameter_id_challenger=parameter_id_challenger,
-                                                                         score_table=optimisation_score_table,
+                                                                         score_table=score_table,
                                                                          n_max_bootstraps=n_max_bootstraps,
-                                                                         n_intensify_step_bootstraps=n_intensify_step_bootstraps)
+                                                                         n_intensify_step_bootstraps=n_intensify_step_bootstraps,
+                                                                         exploration_method=exploration_method)
                 
                 # Check if there are any runs to perform.
-                if(nrow(run_table) == 0) break()
+                if(is_empty(run_table)) break()
                 
                 # Message the user.
                 logger.message(paste("Intensify step", n_intensify_steps + 1L, "using", length(parameter_id_challenger),
@@ -778,45 +863,32 @@ setMethod("optimise_hyperparameters", signature(object="familiarModel", data="da
                                                                            rank_table_list=rank_table_list,
                                                                            parameter_table=parameter_table,
                                                                            metric_objects=metric_object_list,
+                                                                           iteration_id=optimisation_step + 1L,
                                                                            time_optimisation_model=time_optimisation_model,
                                                                            overhead_time=score_results$overhead_time,
                                                                            verbose=verbose)
                 
                 # Get score table.
-                intensify_score_table <- score_results$results
-                
-                # Compute the optimisation score. This creates a table with
-                # optimisation scores per bootstrap and parameter identifier.
-                intensify_optimisation_score_table <- .compute_hyperparameter_optimisation_score(score_table=intensify_score_table,
-                                                                                                 optimisation_function=optimisation_function)
-                
-                # Find information regarding the dataset that has the highest
-                # optimisation score from among the challengers and the
-                # incumbent.
-                incumbent_set_data <- ..get_best_hyperparameter_set(optimisation_score_table=intensify_optimisation_score_table,
-                                                                    acquisition_function=acquisition_function,
-                                                                    n=1L)
-                
                 # Add new data to score and optimisation tables.
                 score_table <- rbind(score_table,
-                                     intensify_score_table,
+                                     score_results$results,
                                      use.names=TRUE)
                 
-                optimisation_score_table <- rbind(optimisation_score_table,
-                                                  intensify_optimisation_score_table,
-                                                  use.names=TRUE)
+                # Add errors encountered during model training.
+                train_errors <- c(train_errors, score_results$error)
                 
                 # Find scores and return parameter ids for challenger and
                 # incumbent hyperparameter sets. Compared to the original SMAC
                 # algorithm, we actively eliminate unsuccessful challengers. To
                 # do so we determine the probability that the optimisation score
                 # of a challenger does not exceed the incumbent score.
-                runoff_parameter_ids <- .compare_hyperparameter_optimisation_scores(score_table=optimisation_score_table,
-                                                                                    parameter_id_incumbent=parameter_id_incumbent,
-                                                                                    parameter_id_challenger=parameter_id_challenger,
-                                                                                    acquisition_function=acquisition_function,
-                                                                                    exploration_method=exploration_method,
-                                                                                    intensify_stop_p_value=intensify_stop_p_value)
+                runoff_parameter_ids <- .compare_hyperparameter_sets(score_table=score_table,
+                                                                     parameter_table=parameter_table,
+                                                                     optimisation_model=optimisation_model_prototype,
+                                                                     parameter_id_incumbent=parameter_id_incumbent,
+                                                                     parameter_id_challenger=parameter_id_challenger,
+                                                                     exploration_method=exploration_method,
+                                                                     intensify_stop_p_value=intensify_stop_p_value)
                 
                 # Extract hyperparameter set identifiers.
                 parameter_id_incumbent <- runoff_parameter_ids$parameter_id_incumbent
@@ -830,36 +902,47 @@ setMethod("optimise_hyperparameters", signature(object="familiarModel", data="da
                 
                 # Update the model that predicts the time a process takes to
                 # complete training.
-                time_optimisation_model <- .create_hyperparameter_time_optimisation_model(score_table=optimisation_score_table,
-                                                                                          parameter_table=parameter_table)
+                time_optimisation_model <- .create_hyperparameter_time_optimisation_model(score_table=score_table,
+                                                                                          parameter_table=parameter_table,
+                                                                                          optimisation_function=optimisation_function)
               }
               
               ##### SMBO - Evaluate --------------------------------------------
               # We assess improvement to provide early stopping on non-improving
               # incumbents.
               
-              # Get all runs and determine incumbent parameter id.
-              incumbent_set_data <- ..get_best_hyperparameter_set(optimisation_score_table=optimisation_score_table,
-                                                                  acquisition_function=acquisition_function)
+              # Get all runs and compute details for the incumbent set.
+              incumbent_set <- get_best_hyperparameter_set(score_table=score_table,
+                                                           parameter_table=parameter_table,
+                                                           optimisation_model=optimisation_model_prototype,
+                                                           n_max_bootstraps=n_max_bootstraps)
               
               # Update list with stopping criteria
-              stop_list <- ..update_hyperparameter_optimisation_stopping_criteria(score_table=optimisation_score_table,
-                                                                                  parameter_id_incumbent=incumbent_set_data$param_id,
-                                                                                  stop_list=stop_list,
-                                                                                  tolerance=convergence_tolerance,
-                                                                                  acquisition_function=acquisition_function)
+              stop_list <- ..update_hyperparameter_optimisation_stopping_criteria(set_data=incumbent_set,
+                                                                                  stop_data=stop_list,
+                                                                                  tolerance=convergence_tolerance)
               
               # Message progress.
               logger.message(paste0("Hyperparameter optimisation: SMBO iteration ", optimisation_step + 1L, ": score ",
-                                    incumbent_set_data$optimisation_score, "; ",
-                                    ..parse_hyperparameters_to_string(id=incumbent_set_data$param_id,
+                                    incumbent_set$summary_score, "; ",
+                                    ..parse_hyperparameters_to_string(id=incumbent_set$param_id,
                                                                       parameter_table=parameter_table,
                                                                       parameter_list=parameter_list)),
                              indent=message_indent+1L,
                              verbose=verbose)
               
+              # Check time and finish the optimisation process if required. This
+              # will also automatically generate a message if verbose is TRUE.
+              if(!.optimisation_process_time_available(start_time=optimisation_start_time,
+                                                       time_limit=time_limit,
+                                                       message_indent=message_indent,
+                                                       verbose=verbose)){
+                break()
+              }
+              
               # Break if the convergence counter reaches a certain number
-              if(stop_list$convergence_counter >= convergence_stopping){
+              if(stop_list$convergence_counter_score >= convergence_stopping | 
+                 stop_list$convergence_counter_parameter_id >= convergence_stopping){
                 
                 # Message convergence
                 logger.message(paste0("Hyperparameter optimisation: Optimisation stopped early as convergence was achieved."),
@@ -876,29 +959,58 @@ setMethod("optimise_hyperparameters", signature(object="familiarModel", data="da
             ##### SMBO - Wrap-up and report-------------------------------------
             
             # Get all runs and determine incumbent parameter id.
-            optimal_set_data <- ..get_best_hyperparameter_set(optimisation_score_table=optimisation_score_table,
-                                                              acquisition_function=acquisition_function,
-                                                              n=1L)
+            incumbent_set <- get_best_hyperparameter_set(score_table=score_table,
+                                                         parameter_table=parameter_table,
+                                                         optimisation_model=optimisation_model_prototype,
+                                                         n_max_bootstraps=n_max_bootstraps)
             
             # Add corresponding hyper parameters and remove redundant columns.
-            optimal_set_table <- parameter_table[param_id==optimal_set_data$param_id, ]
+            optimal_set_table <- parameter_table[param_id==incumbent_set$param_id, ]
             optimal_set_table[ ,"param_id":=NULL]
             
             # Check that a suitable set of hyperparameters was found.
-            if(optimal_set_data$optimisation_score > -1){
+            if(incumbent_set$summary_score > -1){
               object@hyperparameters <- as.list(optimal_set_table)
+              
+              logger.message(paste0("Hyperparameter optimisation: A suitable set of hyperparameters was identified: score ",
+                                    incumbent_set$summary_score, "; ",
+                                    ..parse_hyperparameters_to_string(id=incumbent_set$param_id,
+                                                                      parameter_table=parameter_table,
+                                                                      parameter_list=parameter_list)),
+                             indent=message_indent,
+                             verbose=verbose)
               
             } else {
               logger.message(paste0("Hyperparameter optimisation: No suitable set of hyperparameters was found."),
                              indent=message_indent,
                              verbose=verbose)
               
+              # Report on errors.
+              if(!is.null(train_errors)){
+                # Generate a summary of the errors.
+                train_errors <- condition_summary(train_errors)
+                
+                # Notify that one or more errors were encountered.
+                logger.message(paste0("Hyperparameter optimisation: The following ",
+                                      ifelse(length(train_errors) == 1, "error was", "errors were"),
+                                      " encountered while training models:"),
+                               indent=message_indent,
+                               verbose=verbose)
+                
+                # Show errors.
+                sapply(train_errors, logger.message, indent=message_indent+1, verbose=verbose)
+              }
+              
               # Set NULL.
               object@hyperparameters <- NULL
             }
             
             # Update attributes of object.
-            object@hyperparameter_data <- score_table[parameter_table, on=.NATURAL]
+            object@hyperparameter_data <- list("score_table"=score_table,
+                                               "parameter_table"=parameter_table,
+                                               "time_taken"=as.numeric(Sys.time() - optimisation_start_time),
+                                               "hyperparameter_learner"=hyperparameter_learner,
+                                               "optimisation_function"=optimisation_function)
             
             return(object)
           })

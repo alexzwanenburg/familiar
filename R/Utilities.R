@@ -1,28 +1,5 @@
 #' @include FamiliarS4Generics.R
 
-check_column_name <- function(column_name){
-  
-  # Remove spaces
-  column_name <- gsub(pattern=" ", replacement="_", column_name)
-  
-  # Remove less/equal/greater than signs
-  column_name <- gsub(pattern=">=", replacement="_geq_", fixed=TRUE, column_name)
-  column_name <- gsub(pattern="<=", replacement="_leq_", fixed=TRUE, column_name)
-  column_name <- gsub(pattern="!=", replacement="_neq_", fixed=TRUE, column_name)
-  column_name <- gsub(pattern="<", replacement="_l_", fixed=TRUE, column_name)
-  column_name <- gsub(pattern=">", replacement="_g_", fixed=TRUE, column_name)
-  column_name <- gsub(pattern="=", replacement="_eq_", fixed=TRUE, column_name)
-  
-  # Remove punctuation
-  column_name <- gsub(pattern="[[:punct:]]", replacement="_", column_name)
-  
-  # Remove starting number
-  column_name <- gsub(pattern="^([0-9])", replacement="n_\\1", column_name)
-  
-  return(column_name)
-}
-
-
 
 stop_or_warn <- function(message, as_error=TRUE){
   # Find the name of the calling environment.
@@ -510,13 +487,17 @@ compute_icc <- function(x, feature, id_data, type="1"){
 
 
 .file_extension <- function(x){
-  
   # Find the file extension by extracting the substring to the right of the
   # final period.
-  extension <- stringi::stri_sub(x, from=stringi::stri_locate_last_fixed(x, '.')[1,2] + 1L)
   
-  # Check for NA values in case an extension is missing.
-  if(is.na(extension)) return("")
+  # Find the position of the period preceding the file extension.
+  indicator <- tail(gregexpr(pattern=".", text=x, fixed=TRUE)[[1]], n=1L)
+  
+  # Check when period (.) is not found in x.
+  if(indicator == -1) return("")
+  
+  # Find the extension
+  extension <- substr(x, start=indicator+1L, stop=nchar(x))
   
   return(extension)
 }
@@ -595,18 +576,6 @@ get_estimate <- function(x, na.rm=TRUE){
 }
 
 
-strict.do.call <- function(what, args, quote = FALSE, envir = parent.frame()){
-  # Only pass fully matching arguments. Side effect is that ... is always empty.
-  # Use with care in case arguments need to be passed to another function.
-  
-  # Get arguments that can be passed.
-  passable_argument_names <- intersect(names(formals(what)),
-                                       names(args))
-  
-  return(do.call(what, args=args[passable_argument_names], quote=quote, envir=envir))
-}
-
-
 
 get_placeholder_vimp_table <- function(){
   return(data.table::data.table("name"=character(0), "rank"=numeric(0), "score"=numeric(0), "multi_var"=logical(0)))
@@ -636,7 +605,6 @@ get_id_columns <- function(id_depth="repetition", single_column=NULL){
                          "series" = "series_id",
                          "repetition" = "repetition_id")
   }
-  
   
   return(id_columns)
 }
@@ -1136,33 +1104,24 @@ encapsulate_path <- function(path){
 is.encapsulated_path <- function(x){ return(inherits(x, "encapsulated_path")) }
 
 
-quiet <- function(x) { 
-  # Removes all output to console.
-  
-  sink(nullfile()) 
-  on.exit(sink()) 
-  
-  invisible(utils::capture.output(x, file=nullfile(), type="message"))
-} 
-
-.append_new <- function(l, new){
-
-  # Find the names of list elements in l and new
-  existing_names <- names(l)
-  new_names <- names(new)
-  
-  # Find which elements should be migrated.
-  migrate_elements <- setdiff(new_names, existing_names)
-  if(length(migrate_elements) == 0){ return(l) }
-  
-  # Drop any duplicate elements.
-  duplicate_elements <- intersect(new_names, existing_names)
-  for(duplicate_element in duplicate_elements){
-    new[[duplicate_element]] <- NULL
-  }
-  
-  return(append(l, new))
-}
+# .append_new <- function(l, new){
+# 
+#   # Find the names of list elements in l and new
+#   existing_names <- names(l)
+#   new_names <- names(new)
+#   
+#   # Find which elements should be migrated.
+#   migrate_elements <- setdiff(new_names, existing_names)
+#   if(length(migrate_elements) == 0){ return(l) }
+#   
+#   # Drop any duplicate elements.
+#   duplicate_elements <- intersect(new_names, existing_names)
+#   for(duplicate_element in duplicate_elements){
+#     new[[duplicate_element]] <- NULL
+#   }
+#   
+#   return(append(l, new))
+# }
 
 
 is_subclass <- function(class_1, class_2){
@@ -1183,25 +1142,6 @@ is_subclass <- function(class_1, class_2){
   return(TRUE)
 }
 
-
-paste_s <- function(...){
-  dots <- c(...)
-  
-  if(length(dots) > 2){
-    # 
-    initial_string <- paste0(head(dots, n=length(dots)-2), collapse=", ")
-    
-    final_string <- paste0(tail(dots, n=2), collapse=" and ")
-    
-    return(paste0(c(initial_string, final_string), collapse=", "))
-    
-  } else if(length(dots) == 2){
-    
-    return(paste0(dots, collapse=" and "))
-  } else {
-    return(paste0(dots))
-  }
-}
 
 
 .as_preprocessing_level <- function(x){

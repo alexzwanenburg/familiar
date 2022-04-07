@@ -37,6 +37,12 @@ testthat::test_that("Cox model trained correctly", {
   
   # Test that the model predicts hazard ratios
   testthat::expect_equal(familiar:::get_prediction_type(good_model, type="survival_probability"), "survival_probability")
+  
+  # Checkt that no deprecation warnings are given.
+  familiar:::test_not_deprecated(good_model@messages$warning)
+  
+  # Test that no errors appear.
+  testthat::expect_equal(good_model@messages$error, NULL)
 })
 
 
@@ -70,6 +76,15 @@ testthat::test_that("Cox model does not train for wide data", {
   
   # No valid survival probability predictions.
   testthat::expect_equal(familiar:::any_predictions_valid(familiar:::.predict(wide_model, wide_data, type="survival_probability", time=1000), outcome_type=wide_data@outcome_type), FALSE)
+  
+  # Test that specific warnings and errors appear.
+  testthat::expect_equal(length(wide_model@messages$warning), 1L)
+  testthat::expect_equal(grepl(x=wide_model@messages$warning, pattern="did not converge", fixed=TRUE),
+                         TRUE)
+  
+  testthat::expect_equal(length(wide_model@messages$error), 1L)
+  testthat::expect_equal(grepl(x=wide_model@messages$error, pattern="did not converge", fixed=TRUE),
+                         TRUE)
 })
 
 

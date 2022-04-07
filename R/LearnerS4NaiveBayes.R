@@ -39,7 +39,7 @@ setMethod("is_available", signature(object="familiarNaiveBayes"),
 
 #####get_default_hyperparameters#####
 setMethod("get_default_hyperparameters", signature(object="familiarNaiveBayes"),
-          function(object, data=NULL){
+          function(object, data=NULL, ...){
             
             # Initialise list and declare hyperparameter entries.
             param <- list()
@@ -71,10 +71,15 @@ setMethod("..train", signature(object="familiarNaiveBayes", data="dataObject"),
           function(object, data, ...){
             
             # Check if training data is ok.
-            if(has_bad_training_data(object=object, data=data)) return(callNextMethod())
+            if(reason <- has_bad_training_data(object=object, data=data)){
+              return(callNextMethod(object=.why_bad_training_data(object=object, reason=reason)))
+            } 
             
             # Check if hyperparameters are set.
-            if(is.null(object@hyperparameters)) return(callNextMethod())
+            if(is.null(object@hyperparameters)){
+              return(callNextMethod(object=..update_errors(object=object,
+                                                           ..error_message_no_optimised_hyperparameters_available())))
+            }
             
             # Check that required packages are loaded and installed.
             require_package(object, "train")
@@ -86,14 +91,19 @@ setMethod("..train", signature(object="familiarNaiveBayes", data="dataObject"),
             formula <- stats::reformulate(termlabels=feature_columns,
                                           response=quote(outcome))
             
-            # Create the model.
-            model <- tryCatch(e1071::naiveBayes(formula,
-                                                data=data@data,
-                                                laplace=object@hyperparameters$laplace),
-                              error=identity)
+            # Train the model.
+            model <- do.call_with_handlers(e1071::naiveBayes,
+                                           args=list(formula,
+                                                     "data"=data@data,
+                                                     "laplace"=object@hyperparameters$laplace))
+            
+            # Extract values.
+            object <- ..update_warnings(object=object, model$warning)
+            object <- ..update_errors(object=object, model$error)
+            model <- model$value
             
             # Check if the model trained at all.
-            if(inherits(model, "error")) return(callNextMethod())
+            if(!is.null(object@messages$error)) return(callNextMethod(object=object))
             
             # Add model to the familiarModel object.
             object@model <- model

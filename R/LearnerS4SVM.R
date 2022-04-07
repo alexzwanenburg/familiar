@@ -40,12 +40,12 @@ setClass("familiarSVMEps", contains="familiarSVM")
 
 
 ..find_kernel_type <- function(learner){
-  
+
   # Find all available svm kernels.
   svm_kernels <- ..get_available_svm_kernels()
   
   # Find matches with end of learner string.
-  kernel_matches <- stringi::stri_endswith_fixed(learner, pattern=svm_kernels)
+  kernel_matches <- sapply(svm_kernels, function(suffix, x) (endsWith(x=x, suffix=suffix)), x=learner)
   
   # If all are missing (e.g. "svm_eps), use default RBF kernel.
   if(all(!kernel_matches)) return("radial")
@@ -79,7 +79,7 @@ setMethod("is_available", signature(object="familiarSVM"),
 
 #####get_default_hyperparameters#####
 setMethod("get_default_hyperparameters", signature(object="familiarSVM"),
-          function(object, data=NULL){
+          function(object, data=NULL, ...){
             
             # Find kernel type.
             svm_kernel <- ..find_kernel_type(learner=object@learner)
@@ -138,8 +138,11 @@ setMethod("get_default_hyperparameters", signature(object="familiarSVM"),
             
             # This parameter defines the cost for constraint violations. It is
             # expressed on a log10 scale.
-            param$c <- .set_hyperparameter(default=c(-3, -1, -0, 1, 3), type="numeric", range=c(-5, 3),
-                                           valid_range=c(-Inf, Inf), randomise=TRUE)
+            param$c <- .set_hyperparameter(default=c(-3, -1, -0, 1, 3),
+                                           type="numeric",
+                                           range=c(-5, 3),
+                                           valid_range=c(-Inf, Inf),
+                                           randomise=TRUE)
             
             
             ##### Error tolerance epsilon ####################################
@@ -147,8 +150,11 @@ setMethod("get_default_hyperparameters", signature(object="familiarSVM"),
               
               # This parameter defines the error tolerance for regression SVM.
               # It is expressed on a log10 scale.
-              param$epsilon <- .set_hyperparameter(default=c(-5, -3, -1, 0, 1), type="numeric", range=c(-5, 1),
-                                                   valid_range=c(-Inf, Inf), randomise=TRUE)
+              param$epsilon <- .set_hyperparameter(default=c(-5, -3, -1, 0, 1),
+                                                   type="numeric",
+                                                   range=c(-5, 1),
+                                                   valid_range=c(-Inf, Inf),
+                                                   randomise=TRUE)
             }
             
             
@@ -156,8 +162,11 @@ setMethod("get_default_hyperparameters", signature(object="familiarSVM"),
             if(is(object, "familiarSVMNu")){
               
               # nu is expressed on a log10 scale.
-              param$nu <- .set_hyperparameter(default=c(-5, -3, -1, 0, 1), type="numeric", range=c(-5, 1),
-                                              valid_range=c(-Inf, Inf), randomise=TRUE)
+              param$nu <- .set_hyperparameter(default=c(-5, -3, -1, 0, 1),
+                                              type="numeric",
+                                              range=c(-5, 1),
+                                              valid_range=c(-Inf, Inf),
+                                              randomise=TRUE)
               
             }
             
@@ -166,8 +175,11 @@ setMethod("get_default_hyperparameters", signature(object="familiarSVM"),
             if(svm_kernel %in% c("radial", "polynomial", "sigmoid")){
               
               # sigma is expressed on a log10 scale
-              param$gamma <- .set_hyperparameter(default=c(-7, -5, -3, -1, 1), type="numeric", range=c(-9, 3),
-                                                 valid_range=c(-Inf, Inf), randomise=TRUE)
+              param$gamma <- .set_hyperparameter(default=c(-7, -5, -3, -1, 1),
+                                                 type="numeric",
+                                                 range=c(-9, 3),
+                                                 valid_range=c(-Inf, Inf),
+                                                 randomise=TRUE)
             }
             
             
@@ -175,8 +187,11 @@ setMethod("get_default_hyperparameters", signature(object="familiarSVM"),
             if(svm_kernel %in% c("polynomial")){
               
               # polydot, besseldot and anovadot expect positive integer degrees.
-              param$degree <- .set_hyperparameter(default=c(1, 2, 3, 4, 5), type="integer", range=c(1, 5),
-                                                  valid_range=c(1, Inf), randomise=TRUE)
+              param$degree <- .set_hyperparameter(default=c(1, 2, 3, 4, 5),
+                                                  type="integer",
+                                                  range=c(1, 5),
+                                                  valid_range=c(1, Inf),
+                                                  randomise=TRUE)
             }
             
             
@@ -186,8 +201,11 @@ setMethod("get_default_hyperparameters", signature(object="familiarSVM"),
               # As feature data is rescaled internally by svm, we should not
               # expect offsets outside the [0, 1] range. Also, negative values
               # are not allowed for either kernel.
-              param$offset <- .set_hyperparameter(default=c(0.0, 0.2, 0.5, 1.0), type="numeric", range=c(0, 1),
-                                                  valid_range=c(0, Inf), randomise=TRUE)
+              param$offset <- .set_hyperparameter(default=c(0.0, 0.2, 0.5, 1.0),
+                                                  type="numeric",
+                                                  range=c(0, 1),
+                                                  valid_range=c(0, Inf),
+                                                  randomise=TRUE)
             }
             
             return(param)
@@ -198,11 +216,16 @@ setMethod("get_default_hyperparameters", signature(object="familiarSVM"),
 setMethod("..train", signature(object="familiarSVM", data="dataObject"),
           function(object, data, ...){
             
-            # Check if the training data is ok.
-            if(has_bad_training_data(object=object, data=data)) return(callNextMethod())
+            # Check if training data is ok.
+            if(reason <- has_bad_training_data(object=object, data=data)){
+              return(callNextMethod(object=.why_bad_training_data(object=object, reason=reason)))
+            } 
             
             # Check if hyperparameters are set.
-            if(is.null(object@hyperparameters)) return(callNextMethod())
+            if(is.null(object@hyperparameters)){
+              return(callNextMethod(object=..update_errors(object=object,
+                                                           ..error_message_no_optimised_hyperparameters_available())))
+            }
             
             # Check that required packages are loaded and installed.
             require_package(object, "train")
@@ -251,23 +274,29 @@ setMethod("..train", signature(object="familiarSVM", data="dataObject"),
               svm_parameter_list$coef0 <- object@hyperparameters$offset
             }
             
-            # Fit the SVM model using e1071::svm. The quiet wrapper suppresses C
-            # output from the underlying libsvm library, notably iteration
-            # warnings.
-            quiet(model <- suppressWarnings(tryCatch(do.call(e1071::svm,
-                                                             args=c(list(formula,
-                                                                         "data"=data@data,
-                                                                         "type"=svm_type,
-                                                                         "probability"=fit_probability,
-                                                                         "fitted"=FALSE,
-                                                                         "cross"=0L),
-                                                                    svm_parameter_list)),
-                                                     error=identity)))
+            if(object@outcome_type %in% c("binomial", "multinomial")){
+              svm_parameter_list$class.weights <- "inverse"
+            }
+            
+            # Train the model.
+            model <- do.call_with_handlers(e1071::svm,
+                                           args=c(list(formula,
+                                                       "data"=data@data,
+                                                       "type"=svm_type,
+                                                       "probability"=fit_probability,
+                                                       "fitted"=FALSE,
+                                                       "cross"=0L),
+                                                  svm_parameter_list))
+            
+            # Extract values.
+            object <- ..update_warnings(object=object, model$warning)
+            object <- ..update_errors(object=object, model$error)
+            model <- model$value
             
             # Check if the model trained at all.
-            if(inherits(model, "error")) return(callNextMethod())
-            
-            if(is.null(model)) return(callNextMethod())
+            if(!is.null(object@messages$error)) return(callNextMethod(object=object))
+            if(is.null(model)) return(callNextMethod(object=..update_errors(object=object,
+                                                                            "SVM model returned as NULL.")))
             
             # Add model
             object@model <- model

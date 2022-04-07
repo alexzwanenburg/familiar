@@ -21,7 +21,7 @@ setMethod("is_available", signature(object="familiarCorrelationVimp"),
 
 #####get_default_hyperparameters#####
 setMethod("get_default_hyperparameters", signature(object="familiarCorrelationVimp"),
-          function(object, data=NULL) return(list()))
+          function(object, data=NULL, ...) return(list()))
 
 
 

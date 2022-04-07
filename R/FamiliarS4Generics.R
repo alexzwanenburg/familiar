@@ -177,6 +177,8 @@ setGeneric("get_feature_columns", function(x, ...) standardGeneric("get_feature_
 
 setGeneric("get_n_features", function(x, ...) standardGeneric("get_n_features"))
 
+setGeneric("get_n_samples", function(x, ...) standardGeneric("get_n_samples"))
+
 setGeneric("has_feature_data", function(x, ...) standardGeneric("has_feature_data"))
 
 setGeneric("get_unique_row_names", function(x, ...) standardGeneric("get_unique_row_names"))
@@ -198,6 +200,8 @@ setGeneric("fam_sample", function(x, ...) standardGeneric("fam_sample"))
 setGeneric("get_bootstrap_sample", function(data, ...) standardGeneric("get_bootstrap_sample"))
 
 setGeneric("get_subsample", function(data, ...) standardGeneric("get_subsample"))
+
+setGeneric("create_instance_weights", function(data, ...) standardGeneric("create_instance_weights"))
 
 
 ##### familiarModel learner methods #####
@@ -226,6 +230,10 @@ setGeneric("..set_vimp_parameters", function(object, ...) standardGeneric("..set
 setGeneric("..get_distribution_family", function(object, ...) standardGeneric("..get_distribution_family"))
 
 setGeneric("..update_outcome", function(object, data, ...) standardGeneric("..update_outcome"))
+
+setGeneric("..update_warnings", function(object, ...) standardGeneric("..update_warnings"))
+
+setGeneric("..update_errors", function(object, ...) standardGeneric("..update_errors"))
 
 setGeneric("optimise_hyperparameters", function(object, data, ...) standardGeneric("optimise_hyperparameters"))
 

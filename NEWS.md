@@ -1,3 +1,41 @@
+# Version 1.1.0 (Enchanting Earthworm)
+
+## Major changes
+
+-   Added `train_familiar` function that trains (and returns) models, but skips evaluation steps. This function is essentially a wrapper around `summon_familiar`.
+-   Multivariate feature selection / variable importance methods such as `multivariate_regression`, `mrmr` and `lasso` now respect signature features set using the `signature` configuration parameter. Features provided in `signature` are always selected for the resulting model, and were therefore ignored during feature selection for both univariate and multivariate method. This has changed, so that multivariate methods now use the signature features as the basic set and attempt to identify any additional suitable features. Signature features are still ignored for univariate methods.
+-   Many learners now allow for sample weighting to correct for class imbalances. By default this is done by weighting using inverse sample weights. This can be changed to an effective number method by setting model hyperparameters.
+-   Hyperparameter optimisation is now less greedy during intensification steps when using `successive_halving` or `stochastic_reject` as exploration methods. Fewer bootstraps are assessed during intensification steps if there are any bootstraps that have only partially been sampled by the hyperparameter sets under evaluation. This should accelerate the optimisation process considerably. The (so far untested) rationale is that the hyperparameter learners should generally be able to accurately model the optimisation score of hyperparameter sets using locally sparse data.
+    -   By default, a maximum of 20 bootstraps are now used to evaluate hyperparameter sets. This is down from the default of 50 used previously. This saves time spent on computing variable importance.
+    -   It is now moreover possible to limit the time (in minutes) spent on optimisation using the `smbo_time_limit` parameter. Optimisation will stop once this limit has been exceeded. Note that familiar does not actively kill ongoing optimisation processes, but waits until they complete before stopping optimisation. Actively killing processes would require a general overhaul of the parallelisation routines used in familiar, which is complex and not an urgent priority.
+-   Models now show warnings and errors encountered while (attempting to) train the model. This allows for identifying potential issues with the underlying data, and model-specific issues.
+    -   In case hyperparameters cannot be obtained for a model due to errors encountered while training the models, these errors are now reported.
+-   R version 4.0.0 or newer is now required, instead of 3.4.0.
+
+## Minor changes
+
+-   Added `summary`, `vcov` and `coef` method for `familiarModel` objects. These respectively apply `summary`, `vcov` and `coef` to the stored model.
+-   Added relative absolute error, relative squared error and root relative squared error as performance metrics.
+-   Models to predict the goodness (*optimisation score*) of hyperparameter sets are now object-oriented. This change is not visible to the user.
+-   Additional options are now available to as `optimisation_function` to determine optimisation and overall summary scores of hyperparameter sets. Newly introduced are:
+    -   `validation_minus_sd`: The mean performance on out-of-bag data minus its standard deviation.
+
+    -   `validation_25th_percentile`: The 25th percentile of model performance on out-of-bag data.
+
+    -   `model_estimate`: The estimated model performance inferred by the hyperparameter model that was previously used to identify new candidate hyperparameter sets. Not available for random search.
+
+    -   `model_estimate_minus_sd`: The estimated model performance minus its standard deviation. Not available for random search.
+-   The default `optimisation_function` is now `validation`.
+-   The default `smbo_stop_tolerance` now depends on the number of samples and varies between `0.01` for 100 or fewer samples, and `0.001` for 10000 or more samples.
+-   Additional data are now exported after optimising hyperparameters, namely the iteration step during which performance data were obtained, the time taken by the optimisation process, the learner used to learn how well hyperparameter sets perform, and the optimisation function. This is in addition to the score table and parameter tables that were already exported previously.
+-   The `stringi` package has been phased out, and is no longer suggested or imported.
+
+## Bug fixes
+
+-   Fixed some missing verbosity settings.
+
+-   Trained models now contain information for features used only for missing data inference.
+
 # Version 1.0.2 (Dolorous Dragon)
 
 ## Bug fixes

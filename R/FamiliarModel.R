@@ -30,14 +30,23 @@ setMethod(".train", signature(object="familiarModel", data="dataObject"),
             
             # Check if there are any data entries. The familiar model cannot be
             # trained otherwise
-            if(is_empty(x=data)) can_train <- FALSE
+            if(is_empty(x=data)){
+              can_train <- FALSE
+              object <- ..update_errors(object=object, ..error_message_no_training_data_available())
+            } 
             
             # Check the number of features in data; if it has no features, the
             # familiar model can not be trained
-            if(!has_feature_data(x=data)) can_train <- FALSE
+            if(!has_feature_data(x=data)){
+              can_train <- FALSE
+              object <- ..update_errors(object=object, ..error_message_no_features_selected_for_training())
+            } 
             
             # Check if the hyperparameters are plausible.
-            if(!has_optimised_hyperparameters(object=object)) can_train <- FALSE
+            if(!has_optimised_hyperparameters(object=object)){
+              can_train <- FALSE
+              object <- ..update_errors(object=object, ..error_message_no_optimised_hyperparameters_available())
+            } 
             
             # Train a new model based on data.
             if(can_train) object <- ..train(object=object,
@@ -155,6 +164,24 @@ setMethod("show", signature(object="familiarModel"),
               cat(paste0("A ", object@learner, " model (class: ", class(object)[1],
                          ") that was not successfully trained (v", object@familiar_version, ").\n"))
               
+              if(length(object@messages$warning) > 0){
+                condition_messages <- condition_summary(object@messages$warning)
+                cat(paste0("\nThe following ",
+                           ifelse(length(condition_messages) == 1, "warning was", "warnings were"),
+                           " generated while trying to train the model:\n",
+                           paste0(condition_messages, collapse="\n"),
+                           "\n"))
+              }
+              
+              if(length(object@messages$error) > 0){
+                condition_messages <- condition_summary(object@messages$error)
+                cat(paste0("\nThe following ",
+                           ifelse(length(condition_messages) == 1, "error was", "errors were"),
+                           " encountered while trying to train the model:\n",
+                           paste0(condition_messages, collapse="\n"),
+                           "\n"))
+              }
+              
             } else {
               # Describe the learner and the version of familiar.
               message_str <- paste0("A ", object@learner, " model (class: ", class(object)[1],
@@ -182,7 +209,7 @@ setMethod("show", signature(object="familiarModel"),
                 show(object@model)
               }
 
-              cat(paste0("---------------------------------------------\n"))
+              cat(paste0("\n---------------------------------------------\n"))
               
               # Outcome details
               cat("\nThe following outcome was modelled:\n")
@@ -218,9 +245,173 @@ setMethod("show", signature(object="familiarModel"),
                 lapply(novelty_features, function(x, object) show(object@feature_info[[x]]), object=object)
               }
               
+              if(length(object@messages$warning) > 0 || length(object@messages$error) > 0){
+                
+                cat(paste0("\n------------ Warnings and errors ------------\n"))
+              
+                if(length(object@messages$warning) > 0){
+                  condition_messages <- condition_summary(object@messages$warning)
+                  cat(paste0("\nThe following ",
+                             ifelse(length(condition_messages) == 1, "warning was", "warnings were"),
+                             " generated while training the model:\n",
+                             paste0(condition_messages, collapse="\n")))
+                }
+                
+                if(length(object@messages$error) > 0){
+                  condition_messages <- condition_summary(object@messages$error)
+                  cat(paste0("\nThe following ",
+                             ifelse(length(condition_messages) == 1, "error was", "errors were"),
+                             " encountered while training the model:\n",
+                             paste0(condition_messages, collapse="\n")))
+                }
+              }
+              
               # Check package version.
               check_package_version(object)
             }
+          })
+
+
+#' Model summaries
+#'
+#' `summary` produces model summaries.
+#'
+#' @param object a familiarModel object
+#' @param ... additional arguments passed to `summary` methods for the underlying
+#'   model, when available.
+#'
+#' @details This method extends the `summary` S3 method. For some models
+#'   `summary` requires information that is trimmed from the model. In this case
+#'   a copy of summary data is stored with the model, and returned.
+#'
+#' @return Depends on underlying model. See the documentation for the particular
+#'   models.
+#'
+#' @exportMethod summary
+#' @rdname summary-methods
+#' @md
+setGeneric("summary")
+
+#####summary--------------------------------------------------------------------
+
+#' @rdname summary-methods
+setMethod("summary", signature(object="familiarModel"),
+          function(object, ...){
+            
+            if(!model_is_trained(object)){
+              message("The model was not trained. A summary is not available.")
+              return(invisible(NULL))
+            }
+            
+            # Attempt to retrieve the summary from the model.
+            if(object@is_trimmed){
+              if(!is.null(object@trimmed_function$summary)) return(object@trimmed_function$summary)
+            }
+            
+            # Attempt to capture the summary directly.
+            h <- tryCatch(summary(object@model, ...),
+                          error=identity)
+            
+            # If an error is generated, create a message and return an invisible
+            # NULL.
+            if(inherits(h, "error")){
+              message("No summary is available for this model.")
+              return(invisible(NULL))
+            } 
+            
+            # If the summary is a default one, create a message and return an
+            # invisible NULL.
+            if(inherits(h, "summaryDefault")){
+              message("No summary is available for this model.")
+              return(invisible(NULL))
+            }
+            
+            return(h)
+          })
+
+
+
+#' Extract model coefficients
+#'
+#' @param object a familiarModel object
+#' @param ... additional arguments passed to `coef` methods for the underlying
+#'   model, when available.
+#'
+#' @details This method extends the `coef` S3 method. For some models `coef`
+#'   requires information that is trimmed from the model. In this case a copy of
+#'   the model coefficient is stored with the model, and returned.
+#'
+#' @return Coefficients extracted from the model in the familiarModel object, if
+#'   any.
+#' @export
+#' @rdname coef-methods
+#' @md
+setGeneric("coef")
+
+#####coef-----------------------------------------------------------------------
+
+#' @rdname coef-methods
+setMethod("coef", signature(object="familiarModel"),
+          function(object, ...){
+            
+            # No training, no coefficients.
+            if(!model_is_trained(object)) return(NULL)
+            
+            # Attempt to retrieve the coefficients from the model.
+            if(object@is_trimmed){
+              if(!is.null(object@trimmed_function$coef)) return(object@trimmed_function$coef)
+            }
+            
+            # Attempt to capture the coefficients directly.
+            feature_coefficients <- tryCatch(coef(object@model, ...),
+                                             error=identity)
+            
+            # If an error is generated by coef, return a NULL.
+            if(inherits(feature_coefficients, "error")) return(NULL)
+            
+            return(feature_coefficients)
+          })
+
+
+
+#' Calculate variance-covariance matrix for a model
+#'
+#' @param object a familiarModel object
+#' @param ... additional arguments passed to `vcob` methods for the underlying
+#'   model, when available.
+#'
+#' @details This method extends the `vcov` S3 method. For some models `vcov`
+#'   requires information that is trimmed from the model. In this case a copy of
+#'   the variance-covariance matrix is stored with the model, and returned.
+#'
+#' @return Variance-covariance matrix of the model in the familiarModel object,
+#'   if any.
+#' @export
+#' @rdname vcov-methods
+#' @md
+setGeneric("vcov")
+
+#####vcov-----------------------------------------------------------------------
+#' @rdname vcov-methods
+setMethod("vcov", signature(object="familiarModel"),
+          function(object, ...){
+            
+            # No training, no variance-covariance matrix
+            if(!model_is_trained(object)) return(NULL)
+            
+            # Attempt to retrieve the variance-covariance matrix from the model.
+            if(object@is_trimmed){
+              if(!is.null(object@trimmed_function$vcov)) return(object@trimmed_function$vcov)
+            }
+            
+            # Attempt to capture the variance-covariance matrix directly.
+            variance_covariance_matrix <- tryCatch(vcov(object@model, ...),
+                                                   error=identity)
+            
+            # If an error is generated by vcov, return a NULL.
+            if(inherits(variance_covariance_matrix, "error")) return(NULL)
+            
+            return(variance_covariance_matrix)
           })
 
 
@@ -343,7 +534,7 @@ setMethod("set_object_name", signature(x="familiarModel"),
               # randomly generate characters and add a time stamp, so that
               # collision is practically impossible.
               slot(object=x, name="name") <- paste0(as.character(as.numeric(format(Sys.time(),"%H%M%S"))),
-                                                    "_", stringi::stri_rand_strings(1, 20, '[A-Z]'))
+                                                    "_", rstring(n=20L))
               
             } else if(is.null(new)) {
               # Generate a sensible object name.
@@ -390,12 +581,12 @@ setMethod("model_is_trained", signature(object="familiarModel"),
           function(object){
             # Check if a model was trained
             if(is.null(object@model)){
-              # Check if a model is present
+              # If no model is attached to the object, assume that no model was
+              # trained.
               return(FALSE)
               
             } else {
-              # Assume that the model is present if it is not specifically
-              # stated using the model_trained element
+              # If the the model is not NULL, assume that it is present.
               return(TRUE)
             }
           })
@@ -612,8 +803,8 @@ setMethod("trim_model", signature(object="familiarModel"),
             if(!trimmed_object@is_trimmed) return(object)
             
             # Go over different functions.
-            trimmed_object <- .replace_broken_functions(object=object,
-                                                        trimmed_object=trimmed_object)
+            trimmed_object <- suppressWarnings(.replace_broken_functions(object=object,
+                                                                         trimmed_object=trimmed_object))
             
             return(trimmed_object)
           })
@@ -623,6 +814,30 @@ setMethod("trim_model", signature(object="familiarModel"),
 setMethod(".trim_model", signature(object="familiarModel"),
           function(object, ...){
             # Default method for models that lack a more specific method.
+            return(object)
+          })
+
+
+#####..update_warnings----------------------------------------------------------
+setMethod("..update_warnings", signature(object="familiarModel"),
+          function(object, messages){
+            
+            # Update warnings attached to the object.
+            object@messages$warning <- c(object@messages$warning,
+                                         messages)
+            
+            return(object)
+          })
+
+
+#####..update_errors------------------------------------------------------------
+setMethod("..update_errors", signature(object="familiarModel"),
+          function(object, messages){
+            
+            # Update error attached to the object.
+            object@messages$error <- c(object@messages$error,
+                                       messages)
+            
             return(object)
           })
 

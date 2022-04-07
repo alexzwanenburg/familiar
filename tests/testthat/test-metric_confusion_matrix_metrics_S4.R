@@ -4,15 +4,15 @@ cm_metric_test <- function(metric, data_list, baseline_value, expected_score, ex
   if(is.null(expected_objective)) expected_objective <- expected_score
   
   # Extract the correct expected_score and expected_objective variables.
-  if(stringi::stri_endswith_fixed(str=metric, pattern="_macro")){
+  if(endsWith(x=metric, suffix="_macro")){
     expected_score <- expected_score$macro
     expected_objective <- expected_objective$macro
     
-  } else if(stringi::stri_endswith_fixed(str=metric, pattern="_micro")){
+  } else if(endsWith(x=metric, suffix="_micro")){
     expected_score <- expected_score$micro
     expected_objective <- expected_objective$micro
     
-  } else if(stringi::stri_endswith_fixed(str=metric, pattern="_weighted")){
+  } else if(endsWith(x=metric, suffix="_weighted")){
     expected_score <- expected_score$weighted
     expected_objective <- expected_objective$weighted
      
@@ -353,8 +353,8 @@ testthat::test_that("Specificity is correct", {
 ##### Youden's J statistic #####################################################
 # Test results depend on averaging method.
 metric_youden <- familiar:::.get_available_youden_metrics()
-metric_non_micro <- metric_youden[!stringi::stri_endswith_fixed(str=metric_youden, pattern="_micro")]
-metric_micro <- metric_youden[stringi::stri_endswith_fixed(str=metric_youden, pattern="_micro")]
+metric_non_micro <- metric_youden[!endsWith(x=metric_youden, suffix="_micro")]
+metric_micro <- metric_youden[endsWith(x=metric_youden, suffix="_micro")]
 
 familiar:::test_all_metrics(metrics=metric_non_micro,
                             except_one_sample=TRUE,

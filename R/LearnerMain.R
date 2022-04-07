@@ -13,6 +13,7 @@
 #' @include LearnerS4XGBoost.R
 NULL
 
+##### promote_learner (model) --------------------------------------------------
 setMethod("promote_learner", signature(object="familiarModel"),
           function(object){
             

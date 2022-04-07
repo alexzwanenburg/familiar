@@ -77,13 +77,13 @@
   if(length(req_length) == 1){
     # The req_length argument specifies the exact number or the minimum number
     # of values.
-    stop(paste0("The ", var_name, "argument requires ", ifelse(allow_more, "at least ", "exactly "), req_length,
+    stop(paste0("The ", var_name, " argument requires ", ifelse(allow_more, "at least ", "exactly "), req_length,
                 ifelse(req_length==1, " value", " values"), ". ", length(x),
                 ifelse(length(x)==1, " value was", " values were"), " found."))
     
   } else {
     # The req_length argument specifies a range for the number of values.
-    stop(paste0("The ", var_name, "argument requires between ", req_length[1], " and ", req_length[2], " values. ",
+    stop(paste0("The ", var_name, " argument requires between ", req_length[1], " and ", req_length[2], " values. ",
                 ifelse(length(x)==1, " value was", " values were"), " found."))
   }
 }
@@ -110,7 +110,7 @@
     
   } else {
     
-    stop(paste0("The ",var_name, " argument requires between", req_length[1], " and ", req_length[2], " values. ",
+    stop(paste0("The ",var_name, " argument requires between ", req_length[1], " and ", req_length[2], " values. ",
                 ifelse(length(x)==1, " value was", " values were"), " found."))
   }
 }
@@ -231,4 +231,28 @@
                    ..message_install_from_bioconductor(x=x))
   
   stop(paste0(err_message, collapse=""))
+}
+
+
+
+
+..error_message_no_training_data_available <- function(){
+  return("No data was available to train the model.")
+}
+
+
+
+..error_message_no_features_selected_for_training <- function(){
+  return("No features were selected to train the model on.")
+}
+
+
+
+..error_message_no_optimised_hyperparameters_available <- function(){
+  return("Model hyperparameters were not optimised.")
+}
+
+
+..error_message_failed_model_coefficient_estimation <- function(){
+  return("None of the model coefficients could be estimated.")
 }

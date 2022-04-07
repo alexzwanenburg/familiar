@@ -20,14 +20,14 @@ Familiar can also be installed directly from the GitHub repository:
 
 The package vignettes contain additional information concerning familiar:
 
-* [Introducing familiar](https://github.com/alexzwanenburg/familiar/blob/master/docs_github/github_introduction.md)
+* [Introducing familiar](https://cran.r-project.org/web/packages/familiar/vignettes/introduction_precompiled.html)
 
-* [Feature selection methods](https://github.com/alexzwanenburg/familiar/blob/master/docs_github/github_feature_selection.md)
+* [Feature selection methods](https://cran.r-project.org/web/packages/familiar/vignettes/feature_selection_precompiled.html)
 
-* [Learners and hyperparameter optimisation](https://github.com/alexzwanenburg/familiar/blob/master/docs_github/github_learners.md)
+* [Learners and hyperparameter optimisation](https://cran.r-project.org/web/packages/familiar/vignettes/learners_precompiled.html)
 
-* [Model performance metrics](https://github.com/alexzwanenburg/familiar/blob/master/docs_github/github_performance_metrics.md)
+* [Model performance metrics](https://cran.r-project.org/web/packages/familiar/vignettes/performance_metrics_precompiled.html)
 
-* [Using familiar to evaluate and explain models](https://github.com/alexzwanenburg/familiar/blob/master/docs_github/github_evaluation_and_explanation.md)
+* [Using familiar to evaluate and explain models](https://cran.r-project.org/web/packages/familiar/vignettes/evaluation_and_explanation_precompiled.html)
 
-* [Using familiar prospectively](https://github.com/alexzwanenburg/familiar/blob/master/docs_github/github_prospective_use.md)
+* [Using familiar prospectively](https://cran.r-project.org/web/packages/familiar/vignettes/prospective_use_precompiled.html)

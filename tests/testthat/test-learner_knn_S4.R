@@ -43,6 +43,12 @@ wide_model <- familiar:::test_train(data=wide_data,
 testthat::test_that("k-nearest neighbour model trained correctly", {
   # Model trained
   testthat::expect_equal(familiar:::model_is_trained(good_model), TRUE)
+  
+  # Check that no deprecation warnings are given.
+  familiar:::test_not_deprecated(good_model@messages$warning)
+  
+  # Test that no errors appear.
+  testthat::expect_equal(good_model@messages$error, NULL)
 })
 
 
@@ -66,6 +72,12 @@ testthat::test_that("k-nearest neighbour model can train on wide data", {
   
   # Valid predictions.
   testthat::expect_equal(familiar:::any_predictions_valid(familiar:::.predict(wide_model, wide_data), outcome_type=wide_data@outcome_type), TRUE)
+  
+  # Check that no deprecation warnings are given.
+  familiar:::test_not_deprecated(wide_model@messages$warning)
+  
+  # Test that no errors appear.
+  testthat::expect_equal(wide_model@messages$error, NULL)
 })
 
 
@@ -94,6 +106,12 @@ wide_model <- familiar:::test_train(data=wide_data,
 testthat::test_that("k-nearest neighbour model trained correctly", {
   # Model trained
   testthat::expect_equal(familiar:::model_is_trained(good_model), TRUE)
+  
+  # Check that no deprecation warnings are given.
+  familiar:::test_not_deprecated(good_model@messages$warning)
+  
+  # Test that no errors appear.
+  testthat::expect_equal(good_model@messages$error, NULL)
 })
 
 
@@ -117,6 +135,12 @@ testthat::test_that("k-nearest neighbour model can train on wide data", {
   
   # Valid predictions.
   testthat::expect_equal(familiar:::any_predictions_valid(familiar:::.predict(wide_model, wide_data), outcome_type=wide_data@outcome_type), TRUE)
+  
+  # Check that no deprecation warnings are given.
+  familiar:::test_not_deprecated(wide_model@messages$warning)
+  
+  # Test that no errors appear.
+  testthat::expect_equal(wide_model@messages$error, NULL)
 })
 
 
@@ -147,6 +171,12 @@ wide_model <- familiar:::test_train(data=wide_data,
 testthat::test_that("k-nearest neighbour model trained correctly", {
   # Model trained
   testthat::expect_equal(familiar:::model_is_trained(good_model), TRUE)
+  
+  # Check that no deprecation warnings are given.
+  familiar:::test_not_deprecated(good_model@messages$warning)
+  
+  # Test that no errors appear.
+  testthat::expect_equal(good_model@messages$error, NULL)
 })
 
 
@@ -170,6 +200,12 @@ testthat::test_that("k-nearest neighbour model can train on wide data", {
   
   # Valid predictions.
   testthat::expect_equal(familiar:::any_predictions_valid(familiar:::.predict(wide_model, wide_data), outcome_type=wide_data@outcome_type), TRUE)
+  
+  # Check that no deprecation warnings are given.
+  familiar:::test_not_deprecated(wide_model@messages$warning)
+  
+  # Test that no errors appear.
+  testthat::expect_equal(wide_model@messages$error, NULL)
 })
 
 
@@ -199,6 +235,12 @@ wide_model <- familiar:::test_train(data=wide_data,
 testthat::test_that("k-nearest neighbour model trained correctly", {
   # Model trained
   testthat::expect_equal(familiar:::model_is_trained(good_model), TRUE)
+  
+  # Check that no deprecation warnings are given.
+  familiar:::test_not_deprecated(good_model@messages$warning)
+  
+  # Test that no errors appear.
+  testthat::expect_equal(good_model@messages$error, NULL)
 })
 
 
@@ -222,6 +264,12 @@ testthat::test_that("k-nearest neighbour model can train on wide data", {
   
   # Valid predictions cannot be made.
   testthat::expect_equal(familiar:::any_predictions_valid(familiar:::.predict(wide_model, wide_data), outcome_type=wide_data@outcome_type), TRUE)
+  
+  # Check that no deprecation warnings are given.
+  familiar:::test_not_deprecated(wide_model@messages$warning)
+  
+  # Test that no errors appear.
+  testthat::expect_equal(wide_model@messages$error, NULL)
 })
 
 

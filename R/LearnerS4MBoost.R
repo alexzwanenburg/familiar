@@ -155,7 +155,7 @@ setMethod("is_available", signature(object="familiarMBoostTree"),
 
 #####get_default_hyperparameters#####
 setMethod("get_default_hyperparameters", signature(object="familiarMBoost"),
-          function(object, data=NULL){
+          function(object, data=NULL, user_list=NULL, ...){
             
             # Initialise list and declare hyperparameter entries.
             param <- list()
@@ -163,6 +163,8 @@ setMethod("get_default_hyperparameters", signature(object="familiarMBoost"),
             param$family <- list()
             param$n_boost <- list()
             param$learning_rate <- list()
+            param$sample_weighting <- list()
+            param$sample_weighting_beta <- list()
             
             if(is(object, "familiarMBoostTree")){
               param$tree_depth <- list()
@@ -187,8 +189,8 @@ setMethod("get_default_hyperparameters", signature(object="familiarMBoost"),
                                     "surv_loglog", "gehan", "cindex", "multinomial")
             
             # Read family string by parsing learner
-            fam <- stringi::stri_replace_first_regex(str=object@learner, pattern="boosted_glm|boosted_tree", replace="")
-            if(fam != "") fam <- stringi::stri_replace_first_regex(str=fam, pattern="_", replace="")
+            fam <- sub_all_patterns(x=object@learner, pattern=c("boosted_glm", "boosted_tree"), replacement="", fixed=TRUE)
+            if(fam != "") fam <- sub(x=fam, pattern="_", replacement="", fixed=TRUE)
             
             # Define the family based on the name of the learner.
             if(fam == ""){
@@ -235,7 +237,9 @@ setMethod("get_default_hyperparameters", signature(object="familiarMBoost"),
             }
             
             # Set the family parameter.
-            param$family <- .set_hyperparameter(default=family_default, type="factor", range=family_default,
+            param$family <- .set_hyperparameter(default=family_default,
+                                                type="factor",
+                                                range=family_default,
                                                 randomise=ifelse(length(family_default) > 1, TRUE, FALSE))
             
             ##### Number of boosting iterations ################################
@@ -244,8 +248,11 @@ setMethod("get_default_hyperparameters", signature(object="familiarMBoost"),
             # mboost. However, the SMAC hyperoptimisation method implemented in
             # the framework is superior to that of the grid-search method of cv
             # and cvrisk This hyper-parameter is expressed on the log 10 scale
-            param$n_boost <- .set_hyperparameter(default=c(0, 1, 2, 3), type="numeric", range=c(0, 3),
-                                                 valid_range=c(0, Inf), randomise=TRUE)
+            param$n_boost <- .set_hyperparameter(default=c(0, 1, 2, 3),
+                                                 type="numeric",
+                                                 range=c(0, 3),
+                                                 valid_range=c(0, Inf),
+                                                 randomise=TRUE)
             
             
             ##### Learning rate ################################################
@@ -253,30 +260,57 @@ setMethod("get_default_hyperparameters", signature(object="familiarMBoost"),
             # Learning rate is on a log10 scale and determines how fast the
             # algorithm tries to learn. Lower values typically lead to better
             # models, but converge slower.
-            param$learning_rate <- .set_hyperparameter(default=c(-5, -3, -2, -1), type="numeric", range=c(-7, 0),
-                                                       valid_range=c(-Inf, 0), randomise=TRUE)
+            param$learning_rate <- .set_hyperparameter(default=c(-5, -3, -2, -1), 
+                                                       type="numeric",
+                                                       range=c(-7, 0),
+                                                       valid_range=c(-Inf, 0),
+                                                       randomise=TRUE)
+            
+            
+            ##### Sample weighting method ######################################
+            #Class imbalances may lead to learning majority classes. This can be
+            #partially mitigated by increasing weight of minority classes.
+            param$sample_weighting <- .get_default_sample_weighting_method(outcome_type=object@outcome_type)
+            
+            ##### Effective number of samples beta #############################
+            #Specifies the beta parameter for effective number sample weighting
+            #method. See Cui et al. (2019).
+            param$sample_weighting_beta <- .get_default_sample_weighting_beta(method=c(param$sample_weighting$init_config,
+                                                                                       user_list$sample_weighting),
+                                                                              outcome_type=object@outcome_type)
+            
             
             if(is(object, "familiarMBoostTree")){
               ##### Tree maximum depth #########################################
               
               # This hyperparameter is only used by tree models. Larger depths
               # increase the risk of overfitting.
-              param$tree_depth <- .set_hyperparameter(default=c(1, 2, 3, 7), type="integer", range=c(1, 10),
-                                                      valid_range=c(1, Inf), randomise=TRUE)
+              param$tree_depth <- .set_hyperparameter(default=c(1, 2, 3, 7),
+                                                      type="integer",
+                                                      range=c(1, 10),
+                                                      valid_range=c(1, Inf),
+                                                      randomise=TRUE)
               
               
               ##### Minimum sum of instance weight #############################
               
               # We implement this on a power(10) scale, with -1 offset.
-              param$min_child_weight <- .set_hyperparameter(default=c(0, 1, 2), type="numeric", range=c(0, 2),
-                                                            valid_range=c(0, Inf), randomise=TRUE)
+              param$min_child_weight <- .set_hyperparameter(default=c(0, 1, 2),
+                                                            type="numeric", 
+                                                            range=c(0, 2),
+                                                            valid_range=c(0, Inf),
+                                                            randomise=TRUE)
               
               
               ##### Significance threshold for splitting #######################
               
               # Sets the significance level required to allow a split on a variable.
-              param$alpha <- .set_hyperparameter(default=c(0.05, 0.1, 0.5, 1.0), type="numeric", range=c(10^-6, 1.0),
-                                                 valid_range=c(0.0, 1.0), randomise=TRUE, distribution="log")
+              param$alpha <- .set_hyperparameter(default=c(0.05, 0.1, 0.5, 1.0),
+                                                 type="numeric",
+                                                 range=c(10^-6, 1.0),
+                                                 valid_range=c(0.0, 1.0),
+                                                 randomise=TRUE,
+                                                 distribution="log")
             }
             
             # Return hyper-parameters
@@ -317,11 +351,16 @@ setMethod("..train", signature(object="familiarMBoost", data="dataObject"),
             # repeated measurements.
             data <- aggregate_data(data=data)
             
-            # Check if the training data is ok.
-            if(has_bad_training_data(object=object, data=data)) return(callNextMethod())
+            # Check if training data is ok.
+            if(reason <- has_bad_training_data(object=object, data=data)){
+              return(callNextMethod(object=.why_bad_training_data(object=object, reason=reason)))
+            } 
             
             # Check if hyperparameters are set.
-            if(is.null(object@hyperparameters)) return(callNextMethod())
+            if(is.null(object@hyperparameters)){
+              return(callNextMethod(object=..update_errors(object=object,
+                                                           ..error_message_no_optimised_hyperparameters_available())))
+            }
             
             # Check that required packages are loaded and installed.
             require_package(object, "train")
@@ -363,14 +402,30 @@ setMethod("..train", signature(object="familiarMBoost", data="dataObject"),
             control_object <- mboost::boost_control(mstop = round(10^object@hyperparameters$n_boost),
                                                     nu = 10^object@hyperparameters$learning_rate)
             
+            # Set weights.
+            weights <- create_instance_weights(data=encoded_data$encoded_data,
+                                               method=object@hyperparameters$sample_weighting,
+                                               beta=..compute_effective_number_of_samples_beta(object@hyperparameters$sample_weighting_beta),
+                                               normalisation="average_one")
+            
             if(is(object, "familiarMBoostLM")){
-              # Attempt to create model
-              model <- suppressWarnings(tryCatch(mboost::glmboost(formula,
-                                                                  data=encoded_data$encoded_data@data,
-                                                                  family=family,
-                                                                  center=FALSE,
-                                                                  control=control_object),
-                                                 error=identity))
+              # Get the arguments which are shared between all families.
+              learner_arguments <- list(formula,
+                                        "data"=encoded_data$encoded_data@data,
+                                        "family"=family,
+                                        "center"=FALSE,
+                                        "control"=control_object)
+              
+              if(!object@hyperparameters$family %in% c("auc")){
+                # mboost does not support weights when gradient boosting with
+                # the AUC family, but others do.
+                learner_arguments <- c(learner_arguments,
+                                       list("weights"=weights))
+              }
+              
+              # Train the model.
+              model <- do.call_with_handlers(mboost::glmboost,
+                                             args=learner_arguments)
               
             } else if(is(object, "familiarMBoostTree")){
               # Set tree controls. Note that every parameter except max depth is
@@ -381,20 +436,35 @@ setMethod("..train", signature(object="familiarMBoost", data="dataObject"),
                                                              mincriterion = 1 - object@hyperparameters$alpha,
                                                              saveinfo = FALSE)
               
-              # Attempt to create model
-              model <- suppressWarnings(tryCatch(mboost::blackboost(formula,
-                                                                    data=encoded_data$encoded_data@data,
-                                                                    family=family,
-                                                                    control=control_object,
-                                                                    tree_controls=tree_control_object),
-                                                 error=identity))
+              # Get the arguments which are shared between all families.
+              learner_arguments <- list(formula,
+                                        "data"=encoded_data$encoded_data@data,
+                                        "family"=family,
+                                        "control"=control_object,
+                                        "tree_controls"=tree_control_object)
+              
+              if(!object@hyperparameters$family %in% c("auc")){
+                # mboost does not support weights when gradient boosting with
+                # the AUC family.
+                learner_arguments <- c(learner_arguments,
+                                       list("weights"=weights))
+              }
+              
+              # Train the model.
+              model <- do.call_with_handlers(mboost::blackboost,
+                                             args=learner_arguments)
               
             } else {
               ..error_reached_unreachable_code(paste0("..train,familiarMBoost: encountered unknown learner of unknown class: ", paste0(class(object), collapse=", ")))
             }
             
+            # Extract values.
+            object <- ..update_warnings(object=object, model$warning)
+            object <- ..update_errors(object=object, model$error)
+            model <- model$value
+            
             # Check if the model trained at all.
-            if(inherits(model, "error")) return(callNextMethod())
+            if(!is.null(object@messages$error)) return(callNextMethod(object=object))
             
             # Add model
             object@model <- model

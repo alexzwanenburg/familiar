@@ -21,7 +21,10 @@ setMethod("is_available", signature(object="familiarMetricRegression"),
            .get_available_rmse_metrics(),
            .get_available_rmsle_metrics(),
            .get_available_r_squared_metrics(),
-           .get_available_explained_variance_metrics()))
+           .get_available_explained_variance_metrics(),
+           .get_available_rse_metrics(),
+           .get_available_rrse_metrics(),
+           .get_available_rae_metrics()))
 } 
 
 
@@ -33,7 +36,9 @@ setClass("familiarMetricMAE",
                                       higher_better = FALSE))
 
 
-.get_available_mae_metrics <- function() return(c("mae", "mean_absolute_error"))
+.get_available_mae_metrics <- function(){
+  return(c("mae", "mean_absolute_error"))
+} 
 
 
 
@@ -59,6 +64,54 @@ setMethod("compute_metric_score", signature(metric="familiarMetricMAE"),
 
 
 
+#####Relative absolute error####################################################
+setClass("familiarMetricRAE",
+         contains="familiarMetricRegression",
+         prototype=methods::prototype(name = "Relative Absolute Error",
+                                      value_range = c(0.0, Inf),
+                                      higher_better = FALSE))
+
+.get_available_rae_metrics <- function(){
+  return(c("rae", "relative_absolutive_error"))
+}
+
+
+#####compute_metric_score (Relative absolute error)#############################
+setMethod("compute_metric_score", signature(metric="familiarMetricRAE"),
+          function(metric, data, ...){
+            
+            # Remove any entries that lack valid predictions.
+            data <- remove_nonvalid_predictions(prediction_table=data,
+                                                outcome_type=metric@outcome_type)
+            
+            # Remove any entries that lack observed values.
+            data <- remove_missing_outcomes(data=data,
+                                            outcome_type=metric@outcome_type)
+            
+            if(is_empty(data)) return(callNextMethod())
+            
+            y_mean <- mean(data$outcome)
+            nom <- sum(abs(data$outcome - data$predicted_outcome))
+            denom <- sum(abs(y_mean - data$outcome))
+            
+            # Check if denominator is not 0.
+            if(!denom == 0){
+              # Denominator not 0
+              score <- nom / denom
+              
+            } else if (nom == denom) {
+              # Denominator = nominator = 0
+              score <- 0.0
+              
+            } else {
+              # Denominator = 0. Would be inf otherwise.
+              return(callNextMethod())
+            }
+            
+            return(score)
+          })
+
+
 #####Mean log absolute error####################################################
 setClass("familiarMetricMLAE",
          contains="familiarMetricRegression",
@@ -67,7 +120,9 @@ setClass("familiarMetricMLAE",
                                       higher_better = FALSE))
 
 
-.get_available_mlae_metrics <- function() return(c("mlae", "mean_log_absolute_error"))
+.get_available_mlae_metrics <- function(){
+  return(c("mlae", "mean_log_absolute_error"))
+} 
 
 
 
@@ -101,7 +156,9 @@ setClass("familiarMetricMSE",
                                       higher_better = FALSE))
 
 
-.get_available_mse_metrics <- function() return(c("mse", "mean_squared_error"))
+.get_available_mse_metrics <- function(){
+  return(c("mse", "mean_squared_error"))
+} 
 
 
 
@@ -126,7 +183,59 @@ setMethod("compute_metric_score", signature(metric="familiarMetricMSE"),
           })
 
 
-#####Mean squared log error#########################################################
+#####Relative squared error#####################################################
+setClass("familiarMetricRSE",
+         contains="familiarMetricRegression",
+         prototype=methods::prototype(name = "Relative Squared Error",
+                                      value_range = c(0.0, Inf),
+                                      higher_better = FALSE))
+
+
+.get_available_rse_metrics <- function(){
+  return(c("rse", "relative_squared_error"))
+} 
+
+
+
+#####compute_metric_score (Root relative squared error)#####
+setMethod("compute_metric_score", signature(metric="familiarMetricRSE"),
+          function(metric, data, ...){
+            
+            # Remove any entries that lack valid predictions.
+            data <- remove_nonvalid_predictions(prediction_table=data,
+                                                outcome_type=metric@outcome_type)
+            
+            # Remove any entries that lack observed values.
+            data <- remove_missing_outcomes(data=data,
+                                            outcome_type=metric@outcome_type)
+            
+            if(is_empty(data)) return(callNextMethod())
+            
+            # Compute the mean squared error.
+            y_mean <- mean(data$outcome)
+            nom <- sum((data$outcome - data$predicted_outcome)^2)
+            denom <- sum((y_mean - data$outcome)^2)
+            
+            # Check if denominator is not 0.
+            if(!denom == 0){
+              # Denominator not 0
+              score <- nom / denom
+              
+            } else if (nom == denom) {
+              # Denominator = nominator = 0
+              score <- 0.0
+              
+            } else {
+              # Denominator = 0. Would be inf otherwise.
+              return(callNextMethod())
+            }
+            
+            return(score)
+          })
+
+
+
+#####Mean squared log error#####################################################
 setClass("familiarMetricMSLE",
          contains="familiarMetricRegression",
          prototype=methods::prototype(name = "Mean Squared Log Error",
@@ -134,7 +243,9 @@ setClass("familiarMetricMSLE",
                                       higher_better = FALSE))
 
 
-.get_available_msle_metrics <- function() return(c("msle", "mean_squared_log_error"))
+.get_available_msle_metrics <- function(){
+  return(c("msle", "mean_squared_log_error"))
+} 
 
 
 
@@ -170,7 +281,9 @@ setClass("familiarMetricMedianAE",
                                       higher_better = FALSE))
 
 
-.get_available_medea_metrics <- function() return(c("medae", "median_absolute_error"))
+.get_available_medea_metrics <- function(){
+  return(c("medae", "median_absolute_error"))
+} 
 
 
 
@@ -204,7 +317,9 @@ setClass("familiarMetricRMSE",
                                       higher_better = FALSE))
 
 
-.get_available_rmse_metrics <- function() return(c("rmse", "root_mean_square_error"))
+.get_available_rmse_metrics <- function(){
+  return(c("rmse", "root_mean_square_error"))
+} 
 
 
 
@@ -230,6 +345,58 @@ setMethod("compute_metric_score", signature(metric="familiarMetricRMSE"),
 
 
 
+#####Root relative squared error################################################
+setClass("familiarMetricRRSE",
+         contains="familiarMetricRegression",
+         prototype=methods::prototype(name = "Root Relative Squared Error",
+                                      value_range = c(0.0, Inf),
+                                      higher_better = FALSE))
+
+
+.get_available_rrse_metrics <- function(){
+  return(c("rrse", "root_relative_squared_error"))
+} 
+
+
+
+#####compute_metric_score (Root relative squared error)#####
+setMethod("compute_metric_score", signature(metric="familiarMetricRRSE"),
+          function(metric, data, ...){
+            
+            # Remove any entries that lack valid predictions.
+            data <- remove_nonvalid_predictions(prediction_table=data,
+                                                outcome_type=metric@outcome_type)
+            
+            # Remove any entries that lack observed values.
+            data <- remove_missing_outcomes(data=data,
+                                            outcome_type=metric@outcome_type)
+            
+            if(is_empty(data)) return(callNextMethod())
+            
+            # Compute the mean squared error.
+            y_mean <- mean(data$outcome)
+            nom <- sum((data$outcome - data$predicted_outcome)^2)
+            denom <- sum((y_mean - data$outcome)^2)
+            
+            # Check if denominator is not 0.
+            if(!denom == 0){
+              # Denominator not 0
+              score <- sqrt(nom / denom)
+              
+            } else if (nom == denom) {
+              # Denominator = nominator = 0
+              score <- 0.0
+              
+            } else {
+              # Denominator = 0. Would be inf otherwise.
+              return(callNextMethod())
+            }
+            
+            return(score)
+          })
+
+
+
 #####Root mean square log error#####################################################
 setClass("familiarMetricRMSLE",
          contains="familiarMetricRegression",
@@ -238,7 +405,9 @@ setClass("familiarMetricRMSLE",
                                       higher_better = FALSE))
 
 
-.get_available_rmsle_metrics <- function() return(c("rmsle", "root_mean_square_log_error"))
+.get_available_rmsle_metrics <- function(){
+  return(c("rmsle", "root_mean_square_log_error"))
+} 
 
 
 
@@ -273,7 +442,9 @@ setClass("familiarMetricR2",
                                       higher_better = TRUE))
 
 
-.get_available_r_squared_metrics <- function() return(c("r2_score", "r_squared"))
+.get_available_r_squared_metrics <- function(){
+  return(c("r2_score", "r_squared"))
+} 
 
 
 
@@ -322,7 +493,9 @@ setClass("familiarMetricExplainedVariance",
                                       higher_better = TRUE))
 
 
-.get_available_explained_variance_metrics <- function() return(c("explained_variance"))
+.get_available_explained_variance_metrics <- function(){
+  return(c("explained_variance"))
+} 
 
 
 

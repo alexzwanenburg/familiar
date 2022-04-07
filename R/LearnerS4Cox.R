@@ -43,7 +43,7 @@ setMethod("is_available", signature(object="familiarCoxPH"),
 
 #####get_default_hyperparameters#####
 setMethod("get_default_hyperparameters", signature(object="familiarCoxPH"),
-          function(object, data=NULL){
+          function(object, data=NULL, ...){
             
             # Initialise list and declare hyperparameter entries
             param    <- list()
@@ -83,10 +83,15 @@ setMethod("..train", signature(object="familiarCoxPH", data="dataObject"),
           function(object, data, ...){
             
             # Check if training data is ok.
-            if(has_bad_training_data(object=object, data=data)) return(callNextMethod())
+            if(reason <- has_bad_training_data(object=object, data=data)){
+              return(callNextMethod(object=.why_bad_training_data(object=object, reason=reason)))
+            } 
             
             # Check if hyperparameters are set.
-            if(is.null(object@hyperparameters)) return(callNextMethod())
+            if(is.null(object@hyperparameters)){
+              return(callNextMethod(object=..update_errors(object=object,
+                                                           ..error_message_no_optimised_hyperparameters_available())))
+            }
             
             # Check that required packages are loaded and installed.
             require_package(object, "train")
@@ -110,20 +115,29 @@ setMethod("..train", signature(object="familiarCoxPH", data="dataObject"),
             model_control <- survival::coxph.control(iter.max=100)
             
             # Train the model
-            model <- tryCatch(coxph(formula,
-                                    data=encoded_data$encoded_data@data,
-                                    control=model_control,
-                                    y=FALSE),
-                              error=identity)
+            model <- do.call_with_handlers(survival::coxph,
+                                           args=list(formula,
+                                                     "data"=encoded_data$encoded_data@data,
+                                                     "control"=model_control,
+                                                     "y"=FALSE))
+            
+            # Extract values.
+            object <- ..update_warnings(object=object, model$warning)
+            object <- ..update_errors(object=object, model$error)
+            model <- model$value
             
             # Check if the model trained at all.
-            if(inherits(model, "error")) return(callNextMethod())
+            if(!is.null(object@messages$error)) return(callNextMethod(object=object))
             
             # Check if the model fitter converged in time.
-            if(model$iter >= 100) return(callNextMethod())
+            if(model$iter >= 100) return(callNextMethod(object=..update_errors(object=object,
+                                                                               "Model fitter ran out of iterations and did not converge.")))
             
             # Check if all coefficients could not be estimated.
-            if(all(!sapply(stats::coef(model), is.finite))) return(callNextMethod())
+            if(all(!sapply(stats::coef(model), is.finite))){
+              return(callNextMethod(object=..update_errors(object=object,
+                                                           ..error_message_failed_model_coefficient_estimation())))
+            }
             
             # Add model
             object@model <- model

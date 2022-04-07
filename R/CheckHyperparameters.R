@@ -137,10 +137,10 @@ NULL
   
   if(is.character(x)){
     # Divide by comma
-    x <- stringi::stri_split(str=x, fixed=",")[[1]]
+    x <- strsplit(x=x, split=",", fixed=TRUE)[[1]]
     
     # Remove whitespace
-    x <- stringi::stri_replace_all(str=x, fixed=" ", replacement="")
+    x <- gsub(x=x, pattern=" ", replacement="", fixed=TRUE)
   }
   
   # Update the parameter_name for passing into error warnings
@@ -163,9 +163,9 @@ NULL
   }
   
   # For parameters that are not randomised only a single value is allowed
-  if(!preset_list$randomise & length(x) > 1){
-    ..error_variable_has_too_many_values(x, var_name=parameter_name, req_length=1, allow_fewer=FALSE)
-  }
+  # if(!preset_list$randomise & length(x) > 1){
+  #   ..error_variable_has_too_many_values(x, var_name=parameter_name, req_length=1, allow_fewer=FALSE)
+  # }
   
   return(x)
 }

@@ -43,6 +43,7 @@
 #'   are expected to be `data.frame` or `data.table` objects or paths to data
 #'   files. The latter are handled in the same way as file paths provided to
 #'   `data_file`.
+#' @param verbose Sets verbosity.
 #' @param ... Unused arguments
 #'
 #' @return List of paths to important directories and files.
@@ -53,6 +54,7 @@
                               project_dir=waiver(),
                               experiment_dir=waiver(),
                               data_file=waiver(),
+                              verbose=TRUE,
                               ...){
 
   # Initialise list of file paths
@@ -104,7 +106,7 @@
       # Case 4. project_dir does not exist, and neither does experiment_dir.
       
       # Work in a temporary directory.
-      temporary_directory <- file.path(tempdir(), "familiar", stringi::stri_rand_strings(1, 8))
+      temporary_directory <- file.path(tempdir(), "familiar", rstring(n=8L))
       experiment_dir <- project_dir <- normalizePath(temporary_directory, mustWork=FALSE)
       file_paths$is_temporary <- TRUE
       
@@ -119,7 +121,7 @@
       # subdirectory, and assign a random name instead.
       
       # Work in a temporary directory.
-      temporary_directory <- file.path(tempdir(), "familiar", stringi::stri_rand_strings(1, 8))
+      temporary_directory <- file.path(tempdir(), "familiar", rstring(n=8L))
       experiment_dir <- project_dir <- normalizePath(temporary_directory, mustWork=FALSE)
       file_paths$is_temporary <- TRUE
     }
@@ -189,7 +191,8 @@
   }
   
   if(file_paths$is_temporary){
-    logger.message(paste0("Configuration: A temporary R directory is created for the analysis: ", temporary_directory))
+    logger.message(paste0("Configuration: A temporary R directory is created for the analysis: ", temporary_directory),
+                   verbose=verbose)
   }
   
   return(file_paths)
@@ -354,7 +357,7 @@
 .parse_general_settings <- function(settings, config=NULL, data, ...){
   
   # Computational setup settings
-  settings$run <- strict.do.call(.parse_setup_settings,
+  settings$run <- do.call_strict(.parse_setup_settings,
                                  args=c(list("config"=config$run),
                                         list(...)))
   
@@ -365,7 +368,7 @@
   dots$outcome_type <- NULL
   
   # Pre-processing settings
-  settings$prep <- strict.do.call(.parse_preprocessing_settings,
+  settings$prep <- do.call_strict(.parse_preprocessing_settings,
                                   args=c(list("config"=config$preprocessing,
                                               "data"=data,
                                               "parallel"=settings$run$parallel,
@@ -373,7 +376,7 @@
                                          dots))
   
   # Feature selection settings
-  settings$fs <- strict.do.call(.parse_feature_selection_settings,
+  settings$fs <- do.call_strict(.parse_feature_selection_settings,
                                 args=c(list("config"=config$feature_selection,
                                             "data"=data,
                                             "parallel"=settings$run$parallel,
@@ -381,7 +384,7 @@
                                        dots))
   
   # Model development settings
-  settings$mb <- strict.do.call(.parse_model_development_settings,
+  settings$mb <- do.call_strict(.parse_model_development_settings,
                                 args=c(list("config"=config$model_development,
                                             "data"=data,
                                             "parallel"=settings$run$parallel,
@@ -389,7 +392,7 @@
                                        dots))
   
   # Hyperparameter optimisation settings
-  settings$hpo <- strict.do.call(.parse_hyperparameter_optimisation_settings,
+  settings$hpo <- do.call_strict(.parse_hyperparameter_optimisation_settings,
                                  args=c(list("config"=config$hyperparameter_optimisation,
                                              "parallel"=settings$run$parallel,
                                              "outcome_type"=settings$data$outcome_type),
@@ -404,7 +407,7 @@
   dots$vimp_aggregation_rank_threshold <- NULL
   
   # Evaluation settings
-  settings$eval <- strict.do.call(.parse_evaluation_settings,
+  settings$eval <- do.call_strict(.parse_evaluation_settings,
                                   args=c(list("config"=config$evaluation,
                                               "data"=data,
                                               "parallel"=settings$run$parallel,
@@ -2289,7 +2292,17 @@
 #' @param smbo_stop_tolerance (*optional*) Tolerance for early stopping due to
 #'   convergent optimisation score.
 #'
-#'   The default value is `0.01`.
+#'   The default value depends on the number of samples (at the series level),
+#'   ranging from `0.01` for 100 or fewer samples, to `0.001` for 10000 or more
+#'   samples.
+#' @param smbo_time_limit (*optional*) Time limit (in minutes) for the
+#'   optimisation process. Optimisation is stopped after this limit is exceeded.
+#'   Time taken to determine variable importance for the optimisation process
+#'   (see the `optimisation_determine_vimp` parameter) does not count.
+#'
+#'   The default is `NULL`, indicating that there is no time limit for the
+#'   optimisation process. The time limit cannot be less than 1 minute.
+#'   
 #' @param smbo_step_bootstraps (*optional*) The number of bootstraps taken from
 #'   the set of `optimisation_bootstraps` bootstraps as data for the initial
 #'   SMBO step and the steps in each intensify iteration.
@@ -2475,6 +2488,7 @@
                                                         max_smbo_iterations=waiver(),
                                                         smbo_stop_convergent_iterations=waiver(),
                                                         smbo_stop_tolerance=waiver(),
+                                                        smbo_time_limit=waiver(),
                                                         smbo_step_bootstraps=waiver(),
                                                         smbo_intensify_steps=waiver(),
                                                         smbo_stochastic_reject_p_value=waiver(),
@@ -2529,11 +2543,11 @@
                                             var_name="optimisation_bootstraps",
                                             type="integer",
                                             optional=TRUE,
-                                            default=50)
+                                            default=20)
   
   .check_number_in_valid_range(x=settings$hpo_max_bootstraps,
                                var_name="optimisation_bootstraps",
-                               range=c(20, Inf))
+                               range=c(10, Inf))
   
   ##### max_smbo_iterations ####################################################
   # Maximum number of SMBO iterations before stopping
@@ -2610,12 +2624,47 @@
                                                    var_name="smbo_stop_tolerance",
                                                    type="numeric",
                                                    optional=TRUE,
-                                                   default=1E-2)
+                                                   default=NULL)
   
-  .check_number_in_valid_range(x=settings$hpo_convergence_tolerance,
-                               var_name="smbo_stop_tolerance",
-                               range=c(0.0, 2.0),
-                               closed=c(FALSE, TRUE))
+  # Check provided settings. If NULL, convergence will be set by the 
+  if(!is.null(settings$hpo_convergence_tolerance)){
+    .check_number_in_valid_range(x=settings$hpo_convergence_tolerance,
+                                 var_name="smbo_stop_tolerance",
+                                 range=c(0.0, 2.0),
+                                 closed=c(FALSE, TRUE)) 
+  }
+  
+  ##### smbo_time_limit ########################################################
+  # Time limit for the optimisation process..
+  settings$hpo_time_limit <- .parse_arg(x_config=config$smbo_time_limit,
+                                        x_var=smbo_time_limit,
+                                        var_name="smbo_time_limit",
+                                        type="numeric",
+                                        optional=TRUE,
+                                        default=NULL)
+  
+  if(!is.null(settings$hpo_time_limit)){
+    .check_number_in_valid_range(x=settings$hpo_time_limit,
+                                 var_name="smbo_time_limit",
+                                 range=c(1.0, Inf))
+  }
+  
+  
+  
+  ##### hyperparameter_learner #################################################
+  # Hyperparameter learner
+  settings$hpo_hyperparameter_learner <- .parse_arg(x_config=config$hyperparameter_learner,
+                                                    x_var=hyperparameter_learner,
+                                                    var_name="hyperparameter_learner",
+                                                    type="character",
+                                                    optional=TRUE,
+                                                    default="gaussian_process")
+  
+  .check_parameter_value_is_valid(x=settings$hpo_hyperparameter_learner,
+                                  var_name="hyperparameter_learner",
+                                  values=.get_available_hyperparameter_learners())
+  
+  .check_hyperparameter_learner_available(hyperparameter_learner=settings$hpo_hyperparameter_learner)
   
   
   ##### optimisation_function ##################################################
@@ -2625,11 +2674,12 @@
                                                    var_name="optimisation_function",
                                                    type="character",
                                                    optional=TRUE,
-                                                   default="balanced")
+                                                   default="validation")
   
   .check_parameter_value_is_valid(x=settings$hpo_optimisation_function,
                                   var_name="optimisation_function",
-                                  values=.get_available_optimisation_functions())
+                                  values=.get_available_optimisation_functions(hyperparameter_learner=settings$hpo_hyperparameter_learner))
+  
   
   ##### acquisition_function ###################################################
   # Acquisition function
@@ -2643,6 +2693,7 @@
   .check_parameter_value_is_valid(x=settings$hpo_acquisition_function,
                                   var_name="acquisition_function",
                                   values=.get_available_acquisition_functions())
+  
   
   ##### exploration_method #####################################################
   # Exploration method
@@ -2674,22 +2725,6 @@
          metric.check_outcome_type,
          outcome_type=outcome_type)
   
-  ##### hyperparameter_learner #################################################
-  # Hyperparameter learner
-  settings$hpo_hyperparameter_learner <- .parse_arg(x_config=config$hyperparameter_learner,
-                                                    x_var=hyperparameter_learner,
-                                                    var_name="hyperparameter_learner",
-                                                    type="character",
-                                                    optional=TRUE,
-                                                    default="gaussian_process")
-  
-  .check_parameter_value_is_valid(x=settings$hpo_hyperparameter_learner,
-                                  var_name="hyperparameter_learner",
-                                  values=.get_available_hyperparameter_learners())
-  
-  require_package(x=.required_packages_hyperparameter_learner(settings$hpo_hyperparameter_learner),
-                  purpose="to use the requested learner (", settings$hpo_hyperparameter_learner, ") for model-based hyperparameter optimisation",
-                  message_type="backend_error")
   
   ##### parallel_hyperparameter_optimisation ###################################
   # Parallelisation switch for parallel processing
@@ -3770,7 +3805,8 @@
   available_parameters <- setdiff(available_parameters,
                                   c("", "...", "config", "data", "hpo_metric", "prep_cluster_method",
                                     "prep_cluster_linkage_method", "prep_cluster_cut_method",
-                                    "prep_cluster_similarity_threshold", "prep_cluster_similarity_metric"))
+                                    "prep_cluster_similarity_threshold", "prep_cluster_similarity_metric",
+                                    "verbose"))
   
   return(available_parameters)
 }

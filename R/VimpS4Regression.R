@@ -5,11 +5,34 @@ NULL
 setClass("familiarRegressionVimp",
          contains="familiarVimpMethod")
 
-.get_available_regression_vimp_methods <- function(show_general=TRUE){
-  return(c("univariate_regression", "multivariate_regression"))
+setClass("familiarUnivariateRegressionVimp",
+         contains="familiarRegressionVimp")
+
+setClass("familiarMultivariateRegressionVimp",
+         contains="familiarRegressionVimp",
+         prototype = methods::prototype(multivariate=TRUE))
+
+#####initialize######
+setMethod("initialize", signature(.Object="familiarMultivariateRegressionVimp"),
+          function(.Object, ...){
+            
+            # Update with parent class first.
+            .Object <- callNextMethod()
+            
+            # Set the required package
+            .Object@multivariate <- TRUE
+            
+            return(.Object)
+          })
+
+
+.get_available_univariate_regression_vimp_methods <- function(show_general=TRUE){
+  return("univariate_regression")
 }
 
-
+.get_available_multivariate_regression_vimp_methods <- function(show_general=TRUE){
+  return("multivariate_regression")
+}
 
 #####is_available#####
 setMethod("is_available", signature(object="familiarRegressionVimp"),
@@ -21,7 +44,7 @@ setMethod("is_available", signature(object="familiarRegressionVimp"),
 
 #####get_default_hyperparameters#####
 setMethod("get_default_hyperparameters", signature(object="familiarRegressionVimp"),
-          function(object, data=NULL){
+          function(object, data=NULL, ...){
 
             param <- list()
             param$n_bootstrap <- list()
@@ -139,64 +162,96 @@ setMethod("..vimp", signature(object="familiarRegressionVimp"),
                                                   "select_step"=0,
                                                   "score"=as.double(NA))
             
-            # Compute objective score for every feature.
-            objective_score <- lapply(feature_columns,
-                                      ..regression_vimp_assess_feature,
-                                      fam_model=fam_model,
-                                      metric_objects=metric_object_list,
-                                      data=data,
-                                      iteration_list=iteration_list,
-                                      fixed_set=NULL)
+            # Find signature features, if any.
+            signature_feature <- names(object@feature_info)[sapply(object@feature_info, is_in_signature)]
             
-            # Combine into data.table.
-            objective_score <- data.table::rbindlist(objective_score)
-            
-            # In case of univariate regression, return at this point.
-            if(object@vimp_method == "univariate_regression"){
+            if(length(signature_feature) > 0 & is(object, "familiarMultivariateRegressionVimp")){
+              # For multivariate regression with features in a signature.
               
-              # Create variable importance table.
-              vimp_table <- data.table::data.table("name"=objective_score$name,
-                                                   "score"=objective_score$score)
+              # Get the objective score for the signature.
+              objective_score <- ..regression_vimp_assess_feature(feature=NULL,
+                                                                  fam_model=fam_model,
+                                                                  metric_objects=metric_object_list,
+                                                                  data=data,
+                                                                  iteration_list=iteration_list,
+                                                                  fixed_set=signature_feature)
               
-              # Add ranks.
-              vimp_table[, "rank":=data.table::frank(-score, ties.method="min")]
-              vimp_table[, "multi_var":=FALSE]
+              # Set max_objective_score.
+              max_objective_score <- objective_score$score
               
-              return(vimp_table)
+              # Update the score table.
+              score_table[name %in% signature_feature, ":="("score"=max_objective_score,
+                                                            "available"=FALSE,
+                                                            "selected"=TRUE,
+                                                            "select_step"=seq_len(length(signature_feature)))]
+              
+              # Iteration counter.
+              ii <- length(signature_feature) + 1
+              
+            } else {
+              # For multivariate regression without signature features, or
+              # univariate regression.
+              
+              # Compute objective score for every feature.
+              objective_score <- lapply(feature_columns,
+                                        ..regression_vimp_assess_feature,
+                                        fam_model=fam_model,
+                                        metric_objects=metric_object_list,
+                                        data=data,
+                                        iteration_list=iteration_list,
+                                        fixed_set=NULL)
+              
+              # Combine into data.table.
+              objective_score <- data.table::rbindlist(objective_score)
+              
+              # In case of univariate regression, return at this point.
+              if(is(object, "familiarUnivariateRegressionVimp")){
+                
+                # Create variable importance table.
+                vimp_table <- data.table::data.table("name"=objective_score$name,
+                                                     "score"=objective_score$score)
+                
+                # Add ranks.
+                vimp_table[, "rank":=data.table::frank(-score, ties.method="min")]
+                vimp_table[, "multi_var":=FALSE]
+                
+                return(vimp_table)
+              }
+              
+              # Proceed with forward selection and multivariate regression.
+              
+              # Find the best performing feature.
+              max_objective_score <- max(objective_score$score)
+              best_feature <- objective_score[score == max_objective_score]$name
+              
+              # Update the score_table.
+              score_table[name %in% best_feature, ":="("score"=max_objective_score, 
+                                                       "available"=FALSE,
+                                                       "selected"=TRUE,
+                                                       "select_step"=1)]
+              
+              # Identify features to be dropped.
+              n_available <- nrow(objective_score) - length(best_feature)
+              n_dropped <- floor(object@hyperparameters$drop_rate * n_available)
+              
+              # Make dropped features unavailable.
+              if(n_dropped > 0){
+                # Identify the worst performing features.
+                bad_features <- tail(objective_score[(order(-score))], n=n_dropped)$name
+                score_table[name %in% bad_features, "available":=FALSE]
+              }
+              
+              # Iteration counter.
+              ii <- 2
             }
             
-            # Proceed with forward selection and multivariate regression.
-            
-            # Find the best performing feature.
-            max_objective_score <- max(objective_score$score)
-            best_feature <- objective_score[score == max_objective_score]$name
-            
-            # Update the score_table.
-            score_table[name %in% best_feature, ":="("score"=max_objective_score, 
-                                                     "available"=FALSE,
-                                                     "selected"=TRUE,
-                                                     "select_step"=1)]
-            
-            # Identify features to be dropped.
-            n_available <- nrow(objective_score) - length(best_feature)
-            n_dropped <- floor(object@hyperparameters$drop_rate * n_available)
-            
-            # Make dropped features unavailable.
-            if(n_dropped > 0){
-              # Identify the worst performing features.
-              bad_features <- tail(objective_score[(order(-score))], n=n_dropped)$name
-              score_table[name %in% bad_features, "available":=FALSE]
-            }
-
             # Determine the features still available.
             available_features <- score_table[available == TRUE, ]$name
             selected_features  <- score_table[selected == TRUE, ]$name
             
-            # Iteration counter.
-            ii <- 2
-            
             # Set current objective score.
             previous_objective_score <- max_objective_score
+            
             
             while(length(available_features) > 0 ){
               # Generate new iteration list.
@@ -270,7 +325,12 @@ setMethod("..vimp", signature(object="familiarRegressionVimp"),
 
 
 
-..regression_vimp_assess_feature <- function(feature, fam_model, metric_objects, data, iteration_list, fixed_set){
+..regression_vimp_assess_feature <- function(feature,
+                                             fam_model,
+                                             metric_objects,
+                                             data,
+                                             iteration_list,
+                                             fixed_set){
 
   # Make local copy of the data prior to filtering features.
   data <- data.table::copy(data)
@@ -288,17 +348,29 @@ setMethod("..vimp", signature(object="familiarRegressionVimp"),
     test_data <- select_data_from_samples(data=data,
                                           samples=iteration_list$valid_list[[bootstrap_id]])
     
-    # Update the familiar model
+    # Update the familiar model.
     fam_model@hyperparameters$sign_size=length(c(feature, fixed_set))
+    
+    #Set missing parameters.
+    parameter_list <- get_default_hyperparameters(object=fam_model,
+                                                  data=train_data,
+                                                  user_list=fam_model@hyperparameters)
+    
+    # Update the parameter list With user-defined variables.
+    parameter_list <- .update_hyperparameters(parameter_list=parameter_list,
+                                              user_list=fam_model@hyperparameters)
+    
+    # Update hyperparameters to set any fixed parameters.
+    fam_model@hyperparameters <- lapply(parameter_list, function(list_entry) list_entry$init_config)
     
     # Set additional parameters, e.g. the learner family.
     fam_model <- ..set_vimp_parameters(object=fam_model,
                                        method=fam_model@learner)
     
     # Train the model using the train data.
-    fam_model <- .train(object=fam_model,
-                        data=train_data,
-                        get_additional_info=FALSE)
+    fam_model <- suppressWarnings(.train(object=fam_model,
+                                         data=train_data,
+                                         get_additional_info=FALSE))
     
     # Compute score using the metrics.
     score_table <- mapply(function(data, data_set, object, metric_objects, settings){

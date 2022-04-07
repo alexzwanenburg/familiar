@@ -49,7 +49,7 @@ setMethod("is_available", signature(object="familiarSurvRegr"),
 
 #####get_default_hyperparameters#####
 setMethod("get_default_hyperparameters", signature(object="familiarSurvRegr"),
-          function(object, data=NULL){
+          function(object, data=NULL, ...){
             
             # Initialise list and declare hyperparameter entries
             param <- list()
@@ -71,9 +71,10 @@ setMethod("get_default_hyperparameters", signature(object="familiarSurvRegr"),
               distribution_default <- c("weibull", "exponential", "gaussian", "logistic", "loglogistic", "lognormal")
               
             } else {
-              distribution_default <- stringi::stri_replace_first_fixed(str=object@learner,
-                                                                        pattern="survival_regr_",
-                                                                        replacement="")
+              distribution_default <- sub(x=object@learner,
+                                          pattern="survival_regr_",
+                                          replacement="",
+                                          fixed=TRUE)
             }
             
             # Set the distribution parameter
@@ -112,10 +113,15 @@ setMethod("..train", signature(object="familiarSurvRegr", data="dataObject"),
           function(object, data, ...){
             
             # Check if training data is ok.
-            if(has_bad_training_data(object=object, data=data)) return(callNextMethod())
+            if(reason <- has_bad_training_data(object=object, data=data)){
+              return(callNextMethod(object=.why_bad_training_data(object=object, reason=reason)))
+            } 
             
             # Check if hyperparameters are set.
-            if(is.null(object@hyperparameters)) return(callNextMethod())
+            if(is.null(object@hyperparameters)){
+              return(callNextMethod(object=..update_errors(object=object,
+                                                           ..error_message_no_optimised_hyperparameters_available())))
+            }
             
             # Check that required packages are loaded and installed.
             require_package(object, "train")
@@ -139,24 +145,31 @@ setMethod("..train", signature(object="familiarSurvRegr", data="dataObject"),
             # survival regression.
             model_control <- survival::survreg.control(iter.max=100)
             
-            # Generate model -- NOTE: survreg was directly imported to allow
-            # access to predict and summary functions that were not exported in
-            # survival.
-            quiet(model <- tryCatch(survreg(formula,
-                                            data=encoded_data$encoded_data@data,
-                                            control=model_control,
-                                            y=FALSE,
-                                            dist=as.character(object@hyperparameters$distribution)),
-                                    error=identity))
+            # Train the model.
+            model <- do.call_with_handlers(survival::survreg,
+                                           args=list(formula,
+                                                     "data"=encoded_data$encoded_data@data,
+                                                     "control"=model_control,
+                                                     "y"=FALSE,
+                                                     "dist"=as.character(object@hyperparameters$distribution)))
+            
+            # Extract values.
+            object <- ..update_warnings(object=object, model$warning)
+            object <- ..update_errors(object=object, model$error)
+            model <- model$value
             
             # Check if the model trained at all.
-            if(inherits(model, "error")) return(callNextMethod())
+            if(!is.null(object@messages$error)) return(callNextMethod(object=object))
             
             # Check if the model fitter converged in time.
-            if(model$iter >= 100) return(callNextMethod())
+            if(model$iter >= 100) return(callNextMethod(object=..update_errors(object=object,
+                                                                               "Model fitter ran out of iterations and did not converge.")))
             
             # Check if all coefficients could not be estimated.
-            if(all(!sapply(stats::coef(model), is.finite))) return(callNextMethod())
+            if(all(!sapply(stats::coef(model), is.finite))){
+              return(callNextMethod(object=..update_errors(object=object,
+                                                           ..error_message_failed_model_coefficient_estimation())))
+            }
             
             # Add model
             object@model <- model
@@ -389,6 +402,7 @@ setMethod("..set_calibration_info", signature(object="familiarSurvRegr"),
           })
 
 
+
 #####..set_vimp_parameters#####
 setMethod("..set_vimp_parameters", signature(object="familiarSurvRegr"),
           function(object, method, ...){
@@ -398,9 +412,10 @@ setMethod("..set_vimp_parameters", signature(object="familiarSurvRegr"),
               distribution_default <- "weibull"
               
             } else {
-              distribution_default <- stringi::stri_replace_first_fixed(str=method,
-                                                                        pattern="survival_regr_",
-                                                                        replacement="")
+              distribution_default <- sub(x=method,
+                                          pattern="survival_regr_",
+                                          replacement="",
+                                          fixed=TRUE)
             }
             
             # Set the distribution parameter

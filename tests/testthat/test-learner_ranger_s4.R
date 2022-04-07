@@ -105,6 +105,12 @@ wide_model <- familiar:::test_train(data=wide_data,
 testthat::test_that("Ranger random forest model trained correctly", {
   # Model trained
   testthat::expect_equal(familiar:::model_is_trained(good_model), TRUE)
+  
+  # That no deprecation warnings are given.
+  familiar:::test_not_deprecated(good_model@messages$warning)
+  
+  # Test that no errors appear.
+  testthat::expect_equal(good_model@messages$error, NULL)
 })
 
 
@@ -135,6 +141,12 @@ testthat::test_that("Ranger random forest model can train on wide data", {
   
   # Valid predictions.
   testthat::expect_equal(familiar:::any_predictions_valid(familiar:::.predict(wide_model, wide_data), outcome_type=wide_data@outcome_type), TRUE)
+  
+  # Test that no deprecation warnings are given.
+  familiar:::test_not_deprecated(wide_model@messages$warning)
+  
+  # Test that no errors appear.
+  testthat::expect_equal(wide_model@messages$error, NULL)
 })
 
 
@@ -174,6 +186,12 @@ wide_model <- familiar:::test_train(data=wide_data,
 testthat::test_that("Ranger random forest model trained correctly", {
   # Model trained
   testthat::expect_equal(familiar:::model_is_trained(good_model), TRUE)
+  
+  # That no deprecation warnings are given.
+  familiar:::test_not_deprecated(good_model@messages$warning)
+  
+  # Test that no errors appear.
+  testthat::expect_equal(good_model@messages$error, NULL)
 })
 
 
@@ -203,6 +221,12 @@ testthat::test_that("Ranger random forest model can train on wide data", {
   
   # Valid predictions.
   testthat::expect_equal(familiar:::any_predictions_valid(familiar:::.predict(wide_model, wide_data), outcome_type=wide_data@outcome_type), TRUE)
+  
+  # Test that no deprecation warnings are given.
+  familiar:::test_not_deprecated(wide_model@messages$warning)
+  
+  # Test that no errors appear.
+  testthat::expect_equal(wide_model@messages$error, NULL)
 })
 
 
@@ -242,6 +266,12 @@ wide_model <- familiar:::test_train(data=wide_data,
 testthat::test_that("Ranger random forest model trained correctly", {
   # Model trained
   testthat::expect_equal(familiar:::model_is_trained(good_model), TRUE)
+  
+  # That no deprecation warnings are given.
+  familiar:::test_not_deprecated(good_model@messages$warning)
+  
+  # Test that no errors appear.
+  testthat::expect_equal(good_model@messages$error, NULL)
 })
 
 
@@ -272,6 +302,12 @@ testthat::test_that("Ranger random forest model can train on wide data", {
   
   # Valid predictions.
   testthat::expect_equal(familiar:::any_predictions_valid(familiar:::.predict(wide_model, wide_data), outcome_type=wide_data@outcome_type), TRUE)
+  
+  # Test that no deprecation warnings are given.
+  familiar:::test_not_deprecated(wide_model@messages$warning)
+  
+  # Test that no errors appear.
+  testthat::expect_equal(wide_model@messages$error, NULL)
 })
 
 
@@ -311,6 +347,12 @@ wide_model <- familiar:::test_train(data=wide_data,
 testthat::test_that("Ranger random forest model trained correctly", {
   # Model trained
   testthat::expect_equal(familiar:::model_is_trained(good_model), TRUE)
+  
+  # That no deprecation warnings are given.
+  familiar:::test_not_deprecated(good_model@messages$warning)
+  
+  # Test that no errors appear.
+  testthat::expect_equal(good_model@messages$error, NULL)
 })
 
 
@@ -326,8 +368,8 @@ testthat::test_that("Ranger random forest model has variable importance", {
   testthat::expect_equal(all(familiar:::get_feature_columns(good_data) %in% vimp_table$name), TRUE)
   
   # Expect that Petal length has rank 1 and petal width has rank 2.
-  testthat::expect_equal(vimp_table[rank == 1, ]$name, "Petal_Length")
-  testthat::expect_equal(vimp_table[rank == 2, ]$name, "Petal_Width")
+  testthat::expect_equal(vimp_table[rank == 1, ]$name %in% c("Petal_Length", "Petal_Width"), TRUE)
+  testthat::expect_equal(vimp_table[rank == 2, ]$name %in% c("Petal_Length", "Petal_Width"), TRUE)
 })
 
 
@@ -341,6 +383,12 @@ testthat::test_that("Ranger random forest model can train on wide data", {
   
   # Valid predictions.
   testthat::expect_equal(familiar:::any_predictions_valid(familiar:::.predict(wide_model, wide_data), outcome_type=wide_data@outcome_type), TRUE)
+  
+  # Test that no deprecation warnings are given.
+  familiar:::test_not_deprecated(wide_model@messages$warning)
+  
+  # Test that no errors appear.
+  testthat::expect_equal(wide_model@messages$error, NULL)
 })
 
 
@@ -388,6 +436,12 @@ testthat::test_that("Ranger random forest model trained correctly", {
   
   # Test that the model predicts hazard ratios
   testthat::expect_equal(familiar:::get_prediction_type(good_model, type="survival_probability"), "survival_probability")
+  
+  # That no deprecation warnings are given.
+  familiar:::test_not_deprecated(good_model@messages$warning)
+  
+  # Test that no errors appear.
+  testthat::expect_equal(good_model@messages$error, NULL)
 })
 
 
@@ -420,6 +474,12 @@ testthat::test_that("Ranger random forest model can train on wide data", {
   
   # Valid survival probability predictions can be made.
   testthat::expect_equal(familiar:::any_predictions_valid(familiar:::.predict(wide_model, wide_data, type="survival_probability", time=1000), outcome_type=wide_data@outcome_type), TRUE)
+  
+  # Test that no deprecation warnings are given.
+  familiar:::test_not_deprecated(wide_model@messages$warning)
+  
+  # Test that no errors appear.
+  testthat::expect_equal(wide_model@messages$error, NULL)
 })
 
 
