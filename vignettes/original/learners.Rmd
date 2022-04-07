@@ -772,18 +772,19 @@ Hyperparameter optimization may be configured using the tags/arguments in the ta
 | `optimisation_determine_vimp` | If `TRUE`, compute variable importance for each bootstrap. If `FALSE` use variable importance computed during the feature selection step. | `TRUE` |
 | `smbo_random_initialisation` | If `random` initial parameter sets are generated randomly from default ranges. If `fixed` or `fixed_subsample`, the initial parameter sets are based on a grid in parameter space. | `fixed_subsample` |
 | `smbo_n_random_sets` | Sets the number of hyperparameter sets drawn for initialisation. Ignored if `smbo_random_initialisation` is `fixed`. If `smbo_random_initialisation` is `fixed_subsample`, the number of selected hyperparameters may be lower. | `100` |
-| `max_smbo_iterations` | Maximum number of intensify iterations of the SMBO algorithm | `20` |
+| `max_smbo_iterations` | Maximum number of intensify iterations of the SMBO algorithm. | `20` |
 | `smbo_stop_convergent_iterations` | Number of subsequent convergent SMBO iterations required to stop hyperparameter optimisation early. | `3` |
-| `smbo_stop_tolerance` | Tolerance for recent optimisation scores to determine convergence | `0.01` |
+| `smbo_stop_tolerance` | Tolerance for recent optimisation scores to determine convergence. | between `0.01` and `0.001` |
+| `smbo_time_limit` | Time limit (in minutes) for the optimisation process. | `NULL` |
 | `smbo_step_bootstraps` | Number of bootstraps used within each step of an intensify iteration. | `3` |
 | `smbo_intensify_steps` | Number of intensify steps within each intensify iteration. | `5` |
 | `optimisation_metric` | The metric used for optimisation, e.g. `auc`. See the vignette on performance metrics for available options. More than one metric may be specified. | `auc_roc` (`binomial`, `multinomial`); `mse` (`continuous`); `msle` (`count`); and `concordance_index` (`survival`) |
 | `optimisation_function` | The optimisation function used (see [Assessing goodness of hyperparameter sets]). | `balanced` |
 | `hyperparameter_learner` | Learner used to predict optimisation scores for new hyperparameter sets (see [Predicting optimisation score for new hyperparameter sets]). | `gaussian_process` |
-| `acquisition_function` | The function used to quantify utility of hyperparameter sets (see [Acquisition functions for utility of hyperparameter sets]) | `expected_improvement` |
-| `exploration_method` | Method used to explore challenger hyperparameter sets (see [Exploring challenger sets]) | `successive_halving` |
-| `smbo_stochastic_reject_p_value` | The p-value level for stochastic pruning | `0.05` |
-| `parallel_hyperparameter_optimisation` | Enables parallel processing for hyperparameter optimisation. Ignored if `parallel=FALSE`. | `TRUE` |
+| `acquisition_function` | The function used to quantify utility of hyperparameter sets (see [Acquisition functions for utility of hyperparameter sets]). | `expected_improvement` |
+| `exploration_method` | Method used to explore challenger hyperparameter sets (see [Exploring challenger sets]). | `successive_halving` |
+| `smbo_stochastic_reject_p_value` | The p-value level for stochastic pruning. | `0.05` |
+| `parallel_hyperparameter_optimisation` | Enables parallel processing for hyperparameter optimisation. Ignored if `parallel=FALSE`. Can be `outer` to process multiple optimisation processes simultaneously. | `TRUE` |
 
 Table: Configuration options for hyperparameter optimisation.
 
