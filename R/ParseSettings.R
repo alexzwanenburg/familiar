@@ -2301,7 +2301,7 @@
 #'   (see the `optimisation_determine_vimp` parameter) does not count.
 #'
 #'   The default is `NULL`, indicating that there is no time limit for the
-#'   optimisation process.
+#'   optimisation process. The time limit cannot be less than 1 minute.
 #'   
 #' @param smbo_step_bootstraps (*optional*) The number of bootstraps taken from
 #'   the set of `optimisation_bootstraps` bootstraps as data for the initial
