@@ -137,7 +137,7 @@ setMethod("..train", signature(object="familiarCoxPH", data="dataObject"),
             if(all(!sapply(stats::coef(model), is.finite))){
               return(callNextMethod(object=..update_errors(object=object,
                                                            ..error_message_failed_model_coefficient_estimation())))
-            } 
+            }
             
             # Add model
             object@model <- model

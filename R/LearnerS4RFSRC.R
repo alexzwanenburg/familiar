@@ -264,11 +264,16 @@ setMethod("..train", signature(object="familiarRFSRC", data="dataObject"),
             # facilitate repeated measurements.
             data <- aggregate_data(data=data)
             
-            # Check if the training data is ok.
-            if(has_bad_training_data(object=object, data=data)) return(callNextMethod())
+            # Check if training data is ok.
+            if(reason <- has_bad_training_data(object=object, data=data)){
+              return(callNextMethod(object=.why_bad_training_data(object=object, reason=reason)))
+            } 
             
             # Check if hyperparameters are set.
-            if(is.null(object@hyperparameters)) return(callNextMethod())
+            if(is.null(object@hyperparameters)){
+              return(callNextMethod(object=..update_errors(object=object,
+                                                           ..error_message_no_optimised_hyperparameters_available())))
+            }
             
             # Check that required packages are loaded and installed.
             require_package(object, "train")
@@ -314,19 +319,28 @@ setMethod("..train", signature(object="familiarRFSRC", data="dataObject"),
               forest_function <- randomForestSRC::rfsrc
             }
             
-            # Generate random forest.
-            model <- forest_function(formula,
-                                     data = data@data,
-                                     ntree = 2^param$n_tree,
-                                     samptype = sample_type,
-                                     sampsize = sample_size,
-                                     mtry = max(c(1, ceiling(param$m_try * length(feature_columns)))),
-                                     nodesize = param$node_size,
-                                     nodedepth = param$tree_depth,
-                                     nsplit = param$n_split,
-                                     splitrule = as.character(param$split_rule),
-                                     case.wt = weights,
-                                     seed = forest_seed)
+            # Train the model.
+            model <- do.call_with_handlers(forest_function,
+                                           args=list(formula,
+                                                     "data" = data@data,
+                                                     "ntree" = 2^param$n_tree,
+                                                     "samptype" = sample_type,
+                                                     "sampsize" = sample_size,
+                                                     "mtry" = max(c(1, ceiling(param$m_try * length(feature_columns)))),
+                                                     "nodesize" = param$node_size,
+                                                     "nodedepth" = param$tree_depth,
+                                                     "nsplit" = param$n_split,
+                                                     "splitrule" = as.character(param$split_rule),
+                                                     "case.wt" = weights,
+                                                     "seed" = forest_seed))
+            
+            # Extract values.
+            object <- ..update_warnings(object=object, model$warning)
+            object <- ..update_errors(object=object, model$error)
+            model <- model$value
+            
+            # Check if the model trained at all.
+            if(!is.null(object@messages$error)) return(callNextMethod(object=object))
             
             # Add model to the object.
             object@model <- model
