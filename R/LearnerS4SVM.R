@@ -216,11 +216,16 @@ setMethod("get_default_hyperparameters", signature(object="familiarSVM"),
 setMethod("..train", signature(object="familiarSVM", data="dataObject"),
           function(object, data, ...){
             
-            # Check if the training data is ok.
-            if(has_bad_training_data(object=object, data=data)) return(callNextMethod())
+            # Check if training data is ok.
+            if(reason <- has_bad_training_data(object=object, data=data)){
+              return(callNextMethod(object=.why_bad_training_data(object=object, reason=reason)))
+            } 
             
             # Check if hyperparameters are set.
-            if(is.null(object@hyperparameters)) return(callNextMethod())
+            if(is.null(object@hyperparameters)){
+              return(callNextMethod(object=..update_errors(object=object,
+                                                           ..error_message_no_optimised_hyperparameters_available())))
+            }
             
             # Check that required packages are loaded and installed.
             require_package(object, "train")
@@ -273,23 +278,25 @@ setMethod("..train", signature(object="familiarSVM", data="dataObject"),
               svm_parameter_list$class.weights <- "inverse"
             }
             
-            # Fit the SVM model using e1071::svm. The quiet wrapper suppresses C
-            # output from the underlying libsvm library, notably iteration
-            # warnings.
-            quiet(model <- suppressWarnings(tryCatch(do.call(e1071::svm,
-                                                             args=c(list(formula,
-                                                                         "data"=data@data,
-                                                                         "type"=svm_type,
-                                                                         "probability"=fit_probability,
-                                                                         "fitted"=FALSE,
-                                                                         "cross"=0L),
-                                                                    svm_parameter_list)),
-                                                     error=identity)))
+            # Train the model.
+            model <- do.call_with_handlers(e1071::svm,
+                                           args=c(list(formula,
+                                                       "data"=data@data,
+                                                       "type"=svm_type,
+                                                       "probability"=fit_probability,
+                                                       "fitted"=FALSE,
+                                                       "cross"=0L),
+                                                  svm_parameter_list))
+            
+            # Extract values.
+            object <- ..update_warnings(object=object, model$warning)
+            object <- ..update_errors(object=object, model$error)
+            model <- model$value
             
             # Check if the model trained at all.
-            if(inherits(model, "error")) return(callNextMethod())
-            
-            if(is.null(model)) return(callNextMethod())
+            if(!is.null(object@messages$error)) return(callNextMethod(object=object))
+            if(is.null(model)) return(callNextMethod(object=..update_errors(object=object,
+                                                                            "SVM model returned as NULL.")))
             
             # Add model
             object@model <- model
