@@ -34,6 +34,8 @@
 
 -   Fixed some missing verbosity settings.
 
+-   Fixed a deprecation warning in the `xgboost` package for DART boosters, that appeared for versions 1.4.0 and newer.
+
 -   Trained models now contain information for features used only for missing data inference.
 
 # Version 1.0.2 (Dolorous Dragon)
