@@ -38,7 +38,7 @@ testthat::test_that("Cox model trained correctly", {
   # Test that the model predicts hazard ratios
   testthat::expect_equal(familiar:::get_prediction_type(good_model, type="survival_probability"), "survival_probability")
   
-  # That no deprecation warnings are given.
+  # Checkt that no deprecation warnings are given.
   familiar:::test_not_deprecated(good_model@messages$warning)
   
   # Test that no errors appear.

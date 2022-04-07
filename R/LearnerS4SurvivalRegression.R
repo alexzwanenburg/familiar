@@ -113,10 +113,15 @@ setMethod("..train", signature(object="familiarSurvRegr", data="dataObject"),
           function(object, data, ...){
             
             # Check if training data is ok.
-            if(has_bad_training_data(object=object, data=data)) return(callNextMethod())
+            if(reason <- has_bad_training_data(object=object, data=data)){
+              return(callNextMethod(object=.why_bad_training_data(object=object, reason=reason)))
+            } 
             
             # Check if hyperparameters are set.
-            if(is.null(object@hyperparameters)) return(callNextMethod())
+            if(is.null(object@hyperparameters)){
+              return(callNextMethod(object=..update_errors(object=object,
+                                                           ..error_message_no_optimised_hyperparameters_available())))
+            }
             
             # Check that required packages are loaded and installed.
             require_package(object, "train")
@@ -140,24 +145,31 @@ setMethod("..train", signature(object="familiarSurvRegr", data="dataObject"),
             # survival regression.
             model_control <- survival::survreg.control(iter.max=100)
             
-            # Generate model -- NOTE: survreg was directly imported to allow
-            # access to predict and summary functions that were not exported in
-            # survival.
-            quiet(model <- tryCatch(survreg(formula,
-                                            data=encoded_data$encoded_data@data,
-                                            control=model_control,
-                                            y=FALSE,
-                                            dist=as.character(object@hyperparameters$distribution)),
-                                    error=identity))
+            # Train the model.
+            model <- do.call_with_handlers(survival::survreg,
+                                           args=list(formula,
+                                                     "data"=encoded_data$encoded_data@data,
+                                                     "control"=model_control,
+                                                     "y"=FALSE,
+                                                     "dist"=as.character(object@hyperparameters$distribution)))
+            
+            # Extract values.
+            object <- ..update_warnings(object=object, model$warning)
+            object <- ..update_errors(object=object, model$error)
+            model <- model$value
             
             # Check if the model trained at all.
-            if(inherits(model, "error")) return(callNextMethod())
+            if(!is.null(object@messages$error)) return(callNextMethod(object=object))
             
             # Check if the model fitter converged in time.
-            if(model$iter >= 100) return(callNextMethod())
+            if(model$iter >= 100) return(callNextMethod(object=..update_errors(object=object,
+                                                                               "Model fitter ran out of iterations and did not converge.")))
             
             # Check if all coefficients could not be estimated.
-            if(all(!sapply(stats::coef(model), is.finite))) return(callNextMethod())
+            if(all(!sapply(stats::coef(model), is.finite))){
+              return(callNextMethod(object=..update_errors(object=object,
+                                                           ..error_message_failed_model_coefficient_estimation())))
+            }
             
             # Add model
             object@model <- model
@@ -388,6 +400,7 @@ setMethod("..set_calibration_info", signature(object="familiarSurvRegr"),
             
             return(object)
           })
+
 
 
 #####..set_vimp_parameters#####
