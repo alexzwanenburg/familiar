@@ -334,7 +334,7 @@
     }
     
     logger.message(paste0("Computing variable importance for ", length(bootstraps), " bootstraps."),
-                   indent=message_indent,
+                   indent=message_indent + 1L,
                    verbose=verbose)
     
     # Iterate over data.
