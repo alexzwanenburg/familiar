@@ -101,11 +101,11 @@ build_model <- function(run, hpo_list){
                        outcome_info = create_outcome_info(settings=settings))
   
   ############### Initialisation ##################################################################
-
+  
   # Get hyper-parameters
-  param_list <- .find_hyperparameters_for_run(run=run,
-                                              hpo_list=hpo_list,
-                                              as_list=TRUE)
+  hyperparameter_object <- .find_hyperparameters_for_run(run=run,
+                                                         hpo_list=hpo_list)
+  
   
   # Get feature ranks
   rank_table <- rank.get_feature_ranks(run=run,
@@ -126,8 +126,8 @@ build_model <- function(run, hpo_list){
                             learner = run$learner,
                             fs_method = run$fs_method,
                             run_table = run$run_table,
-                            hyperparameters = param_list,
-                            hyperparameter_data = NULL,
+                            hyperparameters = hyperparameter_object@hyperparameters,
+                            hyperparameter_data = hyperparameter_object@hyperparameter_data,
                             feature_info = feature_info_list,
                             outcome_info = .get_outcome_info(),
                             project_id = project_list$project_id,
