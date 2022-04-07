@@ -270,7 +270,7 @@
   if(optimisation_time < time_limit) return(TRUE)
   
   logger.message(paste0("Hyperparameter optimisation: Optimisation stopped because the optimisation process exceeded the allotted time: time spent: ",
-                        optimisation_time, " seconds; time allotted: ", time_limit, " seconds."),
+                        optimisation_time, " mins; time allotted: ", time_limit, " mins."),
                  indent=message_indent,
                  verbose=verbose)
   

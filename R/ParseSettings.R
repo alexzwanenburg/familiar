@@ -2295,7 +2295,7 @@
 #'   The default value depends on the number of samples (at the series level),
 #'   ranging from `0.01` for 100 or fewer samples, to `0.001` for 10000 or more
 #'   samples.
-#' @param smbo_time_limit (*optional*) Time limit (in seconds) for the
+#' @param smbo_time_limit (*optional*) Time limit (in minutes) for the
 #'   optimisation process. Optimisation is stopped after this limit is exceeded.
 #'   Time taken to determine variable importance for the optimisation process
 #'   (see the `optimisation_determine_vimp` parameter) does not count.
