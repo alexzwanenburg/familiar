@@ -62,11 +62,14 @@ extract_experimental_setup <- function(experimental_design,
 
 
 .get_experimental_design_section_table <- function(experimental_design){
-
+  
   # Determine the number of experimental levels
   # First we locate the position of parentheses
   left_parenthesis <- gregexpr(pattern="(", text=experimental_design, fixed=TRUE)[[1]]
   right_parenthesis <- gregexpr(pattern=")", text=experimental_design, fixed=TRUE)[[1]]
+  
+  if(left_parenthesis == -1) left_parenthesis <- integer(0)
+  if(right_parenthesis == -1) right_parenthesis <- integer(0)
   
   # Subsequently generate the corresponding experimental levels
   experiment_levels <- integer(nchar(experimental_design))
