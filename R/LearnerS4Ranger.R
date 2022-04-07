@@ -254,11 +254,16 @@ setMethod("..train", signature(object="familiarRanger", data="dataObject"),
             # repeated measurements.
             data <- aggregate_data(data=data)
             
-            # Check if the training data is ok.
-            if(has_bad_training_data(object=object, data=data)) return(callNextMethod())
+            # Check if training data is ok.
+            if(reason <- has_bad_training_data(object=object, data=data)){
+              return(callNextMethod(object=.why_bad_training_data(object=object, reason=reason)))
+            } 
             
             # Check if hyperparameters are set.
-            if(is.null(object@hyperparameters)) return(callNextMethod())
+            if(is.null(object@hyperparameters)){
+              return(callNextMethod(object=..update_errors(object=object,
+                                                           ..error_message_no_optimised_hyperparameters_available())))
+            }
             
             # Check that required packages are loaded and installed.
             require_package(object, "train")
@@ -291,40 +296,47 @@ setMethod("..train", signature(object="familiarRanger", data="dataObject"),
                                                beta=..compute_effective_number_of_samples_beta(object@hyperparameters$sample_weighting_beta),
                                                normalisation="average_one")
             
+            # Get the arguments which are shared between holdout and standard
+            # forests.
+            learner_arguments <- list(formula,
+                                      "data" = data@data,
+                                      "num.trees" = 2^param$n_tree,
+                                      "mtry" = max(c(1, ceiling(param$m_try * length(feature_columns)))),
+                                      "min.node.size" = param$node_size,
+                                      "max.depth" = param$tree_depth,
+                                      "alpha" = param$alpha,
+                                      "splitrule" = as.character(param$split_rule),
+                                      "probability" = fit_probability,
+                                      "num.threads" = 1L,
+                                      "verbose" = FALSE)
+            
             # Create random forest using ranger.
             if(param$fs_forest_type == "standard"){
               # Conventional random forest (used for model building and variable
               # importance estimations)
-              model <- ranger::ranger(formula,
-                                      data = data@data,
-                                      num.trees = 2^param$n_tree,
-                                      sample.fraction = param$sample_size,
-                                      mtry = max(c(1, ceiling(param$m_try * length(feature_columns)))),
-                                      min.node.size = param$node_size,
-                                      max.depth = param$tree_depth,
-                                      alpha = param$alpha,
-                                      case.weights = weights,
-                                      splitrule = as.character(param$split_rule),
-                                      importance = as.character(param$fs_vimp_method),
-                                      probability = fit_probability,
-                                      num.threads = 1,
-                                      verbose = FALSE)
+              model <- do.call_with_handlers(ranger::ranger,
+                                             args=c(learner_arguments,
+                                                    list("sample.fraction" = param$sample_size,
+                                                         "case.weights" = weights,
+                                                         "importance" = as.character(param$fs_vimp_method))))
               
             } else if(param$fs_forest_type == "holdout") {
               # Hold-out random forest (used only for variable importance
               # estimations).
-              model <- ranger::holdoutRF(formula,
-                                         data = data@data,
-                                         num.trees = 2^param$n_tree,
-                                         mtry = max(c(1, ceiling(param$m_try * length(feature_columns)))),
-                                         min.node.size = param$node_size,
-                                         max.depth = param$tree_depth,
-                                         alpha = param$alpha,
-                                         splitrule = as.character(param$split_rule),
-                                         probability = fit_probability,
-                                         num.threads = 1,
-                                         verbose = FALSE)
+              model <- do.call_with_handlers(ranger::holdoutRF,
+                                             args=learner_arguments)
+              
+            } else {
+              ..error_reached_unreachable_code(paste0("..train,familiarRanger: encountered unknown forest type: ", param$fs_forest_type))
             }
+            
+            # Extract values.
+            object <- ..update_warnings(object=object, model$warning)
+            object <- ..update_errors(object=object, model$error)
+            model <- model$value
+            
+            # Check if the model trained at all.
+            if(!is.null(object@messages$error)) return(callNextMethod(object=object))
             
             # Add model
             object@model <- model
