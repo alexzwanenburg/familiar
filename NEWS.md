@@ -1,3 +1,9 @@
+# Development
+
+## Minor changes
+
+-   Random forest-based variable importance methods now have variants that use the default values provided by the underlying algorithms. These can be recognised by the suffix `_default`. This is mainly done to avoid long hyperparameter optimisation times for such methods during feature selection.
+
 # Version 1.1.0 (Enchanting Earthworm)
 
 ## Major changes

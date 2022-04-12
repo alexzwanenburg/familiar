@@ -1,4 +1,5 @@
 familiar:::test_all_vimp_methods_available(familiar:::.get_available_ranger_vimp_methods(show_general=TRUE))
+familiar:::test_all_vimp_methods_available(familiar:::.get_available_ranger_default_vimp_methods(show_general=TRUE))
 
 # Don't perform any further tests on CRAN due to time of running the complete test.
 testthat::skip_on_cran()
@@ -34,6 +35,8 @@ familiar:::test_all_vimp_methods(familiar:::.get_available_ranger_vimp_methods(s
                                                                           "node_size"=5,
                                                                           "tree_depth"=5,
                                                                           "alpha"=0.1)))
+
+familiar:::test_all_vimp_methods(familiar:::.get_available_ranger_default_vimp_methods(show_general=FALSE))
 
 # Parallel test.
 familiar:::test_all_vimp_methods_parallel(familiar:::.get_available_ranger_vimp_methods(show_general=FALSE),

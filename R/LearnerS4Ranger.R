@@ -5,6 +5,8 @@ NULL
 setClass("familiarRanger",
          contains="familiarModel")
 
+setClass("familiarRangerDefault",
+         contains="familiarRanger")
 
 #####initialize#################################################################
 setMethod("initialize", signature(.Object="familiarRanger"),
@@ -20,13 +22,22 @@ setMethod("initialize", signature(.Object="familiarRanger"),
           })
 
 
-.get_available_ranger_learners <- function(show_general=TRUE) return("random_forest_ranger")
+.get_available_ranger_learners <- function(show_general=TRUE){
+  return("random_forest_ranger")
+} 
+
+.get_available_ranger_default_learners <- function(show_general=TRUE){
+  return("random_forest_ranger_default")
+} 
 
 .get_available_ranger_vimp_methods <- function(show_general=TRUE){
   return(c("random_forest_ranger_holdout_permutation", "random_forest_ranger_permutation",
            "random_forest_ranger_impurity"))
 }
 
+.get_available_ranger_default_vimp_methods <- function(show_general=TRUE){
+  return(paste0(.get_available_ranger_vimp_methods(show_general=show_general), "_default"))
+}
 
 #####is_available#####
 setMethod("is_available", signature(object="familiarRanger"),
@@ -38,7 +49,7 @@ setMethod("is_available", signature(object="familiarRanger"),
 
 
 
-#####get_default_hyperparameters#####
+##### get_default_hyperparameters (familiarRanger) -----------------------------
 setMethod("get_default_hyperparameters", signature(object="familiarRanger"),
           function(object, data=NULL, user_list=NULL, ...){
             
@@ -219,6 +230,66 @@ setMethod("get_default_hyperparameters", signature(object="familiarRanger"),
 
 
 
+##### get_default_hyperparameters (familiarRangerDefault) ----------------------
+setMethod("get_default_hyperparameters", signature(object="familiarRangerDefault"),
+          function(object, data=NULL, user_list=NULL, ...){
+            
+            # Initialise list and declare hyperparameter entries.
+            param <- list()
+            param$sign_size   <- list()
+            param$sample_weighting <- list()
+            param$sample_weighting_beta <- list()
+            
+            # The following hyperparameters are only used for feature selection.
+            param$fs_forest_type <- list()
+            param$fs_vimp_method <- list()
+            
+            # If dt is not provided, return the list with hyperparameter /names only.
+            if(is.null(data)) return(param)
+            
+            ###### Signature size ##############################################
+            param$sign_size <- .get_default_sign_size(data_obj=data)
+            
+            
+            ##### Sample weighting method ######################################
+            # Class imbalances may lead to learning majority classes. This can
+            # be partially mitigated by increasing weight of minority classes.
+            param$sample_weighting <- .get_default_sample_weighting_method(outcome_type=object@outcome_type)
+            
+            
+            ##### Effective number of samples beta #############################
+            # Specifies the beta parameter for effective number sample weighting
+            # method. See Cui et al. (2019).
+            param$sample_weighting_beta <- .get_default_sample_weighting_beta(method=c(param$sample_weighting$init_config,
+                                                                                       user_list$sample_weighting),
+                                                                              outcome_type=object@outcome_type)
+            
+            
+            ##### Feature selection forest type ################################
+            
+            # Enables the construction of holdout forests. A conventional forest
+            # is grown by default.
+            param$fs_forest_type <- .set_hyperparameter(default="standard",
+                                                        type="factor",
+                                                        range=c("standard", "holdout"),
+                                                        randomise=FALSE)
+            
+            
+            ##### Feature selection variable importance method #################
+            
+            # Enables the use of different variable importance methods. The
+            # permutation method is used by default.
+            param$fs_vimp_method <- .set_hyperparameter(default="permutation",
+                                                        type="factor",
+                                                        range=c("permutation", "impurity", "impurity_corrected"),
+                                                        randomise=FALSE)
+            
+            return(param)
+          })
+
+
+
+
 #####get_prediction_type#####
 setMethod("get_prediction_type", signature(object="familiarRanger"),
           function(object, type="default"){
@@ -297,27 +368,38 @@ setMethod("..train", signature(object="familiarRanger", data="dataObject"),
                                                normalisation="average_one")
             
             # Get the arguments which are shared between holdout and standard
-            # forests.
+            # forests. 
             learner_arguments <- list(formula,
                                       "data" = data@data,
-                                      "num.trees" = 2^param$n_tree,
-                                      "mtry" = max(c(1, ceiling(param$m_try * length(feature_columns)))),
-                                      "min.node.size" = param$node_size,
-                                      "max.depth" = param$tree_depth,
-                                      "alpha" = param$alpha,
-                                      "splitrule" = as.character(param$split_rule),
                                       "probability" = fit_probability,
                                       "num.threads" = 1L,
                                       "verbose" = FALSE)
+            
+            if(!is(object, "familiarRangerDefault")){
+              # Non-default random forests have more arguments.
+              learner_arguments <- c(learner_arguments,
+                                     list("num.trees" = 2^param$n_tree,
+                                          "mtry" = max(c(1, ceiling(param$m_try * length(feature_columns)))),
+                                          "min.node.size" = param$node_size,
+                                          "max.depth" = param$tree_depth,
+                                          "alpha" = param$alpha,
+                                          "splitrule" = as.character(param$split_rule)))
+            }
             
             # Create random forest using ranger.
             if(param$fs_forest_type == "standard"){
               # Conventional random forest (used for model building and variable
               # importance estimations)
+              
+              if(!is(object, "familiarRangerDefault")){
+                # Non-default random forests have more arguments.
+                learner_arguments <- c(learner_arguments,
+                                       list("sample.fraction" = param$sample_size))
+              }
+              
               model <- do.call_with_handlers(ranger::ranger,
                                              args=c(learner_arguments,
-                                                    list("sample.fraction" = param$sample_size,
-                                                         "case.weights" = weights,
+                                                    list("case.weights" = weights,
                                                          "importance" = as.character(param$fs_vimp_method))))
               
             } else if(param$fs_forest_type == "holdout") {
@@ -559,16 +641,16 @@ setMethod("..set_vimp_parameters", signature(object="familiarRanger"),
           function(object, method, ...){
             
             # Determine variable importance method
-            if(method %in% c("random_forest_ranger_holdout_permutation", "random_forest_ranger_permutation")){
+            if(startswith_any(method, prefix=c("random_forest_ranger_holdout_permutation", "random_forest_ranger_permutation"))){
               vimp_method <- "permutation"
-            } else if(method %in% c("random_forest_ranger_impurity")){
+            } else if(startswith_any(method, prefix=c("random_forest_ranger_impurity"))){
               vimp_method <- "impurity_corrected"
             }
             
             # Determine forest type
-            if(method %in% c("random_forest_ranger_holdout_permutation")){
+            if(startswith_any(method, prefix=c("random_forest_ranger_holdout_permutation"))){
               forest_type <- "holdout"
-            } else if(method %in% c("random_forest_ranger_permutation", "random_forest_ranger_impurity")){
+            } else if(startswith_any(method, prefix=c("random_forest_ranger_permutation", "random_forest_ranger_impurity"))){
               forest_type <- "standard"
             }
             

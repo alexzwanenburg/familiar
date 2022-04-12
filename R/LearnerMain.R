@@ -75,9 +75,17 @@ setMethod("promote_learner", signature(object="familiarModel"),
               # Random forests for survival, regression, and classification
               object <- methods::new("familiarRFSRC", object)
               
+            } else if(learner %in% .get_available_rfsrc_default_learners()){
+              # Random forests for survival, regression, and classification
+              object <- methods::new("familiarRFSRCDefault", object)
+              
             } else if(learner %in% .get_available_ranger_learners()){
               # Ranger random forests
               object <- methods::new("familiarRanger", object)
+            
+            } else if(learner %in% .get_available_ranger_default_learners()){
+              # Ranger random forests
+              object <- methods::new("familiarRangerDefault", object)
               
             } else if(learner %in% .get_available_mboost_tree_learners()){
               # Boosted regression trees

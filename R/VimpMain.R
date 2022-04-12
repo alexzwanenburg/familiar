@@ -109,13 +109,16 @@ setMethod("promote_vimp_method", signature(object="familiarVimpMethod"),
               # Promote to the correct subclass.
               object <- promote_learner(object)
                
-            } else if(method %in% .get_available_rfsrc_vimp_methods()){
+            } else if(method %in% .get_available_rfsrc_vimp_methods() ||
+                      method %in% .get_available_rfsrc_default_vimp_methods()){
               # Random forest variable importance methods.
               
               # Create a familiarModel and promote to the right class.
               object <- methods::new("familiarModel",
                                      fs_method = "none",
-                                     learner = "random_forest_rfsrc",
+                                     learner = ifelse(method %in% .get_available_rfsrc_vimp_methods(),
+                                                      "random_forest_rfsrc",
+                                                      "random_forest_rfsrc_default"),
                                      outcome_type = object@outcome_type,
                                      hyperparameters = object@hyperparameters,
                                      outcome_info = object@outcome_info,
@@ -130,13 +133,16 @@ setMethod("promote_vimp_method", signature(object="familiarVimpMethod"),
               # Set the variable importance parameters for the method.
               object <- ..set_vimp_parameters(object, method=method)
 
-            } else if(method %in% .get_available_ranger_vimp_methods()){
+            } else if(method %in% .get_available_ranger_vimp_methods() ||
+                      method %in% .get_available_ranger_default_vimp_methods()){
               # Ranger random forest variable importance methods.
               
               # Create a familiarModel and promote to the right class.
               object <- methods::new("familiarModel",
                                      fs_method = "none",
-                                     learner = "random_forest_ranger",
+                                     learner = ifelse(method %in% .get_available_ranger_vimp_methods(),
+                                                      "random_forest_ranger",
+                                                      "random_forest_ranger_default"),
                                      outcome_type = object@outcome_type,
                                      hyperparameters = object@hyperparameters,
                                      outcome_info = object@outcome_info,
