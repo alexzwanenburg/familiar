@@ -264,7 +264,7 @@
   if(is.null(time_limit)) return(TRUE)
   
   # Compute time spent optimising.
-  optimisation_time <- as.numeric(Sys.time() - start_time)
+  optimisation_time <- as.numeric(difftime(Sys.time(), start_time, units="mins"))
   
   # Check if there still is time left.
   if(optimisation_time < time_limit) return(TRUE)
