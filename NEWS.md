@@ -10,6 +10,8 @@
 
 -   Familiar model objects now correctly show that no novelty detector was trained with `novelty_detector="none"`.
 
+-   Fixed missing documentation for the `optimisation_function` configuration parameter.
+
 # Version 1.1.0 (Enchanting Earthworm)
 
 ## Major changes
