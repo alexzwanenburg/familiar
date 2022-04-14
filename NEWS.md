@@ -8,6 +8,8 @@
 
 -   Hyperparameter time limit and time taken are now always correctly parsed to minutes instead of seconds, minutes, or rarely, hours.
 
+-   Familiar model objects now correctly show that no novelty detector was trained with `novelty_detector="none"`.
+
 # Version 1.1.0 (Enchanting Earthworm)
 
 ## Major changes
