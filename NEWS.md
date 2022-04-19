@@ -1,4 +1,4 @@
-# Development
+# Version 1.1.1 (Flamboyant Flamingo)
 
 ## Minor changes
 
@@ -11,6 +11,8 @@
 -   Familiar model objects now correctly show that no novelty detector was trained with `novelty_detector="none"`.
 
 -   Fixed missing documentation for the `optimisation_function` configuration parameter.
+
+-   Confidence intervals in calibration plots are no longer cropped to the [0,1] range. Previously, the estimate itself was not cropped, whereas its confidence interval was.
 
 # Version 1.1.0 (Enchanting Earthworm)
 
