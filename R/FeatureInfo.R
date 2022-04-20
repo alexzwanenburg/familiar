@@ -50,21 +50,27 @@ create_feature_info <- function(data, signature=NULL, ...){
 }
 
 
+
 .get_feature_info_data <- function(data, file_paths, project_id, outcome_type){
   
   # Create path to the feature info file
-  feature_info_file <- .get_feature_info_file_name(file_paths=file_paths, project_id=project_id)
+  feature_info_file <- .get_feature_info_file_name(file_paths=file_paths,
+                                                   project_id=project_id)
   if(is.null(file_paths)){
     
     # Create, but do not store to disk.
     feature_info_list <- list()
-    feature_info_list[["generic"]] <- get_generic_feature_info(dt=data, outcome_type=outcome_type, descriptor=NULL)
-  
+    feature_info_list[["generic"]] <- .get_generic_feature_info(data=data,
+                                                                outcome_type=outcome_type,
+                                                                descriptor=NULL)
+    
   } else if(!file.exists(feature_info_file)){
     
     # Generate feature information
     feature_info_list <- list()
-    feature_info_list[["generic"]] <- get_generic_feature_info(dt=data, outcome_type=outcome_type, descriptor=NULL)
+    feature_info_list[["generic"]] <- .get_generic_feature_info(data=data, 
+                                                                outcome_type=outcome_type,
+                                                                descriptor=NULL)
     
     # Write to file
     saveRDS(feature_info_list, file=feature_info_file)
@@ -78,19 +84,22 @@ create_feature_info <- function(data, signature=NULL, ...){
 
 
 
-get_generic_feature_info <- function(dt, outcome_type, descriptor=NULL){
+.get_generic_feature_info <- function(data, outcome_type, descriptor=NULL){
   # Initialises feature_info objects
 
+  # Expect that data is a data.table.
+  if(is(data, "dataObject")) data <- data@data
+  
   # Identify feature columns
-  feature_columns   <- get_feature_columns(x=dt, outcome_type=outcome_type)
+  feature_columns   <- get_feature_columns(x=data, outcome_type=outcome_type)
   
   # Iterate over feature columns and create a list of feature_info objects
-  feature_info_list <- lapply(feature_columns, function(ii, dt, descriptor) {
+  feature_info_list <- lapply(feature_columns, function(ii, data, descriptor) {
     
     # Determine feature type
-    if(is.factor(dt[[ii]])){
+    if(is.factor(data[[ii]])){
       feature_type <- "factor"
-    } else if(is.numeric(dt[[ii]])){
+    } else if(is.numeric(data[[ii]])){
       feature_type <- "numeric"
     } else {
       feature_type <- "unknown"
@@ -104,8 +113,8 @@ get_generic_feature_info <- function(dt, outcome_type, descriptor=NULL){
     
     # Set factor levels for future reproducibility
     if(feature_type == "factor"){
-      feature_info@levels <- levels(dt[[ii]])
-      feature_info@ordered <- is.ordered(dt[[ii]])
+      feature_info@levels <- levels(data[[ii]])
+      feature_info@ordered <- is.ordered(data[[ii]])
     }
     
     # Mark "unknown" feature types for removal
@@ -116,7 +125,7 @@ get_generic_feature_info <- function(dt, outcome_type, descriptor=NULL){
     
     return(feature_info)
     
-  }, dt=dt, descriptor=descriptor)
+  }, data=data, descriptor=descriptor)
   
   # Set names in the list of featureInfo objects
   names(feature_info_list) <- feature_columns
