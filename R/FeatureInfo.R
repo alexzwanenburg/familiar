@@ -53,7 +53,7 @@ create_feature_info <- function(data, signature=NULL, ...){
 .get_feature_info_data <- function(data, file_paths, project_id, outcome_type){
   
   # Create path to the feature info file
-  feature_info_file <- .get_feature_info_from_file(file_paths=file_paths, project_id=project_id)
+  feature_info_file <- .get_feature_info_file_name(file_paths=file_paths, project_id=project_id)
   if(is.null(file_paths)){
     
     # Create, but do not store to disk.

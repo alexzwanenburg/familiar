@@ -1,4 +1,4 @@
-.get_feature_info_from_file <- function(file_paths, project_id){
+.get_feature_info_file_name <- function(file_paths, project_id){
   # Generate file name of pre-processing file
   file_name <- paste0(project_id, "_feature_info.RDS")
   
@@ -46,7 +46,7 @@ check_pre_processing <- function(cl,
   all_runs <- names(iteration_list)
   
   # Determine file name
-  feature_info_file <- .get_feature_info_from_file(file_paths=file_paths,
+  feature_info_file <- .get_feature_info_file_name(file_paths=file_paths,
                                                    project_id=project_id)
   
   # Iterate over runs
