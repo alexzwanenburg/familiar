@@ -74,7 +74,7 @@ run_evaluation <- function(cl,
   project_id <- project_list$project_id
   
   # Check which data object is required for performing model building
-  mb_data_id <- .get_process_step_data_identifier(project_list=project_list,
+  mb_data_id <- .get_process_step_data_identifier(project_info=project_list,
                                                   process_step="mb")
   
   # Get runs

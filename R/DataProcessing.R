@@ -92,14 +92,14 @@
 
 
 
-.get_process_step_data_identifier <- function(project_list, process_step){
+.get_process_step_data_identifier <- function(project_info, process_step){
   # Get the main data id for a step in the overall modelling process.
   
   # Suppress NOTES due to non-standard evaluation in data.table
   feat_sel <- model_building <- external_validation <- NULL
   
   # Load experiment data table
-  experiment_table <- project_list$experiment_setup
+  experiment_table <- project_info$experiment_setup
   
   if(process_step=="fs"){
     # Find row on where feature selection takes place and extract the main data

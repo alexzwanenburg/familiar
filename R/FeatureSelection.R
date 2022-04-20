@@ -6,7 +6,7 @@ run_feature_selection <- function(cl,
                                   verbose=TRUE){
 
   # Check which data object is required for performing feature selection.
-  fs_data_id <- .get_process_step_data_identifier(project_list=project_list,
+  fs_data_id <- .get_process_step_data_identifier(project_info=project_list,
                                                   process_step="fs")
   
   # Get feature selection methods that still need to be checked.
