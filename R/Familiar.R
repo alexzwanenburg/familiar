@@ -93,7 +93,7 @@ summon_familiar <- function(formula=NULL,
                             config=NULL,
                             config_id=1,
                             verbose=TRUE,
-                            stop_after="evaluation",
+                            .stop_after="evaluation",
                             ...){
   
   # Set options.
@@ -217,7 +217,7 @@ summon_familiar <- function(formula=NULL,
     
   ##### Basic feature information ----------------------------------------------
   
-  # Generate feature info
+  # Generate feature info, or load file.
   feature_info_list <- .get_feature_info_data(data=data,
                                               file_paths=file_paths,
                                               project_id=project_info$project_id,
@@ -277,6 +277,14 @@ summon_familiar <- function(formula=NULL,
   # the familiar environment prior to shutting down the socket server process.
   on.exit(.clean_familiar_environment(), add=TRUE)
   
+  ##### Pre-processing ---------------------------------------------------------
+  # Check if the process should be stopped at this point.
+  if(.stop_after %in% c("preprocessing")){
+    
+    
+  }
+  
+  
   
   ##### Variable importance ----------------------------------------------------
   
@@ -286,6 +294,12 @@ summon_familiar <- function(formula=NULL,
                         settings=settings,
                         file_paths=file_paths,
                         verbose=verbose)
+  
+  # Check if the process should be stopped at this point.
+  if(.stop_after %in% c("vimp")){
+    
+    
+  }
   
   
   ##### Training ---------------------------------------------------------------
@@ -297,6 +311,10 @@ summon_familiar <- function(formula=NULL,
                         file_paths=file_paths,
                         verbose=verbose)
   
+  # Check if the process should be stopped at this point.
+  if(.stop_after %in% c("training")){
+    
+  }
   
   
   ##### Explanation and evaluation ---------------------------------------------
