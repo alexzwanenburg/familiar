@@ -67,6 +67,7 @@
 #'   table indicated by `config` contains more than one set of configurations.
 #' @param verbose Indicates verbosity of the results. Default is TRUE, and all
 #'   messages and warnings are returned.
+#' @param .stop_after Variable for internal use.
 #'
 #' @inheritDotParams .parse_file_paths -config -verbose
 #' @inheritDotParams .parse_experiment_settings -config
@@ -92,6 +93,7 @@ summon_familiar <- function(formula=NULL,
                             config=NULL,
                             config_id=1,
                             verbose=TRUE,
+                            stop_after="evaluation",
                             ...){
   
   # Set options.

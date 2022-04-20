@@ -252,6 +252,7 @@ new_object <- familiar:::optimise_hyperparameters(object=object,
                                                   n_max_bootstraps=25L,
                                                   n_max_optimisation_steps=1L,
                                                   n_max_intensify_steps=4L,
+                                                  n_initial_bootstraps=2L,
                                                   n_intensify_step_bootstraps=5L,
                                                   n_random_sets=16L,
                                                   n_challengers=10L,
@@ -260,10 +261,11 @@ new_object <- familiar:::optimise_hyperparameters(object=object,
                                                   verbose=verbose)
 
 # Set expected range of rows. The lowest boundary occurs when all challengers
-# are rejected after one round, and only one new run is sampled. The upper boundary occurs when no challengers
-# are rejected at all and 5 new runs are sampled.
-expected_rows_lower <- (16 * 5 + 10 + 1) * 2  # initial + step 1 + incumbent
-expected_rows_upper <- (16 * 5 + 10 * 5 * 4 + 1 * 5 * 4) * 2  # initial + steps 1-4 + incumbent
+# are rejected after one round, and only one new run is sampled. The upper
+# boundary occurs when no challengers are rejected at all and 5 new runs are
+# sampled.
+expected_rows_lower <- (16 * 2 + 10 + 1) * 2  # initial + step 1 + incumbent
+expected_rows_upper <- (16 * 2 + 10 * 5 * 4 + 1 * 5 * 4) * 2  # initial + steps 1-4 + incumbent
 
 testthat::test_that("Test that \"stochastic_reject\" exploration method may prune any hyperparameter sets during intensification",{
   testthat::expect_lte(nrow(new_object@hyperparameter_data$score_table), expected_rows_upper)

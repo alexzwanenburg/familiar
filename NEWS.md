@@ -1,5 +1,9 @@
 # Development
 
+## Minor changes
+
+-   It is now possible to set the number of bootstraps that are initially explored for hyperparameter optimisation using the `smbo_initial_bootstraps` configuration parameter. The default value is `1`, indicating that the initial hyperparameter sets are initially evaluated on a single bootstrap.
+
 # Version 1.1.1 (Flamboyant Flamingo)
 
 ## Minor changes

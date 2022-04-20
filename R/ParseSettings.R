@@ -2303,9 +2303,16 @@
 #'   The default is `NULL`, indicating that there is no time limit for the
 #'   optimisation process. The time limit cannot be less than 1 minute.
 #'
+#' @param smbo_initial_bootstraps (*optional*) The number of bootstraps taken
+#'   from the set of `optimisation_bootstraps` as the bootstraps assessed
+#'   initially.
+#'
+#'   The default value is `1`. The value cannot be larger than
+#'   `optimisation_bootstraps`.
+#'
 #' @param smbo_step_bootstraps (*optional*) The number of bootstraps taken from
-#'   the set of `optimisation_bootstraps` bootstraps as data for the initial
-#'   SMBO step and the steps in each intensify iteration.
+#'   the set of `optimisation_bootstraps` bootstraps as the bootstraps assessed
+#'   during the steps of each intensify iteration.
 #'
 #'   The default value is `3`. The value cannot be larger than
 #'   `optimisation_bootstraps`.
@@ -2505,6 +2512,7 @@
                                                         smbo_stop_convergent_iterations=waiver(),
                                                         smbo_stop_tolerance=waiver(),
                                                         smbo_time_limit=waiver(),
+                                                        smbo_initial_bootstraps=waiver(),
                                                         smbo_step_bootstraps=waiver(),
                                                         smbo_intensify_steps=waiver(),
                                                         smbo_stochastic_reject_p_value=waiver(),
@@ -2552,18 +2560,6 @@
                                             optional=TRUE,
                                             default=TRUE)
   
-  ##### optimisation_bootstraps ################################################
-  # Maximum number of bootstraps for hyperparameter evaluation
-  settings$hpo_max_bootstraps <- .parse_arg(x_config=config$optimisation_bootstraps,
-                                            x_var=optimisation_bootstraps,
-                                            var_name="optimisation_bootstraps",
-                                            type="integer",
-                                            optional=TRUE,
-                                            default=20)
-  
-  .check_number_in_valid_range(x=settings$hpo_max_bootstraps,
-                               var_name="optimisation_bootstraps",
-                               range=c(10, Inf))
   
   ##### max_smbo_iterations ####################################################
   # Maximum number of SMBO iterations before stopping
@@ -2578,15 +2574,46 @@
                                var_name="max_smbo_iterations",
                                range=c(1, Inf))
   
+  
+  ##### optimisation_bootstraps ################################################
+  # Maximum number of bootstraps for hyperparameter evaluation
+  settings$hpo_max_bootstraps <- .parse_arg(x_config=config$optimisation_bootstraps,
+                                            x_var=optimisation_bootstraps,
+                                            var_name="optimisation_bootstraps",
+                                            type="integer",
+                                            optional=TRUE,
+                                            default=20)
+  
+  .check_number_in_valid_range(x=settings$hpo_max_bootstraps,
+                               var_name="optimisation_bootstraps",
+                               range=c(10, Inf))
+  
+
+  
+  ##### smbo_initial_bootstraps ################################################
+  # Number of bootstraps evaluated initially
+  settings$hpo_initial_bootstraps <- .parse_arg(x_config=config$smbo_initial_bootstraps,
+                                                x_var=smbo_initial_bootstraps,
+                                                var_name="smbo_initial_bootstraps",
+                                                type="integer",
+                                                optional=TRUE,
+                                                default=1L)
+  
+  .check_number_in_valid_range(x=settings$hpo_initial_bootstraps,
+                               var_name="smbo_initial_bootstraps",
+                               range=c(1, settings$hpo_max_bootstraps))
+  
+  
+  
   ##### smbo_step_bootstraps ###################################################
-  # Maximum number of bootstrap evaluated initially and during each intensify
+  # Maximum number of bootstrap evaluated each intensify
   # step of each SMBO iteration.
   settings$hpo_bootstraps <- .parse_arg(x_config=config$smbo_step_bootstraps,
                                         x_var=smbo_step_bootstraps,
                                         var_name="smbo_step_bootstraps",
                                         type="integer",
                                         optional=TRUE,
-                                        default=3)
+                                        default=3L)
   
   .check_number_in_valid_range(x=settings$hpo_bootstraps,
                                var_name="smbo_step_bootstraps",
