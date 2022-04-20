@@ -171,6 +171,9 @@ summon_familiar <- function(formula=NULL,
                                    event_indicator=settings$data$event_indicator,
                                    competing_risk_indicator=settings$data$competing_risk_indicator)
 
+  
+  ##### Experimental setup and settings ----------------------------------------
+  
   # Derive experimental design
   experiment_setup <- extract_experimental_setup(experimental_design=settings$data$exp_design,
                                                  file_dir=file_paths$iterations_dir,
@@ -210,6 +213,9 @@ summon_familiar <- function(formula=NULL,
                                                      data=data,
                                                      settings=settings)
   }
+
+    
+  ##### Basic feature information ----------------------------------------------
   
   # Generate feature info
   feature_info_list <- .get_feature_info_data(data=data,
@@ -217,6 +223,9 @@ summon_familiar <- function(formula=NULL,
                                               project_id=project_info$project_id,
                                               outcome_type=settings$data$outcome_type)
 
+  
+  ##### Backend and parallellisation -------------------------------------------
+  
   # Identify if an external cluster is provided, and required.
   if(settings$run$parallel){
     is_external_cluster <- inherits(cl, "cluster")
@@ -268,6 +277,9 @@ summon_familiar <- function(formula=NULL,
   # the familiar environment prior to shutting down the socket server process.
   on.exit(.clean_familiar_environment(), add=TRUE)
   
+  
+  ##### Variable importance ----------------------------------------------------
+  
   # Start feature selection
   run_feature_selection(cl=cl,
                         project_list=project_info,
@@ -275,12 +287,19 @@ summon_familiar <- function(formula=NULL,
                         file_paths=file_paths,
                         verbose=verbose)
   
+  
+  ##### Training ---------------------------------------------------------------
+  
   # Start model building
   run_model_development(cl=cl,
                         project_list=project_info,
                         settings=settings,
                         file_paths=file_paths,
                         verbose=verbose)
+  
+  
+  
+  ##### Explanation and evaluation ---------------------------------------------
   
   # Start evaluation
   run_evaluation(cl=cl,
