@@ -10,14 +10,6 @@ run_model_development <- function(cl,
   mb_data_id <- .get_process_step_data_identifier(project_info=project_list,
                                                   process_step="mb")
   
-  # Check whether pre-processing has been conducted
-  check_pre_processing(cl=cl,
-                       data_id=mb_data_id,
-                       file_paths=file_paths,
-                       project_id=project_list$project_id,
-                       message_indent=message_indent,
-                       verbose=verbose)
-
   # Get runs
   run_list <- .get_run_list(iteration_list=project_list$iter_list,
                             data_id=mb_data_id)

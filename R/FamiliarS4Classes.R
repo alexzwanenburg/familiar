@@ -801,6 +801,39 @@ setClass("featureInfo",
          )
 )
 
+
+#### featureInfoParameters -----------------------------------------------------
+
+#' Feature information parameters object.
+#'
+#' A featureInfo object contains information for a single feature. Some
+#' information, for example concerning clustering and transformation contains
+#' various parameters that allow for applying the data transformation correctly.
+#' These are stored in featureInfoParameters objects.
+#'
+#' @slot name Name of the feature, which by default is the column name of the
+#'   feature. Typically used to correctly assign the data.
+#' @slot complete Flags whether the parameters have been completely set.
+#' @slot familiar_version Version of the familiar package.
+#'
+#' @details featureInfoParameters is normally a parent class for specific
+#'   classes, such as featureInfoParametersTransformation.
+#'
+#' @export
+setClass("featureInfoParameters",
+         slots = list(
+           name = "character",
+           complete = "logical",
+           familiar_version = "ANY"
+         ),
+         prototype = list(
+           name = NA_character_,
+           complete = FALSE,
+           familiar_version = NULL
+         )
+)
+
+
 #### outcomeInfo ---------------------------------------------------------------
 
 #' Outcome information object.
