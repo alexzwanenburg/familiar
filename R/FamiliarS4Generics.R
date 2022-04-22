@@ -157,6 +157,12 @@ setGeneric("is_in_novelty", function(object, ...) standardGeneric("is_in_novelty
 
 setGeneric("update_removed_status", function(object, ...) standardGeneric("update_removed_status"))
 
+setGeneric("feature_info_complete", function(object, ...) standardGeneric("feature_info_complete"))
+
+setGeneric("add_feature_info_parameters", function(object, data, ...) standardGeneric("add_feature_info_parameters"))
+
+setGeneric("apply_feature_info_parameters", function(object, data, ...) standardGeneric("apply_feature_info_parameters"))
+
 
 ##### plotting methods #####
 setGeneric("plot_all", function(object, ...) standardGeneric("plot_all"))
