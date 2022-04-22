@@ -59,6 +59,11 @@
   # Set upper limit to Inf
   if(is.na(range[2])) range[2] <- Inf
   
+  # Check if x is numeric.
+  if(!is.numeric(x)){
+    ..error_type_not_valid(x, var_name, "numeric")
+  }
+  
   # Some internal checks that should never be triggered.
   if(length(x) != 1){
     ..error_reached_unreachable_code(".check_number_in_valid_range_x_not_length_1")
