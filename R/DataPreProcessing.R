@@ -9,6 +9,13 @@
 }
 
 
+
+.get_feature_info_list_name <- function(data_id, run_id){
+  return(paste0(data_id, ".", run_id))
+}
+
+
+
 .get_feature_info_list <- function(run){
   
   # Find pre-processing control element for the current run
