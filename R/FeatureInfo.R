@@ -336,18 +336,18 @@ add_required_features <- function(feature_info_list){
 
 
 # Add feature distribution data
-compute_feature_distribution_data <- function(cl, feature_info_list, data_obj){
+compute_feature_distribution_data <- function(cl, feature_info_list, data){
   
   
   # Identify the feature columns in the data
-  feature_columns <- get_feature_columns(x=data_obj)
+  feature_columns <- get_feature_columns(x=data)
   
   # Compute feature distributions
   updated_feature_info <- fam_mapply(cl=cl,
                                      assign=NULL,
                                      FUN=.compute_feature_distribution_data,
                                      object=feature_info_list[feature_columns],
-                                     x=data_obj@data[, mget(feature_columns)],
+                                     x=data@data[, mget(feature_columns)],
                                      progress_bar=FALSE,
                                      chopchop=TRUE)
 
@@ -396,16 +396,16 @@ compute_feature_distribution_data <- function(cl, feature_info_list, data_obj){
 
 
 
-find_invariant_features <- function(cl=NULL, feature_info_list, data_obj){
+find_invariant_features <- function(cl=NULL, feature_info_list, data){
   # Find features that are invariant. Such features are ill-behaved and should be removed.
   
   # Identify the feature columns in the data
-  feature_columns <- get_feature_columns(x=data_obj)
+  feature_columns <- get_feature_columns(x=data)
   
   # Shorthand.
   singular_features <- fam_sapply(cl=cl,
                                   assign=NULL,
-                                  X=data_obj@data[, mget(feature_columns)],
+                                  X=data@data[, mget(feature_columns)],
                                   FUN=is_singular_data,
                                   progress_bar=FALSE,
                                   chopchop=TRUE)
@@ -1564,6 +1564,52 @@ setMethod("show", signature(object="featureInfo"),
             if(length(cluster_str) > 0) cat(cluster_str)
           })
 
+
+
+##### feature_info_complete (feature info) -------------------------------------
+setMethod("feature_info_complete", signature(object="featureInfo"),
+          function(object, level="clustering"){
+            # Check if the feature is removed.
+            if(!is_available(object)) return(TRUE)
+            
+            if(level=="none") return(TRUE)
+            if(level=="signature") return(TRUE)
+            
+            if(!feature_info_complete(object@transformation_parameters)) return(FALSE)
+            
+            if(level=="transformation") return(TRUE)
+            
+            if(is.null(object@normalisation_parameters)) return(FALSE)
+            
+            if(level=="normalisation") return(TRUE)
+            
+            if(is.null(object@batch_normalisation_parameters)) return(FALSE)
+            
+            if(level=="batch_normalisation") return(TRUE)
+            
+            if(is.null(object@imputation_parameters)) return(FALSE)
+            
+            if(level=="imputation") return(TRUE)
+            
+            if(is.null(object@cluster_parameters)) return(FALSE)
+            
+            if(level=="clustering") return(TRUE)
+          })
+
+
+##### feature_info_complete (list) ---------------------------------------------
+setMethod("feature_info_complete", signature(object="list"),
+          function(object, level="clustering"){
+            return(all(sapply(object, feature_info_complete, level=level)))
+          })
+
+
+##### feature_info_complete (NULL) ---------------------------------------------
+setMethod("feature_info_complete", signature(object="NULL"),
+          function(object, level="clustering"){
+            # No feature information found.
+            return(FALSE)
+          })
 
 
 ##### feature_info_complete (featureInfoParameters) ----------------------------

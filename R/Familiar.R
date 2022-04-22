@@ -215,13 +215,13 @@ summon_familiar <- function(formula=NULL,
   }
 
     
-  ##### Basic feature information ----------------------------------------------
-  
-  # Generate feature info, or load file.
-  feature_info_list <- .get_feature_info_data(data=data,
-                                              file_paths=file_paths,
-                                              project_id=project_info$project_id,
-                                              outcome_type=settings$data$outcome_type)
+  # ##### Basic feature information ----------------------------------------------
+  # 
+  # # Generate feature info, or load file.
+  # feature_info_list <- .get_feature_info_data(data=data,
+  #                                             file_paths=file_paths,
+  #                                             project_id=project_info$project_id,
+  #                                             outcome_type=settings$data$outcome_type)
 
   
   ##### Backend and parallellisation -------------------------------------------
@@ -246,9 +246,9 @@ summon_familiar <- function(formula=NULL,
   .assign_data_to_backend(data=data,
                           backend_type=settings$run$backend_type,
                           server_port=settings$run$server_port)
-  .assign_feature_info_to_backend(feature_info_list=feature_info_list,
-                                  backend_type=settings$run$backend_type,
-                                  server_port=settings$run$server_port)
+  # .assign_feature_info_to_backend(feature_info_list=feature_info_list,
+  #                                 backend_type=settings$run$backend_type,
+  #                                 server_port=settings$run$server_port)
   .assign_parallel_options_to_global(is_external_cluster=is_external_cluster,
                                      restart_cluster=settings$run$restart_cluster,
                                      n_cores=settings$run$parallel_nr_cores,
@@ -278,10 +278,22 @@ summon_familiar <- function(formula=NULL,
   on.exit(.clean_familiar_environment(), add=TRUE)
   
   ##### Pre-processing ---------------------------------------------------------
+  feature_info <- NULL
+  
+  # Start pre-processing
+  feature_info_list <- run_preprocessing(cl=cl,
+                                         feature_info_list=feature_info,
+                                         project_info=project_info,
+                                         settings=settings,
+                                         file_paths=file_paths,
+                                         verbose=verbose)
+  
   # Check if the process should be stopped at this point.
   if(.stop_after %in% c("preprocessing")){
+    return(feature_info_list)
     
-    
+  } else {
+    rm(feature_info_list)
   }
   
   

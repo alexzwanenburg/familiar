@@ -1,3 +1,216 @@
+run_preprocessing <- function(cl,
+                              feature_info_list=NULL,
+                              project_info,
+                              settings,
+                              file_paths,
+                              message_indent=0L,
+                              verbose){
+  
+  # Suppress NOTES due to non-standard evaluation in data.table
+  data_id <- run_id <- list_name <- complete <- NULL
+  
+  # Determine how parallel processing takes place.
+  if(settings$prep$do_parallel %in% c("TRUE", "inner")){
+    # Parallel processing in inner function, i.e. within each data subset.
+    cl_inner <- cl
+    cl_outer <- NULL
+    
+  } else if(settings$prep$do_parallel %in% c("outer")){
+    # Parallel processing in outer loop, i.e. over all data subsets.
+    cl_inner <- NULL
+    cl_outer <- cl
+    
+    if(!is.null(cl_outer)) logger.message(paste0("\nPre-processing: Load-balanced parallel processing is done in the outer loop. ",
+                                                 "No progress can be displayed."),
+                                          indent=message_indent,
+                                          verbose=verbose)
+  } else {
+    # No parallel processing.
+    cl_inner <- cl_outer <- NULL
+  }
+  
+  # Check if a feature info list was already created. This will typically
+  # generate a generic feature info list when called from summon_familiar.
+  if(is.null(feature_info_list)) feature_info_list <- .get_feature_info_data(data=data,
+                                                                             file_paths=file_paths,
+                                                                             project_id=project_info$project_id,
+                                                                             outcome_type=settings$data$outcome_type)
+  
+  # TODO: Check if the generic contains all the required data -- particularly
+  # for externally provided feature information.
+  
+  # Create a list of runs for which pre-processing information should be
+  # obtained. First find the data ids over which should be iterated.
+  data_id <- c(.get_process_step_data_identifier(project_info=project_info,
+                                                 process_step="fs"),
+               .get_process_step_data_identifier(project_info=project_info,
+                                                 process_step="mb"))
+  
+  # Create a list of runs, with data_id and run_id.
+  run_list <- data.table::rbindlist(lapply(unique(data_id), function(data_id, project_info){
+    # Find the current data identifier for pre-processing. This may or may not
+    # be data_id.
+    pre_process_data_id <- .get_preprocessing_iteration_identifiers(run=.get_run_list(iteration_list=project_info$iter_list,
+                                                                                      data_id=data_id,
+                                                                                      run_id=1))$data
+    
+    # Find data and run ids.
+    iteration_list <- .get_run_list(iteration_list=project_info$iter_list,
+                                    data_id=pre_process_data_id)
+    
+    
+    # Iterate over the iteration list, extract the run-table and return it.
+    return(data.table::rbindlist(lapply(iteration_list, function(x) (tail(x$run_table, n=1)))))
+    
+  },
+  project_info=project_info))
+  
+  # Remove duplicates.
+  run_list <- unique(run_list)
+  
+  # Add list names and check for completeness.
+  run_list[, ":="("list_name"=.get_feature_info_list_name(data_id=data_id, run_id=run_id),
+                  "complete"=FALSE)]
+  
+  # Iterate over the runs and check which feature information lists are already
+  # fully complete.
+  run_list[, "complete":=feature_info_complete(feature_info_list[[list_name]]), by="list_name"]
+ 
+  # Get all runs which are not (fully) complete, and add some additional data.
+  run_list <- run_list[complete == FALSE, ]
+  
+  if(!is_empty(run_list)){
+    # Set preprocessing run identifier and total number of datasets.
+    run_list[, ":="("preprocessing_run_id"=.I, "n_preprocessing_runs"=nrow(run_list))]
+    
+    # Iterate over data subsets for which parameters have not yet been set.
+    new_feature_info_list <- fam_mapply_lb(cl=cl_outer,
+                                           assign="data",
+                                           FUN=.run_preprocessing,
+                                           progress_bar=!is.null(cl_outer),
+                                           run=split(run_list, by=c("preprocessing_run_id")),
+                                           MoreArgs=list("cl"=cl_inner,
+                                                         "feature_info_list"=feature_info_list,
+                                                         "project_info"=project_info,
+                                                         "settings"=settings,
+                                                         "message_indent"=message_indent,
+                                                         "verbose"=verbose & is.null(cl_outer)))
+    
+    # Set names of the new feature list.
+    names(new_feature_info_list) <- run_list$list_name
+    
+    # Update lists with feature information.
+    feature_info_list[run_list$list_name] <- new_feature_info_list 
+  }
+  
+  # Save to file, if necessary.
+  if(!is.null(file_paths)){
+    # Determine file name
+    feature_info_file <- .get_feature_info_file_name(file_paths=file_paths,
+                                                     project_id=project_info$project_id)
+    
+    # Write to file
+    saveRDS(feature_info_list, file=feature_info_file)
+  }
+  
+  # Attach the feature info file to the backend.
+  .assign_feature_info_to_backend(feature_info_list=feature_info_list)
+  
+  return(feature_info_list)
+}
+
+
+.run_preprocessing <- function(cl=NULL,
+                               run,
+                               feature_info_list,
+                               project_info,
+                               settings,
+                               message_indent,
+                               verbose){
+  
+  
+  logger.message(paste0("\nPre-processing: Starting preprocessing for run ",
+                        run$preprocessing_run_id, " of ",
+                        run$n_preprocessing_runs, "."),
+                 indent=message_indent,
+                 verbose=verbose)
+  
+  # Selected feature information list.
+  template_feature_info <- combine_feature_info_list(preferred=feature_info_list[[run$list_name]],
+                                                     custom=feature_info_list[["custom"]],
+                                                     generic=feature_info_list[["generic"]])
+  
+  # Find pre-processing parameters
+  feature_info_list <- determine_preprocessing_parameters(cl=cl,
+                                                          feature_info_list=template_feature_info,
+                                                          data_id=run$data_id,
+                                                          run_id=run$run_id,
+                                                          project_info=project_info,
+                                                          settings=settings,
+                                                          message_indent=message_indent+1L,
+                                                          verbose=verbose)
+  
+  return(feature_info_list)
+}
+
+
+
+
+determine_preprocessing_parameters <- function(cl=NULL,
+                                               feature_info_list,
+                                               data_id,
+                                               run_id,
+                                               project_info,
+                                               settings,
+                                               message_indent,
+                                               verbose){
+  
+  # Add workflow control info.
+  feature_info_list <- add_control_info(feature_info_list=feature_info_list,
+                                        data_id=data_id,
+                                        run_id=run_id)
+  
+  # Add signature feature info.
+  feature_info_list <- add_signature_info(feature_info_list=feature_info_list,
+                                          signature=settings$data$signature)
+  
+  # Add novelty feature info.
+  feature_info_list <- add_novelty_info(feature_info_list=feature_info_list,
+                                        novelty_features=settings$data$novelty_features)
+  
+  # Find the run list.
+  run_list <- .get_run_list(iteration_list=project_info$iter_list,
+                            data_id=data_id,
+                            run_id=run_id)
+  
+  # Select unique samples.
+  sample_identifiers <- .get_sample_identifiers(run=run_list,
+                                                train_or_validate="train")
+  sample_identifiers <- unique(sample_identifiers)
+  
+  # Find currently available features.
+  available_features <- get_available_features(feature_info_list=feature_info_list)
+  
+  # Create a dataObject.
+  data <- methods::new("dataObject",
+                       data = get_data_from_backend(sample_identifiers=sample_identifiers),
+                       preprocessing_level = "none",
+                       outcome_type = settings$data$outcome_type)
+  
+  # Remove unavailable features from the data object.
+  data <- filter_features(data=data,
+                          available_features=available_features)
+  
+  return(.determine_preprocessing_parameters(cl=cl,
+                                             data=data,
+                                             feature_info_list=feature_info_list,
+                                             settings=settings,
+                                             message_indent=message_indent,
+                                             verbose=verbose))
+}
+
+
+
 .get_feature_info_file_name <- function(file_paths, project_id){
   # Generate file name of pre-processing file
   file_name <- paste0(project_id, "_feature_info.RDS")
@@ -29,114 +242,6 @@
 }
 
 
-check_pre_processing <- function(cl,
-                                 data_id,
-                                 file_paths,
-                                 project_id,
-                                 message_indent=0L,
-                                 verbose=FALSE){
-
-  # Get the feature info list from the backend
-  feature_info_list <- get_feature_info_from_backend(data_id=waiver(),
-                                                     run_id=waiver())
-  
-  # Identify the data_id for pre-processing
-  pre_process_data_id <- .get_preprocessing_iteration_identifiers(run=.get_run_list(iteration_list=get_project_list()$iter_list,
-                                                                                    data_id=data_id,
-                                                                                    run_id=1))$data
-  
-  # Find the iteration list
-  iteration_list <- .get_run_list(iteration_list=get_project_list()$iter_list,
-                                  data_id=pre_process_data_id)
-  
-  # Determine all available runs
-  all_runs <- names(iteration_list)
-  
-  # Determine file name
-  feature_info_file <- .get_feature_info_file_name(file_paths=file_paths,
-                                                   project_id=project_id)
-  
-  # Iterate over runs
-  for(run_id in all_runs){
-    
-    # Define the name of the feature_info_list entry
-    list_name <- .get_feature_info_list_name(data_id=pre_process_data_id, run_id=run_id)
-    
-    # Determine if the pre-processing data has already been stored
-    if(!is.null(feature_info_list[[list_name]])) next()
-    
-    logger.message(paste0("\nPre-processing: Starting preprocessing for run ", run_id, " of ", length(all_runs), "."),
-                   indent=message_indent,
-                   verbose=verbose)
-    
-    # Find pre-processing parameters
-    feature_info_list[[list_name]] <- determine_pre_processing_parameters(cl=cl,
-                                                                          data_id=pre_process_data_id,
-                                                                          run_id=run_id,
-                                                                          message_indent=message_indent+1L,
-                                                                          verbose=verbose)
-
-    # Write to file
-    saveRDS(feature_info_list, file=feature_info_file)
-    
-    # Set to backend
-    .assign_feature_info_to_backend(feature_info_list=feature_info_list)
-  }
-}
-
-
-
-determine_pre_processing_parameters <- function(cl, data_id, run_id, message_indent=0L, verbose=TRUE){
-
-  # Get settings file
-  settings <- get_settings()
-    
-  # Get the generic feature information list
-  feature_info_list <- get_feature_info_from_backend()
-  
-  # Add workflow control info
-  feature_info_list <- add_control_info(feature_info_list=feature_info_list, data_id=data_id, run_id=run_id)
-  
-  # Add signature feature info
-  feature_info_list <- add_signature_info(feature_info_list=feature_info_list, signature=settings$data$signature)
-
-  # Add novelty feature info
-  feature_info_list <- add_novelty_info(feature_info_list=feature_info_list,
-                                        novelty_features=settings$data$novelty_features)
-  
-  # Find the run list
-  run_list <- .get_run_list(iteration_list=get_project_list()$iter_list,
-                            data_id=data_id,
-                            run_id=run_id)
-  
-  # Select unique samples
-  sample_identifiers <- .get_sample_identifiers(run=run_list,
-                                                train_or_validate="train")
-  sample_identifiers <- unique(sample_identifiers)
-  
-  # Find currently available features
-  available_features <- get_available_features(feature_info_list=feature_info_list)
-
-  # Create a dataObject
-  data <- methods::new("dataObject",
-                       data = get_data_from_backend(sample_identifiers=sample_identifiers),
-                       preprocessing_level = "none",
-                       outcome_type = settings$data$outcome_type)
-  
-  # Remove unavailable features from the data object.
-  data <- filter_features(data=data,
-                          available_features=available_features)
-  
-  # Unload cluster locally, if it is not required
-  if(!settings$prep$do_parallel) cl <- NULL 
-  
-  return(.determine_preprocessing_parameters(cl=cl,
-                                             data=data,
-                                             feature_info_list=feature_info_list,
-                                             settings=settings,
-                                             message_indent=message_indent,
-                                             verbose=verbose))
-}
 
 .determine_preprocessing_parameters <- function(cl=NULL,
                                                 data,
@@ -150,7 +255,7 @@ determine_pre_processing_parameters <- function(cl, data_id, run_id, message_ind
   if(!has_feature_data(data)) stop("The provided dataset does not contain any features.")
   
   
-  ##### Remove samples with missing outcome data #####
+  ##### Remove samples with missing outcome data -------------------------------
   n_samples_current <- data.table::uniqueN(data@data, by=get_id_columns(id_depth="sample"))
   logger.message(paste0("Pre-processing: ", n_samples_current, " samples were initially available."),
                  indent=message_indent,
@@ -170,7 +275,7 @@ determine_pre_processing_parameters <- function(cl, data_id, run_id, message_ind
                  verbose=verbose)
   
   
-  ##### Remove features with a large fraction of missing values #####
+  ##### Remove features with a large fraction of missing values ----------------
   n_features_current <- get_n_features(data)
   logger.message(paste0("Pre-processing: ", n_features_current, " features were initially available."),
                  indent=message_indent,
@@ -186,7 +291,8 @@ determine_pre_processing_parameters <- function(cl, data_id, run_id, message_ind
   available_features <- get_available_features(feature_info_list=feature_info_list)
   
   # Remove features with a high fraction of missing values
-  data <- filter_features(data=data, available_features=available_features)
+  data <- filter_features(data=data,
+                          available_features=available_features)
   if(!has_feature_data(data)) stop(paste0("The provided dataset lacks features with sufficient available values. ",
                                           "Please investigate missing values in the dataset or increase the missingness ",
                                           "threshold by increasing the feature_max_fraction_missing configuration parameter."))
@@ -201,10 +307,11 @@ determine_pre_processing_parameters <- function(cl, data_id, run_id, message_ind
   n_samples_current <- n_samples_remain
   
   
-  ##### Remove training samples with a large fraction of missing values #####
+  ##### Remove training samples with a large fraction of missing values --------
   
   # Remove samples with a large fraction of missing values
-  data <- filter_bad_samples(data=data, threshold=settings$prep$sample_max_fraction_missing)
+  data <- filter_bad_samples(data=data,
+                             threshold=settings$prep$sample_max_fraction_missing)
   if(is_empty(data)) stop(paste0("The provided dataset lacks samples with sufficient available feature values. ",
                                  "Please investigate missing values in the dataset or increase the missingness ",
                                  "threshold by increasing the sample_max_fraction_missing configuration parameter."))
@@ -223,11 +330,15 @@ determine_pre_processing_parameters <- function(cl, data_id, run_id, message_ind
   ##### Remove invariant features #####
   
   # Filter features that are invariant.
-  feature_info_list  <- find_invariant_features(cl=cl, feature_info_list=feature_info_list, data_obj=data)
+  feature_info_list  <- find_invariant_features(cl=cl,
+                                                feature_info_list=feature_info_list,
+                                                data=data)
+  # Find available features.
   available_features <- get_available_features(feature_info_list=feature_info_list)
   
   # Remove invariant features from the data
-  data <- filter_features(data=data, available_features=available_features)
+  data <- filter_features(data=data,
+                          available_features=available_features)
   if(!has_feature_data(data)) stop(paste0("Remaining features in the dataset only have a single value for all samples and cannot be used for training."))
   
   # Message number of features removed by the no-variance filter.
@@ -244,11 +355,13 @@ determine_pre_processing_parameters <- function(cl, data_id, run_id, message_ind
                  verbose=verbose)
     
   # Add feature distribution data
-  feature_info_list <- compute_feature_distribution_data(cl=cl, feature_info_list=feature_info_list, data_obj=data)
+  feature_info_list <- compute_feature_distribution_data(cl=cl,
+                                                         feature_info_list=feature_info_list,
+                                                         data=data)
   
   
   
-  ##### Transform features #####
+  ##### Transform features -----------------------------------------------------
   if(settings$prep$transform_method!="none"){
     logger.message("Pre-processing: Performing transformations to normalise feature value distributions.",
                    indent=message_indent,
@@ -258,8 +371,9 @@ determine_pre_processing_parameters <- function(cl, data_id, run_id, message_ind
   # Add transformation parameters to the feature information list
   feature_info_list <- add_transformation_parameters(cl=cl, feature_info_list=feature_info_list, data_obj=data, settings=settings)
   
-  # Apply transformation before normalisation
-  data <- transform_features(data=data, feature_info_list=feature_info_list)
+  # Apply transformation.
+  data <- transform_features(data=data,
+                             feature_info_list=feature_info_list)
   
   if(settings$prep$transform_method!="none"){
     logger.message("Pre-processing: Feature distributions have been transformed for normalisation.",
@@ -438,4 +552,95 @@ determine_pre_processing_parameters <- function(cl, data_id, run_id, message_ind
   
   # Return list of featureInfo objects
   return(feature_info_list)
+}
+
+
+combine_feature_info_list <- function(preferred=NULL,
+                                      custom=NULL,
+                                      generic=NULL){
+  
+  # Suppress NOTES due to non-standard evaluation in data.table
+  name <- present <- list_name <- complete <- NULL
+  
+  # Get all features.
+  feature_names <- c(names(preferred),
+                     names(custom),
+                     names(generic))
+  
+  # Identify which features appear where.
+  data <- mapply(FUN=function(x, x_name, feature_names){
+    
+    # Default dataset.
+    data <- data.table::data.table("list_name"=x_name,
+                                   "name"=feature_names,
+                                   "present"=FALSE,
+                                   "complete"=FALSE)
+    
+    # Mark feature names that are present in the current dataset.
+    data[name %in% names(x), "present":=TRUE]
+    
+    # Check whether data are present, are complete.
+    data[present==TRUE, "complete":=feature_info_complete(object=x[[name]]), by="name"]
+    
+    return(data)
+    
+  },
+  x=list("preferred"=preferred, "custom"=custom, "generic"=generic),
+  x_name=c("preferred", "custom", "generic"),
+  MoreArgs=list("feature_names"=feature_names),
+  SIMPLIFY=FALSE)
+  
+  # Combine list.
+  data <- data.table::rbindlist(data)
+  
+  # Start new feature list.
+  new_feature_list <- NULL
+  
+  # Preference to get features with complete information first from the
+  # preferred set.
+  selected_feature_names <- data[list_name == "preferred" & complete == TRUE]$name
+  
+  # Add to feature list and remove from set of features.
+  if(length(selected_feature_names) > 0){
+    new_feature_list <- c(new_feature_list, preferred[selected_feature_names])
+    feature_names <- setdiff(feature_names, selected_feature_names)
+  }
+  
+  # Then, preference to get complete information from the custom set.
+  selected_feature_names <- data[name %in% feature_names & list_name == "custom" & complete == TRUE, ]$name
+  
+  # Add to feature list and remove from set of features.
+  if(length(selected_feature_names) > 0){
+    new_feature_list <- c(new_feature_list, custom[selected_feature_names])
+    feature_names <- setdiff(feature_names, selected_feature_names)
+  }
+  
+  # Then, preference to get incomplete information first from the preferred set.
+  selected_feature_names <- data[name %in% feature_names & list_name == "preferred" & present == TRUE, ]$name
+  
+  # Add to feature list and remove from set of features.
+  if(length(selected_feature_names) > 0){
+    new_feature_list <- c(new_feature_list, preferred[selected_feature_names])
+    feature_names <- setdiff(feature_names, selected_feature_names)
+  }
+  
+  # Then, preference to get incomplete information first from the custom set.
+  selected_feature_names <- data[name %in% feature_names & list_name == "custom" & present == TRUE, ]$name
+  
+  # Add to feature list and remove from set of features.
+  if(length(selected_feature_names) > 0){
+    new_feature_list <- c(new_feature_list, custom[selected_feature_names])
+    feature_names <- setdiff(feature_names, selected_feature_names)
+  }
+  
+  # Then, preference to get incomplete information first from the generic set.
+  selected_feature_names <- data[name %in% feature_names & list_name == "generic" & present == TRUE, ]$name
+  
+  # Add to feature list and remove from set of features.
+  if(length(selected_feature_names) > 0){
+    new_feature_list <- c(new_feature_list, generic[selected_feature_names])
+    feature_names <- setdiff(feature_names, selected_feature_names)
+  }
+  
+  return(new_feature_list)
 }

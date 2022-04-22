@@ -14,14 +14,6 @@ run_feature_selection <- function(cl,
                                                          settings=settings,
                                                          file_paths=file_paths)
 
-  # Check whether pre-processing has been conducted.
-  check_pre_processing(cl=cl,
-                       data_id=fs_data_id,
-                       file_paths=file_paths,
-                       project_id=project_list$project_id,
-                       message_indent=message_indent,
-                       verbose=verbose)
-
   # Get runs
   run_list <- .get_run_list(iteration_list=project_list$iter_list,
                             data_id=fs_data_id)
