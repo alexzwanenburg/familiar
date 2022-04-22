@@ -1303,19 +1303,20 @@ setMethod("transform_features", signature(data="data.table"),
           function(data, feature_info_list, features, invert=FALSE){
             
             # Check if data is empty
-            if(is_empty(data)){
-              return(data)
-            }
+            if(is_empty(data)) return(data)
             
             # Apply transformations
             transformed_list <- lapply(features, function(ii, data, feature_info_list, invert){
               
-              x <- transformation.apply_transform(x=data[[ii]],
-                                                  trans_param=feature_info_list[[ii]]@transformation_parameters,
-                                                  invert=invert)
+              x <- apply_feature_info_parameters(object=feature_info_list[[ii]]@transformation_parameters,
+                                                 data=data[[ii]],
+                                                 invert=invert)
               
               return(x)
-            }, data=data, feature_info_list=feature_info_list, invert=invert)
+            },
+            data=data,
+            feature_info_list=feature_info_list,
+            invert=invert)
             
             # Update name of data in columns
             names(transformed_list) <- features

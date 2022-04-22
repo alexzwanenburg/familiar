@@ -368,8 +368,15 @@ determine_preprocessing_parameters <- function(cl=NULL,
                    verbose=verbose)
   }
   
+  # Add skeletons to the feature information list.
+  feature_info_list <- create_transformation_parameter_skeleton(feature_info_list=feature_info_list,
+                                                                transformation_method=settings$prep$transform_method)
+  
   # Add transformation parameters to the feature information list
-  feature_info_list <- add_transformation_parameters(cl=cl, feature_info_list=feature_info_list, data_obj=data, settings=settings)
+  feature_info_list <- add_transformation_parameters(cl=cl,
+                                                     feature_info_list=feature_info_list,
+                                                     data=data,
+                                                     verbose=verbose)
   
   # Apply transformation.
   data <- transform_features(data=data,
