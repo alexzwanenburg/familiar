@@ -149,6 +149,12 @@
              "Found the following unknown values:", paste_s(forbidden_values)))
 }
 
+
+..error_type_not_valid <- function(x, var_name, valid_type){
+  stop(paste0(var_name, " has type ", paste_s(class(x)), " whereas ", paste_s(valid_type), " was expected."))
+}
+
+
 ..error_ensemble_models_not_loaded <- function(){
   stop(paste("familiarModel objects were not loaded and attached the familiarEnsemble. Please use the load_models method to load the models."))
 }
