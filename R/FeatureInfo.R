@@ -1566,6 +1566,15 @@ setMethod("show", signature(object="featureInfo"),
 
 
 
+##### feature_info_complete (featureInfoParameters) ----------------------------
+setMethod("feature_info_complete", signature(object="featureInfoParameters"),
+          function(object, ...){
+            # Check the 'complete' attribute.
+            return(object@complete)
+          })
+
+
+
 #####is_in_signature#####
 setMethod("is_in_signature", signature(object="featureInfo"),
           function(object){
