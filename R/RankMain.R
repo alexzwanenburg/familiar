@@ -37,7 +37,7 @@ rank.get_vimp_table <- function(run, fs_method, proj_list, file_paths, decluster
     vimp_list <- lapply(vimp_list, function(list_elem) {
       
       # Obtain the list with featureInfo objects
-      feature_info_list <- get_feature_info_list(run=list_elem)
+      feature_info_list <- .get_feature_info_list(run=list_elem)
       
       # Decluster the vimp table
       vimp_table <- rank.decluster_vimp_table(vimp_table=list_elem$vimp,

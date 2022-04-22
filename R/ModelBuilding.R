@@ -118,7 +118,7 @@ build_model <- function(run, hpo_list){
   ############### Data preparation ################################################################
 
   # Load feature_info_list
-  feature_info_list <- get_feature_info_list(run=run)
+  feature_info_list <- .get_feature_info_list(run=run)
   
   # Create familiar model
   fam_model <- methods::new("familiarModel",

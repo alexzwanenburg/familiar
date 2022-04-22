@@ -9,7 +9,7 @@
 }
 
 
-get_feature_info_list <- function(run){
+.get_feature_info_list <- function(run){
   
   # Find pre-processing control element for the current run
   pre_proc_id_list <- .get_preprocessing_iteration_identifiers(run=run)

@@ -104,7 +104,7 @@ compute_variable_importance <- function(run, fs_method, hpo_list, proj_list, set
   ############## Variable importance calculation ##################################################
   
   # Load feature_info_list
-  feature_info_list <- get_feature_info_list(run=run)
+  feature_info_list <- .get_feature_info_list(run=run)
   
   # Create the variable importance method object or familiar model object to
   # compute variable importance with.

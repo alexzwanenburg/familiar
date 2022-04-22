@@ -1025,7 +1025,7 @@ setMethod("optimise_hyperparameters", signature(object="familiarModel", data="da
                                                                 settings,
                                                                 project_id){
   # Obtain feature information list.
-  feature_info_list <- get_feature_info_list(run=run)
+  feature_info_list <- .get_feature_info_list(run=run)
   
   if(is.null(learner)){
     
