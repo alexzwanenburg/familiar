@@ -241,6 +241,9 @@ setMethod("export_univariate_analysis_data", signature(object="familiarCollectio
                    export_collection=FALSE,
                    ...){
             
+            # Make sure the collection object is updated.
+            object <- update_object(object=object)
+            
             # Set default adjust method.
             if(is.waive(p_adjustment_method)) p_adjustment_method <- "fdr"
             if(is.null(p_adjustment_method)) p_adjustment_method <- "none"

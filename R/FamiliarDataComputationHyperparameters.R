@@ -256,6 +256,9 @@ setMethod("export_hyperparameters", signature(object="familiarCollection"),
                    export_collection=FALSE,
                    ...){
             
+            # Make sure the collection object is updated.
+            object <- update_object(object=object)
+            
             if(aggregate_results){
               subtype <- "summary"
               

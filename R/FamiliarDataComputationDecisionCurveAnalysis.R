@@ -640,6 +640,9 @@ setGeneric("export_decision_curve_analysis_data", function(object, dir_path=NULL
 setMethod("export_decision_curve_analysis_data", signature(object="familiarCollection"),
           function(object, dir_path=NULL, aggregate_results=TRUE, ...){
             
+            # Make sure the collection object is updated.
+            object <- update_object(object=object)
+            
             return(.export(x=object,
                            data_slot="decision_curve_data",
                            dir_path=dir_path,
