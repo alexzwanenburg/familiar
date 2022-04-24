@@ -7,6 +7,9 @@ NULL
 setMethod("show", signature(object="familiarData"),
           function(object){
             
+            # Make sure the data object is updated.
+            object <- update_object(object=object)
+            
             # Create an initial descriptor.
             data_str <- paste0("A dataset (", object@name, "; v", object@familiar_version, ")")
             

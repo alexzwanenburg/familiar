@@ -160,6 +160,10 @@ setMethod(".train_novelty_detector", signature(object="familiarModel", data="dat
 #####show (model)#####
 setMethod("show", signature(object="familiarModel"),
           function(object){
+            
+            # Make sure the model object is updated.
+            object <- update_object(object=object)
+            
             if(!model_is_trained(object)){
               cat(paste0("A ", object@learner, " model (class: ", class(object)[1],
                          ") that was not successfully trained (v", object@familiar_version, ").\n"))

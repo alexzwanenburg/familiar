@@ -532,6 +532,9 @@ setMethod("get_object_name", signature(object="familiarCollection"),
 setMethod("show", signature(object="familiarCollection"),
           function(object){
             
+            # Make sure the collection object is updated.
+            object <- update_object(object=object)
+            
             # Create an initial descriptor.
             cat(paste0("A collection of datasets (", object@name, "; v", object@familiar_version, "):\n"))
             lapply(object@data_sets, function(x) cat(paste0("  ", x, "\n")))

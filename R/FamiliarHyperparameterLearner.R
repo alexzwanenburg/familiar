@@ -138,6 +138,7 @@ setMethod("get_prediction_type", signature(object="familiarHyperparameterLearner
 ##### show (hyperparameter learner) --------------------------------------------
 setMethod("show", signature(object="familiarHyperparameterLearner"),
           function(object){
+            
             if(!model_is_trained(object)){
               cat(paste0("A ", object@learner, " model (class: ", class(object)[1],
                          ") for inferring hyperparameters of the ", object@target_learner, ". ",

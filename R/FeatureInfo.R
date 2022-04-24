@@ -1429,6 +1429,9 @@ trim_unused_features_from_list <- function(feature_info_list){
 setMethod("show", signature(object="featureInfo"),
           function(object){
             
+            # Make sure the model object is updated.
+            object <- update_object(object=object)
+            
             # Create basic feature string.
             feature_str <- .show_simple_feature_info(object=object)
 
