@@ -123,6 +123,7 @@ create_transformation_parameter_skeleton <- function(feature_info_list,
   # Pass to underlying function that constructs the skeleton.
   object <- ..create_transformation_parameter_skeleton(feature_name=feature_info@name,
                                                        feature_type=feature_info@feature_type,
+                                                       available=is_available(feature_info),
                                                        method=method,
                                                        lambda=lambda)
   
@@ -134,7 +135,11 @@ create_transformation_parameter_skeleton <- function(feature_info_list,
 
 
 
-..create_transformation_parameter_skeleton <- function(feature_name, feature_type="numeric", method, lambda=NULL){
+..create_transformation_parameter_skeleton <- function(feature_name,
+                                                       feature_type="numeric",
+                                                       available=TRUE,
+                                                       method,
+                                                       lambda=NULL){
   # This is the lowest level function for creation transformation parameter
   # skeletons.
   
@@ -142,6 +147,10 @@ create_transformation_parameter_skeleton <- function(feature_info_list,
   if(feature_type != "numeric"){
     object <- methods::new("featureInfoParametersTransformationNone",
                            reason="not a numeric feature")
+  
+  } else if(!available){
+    object <- methods::new("featureInfoParametersTransformationNone",
+                           reason="feature was omitted prior to transformation")
     
   } else if(method %in% .get_available_none_transformation_methods()){
     object <- methods::new("featureInfoParametersTransformationNone")
@@ -167,7 +176,7 @@ create_transformation_parameter_skeleton <- function(feature_info_list,
   }
   
   # Update the familiar version.
-  object <- .add_package_version(object=object)
+  object <- add_package_version(object=object)
   
   return(object)
 }
