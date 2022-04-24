@@ -123,6 +123,9 @@ create_feature_info <- function(data, signature=NULL, ...){
       feature_info@removed_unknown_type <- TRUE
     }
     
+    # Update the familiar version.
+    feature_info <- add_package_version(object=feature_info)
+    
     return(feature_info)
     
   }, data=data, descriptor=descriptor)
@@ -1670,4 +1673,13 @@ setMethod("update_removed_status", signature(object="featureInfo"),
             }
             
             return(object)
+          })
+
+
+##### add_package_version (feature info) ---------------------------------------
+setMethod("add_package_version", signature(object="featureInfo"),
+          function(object){
+            
+            # Set version of familiar
+            return(.add_package_version(object=object))
           })

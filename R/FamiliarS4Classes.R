@@ -739,6 +739,7 @@ setClass("dataObject",
 #' @slot imputation_parameters Details parameters or models for imputation of missing values.
 #' @slot cluster_parameters Details parameters for forming clusters with other features.
 #' @slot required_features Details features required for clustering or imputation.
+#' @slot familiar_version Version of the familiar package.
 #'
 #' @export
 
@@ -769,7 +770,8 @@ setClass("featureInfo",
            batch_normalisation_parameters = "ANY",
            imputation_parameters = "ANY",
            cluster_parameters = "ANY",
-           required_features = "ANY"
+           required_features = "ANY",
+           familiar_version = "ANY"
          ),
          prototype = list(
            name = NA_character_,
@@ -797,7 +799,8 @@ setClass("featureInfo",
            batch_normalisation_parameters = NULL,
            imputation_parameters = NULL,
            cluster_parameters = NULL,
-           required_features = NULL
+           required_features = NULL,
+           familiar_version = NULL
          )
 )
 
