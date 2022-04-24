@@ -481,6 +481,10 @@ setMethod("load_familiar_object", signature(object="ANY"),
             # Return the object if it is a familiar S4 class object that has already been loaded. Else throw an error.
             
             if(is_any(object, class2=c("familiarModel", "familiarEnsemble", "familiarData", "familiarCollection"))){
+              
+              # Make sure the S4 object is updated.
+              object <- update_object(object=object)
+              
               return(object)
               
             } else {
