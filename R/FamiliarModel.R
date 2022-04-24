@@ -302,6 +302,9 @@ setGeneric("summary")
 setMethod("summary", signature(object="familiarModel"),
           function(object, ...){
             
+            # Make sure the model object is updated.
+            object <- update_object(object=object)
+            
             if(!model_is_trained(object)){
               message("The model was not trained. A summary is not available.")
               return(invisible(NULL))
@@ -358,6 +361,9 @@ setGeneric("coef")
 setMethod("coef", signature(object="familiarModel"),
           function(object, ...){
             
+            # Make sure the model object is updated.
+            object <- update_object(object=object)
+            
             # No training, no coefficients.
             if(!model_is_trained(object)) return(NULL)
             
@@ -399,6 +405,9 @@ setGeneric("vcov")
 #' @rdname vcov-methods
 setMethod("vcov", signature(object="familiarModel"),
           function(object, ...){
+            
+            # Make sure the model object is updated.
+            object <- update_object(object=object)
             
             # No training, no variance-covariance matrix
             if(!model_is_trained(object)) return(NULL)
