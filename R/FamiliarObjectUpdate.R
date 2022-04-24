@@ -214,6 +214,27 @@ setMethod("update_object", signature(object="familiarCollection"),
           })
 
 
+
+##### update_object (familiarNoveltyDetector) ----------------------------------
+#'@rdname update_object-methods
+setMethod("update_object", signature(object="familiarNoveltyDetector"),
+          function(object, ...){
+            
+            # Update attached feature info objects.
+            feature_names <- names(object@feature_info)
+            if(length(feature_names) > 0){
+              object@feature_info <- lapply(object@feature_info, update_object)
+              names(object@feature_info) <- feature_names
+            }
+
+            if(!methods::validObject(object)) stop("Could not update the familiarNoveltyDetector object to the most recent definition.")
+            
+            # Update package version.
+            object <- add_package_version(object=object)
+          })
+
+
+
 ##### update_object (featureInfo) ----------------------------------------------
 #'@rdname update_object-methods
 setMethod("update_object", signature(object="featureInfo"),
@@ -239,3 +260,5 @@ setMethod("update_object", signature(object="featureInfo"),
             
             return(object)
           })
+
+
