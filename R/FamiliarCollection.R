@@ -10,6 +10,9 @@ setMethod(".set_labels", signature(x="familiarCollection"),
             # Suppress NOTES due to non-standard evaluation in data.table
             label <- NULL
             
+            # Make sure the collection object is updated.
+            x <- update_object(object=x)
+            
             # Read the slot
             label_table <- slot(x, upd_slot)
             
