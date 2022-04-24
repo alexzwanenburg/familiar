@@ -78,11 +78,27 @@ setMethod("update_object", signature(object="familiarModel"),
               # Remove learner_package and learner_version attributes.
               attr(object, "learner_package") <- NULL
               attr(object, "learner_version") <- NULL
+              
+              # Replace any novelty detector, since these are now proper
+              # classes.
+              methods::slot(object, "novelty_detector", check=FALSE) <- NULL
             }
             
             if(object@familiar_version < "1.1.0"){
               # Add placeholder messages attribute.
               attr(object, "messages") <- list()
+            }
+            
+            # Update attached feature info objects.
+            feature_names <- names(object@feature_info)
+            if(length(feature_names) > 0){
+              object@feature_info <- lapply(object@feature_info, update_object)
+              names(object@feature_info) <- feature_names
+            }
+            
+            # Update attached novelty detector
+            if(!is.null(object@novelty_detector)){
+              object@novelty_detector <- update_object(object@novelty_detector)
             }
             
             if(!methods::validObject(object)) stop("Could not update the familiarModel object to the most recent definition.")
@@ -123,6 +139,13 @@ setMethod("update_object", signature(object="familiarEnsemble"),
 
               # Remove is_anonymised.
               attr(object, "is_anonymised") <- NULL
+            }
+            
+            if(object@familiar_version < "1.2.0"){
+              # Update attached feature info objects.
+              feature_names <- names(object@feature_info)
+              object@feature_info <- lapply(object@feature_info, update_object)
+              names(object@feature_info) <- feature_names
             }
             
             if(!methods::validObject(object)) stop("Could not update the familiarEnsemble object to the most recent definition.")
