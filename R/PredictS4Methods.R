@@ -92,6 +92,7 @@ setMethod("predict", signature(object="familiarModel"),
                    stratification_method=NULL,
                    percentiles=NULL,
                    ...){
+            
             # Create ensemble.
             object <- as_familiar_ensemble(object=object)
             
@@ -128,6 +129,9 @@ setMethod("predict", signature(object="familiarEnsemble"),
             
             if(missing(newdata)) stop("newdata must be provided.")
             if(is_empty(newdata)) ..error_data_set_is_empty()
+            
+            # Make sure the ensemble model object is updated.
+            object <- update_object(object=object)
             
             # Parse newdata to data object
             data <- as_data_object(data=newdata,
@@ -169,6 +173,9 @@ setMethod("predict", signature(object="familiarNoveltyDetector"),
             
             if(missing(newdata)) stop("newdata must be provided.")
             if(is_empty(newdata)) ..error_data_set_is_empty()
+            
+            # Make sure the ensemble model object is updated.
+            object <- update_object(object=object)
             
             # Parse newdata to data object
             data <- as_data_object(data=newdata,
