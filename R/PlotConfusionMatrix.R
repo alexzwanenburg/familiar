@@ -174,6 +174,9 @@ setMethod("plot_confusion_matrix", signature(object="familiarCollection"),
             # Suppress NOTES due to non-standard evaluation in data.table
             observed_outcome <- expected_outcome <- count <- class_matches <- total_observed <- NULL
             
+            # Make sure the collection object is updated.
+            object <- update_object(object=object)
+            
             # Get input data.
             x <- export_confusion_matrix_data(object=object)
             

@@ -10,6 +10,9 @@ setMethod("plot_all", signature(object="familiarCollection"),
               dir_path <- encapsulate_path(dir_path)
             }
             
+            # Make sure the collection object is updated.
+            object <- update_object(object=object)
+            
             # Feature univariate p-values (horizontal bars)
             do.call(plot_univariate_importance,
                     args=c(list("object"=object,

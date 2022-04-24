@@ -241,6 +241,9 @@ setMethod("plot_univariate_importance", signature(object="familiarCollection"),
             # Suppress NOTES due to non-standard evaluation in data.table
             value <- .NATURAL <- NULL
             
+            # Make sure the collection object is updated.
+            object <- update_object(object=object)
+            
             ##### Check data ########################################
 
             # Get input data.

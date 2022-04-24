@@ -350,6 +350,9 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
             # Suppress NOTES due to non-standard evaluation in data.table
             .NATURAL <- NULL
             
+            # Make sure the collection object is updated.
+            object <- update_object(object=object)
+            
             # Get feature expression data
             feature_expression <- export_feature_expressions(object=object,
                                                              evaluation_time=evaluation_times)

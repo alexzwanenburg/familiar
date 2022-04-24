@@ -500,6 +500,8 @@ setMethod("plot_ice", signature(object="familiarCollection"),
             
             # Suppress NOTES due to non-standard evaluation in data.table
             
+            # Make sure the collection object is updated.
+            object <- update_object(object=object)
             
             # Get input data.
             ice_data <- export_ice_data(object=object,

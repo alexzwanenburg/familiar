@@ -214,6 +214,9 @@ setMethod("plot_permutation_variable_importance", signature(object="familiarColl
             # Suppress NOTES due to non-standard evaluation in data.table
             value <- ci_low <- ci_up <- NULL
             
+            # Make sure the collection object is updated.
+            object <- update_object(object=object)
+            
             ##### Check input arguments ########################################
             
             # Get input data.
