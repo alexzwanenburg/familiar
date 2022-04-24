@@ -181,6 +181,9 @@ setMethod(".get_labels", signature(x="familiarCollection"),
             # Suppress NOTES due to non-standard evaluation in data.table
             label_order <- NULL
             
+            # Make sure the collection object is updated.
+            x <- update_object(object=x)
+            
             # Determine if the slot has been set.
             if(is.null(slot(x, upd_slot))){
               x <- .construct_label_table(x=x, upd_slot=upd_slot)
