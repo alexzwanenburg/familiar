@@ -45,3 +45,12 @@ setMethod("apply_feature_info_parameters", signature(object="featureInfoParamete
             # Default behaviour is to return the data as is.
             return(data)
           })
+
+
+##### add_package_version (feature info parameters) ----------------------------
+setMethod("add_package_version", signature(object="featureInfoParameters"),
+          function(object){
+            
+            # Set version of familiar
+            return(.add_package_version(object=object))
+          })
