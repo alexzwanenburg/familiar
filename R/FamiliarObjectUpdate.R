@@ -212,3 +212,30 @@ setMethod("update_object", signature(object="familiarCollection"),
             
             return(object)
           })
+
+
+##### update_object (featureInfo) ----------------------------------------------
+#'@rdname update_object-methods
+setMethod("update_object", signature(object="featureInfo"),
+          function(object, ...){
+            
+            # Add a placeholder familiar version slot if necessary.
+            if(!methods::.hasSlot(object, "familiar_version")){
+              attr(object, "familiar_version") <- "0.0.0"
+            }
+            
+            if(object@familiar_version < "1.2.0"){
+              object@transformation_parameters <- ..create_transformation_parameter_skeleton(feature_name=object@name,
+                                                                                             feature_type=object@feature_type,
+                                                                                             available=is_available(object),
+                                                                                             method=object@transformation_parameters$transform_method,
+                                                                                             lambda=object@transformation_parameters$transform_lambda)
+            }
+            
+            if(!methods::validObject(object)) stop("Could not update the featureInfo object to the most recent definition.")
+            
+            # Update package version.
+            object <- add_package_version(object=object)
+            
+            return(object)
+          })

@@ -283,9 +283,9 @@ determine_preprocessing_parameters <- function(cl=NULL,
   
   # Determine the fraction of missing values
   feature_info_list <- add_missing_value_fractions(cl=cl,
-                                                    feature_info_list=feature_info_list,
-                                                    data=data,
-                                                    threshold=settings$prep$feature_max_fraction_missing)
+                                                   feature_info_list=feature_info_list,
+                                                   data=data,
+                                                   threshold=settings$prep$feature_max_fraction_missing)
   
   # Find features that are not missing too many values.
   available_features <- get_available_features(feature_info_list=feature_info_list)
