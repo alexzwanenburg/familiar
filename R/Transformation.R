@@ -193,7 +193,7 @@ add_transformation_parameters <- function(cl=NULL,
   feature_names <- get_feature_columns(x=data)
   
   # Sanity check.
-  if(!(setequal(feature_names, names(feature_info_list)))){
+  if(!(setequal(feature_names, get_available_features(feature_info_list=feature_info_list)))){
     ..error_reached_unreachable_code("add_transformation_parameters: features in data and the feature info list are expect to be the same, but were not.")
   }
   
