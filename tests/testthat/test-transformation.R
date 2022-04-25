@@ -431,3 +431,90 @@ for(n_numeric_features in c(4, 3, 2, 1, 0)){
                         })
   }
 }
+
+##### Mix of methods -----------------------------------------------------------
+
+data <- familiar:::test_create_synthetic_series_data(outcome_type=outcome_type,
+                                                     n_numeric=4)
+
+testthat::test_that(paste0("Transformation is correctly performed when mixing transformation methods."),
+                    {
+                      # Make a copy of the data.
+                      data_copy <- data.table::copy(data)
+                      
+                      # Create a list of featureInfo objects.
+                      feature_info_list <- familiar:::.get_feature_info_data(data=data_copy@data,
+                                                                             file_paths=NULL,
+                                                                             project_id=character(),
+                                                                             outcome_type=outcome_type)[[1]]
+                      
+                      # Add skeletons for features 1 and 2.
+                      feature_info_list <- familiar:::create_transformation_parameter_skeleton(feature_info_list=feature_info_list,
+                                                                                               transformation_method="box_cox",
+                                                                                               feature_names=c("feature_1", "feature_2"))
+                      
+                      # Check that this only updates features 1 and 2.
+                      testthat::expect_equal(is(feature_info_list$feature_1@transformation_parameters,
+                                                "featureInfoParametersTransformationBoxCox"),
+                                             TRUE)
+                      testthat::expect_equal(is(feature_info_list$feature_2@transformation_parameters,
+                                                "featureInfoParametersTransformationBoxCox"),
+                                             TRUE)
+                      testthat::expect_equal(is.null(feature_info_list$feature_3@transformation_parameters), TRUE)
+                      testthat::expect_equal(is.null(feature_info_list$feature_4@transformation_parameters), TRUE)
+                      
+                      # Add skeleton for feature 3.
+                      feature_info_list <- familiar:::create_transformation_parameter_skeleton(feature_info_list=feature_info_list,
+                                                                                               transformation_method="yeo_johnson",
+                                                                                               feature_names=c("feature_3"))
+                      
+                      # Check that this only updates feature 3.
+                      testthat::expect_equal(is(feature_info_list$feature_1@transformation_parameters,
+                                                "featureInfoParametersTransformationBoxCox"),
+                                             TRUE)
+                      testthat::expect_equal(is(feature_info_list$feature_2@transformation_parameters,
+                                                "featureInfoParametersTransformationBoxCox"),
+                                             TRUE)
+                      testthat::expect_equal(is(feature_info_list$feature_3@transformation_parameters,
+                                                "featureInfoParametersTransformationYeoJohnson"),
+                                             TRUE)
+                      testthat::expect_equal(is.null(feature_info_list$feature_4@transformation_parameters), TRUE)
+                      
+                      # Add skeletons for feature 4.
+                      feature_info_list <- familiar:::create_transformation_parameter_skeleton(feature_info_list=feature_info_list,
+                                                                                               transformation_method="none",
+                                                                                               feature_names=c("feature_4"))
+                      # Check that this only updates feature 4.
+                      testthat::expect_equal(is(feature_info_list$feature_1@transformation_parameters,
+                                                "featureInfoParametersTransformationBoxCox"),
+                                             TRUE)
+                      testthat::expect_equal(is(feature_info_list$feature_2@transformation_parameters,
+                                                "featureInfoParametersTransformationBoxCox"),
+                                             TRUE)
+                      testthat::expect_equal(is(feature_info_list$feature_3@transformation_parameters,
+                                                "featureInfoParametersTransformationYeoJohnson"),
+                                             TRUE)
+                      testthat::expect_equal(is(feature_info_list$feature_4@transformation_parameters,
+                                                "featureInfoParametersTransformationNone"),
+                                             TRUE)
+                      
+                      # Update the feature info list.
+                      feature_info_list <- familiar:::add_transformation_parameters(feature_info_list=feature_info_list,
+                                                                                    data=data_copy)
+                      
+                      # Perform the transformation.
+                      data_copy <- familiar:::transform_features(data=data_copy,
+                                                                 feature_info_list=feature_info_list)
+                      
+                      # Assert that inverting the transformation produces the original dataset.
+                      data_restored <- familiar:::transform_features(data=data_copy,
+                                                                     feature_info_list=feature_info_list,
+                                                                     invert=TRUE)
+                      
+                      # Iterate over features and compare. They should be equal
+                      for(feature in familiar:::get_feature_columns(data_restored)){
+                        # Expect that values are similar to a tolerance.
+                        testthat::expect_equal(data_restored@data[[feature]], data@data[[feature]])
+                      }
+                      
+                    })
