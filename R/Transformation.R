@@ -252,7 +252,7 @@ setMethod("add_feature_info_parameters", signature(object="featureInfoParameters
                    data,
                    lambda=NULL,
                    ...) {
-            browser()
+            
             if(is.numeric(lambda)){
               if(is.finite(lambda)){
                 # Lambda is numeric, and not NA. This is typical when lambda is set
@@ -318,7 +318,7 @@ setMethod("add_feature_info_parameters", signature(object="featureInfoParameters
             # This method is targeted in when directly determining the
             # transformation parameters. It is usually called from the child
             # functions.
-            browser()
+            
             # Check if all required parameters have been set.
             if(feature_info_complete(object)) return(object)
             
@@ -628,4 +628,65 @@ setMethod("apply_feature_info_parameters", signature(object="featureInfoParamete
   llf <- (lambda - 1.0) * sum(sign(x) * log1p(abs(x))) - n /2.0 * log(sigma_hat_squared)
   
   return(llf)
+}
+
+
+
+
+..collect_and_aggregate_transformation_info <- function(feature_info_list, instance_mask, feature_name){
+  # Aggregate transformation parameters. This function exists so that it can be
+  # tested as part of a unit test.
+  
+  # Suppress NOTES due to non-standard evaluation in data.table
+  n <- NULL
+  
+  if(!any(instance_mask)){
+    return(list("parameters"=..create_transformation_parameter_skeleton(feature_name=feature_name,
+                                                                        method="none"),
+                "instance_mask"=instance_mask))
+  }
+  
+  # Check the class of the transformation objects.
+  object_class <- sapply(feature_info_list, function(x)(class(x@transformation_parameters)[1]))
+  
+  # Determine if there are any objects that are not NULL or
+  # featureInfoParametersTransformationNone.
+  if(all(object_class[instance_mask] %in% c("NULL", "featureInfoParametersTransformationNone"))){
+    return(list("parameters"=..create_transformation_parameter_skeleton(feature_name=feature_name,
+                                                                        method="none"),
+                "instance_mask"=instance_mask))
+  }
+  
+  # For the remaining objects, check which class occurs most.
+  class_table <- data.table::data.table("class"=object_class[instance_mask])[, list("n"=.N), by="class"]
+  
+  # Drop NULL and none transformations.
+  class_table <- class_table[!class %in% c("NULL", "featureInfoParametersTransformationNone")]
+  
+  # Select the object that occurs most often.
+  most_common_class <- class_table[n==max(class_table$n), ]$class[1]
+  
+  # Update the instance mask.
+  instance_mask <- instance_mask & object_class == most_common_class
+  
+  if(most_common_class %in% c("featureInfoParametersTransformationBoxCox", "featureInfoParametersTransformationYeoJohnson")){
+    # Aggregate lambda values, and select modal value.
+    all_lambda <- sapply(feature_info_list[instance_mask], function(x) (x@transformation_parameters@lambda))
+    selected_lambda <- get_mode(all_lambda)
+    
+    # Identify the method for the selected lambda value.
+    selected_method <- sapply(feature_info_list[instance_mask], function(x) (x@transformation_parameters@method))
+    selected_method <- selected_method[all_lambda == selected_lambda][1]
+    
+    # Update the instance mask to include any close lambda values.
+    instance_mask[instance_mask] <- all_lambda >= selected_lambda - 0.1 & all_lambda <= selected_lambda + 0.1
+    
+  } else {
+    ..error_reached_unreachable_code()
+  }
+  
+  return(list("parameters"=..create_transformation_parameter_skeleton(feature_name=feature_name,
+                                                                      method=selected_method,
+                                                                      lambda=selected_lambda),
+              "instance_mask"=instance_mask))
 }

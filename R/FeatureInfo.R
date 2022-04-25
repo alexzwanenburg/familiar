@@ -1071,17 +1071,22 @@ trim_unused_features_from_list <- function(feature_info_list){
     feature_info@distribution <- distr_list
   }
   
+  # Determine if instances of the feature were removed.
+  instance_mask <- sapply(feature_info_list, is_available)
+  
   # Extract transformation parameter data.
-  transformation_parameter_data <- ..collect_and_aggregate_transformation_info(feature_info_list=feature_info_list)
+  transformation_parameter_data <- ..collect_and_aggregate_transformation_info(feature_info_list=feature_info_list,
+                                                                               instance_mask=instance_mask,
+                                                                               feature_name=feature)
   
   # Set the aggregated transformation parameters.
   feature_info@transformation_parameters <- transformation_parameter_data$parameters
   
-  # Apply the mask to select only valid instances.
-  feature_info_list <- feature_info_list[transformation_parameter_data$instance_mask]
   
   if(stop_at == "transformation") return(feature_info)
   
+  # # Apply the mask to select only valid instances.
+  # feature_info_list <- feature_info_list[transformation_parameter_data$instance_mask]
   
   # Extract normalisation parameter data.
   normalisation_parameter_data <- ..collect_and_aggregate_normalisation_info(feature_info_list=feature_info_list)
@@ -1128,83 +1133,6 @@ trim_unused_features_from_list <- function(feature_info_list){
 }
 
 
-..collect_and_aggregate_transformation_info <- function(feature_info_list){
-  # Aggregate transformation parameters. This function exists so that it can be
-  # tested as part of a unit test.
-  
-  # Suppress NOTES due to non-standard evaluation in data.table
-  is_valid <- transform_method <- transform_lambda <- NULL
-  
-  # Extract all transformation parameters and aggregate to a table.
-  transformation_parameters <- lapply(feature_info_list, function(current_feature_info) data.table::as.data.table(current_feature_info@transformation_parameters))
-  transformation_parameters <- data.table::rbindlist(transformation_parameters)
-  
-  if(all(transformation_parameters$transform_method == "none")){
-    # If all transformation methods across the feature instances are none, none
-    # of the parameters is valid.
-    transformation_parameters[, "is_valid":=FALSE]
-    
-    # Set default parameters.
-    transformation_parameter_list <- list("transform_method" = "none",
-                                          "transform_lambda" = NA_real_)
-    
-  } else {
-    # This means that are some methods that are not "none".
-    
-    # Set the is_valid flag for all entries that have a transformation method
-    # other than "none".
-    transformation_parameters[, "is_valid":=transform_method != "none"]
-    
-    if(all(is.na(transformation_parameters[is_valid == TRUE]$transform_lambda))){
-      # Mark all instances as invalid.
-      transformation_parameters[is.na(transform_lambda), "is_valid":=FALSE]
-      
-      # Check if all lambda's for valid transformations are NA.
-      transformation_parameter_list <- list("transform_method" = "none",
-                                            "transform_lambda" = NA_real_)
-      
-    } else {
-      # Mark those instances with NA lambda as invalid.
-      transformation_parameters[is.na(transform_lambda), "is_valid":=FALSE]
-      
-      # Get the most common transformation method.
-      selected_transformation_method <- get_mode(transformation_parameters[is_valid == TRUE]$transform_method)
-      
-      # Set all instances with transformation methods that are not equal to the
-      # selected method to invalid.
-      transformation_parameters[transform_method != selected_transformation_method, "is_valid":=FALSE]
-      
-      # From the remaining, select the median lambda.
-      remaining_lambda <- transformation_parameters[is_valid == TRUE,]$transform_lambda
-      selected_lambda <- remaining_lambda[which.min(abs(remaining_lambda - stats::median(remaining_lambda)))]
-      
-      # Set instances with a lambda other than the selected lambda (with a small
-      # tolerance) to invalid.
-      transformation_parameters[!data.table::between(selected_lambda,
-                                                     lower=selected_lambda-0.1,
-                                                     upper=selected_lambda+0.1,
-                                                     incbounds=TRUE), "is_valid":=FALSE]
-      
-      # Set the transformation parameter.
-      transformation_parameter_list <- list("transform_method" = selected_transformation_method,
-                                            "transform_lambda" = selected_lambda)
-    }
-  }
-  
-  # Generate the mask for identifying instances of the feature that have the
-  # selected transformation parameter.
-  if(any(transformation_parameters$is_valid)){
-    valid_instance_mask <- transformation_parameters$is_valid
-    
-  } else {
-    # If all are invalid, transformation is not performed, and all instances
-    # should be kept.
-    valid_instance_mask <- rep_len(TRUE, length.out=length(feature_info_list))
-  }
-  
-  return(list("parameters"=transformation_parameter_list,
-              "instance_mask"=valid_instance_mask))
-}
 
 
 ..collect_and_aggregate_normalisation_info <- function(feature_info_list){
@@ -1440,13 +1368,14 @@ setMethod("show", signature(object="featureInfo"),
             transform_str <- character(0L)
             
             # Attempt to create an actual descriptor, if meaningful.
-            if(!is.null(object@transformation_parameters)){
-              if(object@transformation_parameters$transform_method != "none"){
-                if(object@transformation_parameters$transform_lambda != 1.0){
+            transform_parameters <- object@transformation_parameters
+            if(!is.null(transform_parameters)){
+              if(is(transform_parameters, "featureInfoParametersTransformationPowerTransform")){
+                if(transform_parameters@lambda != 1.0){
                   transform_str <- paste0("  transformation (",
-                                          object@transformation_parameters$transform_method,
+                                          transform_parameters@method,
                                           ") with \u03BB = ",
-                                          object@transformation_parameters$transform_lambda,
+                                          transform_parameters@lambda,
                                           ".\n")
                 }
               }
