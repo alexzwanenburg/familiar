@@ -349,10 +349,6 @@ setMethod("add_feature_info_parameters", signature(object="featureInfoParameters
                    data,
                    ...) {
             
-            # This method is targeted in when directly determining the
-            # transformation parameters. It is usually called from the child
-            # functions.
-            
             # Check if all required parameters have been set.
             if(feature_info_complete(object)) return(object)
             
@@ -416,10 +412,6 @@ setMethod("add_feature_info_parameters", signature(object="featureInfoParameters
           function(object, 
                    data,
                    ...) {
-            
-            # This method is targeted in when directly determining the
-            # transformation parameters. It is usually called from the child
-            # functions.
             
             # Check if all required parameters have been set.
             if(feature_info_complete(object)) return(object)
