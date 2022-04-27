@@ -269,11 +269,20 @@ setMethod("update_object", signature(object="featureInfo"),
             }
             
             if(object@familiar_version < "1.2.0"){
+              # Upgrade transformation parameters to a proper S4 object.
               object@transformation_parameters <- ..create_transformation_parameter_skeleton(feature_name=object@name,
                                                                                              feature_type=object@feature_type,
                                                                                              available=is_available(object),
                                                                                              method=object@transformation_parameters$transform_method,
                                                                                              lambda=object@transformation_parameters$transform_lambda)
+              
+              # Upgrade normalisation parameters to a proper S4 object.
+              object@normalisation_parameters <- ..create_normalisation_parameter_skeleton(feature_name=object@name,
+                                                                                           feature_type=object@feature_type,
+                                                                                           available=is_available(object),
+                                                                                           shift=object@normalisation_parameters$norm_shift,
+                                                                                           scale=object@normalisation_parameters$norm_scale)
+              
             }
             
             if(!methods::validObject(object)) stop("Could not update the featureInfo object to the most recent definition.")

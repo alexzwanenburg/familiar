@@ -417,18 +417,22 @@ determine_preprocessing_parameters <- function(cl=NULL,
   
   
   
-  ##### Normalise features #####
+  ##### Normalise features -----------------------------------------------------
   if(settings$prep$normalisation_method!="none"){
     logger.message("Pre-processing: Extracting normalisation parameters from feature data.",
                    indent=message_indent,
                    verbose=verbose)
   }
   
-  # Add normalisation parameters to the feature information list
+  # Add skeletons to the feature information list.
+  feature_info_list <- create_normalisation_parameter_skeleton(feature_info_list=feature_info_list,
+                                                               normalisation_method=settings$prep$normalisation_method)
+  
+  # Add normalisation parameters to the feature information list.
   feature_info_list <- add_normalisation_parameters(cl=cl,
                                                     feature_info_list=feature_info_list,
-                                                    data_obj=data,
-                                                    settings=settings)
+                                                    data=data,
+                                                    verbose=verbose)
 
   # Apply normalisation to data before clustering
   data <- normalise_features(data=data,
@@ -441,7 +445,7 @@ determine_preprocessing_parameters <- function(cl=NULL,
   }
   
   
-  ##### Batch normalise features #####
+  ##### Batch normalise features -----------------------------------------------
   if(settings$prep$batch_normalisation_method!="none"){
     logger.message("Pre-processing: Extracting batch normalisation parameters from feature data.",
                    indent=message_indent,

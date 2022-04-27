@@ -1322,7 +1322,8 @@ setMethod("transform_features", signature(data="data.table"),
             names(transformed_list) <- features
             
             # Update with replacement in the data object
-            data <- update_with_replacement(data=data, replacement_list=transformed_list)
+            data <- update_with_replacement(data=data,
+                                            replacement_list=transformed_list)
             
             return(data)
           })
@@ -1366,26 +1367,28 @@ setMethod("normalise_features", signature(data="dataObject"),
 setMethod("normalise_features", signature(data="data.table"),
           function(data, feature_info_list, features, invert=FALSE){
             
-            # Check if data is empty
-            if(is_empty(data)){
-              return(data)
-            }
+            # Check if data is empty.
+            if(is_empty(data)) return(data)
             
-            # Apply normalisation
+            # Apply normalisation.
             normalised_list <- lapply(features, function(ii, data, feature_info_list, invert){
               
-              x <- normalise.apply_normalisation(x=data[[ii]],
-                                                 norm_param=feature_info_list[[ii]]@normalisation_parameters,
+              x <- apply_feature_info_parameters(object=feature_info_list[[ii]]@normalisation_parameters,
+                                                 data=data[[ii]],
                                                  invert=invert)
               
               return(x)
-            }, data=data, feature_info_list=feature_info_list, invert=invert)
+            },
+            data=data,
+            feature_info_list=feature_info_list,
+            invert=invert)
             
-            # Update name of data in columns
+            # Update name of data in columns.
             names(normalised_list) <- features
             
-            # Update with replacement in the data object
-            data <- update_with_replacement(data=data, replacement_list=normalised_list)
+            # Update with replacement in the data object.
+            data <- update_with_replacement(data=data,
+                                            replacement_list=normalised_list)
             
             return(data)
           })

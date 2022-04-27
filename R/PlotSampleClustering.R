@@ -1739,7 +1739,7 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
     # Normalise features within the current dataset.
     for(curr_feat in names(x@feature_info)){
       x@data[, (curr_feat):=.normalise(get(curr_feat),
-                                       norm_method="standardisation_winsor")]
+                                       normalisation_method="standardisation_winsor")]
     }
   }
   

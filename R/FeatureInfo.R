@@ -441,7 +441,6 @@ find_invariant_features <- function(cl=NULL, feature_info_list, data){
 }
 
 
-find_low_variance_features <- function(cl=NULL, feature_info_list, data_obj, settings){
   # Determine which features have a very low variance and remove these
 
   # Suppress NOTES due to non-standard evaluation in data.table
@@ -1085,17 +1084,13 @@ trim_unused_features_from_list <- function(feature_info_list){
   
   if(stop_at == "transformation") return(feature_info)
   
-  # # Apply the mask to select only valid instances.
-  # feature_info_list <- feature_info_list[transformation_parameter_data$instance_mask]
-  
   # Extract normalisation parameter data.
-  normalisation_parameter_data <- ..collect_and_aggregate_normalisation_info(feature_info_list=feature_info_list)
+  normalisation_parameter_data <- ..collect_and_aggregate_normalisation_info(feature_info_list=feature_info_list,
+                                                                             instance_mask=instance_mask,
+                                                                             feature_name=feature)
   
   # Set the aggregated normalisation methods.
   feature_info@normalisation_parameters <- normalisation_parameter_data$parameters
-  
-  # Apply the mask to select only valid instances.
-  feature_info_list <- feature_info_list[normalisation_parameter_data$instance_mask]
   
   if(stop_at == "normalisation") return(feature_info)
   
@@ -1132,83 +1127,6 @@ trim_unused_features_from_list <- function(feature_info_list){
   return(feature_info)
 }
 
-
-
-
-..collect_and_aggregate_normalisation_info <- function(feature_info_list){
-  # Aggregate normalisation parameters. This function exists so that it can be
-  # tested as part of a unit test.
-  
-  # Suppress NOTES due to non-standard evaluation in data.table
-  is_valid <- norm_method <- norm_shift <- NULL
-  
-  # Extract all normalisation parameters and aggregate to a table.
-  normalisation_parameters <- lapply(feature_info_list, function(current_feature_info) data.table::as.data.table(current_feature_info@normalisation_parameters))
-  normalisation_parameters <- data.table::rbindlist(normalisation_parameters)
-  
-  if(all(normalisation_parameters$norm_method == "none")){
-    # If all normalisation methods across the feature instances are none, none
-    # of the parameters are valid.
-    normalisation_parameters[, "is_valid":=FALSE]
-    
-    # Set default parameters.
-    normalisation_parameter_list <- list("norm_method" = "none",
-                                         "norm_shift" = NA_real_,
-                                         "norm_scale" = NA_real_)
-    
-  } else {
-    # This means that are some methods that are not "none".
-    
-    # Set the is_valid flag for all entries that have a normalisation method
-    # other than "none".
-    normalisation_parameters[, "is_valid":=norm_method != "none"]
-    
-    if(all(is.na(normalisation_parameters[is_valid == TRUE]$norm_shift))){
-      # Mark all instances as invalid.
-      normalisation_parameters[is.na(norm_shift), "is_valid":=FALSE]
-      
-      # Set default parameters.
-      normalisation_parameter_list <- list("norm_method" = "none",
-                                           "norm_shift" = NA_real_,
-                                           "norm_scale" = NA_real_)
-      
-    } else {
-      # Mark those instances with NA shift as invalid.
-      normalisation_parameters[is.na(norm_shift), "is_valid":=FALSE]
-      
-      # Get the most common normalisation method.
-      selected_normalisation_method <- get_mode(normalisation_parameters[is_valid == TRUE]$norm_method)
-      
-      # Set all instances with normalisation methods that are not equal to the
-      # selected method to invalid.
-      normalisation_parameters[norm_method != selected_normalisation_method, "is_valid":=FALSE]
-      
-      # From the remaining, select the average shift and scale parameters.
-      selected_normalisation_shift <- mean(normalisation_parameters[is_valid == TRUE]$norm_shift)
-      selected_normalisation_scale <- mean(normalisation_parameters[is_valid == TRUE]$norm_scale)
-      
-      # Set the normalisation parameter.
-      normalisation_parameter_list <- list("norm_method" = selected_normalisation_method,
-                                           "norm_shift" = selected_normalisation_shift,
-                                           "norm_scale" = selected_normalisation_scale)
-    }
-  }
-  
-  # Generate the mask for identifying instances of the feature that have the
-  # selected normalisation method.
-  if(any(normalisation_parameters$is_valid)){
-    valid_instance_mask <- normalisation_parameters$is_valid
-    
-  } else {
-    # If all are invalid, normalisation is not performed, and all instances
-    # should be kept.
-    valid_instance_mask <- rep_len(TRUE, length.out=length(feature_info_list))
-  }
-  
-  return(list("parameters"=normalisation_parameter_list,
-              "instance_mask"=valid_instance_mask))
-  
-}
 
 
 ..collect_and_aggregate_batch_normalisation_info <- function(feature_info_list){
@@ -1386,16 +1304,25 @@ setMethod("show", signature(object="featureInfo"),
             normalisation_str <- character(0L)
             
             # Attempt to create an actual descriptor, if meaningful.
-            if(!is.null(object@normalisation_parameters)){
-              if(object@normalisation_parameters$norm_method != "none"){
-                if(object@normalisation_parameters$norm_shift != 0.0 &
-                   object@normalisation_parameters$norm_scale != 1.0){
+            normalisation_parameters <- object@normalisation_parameters
+            if(!is.null(normalisation_parameters)){
+              if(is(normalisation_parameters, "featureInfoParametersNormalisationShiftScale")){
+                if(normalisation_parameters@shift != 0.0 || normalisation_parameters@scale != 1.0){
                   normalisation_str <- paste0("  normalisation (",
-                                              object@normalisation_parameters$norm_method,
+                                              normalisation_parameters@method,
                                               ") with shift = ",
-                                              object@normalisation_parameters$norm_shift,
+                                              normalisation_parameters@shift,
                                               " and scale = ",
-                                              object@normalisation_parameters$norm_scale,
+                                              normalisation_parameters@scale,
+                                              ".\n")
+                }
+                
+              } else if(is(normalisation_parameters, "featureInfoParametersNormalisationShift")){
+                if(normalisation_parameters@shift != 0.0){
+                  normalisation_str <- paste0("  normalisation (",
+                                              normalisation_parameters@method,
+                                              ") with shift = ",
+                                              normalisation_parameters@shift,
                                               ".\n")
                 }
               }
