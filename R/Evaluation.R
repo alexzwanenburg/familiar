@@ -407,6 +407,9 @@ run_evaluation <- function(cl,
                                learner=ensemble_table$learner[1],
                                fs_method=ensemble_table$fs_method[1])
   
+  # Add package version.
+  fam_ensemble <- add_package_version(object=fam_ensemble)
+  
   # Load models and prevent auto-detaching.
   fam_ensemble <- load_models(object=fam_ensemble, dir_path=dir_path, suppress_auto_detach=TRUE)
 

@@ -16,6 +16,9 @@ setMethod("promote_detector", signature(object="familiarNoveltyDetector"),
               object <- methods::new("familiarNoneNoveltyDetector", object)
             }
             
+            # Add package version.
+            object <- add_package_version(object=object)
+            
             # Returned object can be a standard familiarNoveltyDetector.
             return(object)
           })

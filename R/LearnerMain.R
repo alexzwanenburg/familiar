@@ -104,6 +104,9 @@ setMethod("promote_learner", signature(object="familiarModel"),
               object <- methods::new("familiarGLMnetLassoTest", object)
             }
             
+            # Add package version.
+            object <- add_package_version(object=object)
+            
             # Returned object can be a standard familiarModel
             return(object)
           })

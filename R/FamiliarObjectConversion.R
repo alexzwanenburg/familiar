@@ -61,6 +61,9 @@ setMethod("as_familiar_ensemble", signature(object="list"),
                                          fs_method = object[[1]]@fs_method,
                                          run_table = list("run_table"=run_table, "ensemble_data_id"=0L, "ensemble_run_id"=0L))
             
+            # Add package version.
+            fam_ensemble <- add_package_version(object=fam_ensemble)
+            
             # Complete the ensemble using information provided by the model(s)
             fam_ensemble <- complete_familiar_ensemble(object=fam_ensemble)
             
@@ -381,13 +384,13 @@ setMethod("as_familiar_collection", signature(object="list"),
                                         ice_data = collect(x=object, data_slot="ice_data"),
                                         project_id = object[[1]]@project_id)
             
+            # Add a package version to the familiarCollection object
+            fam_collect <- add_package_version(object=fam_collect)
+            
             # Create labels for the data names for correct ordering of plots etc.
             fam_collect <- set_data_set_names(x=fam_collect,
                                               new=as.character(familiar_data_names),
                                               order=levels(familiar_data_names))
-            
-            # Add a package version to the familiarCollection object
-            fam_collect <- add_package_version(object=fam_collect)
             
             return(fam_collect)
           })

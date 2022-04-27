@@ -32,6 +32,9 @@ setMethod("promote_learner", signature(object="familiarHyperparameterLearner"),
               ..error_reached_unreachable_code(paste0("promote_learner,familiarHyperparameterLearner: encountered unknown hyperparameter learner: ", learner))
             }
             
+            # Add package version.
+            object <- add_package_version(object=object)
+            
             # Return promoted object.
             return(object)
           })
