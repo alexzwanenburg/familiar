@@ -390,19 +390,23 @@ determine_preprocessing_parameters <- function(cl=NULL,
   
   
   
-  ##### Remove low-variance features #####
+  ##### Remove low-variance features -------------------------------------------
   if("low_variance" %in% settings$prep$filter_method){
     n_features_current <- length(available_features)
     
     # Filter features that are invariant.
-    feature_info_list  <- find_low_variance_features(cl=cl,
-                                                     feature_info_list=feature_info_list,
-                                                     data_obj=data,
-                                                     settings=settings)
+    feature_info_list <- find_low_variance_features(cl=cl,
+                                                    feature_info_list=feature_info_list,
+                                                    data=data,
+                                                    settings=settings)
+    
+    # Check available features.
     available_features <- get_available_features(feature_info_list=feature_info_list)
     
     # Remove invariant features from the data
-    data <- filter_features(data=data, available_features=available_features)
+    data <- filter_features(data=data,
+                            available_features=available_features)
+    
     if(!has_feature_data(data)) stop(paste0("Remaining features in the dataset have a variance that is lower than the threshold ",
                                             "and were therefore all removed. Please investigate your data, or increase the threshold ",
                                             "through the low_var_minimum_variance_threshold configuration parameter."))

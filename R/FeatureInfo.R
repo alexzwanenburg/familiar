@@ -441,32 +441,38 @@ find_invariant_features <- function(cl=NULL, feature_info_list, data){
 }
 
 
+find_low_variance_features <- function(cl=NULL,
+                                       feature_info_list,
+                                       data,
+                                       settings){
   # Determine which features have a very low variance and remove these
 
   # Suppress NOTES due to non-standard evaluation in data.table
   variance <- NULL
   
   # Identify the feature columns in the data
-  feature_columns <- get_feature_columns(x=data_obj)
+  feature_columns <- get_feature_columns(x=data)
   
   # Determine which columns actually contains numeric data
-  numeric_columns <- feature_columns[sapply(feature_columns, function(ii, data) (is.numeric(data@data[[ii]])), data=data_obj)]
+  numeric_columns <- feature_columns[sapply(feature_columns, function(ii, data) (is.numeric(data@data[[ii]])), data=data)]
   
   # Skip if there are no numeric columns
   if(length(numeric_columns) == 0){
     return(feature_info_list)
   }
   
+  # Determine variance.
   feature_variances <- fam_sapply(cl=cl,
                                   assign=NULL,
-                                  X=data_obj@data[, mget(numeric_columns)],
+                                  X=data@data[, mget(numeric_columns)],
                                   FUN=stats::var,
                                   progress_bar=FALSE,
                                   na.rm=TRUE,
                                   chopchop=TRUE)
   
   # Define a data table containing the variances
-  dt_var <- data.table::data.table("name"=numeric_columns, "variance"=feature_variances)
+  dt_var <- data.table::data.table("name"=numeric_columns,
+                                   "variance"=feature_variances)
   
   # Set missing parameters
   if(is.null(settings$prep$low_var_threshold)){
@@ -1002,6 +1008,9 @@ trim_unused_features_from_list <- function(feature_info_list){
                                run_id = as.integer(object@run_table$ensemble_run_id),
                                in_signature = feature_info_list[[1]]@in_signature)
 
+  # Add package version.
+  feature_info <- add_package_version(object=feature_info)
+  
   # Compute average freaction of data missing
   feature_info@fraction_missing <- mean(extract_from_slot(object_list=feature_info_list, slot_name="fraction_missing", na.rm=TRUE))
   
