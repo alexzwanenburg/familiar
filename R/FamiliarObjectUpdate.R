@@ -280,6 +280,7 @@ setMethod("update_object", signature(object="featureInfo"),
               object@normalisation_parameters <- ..create_normalisation_parameter_skeleton(feature_name=object@name,
                                                                                            feature_type=object@feature_type,
                                                                                            available=is_available(object),
+                                                                                           method=object@normalisation_parameters$norm_method,
                                                                                            shift=object@normalisation_parameters$norm_shift,
                                                                                            scale=object@normalisation_parameters$norm_scale)
               
@@ -294,3 +295,11 @@ setMethod("update_object", signature(object="featureInfo"),
           })
 
 
+
+##### update_object (ANY) ------------------------------------------------------
+#'@rdname update_object-methods
+setMethod("update_object", signature(object="ANY"),
+          function(object, ...){
+            # Fallback method for missing or unknown items.
+            return(object)
+          })
