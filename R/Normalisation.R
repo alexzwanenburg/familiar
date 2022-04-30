@@ -562,6 +562,20 @@ setMethod("add_feature_info_parameters", signature(object="featureInfoParameters
 
 
 
+##### add_feature_info_parameters (standardisation, data.table) ----------------
+setMethod("add_feature_info_parameters", signature(object="featureInfoParametersNormalisationStandardisation", data="data.table"),
+          function(object, 
+                   data,
+                   ...){
+            
+            # Pass to non-data.table method.
+            return(add_feature_info_parameters(object=object,
+                                               data=data[[object@name]],
+                                               ...))
+          })
+
+
+
 ##### add_feature_info_parameters (standardisation, ANY) -----------------------
 setMethod("add_feature_info_parameters", signature(object="featureInfoParametersNormalisationStandardisation", data="ANY"),
           function(object, 
@@ -617,6 +631,20 @@ setMethod("add_feature_info_parameters", signature(object="featureInfoParameters
 
 
 
+##### add_feature_info_parameters (quantile, data.table) ----------------
+setMethod("add_feature_info_parameters", signature(object="featureInfoParametersNormalisationQuantile", data="data.table"),
+          function(object, 
+                   data,
+                   ...){
+            
+            # Pass to non-data.table method.
+            return(add_feature_info_parameters(object=object,
+                                               data=data[[object@name]],
+                                               ...))
+          })
+
+
+
 ##### add_feature_info_parameters (quantile, ANY) ------------------------------
 setMethod("add_feature_info_parameters", signature(object="featureInfoParametersNormalisationQuantile", data="ANY"),
           function(object, 
@@ -660,6 +688,20 @@ setMethod("add_feature_info_parameters", signature(object="featureInfoParameters
             object@complete <- TRUE
             
             return(object)
+          })
+
+
+
+##### add_feature_info_parameters (normalisation, data.table) ----------------
+setMethod("add_feature_info_parameters", signature(object="featureInfoParametersNormalisationNormalisation", data="data.table"),
+          function(object, 
+                   data,
+                   ...){
+            
+            # Pass to non-data.table method.
+            return(add_feature_info_parameters(object=object,
+                                               data=data[[object@name]],
+                                               ...))
           })
 
 
@@ -719,6 +761,20 @@ setMethod("add_feature_info_parameters", signature(object="featureInfoParameters
             object@complete <- TRUE
             
             return(object)
+          })
+
+
+
+##### add_feature_info_parameters (mean centering, data.table) ----------------
+setMethod("add_feature_info_parameters", signature(object="featureInfoParametersNormalisationMeanCentering", data="data.table"),
+          function(object, 
+                   data,
+                   ...){
+            
+            # Pass to non-data.table method.
+            return(add_feature_info_parameters(object=object,
+                                               data=data[[object@name]],
+                                               ...))
           })
 
 
