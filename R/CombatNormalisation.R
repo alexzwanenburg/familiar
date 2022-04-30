@@ -1,3 +1,30 @@
+#' @include FamiliarS4Generics.R
+#' @include FamiliarS4Classes.R
+#' @include Normalisation.R
+NULL
+
+setClass("featureInfoParametersNormalisationParametricCombat",
+         contains="featureInfoParametersNormalisationShiftScale",
+         slots=list("method" = "character"),
+         prototype=list("method"=NA_character_))
+
+setClass("featureInfoParametersNormalisationNonParametricCombat",
+         contains="featureInfoParametersNormalisationShiftScale",
+         slots=list("method" = "character"),
+         prototype=list("method"=NA_character_))
+
+
+# Only included in .get_available_batch_normalisation_methods
+.get_available_combat_parametric_normalisation_methods <- function(){
+  return(c("combat", "combat_p", "combat_parametric"))
+}
+
+# Only included in .get_available_batch_normalisation_methods
+.get_available_combat_non_parametric_normalisation_methods <- function(){
+  return(c("combat_np", "combat_non_parametric"))
+}
+
+
 combat.get_normalisation_parameters <- function(x, batch_normalisation_method, cl=NULL, progress_bar=TRUE){
   # Suppress NOTES due to non-standard evaluation in data.table
   value <- n <- is_valid <- invariant <- n_features <- NULL
