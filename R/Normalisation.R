@@ -47,6 +47,8 @@ setClass("featureInfoParametersNormalisationMeanCentering",
          slots=list("method" = "character"),
          prototype=list("method"=NA_character_))
 
+
+
 .get_available_none_normalisation_methods <- function(){
   return("none")
 }
@@ -227,9 +229,17 @@ create_normalisation_parameter_skeleton <- function(feature_info_list,
   } else if(method %in% .get_available_mean_centering_normalisation_methods()){
     object <- methods::new("featureInfoParametersNormalisationMeanCentering",
                            "method"=method)
+  
+  } else if(method %in% .get_available_combat_parametric_normalisation_methods()){
+    object <- methods::new("featureInfoParametersNormalisationParametricCombat",
+                           "method"=method)
+    
+  } else if(method %in% .get_available_combat_non_parametric_normalisation_methods()){
+    object <- methods::new("featureInfoParametersNormalisationNonParametricCombat",
+                           "method"=method)
     
   } else {
-    ..error_reached_unreachable_code(paste0("create_normalisation_parameter_skeleton: encountered an unknown normalisation method: ", paste_s(method)))
+    ..error_reached_unreachable_code(paste0("..create_normalisation_parameter_skeleton: encountered an unknown normalisation method: ", paste_s(method)))
   }
   
   # Set the name of the object.
@@ -1048,6 +1058,10 @@ normalise.apply_normalisation <- function(x, norm_param, invert=FALSE){
 ..collect_and_aggregate_normalisation_info <- function(feature_info_list, instance_mask, feature_name){
   # Aggregate normalisation parameters. This function exists so that it can be
   # tested as part of a unit test.
+  
+  # This is used to collect from a list of objects. It serves both to aggregate
+  # data for the ensemble and when creating replacement data for batch
+  # normalisation.
   
   # Suppress NOTES due to non-standard evaluation in data.table
   n <- NULL
