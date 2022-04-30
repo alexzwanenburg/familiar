@@ -1059,6 +1059,14 @@ normalise.apply_normalisation <- function(x, norm_param, invert=FALSE){
   # Aggregate normalisation parameters. This function exists so that it can be
   # tested as part of a unit test.
   
+  return(...collect_and_aggregate_normalisation_info(object_list=lapply(feature_info_list, function(x) (x@normalisation_parameters)),
+                                                     instance_mask=instance_mask,
+                                                     feature_name=feature_name))
+}
+
+
+
+...collect_and_aggregate_normalisation_info <- function(object_list, instance_mask, feature_name){
   # This is used to collect from a list of objects. It serves both to aggregate
   # data for the ensemble and when creating replacement data for batch
   # normalisation.
