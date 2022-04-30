@@ -263,7 +263,7 @@ add_normalisation_parameters <- function(cl=NULL,
   
   # Sanity check.
   if(!(setequal(feature_names, get_available_features(feature_info_list=feature_info_list)))){
-    ..error_reached_unreachable_code("add_transformation_parameters: features in data and the feature info list are expect to be the same, but were not.")
+    ..error_reached_unreachable_code("add_normalisation_parameters: features in data and the feature info list are expect to be the same, but were not.")
   }
   
   # Iterate over features.
@@ -434,6 +434,12 @@ setMethod("add_feature_info_parameters", signature(object="featureInfoParameters
             # Check that at least three unique values are present.
             if(length(unique(data)) <= 3) return(add_feature_info_parameters(object=object, data=NULL))
             
+            # For batch normalisation, check that at least five instances are
+            # present.
+            if(!is.null(object@batch)){
+              if(length(data) < 5) return(add_feature_info_parameters(object=object, data=NULL))
+            }
+            
             return(object)
           })
 
@@ -518,7 +524,6 @@ setMethod("add_feature_info_parameters", signature(object="featureInfoParameters
 
 
 
-
 ##### add_feature_info_parameters (shift and scale normalisation, ANY) ---------
 setMethod("add_feature_info_parameters", signature(object="featureInfoParametersNormalisationShiftScale", data="ANY"),
           function(object, 
@@ -545,7 +550,13 @@ setMethod("add_feature_info_parameters", signature(object="featureInfoParameters
             
             # Check that at least three unique values are present.
             if(length(unique(data)) <= 3) return(add_feature_info_parameters(object=object, data=NULL))
-
+            
+            # For batch normalisation, check that at least five instances are
+            # present.
+            if(!is.null(object@batch)){
+              if(length(data) < 5) return(add_feature_info_parameters(object=object, data=NULL))
+            }            
+            
             return(object)
           })
 
@@ -992,7 +1003,7 @@ normalise.apply_normalisation <- function(x, norm_param, invert=FALSE){
   }
   
   # Check the class of the transformation objects.
-  object_class <- sapply(feature_info_list, function(x)(class(x@normalisation_parameters)[1]))
+  object_class <- sapply(object_list, function(x)(class(x)[1]))
   
   # Determine if there are any objects that are not NULL or
   # featureInfoParametersNormalisationNone.
@@ -1016,30 +1027,29 @@ normalise.apply_normalisation <- function(x, norm_param, invert=FALSE){
   
   if(most_common_class %in% c("featureInfoParametersNormalisationStandardisation",
                               "featureInfoParametersNormalisationQuantile",
-                              "featureInfoParametersNormalisationNormalisation")){
+                              "featureInfoParametersNormalisationNormalisation",
+                              "featureInfoParametersNormalisationParametricCombat",
+                              "featureInfoParametersNormalisationNonParametricCombat")){
     
     # Aggregate shift values, and select median value.
-    all_shift <- sapply(feature_info_list[instance_mask],
-                        function(x) (x@normalisation_parameters@shift))
+    all_shift <- sapply(object_list[instance_mask], function(x) (x@shift))
     selected_shift <- stats::median(all_shift)
     
     # Aggregate scale values, and select mean value.
-    all_scale <- sapply(feature_info_list[instance_mask],
-                        function(x) (x@normalisation_parameters@scale))
+    all_scale <- sapply(object_list[instance_mask], function(x) (x@scale))
     selected_scale <- stats::median(all_scale)
     
     # Identify the first method -- its not that crucial.
-    selected_method <- sapply(feature_info_list[instance_mask], function(x) (x@normalisation_parameters@method))[1]
+    selected_method <- sapply(object_list[instance_mask], function(x) (x@method))[1]
     
   } else if(most_common_class %in% c("featureInfoParametersNormalisationMeanCentering")){
     
     # Aggregate shift values, and select median value.
-    all_shift <- sapply(feature_info_list[instance_mask],
-                        function(x) (x@normalisation_parameters@shift))
+    all_shift <- sapply(object_list[instance_mask], function(x) (x@shift))
     selected_shift <- stats::median(all_shift)
     
     # Identify the first method -- its not that crucial.
-    selected_method <- sapply(feature_info_list[instance_mask], function(x) (x@normalisation_parameters@method))[1]
+    selected_method <- sapply(object_list[instance_mask], function(x) (x@method))[1]
     
   } else {
     ..error_reached_unreachable_code(paste0("..collect_and_aggregate_normalisation_info: encountered an unknown class of objects: ", paste_s(most_common_class)))
@@ -1050,4 +1060,5 @@ normalise.apply_normalisation <- function(x, norm_param, invert=FALSE){
                                                                      shift=selected_shift,
                                                                      scale=selected_scale),
               "instance_mask"=instance_mask))
+  
 }
