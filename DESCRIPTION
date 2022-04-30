@@ -72,15 +72,16 @@ Suggests:
     VGAM,
     xgboost
 Collate: 
+    'FamiliarS4Classes.R'
+    'FamiliarS4Generics.R'
     'BatchNormalisation.R'
     'BootstrapConfidenceInterval.R'
     'CheckArguments.R'
-    'FamiliarS4Classes.R'
-    'FamiliarS4Generics.R'
     'CheckHyperparameters.R'
     'CheckPackages.R'
     'ClassBalance.R'
     'Clustering.R'
+    'Normalisation.R'
     'CombatNormalisation.R'
     'DataObject.R'
     'DataParameterChecks.R'
@@ -157,7 +158,6 @@ Collate:
     'MetricS4.R'
     'MetricS4ConcordanceIndex.R'
     'ModelBuilding.R'
-    'Normalisation.R'
     'NoveltyDetectorS4IsolationTree.R'
     'NoveltyDetectorMain.R'
     'NoveltyDetectorS4NoneNoveltyDetector.R'
