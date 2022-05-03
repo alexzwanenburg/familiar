@@ -1338,39 +1338,44 @@ setMethod("show", signature(object="featureInfo"),
             }
             
             # Batch normalisation parameters
-            if(!is.null(object@batch_normalisation_parameters)){
-              batch_norm_str <- sapply(seq_along(object@batch_normalisation_parameters), function(ii, x){
+            batch_norm_str <- character(0L)
+            
+            # Attempt to create an actual descriptor, if meaningful.
+            batch_parameters <- object@batch_normalisation_parameters
+            if(!is.null(batch_parameters)){
+              if(batch_parameters@method != "none"){
                 
-                # Placeholder string
-                batch_norm_str <- ""
-                
-                # Attempt to create an actual descriptor, if meaningful.
-                if(!x[[ii]]$norm_method %in% c("none", "unknown")){
-                  if(x[[ii]]$norm_shift != 0.0 & x[[ii]]$norm_scale != 1.0){
-                    batch_norm_str <- paste0("  batch-normalisation (",
-                                             x[[ii]]$norm_method,
-                                             ") for ",
-                                             names(x)[ii],
-                                             " with shift = ",
-                                             x[[ii]]$norm_shift,
-                                             " and scale = ",
-                                             x[[ii]]$norm_scale,
-                                             ".\n")
+                # Iterate over normalisation parameters stored within the
+                # container.
+                for(normalisation_parameters in batch_parameters@batch_parameters){
+                  if(is(normalisation_parameters, "featureInfoParametersNormalisationShiftScale")){
+                    if(normalisation_parameters@shift != 0.0 || normalisation_parameters@scale != 1.0){
+                      batch_norm_str <- paste0("  [",
+                                               normalisation_parameters@batch,
+                                               "] normalisation (",
+                                               normalisation_parameters@method,
+                                               ") with shift = ",
+                                               normalisation_parameters@shift,
+                                               " and scale = ",
+                                               normalisation_parameters@scale,
+                                               ".\n")
+                    }
+                    
+                  } else if(is(normalisation_parameters, "featureInfoParametersNormalisationShift")){
+                    if(normalisation_parameters@shift != 0.0){
+                      batch_norm_str <- paste0("  [",
+                                               normalisation_parameters@batch,
+                                               "] normalisation (",
+                                               normalisation_parameters@method,
+                                               ") with shift = ",
+                                               normalisation_parameters@shift,
+                                               ".\n")
+                    }
                   }
                 }
-                
-                return(batch_norm_str)
-              }, x=object@batch_normalisation_parameters)
-              
-              # Collate the string.
-              batch_norm_str <- paste0(batch_norm_str, collapse="")
-              
-              # Replace by default placeholder.
-              if(batch_norm_str == "") batch_norm_str <- character(0L)
-              
-            } else {
-              batch_norm_str <- character(0L)
+              }
             }
+              
             
             # Clustering
             # Placeholder string
@@ -1450,11 +1455,11 @@ setMethod("feature_info_complete", signature(object="featureInfo"),
             
             if(level=="transformation") return(TRUE)
             
-            if(is.null(object@normalisation_parameters)) return(FALSE)
+            if(!feature_info_complete(object@normalisation_parameters)) return(FALSE)
             
             if(level=="normalisation") return(TRUE)
             
-            if(is.null(object@batch_normalisation_parameters)) return(FALSE)
+            if(!feature_info_complete(object@batch_normalisation_parameters)) return(FALSE)
             
             if(level=="batch_normalisation") return(TRUE)
             

@@ -831,6 +831,27 @@ setMethod("add_feature_info_parameters", signature(object="featureInfoParameters
 
 
 
+##### apply_feature_info_parameters (shift and scale, data.table) --------------
+setMethod("apply_feature_info_parameters", signature(object="featureInfoParametersNormalisationShiftScale", data="ANY"),
+          function(object, 
+                   data,
+                   ...){
+            
+            # Pass to method with signature data="ANY" to perform the
+            # normalisation.
+            y <- apply_feature_info_parameters(object=object, data[[object@name]], ...)
+            
+            # Avoid updating by reference.
+            data <- data.table::copy(data)
+            
+            # Update the respective column with the transformed values.
+            data[, (object@name):=y]
+            
+            return(data)
+          })
+
+
+
 ##### apply_feature_info_parameters (shift and scale, ANY) ---------------------
 setMethod("apply_feature_info_parameters", signature(object="featureInfoParametersNormalisationShiftScale", data="ANY"),
           function(object, 
@@ -848,6 +869,27 @@ setMethod("apply_feature_info_parameters", signature(object="featureInfoParamete
               # dividing by the scale.
               return((data - object@shift) / (object@scale))
             }
+          })
+
+
+
+##### apply_feature_info_parameters (shift, data.table) ------------------------
+setMethod("apply_feature_info_parameters", signature(object="featureInfoParametersNormalisationShift", data="ANY"),
+          function(object, 
+                   data,
+                   ...){
+            
+            # Pass to method with signature data="ANY" to perform the
+            # normalisation.
+            y <- apply_feature_info_parameters(object=object, data[[object@name]], ...)
+            
+            # Avoid updating by reference.
+            data <- data.table::copy(data)
+            
+            # Update the respective column with the transformed values.
+            data[, (object@name):=y]
+            
+            return(data)
           })
 
 
@@ -871,135 +913,135 @@ setMethod("apply_feature_info_parameters", signature(object="featureInfoParamete
 
 
 
-normalise.get_normalisation_parameters <- function(x, norm_method="standardisation"){
-  # Determines normalisation parameters
+# normalise.get_normalisation_parameters <- function(x, norm_method="standardisation"){
+#   # Determines normalisation parameters
+# 
+#   # Determine class of vector x
+#   class_x <- class(x)
+#   
+#   # Filter out characters, logical and factor variables - these can not be
+#   # normalised.
+#   if(any(class_x %in% c("character", "logical", "factor"))){
+#     return(list("norm_method"="none",
+#                 "norm_shift"=NA_real_,
+#                 "norm_scale"=NA_real_))
+#   }
+# 
+#   # Filter out missing data.
+#   x <- x[is.finite(x)]
+#   
+#   # Filter out numerical or integer variables that have 3 or less unique
+#   # numerical variables - these are likely contrasts. This also resolves issues
+#   # surrounding small datasets.
+#   if(length(unique(x)) <= 3){
+#     return(list("norm_method"="none",
+#                 "norm_shift"=NA_real_,
+#                 "norm_scale"=NA_real_))
+#   }
+#   
+#   # Apply trimming or winsoring
+#   if(grepl(pattern="_trim", x=norm_method, fixed=TRUE)){
+#     x <- trim(x, fraction=0.05)
+#     
+#   } else if(grepl(pattern="_winsor", x=norm_method, fixed=TRUE)){
+#     x <- winsor(x, fraction=0.05)
+#   }
+#   
+#   # For the remainder both shift and scaling parameters are determined
+#   if(norm_method=="none") {
+#     # No transformation takes place
+#     return(list("norm_method"="none",
+#                 "norm_shift"=NA_real_,
+#                 "norm_scale"=NA_real_))
+# 
+#   } else if(norm_method %in% c("standardisation", "standardisation_trim", "standardisation_winsor")){
+#     # Determine mean (shift) and standard deviation (scale)
+#     norm_shift <- mean(x)
+#     norm_scale <- sqrt(sum((x-norm_shift)^2) / length(x))
+# 
+#     # Check for scales which are close to 0
+#     if(norm_scale < 2 * .Machine$double.eps) norm_scale <- 1
+# 
+#     return(list("norm_method"=norm_method,
+#                 "norm_shift"=norm_shift,
+#                 "norm_scale"=norm_scale))
+# 
+#   } else if(norm_method=="quantile"){
+#     # Determine median (shift) and interquartile range (scale)
+#     norm_shift <- stats::median(x)
+#     norm_scale <- unname(diff(stats::quantile(x, probs=c(0.25,0.75))))
+# 
+#     # Check for scales which are close to 0
+#     if(norm_scale < 2 * .Machine$double.eps) norm_scale <- 1
+# 
+#     return(list("norm_method"=norm_method,
+#                 "norm_shift"=norm_shift,
+#                 "norm_scale"=norm_scale))
+# 
+#   } else if(norm_method=="mean_centering") {
+#     # Determine mean
+#     norm_shift <- mean(x)
+#     
+#     return(list("norm_method"=norm_method,
+#                 "norm_shift"=norm_shift,
+#                 "norm_scale"=1.0))
+#     
+#   } else if(norm_method %in% c("normalisation", "normalisation_trim", "normalisation_winsor")){
+#     # Determine max and min values
+#     x_min <- min(x, na.rm=TRUE)
+#     x_max <- max(x, na.rm=TRUE)
+#     
+#     # Set shift and scale parameters.
+#     norm_shift <- x_min
+#     norm_scale <- x_max - x_min
+#     
+#     # Check for scales which are close to 0
+#     if(norm_scale < 2 * .Machine$double.eps) norm_scale <- 1
+#     
+#     return(list("norm_method"=norm_method,
+#                 "norm_shift"=norm_shift,
+#                 "norm_scale"=norm_scale))
+#     
+#   } else{
+#     ..error_reached_unreachable_code("normalise.get_normalisation_parameters_unknown_normalisation_method")
+#   }
+# }
 
-  # Determine class of vector x
-  class_x <- class(x)
-  
-  # Filter out characters, logical and factor variables - these can not be
-  # normalised.
-  if(any(class_x %in% c("character", "logical", "factor"))){
-    return(list("norm_method"="none",
-                "norm_shift"=NA_real_,
-                "norm_scale"=NA_real_))
-  }
-
-  # Filter out missing data.
-  x <- x[is.finite(x)]
-  
-  # Filter out numerical or integer variables that have 3 or less unique
-  # numerical variables - these are likely contrasts. This also resolves issues
-  # surrounding small datasets.
-  if(length(unique(x)) <= 3){
-    return(list("norm_method"="none",
-                "norm_shift"=NA_real_,
-                "norm_scale"=NA_real_))
-  }
-  
-  # Apply trimming or winsoring
-  if(grepl(pattern="_trim", x=norm_method, fixed=TRUE)){
-    x <- trim(x, fraction=0.05)
-    
-  } else if(grepl(pattern="_winsor", x=norm_method, fixed=TRUE)){
-    x <- winsor(x, fraction=0.05)
-  }
-  
-  # For the remainder both shift and scaling parameters are determined
-  if(norm_method=="none") {
-    # No transformation takes place
-    return(list("norm_method"="none",
-                "norm_shift"=NA_real_,
-                "norm_scale"=NA_real_))
-
-  } else if(norm_method %in% c("standardisation", "standardisation_trim", "standardisation_winsor")){
-    # Determine mean (shift) and standard deviation (scale)
-    norm_shift <- mean(x)
-    norm_scale <- sqrt(sum((x-norm_shift)^2) / length(x))
-
-    # Check for scales which are close to 0
-    if(norm_scale < 2 * .Machine$double.eps) norm_scale <- 1
-
-    return(list("norm_method"=norm_method,
-                "norm_shift"=norm_shift,
-                "norm_scale"=norm_scale))
-
-  } else if(norm_method=="quantile"){
-    # Determine median (shift) and interquartile range (scale)
-    norm_shift <- stats::median(x)
-    norm_scale <- unname(diff(stats::quantile(x, probs=c(0.25,0.75))))
-
-    # Check for scales which are close to 0
-    if(norm_scale < 2 * .Machine$double.eps) norm_scale <- 1
-
-    return(list("norm_method"=norm_method,
-                "norm_shift"=norm_shift,
-                "norm_scale"=norm_scale))
-
-  } else if(norm_method=="mean_centering") {
-    # Determine mean
-    norm_shift <- mean(x)
-    
-    return(list("norm_method"=norm_method,
-                "norm_shift"=norm_shift,
-                "norm_scale"=1.0))
-    
-  } else if(norm_method %in% c("normalisation", "normalisation_trim", "normalisation_winsor")){
-    # Determine max and min values
-    x_min <- min(x, na.rm=TRUE)
-    x_max <- max(x, na.rm=TRUE)
-    
-    # Set shift and scale parameters.
-    norm_shift <- x_min
-    norm_scale <- x_max - x_min
-    
-    # Check for scales which are close to 0
-    if(norm_scale < 2 * .Machine$double.eps) norm_scale <- 1
-    
-    return(list("norm_method"=norm_method,
-                "norm_shift"=norm_shift,
-                "norm_scale"=norm_scale))
-    
-  } else{
-    ..error_reached_unreachable_code("normalise.get_normalisation_parameters_unknown_normalisation_method")
-  }
-}
 
 
-
-normalise.apply_normalisation <- function(x, norm_param, invert=FALSE){
-  # Applies normalisation parameters to input data
-
-  norm_method <- norm_param$norm_method
-  
-  if(is.null(norm_param)) return(x)
-  
-  if(norm_method=="none"){
-    # No normalisation was performed.
-    y <- x
-    
-  } else if(norm_method %in% union(.get_available_normalisation_methods(), .get_available_batch_normalisation_methods())){
-
-    if(is.finite(norm_param$norm_scale) & is.finite(norm_param$norm_shift)){
-      if(invert){
-        # Invert normalisation by multiplying input x by the scale and adding the shift.
-        y <- x * norm_param$norm_scale + norm_param$norm_shift
-        
-      } else {
-        # Apply normalisation by subtracting the shift parameter and dividing by the scale.
-        y <- (x - norm_param$norm_shift) / (norm_param$norm_scale)
-      }
-      
-    } else {
-      y <- x
-    }
-    
-  } else {
-    ..error_reached_unreachable_code(paste0("normalise.apply_normalisation: an unknown normalisation method was encountered: ", norm_method))
-  }
-  
-  return(y)
-}
+# normalise.apply_normalisation <- function(x, norm_param, invert=FALSE){
+#   # Applies normalisation parameters to input data
+# 
+#   norm_method <- norm_param$norm_method
+#   
+#   if(is.null(norm_param)) return(x)
+#   
+#   if(norm_method=="none"){
+#     # No normalisation was performed.
+#     y <- x
+#     
+#   } else if(norm_method %in% union(.get_available_normalisation_methods(), .get_available_batch_normalisation_methods())){
+# 
+#     if(is.finite(norm_param$norm_scale) & is.finite(norm_param$norm_shift)){
+#       if(invert){
+#         # Invert normalisation by multiplying input x by the scale and adding the shift.
+#         y <- x * norm_param$norm_scale + norm_param$norm_shift
+#         
+#       } else {
+#         # Apply normalisation by subtracting the shift parameter and dividing by the scale.
+#         y <- (x - norm_param$norm_shift) / (norm_param$norm_scale)
+#       }
+#       
+#     } else {
+#       y <- x
+#     }
+#     
+#   } else {
+#     ..error_reached_unreachable_code(paste0("normalise.apply_normalisation: an unknown normalisation method was encountered: ", norm_method))
+#   }
+#   
+#   return(y)
+# }
 
 
 

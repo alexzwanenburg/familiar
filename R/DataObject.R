@@ -1420,14 +1420,15 @@ setMethod("batch_normalise_features", signature(data="dataObject"),
             
             # Update feature_info_list by adding info for missing batches
             feature_info_list <- add_batch_normalisation_parameters(feature_info_list=feature_info_list,
-                                                                    data_obj=data)
+                                                                    data=data)
             
             # Apply batch-normalisation
             batch_normalised_list <- lapply(feature_columns, function(ii, data, feature_info_list, invert){
               
-              x <- batch_normalise.apply_normalisation(x=data@data[, mget(c(ii, get_id_columns()))],
-                                                       feature_info=feature_info_list[[ii]],
-                                                       invert=invert)
+              # Dispatch to apply-method.
+              x <- apply_feature_info_parameters(object=feature_info_list[[ii]]@batch_normalisation_parameters,
+                                                 data=data@data[, mget(c(ii, get_id_columns("batch")))],
+                                                 invert=invert)
               
               return(x)
             },

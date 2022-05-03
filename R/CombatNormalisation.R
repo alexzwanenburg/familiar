@@ -25,10 +25,106 @@ setClass("featureInfoParametersNormalisationNonParametricCombat",
 }
 
 
-combat.get_normalisation_parameters <- function(x, batch_normalisation_method, cl=NULL, progress_bar=TRUE){
+
+##### add_feature_info_parameters (standardisation, data.table) ----------------
+setMethod("add_feature_info_parameters", signature(object="featureInfoParametersNormalisationParametricCombat", data="data.table"),
+          function(object, 
+                   data,
+                   batch_parameter_data,
+                   ...) {
+            
+            # Suppress NOTES due to non-standard evaluation in data.table
+            feature <- batch_id <- NULL
+            
+            # Check if all required parameters have been set.
+            if(feature_info_complete(object)) return(object)
+
+            # Generate a replacement object that uses univariate
+            # standardisation.
+            replacement_object <- ..create_normalisation_parameter_skeleton(feature_name=object@name,
+                                                                            method="standardisation",
+                                                                            batch=object@batch)
+            browser()
+            # Select the current feature and batch from batch_parameter_data.
+            batch_parameter_data <- batch_parameter_data[feature==object@feature & batch_id==object@batch, ]
+            
+            # If the batch parameter data are empty, attempt to use univariate
+            # standardisation.
+            if(is_empty(batch_parameter_data)) return(add_feature_info_parameters(object=replacement_object,
+                                                                                  data=data))
+            
+            # If shift and scale parameters are not finite, attempt to use
+            # univariate standardisation.
+            if(!is.finite(batch_parameter_data$norm_shift) || !is.finite(batch_parameter_data$norm_scale)){
+              return(add_feature_info_parameters(object=replacement_object,
+                                                 data=data))
+            }
+            
+            # Check for scales which are close to 0
+            if(scale < 2.0 * .Machine$double.eps) scale <- 1.0
+            
+            # Set shift and scale parameters.
+            object@shift <- batch_parameter_data$norm_shift
+            object@scale <- batch_parameter_data$norm_scale
+            object@complete <- TRUE
+            
+            return(object)
+          })
+
+
+
+##### add_feature_info_parameters (standardisation, data.table) ----------------
+setMethod("add_feature_info_parameters", signature(object="featureInfoParametersNormalisationNonParametricCombat", data="data.table"),
+          function(object, 
+                   data,
+                   batch_parameter_data,
+                   ...) {
+            
+            # Suppress NOTES due to non-standard evaluation in data.table
+            feature <- batch_id <- NULL
+            
+            # Check if all required parameters have been set.
+            if(feature_info_complete(object)) return(object)
+            
+            # Generate a replacement object that uses univariate
+            # standardisation.
+            replacement_object <- ..create_normalisation_parameter_skeleton(feature_name=object@name,
+                                                                            method="standardisation",
+                                                                            batch=object@batch)
+            browser()
+            # Select the current feature and batch from batch_parameter_data.
+            batch_parameter_data <- batch_parameter_data[feature==object@feature & batch_id==object@batch, ]
+            
+            # If the batch parameter data are empty, attempt to use univariate
+            # standardisation.
+            if(is_empty(batch_parameter_data)) return(add_feature_info_parameters(object=replacement_object,
+                                                                                  data=data))
+            
+            # If shift and scale parameters are not finite, attempt to use
+            # univariate standardisation.
+            if(!is.finite(batch_parameter_data$norm_shift) || !is.finite(batch_parameter_data$norm_scale)){
+              return(add_feature_info_parameters(object=replacement_object,
+                                                 data=data))
+            }
+            
+            # Check for scales which are close to 0
+            if(scale < 2.0 * .Machine$double.eps) scale <- 1.0
+            
+            # Set shift and scale parameters.
+            object@shift <- batch_parameter_data$norm_shift
+            object@scale <- batch_parameter_data$norm_scale
+            object@complete <- TRUE
+            
+            return(object)
+          })
+
+
+
+
+.compute_combat_batch_normalisation_z_matrix <- function(data, feature_names){
   # Suppress NOTES due to non-standard evaluation in data.table
   value <- n <- is_valid <- invariant <- n_features <- NULL
-  gamma_hat <- norm_method <- .NATURAL <- NULL
+  gamma_hat <- .NATURAL <- NULL
   
   # Get the batch identifier column.
   batch_id_column <- get_id_columns(single_column="batch")
@@ -36,13 +132,13 @@ combat.get_normalisation_parameters <- function(x, batch_normalisation_method, c
   # Set a minimum threshold for valid sample sizes
   min_valid_samples <- 10
   min_valid_features <- 3
-
-  # Determine whether parameteric or non-parametric versions are to be utelised.
-  is_parametric <- batch_normalisation_method %in% c("combat_p", "combat_parametric")
   
   # Convert the table from wide to long format
-  x <- data.table::melt(x, id.vars=batch_id_column, variable.name="feature", value.name="value")
-
+  x <- data.table::melt(data[, mget(c(batch_id_column, feature_names))],
+                        id.vars=batch_id_column,
+                        variable.name="feature",
+                        value.name="value")
+  
   # Sum the number of instances with a valid value, and determine whether all
   # values are singular.
   aggregate_table <- x[, list("n"=sum(is.finite(value)),
@@ -61,7 +157,7 @@ combat.get_normalisation_parameters <- function(x, batch_normalisation_method, c
   
   # Drop invariant and n_features columns, as these are no longer required.
   aggregate_table[, ":="("n_features"=NULL, "invariant"=NULL)]
-
+  
   # First select for which combat can be used. This table is called z,
   # after the name for standardized data in Johnson et al. Note that overall
   # standardisation is conducted prior to batch-normalisation in familiar, and
@@ -74,62 +170,131 @@ combat.get_normalisation_parameters <- function(x, batch_normalisation_method, c
     
     # Determine the mean (gamma_hat) of each feature in each batch.
     z[, "gamma_hat":=mean(value), by=c(batch_id_column, "feature")]
-  
+    
     # Determine the variance (delta_hat_squared) of each feature in each batch.
     z[, "delta_hat_squared":=1/n * sum((value - gamma_hat)^2.0), by=c(batch_id_column, "feature")]
-
-    if(is_parametric){
-      # Parameteric empirical bayes-estimation.
-      
-      # Find batch parameters after Bayesian optimisation with parametric
-      # empirical priors.
-      combat_batch_parameters <- combat.iterative_parametric_bayes_solver(z=z, cl=cl, progress_bar=progress_bar)
-
-    } else {
-      # Non-parametric empirical Bayes
-      
-      # Find batch parameters with non-parametric empirical priors.
-      combat_batch_parameters <- combat.non_parametric_bayes_solver(z=z, cl=cl, progress_bar=progress_bar)
-    }
-
-    # Set the norm_method in batch_parameters, and turn into a list.
-    combat_batch_parameters[, "norm_method":=batch_normalisation_method]
-    combat_batch_parameters <- list(combat_batch_parameters)
     
   } else {
-    combat_batch_parameters <- list()
+    z <- NULL
   }
   
-  # Take invalid batches and features and push them through a normal
-  # batch-standardisation scheme.
-  z <- x[aggregate_table[is_valid == FALSE], on=.NATURAL]
-  
-  if(!is_empty(z)){
-    # Obtain normal parameters
-    normal_batch_parameters <- combat.non_combat_solver(z=z, cl=cl, progress_bar=progress_bar)
-    
-    # Update the norm_method. Note that any "unknown" or "none" is not updated.
-    normal_batch_parameters[!norm_method %in% c("unknown", "none"), "norm_method":=batch_normalisation_method]
-    normal_batch_parameters <- list(normal_batch_parameters)
-    
-  } else {
-    normal_batch_parameters <- list()
-  }
-  
-  # Combine both combat and normal batch parameters.
-  batch_parameters <- data.table::rbindlist(append(combat_batch_parameters, normal_batch_parameters), use.names=TRUE)
-  
-  return(batch_parameters)
+  return(z)
 }
 
 
+
+# combat.get_normalisation_parameters <- function(x, batch_normalisation_method, cl=NULL, progress_bar=TRUE){
+#   # Suppress NOTES due to non-standard evaluation in data.table
+#   value <- n <- is_valid <- invariant <- n_features <- NULL
+#   gamma_hat <- norm_method <- .NATURAL <- NULL
+#   
+#   # Get the batch identifier column.
+#   batch_id_column <- get_id_columns(single_column="batch")
+#   
+#   # Set a minimum threshold for valid sample sizes
+#   min_valid_samples <- 10
+#   min_valid_features <- 3
+# 
+#   # Determine whether parameteric or non-parametric versions are to be utelised.
+#   is_parametric <- batch_normalisation_method %in% c("combat_p", "combat_parametric")
+#   
+#   # Convert the table from wide to long format
+#   x <- data.table::melt(x, id.vars=batch_id_column, variable.name="feature", value.name="value")
+# 
+#   # Sum the number of instances with a valid value, and determine whether all
+#   # values are singular.
+#   aggregate_table <- x[, list("n"=sum(is.finite(value)),
+#                               "invariant"=is_singular_data(value)),
+#                        by=c(batch_id_column, "feature")]
+#   
+#   # A feature/batch combination is valid if it is not invariant and has
+#   # sufficient instances with a finite value.
+#   aggregate_table[, "is_valid":=invariant==FALSE & n >= min_valid_samples]
+#   
+#   # Determine the number of features available in each batch.
+#   aggregate_table[, "n_features":=sum(is_valid), by=c(batch_id_column)]
+#   
+#   # If a batch does not have sufficient features (3 or more), mark as invalid.
+#   aggregate_table[n_features < min_valid_features, "is_valid":=FALSE]
+#   
+#   # Drop invariant and n_features columns, as these are no longer required.
+#   aggregate_table[, ":="("n_features"=NULL, "invariant"=NULL)]
+# 
+#   # First select for which combat can be used. This table is called z,
+#   # after the name for standardized data in Johnson et al. Note that overall
+#   # standardisation is conducted prior to batch-normalisation in familiar, and
+#   # is external to this function.
+#   z <- x[aggregate_table[is_valid == TRUE], on=.NATURAL]
+#   
+#   if(!is_empty(z)){
+#     # Remove NA or infinite values.
+#     z <- z[is.finite(value)]
+#     
+#     # Determine the mean (gamma_hat) of each feature in each batch.
+#     z[, "gamma_hat":=mean(value), by=c(batch_id_column, "feature")]
+#   
+#     # Determine the variance (delta_hat_squared) of each feature in each batch.
+#     z[, "delta_hat_squared":=1/n * sum((value - gamma_hat)^2.0), by=c(batch_id_column, "feature")]
+# 
+#     if(is_parametric){
+#       # Parameteric empirical bayes-estimation.
+#       
+#       # Find batch parameters after Bayesian optimisation with parametric
+#       # empirical priors.
+#       combat_batch_parameters <- .combat_iterative_parametric_bayes_solver(z=z, cl=cl, progress_bar=progress_bar)
+# 
+#     } else {
+#       # Non-parametric empirical Bayes
+#       
+#       # Find batch parameters with non-parametric empirical priors.
+#       combat_batch_parameters <- .combat_non_parametric_bayes_solver(z=z, cl=cl, progress_bar=progress_bar)
+#     }
+# 
+#     # Set the norm_method in batch_parameters, and turn into a list.
+#     combat_batch_parameters[, "norm_method":=batch_normalisation_method]
+#     combat_batch_parameters <- list(combat_batch_parameters)
+#     
+#   } else {
+#     combat_batch_parameters <- list()
+#   }
+#   
+#   # Take invalid batches and features and push them through a normal
+#   # batch-standardisation scheme.
+#   z <- x[aggregate_table[is_valid == FALSE], on=.NATURAL]
+#   
+#   if(!is_empty(z)){
+#     # Obtain normal parameters
+#     normal_batch_parameters <- combat.non_combat_solver(z=z, cl=cl, progress_bar=progress_bar)
+#     
+#     # Update the norm_method. Note that any "unknown" or "none" is not updated.
+#     normal_batch_parameters[!norm_method %in% c("unknown", "none"), "norm_method":=batch_normalisation_method]
+#     normal_batch_parameters <- list(normal_batch_parameters)
+#     
+#   } else {
+#     normal_batch_parameters <- list()
+#   }
+#   
+#   # Combine both combat and normal batch parameters.
+#   batch_parameters <- data.table::rbindlist(append(combat_batch_parameters, normal_batch_parameters), use.names=TRUE)
+#   
+#   return(batch_parameters)
+# }
+
+
   
-combat.iterative_parametric_bayes_solver <- function(z, tolerance=0.0001, max_iterations=20, cl=NULL, progress_bar=TRUE){
+.combat_iterative_parametric_bayes_solver <- function(z,
+                                                      tolerance=0.0001,
+                                                      max_iterations=20,
+                                                      cl=NULL,
+                                                      progress_bar=FALSE){
   # In the empirical Bayes approach with parametric priors, the posterior
   # estimations of gamma and delta_squared are iteratively optimised.
   
   # Suppress NOTES due to non-standard evaluation in data.table
   gamma_hat <- delta_hat_squared <- NULL
+  
+  # Check that z is not empty.
+  if(is_empty(z)) return(NULL)
   
   # Get the batch identifier column.
   batch_id_column <- get_id_columns(single_column="batch")
@@ -147,17 +312,17 @@ combat.iterative_parametric_bayes_solver <- function(z, tolerance=0.0001, max_it
   
   # Determine lambda_bar (also called alpha) priors for the inverse gamma
   # distribution according to Johnson et al, supplement A3.1. 1 value per batch
-  z_short[, "lambda_bar":=combat.lambda_prior(delta_hat_squared), by=batch_id_column]
+  z_short[, "lambda_bar":=..combat_lambda_prior(delta_hat_squared), by=batch_id_column]
   
   # Determine theta_bar (also called beta) priors according to Johnson et al.
   # supplement A3.1. 1 value per batch
-  z_short[, "theta_bar":=combat.theta_prior(delta_hat_squared), by=batch_id_column]
+  z_short[, "theta_bar":=..combat_theta_prior(delta_hat_squared), by=batch_id_column]
 
   # Split by batch.
   batch_parameters <- fam_lapply_lb(cl=cl,
                                     assign=NULL,
                                     X=split(z, by=batch_id_column),
-                                    FUN=.combat.iterative_parametric_bayes_solver,
+                                    FUN=..combat_iterative_parametric_bayes_solver,
                                     progress_bar=progress_bar,
                                     z_short=z_short,
                                     tolerance=tolerance,
@@ -170,9 +335,10 @@ combat.iterative_parametric_bayes_solver <- function(z, tolerance=0.0001, max_it
 }
 
 
-.combat.iterative_parametric_bayes_solver <- function(z, z_short, tolerance, max_iterations){
+
+..combat_iterative_parametric_bayes_solver <- function(z, z_short, tolerance, max_iterations){
   # Perform the actual parametric estimations within each batch. Called from the
-  # combat.iterative_parametric_bayes_solver function
+  # .combat_iterative_parametric_bayes_solver function
   
   # Suppress NOTES due to non-standard evaluation in data.table
   batch_id <- NULL
@@ -196,7 +362,7 @@ combat.iterative_parametric_bayes_solver <- function(z, tolerance=0.0001, max_it
   while(convergence_update > tolerance & iteration_count < max_iterations){
 
     # Update the conditional gamma star posterior.
-    z_short[, "gamma_star_new":=combat.gamma_posterior(n, tau_bar_squared, gamma_hat, delta_star_squared_old, gamma_bar)]
+    z_short[, "gamma_star_new":=..combat_gamma_posterior(n, tau_bar_squared, gamma_hat, delta_star_squared_old, gamma_bar)]
     
     # Merge z_short back into z prior to computing the sum squared error.
     z_new <- merge(x=z[, mget(c(batch_id_column, "feature", "value"))],
@@ -208,7 +374,7 @@ combat.iterative_parametric_bayes_solver <- function(z, tolerance=0.0001, max_it
     z_short <- merge(x=z_short, y=z_new, by=c(batch_id_column, "feature"), all=TRUE)
     
     # Update the conditional delta_star_squared posterior.
-    z_short[, "delta_star_squared_new":=combat.delta_squared_posterior(theta_bar, sum_squared_error, n, lambda_bar)]
+    z_short[, "delta_star_squared_new":=..combat_delta_squared_posterior(theta_bar, sum_squared_error, n, lambda_bar)]
     
     # Update convergence
     convergence_update <- max(abs((z_short$gamma_star_new - z_short$gamma_star_old) / z_short$gamma_star_old),
@@ -232,7 +398,11 @@ combat.iterative_parametric_bayes_solver <- function(z, tolerance=0.0001, max_it
 }
 
 
-combat.non_parametric_bayes_solver <- function(z, n_sample_features=50, cl=NULL, progress_bar=TRUE){
+
+.combat_non_parametric_bayes_solver <- function(z,
+                                                n_sample_features=50,
+                                                cl=NULL,
+                                                progress_bar=TRUE){
   # Computes batch parameters using non-parametric priors. Sadly, this seems to
   # be an O(2) problem because it compares each feature with every other
   # feature. Johnson et al. We may be able to cheat a bit by subsampling the
@@ -244,6 +414,9 @@ combat.non_parametric_bayes_solver <- function(z, n_sample_features=50, cl=NULL,
   # Using n_sample_features=50, this would have been 3 * 2.7E6 computations,
   # which is more tractable, and scales way better.
   
+  # Check if z is not empty.
+  if(is_empty(z)) return(NULL)
+  
   # Create a shortened table containing gamma_hat and delta_hat_squared
   # parameters for each feature and batch. If we make this function parallel at
   # one point, I prefer not to distribute z (in its entirety) to clusters, due
@@ -254,7 +427,7 @@ combat.non_parametric_bayes_solver <- function(z, n_sample_features=50, cl=NULL,
   batch_parameters <- fam_lapply(cl=cl,
                                  assign=NULL,
                                  X=split(z, by=c(get_id_columns(single_column="batch"), "feature"), drop=TRUE),
-                                 FUN=.combat.non_parametric_bayes_solver,
+                                 FUN=..combat_non_parametric_bayes_solver,
                                  progress_bar=progress_bar,
                                  z_short=z_short,
                                  n_sample_features=n_sample_features,
@@ -267,7 +440,7 @@ combat.non_parametric_bayes_solver <- function(z, n_sample_features=50, cl=NULL,
 }
 
 
-.combat.non_parametric_bayes_solver <- function(z, z_short, n_sample_features){
+..combat_non_parametric_bayes_solver <- function(z, z_short, n_sample_features){
 
   # Suppress NOTES due to non-standard evaluation in data.table
   batch_id <- feature <- NULL
@@ -334,39 +507,39 @@ combat.non_parametric_bayes_solver <- function(z, n_sample_features=50, cl=NULL,
 }
 
 
-combat.non_combat_solver <- function(z, cl=NULL, progress_bar=TRUE){
-  # Extracts batch normalisation parameters using standard methods.
-  
-  # Extract parameters for each feature in each batch.
-  batch_parameters <- fam_lapply(cl=cl,
-                                 assign=NULL,
-                                 X=split(z, by=c(get_id_columns(single_column="batch"), "feature"), drop=TRUE),
-                                 FUN=.combat.non_combat_solver,
-                                 progress_bar=progress_bar,
-                                 chopchop=TRUE)
-  
-  # Combine into single table
-  batch_parameters <- data.table::rbindlist(batch_parameters)
-  
-  return(batch_parameters)
-}
+# combat.non_combat_solver <- function(z, cl=NULL, progress_bar=TRUE){
+#   # Extracts batch normalisation parameters using standard methods.
+#   
+#   # Extract parameters for each feature in each batch.
+#   batch_parameters <- fam_lapply(cl=cl,
+#                                  assign=NULL,
+#                                  X=split(z, by=c(get_id_columns(single_column="batch"), "feature"), drop=TRUE),
+#                                  FUN=.combat.non_combat_solver,
+#                                  progress_bar=progress_bar,
+#                                  chopchop=TRUE)
+#   
+#   # Combine into single table
+#   batch_parameters <- data.table::rbindlist(batch_parameters)
+#   
+#   return(batch_parameters)
+# }
+# 
+# 
+# .combat.non_combat_solver <- function(z){
+#   
+#   # Obtain batch parameters using per-batch standardisation.
+#   batch_parameters <- batch_normalise.get_normalisation_parameters(z$value, norm_method="standardisation")
+#   
+#   return(data.table::data.table("batch_id"=z[[get_id_columns(single_column="batch")]][1],
+#                                 "feature"=z$feature[1],
+#                                 "norm_shift"=batch_parameters$norm_shift,
+#                                 "norm_scale"=batch_parameters$norm_scale,
+#                                 "norm_method"=batch_parameters$norm_method,
+#                                 "n"=batch_parameters$n))
+# }
 
 
-.combat.non_combat_solver <- function(z){
-  
-  # Obtain batch parameters using per-batch standardisation.
-  batch_parameters <- batch_normalise.get_normalisation_parameters(z$value, norm_method="standardisation")
-  
-  return(data.table::data.table("batch_id"=z[[get_id_columns(single_column="batch")]][1],
-                                "feature"=z$feature[1],
-                                "norm_shift"=batch_parameters$norm_shift,
-                                "norm_scale"=batch_parameters$norm_scale,
-                                "norm_method"=batch_parameters$norm_method,
-                                "n"=batch_parameters$n))
-}
-
-
-combat.lambda_prior <- function(delta_hat_squared){
+..combat_lambda_prior <- function(delta_hat_squared){
   # Computes the lambda prior from Johnson et al. See suppl. A3.1 for more
   # details. It seems that the supplement contains an error, where the prior is
   # created using V instead of V^2. Since V^2 appears in other code
@@ -381,7 +554,7 @@ combat.lambda_prior <- function(delta_hat_squared){
 
 
 
-combat.theta_prior <- function(delta_hat_squared){
+..combat_theta_prior <- function(delta_hat_squared){
   # Computes the theta prior from Johnson et al. See suppl. A3.1 for more
   # details.
   V <- mean(delta_hat_squared)
@@ -392,7 +565,7 @@ combat.theta_prior <- function(delta_hat_squared){
 
 
 
-combat.gamma_posterior <- function(n, tau_bar_squared, gamma_hat, delta_star_squared, gamma_bar){
+..combat_gamma_posterior <- function(n, tau_bar_squared, gamma_hat, delta_star_squared, gamma_bar){
   # Computes conditional posterior for gamma, see equation 3.1 in Johnson et al.
   gamma_star <- (n * tau_bar_squared * gamma_hat + delta_star_squared * gamma_bar) / (n * tau_bar_squared + delta_star_squared)
   
@@ -401,7 +574,7 @@ combat.gamma_posterior <- function(n, tau_bar_squared, gamma_hat, delta_star_squ
 
 
 
-combat.delta_squared_posterior <- function(theta_bar, sum_squared_error, n, lambda_bar){
+..combat_delta_squared_posterior <- function(theta_bar, sum_squared_error, n, lambda_bar){
   # Computes conditional posterior for delta_star_squared, see equation 3.1 in Johnson et al.
   delta_star_squared <- (theta_bar + 0.5 * sum_squared_error) / (0.5 * n + lambda_bar - 1.0)
   

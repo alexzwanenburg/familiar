@@ -284,6 +284,37 @@ setMethod("update_object", signature(object="featureInfo"),
                                                                                            shift=object@normalisation_parameters$norm_shift,
                                                                                            scale=object@normalisation_parameters$norm_scale)
               
+              # Upgrade batch normalisation parameters to a proper S4 object.
+              # Determine the method used for batch normalisation.
+              batch_normalisation_method <- unique(sapply(object@batch_normalisation_parameters, function(x) (x$norm_method)))
+              batch_normalisation_method <- setdiff(batch_normalisation_method, c("none", "unknown"))
+              if(is_empty(batch_normalisation_method)) batch_normalisation_method <- "none"
+              browser()
+              # Add container.
+              batch_normalisation_parameters <- ..create_batch_normalisation_parameter_skeleton(feature_name=object@name,
+                                                                                                feature_type=object@feature_type,
+                                                                                                available=is_available(object),
+                                                                                                method=batch_normalisation_method)
+              
+              # Update the container contents.
+              batch_normalisation_parameters@batch_parameters <- mapply(FUN=function(x, batch, object){
+                return(..create_normalisation_parameter_skeleton(feature_name=object@name,
+                                                                 feature_type=object@feature_type,
+                                                                 available=is_available(object),
+                                                                 method=x$norm_method,
+                                                                 batch=batch,
+                                                                 shift=x$norm_shift,
+                                                                 scale=x$norm_scale))
+              },
+              x=object@batch_normalisation_parameters,
+              batch=names(object@batch_normalisation_parameters),
+              MoreArgs=list("object"=object))
+              
+              # Update names.
+              names(batch_normalisation_parameters@batch_parameters) <- names(object@batch_normalisation_parameters)
+              
+              # Update batch normalisations parameters in the object.
+              object@batch_normalisation_parameters <- batch_normalisation_parameters
             }
             
             if(!methods::validObject(object)) stop("Could not update the featureInfo object to the most recent definition.")

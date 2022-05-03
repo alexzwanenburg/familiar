@@ -456,12 +456,15 @@ determine_preprocessing_parameters <- function(cl=NULL,
                    verbose=verbose)
   }
   
+  # Add batch normalisation skeletons.
+  feature_info_list <- create_batch_normalisation_parameter_skeleton(feature_info_list=feature_info_list,
+                                                                     normalisation_method=settings$prep$batch_normalisation_method)
+  
   # Add batch normalisation parameters to the feature information list.
   feature_info_list <- add_batch_normalisation_parameters(cl=cl, 
                                                           feature_info_list=feature_info_list,
-                                                          data_obj=data,
-                                                          settings=settings,
-                                                          progress_bar=verbose)
+                                                          data=data,
+                                                          verbose=verbose)
   
   # Batch-normalise feature values
   data <- batch_normalise_features(data=data,
@@ -568,6 +571,7 @@ determine_preprocessing_parameters <- function(cl=NULL,
   # Return list of featureInfo objects
   return(feature_info_list)
 }
+
 
 
 combine_feature_info_list <- function(preferred=NULL,
