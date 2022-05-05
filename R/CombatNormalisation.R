@@ -44,9 +44,9 @@ setMethod("add_feature_info_parameters", signature(object="featureInfoParameters
             replacement_object <- ..create_normalisation_parameter_skeleton(feature_name=object@name,
                                                                             method="standardisation",
                                                                             batch=object@batch)
-            browser()
+            
             # Select the current feature and batch from batch_parameter_data.
-            batch_parameter_data <- batch_parameter_data[feature==object@feature & batch_id==object@batch, ]
+            batch_parameter_data <- batch_parameter_data[feature==object@name & batch_id==object@batch, ]
             
             # If the batch parameter data are empty, attempt to use univariate
             # standardisation.
@@ -60,12 +60,14 @@ setMethod("add_feature_info_parameters", signature(object="featureInfoParameters
                                                  data=data))
             }
             
-            # Check for scales which are close to 0
-            if(scale < 2.0 * .Machine$double.eps) scale <- 1.0
-            
             # Set shift and scale parameters.
             object@shift <- batch_parameter_data$norm_shift
             object@scale <- batch_parameter_data$norm_scale
+            
+            # Check for scales which are close to 0
+            if(object@scale < 2.0 * .Machine$double.eps) object@scale <- 1.0
+            
+            # Mark complete.
             object@complete <- TRUE
             
             return(object)
@@ -91,9 +93,9 @@ setMethod("add_feature_info_parameters", signature(object="featureInfoParameters
             replacement_object <- ..create_normalisation_parameter_skeleton(feature_name=object@name,
                                                                             method="standardisation",
                                                                             batch=object@batch)
-            browser()
+            
             # Select the current feature and batch from batch_parameter_data.
-            batch_parameter_data <- batch_parameter_data[feature==object@feature & batch_id==object@batch, ]
+            batch_parameter_data <- batch_parameter_data[feature==object@name & batch_id==object@batch, ]
             
             # If the batch parameter data are empty, attempt to use univariate
             # standardisation.
@@ -107,12 +109,14 @@ setMethod("add_feature_info_parameters", signature(object="featureInfoParameters
                                                  data=data))
             }
             
-            # Check for scales which are close to 0
-            if(scale < 2.0 * .Machine$double.eps) scale <- 1.0
-            
             # Set shift and scale parameters.
             object@shift <- batch_parameter_data$norm_shift
             object@scale <- batch_parameter_data$norm_scale
+            
+            # Check for scales which are close to 0
+            if(object@scale < 2.0 * .Machine$double.eps) object@scale <- 1.0
+            
+            # Mark complete.
             object@complete <- TRUE
             
             return(object)

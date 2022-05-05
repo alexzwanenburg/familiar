@@ -245,8 +245,13 @@ create_normalisation_parameter_skeleton <- function(feature_info_list,
   # Set the name of the object.
   object@name <- feature_name
   
-  # Check if lambda is not NULL.
-  if(!is.null(batch) || !is.null(shift) || !is.null(scale)){
+  # Add batch, if provided.
+  if(!is.null(batch)){
+    object@batch <- batch
+  }
+  
+  # Add shift and/or scale, when provided.
+  if(!is.null(shift) || !is.null(scale)){
     object <- add_feature_info_parameters(object,
                                           data=NULL,
                                           batch=batch,
@@ -832,7 +837,7 @@ setMethod("add_feature_info_parameters", signature(object="featureInfoParameters
 
 
 ##### apply_feature_info_parameters (shift and scale, data.table) --------------
-setMethod("apply_feature_info_parameters", signature(object="featureInfoParametersNormalisationShiftScale", data="ANY"),
+setMethod("apply_feature_info_parameters", signature(object="featureInfoParametersNormalisationShiftScale", data="data.table"),
           function(object, 
                    data,
                    ...){
@@ -874,7 +879,7 @@ setMethod("apply_feature_info_parameters", signature(object="featureInfoParamete
 
 
 ##### apply_feature_info_parameters (shift, data.table) ------------------------
-setMethod("apply_feature_info_parameters", signature(object="featureInfoParametersNormalisationShift", data="ANY"),
+setMethod("apply_feature_info_parameters", signature(object="featureInfoParametersNormalisationShift", data="data.table"),
           function(object, 
                    data,
                    ...){
@@ -1128,8 +1133,8 @@ setMethod("apply_feature_info_parameters", signature(object="featureInfoParamete
   # Determine if there are any objects that are not NULL or
   # featureInfoParametersNormalisationNone.
   if(all(object_class[instance_mask] %in% c("NULL", "featureInfoParametersNormalisationNone"))){
-    return(list("parameters"=..create_transformation_parameter_skeleton(feature_name=feature_name,
-                                                                        method="none"),
+    return(list("parameters"=..create_normalisation_parameter_skeleton(feature_name=feature_name,
+                                                                       method="none"),
                 "instance_mask"=instance_mask))
   }
   
@@ -1176,9 +1181,8 @@ setMethod("apply_feature_info_parameters", signature(object="featureInfoParamete
   }
   
   return(list("parameters"=..create_normalisation_parameter_skeleton(feature_name=feature_name,
-                                                                     method=selected_method,
-                                                                     shift=selected_shift,
-                                                                     scale=selected_scale),
+                                                                     method=unname(selected_method),
+                                                                     shift=unname(selected_shift),
+                                                                     scale=unname(selected_scale)),
               "instance_mask"=instance_mask))
-  
 }

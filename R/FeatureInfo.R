@@ -1104,14 +1104,14 @@ trim_unused_features_from_list <- function(feature_info_list){
   if(stop_at == "normalisation") return(feature_info)
   
   # Extract batch normalisation parameter data.
-  batch_normalisation_parameter_data <- ..collect_and_aggregate_batch_normalisation_info(feature_info_list=feature_info_list)
- 
+  batch_normalisation_parameter_data <- ..collect_and_aggregate_batch_normalisation_info(feature_info_list=feature_info_list,
+                                                                                         instance_mask=instance_mask,
+                                                                                         feature_name=feature)
   
+  # Update batch normalisation parameter data.
+  feature_info@batch_normalisation_parameters <- batch_normalisation_parameter_data$parameters
   
-  
-  if(stop_at == "batch_normalisation"){
-    return(feature_info)
-  }
+  if(stop_at == "batch_normalisation") return(feature_info)
 
   # Imputation parameters.
   if(feature_info@feature_type == "numeric"){
@@ -1136,115 +1136,6 @@ trim_unused_features_from_list <- function(feature_info_list){
   return(feature_info)
 }
 
-
-
-..collect_and_aggregate_batch_normalisation_info <- function(feature_info_list){
-  # Aggregate batch normalisation parameters. This function exists so that it
-  # can be tested as part of a unit test.
-  
-  # Suppress NOTES due to non-standard evaluation in data.table
-  is_valid <- norm_method <- norm_shift <- NULL
-  
-  # Get the batch identifier column.
-  batch_id_column <- get_id_columns(single_column="batch")
-  
-  # Aggregate all existing parameters to a table.
-  batch_parameters <- lapply(feature_info_list, function(current_feature_info, batch_id_column) {
-    
-    # Return NULL if parameters are missing.
-    if(is.null(current_feature_info@batch_normalisation_parameters)) return(NULL)
-    
-    # Extract batch parameters from each batch for the current featureInfo object.
-    parameter_table <- lapply(names(current_feature_info@batch_normalisation_parameters), function(batch_name, current_feature_info, batch_id_column){
-      
-      # Parse hyperparameters for in each batch to a ble
-      parameter_table <- data.table::as.data.table(current_feature_info@batch_normalisation_parameters[[batch_name]])
-      
-      # Add batch identifier
-      parameter_table[, (batch_id_column):=batch_name]
-      
-      return(parameter_table)
-      
-    },
-    current_feature_info=current_feature_info,
-    batch_id_column=batch_id_column)
-    
-    # Combine list of parameter tables to a single table
-    parameter_table <- data.table::rbindlist(parameter_table)
-    
-    return(parameter_table)
-  },
-  batch_id_column=batch_id_column)
-  
-  # Combine list of parameter table into a single table.
-  batch_parameters <- data.table::rbindlist(batch_parameters)
-  
-  if(is_empty(batch_parameters)) return(NULL)
-  
-  # Get all batch identifiers
-  # batch_ids <- unique(batch_parameters[[batch_id_column]])
-  
-  # Extract batch parameters.
-  batch_parameter_list <- lapply(split(batch_parameters, by=batch_id_column), function(batch_parameters){
-    
-    if(all(batch_parameters$norm_method == "none")){
-      # If all batch normalisation methods across the feature instances are
-      # none, none of the parameters are valid.
-      batch_parameters[, "is_valid":=FALSE]
-      
-      # Set default parameters.
-      batch_parameter_list <- list("norm_method" = "none",
-                                   "norm_shift" = NA_real_,
-                                   "norm_scale" = NA_real_,
-                                   "n" = 0L)
-      
-    } else {
-      # This means that are some batch normalisation methods that are not
-      # "none".
-      
-      # Set the is_valid flag for all entries that have a batch normalisation
-      # method other than "none".
-      batch_parameters[, "is_valid":=norm_method != "none"]
-      
-      if(all(is.na(batch_parameters[is_valid == TRUE]$norm_shift))){
-        # Mark all instances as invalid.
-        batch_parameters[is.na(norm_shift), "is_valid":=FALSE]
-        
-        # Set default parameters.
-        batch_parameter_list <- list("norm_method" = "none",
-                                     "norm_shift" = NA_real_,
-                                     "norm_scale" = NA_real_,
-                                     "n" = 0L)
-        
-      } else {
-        # Mark those instances with NA shift as invalid.
-        batch_parameters[is.na(norm_shift), "is_valid":=FALSE]
-        
-        # Get the most common normalisation method.
-        selected_batch_normalisation_method <- get_mode(batch_parameters[is_valid == TRUE]$norm_method)
-        
-        # Set all instances with normalisation methods that are not equal to the
-        # selected method to invalid.
-        batch_parameters[norm_method != selected_batch_normalisation_method, "is_valid":=FALSE]
-        
-        # From the remaining, select the average shift and scale parameters.
-        selected_batch_normalisation_shift <- mean(batch_parameters[is_valid == TRUE]$norm_shift)
-        selected_batch_normalisation_scale <- mean(batch_parameters[is_valid == TRUE]$norm_scale)
-        selected_n <- as.integer(stats::median(batch_parameters[is_valid == TRUE]$n))
-        
-        # Set the normalisation parameter.
-        batch_parameter_list <- list("norm_method" = selected_batch_normalisation_method,
-                                     "norm_shift" = selected_batch_normalisation_shift,
-                                     "norm_scale" = selected_batch_normalisation_scale,
-                                     "n" = selected_n)
-      }
-      
-      return(batch_parameter_list)
-    }
-  })
-  
-  return(batch_parameter_list)
-}
 
 
 .show_simple_feature_info <- function(object, line_end=""){
@@ -1350,26 +1241,28 @@ setMethod("show", signature(object="featureInfo"),
                 for(normalisation_parameters in batch_parameters@batch_parameters){
                   if(is(normalisation_parameters, "featureInfoParametersNormalisationShiftScale")){
                     if(normalisation_parameters@shift != 0.0 || normalisation_parameters@scale != 1.0){
-                      batch_norm_str <- paste0("  [",
-                                               normalisation_parameters@batch,
-                                               "] normalisation (",
-                                               normalisation_parameters@method,
-                                               ") with shift = ",
-                                               normalisation_parameters@shift,
-                                               " and scale = ",
-                                               normalisation_parameters@scale,
-                                               ".\n")
+                      batch_norm_str <- c(batch_norm_str,
+                                          paste0("  [",
+                                                 normalisation_parameters@batch,
+                                                 "] normalisation (",
+                                                 normalisation_parameters@method,
+                                                 ") with shift = ",
+                                                 normalisation_parameters@shift,
+                                                 " and scale = ",
+                                                 normalisation_parameters@scale,
+                                                 ".\n"))
                     }
                     
                   } else if(is(normalisation_parameters, "featureInfoParametersNormalisationShift")){
                     if(normalisation_parameters@shift != 0.0){
-                      batch_norm_str <- paste0("  [",
-                                               normalisation_parameters@batch,
-                                               "] normalisation (",
-                                               normalisation_parameters@method,
-                                               ") with shift = ",
-                                               normalisation_parameters@shift,
-                                               ".\n")
+                      batch_norm_str <- c(batch_norm_str,
+                                          paste0("  [",
+                                                 normalisation_parameters@batch,
+                                                 "] normalisation (",
+                                                 normalisation_parameters@method,
+                                                 ") with shift = ",
+                                                 normalisation_parameters@shift,
+                                                 ".\n"))
                     }
                   }
                 }

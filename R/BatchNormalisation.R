@@ -81,7 +81,7 @@ create_batch_normalisation_parameter_skeleton <- function(feature_info_list,
   
   # Check if normalisation data was already completed, and does not require
   # being determined anew.
-  if(feature_info_complete(feature_info@normalisation_parameters) & !.override_existing) return(feature_info)
+  if(feature_info_complete(feature_info@batch_normalisation_parameters) & !.override_existing) return(feature_info)
   
   # Pass to underlying function that constructs the skeleton.
   object <- ..create_batch_normalisation_parameter_skeleton(feature_name=feature_info@name,
@@ -90,7 +90,7 @@ create_batch_normalisation_parameter_skeleton <- function(feature_info_list,
                                                             available=is_available(feature_info))
   
   # Update normalisation_parameters slot.
-  feature_info@normalisation_parameters <- object
+  feature_info@batch_normalisation_parameters <- object
   
   return(feature_info)
 }
@@ -140,7 +140,7 @@ add_batch_normalisation_parameters <- function(cl=NULL,
   }
   
   # Identify methods specified by the containers for different features.
-  container_batch_methods <- sapply(feature_info_list=feature_names,
+  container_batch_methods <- sapply(feature_info_list[feature_names],
                                     function(x) (x@batch_normalisation_parameters@method))
   
   # Iterate over methods. The names of features that are assessed using the same
@@ -156,8 +156,8 @@ add_batch_normalisation_parameters <- function(cl=NULL,
       
       # Pre-compute z-matrix. Otherwise we need to compute for each feature,
       # over and over again.
-      z <- .compute_combat_batch_normalisation_z_matrix(data=data,
-                                                        feature_names=feature_names)
+      z <- .compute_combat_batch_normalisation_z_matrix(data=data@data,
+                                                        feature_names=batch_method_feature_names)
       
       if(container_batch_method %in% .get_available_batch_normalisation_methods(type="combat_parametric")){
         # Obtain ComBat data using the parametric solver.
@@ -180,8 +180,8 @@ add_batch_normalisation_parameters <- function(cl=NULL,
     updated_feature_info <- fam_mapply(cl=cl,
                                        FUN=.add_batch_normalisation_parameters,
                                        feature_info=feature_info_list[batch_method_feature_names],
-                                       data=data@data[, mget(feature_names)],
-                                       MoreArgs=list("batch_column_data"= data@data[, mget(get_id_columns("batch", single_column=TRUE))],
+                                       data=data@data[, mget(batch_method_feature_names)],
+                                       MoreArgs=list("batch_column_data"= data@data[[get_id_columns("batch", single_column=TRUE)]],
                                                      "batch_parameter_data"=batch_parameter_data),
                                        progress_bar=verbose,
                                        chopchop=TRUE)
@@ -251,7 +251,7 @@ setMethod("add_feature_info_parameters", signature(object="featureInfoParameters
             
             # Find the batch identifiers in the data.
             batch_ids <- unique(data[[get_id_columns(id_depth="batch")]])
-            browser()
+            
             # Determine which normalisation objects already exist.
             visited_batch <- names(object@batch_parameters)
             
@@ -309,12 +309,19 @@ setMethod("add_feature_info_parameters", signature(object="featureInfoParameters
                                                                                               feature_name=object@name)$parameters
               
               # Identify which new objects are none objects.
-              batch_to_check <- batch_to_check[sapply(object@batch_parameter[batch_to_check], is, class2="featureInfoParametersNormalisationNone")]
+              batch_to_check <- batch_to_check[sapply(object@batch_parameters[batch_to_check], is, class2="featureInfoParametersNormalisationNone")]
               
               if(length(batch_to_check) > 0){
-                browser()
+                
                 # Add batch attribute to normalisation objects.
-                normalisation_objects <- lapply(batch_to_check, function(x, object) (object@batch=x), object=replacement_normalisation_object)
+                normalisation_objects <- lapply(batch_to_check, function(x, object){
+                  
+                  # Add batch name
+                  object@batch <- x
+                  
+                  return(object)
+                },
+                object=replacement_normalisation_object)
                 
                 # Update names.
                 names(normalisation_objects) <- batch_to_check
@@ -372,7 +379,8 @@ setMethod("apply_feature_info_parameters", signature(object="featureInfoParamete
             # Transform per batch.
             data <- fam_mapply(FUN=apply_feature_info_parameters,
                                object=object@batch_parameters[batch_ids],
-                               data=split(data, by=get_id_columns(id_depth="batch"))[batch_ids])
+                               data=split(data, by=get_id_columns(id_depth="batch"))[batch_ids],
+                               MoreArgs=list(...))
             
             # Combine into a single data.table.
             data <- data.table::rbindlist(data, use.names=TRUE)
@@ -383,6 +391,84 @@ setMethod("apply_feature_info_parameters", signature(object="featureInfoParamete
             # Extract the feature values and return.
             return(data[[object@name]])
           })
+
+
+
+..collect_and_aggregate_batch_normalisation_info <- function(feature_info_list, instance_mask, feature_name){
+  # Aggregate batch normalisation parameters. This function exists so that it
+  # can be tested as part of a unit test.
+  
+  # Find all batches in the parameters.
+  batch_ids <- unique(unlist(lapply(feature_info_list, function(x){
+    
+    # Return NULL if parameters are missing.
+    if(is.null(x@batch_normalisation_parameters)) return(NULL)
+    
+    return(names(x@batch_normalisation_parameters@batch_parameters))
+  })))
+  
+  # Main batch method
+  main_batch_method <- unique(unlist(lapply(feature_info_list, function(x){
+    # Return NULL if parameters are missing.
+    if(is.null(x@batch_normalisation_parameters)) return(NULL)
+    
+    return(x@batch_normalisation_parameters@method)
+  })))
+  
+  # Create parameter container
+  batch_parameter_container <- ..create_batch_normalisation_parameter_skeleton(method=main_batch_method[1],
+                                                                               feature_name=feature_name)
+  
+  if(!any(instance_mask)){
+    # Create placeholder objects.
+    batch_normalisation_objects <- lapply(batch_ids, function(batch, feature_name){
+      ..create_normalisation_parameter_skeleton(feature_name=feature_name,
+                                                method="none",
+                                                batch=batch)
+    },
+    feature_name=feature_name)
+    
+    # Add names.
+    names(batch_normalisation_objects) <- batch_ids
+    
+    # Add to container.
+    batch_parameter_container@batch_parameters <- batch_normalisation_objects
+    
+    return(list("parameters"=batch_parameter_container,
+                "instance_mask"=instance_mask))
+  }
+  
+  # Initialise list of objects.
+  batch_normalision_object_list <- list()
+  
+  # Iterate over batch identifiers and collect all batch identifiers.
+  for(batch_id in batch_ids){
+    
+    # Collect batch normalisation objects.
+    batch_normalisation_objects <- lapply(feature_info_list[instance_mask], function(x, batch_id){
+      # Return NULL if parameters are missing.
+      if(is.null(x@batch_normalisation_parameters)) return(NULL)
+      
+      # Return parameters for the specific batch.
+      return(x@batch_normalisation_parameters@batch_parameters[[batch_id]])
+    },
+    batch_id=batch_id)
+    
+    # Collect aggregate object.
+    batch_normalision_object_list[[batch_id]] <- ...collect_and_aggregate_normalisation_info(object_list=batch_normalisation_objects,
+                                                                                             instance_mask=rep_len(TRUE, length(batch_normalisation_objects)),
+                                                                                             feature_name=feature_name)$parameters
+    
+    # Set batch name.
+    batch_normalision_object_list[[batch_id]]@batch <- batch_id
+  }
+  
+  # Add batch objects to container.
+  batch_parameter_container@batch_parameters <- batch_normalision_object_list
+  
+  return(list("parameters"=batch_parameter_container,
+              "instance_mask"=instance_mask))
+}
 
 
 
