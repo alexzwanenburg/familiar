@@ -622,25 +622,71 @@ for(n_numeric_features in c(4, 3, 2, 1, 0)){
                                    # Check that the data is not altered.
                                    testthat::expect_equal(data.table::fsetequal(data_copy@data, data@data), TRUE)
                                    
-                                 } else {
+                                   # Iterate over features.
                                    for(feature in familiar:::get_feature_columns(data_copy)){
+                                     # Test that the container method matches the batch
+                                     # normalisation method.
+                                     testthat::expect_equal(feature_info_list[[feature]]@batch_normalisation_parameters@method,
+                                                            batch_normalisation_method)
                                      
-                                     # Determine if the feature is numeric.
-                                     if(feature_info_list[[feature]]@feature_type == "numeric"){
+                                     # Expect that all batches are named.
+                                     testthat::expect_setequal(names(feature_info_list[[feature]]@batch_normalisation_parameters@batch_parameters),
+                                                               batch_ids)
+                                     
+                                     # Expect that all batches parameter objects have
+                                     # the none class.
+                                     for(batch_parameter_object in feature_info_list[[feature]]@batch_normalisation_parameters@batch_parameters){
+                                       testthat::expect_s4_class(batch_parameter_object, "featureInfoParametersNormalisationNone")
+                                       testthat::expect_equal(batch_parameter_object@name, feature)
+                                       testthat::expect_equal(batch_parameter_object@batch %in% batch_ids, TRUE)
+                                     }
+                                   }
+                                   
+                                 } else {
+                                   # Iterate over the different batches to determine if
+                                   # batch corrections were performed correctly.
+                                   for(feature in familiar:::get_feature_columns(data_copy)){
+                                     for(x in split(data_copy@data, by="batch_id")){
                                        
-                                       # Expect that shift and scale parameters are 0 and 1, respectively.
-                                       x_shift <- sapply(feature_info_list[[feature]]@batch_normalisation_parameters, function(batch_param) (batch_param$norm_shift))
-                                       x_scale <- sapply(feature_info_list[[feature]]@batch_normalisation_parameters, function(batch_param) (batch_param$norm_scale))
+                                       # Find the current batch identifier.
+                                       current_batch_id <- x[["batch_id"]][1]
                                        
-                                       testthat::expect_equal(all(is.na(x_shift)), TRUE)
-                                       testthat::expect_equal(all(is.na(x_scale)), TRUE)
-                                       
-                                     } else {
-                                       # For categorical features test that the none batch normalisation
-                                       # method is present.
-                                       x <- all(sapply(feature_info_list[[feature]]@batch_normalisation_parameters, function(batch_param) (batch_param$norm_method)) == "none")
-                                       
-                                       testthat::expect_equal(x, TRUE)
+                                       # Iterate over features.
+                                       for(feature in familiar:::get_feature_columns(data_copy)){
+                                         
+                                         # Determine if the feature is numeric.
+                                         if(feature_info_list[[feature]]@feature_type == "numeric"){
+                                           # Expect that all batches are named.
+                                           testthat::expect_setequal(names(feature_info_list[[feature]]@batch_normalisation_parameters@batch_parameters),
+                                                                     batch_ids)
+                                           
+                                           # Expect that all batch parameter objects have
+                                           # the none class.
+                                           for(batch_parameter_object in feature_info_list[[feature]]@batch_normalisation_parameters@batch_parameters){
+                                             testthat::expect_s4_class(batch_parameter_object, "featureInfoParametersNormalisationNone")
+                                             testthat::expect_equal(batch_parameter_object@name, feature)
+                                             testthat::expect_equal(batch_parameter_object@batch %in% batch_ids, TRUE)
+                                           }
+                                           
+                                         } else {
+                                           # For categorical features test that the none
+                                           # batch normalisation method is present.
+                                           testthat::expect_equal(feature_info_list[[feature]]@batch_normalisation_parameters@method,
+                                                                  "none")
+                                           
+                                           # Expect that all batches are named.
+                                           testthat::expect_setequal(names(feature_info_list[[feature]]@batch_normalisation_parameters@batch_parameters),
+                                                                     batch_ids)
+                                           
+                                           # Expect that all batches parameter objects have
+                                           # the none class.
+                                           for(batch_parameter_object in feature_info_list[[feature]]@batch_normalisation_parameters@batch_parameters){
+                                             testthat::expect_s4_class(batch_parameter_object, "featureInfoParametersNormalisationNone")
+                                             testthat::expect_equal(batch_parameter_object@name, feature)
+                                             testthat::expect_equal(batch_parameter_object@batch %in% batch_ids, TRUE)
+                                           }
+                                         }
+                                       }
                                      }
                                    }
                                  }
