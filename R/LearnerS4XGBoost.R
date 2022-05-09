@@ -582,7 +582,7 @@ setMethod("..predict", signature(object="familiarXGBoost", data="dataObject"),
               
               # Get an empty prediction table.
               prediction_table <- get_placeholder_prediction_table(object=object,
-                                                                   data=encoded_data$encoded_dat,
+                                                                   data=encoded_data$encoded_data,
                                                                    type=type)
               
               # Make predictions. If the booster object is DART type, predict()
