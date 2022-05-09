@@ -514,7 +514,7 @@ determine_preprocessing_parameters <- function(cl=NULL,
     # Filter features that are not relevant
     feature_info_list  <- find_unimportant_features(cl=cl,
                                                     feature_info_list=feature_info_list,
-                                                    data_obj=data,
+                                                    data=data,
                                                     settings=settings)
     available_features <- get_available_features(feature_info_list=feature_info_list)
     

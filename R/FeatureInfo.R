@@ -599,40 +599,48 @@ find_non_robust_features <- function(cl=NULL,
 }
 
 
-find_unimportant_features <- function(cl=NULL, feature_info_list, data_obj, settings){
+find_unimportant_features <- function(cl=NULL,
+                                      feature_info_list,
+                                      data,
+                                      settings){
   # Find which features are not important for the current endpoint.
   
   # Suppress NOTES due to non-standard evaluation in data.table
   p_full <- q_full <- p_val <- q_val <- name <- p_median <- q_median <- q_sel <- p_sel <- NULL
   
-  # Base calculatutions on medians/modes for repeated data. Repeated measurements are not independent and may inflate statistics.
-  data_obj <- aggregate_data(data=data_obj)
+  # Base calculatutions on medians/modes for repeated data. Repeated
+  # measurements are not independent and may inflate statistics.
+  data <- aggregate_data(data=data)
   
   # Determine feature columns
-  feature_columns <- get_feature_columns(x=data_obj)
+  feature_columns <- get_feature_columns(x=data)
   
   # Set q-value to 1 if none is provided
   if(is.null(settings$prep$univar_threshold))  {
-    # If NULL, allow potential selection of all features, pending univar_feat_set_size.
+    # If NULL, allow potential selection of all features, pending
+    # univar_feat_set_size.
     settings$prep$univar_threshold <- 1
   }
   
   if(is.null(settings$prep$univar_feat_set_size)){
-    # If NULL, allow potential selection of all features, pending univar_threshold
+    # If NULL, allow potential selection of all features, pending
+    # univar_threshold
     settings$prep$univar_feat_set_size <- length(feature_columns)
   }
   
   # Generate bootstraps
-  n_iter         <- 10
-  iter_list      <- .create_bootstraps(n_iter=n_iter,
-                                       settings=settings,
-                                       data=data_obj@data,
-                                       stratify=TRUE)
+  n_iter <- 10
+  iter_list <- .create_bootstraps(n_iter=n_iter,
+                                  settings=settings,
+                                  data=data@data,
+                                  stratify=TRUE)
   
   
   ##### Calculate metric values over the full data #####
   # Calculate p-values of the coefficients
-  regr_pval      <- compute_univariable_p_values(cl=cl, data_obj=data_obj, feature_columns=feature_columns)
+  regr_pval <- compute_univariable_p_values(cl=cl,
+                                            data_obj=data,
+                                            feature_columns=feature_columns)
   
   # Find and replace non-finite values
   regr_pval[!is.finite(regr_pval)] <- 1.0
@@ -664,7 +672,8 @@ find_unimportant_features <- function(cl=NULL, feature_info_list, data_obj, sett
   for(ii in 1:n_iter){
     
     # Bootstrap data
-    data_bootstrap_obj <- select_data_from_samples(data=data_obj, samples=iter_list$train_list[[ii]])
+    data_bootstrap_obj <- select_data_from_samples(data=data,
+                                                   samples=iter_list$train_list[[ii]])
     
     # Calculate p-values for the current bootstrap
     if(length(feature_columns)>0){
@@ -688,13 +697,13 @@ find_unimportant_features <- function(cl=NULL, feature_info_list, data_obj, sett
   }
   
   # Combine into single data table
-  dt_regr_bs      <- data.table::rbindlist(bt_regr_pval)
+  dt_regr_bs <- data.table::rbindlist(bt_regr_pval)
   
   # Calculate median metric values of the bootstraps
-  dt_regr_bs      <- dt_regr_bs[, list(p_median=stats::median(p_val, na.rm=TRUE), q_median=stats::median(q_val, na.rm=TRUE)), by=name]
+  dt_regr_bs <- dt_regr_bs[, list(p_median=stats::median(p_val, na.rm=TRUE), q_median=stats::median(q_val, na.rm=TRUE)), by=name]
   
   # Merge median metric value table and the full table
-  dt_regr_bs      <- merge(x=dt_regr_bs, y=dt_regr_full, by="name", all=TRUE)
+  dt_regr_bs <- merge(x=dt_regr_bs, y=dt_regr_full, by="name", all=TRUE)
   
   # Address non-finite entries
   dt_regr_bs[!is.finite(p_median), "p_median":=1]
@@ -751,6 +760,7 @@ find_unimportant_features <- function(cl=NULL, feature_info_list, data_obj, sett
   
   return(feature_info_list)
 }
+
 
 
 get_available_features <- function(feature_info_list, data_obj=NULL, exclude_signature=FALSE, exclude_novelty=FALSE){
