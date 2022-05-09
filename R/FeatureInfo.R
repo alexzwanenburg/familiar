@@ -530,25 +530,25 @@ find_low_variance_features <- function(cl=NULL,
 }
 
 
-find_non_robust_features <- function(cl=NULL, feature_info_list, data_obj, settings){
+find_non_robust_features <- function(cl=NULL,
+                                     feature_info_list,
+                                     data,
+                                     settings){
   # Determine which features lack robustness and are to be removed.
   # This is only possible for repeated measurements.
   
-  # Check if repeated measurements are present, otherwise return no feature names.
-  if(all(data_obj@data$repetition_id==1)){
-    return(feature_info_list)
-  }
+  # Check if repeated measurements are present, otherwise return feature info
+  # list as is..
+  if(all(data@data$repetition_id==1)) return(feature_info_list)
   
   # Determine which columns contain feature data
-  feature_columns <- get_feature_columns(x=data_obj)
+  feature_columns <- get_feature_columns(x=data)
   
-  # Determine which columns actually contains numeric data
-  numeric_columns <- feature_columns[sapply(feature_columns, function(ii, data) (is.numeric(data@data[[ii]])), data=data_obj)]
+  # Determine which columns actually contains numeric data.
+  numeric_columns <- feature_columns[sapply(feature_columns, function(ii, data) (is.numeric(data@data[[ii]])), data=data)]
   
-  # Skip if there are no numeric columns
-  if(length(numeric_columns) == 0){
-    return(feature_info_list)
-  }
+  # Skip if there are no columns with numeric data.
+  if(length(numeric_columns) == 0) return(feature_info_list)
   
   # Read several items from settings
   icc_type          <- settings$prep$robustness_icc_type
@@ -559,10 +559,10 @@ find_non_robust_features <- function(cl=NULL, feature_info_list, data_obj, setti
   icc_list <- fam_mapply(cl=cl,
                          assign=NULL,
                          FUN=compute_icc,
-                         x=data_obj@data[, mget(numeric_columns)],
+                         x=data@data[, mget(numeric_columns)],
                          feature=numeric_columns,
                          progress_bar=FALSE,
-                         MoreArgs=list("id_data"=data_obj@data[, mget(get_id_columns())],
+                         MoreArgs=list("id_data"=data@data[, mget(get_id_columns())],
                                        "type"=icc_type),
                          chopchop=TRUE)
   

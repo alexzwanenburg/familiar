@@ -485,8 +485,9 @@ determine_preprocessing_parameters <- function(cl=NULL,
     # Filter features that are not robust
     feature_info_list  <- find_non_robust_features(cl=cl,
                                                    feature_info_list=feature_info_list,
-                                                   data_obj=data,
+                                                   data=data,
                                                    settings=settings)
+    
     available_features <- get_available_features(feature_info_list=feature_info_list)
     
     # Remove non-robust features from the data
