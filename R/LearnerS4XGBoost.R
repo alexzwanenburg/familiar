@@ -541,9 +541,10 @@ setMethod("..train", signature(object="familiarXGBoost", data="dataObject"),
             # Check if the model trained at all.
             if(!is.null(object@messages$error)) return(callNextMethod(object=object))
             
-            # Add model. Note that we use xgboost to save raw model data to
-            # prevent issues with saveRDS. This serialises the model.
-            object@model <- xgboost::xgb.save.raw(model)
+            # Add model. Note that we do not use xgboost::xgb.save.raw to save
+            # raw model data, since this prevents the model being used for
+            # variable importance.
+            object@model <- model
             
             # Add the contrast references to model_list
             object@encoding_reference_table <- encoded_data$reference_table
@@ -576,7 +577,9 @@ setMethod("..predict", signature(object="familiarXGBoost", data="dataObject"),
               if(is_empty(data)) return(callNextMethod())
               
               # Load model through unserialisation.
-              object@model <- xgboost::xgb.load.raw(object@model)
+              if(inherits(object@model, "raw")){
+                object@model <- xgboost::xgb.load.raw(object@model)
+              }
               
               # Encode data so that the features are the same as in the training.
               encoded_data <- encode_categorical_variables(data=data,
@@ -737,8 +740,11 @@ setMethod("..vimp", signature(object="familiarXGBoost"),
             # Check that required packages are loaded and installed.
             require_package(object, "vimp")
             
-            # Load model through unserialisation.
-            object@model <- xgboost::xgb.load.raw(object@model)
+            # Load model through unserialisation. Note that this currently does
+            # not produce a model that can be used to infer variable importance.
+            if(inherits(object@model, "raw")){
+              object@model <- xgboost::xgb.load.raw(object@model)
+            }
             
             # Use xgboost::xgb.importance function from xgboost to extract a
             # data.table.
