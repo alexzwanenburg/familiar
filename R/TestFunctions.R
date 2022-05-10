@@ -109,13 +109,27 @@ test_all_learners_train_predict_vimp <- function(learners,
       # Create a trimmed model.
       trimmed_model <- trim_model(model)
       
+      # Generate a file name to save the model to.
+      file_name <- tempfile(fileext=".rds")
+      
+      # Save file.
+      saveRDS(trimmed_model, file=file_name)
+      
+      # Read file contents as a reloaded model.
+      reloaded_model <- readRDS(file=file_name)
+      
+      # Clean up.
+      file.remove(file_name)
+      
       # Check that the model can be trimmed.
       test_fun(paste0("Model for ", outcome_type, " created using ", learner, " can be trimmed."), {
         if(can_trim){
           testthat::expect_equal(trimmed_model@is_trimmed, TRUE)
+          testthat::expect_equal(reloaded_model@is_trimmed, TRUE)
           
         } else {
           testthat::expect_equal(trimmed_model@is_trimmed, FALSE)
+          testthat::expect_equal(reloaded_model@is_trimmed, FALSE)
         }
       })
       
@@ -156,6 +170,14 @@ test_all_learners_train_predict_vimp <- function(learners,
         testthat::expect_equal(prediction_table,
                                prediction_table_trim,
                                ignore_attr=TRUE)
+        
+        # Expect that the reloaded model produces the same predictions.
+        prediction_table_reloaded <- suppressWarnings(.predict(reloaded_model,
+                                                               data=full_data))
+        
+        testthat::expect_equal(prediction_table,
+                               prediction_table_reloaded,
+                               ignore_attr=TRUE)
       })
       
       # Test that models can be used to predict the outcome.
@@ -181,6 +203,14 @@ test_all_learners_train_predict_vimp <- function(learners,
         
         testthat::expect_equal(prediction_table,
                                prediction_table_trim,
+                               ignore_attr=TRUE)
+        
+        # Expect that the trimmed model produces the same predictions.
+        prediction_table_reloaded <- suppressWarnings(.predict(reloaded_model,
+                                                               data=full_one_sample_data))
+        
+        testthat::expect_equal(prediction_table,
+                               prediction_table_reloaded,
                                ignore_attr=TRUE)
       })
       
@@ -218,6 +248,17 @@ test_all_learners_train_predict_vimp <- function(learners,
                                  prediction_table_trim,
                                  ignore_attr=TRUE)
           
+          # Expect that the reloaded model produces the same predictions.
+          prediction_table_reloaded <- suppressWarnings(.predict(reloaded_model,
+                                                                 data=full_data,
+                                                                 type="survival_probability",
+                                                                 time=1000))
+          
+          testthat::expect_equal(prediction_table,
+                                 prediction_table_reloaded,
+                                 ignore_attr=TRUE)
+          
+          
           # Predict stratification.
           prediction_table <- suppressWarnings(.predict(model,
                                                         data=full_data,
@@ -235,6 +276,16 @@ test_all_learners_train_predict_vimp <- function(learners,
           
           testthat::expect_equal(prediction_table,
                                  prediction_table_trim,
+                                 ignore_attr=TRUE)
+          
+          # Expect that the reloaded model produces the same predictions.
+          prediction_table_reloaded <- suppressWarnings(.predict(reloaded_model,
+                                                                 data=full_data,
+                                                                 type="risk_stratification",
+                                                                 time=1000))
+          
+          testthat::expect_equal(prediction_table,
+                                 prediction_table_reloaded,
                                  ignore_attr=TRUE)
         })
         
@@ -260,6 +311,16 @@ test_all_learners_train_predict_vimp <- function(learners,
                                  prediction_table_trim,
                                  ignore_attr=TRUE)
           
+          # Expect that the reloaded model produces the same predictions.
+          prediction_table_reloaded <- suppressWarnings(.predict(reloaded_model,
+                                                                 data=full_one_sample_data,
+                                                                 type="survival_probability",
+                                                                 time=1000))
+          
+          testthat::expect_equal(prediction_table,
+                                 prediction_table_reloaded,
+                                 ignore_attr=TRUE)
+          
           # Expect predictions to be made.
           prediction_table <- suppressWarnings(.predict(model,
                                                         data=full_one_sample_data,
@@ -279,6 +340,15 @@ test_all_learners_train_predict_vimp <- function(learners,
                                  prediction_table_trim,
                                  ignore_attr=TRUE)
           
+          # Expect that the reloaded model produces the same predictions.
+          prediction_table_reloaded <- suppressWarnings(.predict(reloaded_model,
+                                                                 data=full_one_sample_data,
+                                                                 type="risk_stratification",
+                                                                 time=1000))
+          
+          testthat::expect_equal(prediction_table,
+                                 prediction_table_reloaded,
+                                 ignore_attr=TRUE)
         })
       }
       
@@ -287,9 +357,13 @@ test_all_learners_train_predict_vimp <- function(learners,
         # Extract the variable importance table.
         vimp_table <- suppressWarnings(.vimp(model, data=full_data))
         
-        # Extract the variable importanct table for the trimmed model.
+        # Extract the variable importance table for the trimmed model.
         vimp_table_trim <- suppressWarnings(.vimp(trimmed_model,
-                                                   data=full_data))
+                                                  data=full_data))
+        
+        # Extract the variable importance table for the reloaded model.
+        vimp_table_reloaded <- suppressWarnings(.vimp(reloaded_model,
+                                                      data=full_data))
         
         if(has_vimp){
           # Get the number of features
@@ -298,19 +372,22 @@ test_all_learners_train_predict_vimp <- function(learners,
           # Expect that the vimp table has two rows.
           testthat::expect_equal(nrow(vimp_table) > 0 & nrow(vimp_table) <= n_features, TRUE)
           testthat::expect_equal(nrow(vimp_table_trim) > 0 & nrow(vimp_table_trim) <= n_features, TRUE)
+          testthat::expect_equal(nrow(vimp_table_reloaded) > 0 & nrow(vimp_table_reloaded) <= n_features, TRUE)
           
           # Expect that the names in the vimp table correspond to those of the
           # features.
           testthat::expect_equal(all(vimp_table$name %in% get_feature_columns(full_data)), TRUE)
           testthat::expect_equal(all(vimp_table_trim$name %in% get_feature_columns(full_data)), TRUE)
+          testthat::expect_equal(all(vimp_table_reloaded$name %in% get_feature_columns(full_data)), TRUE)
           
         } else {
           # Expect that the vimp table has no rows.
           testthat::expect_equal(nrow(vimp_table), 0)
           testthat::expect_equal(nrow(vimp_table_trim), 0)
+          testthat::expect_equal(nrow(vimp_table_reloaded), 0)
         }
       })
-      
+
       
       
       #####Bootstrapped dataset#################################################
