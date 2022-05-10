@@ -1,4 +1,122 @@
+#' @include FamiliarS4Generics.R
+#' @include FamiliarS4Classes.R
+NULL
+
+.get_available_imputation_methods <- function(){
+  return(c(.get_available_simple_imputation_methods(),
+           .get_available_lasso_imputation_methods()))
+  
+}
+
+.get_available_simple_imputation_methods <- function(){
+  return("simple")
+}
+
+.get_available_lasso_imputation_methods <- function(){
+  return("lasso")
+}
+
+
+
+create_imputation_parameter_skeleton <- function(feature_info_list,
+                                                 feature_names=NULL,
+                                                 imputation_method,
+                                                 .override_existing=FALSE){
+  # Creates a skeleton for the provided imputation method.
+  
+  # Determine feature names from the feature info list, if provided.
+  if(is.null(feature_names)) feature_names <- names(feature_info_list)
+  
+  # Select only features that appear in the feature info list.
+  feature_names <- intersect(names(feature_info_list),
+                             feature_names)
+  
+  # Skip step if no feature info objects are updated.
+  if(is_empty(feature_names)) return(feature_info_list)
+  
+  # Check that method is applicable.
+  .check_parameter_value_is_valid(x=imputation_method,
+                                  var_name="imputation_method",
+                                  values=.get_available_imputation_methods())
+  
+  # Update familiar info objects with a feature normalisation skeleton.
+  updated_feature_info <- fam_lapply(X=feature_info_list[feature_names],
+                                     FUN=.create_imputation_parameter_skeleton,
+                                     method=imputation_method,
+                                     .override_existing=.override_existing)
+  
+  # Provide names for the updated feature info objects.
+  names(updated_feature_info) <- feature_names
+  
+  # Replace list elements.
+  feature_info_list[feature_names] <- updated_feature_info
+  
+  return(feature_info_list)
+}
+
+
+
+.create_imputation_parameter_skeleton <- function(feature_info,
+                                                  method,
+                                                  .override_existing=FALSE){
+  
+  # Check if imputation data was already completed, and does not require being
+  # determined anew.
+  if(feature_info_complete(feature_info@imputation_parameters) & !.override_existing) return(feature_info)
+  
+  # Pass to underlying function that constructs the skeleton.
+  object <- ..create_imputation_parameter_skeleton(feature_name=feature_info@name,
+                                                   feature_type=feature_info@feature_type,
+                                                   available=is_available(feature_info),
+                                                   method=method)
+  
+  # Update imputation_parameters slot.
+  feature_info@imputation_parameters <- object
+  
+  return(feature_info)
+}
+
+
+
+..create_imputation_parameter_skeleton <- function(feature_name,
+                                                   feature_type="numeric",
+                                                   available=TRUE,
+                                                   method){
+  # This is the lowest level function for creating imputation parameter
+  # skeletons.
+  
+  # Create the relevant objects.
+  if(!available){
+    object <- methods::new("featureInfoParametersImputationNone",
+                           reason="feature was omitted prior to transformation")
+    
+  } else if(method %in% .get_available_simple_imputation_methods()){
+    object <- methods::new("featureInfoParametersImputationSimple",
+                           "method"=method)
+    
+  } else if(method %in% .get_available_lasso_imputation_methods()){
+    object <- methods::new("featureInfoParametersImputationLasso",
+                           "method"=method)
+    
+  } else {
+    ..error_reached_unreachable_code(paste0("..create_imputation_parameter_skeleton: encountered an unknown imputation method: ", paste_s(method)))
+  }
+  
+  # Set the name of the object.
+  object@name <- feature_name
+  
+  # Update the familiar version.
+  object <- add_package_version(object=object)
+  
+  return(object)
+}
+
+
+
+
 add_imputation_info <- function(cl=NULL, feature_info_list, data_obj, settings, verbose=TRUE){
+  
+  
   
   # Add simple imputation info
   feature_info_list <- impute.add_simple_imputation_info(cl=cl,

@@ -478,7 +478,7 @@ determine_preprocessing_parameters <- function(cl=NULL,
   
   
   
-  ##### Remove non-robust features #####
+  ##### Remove non-robust features ---------------------------------------------
   if("robustness" %in% settings$prep$filter_method){
     n_features_current <- length(available_features)
     
@@ -507,7 +507,7 @@ determine_preprocessing_parameters <- function(cl=NULL,
   
   
   
-  ##### Remove unimportant features #####
+  ##### Remove unimportant features --------------------------------------------
   if("univariate_test" %in% settings$prep$filter_method){
     n_features_current <- length(available_features)
     
@@ -533,10 +533,14 @@ determine_preprocessing_parameters <- function(cl=NULL,
   }
   
   
-  ##### Impute missing values #####
+  ##### Impute missing values --------------------------------------------------
   logger.message("Pre-processing: Adding imputation information to features.",
                  indent=message_indent,
                  verbose=verbose)
+  
+  # Add imputation skeletons.
+  feature_info_list <- create_imputation_parameter_skeleton(feature_info_list=feature_info_list,
+                                                            imputation_method=settings$prep$imputation_method)
   
   # Add imputation info
   feature_info_list <- add_imputation_info(cl=cl,

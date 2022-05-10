@@ -1700,7 +1700,7 @@
   
   .check_parameter_value_is_valid(x=settings$imputation_method,
                                   var_name="imputation_method",
-                                  values=c("simple", "lasso"))
+                                  values=.get_available_imputation_methods())
   
   if(settings$imputation_method == "lasso"){
     # If glmnet is not installed, use simple imputation.
