@@ -543,7 +543,7 @@ setMethod("..train", signature(object="familiarXGBoost", data="dataObject"),
             
             # Add model. Note that we use xgboost to save raw model data to
             # prevent issues with saveRDS. This serialises the model.
-            object@model <- xgboost:::xgb.save.raw(model)
+            object@model <- xgboost::xgb.save.raw(model)
             
             # Add the contrast references to model_list
             object@encoding_reference_table <- encoded_data$reference_table
