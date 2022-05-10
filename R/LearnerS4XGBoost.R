@@ -541,8 +541,9 @@ setMethod("..train", signature(object="familiarXGBoost", data="dataObject"),
             # Check if the model trained at all.
             if(!is.null(object@messages$error)) return(callNextMethod(object=object))
             
-            # Add model
-            object@model <- model
+            # Add model. Note that we use xgboost to save raw model data to
+            # prevent issues with saveRDS. This serialises the model.
+            object@model <- xgboost:::xgb.save.raw(model)
             
             # Add the contrast references to model_list
             object@encoding_reference_table <- encoded_data$reference_table
@@ -573,6 +574,9 @@ setMethod("..predict", signature(object="familiarXGBoost", data="dataObject"),
               
               # Check if the data is empty.
               if(is_empty(data)) return(callNextMethod())
+              
+              # Load model through unserialisation.
+              object@model <- xgboost::xgb.load.raw(object@model)
               
               # Encode data so that the features are the same as in the training.
               encoded_data <- encode_categorical_variables(data=data,
@@ -733,6 +737,9 @@ setMethod("..vimp", signature(object="familiarXGBoost"),
             # Check that required packages are loaded and installed.
             require_package(object, "vimp")
             
+            # Load model through unserialisation.
+            object@model <- xgboost::xgb.load.raw(object@model)
+            
             # Use xgboost::xgb.importance function from xgboost to extract a
             # data.table.
             xgboost_score <- tryCatch(xgboost::xgb.importance(model=object@model),
@@ -857,18 +864,18 @@ setMethod("..set_recalibration_model", signature(object="familiarXGBoost", data=
 setMethod(".trim_model", signature(object="familiarXGBoost"),
           function(object, ...){
             
+            # Set is_trimmed to TRUE.
+            object@is_trimmed <- TRUE
+            
+            # Prevent trimming of raw, serialised model information.
+            if(inherits(object@model, "raw")) return(object)
+            
             # Update model by removing the call.
             object@model$call <- call("trimmed")
             
             # Add show.
             object <- .capture_show(object)
-            
-            # Remove raw
-            object@model$raw <- NULL
-            
-            # Set is_trimmed to TRUE.
-            object@is_trimmed <- TRUE
-            
+
             # Default method for models that lack a more specific method.
             return(object)
           })

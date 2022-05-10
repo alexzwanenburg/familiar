@@ -14,6 +14,8 @@
 
 -   Confidence intervals in calibration plots are no longer cropped to the [0,1] range. Previously, the estimate itself was not cropped, whereas its confidence interval was.
 
+-   `xgboost` models are now serialised using `xgboost::xgb.save.raw` prior to writing the model as part of a `familiarModel` object. Such models are now unserialised prior to prediction or variable importance.
+
 # Version 1.1.0 (Enchanting Earthworm)
 
 ## Major changes
