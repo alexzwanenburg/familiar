@@ -71,14 +71,21 @@ univariate or multivariate setting.
 | poisson^b^ | `elastic_net_poisson`                                    |   |   |   | × |   |
 | cox^b^ | `elastic_net_cox`                                            |   |   |   |   | × |
 | **random forest (RFSRC) variable importance**|
-| permutation^b^ | `random_forest_permutation`                          | × | × | × | × | × |
-| minimum depth^b^ | `random_forest_minimum_depth`                      | × | × | × | × | × |
-| variable hunting^b^ | `random_forest_variable_hunting`                | × | × | × | × | × |
-| hold-out ^b^ | `random_forest_holdout`                                | × | × | × | × | × |
+| permutation^b^ | `random_forest_permutation`                                     | × | × | × | × | × |
+| permutation (unoptimised) | `random_forest_permutation_default`                  | × | × | × | × | × |
+| minimum depth^b^ | `random_forest_minimum_depth`                                 | × | × | × | × | × |
+| minimum depth (unoptimised) | `random_forest_minimum_depth_default`              | × | × | × | × | × |
+| variable hunting^b^ | `random_forest_variable_hunting`                           | × | × | × | × | × |
+| variable hunting (unoptimised) | `random_forest_variable_hunting_default`        | × | × | × | × | × |
+| hold-out ^b^ | `random_forest_holdout`                                           | × | × | × | × | × |
+| hold-out (unoptimised) | `random_forest_holdout_default`                         | × | × | × | × | × |
 | **random forest (ranger) variable importance**|
-| permutation^b^ | `random_forest_ranger_permutation`                   | × | × | × | × | × |
-| hold-out permutation^b^ | `random_forest_ranger_holdout_permutation`  | × | × | × | × | × |
-| impurity^b^ | `random_forest_ranger_impurity`                         | × | × | × | × | x |
+| permutation^b^ | `random_forest_ranger_permutation`                              | × | × | × | × | × |
+| permutation (unoptimised) | `random_forest_ranger_permutation_default`           | × | × | × | × | × |
+| hold-out permutation^b^ | `random_forest_ranger_holdout_permutation`             | × | × | × | × | × |
+| hold-out perm. (unoptimised) |`random_forest_ranger_holdout_permutation_default` | × | × | × | × | × | 
+| impurity^b^ | `random_forest_ranger_impurity`                                    | × | × | × | × | x |
+| impurity (unoptimised) | `random_forest_ranger_impurity_default`                 | × | × | × | × | x |
 | **special methods**|
 | no selection | `none`                                                 | × | × | × | × | × |
 | random selection | `random`                                           | × | × | × | × | × |
@@ -341,33 +348,40 @@ for `ranger`-based and `randomForestSRC`-based methods, are shown below.
 | variable hunting step size | `fs_vh_step_size` | $\mathbb{Z} \in \left[1, \infty\right)$ | no | Step size for the `random_forest_variable_hunting` method. The default is $1$. |
 | variable hunting iterations | `fs_vh_n_rep` | $\mathbb{Z} \in \left[1, \infty\right)$ | no | Number of Monte Carlo iterations for the `random_forest_variable_hunting` method. The default is $50$. |
 
+The unoptimised methods do not require hyperparameter optimisation, and use
+default values from the `ranger` and `randomForestSRC`. For
+`random_forest_variable_hunting_default`the `fs_vh_fold`, `fs_vh_step_size` and
+`fs_vh_n_rep` parameters can be set.
+
 ### Permutation importance
 
 The permutation importance method is implemented by `random_forest_permutation`
-(`randomForestSRC` package) and `random_forest_ranger_permutation` (`ranger`
-package). In short, this method functions as follows [Ishwaran2007-va]. As
-usual, each tree in the random forest is constructed using the in-bag samples of
-a bootstrap of the data. The predictive performance of each model is first
-measured using the out-of-bag data. Subsequently, the out-of-bag instances for
-each feature are randomly permuted, and predictive performance is assessed
-again. The difference between the normal performance and the permuted
-performance is used as a measure of the variable importance. For important
-features, this difference is large, whereas for irrelevant features the
-difference is negligible or even negative.
+and `random_forest_permutation_default` (`randomForestSRC` package) and
+`random_forest_ranger_permutation` and
+`random_forest_ranger_permutation_default` (`ranger` package). In short, this
+method functions as follows [Ishwaran2007-va]. As usual, each tree in the random
+forest is constructed using the in-bag samples of a bootstrap of the data. The
+predictive performance of each model is first measured using the out-of-bag
+data. Subsequently, the out-of-bag instances for each feature are randomly
+permuted, and predictive performance is assessed again. The difference between
+the normal performance and the permuted performance is used as a measure of the
+variable importance. For important features, this difference is large, whereas
+for irrelevant features the difference is negligible or even negative.
 
 ### Holdout permutation importance
 
 This variant on permutation importance
-(`random_forest_ranger_holdout_permutation`) is implemented using
+(`random_forest_ranger_holdout_permutation` and
+`random_forest_ranger_holdout_permutation_default`) is implemented using
 `ranger::holdoutRF`. Instead of using out-of-bag to compute feature importance,
 two cross-validation folds are used. A random forest is trained on either fold,
 and variable importance determined on the other [@Janitza2018-kl].
 
 The hold-out variable importance method implemented in the `randomForestSRC`
-package (`random_forest_holdout`) is implemented using
-`randomForestSRC::holdout.vimp`. It is similar to the previous variant, but does
-not cross-validation folds. Instead, out-of-bag prediction errors for models
-trained with and without each feature are compared.
+package (`random_forest_holdout` and `random_forest_holdout_default`) is
+implemented using `randomForestSRC::holdout.vimp`. It is similar to the previous
+variant, but does not cross-validation folds. Instead, out-of-bag prediction
+errors for models trained with and without each feature are compared.
 
 ### Minimum depth variable selection
 

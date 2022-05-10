@@ -1008,7 +1008,7 @@ setMethod("optimise_hyperparameters", signature(object="familiarModel", data="da
             # Update attributes of object.
             object@hyperparameter_data <- list("score_table"=score_table,
                                                "parameter_table"=parameter_table,
-                                               "time_taken"=as.numeric(Sys.time() - optimisation_start_time),
+                                               "time_taken"=as.numeric(difftime(Sys.time(), optimisation_start_time, units="mins")),
                                                "hyperparameter_learner"=hyperparameter_learner,
                                                "optimisation_function"=optimisation_function)
             

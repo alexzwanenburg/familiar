@@ -850,10 +850,6 @@ setMethod("plot_calibration_data", signature(object="familiarCollection"),
   # Plot confidence intervals
   if(conf_int_style[1]!="none"){
     
-    # Limit ci_low and ci_up to y_range.
-    x[ci_low < y_range[1] & ci_up > y_range[1], "ci_low":=y_range[1]]
-    x[ci_up > y_range[2] & ci_low < y_range[2], "ci_up":=y_range[2]]
-    
     if(conf_int_style[1] == "step"){
       if(is.null(color_by)){
         p <- p + ggplot2::geom_step(mapping=ggplot2::aes(y=!!sym("ci_low")),

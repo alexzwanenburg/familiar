@@ -1,3 +1,21 @@
+# Version 1.1.1 (Flamboyant Flamingo)
+
+## Minor changes
+
+-   Random forest-based variable importance methods now have variants that use the default values provided by the underlying algorithms. These can be recognised by the suffix `_default`. This is mainly done to avoid long hyperparameter optimisation times for such methods during feature selection.
+
+## Bug fixes
+
+-   Hyperparameter time limit and time taken are now always correctly parsed to minutes instead of seconds, minutes, or rarely, hours.
+
+-   Familiar model objects now correctly show that no novelty detector was trained with `novelty_detector="none"`.
+
+-   Fixed missing documentation for the `optimisation_function` configuration parameter.
+
+-   Confidence intervals in calibration plots are no longer cropped to the [0,1] range. Previously, the estimate itself was not cropped, whereas its confidence interval was.
+
+-   `xgboost` models now still work after being loaded from a file.
+
 # Version 1.1.0 (Enchanting Earthworm)
 
 ## Major changes

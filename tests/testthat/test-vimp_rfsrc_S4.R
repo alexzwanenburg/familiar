@@ -1,4 +1,5 @@
 familiar:::test_all_vimp_methods_available(familiar:::.get_available_rfsrc_vimp_methods(show_general=TRUE))
+familiar:::test_all_vimp_methods_available(familiar:::.get_available_rfsrc_default_vimp_methods(show_general=TRUE))
 
 # Don't perform any further tests on CRAN due to time of running the complete test.
 testthat::skip_on_cran()
@@ -40,6 +41,8 @@ familiar:::test_all_vimp_methods(familiar:::.get_available_rfsrc_vimp_methods(sh
                                                                           "tree_depth"=5,
                                                                           "fs_vh_fold"=3,
                                                                           "fs_vh_n_rep"=2)))
+
+familiar:::test_all_vimp_methods(familiar:::.get_available_rfsrc_default_vimp_methods())
 
 familiar:::test_all_vimp_methods_parallel(familiar:::.get_available_rfsrc_vimp_methods(show_general=FALSE),
                                           hyperparameter_list=list("count"=list("n_tree"=4,

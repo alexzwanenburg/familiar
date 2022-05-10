@@ -229,7 +229,7 @@ setMethod("show", signature(object="familiarModel"),
               lapply(object@model_features, function(x, object) show(object@feature_info[[x]]), object=object)
               
               # Details concerning novelty features:
-              if(is.null(object@novelty_detector)){
+              if(!model_is_trained(object@novelty_detector)){
                 cat("\nNo novelty detector was trained.\n")
                 
               } else if(setequal(object@model_features, object@novelty_features)){

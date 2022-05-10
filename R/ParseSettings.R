@@ -2302,7 +2302,7 @@
 #'
 #'   The default is `NULL`, indicating that there is no time limit for the
 #'   optimisation process. The time limit cannot be less than 1 minute.
-#'   
+#'
 #' @param smbo_step_bootstraps (*optional*) The number of bootstraps taken from
 #'   the set of `optimisation_bootstraps` bootstraps as data for the initial
 #'   SMBO step and the steps in each intensify iteration.
@@ -2340,22 +2340,38 @@
 #' @param optimisation_function (*optional*) Type of optimisation function used
 #'   to quantify the performance of a hyperparameter set. Model performance is
 #'   assessed using the metric(s) specified by `optimisation_metric` on the
-#'   in-bag and out-of-bag samples of a bootstrap. These values are converted to
-#'   objective scores with a standardised interval of \eqn{[-1.0, 1.0]}, and are
-#'   referred to as \eqn{s'_{ib}} and \eqn{s'_{oob}}, respectively. The function
-#'   indicated by `optimisation_function` computes a objective score from each
-#'   pair of values:
+#'   in-bag (IB) and out-of-bag (OOB) samples of a bootstrap. These values are
+#'   converted to objective scores with a standardised interval of \eqn{[-1.0,
+#'   1.0]}. Each pair of objective is subsequently used to compute an
+#'   optimisation score. The optimisation score across different bootstraps is
+#'   than aggregated to a summary score. This summary score is used to rank
+#'   hyperparameter sets, and select the optimal set.
 #'
-#'   * `max_validation`: Uses the out-of-bag validation objective score
-#'   \eqn{s'_{oob}} as optimisation score. This function is widely used in
-#'   machine learning.
+#'   The combination of optimisation score and summary score is determined by
+#'   the optimisation function indicated by this parameter:
 #'
-#'   * `balanced` (default): Computes \eqn{s'_{oob} - |s'_{oob} - s'_{ib}|}.
-#'   This function forces the algorithm to consider hyperparameter sets that
-#'   perform well on both development and validation data.
+#'   * `validation` or `max_validation` (default): seeks to maximise OOB score.
 #'
-#'   * `stronger_balance`: Computes \eqn{s'_{oob} - 2.0 |s'_{oob} - s'_{ib}|}.
-#'   Stronger penalty than in the `balanced` objective.
+#'   * `balanced`: seeks to balance IB and OOB score.
+#'
+#'   * `stronger_balance`: similar to `balanced`, but with stronger penalty for
+#'   differences between IB and OOB scores.
+#'
+#'   * `validation_minus_sd`: seeks to optimise the average OOB score minus its
+#'   standard deviation.
+#'
+#'   * `validation_25th_percentile`: seeks to optimise the 25th percentile of
+#'   OOB scores, and is conceptually similar to `validation_minus_sd`.
+#'
+#'   * `model_estimate`: seeks to maximise the OOB score estimate predicted by
+#'   the hyperparameter learner (not available for random search).
+#'
+#'   * `model_estimate_minus_sd`: seeks to maximise the OOB score estimate minus
+#'   its estimated standard deviation, as predicted by the hyperparameter
+#'   learner (not available for random search).
+#'
+#'   Additional detail are provided in the *Learning algorithms and
+#'   hyperparameter optimisation* vignette.
 #'
 #' @param hyperparameter_learner (*optional*) Any point in the hyperparameter
 #'   space has a single, scalar, optimisation score value that is *a priori*
