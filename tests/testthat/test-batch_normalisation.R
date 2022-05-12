@@ -2,8 +2,8 @@
 testthat::skip_on_cran()
 
 outcome_type <- "survival"
-n_numeric_features <- 3
-batch_normalisation_method <- "combat"
+# n_numeric_features <- 3
+# batch_normalisation_method <- "combat"
 
 #### Generic test ##############################################################
 for(n_numeric_features in c(4, 3, 2, 1, 0)){
