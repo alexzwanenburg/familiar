@@ -1122,26 +1122,17 @@ trim_unused_features_from_list <- function(feature_info_list){
   feature_info@batch_normalisation_parameters <- batch_normalisation_parameter_data$parameters
   
   if(stop_at == "batch_normalisation") return(feature_info)
-
-  # Imputation parameters.
-  if(feature_info@feature_type == "numeric"){
-    imputation_common_value <- mean(extract_from_slot(object_list=feature_info_list, slot_name="imputation_parameters", slot_element="common_value"))
-    
-  } else {
-    imputation_common_value <- get_mode(extract_from_slot(object_list=feature_info_list, slot_name="imputation_parameters", slot_element="common_value"))
-  }
   
-  # Obtain lasso model(s) and required features.
-  imputation_lasso_model <- extract_from_slot(object_list=feature_info_list, slot_name="imputation_parameters", slot_element="lasso_model")
-  imputation_required_features <- unique(drop(unlist(extract_from_slot(object_list=feature_info_list, slot_name="imputation_parameters", slot_element="required_features"))))
+  # Extract imputation data
+  imputation_parameter_data <- ..collect_and_aggregate_imputation_info(feature_info_list=feature_info_list,
+                                                                       feature_name=feature,
+                                                                       feature_type=feature_info@feature_type)
   
   # Add to slot.
-  feature_info@imputation_parameters <- list("common_value" = imputation_common_value,
-                                             "lasso_model" = imputation_lasso_model,
-                                             "required_features" = imputation_required_features)
+  feature_info@imputation_parameters <- imputation_parameter_data$parameters
   
   # Set required features.
-  feature_info@required_features <- imputation_required_features
+  feature_info@required_features <- feature_info@imputation_parameters@required_features
   
   return(feature_info)
 }

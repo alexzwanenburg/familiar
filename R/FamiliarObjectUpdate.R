@@ -315,6 +315,19 @@ setMethod("update_object", signature(object="featureInfo"),
               
               # Update batch normalisations parameters in the object.
               object@batch_normalisation_parameters <- batch_normalisation_parameters
+              
+              # Upgrade imputation parameters to proper S4 objects. For now create an S4 skeleton.
+              imputation_object <- ..create_imputation_parameter_skeleton(feature_name=object@feature_name,
+                                                                          feature_type=object@feature_type,
+                                                                          available=is_available(object),
+                                                                          method="simple")
+              
+              # Attach to imputation object.
+              imputation_object@model <- object@imputation_parameters$common_value
+              imputation_object@required_features <- object@feature_name
+              
+              # Attach to object.
+              object@imputation_parameters <- imputation_object
             }
             
             if(!methods::validObject(object)) stop("Could not update the featureInfo object to the most recent definition.")

@@ -1470,27 +1470,16 @@ setMethod("impute_features", signature(data="dataObject"),
             # Check if data has features
             if(!has_feature_data(x=data)) return(data)
             
-            # Find the columns containing features
-            feature_columns <- get_feature_columns(x=data)
+            # Apply univariate results to the dataset.
+            imputed_data <- .impute_features(data=data,
+                                             feature_info_list=feature_info_list,
+                                             initial_imputation=TRUE)
             
-            # Determine which columns have missing entries
-            censored_features <- feature_columns[sapply(feature_columns, function(ii, data_obj) (!all(is_valid_data(data_obj@data[[ii]]))), data_obj=data)]
-            
-            # Skip if there are no censored features
-            if(length(censored_features) == 0) return(data)
-            
-            # Fill out all censored entries by simple imputation
-            uncensored_data <- impute.impute_simple(cl=cl,
-                                                    data_obj=data,
-                                                    feature_info_list=feature_info_list,
-                                                    censored_features=censored_features)
-            
-            # Fill out all censored entries by lasso-based imputation
-            data <- impute.impute_lasso(cl=cl,
-                                        data_obj=data,
-                                        uncensored_data_obj=uncensored_data,
-                                        feature_info_list=feature_info_list,
-                                        censored_features=censored_features)
+            # Apply multivariate model to the dataset.
+            data <- .impute_features(data=imputed_data,
+                                     feature_info_list=feature_info_list,
+                                     initial_imputation=FALSE,
+                                     mask_data=data)
             
             return(data)
           })
