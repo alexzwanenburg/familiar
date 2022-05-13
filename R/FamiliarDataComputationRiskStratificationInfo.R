@@ -183,6 +183,9 @@ setMethod("export_risk_stratification_info", signature(object="familiarCollectio
                    export_collection=FALSE,
                    ...){
             
+            # Make sure the collection object is updated.
+            object <- update_object(object=object)
+            
             return(.export(x=object,
                            data_slot="km_info",
                            dir_path=dir_path,

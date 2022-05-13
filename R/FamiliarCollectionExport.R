@@ -44,6 +44,9 @@ setGeneric("export_all",
 setMethod("export_all", signature(object="familiarCollection"),
           function(object, dir_path=NULL, aggregate_results=waiver(), ...){
             
+            # Make sure the collection object is updated.
+            object <- update_object(object=object)
+            
             # Export feature selection variable importance
             fs_vimp <- export_fs_vimp(object=object,
                                       dir_path=dir_path)

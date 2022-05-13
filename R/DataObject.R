@@ -1303,25 +1303,27 @@ setMethod("transform_features", signature(data="data.table"),
           function(data, feature_info_list, features, invert=FALSE){
             
             # Check if data is empty
-            if(is_empty(data)){
-              return(data)
-            }
+            if(is_empty(data)) return(data)
             
             # Apply transformations
             transformed_list <- lapply(features, function(ii, data, feature_info_list, invert){
               
-              x <- transformation.apply_transform(x=data[[ii]],
-                                                  trans_param=feature_info_list[[ii]]@transformation_parameters,
-                                                  invert=invert)
+              x <- apply_feature_info_parameters(object=feature_info_list[[ii]]@transformation_parameters,
+                                                 data=data[[ii]],
+                                                 invert=invert)
               
               return(x)
-            }, data=data, feature_info_list=feature_info_list, invert=invert)
+            },
+            data=data,
+            feature_info_list=feature_info_list,
+            invert=invert)
             
             # Update name of data in columns
             names(transformed_list) <- features
             
             # Update with replacement in the data object
-            data <- update_with_replacement(data=data, replacement_list=transformed_list)
+            data <- update_with_replacement(data=data,
+                                            replacement_list=transformed_list)
             
             return(data)
           })
@@ -1365,26 +1367,28 @@ setMethod("normalise_features", signature(data="dataObject"),
 setMethod("normalise_features", signature(data="data.table"),
           function(data, feature_info_list, features, invert=FALSE){
             
-            # Check if data is empty
-            if(is_empty(data)){
-              return(data)
-            }
+            # Check if data is empty.
+            if(is_empty(data)) return(data)
             
-            # Apply normalisation
+            # Apply normalisation.
             normalised_list <- lapply(features, function(ii, data, feature_info_list, invert){
               
-              x <- normalise.apply_normalisation(x=data[[ii]],
-                                                 norm_param=feature_info_list[[ii]]@normalisation_parameters,
+              x <- apply_feature_info_parameters(object=feature_info_list[[ii]]@normalisation_parameters,
+                                                 data=data[[ii]],
                                                  invert=invert)
               
               return(x)
-            }, data=data, feature_info_list=feature_info_list, invert=invert)
+            },
+            data=data,
+            feature_info_list=feature_info_list,
+            invert=invert)
             
-            # Update name of data in columns
+            # Update name of data in columns.
             names(normalised_list) <- features
             
-            # Update with replacement in the data object
-            data <- update_with_replacement(data=data, replacement_list=normalised_list)
+            # Update with replacement in the data object.
+            data <- update_with_replacement(data=data,
+                                            replacement_list=normalised_list)
             
             return(data)
           })
@@ -1416,14 +1420,15 @@ setMethod("batch_normalise_features", signature(data="dataObject"),
             
             # Update feature_info_list by adding info for missing batches
             feature_info_list <- add_batch_normalisation_parameters(feature_info_list=feature_info_list,
-                                                                    data_obj=data)
+                                                                    data=data)
             
             # Apply batch-normalisation
             batch_normalised_list <- lapply(feature_columns, function(ii, data, feature_info_list, invert){
               
-              x <- batch_normalise.apply_normalisation(x=data@data[, mget(c(ii, get_id_columns()))],
-                                                       feature_info=feature_info_list[[ii]],
-                                                       invert=invert)
+              # Dispatch to apply-method.
+              x <- apply_feature_info_parameters(object=feature_info_list[[ii]]@batch_normalisation_parameters,
+                                                 data=data@data[, mget(c(ii, get_id_columns("batch")))],
+                                                 invert=invert)
               
               return(x)
             },
@@ -1465,27 +1470,16 @@ setMethod("impute_features", signature(data="dataObject"),
             # Check if data has features
             if(!has_feature_data(x=data)) return(data)
             
-            # Find the columns containing features
-            feature_columns <- get_feature_columns(x=data)
+            # Apply univariate results to the dataset.
+            imputed_data <- .impute_features(data=data,
+                                             feature_info_list=feature_info_list,
+                                             initial_imputation=TRUE)
             
-            # Determine which columns have missing entries
-            censored_features <- feature_columns[sapply(feature_columns, function(ii, data_obj) (!all(is_valid_data(data_obj@data[[ii]]))), data_obj=data)]
-            
-            # Skip if there are no censored features
-            if(length(censored_features) == 0) return(data)
-            
-            # Fill out all censored entries by simple imputation
-            uncensored_data <- impute.impute_simple(cl=cl,
-                                                    data_obj=data,
-                                                    feature_info_list=feature_info_list,
-                                                    censored_features=censored_features)
-            
-            # Fill out all censored entries by lasso-based imputation
-            data <- impute.impute_lasso(cl=cl,
-                                        data_obj=data,
-                                        uncensored_data_obj=uncensored_data,
-                                        feature_info_list=feature_info_list,
-                                        censored_features=censored_features)
+            # Apply multivariate model to the dataset.
+            data <- .impute_features(data=imputed_data,
+                                     feature_info_list=feature_info_list,
+                                     initial_imputation=FALSE,
+                                     mask_data=data)
             
             return(data)
           })

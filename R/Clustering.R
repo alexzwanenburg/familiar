@@ -239,7 +239,9 @@ cluster.get_samplewise_similarity_table <- function(cl=NULL,
     for(ii in numerical_features){
       data.table::set(data_obj@data,
                       j=ii,
-                      value=.normalise(x=data_obj@data[[ii]], norm_method=norm_method, range=c(0, 1)))
+                      value=.normalise(x=data_obj@data[[ii]],
+                                       normalisation_method=norm_method,
+                                       range=c(0, 1)))
     }
   }
   

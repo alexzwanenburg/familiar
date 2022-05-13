@@ -217,6 +217,9 @@ setMethod("plot_feature_similarity", signature(object="familiarCollection"),
                    export_collection=FALSE,
                    ...){
             
+            # Make sure the collection object is updated.
+            object <- update_object(object=object)
+            
             # Get input data
             x <- export_feature_similarity(object=object,
                                            feature_cluster_method=feature_cluster_method,

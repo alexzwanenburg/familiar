@@ -739,6 +739,7 @@ setClass("dataObject",
 #' @slot imputation_parameters Details parameters or models for imputation of missing values.
 #' @slot cluster_parameters Details parameters for forming clusters with other features.
 #' @slot required_features Details features required for clustering or imputation.
+#' @slot familiar_version Version of the familiar package.
 #'
 #' @export
 
@@ -769,7 +770,8 @@ setClass("featureInfo",
            batch_normalisation_parameters = "ANY",
            imputation_parameters = "ANY",
            cluster_parameters = "ANY",
-           required_features = "ANY"
+           required_features = "ANY",
+           familiar_version = "ANY"
          ),
          prototype = list(
            name = NA_character_,
@@ -797,9 +799,43 @@ setClass("featureInfo",
            batch_normalisation_parameters = NULL,
            imputation_parameters = NULL,
            cluster_parameters = NULL,
-           required_features = NULL
+           required_features = NULL,
+           familiar_version = NULL
          )
 )
+
+
+#### featureInfoParameters -----------------------------------------------------
+
+#' Feature information parameters object.
+#'
+#' A featureInfo object contains information for a single feature. Some
+#' information, for example concerning clustering and transformation contains
+#' various parameters that allow for applying the data transformation correctly.
+#' These are stored in featureInfoParameters objects.
+#'
+#' @slot name Name of the feature, which by default is the column name of the
+#'   feature. Typically used to correctly assign the data.
+#' @slot complete Flags whether the parameters have been completely set.
+#' @slot familiar_version Version of the familiar package.
+#'
+#' @details featureInfoParameters is normally a parent class for specific
+#'   classes, such as featureInfoParametersTransformation.
+#'
+#' @export
+setClass("featureInfoParameters",
+         slots = list(
+           name = "character",
+           complete = "logical",
+           familiar_version = "ANY"
+         ),
+         prototype = list(
+           name = NA_character_,
+           complete = FALSE,
+           familiar_version = NULL
+         )
+)
+
 
 #### outcomeInfo ---------------------------------------------------------------
 

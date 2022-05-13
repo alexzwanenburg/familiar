@@ -67,6 +67,7 @@
 #'   table indicated by `config` contains more than one set of configurations.
 #' @param verbose Indicates verbosity of the results. Default is TRUE, and all
 #'   messages and warnings are returned.
+#' @param .stop_after Variable for internal use.
 #'
 #' @inheritDotParams .parse_file_paths -config -verbose
 #' @inheritDotParams .parse_experiment_settings -config
@@ -92,6 +93,7 @@ summon_familiar <- function(formula=NULL,
                             config=NULL,
                             config_id=1,
                             verbose=TRUE,
+                            .stop_after="evaluation",
                             ...){
   
   # Set options.
@@ -169,6 +171,9 @@ summon_familiar <- function(formula=NULL,
                                    event_indicator=settings$data$event_indicator,
                                    competing_risk_indicator=settings$data$competing_risk_indicator)
 
+  
+  ##### Experimental setup and settings ----------------------------------------
+  
   # Derive experimental design
   experiment_setup <- extract_experimental_setup(experimental_design=settings$data$exp_design,
                                                  file_dir=file_paths$iterations_dir,
@@ -208,13 +213,19 @@ summon_familiar <- function(formula=NULL,
                                                      data=data,
                                                      settings=settings)
   }
-  
-  # Generate feature info
-  feature_info_list <- .get_feature_info_data(data=data,
-                                              file_paths=file_paths,
-                                              project_id=project_info$project_id,
-                                              outcome_type=settings$data$outcome_type)
 
+    
+  # ##### Basic feature information ----------------------------------------------
+  # 
+  # # Generate feature info, or load file.
+  # feature_info_list <- .get_feature_info_data(data=data,
+  #                                             file_paths=file_paths,
+  #                                             project_id=project_info$project_id,
+  #                                             outcome_type=settings$data$outcome_type)
+
+  
+  ##### Backend and parallellisation -------------------------------------------
+  
   # Identify if an external cluster is provided, and required.
   if(settings$run$parallel){
     is_external_cluster <- inherits(cl, "cluster")
@@ -235,9 +246,9 @@ summon_familiar <- function(formula=NULL,
   .assign_data_to_backend(data=data,
                           backend_type=settings$run$backend_type,
                           server_port=settings$run$server_port)
-  .assign_feature_info_to_backend(feature_info_list=feature_info_list,
-                                  backend_type=settings$run$backend_type,
-                                  server_port=settings$run$server_port)
+  # .assign_feature_info_to_backend(feature_info_list=feature_info_list,
+  #                                 backend_type=settings$run$backend_type,
+  #                                 server_port=settings$run$server_port)
   .assign_parallel_options_to_global(is_external_cluster=is_external_cluster,
                                      restart_cluster=settings$run$restart_cluster,
                                      n_cores=settings$run$parallel_nr_cores,
@@ -266,6 +277,29 @@ summon_familiar <- function(formula=NULL,
   # the familiar environment prior to shutting down the socket server process.
   on.exit(.clean_familiar_environment(), add=TRUE)
   
+  ##### Pre-processing ---------------------------------------------------------
+  feature_info <- NULL
+  
+  # Start pre-processing
+  feature_info_list <- run_preprocessing(cl=cl,
+                                         feature_info_list=feature_info,
+                                         project_info=project_info,
+                                         settings=settings,
+                                         file_paths=file_paths,
+                                         verbose=verbose)
+  
+  # Check if the process should be stopped at this point.
+  if(.stop_after %in% c("preprocessing")){
+    return(feature_info_list)
+    
+  } else {
+    rm(feature_info_list)
+  }
+  
+  
+  
+  ##### Variable importance ----------------------------------------------------
+  
   # Start feature selection
   run_feature_selection(cl=cl,
                         project_list=project_info,
@@ -273,12 +307,29 @@ summon_familiar <- function(formula=NULL,
                         file_paths=file_paths,
                         verbose=verbose)
   
+  # Check if the process should be stopped at this point.
+  if(.stop_after %in% c("vimp")){
+    
+    
+  }
+  
+  
+  ##### Training ---------------------------------------------------------------
+  
   # Start model building
   run_model_development(cl=cl,
                         project_list=project_info,
                         settings=settings,
                         file_paths=file_paths,
                         verbose=verbose)
+  
+  # Check if the process should be stopped at this point.
+  if(.stop_after %in% c("training")){
+    
+  }
+  
+  
+  ##### Explanation and evaluation ---------------------------------------------
   
   # Start evaluation
   run_evaluation(cl=cl,

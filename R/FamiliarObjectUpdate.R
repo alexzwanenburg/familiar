@@ -78,11 +78,27 @@ setMethod("update_object", signature(object="familiarModel"),
               # Remove learner_package and learner_version attributes.
               attr(object, "learner_package") <- NULL
               attr(object, "learner_version") <- NULL
+              
+              # Replace any novelty detector, since these are now proper
+              # classes.
+              methods::slot(object, "novelty_detector", check=FALSE) <- NULL
             }
             
             if(object@familiar_version < "1.1.0"){
               # Add placeholder messages attribute.
               attr(object, "messages") <- list()
+            }
+            
+            # Update attached feature info objects.
+            feature_names <- names(object@feature_info)
+            if(length(feature_names) > 0){
+              object@feature_info <- lapply(object@feature_info, update_object)
+              names(object@feature_info) <- feature_names
+            }
+            
+            # Update attached novelty detector
+            if(!is.null(object@novelty_detector)){
+              object@novelty_detector <- update_object(object@novelty_detector)
             }
             
             if(!methods::validObject(object)) stop("Could not update the familiarModel object to the most recent definition.")
@@ -123,6 +139,13 @@ setMethod("update_object", signature(object="familiarEnsemble"),
 
               # Remove is_anonymised.
               attr(object, "is_anonymised") <- NULL
+            }
+            
+            if(object@familiar_version < "1.2.0"){
+              # Update attached feature info objects.
+              feature_names <- names(object@feature_info)
+              object@feature_info <- lapply(object@feature_info, update_object)
+              names(object@feature_info) <- feature_names
             }
             
             if(!methods::validObject(object)) stop("Could not update the familiarEnsemble object to the most recent definition.")
@@ -210,5 +233,117 @@ setMethod("update_object", signature(object="familiarCollection"),
             # Update package version.
             object <- add_package_version(object=object)
             
+            return(object)
+          })
+
+
+
+##### update_object (familiarNoveltyDetector) ----------------------------------
+#'@rdname update_object-methods
+setMethod("update_object", signature(object="familiarNoveltyDetector"),
+          function(object, ...){
+            
+            # Update attached feature info objects.
+            feature_names <- names(object@feature_info)
+            if(length(feature_names) > 0){
+              object@feature_info <- lapply(object@feature_info, update_object)
+              names(object@feature_info) <- feature_names
+            }
+
+            if(!methods::validObject(object)) stop("Could not update the familiarNoveltyDetector object to the most recent definition.")
+            
+            # Update package version.
+            object <- add_package_version(object=object)
+          })
+
+
+
+##### update_object (featureInfo) ----------------------------------------------
+#'@rdname update_object-methods
+setMethod("update_object", signature(object="featureInfo"),
+          function(object, ...){
+            
+            # Add a placeholder familiar version slot if necessary.
+            if(!methods::.hasSlot(object, "familiar_version")){
+              attr(object, "familiar_version") <- "0.0.0"
+            }
+            
+            if(object@familiar_version < "1.2.0"){
+              # Upgrade transformation parameters to a proper S4 object.
+              object@transformation_parameters <- ..create_transformation_parameter_skeleton(feature_name=object@name,
+                                                                                             feature_type=object@feature_type,
+                                                                                             available=is_available(object),
+                                                                                             method=object@transformation_parameters$transform_method,
+                                                                                             lambda=object@transformation_parameters$transform_lambda)
+              
+              # Upgrade normalisation parameters to a proper S4 object.
+              object@normalisation_parameters <- ..create_normalisation_parameter_skeleton(feature_name=object@name,
+                                                                                           feature_type=object@feature_type,
+                                                                                           available=is_available(object),
+                                                                                           method=object@normalisation_parameters$norm_method,
+                                                                                           shift=object@normalisation_parameters$norm_shift,
+                                                                                           scale=object@normalisation_parameters$norm_scale)
+              
+              # Upgrade batch normalisation parameters to a proper S4 object.
+              # Determine the method used for batch normalisation.
+              batch_normalisation_method <- unique(sapply(object@batch_normalisation_parameters, function(x) (x$norm_method)))
+              batch_normalisation_method <- setdiff(batch_normalisation_method, c("none", "unknown"))
+              if(is_empty(batch_normalisation_method)) batch_normalisation_method <- "none"
+              browser()
+              # Add container.
+              batch_normalisation_parameters <- ..create_batch_normalisation_parameter_skeleton(feature_name=object@name,
+                                                                                                feature_type=object@feature_type,
+                                                                                                available=is_available(object),
+                                                                                                method=batch_normalisation_method)
+              
+              # Update the container contents.
+              batch_normalisation_parameters@batch_parameters <- mapply(FUN=function(x, batch, object){
+                return(..create_normalisation_parameter_skeleton(feature_name=object@name,
+                                                                 feature_type=object@feature_type,
+                                                                 available=is_available(object),
+                                                                 method=x$norm_method,
+                                                                 batch=batch,
+                                                                 shift=x$norm_shift,
+                                                                 scale=x$norm_scale))
+              },
+              x=object@batch_normalisation_parameters,
+              batch=names(object@batch_normalisation_parameters),
+              MoreArgs=list("object"=object))
+              
+              # Update names.
+              names(batch_normalisation_parameters@batch_parameters) <- names(object@batch_normalisation_parameters)
+              
+              # Update batch normalisations parameters in the object.
+              object@batch_normalisation_parameters <- batch_normalisation_parameters
+              
+              # Upgrade imputation parameters to proper S4 objects. For now create an S4 skeleton.
+              imputation_object <- ..create_imputation_parameter_skeleton(feature_name=object@feature_name,
+                                                                          feature_type=object@feature_type,
+                                                                          available=is_available(object),
+                                                                          method="simple")
+              
+              # Attach to imputation object.
+              imputation_object@model <- object@imputation_parameters$common_value
+              imputation_object@required_features <- object@feature_name
+              
+              # Attach to object.
+              object@imputation_parameters <- imputation_object
+            }
+            
+            if(!methods::validObject(object)) stop("Could not update the featureInfo object to the most recent definition.")
+            
+            # Update package version.
+            object <- add_package_version(object=object)
+            
+            return(object)
+          })
+
+
+
+##### update_object (ANY) ------------------------------------------------------
+#'@rdname update_object-methods
+setMethod("update_object", signature(object="ANY"),
+          function(object, ...){
+            # Fallback method for missing or unknown items.
             return(object)
           })

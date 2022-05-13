@@ -6,21 +6,13 @@ run_feature_selection <- function(cl,
                                   verbose=TRUE){
 
   # Check which data object is required for performing feature selection.
-  fs_data_id <- .get_process_step_data_identifier(project_list=project_list,
+  fs_data_id <- .get_process_step_data_identifier(project_info=project_list,
                                                   process_step="fs")
   
   # Get feature selection methods that still need to be checked.
   run_fs_methods <- .find_missing_feature_selection_data(proj_list=project_list,
                                                          settings=settings,
                                                          file_paths=file_paths)
-
-  # Check whether pre-processing has been conducted.
-  check_pre_processing(cl=cl,
-                       data_id=fs_data_id,
-                       file_paths=file_paths,
-                       project_id=project_list$project_id,
-                       message_indent=message_indent,
-                       verbose=verbose)
 
   # Get runs
   run_list <- .get_run_list(iteration_list=project_list$iter_list,
@@ -104,7 +96,7 @@ compute_variable_importance <- function(run, fs_method, hpo_list, proj_list, set
   ############## Variable importance calculation ##################################################
   
   # Load feature_info_list
-  feature_info_list <- get_feature_info_list(run=run)
+  feature_info_list <- .get_feature_info_list(run=run)
   
   # Create the variable importance method object or familiar model object to
   # compute variable importance with.

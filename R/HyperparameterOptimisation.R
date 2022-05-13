@@ -151,6 +151,7 @@ run_hyperparameter_optimisation <- function(cl=NULL,
                                                  "measure_time"=TRUE,
                                                  "hyperparameter_learner"=settings$hpo$hpo_hyperparameter_learner,
                                                  "n_max_bootstraps"=settings$hpo$hpo_max_bootstraps,
+                                                 "n_initial_bootstraps"=settings$hpo$hpo_initial_bootstraps,
                                                  "n_intensify_step_bootstraps"=settings$hpo$hpo_bootstraps,
                                                  "n_max_optimisation_steps"=settings$hpo$hpo_smbo_iter_max,
                                                  "n_max_intensify_steps"=settings$hpo$hpo_intensify_max_iter,
@@ -351,6 +352,7 @@ setMethod("optimise_hyperparameters", signature(object="familiarModel", data="da
                    measure_time=TRUE,
                    hyperparameter_learner="gaussian_process",
                    n_max_bootstraps=20L,
+                   n_initial_bootstraps=1L,
                    n_intensify_step_bootstraps=3L,
                    n_max_optimisation_steps=20L,
                    n_max_intensify_steps=5L,
@@ -629,7 +631,7 @@ setMethod("optimise_hyperparameters", signature(object="familiarModel", data="da
             # Set the process start time.
             optimisation_start_time <- Sys.time()
             
-            if(measure_time & n_intensify_step_bootstraps > 1L) {
+            if(measure_time & n_initial_bootstraps > 1L) {
               
               # Start with an initial run to measure performance and time.
               run_table <- ..create_hyperparameter_run_table(run_ids=1L,
@@ -665,7 +667,7 @@ setMethod("optimise_hyperparameters", signature(object="familiarModel", data="da
                                                       verbose=FALSE)){
                 
                 # Set up the runs for the remaining initial computations.
-                run_table <- ..create_hyperparameter_run_table(run_ids=setdiff(seq_len(n_intensify_step_bootstraps), 1L),
+                run_table <- ..create_hyperparameter_run_table(run_ids=setdiff(seq_len(n_initial_bootstraps), 1L),
                                                                measure_time=measure_time,
                                                                score_table=score_table,
                                                                parameter_table=parameter_table,
@@ -708,7 +710,7 @@ setMethod("optimise_hyperparameters", signature(object="familiarModel", data="da
               
             } else {
               # Set up hyperparameter experiment runs
-              run_table <- ..create_hyperparameter_run_table(run_ids=seq_len(n_intensify_step_bootstraps),
+              run_table <- ..create_hyperparameter_run_table(run_ids=seq_len(n_initial_bootstraps),
                                                              parameter_ids=parameter_table$param_id)
               
               logger.message(paste0("Compute initial model performance based on ",
@@ -1023,7 +1025,7 @@ setMethod("optimise_hyperparameters", signature(object="familiarModel", data="da
                                                                 settings,
                                                                 project_id){
   # Obtain feature information list.
-  feature_info_list <- get_feature_info_list(run=run)
+  feature_info_list <- .get_feature_info_list(run=run)
   
   if(is.null(learner)){
     

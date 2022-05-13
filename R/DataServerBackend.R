@@ -398,12 +398,6 @@ get_feature_info_from_backend <- function(backend_type=NULL, server_port=NULL, d
 
 
 
-.get_feature_info_list_name <- function(data_id, run_id){
-  return(paste0(data_id, ".", run_id))
-}
-
-
-
 get_os <- function(){
   # Gets the operating system name
   system_info <- Sys.info()

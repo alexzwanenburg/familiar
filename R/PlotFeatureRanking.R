@@ -210,6 +210,9 @@ setMethod("plot_variable_importance", signature(object="familiarCollection"),
                    export_collection=FALSE,
                    ...){
             
+            # Make sure the collection object is updated.
+            object <- update_object(object=object)
+            
             return(.plot_variable_importance(object=object,
                                              type=type,
                                              aggregation_method=aggregation_method,

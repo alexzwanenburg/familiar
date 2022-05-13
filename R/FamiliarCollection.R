@@ -10,6 +10,9 @@ setMethod(".set_labels", signature(x="familiarCollection"),
             # Suppress NOTES due to non-standard evaluation in data.table
             label <- NULL
             
+            # Make sure the collection object is updated.
+            x <- update_object(object=x)
+            
             # Read the slot
             label_table <- slot(x, upd_slot)
             
@@ -177,6 +180,9 @@ setMethod(".get_labels", signature(x="familiarCollection"),
             
             # Suppress NOTES due to non-standard evaluation in data.table
             label_order <- NULL
+            
+            # Make sure the collection object is updated.
+            x <- update_object(object=x)
             
             # Determine if the slot has been set.
             if(is.null(slot(x, upd_slot))){
@@ -531,6 +537,9 @@ setMethod("get_object_name", signature(object="familiarCollection"),
 #####show (collection)######
 setMethod("show", signature(object="familiarCollection"),
           function(object){
+            
+            # Make sure the collection object is updated.
+            object <- update_object(object=object)
             
             # Create an initial descriptor.
             cat(paste0("A collection of datasets (", object@name, "; v", object@familiar_version, "):\n"))

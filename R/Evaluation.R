@@ -74,7 +74,7 @@ run_evaluation <- function(cl,
   project_id <- project_list$project_id
   
   # Check which data object is required for performing model building
-  mb_data_id <- .get_process_step_data_identifier(project_list=project_list,
+  mb_data_id <- .get_process_step_data_identifier(project_info=project_list,
                                                   process_step="mb")
   
   # Get runs
@@ -406,6 +406,9 @@ run_evaluation <- function(cl,
                                model_list=as.list(ensemble_table$fam_model),
                                learner=ensemble_table$learner[1],
                                fs_method=ensemble_table$fs_method[1])
+  
+  # Add package version.
+  fam_ensemble <- add_package_version(object=fam_ensemble)
   
   # Load models and prevent auto-detaching.
   fam_ensemble <- load_models(object=fam_ensemble, dir_path=dir_path, suppress_auto_detach=TRUE)

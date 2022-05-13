@@ -182,6 +182,9 @@ setMethod("export_feature_expressions", signature(object="familiarCollection"),
                    export_collection=FALSE,
                    ...){
             
+            # Make sure the collection object is updated.
+            object <- update_object(object=object)
+            
             # Extract data.
             x <- object@feature_expressions
             

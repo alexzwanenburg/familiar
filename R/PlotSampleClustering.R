@@ -350,6 +350,9 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
             # Suppress NOTES due to non-standard evaluation in data.table
             .NATURAL <- NULL
             
+            # Make sure the collection object is updated.
+            object <- update_object(object=object)
+            
             # Get feature expression data
             feature_expression <- export_feature_expressions(object=object,
                                                              evaluation_time=evaluation_times)
@@ -1736,7 +1739,7 @@ setMethod("plot_sample_clustering", signature(object="familiarCollection"),
     # Normalise features within the current dataset.
     for(curr_feat in names(x@feature_info)){
       x@data[, (curr_feat):=.normalise(get(curr_feat),
-                                       norm_method="standardisation_winsor")]
+                                       normalisation_method="standardisation_winsor")]
     }
   }
   

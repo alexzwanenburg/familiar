@@ -324,6 +324,9 @@ setMethod("export_model_performance", signature(object="familiarCollection"),
                    export_collection=FALSE,
                    ...){
             
+            # Make sure the collection object is updated.
+            object <- update_object(object=object)
+            
             return(.export(x=object,
                            data_slot="model_performance",
                            dir_path=dir_path,

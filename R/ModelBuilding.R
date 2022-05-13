@@ -7,17 +7,9 @@ run_model_development <- function(cl,
   # Model building
 
   # Check which data object is required for performing model building
-  mb_data_id <- .get_process_step_data_identifier(project_list=project_list,
+  mb_data_id <- .get_process_step_data_identifier(project_info=project_list,
                                                   process_step="mb")
   
-  # Check whether pre-processing has been conducted
-  check_pre_processing(cl=cl,
-                       data_id=mb_data_id,
-                       file_paths=file_paths,
-                       project_id=project_list$project_id,
-                       message_indent=message_indent,
-                       verbose=verbose)
-
   # Get runs
   run_list <- .get_run_list(iteration_list=project_list$iter_list,
                             data_id=mb_data_id)
@@ -118,7 +110,7 @@ build_model <- function(run, hpo_list){
   ############### Data preparation ################################################################
 
   # Load feature_info_list
-  feature_info_list <- get_feature_info_list(run=run)
+  feature_info_list <- .get_feature_info_list(run=run)
   
   # Create familiar model
   fam_model <- methods::new("familiarModel",

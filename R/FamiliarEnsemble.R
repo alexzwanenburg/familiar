@@ -88,6 +88,9 @@ setMethod("complete_familiar_ensemble", signature(object="familiarEnsemble"),
 setMethod("show", signature(object="familiarEnsemble"),
           function(object){
             
+            # Make sure the model object is updated.
+            object <- update_object(object=object)
+            
             # Flag to show additional information.
             show_additional_information <- TRUE
             
