@@ -452,6 +452,7 @@ setMethod("add_feature_info_parameters", signature(object="featureInfoParameters
 
             # Use effect coding to convert categorical data into encoded data.
             encoded_data <- encode_categorical_variables(data=x,
+                                                         object=NULL,
                                                          encoding_method="dummy",
                                                          drop_levels=FALSE)
             
@@ -521,18 +522,19 @@ setMethod("add_feature_info_parameters", signature(object="featureInfoParameters
             
             # Use effect coding to convert categorical data into encoded data.
             encoded_data <- encode_categorical_variables(data=x,
+                                                         object=NULL,
                                                          encoding_method="dummy",
                                                          drop_levels=FALSE)
-            # 
-            # # Extract data table with contrasts.
-            # train_data <- encoded_data$encoded_data
-            # 
-            # # Check the number of columns in train_data. glmnet wants at least two
-            # # columns.
-            # if(ncol(train_data) == 1) train_data[, "bogus__variable__":=0.0]
+
+            # Extract data table with contrasts.
+            x <- encoded_data$encoded_data
+            
+            # Check the number of columns in train_data. glmnet wants at least
+            # two columns.
+            if(ncol(x) == 1) x[, "bogus__variable__":=0.0]
             browser()
             # Train a small model at this lambda.1se.
-            lasso_model <- glmnet::glmnet(x = as.matrix(x@data[mask_data, mget(get_feature_columns(x))]),
+            lasso_model <- glmnet::glmnet(x = as.matrix(x),
                                           y = y,
                                           family = distribution,
                                           lambda = lasso_model$lambda.1se,
@@ -628,11 +630,15 @@ setMethod("apply_feature_info_parameters",  signature(object="featureInfoParamet
             
             # Use effect coding to convert categorical data into encoded data.
             encoded_data <- encode_categorical_variables(data=x,
+                                                         object=NULL,
                                                          encoding_method="dummy",
                                                          drop_levels=FALSE)
             
             # Extract data table with contrasts.
             x <- encoded_data$encoded_data
+            
+            # Check if the validation data has two or more columns
+            if(ncol(x) == 1) x[, "bogus__variable__":=0.0]
             
             # Get the type of response for glmnet predict
             response_type <- ifelse(object@feature_type == "numeric", "response", "class")
