@@ -499,19 +499,12 @@
   
   # Update the familiar model (for variable importance)
   object@hyperparameters <- parameter_list
+  
   # Set signature.
-  if(!is_empty(rank_table)){
-    object <- set_signature(object=object,
-                            rank_table=rank_table,
-                            minimise_footprint=TRUE)
-    
-  } else {
-    object <- set_signature(object=object,
-                            signature_features=get_feature_columns(data),
-                            minimise_footprint=TRUE)
-    
-  }
-
+  object <- set_signature(object=object,
+                          rank_table=rank_table,
+                          minimise_footprint=TRUE)
+  
   # Train model with the set of hyperparameters.
   object <- .train(object=object,
                    data=data_training,
