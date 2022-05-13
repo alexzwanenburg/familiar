@@ -8,6 +8,12 @@
 
 -   Consistency of S4 objects is more actively checked in exported methods and functions by calling `update_object`. This prevents errors attempting when attempting to use a more recent version of familiar than the one used to create the objects. Previously these checks were only rigorously performed for objects that were loaded internally, and not those loaded by the user directly.
 
+# Version 1.1.2 (Gregarious Gopher)
+
+## Bug fixes
+
+- Fixed an issue that would cause all features to be used for hyperparameter optimisation for `signature_only` and `random` feature selection methods.
+
 # Version 1.1.1 (Flamboyant Flamingo)
 
 ## Minor changes

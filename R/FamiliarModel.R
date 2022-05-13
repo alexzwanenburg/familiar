@@ -863,11 +863,7 @@ setMethod("has_calibration_info", signature(object="familiarModel"),
 #####set_signature (familiarModel)----------------------------------------------
 setMethod("set_signature", signature(object="familiarModel"),
           function(object, rank_table=NULL, signature_features=NULL, minimise_footprint=FALSE, ...){
-            
-            if(is.null(rank_table) & is.null(signature_features)){
-              ..error_reached_unreachable_code("set_signature: rank_table and signature_features cannot both be NULL")
-            }
-            
+
             if(is.null(signature_features)){
               # Get signature features using the table with ranked features.
               # Those features may be clustered.
@@ -975,7 +971,10 @@ setMethod("get_signature", signature(object="list"),
               
               # Get number remaining available features
               n_allowed_features <- signature_size - length(signature_features)
-              if(n_allowed_features > 0){
+              
+              # Check that features may be added, and the rank table is not
+              # empty.
+              if(n_allowed_features > 0 & !is_empty(rank_table)){
                 
                 # Get available features.
                 features <- features_after_clustering(features=get_available_features(feature_info_list=object),
@@ -984,8 +983,8 @@ setMethod("get_signature", signature(object="list"),
                 # Remove signature features, if any, to prevent duplicates.
                 features <- setdiff(features, signature_features)
                 
-                # Keep only feature ranks of feature corresponding to available features,
-                # and order by rank.
+                # Keep only feature ranks of feature corresponding to available
+                # features, and order by rank.
                 rank_table <- rank_table[name %in% features,][order(aggr_rank)]
                 
                 # Add good features (low rank) to the selection
