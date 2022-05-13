@@ -1,3 +1,9 @@
+# Version 1.1.2 (Gregarious Gopher)
+
+## Bug fixes
+
+- Fixed an issue that would cause all features to be used for hyperparameter optimisation for `signature_only` and `random` feature selection methods.
+
 # Version 1.1.1 (Flamboyant Flamingo)
 
 ## Minor changes
