@@ -309,8 +309,9 @@ add_required_features <- function(feature_info_list){
     
     # Required features for imputation
     if(is.list(object@imputation_parameters)){
-      if(!is.null(object@imputation_parameters$required_features)){
-        required_features <- c(required_features, object@imputation_parameters$required_features)
+      if(!is.null(object@imputation_parameters)){
+        browser()
+        required_features <- c(required_features, object@imputation_parameters@required_features)
       }
     }
     
