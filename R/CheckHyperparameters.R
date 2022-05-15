@@ -227,7 +227,7 @@ NULL
 .update_hyperparameters <- function(parameter_list, user_list=NULL, n_features=NULL){
   
   # Check if any parameters are provided
-  if(length(parameter_list) == 0){ return(parameter_list) }
+  if(length(parameter_list) == 0) return(parameter_list)
   
   for(parameter_name in names(parameter_list)){
     

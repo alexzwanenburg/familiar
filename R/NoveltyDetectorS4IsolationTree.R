@@ -131,7 +131,7 @@ setMethod("get_default_hyperparameters", signature(object="familiarIsolationFore
             
             # The number of splitting dimensions cannot be larger than the
             # number of features.
-            if(default_n_dim > n_features) default_n_dim <- n_features
+            if(default_n_dim > n_features && n_features > 0) default_n_dim <- n_features
             
             param$n_dim <- .set_hyperparameter(default=default_n_dim,
                                                type="integer",
