@@ -243,6 +243,19 @@ test.create_empty_data_set <- function(outcome_type){
 
 
 
+test.create_no_feature_data_set <- function(outcome_type){
+  
+  # Create good dataset first and work from there.
+  data <- test.create_good_data_set(outcome_type)
+  
+  # Remove features.
+  data@data <- data@data[, mget(get_non_feature_columns(outcome_type))]
+  
+  return(data)
+}
+
+
+
 test.create_bootstrapped_data_set <- function(outcome_type, to_data_object=TRUE){
   
   # Suppress NOTES due to non-standard evaluation in data.table
