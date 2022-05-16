@@ -182,9 +182,7 @@ NULL
   if(is.null(fs_method) & is.null(learner) & is.null(detector)){
     ..error_reached_unreachable_code(".get_preset_hyperparameters: one of fs_method, learner, detector should not be NULL")
   }
-  
-  if(is_empty(data)) names_only <- TRUE
-  
+
   # Internal error checks. We should be able to obtain the outcome_type.
   if(is.null(detector)){
     if(is.null(data) & is.null(outcome_type) ){
