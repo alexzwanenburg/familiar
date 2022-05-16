@@ -1196,6 +1196,9 @@ setMethod("filter_features", signature(data="dataObject"),
               stop("This point should never be reachable. Check for inconsistencies if it does.")
             }
             
+            # Make a copy to prevent updating by reference.
+            data@data <- data.table::copy(data@data)
+            
             # Remove features from data if there is 1 or more feature to remove
             if(length(remove_features) > 0){
               data@data[, (remove_features):=NULL]

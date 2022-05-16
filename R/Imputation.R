@@ -184,20 +184,26 @@ add_imputation_info <- function(cl=NULL,
                                    feature_info_list=feature_info_list,
                                    initial_imputation=TRUE)
   
-  # Iterate over features again to train multivariate imputation models.
-  updated_feature_info <- fam_mapply(cl=cl,
-                                     FUN=.add_imputation_info,
-                                     feature_info=feature_info_list[feature_names],
-                                     mask_data=data@data[, mget(feature_names)],
-                                     MoreArgs=list("data"=imputed_data),
-                                     progress_bar=verbose,
-                                     chopchop=TRUE)
+  # Check if there are any features that lack imputation (are of the
+  # featureInfoParametersImputationNone class).
+  feature_names <- unname(feature_names[!sapply(feature_info_list[feature_names], function(x) (is(x@imputation_parameters, "featureInfoParametersImputationNone")))])
   
-  # Provide names for the updated feature info objects.
-  names(updated_feature_info) <- feature_names
-  
-  # Replace list elements.
-  feature_info_list[feature_names] <- updated_feature_info
+  if(length(feature_names) > 0){
+    # Iterate over features again to train multivariate imputation models.
+    updated_feature_info <- fam_mapply(cl=cl,
+                                       FUN=.add_imputation_info,
+                                       feature_info=feature_info_list[feature_names],
+                                       mask_data=data@data[, mget(feature_names)],
+                                       MoreArgs=list("data"=imputed_data),
+                                       progress_bar=verbose,
+                                       chopchop=TRUE)
+    
+    # Provide names for the updated feature info objects.
+    names(updated_feature_info) <- feature_names
+    
+    # Replace list elements.
+    feature_info_list[feature_names] <- updated_feature_info
+  }
   
   return(feature_info_list)
 }
@@ -462,14 +468,14 @@ setMethod("add_feature_info_parameters", signature(object="featureInfoParameters
             # Perform a cross-validation to derive a optimal lambda. This may
             # rarely fail if y is numeric but does not change in a particular
             # fold. In that case, skip.
-            lasso_model <- tryCatch(glmnet::cv.glmnet(x=as.matrix(x@data[mask_data, mget(get_feature_columns(x))]),
-                                                      y=y,
-                                                      family=distribution,
-                                                      alpha=1,
-                                                      standardize=FALSE,
-                                                      nfolds=min(sum(mask_data), 20),
-                                                      parallel=FALSE),
-                                    error=identity)
+            lasso_model <- suppressWarnings(tryCatch(glmnet::cv.glmnet(x=as.matrix(x@data[mask_data, mget(get_feature_columns(x))]),
+                                                                       y=y,
+                                                                       family=distribution,
+                                                                       alpha=1,
+                                                                       standardize=FALSE,
+                                                                       nfolds=min(sum(mask_data), 20),
+                                                                       parallel=FALSE),
+                                                     error=identity))
             
             if(inherits(lasso_model, "error") )return(object@simple)
             
@@ -527,18 +533,18 @@ setMethod("add_feature_info_parameters", signature(object="featureInfoParameters
                                                          drop_levels=FALSE)
 
             # Extract data table with contrasts.
-            x <- encoded_data$encoded_data
+            x <- encoded_data$encoded_data@data[mask_data, mget(get_feature_columns(encoded_data$encoded_data))]
             
             # Check the number of columns in train_data. glmnet wants at least
             # two columns.
             if(ncol(x) == 1) x[, "bogus__variable__":=0.0]
-            browser()
+            
             # Train a small model at this lambda.1se.
-            lasso_model <- glmnet::glmnet(x = as.matrix(x),
+            lasso_model <- suppressWarnings(glmnet::glmnet(x = as.matrix(x),
                                           y = y,
                                           family = distribution,
                                           lambda = lasso_model$lambda.1se,
-                                          standardize = FALSE)
+                                          standardize = FALSE))
             
             # Remove extraneous information from the model.
             lasso_model <- ..trim_glmnet(lasso_model)
@@ -595,7 +601,7 @@ setMethod("apply_feature_info_parameters",  signature(object="featureInfoParamet
                    mask_data,
                    initial_imputation,
                    ...) {
-            browser()
+            
             # For initial imputation use univariate imputer.
             if(initial_imputation){
               return(apply_feature_info_parameters(object=object@simple,
@@ -611,13 +617,13 @@ setMethod("apply_feature_info_parameters",  signature(object="featureInfoParamet
             if(all(mask_data)) return(data@data[[object@name]])
             
             # Check that features required for imputation are present in data.
-            if(!all(get_feature_columns(data) %in% object@required_features)){
+            if(!all(object@required_features %in% get_feature_columns(data))){
               return(apply_feature_info_parameters(object=object@simple,
                                                    data=data,
                                                    mask_data=mask_data,
                                                    initial_imputation=initial_imputation))
             }
-            browser()
+            
             # Check that the glmnet package is installed.
             require_package(x="glmnet",
                             purpose="to impute data using lasso regression")
@@ -635,13 +641,13 @@ setMethod("apply_feature_info_parameters",  signature(object="featureInfoParamet
                                                          drop_levels=FALSE)
             
             # Extract data table with contrasts.
-            x <- encoded_data$encoded_data
+            x <- encoded_data$encoded_data@data[!mask_data, mget(get_feature_columns(encoded_data$encoded_data))]
             
             # Check if the validation data has two or more columns
             if(ncol(x) == 1) x[, "bogus__variable__":=0.0]
             
             # Get the type of response for glmnet predict
-            response_type <- ifelse(object@feature_type == "numeric", "response", "class")
+            response_type <- ifelse(object@type == "numeric", "response", "class")
             
             # Impute values for censored values.
             y[!mask_data] <- drop(predict(object=object@model,

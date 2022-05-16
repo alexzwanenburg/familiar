@@ -8,6 +8,8 @@
 
 -   Consistency of S4 objects is more actively checked in exported methods and functions by calling `update_object`. This prevents errors attempting when attempting to use a more recent version of familiar than the one used to create the objects. Previously these checks were only rigorously performed for objects that were loaded internally, and not those loaded by the user directly.
 
+-   The `n_dim` parameter for isolation forests is now correctly set for datasets without any features.
+
 # Version 1.1.2 (Gregarious Gopher)
 
 ## Bug fixes

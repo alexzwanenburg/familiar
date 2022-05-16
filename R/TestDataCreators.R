@@ -1075,6 +1075,7 @@ test_create_synthetic_series_na_data <- function(outcome_type,
                                                  n_missing_frac=0.1,
                                                  seed=1844,
                                                  rstream_object=NULL){
+  # Some instances are completely NA.
   
   # Create test data.
   data <- test_create_synthetic_series_data(outcome_type=outcome_type,
@@ -1100,6 +1101,64 @@ test_create_synthetic_series_na_data <- function(outcome_type,
       
     } else {
       data@data[na_rows, (feature):=NA_real_]
+    }
+  }
+  
+  return(data)
+}
+
+
+
+test_create_synthetic_series_random_na_data <- function(outcome_type,
+                                                        n_numeric=4L,
+                                                        n_missing_frac=0.1,
+                                                        seed=1844,
+                                                        rstream_object=NULL){
+  # Some data points are NA, but not instances.
+  
+  
+  if(!is.null(seed) & is.null(rstream_object)){
+    rstream_object <- .start_random_number_stream(seed=seed)
+  }
+  
+  # Create test data.
+  data <- test_create_synthetic_series_data(outcome_type=outcome_type,
+                                            n_numeric=n_numeric,
+                                            rstream_object=rstream_object)
+  
+  # Get the number of rows and feature columns.
+  n_rows <- nrow(data@data)
+  feature_columns <- get_feature_columns(data)
+  
+  # Select the number of data points to randomise.
+  n_randomise <- ceiling(n_missing_frac * n_rows * length(feature_columns))
+  
+  # Determine which data points should be randomised.
+  random_data <- data.table::data.table("row_id"=fam_sample(seq_len(n_rows),
+                                                            size=n_randomise,
+                                                            replace=TRUE,
+                                                            rstream_object=rstream_object),
+                                        "feature"=fam_sample(feature_columns,
+                                                             size=n_randomise,
+                                                             replace=TRUE,
+                                                             rstream_object=rstream_object))
+  # Select only unique data points.
+  random_data <- unique(random_data)
+  
+  # Split for iteration.
+  random_data <- split(random_data, by="feature", drop=TRUE)
+  
+  # Update feature columns.
+  for(feature in feature_columns){
+    if(!is.null(random_data[[feature]])){
+      
+      # Split by numeric and factor features.
+      if(is.factor(data@data[[feature]])){
+        data@data[random_data[[feature]]$row_id, (feature):=NA]
+        
+      } else {
+        data@data[random_data[[feature]]$row_id, (feature):=NA_real_]
+      }
     }
   }
   
