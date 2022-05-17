@@ -558,6 +558,10 @@ determine_preprocessing_parameters <- function(cl=NULL,
                                                             indent=message_indent,
                                                             verbose=verbose)
   
+  # Add clustering skeletons.
+  feature_info_list <- create_cluster_parameter_skeleton(feature_info_list=feature_info_list,
+                                                         cluster_method=settings$prep$cluster_method)
+  
   # Extract clustering information
   feature_info_list  <- add_cluster_info(cl=cl,
                                          feature_info_list=feature_info_list,

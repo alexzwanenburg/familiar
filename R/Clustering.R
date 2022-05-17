@@ -1,3 +1,461 @@
+#' @include FamiliarS4Generics.R
+#' @include FamiliarS4Classes.R
+NULL
+
+
+setClass("featureInfoCluster",
+         contains="featureInfoParameters",
+         slots=list("method" = "ANY",
+                    "weight" = "numeric",
+                    "invert" = "logical",
+                    "cluster_name" = "character",
+                    "cluster_size" = "integer",
+                    "cluster_features" = "character",
+                    "required_features"="ANY"),
+         prototype=list("method" = NULL,
+                        "weight" = 1.0,
+                        "invert" = FALSE,
+                        "cluster_name" = NA_character_,
+                        "cluster_size" = NA_integer_,
+                        "cluster_features" = NA_character_,
+                        "required_features"=NULL))
+
+setClass("clusterMethod",
+         slots=list("method" = "character",
+                    "data_type" = "character",
+                    "cluster_cut_method" = "character",
+                    "representation_method"="character"),
+         prototype=list("method" = NA_character_,
+                        "data_type" = NA_character_,
+                        "cluster_cut_method" = "none",
+                        "representation_method"="none"))
+
+setClass("clusterMethodHierarchical",
+         contains="clusterMethod",
+         slots=list("similarity_metric" = "character",
+                    "similarity_threshold"="numeric"),
+         prototype=list("similarity_metric" = NA_character_,
+                        "similarity_threshold" = NA_real_))
+
+setClass("clusterMethodHClust",
+         contains="clusterMethodHierarchical",
+         slots=list("linkage_method"="character"),
+         prototype=list("linkage_method"=NA_character_))
+
+setClass("clusterMethodAgnes",
+         contains="clusterMethodHierarchical",
+         slots=list("linkage_method"="character"),
+         prototype=list("linkage_method"=NA_character_))
+
+setClass("clusterMethodDiana",
+         contains="clusterMethodHierarchical")
+
+setClass("clusterMethodPAM",
+         contains="clusterMethod",
+         slots=list("similarity_metric" = "character"),
+         prototype=list("similarity_metric" = "character"))
+
+setClass("clusterMethodNone",
+         contains="clusterMethod")
+
+
+create_cluster_parameter_skeleton <- function(feature_info_list,
+                                              feature_names=NULL,
+                                              cluster_method,
+                                              cluster_linkage=NULL,
+                                              cluster_cut_method=NULL,
+                                              cluster_similarity_threshold=NULL,
+                                              cluster_similarity_metric=NULL,
+                                              cluster_representation_method=NULL,
+                                              .override_existing=FALSE){
+  # Creates a skeleton for the provided cluster method.
+  
+  # Determine feature names from the feature info list, if provided.
+  if(is.null(feature_names)) feature_names <- names(feature_info_list)
+  
+  # Select only features that appear in the feature info list.
+  feature_names <- intersect(names(feature_info_list),
+                             feature_names)
+  
+  # Skip step if no feature info objects are updated.
+  if(is_empty(feature_names)) return(feature_info_list)
+  
+  # Check that method is applicable.
+  .check_parameter_value_is_valid(x=cluster_method,
+                                  var_name="cluster_method",
+                                  values=.get_available_cluster_methods())
+  
+  # Update familiar info objects with a feature clustering skeleton.
+  updated_feature_info <- fam_lapply(X=feature_info_list[feature_names],
+                                     FUN=.create_cluster_parameter_skeleton,
+                                     method=cluster_method,
+                                     .override_existing=.override_existing)
+  
+  # Provide names for the updated feature info objects.
+  names(updated_feature_info) <- feature_names
+  
+  # Replace list elements.
+  feature_info_list[feature_names] <- updated_feature_info
+  
+  return(feature_info_list)
+}
+
+
+
+.create_cluster_parameter_skeleton <- function(feature_info,
+                                               method,
+                                               ...,
+                                               .override_existing=FALSE){
+  
+  # Check if clustering data was already completed, and does not require being
+  # determined anew.
+  if(feature_info_complete(feature_info@cluster_parameters) & !.override_existing) return(feature_info)
+  
+  # Create cluster parameter object.
+  object <- methods::new("featureInfoCluster",
+                         method=method)
+  
+  # Set feature name
+  object@name <- feature_name
+  
+  # Update the familiar version.
+  object <- add_package_version(object=object)
+  
+  # Check that the feature was not removed and is not set as a signature.
+  if(!available(feature_info) || is_in_signature(feature_info)) method <- "none"
+  
+  # Create the cluster method object.
+  object@method <- create_cluster_method_object(cluster_method=method,
+                                                data_type="cluster",
+                                                ...)
+  
+  # Update imputation_parameters slot.
+  feature_info@cluster_parameters <- object
+  
+  return(feature_info)
+}
+
+
+create_cluster_method_object <- function(cluster_method,
+                                         data_type,
+                                         cluster_linkage=NULL,
+                                         cluster_cut_method=NULL,
+                                         cluster_similarity_threshold=NULL,
+                                         cluster_similarity_metric=NULL,
+                                         cluster_representation_method=NULL){
+  
+  
+  # Check that method is applicable.
+  .check_parameter_value_is_valid(x=cluster_method,
+                                  var_name=ifelse(data_type=="cluster", "cluster_method", paste0(data_type, "_cluster_method")),
+                                  values=.get_available_cluster_methods())
+
+  # Check that data_type is valid.
+  .check_parameter_value_is_valid(x=data_type,
+                                  var_name="data_type",
+                                  values=c("feature", "cluster", "sample"))
+    
+  if(cluster_method == "none"){
+    object <- methods::new("clusterMethodNone")
+    
+  } else if(cluster_method == "pam"){
+    object <- methods::new("clusterMethodPAM")
+    
+  } else if(cluster_method == "hclust"){
+    object <- methods::new("clusterMethodHClust")
+    
+  } else if(cluster_method == "agnes"){
+    object <- methods::new("clusterMethodAgnes")
+    
+  } else if(cluster_method == "diana"){
+    object <- methods::new("clusterMethodDiana")
+    
+  } else {
+    ..error_reached_unreachable_code(paste0("create_cluster_method_object: encountered an unknown cluster method: ", cluster_method))
+  }
+  
+  # Cluster method and data type are always set.
+  object@method <- cluster_method
+  object@data_type <- data_type
+  
+  # Set cluster object method parameters as required.
+  object <- set_object_parameters(object=object,
+                                  cluster_linkage=cluster_linkage,
+                                  cluster_cut_method=cluster_cut_method,
+                                  cluster_similarity_threshold=cluster_similarity_threshold,
+                                  cluster_similarity_metric=cluster_similarity_metric,
+                                  cluster_representation_method=cluster_representation_method)
+  
+  return(object)
+}
+
+
+##### set_object_parameters (none) ---------------------------------------------
+setMethod("set_object_parameters", signature(object="clusterMethodNone"),
+          function(object,
+                   ...){
+            
+            return(object)
+          })
+
+
+
+##### set_object_parameters (PAM) ----------------------------------------------
+setMethod("set_object_parameters", signature(object="clusterMethodPAM"),
+          function(object,
+                   cluster_similarity_metric,
+                   cluster_cut_method=NULL,
+                   cluster_representation_method=NULL,
+                   ...){
+            
+            # Check that similarity metric is valid.
+            .check_parameter_value_is_valid(x=cluster_similarity_metric,
+                                            var_name=paste0(object@data_type, "_similarity_metric"),
+                                            values=.get_available_similarity_metrics(data_type=object@data_type))
+            
+            # Set similarity metric.
+            object@similarity_metric <- cluster_similarity_metric
+            
+            # Cut methods are optional, and default to "none".
+            if(!is.null(cluster_cut_method)){
+              
+              # Check cluster cut method.
+              .check_parameter_value_is_valid(x=cluster_cut_method,
+                                              var_name=ifelse(object@data_type=="cluster",
+                                                              "cluster_cut_method",
+                                                              paste0(object@data_type, "_cluster_cut_method")),
+                                              values=c("none", "silhouette"))
+              
+              # Set cluster cut method.
+              object@cluster_cut_method <- cluster_cut_method
+            }
+            
+            # Check representation method.
+            if(!is.null(cluster_representation_method) && object@cluster_cut_method == "silhouette"){
+              
+              # Check representation method.
+              .check_parameter_value_is_valid(x=cluster_representation_method,
+                                              var_name=ifelse(object@data_type=="cluster",
+                                                              "cluster_representation_method",
+                                                              paste0(object@data_type, "_cluster_representation_method")),
+                                              values=.get_available_cluster_representation_methods(object@method))
+              
+              # Set cluster representation method.
+              object@representation_method <- cluster_representation_method
+            }
+            
+            return(object)
+          })
+
+
+
+##### set_object_parameters (hclust) -------------------------------------------
+setMethod("set_object_parameters", signature(object="clusterMethodHClust"),
+          function(object,
+                   cluster_linkage_method,
+                   cluster_similarity_metric,
+                   cluster_cut_method=NULL,
+                   cluster_similarity_threshold=NULL,
+                   cluster_representation_method=NULL,
+                   ...){
+            
+            # Check that similarity metric is valid.
+            .check_parameter_value_is_valid(x=cluster_similarity_metric,
+                                            var_name=paste0(object@data_type, "_similarity_metric"),
+                                            values=.get_available_similarity_metrics(data_type=object@data_type))
+            
+            # Set similarity metric.
+            object@similarity_metric <- cluster_similarity_metric
+            
+            # Check that linkage method is valid.
+            .check_parameter_value_is_valid(x=cluster_linkage_method,
+                                            var_name=paste0(object@data_type, "_linkage_method"),
+                                            values=.get_available_linkage_methods())
+            
+            # Cut methods are optional, and default to "none".
+            if(!is.null(cluster_cut_method)){
+              
+              # Check cluster cut method.
+              .check_parameter_value_is_valid(x=cluster_cut_method,
+                                              var_name=ifelse(object@data_type=="cluster",
+                                                              "cluster_cut_method",
+                                                              paste0(object@data_type, "_cluster_cut_method")),
+                                              values=c("none", "fixed_cut", "silhouette", "dynamic_cut"))
+              
+              # Set cluster cut method.
+              object@cluster_cut_method <- cluster_cut_method
+            }
+            
+            if(object@cluster_cut_method == c("fixed_cut")){
+              
+              # Check cutting height for fixed cut. Multiple cut heights are
+              # possible. Use as_distance to get two-value ranges, but note that
+              # these values are similarity otherwise.
+              sapply(cluster_similarity_threshold,
+                     .check_number_in_valid_range,
+                     var_name=paste0(object@data_type, "_similarity_threshold"),
+                     range=similarity.metric_range(similarity_metric=object@similarity_metric,
+                                                   as_distance=TRUE))
+              
+              # Attach to object.
+              object@similarity_threshold <- cluster_similarity_threshold
+            }
+            
+            # Check representation method.
+            if(!is.null(cluster_representation_method) && object@cluster_cut_method != "none"){
+              
+              # Check representation method.
+              .check_parameter_value_is_valid(x=cluster_representation_method,
+                                              var_name=ifelse(object@data_type=="cluster",
+                                                              "cluster_representation_method",
+                                                              paste0(object@data_type, "_cluster_representation_method")),
+                                              values=.get_available_cluster_representation_methods(object@method))
+              
+              # Set cluster representation method.
+              object@representation_method <- cluster_representation_method
+            }
+            
+            return(object)
+          })
+
+
+
+##### set_object_parameters (agnes) --------------------------------------------
+setMethod("set_object_parameters", signature(object="clusterMethodAgnes"),
+          function(object,
+                   cluster_linkage_method,
+                   cluster_similarity_metric,
+                   cluster_cut_method=NULL,
+                   cluster_similarity_threshold=NULL,
+                   cluster_representation_method=NULL,
+                   ...){
+            
+            # Check that similarity metric is valid.
+            .check_parameter_value_is_valid(x=cluster_similarity_metric,
+                                            var_name=paste0(object@data_type, "_similarity_metric"),
+                                            values=.get_available_similarity_metrics(data_type=object@data_type))
+            
+            # Set similarity metric.
+            object@similarity_metric <- cluster_similarity_metric
+            
+            # Check that linkage method is valid.
+            .check_parameter_value_is_valid(x=cluster_linkage_method,
+                                            var_name=paste0(object@data_type, "_linkage_method"),
+                                            values=.get_available_linkage_methods())
+            
+            # Cut methods are optional, and default to "none".
+            if(!is.null(cluster_cut_method)){
+              
+              # Check cluster cut method.
+              .check_parameter_value_is_valid(x=cluster_cut_method,
+                                              var_name=ifelse(object@data_type=="cluster",
+                                                              "cluster_cut_method",
+                                                              paste0(object@data_type, "_cluster_cut_method")),
+                                              values=c("none", "fixed_cut", "silhouette"))
+              
+              # Set cluster cut method.
+              object@cluster_cut_method <- cluster_cut_method
+            }
+            
+            if(object@cluster_cut_method == c("fixed_cut")){
+              
+              # Check cutting height for fixed cut. Multiple cut heights are
+              # possible. Use as_distance to get two-value ranges, but note that
+              # these values are similarity otherwise.
+              sapply(cluster_similarity_threshold,
+                     .check_number_in_valid_range,
+                     var_name=paste0(object@data_type, "_similarity_threshold"),
+                     range=similarity.metric_range(similarity_metric=object@similarity_metric,
+                                                   as_distance=TRUE))
+              
+              # Attach to object.
+              object@similarity_threshold <- cluster_similarity_threshold
+            }
+            
+            # Check representation method.
+            if(!is.null(cluster_representation_method) && object@cluster_cut_method != "none"){
+              
+              # Check representation method.
+              .check_parameter_value_is_valid(x=cluster_representation_method,
+                                              var_name=ifelse(object@data_type=="cluster",
+                                                              "cluster_representation_method",
+                                                              paste0(object@data_type, "_cluster_representation_method")),
+                                              values=.get_available_cluster_representation_methods(object@method))
+              
+              # Set cluster representation method.
+              object@representation_method <- cluster_representation_method
+            }
+            
+            return(object)
+          })
+
+
+
+##### set_object_parameters (diana) --------------------------------------------
+setMethod("set_object_parameters", signature(object="clusterMethodDiana"),
+          function(object,
+                   cluster_similarity_metric,
+                   cluster_cut_method=NULL,
+                   cluster_similarity_threshold=NULL,
+                   cluster_representation_method=NULL,
+                   ...){
+            
+            # Check that similarity metric is valid.
+            .check_parameter_value_is_valid(x=cluster_similarity_metric,
+                                            var_name=paste0(object@data_type, "_similarity_metric"),
+                                            values=.get_available_similarity_metrics(data_type=object@data_type))
+            
+            # Set similarity metric.
+            object@similarity_metric <- cluster_similarity_metric
+            
+            # Cut methods are optional, and default to "none".
+            if(!is.null(cluster_cut_method)){
+              
+              # Check cluster cut method.
+              .check_parameter_value_is_valid(x=cluster_cut_method,
+                                              var_name=ifelse(object@data_type=="cluster",
+                                                              "cluster_cut_method",
+                                                              paste0(object@data_type, "_cluster_cut_method")),
+                                              values=c("none", "fixed_cut", "silhouette"))
+              
+              # Set cluster cut method.
+              object@cluster_cut_method <- cluster_cut_method
+            }
+            
+            if(object@cluster_cut_method == c("fixed_cut")){
+              
+              # Check cutting height for fixed cut. Multiple cut heights are
+              # possible. Use as_distance to get two-value ranges, but note that
+              # these values are similarity otherwise.
+              sapply(cluster_similarity_threshold,
+                     .check_number_in_valid_range,
+                     var_name=paste0(object@data_type, "_similarity_threshold"),
+                     range=similarity.metric_range(similarity_metric=object@similarity_metric,
+                                                   as_distance=TRUE))
+              
+              # Attach to object.
+              object@similarity_threshold <- cluster_similarity_threshold
+            }
+            
+            # Check representation method.
+            if(!is.null(cluster_representation_method) && object@cluster_cut_method != "none"){
+              
+              # Check representation method.
+              .check_parameter_value_is_valid(x=cluster_representation_method,
+                                              var_name=ifelse(object@data_type=="cluster",
+                                                              "cluster_representation_method",
+                                                              paste0(object@data_type, "_cluster_representation_method")),
+                                              values=.get_available_cluster_representation_methods(object@method))
+              
+              # Set cluster representation method.
+              object@representation_method <- cluster_representation_method
+            }
+            
+            return(object)
+          })
+
+
+
 add_cluster_info <- function(cl=NULL,
                              feature_info_list,
                              data_obj,
@@ -1226,4 +1684,39 @@ cluster.compute_cluster <- function(cluster_table, data_obj){
                                       values=c("best_predictor", "medioid", "mean"))
     }
   }
+}
+
+
+
+.get_available_cluster_methods <- function(){
+  return(c("none", "pam", "agnes", "diana", "hclust"))
+}
+
+
+
+.get_available_linkage_methods <- function(){
+  return(c("average", "single", "complete", "weighted", "ward"))
+}
+
+
+
+.get_available_cluster_representation_methods <- function(cluster_method){
+  # Note that "none" is used to prevent forming cluster representations. It's
+  # not a valid choice per se.
+  if(cluster_method == "none"){
+    representation_methods <- "none"
+    
+  } else if(cluster_method == "pam"){
+    representation_methods <- c("none", "medioid")
+    
+  } else if(cluster_method %in% c("agnes", "diana", "hclust")){
+    representation_methods <- c("none", "medioid", "best_predictor", "mean")
+    
+  } else {
+    ..error_reached_unreachable_code(paste0(".get_available_cluster_representation_methods: ",
+                                            "encountered unknown cluster method: ",
+                                            cluster_method))
+  }
+  
+  return(representation_methods)
 }
