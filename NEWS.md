@@ -1,5 +1,9 @@
 # Development
 
+## Major changes
+
+-   Several pre-processing steps, i.e. transformation, normalisation, batch normalisation, imputation and clustering have been re-implemented as objects. This allows for better portability between experiments, improved flexibility and extensibility to newer methods, and better forward compatibility.
+
 ## Minor changes
 
 -   It is now possible to set the number of bootstraps that are initially explored for hyperparameter optimisation using the `smbo_initial_bootstraps` configuration parameter. The default value is `1`, indicating that the initial hyperparameter sets are initially evaluated on a single bootstrap.
