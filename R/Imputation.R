@@ -185,7 +185,8 @@ add_imputation_info <- function(cl=NULL,
                                    initial_imputation=TRUE)
   
   # Check if there are any features that lack imputation (are of the
-  # featureInfoParametersImputationNone class).
+  # featureInfoParametersImputationNone class). These are subsequently skipped
+  # to avoid having to rely on potentially missing data to infer other features.
   feature_names <- unname(feature_names[!sapply(feature_info_list[feature_names], function(x) (is(x@imputation_parameters, "featureInfoParametersImputationNone")))])
   
   if(length(feature_names) > 0){
