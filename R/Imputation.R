@@ -666,7 +666,6 @@ setMethod("apply_feature_info_parameters",  signature(object="featureInfoParamet
                    mask_data,
                    initial_imputation,
                    ...) {
-            browser()
             
             # Find uncensored data.
             uncensored_data <- .mask_data_to_mask(mask_data = mask_data, type=object@type)
@@ -685,7 +684,7 @@ setMethod("apply_feature_info_parameters",  signature(object="featureInfoParamet
             if(object@type == "numeric"){
               aggregation_function <- mean
               
-            } else if(object@type == "feature"){
+            } else if(object@type == "factor"){
               aggregation_function <- get_mode
             }
             
@@ -693,15 +692,16 @@ setMethod("apply_feature_info_parameters",  signature(object="featureInfoParamet
             imputed_values <- lapply(object@model,
                                      apply_feature_info_parameters,
                                      data=censored_data,
-                                     mask_data=mask_data[!uncensored_data])
+                                     mask_data=mask_data[!uncensored_data],
+                                     initial_imputation=initial_imputation)
             
             # Set as data.table.
             imputed_values <- data.table::as.data.table(imputed_values)
             
             # Aggregate by row.
-            imputed_values[, list("value"=aggregation_function(do.call(c, .SD))),
-                           .SDcols=colnames(imputed_values),
-                           by=seq_len(nrow(imputed_values))]
+            imputed_values <- imputed_values[, list("value"=aggregation_function(do.call(c, .SD))),
+                                             .SDcols=colnames(imputed_values),
+                                             by=seq_len(nrow(imputed_values))]
             
             # Replace censored values in y.
             y[!uncensored_data] <- imputed_values$value
@@ -741,9 +741,9 @@ setMethod("apply_feature_info_parameters",  signature(object="featureInfoParamet
                                    function(x){
                                      # Filter out "none" class imputation
                                      # objects.
-                                     if(is(x@imputation_parameters, "featureInfoParametersImputationNone")) return(NULL)
+                                     if(is(x, "featureInfoParametersImputationNone")) return(NULL)
                                      
-                                     return(x@imputation_parameters)
+                                     return(x)
                                    })
   
   if(is_empty(container_object@model)){
@@ -754,6 +754,9 @@ setMethod("apply_feature_info_parameters",  signature(object="featureInfoParamet
   
   # Set required parameters.
   container_object@required_features <- unique(unlist(lapply(container_object@model, function(x) (x@required_features))))
+  
+  # Mark as complete.
+  container_object@complete <- TRUE
   
   return(list("parameters"=container_object))
 }
