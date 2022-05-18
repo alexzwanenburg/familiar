@@ -3614,6 +3614,7 @@
                                                       optional=TRUE,
                                                       default=prep_cluster_similarity_threshold)
   
+  # Check the proposed cluster parameters.
   if(any(c("feature_similarity", "univariate_analysis", "feature_expressions", "permutation_vimp") %in% settings$evaluation_data_elements)){
     check_cluster_parameters(cluster_method=settings$feature_cluster_method,
                              cluster_linkage=settings$feature_linkage_method,
