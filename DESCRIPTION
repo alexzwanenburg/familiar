@@ -81,6 +81,7 @@ Collate:
     'CheckPackages.R'
     'ClassBalance.R'
     'Clustering.R'
+    'ClusteringMethod.R'
     'Normalisation.R'
     'CombatNormalisation.R'
     'DataObject.R'
