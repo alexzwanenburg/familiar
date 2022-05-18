@@ -190,7 +190,7 @@ setMethod("extract_permutation_vimp", signature(object="familiarEnsemble"),
                                       cluster_cut_method=feature_cluster_cut_method,
                                       cluster_similarity_threshold=feature_similarity_threshold,
                                       cluster_similarity_metric=feature_similarity_metric,
-                                      var_type="feature")
+                                      data_type="feature")
             
             # Test if models are properly loaded
             if(!is_model_loaded(object=object)) ..error_ensemble_models_not_loaded()

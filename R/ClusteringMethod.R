@@ -96,7 +96,7 @@ create_cluster_method_object <- function(cluster_method,
 }
 
 
-##### set_object_parameters (none) ---------------------------------------------
+#### set_object_parameters (none) ----------------------------------------------
 setMethod("set_object_parameters", signature(object="clusterMethodNone"),
           function(object,
                    ...){
@@ -106,7 +106,7 @@ setMethod("set_object_parameters", signature(object="clusterMethodNone"),
 
 
 
-##### set_object_parameters (general) ------------------------------------------
+#### set_object_parameters (general) -------------------------------------------
 setMethod("set_object_parameters", signature(object="clusterMethod"),
           function(object,
                    cluster_cut_method=NULL,
@@ -152,7 +152,7 @@ setMethod("set_object_parameters", signature(object="clusterMethod"),
 
 
 
-##### set_object_parameters (PAM) ----------------------------------------------
+#### set_object_parameters (PAM) -----------------------------------------------
 setMethod("set_object_parameters", signature(object="clusterMethodPAM"),
           function(object,
                    cluster_similarity_metric,
@@ -174,7 +174,7 @@ setMethod("set_object_parameters", signature(object="clusterMethodPAM"),
 
 
 
-##### set_object_parameters (general hierarchical) -----------------------------
+#### set_object_parameters (general hierarchical) ------------------------------
 setMethod("set_object_parameters", signature(object="clusterMethodHierarchical"),
           function(object,
                    cluster_similarity_metric,
@@ -211,7 +211,7 @@ setMethod("set_object_parameters", signature(object="clusterMethodHierarchical")
 
 
 
-##### set_object_parameters (hclust) -------------------------------------------
+#### set_object_parameters (hclust) --------------------------------------------
 setMethod("set_object_parameters", signature(object="clusterMethodHClust"),
           function(object,
                    cluster_linkage_method,
@@ -231,7 +231,7 @@ setMethod("set_object_parameters", signature(object="clusterMethodHClust"),
 
 
 
-##### set_object_parameters (agnes) --------------------------------------------
+#### set_object_parameters (agnes) ---------------------------------------------
 setMethod("set_object_parameters", signature(object="clusterMethodAgnes"),
           function(object,
                    cluster_linkage_method,
@@ -251,7 +251,7 @@ setMethod("set_object_parameters", signature(object="clusterMethodAgnes"),
 
 
 
-##### set_object_parameters (diana) --------------------------------------------
+#### set_object_parameters (diana) ---------------------------------------------
 setMethod("set_object_parameters", signature(object="clusterMethodDiana"),
           function(object,
                    ...){
@@ -262,3 +262,55 @@ setMethod("set_object_parameters", signature(object="clusterMethodDiana"),
             
             return(object)
           })
+
+
+
+.check_cluster_parameters <- function(cluster_method,
+                                      cluster_linkage=NULL,
+                                      cluster_cut_method=NULL,
+                                      cluster_similarity_threshold=NULL,
+                                      cluster_similarity_metric=NULL,
+                                      cluster_representation_method=NULL,
+                                      data_type="cluster",
+                                      test_required_packages=TRUE,
+                                      message_type="error"){
+  
+  # Perform checks by creating the relevant object. This checks whether the
+  # applicable parameters are set.
+  object <- create_cluster_method_object(cluster_method,
+                                         data_type=data_type,
+                                         cluster_linkage=cluster_linkage,
+                                         cluster_cut_method=cluster_cut_method,
+                                         cluster_similarity_threshold=cluster_similarity_metric,
+                                         cluster_similarity_metric=cluster_similarity_metric,
+                                         cluster_representation_method=cluster_representation_method)
+  
+  if(test_required_packages){
+    # Check whether the cluster package has been installed.
+    if(object@method %in% c("pam", "agnes", "diana")){
+      require_package(x="cluster",
+                      purpose="to compute similarity between features or instances",
+                      message_type=message_type)
+    }
+    
+    # Check whether the dynamicTreeCut package has been installed.
+    if(.hasSlot(object, "cluster_cut_method")){
+      if(object@cluster_cut_method == "dynamic_cut"){
+        require_package(x="dynamicTreeCut",
+                        purpose="to cut dendrograms dynamically",
+                        message_type=message_type)
+        
+      }
+    }
+    
+    # Check whether the VGAM package has been installed.
+    if(.hasSlot(object, "similarity_metric")){
+      if(object@similarity_metric %in% c("mcfadden_r2", "cox_snell_r2", "nagelkerke_r2")){
+        require_package(x="VGAM",
+                        purpose=paste0("to compute log-likelihood pseudo R2 similarity using the ",
+                                       object@similarity_metric, " metric"),
+                        message_type=message_type)
+      }
+    }
+  }
+}

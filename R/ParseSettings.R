@@ -1906,8 +1906,8 @@
                             cluster_similarity_threshold=settings$cluster_sim_thresh,
                             cluster_similarity_metric=settings$cluster_similarity_metric,
                             cluster_representation_method=settings$cluster_repr_method,
-                            var_type="cluster",
-                            test_required_packages=FALSE)
+                            data_type="cluster",
+                            message_type="backend_error")
   
   ##### parallel_preprocessing #################################################
   # Parallel processing
@@ -3560,12 +3560,13 @@
                                                 optional=TRUE,
                                                 default=prep_cluster_method)
   
-  if(any(c("feature_similarity", "univariate_analysis", "feature_expressions", "permutation_vimp") %in% settings$evaluation_data_elements)
-     & !settings$feature_cluster_method %in% c("none", "hclust")){
-    require_package(x="cluster",
-                    purpose="to use feature similarity",
-                    message_type="backend_error")
-  }
+  # Already checked in .check_cluster_parameters.
+  # if(any(c("feature_similarity", "univariate_analysis", "feature_expressions", "permutation_vimp") %in% settings$evaluation_data_elements)
+  #    & !settings$feature_cluster_method %in% c("none", "hclust")){
+  #   require_package(x="cluster",
+  #                   purpose="to use feature similarity",
+  #                   message_type="backend_error")
+  # }
   
   ##### feature_linkage_method #################################################
   # Feature linkage method
@@ -3613,14 +3614,16 @@
                                                       optional=TRUE,
                                                       default=prep_cluster_similarity_threshold)
   
-  .check_cluster_parameters(cluster_method=settings$feature_cluster_method,
-                            cluster_linkage=settings$feature_linkage_method,
-                            cluster_cut_method=settings$feature_cluster_cut_method,
-                            cluster_similarity_threshold=settings$feature_similarity_threshold,
-                            cluster_similarity_metric=settings$feature_similarity_metric,
-                            var_type="feature",
-                            test_required_packages=FALSE)
-  
+  if(any(c("feature_similarity", "univariate_analysis", "feature_expressions", "permutation_vimp") %in% settings$evaluation_data_elements)){
+    check_cluster_parameters(cluster_method=settings$feature_cluster_method,
+                             cluster_linkage=settings$feature_linkage_method,
+                             cluster_cut_method=settings$feature_cluster_cut_method,
+                             cluster_similarity_threshold=settings$feature_similarity_threshold,
+                             cluster_similarity_metric=settings$feature_similarity_metric,
+                             data_type="feature",
+                             message_type="backend_error")
+  }
+  .
   ##### sample_cluster_method ##################################################
   # Sample cluster method
   settings$sample_cluster_method <- .parse_arg(x_config=config$sample_cluster_method,
@@ -3630,12 +3633,13 @@
                                                optional=TRUE,
                                                default=prep_cluster_method)
   
-  if(any(c("sample_similarity", "feature_expressions") %in% settings$evaluation_data_elements) &
-     !settings$sample_cluster_method %in% c("none", "hclust")){
-    require_package(x="cluster",
-                    purpose="to use sample similarity",
-                    message_type="backend_error")
-  }
+  # Already checked in .check_cluster_parameters
+  # if(any(c("sample_similarity", "feature_expressions") %in% settings$evaluation_data_elements) &
+  #    !settings$sample_cluster_method %in% c("none", "hclust")){
+  #   require_package(x="cluster",
+  #                   purpose="to use sample similarity",
+  #                   message_type="backend_error")
+  # }
   
   ##### sample_linkage_method ##################################################
   # Sample cluster linkage method
@@ -3665,11 +3669,14 @@
     }
   }
   
-  .check_cluster_parameters(cluster_method=settings$sample_cluster_method,
-                            cluster_linkage=settings$sample_linkage_method,
-                            cluster_similarity_metric=settings$sample_similarity_metric,
-                            var_type="sample",
-                            test_required_packages=FALSE)
+  # Check the proposed cluster parameters.
+  if(any(c("sample_similarity", "feature_expressions") %in% settings$evaluation_data_elements)){
+    .check_cluster_parameters(cluster_method=settings$sample_cluster_method,
+                              cluster_linkage=settings$sample_linkage_method,
+                              cluster_similarity_metric=settings$sample_similarity_metric,
+                              data_type="sample",
+                              message_type="backend_error")
+  }
   
   ##### eval_aggregation_method ################################################
   # Variable importance aggregation methods

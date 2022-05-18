@@ -100,13 +100,7 @@ setMethod("extract_feature_similarity", signature(object="familiarEnsemble", dat
                                       cluster_cut_method=feature_cluster_cut_method,
                                       cluster_similarity_threshold=feature_similarity_threshold,
                                       cluster_similarity_metric=feature_similarity_metric,
-                                      var_type="feature")
-            
-            # Check correlation method
-            .check_parameter_value_is_valid(x=feature_similarity_metric, var_name="feature_similarity_metric",
-                                            values=.get_available_similarity_metrics(data_type="feature"))
-            
-            
+                                      data_type="feature")
             
             # Obtain confidence level from the settings file stored with the
             # familiarEnsemble object.
@@ -507,7 +501,7 @@ setMethod("export_feature_similarity", signature(object="familiarCollection"),
                                       cluster_cut_method=x[[1]]@cluster_cut_method,
                                       cluster_similarity_threshold=x[[1]]@similarity_threshold,
                                       cluster_similarity_metric=x[[1]]@similarity_metric,
-                                      var_type="feature")
+                                      data_type="feature")
             
             if(aggregate_results | export_dendrogram | export_ordered_data | export_clustering){
               x <- .compute_data_element_estimates(x)

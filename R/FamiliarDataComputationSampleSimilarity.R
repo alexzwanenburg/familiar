@@ -86,7 +86,7 @@ setMethod("extract_sample_similarity", signature(object="familiarEnsemble", data
             .check_cluster_parameters(cluster_method=sample_cluster_method,
                                       cluster_linkage=sample_linkage_method,
                                       cluster_similarity_metric=sample_similarity_metric,
-                                      var_type="sample")
+                                      data_type="sample")
             
             # Check the sample limit.
             sample_limit <- .parse_sample_limit(x = sample_limit,
@@ -322,7 +322,7 @@ setMethod("export_sample_similarity", signature(object="familiarCollection"),
             .check_cluster_parameters(cluster_method=x[[1]]@cluster_method,
                                       cluster_linkage=x[[1]]@linkage_method,
                                       cluster_similarity_metric=x[[1]]@similarity_metric,
-                                      var_type="sample")
+                                      data_type="sample")
             
             if(aggregate_results | export_dendrogram){
               x <- .compute_data_element_estimates(x)
