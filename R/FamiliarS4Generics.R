@@ -95,6 +95,10 @@ setGeneric("get_distance_matrix", function(object, data, ...) standardGeneric("g
 
 setGeneric("get_similarity_table", function(object, data, ...) standardGeneric("get_similarity_table"))
 
+setGeneric("create_cluster_table", function(object, data, ...) standardGeneric("create_cluster_table"))
+
+setGeneric("create_cluster_object", function(object, data, ...) standardGeneric("create_cluster_object"))
+
 ##### Methods to see and update labels of data in familiarCollection objects.
 setGeneric(".set_labels", function(x, ...) standardGeneric(".set_labels"))
 

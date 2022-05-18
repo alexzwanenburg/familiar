@@ -395,6 +395,7 @@ setMethod("get_similarity_table", signature(object="clusterMethod", data="dataOb
           function(object,
                    data,
                    feature_info_list,
+                   cl=NULL,
                    verbose=FALSE,
                    ...){
             
@@ -549,6 +550,17 @@ setMethod("get_similarity_table", signature(object="clusterMethod", data="dataOb
             
             return(similarity_table)
           })
+
+
+#### create_cluster_object (none, ANY) -----------------------------------------
+
+#### create_cluster_object (clusterMethod, NULL) -------------------------------
+
+#### create_cluster_object (clusterMethod, dataObject) -------------------------
+
+#### create_cluster_object (clusterMethod, similarityTable) --------------------
+
+#### create_cluster_object (clusterMethod, dist) -------------------------------
 
 
 
