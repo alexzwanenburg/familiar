@@ -90,6 +90,11 @@ setGeneric("extract_settings_from_data", function(data, ...) standardGeneric("ex
 
 setGeneric("set_object_parameters", function(object, ...) standardGeneric("set_object_parameters"))
 
+##### Clustering methods -------------------------------------------------------
+setGeneric("get_distance_matrix", function(object, data, ...) standardGeneric("get_distance_matrix"))
+
+setGeneric("get_similarity_table", function(object, data, ...) standardGeneric("get_similarity_table"))
+
 ##### Methods to see and update labels of data in familiarCollection objects.
 setGeneric(".set_labels", function(x, ...) standardGeneric(".set_labels"))
 

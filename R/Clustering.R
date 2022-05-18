@@ -99,17 +99,102 @@ create_cluster_parameter_skeleton <- function(feature_info_list,
 
 
 
-
-
 add_cluster_info <- function(cl=NULL,
                              feature_info_list,
-                             data_obj,
-                             settings,
+                             data,
                              message_indent=0L,
-                             verbose=TRUE){
+                             verbose=FALSE){
 
   # Suppress NOTES due to non-standard evaluation in data.table
   name <- cluster_id <- weight <- cluster_size <-  NULL
+  
+  
+  # Find feature columns.
+  feature_names <- get_feature_columns(x=data)
+  
+  # Sanity check.
+  if(!(setequal(feature_names, get_available_features(feature_info_list=feature_info_list)))){
+    ..error_reached_unreachable_code("add_cluster_info: features in data and the feature info list are expect to be the same, but were not.")
+  }
+  
+  # Skeletons should be present. Now we need to identify which features can be
+  # grouped by their method slot. This is done by iterating, and identifying
+  # which features form groups. Though this may seem to a bit convoluted, we do
+  # this to allow for proper processing of features that may have different
+  # parameters assigned on purpose, e.g. signature features or externally
+  # provided features.
+  
+  # List of cluster groups that use the same method.
+  cluster_group_lists <- NULL
+  
+  # Eliminate features that are already complete.
+  feature_names <- feature_names[!sapply(feature_info_list[feature_names],
+                                         function(x) (feature_info_complete(x@cluster_parameters)))]
+  
+  # Skip any further processing if all parameter information has already been
+  # completed.
+  if(length(feature_names) == 0) return(feature_info_list)  
+  
+  # Identify all features that are not to be clustered.
+  none_features <- feature_names[sapply(feature_info_list[feature_names],
+                                                          function(x) (is(x@cluster_parameters@method, "clusterMethodNone")))]
+  
+  # Identify features that should still be sorted.
+  feature_names <- setdiff(feature_names, none_features)
+  browser()
+  # Iterate to create feature groups.
+  while(TRUE){
+    # Break once all features have been assigned.
+    if(length(feature_names) == 0) break()
+    
+    # Get the cluster method object of the first feature that still needs to be
+    # sorted.
+    cluster_method_object <- feature_info_list[[feature_names[1L]]]@cluster_parameters@method
+    
+    # Find other unsorted features that have the same method.
+    same_method_features <- feature_names[sapply(feature_info_list[feature_names],
+                                                 function(x, y) (identical(x@cluster_parameters@method, y)),
+                                                 y=cluster_method_object)]
+    
+    # Append to the cluster group list. Note that the list is nested to avoid
+    # concatenating list elements.
+    cluster_group_lists <- c(cluster_group_lists,
+                             list(list("features"=same_method_features,
+                                       "cluster_method_object"=cluster_method_object)))
+    
+    # Remove features from feature names.
+    feature_names <- setdiff(feature_names, same_method_features)
+  }
+  
+  # Now process data that use clustering.
+  if(length(cluster_group_lists) > 0){
+    # Iterate over lists of features that have unique clustering parameters.
+    for(cluster_group in cluster_group_lists){
+      
+      # Check that at least 3 features are present. Otherwise no sensible
+      # clusters may be formed.
+      if(length(cluster_group$features) <= 2){
+        
+        # Update feature info so that these features now have "none" cluster objects.
+        feature_info_list <- create_cluster_parameter_skeleton(feature_info_list,
+                                                               feature_names=cluster_group$features,
+                                                               cluster_method="none")
+        # Add features to none_features
+        none_features <- c(none_features,
+                           cluster_group$features)
+        
+        # And skip to the next group.
+        next()
+      }
+      
+      # Compute distance matrix from data.
+      distance_matrix <- get_distance_matrix(object=cluster_group$cluster_method_object,
+                                             data=filter_features(data=data,
+                                                                  available_features=cluster_group$features),
+                                             feature_info_list=feature_info_list[cluster_group$features])
+      
+    }
+  }
   
   # Determine feature columns. Novelty features are clustered.
   feature_columns <- get_available_features(feature_info_list=feature_info_list,
@@ -197,254 +282,254 @@ add_cluster_info <- function(cl=NULL,
 
 
 
-cluster.get_featurewise_similarity_table <- function(cl=NULL, data_obj,
-                                                     feature_columns=NULL,
-                                                     settings=NULL,
-                                                     similarity_metric=NULL,
-                                                     message_indent=0L,
-                                                     verbose=FALSE){
-  # Create a pairwise similarity table
-  
-  # Internal function for computing pair-wise similarity
-  ..compute_similarity <- function(ii, combinations, data, similarity_metric, categorical_mask){
-    
-    # Identify features that are being compared.
-    feature_1 <- combinations[1, ii]
-    feature_2 <- combinations[2, ii]
-    
-    # Compute pairwise similarity
-    similarity <- similarity.compute_similarity(x=data[[feature_1]],
-                                                y=data[[feature_2]],
-                                                x_categorical=categorical_mask[feature_1],
-                                                y_categorical=categorical_mask[feature_2],
-                                                similarity_metric=similarity_metric)
-    
-    return(similarity)
-  }
-  
-  
-  if(is.null(data_obj)){
-    ..error_reached_unreachable_code("cluster.get_featurewise_similarity_table: data_obj argument cannot be missing.")
-  }
-  
-  if(!is.null(settings)){
-    similarity_metric <- settings$prep$cluster_similarity_metric
-  } else if(is.null(similarity_metric)){
-    ..error_reached_unreachable_code("cluster.get_featurewise_similarity_table: settings and similarity_metric arguments are both missing.")
-  }
-  
-  # Message similarity metric
-  logger.message(paste0("Pair-wise distance between features is quantified by ",
-                        similarity.message_similarity_metric(similarity_metric=similarity_metric), "."),
-                 indent=message_indent,
-                 verbose=verbose)
-  
-  # Get feature columns if this was not provided
-  if(is.null(feature_columns)){
-    feature_columns <- get_feature_columns(x=data_obj)
-  }
-  
-  # Generate all combinations of features
-  combinations <- utils::combn(sort(feature_columns), 2)
-  
-  # Determine which features are categorical.
-  column_class <- lapply(feature_columns, function(ii, data) (class(data[[ii]])), data=data_obj@data)
-  categorical_mask <- sapply(column_class, function(selected_column_class) (any(selected_column_class %in% c("logical", "character", "factor"))))
-  
-  # Add names to the mask to allow indexing by feature name.
-  names(categorical_mask) <- feature_columns
-  
-  # Determine similarity measures for each feature pair.
-  similarity <- fam_sapply(cl=cl,
-                           assign=NULL,
-                           X=seq_len(ncol(combinations)),
-                           FUN=..compute_similarity,
-                           progress_bar=verbose,
-                           combinations=combinations,
-                           data=droplevels(data_obj@data),
-                           similarity_metric=similarity_metric,
-                           categorical_mask=categorical_mask,
-                           chopchop=TRUE)
-  
-  # Transform similarity scores into a data.table.
-  similarity_table  <- data.table::data.table("feature_name_1"=combinations[1,],
-                                              "feature_name_2"=combinations[2,],
-                                              "value"=similarity)
-
-  return(similarity_table)
-}
-
-
-
-cluster.get_samplewise_similarity_table <- function(cl=NULL,
-                                                    data_obj,
-                                                    similarity_metric,
-                                                    message_indent=0L,
-                                                    verbose=FALSE){
-  
-  # Internal function for computing pair-wise similarity
-  ..compute_similarity <- function(ii, combinations, data, similarity_metric, categorical_mask){
-
-    # Identify features that are being compared.
-    row_1 <- combinations[1, ii]
-    row_2 <- combinations[2, ii]
-    
-    # Compute pairwise similarity
-    similarity <- similarity.compute_similarity(x=as.numeric(data[row_1, ]),
-                                                y=as.numeric(data[row_2, ]),
-                                                x_categorical=categorical_mask,
-                                                y_categorical=categorical_mask,
-                                                similarity_metric=similarity_metric)
-    
-    return(similarity)
-  }
-  
-  
-  # Get similarity between samples.
-  if(is.null(data_obj)){
-    ..error_reached_unreachable_code("cluster.get_samplewise_similarity_table: data_obj argument cannot be missing.")
-  }
-  
-  # Check if similarity metric is provided.
-  if(is.null(similarity_metric)){
-    ..error_reached_unreachable_code("cluster.get_samplewise_similarity_table: similarity_metric argument is missing.")
-  }
-  
-  # Message similarity metric
-  logger.message(paste0("Pair-wise distance between samples is quantified by ",
-                        similarity.message_similarity_metric(similarity_metric=similarity_metric), "."),
-                 indent=message_indent,
-                 verbose=verbose)
-  
-  # Get feature columns.
-  feature_columns <- get_feature_columns(x=data_obj)
-  
-  # Determine which features are categorical.
-  column_class <- lapply(feature_columns, function(ii, data) (class(data[[ii]])), data=data_obj@data)
-  categorical_mask <- sapply(column_class, function(selected_column_class) (any(selected_column_class %in% c("logical", "character", "factor"))))
-  
-  # Determine if data requires normalisation
-  if(similarity.requires_normalisation(similarity_metric=similarity_metric)){
-    # Identify numerical features
-    numerical_features <- feature_columns[!categorical_mask]
-    
-    if(grepl(pattern="_trim", x=similarity_metric, fixed=TRUE)){
-      norm_method <- "normalisation_trim"
-      
-    } else if(grepl(pattern="_winsor", x=similarity_metric, fixed=TRUE)){
-      norm_method <- "normalisation_winsor"
-      
-    } else {
-      norm_method <- "normalisation"
-    }
-    
-    # Perform normalisation.
-    for(ii in numerical_features){
-      data.table::set(data_obj@data,
-                      j=ii,
-                      value=.normalise(x=data_obj@data[[ii]],
-                                       normalisation_method=norm_method,
-                                       range=c(0, 1)))
-    }
-  }
-  
-  # Generate all combinations of samples
-  combinations <- utils::combn(seq_len(nrow(data_obj@data)), 2)
-  
-  # Determine similarity measures for each sample pair.
-  similarity <- fam_sapply(cl=cl,
-                           assign=NULL,
-                           X=seq_len(ncol(combinations)),
-                           FUN=..compute_similarity,
-                           progress_bar=verbose,
-                           combinations=combinations,
-                           data=data_obj@data[, mget(feature_columns)],
-                           similarity_metric=similarity_metric,
-                           categorical_mask=categorical_mask,
-                           chopchop=TRUE)
-  
-  # Create unique row names.
-  row_names <- get_unique_row_names(x=data_obj)
-  
-  # Transform similarity scores into a data.table.
-  similarity_table  <- data.table::data.table("sample_1"=row_names[combinations[1, ]],
-                                              "sample_2"=row_names[combinations[2, ]],
-                                              "value"=similarity)
-  
-  return(similarity_table)
-}
-
-
-cluster.get_distance_matrix <- function(cl=NULL,
-                                        data_obj=NULL,
-                                        similarity_table=NULL,
-                                        feature_columns=NULL,
-                                        settings=NULL,
-                                        similarity_metric=NULL,
-                                        message_indent=0L,
-                                        verbose=FALSE){
-  # Compute distance matrix
-
-  # Suppress NOTES due to non-standard evaluation in data.table
-  value <- NULL
-  
-  # Check if similarity metric is provided
-  if(!is.null(settings)){
-    similarity_metric <- settings$prep$cluster_similarity_metric
-  } else if(is.null(similarity_metric)){
-    ..error_reached_unreachable_code("cluster.get_distance_matrix: settings and similarity_metric arguments are both missing.")
-  }
-  
-  # Compute the similarity_table first. This is the distance matrix in tabular
-  # format. This table is then processed further to derive the distance matrix.
-  if(is.null(similarity_table)){
-    lower_triangle <- cluster.get_featurewise_similarity_table(cl=cl,
-                                                               data_obj=data_obj,
-                                                               feature_columns=feature_columns,
-                                                               settings=settings,
-                                                               similarity_metric=similarity_metric,
-                                                               message_indent=message_indent,
-                                                               verbose=verbose)
-    
-  } else {
-    lower_triangle <- data.table::copy(similarity_table)
-  }
-  
-  # Determine whether the similarity table is for features (columns) or samples
-  # (rows).
-  table_type <- ifelse("feature_name_1" %in% colnames(lower_triangle), "feature", "sample")
-  
-  element_1 <- ifelse(table_type == "feature", "feature_name_1", "sample_1")
-  element_2 <- ifelse(table_type == "feature", "feature_name_2", "sample_2")
-  
-  # Find elements from the distance table.
-  elements <- union(lower_triangle[[element_1]], lower_triangle[[element_2]])
-  
-  # Convert similarity to distance.
-  lower_triangle[, "value":=similarity.to_distance(x=value, similarity_metric=similarity_metric)]
-  
-  # Add in other triangle of the table by switching around the columns.
-  upper_triangle <- data.table::copy(lower_triangle)
-  data.table::setnames(upper_triangle, old=c(element_1, element_2), new=c(element_2, element_1))
-  
-  # Combine with data.table that includes diagonals
-  diagonal_table <- data.table::data.table("element_1"=elements, "element_2"=elements, "value"=as.double(0))
-  data.table::setnames(diagonal_table, old=c("element_1", "element_2"), new=c(element_1, element_2))
-  distance_table  <- rbind(lower_triangle, diagonal_table, upper_triangle)
-  
-  # Create n x n table
-  distance_table  <- data.table::dcast(distance_table,
-                                       stats::as.formula(paste(element_1, "~", element_2)),
-                                       value.var="value")
-  
-  rownames(distance_table) <- distance_table[[element_1]]
-  distance_table[, (element_1):=NULL]
-  
-  # Create dissimilarity matrix
-  distance_matrix <- stats::as.dist(distance_table)
-  
-  return(distance_matrix)
-}
+# cluster.get_featurewise_similarity_table <- function(cl=NULL, data_obj,
+#                                                      feature_columns=NULL,
+#                                                      settings=NULL,
+#                                                      similarity_metric=NULL,
+#                                                      message_indent=0L,
+#                                                      verbose=FALSE){
+#   # Create a pairwise similarity table
+#   
+#   # Internal function for computing pair-wise similarity
+#   ..compute_similarity <- function(ii, combinations, data, similarity_metric, categorical_mask){
+#     
+#     # Identify features that are being compared.
+#     feature_1 <- combinations[1, ii]
+#     feature_2 <- combinations[2, ii]
+#     
+#     # Compute pairwise similarity
+#     similarity <- similarity.compute_similarity(x=data[[feature_1]],
+#                                                 y=data[[feature_2]],
+#                                                 x_categorical=categorical_mask[feature_1],
+#                                                 y_categorical=categorical_mask[feature_2],
+#                                                 similarity_metric=similarity_metric)
+#     
+#     return(similarity)
+#   }
+#   
+#   
+#   if(is.null(data_obj)){
+#     ..error_reached_unreachable_code("cluster.get_featurewise_similarity_table: data_obj argument cannot be missing.")
+#   }
+#   
+#   if(!is.null(settings)){
+#     similarity_metric <- settings$prep$cluster_similarity_metric
+#   } else if(is.null(similarity_metric)){
+#     ..error_reached_unreachable_code("cluster.get_featurewise_similarity_table: settings and similarity_metric arguments are both missing.")
+#   }
+#   
+#   # Message similarity metric
+#   logger.message(paste0("Pair-wise distance between features is quantified by ",
+#                         similarity.message_similarity_metric(similarity_metric=similarity_metric), "."),
+#                  indent=message_indent,
+#                  verbose=verbose)
+#   
+#   # Get feature columns if this was not provided
+#   if(is.null(feature_columns)){
+#     feature_columns <- get_feature_columns(x=data_obj)
+#   }
+#   
+#   # Generate all combinations of features
+#   combinations <- utils::combn(sort(feature_columns), 2)
+#   
+#   # Determine which features are categorical.
+#   column_class <- lapply(feature_columns, function(ii, data) (class(data[[ii]])), data=data_obj@data)
+#   categorical_mask <- sapply(column_class, function(selected_column_class) (any(selected_column_class %in% c("logical", "character", "factor"))))
+#   
+#   # Add names to the mask to allow indexing by feature name.
+#   names(categorical_mask) <- feature_columns
+#   
+#   # Determine similarity measures for each feature pair.
+#   similarity <- fam_sapply(cl=cl,
+#                            assign=NULL,
+#                            X=seq_len(ncol(combinations)),
+#                            FUN=..compute_similarity,
+#                            progress_bar=verbose,
+#                            combinations=combinations,
+#                            data=droplevels(data_obj@data),
+#                            similarity_metric=similarity_metric,
+#                            categorical_mask=categorical_mask,
+#                            chopchop=TRUE)
+#   
+#   # Transform similarity scores into a data.table.
+#   similarity_table  <- data.table::data.table("feature_name_1"=combinations[1,],
+#                                               "feature_name_2"=combinations[2,],
+#                                               "value"=similarity)
+# 
+#   return(similarity_table)
+# }
+# 
+# 
+# 
+# cluster.get_samplewise_similarity_table <- function(cl=NULL,
+#                                                     data_obj,
+#                                                     similarity_metric,
+#                                                     message_indent=0L,
+#                                                     verbose=FALSE){
+#   
+#   # Internal function for computing pair-wise similarity
+#   ..compute_similarity <- function(ii, combinations, data, similarity_metric, categorical_mask){
+# 
+#     # Identify features that are being compared.
+#     row_1 <- combinations[1, ii]
+#     row_2 <- combinations[2, ii]
+#     
+#     # Compute pairwise similarity
+#     similarity <- similarity.compute_similarity(x=as.numeric(data[row_1, ]),
+#                                                 y=as.numeric(data[row_2, ]),
+#                                                 x_categorical=categorical_mask,
+#                                                 y_categorical=categorical_mask,
+#                                                 similarity_metric=similarity_metric)
+#     
+#     return(similarity)
+#   }
+#   
+#   
+#   # Get similarity between samples.
+#   if(is.null(data_obj)){
+#     ..error_reached_unreachable_code("cluster.get_samplewise_similarity_table: data_obj argument cannot be missing.")
+#   }
+#   
+#   # Check if similarity metric is provided.
+#   if(is.null(similarity_metric)){
+#     ..error_reached_unreachable_code("cluster.get_samplewise_similarity_table: similarity_metric argument is missing.")
+#   }
+#   
+#   # Message similarity metric
+#   logger.message(paste0("Pair-wise distance between samples is quantified by ",
+#                         similarity.message_similarity_metric(similarity_metric=similarity_metric), "."),
+#                  indent=message_indent,
+#                  verbose=verbose)
+#   
+#   # Get feature columns.
+#   feature_columns <- get_feature_columns(x=data_obj)
+#   
+#   # Determine which features are categorical.
+#   column_class <- lapply(feature_columns, function(ii, data) (class(data[[ii]])), data=data_obj@data)
+#   categorical_mask <- sapply(column_class, function(selected_column_class) (any(selected_column_class %in% c("logical", "character", "factor"))))
+#   
+#   # Determine if data requires normalisation
+#   if(similarity.requires_normalisation(similarity_metric=similarity_metric)){
+#     # Identify numerical features
+#     numerical_features <- feature_columns[!categorical_mask]
+#     
+#     if(grepl(pattern="_trim", x=similarity_metric, fixed=TRUE)){
+#       norm_method <- "normalisation_trim"
+#       
+#     } else if(grepl(pattern="_winsor", x=similarity_metric, fixed=TRUE)){
+#       norm_method <- "normalisation_winsor"
+#       
+#     } else {
+#       norm_method <- "normalisation"
+#     }
+#     
+#     # Perform normalisation.
+#     for(ii in numerical_features){
+#       data.table::set(data_obj@data,
+#                       j=ii,
+#                       value=.normalise(x=data_obj@data[[ii]],
+#                                        normalisation_method=norm_method,
+#                                        range=c(0, 1)))
+#     }
+#   }
+#   
+#   # Generate all combinations of samples
+#   combinations <- utils::combn(seq_len(nrow(data_obj@data)), 2)
+#   
+#   # Determine similarity measures for each sample pair.
+#   similarity <- fam_sapply(cl=cl,
+#                            assign=NULL,
+#                            X=seq_len(ncol(combinations)),
+#                            FUN=..compute_similarity,
+#                            progress_bar=verbose,
+#                            combinations=combinations,
+#                            data=data_obj@data[, mget(feature_columns)],
+#                            similarity_metric=similarity_metric,
+#                            categorical_mask=categorical_mask,
+#                            chopchop=TRUE)
+#   
+#   # Create unique row names.
+#   row_names <- get_unique_row_names(x=data_obj)
+#   
+#   # Transform similarity scores into a data.table.
+#   similarity_table  <- data.table::data.table("sample_1"=row_names[combinations[1, ]],
+#                                               "sample_2"=row_names[combinations[2, ]],
+#                                               "value"=similarity)
+#   
+#   return(similarity_table)
+# }
+# 
+# 
+# cluster.get_distance_matrix <- function(cl=NULL,
+#                                         data_obj=NULL,
+#                                         similarity_table=NULL,
+#                                         feature_columns=NULL,
+#                                         settings=NULL,
+#                                         similarity_metric=NULL,
+#                                         message_indent=0L,
+#                                         verbose=FALSE){
+#   # Compute distance matrix
+# 
+#   # Suppress NOTES due to non-standard evaluation in data.table
+#   value <- NULL
+#   
+#   # Check if similarity metric is provided
+#   if(!is.null(settings)){
+#     similarity_metric <- settings$prep$cluster_similarity_metric
+#   } else if(is.null(similarity_metric)){
+#     ..error_reached_unreachable_code("cluster.get_distance_matrix: settings and similarity_metric arguments are both missing.")
+#   }
+#   
+#   # Compute the similarity_table first. This is the distance matrix in tabular
+#   # format. This table is then processed further to derive the distance matrix.
+#   if(is.null(similarity_table)){
+#     lower_triangle <- cluster.get_featurewise_similarity_table(cl=cl,
+#                                                                data_obj=data_obj,
+#                                                                feature_columns=feature_columns,
+#                                                                settings=settings,
+#                                                                similarity_metric=similarity_metric,
+#                                                                message_indent=message_indent,
+#                                                                verbose=verbose)
+#     
+#   } else {
+#     lower_triangle <- data.table::copy(similarity_table)
+#   }
+#   
+#   # Determine whether the similarity table is for features (columns) or samples
+#   # (rows).
+#   table_type <- ifelse("feature_name_1" %in% colnames(lower_triangle), "feature", "sample")
+#   
+#   element_1 <- ifelse(table_type == "feature", "feature_name_1", "sample_1")
+#   element_2 <- ifelse(table_type == "feature", "feature_name_2", "sample_2")
+#   
+#   # Find elements from the distance table.
+#   elements <- union(lower_triangle[[element_1]], lower_triangle[[element_2]])
+#   
+#   # Convert similarity to distance.
+#   lower_triangle[, "value":=similarity.to_distance(x=value, similarity_metric=similarity_metric)]
+#   
+#   # Add in other triangle of the table by switching around the columns.
+#   upper_triangle <- data.table::copy(lower_triangle)
+#   data.table::setnames(upper_triangle, old=c(element_1, element_2), new=c(element_2, element_1))
+#   
+#   # Combine with data.table that includes diagonals
+#   diagonal_table <- data.table::data.table("element_1"=elements, "element_2"=elements, "value"=as.double(0))
+#   data.table::setnames(diagonal_table, old=c("element_1", "element_2"), new=c(element_1, element_2))
+#   distance_table  <- rbind(lower_triangle, diagonal_table, upper_triangle)
+#   
+#   # Create n x n table
+#   distance_table  <- data.table::dcast(distance_table,
+#                                        stats::as.formula(paste(element_1, "~", element_2)),
+#                                        value.var="value")
+#   
+#   rownames(distance_table) <- distance_table[[element_1]]
+#   distance_table[, (element_1):=NULL]
+#   
+#   # Create dissimilarity matrix
+#   distance_matrix <- stats::as.dist(distance_table)
+#   
+#   return(distance_matrix)
+# }
 
 
 
